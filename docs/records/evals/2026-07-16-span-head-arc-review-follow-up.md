@@ -27,12 +27,12 @@ expected agreement with the _rest of the list_ under probabilities renormalized 
 risk(ŷ) = Σⱼ p(yⱼ) · (1 − street_span_agreement(ŷ, yⱼ))     over the k-best list itself
 ```
 
-Pick argmin. No gold, no training, and the partition function already gives the within-input
-normalization MBR would need if the runtime exposes full sequence log-probs; otherwise this is a
-k-best consensus heuristic using renormalized k-best scores. Intuition for why this can beat
+Pick argmin. It needs neither gold nor training. The partition function already gives the
+within-input normalization MBR would need if the runtime exposes full sequence log-probs. Otherwise
+this is a k-best consensus heuristic using renormalized k-best scores. Intuition for why this can beat
 Viterbi here: when the correct street reading appears in slightly different boundary variants
 across ranks 2–5, those variants vote for each other's shared span while the rank-1 locality-refusal
-stands alone. Failure mode: a majority-wrong cluster can outvote a lone correct candidate. It goes
+has no supporting variant. Failure mode: a majority-wrong cluster can outvote a lone correct candidate. It goes
 into the diagnostics tier, pre-registered: MBR@1 vs seg@1 on parity and Paris, same instruments.
 
 ## 2. The check question (thesis §8 Q3) — settled for now
@@ -49,9 +49,9 @@ while the polarity class stands, so the check isn't the blocker. The polarity cl
 
 Adopted with reviewer B's constraint as a hard rule: **positive bias only, never a veto.** Negative
 evidence from an incomplete register recreates the Pelias deletion in soft form — real unseen
-streets get punished globally, which is §6's scar tissue with extra steps. Reviewer A's locale-tier
-matrix is required before implementation (BAN: yes; BAG: yes; TIGER: spatial, needs state scoping,
-which re-introduces a locality dependency; ZZ: absent). Score comparability with the CRF's
+streets get punished globally. That repeats the §6 failure through more steps. Reviewer A's
+locale-tier matrix is required before implementation. In it, BAN is yes and BAG is yes. TIGER is
+spatial and needs state scoping, and that scoping re-introduces a locality dependency. ZZ is absent. Score comparability with the CRF's
 normalization gets checked in review, per the thesis's own incomparable-scores antipattern.
 
 Longer-view framing: BAN is the first proving ground rather than the abstraction. The abstraction is a
@@ -64,9 +64,9 @@ StreetNameEvidenceProvider.lookup(surface, locale, scope?)
 
 Tier A sources (authoritative street/address registers: BAN, BAG-like systems) can support eval,
 augmentation, and positive name-index bias. Tier B sources (road/address-range data: TIGER) can
-support scoped evidence only; global `"Main St"` evidence is weak, while `"Main St" + state/ZIP`
+support scoped evidence only. Global `"Main St"` evidence is weak, while `"Main St" + state/ZIP`
 may be useful. Tier C sources (admin gazetteers such as WOF) support locality/region/country
-evidence rather than street existence; they are the famous-street-as-place trap. Tier D sources (OSM-like
+evidence rather than street existence. They are the famous-street-as-place trap. Tier D sources (OSM-like
 broad data) are useful for experiments and coverage gaps, but licensing, attribution, and local
 quality must check product use. No tier supplies global negative evidence.
 
@@ -82,9 +82,9 @@ on the external `query-shape` structural signal rather than the learned kind hea
 Everything below Tier 2 is blocked on what the tiers above it show. Falsifiers pre-registered here.
 
 **Tier 0 — documentation, before the next draft.**
-Edit §2's governing claim from "no mechanism to constrain the next token" to: _nothing in the
-objective or decode rewards segment-level coherence, and the prior on bare toponyms is wrong._
-Same evidence, no false claim about representations. Also implement reviewer A's harness baseline
+Edit §2's governing claim from "no mechanism to constrain the next token" to: _neither the
+objective nor the decode rewards segment-level coherence, and the prior on bare toponyms is wrong._
+The new claim uses the same evidence and makes no false claim about representations. Also implement reviewer A's harness baseline
 assertion (>10% deviation from the last registered baseline refuses to produce a report) — before
 Tier 1, so the diagnostics below can't ship a broken number. Both §7 near-misses would have been
 caught by it.
@@ -92,8 +92,8 @@ caught by it.
 **Tier 1 — no-training diagnostics, in parallel.**
 
 - **(a) Regression-class cross-tab** on parity: token-correct/span-wrong vs token-wrong/span-correct,
-  per fixture. +2 net overall against +15 on Paris means the span decode is losing somewhere;
-  name the class before shipping. An hour of analysis on existing results. _Falsifier for
+  per fixture. +2 net overall against +15 on Paris means the span decode is losing somewhere.
+  Name the class before shipping. An hour of analysis on existing results. _Falsifier for
   shipping-by-default: if the regression class is "street hallucinated where none exists," that's
   a new failure mode and the flag stays on._
 - **(b) Gazetteer-off run** on Paris bare/famous. If famous streets sit in WOF as places, the
@@ -110,15 +110,16 @@ caught by it.
 **Tier 2 — the BAN bare-street training extract.** 5–10% mix, short schedule, graded on the Tier-1c
 eval set. The same extraction script may produce both train and eval, but the split must be
 source-disjoint by normalized street surface before sampling rather than merely row-disjoint. Add a
-full-address/contextful regression guard alongside the bare-fragment read; the extract only ships if
+full-address/contextful regression guard alongside the bare-fragment read. The extract only ships if
 it improves fragments without degrading normal addresses. _Pre-registered read: if the 17
 locality-refusals flip to street, the training-distribution hypothesis holds and option C becomes
 reinforcement rather than rescue. If they don't move, the hypothesis is falsified and option C is
 vindicated as the correct level. Either result decides something the current analysis cannot._
 
 **Tier 3 — conditional on Tiers 1–2.** Name-index rerank (positive bias only) to collect list
-headroom; option C (external kind signal) only if polarity survives augmentation; MBR as the
-default consumer only if Tier-1d shows a real margin. Tune any name-index bias on held-out dev rather than the Paris target fixture; positive-only evidence can still over-rank street readings if the
+headroom. Option C (external kind signal) is built only if polarity survives augmentation. MBR
+becomes the default consumer only if Tier-1d shows a real margin. Tune any name-index bias on
+held-out dev rather than the Paris target fixture. Positive-only evidence can still over-rank street readings if the
 offset is hand-fit to the known failures.
 
 ## 6. Ship decision
@@ -126,7 +127,7 @@ offset is hand-fit to the known failures.
 Unanimous across reviews: the span decode ships **behind a flag**, valued for the list and the
 target class (+23.8pp Paris, oracle@5 0.905, +0.5% latency) rather than for rank-1 parity (+0.75pp, inside
 noise). It becomes the default path when a consumer collects the headroom — and Tier 1a decides
-whether the flag has a regression cost we haven't named yet.
+whether the flag has a regression cost that has not been identified yet.
 
 ---
 

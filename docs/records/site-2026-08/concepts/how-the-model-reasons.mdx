@@ -53,8 +53,8 @@ model with a language model.
 
 It is **not** a context-free grammar. v0 mailwoman (the rule-based ancestor)
 was closer to one. Each rule classifier fires independently on token features,
-and solvers reconcile globally. The neural model doesn't enumerate productions;
-it learns continuous-valued biases where each token's interpretation depends
+and solvers reconcile globally. The neural model doesn't enumerate productions.
+It learns continuous-valued biases where each token's interpretation depends
 on every other token via attention weights.
 
 It is **not** a context-sensitive grammar either. CSG would require explicit
@@ -114,18 +114,18 @@ final_emissions = encoder_logits + queryShape_bias + admin_fst_bias + morphology
 
 This is the shallow-fusion architecture. The encoder is the "acoustic model."
 The FSTs are the "language models." Each provides an independent view of
-what each token IS; their sum decides what each token GETS classified as.
+what each token IS. Their sum decides what each token GETS classified as.
 
 ### 3. The Viterbi decoder
 
 Once the per-token emission distributions are fixed, Viterbi finds the
-best label SEQUENCE under the BIO transition mask. BIO grammar says: `I-X`
-can only follow `B-X` or another `I-X`; you can't go from `B-locality` to
+best label SEQUENCE under the BIO transition mask. BIO grammar requires that `I-X`
+follow only `B-X` or another `I-X`. You can't go from `B-locality` to
 `I-region`. The Viterbi enforces this globally — once a token's label is
 chosen, the next token's label space is constrained.
 
 This is structural context-sensitivity at the label level. The encoder's
-per-token decision for `OR` doesn'tdepend on `OR`'s context; it
+per-token decision for `OR` doesn't depend on `OR`'s context. It
 depends on whether the previous token was labeled `B-locality` (in which
 case `I-locality` is a candidate but B-region is too) or labeled something
 else.
@@ -175,7 +175,7 @@ flowchart TD
 
 The encoder's representation of `Main` is built knowing it's between something
 that looks like a house-number and something that looks like a street suffix.
-That alone gives the encoder a soft signal that `Main` is street-name-shaped.
+That position, before any prior applies, gives the encoder a soft signal that `Main` is street-name-shaped.
 The admin FST contributes no bias for `Main` (it's not a WOF place). The
 morphology FST sees `St` matches and biases `Main` toward `street` (positive)
 and away from `dependent_locality` (negative). The sum at `Main`'s position
@@ -216,7 +216,7 @@ But also: the neural model is sometimes BETTER on adversarial inputs that
 break v0's assumptions. The falsehoods catalog shows neural winning on
 `8 Seven Gardens Burgh` (number-in-street-name) and `R 5, 6-13 Mannheim`
 (grid address). v0's rules force a street-shaped reading on these and
-get it wrong; the neural correctly stays silent on the components it
+get it wrong. The neural model correctly stays silent on the components it
 can't interpret.
 
 The difference is generalization. v0 has a small competence space with
@@ -235,15 +235,15 @@ Each piece has a role:
 
 - **The encoder** learns "what does the surrounding context say about
   this token?" It's the soft, learned, contextual layer.
-- **The QueryShape prior** says "what does the token's shape say about
+- **The QueryShape prior** asks "what does the token's shape say about
   itself?" Token-local structural features.
-- **The admin FST** says "what does the world's gazetteer say about
+- **The admin FST** asks "what does the world's gazetteer say about
   this token sequence?" External world knowledge, gazetteer-derived.
-- **The morphology FST** says "what does this token's morphology say
+- **The morphology FST** asks "what does this token's morphology say
   about it being a street-typing affix?" Linguistic structure.
-- **Viterbi** says "what's the best globally-valid label sequence given
+- **Viterbi** asks "what's the best globally-valid label sequence given
   all the above?"
-- **The tree builder** says "what hierarchical structure does this
+- **The tree builder** asks "what hierarchical structure does this
   label sequence project into?"
 
 The encoder is necessary but not sufficient. The FST priors anchor the

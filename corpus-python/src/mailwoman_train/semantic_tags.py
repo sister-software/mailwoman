@@ -115,8 +115,8 @@ def project_tag(tag: str, label_set: LabelSet) -> str | None:
 class ProjectionLedger:
     """Counts of what projecting labels into one family changed and what it could not represent.
 
-    A loader that projects through this ledger can report, per run, how many spans of each concept
-    became a coarser tag and how many the family could not emit. The second count is the one
+    A loader that projects through this ledger can report, per run, the number of spans of each concept
+    that became a coarser tag and the number the family could not emit. The second count is the one
     invariant 6 of the decoder-exposure plan forbids leaving silent.
     """
 

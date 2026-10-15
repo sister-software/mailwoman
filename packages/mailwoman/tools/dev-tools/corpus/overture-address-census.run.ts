@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Counts address rows per country in an Overture release. It reports how many rows have a street,
+ *   Counts address rows per country in an Overture release. It reports the number of rows that have a street,
  *   a house number and a postcode.
  *
  *   This answers which jurisdictions a corpus build could admit from a permissively licensed bulk source.

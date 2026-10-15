@@ -71,7 +71,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     # Run A (DeepSeek+Claude consensus): affix at 5x (2.0->10.0). The 20x diagnostic recovered prefix
     # 27.6->75 in 2k steps with no spine collateral (postcode even +1.6) → affix is scheduling-bound,

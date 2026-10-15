@@ -2,7 +2,7 @@
 
 Supersedes [2026-06-11](./parity-scorecard-2026-06-11.md) — the first complete per-tag scorecard
 since it. Same two lenses, same rules: arena head-to-head is whole-parse-strict (direct,
-understates per-tag wins); per-tag F1 is what the campaigns move; real-OOD columns are the truth
+understates per-tag wins). Per-tag F1 is what the campaigns move. Real-OOD columns are the truth
 for campaign tags. Self-emitted from `scripts/eval/promotion-check.ts` (the #479 battery:
 `per-locale-f1.ts` + `score-affix.ts` + `score-country-homograph.ts` + `de-order-eval.ts` +
 `external-arenas.ts`), check spec `scripts/eval/checks/v4.15.0-boundary.json` — do not hand-edit.
@@ -22,7 +22,7 @@ libpostal clean-canonical arena 36 → 30%.
 - int8 (the shipped bytes): `model-v193a3-step-80000-int8.onnx`, md5
   `4dec4f460a934949580d8e7b43adae7e` — **verified byte-identical to `model.onnx` inside the
   published `@mailwoman/neural-weights-en-us@5.0.0` npm tarball** (5.0.0 was the acronym-casing
-  code major; the weights are the v4.15.0 line unchanged).
+  code major, and the weights are the v4.15.0 line unchanged).
 - fp32 (delta reference): `model-v193a3-step-80000-fp32.onnx`, md5
   `0ae5ad20313607f31d4dfd3c649cf923` (Modal `output-v193a3-anchor-absorption-s42`).
 - tokenizer `v0.6.0-a0`, ship config = anchor + gazetteer lexicon + `conventions:"auto"` +
@@ -40,7 +40,7 @@ libpostal clean-canonical arena 36 → 30%.
 
 ## Lens 2 — per-tag truth (int8 = the shipped bytes, gaz+anchor+conventions+bridge fed)
 
-Columns v4.3.0/v4.4.0 from their ship checks; v5.0.0 is this re-score. Δ is v5.0.0 − v4.4.0 (the
+Columns v4.3.0/v4.4.0 from their ship checks. The v5.0.0 column is this re-score. Δ is v5.0.0 − v4.4.0 (the
 last full baseline).
 
 | tag                | eval                    |  floor | v4.3.0 | v4.4.0 | **v5.0.0** |      Δ | vs floor            |
@@ -67,14 +67,14 @@ last full baseline).
 
 † The two documented v4.15.0 check revisions — the drop is the priced-in #723 trade rather than new
 drift. Note both now sit **exactly at their revised floors** (us.postcode 95.005/95.0,
-fr.postcode 99.341/99.3): the floors have zero slack left, which is the correct design (the floor
-is the shipped level) but means any future hair of postcode loss fails the check loudly.
+fr.postcode 99.341/99.3): the floors have zero slack left. That is the correct design (the floor
+is the shipped level), but any further postcode loss, however small, fails the check.
 
 ⚠ `fr.cedex_real` 96.1 → 89.4 is the one >2pp real-OOD move with no written justification in any
 promotion doc between v4.4.0 and v4.15.0 — the exact pattern #885 exists to catch. It remains
-19.4pp above its floor, so nothing checks on it today; it is now on the record as accumulated
+19.4pp above its floor, so no current check fails on it. It is now on the record as accumulated
 drift rather than silently absorbed. (Plausible source: the multi-locale/AU/anchor retrains between
-06-11 and 06-25 rebalancing FR postal-format mass; diagnosing is a follow-up rather than this doc's job.)
+06-11 and 06-25 rebalancing FR postal-format mass. The diagnosis is a follow-up rather than this doc's job.)
 
 fp32 ↔ int8: max per-tag delta 0.8pp, on fr.region (cap 1.5) — quantization is not distorting
 any floor.
@@ -99,14 +99,14 @@ if a future release wants to check it, this is the baseline to floor.
 
 Label-F1 above is the drift backstop rather than the verdict. The shipped line's coordinate record,
 measured this week on the same artifact (see `#884` and the [day eval](https://github.com/sister-software/mailwoman/blob/feat/825-v196-slavic-anchor/docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md)):
-US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 km / resolve
-0.968; PL-1k 2.07 km / 0.985 (the CZ/PL wrong-city defect is #884's fix, promote-pending).
+US-2k coord p50 3.31 km / resolve 1.000 / region 0.999. CZ-1k resolved-p50 3.29 km / resolve
+0.968. PL-1k 2.07 km / 0.985 (the CZ/PL wrong-city defect is #884's fix, promote-pending).
 
 ## What this re-score settles (and what it leaves for the operator)
 
 1. **The "coordinate-invisible debt" is bounded and mostly positive.** Of the five deferred
-   label regressions, the two postcode floors are priced-in revisions sitting exactly at floor;
-   us.region −1.7 and street_suffix −1.7 are inside noise-and-floor margins; and the same period
+   label regressions, the two postcode floors are priced-in revisions sitting exactly at floor.
+   us.region −1.7 and street_suffix −1.7 are inside noise-and-floor margins. The same period
    bought street +4.4, unit +4.9, prefix +4.4, po_box +2.3, fr.region +22.8, and +6 on the conditional
    arena. The pattern (grade the coordinate, document label trades) is vindicated — with two
    uncaptured drifts now recorded: `fr.cedex_real` −6.7 and the libpostal clean-arena −6.
@@ -118,7 +118,7 @@ US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 
 3. **Approved re-score rule (operator, 2026-07-02)**, written into
    `CONTRIBUTING_MODEL_WORK.mdx`: every 5 promotes, or any promote that lowers a check floor,
    triggers a full re-score published as a dated scorecard. v4.4.0 → v4.15.0 was 11 promotes
-   with none; this doc is the debt paid once.
+   with none. This doc is that missing re-score.
 
 ## Provenance
 

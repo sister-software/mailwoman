@@ -7,7 +7,7 @@
 #
 # One variable vs v4.1.0 (v0.9.7-unit-v3): the balanced country recipe output is overlaid on the shipped
 # unit base (v0.4.5-unit-v2 → v0.4.10-country-bal). No affix (not shipped). No anchor feature yet
-# (DeepSeek's data-first: prove balanced data alone, add the soft anchor only if long-tail recall
+# (DeepSeek's data-first: prove balanced data without the anchor first, add the soft anchor only if long-tail recall
 # lags). Class-weight B/I-country stays at 2.0 (shipped model had 2.0 and country was 0% → the gap was
 # data). Everything else held — v0.9.3 recipe (anchor on, self-cond on, region-tail German), seed 42.
 #

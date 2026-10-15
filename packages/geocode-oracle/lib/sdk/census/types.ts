@@ -155,8 +155,7 @@ export interface CensusAddressComponents {
 	 */
 	state: AdminLevel1Abbreviation | string
 	/**
-	 * The ZIP code: the geocoder returns the five-digit form, with the plus-four
-	 * variant admitted for completeness.
+	 * The ZIP code: the geocoder returns the five-digit form, and the type also admits the plus-four variant.
 	 */
 	zip: ZipCode | ZipCodePlusFour | string
 	/**

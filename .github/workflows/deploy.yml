@@ -1,6 +1,6 @@
 # Deploy the Cloudflare Workers this repository owns: the tile worker, the license worker, and the three static
 # apps (Earth, Moon, Mars). One deployer per Worker, from here, on every push to main. the Workers Builds projects
-# that used to deploy the two workers are retired so nothing races this workflow.
+# that used to deploy the two workers are retired so that no other deployer races this workflow.
 #
 # which workers A push deploys is not a path list in this file. The `targets` job runs
 # `mwops release deploy-targets`, which diffs the push against its parent, maps each changed file to its workspace,
@@ -11,10 +11,10 @@
 #
 # A hand deploy is `workflow_dispatch` with `targets`: `all`, or a comma-separated list of ids (`moon,mars`).
 #
-# Every job is hosted. The two credentials are secrets of the `worker-production` GitHub environment, which the
-# deploy job declares. a job without that declaration reads them as empty strings. A self-hosted lab runner would
+# Every job is hosted. The two credentials are secrets of the `worker-production` GitHub environment. The
+# deploy job declares that environment. a job without that declaration reads them as empty strings. A self-hosted lab runner would
 # read them from its own `.env` instead, and an `env:` block from `secrets` overrides that with an empty string on
-# any event whose store lacks the name, which is the shape test.yml warns about.
+# any event whose store lacks the name. test.yml warns about that shape.
 name: Deploy
 
 on:
@@ -126,7 +126,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # wrangler and Vite both resolve the workspaces through the `default` condition, which names `out/`.
+      # wrangler and Vite both resolve the workspaces through the `default` condition. That condition names `out/`.
       - name: Compile
         run: yarn compile
 

@@ -18,8 +18,9 @@ overstates what n=54 can support: the two intervals overlap, and McNemar on the 
 the 11 new hallucinations are real, individually inspectable failures — `New York, NY` → street=`new
 york` is not a statistical claim — and the pre-registered condition turns on the failure CLASS
 existing rather than on its rate being by a measured margin worse. The verdict stands on those grounds. The rate
-question is settled by the T1c fragment board, whose `bare-locality` class carries n=400 (±4.0pp).
-Caught by the same discipline that produced the finding; left visible rather than without output edited.
+question is settled by the T1c fragment board. Its `bare-locality` class has n=400 (±4.0pp).
+The same discipline that produced the finding caught this error. The correction is left visible rather
+than edited out.
 :::
 
 |         |                                                                               |
@@ -58,7 +59,7 @@ NO "Maria Dehlis vei 15"      v264="vei"               seg="maria dehlis vei"   
 SE "Gamla Varmdovägen 6"      v264="varmdovägen"       seg="gamla varmdovägen"       ✓
 ```
 
-Five of them are cases where **the shipped model emits nothing at all**. The span decode is doing the
+Five of them are cases where **the shipped model emits an empty street**. The span decode is doing the
 job it was built for, on the class it was built for.
 
 ## 3. The regression class is systematic — 8 of 17 are digit-eating
@@ -76,13 +77,13 @@ SE "Ångermannagatan 80, Vällingby"     gold="ångermannagatan"         seg="å
 
 **The street span swallows the first digit of the adjacent house number or postcode** — never the whole
 number, always the first piece. The tokenizer splits numbers into digit pieces (`▁8|1|0`), and the
-segment ends one piece late. Eight locales, one shape. This is not noise; it is a boundary off-by-one at
+segment ends one piece late. Eight locales, one shape. This is not noise. It is a boundary off-by-one at
 a digit run, and it looks fixable independently of everything else here.
 
 Three more are truncations (`"bulevardul iuliu maniu"` → `"bulevardul i"`, reducing mid-word), which is
 the same boundary error in the other direction.
 
-## 4. The falsifier: hallucination on the 54 rows nothing measures
+## 4. The falsifier: hallucination on the 54 rows no harness measures
 
 Every street harness in the arc filters to fixtures with `expect.street` — `seg@1`, `oracle@5`,
 `oracle@10`, the Paris board, all of them. So a spurious street on a locality-only row is invisible **by
@@ -108,7 +109,7 @@ US "philadelphia museum of art" → street="philadelphia museum of art"
 Six are pure locality/postcode rows (indefensible). Five are venue rows (softer — a venue read as a
 street is arguable). Both partitions get worse: pure +6/−3, venue +5/−1.
 
-**Not a grammar defect.** The exported grammar carries explicit `start_transitions`, `end_transitions`,
+**Not a grammar defect.** The exported grammar defines explicit `start_transitions`, `end_transitions`,
 and an `O` segment type at index 0. An all-`O` parse is representable and cheap to express. The decode
 chooses street anyway. This is **learned miscalibration** rather than a structural hole. (Checked, because the
 structural story was the attractive one.)
@@ -134,13 +135,13 @@ Three things survive that arithmetic, and they are what the verdict rests on:
 2. **The pre-registered condition turns on the class rather than the rate.** It reads: _"if the regression
    class is 'street hallucinated where none exists', that's a new failure mode and the flag stays
    off-by-default."_ The class exists. The condition fires as written.
-3. **Precaution is asymmetric here.** The flag is opt-in either way; the cost of holding it is a
+3. **Precaution is asymmetric here.** The flag is opt-in either way. The cost of holding it is that a
    consumer types a flag, and the cost of shipping it wrong is silent street hallucination in a
    geocoder. At p=0.12 you do not get to round toward the convenient answer.
 
 **The rate question is answered by T1c rather than by this page.** The fragment board's `bare-locality` class
-runs n=400 — a ±4.0pp interval at p≈0.22, versus ±10.9pp here. That is the measurement; this was the
-detection.
+runs n=400 — a ±4.0pp interval at p≈0.22, versus ±10.9pp here. The board is the measurement. This page was
+the detection.
 
 ## 5. One property, three consequences
 
@@ -159,8 +160,8 @@ flag is **net negative** — and the arc has never once measured it that way.
 
 **For the ship decision (#42): the flag stays off by default.** The pre-registered kill condition fired
 on its exact terms. The decode's value on the target class is real and large — five fixtures where the
-shipped model says nothing — but it is bought with a hallucination rate the street metric cannot price.
-A consumer that wants the k-best list can opt in; nothing gets it by default until §5's over-eagerness
+shipped model emits an empty street — but it is bought with a hallucination rate the street metric
+cannot measure. A consumer that wants the k-best list can opt in. No consumer gets it by default until §5's over-eagerness
 is separated from §2's win.
 
 **For the instrument:** the street metric's `expect.street` filter is a blind spot that **flatters the
@@ -172,10 +173,10 @@ The two-board structure (#43) needs a third question: **what does the board not 
 
 **For T2 (the BAN extract) — this is the strongest evidence yet.** The hallucination and the bare-fragment
 failure are the same miscalibration seen from opposite sides. The corpus is thin on bare street fragments
-and thick on bare localities; the BIO head learned "bare toponym → locality" (the §2 prior that starts the
+and thick on bare localities. The BIO head learned "bare toponym → locality" (the §2 prior that starts the
 arc), and the span head, trained on the same corpus, learned an over-eager street segment that fires on
 bare toponyms **regardless of whether one is there**. Both heads are miscalibrated on the same axis, in
-opposite directions, from the same missing data. A extract carrying real bare streets and real bare
+opposite directions, from the same missing data. An extract containing real bare streets and real bare
 localities is the one intervention that speaks to both.
 
 ---

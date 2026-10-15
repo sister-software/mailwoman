@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Claude Code PostToolUse hook: run the file an Edit or Write just changed through the Vale surface CI runs.
+ *   Claude Code PostToolUse hook: run the file an Edit or Write changed through the Vale surface CI runs.
  *   Return any findings immediately so the author can fix them before `yarn lint`.
  *
  *   The surface follows the extension and is the one `config/vale/lint-prose.ts` already owns — this hook passes the

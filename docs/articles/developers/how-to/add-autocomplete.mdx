@@ -78,7 +78,7 @@ export function suggest(query) {
 ```
 
 `deserializeFST` returns the matcher directly. If you wrap its result in `new FSTMatcher(...)`, you produce an
-object that answers every query with zero suggestions and raises no error, which is hard to debug.
+object that answers every query with zero suggestions and raises no error. That silent failure is hard to debug.
 
 A dropdown needs `dedupeByName: true`, which is off by default. It collapses places with the
 same name to the one with the highest importance:
@@ -122,7 +122,7 @@ partial later token    400          6        19
 Measured on an AMD Ryzen 9 8945HS, 16 logical cores, Node.js 26.2.0, `mailwoman` 8.7.0, over every
 keystroke of four typed queries (`san francisco`, `brooklyn`, `washington dc`, `cambridge ma`), 40
 samples per prefix, after a warm-up pass. The machine was shared, so treat the absolute values as one
-host's figures. Your numbers will differ, but the ratios below should carry over. Resident memory
+host's figures. Your numbers will differ, but the ratios below should hold on other machines. Resident memory
 after load ranged from 241 MB to 293 MB across runs, so treat that figure as an order of magnitude.
 
 The three keystroke shapes behave differently, and the partial first token dominates the cost:
@@ -133,17 +133,17 @@ The three keystroke shapes behave differently, and the partial first token domin
   walk fails, so the code walks the complete prefix and filters that state's continuation edges by
   prefix. That state has 100 edges. 6 µs.
 - **Partial first token**: a fragment and no other token (`sa`, `br`, `brookl`). The same prefix filter
-  runs, but on the root state, which has 53,904 continuation edges. The code scans every one of them.
+  runs, but on the root state. The root state has 53,904 continuation edges. The code scans every one of them.
   8.4 ms.
 
 The expensive keystrokes are therefore the first few characters of the first word. The cost drops as
 soon as the user types a space.
 
-Compare these costs with a parse instead of with a clock, because the ratio carries over to other
+Compare these costs with a parse instead of with a clock, because the ratio holds on other
 machines. `classifier.parse` over the same twenty addresses, on the same host in the same session,
 measured p50 6,086 µs. A complete-token completion is **roughly three orders of magnitude cheaper
-than one parse**, and a partial-first-token completion **costs about as much as one parse**. The
-index is nearly free to query except at the root, where one query costs about as much as a model
+than one parse**, and a partial-first-token completion **costs about as much as one parse**. An index
+query takes 6 to 8 µs except at the root, where one query takes 8.4 ms, about as long as a model
 call.
 
 The ratio has two consequences for the front end. First, debounce input instead of querying on every
@@ -189,7 +189,7 @@ npx mailwoman autocomplete "brookl" --limit 3 --json
 ]
 ```
 
-Every suggestion carries a `wofID`, the Who's On First identifier. Your code can resolve a selected
+Every suggestion includes a `wofID`, the Who's On First identifier. Your code can resolve a selected
 suggestion to coordinates and a hierarchy without a second text query. That is the reason to build
 the dropdown on this index instead of on repeated geocodes.
 
@@ -198,7 +198,7 @@ the dropdown on this index instead of on repeated geocodes.
 - **It completes places only.** It does not complete streets, house numbers or points of interest. A
   user typing `1275 Pennsylv` gets no useful suggestion from this index.
 - **Each file covers one locale.** `fst-en-us.bin` ships with the en-US weights, and
-  `@mailwoman/neural-weights-fr-fr` carries its own file. The library does not merge locales, so a
+  `@mailwoman/neural-weights-fr-fr` ships its own file. The library does not merge locales, so a
   search box that serves several markets loads several files and merges the result lists itself.
 - **Resident memory is a few hundred megabytes after load** (241 MB to 293 MB across the runs above).
   The file is read fully into memory instead of being memory-mapped. Plan for that cost once per locale per process.

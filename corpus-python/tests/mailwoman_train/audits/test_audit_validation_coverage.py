@@ -4,7 +4,12 @@ from typing import Any
 
 import pytest
 
-from mailwoman_train.audits.validation_coverage import blind_countries, failing_requirements, scan_split
+from mailwoman_train.audits.validation_coverage import (
+    blind_countries,
+    expand_requirements,
+    failing_requirements,
+    scan_split,
+)
 from mailwoman_train.config import ValidationCoverageConfig
 
 
@@ -93,4 +98,19 @@ def test_a_floor_naming_a_split_the_report_lacks_is_a_failure_rather_than_a_pass
 
     assert failing_requirements(report, required) == [
         {"country": "US", "split": "test", "because": "the report carries no test split"}
+    ]
+
+
+def test_an_every_country_entry_expands_over_the_admitted_countries() -> None:
+    required = [
+        ValidationCoverageConfig(country="*", split="val", min_rows=50, min_street_rows=10),
+        ValidationCoverageConfig(country="US", split="val", min_rows=5_000),
+    ]
+
+    expanded = expand_requirements(required, {"US": 1.0, "KE": 0.5, "BR": 2.0, "XX": 0.0})
+
+    assert [(entry.country, entry.min_rows, entry.min_street_rows) for entry in expanded] == [
+        ("US", 5_000, 0),
+        ("BR", 50, 10),
+        ("KE", 50, 10),
     ]

@@ -1,6 +1,6 @@
 ---
 title: Google Maps Platform
-description: A hosted geocoding service against an in-process library — what each shape is built to do, and when the hosted one is the right answer.
+description: A hosted geocoding service against an in-process library — what each shape is built to do, and when the hosted one fits better.
 role: explanation
 ---
 
@@ -29,7 +29,7 @@ Address Descriptors feature. It notes that developers in the European Economic A
 different terms with effect from 8 July 2025.
 
 Understand the Place ID before you compare anything else, because the service is designed around it.
-A Place ID is a stable identifier into Google's own place graph. Once your records carry Place IDs,
+A Place ID is a stable identifier into Google's own place graph. Once your records store Place IDs,
 they hold keys that resolve only in Google's system. That link is useful, because it keeps the
 geocoder, the Places data and the map rendering consistent. It also means the IDs cannot be used
 with another provider.
@@ -43,12 +43,12 @@ A copy quoted in another project's documentation can go stale, so read the origi
 
 |                      | Google Maps Platform                | Mailwoman                                                  |
 | -------------------- | ----------------------------------- | ---------------------------------------------------------- |
-| Shape                | Hosted HTTP service                 | npm package, in-process; HTTP servers optional             |
+| Shape                | Hosted HTTP service                 | npm package, in-process. HTTP servers optional             |
 | Where the query goes | Google's infrastructure             | Your process                                               |
-| Coverage             | Global and uniform, without setup   | Per-locale, measured where claimed; a download per country |
+| Coverage             | Global and uniform, without setup   | Per-locale, measured where claimed. A download per country |
 | Reference data       | Google's, maintained by Google      | Public registers on your disk, refreshed by you            |
 | Identifier           | Place ID into Google's place graph  | A component decomposition, plus an address key you compute |
-| Non-address queries  | Landmarks, business names, partials | Not the design; the parser needs an address                |
+| Non-address queries  | Landmarks, business names, partials | Not the design. The parser needs an address                |
 | What arrives         | A matched place                     | Labeled spans with offsets, plus a coordinate and a tier   |
 | Cost model           | Per request                         | Infrastructure and disk                                    |
 
@@ -79,8 +79,8 @@ Mailwoman would be a mistake.
   unverified. See [Locales and tiers](../../developers/reference/locales-and-tiers.mdx). If your file
   spans 40 countries and you cannot wait for tiers, choose the hosted service.
 - **You already use the Google ecosystem.** If you render Google maps, use Places, and store Place
-  IDs, a second geocoder gives you two place graphs to reconcile. Consistency within one system is
-  worth more than the marginal benefits of another one.
+  IDs, a second geocoder gives you two place graphs to reconcile. Consistency within one system
+  outweighs the marginal benefits of another one.
 - **Your volume is low and engineering time is scarce.** Below the volume where per-request pricing
   becomes a material cost, sourcing and refreshing reference data is ongoing work that gains you no benefit.
 - **You have no place to put 2.88 GB.** The gazetteer needs a disk. A serverless function with a
@@ -92,10 +92,10 @@ Mailwoman would be a mistake.
 - **The addresses cannot leave your systems.** Mailwoman sends no query data out of your process, and
   the other benefits follow from that.
 - **You need fields rather than only a point.** Mailwoman returns spans with offsets into your
-  original string, which deduplication and validation can use.
+  original string. Deduplication and validation can use those offsets.
 - **The volume makes per-request pricing your largest line item.** Mailwoman replaces that cost with
-  infrastructure and disk, which grow differently with volume.
-- **You want to store the results indefinitely.** Reference data on your disk carries whatever the
+  infrastructure and disk. Those costs grow differently with volume.
+- **You want to store the results indefinitely.** Reference data on your disk is usable as far as the
   source license permits, and you read that license instead of a service agreement.
 - **You need to inspect or override a wrong answer.** Every resolved span identifies the gazetteer record
   it landed on, so you can trace a bad result to the stage that produced it.

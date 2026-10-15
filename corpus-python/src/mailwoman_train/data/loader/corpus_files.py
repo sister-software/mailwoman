@@ -114,7 +114,7 @@ def file_source_counts(path: Path) -> dict[str, int]:
     writer splits files by row count. Arrow's `value_counts` performs the count without creating one
     Python string per row.
 
-    Raises `TypeError` on a non-string cell. This usually means a label-less ``--golden`` file was
+    Raises `TypeError` on a non-string cell. The known cause is a label-less ``--golden`` file was
     passed as a train file.
     """
     column = pq.ParquetFile(path).read(columns=["source"])["source"]
@@ -132,7 +132,7 @@ def file_source_counts(path: Path) -> dict[str, int]:
 def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
     """Count rows per source across every parquet file in a split.
 
-    The epoch audit divides draws by these counts to report how many times each source row was shown.
+    The epoch audit divides draws by these counts to report the number of times each source row was shown.
     Files whose ``source`` column cannot be read are skipped.
     """
     counts: dict[str, int] = {}

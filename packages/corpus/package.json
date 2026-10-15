@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/corpus",
-	"version": "10.3.0",
+	"version": "10.4.0",
 	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -89,7 +89,7 @@
 		"parquet-wasm": "0.9.0",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^9.2.0",
+		"spliterator": "^9.2.1",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {

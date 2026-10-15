@@ -4,7 +4,7 @@ Mailwoman neural-classifier weights for CJK scripts: the char-path base model, J
 Chinese under one 49-label head (`stage3-cjk`). Data-only; `@mailwoman/neural` loads it at runtime.
 
 The manifest lists `model.onnx`, which `mwops release copy-weights` materializes from `release.config.json`'s
-`charWeights.cjk` at release time; the `ja-jp` / `zh-cn` overlays are data-only packages over this base.
+`charWeights.cjk` at release time. The `ja-jp` / `zh-cn` overlays are data-only packages over this base.
 
 ## What this package ships
 
@@ -17,7 +17,7 @@ The manifest lists `model.onnx`, which `mwops release copy-weights` materializes
 
 ## What this package does not ship
 
-- **No `tokenizer.model`.** A char graph has no SentencePiece vocabulary; weights resolution requires
+- **No `tokenizer.model`.** A char graph has no SentencePiece vocabulary, so weights resolution requires
   `char-vocab.json` in its place (`packages/neural/lib/weights.ts`, the card's `encoder` block).
 - **No soft-feed channels.** The char path is channel-free by interface: no postcode-anchor, gazetteer, country or
   evidence lexicons, and the graph declares no channel inputs.
@@ -45,12 +45,12 @@ await classifier.parseJSON("東京都千代田区丸の内1丁目9-1")
 registers including the municipality's kana reading), the Korean road-name address register rebuilt from the
 ministry's 2026-08 주소DB (2,000,000 rows, seven registers including the lot-number form), the Taiwan corpus from
 Overture-TW (2,000,000 rows, five registers), three registries of typed business addresses aligned exactly against
-those keys before training (Korean permits, Taiwanese companies, Japanese corporate numbers; 1,666,000 rows), and 126
+those keys before training (Korean permits, Taiwanese companies and Japanese corporate numbers, 1,666,000 rows), and 126
 Chinese organizational-unit rows. On the 20,000-row held-out JP board the native register reads 0.9954 acceptability at
 15 km against the previous base's 0.9921 on the same scorer, and かすみがうら市 fails 0 of 823 rows. On the 20,000-row
 Korean board over 26 held-out 시군구 the spans read region 1.000 / subregion 0.998 / dependent_locality 0.998 / street
-0.999 / house_number 1.000 / postcode 1.000; on the 20,000-row Taiwan board over 28 held-out 鄉鎮市區, region 1.000 /
-subregion 1.000 / street 0.999 / house_number 0.999. The 町 whose names carry 市 are closed at decode time by the
+0.999 / house_number 1.000 / postcode 1.000. On the 20,000-row Taiwan board over 28 held-out 鄉鎮市區, the spans read region 1.000 /
+subregion 1.000 / street 0.999 / house_number 0.999. The 町 whose names contain 市 are closed at decode time by the
 register in `@mailwoman/codex/jp` (#2178).
 Decision record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; the run record is
 `docs/records/evals/2026-09-08-v8-cjk-regs.md`; receipts on #1176, #2034, #2164, #2184 and #2204.

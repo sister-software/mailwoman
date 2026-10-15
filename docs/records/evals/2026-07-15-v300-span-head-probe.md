@@ -2,19 +2,21 @@
 title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained) rather than falsified
 ---
 
-# v3.0.0-span-head 2k probe — the head never trained; the check does not adjudicate
+# v3.0.0-span-head 2k probe — the head never trained, so the check does not adjudicate
 
 **Check (config-canonical, quoted verbatim from `v3.0.0-span-head.yaml`):**
 
-> `seg@1 > token@1` on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
-> segment decode over the SUMMED-BIO stand-in scored 0.453.
-> Secondary read: oracle@10 must RISE from 0.749.
-> If seg@1 < token@1: do not tune span_loss_weight and re-run. That is the treadmill. One
-> diagnostic (is the loss decreasing?), then fork to the operator.
+```text
+`seg@1 > token@1` on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
+segment decode over the SUMMED-BIO stand-in scored 0.453.
+Secondary read: oracle@10 must RISE from 0.749.
+If seg@1 < token@1: do not tune span_loss_weight and re-run. That is the treadmill. One
+diagnostic (is the loss decreasing?), then fork to the operator.
+```
 
 **Result: the check reads fail, but it does not adjudicate the arc.** Per the pre-registered
-diagnostic, this is **under-trained rather than falsified** — and the direct call is the fork, which is why
-this doc exists rather than a relaunch.
+diagnostic, this is **under-trained rather than falsified**. The direct call is the fork, so
+this doc exists in place of a relaunch.
 
 ## What ran
 
@@ -52,7 +54,7 @@ converged:
   no structure. Compare the BIO head on the same input: `▁Kor|un|ni:street ▁8|1|0:house_number
   ▁Pra|ha:locality` — correct.
 
-**The probe was mis-specified, and that is my error.** `lr: 1e-5` was inherited verbatim from
+**The probe was mis-specified. The error is the author's.** `lr: 1e-5` was inherited verbatim from
 v2.6.4 — a recipe that _fine-tunes existing weights_. The span head is **randomly initialized**. A
 fresh head at a fine-tuning LR for 2k steps cannot train, and the one-variable discipline (correctly)
 stopped me from also changing the LR, so the probe tested "does a barely-initialized head beat a
@@ -60,7 +62,7 @@ fully-trained one" — a question with a known answer.
 
 ## The BIO head is untouched — the bytes remained identical in a real run
 
-The step-2000 eval, which is the useful result here:
+The step-2000 eval is the useful result here:
 
 |           | street | house_number | postcode | locality | region | macro  |
 | --------- | ------ | ------------ | -------- | -------- | ------ | ------ |
@@ -72,8 +74,8 @@ confirmed under real gradient. That much of Phase 1 is proven.
 ## Caveat that limits this harness (a second design error, also mine)
 
 `eval_seg_at_1.py` runs Python-side against the torch checkpoint, deliberately, to avoid depending on
-the Phase-2 ONNX export. But the Python side **feeds no anchor/gazetteer/country channels, no
-postcodeRepair, no word-consistency heal** — the #718 channel-starvation trap. So its token@1 reads
+the Phase-2 ONNX export. But the Python side **feeds no anchor/gazetteer/country channels and runs neither
+postcodeRepair nor the word-consistency heal** — the #718 channel-starvation trap. So its token@1 reads
 0.348 where the JS harness reads **0.573 on the same model**. The absolute numbers here are not
 comparable to `mailwoman eval parity --weights-cache`, and the script now prints that in its output.
 
@@ -88,15 +90,15 @@ couldn't reproduce a known baseline:
 2. The check concatenated street-family _pieces_, dropping the `O`-labeled bare `▁` separator and
    welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now takes the substring by char offsets. token@1 0.285 → 0.348.
 
-## The fork (operator's call — the pre-registration says so)
+## The fork (operator's call, per the pre-registration)
 
 The arc is **not** falsified. The question the probe was meant to answer is still open. Options:
 
 1. **Re-probe with a head-appropriate LR** — e.g. a param-group LR for `span_scorer`/`semi_crf` at
    1e-3 while the encoder stays at 1e-5. This is standard for a fresh head on a pretrained encoder,
-   and it is _not_ the treadmill (the treadmill is opposite-direction knob oscillation; this is
-   fixing a mis-specified probe). Cheapest real test of the hypothesis.
-2. **8k at the current LR** — tests whether duration alone gets there. Slower, and the trajectory
+   and it is _not_ the treadmill (the treadmill is opposite-direction knob oscillation, and this
+   fixes a mis-specified probe). Cheapest real test of the hypothesis.
+2. **8k at the current LR** — tests whether more steps, with no other change, get there. Slower, and the trajectory
    suggests it would still be far from converged.
 3. **Park Phase 1** and revisit with the option-C recall channel bundled (violates one-variable, but
    the 66% bare-fragment class is the bigger prize anyway).

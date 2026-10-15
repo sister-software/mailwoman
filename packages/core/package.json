@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "10.3.0",
+	"version": "10.4.0",
 	"description": "Mailwoman core: tokenization, decoder, formatter, resources, filters, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -176,6 +176,11 @@
 			"types": "./out/resources/whosonfirst.d.ts",
 			"node": "./lib/resources/whosonfirst.ts",
 			"default": "./out/resources/whosonfirst.js"
+		},
+		"./resources/libpostal": {
+			"types": "./out/resources/libpostal.d.ts",
+			"node": "./lib/resources/libpostal.ts",
+			"default": "./out/resources/libpostal.js"
 		},
 		"./resources/whosonfirst/specificity": {
 			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts",
@@ -562,6 +567,11 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
 		},
+		"./postcode-prefix-files": {
+			"types": "./out/postcode-prefix-files.d.ts",
+			"node": "./lib/postcode-prefix-files.ts",
+			"default": "./out/postcode-prefix-files.js"
+		},
 		"./overture-pins": {
 			"types": "./out/overture-pins.d.ts",
 			"node": "./lib/overture-pins.ts",
@@ -657,7 +667,7 @@
 		"path-ts": "^2.5.0",
 		"pino": "^10.4.0",
 		"regenerate": "^1.5.0",
-		"spliterator": "^9.2.0",
+		"spliterator": "^9.2.1",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.10.0",
 		"yauzl-promise": "^4.0.0",

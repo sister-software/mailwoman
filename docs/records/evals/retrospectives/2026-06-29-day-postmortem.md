@@ -6,13 +6,13 @@ _A collaborative day that started as three namesake bugs and turned into an arch
 
 - **#832 — NYC, London, and the marquee-city namesake bug.** "New York, NY" was resolving to New York Mills (pop 3,190) over NYC (8.8M). The root cause was not the FTS ranking — NYC was in the window. It was NYC's WOF `parent_id = -4` (the multi-parent sentinel for a city straddling five boroughs), which left it only-self in the `ancestors` table. Therefore, the region hard-filter excluded it. The #441 `wof:hierarchy` backfill that fixes exactly this had never been wired into the rebuild pipeline, so the 2026-06-27 rebuild re-orphaned it. Fixed by wiring the backfill into `build-unified-wof` (PR #835) and swapping the repaired canonical DB. (PR #836 locked the gauntlet case to a counted pass.)
 
-- **#833 — Portland, ME → Messina, Italy.** First diagnosed as a coarse-placer mis-prediction (GB 0.79), and a β-weighted posterior damp was built to correct it. Then the operator pushed back: a country safelist or a deterministic country-pin "borders on Pelias." That reframed the whole problem. The real fix is **joint geographic consistency** — resolve the (region, locality) pair where the locality descends from a same-named region candidate, because a "Portland" sits under Maine and not under Messina. No country prior, no list, and it generalizes to every country. Shipped as `opts.adminCoherence` (PR #837); the β-fusion was shelved on a spike branch. The two-consistent-pairs residual it can't reach (Augusta exists under _both_ Maine and Messina) is closed by a **derived** forward signal: `recognizeUsRegions` stamps `country_hint: "US"` on a 2-letter state abbreviation, and the resolver constrains that lookup to US (PR #838). Abbreviations only — a full "Georgia" stays ambiguous and is never pinned.
+- **#833 — Portland, ME → Messina, Italy.** First diagnosed as a coarse-placer mis-prediction (GB 0.79), and a β-weighted posterior damp was built to correct it. Then the operator pushed back: a country safelist or a deterministic country-pin "borders on Pelias." That reframed the whole problem. The fix that shipped is **joint geographic consistency** — resolve the (region, locality) pair where the locality descends from a region candidate of the same name, because a "Portland" sits under Maine and not under Messina. It uses no country prior and no list, and it generalizes to every country. Shipped as `opts.adminCoherence` (PR #837); the β-fusion was shelved on a spike branch. The two-consistent-pairs residual it can't reach (Augusta exists under _both_ Maine and Messina) is closed by a **derived** forward signal: `recognizeUsRegions` stamps `country_hint: "US"` on a 2-letter state abbreviation, and the resolver constrains that lookup to US (PR #838). Abbreviations only — a full "Georgia" stays ambiguous and is never pinned.
 
 - **#266 — international coverage.** The #265 measurement found the off-map gap was coverage rather than routing: the server gazetteer had **zero localities for ~147 countries** (Skopje, Tbilisi, Yerevan all absent). The night-2026-06-28 GeoNames `cities15000` fold had been staged but never promoted, and it predated #832. Reconciled the two (re-applied the ancestry backfill to the staged coverage DB), validated, and swapped it in: **97 → 244 countries, 2.97M → 3.74M localities**. Romanized off-map resolution went from 0% to ~80% (MK 84%, GE 79%, AM 90%, CY 64%), with the US path untouched.
 
 ## The decision that mattered: not building a model
 
-#265 asked whether a supplementary forward address-system model was worth building. The measurement said no, and saying no was the result:
+#265 asked whether a supplementary forward address-system model should be built. The measurement answered no, and that answer was the result:
 
 - The US two-pairs residual (Augusta) is small and rule-shaped — a derived `country_hint` closes it.
 - The off-map international "0%" was a coverage hole, and a model cannot route to a place that isn't in the gazetteer.
@@ -20,10 +20,10 @@ _A collaborative day that started as three namesake bugs and turned into an arch
 
 No measured residual justified a learned model. The international change was coverage (#266), which moved the number from 0% to 80% with data rather than parameters.
 
-## Disciplines that earned their keep
+## Disciplines that caught errors
 
-- **Verify before verdict** fired repeatedly: the #832 FTS hypothesis was wrong (it was ancestry); the β-fusion's "fixed 4/6" hid an arithmetic hole; the #265 off-map "0%" was coverage rather than routing, and the spot-check caught it before a wrong conclusion shipped.
-- **Test the numbers** caught two arithmetic holes in the DeepSeek-proposed β-fusion formula — discounting the argmax only trades Italy for England, and multiplying non-US mass by β can't lift US from zero. The structural advice held; the specific numbers needed a probe. (4-turn pro consult; structural 4/4, quantitative corrected twice.)
+- **Verify before verdict** fired repeatedly: the #832 FTS hypothesis was wrong (it was ancestry). The β-fusion's "fixed 4/6" hid an arithmetic hole. The #265 off-map "0%" was coverage rather than routing, and the spot-check caught it before a wrong conclusion shipped.
+- **Test the numbers** caught two arithmetic holes in the DeepSeek-proposed β-fusion formula — discounting the argmax only trades Italy for England, and multiplying non-US mass by β can't lift US from zero. The structural advice was correct, and the specific numbers needed a probe. (4-turn pro consult: structural 4/4, quantitative corrected twice.)
 - **Diagnostic before fix** killed the forward model and redirected the effort to coverage.
 
 ## Numbers
@@ -32,7 +32,7 @@ No measured residual justified a learned model. The international change was cov
 | ------------------ | ------------------------------------------------------------------- |
 | PRs merged         | #835, #836, #837 (+ #838 in flight)                                 |
 | Canonical DB swaps | 2 (ancestry #832, coverage #266), both build-on-copy + validated    |
-| Coverage           | 97 → 244 countries; 2.97M → 3.74M localities                        |
+| Coverage           | 97 → 244 countries, 2.97M → 3.74M localities                        |
 | Off-map romanized  | 0% → ~80%                                                           |
 | Gauntlet           | regression 9/9 conditional, metamorphic unchanged, 0 new violations |
 | Models trained     | 0 (the day's one model question was answered "don't")               |

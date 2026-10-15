@@ -62,9 +62,9 @@ A query for `Walmart` could mean any of the sub-brands. A query for `Walmart Sup
 1. Resolve the location constraint (`Springfield, IL`) to coordinates or an area.
 2. Find the nearest Walmart to that location.
 
-The location constraint is an address or place name, which is the kind of query Mailwoman already handles. The franchise lookup is new. The resolver first resolves the place, then queries the franchise index and ranks matching POIs by distance from that place. This is a **two-stage resolver** query.
+The location constraint is an address or place name. Mailwoman already handles that kind of query. The franchise lookup is new. The resolver first resolves the place, then queries the franchise index and ranks matching POIs by distance from that place. This is a **two-stage resolver** query.
 
-This is the same pattern as "gas station near Springfield, IL" (amenity + location constraint) but with a named brand instead of a generic category.
+This is the same pattern as "gas station near Springfield, IL" (amenity + location constraint) but with a specific brand instead of a generic category.
 
 ## How traditional geocoders handle franchise queries
 
@@ -76,7 +76,7 @@ This is the same pattern as "gas station near Springfield, IL" (amenity + locati
 
 ## What Mailwoman does today
 
-The category infrastructure that amenity queries use (the `poi_query` kind, the anchor split, and `poi.db` resolution) exists now, but brand matching isn't wired into it. Mailwoman's parser still sees `Walmart` and tries to classify it as an address component. A lone brand name is a one-token address, and the parser may read it as `locality` (there are towns named Walmart) or `venue`. The venue classifier exists but is weak, as [Landmark queries](./landmark-queries.mdx).
+The category infrastructure that amenity queries use (the `poi_query` kind, the anchor split, and `poi.db` resolution) exists now, but brand matching isn't wired into it. Mailwoman's parser still sees `Walmart` and tries to classify it as an address component. A lone brand name is a one-token address, and the parser may read it as `locality` (there are towns called Walmart) or `venue`. The venue classifier exists but is weak, as [Landmark queries](./landmark-queries.mdx) describes.
 
 **Franchise queries are still deferred.** Mailwoman has no brand lexicon yet. No table maps "Walmart," "Macca's," or `マクド` to a chain identifier, and no lookup joins Overture's `brand.wikidata` field to a name. The location-constraint half (`near Springfield, IL`) already works through the same anchor-parsing path that amenity queries use. The brand-lookup half doesn't exist. See [the series index](./exotic-point-of-interest-queries.mdx#whats-still-ahead) for what's built and what isn't across the whole POI arc.
 

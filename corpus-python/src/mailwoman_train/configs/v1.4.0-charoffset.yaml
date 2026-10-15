@@ -11,7 +11,7 @@
 # learn those spans intrinsically. The check (scripts/eval/checks/v0.5.0-bridge.json) asks: does dotted
 # po_box hold >= 89.1 with the bridge off? If yes, the bridge retires. That test is only meaningful
 # because the po_box signal is now a char-span the model can learn — which is exactly why the corpus
-# had to carry the re-emitted synth-po-box-cedex overlay (it does: 50k rows, char-offset, source-tagged).
+# had to include the re-emitted synth-po-box-cedex overlay (it does: 50k rows, char-offset, source-tagged).
 #
 # corpus: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 — 676.62M train (676.13M base + 484.8k overlay),
 # 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).

@@ -3,7 +3,7 @@
 # recipe-assembly D1-D3, Fisher-capture D4, operator sign-off = the #1348 merge, 2026-07-29.)
 #
 # What this run is: the golden master — every shipped capability from one recipe with one
-# provenance, zero named watches at ship. The base the B11 fine-tune template starts every
+# provenance, zero open watch items at ship. The base the B11 fine-tune template starts every
 # engagement from. the run where the Fisher artifact is captured at the only cheap point.
 #
 # composition (D2, deltas vs the shipped v3.24.0-bundle-ordinal recipe):
@@ -31,14 +31,14 @@
 #   G1 fragment bars (P0 grid, --lexicon locality-surface-lexicon-v7.json
 #      --street-lexicon street-type-lexicon-v3.json): homonym on-off >= +0.050 asis and >= +0.25
 #      lower+heal (the marker's number to beat); house-number classes >= -0.020 asis raw;
-#      lowercase-heal all >= +0.015. bare-locality damage class ~0 (the curriculum now actually
+#      lowercase-heal all >= +0.015. bare-locality damage class ~0 (the curriculum now
 #      reaches the channel — its first real test).
 #   G2 ablation vs the shipped 6.7.0 same-grader reference.
 #   G3 invariance (int8, --baseline 6.7.0): zero new classes.
 #   G4 gauntlet x3 layers.
 #   G5 golden ablated: **match-or-beat 6.7.0 with zero waivers** — including fr.cedex against the
 #      unwaived 85.6-class shipped-same-harness reading (the entire point of from-scratch. the
-#      82.2 waived floor is dead for this run). Floors rebuilt noise-honest (max(1.0pp, 2xSE)) from
+#      82.2 waived floor is dead for this run). Floors rebuilt noise-calibrated (max(1.0pp, 2xSE)) from
 #      the candidate's own readings at promote. G5b golden fed recorded (misroute-cost input).
 #   G6 canary zero-flip, formatted mode.
 #   G7 the full pre-ship gauntlet on the dev-linked flip (the 8.2.0 instrument): Fifth-Ave
@@ -50,7 +50,7 @@
 #      (per-ingredient D-rule) without indicting the run.
 #   fisher sanity (mechanical): fisher-diag-v1.npz written beside the final checkpoint, loads, and
 #      covers every trainable parameter. sidecar provenance complete.
-#   stop rules (D1): this is run 1 of a 2-run envelope. Any G-miss => the named single-delta
+#   stop rules (D1): this is run 1 of a 2-run envelope. Any G-miss => the pre-registered single-delta
 #      contingency and one re-run. a second miss is an operator conversation, never a third launch.
 #      No knob iteration inside the run.
 #

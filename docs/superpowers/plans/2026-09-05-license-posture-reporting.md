@@ -2,9 +2,9 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Every mailwoman output that leaves the process says which license branch produced it: a two-line stderr notice from the CLI and the servers, an `engine` object in JSON bodies, and `Server` + `Link: rel="license"` headers on every HTTP response.
+**Goal:** Every mailwoman output that leaves the process states which license branch produced it: a two-line stderr notice from the CLI and the servers, an `engine` object in JSON bodies, and `Server` + `Link: rel="license"` headers on every HTTP response.
 
-**Architecture:** One pure function in `@mailwoman/core/license` builds an `EngineStamp` from the package version and the offline key verification. The `mailwoman` package resolves that stamp once per process and hands it to the launcher, the four JSON-emitting commands, and each HTTP app as an option. `@mailwoman/api-kit` owns the header middleware and the zod schema for the stamp; each app attaches the body field where its protocol has room for one.
+**Architecture:** One pure function in `@mailwoman/core/license` builds an `EngineStamp` from the package version and the offline key verification. The `mailwoman` package resolves that stamp once per process and hands it to the launcher, the four JSON-emitting commands, and each HTTP app as an option. `@mailwoman/api-kit` owns the header middleware and the zod schema for the stamp. Each app attaches the body field where its protocol has room for one.
 
 **Tech Stack:** TypeScript under Node (type stripping, `.ts` imports), zod 4, Hono + `@hono/zod-openapi`, vitest, Docusaurus for the one docs page.
 
@@ -13,11 +13,11 @@
 ## Global Constraints
 
 - The runtime does not change: no code path refuses work for want of a key. The stamp and notice REPORT.
-- The stamp never carries `licensee` or `kid`. Tests assert this by key enumeration.
-- The stamp is offline: it reads `verifyConfiguredLicenseKey()` and never the well-known register. A network call per process for a stamp is out of scope; the doctor owns the freshness check.
+- The stamp never contains `licensee` or `kid`. Tests assert this by key enumeration.
+- The stamp is offline: it reads `verifyConfiguredLicenseKey()` and never the well-known register. A network call per process for a stamp is out of scope. The doctor owns the freshness check.
 - Wire keys are snake_case: `license_url`. TypeScript identifiers cap acronyms whole: `docsURL`, `licenseURL`, `EngineStamp`.
 - `node:*` imports are refused outside `@mailwoman/core` by `oxlint.config.ts`. File reads go through `@mailwoman/core/fs/readers`; process spawns through `@mailwoman/core/process`.
-- Relative imports carry `.ts`; sibling modules inside a package go through the `#` imports map (`#license/key`), never `../`.
+- Relative imports end in `.ts`. Sibling modules inside a package go through the `#` imports map (`#license/key`), never `../`.
 - No `enum`; `const X = {…} as const`.
 - Comments state invariants rather than history. No dates, PR numbers, or "added for" in a comment.
 - The launcher `packages/mailwoman/lib/cli.ts` keeps one static import. Everything new there arrives by dynamic import after dispatch.
@@ -39,7 +39,7 @@
 | `packages/mailwoman/lib/cli-kit/engine-stamp.ts` (create)                                                | `resolveEngineStamp()` memoized per process, `printLicenseNotice()`              |
 | `packages/mailwoman/package.json` (modify)                                                               | `./cli-kit/engine-stamp` export                                                  |
 | `packages/mailwoman/lib/cli.ts` (modify)                                                                 | print the notice after dispatch                                                  |
-| `packages/mailwoman/lib/cli/launcher.test.ts` (modify)                                                   | stderr carries the notice, stdout is the bare version                            |
+| `packages/mailwoman/lib/cli/launcher.test.ts` (modify)                                                   | stderr prints the notice, stdout is the bare version                             |
 | `packages/mailwoman/lib/cli-native/commands/{geocode,reverse,autocomplete}.ts` (modify)                  | attach `engine` to JSON output                                                   |
 | `packages/api-kit/lib/engine-stamp.ts` (create)                                                          | `EngineStampSchema` (zod) and `engineHeaders(stamp)` middleware                  |
 | `packages/api-kit/lib/index.ts` (modify)                                                                 | re-export                                                                        |
@@ -55,9 +55,9 @@
 
 Three decisions recorded here that refine the spec:
 
-1. `mailwoman parse --format json` gets no body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
+1. `mailwoman parse --format json` gets no body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse. This plan overrides that row.
 2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`) rather than by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
-3. The stamp is offline. The spec says a `retired` key reads as the open-source branch; a retired reading needs the well-known register, which the stamp never consults. A retired key whose signature still verifies stamps `LicenseRef-Commercial` until the release that removes its public key; the doctor's `--online` check is where retirement is reported. This is the asymmetry `packages/core/lib/license/trusted-keys.ts` already documents.
+3. The stamp is offline. The spec states that a `retired` key reads as the open-source branch. A retired reading needs the well-known register, and the stamp never consults that register. A retired key whose signature still verifies stamps `LicenseRef-Commercial` until the release that removes its public key. The doctor's `--online` check is where retirement is reported. This is the asymmetry `packages/core/lib/license/trusted-keys.ts` already documents.
 
 ---
 
@@ -224,7 +224,7 @@ describe("licenseNoticeLines", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/core/lib/license/stamp.test.ts`
-Expected: FAIL — `buildEngineStamp` is not exported from `@mailwoman/core/license`.
+Expected: fail — `buildEngineStamp` is not exported from `@mailwoman/core/license`.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -336,7 +336,7 @@ export * from "#license/stamp"
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/core/lib/license/stamp.test.ts`
-Expected: PASS, 11 tests.
+Expected: pass, 11 tests.
 
 - [ ] **Step 5: Lint and commit**
 
@@ -441,7 +441,7 @@ describe("printLicenseNotice", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/mailwoman/lib/cli/kit/engine-stamp.test.ts`
-Expected: FAIL — cannot resolve `mailwoman/cli-kit/engine-stamp`.
+Expected: fail — cannot resolve `mailwoman/cli-kit/engine-stamp`.
 
 - [ ] **Step 3: Write the implementation and register the export**
 
@@ -529,7 +529,7 @@ Check `packages/mailwoman/package.json` for a `files` array or a knip/exports te
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/mailwoman/lib/cli/kit/engine-stamp.test.ts`
-Expected: PASS, 3 tests.
+Expected: pass, 3 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -615,7 +615,7 @@ process.exitCode = exitCode
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/mailwoman/lib/cli/launcher.test.ts`
-Expected: PASS, 5 tests.
+Expected: pass, 5 tests.
 
 - [ ] **Step 5: Compile and check the compiled CLI by hand**
 
@@ -660,12 +660,12 @@ expect(body.engine).toMatchObject({
 expect(body.engine).not.toHaveProperty("licensee")
 ```
 
-If the file skips when the gazetteer is absent, keep that guard; the assertion runs wherever the test already runs.
+If the file skips when the gazetteer is absent, keep that guard. The assertion runs wherever the test already runs.
 
 - [ ] **Step 2: Run it to verify it fails**
 
 Run: `yarn vitest run packages/mailwoman/lib/commands/reverse-cli.integration.test.ts`
-Expected: FAIL on `body.engine` (or SKIP if the gazetteer is absent — then proceed on the unit test below and hand-check in Step 6).
+Expected: fail on `body.engine` (or SKIP if the gazetteer is absent — then proceed on the unit test below and hand-check in Step 6).
 
 - [ ] **Step 3: Attach the stamp in `geocode.ts`**
 
@@ -744,12 +744,12 @@ node packages/mailwoman/out/cli.js geocode "10 Downing Street, London SW1A 2AA" 
 node packages/mailwoman/out/cli.js geocode "10 Downing Street, London SW1A 2AA" --jsonld 2>/dev/null | grep -c '"engine"'
 ```
 
-Expected: the first three end with an `engine` object; the last prints `0`.
+Expected: the first three end with an `engine` object, and the last prints `0`.
 
 - [ ] **Step 7: Run the tests and commit**
 
 Run: `yarn vitest run packages/mailwoman/lib/commands/reverse-cli.integration.test.ts packages/mailwoman/lib/cli/native`
-Expected: PASS.
+Expected: pass.
 
 ```bash
 git add packages/mailwoman/lib/cli-native/commands/geocode.ts packages/mailwoman/lib/cli-native/commands/reverse.ts packages/mailwoman/lib/cli-native/commands/autocomplete.ts packages/mailwoman/test CHANGELOG.md
@@ -856,7 +856,7 @@ test("EngineStampSchema: accepts the stamp and refuses a licensee", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/api-kit/lib/engine-stamp.test.ts`
-Expected: FAIL — `engineHeaders` is not exported.
+Expected: fail — `engineHeaders` is not exported.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -940,7 +940,7 @@ and keep whichever form makes both header tests pass.
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/api-kit/lib/engine-stamp.test.ts`
-Expected: PASS, 4 tests.
+Expected: pass, 4 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1037,7 +1037,7 @@ test("no engine option: no `engine` field and no headers", async () => {
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `yarn vitest run packages/api/lib/index.test.ts`
-Expected: the three new tests fail; the rest pass.
+Expected: the three new tests fail, and the rest pass.
 
 - [ ] **Step 3: Thread the option through app and routes**
 
@@ -1115,7 +1115,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Modify: `packages/nominatim/lib/app.ts` (`NominatimAppOptions`, `createNominatimApp`)
-- Modify: `packages/nominatim/lib/routes.ts` (`registerNominatimRoutes` signature; the jsonv2 and geojson responses of `/search`, `/reverse`, `/lookup`)
+- Modify: `packages/nominatim/lib/routes.ts` (`registerNominatimRoutes` signature, and the jsonv2 and geojson responses of `/search`, `/reverse`, `/lookup`)
 - Modify: `packages/nominatim/lib/schema.ts` (`NominatimResultSchema`)
 - Test: `packages/nominatim/lib/index.test.ts`
 
@@ -1179,7 +1179,7 @@ Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
 
-`app.ts`: add `engine?: EngineStamp` to `NominatimAppOptions` with the same docstring shape as Task 6; after the CORS block `if (options.engine) app.use(engineHeaders(options.engine))`; call `registerNominatimRoutes(app, engine, { ...(options.engine ? { engine: options.engine } : {}) })`.
+`app.ts`: add `engine?: EngineStamp` to `NominatimAppOptions` with the same docstring shape as Task 6. After the CORS block, add `if (options.engine) app.use(engineHeaders(options.engine))`; call `registerNominatimRoutes(app, engine, { ...(options.engine ? { engine: options.engine } : {}) })`.
 
 `routes.ts`: change the signature to
 
@@ -1204,7 +1204,7 @@ and at each response site:
 - [ ] **Step 4: Run the tests and commit**
 
 Run: `yarn vitest run packages/nominatim/lib`
-Expected: PASS.
+Expected: pass.
 
 ```bash
 git add packages/nominatim/lib packages/nominatim/test
@@ -1288,7 +1288,7 @@ Expected: the two new tests fail.
 - [ ] **Step 4: Run the tests and commit**
 
 Run: `yarn vitest run packages/photon/lib`
-Expected: PASS.
+Expected: pass.
 
 ```bash
 git add packages/photon/lib packages/photon/test
@@ -1351,7 +1351,7 @@ Expected: the new test fails on the `server` header.
 - [ ] **Step 4: Run the tests and commit**
 
 Run: `yarn vitest run packages/libpostal/lib`
-Expected: PASS.
+Expected: pass.
 
 ```bash
 git add packages/libpostal/lib packages/libpostal/test
@@ -1370,7 +1370,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `packages/photon/lib/cli.ts` (~line 222)
 - Modify: `packages/libpostal/lib/cli.ts` (~line 66)
 - Modify: `packages/mailwoman/lib/commands/serve.tsx` (~line 225, `createMailwomanAPI(engine, { batchMax })` and its `serveNode` call)
-- Test: hand-run each server once; the `openapi` subcommand tests already cover app construction without a stamp.
+- Test: hand-run each server once. The `openapi` subcommand tests already cover app construction without a stamp.
 
 **Interfaces:**
 
@@ -1426,7 +1426,7 @@ and in the `serveNode` call's `onListen` (add one if it relies on the default), 
 				},
 ```
 
-Note the launcher (Task 3) also prints the notice when the process exits; a server prints it at listen because it does not exit.
+Note the launcher (Task 3) also prints the notice when the process exits. A server prints it at listen because it does not exit.
 
 - [ ] **Step 3: Compile, typecheck, and hand-run**
 
@@ -1506,7 +1506,7 @@ mailwoman doctor
 
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
 mailwoman.ai still lists the key id as active. `doctor` reports the branch that applies and the
-obligations it carries. With a valid key the notice is silent and `engine.license` reads
+obligations that branch imposes. With a valid key the notice is silent and `engine.license` reads
 `LicenseRef-Commercial`.
 
 ````
@@ -1570,7 +1570,7 @@ yarn lint
 yarn vitest run packages/core/lib/license packages/api-kit/lib packages/api/lib packages/nominatim/lib packages/photon/lib packages/libpostal/lib packages/mailwoman/lib/cli/launcher.test.ts packages/mailwoman/lib/cli/kit
 ```
 
-Expected: all clean. `yarn lint` includes `health`, which counts synchronous filesystem calls and banned vocabulary; a new finding there is a defect in this branch.
+Expected: all clean. `yarn lint` includes `health`, which counts synchronous filesystem calls and banned vocabulary. A new finding there is a defect in this branch.
 
 - [ ] **Step 4: Commit and open the PR**
 

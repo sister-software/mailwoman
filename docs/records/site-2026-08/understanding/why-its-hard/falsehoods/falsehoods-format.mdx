@@ -63,13 +63,13 @@ The longest street name in Germany: `Bischöflich-Geistlicher-Rat-Josef-Zinnbaue
 
 ### "Real place names won't contain rude words."
 
-Middlesex, Scunthorpe, Penistone, and several others are real English place names. Address validators that filter for profanity reject real places. The Scunthorpe problem (named for the town whose name contains a substring interpreted as profanity) is a classic example of overzealous content filtering.
+Middlesex, Scunthorpe, Penistone, and several others are real English place names. Address validators that filter for profanity reject real places. The Scunthorpe problem (called after the town whose name contains a substring interpreted as profanity) is a classic example of overzealous content filtering.
 
 ## How traditional geocoders handled these
 
 **libpostal** handles multi-script addresses through its CRF's character-level features. The model operates on character n-grams rather than words, so it can handle any script without script-specific tokenization. libpostal's `normalize` step handles Unicode normalization (NFD → NFC) and transliteration, but it does not handle mixed-script addresses (different scripts in different components).
 
-**Pelias** tokenizes on whitespace and punctuation. Non-ASCII characters are preserved in the token stream. Pelias's rule classifiers operate on the token text directly — if a token matches a dictionary entry, it classifies; if not, it moves on. This means Pelias can handle non-ASCII names that appear in its dictionaries (WOF gazetteer entries, OpenStreetMap tags) but not names in scripts that are not well-represented in open data.
+**Pelias** tokenizes on whitespace and punctuation. Non-ASCII characters are preserved in the token stream. Pelias's rule classifiers operate on the token text directly. If a token matches a dictionary entry, it classifies. If not, it moves on. This means Pelias can handle non-ASCII names that appear in its dictionaries (WOF gazetteer entries, OpenStreetMap tags) but not names in scripts that are not well-represented in open data.
 
 **Google's API** handles multi-script, multi-lingual addresses comprehensively. Google's model is trained on global address data and can parse addresses in dozens of scripts. The trade-off is that the model is proprietary — you cannot inspect how it handles a specific script or format.
 

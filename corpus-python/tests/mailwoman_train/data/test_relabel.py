@@ -252,7 +252,7 @@ class TestRelabelSpans:
         # "Main St.": the corpus tokenizer dropped the period, so the token path sees "St" and
         # splits. the span path sees the whitespace word "St." (builder parity: parseStreet
         # splits raw words, "St." is not in the lexicon) and leaves the span whole. The span path
-        # is the v0.5.0 source of truth — conservative beats a third labeling.
+        # is the v0.5.0 label authority. The test prefers its conservative span over a third labeling.
         row = {
             "raw": "Main St.",
             "tokens": ["Main", "St"],

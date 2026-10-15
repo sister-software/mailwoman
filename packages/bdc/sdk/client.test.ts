@@ -360,7 +360,7 @@ describe("createBDCClient: the throttle meter", () => {
 			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
 		])
 
-		// Each budget's worth of requests triggers one cooldown.
+		// Each full request budget triggers one cooldown.
 		// The cooldown has positive duration.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 

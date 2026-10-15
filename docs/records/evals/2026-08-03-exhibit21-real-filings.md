@@ -6,7 +6,7 @@ fixture suite that was fully green.
 
 On 2026-08-03 we ran the assembled chain against 24 public telecom registrants for the first
 time. Across the 21 filings it reached, the parser emitted **245 subsidiaries from documents
-that state roughly 2,640**. Ten of the 21 yielded nothing at all. Several of the 245 were not
+that state roughly 2,640**. Ten of the 21 yielded zero subsidiaries. Several of the 245 were not
 subsidiaries.
 
 This page records what the filings contain, what the parser did with them, and what
@@ -19,14 +19,14 @@ name, say): `resolveCIKCandidates` against `company_tickers.json`, then `fetchTe
 then the most recent 10-K's Exhibit 21.
 
 Three names produced no document to parse, all for ordinary reasons: Frontier Communications
-Parent has no 10-K on file under that CIK; Consolidated Communications and United States
+Parent has no 10-K on file under that CIK. Consolidated Communications and United States
 Cellular each filed a most-recent 10-K carrying no Exhibit 21. A filing without one is
 common rather than an error.
 
 The other 21 documents were fetched and parsed. Thirteen of them — chosen to cover every
 distinct layout in the set, and all under 25 KB — are vendored at
 `filer/test-fixtures/edgar/` with a manifest recording each source URL, CIK, accession number
-and retrieval date. The other eight (Comcast's Exhibit 21 alone is 960 KB and lists roughly
+and retrieval date. The other eight (Comcast's Exhibit 21 by itself is 960 KB and lists roughly
 1,500 subsidiaries) were measured but not committed.
 
 ## What the parser did
@@ -40,17 +40,17 @@ and retrieval date. The other eight (Comcast's Exhibit 21 alone is 960 KB and li
 
 The independent reference implementation described below, run over the same 21 documents,
 returns 2,644. The two differ on three filings by a handful of rows each and agree everywhere
-else; neither was written against the other's output.
+else. Neither was written against the other's output.
 
-The one remaining zero is correct. AlTi Global's exhibit separates entries with nothing but a
+The one remaining zero is correct. AlTi Global's exhibit separates entries with only a
 double space, so no name/jurisdiction boundary exists to be found without inventing one.
 The parser must abstain there, and the regression suite asserts that behavior.
 
 ## Six ways the fixtures were not representative
 
 **The SGML envelope.** EDGAR's archive serves an exhibit inside its submission wrapper:
-`<TYPE>EX-21.1`, `<SEQUENCE>3`, `<FILENAME>…`, then the real `<TEXT>` payload, whose HTML
-`<head>` carries `<title>Document</title>`. The tag-stripping step turns each of those into a bare
+`<TYPE>EX-21.1`, `<SEQUENCE>3` and `<FILENAME>…` precede the real `<TEXT>` payload. The
+payload's HTML `<head>` holds `<title>Document</title>`. The tag-stripping step turns each of those into a bare
 line. Bandwidth Inc.'s exhibit reported 18 subsidiaries, of which four were `EX-21.1`, `3`,
 `q42025exh211listofsubsidia.htm` and `Document`, and the other twelve had the bullet
 character `•` as the name and the actual company name as the jurisdiction. Every one of the
@@ -59,29 +59,29 @@ character `•` as the name and the actual company name as the jurisdiction. Eve
 **Spacer columns.** Word- and Wdesk-exported EDGAR tables put a blank column between name and
 jurisdiction. The parser counted cells rather than values, so a two-value row read as
 three-wide and abstained. Cable One, Ooma, Verizon, AT&T and Anterix each yielded zero for
-this reason alone. The fix drops columns that are blank in every row of a table, which is a
-column-wise operation on purpose: filtering blanks row by row discards the fact that a row's
-_leading_ cell was blank, and that is the difference between a subsidiary row and an indented
-child row.
+this reason and no other. The fix drops columns that are blank in every row of a table. It
+operates column by column on purpose. A row-by-row blank filter discards the fact that a row's
+_leading_ cell was blank. That blank cell distinguishes a subsidiary row from an indented child
+row.
 
 **One table of several.** The parser read the outermost table and stopped. Lumen's list spans
-five sibling tables (207 rows, 42 read); Comcast's spans 33 (1,530 rows, 47 read); Uniti's
-eight, Charter's four, T-Mobile's four. Even the filings that appeared to work were reporting
+five sibling tables (207 rows, 42 read). Comcast's spans 33 (1,530 rows, 47 read). Uniti's
+spans eight, Charter's four, and T-Mobile's four. Even the filings that appeared to work were reporting
 a fraction.
 
 **Unlisted header labels.** Header recognition matched a fixed list of boilerplate phrases.
-Liberty Broadband labels its columns "Entity Name" and "Domicile"; WidePoint uses "Full Legal
+Liberty Broadband labels its columns "Entity Name" and "Domicile". WidePoint uses "Full Legal
 Name" and "State or Country of Incorporation". Neither was on the list, so both header rows
 were emitted as subsidiaries.
 
 **A real third column.** AT&T adds "Conducts Business Under", ATN International adds "Other
-name(s) under which entity does business", EchoStar adds both "% of Ownership" and "Name
-The parser now reads the columns following "Doing Business As". A three-value row abstained. It now reads the columns the document's own
-header row names — which is not a guess about which of N columns means what, because the
-document says.
+name(s) under which entity does business", EchoStar adds both "% of Ownership" and
+"Name Doing Business As". A three-value row abstained. The parser now reads the columns that the
+document's own header row labels. The header states which column holds which value, so the
+parser does not guess.
 
 **Footnote tables.** The parser must inspect footnote tables that follow the
-list. WidePoint's is `["(1)", "In January 2019, WidePoint Solutions Corp. was merged into…"]`;
+list. WidePoint's is `["(1)", "In January 2019, WidePoint Solutions Corp. was merged into…"]`.
 EchoStar has four. A row whose first value is a bare footnote marker is counted and dropped.
 
 ## Two rules that cost more than they recovered
@@ -93,32 +93,32 @@ A per-row test for "this jurisdiction looks like a company name" removes the cas
 two-across list of entity names is misread as name-and-jurisdiction. It also removes 135 of
 Charter Communications' 139 subsidiaries, because Charter writes its jurisdiction column as
 "Delaware limited liability company". What separates the two cases is repetition rather than
-vocabulary: a jurisdiction column repeats (Charter, 9 distinct values over 135 rows; Comcast
-0.05; Uniti 0.13; T-Mobile 0.15; Lumen 0.26) and a second name column does not (IDT, 5 over
-5). The test is now a table-level one requiring both a designation majority and high
+vocabulary. A jurisdiction column repeats its values, and a second name column does not.
+Charter has 9 distinct values over 135 rows. The distinct-value ratios are Comcast 0.05, Uniti
+0.13, T-Mobile 0.15 and Lumen 0.26. IDT's second name column has 5 distinct values over 5 rows. The test is now a table-level one requiring both a designation majority and high
 distinctness.
 
-The parser may seem safe when it abstains on a blank labeled name column, but indented
+An abstention on a row whose labeled name column is blank looks safe, but it drops an indented
 corporate tree. Telephone and Data Systems indents each subsidiary one column to the right of
 its parent, and 132 of its 183 subsidiaries sit on such rows. The parser recovers them from the first non-blank
 column between the labeled name column and the labeled jurisdiction column.
-The nesting depth is discarded, which costs nothing here — an Exhibit 21 row becomes a
-registrant→subsidiary edge either way.
+The parser discards the nesting depth. An Exhibit 21 row becomes a registrant→subsidiary
+edge at any depth, so the output is unchanged.
 
 ## What the substring invariant does and does not catch
 
 `exhibit21.ts` has held one invariant since it was written: every emitted name and
 jurisdiction must appear in the document as a contiguous string once tags are stripped,
-entities decoded and whitespace collapsed. Nothing assembled from pieces the source kept
-apart, nothing truncated at a boundary the source did not put there.
+entities decoded and whitespace collapsed. The parser may not assemble a value from pieces
+the source kept apart, and may not truncate one at a boundary the source did not put there.
 
 It held throughout. `EX-21.1`, `3`, `q42025exh211listofsubsidia.htm`, `Document`, `•`,
 `Entity Name` and `Full Legal Name` are all contiguous substrings of their documents. The
-invariant is necessary and it is not sufficient, and the real-filing suite now carries a
+invariant is necessary and it is not sufficient, and the real-filing suite now holds a
 separate set of assertions naming each of those shapes.
 
 One case does violate it, and only structure catches it. Ooma's last table row is a single
-`<td>` holding five `<p>` blocks; cleaning runs them together into one string that reads
+`<td>` holding five `<p>` blocks. The cleaning step runs them together into one string that reads
 `Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream
 Technologies, LLC Phone.Com, Inc.` The rule that catches it looks at the cell's raw markup
 for a block boundary with text on both sides — the source kept those apart, so the parser
@@ -146,11 +146,11 @@ at 0.829, and "WideOpenWest, Inc." to WidePoint Corp at 0.886.
 
 Both are vendored under their true registrant names, as evidence rather than as an accident.
 Anything that writes EDGAR rows into `filer.db` has to corroborate a candidate against
-something other than its name; the registrant's SIC code, which the submissions payload
-already carries, is the cheapest check available. That work, and the ingest path it checks,
+something other than its name. The cheapest check available is the registrant's SIC code.
+The submissions payload already includes it. That work, and the ingest path it checks,
 is not part of this change.
 
-A related defect was measured and is worth stating separately: `company_tickers.json` carries
+A related defect was measured separately. `company_tickers.json` has
 one row per _ticker_, so a registrant with several share classes appears several times under
 one CIK. The lookup for "Liberty Broadband Corporation" returned the same CIK four times, each at
 1.0, and the tie rule — which exists to stop a caller narrowing an actual collision between
@@ -172,7 +172,7 @@ node packages/filer/lib/tools/reference-oracle.run.ts packages/filer/test-fixtur
 ```
 
 To refetch a document, set `SEC_EDGAR_USER_AGENT` to a descriptive
-`Company Name AdminContact@domain.com` string; every source URL is in
+`Company Name AdminContact@domain.com` string. Every source URL is in
 `filer/test-fixtures/edgar/manifest.json`.
 
 ## Still open
@@ -182,9 +182,9 @@ The parser is correct now, and finding the exhibit inside a filing works:
 manifest gives a type and filename per document, and returns an absolute URL per `EX-21*`.
 EDGAR's accession `index.json` cannot answer this — it types every file as a GIF icon name.
 
-Lumen's manifest is vendored for that test. It carries 161 `<DOCUMENT>` blocks while its own
-`<PUBLIC-DOCUMENT-COUNT>` says 162; four sequence numbers have no block. Count the blocks.
+Lumen's manifest is vendored for that test. It holds 161 `<DOCUMENT>` blocks while its own
+`<PUBLIC-DOCUMENT-COUNT>` is 162. Four sequence numbers have no block. Count the blocks.
 
 Beyond that: the CIK corroboration rule, the share-class collapse, and the orchestrator that
-walks corroborated registrants into `filer_family` rows. Until those land, nothing from EDGAR
-reaches `filer.db` in production. This change makes the parser correct rather than the ingest live.
+walks corroborated registrants into `filer_family` rows. Until those land, production `filer.db`
+holds zero rows from EDGAR. This change makes the parser correct rather than the ingest live.

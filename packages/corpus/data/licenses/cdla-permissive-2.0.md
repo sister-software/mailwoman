@@ -5,9 +5,9 @@
 - Publisher: The Linux Foundation, as the steward of the agreement
 - Version stated in the text: 2.0
 
-This is the grant the Overture Maps Foundation places its Places theme under, which is the `poi`
+This is the grant the Overture Maps Foundation places its Places theme under. That theme is the `poi`
 runtime bundle. The text was taken from the SPDX license list rather than from `cdla.dev`, because
-SPDX publishes it as plain text and the two carry the same words.
+SPDX publishes it as plain text and the two contain the same words.
 
 ## Data-sharing terms (quoted)
 
@@ -16,7 +16,7 @@ SPDX publishes it as plain text and the two carry the same words.
 
 That is the one condition the agreement places on redistributing the database, and it is a condition
 to supply this text rather than to name a contributor. This repository hosts `poi.db` for download,
-so the condition attaches to that hosting, which is why this file is committed.
+so the condition attaches to that hosting. This file is committed to meet it.
 
 ## A model trained on the data, quoted
 
@@ -28,14 +28,14 @@ so the condition attaches to that hosting, which is why this file is committed.
 > 5.4. "Results" means any result obtained by computational analysis of Data, including for example
 > machine learning models and models' insights.
 
-Read together, the agreement states that a machine-learning model is a Result and that it carries no
+Read together, the agreement states that a machine-learning model is a Result and that it is subject to no
 restriction or obligation under the agreement. Among the grants this repository reads, this is the
 one that addresses a trained model in its own text rather than leaving it to be argued from the
 definition of a derived work.
 
 Two things that does not establish. It makes no statement about the terms of whatever sources Overture
-itself drew each row from, which the `poi` bundle's record still carries as an open question. And it
-is a statement about this agreement alone, so it does not decide the question for any other source.
+itself drew each row from. The `poi` bundle's record still lists those terms as an open question. And
+it is a statement about this agreement only, so it does not decide the question for any other source.
 
 ## What this text does not settle
 

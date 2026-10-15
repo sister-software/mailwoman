@@ -9,14 +9,14 @@ owner: operations
 
 A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
 exhausted source with a fresh shuffled pass, so a small source is presented once per pass and its
-row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
-ways, which is still one street.
+row count reads as supply it does not have. And a corpus can hold one street rendered a hundred
+ways. That is still one street.
 
 `locale_supply_census` counts four things a row count cannot give, over a full scan rather than a
 sample, because a distinct count is the one statistic a sample cannot extrapolate. This page records
-what it found.
+the census results.
 
-Measured on `v0.32.0-locality-shape`, all 718 train files, unless a row says otherwise. Receipts live
+Measured on `v0.32.0-locality-shape`, all 718 train files, unless a row states otherwise. Receipts are stored
 on the `mailwoman-training` volume as `audits/locale-supply-<iso2>.json`.
 
 ## `synth-` is the retired spelling of a recipe-output source
@@ -49,7 +49,7 @@ corpus stores. The left column below uses the spelling the measured corpus,
 | `synth-nz` | `rendered-nz` | a LINZ-derived OpenAddresses extract                         |
 
 Three columns record this, each answering one question. `recipe` names the code that produced the
-row, `register` names the publication its record came from, and `surface` says how the text was
+row, `register` names the publication its record came from, and `surface` states how the text was
 built: `attested` is the publisher's own string, `composed` is a template over one real record's
 fields, and `invented` names no published record.
 
@@ -59,7 +59,7 @@ Land Registry record in the recipe's order. `invented-po-box` writes `register: 
 `spliced-sub-venue` and the other shape recipes divide the same way.
 
 A single `synth_method` column used to answer both questions and was read as the second. It reported
-every Land Registry record as fabricated, which is why the split exists.
+every Land Registry record as fabricated. The split exists to prevent that misreading.
 
 ## The five locales with a receipt
 
@@ -81,24 +81,24 @@ GB, 1.08 for DE, 1.00 for BE. None of the four is carrying meaningful duplicatio
 
 GB's train supply by source:
 
-| source            |       rows | carries a street |
-| ----------------- | ---------: | ---------------- |
-| `wof-postalcode`  | 13,548,202 | no               |
-| `wof-admin`       |  1,263,798 | no               |
-| `synth-gb`        |    800,000 | yes              |
-| `synth-sub-venue` |     31,800 | shape recipe     |
-| `synth-fragment`  |        907 | shape recipe     |
+| source            |       rows | has a street |
+| ----------------- | ---------: | ------------ |
+| `wof-postalcode`  | 13,548,202 | no           |
+| `wof-admin`       |  1,263,798 | no           |
+| `synth-gb`        |    800,000 | yes          |
+| `synth-sub-venue` |     31,800 | shape recipe |
+| `synth-fragment`  |        907 | shape recipe |
 
 `street_rows` is 825,083 against 832,707 rows from the three recipe sources. Scanned locally on
-`v0.5.0`, GB's two `wof-*` sources hold 14,812,000 rows and **0** carry a `street` or `house_number`
+`v0.5.0`, GB's two `wof-*` sources hold 14,812,000 rows and **0** have a `street` or `house_number`
 tag, so every GB street row the model sees is a `synth-gb` rendering of a Price Paid row.
 
-Price Paid holds 25,674,049 rows and the recipe samples 800,000 of them, which is 3.1%. The cap is
+Price Paid holds 25,674,049 rows and the recipe samples 800,000 of them (3.1%). The cap is
 `RESERVOIR_CAP`, 1,200,000 per part, applied by Algorithm-R reservoir sampling so memory stays
 bounded on a 1.5 GB input.
 
 Two further readings of the same receipt. 13,548,202 of GB's 15,644,707 rows — 86.6% — sit in two
-component sequences, `locality|postcode` and `postcode`. The largest sequence that carries a street,
+component sequences, `locality|postcode` and `postcode`. The largest sequence that includes a street,
 `house_number|street|locality|postcode`, holds 268,173 rows, or 1.7%.
 
 **Price Paid covers England and Wales.** Scotland and Northern Ireland register land separately, so
@@ -117,7 +117,7 @@ with no path to a `CanonicalRow`:
 | `osopenuprn/<date>` | 2.7 GB | OS Open UPRN                                |
 | `codepoint/<date>`  | 184 MB | Code-Point Open                             |
 
-EPC carries `address1`, `address2`, `address3`, `postcode` and `posttown` per certificate. UPRN and
+EPC records `address1`, `address2`, `address3`, `postcode` and `posttown` per certificate. UPRN and
 Code-Point are read by `gazetteer-pipeline` for the retrieval artifacts — `pair-index-gb.bin`,
 `postcode-gb.bin` — rather than for training rows.
 
@@ -128,7 +128,7 @@ unused.
 
 Read by `COUNTRY_SOURCES` in `packages/corpus/lib/international/recipes/locale.ts` for the first
 time. These are pool sizes reported by the recipe's own reader on the run that generated each
-output, rather than corpus row counts. No corpus carries these rows yet.
+output, rather than corpus row counts. No corpus contains these rows yet.
 
 | locale | rows in the source CSV | reservoir drew | city-noise drops | rows emitted | skipped |
 | ------ | ---------------------: | -------------: | ---------------: | -----------: | ------: |
@@ -143,24 +143,24 @@ emitted counts are set below the pool so no row is drawn twice.
 
 Three countries with an extract on disk are deliberately absent, each for a reason recorded at the
 `COUNTRY_SOURCES` call site: Saudi Arabia is Arabic script and this repository ships no Arabic
-graph; Iceland carries a locality on 19 of 125,681 rows; Estonia is blocked by `cleanCityNoise`
+graph. Iceland has a locality on 19 of 125,681 rows. Estonia is blocked by `cleanCityNoise`
 rather than by supply, because its `CITY` is two admin levels joined by a comma and rule 1 drops any
 city containing one.
 
 ## What this does not establish
 
-Whether a templated surface teaches as well as an attested one. The addresses are real; the rendering
+Whether a templated surface teaches as well as an attested one. The addresses are real. The rendering
 is the recipe's, and no measurement here isolates the difference.
 
 Whether GB is worse supplied than the alternatives. Five locales have a receipt, and the funnel's
 opportunity view lists 28 candidate jurisdictions with no corpus rows at all.
 
-What raising GB's sample above 3.1%, or adding an EPC adapter, would be worth. Both are measurable
+What a GB sample above 3.1%, or an EPC adapter, would change. Both are measurable
 and neither is measured.
 
 ## Compare a locale metric with this page
 
-A validation metric for a locale is bounded by what that locale's split contains, which is a
-different measurement — `audit_validation_coverage`, and the per-locale floor in
-[Contributing model work](../CONTRIBUTING_MODEL_WORK.mdx). Supply says what could be held out.
-Coverage says what was.
+A validation metric for a locale is bounded by what that locale's split contains. That is a
+different measurement: `audit_validation_coverage`, and the per-locale floor in
+[Contributing model work](../CONTRIBUTING_MODEL_WORK.mdx). Supply states what could be held out.
+Coverage states what was.

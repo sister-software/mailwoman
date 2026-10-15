@@ -1,11 +1,11 @@
 # `core/data/` — what each directory holds and what wrote it
 
 `@mailwoman/core` is installed by every consumer of Mailwoman, and its `files` array ships `data/**`
-whole. This file records what is in there, which builds it, and what about it is unrecorded.
+whole. This file records the contents, the command that builds each directory, and what is unrecorded.
 
-Four directories, and the third-party notices describe three. `THIRD_PARTY_NOTICES.md` beside this
-file is the copy npm ships, and it carries the terms. This file carries the build path, which is a
-different question: what wrote the bytes, and whether a reader can check them.
+The directory has four subdirectories, and the third-party notices describe three. `THIRD_PARTY_NOTICES.md`
+beside this file is the copy npm ships, and it states the terms. This file records the build path. That is
+a different question: what wrote the bytes, and whether a reader can check them.
 
 ## The `data-provenance` check does not read this file's directory
 
@@ -15,7 +15,7 @@ down. So committing this file brings `packages/core/data/` into the check's scop
 finds zero artifacts to name and passes.
 
 That is stated here rather than left for a reader to assume the opposite. The record is what a reader
-opens; the check does not stand behind it yet, and making it recursive is a change to the check rather
+opens. The check does not verify it yet, and a recursive check is a change to the check rather
 than to this file.
 
 ## What is here
@@ -35,7 +35,7 @@ Fetched by `mailwoman dev download libpostal-resources`
 vendored at `libpostal/LICENSE`.
 
 `libpostal/README.md` records which files still have a code consumer and which do not. It was audited
-2026-08-01 and says so, because the consumer map moved when the rules parser was deleted in v7.0.0.
+2026-08-01 and records that date, because the consumer map moved when the rules parser was deleted in v7.0.0.
 
 ### `chromium-i18n/`
 
@@ -50,11 +50,11 @@ added upstream appears on the next run rather than needing a list edited here.
 
 ### `internal/dictionaries/`
 
-Curated here rather than fetched, which is what `internal` names.
+These tables are curated here rather than fetched. The directory name `internal` marks that.
 
 `languages.csv` is the ISO 639 table `generateLanguageTypes`
 (`packages/core/tools/generate-language-types.ts`) reads to regenerate
-`core/lib/resources/languages/types.gen.ts`. Editing the CSV without re-running that tool leaves the
+`core/lib/resources/languages/types.gen.ts`. A CSV edit without a re-run of that tool leaves the
 committed types describing an older table.
 
 `libpostal/` under this directory holds curated overrides and additions that sit apart from the
@@ -63,7 +63,7 @@ vendored copy above, so a re-fetch of upstream cannot overwrite them.
 `whosonfirst/` holds three preferred-name lists derived from Who's On First, at
 `whosonfirst/locality/name:eng_x_preferred.txt`, `whosonfirst/locality/name:fra_x_preferred.txt` and
 `whosonfirst/region/name:eng_x_preferred.txt`. Who's On First's own terms make crediting the project
-recommended and linking back to the license required; the text as retrieved is archived at
+recommended and linking back to the license required. The text as retrieved is archived at
 `packages/corpus/data/licenses/whosonfirst-licenses.md`.
 
 **Unrecorded:** which Who's On First release those three files were derived from, and which command
@@ -80,10 +80,10 @@ attaches to the artifact itself.
 
 Its training rows are assembled by `mailwoman placer build-dataset`
 (`packages/core/tools/coarse-placer/build/dataset.ts`) into
-`<repo>/data/coarse-placer/{train,val,test}.jsonl`. Those files are **not committed** — the directory
-holds 0 tracked files — and on this machine they carry 1,165,072 training rows, 145,629 each for
+`<repo>/data/coarse-placer/{train,val,test}.jsonl`. Those files are **not committed**, and the directory
+holds 0 tracked files. On this machine they hold 1,165,072 training rows, 145,629 each for
 validation and test, plus 11,209 in `test-latin-offmap.jsonl`. Each row is `{raw, country}` and
-carries no source field, so which publisher an address came from cannot be recovered from the dataset.
+has no source field, so which publisher an address came from cannot be recovered from the dataset.
 
 The builder names three inputs, all under the data root and none committed:
 
@@ -92,8 +92,8 @@ The builder names three inputs, all under the data root and none committed:
 - `corpus/versioned/…/corpus-v0.9.2-multilocale-au/…/*.parquet`, for Australian rows
 - `overture/2026-06-17.0`, pinned as `OVERTURE_ADDRESSES_RELEASE` in `core/lib/overture-pins.ts`
 
-**Unrecorded, and this is the gap worth naming:** which records trained the committed `weights.bin`.
+**Unrecorded, and the largest gap in this record:** which records trained the committed `weights.bin`.
 The builder reads a corpus version and the shipped artifact records no manifest, so the artifact
 cannot be joined to the rows behind it. It is the same gap the twelve `neural-weights-*` packages
-carry, and `docs/engineering/reference/artifact-rights-inventory.mdx` tracks both. A rebuild would
+have, and `docs/engineering/reference/artifact-rights-inventory.mdx` tracks both. A rebuild would
 close it by freezing a manifest the way `buildCorpus` now writes `TRAINING_SOURCES.json`.

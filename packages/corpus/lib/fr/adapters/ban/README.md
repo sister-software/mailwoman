@@ -2,7 +2,7 @@
 
 The Base Adresse Nationale, IGN's house-number-level address publication, from
 `adresse.data.gouv.fr`. It covers eleven jurisdictions from one schema: France and the
-ten overseas jurisdictions whose files carry rows.
+ten overseas jurisdictions whose files contain rows.
 
 Measured on 2026-10-01, by parsing each published file whole:
 
@@ -21,7 +21,7 @@ Measured on 2026-10-01, by parsing each published file whole:
 | Saint Pierre and Miquelon | `975`            | 3,049      |
 
 `984` French Southern Territories and `986` Wallis and Futuna are published as 20-byte files
-with no header line, which is a measured zero rather than a missing path. Both map to `TF` and
+with no header line. That size is a measured zero rather than a missing path. Both map to `TF` and
 `WF` anyway, so a row appearing under either is labeled rather than read as metropolitan.
 `989` Clipperton has no ISO 3166-1 alpha-2 code, so a row there has nowhere correct to go.
 
@@ -53,7 +53,7 @@ The other sixteen columns of the 23 the header declares are read by no part of t
 `id_fantoir`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`,
 `type_position`, `alias`, `nom_ld`, `libelle_acheminement`, `nom_afnor`, `source_position`,
 `source_nom_voie`, `certification_commune` and `cad_parcelles`. The spatial fields belong to a
-later adapter that carries geometry.
+later adapter that emits geometry.
 
 ## Output
 
@@ -64,32 +64,32 @@ One `CanonicalRow` per BAN record:
 - `country`: read per row from `code_insee`, so one extract spanning departments yields each
   jurisdiction's own code
 - `locale`: `fr-<country>`, because every jurisdiction BAN publishes writes its addresses in
-  French and the region carries the jurisdiction
+  French and the region subtag identifies the jurisdiction
 - `license`: `"Licence Ouverte 2.0"`. BAN is dual-licensed under Licence Ouverte 2.0 or ODbL and
-  this adapter elects Licence Ouverte, whose terms permit training with attribution. The model
+  this adapter elects Licence Ouverte. Its terms permit training with attribution. The model
   card must attribute BAN.
 - `source_id`: `"ban-<csv-id>"`, since BAN's own `id` column is stable
 - `source`: `ban`. This is a wire identifier: it is the literal `source` value on every row of
   every corpus built from it, and `ban: 3.0` and similar appear as `source_weights` keys across
-  the training configs. Renaming it is a data migration rather than an edit.
+  the training configs. A rename of it is a data migration rather than an edit.
 
-`--country` is optional. Passing one both rejects a jurisdiction BAN does not publish and keeps
+`--country` is optional. A country value both rejects a jurisdiction BAN does not publish and keeps
 only that jurisdiction's rows, so one multi-department extract can be read once per country.
 
-`region` is **not** populated — BAN carries no region column. The wof-admin and wof-postalcode
+`region` is **not** populated, because BAN has no region column. The wof-admin and wof-postalcode
 adapters supply it at corpus build time through a postcode cross-reference. The training split key
 reads `region`, so a BAN-only row lands in the default `train` split unless it joins a WOF row
 that fills the region in.
 
 ## Known quirks
 
-- A row can carry a house number and a position with no street name. The adapter's street check
-  drops those. French Polynesia is where this bites: `nom_voie` is empty on 958 of its 7,713 rows,
-  which is 12.4%, and every one of them is in `98736` Pirae with `source_nom_voie` reading
+- A row can have a house number and a position with no street name. The adapter's street check
+  drops those. French Polynesia loses the most rows to this check: `nom_voie` is empty on 958 of
+  its 7,713 rows (12.4%), and every one of them is in `98736` Pirae with `source_nom_voie` reading
   `commune`. Every other jurisdiction reads 100%.
 - `code_insee` and `code_insee_ancienne_commune` track historical commune mergers. The adapter
-  reads `code_insee` for the country only, and the corpus carries the current `nom_commune`.
-- Some rows carry `numero=0` as a placeholder for "no number". The adapter drops those unless a
+  reads `code_insee` for the country only, and the corpus stores the current `nom_commune`.
+- Some rows have `numero=0` as a placeholder for "no number". The adapter drops those unless a
   postcode is present.
 - BAN periodically re-issues `id` values, so a consumer pinning to one snapshot records the
   file's date alongside the corpus version.

@@ -10,8 +10,8 @@ owner: operations
 # What this repository has, per jurisdiction
 
 One row per jurisdiction, over 250 of them: every ISO 3166-1 alpha-2 code in
-`@mailwoman/codex/country` plus the non-ISO operational codes `@mailwoman/codex/postal-regimes`
-carries. Regenerate with:
+`@mailwoman/codex/country` plus the non-ISO operational codes that `@mailwoman/codex/postal-regimes`
+defines. Regenerate with:
 
 ```sh
 node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
@@ -29,8 +29,8 @@ what the counted corpus holds rather than establishing that the source has none.
 
 ## What the columns separate
 
-**Corpus rows** counts rows in the training corpus. **Street rows** counts those carrying a `street`
-or `house_number` label, which are the rows that teach an address rather than a name: a jurisdiction
+**Corpus rows** counts rows in the training corpus. **Street rows** counts those with a `street`
+or `house_number` label. Those rows teach an address rather than a name. A jurisdiction
 can hold millions of rows while its street-row count reads 0. CN reads 11,357,947 and 0.
 
 **Admission** is `country_weights` in the training config, a hard filter. A code absent from it
@@ -40,11 +40,11 @@ no rows either, by the other route.
 **Gazetteer** counts admin places available to resolve, and `rooftop` marks the two jurisdictions
 whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
 
-**Weights package** existing is not training. One model graph serves every locale; the other packages
+**Weights package** existing is not training. One model graph serves every locale. The other packages
 are data-only overlays over it.
 
 **Board** counts rows that check rather than merely track, over rows present. A jurisdiction reading
-`—` has no board row, which is unmeasured rather than failing.
+`—` has no board row. That jurisdiction is unmeasured rather than failing.
 
 ## Counts
 
@@ -59,16 +59,16 @@ are data-only overlays over it.
 | declined by every shipped config        |            33 |
 | absent from every layer                 |             2 |
 | rooftop geocoding a consumer can obtain |             2 |
-| carries a weights package               |            11 |
+| has a weights package                   |            11 |
 
 ## Every jurisdiction
 
 | code | name                                         | corpus rows              | street rows | admitted by | gazetteer | weights |   board |
 | ---- | -------------------------------------------- | ------------------------ | ----------: | ----------- | --------: | ------- | ------: |
-| `US` | United States                                | 487,527,075 rows         | 474,953,813 | en-us       |   rooftop | en-us   |  94/143 |
+| `US` | United States                                | 487,527,075 rows         | 474,953,813 | en-us       |   rooftop | en-us   |  95/144 |
 | `FR` | France                                       | 147,725,972 rows         | 143,387,337 | en-us       |   rooftop | fr-fr   |   55/67 |
 | `IN` | India                                        | 18,179,272 rows          |       6,000 | en-us       | 1,565,157 | en-in   |     6/7 |
-| `GB` | United Kingdom                               | 13,822,140 rows          |     813,781 | en-us       | 3,642,151 | en-gb   | 106/152 |
+| `GB` | United Kingdom                               | 13,822,140 rows          |     813,781 | en-us       | 3,642,151 | en-gb   | 131/190 |
 | `CN` | China                                        | 7,624,794 rows, 0 street |           0 | cjk, en-us  | 1,660,173 | zh-cn   |    7/28 |
 | `NL` | Netherlands                                  | 3,283,390 rows           |     179,176 | en-us       |   416,037 | —       |     2/2 |
 | `DE` | Germany                                      | 3,247,426 rows           |     362,573 | en-us       |   286,179 | de-de   |    8/16 |

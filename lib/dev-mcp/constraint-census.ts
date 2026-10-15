@@ -78,8 +78,8 @@ interface CheckReading {
 	fired: number
 	resolved_nothing: number
 	/**
-	 * Of the misses under this constraint set, how many hold the key in another band — the subset
-	 * a retrieval change could convert, as opposed to the subset that needs data we do not have.
+	 * Of the misses under this constraint set, the number that hold the key in another band — the
+	 * subset a retrieval change could convert, as opposed to the subset that needs data we do not have.
 	 */
 	reachable_elsewhere: number
 }
@@ -102,7 +102,7 @@ export interface ConstraintCensusResult {
 	n_coverage: number
 	checks: CheckReading[]
 	/**
-	 * Reachability classes, largest first: which band was probed and which bands actually hold the key.
+	 * Reachability classes, largest first: which band was probed and which bands hold the key.
 	 *
 	 * The largest class is the one a cross-band retry should try first.
 	 */
@@ -116,8 +116,8 @@ export interface ConstraintCensusResult {
  * Above this, a check that never once accompanies a successful pick is called inert
  * rather than merely unlucky.
  *
- * It is small on purpose, because below it the honest report is "not enough firings
- * to say", which the rendering states instead.
+ * It is small on purpose, because below it the supported report is "not enough
+ * firings to say", which the rendering states instead.
  */
 const INERT_MIN_FIRINGS = 20
 

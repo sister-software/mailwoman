@@ -24,7 +24,7 @@ export type { FileHandle } from "node:fs/promises"
  * Read the first `byteSize` bytes of a file, or the whole file if it is smaller.
  *
  * @param path The file to read.
- * @param byteSize [65536] How many bytes to read.
+ * @param byteSize [65536] The number of bytes to read.
  * That size is enough to sniff a file's format.
  *
  * @returns The bytes read, as a UTF-8 string.
@@ -52,7 +52,8 @@ export async function readFileHead(path: PathBuilderLike, byteSize: number): Pro
  * Three reads at three positions, where reading the whole file would mean loading
  * a multi-gigabyte artifact to look at sixteen bytes.
  *
- * Returns the bytes it actually read.
+ * Returns the bytes it read.
+ * The count can be smaller than the requested size.
  * The result is shorter than `length` at end of file.
  *
  * @throws Enoent when the file does not exist.

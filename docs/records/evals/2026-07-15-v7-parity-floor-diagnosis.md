@@ -1,6 +1,6 @@
 # 2026-07-15 — The v7 parity-floor blocker: what it is
 
-**TL;DR.** The v7 rules-excision arc is blocked on the neural model clearing the pre-registered
+**Summary.** The v7 rules-excision arc is blocked on the neural model clearing the pre-registered
 swap floors on the rescued parity corpus (street ≥0.90, house_number ≥0.97). The just-shipped
 **v264** (6.3.0) sits at **street 0.543, hn 0.767, postcode 0.986** — the same place v257 sat one
 country-channel and one span-head ago. This note is the diagnosis behind that number: what the
@@ -20,7 +20,7 @@ Package-shaped grade (`eval parity --weights-cache`, the #718-safe path), v264 =
 v264 is a hair **better** than v257 on street (0.543 vs 0.536) and identical on hn/postcode, so the
 v261 span-boundary head and the v263/v264 country channel did **not** erode fragment parsing. The
 plateau is old: v255 peaked at street 0.596 @ 2k but was unstable (the bare-locality↔US-admin
-treadmill, #1102), and v257's gentle 8k traded that peak for a stable 0.536. Nothing since has moved
+treadmill, #1102), and v257's gentle 8k traded that peak for a stable 0.536. No run since has moved
 it.
 
 ## What the failures are (85-row sample, `--failing 50` over the three floors)
@@ -60,7 +60,7 @@ decode-segmentation error at the street↔house_number boundary rather than a mi
 
 ## Why "more extract" is unlikely to break the plateau
 
-The v257 recipe **already** carries targeted bare-street extracts at the campaign's highest source
+The v257 recipe **already** includes targeted bare-street extracts at the campaign's highest source
 weight (12.0): `synth-no-street-led`, `synth-cz-pcfirst-preposition`, `synth-fr-bare-street`,
 `synth-si-bare-village`, plus `synth-fragment` at 6.0. Heavy targeted data on the exact locales that
 still fail, and it plateaued at 0.54. The bare-fragment mis-segmentation and the #727 boundary class
@@ -70,16 +70,16 @@ distribution.**
 
 ## Contextful vs bare: the gap holds in both subsets
 
-I split the 321 live fixtures by whether the gold carries admin context (locality/region/country):
+I split the 321 live fixtures by whether the gold has admin context (locality/region/country):
 
 | subset     |   n | street | house_number | postcode |
 | ---------- | --: | -----: | -----------: | -------: |
 | contextful | 192 |  0.514 |        0.778 |    0.971 |
 | bare       | 129 |  0.580 |        0.754 |    1.000 |
 
-Street fails ~0.5 on **both**; the contextful subset is not meaningfully better. The gap is a
+Street fails ~0.5 on **both**. The contextful subset is not meaningfully better. The gap is a
 pervasive street-parsing quality problem (boundary-absorption, FR/Romance street-type-prefix drop,
-accent, city-absorption) that holds whether or not the input carries admin context. It would not
+accent, city-absorption) that holds whether or not the input includes admin context. It would not
 vanish on production traffic.
 
 ## Coordinate parity — measured
@@ -110,10 +110,10 @@ The signal is two-sided:
   the bare-fragment / US-highway / bare-state-name classes.
 
 A **pure** coordinate re-check does not hold: it ships that tail. The tail lands on input classes the
-pipeline can already detect, which is what the recommended path below exploits.
+pipeline can already detect. The recommended path below uses that detection.
 
-Caveats: this measures neural-vs-rules divergence rather than accuracy against ground truth (the corpus has
-no gold coords, and the rules parser is sometimes the wrong one); and the corpus is deliberately
+Caveats: this measures neural-vs-rules divergence rather than accuracy against ground truth. The corpus
+has no gold coords, and the rules parser is sometimes the wrong one. The corpus is also deliberately
 fragment/edge-case-heavy, so the >25 km tail is smaller on real drop-in traffic than the 21% here.
 
 ## Recommended path: neural-primary with a bounded fallback
@@ -127,8 +127,8 @@ components bound it, in priority order:
    rules/structural fallback until the model clears them.
 2. **Plausibility guard on the resolution.** Fall back when the neural resolution is implausible for
    the input's country signal — a country-centroid hit, or a cross-country jump like `California` →
-   Maryland. A cheap post-resolve check, no model change.
-3. **Ship v7 on this hybrid check** rather than the 0.90 parse-tag floor. The swap is neural-primary; the
+   Maryland. It is a cheap post-resolve check and needs no model change.
+3. **Ship v7 on this hybrid check** rather than the 0.90 parse-tag floor. The swap is neural-primary. The
    fallback shrinks as the model improves and is deleted when it stops firing.
 
 **Measured** (`scratchpad/coord-parity.mjs`, extended with the kind-classifier + both guards). The
@@ -138,13 +138,13 @@ fallback), and of the 7 that classify as `structured_address`, the plausibility 
 live fixtures (0.9%)**, at a cost of **zero false-positive fallbacks** — none of the 81 coordinate-safe
 structured fixtures trip either guard. The surviving 3 are structured, in-country, wrong-locality
 neural resolutions, and their archetype is the #727 boundary class (`Korunní 810, Praha` → wrong
-Czech city). So the hybrid check ships **paired with** #727 stage-2, which erases that residual rather than as
-a permanent substitute for the model work.
+Czech city). So the hybrid check ships **paired with** #727 stage-2 rather than as a permanent substitute for the
+model work. Stage-2 is the change that removes that residual.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
 coordinate re-check would. **#727 stage-2 (FSemi-CRF span head)** stays the model change for the ~39%
 boundary class and shrinks the fallback further. A **29M extract campaign is not recommended as the
-lead**: the plateau evidence says it re-plateaus.
+lead**: the plateau evidence predicts that it re-plateaus.
 
 ## Reproduction
 
@@ -154,6 +154,6 @@ lead**: the plateau evidence says it re-plateaus.
   both parsers, compare coords, cross-tab the tail against the kind-classifier + plausibility guards)
 - v257 recipe: `corpus-python/src/mailwoman_train/configs/v2.5.7-fragment-v5-gentle-full.yaml`
 
-The guard measurement's tail (n=18) is small, so the 11/7 and 4/3 splits are noisy; and it grades
+The guard measurement's tail (n=18) is small, so the 11/7 and 4/3 splits are noisy. The measurement also grades
 neural-vs-rules divergence rather than ground-truth accuracy. Treat the 0.9% residual as an order-of-magnitude
 result — the tail is bounded to low single digits rather than that it is exactly three.

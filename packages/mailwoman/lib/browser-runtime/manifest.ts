@@ -9,7 +9,7 @@
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithRetry } from "#browser-runtime/fetch"
-import { type PostcodeAnchorAssets, releasesManifestURL } from "#browser-runtime/resources"
+import { releasesManifestURL } from "#browser-runtime/resources"
 
 export interface ReleaseInfo {
 	version: string
@@ -21,6 +21,17 @@ export interface ReleaseInfo {
 	hasFST: boolean
 	hasWOFDB: boolean
 	hasAnchor?: boolean
+	/**
+	 * The postcode-anchor binaries in the release directory, such as `postcode-gb.bin`.
+	 */
+	postcodeAnchors?: string[]
+	/**
+	 * The PFX1 postcode-prefix indexes in the release directory, such as `postcode-prefix-us.bin`.
+	 *
+	 * The anchor-region prior reads them.
+	 * A release published before the field holds none.
+	 */
+	postcodePrefixes?: string[]
 	hasPolygons?: boolean
 	/**
 	 * Whether the release directory also holds the split model.
@@ -54,11 +65,33 @@ export function runtimeSupports(release: Pick<ReleaseInfo, "requiresRuntime">): 
 }
 
 /**
- * Whether a release's classifier load fetches the postcode-anchor binaries:
- * only a release whose manifest entry sets `hasAnchor`.
+ * The postcode-anchor binaries published before entries had a `postcodeAnchors` field.
+ * An entry that sets `hasAnchor` without the list held these.
  */
-export function postcodeAnchorAssetsOf(release: Pick<ReleaseInfo, "hasAnchor"> | null): PostcodeAnchorAssets {
-	return release?.hasAnchor === true ? "load" : "skip"
+const PRE_LIST_POSTCODE_ANCHORS: readonly string[] = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
+
+/**
+ * The postcode-anchor binaries a release's classifier load fetches, as file names in its directory.
+ *
+ * An entry with `postcodeAnchors` returns that list.
+ * An older entry that sets only `hasAnchor` returns the files those releases shipped.
+ */
+export function postcodeAnchorFilesOf(
+	release: Pick<ReleaseInfo, "hasAnchor" | "postcodeAnchors"> | null
+): readonly string[] {
+	if (release?.postcodeAnchors) return release.postcodeAnchors
+
+	return release?.hasAnchor === true ? PRE_LIST_POSTCODE_ANCHORS : []
+}
+
+/**
+ * The postcode-prefix indexes a release's classifier load fetches, as file names in its directory.
+ *
+ * A release published before the manifest listed them fetches none,
+ * and the anchor-region prior stays off for it.
+ */
+export function postcodePrefixFilesOf(release: Pick<ReleaseInfo, "postcodePrefixes"> | null): readonly string[] {
+	return release?.postcodePrefixes ?? []
 }
 
 export interface ReleasesManifest {
@@ -88,7 +121,7 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
-	 * The spelling the live 2026-08-11 manifest actually uses (WOF caps, lowercase b).
+	 * The spelling the live 2026-08-11 manifest uses (WOF caps, lowercase b).
 	 *
 	 * A wire key is a string interface.
 	 * Every spelling ever published must stay readable here.

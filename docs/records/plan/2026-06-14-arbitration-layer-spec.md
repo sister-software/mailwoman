@@ -14,12 +14,12 @@ so it can't score below v0 on any component v0 wins.
 
 ## Status audit — what the stale issue gets wrong
 
-| #478 piece                  | issue says                                                     | actual state (2026-06-14)                                                                                                                                                                                                                                                                                                              |
-| --------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Policy registry + config | "`applyPreferenceFilters` has zero tests; no config surface"   | **DONE.** `core/policy/registry.test.ts` covers the dedup core (preferred-mode drop/fallback, merged survival, below-threshold no-trigger, both modes); `core/policy/from-config.ts` + `from-config.test.ts` are the loadable per-locale per-tag config surface. Wired into `core/parser/AddressParser.ts` via `proposal-pipeline.ts`. |
-| 2. Reconcile top-k          | "`ClassifierCandidate` is a mock; no production path emits it" | **DONE.** `core/pipeline/runtime-pipeline.ts` joint path emits real top-k via `parseWithLogits` + `aggregateSpanLogits`.                                                                                                                                                                                                               |
-| 3. Input-shape routing      | "in docs since #15, unwired"                                   | **OPEN.** The routing prior (clean→rules, noisy→neural, both-weak→abstain) is not wired as an arbitration prior. The signals exist: `kind-classifier`, `query-shape`, and now the `#244` coarse-placer (the abstention tier, M1+M2 shipped).                                                                                           |
-| 4. Calibrated arbiter       | "use the calibrated posterior"                                 | **PARTIAL.** Isotonic calibration shipped (#59/#367) + the conformal interp radius (#569); the policy registry compares on `confidence`, but a unified calibrated-posterior currency across rule/neural sources is not yet the arbiter.                                                                                                |
+| #478 piece                  | issue text                                                         | actual state (2026-06-14)                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Policy registry + config | `` `applyPreferenceFilters` has zero tests; no config surface ``   | **DONE.** `core/policy/registry.test.ts` covers the dedup core (preferred-mode drop/fallback, merged survival, below-threshold no-trigger, both modes); `core/policy/from-config.ts` + `from-config.test.ts` are the loadable per-locale per-tag config surface. Wired into `core/parser/AddressParser.ts` via `proposal-pipeline.ts`. |
+| 2. Reconcile top-k          | `` `ClassifierCandidate` is a mock; no production path emits it `` | **DONE.** `core/pipeline/runtime-pipeline.ts` joint path emits real top-k via `parseWithLogits` + `aggregateSpanLogits`.                                                                                                                                                                                                               |
+| 3. Input-shape routing      | "in docs since #15, unwired"                                       | **OPEN.** The routing prior (clean→rules, noisy→neural, both-weak→abstain) is not wired as an arbitration prior. The signals exist: `kind-classifier`, `query-shape`, and now the `#244` coarse-placer (the abstention tier, M1+M2 shipped).                                                                                           |
+| 4. Calibrated arbiter       | "use the calibrated posterior"                                     | **PARTIAL.** Isotonic calibration shipped (#59/#367) + the conformal interp radius (#569); the policy registry compares on `confidence`, but a unified calibrated-posterior currency across rule/neural sources is not yet the arbiter.                                                                                                |
 
 **The two latent dependencies the issue names — and their current state:**
 
@@ -50,7 +50,7 @@ the geocoder campaign added, notper-tag F1.
 Arbitration is a per-component decision over candidate proposals from N sources (rule, neural, merged),
 priored by input shape, decided on calibrated confidence, with abstention as a first-class outcome.
 
-1. **Input-shape router (the prior).** `kind-classifier` + `query-shape` classify the input; the `#244`
+1. **Input-shape router (the prior).** `kind-classifier` + `query-shape` classify the input. The `#244`
    coarse-placer adds (script, coarse-region, OOD-abstain). The prior sets per-component default modes:
    - _clean structured address_ → `rule_preferred` (v0's home turf).
    - _noisy / OOD-script / low rule-confidence_ → `neural_preferred`.
@@ -79,7 +79,7 @@ Re-run with arbitration on, **grading the assembled pipeline** (not raw neural):
   v0 win captured. `neural-only` retained. `both-fail` unchanged-or-better.
 - **Assembled-pipeline precondition + coordinate** (the #566 lesson, the non-negotiable addition): on the
   non-circular holdouts (Travis E-911 + OA), street+house_number+postcode precondition does not regress
-  vs argmax; geocode within-100m and the calibrated-radius coverage hold.
+  vs argmax, and geocode within-100m and the calibrated-radius coverage hold.
 - **Per-locale F1 floors hold.** Demo presets stable.
 
 Re-promoting reconcile to default is blocked on this — specifically the precondition row, the one the
@@ -99,7 +99,7 @@ No retrain. No new classifiers. The work covers wiring, tests, and config for ex
 (#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
 signal rather than trained.
 
-_References: `2026-06-10-DEEP-DIVE-REVIEW.md` §2; the reconcile retirement
+_References: `2026-06-10-DEEP-DIVE-REVIEW.md` §2, the reconcile retirement
 `docs/articles/evals/2026-06-14-reconcile-retirement.md`; the interp calibration
 `docs/articles/evals/2026-06-14-interp-radius-calibration.md`; the coarse-placer
 `docs/articles/evals/2026-06-14-coarse-placer-milestone-1.md`._

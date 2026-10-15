@@ -37,9 +37,9 @@ straight to prerequisites.
 > Let's say you have a CSV of clinic addresses exported from three different systems, and the same clinic
 > appears in it four times with four spellings. By the end of this tutorial you'll have a GeoJSON file with
 > one point per clinic, ready to open in QGIS. `@mailwoman/registry` does it in three calls: `ingestRows`
-> applies your column mapping and, if you hand it a geocode function, resolves each address as it goes;
+> applies your column mapping and, if you hand it a geocode function, resolves each address as it goes.
 > `resolveEntities` runs the block, score and cluster passes over the result and returns `entities` alongside
-> its pair counts; and `toGeoJSON` writes the FeatureCollection. The tutorial takes about twenty minutes,
+> its pair counts. `toGeoJSON` writes the FeatureCollection. The tutorial takes about twenty minutes,
 > most of it spent in the first call waiting on geocodes.
 
 <!-- illustrative -->

@@ -42,13 +42,13 @@ area disagrees with the file, and a parsed row count that differs from the file'
 ## Data and license
 
 Ofcom publishes the files in its Connected Nations releases. The Spring 2026 update (published
-2026-05-13, January 2026 snapshot) carries 121 all-premises postcode files at revision 2, 121
+2026-05-13, January 2026 snapshot) contains 121 all-premises postcode files at revision 2, 121
 residential postcode files, and one output-area file for each premises set. Ofcom licenses the data
 under OGL v3.0. Its website terms ask that reproduced material be "reproduced accurately and not used
 in a misleading context" and acknowledged as Ofcom copyright. The package ships no Ofcom data. Its
 test fixtures copy a few published rows and cite their snapshot.
 
-The fixture rows carry this attribution:
+The fixture rows cite this attribution:
 
 > Ofcom, Connected Nations update Spring 2026, fixed coverage data (January 2026). © Ofcom. Licensed
 > under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).

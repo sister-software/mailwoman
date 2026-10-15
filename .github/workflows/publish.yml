@@ -138,7 +138,7 @@ jobs:
           git checkout -b "${BRANCH}"
           # The explicit release allowlist (#1891): versioned manifests + the generated
           # surfaces the bump stales. Anything else dirty is a fault to surface, never to ship —
-          # a release commit that silently carries an unexpected file is how drift hides.
+          # a release commit that silently includes an unexpected file is how drift hides.
           git add package.json '*/package.json' release.config.json \
             packages/mailwoman/man/mailwoman.1 docs/articles/developers/reference/cli.mdx
           UNEXPECTED=$(git status --porcelain --untracked-files=no | grep -v '^[AMDR]' || true)
@@ -160,9 +160,9 @@ jobs:
             # GITHUB_TOKEN-created PRs don't trigger `on: pull_request` workflows (anti-recursion),
             # so the required `test` check would never report and auto-merge would hang forever.
             # Dispatch the Test workflow against the branch explicitly — its check run lands on the
-            # branch head SHA, which is exactly what the ruleset's required check matches on. (With
-            # the PAT, `pull_request` fires naturally and a second dispatched run would just burn a
-            # lab runner slot — skip it.)
+            # branch head SHA. The ruleset's required check matches on that SHA. (With the PAT,
+            # `pull_request` fires on its own, and a second dispatched run would occupy a lab runner
+            # slot to no purpose. The step skips the dispatch in that case.)
             gh workflow run test.yml --ref "${BRANCH}"
           fi
           gh pr merge --auto --squash "${PR_URL}"
@@ -297,7 +297,7 @@ jobs:
       - name: Report completed dry run
         if: ${{ inputs.dry_run }}
         run: | # shell
-          echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. Nothing was tagged, released or published."
+          echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. The run created no tag, release or npm publish."
 
   # This job regenerates the Python and Rust API clients as workflow artifacts for inspection.
   # publish-clients.yml publishes them to their registries.
@@ -311,11 +311,11 @@ jobs:
       - Linux
       - X64
     timeout-minutes: 20
-    # This job holds the `publish` concurrency group. Cancelling it is safe because it publishes nothing.
+    # This job holds the `publish` concurrency group. Cancelling it is safe because it publishes no package.
     permissions:
       contents: read
     steps:
-      # Main carries the merged release commit, so the clients take the just-published version.
+      # Main holds the merged release commit, so the clients take the just-published version.
       - uses: actions/checkout@v7
         with:
           ref: main

@@ -210,11 +210,11 @@ for await (const row of rows) {
 
 `enableQuoteHandling` keeps a quoted `"350 5th Ave, New York"` from splitting on its own comma. Without it, a street name can end up in the city column. `normalizeKeys` lowercases the header, so `Full Address` arrives as `full_address`.
 
-This loop is single-threaded and processes about 300 addresses/second on one core. Worker threads should help here in principle, because there is no database to contend for, but nobody has measured it. Read the performance reference before you build that.
+This loop is single-threaded and processes about 300 addresses/second on one core. Worker threads should help here in principle, because there is no database to contend for, but the project has not measured it. Read the performance reference before you build that.
 
 ### Full geocoding, across worker threads
 
-Coordinates need the gazetteer, and that per-row work takes milliseconds, which makes it worth moving to threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`. It normalizes each row on the main thread and passes it to a worker, which builds its own classifier, resolver, and extracts.
+Coordinates need the gazetteer, and that per-row work takes milliseconds. Work that slow benefits from moving to threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`. It normalizes each row on the main thread and passes it to a worker. Each worker builds its own classifier, resolver, and extracts.
 
 ```ts
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -242,7 +242,7 @@ for await (const rec of geocoded) {
 }
 ```
 
-Each record carries the same fields the endpoint returns, under `address.geocode`:
+Each record has the same fields the endpoint returns, under `address.geocode`:
 
 ```json
 {
@@ -267,4 +267,4 @@ Each record carries the same fields the endpoint returns, under `address.geocode
 }
 ```
 
-Two details matter before you tune it. Records arrive in **completion order** rather than input order, so carry your own `id` through and rejoin downstream instead of relying on position. `concurrency: 2` is a deliberate value. The workers contend for one multi-gigabyte database, so throughput peaks at two workers and drops after that, and four workers perform no better than the baseline. Each worker also loads its own 38 MB model. Measure several concurrency values against your data instead of using `availableParallelism()`.
+Two details matter before you tune it. Records arrive in **completion order** rather than input order, so pass your own `id` through and rejoin downstream instead of relying on position. `concurrency: 2` is a deliberate value. The workers contend for one multi-gigabyte database, so throughput peaks at two workers and drops after that, and four workers perform no better than the baseline. Each worker also loads its own 38 MB model. Measure several concurrency values against your data instead of using `availableParallelism()`.

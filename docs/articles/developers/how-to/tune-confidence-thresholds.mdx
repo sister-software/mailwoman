@@ -38,9 +38,9 @@ node confidence-scan.mjs
 ```
 
 Every one of those parses is correct. The lowest score in the file is 0.828 and the highest is 0.938 —
-a 0.11 band for twenty rows that are all right. A raw score near 0.9 does not mean 90% correct; it means
+a 0.11 band for twenty rows that are all right. A raw score near 0.9 does not mean 90% correct. It means
 the model's softmax landed there, and this model's raw scores are systematically under-confident and
-narrow — mean confidence 0.913 against 0.980 accuracy on the held-out split, which is why every
+narrow: mean confidence 0.913 against 0.980 accuracy on the held-out split. That gap is why every
 correction in the next section moves a score upward.
 
 The rows that deserve review look different in kind rather than in degree:
@@ -54,7 +54,7 @@ The rows that deserve review look different in kind rather than in degree:
         region=0.462 locality=0.923 street=0.921 house_number=0.908 street_suffix=0.891 postcode=0.914
 ```
 
-`ZZ` is not a state, and the region score says so at 0.462 while every other component in that row
+`ZZ` is not a state, and the region score reflects that at 0.462 while every other component in that row
 stays above 0.89. The signal is there. It is the scale that needs fixing.
 
 ## 2. Apply the calibrator
@@ -83,7 +83,7 @@ const tree = await classifier.parse(raw, { calibrate })
 
 `createCalibrator` returns a pure `(raw: number) => number`, monotone and piecewise-linear over the
 table's twenty bins. Outside the range of bin centers it does not clamp to `[0, 1]`. It returns the
-nearest bin's own calibrated value, which for the shipped `en-us` table is 0.0444 below and 0.9908
+nearest bin's own calibrated value. For the shipped `en-us` table, that value is 0.0444 below and 0.9908
 above. A raw 1.0 therefore calibrates to 0.991, and no input to this function can ever produce a
 calibrated 1.0. No other part of the call changes: the same spans, the same tags, the same offsets,
 different numbers on `confidence`.
@@ -118,7 +118,7 @@ separates on.
 
 ## 3. Take the threshold from the shipped abstention curve
 
-You do not have to guess a starting value. The same `calibration.json` carries an abstention curve
+You do not have to guess a starting value. The same `calibration.json` contains an abstention curve
 measured on the held-out split: for each threshold, what share of spans it accepts and what share of
 those accepted spans were right.
 
@@ -134,8 +134,8 @@ Read it as a price list. At 0.95, precision rises by 0.31 points and coverage fa
 from the 0.90 baseline — you review ten times the spans for a third of a point. At 0.97, precision rises another 0.28
 and costs 7.2 more.
 
-**Start at 0.90.** It is where the curve is still nearly free: 99.23% of spans accepted at 98.51%
-precision. Move up only when you have measured what a wrong accept costs you against what a review
+**Start at 0.90.** It is the highest threshold in the table that sends fewer than 1% of spans to
+review: 99.23% of spans accepted at 98.51% precision, with 0.77% reviewed. Move up only when you have measured what a wrong accept costs you against what a review
 costs you, and the curve gives you both numbers to do that arithmetic with.
 
 Three caveats about this table, all readable in the file:
@@ -151,7 +151,7 @@ Three caveats about this table, all readable in the file:
 
 ## 4. Route rows rather than spans
 
-A row is accepted or rejected whole, which means one score has to stand for the row. Take the
+A row is accepted or rejected whole, so one score has to stand for the row. Take the
 weakest component: a correct address with one badly-read component is not an address you want to
 auto-accept.
 
@@ -166,7 +166,7 @@ if (weakest.confidence >= ACCEPT) {
 }
 ```
 
-That rule is stricter than the curve, and the difference is worth measuring before you ship it. Over the
+That rule is stricter than the curve, so measure the difference before you ship it. Over the
 twenty-row sample plus three deliberately-broken rows:
 
 ```bash
@@ -202,8 +202,8 @@ review  C-1023  region="DC" at 0.656  — beacon ridge analytics 800 f st nw dc
 accepted 18/23, routed 5 to review at threshold 0.95
 ```
 
-Log the weakest component and its score alongside the row, as above. A review queue that says "low
-confidence" gives a human no actionable detail; one that says `region="ZZ" at 0.778` points at the field to fix.
+Log the weakest component and its score alongside the row, as above. A review queue that shows "low
+confidence" gives a human no actionable detail. A queue that shows `region="ZZ" at 0.778` points at the field to fix.
 
 ## Verify
 

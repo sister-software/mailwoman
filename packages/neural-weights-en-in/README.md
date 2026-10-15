@@ -10,17 +10,17 @@ two.
 
 It also ships the four evidence lexicons the base model was trained against — `anchor-lexicon-v1.json`,
 `country-surface-lexicon-v1.json`, `street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — and
-its `model-card.json` carries the base card's `requires` block, so a consumer runs the same channels the
+its `model-card.json` copies the base card's `requires` block, so a consumer runs the same channels the
 board grades. A data-only overlay without them ran gazetteer, country and both evidence channels off
 against a model trained with them (#2115).
 
 ## Two things specific to India
 
-**Renames.** WOF stores `Bangalore`; addresses today say `Bengaluru`. The index carries English name
-variants for parents in this locale so both resolve — enabled for India alone, because that is where
-it was measured.
+**Renames.** WOF stores `Bangalore`; addresses today say `Bengaluru`. The index stores English name
+variants for parents in this locale so both resolve. The variants are enabled only for India, because
+India is the locale where they were measured.
 
-**Deprecated records.** 53% of WOF's Indian sub-locality nodes carry `edtf:deprecated`, against
+**Deprecated records.** 53% of WOF's Indian sub-locality nodes have `edtf:deprecated`, against
 0–2.5% for every other shipped locale. Only live records are indexed.
 
 ## Install

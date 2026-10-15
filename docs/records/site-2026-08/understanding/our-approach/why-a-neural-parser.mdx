@@ -28,10 +28,10 @@ Richard Sutton's 2019 essay "The Bitter Lesson" argues that over the history of 
 
 Applied to address parsing:
 
-| Approach | Short-term                                                                     | Long-term                                                                               |
-| -------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| Rules    | Fix one failure mode immediately with a regex or dictionary update             | Accumulate rules that conflict, need maintenance, and ceiling at ~92% accuracy          |
-| Neural   | Spend time building corpus + training infrastructure before seeing any benefit | Learn the structure of addresses from data; improve with more data without adding rules |
+| Approach | Short-term                                                                     | Long-term                                                                                   |
+| -------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Rules    | Fix one failure mode immediately with a regex or dictionary update             | Accumulate rules that conflict, need maintenance, and ceiling at ~92% accuracy              |
+| Neural   | Spend time building corpus + training infrastructure before seeing any benefit | Learn the structure of addresses from data, and improve with more data without adding rules |
 
 The rule-based approach won the first decade of geocoding (2008-2018) because the cost of training a neural model was high and the cost of writing one more regex was low. The neural approach wins now because the cost of training has dropped (HuggingFace Transformers, ONNX export, cloud GPUs) and the cost of maintaining rule sets has grown (international expansion, long-tail address formats, user-generated content).
 
@@ -49,7 +49,7 @@ A small model is:
 
 - **Fast.** ~10ms per address on CPU.
 - **Browser-deployable.** The full ONNX bundle is ~25MB compressed.
-- **Cheap to train.** A full training run is ~6 hours on a consumer GPU.
+- **Cheap to train.** A from-scratch training run is ~6 hours on a consumer GPU.
 - **Cheap to retrain.** When you add training data for a new failure mode, you can retrain in hours rather than days.
 
 ### Why from scratch
@@ -85,7 +85,7 @@ Mailwoman v2 keeps every rule classifier from v1:
 
 These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode is a postcode — a model gains no benefit by re-learning that pattern.
 
-The **policy registry** decides, per component, per locale, which classifier(s) get authority:
+The **policy registry** decides, per component and per locale, what classifier(s) get authority:
 
 ```ts
 interface ClassifierPolicy {
@@ -134,13 +134,13 @@ Rules either match or don't — binary. The neural model outputs probabilities. 
 - **High confidence on locality/region, low confidence on street** → partial route with ambiguity flag.
 - **Low confidence everywhere** → escalate to manual review.
 
-This is the **graceful failure** that the operator's Paris, Texas talk described as the target behavior: "The mail carrier squinting at bad handwriting and figuring it out anyway." Unlike the mail carrier, the model doesn't figure out ambiguous input; it signals when it can't, and that signal is more useful downstream than a confident wrong answer.
+This is the **graceful failure** that the operator's Paris, Texas talk described as the target behavior: "The mail carrier squinting at bad handwriting and figuring it out anyway." Unlike the mail carrier, the model doesn't figure out ambiguous input. It signals when it can't, and that signal is more useful downstream than a confident wrong answer.
 
 ## What the neural parser doesn't change
 
 - **The tokenizer is still deterministic.** SentencePiece is a trained subword tokenizer, but it produces the same output for the same input every time.
-- **The resolver is still a lookup.** The model emits labels; the resolver turns labels into coordinates via a gazetteer. The resolver does not use the model.
-- **The solver is still a constraint system.** The reconciler picks coherent interpretations from the model's candidates. The model proposes; the solver disposes.
+- **The resolver is still a lookup.** The model emits labels, and the resolver turns labels into coordinates via a gazetteer. The resolver does not use the model.
+- **The solver is still a constraint system.** The reconciler picks coherent interpretations from the model's candidates. The model proposes, and the solver disposes.
 - **You can still debug failures.** When the model misclassifies a span, you can examine the per-token confidence distribution, the phrase grouper's boundary proposals, and the reconciler's alternative candidates. The system is more opaque than a rule set but more inspectable than a black-box LLM.
 
 ## The path forward
@@ -158,7 +158,7 @@ The architecture direction holds. What's open is whether the current training ap
 ## See also
 
 - [How it works now](./how-it-works-now.mdx) — the current rule + neural hybrid in detail
-- [How the model reasons](../../concepts/how-the-model-reasons.mdx) — the transformer architecture deep dive
+- [How the model reasons](../../concepts/how-the-model-reasons.mdx) — the full description of the transformer architecture
 - [The knowledge ladder](./the-knowledge-ladder.mdx) — the staged pipeline decomposition
 - [The tokenization tautology](../why-its-hard/the-tokenization-tautology.mdx) — why rules hit a ceiling
 - [The case for simple geocoders](../alternatives/the-case-for-simple-geocoders.mdx) — the strongest argument for the alternative

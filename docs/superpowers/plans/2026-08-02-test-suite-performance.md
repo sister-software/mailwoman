@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- **Node runs source directly** with type stripping and without flags. Relative imports carry explicit `.ts` extensions.
+- **Node runs source directly** with type stripping and without flags. Relative imports include explicit `.ts` extensions.
 - **`erasableSyntaxOnly: true`** applies repo-wide. Do not use `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), constructor parameter properties, or runtime namespaces.
 - **Do not read `process.env` or `process.argv` directly.** oxlint enforces this in CI (`sister-software/no-process-globals`). The only approved accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
 - **Data-root paths go through `@mailwoman/core/utils`** with `dataRootPath(...)` / `dataRootPath()`. The `$MAILWOMAN_DATA_ROOT` default is defined in one place (`core/utils/data-root.ts`). Never hardcode it again. Docs and help text should reference `$MAILWOMAN_DATA_ROOT`.
@@ -32,22 +32,22 @@
 
 ## File Structure
 
-| file                                                             | disposition | responsibility                                                                                        |
-| ---------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `.github/workflows/cache-prune.yml`                              | create      | Scheduled Actions-cache prune. Sole owner of the retention policy.                                    |
-| `scripts/derived-weights-key.ts`                                 | create      | Compute the content key for the derived-weights store. Pure; no I/O beyond reading the hashed inputs. |
-| `scripts/derived-weights-key.test.ts`                            | create      | Unit tests for the key function.                                                                      |
-| `scripts/copy-weights.ts`                                        | modify      | Read/write the derived store before spawning the CLI builders.                                        |
-| `mailwoman/gazetteer-pipeline/fst.ts`                            | modify      | Memoize `computeSurfaceCountryCounts` by `dbPath` + mtime.                                            |
-| `mailwoman/gazetteer-pipeline/evidence-lexicons.ts`              | modify      | Memoize `loadPersonNameSurfaces`.                                                                     |
-| `mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`         | modify      | Drop the two full-DB tests; keep the pure-unit surface.                                               |
-| `mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts` | create      | The fixture admin DB + the four laws end to end. Runs on every PR.                                    |
-| `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts`    | create      | The full-scale build. Path-conditional / nightly / release only.                                      |
-| `.github/workflows/test.yml`                                     | modify      | `lexicon-full` job, the PARTIAL CHECK annotation, the `out/` cache.                                   |
-| `.github/workflows/lexicon-nightly.yml`                          | create      | Nightly full-scale build against the live data root.                                                  |
-| `neural/test/weights.test.ts`                                    | modify      | Hoist the link scripts and the shared classifier.                                                     |
-| `vitest.config.ts`                                               | modify      | Exclude `.venv` and `scratchpad`.                                                                     |
-| `package.json`                                                   | modify      | `ci:test:fast` / `ci:test:slow` globs for the new test files.                                         |
+| file                                                             | disposition | responsibility                                                                                             |
+| ---------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/cache-prune.yml`                              | create      | Scheduled Actions-cache prune. Sole owner of the retention policy.                                         |
+| `scripts/derived-weights-key.ts`                                 | create      | Compute the content key for the derived-weights store. Pure, without I/O beyond reading the hashed inputs. |
+| `scripts/derived-weights-key.test.ts`                            | create      | Unit tests for the key function.                                                                           |
+| `scripts/copy-weights.ts`                                        | modify      | Read/write the derived store before spawning the CLI builders.                                             |
+| `mailwoman/gazetteer-pipeline/fst.ts`                            | modify      | Memoize `computeSurfaceCountryCounts` by `dbPath` + mtime.                                                 |
+| `mailwoman/gazetteer-pipeline/evidence-lexicons.ts`              | modify      | Memoize `loadPersonNameSurfaces`.                                                                          |
+| `mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`         | modify      | Drop the two full-DB tests, keep the pure-unit surface.                                                    |
+| `mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts` | create      | The fixture admin DB + the four laws end to end. Runs on every PR.                                         |
+| `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts`    | create      | The full-scale build. Path-conditional / nightly / release only.                                           |
+| `.github/workflows/test.yml`                                     | modify      | `lexicon-full` job, the PARTIAL CHECK annotation, the `out/` cache.                                        |
+| `.github/workflows/lexicon-nightly.yml`                          | create      | Nightly full-scale build against the live data root.                                                       |
+| `neural/test/weights.test.ts`                                    | modify      | Hoist the link scripts and the shared classifier.                                                          |
+| `vitest.config.ts`                                               | modify      | Exclude `.venv` and `scratchpad`.                                                                          |
+| `package.json`                                                   | modify      | `ci:test:fast` / `ci:test:slow` globs for the new test files.                                              |
 
 ---
 
@@ -264,7 +264,7 @@ EOF
 
 ### Task 2: Materialize weights from the data root rather than GitHub's cache
 
-The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path to the cache service. The source model is already on local disk on that same host (`release.config.json` → `dataRoot: $MAILWOMAN_DATA_ROOT`). Only the derived `postcode-*.bin` / `pair-index-*.bin` are expensive to produce; those get a content-keyed store in the data root.
+The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path to the cache service. The source model is already on local disk on that same host (`release.config.json` → `dataRoot: $MAILWOMAN_DATA_ROOT`). Only the derived `postcode-*.bin` / `pair-index-*.bin` are expensive to produce. Those get a content-keyed store in the data root.
 
 **Files:**
 
@@ -381,7 +381,7 @@ describe("derivedWeightsDir", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `yarn vitest run scripts/derived-weights-key.test.ts`
-Expected: FAIL — `Failed to resolve import "./derived-weights-key.ts"`.
+Expected: fail — `Failed to resolve import "./derived-weights-key.ts"`.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -472,7 +472,7 @@ export function derivedWeightsDir(key: string): string {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `yarn vitest run scripts/derived-weights-key.test.ts`
-Expected: PASS, 7 tests.
+Expected: pass, 7 tests.
 
 ⚠ If `DERIVED_WEIGHTS_INPUTS` names a path that does not exist in this checkout, that is fine at runtime (it hashes as absent) but wrong as a spec. Verify each one:
 
@@ -609,7 +609,7 @@ time node scripts/copy-weights.ts 2>&1 | grep -E "derived store|built soft-feed"
 time node scripts/copy-weights.ts 2>&1 | grep -E "derived store|built soft-feed"
 ```
 
-Expected: the first run prints `derived store WRITE →` lines and takes minutes; the second prints `derived store HIT →` for every `.bin` and completes in seconds.
+Expected: the first run prints `derived store WRITE →` lines and takes minutes. The second prints `derived store HIT →` for every `.bin` and completes in seconds.
 
 - [ ] **Step 8: Verify the artifacts are byte-identical**
 
@@ -627,14 +627,14 @@ for (const d of readdirSync(".").filter(x => x.startsWith("neural-weights-")))
 Record the md5s. They must match what the pre-change `copy-weights.ts` produced — run the parity guard to confirm:
 
 Run: `yarn vitest run neural/test/pair-index-card-parity.test.ts`
-Expected: PASS. This is the guard that caught the 2026-08-02 stale-artifact incident; it is the backstop here too.
+Expected: pass. This is the guard that caught the 2026-08-02 stale-artifact incident. It is the backstop here too.
 
 - [ ] **Step 9: Remove the two weights cache blocks from `test.yml`**
 
 In `.github/workflows/test.yml`, delete from both the `unit-slow` and `smoke` jobs:
 
 - the `Restore weights cache (model + soft-feed siblings)` step,
-- the `if: steps.weights-cache.outputs.cache-hit != 'true'` conditions on `Materialize weights` and `Symlink base-latn model` (the steps stay; they become unconditional, modulo the smoke leg's existing path-check condition).
+- the `if: steps.weights-cache.outputs.cache-hit != 'true'` conditions on `Materialize weights` and `Symlink base-latn model` (the steps stay and become unconditional, modulo the smoke leg's existing path-check condition).
 
 For `unit-slow` the two steps become:
 
@@ -660,7 +660,7 @@ For `smoke`, keep the existing `if: github.event_name != 'pull_request' || steps
 - [ ] **Step 10: Run the full slow leg**
 
 Run: `yarn compile && yarn ci:test:slow`
-Expected: PASS. Note the wall-clock — it should be unchanged from the ~240s baseline at this point (Task 4 is what moves it).
+Expected: pass. Note the wall-clock — it should be unchanged from the ~240s baseline at this point (Task 4 is what moves it).
 
 - [ ] **Step 11: Commit**
 
@@ -696,7 +696,7 @@ EOF
 
 ### Task 3: Memoize the two full-DB scans
 
-`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither result. A cache for both results is worth adding on its own, because it halves the full build wherever it runs. Tasks 4 and 5 build on it.
+`buildLocalitySurfaceLexicon` calls `computeSurfaceCountryCounts(dbPath)` (a full scan of `spr` + `names`) and `loadPersonNameSurfaces()` on every invocation. The FR and US builds run in one process and share neither result. A cache for both results justifies its own task, because it halves the full build wherever it runs. Tasks 4 and 5 build on it.
 
 **Files:**
 
@@ -707,7 +707,7 @@ EOF
 **Interfaces:**
 
 - Consumes: no artifact from earlier tasks.
-- Produces: `computeSurfaceCountryCounts(dbPath: string): Map<string, number>` keeps its exact signature and return type; only its caching changes. Same for `loadPersonNameSurfaces(): Set<string>`.
+- Produces: `computeSurfaceCountryCounts(dbPath: string): Map<string, number>` keeps its exact signature and return type. Only its caching changes. Same for `loadPersonNameSurfaces(): Set<string>`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -878,7 +878,7 @@ Every call site must only read (`.get` / `.has` / iteration). If one mutates, re
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `yarn vitest run mailwoman/gazetteer-pipeline/scan-memo.test.ts`
-Expected: PASS, 4 tests.
+Expected: pass, 4 tests.
 
 - [ ] **Step 5: Memoize `loadPersonNameSurfaces`**
 
@@ -911,7 +911,7 @@ grep -rn "loadPersonNameSurfaces" --include="*.ts" --include="*.tsx" . | grep -v
 - [ ] **Step 6: Measure the full build**
 
 Run: `time yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`
-Expected: PASS, and meaningfully faster than the 236.9s baseline. Record the number — the spec estimates ~130s.
+Expected: pass, and meaningfully faster than the 236.9s baseline. Record the number — the spec estimates ~130s.
 
 ⚠ If it is not faster, the memo is not being hit. Add a temporary `console.error` in the miss branch and re-run to record the scan count.
 
@@ -954,7 +954,7 @@ The two `describe.skipIf(!existsSync(ADMIN_DB))` tests are 236.9s of the slow le
 
 **Interfaces:**
 
-- Consumes: `buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts): BuiltLexicon` from Task 3's file, unchanged. `opts.dbPath` and `opts.output` already exist. `BuiltLexicon` carries `{ path, entries, homographs, skippedDegenerate, skippedRegionVocabulary, skippedSubPhrase, skippedProminence, maxNgram }`.
+- Consumes: `buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts): BuiltLexicon` from Task 3's file, unchanged. `opts.dbPath` and `opts.output` already exist. `BuiltLexicon` holds `{ path, entries, homographs, skippedDegenerate, skippedRegionVocabulary, skippedSubPhrase, skippedProminence, maxNgram }`.
 - Produces: no artifact other tasks import.
 
 - [ ] **Step 1: Write the fixture test**
@@ -1263,7 +1263,7 @@ yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts
 Expected: both pass, both in under two seconds.
 
 Run: `time yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts`
-Expected: PASS, ~130s (Task 3's memo applies).
+Expected: pass, ~130s (Task 3's memo applies).
 
 - [ ] **Step 5: Update the CI globs**
 
@@ -1279,10 +1279,10 @@ Note `evidence-lexicons.full.test.ts` is now in **neither** leg — Task 5 gives
 - [ ] **Step 6: Verify both legs**
 
 Run: `time yarn ci:test:fast`
-Expected: PASS. The fixture file is now included; wall-clock should stay near the ~7.5s baseline.
+Expected: pass. The fixture file is now included, and wall-clock should stay near the ~7.5s baseline.
 
 Run: `time yarn ci:test:slow`
-Expected: PASS in ~90s (was ~240s). This is the headline number for the whole plan — record it.
+Expected: pass in ~90s (was ~240s). This is the headline number for the whole plan — record it.
 
 - [ ] **Step 7: Commit**
 
@@ -1522,7 +1522,7 @@ git push
 gh pr create --fill --base main
 ```
 
-Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary carries the "skipped (path-conditional)" block. On a PR that does touch it: the job runs the full build.
+Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary contains the "skipped (path-conditional)" block. On a PR that does touch it: the job runs the full build.
 
 ⚠ Verify the aggregator still reports. `test` is the required status check and both the ruleset and publish.yml's auto-merge match on that exact context name — adding a `needs` entry must not rename it.
 
@@ -1642,7 +1642,7 @@ grep -n "link-dev-weights.ts" neural/test/weights.test.ts
 - [ ] **Step 3: Run to verify the assertions still pass**
 
 Run: `yarn vitest run neural/test/weights.test.ts`
-Expected: PASS, same test count as baseline. Record the new wall-clock.
+Expected: pass, same test count as baseline. Record the new wall-clock.
 
 - [ ] **Step 4: Share the en-gb classifier where the load does not vary**
 
@@ -1682,14 +1682,14 @@ and in those tests replace `const cls = await NeuralAddressClassifier.loadFromWe
 - [ ] **Step 5: Run to verify**
 
 Run: `yarn vitest run neural/test/weights.test.ts`
-Expected: PASS, same test count. Wall-clock target ~45s (from 96.6s).
+Expected: pass, same test count. Wall-clock target ~45s (from 96.6s).
 
 ⚠ If any assertion now fails, the shared instance is carrying state between tests. Revert that specific test to its own load rather than weakening the assertion.
 
 - [ ] **Step 6: Run the whole slow leg**
 
 Run: `time yarn ci:test:slow`
-Expected: PASS. Record the wall-clock.
+Expected: pass. Record the wall-clock.
 
 - [ ] **Step 7: Commit**
 
@@ -1780,7 +1780,7 @@ gh api repos/sister-software/mailwoman/actions/runs/<id>/jobs \
 
 Expected on the second run: `Compile` ≤ 15s (was 29–36s), and `Restore compiled tree` a few seconds.
 
-⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is expected. The key includes `github.sha`, so all legs of the _same_ run miss. The saving shows up on re-runs and on later pushes. If that trade is not worth it, drop `github.sha` from the key and hash the sources directly.
+⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is expected. The key includes `github.sha`, so all legs of the _same_ run miss. The saving shows up on re-runs and on later pushes. If the first-run miss costs more than the re-run saving, drop `github.sha` from the key and hash the sources directly.
 
 - [ ] **Step 4: Confirm the cache is not blowing the quota**
 
@@ -1830,7 +1830,7 @@ Two small things. The excludes fix a confirmed local flake. The worker cap has t
 
 - [ ] **Step 1: Reproduce the `.venv` collection**
 
-Run from the **main checkout**, which is the one that has the virtualenv:
+Run from the **main checkout**. That checkout has the virtualenv:
 
 ```bash
 cd /home/lab/Projects/mailwoman
@@ -1869,7 +1869,7 @@ cd /home/lab/Projects/mailwoman/.claude/worktrees/perf+test-suite
 Expected: `0`.
 
 Run: `yarn vitest run --maxWorkers=4 --exclude './mailwoman/test/**' --exclude './mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts' --exclude './mailwoman/commands/geocode.test.ts' --exclude './resolver-wof-sqlite/**' --exclude './neural/test/**'`
-Expected: PASS with **no** `1 skipped` and no `legend.test.js` failure.
+Expected: pass with **no** `1 skipped` and no `legend.test.js` failure.
 
 - [ ] **Step 4: Measure the worker cap on the post-Task-4 slow leg**
 
@@ -1950,16 +1950,16 @@ gh run view <id> --json jobs \
 
 Check every criterion from the spec:
 
-| criterion                                                     | target                                                          |
-| ------------------------------------------------------------- | --------------------------------------------------------------- |
-| green wall-clock on a no-op PR                                | ≤ 3m00s on all three runs (was 6m29s)                           |
-| hosted-leg install                                            | ≤ 30s on all three legs, all three runs (was 24s/83s coin-flip) |
-| `active_caches_size_in_bytes`                                 | < 8 GB (was 10.7 GB)                                            |
-| `unit-slow` test step, non-gazetteer PR                       | ≤ 120s (was 253s)                                               |
-| full-scale build still runs, still asserts `entries > 10_000` | in nightly and release                                          |
-| a run that skips it says so                                   | step summary present                                            |
-| `evidence-lexicons` PR path invariant to gazetteer size       | fixture test unchanged by a rebuild                             |
-| no net loss of assertions                                     | every law still asserted on every PR                            |
+| criterion                                                     | target                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| green wall-clock on a no-op PR                                | ≤ 3m00s on all three runs (was 6m29s)                              |
+| hosted-leg install                                            | ≤ 30s on all three legs, all three runs (was 24s or 83s at random) |
+| `active_caches_size_in_bytes`                                 | < 8 GB (was 10.7 GB)                                               |
+| `unit-slow` test step, non-gazetteer PR                       | ≤ 120s (was 253s)                                                  |
+| full-scale build still runs, still asserts `entries > 10_000` | in nightly and release                                             |
+| a run that skips it reports the skip                          | step summary present                                               |
+| `evidence-lexicons` PR path invariant to gazetteer size       | fixture test unchanged by a rebuild                                |
+| no net loss of assertions                                     | every law still asserted on every PR                               |
 
 ⚠ Report every number, including any that miss. A criterion that is not met is a finding and must stay in the report. Say which criterion missed and by how much.
 

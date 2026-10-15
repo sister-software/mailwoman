@@ -71,7 +71,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     # Run B (consensus #2): Run A's 5x (10.0) undershot — affix prefix 64.9/suffix 52.4 (need 72/64),
     # US postcode 96.1. Finding: affix is per-step density-bound — the affix-good diagnostic (20.0) beat
@@ -166,7 +166,7 @@ train:
   grad_clip_norm: 1.0
   max_steps: 20000
   # eval every 2k → the DeepSeek capacity-tell is at step 8000 (8k into the resume): if suffix < 55 and
-  # country < 84.5 there, stop — genuine equilibrium ceiling, escalate to a wider model (do not iterate).
+  # country < 84.5 there, stop — that is the equilibrium ceiling, escalate to a wider model (do not iterate).
   eval_every_steps: 2000
   save_every_steps: 2000
   log_every_steps: 50

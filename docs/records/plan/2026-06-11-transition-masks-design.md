@@ -1,8 +1,8 @@
 # Per-system transition masks — design note (#478 increment 3 rather than yet built)
 
 Status: DESIGN ONLY (night-11). Increment 1 (emission mask, v4.3.0) and the span bridge (v4.4.0
-corrective) shipped; the train-time loss-mask pairing is implemented and banked
-(`use_conventions_loss_mask`, probe deferred by consult — rides the next full run). Transition
+corrective) shipped. The train-time loss-mask pairing is implemented and committed
+(`use_conventions_loss_mask`). A consult deferred its probe, so it trains in the next full run. Transition
 masks are the next decode-side increment, recorded here with their failure mode before anyone
 implements them in a hurry.
 
@@ -13,7 +13,7 @@ ungrammatical in a detected system, applied as additive `-1e9` entries to the Vi
 matrix (which is structural-BIO-only today). Candidate first rows, each with measured motivation:
 
 - `fr`/`de`: `I-postcode → B-street` and `I-postcode → B-house_number` — the digit-split family
-  (a 5-digit-system postcode never hands off mid-number; both systems' shapes are `^\d{5}$`).
+  (a 5-digit-system postcode never hands off mid-number, and both systems' shapes are `^\d{5}$`).
 - Universal candidate (needs care): `B-postcode → B-postcode` within three chars — the
   double-postcode emission the comma-bridge incident exposed (the model double-labels a
   following house number as a second postcode fragment).
@@ -23,7 +23,7 @@ matrix (which is structural-BIO-only today). Candidate first rows, each with mea
 The rule that forbids `I-postcode → B-street` does not make the orphan digit correct — it forces the
 probability somewhere, and the most likely refuge is `I-postcode`: the digit gets ABSORBED INTO
 the postcode, corrupting it worse than the split did ("4711" + street "0 …" at least kept four
-correct digits; "47110…" absorbing a house number corrupts the field outright). Any transition-
+correct digits; "47110…" absorbing a house number corrupts every digit of the field). Any transition-
 mask implementation must ship with this as a regression TEST CASE: the FR digit-split rows +
 the glue rows, asserted not-worse under the mask.
 

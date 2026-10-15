@@ -5,7 +5,7 @@
  * @file Zip readers for archives already in memory or stored on disk.
  *
  *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`.
- *   That suits a client that just downloaded one (`bdc/sdk/download.ts`).
+ *   That suits a client that has downloaded one into memory (`bdc/sdk/download.ts`).
  *   It does not suit large archives because adm-zip keeps both the archive and decompressed member in memory.
  *   National address dumps under `$MAILWOMAN_DATA_ROOT` range from 0.5–2.9 GB compressed and reach 9 GB unpacked.
  *   The path-based readers stream them. Yauzl seeks the central directory through a file handle and inflates one member on demand.

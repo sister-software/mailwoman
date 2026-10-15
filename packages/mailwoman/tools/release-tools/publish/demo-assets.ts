@@ -64,7 +64,7 @@ export interface DemoAssetUpload {
 	contentType: string
 	cacheControl: string
 	/**
-	 * The `Content-Encoding` the stored object carries, when the upload compresses it.
+	 * The `Content-Encoding` recorded on the stored object, when the upload compresses it.
 	 */
 	contentEncoding?: "gzip"
 }

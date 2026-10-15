@@ -54,11 +54,11 @@ export interface APIClientConfig {
 	disposeCacheStorage?: boolean
 
 	/**
-	 * How many requests to make per minute before enforcing a cooldown: a budget model —
+	 * The number of requests to make per minute before enforcing a cooldown: a budget model —
 	 * spend `requestsPerMinute` dispatches, then stall until the cooldown lapses.
 	 *
 	 * This cannot express a flat per-second rate.
-	 * Many fair-access policies publish that limit.
+	 * Some fair-access policies publish that limit.
 	 * Use {@linkcode minRequestIntervalMs} for that.
 	 *
 	 * The two compose (both limits must clear) but you almost certainly want one.
@@ -143,7 +143,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		// The pacing limit lives IN the adapter rather than in `fetch()`: `axios-cache-interceptor`
 		// short-circuits a cache HIT by replacing `config.adapter` with its own `cachedAdapter`,
-		// so anything installed here is reached only when the request is actually going to the network.
+		// so anything installed here is reached only when the request is going to the network.
 		// A check in `fetch()` would run after the cache interceptor and make every
 		// cache hit burn a full pacer sleep.
 		//

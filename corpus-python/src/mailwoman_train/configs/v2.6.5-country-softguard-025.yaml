@@ -1,6 +1,6 @@
 # v2.6.5-country-softguard-025 — #1104 homograph-guard probe. One variable vs v264: country_ambiguous_scale
 # 0.5 -> 0.25 (a stronger soften). init_from v263 (same base as v264, for a clean A/B). v264 (0.5) already
-# cleanly beat v263 (homograph 82.6->85.1, WOF-admin 89.3->91.1, coord flat); this probes whether 0.25
+# beat v263 on every listed measure (homograph 82.6->85.1, WOF-admin 89.3->91.1, coord flat); this probes whether 0.25
 # recovers more homograph recall without eroding precision — watch the hallucination guard (over-softening
 # lets the model over-emit country on non-country homographs like "Georgia" the state). init_from v263 so
 # encoder keeps v263's country channel + span-boundary grammar and only relearns to trust homograph
@@ -10,7 +10,7 @@
 # unchanged from v263. check (package-shaped, eval check --weights-cache): country-homograph F1 recovers
 # toward 89.8 from v263's 82.6 while golden WOF-admin country recall holds ~89.3% and the held-out US/FR
 # coordinate stays flat (the #566 ship check) + the real-postal board does not regress. Grade package-shaped, never
-# --model alone (#718 country-off trap).
+# --model by itself (#718 country-off trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

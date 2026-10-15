@@ -69,14 +69,14 @@ GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
 - Where the corpus came from: OpenAddresses' `asia.zip` (collected 2021-10-20), whose `LICENSE.txt`
   lists every `kr/<province>/provincewide` as `License: Unknown`, `Required attribution: Ministry of
   the Interior`. The source definition (`sources/kr/11/provincewide.json`) points at a contributor
-  upload, `korea-feb2017.zip`, and its `license` field carries only an attribution name. The pull
-  request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) says "I did not see a
+  upload, `korea-feb2017.zip`, and its `license` field holds only an attribution name. The pull
+  request that added it (openaddresses/openaddresses#2688, merged 2017-03-26) states "I did not see a
   clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).
 - What that product is at the source: the ministry's 도로명주소 위치정보 요약DB (entrance coordinates) and
-  도로명주소 전자지도. On data.go.kr both carry 공공누리 제1유형 (attribution; commercial use and
+  도로명주소 전자지도. On data.go.kr both are licensed under 공공누리 제1유형 (attribution required, commercial use and
   derivatives permitted) and the note that they are provided only after a separate application and a
   purpose-of-use review by the local government or the ministry (시행령 제46조, 시행규칙 제53조,
-  별지 제32호서식). Nobody in the chain above applied. The application form's wording is unread.
+  별지 제32호서식). No party in the chain above applied. The application form's wording is unread.
 - The export rule: 도로명주소법 제25조 제10항 forbids taking a 주소정보기본도 or 주소정보안내도 that contains
   disclosure-restricted spatial information out of Korea without the minister's permission (up to two
   years or 20,000,000 won). Whether entrance coordinates count as restricted is unread.
@@ -86,7 +86,7 @@ GeoJSON). An ALS-to-FST/gazetteer compilation is adaptation. Is that permitted?
   name in the register, is in those products.
 - KOGL's AI type (2026-01-28, 문화체육관광부 + 과학기술정보통신부): permits training and commercial use of
   the trained model, forbids resale of the training set and outputs substantially similar to the source,
-  and applies only where the agency adds the AI mark. None of the address datasets carry it.
+  and applies only where the agency adds the AI mark. None of the address datasets has the mark.
 
 **Posture:** the 2026-09-06 decisions (the KR spec, `docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md`)
 replaced the earlier rule against touching juso data. The exposure is limited to the coordinate file in the
@@ -95,12 +95,12 @@ replaced the earlier rule against touching juso data. The exposure is limited to
 rest on a product that has no application step. Until that run is promoted, the 0.0.2 weights stay as shipped,
 with the attribution line in the card.
 
-## 5. Japan (all green; two riders)
+## 5. Japan (all green, two riders)
 
-**Facts:** ABR is PDL-1.0, which is CC BY 4.0-compatible and requires attribution and a modification notice.
+**Facts:** ABR is PDL-1.0. That license is CC BY 4.0-compatible and requires attribution and a modification notice.
 MLIT is PDL-1.0. Geolonia is CC BY 4.0. Japan Post expressly disclaims copyright on KEN_ALL.
 
-**Riders:** (a) The parcel-level ABR 地番マスター carries a second Ministry-of-Justice grant. Check
+**Riders:** (a) The parcel-level ABR 地番マスター is under a second Ministry-of-Justice grant. Check
 it before building any parcel-tier JP feature. (b) **MJ文字情報一覧表 / MJ縮退マップ are CC BY-SA 2.1 JP
 (share-alike).** If we ever ship an itaiji-normalization table derived from them, the share-alike terms apply to
 the table file. Equivalences from green-licensed data avoid that.
@@ -116,7 +116,7 @@ is ever wanted.
 ## 7. Commercial-license text (GTM A2)
 
 The pricing page (PR #1353) published two lasting commitments before any legal review:
-the rate is fixed at signup, and OEM deals carry no revenue share and no exclusivity. The A2 license text itself
+the rate is fixed at signup, and OEM deals include no revenue share and no exclusivity. The A2 license text itself
 (amendments to COMMERCIAL-LICENSE.md) is drafted but not reviewed. Both CTAs are mailto links, so
 no sale closes self-serve. The text should still be the first item counsel reviews.
 
@@ -136,17 +136,17 @@ on the free channel) and marks every point where an instrument would be needed.
    so it collects personal data. Counsel should settle the notice text at the point of collection, the retention period for
    the download log, and whether the privacy page's "architecturally does not collect" wording
    needs a written carve-out. The form cannot go live until these are settled.
-2. **L2 — the instrument the Lite key is issued under.** It cannot be the AGPL, which governs our code and not
+2. **L2 — the instrument the Lite key is issued under.** It cannot be the AGPL. The AGPL governs our code and not
    a compiled database, and it cannot be the commercial license. The key needs a short data-use notice that states the
    attribution condition and fits correctly on top of the upstream licenses.
 3. **L3 — can we attach conditions to a compiled artifact whose inputs are public domain?** The working
    assumption is that the attribution condition comes from the download agreement rather than from a copyright
    claim over facts. The EU database-compilation right and US law likely differ here. **The whole Lite line
    depends on this answer.**
-4. **L4 — the WOF license, which needs fact-finding first.** The repo contradicts itself: the
+4. **L4 — the WOF license. It needs fact-finding first.** The repo contradicts itself: the
    licensing pages say CC0, `resolver-wof-sqlite/README.md` and the HF dataset card say CC-BY 4.0,
-   `THIRD_PARTY_NOTICES.md` says "several sources with their own licenses." If CC-BY, the
-   gazetteer carries a standing attribution obligation in **both** channels. The upstream's own
+   `THIRD_PARTY_NOTICES.md` states "several sources with their own licenses." If CC-BY, the
+   gazetteer has a standing attribution obligation in **both** channels. The upstream's own
    license page may answer the question without a lawyer.
 5. **L5 — Eurostat GISCO NUTS terms** (the EuroGeographics component). The repo records an
    attribution string and no license identifier at all, so whether a built `nuts.db` may be

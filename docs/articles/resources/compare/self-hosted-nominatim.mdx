@@ -51,7 +51,7 @@ That single difference produces the rest of this table.
 | Reference data         | OpenStreetMap                              | Who's On First, plus national registers per country      |
 | Ambiguity              | Surfaced as a ranked result list           | Resolved to one reading, with alternatives attached      |
 | Partial or fuzzy input | A strength — scoring is continuous         | A weakness — a failed parse has no key to look up        |
-| Non-address queries    | Answers them; place types are searchable   | Not the design                                           |
+| Non-address queries    | Answers them. Place types are searchable   | Not the design                                           |
 | What arrives           | A matched record with an address breakdown | Labeled spans with offsets, plus a coordinate and a tier |
 | Setup                  | An import and an index build               | A package install and a download                         |
 
@@ -59,8 +59,8 @@ That single difference produces the rest of this table.
 It degrades gracefully — a misspelled or half-remembered string still returns a ranked list, where a
 parser that mislabels a span looks up the wrong index and returns no result at all. Its data is
 OpenStreetMap, so a place that exists in OSM is reachable the day it is mapped, with no locale tier
-to wait for. And a ranked list is the right shape for a search box, which is what it was built to
-serve.
+to wait for. And a ranked list is the right shape for a search box. Nominatim was built to
+serve a search box.
 
 **Where the designs diverge on output.** Nominatim returns the record that matched. Mailwoman returns
 which characters of your input were the street and which were the town, with offsets. If your next
@@ -72,13 +72,13 @@ record is a step short of it.
 - **Your queries are exploratory.** Search boxes, partial strings, landmarks, place types. This is its
   home ground, and a parser is the wrong instrument because there is frequently no address to parse.
 - **You want OpenStreetMap specifically.** If your workflow depends on OSM identifiers, OSM tags, or
-  contributing corrections upstream and seeing them in your own results, that loop is worth more than
+  contributing corrections upstream and seeing them in your own results, that loop outweighs
   any property of a different engine.
 - **You are already operating PostgreSQL well.** The database is the operational burden, and a team
   that runs Postgres competently has already paid most of it.
 - **You need a country outside the measured tiers.** OSM coverage is a property of the map rather than of a
   locale tier. Where our coverage is unverified,
-  [What ships today](../../developers/status.mdx) says so, and an engine with global OSM coverage is
+  [What ships today](../../developers/status.mdx) states that, and an engine with global OSM coverage is
   the more predictable choice.
 - **Your workload is reverse geocoding over dense OSM features.** Coordinate to nearest mapped
   feature, across every feature class, is what the index is arranged for.
@@ -90,9 +90,9 @@ record is a step short of it.
 - **You need the decomposition.** Spans with offsets rather than a matched record you post-process into
   fields.
 - **You want a smaller resident footprint.** The gazetteer is read from disk rather than held in
-  memory, which is what the constrained-probe design buys.
+  memory. That is the effect of the constrained-probe design.
 - **You want to scope the data to what you serve.** Coverage is a set of downloads, so a France-only
-  deployment carries France-sized artifacts.
+  deployment stores France-sized artifacts.
 - **You have Nominatim clients already written.** `@mailwoman/nominatim` serves `/search`, `/reverse`
   and `/status` on a compatible surface, so the swap does not touch calling code for `/search` and
   `/status` — `/reverse` returns an empty result until you build a full WOF distribution and mount it —
@@ -118,7 +118,7 @@ mailwoman data pull candidate fr
 node fr-ban-panel.ts --data-root <DATA_ROOT>
 ```
 
-[Benchmarks](../benchmarks/index.mdx) carries the method and the results, including the rows that
+[Benchmarks](../benchmarks/index.mdx) gives the method and the results, including the rows that
 missed.
 
 ## Related

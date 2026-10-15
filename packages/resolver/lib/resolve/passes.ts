@@ -191,7 +191,7 @@ export interface ResolutionState {
 	defaultCountry: DefaultCountry | null
 
 	/**
-	 * The tree's only value-bearing node when it maps to `locality`, or null otherwise.
+	 * The tree's only node with a value when it maps to `locality`, or null otherwise.
 	 *
 	 * Its lookup also probes countries and regions of the same name, because the locality
 	 * placetype filter cannot reach a country that the parser tagged as a locality.
@@ -203,7 +203,7 @@ export interface ResolutionState {
 	 * The tree's first postcode value.
 	 *
 	 * Locality lookups send it to the backend.
-	 * The backend can then favor nearby candidates.
+	 * The backend can then favor candidates closer to the postcode.
 	 */
 	postcode?: string | null
 
@@ -363,7 +363,8 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 
 /**
  * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
- * a locality lookup uses it because the postcode node is usually a sibling.
+ *
+ * A locality lookup uses it because the postcode node is a sibling in the tree shape this pass expects.
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | null {
 	for (const n of walkNodes(roots)) {
@@ -477,32 +478,33 @@ async function recoverPostcodeNode(
 }
 
 /**
- * The farthest distance, in kilometers, that {@link applyPostcodeConsistency}
- * moves a locality onto its postcode's point.
+ * Measures each resolved locality and dependent locality against `anchor`,
+ * a point the tree places the address at.
+ *
+ * A node farther than `thresholdKm` is re-picked to its nearest alternative
+ * within the threshold when one exists.
+ *
+ * When no alternative lies within the threshold, `findNear` may return more same-name
+ * candidates for the node, and the nearest of those within the threshold is taken instead.
+ *
+ * Returns each node that lay beyond the threshold, with its distance before any re-pick.
+ * The caller decides what an unreconciled node means for its anchor.
  */
-export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
-
-/**
- * Reconciles each resolved locality that lies farther than `thresholdKm` from the tree's
- * resolved postcode point, re-picking the nearest alternative within the threshold and otherwise
- * moving the coordinate there, but skipping the move when the distance exceeds `maxMoveKm`.
- */
-export function applyPostcodeConsistency(
+async function reconcileLocalitiesToAnchor(
 	roots: readonly AddressNode[],
+	anchor: { lat: number; lon: number },
 	thresholdKm: number,
-	maxMoveKm = DEFAULT_POSTCODE_MAX_MOVE_KM
-): void {
-	let anchor: { lat: number; lon: number } | null = null
+	findNear?: (node: AddressNode) => Promise<readonly ResolvedPlace[]>
+): Promise<Array<{ node: AddressNode; gapKm: number; repicked: boolean }>> {
+	const far: Array<{ node: AddressNode; gapKm: number; repicked: boolean }> = []
 
-	for (const n of walkNodes(roots)) {
-		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && isResolvedWithCoord(n)) {
-			anchor = { lat: n.lat!, lon: n.lon! }
-
-			break
-		}
-	}
-
-	if (!anchor) return
+	const nearest = (places: readonly ResolvedPlace[]) =>
+		places
+			.filter((a) => a.lat !== 0 || a.lon !== 0)
+			.map((a) => ({ a, d: haversineKm(anchor.lat, anchor.lon, a.lat, a.lon) }))
+			.filter((x) => x.d <= thresholdKm)
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
+			.sort((x, y) => x.d - y.d)[0]
 
 	for (const node of walkNodes(roots)) {
 		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
@@ -513,12 +515,11 @@ export function applyPostcodeConsistency(
 
 		const alts = (node.alternatives as ResolvedPlace[] | null) ?? []
 
-		const reconciling = alts
-			.filter((a) => a.lat !== 0 || a.lon !== 0)
-			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
-			.filter((x) => x.d <= thresholdKm)
-			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
-			.sort((x, y) => x.d - y.d)[0]
+		let reconciling = nearest(alts)
+
+		if (!reconciling && findNear) {
+			reconciling = nearest((await findNear(node)).filter((a) => `wof:${a.id}` !== node.placeID))
+		}
 
 		if (reconciling) {
 			const displaced: ResolvedPlace = {
@@ -534,6 +535,99 @@ export function applyPostcodeConsistency(
 
 			const rest = alts.filter((a) => a !== reconciling.a)
 			decorateNode(node, reconciling.a, [displaced, ...rest])
+		}
+
+		far.push({ node, gapKm, repicked: !!reconciling })
+	}
+
+	return far
+}
+
+/**
+ * The count of same-name localities {@link applyRooftopConsistency} asks the
+ * backend for, ranked by distance to the rooftop.
+ */
+const ROOFTOP_NAMESAKE_LIMIT = 25
+
+/**
+ * Reconciles each resolved locality that lies farther than `thresholdKm` from the street's
+ * address-point coordinate, re-picking the nearest alternative within the threshold.
+ *
+ * The resolved candidates are the most prominent namesakes, so the namesake
+ * nearest the rooftop can lie outside them.
+ * With a `backend`, the pass asks it for same-name localities ranked by distance
+ * to the rooftop and takes the nearest within the threshold.
+ *
+ * A rooftop row is an observed point, so an unreconciled locality is never moved onto it.
+ * The node records the distance as `rooftop_outside_locality_km`, and the result
+ * reports the locality as a component the answer did not follow.
+ */
+export async function applyRooftopConsistency(
+	roots: readonly AddressNode[],
+	thresholdKm: number,
+	backend?: ResolverBackend
+): Promise<void> {
+	const street = [...walkNodes(roots)].find(
+		(n) => n.tag === "street" && n.metadata?.["resolution_tier"] === "address_point"
+	)
+
+	const point = street?.metadata?.["address_point"] as { lat: number; lon: number } | undefined
+
+	if (!point) return
+
+	const findNear = backend
+		? async (node: AddressNode): Promise<readonly ResolvedPlace[]> => {
+				if (node.tag !== "locality") return []
+
+				const country = node.metadata?.["resolver_country"]
+
+				return backend.findPlace({
+					text: node.value,
+					placetype: "locality",
+					...(typeof country === "string" ? { country } : {}),
+					bias: [point],
+					limit: ROOFTOP_NAMESAKE_LIMIT,
+				})
+			}
+		: undefined
+
+	for (const { node, gapKm, repicked } of await reconcileLocalitiesToAnchor(roots, point, thresholdKm, findNear)) {
+		node.metadata = repicked
+			? { ...node.metadata, rooftop_repicked: true }
+			: { ...node.metadata, rooftop_outside_locality_km: gapKm }
+	}
+}
+
+/**
+ * The farthest distance, in kilometers, that {@link applyPostcodeConsistency}
+ * moves a locality onto its postcode's point.
+ */
+export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
+
+/**
+ * Reconciles each resolved locality that lies farther than `thresholdKm` from the tree's
+ * resolved postcode point, re-picking the nearest alternative within the threshold and otherwise
+ * moving the coordinate there, but skipping the move when the distance exceeds `maxMoveKm`.
+ */
+export async function applyPostcodeConsistency(
+	roots: readonly AddressNode[],
+	thresholdKm: number,
+	maxMoveKm = DEFAULT_POSTCODE_MAX_MOVE_KM
+): Promise<void> {
+	let anchor: { lat: number; lon: number } | null = null
+
+	for (const n of walkNodes(roots)) {
+		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && isResolvedWithCoord(n)) {
+			anchor = { lat: n.lat!, lon: n.lon! }
+
+			break
+		}
+	}
+
+	if (!anchor) return
+
+	for (const { node, gapKm, repicked } of await reconcileLocalitiesToAnchor(roots, anchor, thresholdKm)) {
+		if (repicked) {
 			node.metadata = { ...node.metadata, postcode_repicked: true }
 
 			continue

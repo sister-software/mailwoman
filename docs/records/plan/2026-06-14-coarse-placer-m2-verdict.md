@@ -5,10 +5,10 @@ an **open-set / novelty method** so never-trained off-map families are caught wi
 raw confidence threshold imposes — to clear the ~88/88 ceiling a linear char-ngram model hits, and make a
 default-on integration defensible._
 
-## TL;DR
+## Summary
 
-The fix was **a decision rule rather than a new model or a retrain.** The OA-broadened model already carries the
-open-set signal in its `OTHER` head; the ceiling was _how we read it_. Total **in-map mass**
+The fix was **a decision rule rather than a new model or a retrain.** The OA-broadened model already has the
+open-set signal in its `OTHER` head. The ceiling was _how we read it_. Total **in-map mass**
 `1 − P(OTHER)` as the reject score (and routing on the in-map argmax) **decouples "is it in-map?" from
 "which country?"** and clears 90/90 post-hoc. Wired as an opt-in `openSet` rule on `CoarsePlacer`;
 the `mailwoman geocode --place-country` flag uses it.
@@ -33,10 +33,10 @@ Full report: `docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md`.
 **spread** across several in-map countries (e.g. 0.4 FR / 0.4 GB / 0.2 OTHER → top 0.4, rejected) even though
 it is the result shows _not_ off-map. `p_inmap` sums the in-map mass (0.8 → kept) and lets the argmax route it. So the
 two jobs — reject vs route — stop fighting over one softmax. **Mahalanobis underperforms** because a linear
-model's in-map-logit space isn't a clean Gaussian manifold; the discriminative `OTHER` head _is_ the
-detector. ⇒ **Phase 2 (a retrained binary reject-head) is unnecessary.** (Independently sanity-checked with
-DeepSeek, which had pre-registered Mahalanobis/reject-head; it agreed the reasoning is sound and the simpler
-rule is the right call.)
+model's in-map-logit space isn't a clean Gaussian manifold. The discriminative `OTHER` head _is_ the
+detector. ⇒ **Phase 2 (a retrained binary reject-head) is unnecessary.** (DeepSeek independently
+sanity-checked this. DeepSeek had pre-registered Mahalanobis/reject-head, and it agreed that the reasoning
+holds and that the simpler rule suffices.)
 
 ## Phase 3 — the assembled-pipeline check (grade the pipeline rather than the component)
 
@@ -49,8 +49,8 @@ the open-set rule. Report: `docs/articles/evals/2026-06-14-coarse-placer-m2-pipe
 | **M2 open-set**   | 64.7 → **91.2** (+26.5pp) | **9** |       **0** | 0→0 graceful |
 
 The two **new** wins are exactly the cases the rule targets — **Birmingham, AL** (US/GB homograph: placer US
-0.79, the max-prob rule abstained → resolved to Birmingham UK; open-set keeps it → US) and **Los Angeles**
-(US 0.81). Byte-stability invariant (abstain/OTHER ⇒ OFF≡ON) holds; 0 violations.
+0.79, the max-prob rule abstained → resolved to Birmingham UK, and open-set keeps it → US) and **Los Angeles**
+(US 0.81). Byte-stability invariant (abstain/OTHER ⇒ OFF≡ON) holds with 0 violations.
 
 ## Decision: the threshold, and the asymmetry
 
@@ -73,7 +73,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
   _misrouting_ (the prior injecting a _wrong in-map country_). The across-11 check
   (`scripts/eval/coarse-placer-inmap-misroute.ts`, report
   `docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md`) resolves 2 000 in-map addresses
-  (200/country × 10; TW excluded — 0 WOF rows) with the country token **stripped** so the country must be
+  (200/country × 10, with TW excluded because it has 0 WOF rows) with the country token **stripped** so the country must be
   inferred. The case where the prior can bite. Result: **0 misroutes, 0 regressions**, 58 wins, right-country
   50.7 → 53.6%. The tier-safe soft re-rank never pushed an in-map address to a wrong in-map country, even on
   OOD-parsed inputs. (Caveat — direct read: absolute rates are depressed by the en-US model being OOD on

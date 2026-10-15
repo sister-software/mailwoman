@@ -18,6 +18,7 @@ import {
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import { startEarly } from "@mailwoman/core/promises"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
 import type {
@@ -140,9 +141,8 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
  * Every later load fetches afresh.
  */
 export function prefetchReleasesManifest(): void {
-	earlyManifest ??= fetchReleasesManifest()
 	// The hook awaits and reports a failure, so the early promise must not report it a second time.
-	earlyManifest.catch(() => {})
+	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
@@ -254,8 +254,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			// The classify front half: pipeline import → query-shape/kind → neural runPipeline
-			// → flatten, with `onStage(1)` firing between shape and classify.
+			// The classify front half: pipeline import, then query-shape/kind, then neural
+			// runPipeline, then flatten, with `onStage(1)` firing between shape and classify.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(
 				input,
 				{

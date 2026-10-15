@@ -1,7 +1,7 @@
 # Astrogeology: the Moon and Mars data pipeline
 
 **Status:** design approved 2026-09-06. Decisions the operator took: the package is `packages/astrogeology`,
-named for its source the way `tiger`, `ban` and `osm` are; it is `private: true` for v1; fetchers live under
+which takes its source's name the way `tiger`, `ban` and `osm` do. It is `private: true` for v1. Fetchers live under
 `lib/sdk/`.
 **Builds on:** the `RegionDatabaseProvider` acquisition convention (`packages/tiger/lib/sdk`,
 `packages/ban/lib/sdk`), `mailwoman tiles publish`, and the tile worker's PMTiles routes.
@@ -24,7 +24,7 @@ at the point where a body parameter is missing.
 DEM mosaic, and the MOLA MEGDR Martian DEM mosaic are all published by USGS Astrogeology, so the source
 name covers all three the way `tiger` covers every TIGER/Line product.
 
-**Private for v1.** No published package consumes it until `mw geocode --body moon` exists, which is after
+**Private for v1.** No published package consumes it until `mw geocode --body moon` exists. That command comes after
 v1. It joins `SANCTIONED_RELEASE_ABSENCES` with "private planetary data pipeline — no published consumer
 yet". The first publish, when it comes, goes through `bless-package`.
 
@@ -86,8 +86,8 @@ network.
 type PlanetaryBodyID = "earth" | "moon" | "mars"
 ```
 
-`earth` is in the union so a future shared primitive can take a body without a second type; no code in
-this package produces Earth data. Each record carries the IAU target name, the mean radius with its
+`earth` is in the union so a future shared primitive can take a body without a second type. No code in
+this package produces Earth data. Each record stores the IAU target name, the mean radius with its
 source, and the coordinate convention the rendering path uses.
 
 ### Coordinates
@@ -119,9 +119,9 @@ interface PlanetaryNomenclatureFeature {
 }
 ```
 
-One tile layer, `nomenclature`, with geometry-dependent rendering; separate layers for lines and
+One tile layer, `nomenclature`, with geometry-dependent rendering. Separate layers for lines and
 polygons only if the source warrants them once inspected. Tile properties are a projection of the
-record, and `diameterKm` is carried so the style can declutter by scale.
+record, and `diameterKm` is included so the style can declutter by scale.
 
 ### Terrain
 
@@ -129,7 +129,7 @@ Source products are pinned in `sources.ts` at C1 of the implementation plan: the
 (a USGS-distributed ~118 m/pixel product or its PDS equivalent) and the MOLA MEGDR global mosaic. The
 pipeline reprojects to the rendering grid with GDAL, records the exact transformation, and never
 discards the source geodesy metadata. Vertical values are `elevation_m` with `vertical_datum` and
-`reference_surface` named per body; no field is called sea level.
+`reference_surface` takes a per-body value. No field is called sea level.
 
 Hillshade is `gdaldem hillshade` on the reprojected DEM, tiled to a raster PMTiles with `png` tiles. The
 tile worker already maps `png` and `webp` to their content types from the PMTiles header, so the archive
@@ -137,7 +137,7 @@ serves through the existing `/:tileSetName/{z}/{x}/{y}.png` route with no worker
 
 ### PMTiles metadata
 
-Every archive carries, beside ordinary TileJSON, a validated `mailwoman:*` block: `kind`
+Every archive contains, beside ordinary TileJSON, a validated `mailwoman:*` block: `kind`
 (`planetary-basemap` | `planetary-hillshade` | `planetary-dem`), `body`, `schema` (`planetary-v1`),
 `coordinate_longitude`, `coordinate_latitude`, `source`, `build_version`, and for a DEM
 `vertical_datum`, `elevation_unit`, `source_product`. `verify` refuses an archive whose block fails the
@@ -169,7 +169,7 @@ one high-zoom tile to confirm the route answers. The bucket and prefix are the t
 `haversine` keys its radius by unit only. Before this pipeline computes a distance, `spatial` gains a
 body-radius parameter: `haversine(a, b, { unit, radiusKm })` with the Earth radius as the default, and
 the `RADII` table becomes the Earth entry of a per-body table exported for the three bodies. The
-`prefer-home` rule keeps refusing a radius typed anywhere else, which is the point.
+`prefer-home` rule keeps refusing a radius typed anywhere else, as intended.
 
 ### Test plan
 
@@ -187,7 +187,7 @@ the `RADII` table becomes the Earth entry of a per-body table exported for the t
 
 - `moon.pmtiles`, `moon-hillshade.pmtiles`, `mars.pmtiles`, `mars-hillshade.pmtiles` are published
   and answer at `tiles.mailwoman.ai`.
-- Each body's `manifest.json` carries source checksums, coordinate conventions, and output checksums.
+- Each body's `manifest.json` records source checksums, coordinate conventions, and output checksums.
 - The fixture build runs in CI in under a minute with no network.
 - `@mailwoman/spatial` takes a body radius, with the Earth default unchanged for every existing caller.
 - The workspace is registered in the root `workspaces`, both `tsconfig.json` reference pairs, and

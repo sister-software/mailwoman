@@ -25,11 +25,11 @@ head).
 An explicit rules engine handles every newly observed address format with a hand-written case.
 Every long-lived rules-based geocoder shows the maintenance cost of that approach. The rule base
 grows with each observed format, and each addition can break earlier rules. A pure sequence
-labeler takes the opposite approach. Its rules are implicit in the weights, which removes the case
+labeler takes the opposite approach. Its rules are implicit in the weights. That removes the case
 analysis but also removes the ability to read, test, or falsify any single rule.
 
 This interface takes a third approach. **The objective declares the structure through the
-factorization of the score and two small typed grammars carried as data. The model learns the
+factorization of the score and two small typed grammars stored as data. The model learns the
 content.** Here, a rule is a term in a score whose firings can be counted. It is neither a case in
 code nor only a tendency in the weights.
 
@@ -74,7 +74,7 @@ typed headed edges `H` over the spans. The target objective:
 score(S, T, H | x)  =  Σ_{(i,j,t) ∈ S} φ(i, j, t)   +   Σ_{(h,d,r) ∈ H} ψ(h, d, r)
 ```
 
-This objective is maximized **jointly**. The stages of the intuitive pipeline (lexical cues,
+This objective is maximized **jointly**. The stages of the conventional staged pipeline (lexical cues,
 candidate spans, guarded entities, inter-span grammar, address semantics) are _terms of one
 objective_ and are decided together. For example, the overlapping name candidates in
 `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` cannot be
@@ -107,13 +107,13 @@ Standard toponymy decomposes a place name into:
 In this vocabulary, `New York` is modifier + specific. `People's Republic of China` is modifier +
 generic + `of` + specific. It has real internal grammatical structure and is **not** one opaque
 prefix lexeme. `Port of Spain` is generic + `of` + specific. `Elephant and Castle Road` contains a
-coordinator inside its specific element, which is why a token-level reading misparses it as a
+coordinator inside its specific element. A token-level reading therefore misparses it as a
 junction.
 
 This internal grammar is a small typed grammar, `G_name`. The atomicity restriction fixes its place
 in the objective: **`G_name` scores only the inside of `φ`.** A span holds together as a
 name partly _because_ its internal parse under `G_name` is well-formed. This lets an
-out-of-registry pub name like `Ye Three Lords` earn protection from its shape alone. That
+out-of-registry pub name like `Ye Three Lords` receive protection from its shape, with no registry entry. That
 well-formedness never permits an external attachment into the span's interior.
 
 In this vocabulary, the current system covers the following. The street domain has real
@@ -135,7 +135,7 @@ defect described next.
 lexicon matches `Spain` inside `Port of Spain`. That evidence becomes an emission bias on the
 token. The objective sums per-token terms, so the split parse
 (`locality="Port of" + country="Spain"`) gains the bias as support for `B-country`. The cohesive parse must overcome the
-same bias, which counts against `I-locality` on that token. A registry hit on a sub-span therefore
+same bias. That bias counts against `I-locality` on that token. A registry hit on a sub-span therefore
 raises the wrong parse's score. A length discount reduces this unwanted boost but cannot reverse
 its direction.
 
@@ -163,17 +163,17 @@ census counts the rows the constraint explains and the rows it would flag falsel
 graded against truth-graded failures and never against the model's agreement with itself. The
 coherence record applies the same rule to the resolver-side checker.
 
-| id  | predicate over `(x, parse)`                                                                                                                         | inputs required                             | status                                                                                                                                               |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C1  | spans disjoint; uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                       |
-| C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                      |
-| C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                        |
-| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                           |
-| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
-| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                         |
+| id  | predicate over `(x, parse)`                                                                                                                         | inputs required                             | status                                                                                                                                                       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C1  | spans disjoint, uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                               |
+| C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                              |
+| C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                                |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                                   |
+| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system-conventions.ts` is the natural home, but templates are not yet stated as machine-readable sequences |
+| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                                 |
 
 The proposed instrument is a constraint-violation census over the board, built as an extension of
-`mwdev_diagnose`'s mechanism accounts. Every board failure would then carry the predicate(s) it
+`mwdev_diagnose`'s mechanism accounts. Every board failure would then record the predicate(s) it
 violates, and the taxonomy would come from evaluation instead of from arguments over examples.
 
 ## 6. The board rows, mapped
@@ -184,9 +184,9 @@ violates, and the taxonomy would come from evaluation instead of from arguments 
 | `Port of Spain`                                                                     | `locality="Port of" + country="Spain"` — sub-span country hit outranked the whole-phrase gazetteer entry | C6                                     |
 | `Andorra la Vella`, `Tel Aviv-Yafo`, `Petaling Jaya`                                | city split in half, tail promoted to region                                                              | C4 + C6                                |
 | `St Andrew Undershaft Church, St Mary Axe, London EC3A 8BN`                         | two labels inside segment 1; `locality="London"` deleted while its postcode survives                     | C4 + C5                                |
-| `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` | mid-phrase `region`/`locality` fragments; no POI-under-POI production                                    | C4 + C5 + the missing venue→venue edge |
+| `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` | mid-phrase `region`/`locality` fragments, without a POI-under-POI production                             | C4 + C5 + the missing venue→venue edge |
 | `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`                       | `Indiranagar → venue`; note the candidate's `Karnataka → region` is the template-conformant reading      | C5                                     |
-| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6 rather than C4                      |
+| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split, but the Lisbon-street / São-Paulo-street ambiguity   | C6 rather than C4                      |
 
 ## 7. Empirical support
 
@@ -213,11 +213,11 @@ violates, and the taxonomy would come from evaluation instead of from arguments 
 
 | target-grammar object           | existing artifact                                                                | status                                      |
 | ------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
-| span + type + confidence decode | the #727 span head; `semi-crf-transitions.json` parse path (`classifier.ts:132`) | trained experimentally; not shipped         |
-| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists; output does not bind the decode     |
+| span + type + confidence decode | the #727 span head; `semi-crf-transitions.json` parse path (`classifier.ts:132`) | trained experimentally and unshipped        |
+| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists, but output does not bind the decode |
 | `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
 | POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
-| `G_c` segment templates         | `packages/codex/lib/address/system-conventions.ts`                               | home exists; templates not machine-readable |
+| `G_c` segment templates         | `packages/codex/lib/address/system-conventions.ts`                               | home exists, templates not machine-readable |
 | `G_name` toponym grammar        | street domain only (street-type lexicon, morphology FST, affix tags)             | toponym modifier/generic inventories absent |
 | registry evidence               | FST prior, country-surface clues, anchor channel                                 | present — token-granular, hence the §4 leak |
 
@@ -238,7 +238,7 @@ evidence can then raise the scores of parses it should rule out.
    starts at every word position, applies bias at the first accepting state, and applies bias
    _again_ at every longer accepting extension from the same start. Nested and covering entries add
    up in the emission matrix, and no stage ranks, deduplicates, or suppresses overlapping spans.
-   `FSTAcceptedMatch`'s own docstring says the observability path "reports every accepted surface,
+   `FSTAcceptedMatch`'s own docstring states that the observability path "reports every accepted surface,
    including nested matches". A covering `Port of Spain` locality entry therefore cannot outrank the
    nested `Spain` country hit at the FST layer. Both become per-token bias, and the
    token-factorized decoder resolves them token by token. The code confirms the leak described in

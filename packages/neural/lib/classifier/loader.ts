@@ -285,6 +285,7 @@ export async function loadClassifierFromWeights(
 		...(placetypeCensus ? { placetypeCensus } : {}),
 		...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 		...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
+		...(resolved.postcodePrefixPaths ? { postcodePrefixPaths: resolved.postcodePrefixPaths } : {}),
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
 		suppressGazetteerNearPostcode,

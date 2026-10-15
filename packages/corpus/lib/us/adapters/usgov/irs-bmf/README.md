@@ -31,11 +31,11 @@ npx mailwoman corpus run usgov-irs-bmf --input $MAILWOMAN_DATA_ROOT/irs-bmf/eo1.
 
 One row per record with a usable city + ZIP. `NAME` → `venue`; the street line is classified as
 `po_box` (PO BOX / P.O. BOX / POB / BOX …) or split into `house_number` + `street`; `CITY`/`STATE`/`ZIP`
-fill the locality line (`STATE` is already a USPS abbreviation; ZIP+4 is reduced to the 5-digit code).
+fill the locality line (`STATE` is already a USPS abbreviation, and ZIP+4 is reduced to the 5-digit code).
 `source_id` = `usgov-irs-bmf-<EIN>`.
 
 ## Format reference
 
-Header: `EIN,NAME,ICO,STREET,CITY,STATE,ZIP,GROUP,SUBSECTION,…` (28 columns, comma-separated, no
+Header: `EIN,NAME,ICO,STREET,CITY,STATE,ZIP,GROUP,SUBSECTION,…` (28 columns, comma-separated, without
 quoting). This adapter reads `NAME, STREET, CITY, STATE, ZIP` (+ `EIN` for the id). Full layout: the
 [EO BMF data dictionary](https://www.irs.gov/pub/irs-soi/eo_info.pdf).

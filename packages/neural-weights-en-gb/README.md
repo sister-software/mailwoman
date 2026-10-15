@@ -20,12 +20,12 @@ The trained-model bundle (`@mailwoman/neural-weights-en-gb`) for
 [Mailwoman](https://mailwoman.ai), a postal-address parser. This
 package is **data only** — a `model-card.json`, the placetype-pair retrieval
 index, and the shared gazetteer lexicons. It has no JavaScript logic of its
-own; it is loaded at inference time by `@mailwoman/neural`.
+own. It is loaded at inference time by `@mailwoman/neural`.
 
 > **This locale is served by the shared multi-locale model.** The en-gb bundle
 > ships no `model.onnx`/`tokenizer.model` of its own — it declares
 > `@mailwoman/neural-weights-en-us` as its `mailwoman.baseWeights` and resolves
-> the base package's model + tokenizer at runtime (byte-identical artifact; one
+> the base package's model + tokenizer at runtime (a byte-identical artifact, so one
 > encoder serves both locales). What this package ships is the **GB-specific
 > soft-feed data**: the placetype-pair retrieval index (`pair-index-gb.bin`,
 > built from the HM Land Registry PPD tuples — see _Evaluation_ below), plus
@@ -53,7 +53,7 @@ arrives at inference as a retrieval rather than a weight.
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
 - **Postcode anchor:** not shipped, deliberately — see the note above and
   `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
-  the gazetteer resolver still handle full unit-postcode text; what is absent
+  the gazetteer resolver still handle full unit-postcode text. What is absent
   is the soft anchor feature rather than postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
@@ -78,9 +78,9 @@ reads the bundle's `requires`/channel interface and **fails closed** if a
 declared channel isn't fed. Do not hand-wire the raw ONNX session with an
 input zero-filled.
 
-The postcode anchor is the one channel where GB deviates, and it is worth
-being precise about why the general rule doesn't apply. That condition is true when
-the channel was trained: zeroing a trained input is out-of-distribution. The
+The postcode anchor is the one channel where GB deviates. The general rule
+assumes the channel was trained, and that condition holds for every other
+channel: zeroing a trained input is out-of-distribution. The
 GB anchor slot was never trained, so there is no distribution to leave —
 zeroing it is what the encoder saw for every GB example it has ever been shown,
 and supplying a value is the out-of-distribution case. That is why the numbers
@@ -97,7 +97,7 @@ retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
 board (69 rows carrying the tag), prior on at the calibrated δ=5.0: **69/69
 emission, 67/69 tag-correct (97.1%)**. The two misses are pre-existing,
 independently characterized parser-level cases rather than prior artifacts. A
-three-way ablation shows this recall is carried almost entirely by the
+three-way ablation shows this recall comes almost entirely from the
 **prior** rather than the fine-tuned checkpoint's own classifier row — see
 `model-card.json`'s `notes` and `eval` blocks for the full breakdown,
 including the δ-calibration sweep, the venue-confound false-positive rate
@@ -109,7 +109,7 @@ in the current probe mode).
 open ship blocker (a Gauntlet metamorphic-layer regression, unrelated to GB).
 Until that resolves, treat the numbers above as graded-but-unshipped: real
 measurements against the actual candidate artifact rather than yet the production
-default. [`docs/articles/evals/`](https://mailwoman.ai) carries
+default. [`docs/articles/evals/`](https://mailwoman.ai) publishes
 the full scorecard once promoted.
 
 ## Calibration
@@ -122,7 +122,7 @@ output is byte-stable when calibration is omitted.
 
 - **Expects its channels.** See _Ship-config requirement_. The one deliberate
   exception is the postcode anchor: it runs off for en-gb because the GB slot
-  was never trained, and the loader says so once per load.
+  was never trained, and the loader logs that fact once per load.
 - **Base encoder not yet promoted** — see _Evaluation_; the numbers here are
   real but not yet the production default.
 - **Placetype-pair prior is comma-segment-scoped** — it matches whole
@@ -132,8 +132,8 @@ output is byte-stable when calibration is omitted.
   restricted to GB: it structurally cannot fire on non-GB input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;
-  quality there is unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
+  and quality there is unmeasured.
 
 ## License & links
 

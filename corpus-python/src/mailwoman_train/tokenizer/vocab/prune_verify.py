@@ -86,7 +86,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def check_segmentation_identity(orig: Any, pruned: Any, old_to_new: np.ndarray, texts: list[str], label: str) -> int:
-    """B1 — how many of `texts` the two tokenizers segment differently, modulo the id renumbering.
+    """B1 — the number of `texts` the two tokenizers segment differently, modulo the id renumbering.
 
     An id that maps to -1 counts as a difference on its own: the pruned vocabulary dropped a piece
     this text needs, so the sequences could only match by coincidence of length.
@@ -140,7 +140,7 @@ def check_logit_parity(
     pruned_session: Any,
     texts: list[str],
 ) -> int:
-    """B2 — how many of `texts` the two graphs answer differently, bit for bit.
+    """B2 — the number of `texts` the two graphs answer differently, bit for bit.
 
     BITWISE rather than close: the kept embedding rows are byte-identical and the rest of the graph is
     untouched, so any difference at all is the surgery having changed something it should not have.

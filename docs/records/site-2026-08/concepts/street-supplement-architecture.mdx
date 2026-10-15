@@ -9,7 +9,7 @@ tags:
 
 # Street-supplement architecture
 
-This is the design reference for the work that fills the [WOF hierarchy gap](./wof-hierarchy-gap.mdx). It collects the architectural decisions from the v0.6.1 postmortem and the design consult that followed. Code in `neural/`, `resolver-wof-sqlite/`, and `core/` refers back to this page, which explains why each piece is designed the way it is.
+This is the design reference for the work that fills the [WOF hierarchy gap](./wof-hierarchy-gap.mdx). It collects the architectural decisions from the v0.6.1 postmortem and the design consult that followed. Code in `neural/`, `resolver-wof-sqlite/`, and `core/` refers back to this page. This page explains why each piece is designed the way it is.
 
 WOF's placetype hierarchy stops at `address` and has no street node. Mailwoman's tag schema includes a street layer, but the inference-time prior (the FST gazetteer) has no street data to support it. Four layers fill the gap, and two more pieces sit beside them: a brand FST and locality-conditional blocking. Each layer covers a different missing signal, so none of them can replace another.
 
@@ -58,7 +58,7 @@ Mailwoman's tag schema lives in two files:
 1. **Ontology mismatch.** WOF placetypes describe what kind of geographical feature something is. Mailwoman component tags describe the role a span plays in an address. `street` is a linear feature without a WOF identity, and WOF has no placetype for it. `house_number` is not a place at all. `unit` is a building subdivision rather than a geographic feature.
 2. **ID-space fragility.** WOF issue #246 explored adding `lane`, `block`, and `parish`. Any "private" ID range could collide with a future WOF allocation.
 3. **TypeScript exhaustiveness.** With the `ComponentTag` discriminated union, the compiler flags every code path that does not handle every tag. Runtime-loaded JSON has no such check, and the schema will change.
-4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent. The WOF format has no native "valid children" field, so you would compute children from parents anyway, which `PARENT_OF` already does.
+4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent. The WOF format has no native "valid children" field, so you would compute children from parents anyway. `PARENT_OF` already does that.
 
 When tooling needs WOF-format output, such as the `wof tree` command or external consumers, use a serialization shim:
 
@@ -85,12 +85,12 @@ Proposed: `street → intersection → [intersection_a, intersection_b]`, mirror
 
 **The design consult initially called this change zero-risk. Verification showed two problems:**
 
-1. **BIO dimension coupling.** `ComponentTag` is the BIO label space. An `intersection` tag extends `BIO_LABELS` from 33 to 35 entries, which no longer matches the v0.6.0/v0.6.1 weight output dimension. Tail-append avoids this part of the problem, using the same method as `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS`. All 33-dim weights still align by index with the first 33 labels, and the new B-intersection/I-intersection labels at the tail are never the argmax.
+1. **BIO dimension coupling.** `ComponentTag` is the BIO label space. An `intersection` tag extends `BIO_LABELS` from 33 to 35 entries. That count no longer matches the v0.6.0/v0.6.1 weight output dimension. Tail-append avoids this part of the problem, using the same method as `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS`. All 33-dim weights still align by index with the first 33 labels, and the new B-intersection/I-intersection labels at the tail are never the argmax.
 2. **A PARENT_OF rewrite breaks current behavior, even with tail-append.** If `intersection_a/b` no longer have `street`/`locality` as parents, and the model cannot emit `intersection` proposals because it has no training labels for them, then `intersection_a/b` fall through to root. The existing containment encodes parsing behavior that the rewrite would lose.
 
 The decision is to defer the intersection restructure to v0.7+, when the new tag can be added to the training corpus, the golden set, and a retrained model bundle. Until then, the current flat `intersection_a/b → street` containment stays. It is a known limitation, and keeping it causes no regression.
 
-One-line schema changes in PARENT_OF also affect the model output dimension and the labeled corpus. The architecture doc exposed this issue before code landed; implementation and verification followed.
+One-line schema changes in PARENT_OF also affect the model output dimension and the labeled corpus. The architecture doc exposed this issue before code landed, and implementation and verification followed.
 
 ### Private mailbox folds into unit
 
@@ -141,8 +141,8 @@ When the convention's `street_tags` is empty (Japan), the transition mask suppre
 Rejected alternatives:
 
 - **Multi-hot locale flag on input.** A country flag is too coarse, because "US" includes urban street, rural route, and PO-only conventions.
-- **Speculative parsing**, which tries the JP grammar, then the US grammar, and compares scores. Latency multiplies with each grammar: 50ms × 10 candidates = 500ms/address.
-- **Hierarchy data in PlaceEntry.** The FST would then carry two ontologies, place identity and address grammar, which belong in separate structures.
+- **Speculative parsing**. This approach tries the JP grammar, then the US grammar, and compares scores. Latency multiplies with each grammar: 50ms × 10 candidates = 500ms/address.
+- **Hierarchy data in PlaceEntry.** The FST would then hold two ontologies, place identity and address grammar. Those ontologies belong in separate structures.
 
 Country-level granularity is the right v0.7 scope. Variation within a country (US urban vs rural) is v0.8+.
 
@@ -169,13 +169,13 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 
 **Data source:** The existing training corpus (OpenAddresses + WOF + synth extracts), not external OSM data. Consistency with the model's training distribution matters more than an independent data source.
 
-**Build:** One pass over the training corpus's bigrams and trigrams. For each n-gram, count the distinct localities where the n-gram appears next to a labeled locality span. Localities are keyed by WOF `wof_id` so that separate places named Springfield remain separate entries.
+**Build:** One pass over the training corpus's bigrams and trigrams. For each n-gram, count the distinct localities where the n-gram appears next to a labeled locality span. Localities are keyed by WOF `wof_id` so that separate places called Springfield remain separate entries.
 
 **Output format:** A flat `(ngram → count)` lookup table in compact binary or compressed JSON, ~500K entries.
 
 **Inference:** `neural/street-candidacy-prior.ts` looks up the count for each bigram and trigram in the input token sequence and scales it to a bias magnitude (sigmoid or log-scale). It applies the result as a third emission-bias matrix through `addEmissionMatrix`, in the same way as the morphology prior.
 
-**Cold-token fallback:** An unknown n-gram produces no candidacy signal, and the Layer 1 heuristics apply alone.
+**Cold-token fallback:** An unknown n-gram produces no candidacy signal, and only the Layer 1 heuristics apply.
 
 **Status:** Specified but not built. It will be built if Layer 1 results show that candidacy could add further improvement.
 
@@ -242,7 +242,7 @@ The penalty applies only to span-level confidence scores. It leaves the emission
 | v0.7.x           | Layer 2 metro expansion, Layer 4 brand FST                        | per-metro / per-brand |
 | v0.8+            | Mannheim grid, Nicaragua landmarks, dependent_street              | scope work            |
 
-**Caveat from the 2026-05-28 Layer 1 eval:** Layer 1 alone, applied as a decoder-only fix on v0.6.1 weights, does not suppress v0.6.1's 1066 dep_locality hallucinations. Hallucinations drop monotonically as the dep_locality penalty is strengthened. The model is so overconfident on predictions induced by synthetic streets, though, that no practical decoder-time bias flips them. **Layer 1 should be deployed together with a v0.6.2 retrain that includes O-tagged street slots in the corpus.** The prior then adds inference-time bias on top of a better-trained base. The infrastructure added during v0.6.x polish supports that retrain. Full eval data: [Layer 1 eval (2026-05-28)](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-05-28-layer-1-morphology-fst.mdx).
+**Caveat from the 2026-05-28 Layer 1 eval:** Layer 1 without a retrain, applied as a decoder-only fix on v0.6.1 weights, does not suppress v0.6.1's 1066 dep_locality hallucinations. Hallucinations drop monotonically as the dep_locality penalty is strengthened. The model is so overconfident on predictions induced by synthetic streets, though, that no practical decoder-time bias flips them. **Layer 1 should be deployed together with a v0.6.2 retrain that includes O-tagged street slots in the corpus.** The prior then adds inference-time bias on top of a better-trained base. The infrastructure added during v0.6.x polish supports that retrain. Full eval data: [Layer 1 eval (2026-05-28)](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-05-28-layer-1-morphology-fst.mdx).
 
 The intersection restructure is independent of the layers and can land in any shift.
 

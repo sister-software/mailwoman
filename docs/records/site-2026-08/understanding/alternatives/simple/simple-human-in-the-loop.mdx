@@ -11,7 +11,7 @@ tags:
 
 # Human-in-the-loop geocoding
 
-This approach skips parsing, resolving, and guessing. It shows the user what it thinks they meant and lets them confirm. The parser is a suggestion engine; the user's confirmation is the ground truth.
+This approach skips parsing, resolving, and guessing. It shows the user what it thinks they meant and lets them confirm. The parser is a suggestion engine, and the user's confirmation is the ground truth.
 
 ## The approach
 
@@ -26,7 +26,7 @@ This is how Google Maps, Apple Maps, and every ride-sharing app work. The user t
 
 - **Interactive applications.** A checkout form, a delivery address entry, a search box. The user is present and can confirm. The cost of a wrong guess is a bad suggestion rather than a misdelivered package.
 - **You have an autocomplete index.** A database of known addresses (Google's Places API, your own customer database, a gazetteer). The system suggests from the index rather than from free-text parsing.
-- **Your user base is typing their own addresses.** They know where they live. They will recognize the correct suggestion when they see it. The system doesn't need to be right — it needs to be close enough that the right answer is in the top 5.
+- **Your user base is typing their own addresses.** They know where they live. They will recognize the correct suggestion when they see it. The system doesn't need to be right. It needs to be close enough that the correct address is in the top 5.
 - **You serve ambiguous addresses.** `Springfield` — the system suggests the top 3 Springfields by proximity to the user's IP or previous addresses. The user picks the right one. No AI needed.
 - **You are building a product rather than infrastructure.** The geocoding is a UX feature rather than a backend pipeline. The user's selection is the output. The system doesn't need to geocode in batch without human oversight.
 

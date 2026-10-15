@@ -43,12 +43,12 @@ This is not address parsing in the Mailwoman sense. It is field extraction with 
 
 Mailwoman's locale check (Stage 2) and kind classifier (Stage 2.5) serve the same function as the positional anchor: "this is a US address in standard ordering." The difference is that Mailwoman learns the ordering from data rather than hardcoding it per country.
 
-A system that starts with regex-anchored field extraction can add Mailwoman as a **second pass for the extracted fields.** The regex extracts the street name; Mailwoman parses it into `street_prefix=W, street=Somerville, street_suffix=Ave`. The regex extracts the postcode; Mailwoman's resolver uses it as a search-space constraint on top of that.
+A system that starts with regex-anchored field extraction can add Mailwoman as a **second pass for the extracted fields.** The regex extracts the street name, and Mailwoman parses it into `street_prefix=W, street=Somerville, street_suffix=Ave`. The regex extracts the postcode, and Mailwoman's resolver uses it as a search-space constraint on top of that.
 
 ## See also
 
 - [Normalize to match](./simple-normalize-to-match.mdx) — when you don't need field extraction at all
 - [Postcode-only geocoding](./simple-postcode-only.mdx) — when you only need one field
 - [The tokenization tautology](../../why-its-hard/the-tokenization-tautology.mdx) — why positional regexes fail on non-Anglophone addresses
-- [How it used to work](../../our-approach/how-it-used-to-work.mdx) — Mailwoman v1's rule-based approach, which is essentially this with more rules
+- [How it used to work](../../our-approach/how-it-used-to-work.mdx) — Mailwoman v1's rule-based approach, essentially this approach with more rules
 - [The case for simple geocoders](../the-case-for-simple-geocoders.mdx) — the series index this article belongs to

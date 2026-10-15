@@ -24,7 +24,7 @@ that matches decides it:
 
 A feature's properties state the rule's reason with the building's values, the unit denominator as a
 number or the word `unresolved`, and the source records behind the state. The units, the service evidence
-and the access records are separate groups, and a building feature carries no economic figure. The
+and the access records are separate groups, and a building feature has no economic figure. The
 geometry is a point at the building's resolved position. It is `null` when the dossier has no position for
 the building or when two positions differ, and the properties then list the positions that differ. A
 synthetic position is labeled synthetic.
@@ -96,7 +96,7 @@ and 112-132 Cricklewood Lane are in `unknown_coverage`. 130-154, 154a Pentonvill
 `unknown_unit_count`, because its planning row states 119 planned units and its GLA referral states 118.
 Ofcom's area figures and BDUK's counts for each of the buildings' eleven postcodes are inferred claims and
 decide no state. A BDUK claim gives the UPRNs that BDUK's May 2026 release lists with the postcode, the
-UPRNs that NSUL places within 50 m of the planning grid reference, and how many of those have
+UPRNs that NSUL places within 50 m of the planning grid reference, and the count of those UPRNs that have
 `current_gigabit` true, are classed Gigabit White or Gigabit Under Review, and are in BDUK's premises base.
 The workspace's tests import the module as `#london-three-buildings`, another workspace imports it as
 `@mailwoman/opportunity-map/london-three-buildings`, and the package's root entry leaves it out.

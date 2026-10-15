@@ -8,7 +8,7 @@
  *   weights family. The `script` field reports Hangul for them. `locale` must stay unchanged so that
  *   consumers mapping it to a weights package keep working.
  *
- *   `script` is a ranked list. Many Chinese rows put Latin first because a romanized province and country
+ *   `script` is a ranked list. Some Chinese rows put Latin first because a romanized province and country
  *   follow the Han unit, so a consumer should check whether a script is present rather than read only the head.
  */
 

@@ -26,12 +26,20 @@ const ADMITTED = new Set([
 	"cat",
 	"column",
 	"comm",
+	// ImageMagick's `convert` rasterizes an SVG into the path its last argument names,
+	// for checking a diagram's layout.
+	// It derives its output from its arguments like `zstd`.
+	"convert",
 	"date",
 	"diff",
 	"dirname",
 	"du",
 	"echo",
 	"false",
+	// `ffmpeg` transcodes the media file its input names into the path its last argument names,
+	// and `ffprobe` reads a media file's streams and writes only to stdout.
+	"ffmpeg",
+	"ffprobe",
 	"file",
 	"find",
 	"grep",
@@ -93,6 +101,7 @@ const ADMITTED = new Set([
 	"sqlite3",
 	"tar",
 	"tsc",
+	"unzip",
 	"uv",
 	"uvx",
 	"vale",
@@ -225,7 +234,10 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{
 		head: "gh",
-		pattern: /(?:^|\s)pr\s+(?:create|edit|comment)\b/u,
+		// `mwdev_pull_request` opens pull requests in this repository only.
+		// A `--repo` or `-R` naming another repository, such as an upstream data fork, is admitted.
+		pattern:
+			/^(?![^\n]*(?:\s--repo[=\s]+|\s-R\s+)(?!sister-software\/mailwoman(?:\s|$)))[^\n]*?(?:^|\s)pr\s+(?:create|edit|comment)\b/u,
 		because: "the development MCP owns this GitHub pull-request mutation",
 		guidance: GITHUB_MUTATION_GUIDANCE,
 	},

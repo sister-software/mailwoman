@@ -1,4 +1,4 @@
-# === v8-cjk-kana — v8-cjk-full on the JP corpus that carries the kana_municipality register (#2165). ==============
+# === v8-cjk-kana — v8-cjk-full on the JP corpus that contains the kana_municipality register (#2165). ==============
 #
 # One change against v8-cjk-full (app ap-J0uaLu8mQutAWu4ZdtBNzZ, 0.9653 blended / 0.9757 municipality macro on the
 # 20,000-row JP board): the JP corpus is `v8-jp-kana-2026-09-06`, the same renderer, sampler and seed with a fifth
@@ -15,7 +15,7 @@
 #
 # --- what the RUN must show (pre-registered, same instruments as the v8-cjk-full read) ----------------------
 #   * `かすみがうら市` on the JP board: rows failed of 823, against 598 (shared head) / 398 (control) / 2 (record).
-#     The register is aimed at this class. fewer than 100 failed rows is the reading that says it worked.
+#     The register is aimed at this class. fewer than 100 failed rows is the reading that shows it worked.
 #   * JP board, blended coordinate-acceptability ≥ 0.9653 and municipality macro ≥ 0.9757 (the shared head's own
 #     reads): the register must not cost the rest of the board. More than 1 pp under either is the finding.
 #   * Per-register table: the new `kana_municipality` rows read beside native / arabic_chome / compact_folded /
@@ -23,7 +23,7 @@
 #   * CN board: `locality_unit` span exact-match on the 14 rows, read beside 10/14 (PyTorch) and 12/14 (served).
 #   * Board scorer: `score_jp_probe_board.py --label-set stage3-cjk` over the new jp-board.jsonl with the new char
 #     vocabulary and the new centroid table if the held-out municipalities moved (the sampler's seed is unchanged, so
-#     the same municipalities are expected to be held out. the build report says).
+#     the same municipalities are expected to be held out. the build report lists them).
 #
 # Launch:
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk_kana

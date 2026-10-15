@@ -1,5 +1,5 @@
 # This 2k probe adds the GB locale to the v385 recipe and tries to revive the dead dependent_locality tag.
-# It makes three changes together because each one alone leaves the tag dead.
+# It makes three changes together because each one applied without the other two leaves the tag dead.
 # The first change adds the GB corpus and the synth-gb source.
 # The second change raises the dependent_locality class weights to 1.0.
 # The third change re-initializes the dead classifier rows and trains the classifier at a higher learning rate.

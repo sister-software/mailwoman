@@ -6,7 +6,7 @@
  *
  *   The corroboration check is mandatory: resolving 24 telecom names by score only returned the wrong company twice,
  *   at 0.829 and 0.886. {@link EdgarIngestOptions} exposes `pinnedCIKs` for operator decisions.
- *   Every dropped row is counted. A genuine tie between different CIKs after corroboration produces an abstention.
+ *   Every dropped row is counted. An exact tie between different CIKs after corroboration produces an abstention.
  *   A pinned CIK at the top score resolves that tie.
  */
 
@@ -42,7 +42,7 @@ export const EdgarSkipReason = {
 	 */
 	Unresolved: "unresolved",
 	/**
-	 * A genuine tie between different CIKs survived corroboration.
+	 * An exact tie between different CIKs survived corroboration.
 	 */
 	AmbiguousCIK: "ambiguous-cik",
 	/**
@@ -164,7 +164,7 @@ async function resolveCorroboratedCIK(
 
 	corroborated.sort((a, b) => b.score - a.score)
 
-	// Ambiguity is a genuine tie at the top rather than "more than one survived";
+	// Ambiguity is an exact tie at the top rather than "more than one survived";
 	// with the 1,054,085-entry cik-lookup-data, `corroborated.length > 1` by itself
 	// would count 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {

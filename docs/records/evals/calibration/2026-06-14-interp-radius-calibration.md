@@ -1,9 +1,9 @@
 # Interpolation-radius calibration — direct confidence for the street-level tier
 
 _2026-06-14. The forward geocoder's interpolation tier stamps an `uncertainty_m` radius = half the
-matched TIGER segment's length. That's an honest geometric prior, but is it a calibrated confidence
-bound? A split-conformal calibration on the Travis-County E-911 holdout says no — the raw radius is too
-tight, covering only ~72% of true errors. The Q̂ ≈ 1.70 multiplier makes it a 90% bound. This
+matched TIGER segment's length. That is a geometric prior, but is it a calibrated confidence
+bound? A split-conformal calibration on the Travis-County E-911 holdout answers no. The raw radius is too
+tight and covers only ~72% of true errors. The Q̂ ≈ 1.70 multiplier makes it a 90% bound. This
 records the measurement and the opt-in wiring that ships it._
 
 ## Why this is the confidence half of the DoD
@@ -38,7 +38,7 @@ per-tier (interpolated, n=1562):
 
 The half-segment heuristic **underestimates** the true spread by 1.70×. A raw-radius report would
 tell a user "±87 m" when the direct 90% bound is ±148 m. (The situs tier is the opposite. Its fixed 10 m
-floor is conservative vs the ~1 m doorstep error we measure, which is safe; under-reporting confidence,
+floor is conservative vs the ~1 m doorstep error we measure. That direction is safe. Under-reporting confidence,
 as interpolation did, is the dangerous direction.)
 
 ## What ships
@@ -48,9 +48,9 @@ is a property of the calibration set rather than the geometry), and the caller s
 
 - `ResolveOpts.interpolationRadiusCalibration?: number` — when set, `applyInterpolation` reports
   `uncertainty_m = round(raw × factor)` and preserves the raw value under `uncertainty_raw_m`. Absent =
-  raw heuristic (byte-stable; the 40 resolver tests are unchanged).
+  raw heuristic (byte-stable, and the 40 resolver tests are unchanged).
 - The **`geocode` CLI** passes the TX-derived **1.70** by default (`--interp-calibration`, pass `1` to
-  report the raw radius). Verified: Concord NH 3 → 5 m, Honolulu HI 75 → 128 m; situs hits unaffected.
+  report the raw radius). Verified: Concord NH 3 → 5 m, Honolulu HI 75 → 128 m, situs hits unaffected.
 
 ## Caveats / next
 

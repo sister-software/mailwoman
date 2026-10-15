@@ -296,11 +296,6 @@ export function regionToStateSlug(region: string | null): string | null {
 }
 
 /**
- * Whether a classifier load fetches the release's postcode-anchor binaries.
- */
-export type PostcodeAnchorAssets = "load" | "skip"
-
-/**
  * Returns the loader URL configuration shared by the primary and comparison classifiers.
  *
  * Both load every published pair index.
@@ -311,7 +306,7 @@ export type PostcodeAnchorAssets = "load" | "skip"
 export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
-	opts: { postcodeAnchor: PostcodeAnchorAssets; splitEmbeddings?: boolean }
+	opts: { postcodeAnchors: readonly string[]; postcodePrefixes?: readonly string[]; splitEmbeddings?: boolean }
 ) {
 	return {
 		// A split release loads the encoder and reads the embedding rows separately.
@@ -330,14 +325,9 @@ export function neuralClassifierLoadURLs(
 		// Gazetteer-trained bundles require the lexicon.
 		// Older releases may not include it.
 		gazetteerLexicon: { url: assetURL(locale, version, "anchor-lexicon-v1.json") },
-		postcodeBinaryURLs:
-			opts.postcodeAnchor === "load"
-				? [
-						assetURL(locale, version, "postcode-us.bin"),
-						assetURL(locale, version, "postcode-de.bin"),
-						assetURL(locale, version, "postcode-fr.bin"),
-					]
-				: [],
+		postcodeBinaryURLs: opts.postcodeAnchors.map((file) => assetURL(locale, version, file)),
+		// The postcode-prefix indexes sit in the release directory beside the postcode binaries.
+		postcodePrefixURLs: (opts.postcodePrefixes ?? []).map((file) => assetURL(locale, version, file)),
 		// The pair indexes live on the public bucket beside every other model asset,
 		// under a dated generation: the objects ship an immutable Cache-Control,
 		// so a rebuilt index is readable only from a fresh path.

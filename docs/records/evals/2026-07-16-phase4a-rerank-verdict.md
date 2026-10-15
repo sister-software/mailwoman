@@ -43,20 +43,20 @@ Paris fixture, FR, with `ban/street-centroids-fr.db` present and loaded: **314 h
 The arc targets **bare fragments** (66% of street failures, night-3 partition). A bare fragment:
 
 - has **no house number** → the address-point tier cannot fire (it is keyed by number),
-- has **no locality** → the street-centroid tier has nothing to scope a street lookup by,
+- has **no locality** → the street-centroid tier has no locality to scope a street lookup by,
 - therefore resolves to an **admin centroid** — _identically, for every hypothesis in the k-best list_.
 
-So the resolver returns the same evidence for the right parse and the wrong one. It is not that the
-signal is noisy; **there is no signal**. Resolution evidence can only adjudicate addresses that are
+So the resolver returns the same evidence for the right parse and the wrong one. The signal is not
+noisy. **There is no signal**. Resolution evidence can only adjudicate addresses that are
 already resolvable — which are largely the ones the parse gets right anyway.
 
-The −1 on Paris is the whole story in miniature: the single fixture where evidence existed, the
-reranker fired, and it was wrong.
+The −1 on Paris shows the same pattern on one fixture. On the single fixture where evidence existed,
+the reranker fired, and its choice was wrong.
 
 ## What this does and does not overturn
 
-**Does NOT overturn:** the k-best headroom is real and measured — oracle@5 **0.723** (parity) and
-**0.905** (Paris) against a shipped 0.573. The span decode in fact puts the right answer in the
+**Does not overturn:** the k-best headroom is real and measured — oracle@5 **0.723** (parity) and
+**0.905** (Paris) against a shipped 0.573. The span decode in fact puts the gold parse in the
 list. That stands.
 
 **Does overturn:** the assumption — mine and the arc's, stated on 2026-07-15 — that _"the arbiter for
@@ -68,7 +68,7 @@ something else.
 
 The resolver answers _"where is this?"_ The useful question for reranking a bare fragment is
 _"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index** rather than
-a geocode. `ban/street-centroids-fr.db` contains every FR street name; asking whether
+a geocode. `ban/street-centroids-fr.db` contains every FR street name. A query for whether
 `Rue de Rome` appears in it needs no locality and no house number.
 
 That is a lexicon lookup rather than resolution — a different signal with a different failure surface, and
@@ -76,15 +76,15 @@ it interacts directly with #1142 (the `matched` vs `importance` split: "is this 
 _exactly_ the `matched` bit that today's multiply destroys). It warrants a probe only with the same bar
 the others got: a pre-registered check and a measured win.
 
-**Two signals have now failed** (plausibility veto: inert; resolution specificity: −16, rewards the
-locality-reading failure mode). Per the treadmill guard, a third goes to the operator before it goes
+**Two signals have now failed.** The plausibility veto was inert. Resolution specificity scored −16
+and rewards the locality-reading failure mode. Per the treadmill guard, a third goes to the operator before it goes
 to a branch.
 
 ## Phase 4 re-plan
 
-- **4a rerank — DONE, negative.** Code stays (7 tests, sound); it is inert by default because
-  `maxResolve` only vetoes country-centroids, which is a real if rare guard. It ships nothing on its
-  own.
+- **4a rerank — DONE, negative.** Code stays (7 tests, sound). It is inert by default because
+  `maxResolve` only vetoes country-centroids. That veto is a real if rare guard. It ships no behavior
+  change on its own.
 - **4b (isotonic ambiguity check)** — still valuable, and now _more_ so: if evidence cannot pick the
   winner, calibrated confidence is what lets a caller know the answer is uncertain. Unblocked.
 - **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
@@ -92,4 +92,4 @@ to a branch.
 
 **And the standing fact this does not change:** the v7 street floor is **0.90**. seg@1 is 0.577,
 oracle@5 is 0.723. Even a perfect reranker would have landed short. The floors need 4c and/or more
-training — the decode was never going to get there alone.
+training. A decode change without either one cannot reach 0.90.

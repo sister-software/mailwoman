@@ -1,9 +1,9 @@
 # Release MCP server
 
-The release-kit registry as an MCP server, for a maintainer's agent session. Private; never published.
+The release-kit registry as an MCP server, for a maintainer's agent session. The package is private and is never published.
 
-Every operation `release-kit` registers becomes one tool, named after its id (`release.verify-metadata` →
-`release_verify_metadata`) and described with the effect the registry declares: `[read]`, `[local-write]` or
+Every operation `release-kit` registers becomes one tool. The tool's name comes from the operation's id (`release.verify-metadata` →
+`release_verify_metadata`), and its description states the effect the registry declares: `[read]`, `[local-write]` or
 `[external-write]`. A writing tool takes a `dry_run` argument. `release_operations` lists the whole registry, including
 the operations this server is not exposing, so an absence is visible rather than silent.
 
@@ -17,6 +17,6 @@ authority. Start the server with `--allow-external-write` to expose `release_pub
 { "command": "node", "args": ["lib/release-mcp/cli.ts", "--repo-root", "/path/to/mailwoman"] }
 ```
 
-This package carries no release logic. What an operation does, and what it refuses, belongs to `release-kit`
+This package contains no release logic. What an operation does, and what it refuses, belongs to `release-kit`
 (`lib/release-kit/registry.ts`); the private CLI `mwops` is the other view over the same registry. Record:
 `docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md` §4–§5.

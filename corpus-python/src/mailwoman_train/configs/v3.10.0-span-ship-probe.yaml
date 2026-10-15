@@ -1,5 +1,5 @@
 # This 2k probe fine-tunes v381 with two changes.
-# The first change adds the semi-CRF span scorer head, which starts from fresh weights.
+# The first change adds the semi-CRF span scorer head. The head starts from fresh weights.
 # The second change adds all-caps training copies through augment_upper_case_prob.
 # The corpus and tokenizer match v381, so F1 scores compare directly with v381.
 data:

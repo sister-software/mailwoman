@@ -20,29 +20,29 @@ going. The two rows that matter most are the ones a hosted service can never che
 
 ## Capability matrix
 
-| Capability                                                     |             Mailwoman             | Nominatim | Photon | OpenCage | Pelias | libpostal | Google / Mapbox |
-| -------------------------------------------------------------- | :-------------------------------: | :-------: | :----: | :------: | :----: | :-------: | :-------------: |
-| **No API key required**                                        |                ✅                 |    ✅     |   ✅   |    ❌    |   ✅   |    ✅     |       ❌        |
-| **No monthly fee (self-host free)**                            |                ✅                 |    ✅     |   ✅   |    ❌    |   ✅   |    ✅     |       ❌        |
-| Open source                                                    |              ✅ AGPL              |    ✅     |   ✅   |    ❌    |   ✅   |  ✅ MIT   |       ❌        |
-| No Elasticsearch / no PostgreSQL import                        |             ✅ SQLite             |    ❌     |   ❌   |   n/a    |   ❌   |    ✅     |       n/a       |
-| Runs in the browser (WASM)                                     |                ✅                 |    ❌     |   ❌   |    ❌    |   ❌   |    ❌     |       ❌        |
-| Forward geocoding                                              |                ✅                 |    ✅     |   ✅   |    ✅    |   ✅   |    ❌     |       ✅        |
-| Reverse geocoding                                              |                ✅                 |    ✅     |   ✅   |    ✅    |   ✅   |    ❌     |       ✅        |
-| Autocomplete / type-ahead                                      |                ✅                 |    ➖     |   ✅   |    ➖    |   ✅   |    ❌     |       ✅        |
-| Structured address parsing                                     |             ✅ neural             |    ➖     |   ❌   |    ➖    |   ✅   |    ✅     |       ➖        |
-| Annotations (timezone, UN/LOCODE, coordinate formats, flag, …) |                ✅                 |    ❌     |   ❌   |    ✅    |   ❌   |    ❌     |       ➖        |
-| Calibrated, routable confidence                                |                ✅                 |    ❌     |   ❌   |    ➖    |   ➖   |    ❌     |       ➖        |
-| Drop-in compatible API                                         | ✅ Nominatim · Photon · libpostal |     —     |   —    |    —     |   —    |     —     |        —        |
+| Capability                                                     |             Mailwoman              | Nominatim | Photon | OpenCage | Pelias  | libpostal | Google / Mapbox |
+| -------------------------------------------------------------- | :--------------------------------: | :-------: | :----: | :------: | :-----: | :-------: | :-------------: |
+| **No API key required**                                        |                Yes                 |    Yes    |  Yes   |    No    |   Yes   |    Yes    |       No        |
+| **No monthly fee (self-host free)**                            |                Yes                 |    Yes    |  Yes   |    No    |   Yes   |    Yes    |       No        |
+| Open source                                                    |              Yes AGPL              |    Yes    |  Yes   |    No    |   Yes   |  Yes MIT  |       No        |
+| No Elasticsearch / no PostgreSQL import                        |             Yes SQLite             |    No     |   No   |   n/a    |   No    |    Yes    |       n/a       |
+| Runs in the browser (WASM)                                     |                Yes                 |    No     |   No   |    No    |   No    |    No     |       No        |
+| Forward geocoding                                              |                Yes                 |    Yes    |  Yes   |   Yes    |   Yes   |    No     |       Yes       |
+| Reverse geocoding                                              |                Yes                 |    Yes    |  Yes   |   Yes    |   Yes   |    No     |       Yes       |
+| Autocomplete / type-ahead                                      |                Yes                 |  Partial  |  Yes   | Partial  |   Yes   |    No     |       Yes       |
+| Structured address parsing                                     |             Yes neural             |  Partial  |   No   | Partial  |   Yes   |    Yes    |     Partial     |
+| Annotations (timezone, UN/LOCODE, coordinate formats, flag, …) |                Yes                 |    No     |   No   |   Yes    |   No    |    No     |     Partial     |
+| Calibrated, routable confidence                                |                Yes                 |    No     |   No   | Partial  | Partial |    No     |     Partial     |
+| Drop-in compatible API                                         | Yes Nominatim · Photon · libpostal |     —     |   —    |    —     |    —    |     —     |        —        |
 
-✅ supported · ➖ partial · ❌ not supported · n/a not applicable (hosted-only)
+In the table, "Partial" marks partial support and "n/a" marks a hosted-only service where the row does not apply.
 
 ## What that provides you
 
 You can run the whole thing on one box, ship it inside your application, or compile it to WebAssembly and
 geocode in the browser. You get forward and reverse geocoding, autocomplete, and structured parsing from
 the same model — and the OpenCage-style **annotations** block (timezone, coordinate formats, calling
-code, flag, and more) attached to every result, which the other self-hosted stacks don't return at all.
+code, flag, and more) attached to every result. The other self-hosted stacks don't return that block at all.
 
 And when you're migrating from Nominatim, Photon, or [libpostal](./switching-from-libpostal.mdx), you don't rewrite your client. Point it at the matching package:
 
@@ -71,8 +71,8 @@ idea, and we intend to borrow a few of them.
 
 What the client can't fix is the layer underneath. Photon doesn't parse addresses, so Cartes grafts BAN
 onto it, blocked by a street-keyword list and a check that you're searching inside France. Every app that
-builds on a geocoder ends up writing a shim like this eventually, and it's the kind of code nobody enjoys
-maintaining.
+builds on a geocoder ends up writing a shim like this eventually, and each app's maintainers then keep
+that shim in step with the geocoder.
 
 That's the gap Mailwoman aims at. We sit under apps like Cartes rather than beside them:
 `@mailwoman/photon` speaks the same `/api` interface their client already calls, from a SQLite file

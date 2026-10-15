@@ -16,29 +16,29 @@ Half of this was hard to check for a separate reason: `.yarnrc.yml` declared
 `supportedArchitectures` for `cpu` and `os` but not `libc`, so a macOS install silently dropped every
 `libc=glibc` package and left a tree no Linux machine could build from. Fixed in a0eac6ce3.
 
-| Check                                          | Result                                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------------------ |
-| `/pricing`, `/licensing`, `/licenses`          | 200, each a redirect page to its target                                        |
-| `/nope-not-a-page`                             | 404, carrying the new body; upstream's "contact the owner of the site" is gone |
-| `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site                                     |
-| Font preloads in `index.html`                  | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous`             |
-| Purchase cards                                 | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines        |
-| `/docs/pricing`                                | "Buying one" + "Purchase a commercial license" CTA                             |
-| Footer                                         | `href=/license>License`                                                        |
-| `rebeccapurple`                                | absent from the built CSS                                                      |
-| Card example lines                             | `white-space:normal; overflow-wrap:anywhere` shipped                           |
-| Long `alt` strings                             | gone; replaced by the short forms                                              |
+| Check                                          | Result                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `/pricing`, `/licensing`, `/licenses`          | 200, each a redirect page to its target                                    |
+| `/nope-not-a-page`                             | 404, with the new body. Upstream's "contact the owner of the site" is gone |
+| `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site                                 |
+| Font preloads in `index.html`                  | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous`         |
+| Purchase cards                                 | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines    |
+| `/docs/pricing`                                | "Buying one" + "Purchase a commercial license" CTA                         |
+| Footer                                         | `href=/license>License`                                                    |
+| `rebeccapurple`                                | absent from the built CSS                                                  |
+| Card example lines                             | `white-space:normal; overflow-wrap:anywhere` shipped                       |
+| Long `alt` strings                             | gone, replaced by the short forms                                          |
 
 Earth, once the `libc` fix landed (2026-09-14): `vite build` completes on Linux, so the Earth changes
 compile, bundle and pass the PWA precache step. `packages/react`'s node-mode suite is green (21 tests,
 including `place-render.node.test.ts` — the camera logic this pass deliberately did not touch), and so
-are `packages/earth`'s unit tests (14, including `routes.test.ts`, the `?q=` parser `initialQuery`
-rides on).
+are `packages/earth`'s unit tests (14, including `routes.test.ts`, the `?q=` parser that `initialQuery`
+calls).
 
 Still not verified: anything needing a real browser. `@mailwoman/react`'s component suite is Vitest
-browser mode over playwright/chromium, and the Earth browser specs likewise; the chromium download is
+browser mode over playwright/chromium, and the Earth browser specs likewise. The chromium download is
 refused by this workspace's egress allowlist. So the select-on-focus, the result sheet's close, the
-focus ring and the span-tag spacing are compiled and reasoned about, but nobody has watched them work.
+focus ring and the span-tag spacing are compiled and reasoned about, but no person or browser test has watched them work.
 `oxlint` cannot run here either — with its binding correctly installed it now loads and then panics
 inside its own allocator pool (`oxc_allocator/src/pool/fixed_size.rs`), single-threaded too, so that
 one is this VM rather than the toolchain.
@@ -54,9 +54,9 @@ Enter is swallowed by the `busy` guard mid-auto-run or re-runs after it, `readRe
 for the query the spec asked about. Specs that call `demo.goto()` with no query are untouched — no
 auto-run fires.
 
-One new flake vector worth knowing about if one ever appears: when the auto-run finishes before the
+One new flake vector, for the case where a flake ever appears: when the auto-run finishes before the
 fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
-while the second is still in flight. Both runs carry the same query and render the same DOM, so there
+while the second is still in flight. Both runs send the same query and render the same DOM, so there
 is no observable difference. That same timing is the reason a second run happens at all.
 
 ---
@@ -70,7 +70,7 @@ An ONNX `InferenceSession` keeps its weights and arenas in the WASM heap, or on 
 JavaScript collector does not own. The runtime freed the wrapper when the last reference to a loaded bundle disappeared and
 left the model resident. `useReleaseRuntime` rebuilds the bundle whenever the version or the backend
 force changes (`useReleaseRuntime.ts:289`, deps `[selectedVersion, forceWASM]`), so every model-version
-pick, every Force WASM toggle and every compare-mode entry added a model's worth of native memory that
+pick, every Force WASM toggle and every compare-mode entry added the native memory of one more model that
 never came back. A visitor poking at the Developer panel a few times accumulated several.
 
 Three leaks, fixed in 86e85929f:
@@ -87,7 +87,7 @@ Three leaks, fixed in 86e85929f:
    had already resolved, and the last bundle on unmount.
 
 This is separate from the main-thread stall below, and does not fix it. It does reduce what the page
-holds while that work runs, and it is the more likely explanation of a tab being killed outright.
+holds while that work runs, and it is the more likely explanation of the browser killing a tab.
 
 ---
 
@@ -143,15 +143,15 @@ whole page life. That measurement cannot state the claim:
   for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
   `packages/tile-worker/lib/protomaps.ts:72` builds the template as
-  `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
+  `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
   and the measurement is the one that is wrong.
 
 **2026-09-14: the measurement does not reproduce the bug.** The live page was instrumented with a
 longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
 
-- **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated, which rules
-  out the main-thread theory.
+- **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated. That
+  rules out the main-thread theory.
 - **11 animation frames in 66 seconds, with a 52.9-second gap between two of them.**
 - `document.visibilityState === "hidden"` for the whole session.
 
@@ -161,7 +161,7 @@ canvas stays black. That explains every symptom without any bug. And `totalResou
 true count this time rather than a buffer artifact: the tab in fact never asked for a tile because it
 never rendered a frame.
 
-Every observation of this symptom in this record came from a tab driven by browser automation, which
+Every observation of this symptom in this record came from a tab driven by browser automation. Browser automation
 runs the page hidden. So the black map is, on the evidence available, **an artifact of how it was
 observed**. It has never been reproduced in a browser tab a human was looking at.
 
@@ -171,7 +171,7 @@ step is a five-minute check in a visible tab rather than a fix:
 `yarn workspace @mailwoman/earth preview`, open `http://localhost:7771`, run a query, watch.
 
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
-resolve, which shows long tasks and main-thread occupancy directly — or
+resolve shows long tasks and main-thread occupancy directly. Alternatively, call
 `performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
 The question to answer first is whether the main thread is occupied or idle during those twenty
 seconds. Everything else follows from that, and no change should be made until it is known.
@@ -223,17 +223,17 @@ The two halves of the money path never reference each other:
 - `/docs/pricing` (`docs/articles/pricing.mdx`) states the prices and ends in a **mailto**. It has no link
   to `/license` and no purchase CTA at all.
 - `/license` (`docs/src/pages/license.mdx`) holds the actual Stripe checkout (`BuyLicense`), and its two
-  plan cards carry **no price** — only "Renews every month; the key follows the paid period plus 14 days."
+  plan cards show **no price** — only the renewal line `Renews every month; the key follows the paid period plus 14 days.`
   A buyer has to hold the $250 figure in their head from another page.
 - No link in the navbar or the footer points to `/license`. Its only inbound links are from
   `IssuedLicense.tsx:176` and the terms page — both of which you reach _after_ buying.
 - `docs/src/components/PricingTiers/` — the tier cards with price + CTA — is dead code. Its own docblock
-  says so: `index.tsx:11` "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
+  records this at `index.tsx:11`: "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
 - `/pricing` (no `/docs`) **404s**, despite the navbar item being labeled "Pricing".
 
 Fix, smallest first: add `/pricing → /docs/pricing` and `/licensing → /license` to the existing
-`plugin-client-redirects` block (`docusaurus.config.ts:118`); put the price on the two plan cards; end
-`pricing.mdx` with a real CTA to `/license` instead of the mailto; add "License" to the footer's More
+`plugin-client-redirects` block (`docusaurus.config.ts:118`). Put the price on the two plan cards. End
+`pricing.mdx` with a real CTA to `/license` instead of the mailto. Add "License" to the footer's More
 column. Then decide whether `PricingTiers` gets mounted on `/docs/pricing` or deleted.
 
 ---
@@ -252,7 +252,7 @@ what reads as disjointed.
 
 On `/docs/pricing` the navbar highlights **Pricing** (`docusaurus.config.ts:314`, a direct doc link) while
 the sub-header highlights **About** (pricing lives in the `about` sidebar, `sidebars.ts:236`). Pick one:
-either give pricing its own door, or drop the navbar shortcut and let About own it.
+either give the pricing page its own navbar entry, or drop the navbar shortcut and let About own it.
 
 ### 7. `/license/issued` visited cold is a bare sentence
 
@@ -348,11 +348,11 @@ Four fixes, in order of payoff:
   `house_numberstreetstreet_suffix locality regionpostcode`. Unreadable, and it is the first thing a
   visitor looks at.
 - ~~Candidate scores mix scales.~~ FIXED. They were never on one scale: `score` is
-  implementation-defined and its type says to treat it as ordinal — 6.95 is `log10(8.9M)` from the
-  candidate regime, 1.00 a bounded blend from the FTS regime. The row now carries the rank and the
-  placetype; the raw value stays on the button's `title`.
-- Vocabulary disagrees with itself in one panel: the parse tags `postcode`, the candidate says
-  `postalcode`; `placetype: interpolated` and `precision: ≈ interpolated · ±64 m` say the same word twice.
+  implementation-defined and its type documents it as ordinal — 6.95 is `log10(8.9M)` from the
+  candidate regime, 1.00 a bounded blend from the FTS regime. The row now shows the rank and the
+  placetype. The raw value stays on the button's `title`.
+- Vocabulary disagrees with itself in one panel: the parse tags `postcode`, the candidate shows
+  `postalcode`, and `placetype: interpolated` and `precision: ≈ interpolated · ±64 m` say the same word twice.
 - `packages/react/lib/map/GeocoderControls.tsx:326` — the result sheet has **no close button, Escape
   handler, or `role`**. It covers 52vh and can only be removed by running another query. Its header
   (title + Copy JSON) scrolls away with the content instead of sticking.
@@ -364,7 +364,7 @@ Four fixes, in order of payoff:
 - Top-right rail (`packages/react/styles.css:1904`): 2.5rem = **40px targets**, under the 44px minimum,
   unchanged on touch. It defines `:hover`, `:active`, `--active`, `:disabled` but **no `:focus-visible`**,
   and the parent's `overflow: hidden` (`:1892`) clips even the UA outline. Every sibling control has a
-  focus ring; this rail is the gap.
+  focus ring. This rail is the gap.
 - Developer panel: ~~the Model version `<select>` truncates mid-string.~~ FIXED (ellipsis, plus the
   whole label on `title`). Its checkboxes are still native/unstyled beside magenta styling elsewhere.
 - `packages/earth/lib/panels/ResultExtras.tsx:67,85` — `demoStyles.xml` and `demoStyles.hierarchy` are
@@ -388,7 +388,7 @@ Four fixes, in order of payoff:
 **Responsive / tokens**
 
 - Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). No breakpoint
-  between 601px and desktop; no tablet or landscape case.
+  between 601px and desktop. No tablet or landscape case.
 - ~~601–615px: the rail covers the right end of the search pill.~~ FIXED, and not by moving the
   breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
   `max-width` decides the box and the inset is never reached, so it costs no extra work and cannot drift out
@@ -398,17 +398,17 @@ Four fixes, in order of payoff:
   already exist, none of which respond to the theme switch.
 - `packages/earth/vite.config.ts:26` — `themeColor: "#0b1020"` matches no token (`--brand-navy` is
   `#00093a`). A fourth, undocumented brand color in the PWA manifest.
-- ~30 raw `px` spacing values across 7 earth CSS files; 7 inline styles hardcoding type sizes
+- ~30 raw `px` spacing values across 7 earth CSS files. 7 inline styles hardcoding type sizes
   (`0.8rem` / `0.85rem` / `0.9rem`) that correspond to no step in the scale.
 
 ---
 
 ## P2 — docs polish
 
-- **`--ifm-color-content-secondary: rebeccapurple;`** — `docs/src/css/theme-light.css:45`. A CSS named
+- **`--ifm-color-content-secondary: rebeccapurple;`** — `docs/src/css/theme-light.css:45`. A CSS keyword
   color, shipped. It drives `--ifm-font-color-secondary` (`:53`) and `--ifm-toc-link-color` (`:218`), so
   in light mode the right-hand TOC and every piece of secondary copy on the homepage render `#663399`.
-  The dark theme's counterpart carries a `/* FIX: was pure white (too bright) */` marker at
+  The dark theme's counterpart has a `/* FIX: was pure white (too bright) */` marker at
   `theme-dark.css:35` — this one never got the same pass.
 - ~~**A dead component tree.**~~ DELETED: 14 paths, 29 files, 6,531 lines. `PipelineExplorer` and its
   orphaned subtree (`BIOHighlight`, `CRFDiff`, `ClassifierOverlay`, `FSTWalker`, `SubwordExplorer`,
@@ -422,13 +422,13 @@ Four fixes, in order of payoff:
   `GuidedTour/styles.module.css:172-186` is half-tokenised: the correct
   `var(--ifm-color-info-contrast-background, …)` pattern sits ten lines above four rules that skip it.
 - ~~`docs/src/components/TrainingCharts/styles.module.css:176` — `min-width: 600px` forces horizontal
-  overflow on a phone.~~ WITHDRAWN: its parent `.chartWrapper` already carries `overflow-x: auto`, so the
+  overflow on a phone.~~ WITHDRAWN: its parent `.chartWrapper` already sets `overflow-x: auto`, so the
   600px scrolls the chart in its own container rather than the document. The rule is correct as written.
 - Homepage cards clip their mono example lines mid-string with a hard truncation, without an ellipsis or fade:
   `"apt 4b 350 5th ave new york ny 10118" → unit=house-street·` and
   `type an address → components, coordinate, and the source it`.
 - `docs/src/pages/index.tsx:154,194` — `alt` strings of 205 and 196 characters, both inside a `<Link>`, so
-  the link's accessible name is that whole paragraph. The adjacent visible heading already says it.
+  the link's accessible name is that whole paragraph. The adjacent visible heading already states it.
 - Onnxruntime emits two `W:` warnings to the console as errors on every Earth load
   (`VerifyEachNodeIsAssignedToAnEp`). Harmless, but it is the first thing anyone sees in devtools.
 
@@ -441,13 +441,13 @@ seen from different widths: two surfaces over one map, neither of which owned th
 
 | Reported                                      | Resolution                                                                                                                                                 |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held no content. Its height is now its contents. |
+| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything. On a desktop with no result it held no content. Its height is now its contents. |
 | Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                       |
 | Search icon too small                         | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
 | Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                           |
 | Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                              |
 
-Three layout faults found while fixing those, all at the panel's top edge, all worth writing down because
+Three layout faults found while fixing those, all at the panel's top edge. Each is recorded because
 each looked correct in the stylesheet:
 
 - An absolutely positioned close reserves no space. Hung off a bar with no height of its own, a 44px
@@ -455,7 +455,7 @@ each looked correct in the stylesheet:
 - A negative top margin does not pull a grid item out of its padding. The track is sized from the margin
   box while the item is laid out at the track's start, so the bar painted 12px past its own row.
 - A drawer at its tall detent crosses the control rail's corner. Under it, the rail sat on the drawer's
-  own close; the drawer is now raised over the rail, which is what a sheet over a map does.
+  own close. The drawer is now raised over the rail, as a sheet over a map should be.
 
 Still open here: `MapSheet`'s side sheets keep a header pattern of their own rather than the grip bar, so
 the About, Layers and Developer panels close differently from the result.
@@ -467,34 +467,34 @@ the About, Layers and Developer panels close differently from the result.
 Run after the restructure, because a rearrangement is when copies of one idea get left behind. Every item
 fixed here was two implementations of one thing, and four of them had already disagreed.
 
-| Duplicate                                      | What the disagreement cost                                                                                                                                   |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass. |
-| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                       |
-| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel and dismissed the result behind it. One keystroke, two dismissals.                                   |
-| Sheet close button, markup re-typed            | Against `MapSheet`'s own docblock: "One component carries it so the four sheets cannot disagree."                                                            |
-| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it; a drift arms a drag on a layout with nowhere to drag to.                                        |
+| Duplicate                                      | What the disagreement cost                                                                                                                                                                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass.                                                                                               |
+| Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                                                                                                                     |
+| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel and dismissed the result behind it. One keystroke, two dismissals.                                                                                                                                 |
+| Sheet close button, markup re-typed            | Against `MapSheet`'s docblock at the time. That docblock put the close button in one component so the four sheets could not disagree. `packages/react/lib/map/MapSheet.tsx:23` now describes `SheetClose` as the accessible button for dismissing a sheet. |
+| `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it. A drift arms a drag on a layout with nowhere to drag to.                                                                                                                                      |
 
 Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-map-searchbar__clear`.
 `.mw-map-chrome__search` was the last member of a deleted namespace, now `.mw-map-panel__search`.
 
-**The finding worth remembering.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-interface.ts`
+**The finding that applies beyond this pass.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-interface.ts`
 still listed `.mw-map-chrome--top` and `.mw-map-sheet--bottom`, and `visibleBoxes` SKIPS a selector whose
 `count() !== 1` — so the overlap interface had stopped testing the surface the restructure was about, and
 made no assertion. An interface check that skips what it cannot find reports green for a deleted subject. Two unit and
 browser assertions were stale the same way and had not been run since.
 
-Left alone deliberately:
+Left unchanged deliberately:
 
 - `.mw-map-panel__header` and `.mw-map-sheet__header` are the same sticky-header pattern in different
-  tokens. Neither is canonical yet; merging them means settling what a sheet header is across two
-  components, which is more than a sweep.
+  tokens. Neither is canonical yet. A merge of the two means settling what a sheet header is across two
+  components. That work is more than a sweep.
 - `MapControlStackProps.side` has no consumer and `.mw-map-control-stack--left` is therefore unreachable;
   `MapSearchBarProps.trailing` is used only by a story. Both are library surface rather than dead product code.
 
 **Environment note.** The node on the workspace VM is 22.23.2 while `.nvmrc` pins 24.18.0, so `ci:test:fast`
 reports 167 failing files on `AsyncDisposableStack is not defined` and `mwops health` cannot parse
-`await using` at all. Neither is a defect in this work; the react node suite (26 tests) passes, and the
+`await using` at all. Neither is a defect in this work. The react node suite (26 tests) passes, and the
 browser suites need Playwright browsers that VM has no egress to fetch.
 
 ---
@@ -526,7 +526,7 @@ exempt the values that are deliberate, and the check's house rule is that every 
 reached production.
 
 Kept raw on purpose: `1px` / `2px` / `3px` borders, outlines and hairlines (they should not scale with the
-reader's type size), and `packages/planetary/lib/styles/app.css`'s starfield gradients, which are artwork
+reader's type size), and `packages/planetary/lib/styles/app.css`'s starfield gradients. Those gradients are artwork
 rather than palette. Still outstanding: one `rgba(0, 0, 0, 0.18)` shadow in `panels.module.css` and two raw
 background hexes in the planetary app.
 
@@ -546,15 +546,15 @@ to say so: a value written during render is one React is entitled to discard.
 The fix is neither mirror. The callbacks that parse with a bundle now DEPEND on the bundle — `rt.assets`,
 `rt.selectedRelease`, `rt.selectedVersion` in their dependency arrays — so every consumer gets the new
 callback in the same render that produced the new assets, and there is no second copy of the truth to keep
-in step. The identity churns once per release load, which is the only moment it means anything. The refs
-existed to hold identity fixed across exactly that change, which is the one time it should not be.
+in step. The identity churns once per release load. That load is the only moment the identity means anything. The refs
+existed to hold identity fixed across exactly that change. That change is the one time identity should not stay fixed.
 
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
-export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
-hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has traveled far
+export (`./map/graticule` added, and the test now imports it the way the geometry test does). Two missing
+hook dependencies. Two unnamed thresholds in the drawer gestures (`3` for a press that has traveled far
 enough to be a drag, `8` for a pull at the top of the scroll that has traveled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
-scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
+scrolling). `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there. And
 `beforeId`, which title-cases an acronym the house style capitalizes whole.
 
 ---
@@ -562,5 +562,5 @@ scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LAT
 ## Judgment call rather than a defect
 
 `docs/research/authors.yml` publishes field notes under **"Playpen Agent — Autonomous Researcher"**
-alongside Teffen. Worth a deliberate decision about how that authorship is framed on a public research
+alongside Teffen. The operator should decide deliberately how that authorship is framed on a public research
 log, rather than leaving it as a config detail.

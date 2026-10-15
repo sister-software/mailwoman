@@ -1,6 +1,6 @@
 # This recipe combines two changes on top of v2.5.0-fragment-assay.yaml.
 # The first is the synth-fragment source from v2.5.0. The second is a tokenizer that keeps diacritic
-# characters from 12 locales as single pieces, which stops street spans from bleeding past a diacritic.
+# characters from 12 locales as single pieces. Those pieces stop street spans from bleeding past a diacritic.
 #
 # The v0.9.0-multisplice tokenizer is v0.8.0 plus 6,824 diacritic pieces. The checkpoint in init_from
 # is the v2.4.1 model with its token embedding table grown to 73,143 rows. Each new row is the mean of

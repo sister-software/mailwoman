@@ -164,7 +164,13 @@ describe("resolveWeights — package auto-resolve", () => {
 		const { files } = manifest
 
 		expect(files, "neural-weights-en-gb/package.json declares no files array").toBeDefined()
-		expect(files!.filter((entry) => entry.startsWith("postcode-"))).toEqual(shaped ? ["postcode-gb.bin"] : [])
+
+		// The postcode-prefix index ships regardless of the anchor channel, so it is set aside here.
+		expect(files!.filter((entry) => entry.startsWith("postcode-") && !entry.startsWith("postcode-prefix-"))).toEqual(
+			shaped ? ["postcode-gb.bin"] : []
+		)
+
+		expect(files).toContain("postcode-prefix-gb-esw.bin")
 
 		expect(files).toContain("pair-index-gb.bin")
 	})

@@ -136,7 +136,7 @@ def render_row(pref: str, muni: str, street: str | None, number: str | None, pos
         put("house_number", number)
 
     # Legacy token columns (unused by the char path, required by the corpus schema): whitespace
-    # tokens with each token labeled by its first char's span tag — honest at the token grain.
+    # tokens with each token labeled by its first char's span tag. That label is correct at the token grain.
     tokens: list[str] = []
     labels: list[str] = []
     cursor = 0

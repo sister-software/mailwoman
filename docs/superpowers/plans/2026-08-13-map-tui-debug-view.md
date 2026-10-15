@@ -4,7 +4,7 @@
 
 **Goal:** Ship the frame-first `@mailwoman/map-tui` library workspace and the three-panel interactive/static `mw geocode --debug` view it powers.
 
-**Architecture:** map-tui renders PMTiles vector tiles to a `MapFrame` cell-grid value (braille via `@sister.software/asciify` primitives) and never touches the terminal; the debug view is a pure Ink app consuming those frames — interactively on a TTY, as a one-shot captured frame when piped. The geocode CLI's dependency assembly is extracted into a reusable warm session so re-runs skip model load.
+**Architecture:** map-tui renders PMTiles vector tiles to a `MapFrame` cell-grid value (braille via `@sister.software/asciify` primitives) and never touches the terminal. The debug view is a pure Ink app consuming those frames — interactively on a TTY, as a one-shot captured frame when piped. The geocode CLI's dependency assembly is extracted into a reusable warm session so re-runs skip model load.
 
 **Tech Stack:** TypeScript (erasable-syntax, direct-`node` type stripping), Ink 7 + Pastel, `@sister.software/asciify` 4.1 `./tui`, `pmtiles` 4.5, `@mapbox/vector-tile` 2 + `pbf` 4, vitest, tippecanoe (fixture generation only).
 
@@ -15,13 +15,13 @@
 - Every source file starts with the house header: `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.`
 - Relative imports use explicit `.ts` extensions; `rewriteRelativeImportExtensions: true`; `erasableSyntaxOnly: true` (no `enum`, no ctor param properties).
 - Acronyms are whole camelCase components: `frameToANSILines`, `decodeMVT`, `placeID`, `RGBAGrid` — never `frameToAnsiLines`/`decodeMvt`.
-- No raw `process.env` — env goes through `core/env/schema.ts` + `$public`. (`process.stdout.isTTY` is fine; the rule binds env/argv.)
+- No raw `process.env` — env goes through `core/env/schema.ts` + `$public`. (`process.stdout.isTTY` is fine. The rule binds env/argv.)
 - No `!== undefined` predicates — use presence/nullish checks (`x != null`, `typeof x === "number"`).
 - The #1577 interface is inviolable: the non-debug geocode success path never renders through Ink; `geocode.test.ts` must pass **unmodified**.
-- Databases/tiles are read-only artifacts; tiles are never shipped in any package.
+- Databases/tiles are read-only artifacts. Tiles are never shipped in any package.
 - Run tests from the repo root: `yarn vitest run <path>`. Run `yarn compile` before exercising the compiled CLI (`node mailwoman/out/cli.js`).
 - Engines: `node >= 24.18.0` (all workspaces). New workspace version matches siblings: `9.1.0`.
-- Commit after every task; prefix `map-tui:` or `geocode:` matching repo style. Pre-commit hook is lint-only and staged-scoped.
+- Commit after every task. Prefix `map-tui:` or `geocode:` matching repo style. Pre-commit hook is lint-only and staged-scoped.
 
 ---
 
@@ -32,7 +32,7 @@
 **Files:**
 
 - Create: `map-tui/package.json`, `map-tui/tsconfig.json`, `map-tui/index.ts`, `map-tui/README.md`
-- Modify: root `package.json` (workspaces array), root `tsconfig.json` (references, if it carries one)
+- Modify: root `package.json` (workspaces array), root `tsconfig.json` (references, if it has one)
 
 **Interfaces:**
 
@@ -91,13 +91,13 @@ Note the `files` array excludes `test/` and `scripts/` — the fixture and its g
 }
 ```
 
-- [ ] **Step 3: Register the workspace.** Add `"map-tui"` to the root `package.json` `workspaces` array (match the array's existing ordering convention — inspect it first; 54 entries become 55). Check whether the root `tsconfig.json` carries a `references` list of workspaces; if so, add `{ "path": "./map-tui" }` in matching order.
+- [ ] **Step 3: Register the workspace.** Add `"map-tui"` to the root `package.json` `workspaces` array (match the array's existing ordering convention — inspect it first. 54 entries become 55). Check whether the root `tsconfig.json` has a `references` list of workspaces. If so, add `{ "path": "./map-tui" }` in matching order.
 
 - [ ] **Step 4: Stub the entry.** `map-tui/index.ts` with the house header and an empty export list (`export {}` placeholder to be replaced by Task 8's re-exports).
 
-- [ ] **Step 5: Install + verify.** Run `yarn install`, then `yarn lint`. Expected: install resolves the four new deps; lint passes.
+- [ ] **Step 5: Install + verify.** Run `yarn install`, then `yarn lint`. Expected: install resolves the four new deps, and lint passes.
 
-- [ ] **Step 6: README.** Three short paragraphs: what the package is (frame-first terminal map renderer), the `MapFrame` interface (frames are values; consumers own presentation), where tiles come from (caller-supplied PMTiles path; never bundled).
+- [ ] **Step 6: README.** Three short paragraphs: what the package is (frame-first terminal map renderer), the `MapFrame` interface (frames are values, and consumers own presentation), where tiles come from (a caller-supplied PMTiles path, never bundled).
 
 - [ ] **Step 7: Commit.** `map-tui: bootstrap the workspace`
 
@@ -231,7 +231,7 @@ export function metersPerPixel(lat: number, zoom: number): number {
 - [ ] **Step 1: Author the GeoJSON sources.** Five files under `test/fixtures/src/`. Keep coordinates inside the extent above. Required content (each a `FeatureCollection`):
   - `earth.geojson` — one polygon covering the whole extent.
   - `water.geojson` — one river-ish polygon along the western edge (lon < −122.66).
-  - `roads.geojson` — a small grid: 4 north–south lines, 4 east–west lines; one east–west line at lat 45.5034 carries `{"name": "SE Clinton St", "kind": "minor_road"}`; give one line `{"kind": "major_road"}`.
+  - `roads.geojson` — a small grid: 4 north–south lines, 4 east–west lines. One east–west line at lat 45.5034 has the properties `{"name": "SE Clinton St", "kind": "minor_road"}`. Give one line `{"kind": "major_road"}`.
   - `boundaries.geojson` — one diagonal LineString.
   - `places.geojson` — two points: `{"name": "Portland", "kind": "locality"}` at (−122.60, 45.52) and `{"name": "Clinton", "kind": "neighbourhood"}` at (−122.6023, 45.5034).
 
@@ -254,7 +254,7 @@ tippecanoe -o portland.pmtiles --force -Z0 -z15 \
 	-L places:src/places.geojson
 ```
 
-- [ ] **Step 3: Generate + size-check.** Run the script; then `ls -la map-tui/test/fixtures/portland.pmtiles` and `pmtiles show map-tui/test/fixtures/portland.pmtiles`. Expected: file well under 1 MB (a handful of features; likely tens of KB) and the five layers listed. If over 1 MB, drop `-z15` to `-z14` and re-check.
+- [ ] **Step 3: Generate + size-check.** Run the script, then `ls -la map-tui/test/fixtures/portland.pmtiles` and `pmtiles show map-tui/test/fixtures/portland.pmtiles`. Expected: file well under 1 MB (a handful of features, likely tens of KB) and the five layers listed. If over 1 MB, drop `-z15` to `-z14` and re-check.
 
 - [ ] **Step 4: Commit** (fixture + sources + script). `map-tui: synthetic Portland fixture tiles`
 
@@ -376,7 +376,7 @@ export function decodeMVT(data: Uint8Array): DecodedLayer[] {
 }
 ```
 
-(Plus the two interface declarations from the Interfaces block.) If `@mapbox/vector-tile` v2's import shape differs (named vs default), follow its types — the test is the arbiter.
+(Plus the two interface declarations from the Interfaces block.) If `@mapbox/vector-tile` v2's import shape differs (`import { VectorTile }` vs a default export), follow its types — the test is the arbiter.
 
 - [ ] **Step 4: Implement `tile-source.ts`.** A `FilePMTilesSource` implementing pmtiles' `Source` over `node:fs/promises` `FileHandle.read`, wrapped by `TileSource`:
 
@@ -408,7 +408,7 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 ```
 
-`TileSource.open(path)`: open the handle, construct `new PMTiles(new FilePMTilesSource(...))`, await `getHeader()` (minZoom/maxZoom) and `getMetadata()` (attribution: read `attribution` if it's a string, strip tags with `.replace(/<[^>]+>/gu, "")`, trim). `getTile`: key `` `${z}/${x}/${y}` ``, consult the cache Map first (delete+set to refresh recency; evict the oldest key past `TILE_CACHE_LIMIT`); on miss call `getZxy(z, x, y)`; `undefined` → cache and return null; otherwise `decodeMVT(new Uint8Array(response.data))`. pmtiles decompresses tile data internally (native `DecompressionStream`); if the fixture test fails on gzip magic bytes, gunzip via `node:zlib` `gunzipSync` when `data[0] === 0x1f`. `close()`: close the handle.
+`TileSource.open(path)`: open the handle, construct `new PMTiles(new FilePMTilesSource(...))`, await `getHeader()` (minZoom/maxZoom) and `getMetadata()` (attribution: read `attribution` if it's a string, strip tags with `.replace(/<[^>]+>/gu, "")`, trim). `getTile`: key `` `${z}/${x}/${y}` ``, consult the cache Map first (delete+set to refresh recency, and evict the oldest key past `TILE_CACHE_LIMIT`); on miss call `getZxy(z, x, y)`; `undefined` → cache and return null. Otherwise `decodeMVT(new Uint8Array(response.data))`. pmtiles decompresses tile data internally (native `DecompressionStream`); if the fixture test fails on gzip magic bytes, gunzip via `node:zlib` `gunzipSync` when `data[0] === 0x1f`. `close()`: close the handle.
 
 - [ ] **Step 5: Run to verify pass.** — PASS.
 
@@ -648,7 +648,7 @@ describe("drawCircle", () => {
 
 - [ ] **Step 2: Run to verify failure.** — FAIL.
 
-- [ ] **Step 3: Implement.** `RGBAGrid.setPixel` writes RGB + alpha 255 with bounds check. `drawPolyline`: per-segment integer Bresenham; `width > 1` stamps a `width`-sized square at each step. `fillPolygon`: classic even-odd scanline — for each row y, collect x-intersections of every ring edge crossing y+0.5, sort, fill alternate pairs. `drawCircle`: midpoint circle algorithm (8-way symmetry), ring only. All coordinates floored on entry; everything clips through `setPixel`.
+- [ ] **Step 3: Implement.** `RGBAGrid.setPixel` writes RGB + alpha 255 with bounds check. `drawPolyline`: per-segment integer Bresenham; `width > 1` stamps a `width`-sized square at each step. `fillPolygon`: classic even-odd scanline — for each row y, collect x-intersections of every ring edge crossing y+0.5, sort, fill alternate pairs. `drawCircle`: midpoint circle algorithm (8-way symmetry), ring only. All coordinates floored on entry, and everything clips through `setPixel`.
 
 - [ ] **Step 4: Run to verify pass.** — PASS.
 
@@ -767,7 +767,7 @@ describe("overlayText", () => {
 
 - [ ] **Step 2: Run to verify failure.** — FAIL.
 
-- [ ] **Step 3: Implement.** `rasterizeToFrame` constructs a `FrameRasterizer` per call (cheap: two typed arrays), asserts `grid.width === columns * 2 && grid.height === rows * 4` (throw on mismatch — a sizing bug rather than a clip). `frameToANSILines`: per row, walk cells; when `color` differs from the running color and the cell is inked, emit `[38;2;R;G;Bm`; append `String.fromCodePoint(char)` (0 → space); terminate each styled line with `[0m`. `overlayText`: bounds-clip; when `occupied` given, first check every target cell (+1 cell padding left/right) is free, return false on any hit, else write chars + colors and mark occupied.
+- [ ] **Step 3: Implement.** `rasterizeToFrame` constructs a `FrameRasterizer` per call (cheap: two typed arrays), asserts `grid.width === columns * 2 && grid.height === rows * 4` (throw on mismatch — a sizing bug rather than a clip). `frameToANSILines`: per row, walk cells. When `color` differs from the running color and the cell is inked, emit `[38;2;R;G;Bm`; append `String.fromCodePoint(char)` (0 → space); terminate each styled line with `[0m`. `overlayText`: bounds-clip. When `occupied` given, first check every target cell (+1 cell padding left/right) is free, return false on any hit, else write chars + colors and mark occupied.
 
 - [ ] **Step 4: Run to verify pass.** — PASS.
 
@@ -867,7 +867,7 @@ describe("MapRenderer", async () => {
 })
 ```
 
-On the first run the snapshots are created; **eyeball them** — the z14 frame must show the road grid as bright dot lines and the label text; the z11 frame must show the earth fill stipple and water along the west edge. A blank or solid frame is a bug rather than a baseline.
+On the first run the snapshots are created. **Eyeball them**. The z14 frame must show the road grid as bright dot lines and the label text. The z11 frame must show the earth fill stipple and water along the west edge. A blank or solid frame is a bug rather than a baseline.
 
 - [ ] **Step 2: Run to verify failure.** — FAIL (module not found).
 
@@ -899,9 +899,9 @@ return frame
 
 Color packing helper: `rgbToPacked([r, g, b])` → `(r << 16) | (g << 8) | b` — define once in `frame.ts` and reuse.
 
-- [ ] **Step 4: Run to verify pass; eyeball the new snapshots.** — PASS, snapshots reviewed by printing them: `yarn vitest run map-tui/renderer.test.ts` then read `map-tui/__snapshots__/renderer.test.ts.snap`.
+- [ ] **Step 4: Run to verify pass, then eyeball the new snapshots.** — PASS, snapshots reviewed by printing them: `yarn vitest run map-tui/renderer.test.ts` then read `map-tui/__snapshots__/renderer.test.ts.snap`.
 
-- [ ] **Step 5: Wire `index.ts` re-exports; run the whole package.** `yarn vitest run map-tui/` — all green. `yarn lint` — green.
+- [ ] **Step 5: Wire `index.ts` re-exports, then run the whole package.** `yarn vitest run map-tui/` — all green. `yarn lint` — green.
 
 - [ ] **Step 6: Commit.** `map-tui: viewport renderer + golden frames`
 
@@ -942,7 +942,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 - [ ] **Step 1: Move the assembly.** `createGeocodeSession` performs, in this order (preserving today's error precedence — gazetteer path first, weights second): `resolveCandidateDBPath` → `resolveWOFPath` → classifier load → `resolver-wof-sqlite` import → lookup/RegionDatabaseProvider/explicit-extract wiring → BAN/OSM optional providers → CoarsePlacer → `createWOFResolver` → parse the `--bias` string once. All of this is a reduce-and-paste from `runGeocode` with `input`-dependent code left behind.
 
-  `session.geocode(input)` performs the per-input work: `parseForGeocode` → the `barePostcodeFormatConflict` / `inferredScopeOK` / `withheldCountry` derivations → the fork-entity dep probe (hoist the `existsSync(poiDBPath)` + dynamic imports into `createGeocodeSession` so they run once; keep the `options.forkEntity !== false` check) → `geocodeAddress(...)` with the exact dep spread `runGeocode` builds today → returns `{ result, tree: parsedTree }`.
+  `session.geocode(input)` performs the per-input work: `parseForGeocode` → the `barePostcodeFormatConflict` / `inferredScopeOK` / `withheldCountry` derivations → the fork-entity dep probe (hoist the `existsSync(poiDBPath)` + dynamic imports into `createGeocodeSession` so they run once, and keep the `options.forkEntity !== false` check) → `geocodeAddress(...)` with the exact dep spread `runGeocode` builds today → returns `{ result, tree: parsedTree }`.
 
   `close()`: the current `finally` block's five closes, each wrapped so one failure doesn't skip the rest.
 
@@ -974,7 +974,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 **Files:**
 
-- Modify: `core/env/schema.ts` — two lines: `MAILWOMAN_TILES: z.string().optional(),` in the DB-paths block, and `NO_COLOR: z.string().optional(),` (the informal-standard color kill switch; the schema strips unlisted vars, so it must be declared for `$public.NO_COLOR` to be readable — chalk/Ink honor it internally, but the debug map pane emits raw SGR and must consult it itself)
+- Modify: `core/env/schema.ts` — two lines: `MAILWOMAN_TILES: z.string().optional(),` in the DB-paths block, and `NO_COLOR: z.string().optional(),` (the informal-standard color kill switch. The schema strips unlisted vars, so it must be declared for `$public.NO_COLOR` to be readable — chalk/Ink honor it internally, but the debug map pane emits raw SGR and must consult it itself)
 - Create: `mailwoman/debug-view/tiles.ts`, `mailwoman/debug-view/tiles.test.ts`
 
 **Interfaces:**
@@ -1179,7 +1179,7 @@ describe("DebugFrame", () => {
 })
 ```
 
-(Test file extension: `.test.tsx` if JSX in tests requires it — follow `geocode.test.ts`'s pattern for imports; adjust filename accordingly.)
+(Test file extension: `.test.tsx` if JSX in tests requires it — follow `geocode.test.ts`'s pattern for imports, and adjust filename accordingly.)
 
 - [ ] **Step 3: Run to verify failure.** `yarn vitest run mailwoman/debug-view/` — FAIL.
 
@@ -1191,7 +1191,7 @@ export function mapPaneCellSize(columns: number, rows: number): { columns: numbe
 }
 ```
 
-Panes: `<Box borderStyle="round" borderColor={focused === pane ? "cyan" : "gray"}>` with a `<Text>` title. InputBar: `inputField` child when provided, else `<Text>{data.input}</Text>`; beneath it the ribbon — walk the tree's leaf nodes sorted by `start`, emit `<Text backgroundColor={tagColor(node.tag)}> {value} </Text>` segments plus a legend line of `tag` names in their colors. OutputPane: tier/coordinate/uncertainty lines + one row per `result.hierarchy` entry (`tag` in its ribbon color, value, placeID dim, coord dim). MapPane: `frame` present → `frameToANSILines(frame, { color: props.color }).map((line, i) => <Text key={i}>{line}</Text>)` + attribution right-aligned dim; else `<Text dimColor>{mapNote}</Text>`. Busy: title suffix `…` on the output pane.
+Panes: `<Box borderStyle="round" borderColor={focused === pane ? "cyan" : "gray"}>` with a `<Text>` title. InputBar: `inputField` child when provided, else `<Text>{data.input}</Text>`; beneath it the ribbon — walk the tree's leaf nodes sorted by `start`, emit `<Text backgroundColor={tagColor(node.tag)}> {value} </Text>` segments plus a legend line of `tag` names in their colors. OutputPane: tier/coordinate/uncertainty lines + one row per `result.hierarchy` entry (`tag` in its ribbon color, value, placeID dim, coord dim). MapPane: `frame` present → `frameToANSILines(frame, { color: props.color }).map((line, i) => <Text key={i}>{line}</Text>)` + attribution right-aligned dim. Otherwise `<Text dimColor>{mapNote}</Text>`. Busy: title suffix `…` on the output pane.
 
 - [ ] **Step 5: Run to verify pass.** — PASS.
 
@@ -1242,7 +1242,7 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 	)
 ```
 
-The `--debug` + format-shorthand conflict check lives INSIDE `GeocodeDebugCommand`'s async task (first statement), thrown as `commandError` — so it reports through the standard error state and carries exit code 1 like every other usage error, on both the static and interactive paths:
+The `--debug` + format-shorthand conflict check lives INSIDE `GeocodeDebugCommand`'s async task (first statement), thrown as `commandError` — so it reports through the standard error state and exits with code 1 like every other usage error, on both the static and interactive paths:
 
 ```ts
 function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
@@ -1327,7 +1327,7 @@ async function runStaticDebug(input: string, options: GeocodeCommandOptions): Pr
 }
 ```
 
-`GeocodeDebugCommand` (static half; interactive lands in Task 13): when `!process.stdout.isTTY`, `useCommandTask(() => runStaticDebug(input, options))` → on done `writeRawStdout(state.result)`, on error the red `<Text>`; running renders `null` (the #1577 posture). When `process.stdout.isTTY`, render a placeholder `<Text>` ("interactive session lands in the next commit") — replaced by Task 13.
+`GeocodeDebugCommand` (static half. The interactive half lands in Task 13): when `!process.stdout.isTTY`, `useCommandTask(() => runStaticDebug(input, options))` → on done `writeRawStdout(state.result)`, on error the red `<Text>`; running renders `null` (the #1577 posture). When `process.stdout.isTTY`, render a placeholder `<Text>` ("interactive session lands in the next commit") — replaced by Task 13.
 
 - [ ] **Step 4: Write the guarded smoke test** (`static.test.ts`): skip (`describe.skipIf`) unless the weights + a resolver DB resolve (mirror how `geocode.test.ts` guards its environment — read its guard and reuse the same predicate). Body: run `runStaticDebug("3215 SE Clinton St, Portland OR", …)` with `tiles` pointed at `map-tui/test/fixtures/portland.pmtiles` and `debugSize: "100x30"`; assert the string contains `"address_point"` or `"admin"` (tier line), a `⠀`-range braille char or the marker `●`, and the input echoed.
 
@@ -1378,11 +1378,11 @@ focused "map":   arrows pan by (columns/8 cells * 2)px x / (rows/8 * 4)px y; "+"
 focused "output": up/down scroll offset (window the hierarchy rows)
 ```
 
-Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} onSubmit={submit}/>` where `submit` sets busy, `session.geocode(inputValue)`, replaces `data`, clears `viewportOverride`, returns to ready; a thrown error renders in the output pane (message row, red) with the previous result retained.
+Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} onSubmit={submit}/>` where `submit` sets busy, `session.geocode(inputValue)`, replaces `data`, clears `viewportOverride`, returns to ready. A thrown error renders in the output pane (message row, red) with the previous result retained.
 
 - [ ] **Step 3: Wire the TTY branch** in `command.tsx`: replace the Task 12 placeholder with `<DebugSessionApp initialInput={input} options={options} />`.
 
-- [ ] **Step 4: Manual verification on the lab host** (interactive TUIs get a human eye rather than a unit test): `yarn compile && node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" --debug` with `$MAILWOMAN_TILES` set to the planet symlink. Check: three panels render; map shows Portland; Tab cycles focus; arrows pan; `+`/`-` zoom; editing the input to `"350 5th Ave, New York, NY"` + Enter re-renders all panes in ~a second; Esc restores the terminal with scrollback intact (`echo before-run` printed before the session must still be in scrollback after exit). Record observations in the PR.
+- [ ] **Step 4: Manual verification on the lab host** (interactive TUIs get a human eye rather than a unit test): `yarn compile && node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" --debug` with `$MAILWOMAN_TILES` set to the planet symlink. Check: three panels render, the map shows Portland, Tab cycles focus, arrows pan, `+`/`-` zoom, editing the input to `"350 5th Ave, New York, NY"` + Enter re-renders all panes in ~a second, and Esc restores the terminal with scrollback intact (`echo before-run` printed before the session must still be in scrollback after exit). Record observations in the PR.
 
 - [ ] **Step 5: Re-run the pure-component tests** (`yarn vitest run mailwoman/debug-view/ mailwoman/commands/geocode.test.ts`) — PASS.
 
@@ -1392,7 +1392,7 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 
 **Files:**
 
-- Modify: `.release-it.json` (add `map-tui` to the workspaces publish list, matching its ordering), `AGENTS.md` (workspace table + counts), `docs/engineering/SCOPE.mdx` only if it enumerates workspaces (check; skip if not)
+- Modify: `.release-it.json` (add `map-tui` to the workspaces publish list, matching its ordering), `AGENTS.md` (workspace table + counts), `docs/engineering/SCOPE.mdx` only if it enumerates workspaces (check, and skip if not)
 
 - [ ] **Step 1: `.release-it.json`.** Add `map-tui` to the `@release-it-plugins/workspaces` list. The publish count becomes 49 of 55.
 
@@ -1412,9 +1412,9 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 
 ## Deviations from the spec (recorded, approved direction)
 
-1. **No `@mailwoman/spatial` dependency in map-tui.** The uncertainty ring needs only `metersPerPixel` (ground resolution) rather than haversine; cartographer/spatial both drag heavy transitive deps (maplibre-gl + tiger; core's shipped data). map-tui carries a local 40-line `mercator.ts` with the priced-and-declined note — the `nuts-lookup` precedent. Net: zero `@mailwoman/*` runtime deps, which also serves the phase-2 standalone `npx` story.
+1. **No `@mailwoman/spatial` dependency in map-tui.** The uncertainty ring needs only `metersPerPixel` (ground resolution) rather than haversine. cartographer/spatial both drag heavy transitive deps (maplibre-gl + tiger, and core's shipped data). map-tui keeps a local 40-line `mercator.ts` with the priced-and-declined note — the `nuts-lookup` precedent. Net: zero `@mailwoman/*` runtime deps. That also serves the phase-2 standalone `npx` story.
 2. **No `ink-testing-library`.** `renderInkToString` (Task 11) is both the static-path mechanism and the component-test harness — one less dev dep, and the test exercises the production capture path.
-3. **No graticule in the tile-less map pane.** Spec §3's degrade shape ("marker on a graticule") shipped as the note alone; the graticule is deferred to phase 2 with the standalone browser.
+3. **No graticule in the tile-less map pane.** Spec §3's degrade shape ("marker on a graticule") shipped as the note without a graticule. The graticule is deferred to phase 2 with the standalone browser.
 4. **Fixed 12-px pan step.** The interactive pan step is a constant 12 device pixels per keypress (6 cells horizontal, 3 vertical) rather than the terminal-proportional step the plan sketched — same physical nudge at every terminal size.
 
 ## Explicitly out of scope (phase 2+)

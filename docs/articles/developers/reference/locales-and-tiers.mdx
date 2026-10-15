@@ -1,6 +1,6 @@
 ---
 title: Locales and tiers
-description: What a locale tier means, which locales carry a measured claim, and what ships for each one.
+description: What a locale tier means, the locales that have a measured claim, and what ships for each one.
 role: reference
 source-of-truth: docs/engineering/SCOPE.mdx, the neural-weights-* package manifests, mailwoman/data-bundles.ts
 ---
@@ -17,7 +17,7 @@ Read the two lists as answering different questions. The tier table answers "how
 measured". The shipping table answers "what will `npm install` and `mailwoman data pull` give me".
 They do not line up, and the mismatch is the point.
 
-A locale also does not have to match the country named by the address. Mailwoman treats the request
+A locale also does not have to match the country that the address gives. Mailwoman treats the request
 locale, the input's script and postal evidence, and the gazetteer's multilingual names as separate
 signals. [Cross-locale queries](../knowledge-base/localization/cross-locale-queries.mdx) explains what
 happens when an address is written in another language or script, and where translation falls outside
@@ -25,7 +25,7 @@ the current pipeline.
 
 Tiers are maintained in the scope declaration at
 [`SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and
-reproduced here. The table below is the declaration of 2026-07-02; several packages listed under
+reproduced here. The table below is the declaration of 2026-07-02. Several packages listed under
 [What ships](#what-ships) postdate it.
 
 ## Tiers
@@ -41,13 +41,14 @@ reproduced here. The table below is the declaration of 2026-07-02; several packa
 A locale appearing in two tiers is not an error. Tier 4 records a tokenizer capability rather than an
 evaluation, so CZ and PL hold both a coordinate panel and a splice.
 
-Tier 1 is the only tier whose numbers can stop a release. A regression on US or FR blocks a ship; a
+Tier 1 is the only tier whose numbers can stop a release. A regression on US or FR blocks a ship. A
 regression on a tier-2 locale is recorded and argued about.
 
 ### Queued
 
-Queued behind an external constraint rather than an engineering one: GB, IE, SE, HU and RO corpora via
-OpenStreetMap, which is waiting on the share-alike review; and KR, which has no adopted open data path.
+Two items are queued behind an external constraint rather than an engineering one. GB, IE, SE, HU and
+RO corpora come via OpenStreetMap, and that path is waiting on the share-alike review. KR has no
+adopted open data path.
 The constraint on Korean is data licensing. There is no engineering estimate to give, because no estimate is
 possible until a corpus is available.
 
@@ -72,7 +73,7 @@ locale data rather than a second model.
 | `@mailwoman/neural-weights-it-it` | Italy         | No               | Yes        | No                     |
 | `@mailwoman/neural-weights-en-in` | India         | No               | Yes        | No                     |
 
-`en-us` is the base and carries the model, the tokenizer, and the calibration tables. The rest carry
+`en-us` is the base and contains the model, the tokenizer, and the calibration tables. The rest contain
 locale data only, so `@mailwoman/neural-weights-en-us` is installed alongside any of them.
 
 The New Zealand overlay ships no postcode anchor table. The encoder is anchor-trained, so New Zealand
@@ -89,10 +90,10 @@ parses run with the anchor channel off. That is a declared gap, recorded in the 
 | `fr`        | France                | 1         | 6.95 GB | `address_point` only                      |
 | `poi`       | US, CA, MX, FR        | 1         | 3.89 GB | POI search rather than address resolution |
 
-`candidate` is the one every install needs. It answers on the `admin` tier globally, which is a
+`candidate` is the one every install needs. It answers on the `admin` tier globally. That tier is a
 locality or region centroid rather than a rooftop coordinate.
 
-The `us` bundle is per state: `mailwoman data pull us --only nh` fetches New Hampshire alone rather
+The `us` bundle is per state: `mailwoman data pull us --only nh` fetches only New Hampshire rather
 than the full 41.3 GB. The French bundle ships rooftop points with no interpolation tier, so a French
 address whose exact point is absent falls straight through to `admin` rather than to a house-number
 estimate along the street.
@@ -141,8 +142,8 @@ training mix, and those are not the same product.
 
 An overlay can ship before its tier moves. A pair index is useful to somebody parsing
 German addresses today whether or not a coordinate panel exists for German, and holding the package
-back until the evaluation lands would help nobody. It does mean the two tables on this page disagree,
-which is why they are two tables.
+back until the evaluation lands would help no user. It does mean the two tables on this page disagree.
+That is why they are two tables.
 
 The queued locales are queued on licensing rather than on effort. Share-alike terms on a corpus decide
 whether a trained model can ship under this project's license, and that question is answered by

@@ -1,7 +1,7 @@
 # This recipe is v0.9.12-country-gaz.yaml with train.gazetteer_curriculum turned on.
 # The curriculum zeroes the gazetteer confidence on a share of rows that ramps up over the run, on
 # the same schedule as the postcode anchor. The model then has to label correctly both with and
-# without the gazetteer clue, which keeps it from leaning on the clue for postcodes.
+# without the gazetteer clue. That requirement keeps it from leaning on the clue for postcodes.
 #
 # Stage /data/gazetteer/anchor-lexicon-v1.json through R2 before launch, as v0.9.12-country-gaz.yaml
 # describes. Launch it from corpus-python with:

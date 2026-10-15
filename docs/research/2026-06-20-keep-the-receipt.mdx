@@ -12,15 +12,15 @@ Every geocoder turns an address into a coordinate. Almost none of them will tell
 
 ![Address points across New York, each colored by its source dataset: green for the federal National Address Database statewide, orange for OpenAddresses (the city's own NYC Open Data) concentrated in New York City.](/img/address-provenance-ny.png)
 
-Green is the National Address Database; orange is OpenAddresses, which for New York means the city's own NYC Open Data. You can [explore the interactive version](pathname:///maps/address-provenance-ny.html) and click any dot to see its publisher.
+Green is the National Address Database. Orange is OpenAddresses. For New York, OpenAddresses republishes the city's own NYC Open Data. You can [explore the interactive version](pathname:///maps/address-provenance-ny.html) and click any dot to see its publisher.
 
 ## The split is geography you can see
 
-The federal release blankets the state. New York City sits in its own color because the city publishes its own address file, and OpenAddresses carries it. No guess was made about which is which — the source rode along on every point, from ingest all the way to this map. That's the whole trick, and it's a boring one: a `source` column that nobody dropped.
+The federal release blankets the state. New York City sits in its own color because the city publishes its own address file, and OpenAddresses republishes it. No guess was made about which is which. Every point kept its source, from ingest all the way to this map. The method is a `source` column that no pipeline stage dropped.
 
 ## Credit where the data's due
 
-None of this is our data. The National Address Database is a federal release; OpenAddresses is a decade of county and municipal publishers doing the unglamorous work of putting their address files online; the street network underneath is Census TIGER. They're free, they're open, and they're good. The lookup was never the hard part of geocoding. Each pipeline must assemble these sources, keep them fresh, and preserve their provenance. That record lets a user trace a wrong coordinate to the dataset and release that produced it.
+None of this is our data. The National Address Database is a federal release. OpenAddresses is a decade of county and municipal publishers doing the unglamorous work of putting their address files online. The street network underneath is Census TIGER. They're free, they're open, and they're good. The lookup was never the hard part of geocoding. Each pipeline must assemble these sources, keep them fresh, and preserve their provenance. That record lets a user trace a wrong coordinate to the dataset and release that produced it.
 
 ## The layers under the dots
 

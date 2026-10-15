@@ -113,57 +113,57 @@ The persistent core: addresses no current candidate parses. Per-country breakdow
 
 ## Model-specific — where candidates disagree (50)
 
-A ✓ under one model and a failure under another = a fix or a regression **between** candidates — the diff you track release-over-release.
+A pass under one model and a failure under another marks a fix or a regression between candidates. That difference is the one to track from release to release.
 
 | country | input                                                                        | shipped                                                      | v263                                                |
 | ------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| `AD`    | `Phone: 555-1234 — 200 Elm St, Springfield, IL 62701`                        | ✓                                                            | house_number→`55-1234 200`                          |
-| `FR`    | `Manailly Creuse FRANCE`                                                     | ✓                                                            | region→`Creuse FRANCE` · country→`∅`                |
-| `FR`    | `Lizières Creuse France`                                                     | ✓                                                            | region→`Creuse France` · country→`∅`                |
-| `FR`    | `Montredon Lozère France`                                                    | ✓                                                            | locality→`Montredon Lozère` · region→`∅`            |
-| `FR`    | `Ла-Нуай Creuse France`                                                      | ✓                                                            | locality→`Ла-Нуай Creuse` · region→`∅`              |
-| `FR`    | `47110 2 place de verdun sainte-livrade-sur-lot`                             | street→`Place DE` · locality→`Verdun Sainte-Livrade-Sur-Lot` | ✓                                                   |
-| `FR`    | `Woustviller 57915 France`                                                   | ✓                                                            | postcode→`57915 France`                             |
-| `FR`    | `13940 Mollégès, France`                                                     | ✓                                                            | locality→`∅`                                        |
-| `FR`    | `IFS 14123 France`                                                           | ✓                                                            | postcode→`14123 France`                             |
-| `FR`    | `62119 Dourges France`                                                       | ✓                                                            | postcode→`62119 France`                             |
-| `FR`    | `Le Puy-Sainte-Réparade 13610`                                               | locality→`Le`                                                | ✓                                                   |
-| `FR`    | `59112 Ann ullin, France`                                                    | ✓                                                            | locality→`ullin`                                    |
-| `FR`    | `France, 59112 Ann ullin`                                                    | ✓                                                            | locality→`France Ann ullin`                         |
-| `FR`    | `Wimereux, 62930`                                                            | locality→`∅`                                                 | ✓                                                   |
-| `UN`    | `United States of America, Медоу Ејкерс, WY`                                 | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `Патни, Vermont, United States of America`                                   | ✓                                                            | locality→`Патни, Vermont` · region→`∅`              |
-| `UN`    | `United States of America, ND, Лорейн`                                       | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, ND, هاغو`                                         | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, Vermont, Содом`                                   | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `Vermont, United States of America`                                          | ✓                                                            | region→`∅`                                          |
-| `UN`    | `United States of America, ND, Monroe`                                       | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `Wyoming, ہلزڈیل وائیومنگ, United States of America`                         | locality→`Wyoming ہلزڈیل وائیومنگ` · region→`∅`              | ✓                                                   |
-| `UN`    | `United States of America, VT, Уэтерсфилд`                                   | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, Wyoming, هوباک وایومینگ`                          | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `علاالدین وایومینگ, Wyoming, United States of America`                       | ✓                                                            | locality→`علاالدین وایومینگ, Wyoming` · region→`∅`  |
-| `UN`    | `United States of America, North Dakota, Bloomfield`                         | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, اوپهام قوزئی داکوتا, ND`                          | locality→`اوپهام وزئی داکوتا` · country→`∅`                  | ✓                                                   |
-| `UN`    | `United States of America, VT, Вотерфорд`                                    | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, Vermont, Монтпилиер`                              | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, لئونارد داکوتای شمالی, ND`                        | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, Wyoming, بیر ریور`                                | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, Wyoming, Antilop`                                 | country→`∅`                                                  | ✓                                                   |
-| `UN`    | `United States of America, North Dakota, واتفورد سیتی قوزئی داکوتا`          | locality→`واتفورد سیتی وزئی داکوتا` · country→`∅`            | ✓                                                   |
-| `US`    | `Cider Mill Rd VT 05161, US`                                                 | ✓                                                            | street→`Cider VT Mill Rd` · region→`∅`              |
-| `US`    | `STATE RTE 100, VT 05350, USA`                                               | ✓                                                            | street→`State Rte 100 VT` · region→`∅`              |
-| `US`    | `122R Ave Southwest ND 58655`                                                | ✓                                                            | street→`Ave Southwest`                              |
-| `US`    | `VT 05051 Deerfield Ln`                                                      | ✓                                                            | street→`VT Deerfield Ln` · region→`∅`               |
-| `US`    | `Farson Branch Library, 30 Hwy 28 Farson-Eden School Bldg, Farson, WY 82932` | ✓                                                            | street→`Hwy 28 Farson-Eden School`                  |
-| `US`    | `Manchester Community Library, 138 CEMETERY AVE RTE 7A, Manchester VT`       | street→`CEMETERY AVE RTE`                                    | ✓                                                   |
-| `US`    | `US اوبران North Dakota`                                                     | locality→`US اوبران`                                         | ✓                                                   |
-| `US`    | `بروکهورست وایومینگ, Wyoming, US`                                            | ✓                                                            | locality→`بروکهورست وایومینگ, Wyoming` · region→`∅` |
-| `US`    | `North Dakota, Antilopo`                                                     | ✓                                                            | locality→`North Dakota Antilopo` · region→`∅`       |
-| `US`    | `هئیل, North Dakota, US`                                                     | ✓                                                            | locality→`هئیل, North` · region→`Dakota`            |
-| `US`    | `US - ND - نومي`                                                             | ✓                                                            | locality→`ND - نومي` · region→`∅`                   |
-| `US`    | `US, ND, Antilopalar`                                                        | ✓                                                            | locality→`Antilo` · region→`ND palar`               |
-| `US`    | `US, Хак, ND`                                                                | locality→`US Хак`                                            | ✓                                                   |
-| `US`    | `SARDGEEN ARBON PLLC, 110 W FAYETTE ST STE 1110, SYRACUSE, NY 13202`         | ✓                                                            | street→`W Fayette ST`                               |
-| `US`    | `Seyfarth Shaw Fairweather, 1211 Ave of the America, New York, New York`     | ✓                                                            | street→`Ave of the`                                 |
-| `US`    | `Jo Ann Brinkley, PO BOX 7298, Glen Rose, TX 76043`                          | ✓                                                            | street→`BOX 7298`                                   |
-| `US`    | `Virginia Stricklin, 9122 Heathcliff, San Antonio, TX 78254, US`             | ✓                                                            | region→`TX US`                                      |
+| `AD`    | `Phone: 555-1234 — 200 Elm St, Springfield, IL 62701`                        | pass                                                         | house_number→`55-1234 200`                          |
+| `FR`    | `Manailly Creuse FRANCE`                                                     | pass                                                         | region→`Creuse FRANCE` · country→`∅`                |
+| `FR`    | `Lizières Creuse France`                                                     | pass                                                         | region→`Creuse France` · country→`∅`                |
+| `FR`    | `Montredon Lozère France`                                                    | pass                                                         | locality→`Montredon Lozère` · region→`∅`            |
+| `FR`    | `Ла-Нуай Creuse France`                                                      | pass                                                         | locality→`Ла-Нуай Creuse` · region→`∅`              |
+| `FR`    | `47110 2 place de verdun sainte-livrade-sur-lot`                             | street→`Place DE` · locality→`Verdun Sainte-Livrade-Sur-Lot` | pass                                                |
+| `FR`    | `Woustviller 57915 France`                                                   | pass                                                         | postcode→`57915 France`                             |
+| `FR`    | `13940 Mollégès, France`                                                     | pass                                                         | locality→`∅`                                        |
+| `FR`    | `IFS 14123 France`                                                           | pass                                                         | postcode→`14123 France`                             |
+| `FR`    | `62119 Dourges France`                                                       | pass                                                         | postcode→`62119 France`                             |
+| `FR`    | `Le Puy-Sainte-Réparade 13610`                                               | locality→`Le`                                                | pass                                                |
+| `FR`    | `59112 Ann ullin, France`                                                    | pass                                                         | locality→`ullin`                                    |
+| `FR`    | `France, 59112 Ann ullin`                                                    | pass                                                         | locality→`France Ann ullin`                         |
+| `FR`    | `Wimereux, 62930`                                                            | locality→`∅`                                                 | pass                                                |
+| `UN`    | `United States of America, Медоу Ејкерс, WY`                                 | country→`∅`                                                  | pass                                                |
+| `UN`    | `Патни, Vermont, United States of America`                                   | pass                                                         | locality→`Патни, Vermont` · region→`∅`              |
+| `UN`    | `United States of America, ND, Лорейн`                                       | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, ND, هاغو`                                         | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, Vermont, Содом`                                   | country→`∅`                                                  | pass                                                |
+| `UN`    | `Vermont, United States of America`                                          | pass                                                         | region→`∅`                                          |
+| `UN`    | `United States of America, ND, Monroe`                                       | country→`∅`                                                  | pass                                                |
+| `UN`    | `Wyoming, ہلزڈیل وائیومنگ, United States of America`                         | locality→`Wyoming ہلزڈیل وائیومنگ` · region→`∅`              | pass                                                |
+| `UN`    | `United States of America, VT, Уэтерсфилд`                                   | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, Wyoming, هوباک وایومینگ`                          | country→`∅`                                                  | pass                                                |
+| `UN`    | `علاالدین وایومینگ, Wyoming, United States of America`                       | pass                                                         | locality→`علاالدین وایومینگ, Wyoming` · region→`∅`  |
+| `UN`    | `United States of America, North Dakota, Bloomfield`                         | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, اوپهام قوزئی داکوتا, ND`                          | locality→`اوپهام وزئی داکوتا` · country→`∅`                  | pass                                                |
+| `UN`    | `United States of America, VT, Вотерфорд`                                    | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, Vermont, Монтпилиер`                              | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, لئونارد داکوتای شمالی, ND`                        | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, Wyoming, بیر ریور`                                | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, Wyoming, Antilop`                                 | country→`∅`                                                  | pass                                                |
+| `UN`    | `United States of America, North Dakota, واتفورد سیتی قوزئی داکوتا`          | locality→`واتفورد سیتی وزئی داکوتا` · country→`∅`            | pass                                                |
+| `US`    | `Cider Mill Rd VT 05161, US`                                                 | pass                                                         | street→`Cider VT Mill Rd` · region→`∅`              |
+| `US`    | `STATE RTE 100, VT 05350, USA`                                               | pass                                                         | street→`State Rte 100 VT` · region→`∅`              |
+| `US`    | `122R Ave Southwest ND 58655`                                                | pass                                                         | street→`Ave Southwest`                              |
+| `US`    | `VT 05051 Deerfield Ln`                                                      | pass                                                         | street→`VT Deerfield Ln` · region→`∅`               |
+| `US`    | `Farson Branch Library, 30 Hwy 28 Farson-Eden School Bldg, Farson, WY 82932` | pass                                                         | street→`Hwy 28 Farson-Eden School`                  |
+| `US`    | `Manchester Community Library, 138 CEMETERY AVE RTE 7A, Manchester VT`       | street→`CEMETERY AVE RTE`                                    | pass                                                |
+| `US`    | `US اوبران North Dakota`                                                     | locality→`US اوبران`                                         | pass                                                |
+| `US`    | `بروکهورست وایومینگ, Wyoming, US`                                            | pass                                                         | locality→`بروکهورست وایومینگ, Wyoming` · region→`∅` |
+| `US`    | `North Dakota, Antilopo`                                                     | pass                                                         | locality→`North Dakota Antilopo` · region→`∅`       |
+| `US`    | `هئیل, North Dakota, US`                                                     | pass                                                         | locality→`هئیل, North` · region→`Dakota`            |
+| `US`    | `US - ND - نومي`                                                             | pass                                                         | locality→`ND - نومي` · region→`∅`                   |
+| `US`    | `US, ND, Antilopalar`                                                        | pass                                                         | locality→`Antilo` · region→`ND palar`               |
+| `US`    | `US, Хак, ND`                                                                | locality→`US Хак`                                            | pass                                                |
+| `US`    | `SARDGEEN ARBON PLLC, 110 W FAYETTE ST STE 1110, SYRACUSE, NY 13202`         | pass                                                         | street→`W Fayette ST`                               |
+| `US`    | `Seyfarth Shaw Fairweather, 1211 Ave of the America, New York, New York`     | pass                                                         | street→`Ave of the`                                 |
+| `US`    | `Jo Ann Brinkley, PO BOX 7298, Glen Rose, TX 76043`                          | pass                                                         | street→`BOX 7298`                                   |
+| `US`    | `Virginia Stricklin, 9122 Heathcliff, San Antonio, TX 78254, US`             | pass                                                         | region→`TX US`                                      |

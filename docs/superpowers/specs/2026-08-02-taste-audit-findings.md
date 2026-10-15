@@ -16,8 +16,8 @@ was checked against a recorded baseline of 4,617 passing tests taken before any 
 | A2        | five percentile copies → `core/utils/stats.ts`; two kept, annotated         |
 | A3        | `mulberry32` / `makeLcg` thunks → `core/utils/python-random.ts`, 16 sites   |
 | A4        | `check-release-parity` → `APIClient`; file transfers classified + annotated |
-| A5 / A6   | hashing and JSONL callers repointed; four kept raw, annotated               |
-| A7        | data-root literal back to one place; one real behavioral default fixed      |
+| A5 / A6   | hashing and JSONL callers repointed, four kept raw, annotated               |
+| A7        | data-root literal back to one place, one real behavioral default fixed      |
 | A8        | `jaccard` → `match/comparators.ts`                                          |
 | B1        | ray cast → `spatial/geometries/polygon.ts` (corrected — see below)          |
 | B2        | ten-copy regex + splitter → `corpus/src/adapter.ts`                         |
@@ -45,26 +45,26 @@ and B14's test fixtures.
 1. **The great-circle cluster** (7 candidates) produced **0 findings**. Five candidates imported the shared function, one was a
    documented adapter, and one was a deliberate variant for a different quantity.
 2. **B1** proposed moving all three point-in-polygon copies to `@mailwoman/spatial`. `nuts-lookup` and
-   `timezone-lookup` each carry one dependency (the zero-dependency `@mailwoman/annotations`), while spatial pulls in
+   `timezone-lookup` each have one dependency (the zero-dependency `@mailwoman/annotations`), while spatial pulls in
    `@mailwoman/core` and its ~11 MB of shipped data. That is three orders of magnitude of weight for fifteen lines.
    One copy moved, and the other two are documented in place.
 3. **A1** called nine files nine forks, citing a "4.3× size spread = divergence". Their
    `package.json` files show that two are base packages and seven declare `mailwoman.baseWeights` as
    overlays. The spread mostly reflects those two roles.
-4. **A4** counted 28 raw-`fetch` sites as one population. They are two populations: ~23 API requests, which should migrate,
-   and 4–5 multi-gigabyte file transfers streamed to disk, which should stay. Response caching makes no sense at
+4. **A4** counted 28 raw-`fetch` sites as one population. They are two populations. The ~23 API requests should migrate,
+   and the 4–5 multi-gigabyte file transfers streamed to disk should stay. Response caching makes no sense at
    that size, and axios buffers any non-stream response type in memory.
 
-Each correction came from opening a `package.json` or a dependency graph, which the
-grep-plus-read pass had skipped.
+Each correction came from opening a `package.json` or a dependency graph. The
+grep-plus-read pass had skipped both.
 
 ## Summary
 
 | axis                      | clusters | sites | notes                                                     |
 | ------------------------- | -------: | ----: | --------------------------------------------------------- |
 | A — home exists, bypassed |        8 |   ~95 | the owning module is already written and already imported |
-| B — orphan duplication    |       14 |  ~110 | no home yet; each cluster below names one                 |
-| C — idiom drift           |        1 |   ~30 | acronym casing only; the other four conventions hold      |
+| B — orphan duplication    |       14 |  ~110 | no home yet, and each cluster below names one             |
+| C — idiom drift           |        1 |   ~30 | acronym casing only, the other four conventions hold      |
 | D — altitude              |        1 |     1 | observation rather than a verdict                         |
 | rejected on reading       |       10 |   ~20 | see the appendix — do not re-propose these                |
 
@@ -74,14 +74,14 @@ grep-plus-read pass had skipped.
 - B2: ten byte-identical copies of the same regex and splitter. This is the cheapest fix
   in the audit.
 - B1: three point-in-polygon implementations in three published packages.
-- B6: a whole duplicated file whose written exit plan nobody executed.
+- B6: a whole duplicated file whose written exit plan was never executed.
 
 **The common cause.** In three of the largest clusters, a home module exists, but the call sites could
 not use it in its current shape. A3 is the clearest case.
 `SeededRandom` in `core/utils/python-random.ts` is mulberry32 according to its docstring, but it is a class
 with a `.random()` method, and all sixteen call sites want a `() => number` thunk. The sixteen sites
 therefore rebuilt the generator instead of adapting to the class. A2 has the same problem from the other side: two
-functions are named `percentile`, and one takes a percent while the other takes a fraction. When a home's interface
+functions are both called `percentile`, and one takes a percent while the other takes a fraction. When a home's interface
 does not match the call shape, pointing every call site at the home is the wrong fix. The
 home's interface has to change first.
 
@@ -89,7 +89,7 @@ home's interface has to change first.
 
 ### A1. `link-dev-weights.ts` — nine forks, all different, already diverged
 
-Every `neural-weights-*` workspace carries its own copy. The nine files have nine distinct md5s and range from
+Every `neural-weights-*` workspace has its own copy. The nine files have nine distinct md5s and range from
 96 to 512 lines:
 
 ```
@@ -108,7 +108,7 @@ Shared units the clone scan matched across them: `linkForce` (×5), `peekPairInd
 `md5FileWithSidecar` (×2), `removeIfPresent` (×2).
 
 > **Corrected 2026-08-02, before any edit: the size spread is mostly by design.** The nine
-> `package.json` files show that `en-us` and `base-latn` are base packages, whose `files` ship
+> `package.json` files show that `en-us` and `base-latn` are base packages. Their `files` ship
 > `model.onnx` + `tokenizer.model`. The other seven declare
 > `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and are overlays whose `files` ship only
 > locale artifacts. The four ~117-line scripts that link only `pair-index-<cc>.bin` are therefore
@@ -118,9 +118,9 @@ Shared units the clone scan matched across them: `linkForce` (×5), `peekPairInd
 > **A narrower question remains.** Among the seven overlays, three (`en-gb`, `en-nz`,
 > `fr-fr`) also link the base artifacts (`model.onnx`, `tokenizer.model`,
 > `anchor-lexicon-v1.json`, `country-surface-lexicon-v1.json`) into their workspace for local dev,
-> and four (`de-de`, `es-es`, `it-it`, `en-in`) do not. The files alone cannot show whether that split is intentional
+> and four (`de-de`, `es-es`, `it-it`, `en-in`) do not. The files by themselves cannot show whether that split is intentional
 > (because only the three are ever run standalone) or is the actual gap.
-> **The operator has to decide, and that is why this cluster was ranked "wants a second pair of
+> **The operator has to decide. For that reason this cluster was ranked "wants a second pair of
 > eyes" instead of being executed.**
 
 **Cost of leaving it: still the highest in the audit, for a different reason.** Nine scripts with nine
@@ -141,7 +141,7 @@ reduced to its artifact manifest plus one call.
 
 ### A2. Percentile / stats — the home was created for this and the copies came back
 
-`core/utils/stats.ts` was created for these helpers. Its docstring says:
+`core/utils/stats.ts` was created for these helpers. Its docstring reads:
 
 > Small stats helpers — the canonical home for the `percentile`/`median` copies (~15) and the `pct`
 > percentage-format lambdas (~40) the 2026-07-09 dedupe survey found across eval scripts.
@@ -181,7 +181,7 @@ docstring also warns that check parity depends on its exact nearest-rank semanti
 | LCG as `seededRandom`/`makeRandom` |      5 | `corpus/src/adapters/synth-po-box/adapter.ts:76`, `corpus/src/synthesize-{house-venue:11,no-street:20,po-box:21,street:11}.test.ts`                                                                                      |
 | LCG as `lcg`/`seeded`              |      7 | `registry/tools/{learned-scorer-clustering-eval:134,learned-scorer-eval:153,train-cross-gbt:122,train-gbt:128,train-org-cross-gbt:104}.ts`, `corpus/src/synthesize-anchor-absorption.test.ts:14`, `match/gbt.test.ts:14` |
 
-`core/utils/python-random.ts` exports `SeededRandom`, and its docstring says it is "Backed by
+`core/utils/python-random.ts` exports `SeededRandom`, and its docstring states it is "Backed by
 mulberry32". One caller uses it: `scripts/eval/build-oa-coord-golden.ts:149`.
 
 **Diagnosis: the home exists, but its shape does not fit.** `SeededRandom` is a class you call
@@ -198,7 +198,7 @@ and the mulberry32 copies produce different streams from the same seed, so "same
 result" is false across files that appear to agree.
 **Cost of fixing it: low** once the thunk exists.
 
-### A4. HTTP — `APIClient` is declared mandatory; 28 raw-`fetch` sites remain
+### A4. HTTP — `APIClient` is declared mandatory, and 28 raw-`fetch` sites remain
 
 `AGENTS.md` states the rule and then claims that the migration is complete:
 
@@ -234,7 +234,7 @@ rule is not enforced.
 a re-fetch. **Low** for the one-shot tools.
 **Cost of fixing it: medium.** `APIClient` is axios-based, so each migration is a real rewrite.
 
-### A5. Hash utilities — `core/utils/hash.ts` exists; 10 files call `createHash` directly
+### A5. Hash utilities — `core/utils/hash.ts` exists, but 10 files call `createHash` directly
 
 `sha256File` / `sha256Hex` / `md5File` are exported. Direct `createHash` callers:
 
@@ -253,7 +253,7 @@ digest construction may be deliberate.
 
 **Cost of leaving it: low.** **Cost of fixing it: low**, except `address-id`.
 
-### A6. JSONL — `core/utils/jsonl.ts` exists; 10 files hand-roll split-and-parse
+### A6. JSONL — `core/utils/jsonl.ts` exists, but 10 files hand-roll split-and-parse
 
 Nine files import `readJSONL`/`writeJSONL`/`iterateJSONL` correctly. Ten do not:
 `corpus/src/golden.ts`, `corpus/src/extract-recipes/intersection.ts`,
@@ -326,15 +326,15 @@ one. The author knew the rule and could not follow it for PIP.
 
 **Proposed home:** `spatial/geometries/polygon.ts`. `AGENTS.md` already calls spatial "the math
 home", and the missing PIP function makes that claim untrue.
-**Cost of leaving it: medium.** Three packages carry ray-cast edge cases without shared tests.
+**Cost of leaving it: medium.** Three packages hold ray-cast edge cases without shared tests.
 **Cost of fixing it: low-medium.** The fix adds one export and changes three call sites, and the shared signature has to use the resolver variant's
 `readonly` GeoJSON types.
 
 > **Corrected on implementation.** Only the resolver moved. `nuts-lookup` and `timezone-lookup` each
-> carry exactly one dependency (the zero-dependency `@mailwoman/annotations`). A direct spatial import to reach the
+> have exactly one dependency (the zero-dependency `@mailwoman/annotations`). A direct spatial import to reach the
 > ray cast would pull `@mailwoman/core` and its ~11 MB of shipped data into two leaf packages. That
 > is a weight increase of three orders of magnitude for fifteen lines, so both packages keep their copies, with the
-> measurement recorded in place. The audit priced the duplication but not the dependency, and reading the
+> measurement recorded in place. The audit counted the duplicated lines but not the added dependency weight, and reading the
 > dependency graph before moving the code caught the problem.
 
 ### B2. corpus adapters — the same regex ten times, the same splitter eight times
@@ -395,8 +395,8 @@ Each renames the live DB aside, clears `-wal`/`-shm`, renames the new DB into pl
 
 This code implements the database rule from `AGENTS.md`:
 
-> take care to build it successfully, then move the previous version to a temp directory, and then
-> move the new version into place.
+> Database files are read-only published artifacts. Build a replacement separately, verify it, and swap
+> it into place.
 
 A rule the project states in prose and implements twice in code should be a function.
 
@@ -405,16 +405,16 @@ A rule the project states in prose and implements twice in code should be a func
 **Cost of leaving it: medium.** If one copy gets the `-wal` cleanup wrong, it corrupts a shipped
 artifact. **Cost of fixing it: low.**
 
-### B6. `v0-tree-adapter.ts` — a whole file duplicated, with a written exit plan nobody ran
+### B6. `v0-tree-adapter.ts` — a whole file duplicated, with a written exit plan that was never run
 
 `mailwoman/eval-harness/v0-tree-adapter.ts` and `scripts/eval/v0-tree-adapter.ts` differ in **four
-docstring lines.** The code is identical. The docstrings describe which file is the copy:
+docstring lines.** The code is identical. The docstrings describe which file is the copy. A `NOTE(phase5a)` comment in the harness file identified it as
+a copy of `scripts/eval/v0-tree-adapter.ts`. The note said that the original stayed because two probes pending
+triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`) still imported it. It said that the probe
+triage should delete that copy and repoint any surviving probe to the harness file. The one remaining copy is
+`packages/mailwoman/tools/eval-harness/v0-tree-adapter.ts`, and its header no longer contains the note.
 
-> NOTE(phase5a): this is a COPY of `scripts/eval/v0-tree-adapter.ts` […] The original stays behind
-> because two probes pending triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`) still
-> import it; the probe triage should delete that copy and repoint any survivor here.
-
-The triage never happened. Both named probes still exist.
+The triage never happened. Both probes listed in that note still exist.
 
 **Cost of leaving it: low today, and it is the cheapest cluster to close.**
 **Cost of fixing it: low.** Triage the two probes and delete one file.
@@ -436,7 +436,7 @@ Six components with the same names exist in both `docs/src/components/` and `rea
 
 A full read of `KindBadge` shows the same markup tree, the same `formatPct` helper, and the same behavior. The only real
 differences are CSS-module class names versus BEM strings, and a locally imported `KindResult` type
-versus react's structural `KindBadgeResult`. React's docstring says its copy is "Shared by
+versus react's structural `KindBadgeResult`. React's docstring states its copy is "Shared by
 both explorers", but docs never adopted it.
 
 Some docs components (`POIExplorer`, `PipelineExplorer`) do import `@mailwoman/react`, so the port is
@@ -516,7 +516,7 @@ mailwoman/test/*.test.ts  captureResolver ×2, weightsPresent ×2
 corpus/src/*.test.ts      writeCSV ×2, baseRow ×2
 ```
 
-The `resolver` cluster is worth extracting. It has six copies of a `node` fixture builder and three
+Extract the `resolver` cluster. It has six copies of a `node` fixture builder and three
 of `localityOf` across six files that all test the same resolver.
 
 **Cost of leaving it: low**, because test-local duplication is the cheapest kind.
@@ -527,7 +527,7 @@ of `localityOf` across six files that all test the same resolver.
 Four of the five conventions checked have **zero violations**:
 
 - `erasableSyntaxOnly`: 0 `enum` and 0 runtime namespaces. The single `namespace NodeJS` hit is an
-  ambient `.d.ts` declaration, which is permitted.
+  ambient `.d.ts` declaration, and that form is permitted.
 - Explicit `.ts` extensions on relative imports: 0 missing.
 - Raw `process.env` / `process.argv` outside the approved modules: 0.
 - The acronym pattern that `AGENTS.md` claims is at zero (`Json|Jsonl|Http|Api|Url|Uri` on exports): **0,
@@ -577,7 +577,7 @@ with a quick characterization of each file's shape:
 | `resolver-wof-sqlite/lookup.ts`                       |  1315 |       4 |   0 | one large class                     |
 | `filer/sdk/build-filer.ts`                            |  1293 |       4 |  18 | build script                        |
 | `resolver/resolve.ts`                                 |  1145 |       1 |  15 | one entry point, 15 private helpers |
-| **`mailwoman/geocode-core.ts`**                       |  1045 |  **17** |  11 | **the one worth a look**            |
+| **`mailwoman/geocode-core.ts`**                       |  1045 |  **17** |  11 | **the one to inspect**              |
 
 `geocode-core.ts` is the outlier, with seventeen exported symbols and eleven functions in a thousand
 lines. A broad exported surface suggests that a module serves several callers for
@@ -591,7 +591,7 @@ them again.
 
 1. **`match/distance.ts:31 haversineKm`** is a documented adapter from
    `match`'s `LatLon` shape onto `spatial`'s scalar `haversineKm`, aliased on import as
-   `greatCircleKm`. Its docstring says so. It is not a second implementation.
+   `greatCircleKm`. Its docstring states that. It is not a second implementation.
 
 2. **The whole great-circle cluster.** Grep found lat/lon trigonometry in seven files outside
    `spatial/`. The file showed that `resolver-wof-sqlite/geo.ts:23` **re-exports** spatial's function,
@@ -619,8 +619,8 @@ them again.
    / `percentile` from `core/utils/stats`. They already use the home, but a `const pct =` grep flags them as copies.
 
 7. **`docs/src/components/{SpanHighlight,TreeView,…} tier()` ×5** matched as a 5-copy clone group,
-   but each copy already delegates to a shared `confidenceTier`. Only a two-line null check repeats,
-   which is at best a marginal finding.
+   but each copy already delegates to a shared `confidenceTier`. Only a two-line null check repeats.
+   That is at best a marginal finding.
 
 8. **`mailwoman/types/node.d.ts:7 namespace NodeJS`** is the only `namespace` in the repo, and it is allowed as
    an ambient declaration in a `.d.ts`, which `erasableSyntaxOnly` permits.
@@ -631,7 +631,7 @@ them again.
    decisions with stated reasons, and migrating any of them would make it worse.
 
 10. **`gauntlet/cases/regression.ts` at 2291 lines** is a data table with two exports and zero
-    functions. Its length alone does not show that it does more than one job.
+    functions. Its length by itself does not show that it does more than one job.
 
 11. **`nuts-lookup` / `timezone-lookup` point-in-ring, and `match/gbt.test.ts`'s LCG** are real,
     verified duplicates of code that now has a shared home, and they stay duplicated. Each package
@@ -657,7 +657,7 @@ them again.
 
 ## Appendix: the embedded-newline census (2026-08-03)
 
-The CSV parse fix changes extract bytes only for a source that carries a newline inside a
+The CSV parse fix changes extract bytes only for a source that contains a newline inside a
 quoted field. That can be measured, so we scanned every OpenAddresses
 member reachable on the lab host for lines with an odd number of quotes:
 
@@ -691,7 +691,7 @@ postcode:
 
 A quote-blind splitter turns each record into two rows, and the second row has `16210` one column off. However,
 `locale.ts`, the only reader of `es_addresses.csv`, moved onto `CSVSpliterator` in
-`1d7b1bd1` on **2026-07-08**, which is already on main, and `synth-es-pedania-v1.jsonl` was built on
+`1d7b1bd1` on **2026-07-08**. That commit is already on main, and `synth-es-pedania-v1.jsonl` was built on
 **2026-07-22**. The extract postdates the fix by two weeks, so it already holds the corrected rows. It needs
 neither a rebuild nor a re-pin.
 
@@ -702,7 +702,7 @@ because none of the eight `readCSVRecords` callers reads an ES source) or whethe
 does not). Each check takes one command. The wrong claim would have cost someone an 800,000-row rebuild
 before they found the fix was already in place.
 
-**Still unscanned:** the seven `us__*` zips and the GeoNames dumps, which are absent from this host. The same
+**Still unscanned:** the seven `us__*` zips and the GeoNames dumps. Both are absent from this host. The same
 one-liner checks them:
 
 ```

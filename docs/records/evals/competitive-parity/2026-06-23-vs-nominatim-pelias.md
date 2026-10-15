@@ -1,11 +1,11 @@
 # Competitive benchmark — mailwoman vs Nominatim vs Pelias (2026-06-23)
 
 _The direct head-to-head, run for trade-show readiness. Harness: `scripts/eval/competitive-benchmark.ts`._
-_Reproduce: `node scripts/eval/competitive-benchmark.ts --n 150 --locales it,pt,pl,at,cz,fr,au` (Pelias via geocode.earth; Nominatim via the public API at ~1 req/s)._
+_Reproduce: `node scripts/eval/competitive-benchmark.ts --n 150 --locales it,pt,pl,at,cz,fr,au` (Pelias via geocode.earth, Nominatim via the public API at ~1 req/s)._
 
 ## Method (and why it's built this way)
 
-Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/locale. The systems return structurally different things — mailwoman resolves to a gazetteer **centroid**; Nominatim returns the matched **OSM object** (rooftop when it matches, nothing when it doesn't); Pelias is ES over OSM+OA+WOF — so a raw median-error race flatters whoever returns rooftops on the addresses they match and hides who returns nothing. So we score **resolve-rate @ a coarse km threshold** (within Xkm of truth; **"no result" = a miss**) as the direct denominator, plus conditional accuracy. Coarse thresholds (5/25 km = "right locality area") because mailwoman returns centroids. A km-to-rooftop metric would unfairly reward rooftop-when-it-matches.
+Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/locale. The systems return structurally different things. mailwoman resolves to a gazetteer **centroid**. Nominatim returns the matched **OSM object** (rooftop when it matches, and an empty response when it doesn't). Pelias is ES over OSM+OA+WOF. A raw median-error race therefore flatters whoever returns rooftops on the addresses they match and hides who returns no result. So we score **resolve-rate @ a coarse km threshold** (within Xkm of truth, with **"no result" = a miss**) as the direct denominator, plus conditional accuracy. Coarse thresholds (5/25 km = "right locality area") because mailwoman returns centroids. A km-to-rooftop metric would unfairly reward rooftop-when-it-matches.
 
 ## Headline — resolve-rate @ 25 km (clean inputs)
 
@@ -33,7 +33,7 @@ Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/l
 - **The loss is not a resolver-config handicap.** mailwoman is ~44% on the trailing locales across all three resolver configs — admin-only, admin + `postcode-locality-intl`, and the **demo's actual candidate gazetteer** (`candidate-global-20h`). The resolver isn't the cause.
 - **Our internal "resolve-rate" metric OVERSTATES by ~15–22 pp.** Internal panel: PL resolve 62%, CZ 52%, AU 53%. direct @25 km right-place: PL 42%, CZ 28–33%, AU 32–38%. The gap = resolves that land **>25 km** (region-level fallback / wrong same-name place) — counted as success by resolve-rate, as a miss by right-place. **We have been grading ourselves on a lenient metric.** (mailwoman's centroid is not the issue — p50 1.8 km, well inside 25 km; @25 km forgives it.)
 - **The test set favors Pelias.** OpenAddresses is one of Pelias's INDEXED sources — its 81% / p50 0.0 km is partly recall-of-its-own-data rather than generalization (home-field advantage). Nominatim (OSM) overlaps less. mailwoman trained on a disjoint held-out split.
-- **The real mailwoman gap is coverage/recall:** ~27% no-result aggregate (worse on EU non-IT) vs Pelias ~1% / Nominatim ~20%. It fails to return a usable coordinate for a quarter of these addresses.
+- **The measured mailwoman gap is coverage/recall:** ~27% no-result aggregate (worse on EU non-IT) vs Pelias ~1% / Nominatim ~20%. It fails to return a usable coordinate for a quarter of these addresses.
 
 ## Messy inputs — the subset that should favor a calibrated parser
 
@@ -47,11 +47,11 @@ Messy = lowercase + dropped commas/dash-postcodes + abbreviations (house numbers
 | nominatim |         79% |     **81%** |   +2 (resilient free-text) |
 | pelias    |         81% |      ~~6%~~ | **INVALID — rate-limited** |
 
-⚠ **Pelias's messy "6%" is a geocode.earth RATE-LIMIT artifact rather than a finding** — verified by direct query: the API now returns **HTTP 429 on every call**, clean or messy (the trial key's quota exhausted after ~1.2k calls; the messy run ran later than the clean run, so its Pelias column collapsed to 429→null→"no result"). The clean Pelias 81% (earlier, under quota) is likely valid; the messy Pelias number is **discarded**. _verify-before-verdict caught what would have been a false "Pelias collapses on messy" headline._
+⚠ **Pelias's messy "6%" is a geocode.earth RATE-LIMIT artifact rather than a finding** — verified by direct query: the API now returns **HTTP 429 on every call**, clean or messy (the trial key's quota exhausted after ~1.2k calls, and the messy run ran later than the clean run, so its Pelias column collapsed to 429→null→"no result"). The clean Pelias 81% (earlier, under quota) is likely valid. The messy Pelias number is **discarded**. _verify-before-verdict caught what would have been a false "Pelias collapses on messy" headline._
 
 Real messy takeaway: **mailwoman degrades gracefully (−10pp); Nominatim's free-text search is resilient (doesn't degrade)**. My perturbation didn't break Nominatim — OSM has the addresses and its tokenizer forgives lowercase/no-comma/no-postcode.
 
-## US — the home turf (mailwoman vs Nominatim; Pelias rate-locked)
+## US — the home turf (mailwoman vs Nominatim, Pelias rate-locked)
 
 | locale | mailwoman | nominatim |
 | ------ | --------: | --------: |
@@ -62,7 +62,7 @@ Real messy takeaway: **mailwoman degrades gracefully (−10pp); Nominatim's free
 | mailwoman | 150 |  18% |  67% | **99%** |    3.2 km |    **0%** |
 | nominatim | 150 |  82% |  83% |     84% |    0.0 km |       16% |
 
-**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses, which Nominatim (OSM) does not index wholesale. Therefore, this is actual coverage superiority rather than data overlap.
+**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses. Nominatim (OSM) does not index OpenAddresses wholesale. Therefore, this is actual coverage superiority rather than data overlap.
 
 ## direct verdict
 
@@ -75,12 +75,12 @@ The picture is nuanced — and good, once you stop grading on the lenient metric
 
 1. ¹ EU is OpenAddresses, a Pelias-indexed source. Its 81% is partly recall-of-its-own-data.
 
-**Where we win:** US accuracy + coverage (the high-value market) — 99 vs 84, zero misses. Plus two capabilities the competitors structurally lack: **calibrated confidence** (knows when it's wrong) and **deployability** (30 MB, in-browser/offline, no Elasticsearch, no PostgreSQL+OSM-planet).
+**Where we win:** US accuracy + coverage (the high-value market) — 99 vs 84, zero misses. Plus two capabilities the competitors structurally lack: **calibrated confidence** (knows when it's wrong) and **deployability** (30 MB, in-browser/offline, without Elasticsearch or PostgreSQL+OSM-planet).
 
 **Where we trail:** EU coordinate coverage. Nominatim/OSM and Pelias/OA only have more EU address data than our gazetteer + model do today. This is a **coverage/recall gap** (no-result) rather than a precision gap (our resolved p50 is 1.8 km) — and it's the active roadmap: the v4.13.0 multi-locale ship, #370 (the rescore that recovers the wrong-place tail), and G-NAF/coverage ingestion all target exactly it.
 
 **The methodology correction (most important internal takeaway):** our internal "resolve-rate" metric overstated EU by ~15–22 pp — it counts region-level / wrong-same-name resolves that land >25 km from truth. **Use right-place resolve-rate (@25 km / PIP-containment) rather than bare resolve-rate in future comparisons.** This is the #566 "grade the assembled coordinate" discipline, sharpened.
 
-**Trade-show framing:** lead with US dominance + the calibrated-confidence demo + deployability; present EU as the fast-improving frontier (just shipped 16 locales). Do **not** claim "more accurate than Nominatim" globally — it's false on EU and true on US; claim it precisely.
+**Trade-show framing:** lead with US dominance + the calibrated-confidence demo + deployability, and present EU as the fast-improving frontier (just shipped 16 locales). Do **not** claim "more accurate than Nominatim" globally. That claim is false on EU and true on US, so state it per market.
 
 _Caveats: Pelias rate-locked tonight (US Pelias + messy Pelias untested — re-run paced on fresh quota); EU set favors Pelias (OA overlap); n=150/locale._

@@ -68,7 +68,7 @@ For webpack: use `asset/resource` rules on the `.wasm` extension and pass the re
 
 One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
 
-Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below `locality` alone. A rank between them placed the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those — `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, which is why the tier has three members and not one.
+Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below the `locality` placetype by itself. A rank between them placed the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those rows. For example, `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, so the tier has three members and not one.
 
 If you change this table, change it against the Node ladder. The two sides agreed on constants for a whole release once while the formula underneath them diverged.
 

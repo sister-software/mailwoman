@@ -11,7 +11,7 @@ title: "v0.5.3 diagnostic training review"
 Initial analysis compared val_macro_f1 (0.579 vs 0.638) and concluded v0.5.3 regressed. **This was wrong.** The F1 numbers are not directly comparable — different tokenizers, different val sets, different label distributions. When tested on demo presets, v0.5.3 achieves **6/6 correct** including locality=Washington/region=DC and locality=New York/region=NY — the stubborn failures that persisted across all prior models. The tree structure uses proper containment nesting (house_number inside street inside locality inside region). DeepSeek's recommendation to revert was based on the same misleading F1 comparison.
 :::
 
-v0.5.3 peaked at val_macro_f1 = **0.579** (step 28K). v0.5.1 reached **0.638**. Every recipe change since v0.5.1 — wof-admin downweight, cosine LR, label smoothing — has regressed. The model is not capacity-limited; the recipe is wrong.
+v0.5.3 peaked at val_macro_f1 = **0.579** (step 28K). v0.5.1 reached **0.638**. Every recipe change since v0.5.1 — wof-admin downweight, cosine LR, label smoothing — has regressed. The model is not capacity-limited. The recipe is wrong.
 
 ## Model-fit curve
 
@@ -103,7 +103,7 @@ The 29M model quantizes from 66 MB (fp32) to 17 MB (int8) with negligible accura
 :::caution[These results use the currently deployed **v0.5.2 model weights** (which are v0.5.1's `model-stage2-step-001800-int8.onnx` with the v0.1.0 tokenizer) rather than the v0.5.3 checkpoint. The inference-time enhancements (FST prior, QueryShape locality guard, Wikipedia importance, grouper-audit) run on top of whatever model is loaded. Results below may appear better than the raw model warrants because the priors and grouper-audit are compensating for model weaknesses.]
 :::
 
-### Neural-only (no pipeline priors, no FST)
+### Neural-only (without pipeline priors or FST)
 
 The raw model output with no inference-time assistance:
 
@@ -182,7 +182,7 @@ Update `neural-weights-en-us/` with step-28000 int8 + v0.5.0-a1 tokenizer + mode
 
 ### Priority 4: Verify grouper-audit is now a no-op
 
-v0.5.3 emits tags on all spans (no empty gaps). The grouper-audit should have nothing to fill. Run demo presets through the full pipeline and confirm the audit pass doesn't inject conflicting provisional nodes.
+v0.5.3 emits tags on all spans (no empty gaps). The grouper-audit should find no empty span to fill. Run demo presets through the full pipeline and confirm the audit pass doesn't inject conflicting provisional nodes.
 
 ### Priority 5: Instrument per-tag F1 in training loop
 

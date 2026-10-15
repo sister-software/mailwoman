@@ -14,7 +14,7 @@ exactly what the probe-before-fix discipline is for.
 
 ## The read
 
-Pre-registered in `v3.3.0-no-fragment-probe.yaml`, written before the numbers existed; graded on
+Pre-registered in `v3.3.0-no-fragment-probe.yaml`, written before the numbers existed. It is graded on
 board 3 (the no digit board) against the SHIPPED-v310 baselines registered before the run.
 
 **Board 3 — the target:**
@@ -28,8 +28,12 @@ board 3 (the no digit board) against the SHIPPED-v310 baselines registered befor
 | pc-first-hn        | guard (ceiling)  |                0.940 |                    0.945 |     +0.5 ✓ |
 | slash-hn           | monitored        |                0.650 |                    0.655 |       +0.5 |
 
-The pre-registered bar: _"bare-street-hn rises materially... clear motion rather than the complete improvement. If it
-does not move at 2k, the license-transfer hypothesis is wrong and a full run is not warranted."_
+The pre-registered bar read as follows:
+
+```text
+bare-street-hn rises materially... clear motion rather than the complete improvement. If it
+does not move at 2k, the license-transfer hypothesis is wrong and a full run is not warranted.
+```
 
 **+1.7pp with the two intervals almost entirely overlapping is not clear motion.** The bar is not
 met. The `bare-pc` score stayed pinned at 1.000, and the three ceiling classes did not regress —
@@ -52,8 +56,8 @@ win the extract is required to guard. A full 8k run would have more room to ampl
 session, same harness, same int8 export gives `0.733` overall — **identical to the T2 verdict**, cell
 for cell (bare-street 0.715, admin-street-homonym 0.517). So the v310 baseline is stable
 session-to-session and the v330 drift is **real rather than cross-session quantization noise.** That
-strengthens the do-not-escalate call. The specificity is the tell: it is the FR **fragment** classes
-— the ones fr-fragment fixed — that drift rather than the board at random, which points at **weight
+strengthens the do-not-escalate call. The specificity is the evidence: the FR **fragment** classes
+— the ones fr-fragment fixed — drift, rather than random cells across the board. That pattern points at **weight
 dilution**: `synth-no-fragment` @ 12.0 crowds fr-fragment's relative share over 2k steps, and the
 model drifts back toward its pre-fr-fragment reading. So B4b is two knobs rather than one — the bare-street
 ratio _and_ the no-fragment weight relative to fr-fragment — and they must be probed one at a time.
@@ -64,13 +68,13 @@ ratio _and_ the no-fragment weight relative to fr-fragment — and they must be 
 2. The French guard drifted the wrong way across every cell.
 
 **The caveat, stated because integrity requires it:** "material move at 2k" was a quantitative
-prediction I could not strongly ground. fr-fragment's +50pp was measured at its **8k** final; I do
+prediction I could not strongly ground. fr-fragment's +50pp was measured at its **8k** final. I do
 not have its own 2k-vs-8k trajectory on a board, so I cannot say whether +1.7pp at 2k is "flat" or
 "early but real." That is precisely the class of threshold prediction that should not, by itself,
 check a decision — so the call goes to the operator rather than being made by a bar I cannot defend.
 What I will not do is _relax_ the bar I wrote in order to launch the 8k myself.
 
-## The likely reason it barely moved — a named hypothesis rather than a knob spun
+## The likely reason it barely moved — a stated hypothesis rather than a knob spun
 
 B0 showed that the implementation worked: the failing Norwegian rows have the **street mistagged as a locality**,
 and the digit follows it (`Hallingrudveien 32` → locality + postcode). The fix is therefore the same
@@ -78,7 +82,7 @@ as the French bare-street polarity fix: teach that a **bare street is not a bare
 requires the street to appear _without a number at all_, so the model cannot lean on the number.
 
 This extract's `--bare-street-prob` defaults to **0.30**: only 30% of its signal rows are pure bare
-streets; the other 70% are `{street} {number}`, a form the model mostly already handles (board 3's
+streets. The other 70% are `{street} {number}`, a form the model mostly already handles (board 3's
 bare-street-hn is already 0.693 rather than 0.215 like French was). So the extract spends most of its weight
 on a class that is not broken and little on the one that is.
 
@@ -92,7 +96,7 @@ pre-registered and probed rather than tuned in the dark.
 - The instrument (board 3) and the recipe (`no-fragment`, tested, split-disciplined) are correct and
   reusable. The probe _worked_ — it gave a clean, cheap read that stopped an unjustified 8k run.
 - `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model did not learn
-  to stop emitting postcode to chase the digit. The extract's shape is sound; its ratio is the change.
+  to stop emitting postcode to chase the digit. The extract's shape is sound. Its ratio is the change.
 - The Norway YAML fix (#1145) is the required result of the night regardless of this probe —
   Norway now trains at all, and this probe is the first read that could ever have measured it.
 

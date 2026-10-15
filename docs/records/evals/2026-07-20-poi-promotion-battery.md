@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20. **Flag:** `poiQueryKind` (`CreateRuntimePipelineOpts`, default off — see
 [runtime-flag register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/runtime-flags.mdx)). **Status: report only.** No
-default was flipped by this work; the numbers below are for the operator's promotion decision.
+default was flipped by this work. The numbers below are for the operator's promotion decision.
 
 The register's check: **"golden 2pp + demo presets + the POI board (spec §3.6)."** Three legs,
 plus a report-only latency check the task also asked for.
@@ -85,7 +85,7 @@ Script: `scratchpad/poi-battery/leg2-demo-presets.ts` (gitignored).
 
 ## Leg 3 — POI board
 
-Already fresh; not re-run (wouldre-derive numbers already committed 2026-07-20). Cited
+Already fresh and not re-run, because a re-run would re-derive numbers already committed 2026-07-20. Cited
 from [`2026-07-20-poi-query-board-v1.1-brand-lexicon.md`](./2026-07-20-poi-query-board-v1.1-brand-lexicon.md):
 
 ```
@@ -132,8 +132,7 @@ flag-OFF (run 2nd): p50=3.466ms mean=3.607ms
 
 **Conclusion: no detectable added latency from the poi classifier's lexicon scan at n=100** — any
 true per-call cost is below the ~0.2–0.3ms run-to-run noise floor at this sample size. A larger-N
-or dedicated microbenchmark would be needed to bound a true per-call cost below that floor; not
-done here since the report-only ask was for a first-order signal rather than a tight bound.
+or dedicated microbenchmark would be needed to bound a true per-call cost below that floor. This report did not run one, since the report-only ask was for a first-order signal rather than a tight bound.
 
 Scripts: `scratchpad/poi-battery/leg4-latency.ts`, `leg4-latency-swapped.ts` (gitignored).
 

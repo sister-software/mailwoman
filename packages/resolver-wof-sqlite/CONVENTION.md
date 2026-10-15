@@ -15,13 +15,13 @@ sidecar, `ANALYZE`, an integrity check, and `VACUUM`).
 The convention store is queried **on demand** — one indexed lookup per WOF id, memoized — rather than
 paged into runtime memory as a growing dictionary. That's deliberate: it's the counter to the pattern
 where a geocoder accretes giant in-memory dictionaries with no provenance, then blacklists of poison
-entries to protect the 99% case (trivia that reads as maturity and is really the
+entries so the 99% case keeps resolving (trivia that reads as maturity and is really the
 architecture conceding it can't generalize). Two rules fall out of that and are enforced here:
 
-- **Every row carries `source` provenance** — where it came from / why it exists. (We don't store a
+- **Every row stores `source` provenance** — where it came from / why it exists. (We don't store a
   literal "weight"; the point is that what each entry is responsible for stays _visible_ and
   accountable rather than that there's a numeric column.)
-- **A convention that names a strategy this build doesn't register is rejected at BUILD time, loudly**
+- **A convention that references a strategy this build doesn't register is rejected at BUILD time, loudly**
   (and, defensively, surfaced as a one-time `console.warn` at dispatch rather than silently skipped).
 - A convention that starts needing a **blacklist of poison entries** is a signal to fix the strategy
   or the model rather than to grow the list.
@@ -42,10 +42,10 @@ The resolver attaches the asset as an extract and auto-detects it (the same mech
 be injected directly via `new WofSqlitePlaceLookup({ conventions })` (a ready `ConventionSource` or a
 `{ wofId: Convention }` seed map) for tests and embedding.
 
-## Authoring + build
+## Author and build
 
-The human-editable source of truth is **`data/conventions/conventions.json`** — a JSON array of
-authored entries. The `.db` is the compiled, queryable form.
+The file people edit is **`data/conventions/conventions.json`**, a JSON array of
+authored entries. The build reads only that file. The `.db` is the compiled, queryable form.
 
 ```jsonc
 // data/conventions/conventions.json
@@ -78,14 +78,14 @@ rows, and adding no-op rows that merely restate the default would be exactly the
 first real rows land with JP/KR/TW coarse resolution ([#292](https://github.com/sister-software/mailwoman/issues/292)
 / [#293](https://github.com/sister-software/mailwoman/issues/293) /
 [#294](https://github.com/sister-software/mailwoman/issues/294)). The schema, build, runtime source,
-and wiring are in place and tested; the asset is built and shipped once it has rows.
+and wiring are in place and tested. The asset is built and shipped once it has rows.
 
 ## Caveats / follow-ups
 
-- **Conventions are code-coupled.** A convention references strategy _names_; the strategy
+- **Conventions are code-coupled.** A convention references strategy _names_, and the strategy
   _implementations_ live in `lookup.ts`. An asset built against a newer code revision (one that adds a
   strategy) names a strategy an older build won't have — that's why the runtime warns-and-skips rather
   than throwing, and why the `meta.strategies_known` row records what the asset was built against.
 - **`field_mapping` / `tokenNormalization` are not in the schema yet** — the #289/#290 delivery ships
   `candidateStrategies` + `scoringWeights`; later phases (the `locator[]` semantics) extend the
-  `Convention` JSON, no schema migration needed (it's an opaque JSON column).
+  `Convention` JSON without a schema migration, because the column is opaque JSON.

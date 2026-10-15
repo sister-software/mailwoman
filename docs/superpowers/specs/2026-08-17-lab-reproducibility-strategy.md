@@ -24,7 +24,7 @@ databases probed: 60 ; carrying layer_manifest: 8
 
 The eight are `poi.db` and its variants plus four OSM address-point extracts. The gazetteer databases
 (`candidate.db`, `admin-global-priority.db`, every postcode extract, timezone, nuts, un-locode, bdc, and
-filer) carry no provenance at all.
+filer) record no provenance at all.
 
 The interface already exists. `docs/engineering/reference/layer-interface.mdx` specifies `layer_manifest` /
 `layer_coverage`, with source, `asOf`, and the meaning-of-zero coverage rule. **It is implemented on 13% of
@@ -70,16 +70,16 @@ Later phases depend on these commits.
 | `f3b173392` | dev-MCP: place-id provenance, a `reload` that refuses, a source-change arm |
 | `bfd2b5e46` | Phase 0 design                                                             |
 
-Two things from that work carry into this plan. The **worktree arm** (`{kind:"worktree", ref}`, and
+This plan reuses two things from that work. The **worktree arm** (`{kind:"worktree", ref}`, and
 `ref: "WORKTREE"` for uncommitted edits) measures any change in this strategy. The empty-worktree failure
-blocked it, which is why phase 0 exists. **Place-id provenance** is the pattern the manifests generalize:
+blocked it. Phase 0 exists to fix that failure. **Place-id provenance** is the pattern the manifests generalize:
 an id or an artifact states its own source, so a reader never has to infer one.
 
 ## Phase 0 — dev weights resolution — DONE
 
 The full design is `2026-08-17-dev-weights-resolution-design.md`. Phase 0 deletes the third register.
 
-`release.config.json` already carries `weights.model`, `weights.tokenizer`, and a `lineage` string with more
+`release.config.json` already records `weights.model`, `weights.tokenizer`, and a `lineage` string with more
 detail than the code comment that duplicates it. `scripts/copy-weights.ts:177` already reads it. The ten
 `link-dev-weights.ts` scripts hold a byte-identical copy of the same two paths. The 9.0.0 reduce failed to
 update that copy, and phase 0 removes it.
@@ -120,12 +120,12 @@ The design left three questions open. This section resolves them.
 
 **Acceptance**, with status as of 2026-08-17:
 
-| Criterion                                                                 |                                                                                                                                          |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| A worktree of `HEAD` geocodes with no setup step                          | **met** — `source: overlay:en-us`, 13/13 artifact parity, coordinates identical to main                                                  |
-| The sibling report distinguishes `package` / `base` / `overlay` / `cache` | **met**                                                                                                                                  |
-| `link` is idempotent                                                      | **met**                                                                                                                                  |
-| `yarn test` leaves tracked directories untouched                          | **met** — all ten linkers and `buildPairIndexOverlay` write to the overlay; every tracked package stays empty across a full linker sweep |
+| Criterion                                                                 |                                                                                                                                              |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| A worktree of `HEAD` geocodes with no setup step                          | **met** — `source: overlay:en-us`, 13/13 artifact parity, coordinates identical to main                                                      |
+| The sibling report distinguishes `package` / `base` / `overlay` / `cache` | **met**                                                                                                                                      |
+| `link` is idempotent                                                      | **met**                                                                                                                                      |
+| `yarn test` leaves tracked directories untouched                          | **met** — all ten linkers and `buildPairIndexOverlay` write to the overlay, and every tracked package stays empty across a full linker sweep |
 
 **Risk handled in phase 0:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design. The new rung could therefore replace a thrown error with a checkout that parses
@@ -185,12 +185,12 @@ swapped one is already live.
 | `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                    |
 | `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                        |
 
-Phase 3 also fixed the OSM rooftop builder, whose `build_cmd` recorded a path that the workspace regroup
+Phase 3 also fixed the OSM rooftop builder. Its `build_cmd` recorded a path that the workspace regroup
 had moved. Phase 1 found that defect.
 
 **The interface gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID`, which
 covered the two layer shapes that existed when it was written: a cellular one and an id-joined one.
-`address_point` and `street_segment` carry none of the three. They are probed on
+`address_point` and `street_segment` have none of the three. They are probed on
 `(postcode | locality, street_norm, number)`. A first draft declared `addressID: "address_id"`, a column
 that does not exist. The table caught the mistake that the schema module missed. `street` is
 additive, and existing layers are unaffected.
@@ -204,7 +204,7 @@ intended behavior of the rebuild rule.
 The `wof/` family is 79 databases, and four of its sub-families are still unstamped: the 24 `postcode-*`
 extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
 resolution path a geocode takes. The resolver reads `candidate.db`, and the postcode extracts are inputs to
-the candidate build rather than databases it reads at query time. They are worth stamping, but the
+the candidate build rather than databases it reads at query time. A stamp on them would still help, but the
 acceptance criterion did not require them.
 
 ## Invariants to preserve
@@ -226,7 +226,7 @@ These rules come from the repo's own documents. They are restated here because e
 
 - **The seat-preference term's effect is unverified end-to-end.** It moves 3,896 top slots at the ranker.
   Three inverted probes (the term itself, `compareReferential`, and the candidate `ORDER BY`) produced
-  no change in pipeline output on four inputs the sweep says should move. A deliberate `throw` confirmed that
+  no change in pipeline output on four inputs that the sweep predicts should move. A deliberate `throw` confirmed that
   the harness reads the edits. The pipeline therefore decides those answers downstream of candidate
   ordering, at a stage not yet identified. The worktree arm should be used on this first.
 - **`ten-minute-trial.mdx` promises zero configuration.** Every phase here must keep that true. For that

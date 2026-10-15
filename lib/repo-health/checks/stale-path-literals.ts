@@ -91,7 +91,7 @@ export async function findStalePathLiterals(context: {
 	for (const file of sources) {
 		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
 
-		// Most files contain no repository path, so a text search skips them before parsing.
+		// Most files contain no repository path, so a substring search skips them before parsing.
 		if (!REPOSITORY_ROOTS.some((root) => text.includes(root))) continue
 
 		const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)

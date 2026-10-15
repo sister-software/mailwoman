@@ -15,7 +15,7 @@ talks to it, and stops it. There is no port to open and no deployment step.
 
 ## Prerequisites
 
-- Node.js ≥ 24.18.0 and an MCP client. Claude Code is the one configured below; the wiring is the same
+- Node.js ≥ 24.18.0 and an MCP client. Claude Code is the one configured below. The wiring is the same
   for any client that launches a stdio server.
 - A candidate gazetteer under the data root you configure, if you want the four model-backed tools.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx) pulls one.
@@ -173,8 +173,8 @@ mailwoman_filer_family
 ```
 
 That transcript is from a standalone `npm install @mailwoman/mcp` in an empty directory rather than from this
-repository, so it is what a stranger gets. The `[resolver]` line arrives on stderr — the client's log rather than the protocol stream. The tier is `admin` because that data root holds only the candidate gazetteer;
-with per-state address-point databases mounted the same call reaches `address_point`.
+repository, so it is what a stranger gets. The `[resolver]` line arrives on stderr — the client's log rather than the protocol stream. The tier is `admin` because that data root holds only the candidate gazetteer.
+With per-state address-point databases mounted the same call reaches `address_point`.
 
 ## 4. Know which tools need what
 
@@ -196,7 +196,7 @@ Nine tools, and they fall into three groups by what has to be on disk.
 POI query as OverpassQL, and finding the subject and the anchor to render means parsing the input first.
 
 The model and the gazetteer load on the first call that needs them rather than at startup. So a client with no
-data still connects and lists all nine tools; the failure arrives inside the first call:
+data still connects and lists all nine tools. The failure arrives inside the first call:
 
 ```
 ✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.
@@ -235,7 +235,7 @@ root.
 
 - **stdio only.** There is no HTTP or SSE transport. A client that cannot launch a subprocess cannot use
   this server.
-- **The `en-US` weights are the only ones loaded.** The locale is fixed in the server; a French address
+- **The `en-US` weights are the only ones loaded.** The locale is fixed in the server. A French address
   parses with the `en-US` model rather than the `fr-FR` overlay.
 - **One process, one geocode at a time.** Inference blocks the JavaScript thread, so a client issuing
   parallel tool calls serializes behind the first one.

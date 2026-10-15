@@ -3,7 +3,7 @@
 The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel
 ``labels`` list (BIO over those whitespace tokens). As of the v0.5.0 char-offset migration
 (#519) rows additionally store ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
-over ``raw`` (sorted, non-overlapping). These ranges are the label source of truth. The neural model
+over ``raw`` (sorted, non-overlapping). Labels are derived from these ranges. The neural model
 trains over SentencePiece sub-tokens. These are *finer-grained* than the whitespace tokens.
 
 The byte-offset hook is ``EncodeAsImmutableProto`` — the only SentencePiece API that exposes

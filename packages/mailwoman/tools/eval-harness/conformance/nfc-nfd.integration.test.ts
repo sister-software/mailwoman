@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The canonical-form law against the live pipeline — the leg that actually geocodes.
+ *   The canonical-form law against the live pipeline — the leg that geocodes.
  *
  *   This test belongs in the integration suite. The `mailwoman-data` runner executes it with
  *   `MAILWOMAN_DATA_ROOT` set and weights materialized. The fast suite remains portable without those artifacts.

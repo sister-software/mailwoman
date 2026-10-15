@@ -126,8 +126,8 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
     Span-schema is required here. The per-char label array comes from the span triple without
-    whitespace-token quantization. A token-only frozen parquet file has no honest char-level labels
-    to offer. Fail loudly under #519 rather than falling back silently.
+    whitespace-token quantization. A token-only frozen parquet file cannot supply char-level labels,
+    because its labels are quantized to whitespace tokens. Fail loudly under #519 rather than falling back silently.
     """
     starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
     if starts is None or ends is None or tags is None:
@@ -176,7 +176,7 @@ def iter_encoded(
 ) -> Iterator[EncodedExample]:
     """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
 
-    Length-filter rationale: address text is short by nature. long rows are usually adapter
+    Length-filter rationale: address text is short by nature. long rows have come from adapter
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
 
     ``tokenizer`` may be None only when ``cfg_data.char_mode != "off"`` — the char path never

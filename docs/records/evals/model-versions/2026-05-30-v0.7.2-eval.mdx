@@ -2,7 +2,7 @@
 
 **Verdict: EXPERIMENTAL.** Best neural model to date and strictly dominates
 v0.6.0, but does not clear the ≥25% harness PROMOTE bar. Do not promote to
-default on the strict check; ship as experimental. The path to ≥25% is coverage
+default on the strict check. Ship it as experimental. The path to ≥25% is coverage
 and the resolver rather than another recipe tweak.
 
 ## What v0.7.2 was
@@ -25,13 +25,13 @@ Base recipe, tokenizer (v0.6.0-a0), and everything else unchanged → F1 valid.
 
 **+5.1pp over v0.6.0** — the largest single-release harness gain of the v0.6/0.7
 cycle. v0 (rules) is at 93.7% on this suite, as expected (it's a Pelias/addressit
-port; see the capability map — neural is the robustness layer rather than a better v0).
+port). The capability map shows that neural is the robustness layer rather than a better v0.
 
 ### Intersection cluster — the retrain's target
 
 `intersection.test.ts`: **4/65 → 11/65 (17%)**. The bare-format + `@` fix worked
 _directionally_ (+7 assertions) but did not reach "most-of-65." Format diversity
-helped; it wasn't sufficient. Bare-intersection coverage is still thin relative
+helped, but it wasn't sufficient. Bare-intersection coverage is still thin relative
 to the 65 hand-curated adversarial cases.
 
 ## Per-tag check vs v0.6.0 — **PASS**
@@ -55,7 +55,7 @@ generalizing beyond intersections (street segmentation improved a little).
 | ------------------------------------ | --: | --: | ------: | ---------------------- |
 | libpostal (clean/canonical)          |  69 | 29% |     16% | **rules win**          |
 | corpus-perturbation (noisy/degraded) | 398 | 39% | **61%** | **neural wins**        |
-| postal-standards (edge formats)      |  38 | 26% |      8% | rules ahead; both weak |
+| postal-standards (edge formats)      |  38 | 26% |      8% | rules ahead, both weak |
 
 The crossover holds on v0.7.2: clean → rules, noisy → neural. The **third arena**
 (new this cycle) adds the edge dimension — by edge_class: canonical 36/7,
@@ -71,10 +71,10 @@ Opt-in `--unit-repair` post-decode pass. v0.7.2 showed unit-drop has two modes:
    allowing ADD over locality. **Postal unit-tag recall 0/8 → 2/8, 0 locality
    regressions.**
 2. **Absorbed-into-street** (`STE 12` inside `MAIN ST NW STE 12`) — not
-   regex-repairable; a coverage gap (units underrepresented), same as
+   regex-repairable. It is a coverage gap (units underrepresented), same as
    intersections were.
 
-Net: the repair patches the locality half safely; the street-absorption half
+Net: the repair patches the locality half safely. The street-absorption half
 needs a coverage extract (backlog B3'). Stays opt-in.
 
 ## Recommendation
@@ -91,7 +91,7 @@ needs a coverage extract (backlog B3'). Stays opt-in.
   noisy) instead of grading neural on rules' home turf. Both are bigger than a
   extract weight.
 - **Next parser-backlog item:** B2 country-repair (v0.7.2 mislabels trailing
-  `AUSTRALIA` → locality; country −0.8pp) — a closed-lexicon post-decode pass,
+  `AUSTRALIA` → locality, country −0.8pp) — a closed-lexicon post-decode pass,
   same low-risk mould as postcode/unit repair.
 
 Artifacts (volatile, `/tmp/v072-eval/` + `/tmp/external-arenas-v072/`): harness.md,

@@ -5,10 +5,10 @@
  *   Builds the query-intent markers that depend on the resolved answer. `geocodeAddressOnce` appends
  *   them to the kind classifier's markers. The markers never change which answer wins.
  *
- *   The decisive-margin threshold, the coincident-place radius and the margin function come from the
- *   ablation-expectation module, so the repository has one definition of a decisive margin.
+ *   The winning-margin threshold, the coincident-place radius and the margin function come from the
+ *   ablation-expectation module, so the repository has one definition of a winning margin.
  *
- *   WOF often stores a large city twice, once as `locality` and once as `localadmin`, with the same
+ *   WOF can store a large city twice, once as `locality` and once as `localadmin`, with the same
  *   population. Without collapsing coincident places first, every major city would look ambiguous.
  */
 
@@ -108,7 +108,8 @@ export interface DeclaredAmbiguityOpts {
 }
 
 /**
- * Returns a `declared_ambiguity` marker when a bare place-name query has no decisive winner.
+ * Returns a `declared_ambiguity` marker when a bare place-name query has no
+ * candidate that leads by the winning margin.
  *
  * @returns `null` when the query is not a bare toponym, when fewer than two distinct
  * places can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
@@ -175,13 +176,13 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
  * The coarsest tier that still uses each parsed component, compared with {@linkcode tierRank}.
  *
  * An interpolated point locates a house number, so `house_number` needs only `interpolated`.
- * A postcode centroid is street-grade in most address systems, so `postcode` needs only `street`.
+ * A coordinate taken from the postcode's own row locates the postcode, so `postcode` needs only `postcode`.
  * `unit` has no floor because no layer locates units.
  */
 const COMPONENT_TIER_FLOOR: ReadonlyArray<readonly [tag: string, floor: ResolutionTier]> = [
 	["house_number", "interpolated"],
 	["street", "street"],
-	["postcode", "street"],
+	["postcode", "postcode"],
 ]
 
 /**

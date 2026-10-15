@@ -34,7 +34,7 @@ interface PlanProps {
 	 */
 	basis: string
 	/**
-	 * The effective-rate line, when the plan has one worth making.
+	 * The effective-rate line, when the plan has an effective rate to state.
 	 */
 	note?: string
 	renewal: string

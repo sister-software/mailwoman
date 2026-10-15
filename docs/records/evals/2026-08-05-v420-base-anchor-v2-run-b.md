@@ -6,10 +6,10 @@
 **Artifacts:** `$MAILWOMAN_DATA_ROOT/models/v420-base-anchor-v2-s42/` — `step-060000/` (pytorch_model.bin,
 config.json, `fisher-diag-v1.npz` + `fisher-diag-v1.json`, training_state.json), `model.onnx` (fp32, 157 MB),
 `model-int8.onnx` (39.4 MB). Tokenizer `models/tokenizer/v0.9.0-multisplice/tokenizer.model`.
-**Baseline everywhere below:** `model-v401-base-step-060000-int8.onnx` — the v4.0.1 base, which is what
+**Baseline everywhere below:** `model-v401-base-step-060000-int8.onnx` — the v4.0.1 base. That is the file
 `link-dev-weights.ts` puts in `neural-weights-en-us/model.onnx` on this worktree. Every baseline number
 was re-measured here on the same instrument rather than quoted from a prior record, except where a prior
-record's number is named explicitly as a replication target.
+record's number is cited explicitly as a replication target.
 
 ## The instrument
 
@@ -38,9 +38,9 @@ GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
 ```
 
 Its GB branch (`aggregateGbOutward` → `gbOutward`) derives the outward district by splitting `name` on a
-SPACE, because it was written against `postalcode-gb.db`, whose `name` carries the spaced display form.
+SPACE, because it was written against `postalcode-gb.db`. That database stores the spaced display form in `name`.
 The license-clean Code-Point Open extract stores `name` already space-stripped (`AB101AB`), so the split
-returns null on all 1,746,976 rows. It also aggregates to outward codes only, which is the wrong
+returns null on all 1,746,976 rows. It also aggregates to outward codes only. That is the wrong
 granularity for a model trained against `pilot-anchor-lookup-v2` (unit keys with unit centroids).
 
 `mailwoman/dev-tools/build-gb-anchor-bin.run.ts` builds the train-faithful artifact instead — a verbatim
@@ -92,7 +92,7 @@ arm produced its one loud warning as designed.
 | G1  | fragment bars, P0 grid with `--lexicon`/`--street-lexicon` | —                                | **HARNESS ABSENT** (see below)                                                           | **NOT SCORED**                            |
 | G2  | ablation vs shipped 6.7.0 same-grader reference            | —                                | **REFERENCE ABSENT** (see below)                                                         | **NOT SCORED**                            |
 | G3  | invariance, zero new classes                               | 0 new                            | **4 new violations** (2 DEGRADED, 2 LOST)                                                | **FAIL**                                  |
-| G4  | gauntlet × 3 layers                                        | —                                | regression 88/90 → **84/90**; metamorphic pass; held-out **pass, z=2.85**                | **MIXED**                                 |
+| G4  | gauntlet × 3 layers                                        | —                                | regression 88/90 → **84/90** · metamorphic pass · held-out **pass, z=2.85**              | **MIXED**                                 |
 | G5  | golden ABLATED, match-or-beat 6.7.0, zero waivers          | —                                | **FIXTURES ABSENT ON THIS HOST**                                                         | **NOT SCORED**                            |
 | G6  | canary zero-flip, formatted mode                           | —                                | **HARNESS NOT FOUND**                                                                    | **NOT SCORED**                            |
 | G7  | full pre-ship gauntlet on the dev-linked flip              | —                                | = G4 (same instrument, run on the linked worktree)                                       | **MIXED**                                 |
@@ -137,13 +137,13 @@ slot  feature   fisher-col-sum   share
   10  lon        9.194220e-06    4.74%
 ```
 
-GB carries 11.28% of the projection's Fisher mass, third among the locale slots and above DE/ES/IT/NL.
-The two untouched slots are exactly zero, which is what proves the instrument discriminates. **Slot 4
+GB holds 11.28% of the projection's Fisher mass, third among the locale slots and above DE/ES/IT/NL.
+The two untouched slots are exactly zero. Those zeros prove the instrument discriminates. **Slot 4
 took gradient. The run did what it exists to do.**
 
 Column L2 norms are not a usable instrument here and were checked first: every column of
 `anchor_projection.weight` sits at 1.33–1.44 against a Xavier-uniform init expectation of 1.395,
-including the two zero-Fisher controls. The projection barely moves in magnitude; only the Fisher
+including the two zero-Fisher controls. The projection barely moves in magnitude. Only the Fisher
 separates the slots.
 
 What the sheet wanted — evidence the channel is not inert — is present. What it cannot get from
@@ -178,8 +178,8 @@ quote:
 | postcode     | 0.9722   | 0.9722     | 0.97 — PASS in both arms |
 | street       | 0.6554   | **0.7116** | 0.90 — FAIL in both arms |
 
-Both floors that fail were already failing on v4.0.1 on this harness; the candidate is strictly better on
-both. Precision (informational): postcode spurious 15/249 → **9/249**; street spurious 6/54 → **12/54**;
+Both floors that fail were already failing on v4.0.1 on this harness. The candidate is strictly better on
+both. Precision (informational): postcode spurious 15/249 → **9/249**, street spurious 6/54 → **12/54**,
 house_number 5/175 → 6/175.
 
 Per-country full-agreement: US 50/99 → 52/99, FR 23/43 → 24/43, GB 1/3 → 3/3, DE 9/13 unchanged, NL
@@ -223,9 +223,9 @@ failures, and they are one family — Caribbean / US-territory:**
 ```
 
 Against that, the tracked (non-blocking) population drops 98 → 91: all five `si-sentinel` postcode rows
-clear, and a long tail of `gb-venue-*` / `gb-op2-*` rows now pass outright.
+clear, and a long tail of `gb-venue-*` / `gb-op2-*` rows now pass.
 
-Metamorphic: **pass** with 3 tracked xfails, and three previously-known xfails now pass outright
+Metamorphic: **pass** with 3 tracked xfails, and three previously-known xfails now pass
 (`comma-drop|181 Rue du Chevaleret, Paris`, and both Amsterdam `Damrak 1, 1012 LG` transforms).
 
 Held-out fresh draw (FR/BAN, n=300), candidate vs production: **pass**, and by a margin —
@@ -275,14 +275,14 @@ locale_head.weight       sum 1.324248e-03   max 1.260073e-05
 Sidecar: `count_batches 2000`, `captured_at_step 60000`, `window_last_n_steps 2000`, seed 42, corpus
 `v0.17.0-batch`, `output_dir /data/output-v420-base-anchor-v2-s42/checkpoints` — provenance complete.
 The three all-zero tensors are the CRF transitions. The recipe sets `crf_loss_weight: 0.0`, so they take
-no gradient by construction (CE-only; the CRF is inference-time
-structure). Every head carries nonzero mass.
+no gradient by construction. The loss is CE-only, and the CRF is inference-time
+structure. Every head has nonzero mass.
 
 ## Assembly gaps found
 
 1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the license-clean extract, and fails
    silently.** Space-split outward derivation vs a space-stripped `name` column → 0 codes, exit 0, a valid
-   empty PCB1 written. Also outward-only, which is the wrong granularity for an anchor-v2-trained model.
+   empty PCB1 written. It is also outward-only. That is the wrong granularity for an anchor-v2-trained model.
 2. **`resolveWeights` hard-codes `locality-surface-lexicon-v6.json`.** Both v4.0.1 and v4.2.0 train against
    **v7**. The dev-link puts v6 in `neural-weights-en-us/`, and the en-us card declares v6. So the shipped
    configuration feeds a v7-trained model the v6 lexicon. The candidate arms here stage the **v7 content
@@ -290,25 +290,25 @@ structure). Every head carries nonzero mass.
    probe (or a `requires.locality_surface.lexicon`-driven resolve) would close it.
 3. **`neural-weights-en-gb` links no evidence-bundle lexicons.** Its `link-dev-weights.ts` stages
    `pair-index-gb.bin` and the FSTs but not `street-type-lexicon-v3.json` / the locality-surface lexicon,
-   and its card omits `requires.street_type` / `requires.locality_surface` even though its `$comment` says
-   the block is a verbatim copy of the base card's. GB parses therefore run those two channels off on a
+   and its card omits `requires.street_type` / `requires.locality_surface` even though its `$comment` states
+   that the block is a verbatim copy of the base card's. GB parses therefore run those two channels off on a
    model trained with them. The baseline board above inherits that posture (which is why it is the correct
    comparison instrument), but it is a real divergence from the base card.
-4. **G1's harness does not exist.** The sheet names a P0 grid taking `--lexicon` / `--street-lexicon`.
-   Neither `mailwoman eval fragment-board` nor `eval fragment-dev` carries those flags, and nothing else in
+4. **G1's harness does not exist.** The sheet specifies a P0 grid taking `--lexicon` / `--street-lexicon`.
+   Neither `mailwoman eval fragment-board` nor `eval fragment-dev` accepts those flags, and no other command in
    `mailwoman/commands/eval/` does. The FR fragment board above is the nearest existing instrument rather than a
    substitute.
 5. **G2/G5/G8 have no fixtures on this host.** `$MAILWOMAN_DATA_ROOT/eval/golden` and `.../eval/splits` are
-   both EMPTY directories; the golden set the recipe points at (`/data/eval/golden/v0.1.2`) lives on the
+   both empty directories. The golden set the recipe points at (`/data/eval/golden/v0.1.2`) lives on the
    Modal volume. `mailwoman eval check` cannot run its battery here. The "SHIPPED 6.7.0 same-grader
    reference" G2 and G5 compare against also has no artifact in `mailwoman/eval-harness/checks/` (which
-   carries `v6.0.0-shipped-baseline.json` and `v7.0.0-base.json` rather than 6.7.0).
+   holds `v6.0.0-shipped-baseline.json` and `v7.0.0-base.json` rather than 6.7.0).
 6. **G6's canary harness was not found** under any name in `mailwoman/commands/eval/` or
    `mailwoman/eval-harness/`.
 7. **`span_mode: "shaped"` is uppercase-only, and survives only because of `normalizeInputCase`.** The
    alphanumeric shape patterns in `neural/postcode-repair.ts` require uppercase letters deliberately. On raw
    lowercase text the GB anchor fires 0/120. Any serving path that skips #690 case normalization — or any
-   future `normalizeCase: false` caller — silently loses the whole channel for GB and NL. Worth an assertion
+   future `normalizeCase: false` caller — silently loses the whole channel for GB and NL. The behavior needs an assertion
    rather than a docstring.
 8. **`@mailwoman/neural` exports no `./postcode-repair` or `./case-normalize` subpath**, so the fire probe
    lives at `scripts/probe-gb-anchor-fire.ts` (outside any tsconfig project) rather than in

@@ -1,6 +1,6 @@
 # === v8-cjk-regs — the CJK base retrained on the re-sourced Korean register, Taiwan, and three noisy registries. ===#
 # Against v8-cjk-kr (the CJK base, card 0.0.2: JP blended 0.9924 on the kana board, KR subregion 0.9665 raw) the corpus
-# changes and nothing else (#2204): head, geometry, seed and schedule are v8-cjk-kr's. The corpus is
+# changes and no other setting does (#2204): head, geometry, seed and schedule are v8-cjk-kr's. The corpus is
 # `v8-cjk-regs-2026-09-08`: the JP kana parts and the CN parts as before, plus
 #   * `juso-kr`        the Korean label corpus rebuilt from the ministry's 주소DB (a direct download with no application
 #                      step, replacing the 2017 OpenAddresses upload of the application-reviewed entrance file), seven
@@ -21,7 +21,7 @@
 #     beside the others.
 #   * TW board (`v8-tw-2026-09-08/tw-board.jsonl`, `--resolve-tags region,subregion --centroids tw-district-centroids.json`):
 #     `street` and `house_number` ≥ 0.97, `subregion` ≥ 0.95, `region` ≥ 0.99 — a first read, so a bar at the level
-#     the KR probe cleared at 2k rather than a number nobody has measured.
+#     the KR probe cleared at 2k rather than an unmeasured number.
 #   * The three registry boards (`kr-registry-board.jsonl`, `tw-registry-board.jsonl`, `jp-registry-board.jsonl`):
 #     per-tag exact-match on the aligned rows, reported. no bar on the first read.
 #   * CN board: `locality_unit` ≥ 11 of 14.
@@ -42,8 +42,8 @@ data:
     CN: 1.0
     KR: 1.0
     TW: 1.0
-  # The mixture (see the header): per-pull source multinomial, exhausted sources restart. The label corpora carry the
-  # weight. each noisy registry sits at a share the probe can read a regression from.
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart. The label corpora take most
+  # of the weight. each noisy registry sits at a share the probe can read a regression from.
   source_weights:
     overture-jp: 0.34
     juso-kr: 0.20

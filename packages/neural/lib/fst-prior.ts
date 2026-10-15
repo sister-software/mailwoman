@@ -33,6 +33,22 @@ export interface FSTPlaceEntryLike {
 	placetype: string
 
 	/**
+	 * The place's gazetteer name.
+	 *
+	 * The anchor-region boost compares it with the written surface, so an alias such
+	 * as `Washington` for the District of Columbia takes no boost.
+	 */
+	name?: string
+
+	/**
+	 * The WOF ids of the place's ancestors.
+	 *
+	 * The anchor-region boost reads it to tell whether a locality of the written
+	 * name lies inside the anchored region.
+	 */
+	parentChain?: readonly number[]
+
+	/**
 	 * The population-based referential likelihood in [0, 1], which scales the positive emission bias.
 	 *
 	 * The type omits the entries' `encyclopedic` score so the bias cannot use article
@@ -279,6 +295,23 @@ export interface FSTPriorOpts {
 	 * The scorer runs it only when this is set.
 	 */
 	streetContext?: StreetContextRequirementOpts
+
+	/**
+	 * The WOF ids of the regions the input's anchored postcodes assert.
+	 *
+	 * A region entry in this set whose gazetteer name is the written surface takes
+	 * the full `maxBias`, outside the referential and the street-context scale,
+	 * because the postcode is positive evidence that the name is that region.
+	 * At that span the street labels are suppressed at full scale, and the locality
+	 * labels are suppressed by `maxBias` unless a locality of the written name with a
+	 * referential lies inside the region, as `New York` does in New York.
+	 */
+	anchorRegionIDs?: ReadonlySet<number>
+
+	/**
+	 * Receives the WOF id of each anchored region the matrix raised, when the caller passes a set.
+	 */
+	anchorRegionHits?: Set<number>
 }
 
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
@@ -303,7 +336,17 @@ export function buildFSTEmissionPriors(
 	const suppressionScale = opts.suppressionScale ?? 1.5
 
 	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
-	const tuning: BiasTuning = { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode }
+
+	const tuning: BiasTuning = {
+		biasScale,
+		maxBias,
+		suppressionScale,
+		seenWOFIDs,
+		lengthMode,
+		anchorRegionIDs: opts.anchorRegionIDs ?? null,
+		anchorRegionHits: opts.anchorRegionHits ?? null,
+	}
+
 	const matrix = emptyPriorMatrix(T, L)
 	const labelToCol = labelColumnIndex(labels)
 
@@ -321,6 +364,8 @@ export function buildFSTEmissionPriors(
 		? wordGroups.map((g) => HOUSE_NUMBER_RE.test(g.fstToken))
 		: null
 
+	const groupSegments: number[] | null = streetContext ? segmentIndexes(wordGroups, pieces) : null
+
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
 
@@ -337,7 +382,7 @@ export function buildFSTEmissionPriors(
 				fst.accepting(match.stateID),
 				[group],
 				tuning,
-				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags)
+				streetContextScale(wordGroups, start, start, streetContext, streetTypeFlags, houseNumberFlags, groupSegments)
 			)
 		}
 
@@ -361,7 +406,7 @@ export function buildFSTEmissionPriors(
 					fst.accepting(next.stateID),
 					matchedGroups,
 					tuning,
-					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags)
+					streetContextScale(wordGroups, start, end, streetContext, streetTypeFlags, houseNumberFlags, groupSegments)
 				)
 			}
 
@@ -376,7 +421,7 @@ export function buildFSTEmissionPriors(
  * Groups SentencePiece pieces into FST-normalized words, splitting at the `▁` space sentinel.
  *
  * An alphanumeric piece without `▁` opens a new word when none is open,
- * because short words often lack a merged `▁word` piece.
+ * because some short words lack a merged `▁word` piece.
  * Punctuation-only pieces become empty placeholder groups so that separated words never merge.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
@@ -456,6 +501,70 @@ export function isStreetAffix(fst: FSTMatcherLike, token: string): boolean {
 	return fst.accepting(match.stateID).some((e) => e.placetype === "street_affix")
 }
 
+const SEGMENT_BREAK_RE = /[,;|\n]/u
+const DIGIT_RE = /\p{N}/u
+
+/**
+ * A word group with the comma-separated segment it sits in.
+ */
+export interface SegmentWord {
+	group: WordGroup
+	segment: number
+	/**
+	 * Whether the word is an identifier rather than a name word: it contains a digit or is a single letter.
+	 */
+	isIdentifier: boolean
+}
+
+function isIdentifierWord(token: string): boolean {
+	return DIGIT_RE.test(token) || [...token].length === 1
+}
+
+/**
+ * Assigns each non-empty word group its segment index.
+ *
+ * A comma, semicolon, bar or newline in a group's pieces closes the segment after that group.
+ */
+export function wordsWithSegments(
+	groups: readonly WordGroup[],
+	pieces: ReadonlyArray<{ piece: string }>
+): SegmentWord[] {
+	const words: SegmentWord[] = []
+	let segment = 0
+
+	for (const group of groups) {
+		const text = group.pieceIndices.map((i) => pieces[i]!.piece).join("")
+
+		if (group.fstToken !== "") {
+			words.push({ group, segment, isIdentifier: isIdentifierWord(group.fstToken) })
+		}
+
+		if (SEGMENT_BREAK_RE.test(text)) {
+			segment++
+		}
+	}
+
+	return words
+}
+
+/**
+ * Whether the segment holding the word at `index` opens, before that word,
+ * with a word that contains a digit, such as a house number.
+ */
+export function numberOpensSegment(words: readonly SegmentWord[], index: number): boolean {
+	if (index < 0 || index >= words.length) return false
+	let first = index
+
+	while (first > 0 && words[first - 1]!.segment === words[index]!.segment) {
+		first--
+	}
+
+	if (first === index) return false
+	const opener = words[first]!
+
+	return opener.isIdentifier && DIGIT_RE.test(opener.group.fstToken)
+}
+
 function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 | -1): number {
 	for (let i = from + direction; i >= 0 && i < groups.length; i += direction) {
 		if (groups[i]!.fstToken !== "") return i
@@ -464,25 +573,57 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
 	return -1
 }
 
+/**
+ * Assigns each word group, punctuation groups included, its comma-separated segment index.
+ *
+ * A comma, semicolon, bar or newline in a group's pieces closes the segment after that group.
+ */
+function segmentIndexes(groups: readonly WordGroup[], pieces: ReadonlyArray<{ piece: string }>): number[] {
+	let segment = 0
+
+	return groups.map((group) => {
+		const current = segment
+
+		if (SEGMENT_BREAK_RE.test(group.pieceIndices.map((i) => pieces[i]!.piece).join(""))) {
+			segment++
+		}
+
+		return current
+	})
+}
+
+/**
+ * The scale on a match's positive bias from the street type or house number beside it.
+ *
+ * A street type's adjacency stays inside the match's segment: in `05448 New St, Vermont` the
+ * state follows a comma, so the street type before the comma leaves its region bias whole.
+ * A house number's adjacency crosses the comma, because a convention that writes the number
+ * after the street, as in `Sofia Camarena 38, Loma Blanca`, writes the colonia next, and the
+ * scaled bias keeps a colonia that is also a locality elsewhere on its dependent reading.
+ */
 function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
 	streetContext: StreetContextRequirementOpts | null,
 	streetTypeFlags: boolean[] | null,
-	houseNumberFlags: boolean[] | null
+	houseNumberFlags: boolean[] | null,
+	groupSegments: number[] | null
 ): number {
-	if (!streetContext || !streetTypeFlags || !houseNumberFlags) return 1
+	if (!streetContext || !streetTypeFlags || !houseNumberFlags || !groupSegments) return 1
 
 	const prev = adjacentNonEmptyIndex(groups, startIdx, -1)
 
-	if (prev >= 0 && (streetTypeFlags[prev] || houseNumberFlags[prev])) {
+	if (
+		prev >= 0 &&
+		(houseNumberFlags[prev] || (streetTypeFlags[prev] && groupSegments[prev] === groupSegments[startIdx]))
+	) {
 		return streetContext.positiveScale ?? 0.25
 	}
 
 	const next = adjacentNonEmptyIndex(groups, endIdx, 1)
 
-	if (next >= 0 && streetTypeFlags[next]) {
+	if (next >= 0 && groupSegments[next] === groupSegments[endIdx] && streetTypeFlags[next]) {
 		return streetContext.positiveScale ?? 0.25
 	}
 
@@ -495,6 +636,20 @@ interface BiasTuning {
 	suppressionScale: number
 	seenWOFIDs: Set<number>
 	lengthMode: ImportanceLengthScaleMode
+	anchorRegionIDs: ReadonlySet<number> | null
+	anchorRegionHits: Set<number> | null
+}
+
+/**
+ * Whether the matched groups spell the entry's own gazetteer name, in FST-normalized form.
+ *
+ * An entry without a name is never its own surface, so a matcher that carries
+ * no names gives no anchor-region boost.
+ */
+function surfaceIsEntryName(groups: readonly WordGroup[], entry: FSTPlaceEntryLike): boolean {
+	if (entry.name === undefined) return false
+
+	return normalizeFSTToken(entry.name) === groups.map((group) => group.fstToken).join(" ")
 }
 
 function applyBias(
@@ -505,15 +660,43 @@ function applyBias(
 	tuning: BiasTuning,
 	contextScale: number
 ): void {
-	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
+	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode, anchorRegionIDs, anchorRegionHits } = tuning
 	const seenTags = new Map<string, number>()
 
 	const streetShaped = isStreetShapedSurface(groups.map((group) => group.fstToken))
 
+	const anchoredRegion =
+		anchorRegionIDs === null
+			? null
+			: (entries.find(
+					(entry) =>
+						entry.placetype === "region" &&
+						anchorRegionIDs.has(entry.wofID) &&
+						!seenWOFIDs.has(entry.wofID) &&
+						surfaceIsEntryName(groups, entry)
+				) ?? null)
+
+	// A locality keeps its reading only on positive evidence: its own name is the written surface,
+	// the gazetteer holds a referential for it, and it lies inside the anchored region.
+	// An alias row or a locality with no referential is no evidence that the user means a locality.
+	const localityInsideAnchoredRegion =
+		anchoredRegion !== null &&
+		entries.some(
+			(entry) =>
+				PLACETYPE_TO_BIO.get(entry.placetype) === "locality" &&
+				entry.referential > 0 &&
+				surfaceIsEntryName(groups, entry) &&
+				entry.parentChain?.includes(anchoredRegion.wofID)
+		)
+
+	if (anchoredRegion) {
+		anchorRegionHits?.add(anchoredRegion.wofID)
+	}
+
 	const matchLen = groups.length
 	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE
 	const posScale = lengthMode === "both" ? lengthScale : 1
-	const supScale = lengthMode === "off" ? 1 : lengthScale
+	const supScale = anchoredRegion || lengthMode === "off" ? 1 : lengthScale
 
 	for (const entry of entries) {
 		if (seenWOFIDs.has(entry.wofID)) continue
@@ -524,7 +707,9 @@ function applyBias(
 
 		if (streetShaped && MAPPED_TIER_PLACETYPES.has(entry.placetype)) continue
 
-		const impBias = entry.referential * biasScale * maxBias * posScale * contextScale
+		const impBias =
+			entry === anchoredRegion ? biasScale * maxBias : entry.referential * biasScale * maxBias * posScale * contextScale
+
 		const existing = seenTags.get(bioTag) ?? 0
 
 		if (impBias > existing) {
@@ -564,6 +749,18 @@ function applyBias(
 
 				if (col !== undefined) {
 					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -scaledSuppression)
+				}
+			}
+		}
+	}
+
+	if (anchoredRegion && !localityInsideAnchoredRegion) {
+		for (const pi of allPieceIndices) {
+			for (const label of ["B-locality", "I-locality"]) {
+				const col = labelToCol.get(label)
+
+				if (col !== undefined) {
+					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -biasScale * maxBias)
 				}
 			}
 		}

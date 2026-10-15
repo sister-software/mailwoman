@@ -43,7 +43,7 @@ interface SourceRegisterAudit {
 	 */
 	eligible: number
 	/**
-	 * Each distinct refusal, with how many sources it refuses.
+	 * Each distinct refusal, with the number of sources it refuses.
 	 *
 	 * A source refused several ways counts under each.
 	 */
@@ -146,7 +146,7 @@ interface TrainingRecordAudit {
 		problems: string[]
 	} | null
 	/**
-	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
+	 * What one config's audited epoch drew from that corpus, when the repository holds the record.
 	 *
 	 * The frozen manifest states what the corpus holds.
 	 * This states what reached the trainer.
@@ -266,7 +266,7 @@ export interface RightsAudit {
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
 
 /**
- * How many of the data document's license expressions the terminal report prints.
+ * The number of the data document's license expressions the terminal report prints.
  *
  * The count under each is what a reader compares.
  * The tail is a long list of one-component expressions.

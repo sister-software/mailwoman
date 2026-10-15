@@ -470,4 +470,32 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
         ),
     ),
+    "v750_gb_region": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.5-gb-region", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.5.0-gb-region-4k.yaml",
+            "corpus/versioned/v0.7.5-gb-region/corpus-v0.7.5-gb-region/MANIFEST.json",
+            "corpus/versioned/v0.7.5-gb-region/corpus-v0.7.5-gb-region/train/rendered-gb-v2.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+            "output-v720-address-systems-s42/checkpoints/step-060000/fisher-diag-v1.npz",
+        ),
+    ),
+    "v760_venue_gb_region": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.7.6-venue-gb-region", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v7.6.0-venue-gb-region-60k.yaml",
+            "corpus/versioned/v0.7.6-venue-gb-region/corpus-v0.7.6-venue-gb-region/MANIFEST.json",
+            "corpus/versioned/v0.7.6-venue-gb-region/corpus-v0.7.6-venue-gb-region/train/rendered-gb-v2.train.parquet",
+            "corpus/versioned/v0.7.3.2-venue-planet/corpus-v0.7.3.2-venue-planet/train/spliced-venue-locality.train.parquet",
+            "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
+        ),
+    ),
 }

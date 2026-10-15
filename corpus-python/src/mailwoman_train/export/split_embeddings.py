@@ -21,7 +21,7 @@ offset    type   field
 ========  =====  =======================================================
 
 A full file (layout 0) holds ``vocab`` rows from offset 32, so row ``i`` sits at ``32 + i * hidden``
-and an HTTP range read fetches it alone. A subset file (layout 1) holds ``row count`` u32 ids in
+and an HTTP range read fetches that one row without the others. A subset file (layout 1) holds ``row count`` u32 ids in
 ascending order from offset 32, then the rows in the same order.
 """
 

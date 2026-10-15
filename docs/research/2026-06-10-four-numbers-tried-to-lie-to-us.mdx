@@ -12,7 +12,7 @@ you look at the score. What we didn't know was that the next 24 hours would test
 rule four separate times, and that the fourth test would flip a conclusion we'd been
 quoting for two weeks.
 
-This is the story of shipping v4.2.0: a consolidation, a bar that lowered itself, a
+This post describes shipping v4.2.0: a consolidation, a bar that lowered itself, a
 consultant who was confidently wrong twice, a capacity wall with a number on it,
 and a benchmark harness that had been starving our own model for four releases.
 
@@ -23,8 +23,8 @@ and a benchmark harness that had been starving our own model for four releases.
 We consolidated every proven change of the parity campaign into one training run: the
 unit extract, the affix extract, the country gazetteer anchor, the multi-locale balance.
 The core tags soared. Locality up thirteen points, region up eleven, country from no score
-to 87. And the street-affix split, which a solo run hadtaught to 78, crashed
-to 27.
+to 87. And the street-affix split crashed to 27. A solo run had taught that split
+to 78.
 
 If you've trained multi-task models, you know this trade. Capacity is a blanket that's
 slightly too small. Pull it up to your chin and your feet get cold.
@@ -37,7 +37,7 @@ number that would have exposed a regression hiding in every single consolidation
 fell out of the table entirely.
 
 No one had chosen to change the targets. The drift started when we restated numbers from
-memory; each retelling moved the targets toward the system we had already built.
+memory. Each retelling moved the targets toward the system we had already built.
 The operator caught it by asking one question about one number. The fix cost ten
 minutes, and the rule it produced is now non-negotiable: **the training config is the
 canonical check, and any change to a bar is a stated decision with a reason, in
@@ -69,9 +69,9 @@ before anyone reaches for more parameters.
 ## The miss we shipped
 
 So we shipped the trade. v4.2.0 is the consolidation's strongest stable variant, and
-its ledger entry says exactly what it gave up: street down 2.3, unit down 1.7, the
+its ledger entry records exactly what it gave up: street down 2.3, unit down 1.7, the
 affix split present but at 65-level, fluent nowhere near its solo 78. The same entry
-says what everyone got: locality +13, region +11, country from absent to 89.8, French
+records what everyone got: locality +13, region +11, country from absent to 89.8, French
 house numbers at their best ever, German locality beating the system we're chasing.
 
 Name your regressions in the model card and something nice happens downstream: the
@@ -87,7 +87,7 @@ very nearly filed it under the stated costs.
 
 Then we checked how the arena harness loads models. Well. It had no way to feed the
 gazetteer lexicon or the postcode-anchor channel. Every anchor-trained model we've
-benchmarked in those arenas — four releases' worth — was graded with those input
+benchmarked in those arenas — across four releases — was graded with those input
 channels zeroed out. We had been publishing numbers for a parser with its eyes taped
 shut and treating them as the parser.
 
@@ -108,8 +108,8 @@ long enough to cost you something.
 
 The implementation that caught them is boring on purpose. Bars written down before looking.
 Cheap diagnostics before expensive commitments. Misses confronted in writing. And a
-suspicious habit worth stealing: whenever a result confirms what you already believe,
-or condemns what youbuilt, go read how the measurement was taken before you
+suspicious habit that other teams can adopt: whenever a result confirms what you already
+believe, or condemns what you built, go read how the measurement was taken before you
 react to it.
 
 The lookup table from yesterday's post scored 100 and was wrong. The arena scored our

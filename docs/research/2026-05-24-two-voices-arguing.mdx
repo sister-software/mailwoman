@@ -21,7 +21,7 @@ If you've been programming for a while but ML feels opaque, this post is for you
 
 ## What we're building, in one paragraph
 
-Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, New York, NY 10118"`) and turns them into structured place information ("this is in Manhattan, here are the coordinates, here's the postcode, etc."). It uses a small AI model to do the parsing. The model is small by AI standards, with about 9 million numbers inside it. For comparison, GPT-4 is rumored to have over a trillion.
+Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, New York, NY 10118"`) and turns them into structured place information ("this is in Manhattan, these are the coordinates, this is the postcode, etc."). It uses a small AI model to do the parsing. The model is small by AI standards, with about 9 million numbers inside it. For comparison, GPT-4 is rumored to have over a trillion.
 
 We don't need a giant model because the task is narrow. Addresses follow patterns, and we only need to identify which parts of a string are which (`350` is a house number, `5th Avenue` is a street, etc.).
 
@@ -100,8 +100,8 @@ Then somebody pointed out something we hadn't questioned: **we were training the
 
 The model has two scoring systems. We'll call them Voice A and Voice B.
 
-- **Voice A** says: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
-- **Voice B** says: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
+- **Voice A** asks: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
+- **Voice B** asks: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
 
 Both voices are useful, because a working geocoder needs both per-word accuracy _and_ sensible patterns. We'd been adding their feedback together, with Voice B's contribution scaled down to 5%, and using that combined signal to train the model.
 
@@ -127,14 +127,14 @@ Voice B was supposed to be scaled to 5%, but its raw gradient was 16× larger th
 
 An analogy helps explain the result.
 
-Imagine a hiker on a foggy hill, trying to walk to the lowest point in the landscape. The hiker can't see far and carries two GPS devices that each point downhill.
+Imagine a hiker on a foggy hill, trying to walk to the lowest point in the landscape. The hiker can't see far and holds two GPS devices that each point downhill.
 
 - **At the top of the hill (high loss),** every direction is downhill, so both devices point roughly the same way. The hiker makes progress, and loss decreases.
 - **Lower down in a specific valley (lower loss),** the landscape has more detail, and the two devices start to disagree. Voice A points left toward the valley floor, and Voice B points right.
 
 When the devices disagree, the hiker mostly follows **whichever device gives the larger signal**. With Voice B's signal 16× larger than Voice A's, the hiker follows Voice B even though Voice A was pointing at the valley floor. The hiker climbs out of the valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
 
-That is what happened to our model. Above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping, which we saw as the loss climbing back up.
+That is what happened to our model. Above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping. We observed that drop as the loss climbing back up.
 
 ## The fix
 
@@ -142,7 +142,7 @@ The fix follows directly: **remove Voice B from training**, so it contributes no
 
 Voice B still encodes useful structural rules, such as forbidding orphan tags and invalid BIO sequences. We therefore keep Voice B for **inference**, when we use the trained model to parse an address, and leave it out of training.
 
-The code change is one line: when Voice B's weight is 0, the loop skips computing it. The run then uses only Voice A's gradient, which had behaved well throughout.
+The code change is one line: when Voice B's weight is 0, the loop skips computing it. The run then uses only Voice A's gradient. That gradient had behaved well throughout.
 
 ## What we tell ourselves we learned
 

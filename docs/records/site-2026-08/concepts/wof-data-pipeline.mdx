@@ -112,7 +112,7 @@ interface ParsedWOFPlacetype {
 }
 ```
 
-The `localizedPropMap` holds the multilingual name variants. For each language code (ISO 639-3b), it carries the `preferred`, `variant`, `colloquial`, `abbr`, and `short` forms, which match the columns of `PlacetypeDataSource.records`.
+The `localizedPropMap` holds the multilingual name variants. For each language code (ISO 639-3b), it holds the `preferred`, `variant`, `colloquial`, `abbr`, and `short` forms. These forms match the columns of `PlacetypeDataSource.records`.
 
 The worker writes to `PlacetypeDataSource`, a set of small per-placetype SQLite DBs. An earlier version wrote to Redis, and v0.5.0 replaced it.
 
@@ -206,7 +206,7 @@ This pipeline produces item 3. Specifically:
 The WOF spot-check (2026-05-24) found the raw `spr` table's parent_id chains reliable (18/20 correct). It also found two problems that the prepare pipeline needs to address:
 
 1. **Name aliasing**: a bare `name` lookup does not find "Saint Petersburg", because WOF stores it as "St. Petersburg". This is [a known WOF failure mode](./whosonfirst-gotchas.mdx). The `variant`/`short` columns in `PlacetypeDataSource` are designed for this case, and they still need to be populated.
-2. **Disambiguation**: a bare-name lookup without `parent_id` filtering picks the wrong record. A Nebraska village named "New York" outranks NYC because of alphabetical ID ordering. The `find` query needs a `parent_id` filter or population-weighted ranking.
+2. **Disambiguation**: a bare-name lookup without `parent_id` filtering picks the wrong record. A Nebraska village called "New York" outranks NYC because of alphabetical ID ordering. The `find` query needs a `parent_id` filter or population-weighted ranking.
 
 The prepare pipeline populates the variant columns and fixes the first problem. A `PlacetypeDataSource.find` call with criteria that filter by parent_id or placetype fixes the second.
 
@@ -220,7 +220,7 @@ In priority order:
 
 3. **Connect `PlacetypeDataSource` to the reconciler** as the `ResolverCandidatesLookup` + `ParentChainLookup` implementation. This replaces the mocked resolver in the reconciler's current tests with real data.
 
-4. **(Stretch) Use the in-memory-then-consolidate design** for maximum throughput. Workers write to `:memory:` during processing and dump to temp files at the end of each batch, and the main thread merges the files with `ATTACH`. This is worth doing only if steps 1 and 2 are too slow for the full WOF dataset (~120K features × 5-10 languages = 600K-1.2M rows).
+4. **(Stretch) Use the in-memory-then-consolidate design** for maximum throughput. Workers write to `:memory:` during processing and dump to temp files at the end of each batch, and the main thread merges the files with `ATTACH`. Do this only if steps 1 and 2 are too slow for the full WOF dataset (~120K features × 5-10 languages = 600K-1.2M rows).
 
 ## See also
 

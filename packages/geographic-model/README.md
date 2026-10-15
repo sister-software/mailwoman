@@ -1,6 +1,6 @@
 # @mailwoman/geographic-model
 
-Authored geographic semantics for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: stable concepts (`pharmacy`, `obtain_medication`), the relations a curator can state between them (`pharmacy affords obtain_medication`), mappings into external vocabularies, source observations, and derived facts. Every record carries provenance, and the package compiles all of it deterministically into a lookup artifact that the runtime reads.
+Authored geographic semantics for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: stable concepts (`pharmacy`, `obtain_medication`), the relations a curator can state between them (`pharmacy affords obtain_medication`), mappings into external vocabularies, source observations, and derived facts. Every record states its provenance, and the package compiles all of it deterministically into a lookup artifact that the runtime reads.
 
 A geocoder benefits from knowing that a pharmacy is a place where you obtain medication. Once that knowledge becomes a ranking rule, however, authored opinion starts overriding what the models learned from data. This package stores the knowledge in a shape that cannot become ranking policy. The schema has no numeric field, and the compiled artifact answers lookups and never orderings.
 
@@ -16,19 +16,19 @@ You probably should not install it directly yet.
 
 One document holds six tables, and all six are required. A hand-authored file writes `"derivedFacts": []` instead of leaving the table out, because an absent table and an empty table make different claims.
 
-| Table          | Record                                  | What it is                                                                                                                            |
-| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `relations`    | `RelationRecord`                        | Vocabulary: what a relation means, which concept kinds may stand on each side, whether it is transitive or symmetric, and its inverse |
-| `concepts`     | `ConceptRecord` + `RelationAssertion[]` | Authored semantics: a concept, its broader concepts, and the claims a curator states about it                                         |
-| `mappings`     | `ExternalMappingRecord`                 | Translation into an external vocabulary — today `@mailwoman/poi-taxonomy` category identifiers                                        |
-| `observations` | `SourceObservationRecord`               | What a named external source states, recorded in this vocabulary and kept out of the concept table                                    |
-| `derivedFacts` | `DerivedFactRecord`                     | What a named procedure computed, with every record it read listed as an input. Written by the compiler, never by hand                 |
+| Table          | Record                                  | What it is                                                                                                                        |
+| -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `relations`    | `RelationRecord`                        | Vocabulary: what a relation means, the concept kinds allowed on each side, whether it is transitive or symmetric, and its inverse |
+| `concepts`     | `ConceptRecord` + `RelationAssertion[]` | Authored semantics: a concept, its broader concepts, and the claims a curator states about it                                     |
+| `mappings`     | `ExternalMappingRecord`                 | Translation into an external vocabulary — today `@mailwoman/poi-taxonomy` category identifiers                                    |
+| `observations` | `SourceObservationRecord`               | What a cited external source states, recorded in this vocabulary and kept out of the concept table                                |
+| `derivedFacts` | `DerivedFactRecord`                     | What a cited procedure computed, with every record it read listed as an input. Written by the compiler, never by hand             |
 
 Three properties hold by construction:
 
 - **The schema has no numeric field.** It has no strength, confidence, or count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`), and the package exports no order over it, because a number on an authored relationship acts as a ranking weight whatever it is called.
-- **Authored, observed, and derived records are three distinct types.** Their identifiers carry separate brands, so one cannot be assigned where another is expected. They live in separate tables, so a curator must make each curation decision deliberately instead of relying on where a record happens to sit.
-- **A derived fact carries its provenance in its structure.** It has no `source` field. Its `derivation` and its `inputs` form the provenance, and every input carries source provenance in turn. A source string can be copied onto a record that did not come from that source, but an input list must resolve or the document fails validation.
+- **Authored, observed, and derived records are three distinct types.** Their identifiers have separate brands, so one cannot be assigned where another is expected. They live in separate tables, so a curator must make each curation decision deliberately instead of relying on where a record happens to sit.
+- **A derived fact records its provenance in its structure.** It has no `source` field. Its `derivation` and its `inputs` form the provenance, and every input records source provenance in turn. A source string can be copied onto a record that did not come from that source, but an input list must resolve or the document fails validation.
 
 Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly with `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, and `toDerivedFactID`. The brands exist only at compile time, and the strings pass through JSON unchanged.
 
@@ -44,13 +44,13 @@ The validator is plain deterministic TypeScript with no I/O. It uses no reasoner
 
 ## The loader, the compiler, and the artifact
 
-`loadGeographicModelDirectory(root)` reads every `*.json` file under a directory and merges them into one document. It lives in the `./load` subpath and is the only module here that touches a filesystem. The file layout is an authoring convenience and carries no meaning. Enumeration order cannot affect the output, and every validation issue identifies the file it came from.
+`loadGeographicModelDirectory(root)` reads every `*.json` file under a directory and merges them into one document. It lives in the `./load` subpath and is the only module here that touches a filesystem. The file layout is an authoring convenience and has no meaning. Enumeration order cannot affect the output, and every validation issue identifies the file it came from.
 
-`compileGeographicModel(input)` delegates validation and then compiles. **`isA` alone defines semantic inheritance.** The artifact carries every concept's transitive ancestors, and it copies every ancestor's assertions onto descendants as derived facts that record their derivation and inputs. The compiler does **not** compute closures for a relation that declares `transitive` or `inverse`. Those fields describe what the relation means, and general reasoning is excluded from this package for its lifetime.
+`compileGeographicModel(input)` delegates validation and then compiles. **Only `isA` defines semantic inheritance.** The artifact stores every concept's transitive ancestors, and it copies every ancestor's assertions onto descendants as derived facts that record their derivation and inputs. The compiler does **not** compute closures for a relation that declares `transitive` or `inverse`. Those fields describe what the relation means, and general reasoning is excluded from this package for its lifetime.
 
 `serializeCompiledModel(model)` produces canonical bytes. Keys appear in code-point order at every depth, tables are ordered by identifier, and no field records when compilation ran. Two builds of one document are byte-identical, so regenerating produces a diff only when the records changed.
 
-`createGeographicModelIndex(model)` in the `./lookup` subpath is the read interface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. It supports lookups only, without walks, cursors, or a query language, because the artifact exists to remove query-time traversal. Two kinds of absence stay distinguishable. A concept that the artifact does not carry answers `undefined`, and a carried concept with no derived facts answers an empty list.
+`createGeographicModelIndex(model)` in the `./lookup` subpath is the read interface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. It supports lookups only, without walks, cursors, or a query language, because the artifact exists to remove query-time traversal. Two kinds of absence stay distinguishable. A concept that the artifact does not contain answers `undefined`, and a stored concept with no derived facts answers an empty list.
 
 ## What is authored today
 
@@ -89,9 +89,9 @@ Each of these concerns belongs to another package. The ownership list prevents a
 | Dataset identity and coverage epistemics                                                                     | `@mailwoman/core/layers`                                                                                 |
 | Empirical, spatial activity-affordance statistics                                                            | Fitted from data elsewhere in the program, against the identifiers owned here                            |
 
-Tests enforce two rules. First, `@mailwoman/core` must not depend on this package. Core ships the pipeline interface plus ~9 MB of reference data to every consumer, so every drop-in API would inherit a world-semantics dependency added there. Second, the public API carries no ranking policy. A binding whose name suggests a boost, penalty, weight, rank, score, or ordering fails the suite.
+Tests enforce two rules. First, `@mailwoman/core` must not depend on this package. Core ships the pipeline interface plus ~9 MB of reference data to every consumer, so every drop-in API would inherit a world-semantics dependency added there. Second, the public API exposes no ranking policy. A binding whose name suggests a boost, penalty, weight, rank, score, or ordering fails the suite.
 
-One rule governs the whole boundary: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
+One rule governs the whole boundary: **knowledge creates observations, and it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
 
 The package architecture excludes the following for its whole life: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material that compiles into artifacts, and the package provides no service.
 
@@ -104,7 +104,7 @@ This README is the package-local summary. The authoritative documents are in the
 
 ## Layout
 
-Source lives at the workspace root. Each test sits beside the module it covers under `lib/`. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to carry.
+Source lives at the workspace root. Each test sits beside the module it covers under `lib/`. The manifest's `files` array declares `data/**/*.json` explicitly. `**/*.ts` does not match JSON, and a data file missing from `files` would leave the installed package without the data it exists to ship.
 
 ## License
 

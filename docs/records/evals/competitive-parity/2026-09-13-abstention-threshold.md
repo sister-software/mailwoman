@@ -10,15 +10,15 @@ re-grading in the
 [same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts).
 
 **Exploratory, and outside that pre-registration.** Every threshold here was read off results that
-were already visible, which is the one thing the registered rule forbids. Nothing below re-decides the
-frozen verdict, and no threshold warrants a claim until it is registered ahead of a panel it has not
+were already visible, and the registered rule forbids exactly that. The frozen verdict stands as
+recorded, and no threshold warrants a claim until it is registered ahead of a panel it has not
 seen.
 
 Four findings, in the order they constrain each other:
 
 1. A threshold on the confidence the resolver already records beats the baseline on **both** axes at
    once — at four of the fifteen tested values it would also have satisfied the full registered rule.
-2. That same signal is blind to the case it most needs to catch. 28 of the 75 false selections carry
+2. That same signal is blind to the case it most needs to catch. 28 of the 75 false selections have
    the maximum confidence, so no threshold can reach a false-selection rate below 28%. Nine of those
    28 name the withheld settlement under a different WOF id and are not false at all, so the floor a
    threshold has to clear is 19 rows — see
@@ -64,18 +64,18 @@ Generated into [`same-data-threshold.md`](/benchmarks/same-data-threshold.md) an
 | 1.00      | 221      | 162        | 36.5% (129/353)    | 4.5% (6/134)    | 28.0% (28/100)       |
 
 The baseline reads 45.3% accuracy and 57.0% false selection. Six of the fifteen thresholds beat it on
-both axes at once, from 0.01 to 0.30. Both axes together, because either alone is trivially winnable:
+both axes at once, from 0.01 to 0.30. The comparison uses both axes together, because a threshold can win either axis by itself at an extreme:
 threshold 0 maximizes accuracy and threshold 1 minimizes false selection, and each is the other's
 worst case.
 
 The wrong-area rate falls with them, from 19.2% to 9.2% at the first step. That is a second and
-independent sign that the margin carries information about correctness — nothing in the sweep grades
+independent sign that the margin holds information about correctness. The sweep never grades
 distance, so the wrong-area column moving is the withheld rows having been disproportionately wrong.
 
 ### The registered rule, re-read at each dominating threshold
 
 Run through the same `comparePaired` and `evaluateVerdict` the frozen decision used, so a difference
-is the threshold and nothing else.
+comes from the threshold only.
 
 | threshold | pooled margin | exact McNemar p | per-stratum regressions | rule would read |
 | --------- | ------------- | --------------- | ----------------------- | --------------- |
@@ -121,9 +121,9 @@ Against them, the false selections it removes:
 
 ## The floor the margin cannot cross
 
-28 of the 75 false selections carry confidence 1, because the lookup that produced them considered a
-single candidate. No threshold at or below 1 can withhold those, which is why the curve flattens at
-28% and stays there.
+28 of the 75 false selections have confidence 1, because the lookup that produced them considered a
+single candidate. No threshold at or below 1 can withhold those. For that reason the curve flattens
+at 28% and stays there.
 
 The reason is structural rather than a tuning problem. The margin is a **within-pool** quantity: it
 measures the winner's lead over its rivals, so it is blind to whether the pool contains the answer at
@@ -154,9 +154,9 @@ candidate.
 ### Correction: nine of the twenty-eight name the right place
 
 Three of those five exemplars are correct answers. The withheld-gold stratum removes the ids the
-`gn:id` concordance links, and the gazetteer carries several settlements twice — once as a `locality`,
-once as the `localadmin` with the same name at the same centroid — so removing the concorded id
-leaves the twin answerable:
+`gn:id` concordance links. The gazetteer stores several settlements twice, once as a `locality` and
+once as the `localadmin` with the same name at the same centroid. The twin therefore stays
+answerable after the concorded id is removed:
 
 | row             | query       | withheld gold | selected                |     km |
 | --------------- | ----------- | ------------- | ----------------------- | -----: |
@@ -173,7 +173,7 @@ Across the 28 max-margin rows, nine name the gold settlement under another id wi
 within 25 km), and twelve sit within 5 km of the gold whatever they are called. So the floor the
 margin cannot cross is **19 rows rather than 28** — still structural, and still for the reason the next
 paragraph gives, but a fifth smaller than published. The
-[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) carries
+[same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) holds
 the whole-stratum re-grading.
 
 **`bare_race` needs its denominator before it reads as a cause.** The check fires for a lone
@@ -188,8 +188,8 @@ stratum whatever the outcome:
 
 On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE rather than a failure: bare-toponym
 rows do select more frequently than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
-stratum carries the check and a quarter of those rows still abstained. The enrichment is worth a
-separate measurement; it is not on its own evidence that the race manufactures these selections.
+stratum fires the check and a quarter of those rows still abstained. The enrichment needs a
+separate measurement. By itself it is not evidence that the race manufactures these selections.
 
 What the 28 rows do share is the pool the deciding lookup saw: 17 of them had a single candidate in
 the row's whole pool, and the rest reached a lookup that considered one even though the row's union
@@ -202,7 +202,7 @@ it was fixed ([#2265](https://github.com/sister-software/mailwoman/issues/2265))
 
 **What the defect was.** `applySpanRescore` begins `if (hasResolvedPlace(roots)) return`
 (`packages/resolver/lib/resolve/passes.ts`) — it declines only when the tree already holds a resolved
-place. A `minWinningScore` refusal leaves a tree with no resolved place, which is precisely the
+place. A `minWinningScore` refusal leaves a tree with no resolved place. That state is the
 recovery pass's trigger condition. Therefore, the recovery re-issued the byte-identical locality lookup the
 floor haddeclined. Measured before the fix, raising the floor across the whole populated range
 of the scale moved the false-selection rate from 75 of 100 rows to 74 — one row — and moved selection
@@ -213,13 +213,13 @@ Span rescore was built to recover a locality the parser fragmented, and its own 
 early return the "#685 brake — never second-guess a working coordinate". The brake reads a resolved
 place, so it could not tell a deliberate refusal from a parse that failed. **A refusal and a failure
 were the same state, and the recovery pass answered both.** The fix records the refusal on the walk
-state and has the call site decline; it is inert at the default, because `minWinningScore` defaults
+state and has the call site decline. The fix is inert at the default, because `minWinningScore` defaults
 to 0 and no shipped backend emits a negative score.
 
 Generated into [`same-data-knob.md`](/benchmarks/same-data-knob.md). Unlike the curve above this is a
 real replay of the resolver at each option set rather than a re-grade. Every rate is measured over the 372 of
-453 rows that every arm scored without a replay miss, so the columns are comparable to each other;
-all 100 withheld-gold rows survive every arm, so the false-selection column is complete.
+453 rows that every arm scored without a replay miss, so the columns are comparable to each other.
+All 100 withheld-gold rows survive every arm, so the false-selection column is complete.
 
 | arm                                 | replay misses | selection accuracy | wrong-area rate | false-selection rate |
 | ----------------------------------- | ------------- | ------------------ | --------------- | -------------------- |
@@ -235,7 +235,7 @@ all 100 withheld-gold rows survive every arm, so the false-selection column is c
 The floor is now a working knob. At 4.0 it takes the false-selection rate from 75 of 100 rows to 26
 and costs 1.5 points of selection accuracy, 66.9% to 65.4%; it also takes the wrong-area rate from
 17.2% to 10.5%. The gap that remains to `spanRescore: false` is span rescore answering rows the floor
-never reached, which is the behaviour it exists for, rather than rows it refused.
+never reached, rather than rows the floor refused. Span rescore exists to answer those rows.
 
 ### The 8% is this panel's construction, and cannot be read as a setting
 
@@ -255,23 +255,23 @@ three strata that share its pool. So a floor at 4.0 admits every correct answer 
 and rejects the smaller namesakes around them — it is calibrated to the panel by accident of how the
 panel was built, and a user asking for a village of 800 people meets the same floor.
 
-The magnitude therefore says nothing about what a floor should be, and this panel cannot be used to
+The magnitude therefore gives no evidence about what a floor should be, and this panel cannot be used to
 choose one. What survives the confound is the mechanism: a refusal in one pass is answered by
 another, and no choice of floor can show through while that holds. That part is read from the code
 and confirmed by the implementation counts, neither of which depends on the panel.
 
 ## What this supports, and what comes next
 
-Supported: the ranking already carries a signal that separates supportable selections from
+Supported: the ranking already holds a signal that separates supportable selections from
 unsupportable ones well enough to beat the deterministic baseline on selection accuracy and false
 selection simultaneously, and the resolver does not consult it. Supported: `spanRescore` answers a
 refusal `minWinningScore` made, because the state the refusal leaves is the state the recovery pass
 triggers on — read from the code and confirmed by the implementation counts, so it does not depend on this
-panel. Refused: any claim that a particular threshold or floor is the right one; the floor that
+panel. Refused: any claim that a particular threshold or floor is the right one. The floor that
 produces 8% here is calibrated by accident to a panel whose gold all has population above 15,000.
 
-Three next measurements, in order of what they would settle. The first item this list carried — give a
-refusal a state of its own so the recovery pass can tell it from a parse that resolved nothing — is
+Three next measurements, in order of what they would settle. The first item this list held — give a
+refusal a state of its own so the recovery pass can tell it from a parse that resolved no place — is
 done, and the knob table above is the re-run.
 
 1. Register a threshold and a fit-based abstention signal ahead of a fresh panel whose gold spans
@@ -291,5 +291,5 @@ node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
 ```
 
 `sweep` reads only the committed panel and results. `knob` additionally replays the committed fixture
-through the resolver and needs no database. Both are deterministic; the paired bootstrap uses the
+through the resolver and needs no database. Both are deterministic. The paired bootstrap uses the
 frozen benchmark's 10,000 resamples at seed 20260913.

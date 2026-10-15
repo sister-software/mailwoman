@@ -33,6 +33,6 @@ lookup.nearest(51.92, 4.48) // "NL RTM"
 const annotator = makeUnLocodeAnnotator(lookup) // fills AnnotationSet.unLocode
 ```
 
-Name matching is diacritic-folded and case-insensitive. ~80% of UN/LOCODE entries carry coordinates
+Name matching is diacritic-folded and case-insensitive. ~80% of UN/LOCODE entries have coordinates
 (93k of 116k), so `nearest` is broadly useful; `byName` is exact. Data: UNECE UN/LOCODE (public domain
 code list).

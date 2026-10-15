@@ -14,8 +14,8 @@ tags:
 
 Operational knowledge from the first poi.db builds (2026-07-18/19, the exotic-POI arc,
 PRs #1180–#1185). Read this before touching `gazetteer build poi`, the poi executor, or the
-layer publish path. The design rationale lives in the spec named in the front matter; this
-page is the "what bites you" record.
+layer publish path. The design rationale is in the spec listed in the front matter. This
+page records the failures that the build and publish path produce.
 
 poi.db is layer #1. The schema every layer database embeds — the `layer_manifest` /
 `layer_coverage` interface, the spine keys, tiers, and the meaning-of-zero rule this build
@@ -37,17 +37,17 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 ### Overture Places schema gotchas
 
 - **There is no top-level `country` column** in the Places theme (the addresses theme has
-  one; Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
+  one, and Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
   index). The builder probes `DESCRIBE` output and picks the right expression
   (`chooseCountryExpression`); rows with no address struct are **excluded from per-country
   subsets** under the addresses-based filter — this is the accepted v1 limitation.
 - **The category property is mid-transition.** The old `categories` property is slated for
-  removal in Overture's September 2026 release; the new `taxonomy` property
+  removal in Overture's September 2026 release. The new `taxonomy` property
   (`taxonomy.primary`) replaces it. The builder probes for both and prefers `taxonomy`
   (`chooseCategoryColumn`). When bumping the pinned release, re-check the probe output in
   the build log — it prints which property it chose.
 - **`--limit` samples are geographically clustered rather than representative.** LIMIT takes the
-  first rows the scan yields; the first 50k US rows in the 2026-05-20.0 release all landed
+  first rows the scan yields. The first 50k US rows in the 2026-05-20.0 release all landed
   in Hawaii. Fine for smoke verification, useless for coverage judgments. Never grade
   coverage or the query board on a limited build.
 - **`--limit` is also ~200× slower against S3 rather than faster.** DuckDB plans a LIMIT scan
@@ -55,14 +55,14 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   written after 6 minutes — while an unbounded country scan runs 7–8 parallel connections
   and finishes GB in ~23 minutes. Smoke against S3 with an unbounded single-country ingest rather than a LIMIT.
 - **Overture prunes old releases from the bucket** — the 2026-08-19 listing held exactly
-  one release; both prior pins were gone. Consequences: a stale `DEFAULT_RELEASE` fails
-  every default build outright, a sealed artifact from a pruned release can never be
+  one release, and both prior pins were gone. Consequences: a stale `DEFAULT_RELEASE` fails
+  every default build, a sealed artifact from a pruned release can never be
   rebuilt, and two releases never mix in one artifact — so extending an existing artifact
   after a prune means re-ingesting every country at the current release. Cost relief: the
   first country's scan pays the cold cache (~25 min); each further country in the same
-  invocation rides warm at 30–50 s, so batch them.
+  invocation runs warm at 30–50 s, so batch them.
 - `brand.names.primary` is deliberately not extracted — the QID (`brand.wikidata`) is the
-  join key and the row's own `name` carries the display form. Re-adding it is a schema +
+  join key and the row's own `name` holds the display form. Re-adding it is a schema +
   builder change rather than a flag.
 
 ### Key decisions (do not silently re-decide)
@@ -101,13 +101,13 @@ that 800+ green tests missed. End every poi.db-touching change with a live smoke
 and treat the first FULL-scale build as its own verification step: the 2026-07-19 four-country run died
 at Node's default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader
 materialized instead of streamed. Row readers over DuckDB must use the chunked/streaming
-API; memory must stay flat with row count.
+API. Memory must stay flat with row count.
 
-Two more full-scale-only failures, both fixed 2026-07-19 and worth knowing the class of:
-the DuckDB parquet reader must STREAM (chunked fetches; a materializing reader OOM'd the
+Two more full-scale-only failures, both fixed 2026-07-19, share a class.
+The DuckDB parquet reader must STREAM (chunked fetches, because a materializing reader OOM'd the
 ~4 GB JS heap at 13.68M rows — peak RSS is ~2.4 GB streamed), and any Kysely bulk
 `.values(...)` insert must be CHUNKED (`writeLayerCoverage`'s single INSERT for 159,702
-res-6 cells exceeded SQLite's bound-variable limit; batches of 5,000 rows now). The class:
+res-6 cells exceeded SQLite's bound-variable limit, so it now inserts batches of 5,000 rows). The class:
 anything linear in row count that fixture scale cannot exercise.
 
 Reference numbers from the first complete 4-country build (release 2026-05-20.0,
@@ -135,7 +135,7 @@ uploader (`packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run
 (source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's
 version constant (`POI_LAYER_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`). Note:
 `gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**
-the poi path; using it would land the file at the wrong key. The docs tester
+the poi path. It would land the file at the wrong key. The docs tester
 (`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
 
 ## Flag state

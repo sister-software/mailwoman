@@ -30,8 +30,8 @@ import { tryStat } from "#fs/readers/stat"
  *
  * The GeoNames dumps and every register that writes plain TSV are such sources.
  *
- * A genuinely quoted source, such as a spreadsheet export or a register that escapes
- * delimiters, should use `TSVSpliterator` with its default settings.
+ * A source that quotes its fields, such as a spreadsheet export or a register that
+ * escapes delimiters, should use `TSVSpliterator` with its default settings.
  * State that choice where the source is read.
  */
 export function readUnquotedTSV(path: PathBuilderLike): AsyncIterable<string[]> {
@@ -54,7 +54,7 @@ export function readUnquotedTSVText(text: string): Iterable<string[]> {
 /**
  * The same read, checked against the file's own line count, raising rather than answering short.
  *
- * A reader that can return a partial result must state how many rows it read or throw.
+ * A reader that can return a partial result must state the number of rows it read or throw.
  * Consumers see the same count for a short read and a small file.
  *
  * A gazetteer build may then mistake the short read for an absent entry.

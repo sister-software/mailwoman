@@ -26,43 +26,43 @@ Same corpus + tokenizer as v381 → every F1 comparison below is valid.
 | oracle@5 (parity 267)        | —             | **0.7865**      | +6.4pp over v301's 0.7228        |
 | all-caps raw-case exact (P3) | 48.3          | 48.0            | fail (inert, −0.3pp vs +5pp bar) |
 
-train_loss 18.6→1.31; val macro_f1 0.6937 (= the 2k's 0.6936 — the token path is untouched, the
-span head is a purely additional output).
+train_loss went 18.6→1.31. val macro_f1 is 0.6937 (= the 2k's 0.6936). The token path is untouched,
+and the span head is a purely additional output.
 
 ## What the numbers say
 
 **The span head integrates at zero token-path cost.** golden us/fr micro identical to v381, exact
-±0.1pp. The span scorer is a new output head; the BIO path the model already shipped is byte-stable.
-There is nothing to "promote" on the token side — and nothing to lose.
+±0.1pp. The span scorer is a new output head. The BIO path the model already shipped is byte-stable.
+The token side has no change to promote and no score to lose.
 
 **The k-best headroom is real and large.** oracle@5 0.7865 vs seg@1 0.588 = **0.1985** of street@1
 sitting in ranks 2–5, recoverable by a reranker that never touches the model. oracle@3 is already
 0.745 — most of the headroom is in the top 3. This is the empirical foundation the whole stage-2
-arc rested on (the plan cited oracle@10 0.749); the 8k ship-recipe model exceeds it (oracle@5 alone
-0.786), and beats the phase-1 v301 substrate by 6.4pp.
+arc rested on (the plan cited oracle@10 0.749); the 8k ship-recipe model exceeds it (oracle@5 is
+0.786), and beats the phase-1 v301 model by 6.4pp.
 
 **The span head plateaus by 2k.** seg@1 was 0.603 at 2k, 0.588 at 8k (−1.1pp, noise); oracle@5
 likewise saturates. The extra 6k steps refined train_loss (1.49→1.31) but not the decode check —
 the same 2k≈8k plateau the B4b digit arc hit. The 8k is the "complete" run (lowest loss, clean
-schedule) and the better-provenance substrate, but 2k would have served equally on the decode metrics.
+schedule) and the better-provenance model for phase-4c, but 2k would have served equally on the decode metrics.
 
 **P3 all-caps is inert — closed.** The augment failed its +5pp bar at 2k and at 8k (48.0 vs 48.3 both
-times). More steps didn't help; the augment does not teach all-caps robustness at rate 0.15. The
-#690 title-case shim stays (worth +12.4pp raw-case today). A separate higher-rate probe is the only
-open path, and it's the operator's call — this augment, as configured, is a measured negative.
+times). More steps didn't help. The augment does not teach all-caps robustness at rate 0.15. The
+#690 title-case shim stays (it adds +12.4pp raw-case today). A separate higher-rate probe is the only
+open path, and the operator decides whether to run it. This augment, as configured, is a measured negative.
 
-## Status — substrate rather than a ship
+## Status — a decode base for phase-4c rather than a ship
 
-This model **ships nowhere on its own.** The span head is dormant until phase-4c wires the k-best
+This model **does not ship by itself.** The span head is dormant until phase-4c wires the k-best
 decode + the name-evidence rerank (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`).
 The token path is byte-stable, so there is no BIO regression to check and no promote decision to make
-tonight. What this run produces is the **phase-4c decode substrate**: an int8 model that exports
+tonight. What this run produces is the **phase-4c decode model**: an int8 model that exports
 `span_scores` + the `semi-crf-transitions.json` sidecar (the `export_onnx` path was extended tonight
 to emit it), staged at `scratchpad/v3101-cache` + the checkpoint on the training volume.
 
 The measured chain now runs end to end: trained span head → k-best decode (PR #1154) → oracle@5
 0.786 headroom → name-evidence rerank (phase-4b: +18.5pp bare-street on the FR fragment board,
-148 fixes / 3 breaks). Every link is measured; none is promoted. Phase-4c (build
+148 fixes / 3 breaks). Every link is measured. None is promoted. Phase-4c (build
 `StreetLocalityEvidence`, wire the rerank behind a flag, re-run the full promote battery with the
 rerank active) is the next arc, blocked on #1154 merging and the operator ratifying the spec.
 
@@ -76,7 +76,7 @@ rerank active) is the next arc, blocked on #1154 merging and the operator ratify
 ## Correction: the name-evidence rerank, re-measured on this model (not the v301 proxy)
 
 Phase-4b measured the name-evidence rerank on the v301 phase-1 head (the only span model then
-exported). Re-running the FR fragment board (n=1600) on the v3.10.1 8k substrate — the model
+exported). Re-running the FR fragment board (n=1600) on the v3.10.1 8k model — the model
 phase-4c will decode — corrects the headline:
 
 | class              | v301-proxy seg@1 → rerank | **v3.10.1 8k seg@1 → rerank** |
@@ -88,10 +88,9 @@ phase-4c will decode — corrects the headline:
 | **overall**        | 0.619 → 0.706 (+8.7)      | **0.791 → 0.851 (+6.0)**      |
 
 96 fixes / 3 breaks (32:1, cleaner than the proxy's 10:1). The ship-recipe span head (all channels
-
-- v0.11.0 corpus + 8k) is FAR stronger at rank-1 than the bare v257 phase-1 head — seg@1 0.791 vs
-  0.619 — so it leaves less recoverable headroom (146 vs 202 recoverable rows). The rerank still earns
-  its keep (+6.0pp, 32:1), but the value has moved: bare-street is nearly solved by the model itself
-  (0.905), and **date-name is now the primary beneficiary** (+16.7pp — the class the model still finds
-  hardest). The proxy's "+18.5pp bare-street" was a weak-model artifact; verify on the substrate you'll
-  ship. Phase-4c is still worth building, but its pitch is date-name + the long tail rather than bare-street.
+\+ v0.11.0 corpus + 8k) is much stronger at rank-1 than the bare v257 phase-1 head, at seg@1 0.791 vs
+0.619. It therefore leaves less recoverable headroom (146 vs 202 recoverable rows). The rerank still
+adds +6.0pp at 32:1, but the class that benefits most has changed. The model nearly solves bare-street by itself (0.905),
+and **date-name is now the primary beneficiary** (+16.7pp). Date-name is the class the model still
+finds hardest. The proxy's "+18.5pp bare-street" was a weak-model artifact. Verify on the model that
+will ship. Phase-4c still justifies its build cost, but its pitch is date-name + the long tail rather than bare-street.

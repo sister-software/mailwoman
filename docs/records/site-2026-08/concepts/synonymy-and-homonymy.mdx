@@ -42,14 +42,14 @@ it's a _record-linkage primitive_ too — see "Never drop a span" below.
 
 ## Homonymy → disambiguation, split across two stages
 
-Homonymy is harder, because the right answer depends on context — and there are two
-_kinds_ of context, which want two different homes.
+Homonymy is harder, because the correct reading depends on context. There are two
+_kinds_ of context, and each belongs in a different stage.
 
 - **Tag disambiguation — _what kind of thing is this span?_** ("Georgia" → `country`
   or `region`?) This is decidable from **in-string context**: "Atlanta" next to it
   tells you it is the state. So it belongs in the **parser**, and it is exactly what
-  a context-sensitive neural tagger is for. The model resolves it; a lexicon can
-  only _inform_ the decision (a soft feature), never make it — see
+  a context-sensitive neural tagger is for. The model resolves it. A lexicon can
+  only _inform_ the decision (a soft feature), never make it. See
   [closed-vocab fields are model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 - **Referent disambiguation — _which specific entity?_** ("Springfield" → which of
   the 30-some?) This needs **context that is not in the address string** — a
@@ -57,16 +57,16 @@ _kinds_ of context, which want two different homes.
   **resolver**, and it is exactly what [concordance](../understanding/the-problem/what-is-a-concordance.mdx)
   does: it brings gazetteer knowledge into the decision after the parse.
 
-The clean rule: **the parser disambiguates the tag using in-string context; the
+The rule: **the parser disambiguates the tag using in-string context, and the
 resolver disambiguates the referent using geographic context.** When parsers combine these jobs, they
-either over-commit (guess which Springfield from text alone) or under-commit (refuse to tag
+either over-commit (guess which Springfield from the text by itself) or under-commit (refuse to tag
 "Georgia" at all).
 
 A note on scale, because it surprises people: there are ~195 countries, and the
 country tag still felt hard. The size is not the problem. ~180 country names collide
-with no other set and are trivial; the difficulty is the **~12 surfaces that overlap the
-other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places; CA/GA/IN
-↔ state codes; Jordan/Chad ↔ given names). So "differentiate 195 countries" is
+with no other set and are trivial. The difficulty is the **~12 surfaces that overlap the
+other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places, CA/GA/IN
+↔ state codes, and Jordan/Chad ↔ given names). So "differentiate 195 countries" is
 "make ~12 _binary_ sense calls against the other vocabularies", every one
 decidable from in-string context.
 
@@ -88,7 +88,7 @@ classified or explicitly-unclassified — each carrying a canonical value.
 
 That decomposition is the record-linkage fingerprint. Two records are the same entity
 when their canonicalized span-sets agree, surface variation and all. A geocoder
-front-end cannot give you that; a structured, lossless parser can. This is why the
+front-end cannot give you that. A structured, lossless parser can. This is why the
 parser does address-understanding work of its own, rather than only feeding the
 resolver.
 
@@ -100,20 +100,20 @@ a rules engine cannot read context, so it constrains the search space instead.
 
 A model that reads context does not need the crutch, but the _same signals are still
 useful_ — as **soft priors**, fed in as features the model or resolver can overrule
-when the string says otherwise. A focus-country becomes a feature for the parser's
-[gazetteer anchor](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx); a focus-point
+when the string points elsewhere. A focus-country becomes a feature for the parser's
+[gazetteer anchor](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx). A focus-point
 becomes a term in the resolver's ranking. Same information as the mask, but as a
 preference the model can override rather than a constraint it can't.
 
 ## Two paradigms: parse-time vs index-time
 
-Worth contrasting two whole philosophies, because each is internally coherent:
+Two whole philosophies are internally coherent, and they differ in what they give up:
 
 - **Parse-time structured tagging** (Mailwoman, Pelias, libpostal) — commit a typed
-  decomposition up front. Tag disambiguation happens now; referent disambiguation is
+  decomposition up front. Tag disambiguation happens now, and referent disambiguation is
   deferred to the resolver. You get a lossless structure suitable for record linkage.
-- **Index-time disambiguation** (Airmail) — do not parse; index every token and let
-  retrieval + geographic proximity (S2 cells) decide at query time. Elegant for
+- **Index-time disambiguation** (Airmail) — do not parse. Index every token and let
+  retrieval + geographic proximity (S2 cells) decide at query time. This approach suits
   "give me a point", and it _also_ never drops a token — but it never hands you the
   clean typed decomposition, so record linkage is off the table.
 
@@ -127,5 +127,5 @@ is needed), rather than collapsing both into the index.
 
 ## The one-liner
 
-**Canonicalize for synonymy; context-disambiguate the tag at parse time; late-bind
-the referent at resolve time; and never drop a span on the floor.**
+**Canonicalize for synonymy. Context-disambiguate the tag at parse time. Late-bind
+the referent at resolve time. Never drop a span on the floor.**

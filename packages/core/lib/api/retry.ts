@@ -57,7 +57,7 @@ const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
  */
 export interface RetryDirective {
 	/**
-	 * Whether this class of failure is worth another attempt.
+	 * Whether this class of failure gets another attempt.
 	 *
 	 * `true` for 408/429/5xx and network-class failures such as connect errors,
 	 * DNS errors, timeouts, or mid-body-transfer drops.
@@ -136,7 +136,7 @@ function retryAfterFrom(error: AxiosError): number | null {
 /**
  * Classify one failed attempt.
  *
- * Determine whether it is worth retrying.
+ * Determine whether to retry it.
  * Read the server's requested backoff when present.
  *
  * A dropped socket, DNS failure, request timeout, or mid-transfer body-read failure is retryable.

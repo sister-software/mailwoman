@@ -130,7 +130,7 @@ The default policy is `neural_only` for every component.
 
 ### `LocaleProfile`
 
-`LocaleProfile` holds locale-specific behavior: which weights package to load, which components the locale uses, and which per-component policies apply.
+`LocaleProfile` holds locale-specific behavior. It specifies the weights package to load, the components the locale uses, and the per-component policies that apply.
 
 ```ts
 interface LocaleProfile {
@@ -146,7 +146,7 @@ interface LocaleProfile {
 Locales are first-class, and the system does not assume English. Every classifier declares which locales it serves.
 
 - A US-only deployment loads the `en-US` profile, the English rule classifiers, and the US weights.
-- A multi-locale deployment loads all configured profiles. A `LocaleDetector` handles per-input locale detection separately (Phase 2 work; v0 can require an explicit locale).
+- A multi-locale deployment loads all configured profiles. A `LocaleDetector` handles per-input locale detection separately (Phase 2 work, and v0 can require an explicit locale).
 - A new locale needs a new `LocaleProfile`, a new weights package, and optionally new rule classifiers. Core code does not change.
 
 ## Inference path
@@ -208,16 +208,16 @@ If golden_F1 >= threshold: publish
 
 ## Model architecture (what the neural classifier IS)
 
-**Family: encoder-only transformer + per-token classification head.** This is the standard NER (named entity recognition) shape. Each token of the input address string gets exactly one BIO label from a fixed set: `O`, plus `B-<tag>` and `I-<tag>` for each tag in the `ComponentTag` union. That is currently 47 labels (1 + 2 × 23 tags).
+**Family: encoder-only transformer + per-token classification head.** This is the standard NER shape. Each token of the input address string gets exactly one BIO label from a fixed set: `O`, plus `B-<tag>` and `I-<tag>` for each tag in the `ComponentTag` union. That is currently 47 labels (1 + 2 × 23 tags).
 
 ### Why this family rather than the others
 
-| Family                                                                        | Used for                                                        | Why not us                                                                                                                         |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Encoder-only + classification head** (BERT / RoBERTa / DeBERTa + NER heads) | Per-token tagging; same number of output labels as input tokens | **This is us.** Address parsing is a tagging problem rather than a generation problem.                                             |
-| Encoder-decoder (T5, BART)                                                    | Seq2seq — translation, summarization                            | The output isn't a different sequence; it's structured tags per input token. Encoder-decoder is overkill and lossy for this shape. |
-| Decoder-only (GPT, Llama)                                                     | Autoregressive generation                                       | We annotate, we don't generate. A decoder LLM could approximate via constrained decoding at 1000× the cost.                        |
-| Conditional random field (CRF)                                                | Pre-transformer per-token tagging with Markov features          | This is libpostal. We're replacing the CRF with a transformer encoder in front of an effectively-similar tag space.                |
+| Family                                                                        | Used for                                               | Why not us                                                                                                                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Encoder-only + classification head** (BERT / RoBERTa / DeBERTa + NER heads) | Per-token tagging, one output label per input token    | **This is us.** Address parsing is a tagging problem rather than a generation problem.                                             |
+| Encoder-decoder (T5, BART)                                                    | Seq2seq — translation, summarization                   | The output isn't a different sequence. It's structured tags per input token. Encoder-decoder is overkill and lossy for this shape. |
+| Decoder-only (GPT, Llama)                                                     | Autoregressive generation                              | We annotate, we don't generate. A decoder LLM could approximate via constrained decoding at 1000× the cost.                        |
+| Conditional random field (CRF)                                                | Pre-transformer per-token tagging with Markov features | This is libpostal. We're replacing the CRF with a transformer encoder in front of an effectively-similar tag space.                |
 
 ### Concrete config (Phase 2 / issue #10)
 
@@ -235,15 +235,15 @@ The closest commercial reference point is spaCy's [Japanese transformer pipeline
 |                       | spaCy `ja_core_news_trf`                                                                 | mailwoman planned                                                                                |
 | --------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Backbone              | `cl-tohoku/bert-base-japanese-char-v2` (BERT-base — 12 layers, 768d)                     | small BERT (6 layers, 256d) — ~10× smaller                                                       |
-| Vocab                 | 6,144 char-level (Japanese requires character-level for OOV handling)                    | 16,000 SentencePiece (multilingual; bytes fall back for OOV)                                     |
+| Vocab                 | 6,144 char-level (Japanese requires character-level for OOV handling)                    | 16,000 SentencePiece (multilingual, bytes fall back for OOV)                                     |
 | Pretrained            | Yes (Tohoku-Univ. Inui Lab BERT)                                                         | No (from scratch on address corpus)                                                              |
 | Task heads            | **3** on shared encoder: morphologizer (POS), parser (dependency), NER (22 entity types) | **1** on dedicated encoder: NER for 23 address component types                                   |
 | Model size            | 320 MB                                                                                   | < 40 MB int8                                                                                     |
-| NER F1 (their domain) | 83.31 ENTS_F on general Japanese NER                                                     | TBD; the rule baseline is > 95% on `country` / `region` for the golden set, so the floor is high |
+| NER F1 (their domain) | 83.31 ENTS_F on general Japanese NER                                                     | TBD. The rule baseline is > 95% on `country` / `region` for the golden set, so the floor is high |
 | Inference runtime     | Python (spaCy)                                                                           | Node (`onnxruntime-node`)                                                                        |
 | License               | CC BY-SA 3.0                                                                             | AGPL-3.0                                                                                         |
 
-spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head, which is the same shape. Our design differs from theirs in three ways:
+spaCy supports the choice of model family. The flagship Japanese model of the industry-standard NER toolkit is a BERT encoder with a token-classification head. That is the same shape. Our design differs from theirs in three ways:
 
 - **Smaller** (10× fewer parameters): our task is narrower. General-purpose Japanese NER must handle 22 entity types across all news text, while address parsing handles 23 component types in addresses only. A narrower task can use a smaller model.
 - **From scratch rather than fine-tuned**: their cl-tohoku backbone was pretrained on Japanese Wikipedia and news. Our domain is far enough from natural-language text that pretraining transfers poorly. An address-only model trained from scratch should be smaller, faster, and more accurate.
@@ -251,12 +251,12 @@ spaCy supports the choice of model family. The flagship Japanese model of the in
 
 ### Multi-head extension (Phase 4+)
 
-The spaCy pipeline pattern, one shared encoder with multiple task heads, is worth revisiting later. Candidate heads:
+The spaCy pipeline pattern, one shared encoder with multiple task heads, is a candidate for later work. Candidate heads:
 
 - **Venue vs address-part head**: a binary classifier per token to help compositional disambiguation (in `Buffalo Health Clinic Buffalo NY`, is "Buffalo" a venue token or a locality token?). It would help with the hardest cases in [[project-mailwoman-bitter-lesson]].
 - **Locale detection head**: predicts `en-US` vs `fr-FR` vs `ja-JP` for the whole input, so `LocaleDetector` (currently separate) could share the encoder.
 - **Completeness head**: predicts whether the input is a complete address, a fragment, or noise, and feeds graceful-failure signaling per [[project-mailwoman-graceful-failure]].
-- **Confidence head**: a separate calibration learner trained on held-out data, which replaces the per-token softmax with a calibrated probability.
+- **Confidence head**: a separate calibration learner trained on held-out data. It replaces the per-token softmax with a calibrated probability.
 
 None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or later. spaCy shows that the pattern works at scale.
 
@@ -267,7 +267,7 @@ None of these heads is in scope for Phases 0–3. They are filed for Phase 4 or 
 **Don't use**: spaCy as a runtime or training dependency, for these reasons:
 
 - **Runtime**: spaCy is Python-only. The plan's "TypeScript-first" stance is a hard constraint from the epic. Python at inference time would complicate deployment for Node users, and avoiding that is the project's main reason to exist. spaCy's ONNX export path (`spacy-onnx-export`) exists but is rarely production-grade.
-- **Model training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible, which argues against spaCy even for training, where Python is unavoidable.
+- **Model training**: spaCy's config-driven training (`spacy.cfg` + `Thinc`) is well designed, but it pays off mostly when pipeline composition matters or the task is novel. Our task, single-head NER on `BertForTokenClassification`, is the most common path in HuggingFace Transformers. spaCy would add an abstraction layer for little convenience. The operator prefers as little Python as possible. That preference argues against spaCy even for training, where Python is unavoidable.
 
 **Adopt the patterns rather than the tool**:
 
@@ -304,10 +304,10 @@ The plan changed for these reasons:
 
 | Iteration                                                                           | Scope                                                                                                                                                                                                                                            | Wall-clock                              | Outcome                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v0.1.0**                                                                          | First Tier 1 ship; sequential-data overfit due to corpus imbalance                                                                                                                                                                               | ~3 days                                 | Below-target ship, recorded as such; F1 ~0.03 macro, calibration 0.33 (confidently wrong)                                                                                                                                                                                                                                                 |
+| **v0.1.0**                                                                          | First Tier 1 ship, with sequential-data overfit due to corpus imbalance                                                                                                                                                                          | ~3 days                                 | Below-target ship, recorded as such. F1 ~0.03 macro, calibration 0.33 (confidently wrong)                                                                                                                                                                                                                                                 |
 | **v0.2.0**                                                                          | `source_weights` mechanism + relaxed coarse F1 floor (Phase 2 §6 recipe)                                                                                                                                                                         | ~3 days                                 | **9× macro-F1** (0.037 → 0.335); **calibration tightened 2.6×** (0.33 → 0.88 in conf>0.9 bucket); still below 95% targets but ship-worthy                                                                                                                                                                                                 |
 | **v0.3.0 → v3.0.0** (shipped 2026-05-22)                                            | Tier 2 label expansion (`B/I-venue`, `B/I-street`, `B/I-house_number`) + linear-chain CRF decoder + dual loss (CE + 0.05·CRF NLL) + corpus rebuild adding NAD (57.9M) → 677M aligned rows. npm major-bumped from 2.0.6 → 3.0.0.                  | ~1 day (overlap with adapter+demo work) | macro F1 0.32 on golden v0.1.2 (4,535 entries); capability-surface win (`house_number` 0.78, `venue` 0.39, `street` 0.27); **coarse F1 regressed** (region 0.83 → 0.18) — under-trained at step-1800 ship + label-space dilution. CRF makes orphan-`I-*` decode structurally impossible (Saint Petersburg fix verified on the live demo). |
-| **v0.4.0** (next — [#116](https://github.com/sister-software/mailwoman/issues/116)) | Recover the coarse-F1 regression + meet #57 fine floors + harden the dual loss. Per-token CRF NLL norm, longer training (step-5000+), class-weighted CE, source-weight rebalance, JS-side Viterbi + vocab-from-model-card. Reuses corpus-v0.3.0. | ~3-5 days                               | Targets: coarse F1 back to ≥0.6 region/locality + ≥0.7 postcode; `venue` ≥0.6, `street` ≥0.7 (the #57 floors); calibration ≥0.85; training runs to step 10K+ without divergence.                                                                                                                                                          |
+| **v0.4.0** (next — [#116](https://github.com/sister-software/mailwoman/issues/116)) | Recover the coarse-F1 regression + meet #57 fine floors + harden the dual loss. Per-token CRF NLL norm, longer training (step-5000+), class-weighted CE, source-weight rebalance, JS-side Viterbi + vocab-from-model-card. Reuses corpus-v0.3.0. | ~3-5 days                               | Targets: coarse F1 back to ≥0.6 region/locality + ≥0.7 postcode; `venue` ≥0.6, `street` ≥0.7 (the #57 floors), calibration ≥0.85, and training runs to step 10K+ without divergence.                                                                                                                                                      |
 | **v0.5.0+**                                                                         | Tier 3 organization/POI venue + top-k decoding for Resolver                                                                                                                                                                                      | ~5-7 days                               | Deferred until v0.4.0's coarse recovery lands                                                                                                                                                                                                                                                                                             |
 | **Phase 3 (Integration & Ship)** runs in parallel with iterations                   | npm publish pipeline, @mailwoman/neural SDK glue                                                                                                                                                                                                 | ~5-7 days                               | `@mailwoman/neural@0.x.y` on npm                                                                                                                                                                                                                                                                                                          |
 | **Phase 4 (Resolver)**                                                              | Source annotations, top-k disambiguation, gazetteer lookup                                                                                                                                                                                       | Deferred                                | Requires operator approval                                                                                                                                                                                                                                                                                                                |
@@ -340,8 +340,8 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 
 | Shape                                                            | Preserves                                                      | Loses                                         | Round-trip fidelity                                                                                                                       |
 | ---------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **JSON object** `{locality: "Paris", postcode: "75005"}`         | tag → value                                                    | order, repetition, hierarchy, untagged tokens | Country-specific formatter required; reorder errors are silent. Libpostal/Pelias compatible.                                              |
-| **Tuple array** `[["locality", "Paris"], ["postcode", "75005"]]` | tag → value + **original order** + repetition                  | hierarchy                                     | Reconstruction is `array.map(([_, v]) => v).join(" ")`; trivially faithful to ordering.                                                   |
+| **JSON object** `{locality: "Paris", postcode: "75005"}`         | tag → value                                                    | order, repetition, hierarchy, untagged tokens | Country-specific formatter required, and reorder errors are silent. Libpostal/Pelias compatible.                                          |
+| **Tuple array** `[["locality", "Paris"], ["postcode", "75005"]]` | tag → value + **original order** + repetition                  | hierarchy                                     | Reconstruction is `array.map(([_, v]) => v).join(" ")`, which preserves the ordering.                                                     |
 | **S-expression** `(locality "Paris" (postcode "75005"))`         | order + **hierarchy** + arbitrary attributes (`:conf`, `:src`) | no material change                            | The most expressive — lets the parsed output say "this postcode is inside this locality." Natural carrier for Phase 4 source annotations. |
 
 **Operator framing (2026-05-18):** address parsing is inherently lossy, because the original formatted address cannot be recovered from the parsed result. The closest approximation comes from applying a formatter to the parsed result. S-expressions may preserve the original shape better because they encode hierarchy, ordering and attributes in one tree.
@@ -354,9 +354,9 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 
 ## Source attribution (Phase 4 — #12, deferred)
 
-Source attribution distinguishes Mailwoman from libpostal and Pelias. Libpostal says "this token is a city", and Pelias adds hit/miss provenance against ES indexes. **Mailwoman's goal** (operator framing) is to say "this token is a locality identified by the wof-admin gazetteer with 0.97 confidence."
+Source attribution distinguishes Mailwoman from libpostal and Pelias. Libpostal reports "this token is a city", and Pelias adds hit/miss provenance against ES indexes. **Mailwoman's goal** (operator framing) is to say "this token is a locality identified by the wof-admin gazetteer with 0.97 confidence."
 
-The corpus already records `source` per row, because every alignment and augmentation step tags provenance. The remaining work is to carry that provenance through to the inference output.
+The corpus already records `source` per row, because every alignment and augmentation step tags provenance. The remaining work is to pass that provenance through to the inference output.
 
 **Decision (operator, 2026-05-18): hybrid Option C, model + Resolver.**
 
@@ -384,13 +384,13 @@ corpus row (source-stamped)
 
 ### Rejected alternatives
 
-- **Resolver-only at inference, without source-aware training**: the model would have no internal calibration toward gazette-confirmed tokens, which makes this option weaker.
+- **Resolver-only at inference, without source-aware training**: the model would have no internal calibration toward gazette-confirmed tokens. That gap makes this option weaker.
 - **Multi-task neural head** emitting `(label, source-class)` per token: this needs ~15 × 8 = 120 sub-classes, makes the model bigger and harder to retrain, and removes the clean separation between span identification (the model's job) and provenance (the Resolver's job).
 
 ## Anti-patterns to avoid
 
-- ❌ A `mode: 'auto'` setting in `ClassifierPolicy` that "intelligently" picks rule vs neural. It hides state and is hard to debug. Keep the policy explicit.
-- ❌ Hardcoding `'en-US'` as the default in core. The default should be "no locale; classifiers must opt in."
-- ❌ Loading all weights at module init. Lazy-load them on the first classification request.
-- ❌ Mixing inference and resolution. The parser does not know about coordinates, place IDs, or WOF resolution, which belong to Phase 4.
-- ❌ Adding tags to `ComponentTag` without updating the schema doc and the alignment logic in the same commit. Schema drift corrupts the corpus.
+- Do not add a `mode: 'auto'` setting in `ClassifierPolicy` that "intelligently" picks rule vs neural. It hides state and is hard to debug. Keep the policy explicit.
+- Do not hardcode `'en-US'` as the default in core. The default should be no locale, so classifiers must opt in.
+- Do not load all weights at module init. Lazy-load them on the first classification request.
+- Do not mix inference and resolution. The parser does not know about coordinates, place IDs, or WOF resolution. Those belong to Phase 4.
+- Do not add tags to `ComponentTag` without updating the schema doc and the alignment logic in the same commit. Schema drift corrupts the corpus.

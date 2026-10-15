@@ -4,7 +4,7 @@
 
 **Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.ai` and `mars.mailwoman.ai`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
 
-**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both carry that id, so a deep link needs no tile query.
+**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both contain that id, so a deep link needs no tile query.
 
 **Tech Stack:** React 19, Vite 8, `react-map-gl` 8 over MapLibre 6 (`projection: "globe"`), `@mailwoman/ancestrie` reader, `vite-plugin-pwa`, wrangler 4, Playwright, vitest.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - This plan lands after the Earth shell plan (`site-kit`, the fake-runtime subpath) and the astrogeology plan (the archives, the search artifact, the manifest). Rebase onto both.
-- The workspace is `packages/planetary`, named `@mailwoman/planetary`, with `private: true`. Register it in the root `workspaces` (after `packages/photon`, before `packages/poi-taxonomy`), in both root `tsconfig.json` entries, in `SANCTIONED_RELEASE_ABSENCES` ("private planetary map app — Cloudflare infrastructure, never publishes"), and in the dependency-cruiser browser list.
+- The workspace is `packages/planetary`, published under the name `@mailwoman/planetary`, with `private: true`. Register it in the root `workspaces` (after `packages/photon`, before `packages/poi-taxonomy`), in both root `tsconfig.json` entries, in `SANCTIONED_RELEASE_ABSENCES` ("private planetary map app — Cloudflare infrastructure, never publishes"), and in the dependency-cruiser browser list.
 - `PLANETARY_BODY` is read once, at build time, through `packages/planetary/lib/env.ts` (a `liveEnv` view over `@mailwoman/core/env`). Code never reads it from `process.env`. The client sees it through Vite `define` as `__PLANETARY_BODY__`.
 - The app omits the Earth basemap layer, the sprite, and a Worker script. It also has no query parameter that switches the body.
 - Every distance or area claim goes through `@mailwoman/spatial` with the body. v1 makes no such claims.
@@ -124,7 +124,7 @@ export interface StyleSpecificationComposition {
 }
 ```
 
-The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved value is not `null`, and `toJSON` spreads `sprite` only when not `null` and uses `this.glyphs`. Keep the two URL constants as named module-level defaults (`PROTOMAPS_GLYPHS_URL`, `PROTOMAPS_SPRITE_URL`) so the comment above them stays the one place they are explained.
+The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved value is not `null`, and `toJSON` spreads `sprite` only when not `null` and uses `this.glyphs`. Keep the two URL constants as module-level default constants (`PROTOMAPS_GLYPHS_URL`, `PROTOMAPS_SPRITE_URL`) so the comment above them stays the one place they are explained.
 
 - [ ] **Step 3: Run, then the cartographer and docs consumers**
 
@@ -272,7 +272,7 @@ export const selectionLayer = (palette: PlanetaryPalette): CircleLayerSpecificat
 })
 ```
 
-`"Fira Sans Regular"` is a stack the Earth theme already loads from the same glyph host; check `grep -rho '"text-font": \[[^]]*\]' packages/cartographer/lib | sort -u` and use one of those stacks. `style.ts`:
+`"Fira Sans Regular"` is a stack the Earth theme already loads from the same glyph host. Check `grep -rho '"text-font": \[[^]]*\]' packages/cartographer/lib | sort -u` and use one of those stacks. `style.ts`:
 
 ```ts
 export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpecification {
@@ -443,7 +443,7 @@ export default defineConfig({
 })
 ```
 
-`publicDir` selects the body's icon set. Each `public/icons/<body>/` holds the three icons rendered from that body's SVG, in the same way as the Earth shell's icons. The Vite config runs under Node, where `$public` reads the process environment. A missing `PLANETARY_BODY` fails the build with the schema's message, which is how the build refuses an unknown value.
+`publicDir` selects the body's icon set. Each `public/icons/<body>/` holds the three icons rendered from that body's SVG, in the same way as the Earth shell's icons. The Vite config runs under Node, where `$public` reads the process environment. A missing `PLANETARY_BODY` fails the build with the schema's message. The build refuses an unknown value the same way.
 
 - [ ] **Step 4: Run, register, commit**
 
@@ -457,7 +457,7 @@ git add package.json yarn.lock tsconfig.json packages/planetary packages/release
 git commit -m "feat(planetary): the workspace, the build-time body, routes, and the two body configs"
 ```
 
-Expected: `build.json` says `mailwoman-moon`; the Mars manifest id is `https://mars.mailwoman.ai/`.
+Expected: `build.json` reads `mailwoman-moon`; the Mars manifest id is `https://mars.mailwoman.ai/`.
 
 ---
 
@@ -470,7 +470,7 @@ Expected: `build.json` says `mailwoman-moon`; the Mars manifest id is `https://m
 **Interfaces:**
 
 - Consumes: `MapCanvas` (or `DemoMap`) from `@mailwoman/react/map` with `mapStyle`, `initialViewState`, `projection: "globe"`, `mapRef`, `mapProps` (react-map-gl's `interactiveLayerIds`, `onClick`); `createPlanetaryStyle`; `currentBody`, `BODY_CONFIGS`, `routeForPath`, `viewportFromSearch`.
-- Produces: a `SelectedFeature { id, name, featureType, featureTypeCode?, diameterKm?, centerLon, centerLat, origin?, approvalStatus?, approvalDate? }` state; `history.pushState` to `/feature/<id>` on select; the selection layer's filter set to the id.
+- Produces: a `SelectedFeature { id, name, featureType, featureTypeCode?, diameterKm?, centerLon, centerLat, origin?, approvalStatus?, approvalDate? }` state, `history.pushState` to `/feature/<id>` on select, and the selection layer's filter set to the id.
 
 - [ ] **Step 1: The map component**
 
@@ -538,7 +538,7 @@ Read `MapCameraTarget` in `packages/react/lib/map/place-render.ts` for the exact
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary build && yarn workspace @mailwoman/planetary preview
 ```
 
-Open `http://localhost:7790/`: a dark globe with lunar hillshade and labels; click Tycho; the panel shows 85.29 km and the URL becomes `/feature/<id>`. Then `PLANETARY_BODY=mars` and Olympus Mons. Commit:
+Open `http://localhost:7790/`: a dark globe with lunar hillshade and labels. Click Tycho. The panel shows 85.29 km and the URL becomes `/feature/<id>`. Then `PLANETARY_BODY=mars` and Olympus Mons. Commit:
 
 ```bash
 git add packages/planetary
@@ -647,7 +647,7 @@ In `.github/workflows/test.yml`, after the Earth smoke step:
     PLANETARY_BODY: mars
 ```
 
-The README carries the Workers Builds table from the spec (two projects, `PLANETARY_BODY` as the build variable, custom domains), the commands, and the artifact-version pin and how `astrogeology publish` moves it.
+The README contains the Workers Builds table from the spec (two projects, `PLANETARY_BODY` as the build variable, custom domains), the commands, and the artifact-version pin and how `astrogeology publish` moves it.
 
 - [ ] **Step 4: Preflight and PR**
 

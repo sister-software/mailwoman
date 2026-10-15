@@ -46,8 +46,8 @@ match/distance.ts
 ```
 
 The code at `match/distance.ts:25` shows that this is a documented adapter
-from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring says so. It does not reimplement the formula. Grep
-alone would have produced a false finding from its first candidate.
+from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring states that. It does not reimplement the formula. Grep
+without a reading pass would have produced a false finding from its first candidate.
 
 That result sets the method for the whole sweep: **grep generates candidates, and reading produces
 findings.** Every entry in the findings doc has been read.
@@ -59,7 +59,7 @@ Three options were considered:
 | approach                   | strength                                           | weakness                                                           |
 | -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
 | A — declared-home spine    | precise, complete for every home `AGENTS.md` names | blind wherever no home was ever declared                           |
-| B — clone/similarity sweep | recall on duplication nobody anticipated           | noisy; flags fixtures, generated blobs, deliberately-parallel code |
+| B — clone/similarity sweep | recall on duplication no one anticipated           | noisy, flags fixtures, generated blobs, deliberately-parallel code |
 | C — read every workspace   | best judgment                                      | 286k LOC does not fit                                              |
 
 **Chosen: A and B generate candidates, and C's close reading covers only the ranked shortlist.** A gives
@@ -86,7 +86,7 @@ already exists.
 
 ## Out of scope
 
-- **Bug hunting**, which is the job of `/code-review`. A duplicated function that is also wrong is
+- **Bug hunting**. That is the job of `/code-review`. A duplicated function that is also wrong is
   reported as duplication, and the defect is noted without being investigated.
 - Performance work, prose and docs style, `data/`, generated model blobs, and `corpus-python`.
 - Everything on the `AGENTS.md` "What deliberately stays raw" list: FTS5 `MATCH`, ogr2ogr dialect

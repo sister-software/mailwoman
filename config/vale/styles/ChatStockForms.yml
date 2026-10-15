@@ -24,8 +24,9 @@ tokens:
   ## reader's attention instead of reporting: "worth reporting", "worth knowing", "worth the
   ## measurement" all announce that a fact matters rather than saying what it is. State the fact and
   ## let it carry itself; when the cost of an action is the real subject, give the cost and its
-  ## unit.
-  - worth
+  ## unit. The lookbehind admits the place name Fort Worth, and the case-sensitive group admits an
+  ## all-capitals record field such as `4004 WORTH ST`.
+  - (?<!Fort )(?-i:[Ww]orth)
   ## A trailing clause that comments on the report rather than continuing it: "…does not move alone,
   ## and that is the first thing to report". The reply IS the report, so ranking its own parts is
   ## filler. Causal prose starts a sentence — "That is why the loader refuses" — and is unaffected.

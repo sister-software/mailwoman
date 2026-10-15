@@ -7,7 +7,7 @@ es-ES weights overlay for [mailwoman](https://mailwoman.ai).
 
 It also ships the four evidence lexicons the base model was trained against — `anchor-lexicon-v1.json`,
 `country-surface-lexicon-v1.json`, `street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — and
-its `model-card.json` carries the base card's `requires` block, so a consumer runs the same channels the
+its `model-card.json` copies the base card's `requires` block, so a consumer runs the same channels the
 board grades. A data-only overlay without them ran gazetteer, country and both evidence channels off
 against a model trained with them (#2115).
 

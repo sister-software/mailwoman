@@ -4,7 +4,7 @@
 
 ## What changed
 
-The capability-manifest generator and the mask-regression check score the same certification rows through the shared `scoreConventionsMaskOffOn`, and until this change they differed in one parse option: the generator parsed with `inputMode: "formatted"` and the check parsed in the bare-library default (`fragmented`). The rows are formatted postal addresses; on those inputs the production pipeline derives `formatted` and runs the evidence-bundle channels off as a declared ablation. The check therefore graded a path production never takes on these rows. Operator decision (2026-09-05): both callers grade `formatted`; the manifest's published numbers are unchanged, the check's history breaks here.
+The capability-manifest generator and the mask-regression check score the same certification rows through the shared `scoreConventionsMaskOffOn`, and until this change they differed in one parse option: the generator parsed with `inputMode: "formatted"` and the check parsed in the bare-library default (`fragmented`). The rows are formatted postal addresses. On those inputs the production pipeline derives `formatted` and runs the evidence-bundle channels off as a declared ablation. The check therefore graded a path production never takes on these rows. Operator decision (2026-09-05): both callers grade `formatted`. The manifest's published numbers are unchanged, and the check's history breaks here.
 
 **The model did not change.** Every difference in the table below is the parse mode. Numbers before this row grade `fragmented`; numbers from this row on grade `formatted`.
 
@@ -32,17 +32,17 @@ The capability-manifest generator and the mask-regression check score the same c
 | fr     | `locality`           |                   100.0 |                  100.0 |                    +0.0 |                            0.0 |                           0.0 |
 | fr     | `postcode`           |                   100.0 |                  100.0 |                    +0.0 |                            0.0 |                           0.0 |
 
-In-scope cells whose mask-OFF F1 moved: 7 of 19, all US, every move under 1.3pp (`street` +1.2, `unit` +1.0, `country` +0.8, `locality` −0.6, `region` −0.4, `postcode` −0.1, `venue` +0.1). The mask-OFF − mask-ON delta is 0.0 on every cell in both modes: the conventions mask costs nothing on these rows under either mode, so the 2pp lock passes before and after. The FR cells are identical in both modes.
+In-scope cells whose mask-OFF F1 moved: 7 of 19, all US, every move under 1.3pp (`street` +1.2, `unit` +1.0, `country` +0.8, `locality` −0.6, `region` −0.4, `postcode` −0.1, `venue` +0.1). The mask-OFF − mask-ON delta is 0.0 on every cell in both modes: the conventions mask lowers no F1 cell on these rows under either mode, so the 2pp lock passes before and after. The FR cells are identical in both modes.
 
 ## Verdict
 
 `✓ PASS — no tag regresses more than 2.0pp under the conventions mask (2 locale(s), 16 tags each)` in both modes.
 
-No ledger row carries this re-baseline. `evals/scores-by-version.json` is one row per model version and its metrics are the battery's per-locale F1 cells rather than the mask-off/mask-on table; the current spec (`v9.0.0-base`) declares no `requires_conventions`, so the promotion battery run on the same installed weights (PASS, out-dir kept in the session scratchpad) skipped the mask check entirely. The mask numbers live here and in every future promotion out-dir's `mask-regression.json` whose spec declares a mask.
+No ledger row records this re-baseline. `evals/scores-by-version.json` is one row per model version and its metrics are the battery's per-locale F1 cells rather than the mask-off/mask-on table. The current spec (`v9.0.0-base`) declares no `requires_conventions`, so the promotion battery run on the same installed weights (PASS, out-dir kept in the session scratchpad) skipped the mask check entirely. The mask numbers live here and in every future promotion out-dir's `mask-regression.json` whose spec declares a mask.
 
 ## Receipts
 
-- Baseline run (fragmented, compiled tree at 3f8b5212a): `mask-before.json` in the session scratchpad; the same numbers are what every earlier promotion out-dir's `mask-regression.json` carries.
+- Baseline run (fragmented, compiled tree at 3f8b5212a): `mask-before.json` in the session scratchpad. Every earlier promotion out-dir's `mask-regression.json` holds the same numbers.
 - Re-baselined run (formatted): the promotion out-dir's `mask-regression.json` from the run above.
 - Code: `packages/mailwoman/lib/eval-harness/mask-regression.ts` passes `{ inputMode: "formatted" }`; `MaskOffOnOptions.inputMode` in `per-tag-f1.ts` documents both callers.
 

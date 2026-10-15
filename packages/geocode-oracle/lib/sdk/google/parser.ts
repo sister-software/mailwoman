@@ -169,7 +169,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
  * own `types` identifies a street and everything else reports `admin`.
  *
  * Under-claiming is deliberate: an oracle that over-claims precision would have a case
- * author pin an `expectTier` tolerance the parser can never earn.
+ * author pin an `expectTier` tolerance the parser can never meet.
  *
  * A missing `location_type` returns `null` rather than a guess.
  * Read `raw.geometry` when it does.

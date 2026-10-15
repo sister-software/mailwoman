@@ -133,7 +133,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
  *
  * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's.
  * A penalized house-number span scores ~0.2 (single-country times the house-number penalty),
- * while a genuinely ambiguous real code scores at least 0.52 (valid in three countries or fewer),
+ * while an ambiguous real code scores at least 0.52 (valid in three countries or fewer),
  * so a 0.5 floor keeps the latter and rejects the former.
  *
  * A span the position prior reads as a house number falls back to the resolver's coordinate

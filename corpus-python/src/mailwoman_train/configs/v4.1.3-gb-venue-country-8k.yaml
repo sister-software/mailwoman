@@ -6,7 +6,7 @@
 # directional-led names, 15% range numbers). Pre-registration:
 # docs/superpowers/plans/2026-08-01-gb-venue-finetune-preregistration.md
 #
-# ewc_lambda=1e4 — the calibration sweep value this config carries (pick rule: largest lambda
+# ewc_lambda=1e4 — the calibration sweep value this config sets (pick rule: largest lambda
 # whose GB-venue target metric stays within noise of lambda=0 at step-2000).
 data:
   corpus_dir: /data/corpus/versioned/v0.15.2-gb-venue-country/corpus-v0.15.2-gb-venue-country # Addendum 3: v3 tuples + countryAppendFraction 0.3. BUILD the OVERLAY before LAUNCH (recipe-output rebuild → overlay-manifest → R2 → sync).

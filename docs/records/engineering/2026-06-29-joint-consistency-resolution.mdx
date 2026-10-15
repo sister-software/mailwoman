@@ -12,8 +12,8 @@ tags:
 _The target this document sets: an address should resolve to wherever its spans are **jointly
 consistent** in the gazetteer's containment graph rather than to wherever a whole-string country guess
 points. "Portland, ME" is Portland, Maine because a Portland sits under Maine and none sits under
-Messina or Medway. Geography decides; the country prior only fills the silences. This is the design
-the #832 / #833 / VT failures asked for; it is not yet built._
+Messina or Medway. Geography decides, and the country prior applies only where geography gives no answer. The #832 / #833 / VT failures call for this design.
+It is not yet built._
 
 ## What the failures told us
 
@@ -29,7 +29,7 @@ under it?_ — never gets asked.
 
 We did once ask it. Stage 5 (the cross-component reconcile, see `plan/reference/STAGES.mdx`) scored
 whole assignments and vetoed an impossible parent chain (`Houston → New York` warrants `-Infinity`
-because Who's On First says Houston descends from Texas). That reconcile was retired to argmax in #566
+because Who's On First records that Houston descends from Texas). That reconcile was retired to argmax in #566
 because, bundled as it was, it broke the street/house-number precondition on the majority of US
 addresses. The admin-coherence check went out with the bathwater. The greedy fallback that replaced it
 is what produces #833.
@@ -37,7 +37,7 @@ is what produces #833.
 ## The frame: a hermeneutic circle
 
 You cannot read the parts of an address without a guess at the whole, and you cannot fix the whole
-without the parts. "ME" is only Maine once you suspect the address is American; you only suspect it is
+without the parts. "ME" is only Maine once you suspect the address is American. You only suspect it is
 American once you have read "ME", "Portland", and the shape of the string. Interpretation spirals: a
 provisional whole conditions the parts, the parts revise the whole, until the two cohere. This is the
 hermeneutic circle, and an address is a small, tractable instance of it.
@@ -49,12 +49,12 @@ geography rather than over token features.
 
 The circle has two halves, and they are complementary:
 
-- **Forward** — format and script propose a system. A CJK script implies CJK address systems; a UK
-  alphanumeric postcode implies GB; a bare five-digit implies one of a small set. Today this is
+- **Forward** — format and script propose a system. A CJK script implies CJK address systems. A UK
+  alphanumeric postcode implies GB. A bare five-digit implies one of a small set. Today this is
   rule-based (`query-shape`, `locale-hint`'s script-class scorer), and deliberately so — it reads
   character classes and known postcode formats, never place-name dictionaries.
 - **Backward** — the resolved place confirms the system. Once "Portland, ME" lands in Maine, "US"
-  falls out of the result. You did not guess the country; you derived it.
+  falls out of the result. You did not guess the country. You derived it.
 
 The coarse placer (#244) is a forward signal that skips the format and guesses the whole string at
 once. It is useful, but it is a guess, and on "Portland, ME" it guesses GB at 0.79 and routes the
@@ -67,7 +67,7 @@ region and a locality together, prefer the assignment in which the locality is a
 region** in the `ancestors` table (the same table #832 repaired):
 
 - "Portland, ME" → candidate regions `{Maine/US, Messina/IT, Medway/GB}`; only Maine has a "Portland"
-  descendant; resolve there.
+  descendant, so resolve there.
 - "Portland, VT" → Vermont, because a Portland/Burlington descends from Vermont and not from Viterbo.
 
 This generalizes to every country with no country list and no placer in the loop. It needs no new
@@ -83,11 +83,11 @@ exactly the country-pin reflex this document is trying to retire.
 
 ## The placer demotes to gap-filler
 
-The coarse placer does not disappear; it changes job. Where the
+The coarse placer remains, with a different job. Where the
 gazetteer is rich, geography disambiguates and the placer is silent. Where the gazetteer is thin — a
 locality missing under any candidate parent — joint consistency returns no result, and the placer's prior
 is what keeps a sparsely-covered country from resolving to "no answer." The graph is the primary
-signal; the prior is the fallback. The `HARD_PLACE_COUNTRY_SAFELIST` is the piece this most directly undercuts; its
+signal, and the prior is the fallback. This design most directly reduces the role of `HARD_PLACE_COUNTRY_SAFELIST`. Its
 job shrinks as the graph's grows, and the docs already half-disown it (the 2026-06-26 postmortem
 measured that widening it changes no outcome, because the placer abstains and it never checks).
 
@@ -96,7 +96,7 @@ measured that widening it changes no outcome, because the placer abstains and it
 There is room for a "well-known place" fast path, and the pieces already exist: the candidate-table
 byte-range gazetteer (`WofCandidateTableLookup`, `candidate-schema.ts`) — a `WITHOUT ROWID` B-tree keyed
 by `name_key`, denormalized so a resolve is a single probe, population-ranked. The constraint graph does
-not replace it; it **re-ranks within it**, choosing the joint-consistent candidate over the merely
+not replace it. The graph **re-ranks within it**, choosing the joint-consistent candidate over the merely
 most-populous one. A list that resembles curated famous places must instead be derived
 from the gazetteer's own structure and provenance-tracked — the moment a hand-list can override where
 the gazetteer places an address, we have rebuilt Pelias in a nicer font. (#264.)
@@ -105,7 +105,7 @@ The MVP shipped on this branch (`opts.adminCoherence`, default-on for the geocod
 clean class — a region whose child locality fell through — and the build surfaced exactly the residual
 this document predicted. "Augusta, ME" stays at Augusta, Sicily: "Augusta" resolves to a real town
 _under_ Messina, so the locality is not unresolved, and both Messina **and** Maine contain an
-Augusta. Two consistent pairs, and geography alone cannot break the tie. That is the forward
+Augusta. Two consistent pairs exist, and geography by itself cannot break the tie. That is the forward
 address-system prior's job (US-format ⇒ prefer the US state), and it is the next section.
 
 ## Future work, blocked on a measured residual
@@ -115,13 +115,13 @@ still fails, bucketed by why — romanized or transliterated input, mixed script
 ordering, sparse-coverage countries where geography stays silent. That residual, and only that residual,
 scopes two things we do not have today (#265):
 
-- A **supplementary address-system model**. The "don't memorize" rule is task-scoped: the open-world job
-  (which Portland, of thousands) must generalize and retrieve; address-_system_ identification is a
+- A **supplementary address-system model**. The "don't memorize" rule is task-scoped. The open-world job
+  (choosing one Portland among thousands) must generalize and retrieve. Address-_system_ identification is a
   closed, small taxonomy where densely encoding the format-to-system structure is learning the real
-  distribution rather than overfitting. Such a model warrants its keep on the fuzzy tier the rules and the graph
-  both miss. It stays **advisory** — it proposes a system, it never vetoes where geography lands an
-  address. Its larger payoff may be routing (which normalizer, which abbreviations, which field order,
-  which gazetteer extract) rather than disambiguation.
+  distribution rather than overfitting. Such a model is justified on the fuzzy tier that the rules and the graph
+  both miss. It stays **advisory**: it proposes a system and never vetoes where geography lands an
+  address. Its larger payoff may be routing rather than disambiguation: the choice of normalizer,
+  abbreviations, field order and gazetteer extract.
 - An **address-system → country-set** linkage. "Parses like a US address" makes US _and_ Canada
   candidate postal systems, and floats their regions up — a derived prior, softer and better grounded
   than a whole-string guess. Not built.
@@ -130,7 +130,7 @@ scopes two things we do not have today (#265):
 
 - No hand-curated country list, safe-list, or famous-place list as the authority. Derived and
   provenance-tracked, or it does not ship.
-- No re-enabling of the full #566 beam reconcile. The admin-coherence check returns scoped and alone.
+- No re-enabling of the full #566 beam reconcile. The admin-coherence check returns scoped, without the rest of the beam.
 - No supplementary model built ahead of the residual that justifies it.
 
 ## Status

@@ -37,7 +37,7 @@ export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli", "main.js")
  * `dev`, `clients`, and the model-work groups (`corpus`, `eval`, `gazetteer`,
  * `release`, `coverage`, `tiles`) are maintainer surfaces.
  * Their help stays available via `--help`; putting every internal group in the
- * manual buries the six commands an installer actually runs.
+ * manual buries the six commands an installer runs.
  */
 const USER_COMMANDS = ["parse", "geocode", "autocomplete", "doctor", "data", "serve"] as const
 
@@ -46,7 +46,7 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 }
 
 /**
- * Escape troff-significant characters.
+ * Escape the characters troff treats as control syntax.
  *
  * Dots or quotes at the start control troff.
  * Hyphens in option names must be literal `\-` so `man` renders ascii hyphens (grep-able flags).
@@ -115,7 +115,7 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 		try {
 			sections.push(`.SH ${command.toUpperCase()}`, preformatted(await help(cliPath, [command])))
 		} catch {
-			// A command absent from this build simply gets no section.
+			// A command absent from this build gets no section.
 		}
 	}
 

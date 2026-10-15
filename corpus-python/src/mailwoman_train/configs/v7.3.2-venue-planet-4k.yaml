@@ -4,7 +4,7 @@
 # 4,000 steps at batch 128, `source_reps` divided by 15, venue share 3% of
 # the run's draws) over corpus 0.7.3.2-venue-planet: the venue recipe at `--venue-region-fraction 0` over admin
 # tuples for the 147 countries with at least 1,000 distinct Overture names and WOF admin pairs, with bare rows for
-# spaceless-script names that end in a venue head. Each country's rows draw about a fifth as often as in v7.3.1,
+# spaceless-script names that end in a venue head. Each country's rows draw at about a fifth of their v7.3.1 rate,
 # which covered 27 countries at the same share. Graded against the same placebo, v7.3.0-null-4k.yaml.
 #
 # The inherited receipt floors are the base's times 0.97 for the venue share and times 0.9 again. The base

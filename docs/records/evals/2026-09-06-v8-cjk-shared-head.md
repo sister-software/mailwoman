@@ -10,10 +10,10 @@ with `corpus-python/scripts/score_jp_probe_board.py`.
 
 ## 1. The comparison arm was wrong, and the probe read against the corrected one
 
-The 24k JP record carried a 2k-probe read of 0.2237 blended / 0.1847 municipality. Re-scored with the current scorer
+The 24k JP record reported a 2k-probe read of 0.2237 blended / 0.1847 municipality. Re-scored with the current scorer
 the same checkpoint reads **0.9931 / 0.9947**: the probe had been read through the 33-label table (the record now
-carries the correction). Against that arm the shared head's 2k probe read 0.9840 blended, every JP tag inside 1 pp,
-municipality and district the closest; the full run launched on it.
+states the correction). Against that arm the shared head's 2k probe read 0.9840 blended, every JP tag inside 1 pp,
+municipality and district the closest. The 24k from-scratch run `v8-cjk-full` launched on that read.
 
 ## 2. The 24k reads, and what the control separated
 
@@ -29,12 +29,12 @@ municipality and district the closest; the full run launched on it.
 The row-weighted number moved 2.75 pp under the record and the pre-registration called that "the CN rows cost
 something" — until the control, with no Chinese row in its mixture, dropped the trailing 市 on the same held-out
 hiragana municipality in 398 of 823 rows. On the macro the shared head and the control are 0.05 pp apart. The
-difference to the record is two names, and one of them carries 4.1% of the board's rows; #2165 carries the
+difference to the record is two names, and one of them accounts for 4.1% of the board's rows. #2165 tracks the
 per-municipality report (landed) and the kana-surface register (running).
 
 **Han unification did not cost what it was expected to.** Municipality names that contain a code point the CN rows
 also label (102 of the CN corpus's 166 Han characters are in the JP vocabulary) read **0.9947** on the shared head
-against 0.9909 on the JP-only record; names with none read 0.9217 against 0.9997, and 598 of those 598 are
+against 0.9909 on the JP-only record. Names with none read 0.9217 against 0.9997, and 598 of those 598 are
 Kasumigaura. The cost shows on the Chinese side instead: two of the 14 CN board rows start the `locality_unit` one
 character late, on a Han-unified numeral (四, 一) at the boundary with the dependent locality.
 
@@ -53,8 +53,8 @@ The runtime could neither export, resolve nor run a char-path model before this 
 | CN board `locality_unit`, 14 rows                  | 12 / 14 (Viterbi over the same emissions) | 10 / 14 (per-unit argmax) |
 
 12.5 ms per row after warm-up. One repair had to be switched off for the char path: the SentencePiece
-word-consistency repair, which folds the pieces of one whitespace word onto one tag, folded a Japanese address —
-no whitespace. Therefore, one "word" — into a single municipality span on the first served parse.
+word-consistency repair. That repair folds the pieces of one whitespace word onto one tag. A Japanese address has
+no whitespace and is therefore one "word", so the repair folded it into a single municipality span on the first served parse.
 
 ## 3b. The served path through the RESOLVER: 0 of 300 before, 1,823 of 2,000 after
 
@@ -71,21 +71,21 @@ with no coordinate, and `〒885-0061 宮崎県都城市下長飯町1867-2` answe
 | JP placetype map, JP ladder municipality-first, 〒 kept — **shipped**         |      300 |     271 (90.3%) |
 | the same, with a compound municipality reduced to its trailing unit, unscoped |      300 |     251 (83.7%) |
 
-1. **The placetype map.** `DEFAULT_PLACETYPE_MAP` carried no entry for `prefecture`, `municipality` or `district`, so the
+1. **The placetype map.** `DEFAULT_PLACETYPE_MAP` had no entry for `prefecture`, `municipality` or `district`, so the
    resolver's walk skipped them by design ("a different extract entirely", written when JP was postcode-route only). The
-   candidate gazetteer keys them: 49,255 of 53,920 JP records (91.3%) carry a kanji or kana key, `大阪府` is a `region`,
+   candidate gazetteer keys them: 49,255 of 53,920 JP records (91.3%) have a kanji or kana key, `大阪府` is a `region`,
    `大阪市` a `locality`, `北区` a `borough` (in the locality filter group), `知名町` a `locality`. The three entries are now
-   in the default map; only the character-path model emits the tags, so no Latin parse reaches them.
-2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs, which named no JP
+   in the default map. Only the character-path model emits the tags, so no Latin parse reaches them.
+2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs. Those rungs listed no JP
    tag. Therefore, a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
    ABOVE `district`: a district resolves without its municipality as a parent more frequently than not, and the unscoped
    namesake it then picks can be another prefecture's (`千葉県市原市大作` → 921 km). District-first 202, municipality-first 271.
 3. **The postal mark.** The normalizer strips `〒` for the SentencePiece tokenizer, where it is byte-fallback OOV. The
    character model was trained with the mark in front of every postcode and misreads the prefecture boundary without it.
    `NormalizeOpts.postalMark` keeps it when the classifier reports `encoder: "char"`, on both the geocode and the
-   parse-only paths; the default stays `strip`, so every Latin caller is byte-identical.
+   parse-only paths. The default stays `strip`, so every Latin caller is byte-identical.
 
-The Korean side of the same register was read while looking: 46,178 of 52,894 KR candidate records (87.3%) carry a
+The Korean side of the same register was read while looking: 46,178 of 52,894 KR candidate records (87.3%) have a
 Hangul key, stored NFD (conjoining jamo), which a precomposed-range glob misses — the first count read 0.
 
 Shipped, over 2,000 rows (seed 42): **1,823 accepted @15 km (91.2%)**, 963 within 5 km, 26 beyond 50 km. By register:
@@ -93,8 +93,8 @@ arabic_chome 62/62, compact_folded 71/72, designator 410/454, native 1,280/1,412
 compound municipality. A county-town (`猿島郡五霞町`) or city-ward (`新潟市秋葉区`) value has no single key, the walk
 falls to the prefecture centroid (25–52 km), and reducing the value to its trailing unit UNSCOPED loses more than it
 gains (251 of 300) because a bare ward resolves a namesake in another city (`神戸市西区` → Fukuoka, 407 km). The design
-that arm waits for is the scoped form: the city resolved first, the ward probed as its child. The result's named slots
-(`locality`, `region`) also stay null for a JP tree; the coordinate is on the result and the components are in
+that arm waits for is the scoped form: the city resolved first, the ward probed as its child. The result's top-level slots
+(`locality`, `region`) also stay null for a JP tree. The coordinate is on the result and the components are in
 `components`.
 
 The Latin board did not move: `mwdev_compare` origin/main vs the working tree over the full regression board,
@@ -102,19 +102,19 @@ board-routed, reads 0 rows differed (the run id is in the #2164 comment).
 
 **The scoped split (#2175).** The resolver walk now probes a compound municipality as a pair after the whole span
 misses: the head (`神戸市`, `猿島郡`) under the node's own parent, then the tail (`西区`, `五霞町`) as the head's child with
-the parent fallback off, so a namesake outside the head is never admissible; a county head with no key sends the town
+the parent fallback off, so a namesake outside the head is never admissible. A county head with no key sends the town
 under the prefecture the walk already holds. Same 300 rows: 282 accepted (94.0%). Same 2,000 rows: **1,889 (94.5%)**,
 1,048 within 5 km, 4 beyond 50 km — all four `和歌山県日高郡美浜町`, where the scoped town probe missed (Wakayama's 美浜町
 has no key) and the candidate backend's own region-scope fallback re-admitted Aichi's, 184 km away. The tail probe now
 refuses a `regionScopeMiss` answer, and those rows fall to the prefecture centroid (27 km) instead. The remaining
 15–19 km rows are municipality-centroid distances (`新潟市秋葉区`, `かすみがうら市`), the board tolerance's edge.
 
-**The postcode the walk cannot reach yet.** 637 of the 2,000 rows carry a `〒` code, every one keyed in
-`$MAILWOMAN_DATA_ROOT/db/wof/postalcode-jp.db` (142,604 WOF rows; 48,216 unlocated at 0,0), and the candidate table folds
-no JP postcode extract, so the probe returns nothing. Simulated on the same rows: the located code's centroid is 0.52 km
-(p50) / 2.31 km (p90) from the entrance point; 586 of 637 pass on it, 36 of them rows the municipality centroid fails,
+**The postcode the walk cannot reach yet.** 637 of the 2,000 rows contain a `〒` code, every one keyed in
+`$MAILWOMAN_DATA_ROOT/db/wof/postalcode-jp.db` (142,604 WOF rows, 48,216 unlocated at 0,0), and the candidate table folds
+no JP postcode extract, so the probe returns no row. Simulated on the same rows: the located code's centroid is 0.52 km
+(p50) / 2.31 km (p90) from the entrance point. 586 of 637 pass on it, 36 of them rows the municipality centroid fails,
 and the 51 unlocated codes fall through to today's answer because the fold skips 0,0 rows. `postalcode-jp.db` is now in
-`DEFAULT_POSTCODE_DATABASES`; the candidate rebuild that carries it is the operator's.
+`DEFAULT_POSTCODE_DATABASES`. The candidate rebuild that includes it is the operator's.
 
 **The fold, rebuilt and read.** `candidate-global-2026-09-06-jppostcode.db` (15,278,095 rows, 94,388 JP postcode
 rows) keys `885-0061`, and the walk resolves it — but the locality-first admin ladder still read the municipality
@@ -137,8 +137,10 @@ table, 1,889 accepted), 75 beyond 15 km. The first rebuild read the standing fol
 
 ## 5. What this does not decide
 
-The `ja-jp` / `zh-cn` overlays and the release-list move (operator); the CN numeral boundary; Korean; the FST
-autocomplete tier for CJK (#1493, built and staged, swap operator-approved).
+- The `ja-jp` / `zh-cn` overlays and the release-list move (operator).
+- The CN numeral boundary.
+- Korean.
+- The FST autocomplete tier for CJK (#1493, built and staged, swap operator-approved).
 
 ## 6. The kana register run replaces the base: 0.9924, かすみがうら市 0 of 823
 
@@ -162,11 +164,11 @@ with the kanji centroid within 15 km beside the unresolved count, never inside t
 0.9905, arabic_chome 0.9952, compact_folded 0.9960. CN `locality_unit` 11 of 14 (PyTorch), beside 10 (shared,
 PyTorch) and 12 (shared, served). The Han split's CJK-only failure set is empty.
 
-The one trade is `中新川郡上市町`: the register taught "…市 ends a municipality" and this 町 carries 市 inside its name, so the
+The one trade is `中新川郡上市町`: the register taught "…市 ends a municipality" and this 町 has 市 inside its name, so the
 model closes the span at `中新川郡上市` (121 of 136, from 66). The JP-only arm fails 112 of 130 on the new board, so the
-shape was always under-served; a register over the 市-inside-name 町 (上市町, 市貝町, 市川三郷町) is the follow-up (#2178).
+shape was always under-served. A register over the 市-inside-name 町 (上市町, 市貝町, 市川三郷町) is the follow-up (#2178).
 
-Served: the ONNX export reads max_abs_diff 6.4e-6 over 256 rows; the 2,000-row resolver read is unchanged at 1,889
+Served: the ONNX export reads max_abs_diff 6.4e-6 over 256 rows. The 2,000-row resolver read is unchanged at 1,889
 (the resolver already keyed the かすみがうら stem), while `かすみがうら市` and `うんぜん市` now parse with their generic.
-`release.config.json` `charWeights.cjk`, the workspace card and vocabulary (2,337 entries) name the kana package;
-artifacts under `$MAILWOMAN_DATA_ROOT/models/v8-cjk-kana-s42/`.
+`release.config.json` `charWeights.cjk`, the workspace card and vocabulary (2,337 entries) name the kana package.
+Artifacts are under `$MAILWOMAN_DATA_ROOT/models/v8-cjk-kana-s42/`.

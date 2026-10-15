@@ -37,7 +37,7 @@ No property of the target changes between arms. Only the order does.
 Three numbers need their definitions stated before you read them:
 
 - **Distance** is the great-circle distance from the returned coordinate to BAN's coordinate for that
-  row. `exact` means within one meter, which on this panel means the pipeline found the row itself.
+  row. `exact` means within one meter. On this panel that means the pipeline found the row itself.
 - **Routed to the postcode area** means the returned coordinate is within 15 km of the centroid of
   the BAN points sharing that postcode. French postcodes are not one size — a Paris arrondissement
   spans about 2 km, a rural postcode can span 20 — so this is a check against gross misrouting and
@@ -69,7 +69,7 @@ Both arms, 100 rows each, from [`fr-ban-results.json`](/benchmarks/fr-ban-result
 
 The two arms took 2,615 ms together, model load excluded.
 
-The reordered arm scores higher than the clean one, which is the opposite of what a robustness arm is
+The reordered arm scores higher than the clean one. That is the opposite of what a robustness arm is
 built to show. Two rows explain the whole gap, and the mechanism is in the parse:
 
 ```
@@ -83,7 +83,7 @@ reordered   91440 Bures-Sur-Yvette, 33 Avenue du Centre   → street parsed as "
 In the canonical order the street is followed by a comma and then the postcode, and the trailing
 common noun of the street name is dropped from the span. Moved to the end of the string with no token
 after it, the same street name survives whole, the rooftop probe finds its row, and the tier goes from
-`admin` to `address_point`. The truncation is the defect; the reordering does not fix it so much as
+`admin` to `address_point`. The truncation is the defect. The reordering does not fix it so much as
 avoid the position where it fires.
 
 ## Losses
@@ -105,8 +105,8 @@ They are two defects wearing one number.
 **Street-span truncation, four rows.** `Rue du Château d'Eau` loses `d'Eau`, `Avenue du Centre` loses
 `Center`, `Rue Clos du Village` loses `Village`, and `Place du Calvaire à Montsaon` loses its hamlet
 qualifier. Each truncated span then fails the rooftop probe and the cascade falls back to the admin
-centroid, which is why all four answer at `admin`. The two that recover under reordering are listed
-above; the other two miss in both arms.
+centroid. That is why all four answer at `admin`. The two that recover under reordering are listed
+above. The other two miss in both arms.
 
 **Same-name street inside one postcode, two rows.** `Rue de la Mairie` and `Rue Jean Jaurès` are among
 the most repeated street names in France. Both rows answered at `address_point`, so the rooftop probe
@@ -129,7 +129,7 @@ from BAN is outside the panel entirely.
 
 **A 90th-percentile distance of 0 km is not a precision claim.** It is a consequence of the same
 circularity: 94 of 100 rows land on the exact source coordinate, so every percentile up to the 94th
-is zero by construction. Read the count of exact rows and the count of misses; the percentiles carry
+is zero by construction. Read the count of exact rows and the count of misses. The percentiles contain
 no information this panel earned.
 
 **The commune strings are accent-stripped.** BAN's `locality_norm` column is lowercased and
@@ -159,7 +159,7 @@ That file's `versions` block records what this run used: Mailwoman 8.7.0,
 The script writes those from the resolved artifact paths rather than from a constant, so a re-run
 stamps its own — which is how the model filename on this page changed without the model changing. It
 used to read `model-v401-base-step-060000-int8.onnx`, the training-side name a development symlink was
-pointing at; the bytes are identical (md5 `c968c24ad1a3e59658ff1d92c5720575`) and every number below is
+pointing at. The bytes are identical (md5 `c968c24ad1a3e59658ff1d92c5720575`) and every number below is
 unchanged.
 
 ```bash
@@ -181,7 +181,7 @@ node fr-ban-panel.ts --resample --data-root <DATA_ROOT>
 
 The seed is a constant in the script rather than a flag, because changing it changes which addresses are
 being reported on. A different BAN release renumbers the rows and will produce a different panel from
-the same seed, which is why the sample is committed rather than drawn at run time.
+the same seed. That is why the sample is committed rather than drawn at run time.
 
 ## Related
 

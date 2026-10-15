@@ -4,7 +4,7 @@ The critical property is the NO-REGIME-SWITCH guarantee: a per-token confidence 
 postcode, or a confidence-zeroed anchor under the training curriculum) must make the injection an
 exact identity. That is what lets "absent" be the continuous c=0 tail of a spectrum instead of a
 discrete [NO-ANCHOR] mode (DeepSeek 2026-06-05) — and it is the reason no separate dropout token is
-needed. Also covered: the channel actually does something at c>0, back-compat is bit-identical off,
+needed. Also covered: the channel changes the output at c>0, back-compat is bit-identical off,
 the supplied-but-not-built guard fires. The flags also survive save/load.
 """
 

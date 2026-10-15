@@ -37,9 +37,9 @@ license v3, acquisition 2026-08-05).
   is the trap this leg exists to catch.
 - **Configurations:** the shipped pipeline (`mailwoman` 9.1.0, model v4.4.0) at production
   defaults under two locales — `en-US` (the out-of-the-box default) and `en-GB`.
-- **Metric:** haversine distance to the Code-Point centroid; a no-result is a miss at every
-  threshold. Harness: `packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts` (seeded, re-runnable;
-  results JSONL committed to the lab eval store).
+- **Metric:** haversine distance to the Code-Point centroid. A no-result is a miss at every
+  threshold. Harness: `packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts` (seeded and re-runnable,
+  with results JSONL committed to the lab eval store).
 
 ## Results
 
@@ -54,7 +54,7 @@ license v3, acquisition 2026-08-05).
 
 Every sampled postcode, in every input shape, resolves to its own unit-postcode point — the 0.00
 medians are the circularity of section 1 working as described, and the claim they support is
-retrieval fidelity rather than coordinate accuracy. Every phantom postcode abstains; none is "corrected"
+retrieval fidelity rather than coordinate accuracy. Every phantom postcode abstains. None is "corrected"
 into a different real postcode.
 
 ### `--locale en-US` (production default)
@@ -66,12 +66,12 @@ into a different real postcode.
 | `, UK` suffixed      | 600 | 600      | 592/600               | 592/600 | 592/600 | 0.00      |
 | typo (252 phantom)   | 252 | —        | **252/252 abstained** |         |         |           |
 
-The eleven failures were one defect, named with receipts rather than averaged away: under the
+The eleven failures were one defect, documented with receipts rather than averaged away: under the
 `en-US` default the model occasionally tagged a GB postcode's outward code as `street` and its
 inward code as `house_number` (`KT2 6AB` → street "KT2" + house_number "6AB") — **even though the
 query-shape stage detected `uk_postcode` at 0.9 confidence and the kind classifier said
-`postcode_only` at 1.0**. With no postcode span in the tree, the bare form resolved nothing
-(3/600); the `, UK` form resolved only the country token and answered the United Kingdom label
+`postcode_only` at 1.0**. With no postcode span in the tree, the bare form returned no result
+(3/600). The `, UK` form resolved only the country token and answered the United Kingdom label
 centroid, 27–221 km off (8/600). The `en-GB` locale decoded all eleven correctly.
 
 **Fixed the same day** (#1735, `dd74a3a73`) with two rungs — a parse-side repair that consumes the
@@ -80,7 +80,7 @@ failures were a sibling-scope gap: the country node resolved to GB while the pos
 under the locale-inferred US filter beside it). Post-fix, the production default matches `en-GB`:
 **600/600 on every leg**, phantom abstention unchanged at 252/252, and the full regression board
 shows three rows changed — all improvements — and zero regressions. The pre-fix table above is
-kept as the record of what the eval found; finding it was this record's purpose.
+kept as the record of what the eval found. This record exists to document that finding.
 
 ## Re-run
 

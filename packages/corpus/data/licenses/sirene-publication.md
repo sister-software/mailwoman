@@ -3,19 +3,26 @@
 - Source: `https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/`
 - Retrieved: 2026-09-21
 - Publisher: Institut national de la statistique et des études économiques (INSEE)
-- Terms named on the page: `Licence Ouverte / Open Licence version 2.0`, archived beside this as
+- Terms the page identifies: `Licence Ouverte / Open Licence version 2.0`, archived beside this as
   `licence-ouverte-2.0.md`
 - Last update stated on the page: 2026-09-01
 
 ## What the publication offers
 
-Twelve primary files, as six pairs in ZIP and Parquet: the stock of legal units, active and ceased; historicized values
-of legal units; the stock of establishments, active and closed; historicized values of establishments; establishment
-succession links; and SIREN duplicates. Twelve documentation files accompany them, in PDF and CSV.
+The page offers twelve primary files, as six pairs in ZIP and Parquet. The six datasets are these:
+
+- the stock of legal units, active and ceased
+- historicized values of legal units
+- the stock of establishments, active and closed
+- historicized values of establishments
+- establishment succession links
+- SIREN duplicates
+
+Twelve documentation files accompany them, in PDF and CSV.
 
 ## Personal data, quoted and paraphrased
 
-The page states the dataset carries personal data subject to the GDPR and French data-protection law, and that a reuser
+The page states the dataset contains personal data subject to the GDPR and French data-protection law, and that a reuser
 must respect its dissemination-status codes.
 
 For a sole trader or a legal representative who has filed an opposition, INSEE masks specific fields:
@@ -33,6 +40,6 @@ present in the resource is a question the files answer and this page does not. C
 mapping is not evidence of presence.
 
 **Whether the masking suffices for what we do.** INSEE masks an opposed sole trader's identity, municipality address
-and geolocation at the source, which is a stronger starting position than a dataset with no opt-out. Whether a model
+and geolocation at the source. That masking is a stronger starting position than a dataset with no opt-out. Whether a model
 trained on the unmasked remainder can memorize an address, and what measures that calls for, is a separate reading from
 the license.

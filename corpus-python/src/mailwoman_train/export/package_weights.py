@@ -41,7 +41,7 @@ from ..labels import (
 def _phase_label() -> str:
     """Derive the ModelCard ``phase`` string from the active label set.
 
-    Single source of truth: ``labels.ACTIVE_TAGS``. When the ship-line moves
+    The tag list is read from ``labels.ACTIVE_TAGS`` and from nowhere else. When the ship-line moves
     (e.g. ACTIVE bumps to STAGE4), this is the only place that
     needs to learn the new name.
     """
@@ -246,7 +246,7 @@ _F1_TARGETS: dict[str, float] = {
 
 
 def _target_status_line(eval_report: dict[str, Any]) -> str:
-    """Honest one-liner about how this build measures up to the per-tag F1 floors."""
+    """One line stating how this build measures up to the per-tag F1 floors."""
     per = eval_report.get("per_component", {}) or {}
     active_tags = set(ACTIVE_TAGS)
     components_at_target: list[str] = []

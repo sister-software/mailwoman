@@ -24,7 +24,7 @@ per-tag accuracy. Those numbers are in the eval ledger
 and in the dated eval reports next to it.
 
 The model's size was measured on 2026-10-03, and the other artifact sizes on 2026-09-14, against the
-files each release publishes. 10.1.0 carries 9.1.0's en-us, fr-fr and en-gb FSTs, pair indexes, postcode
+files each release publishes. 10.1.0 reuses 9.1.0's en-us, fr-fr and en-gb FSTs, pair indexes, postcode
 tables and lexicons unchanged.
 
 ## Version
@@ -44,7 +44,7 @@ weights package version therefore follows the release instead of the model's own
 ## Packages
 
 These are the packages a consumer installs directly. The remaining workspaces are pipeline stages
-and build tooling, which are installed as dependencies of these packages.
+and build tooling. They are installed as dependencies of these packages.
 
 | Package                                                             | What it is                                                                                                                     |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -106,7 +106,7 @@ The gazetteer is a separate download and is not part of any npm package. The pub
 The tiers below are copied from
 [`docs/engineering/SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx),
 where they are maintained. Mailwoman claims support for a locale only where a coordinate-graded
-evaluation exists for it. A locale's training data alone does not qualify it as supported.
+evaluation exists for it. A locale's training data by itself does not qualify it as supported.
 
 | Tier | Locales                                                | What the tier means                                                                 |
 | ---- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
@@ -114,12 +114,12 @@ evaluation exists for it. A locale's training data alone does not qualify it as 
 | 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                        |
 | 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified           |
 | 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in `5.1.0`                        |
-| 5    | JP, KR, CN                                             | The character path, published in `9.3.0`. See the note below for what each carries  |
+| 5    | JP, KR, CN                                             | The character path, published in `9.3.0`. See the note below for what each includes |
 
 Tier 5 is one 49-label character-path head that serves all three languages, and the three have
 different levels of support. Japanese has a 20,000-row coordinate board. Korean has a 20,000-row board
 over 27 held-out 시군구 and resolves to the 시군구 through the candidate table's Korean names. No Korean
-data finer than the county exists today. Chinese has 126 labeled rows in total, which is too few to
+data finer than the county exists today. Chinese has 126 labeled rows in total. That is too few to
 support a claim.
 
 GB, IE, SE, HU and RO corpora from OpenStreetMap are waiting on an external constraint instead of
@@ -139,13 +139,13 @@ missing feature, the next step turns it on.
 
 | Limit                                                                                      | Next step                                                                                                          |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| The gazetteer database enables coordinate resolution; parsing uses no gazetteer.           | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
+| The gazetteer database enables coordinate resolution. The parser uses no gazetteer.        | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
 | Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                        |
 | The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                        |
 | One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |
 | Korean resolves no finer than the 시군구. No sub-county register has been adopted.         | None today. The constraint is data coverage rather than engineering.                                               |
 | The locale hint reports a single BCP-47 tag, so Han-script input is labeled `ja-JP`.       | Read the resolved country rather than the hint's locale when the input is Han-script.                              |
-| Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible; arbitrary translation is not performed.            |
+| Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible. Arbitrary translation is not performed.            |
 
 ## Rationale
 

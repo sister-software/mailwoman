@@ -1,10 +1,10 @@
 ---
-title: "v0.8.1 — MLM pre-training decisive round (pretrained-init vs from-scratch)"
+title: "v0.8.1 — MLM pre-training full-recipe round (pretrained-init vs from-scratch)"
 date: 2026-05-31
-status: "COMPLETE — verdict: drop pretraining (no ceiling benefit). v0.7.2 stays default; MLM track closed."
+status: "COMPLETE — verdict: drop pretraining (no ceiling benefit). v0.7.2 stays default, and the MLM track is closed."
 ---
 
-# v0.8.1 — The MLM decisive round
+# v0.8.1 — The MLM full-recipe round
 
 ## The question
 
@@ -45,7 +45,7 @@ hand-typed — see #211/#212):
    (non-circular). Primary decision metric.
 2. **harness v0-neural pass-rate** — the Pelias-lineage regression check (secondary).
 3. **calibration** — fraction of WRONG predictions emitted at confidence ≥ 0.9 (lower is
-   better; the original pathology was ~81% at ≥0.9).
+   better, and the original pathology was ~81% at ≥0.9).
 
 ## Kill-point rule (DeepSeek turn-4 consult, 2026-05-31)
 
@@ -72,7 +72,7 @@ Reference column = shipped v0.7.2, cited from
 harness 19.5%).
 
 **Resolver** was re-run at the full 10,000-row OA sample (the auto-runner's 3k first pass
-showed −0.60pp, within noise; 10k tightens it to **−0.20pp / 0.9σ — a statistical tie**).
+showed −0.60pp, within noise, and 10k tightens it to **−0.20pp / 0.9σ — a statistical tie**).
 Both arms use the post-#222 gazetteer-alias matching, and both clear shipped v0.7.2 (96.1%)
 and v0/Pelias (95.8%) on real points.
 
@@ -83,14 +83,14 @@ percentile and has been corrected. Either way the init-attributable calibration 
 
 ## How to read the results
 
-At the **task ceiling**, MLM pre-training of the encoder adds nothing:
+At the **task ceiling**, MLM pre-training of the encoder adds no measurable gain:
 
 - **Product metric (resolver): a tie** (−0.20pp, 0.9σ). Pre-training is neutral rather than harmful.
 - **Harness:** scratch is ahead by 7 assertions (−1.69pp) — small, but the wrong _direction_
   for pre-training.
 - **Calibration:** flat (identical wrong-pred confidence distribution).
 
-The decisive point is the **disappearance of the 40k round's gains.** That under-trained
+The main result is the **disappearance of the 40k round's gains.** That under-trained
 round (lr 5e-5, 40k) had shown pre-training +4.8pp harness and a calibration edge — which is
 what kept the track alive. Re-run at the v0.7.2-proven recipe where the model reaches
 the ceiling (Arm A's step-28k eval was already v0.7.2-class: locality 0.84 / region 0.75 /
@@ -100,12 +100,12 @@ pre-trained init looked better. Given enough steps, scratch catches up and the g
 
 ## Decision
 
-**DROP pre-training. v0.7.2 stays the default; the MLM track is closed as a clean negative
+**Drop pre-training. v0.7.2 stays the default, and the MLM track is closed as a clean negative
 result.** This is exactly DeepSeek's pre-registered kill-point (turn-4): the SHIP branch
 required pre-training to _retain_ the calibration/harness gains, and at ceiling it does not.
 The product metric being a tie (not a loss) means the direct conclusion is "no benefit," not
 "actively worse" — but a +1 training stage (20k MLM pre-train) and the attendant pipeline
-complexity are not worth a statistical tie plus a slightly-worse harness.
+complexity cost more than a statistical tie plus a slightly-worse harness returns.
 
 What we keep from the track: the MLM pre-training code (`pretrain.py`, `masking.py`,
 `forward_mlm`) lands directly and is reusable if a future, larger model or a different objective

@@ -218,7 +218,7 @@ def audit_validation_coverage(
     config_name: str = "v5.9.0-locality-shape-60k.yaml",
     countries: str = "US,FR,DE,GB",
 ) -> None:
-    """Counts rows by country in the validation and test splits, including how many rows have a street.
+    """Counts rows by country in the validation and test splits, including the count of rows that have a street.
 
     The two splits are five parquet files holding roughly 1.9 million rows each, so this reads the
     whole population rather than sampling it the way the rest of this module has to. The nearest

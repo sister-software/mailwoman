@@ -24,17 +24,17 @@ index of them.
 
 ## The datasets
 
-| file                                                              | rows | entity id                          | what it is                                                                 |
-| ----------------------------------------------------------------- | ---: | ---------------------------------- | -------------------------------------------------------------------------- |
-| `nppes_npi-registry_20260607.tsv`                                 | 9.6M | `NPI`                              | National Provider registry — every provider + org with an NPI              |
-| `nppes_other-names_20260607.tsv`                                  | 855K | `NPI`                              | Alternate organization names per NPI (the name-drift source)               |
-| `nppes_practice-locations_20260607.tsv`                           | 1.2M | `NPI`                              | Secondary practice locations per NPI                                       |
-| `fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv` | 470K | `Filing HCP` / `Participating HCP` | FCC Rural Health Care funding commitments — **two HCPs per row**           |
-| `fcc-rhc_posted-services_form461-465_20260615.tsv`                |  94K | `HCP Number`                       | FCC RHC posted-services filings (the enrollment side)                      |
-| `fcc-rhc_spin-lookup_20260615.tsv`                                |  22K | `SPIN`                             | Service Provider Identification Number lookup                              |
-| `txhhsc_nursing-facilities_20260611.tsv`                          | 1176 | `Facility ID`                      | TX HHSC licensed nursing facilities — **carries a `Geo Location` lat,lon** |
-| `txhhsc_nursing-facility-closures_20260608.tsv`                   |  403 | `Facility ID`                      | TX HHSC closed nursing facilities                                          |
-| `txhhsc_hospital-based-nursing-facilities_20260611.tsv`           |    6 | `Facility ID`                      | TX HHSC hospital-based nursing facilities                                  |
+| file                                                              | rows | entity id                          | what it is                                                                  |
+| ----------------------------------------------------------------- | ---: | ---------------------------------- | --------------------------------------------------------------------------- |
+| `nppes_npi-registry_20260607.tsv`                                 | 9.6M | `NPI`                              | National Provider registry — every provider + org with an NPI               |
+| `nppes_other-names_20260607.tsv`                                  | 855K | `NPI`                              | Alternate organization names per NPI (the name-drift source)                |
+| `nppes_practice-locations_20260607.tsv`                           | 1.2M | `NPI`                              | Secondary practice locations per NPI                                        |
+| `fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv` | 470K | `Filing HCP` / `Participating HCP` | FCC Rural Health Care funding commitments — **two HCPs per row**            |
+| `fcc-rhc_posted-services_form461-465_20260615.tsv`                |  94K | `HCP Number`                       | FCC RHC posted-services filings (the enrollment side)                       |
+| `fcc-rhc_spin-lookup_20260615.tsv`                                |  22K | `SPIN`                             | Service Provider Identification Number lookup                               |
+| `txhhsc_nursing-facilities_20260611.tsv`                          | 1176 | `Facility ID`                      | TX HHSC licensed nursing facilities — **includes a `Geo Location` lat,lon** |
+| `txhhsc_nursing-facility-closures_20260608.tsv`                   |  403 | `Facility ID`                      | TX HHSC closed nursing facilities                                           |
+| `txhhsc_hospital-based-nursing-facilities_20260611.tsv`           |    6 | `Facility ID`                      | TX HHSC hospital-based nursing facilities                                   |
 
 ## Column mappings
 
@@ -64,7 +64,7 @@ records in the dedup benchmark. Secondary practice-location addresses live in th
 
 ### FCC RHC commitments → `SourceRecord` (explode: two records per row)
 
-Each row carries the columns `Filing HCP` and `Participating HCP`. Split each row into two records:
+Each row has the columns `Filing HCP` and `Participating HCP`. Split each row into two records:
 
 | field          | `Filing HCP`                                  | `Participating HCP`                                  |
 | -------------- | --------------------------------------------- | ---------------------------------------------------- |

@@ -1,13 +1,13 @@
-# === v8-cjk-control — v8-cjk-full with the CN source at 0.0: the 49-label head over the JP source alone. =============
+# === v8-cjk-control — v8-cjk-full with the CN source at 0.0: the 49-label head over only the JP source. =============
 #
 # The control the v8-cjk-full header pre-registered for the case where the JP read moves. It did: at 24k the shared
 # head read coordinate-acceptability 0.9653 against the JP record's 0.9928, and 598 of the 664 failed rows are one
 # held-out hiragana municipality, かすみがうら市, predicted without its trailing 市 (the JP-only 24k model missed 2 of
 # its 823 rows). Everything else in the run is byte-identical to v8-cjk-full: same head width (49), same re-sealed
 # CJK char vocabulary, same seed, schedule and precision. This arm answers one question: does the 49-label head over
-# the JP source alone also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
+# only the JP source also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
 # variance on a single held-out name and the CN rows are not the cause. if this arm reads like the JP record, the
-# mixture is. Nothing here is a CN reading. The CN source is off.
+# mixture is. No result from this arm is a CN reading. The CN source is off.
 #
 # Launch:
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk
@@ -26,7 +26,7 @@ data:
   source_weights:
     overture-jp: 1.0
     # The control arm: the CN source at zero. The loader drops a zero-weight source from train and val, so
-    # val reads the 20,000 JP rows and the CN val part contributes nothing.
+    # val reads the 20,000 JP rows and the CN val part contributes zero rows.
     coarse-placer-cn-units: 0.0
   coarse_filter: false
   # JP val 20,000 + CN val 11.

@@ -26,7 +26,7 @@ Maine → Maine    score 23.2             (full-name match scores ~17 higher)
 ```
 
 Maine is the **only** US region with the alias `ME` (verified in the gazetteer's
-`names` table; Missouri's alias is `MO`). It still lost — because the ranking adds
+`names` table, where Missouri's alias is `MO`). It still lost — because the ranking adds
 **population as a large additive boost** (`populationBoost`, up to +4), and
 Missouri's larger population overcame Maine's bm25 edge on the 2-letter query.
 
@@ -42,7 +42,7 @@ population exceeds the bm25 gap between an exact alias match and a non-match.
 
 The fix makes ranking **two-keyed**: match quality is the primary key, prominence
 (population) the secondary key **within a tier**. A candidate whose name or any
-alias equals the query (case-folded) ranks above any partial match; the existing
+alias equals the query (case-folded) ranks above any partial match. The existing
 weighted sum — including population — orders candidates _within_ a tier.
 
 - `Springfield, IL` still works: both IL and MA Springfields are exact name
@@ -66,10 +66,10 @@ wider case ever needs it.
 
 `parentId` is a **hard descendant filter** in the backend. If a parent resolves
 wrong, or the gazetteer hierarchy is incomplete (a real locality whose `ancestors`
-chain is missing its region), the filtered lookup returns nothing and the node
+chain is missing its region), the filtered lookup returns zero candidates and the node
 goes unresolved. Fix: when a parent-constrained lookup returns zero, retry once
 **without** the parent constraint (keeping the country constraint, so resolution
-still can't wander cross-border). Prefers a parent-scoped hit; never sacrifices
+still can't wander cross-border). The fallback prefers a parent-scoped hit and never sacrifices
 recall. `core/resolver/resolve.ts` (`ResolveOpts.parentFallback`, default true).
 
 ## Results (2406-row WOF-bootstrap, v0.7.2 model)
@@ -89,7 +89,7 @@ One toggle apart (`--exact-tiering`/`--parent-fallback` off vs on), same model, 
 
 The headline: **+8.5pp end-to-end Acc@1 and a 5.2× reduce in p90 coordinate error**
 (1090 km → 211 km — the cross-state tail collapses, exactly as the "ME → Missouri"
-root cause predicted). Every baseline improves; the gains are largest on the
+root cause predicted). Every baseline improves. The gains are largest on the
 canonical subset (+10.9pp) where clean two-letter region codes are most common.
 Failure attribution shows the implementation effect: neural's resolver-side errors drop
 from 749 to 544 (−27%) with parser-side errors still at 0 — the fix moved

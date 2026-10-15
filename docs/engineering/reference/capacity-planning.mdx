@@ -12,7 +12,7 @@ tags:
 
 The citable answer to two deployer questions: **"how much space will I need to run a
 whole-world mailwoman installation?"** and **"how much memory will that take?"** Every number
-here is either measured on our artifacts (dated, with the artifact named) or an extrapolation
+here is either measured on our artifacts (dated, with the artifact identified) or an extrapolation
 whose per-unit cost is measured. When an artifact changes materially, re-measure and update the
 table — an uncited number in this file is a defect.
 
@@ -24,7 +24,7 @@ grows it. Fidelity grows by adding **layers** — sealed, read-only, memory-mapp
 artifacts probed by parse-derived keys (see
 [the layer interface](./layer-interface.mdx)). Because retrieval is a keyed probe — house
 number + street within an already-resolved locality — rather than fuzzy full-text recall,
-there is no query-time index that must be resident in RAM. Disk holds the data; the page
+there is no query-time index that must be resident in RAM. Disk holds the data. The page
 cache holds whatever the query traffic touches.
 
 ## Measured unit costs (2026-08-07)
@@ -65,9 +65,9 @@ cache: more RAM provides latency, never correctness. There is no heap that must 
 
 For context — the incumbents this trades against (public deployment guidance for their own
 full-planet installs, approximate): a planet Pelias is on the order of 600 GB of
-Elasticsearch that wants to be hot across a cluster; a planet Nominatim is on the order of
-1 TB of Postgres plus an 80 GB flatnode file. They pay at query time in resident index; we
-pay at build time in sealed artifacts.
+Elasticsearch that needs to be hot across a cluster. A planet Nominatim is on the order of
+1 TB of Postgres plus an 80 GB flatnode file. They pay at query time in resident index. Mailwoman
+pays at build time in sealed artifacts.
 
 ## The per-locale template
 
@@ -82,7 +82,7 @@ A locale is a fixed kit. The kit does not change the model:
 | FST gazetteer       | per-locale name matcher                                   | 4–21 MB        |
 
 Worked examples: en-us (all pieces), fr-fr (overlay + BAN points), en-gb (overlay +
-Code-Point postcodes; rooftop layer is the open acquisition). Coverage status per country
+Code-Point postcodes, with the rooftop layer as the open acquisition). Coverage status per country
 belongs to the coverage register rather than this file.
 
 ## Cost-reduction roadmap
@@ -93,7 +93,7 @@ Three changes, held behind the five-arm benchmark's per-query-class latency and 
 1. **Packed address-point spine** ([#1547](https://github.com/sister-software/mailwoman/issues/1547)) —
    parent-relative encoding: per-locality street dictionaries, delta-encoded number
    sequences, coordinates as 16-bit offsets from the parent H3 res-9 cell. The 40× GB
-   postcode receipt above is the evidence base; landing estimate 40–60 B/point, taking the
+   postcode receipt above is the evidence base. The landing estimate is 40–60 B/point, taking the
    world spine from ~150 GB to ~30–50 GB. Decode must stay fixed-stride trivial. The
    resolver ladder runs synchronously on every keystroke.
 2. **Admin-keyed distribution by country file** ([#1548](https://github.com/sister-software/mailwoman/issues/1548)) —
@@ -105,9 +105,9 @@ Three changes, held behind the five-arm benchmark's per-query-class latency and 
    build-time artifacts that make hot, stable queries single lookups (H3-ring KNN lists,
    interpolation-ready per-street tables). The candidate table and postcode bins already ARE
    this pattern, and the 40× receipt shows probe-shaped precompute costs less than the
-   general form it replaces. Only stable + hot queries warrant an artifact; precompute freezes a
+   general form it replaces. Only stable + hot queries warrant an artifact, because precompute freezes a
    query distribution.
 
 Changes 1 and 3 are not opposed: specializing to the probe shape is simultaneously the
-compression and the precompute. All three derive from the same build passes, so consistency
-rides the existing rebuild-not-patch discipline.
+compression and the precompute. All three derive from the same build passes, so the existing
+rebuild-not-patch discipline keeps them consistent.

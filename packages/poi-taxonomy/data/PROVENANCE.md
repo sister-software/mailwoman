@@ -9,7 +9,7 @@
 - **Rows:** 2117 category rows (2118 lines including the header)
 - **Format:** semicolon-delimited, BOM-prefixed — `<category code>; [<hierarchy,path,leaf>]`. The path's last element is
   the category code, except for 4 rows (`aircraft_repair`, `ev_charging_station`, `custom_t_shirt_store`,
-  `community_services_non_profits`) whose display-path leaf differs from the stored code; the generator appends the
+  `community_services_non_profits`) whose display-path leaf differs from the stored code. The generator appends the
   code as the true leaf for those.
 - **License:** CDLA-Permissive-2.0 (the Overture schema/taxonomy).
 
@@ -20,8 +20,8 @@ the network.
 ## `curated-overlay.json` — mailwoman's hand-maintained overlay
 
 The 26 curated category records (curated hierarchies, `osmTag`s, `overtureCategories` rollups, and the 6
-`mailwoman-infra` street-furniture classes) plus the 54 synonym phrases. This is the source of truth for the curated
-layer; the generator merges it over the Overture snapshot.
+`mailwoman-infra` street-furniture classes) plus the 54 synonym phrases. No other file defines the curated
+layer, and the generator merges it over the Overture snapshot.
 
 ## `taxonomy.json` — the generated, committed merge
 
@@ -72,7 +72,7 @@ hand. The builder compares three populations of names per country:
   rows licensed under ODbL, rows whose license names OpenStreetMap, and rows with no recorded license.
 
 The table records each population's size per country, so a country with no street spans is visible.
-It holds words and rates only, and it carries no OpenStreetMap data.
+It holds words and rates only, and it contains no OpenStreetMap data.
 
 A head is admitted when it is two or more characters long, when it is not an administrative name of
 the country, and when its venue rate exceeds its rate at any position in the country's place names

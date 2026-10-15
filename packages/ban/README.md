@@ -20,7 +20,7 @@ OpenAddresses, GeoNames), and it does not require lawyer sign-off. The one stand
 attribution:
 
 - **This package contains code only.** It contains no BAN bytes.
-- **Any result resolved through a BAN point carries attribution.** The `source` on every BAN point is
+- **Any result resolved through a BAN point requires attribution.** The `source` on every BAN point is
   `ban:fr`, and the resolver should display
   _"© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)"_.
 
@@ -51,7 +51,7 @@ additive file, and the build never touches the OSM database beside it.
 
 `BANRegionDatabaseProvider.for(country)` is wired into `GeocodeDeps.nationalExtracts`. The resolver
 consults it **ahead of** the OSM `osmExtracts` tier, because a national authoritative register outranks
-the community fallback, and only for a non-US parse. BAN rows carry their own postcode and commune, so the
+the community fallback, and only for a non-US parse. BAN rows store their own postcode and commune, so the
 lookup keys on the scoped (`postcode` → `locality`) probes and needs no bbox fall-through. Interpolation
-for house numbers that BAN does not carry is not built yet. BAN adds the exact-point tier, and its point
+for house numbers that BAN does not list is not built yet. BAN adds the exact-point tier, and its point
 density is the reason to use it.

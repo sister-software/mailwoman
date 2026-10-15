@@ -16,7 +16,8 @@ import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
  *
  * - No coordinate → `unresolved`
  * - A register row whose coverage basis is `designated` → `designated` (an authority assigned it)
- * - `interpolated`, `street` and `plus_code` → `derived` (a stated rule computed the point)
+ * - `interpolated`, `street`, `postcode` and `plus_code` → `derived`
+ *   (a stated rule computed the point, such as the centroid of a street's or a postcode's delivery points)
  * - Everything else → `observed` (an identified source recorded it without claiming authority)
  *
  * `inferred` is not producible here and stays defined and unused rather than repurposed.
@@ -30,7 +31,9 @@ export function epistemicStatusFor(
 
 	if (basis === CoverageBasis.Designated) return EpistemicStatus.Designated
 
-	if (tier === "interpolated" || tier === "street" || tier === "plus_code") return EpistemicStatus.Derived
+	if (tier === "interpolated" || tier === "street" || tier === "postcode" || tier === "plus_code") {
+		return EpistemicStatus.Derived
+	}
 
 	return EpistemicStatus.Observed
 }

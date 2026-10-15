@@ -23,9 +23,9 @@ Richest sources: Frank's Compulsive Guide to Postal Addresses
 (`columbia.edu/~fdc/postal`, via Wayback), the **UPU per-country addressing
 files** (`upu.int/.../addressingUnit/*.pdf` — authoritative, from each national
 post), Australia Post PDFs, UPS API spec. Notable traps captured: US military
-APO/FPO/DPO + AA/AE/AP pseudo-states; non-Latin/RTL (Persian, Cyrillic w/
-transliteration pairs); Japan block numbering (`chome-ban-go`); German `//`
-unit separator; unit-before-number hyphen (`6-123`, Canada Post `123-45`);
+APO/FPO/DPO + AA/AE/AP pseudo-states, non-Latin/RTL (Persian, Cyrillic w/
+transliteration pairs), Japan block numbering (`chome-ban-go`), German `//`
+unit separator, unit-before-number hyphen (`6-123`, Canada Post `123-45`), and
 PO-box variety (Apartado, A.A., Postfach/Packstation, BP/CEDEX, Private Bag,
 GPO Box, alphanumeric `PO Box HM 100`).
 
@@ -34,9 +34,9 @@ Fields per row: `{raw, country, edge_class, standardized, source}`.
 ### `postal-cases.jsonl` (38 labeled, in-scope subset)
 
 The labeled, runnable subset of the catalog: the 38 in-scope English-Latin
-addresses (US/GB/CA/AU/NZ/IE — excludes the non-Latin/RTL/Japan-block rows,
-which are out of the en-US/fr-FR model's scope, and the USPS `##` format
-templates, which aren't real addresses). Labeled into our schema
+addresses (US/GB/CA/AU/NZ/IE). It excludes the non-Latin/RTL/Japan-block rows
+because they are out of the en-US/fr-FR model's scope. It also excludes the USPS `##` format
+templates because they aren't real addresses. Labeled into our schema
 DeepSeek-assisted then spot-checked: every surface form is verified verbatim
 against `raw`, and the tricky calls (military APO/region mapping,
 unit-before-number `6-123`, county-as-region `CO. ARMAGH`, district-as-
@@ -48,17 +48,17 @@ names are intentionally unlabeled (no schema tag). Fields:
 canonical/intl-format/secondary-unit (29–43%, its rule turf), **0% on military
 APO/FPO, PO-box, rural-route, directional** (coverage gaps shared with neural).
 
-Gaps: USPS Pub 28 worked examples are JPG images (need OCR); Canada Post are SVG
-images; Royal Mail PDF 403'd. The US/UK/CA filled examples here come from
+Gaps: USPS Pub 28 worked examples are JPG images (need OCR). Canada Post's are SVG
+images. The Royal Mail PDF returned 403. The US/UK/CA filled examples here come from
 Frank's guide / UPU instead.
 
 ## The highest-value runnable benchmark: libpostal
 
 `openvenues/libpostal` (MIT) — the canonical _statistical_ address parser, a
 different architecture from Pelias. Its `test/test_parser.c` (~60
-hand-curated, deliberately adversarial cases: house-number ranges `912-914`,
-`92-10`; `Mc Carroll` splits; `apt. 3a`/`#104`/`6th Floor` sub-premise;
-venue+org prefixes; multilingual) is absent from our suite and converts mechanically
+hand-curated, deliberately adversarial cases: house-number ranges `912-914`
+and `92-10`, `Mc Carroll` splits, `apt. 3a`/`#104`/`6th Floor` sub-premise,
+venue+org prefixes, multilingual) is absent from our suite and converts mechanically
 to `{input, expected}` with a tag remap:
 
 | libpostal                                         | ours                       |
@@ -110,9 +110,9 @@ next to the data as `openaddresses-us-sample.report.json`.
 
 `input` is a human-style address string rendered as
 `"{number} {street}, {city}, {region} {postcode}"` from the OA components
-(all-caps / all-lower city & street are title-cased; the harness matcher is
+(all-caps / all-lower city & street are title-cased, and the harness matcher is
 case-insensitive anyway). `lat`/`lon` are OA's point coordinate (the ground
-truth). `expected` carries only the **admin-level** fields the resolver
+truth). `expected` holds only the **admin-level** fields the resolver
 produces — `locality`/`region`/`postcode` (no street geometry).
 
 ### How we selected the samples
@@ -125,7 +125,7 @@ produces — `locality`/`region`/`postcode` (no street geometry).
   is admin-level), drop a house-number-with-no-street, drop streets that are
   purely numeric, drop points outside a US lat/lon sanity box, and require a
   house number in the rendered string. Postcodes are normalized to 5-digit ZIP
-  (a stray `.0` float suffix is stripped; ZIP+4 is truncated to ZIP).
+  (a stray `.0` float suffix is stripped, and ZIP+4 is truncated to ZIP).
 - **Dedup** within a source on `(number, street, city, postcode)`.
 - **Stratified reservoir sample** (deterministic, seeded mulberry32 PRNG) to
   `--per-state` survivors per state, then a round-robin trim to `--target`
@@ -140,22 +140,22 @@ CSV with header `LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HAS
 
 | Source key (`openaddresses:<key>`) | State | Tier                   | zip size | Upstream authority                               | Packaged license                                                    |
 | ---------------------------------- | ----- | ---------------------- | -------- | ------------------------------------------------ | ------------------------------------------------------------------- |
-| `us/ca/berkeley`                   | CA    | dense-urban            | 0.7 MB   | City of Berkeley open data                       | (Unknown in zip; CA open gov)                                       |
-| `us/ca/marin`                      | CA    | suburban-west          | 2.9 MB   | Marin County GIS                                 | (Unknown in zip; CA open gov)                                       |
-| `us/il/cook`                       | IL    | dense-urban            | 34 MB    | Cook County (Chicago metro) GIS                  | (Unknown in zip; IL open gov)                                       |
+| `us/ca/berkeley`                   | CA    | dense-urban            | 0.7 MB   | City of Berkeley open data                       | (Unknown in zip, CA open gov)                                       |
+| `us/ca/marin`                      | CA    | suburban-west          | 2.9 MB   | Marin County GIS                                 | (Unknown in zip, CA open gov)                                       |
+| `us/il/cook`                       | IL    | dense-urban            | 34 MB    | Cook County (Chicago metro) GIS                  | (Unknown in zip, IL open gov)                                       |
 | `us/dc/statewide`                  | DC    | urban-district         | 3.8 MB   | DCGIS                                            | https://dc.gov/page/terms-and-conditions-use-district-data          |
-| `us/ia/statewide`                  | IA    | suburban/rural midwest | 54 MB    | Iowa county GIS (aggregate)                      | (Unknown in zip; per-county open gov)                               |
-| `us/mt/statewide`                  | MT    | rural-west             | 17 MB    | Montana State Library + county GIS               | (Unknown in zip; MT open gov)                                       |
+| `us/ia/statewide`                  | IA    | suburban/rural midwest | 54 MB    | Iowa county GIS (aggregate)                      | (Unknown in zip, per-county open gov)                               |
+| `us/mt/statewide`                  | MT    | rural-west             | 17 MB    | Montana State Library + county GIS               | (Unknown in zip, MT open gov)                                       |
 | `us/vt/statewide`                  | VT    | rural-northeast        | 11 MB    | Vermont Center for Geographic Information (VCGI) | http://vcgi.vermont.gov/.../VCGI_Warranty_Copyright_Notice_2013.pdf |
-| `us/sd/statewide`                  | SD    | rural-plains           | 8 MB     | South Dakota county GIS                          | (Unknown in zip; SD open gov)                                       |
+| `us/sd/statewide`                  | SD    | rural-plains           | 8 MB     | South Dakota county GIS                          | (Unknown in zip, SD open gov)                                       |
 
 **Rejected (documented in the script's `SOURCES` comment):** `us/ca/san_francisco`
-and `us/wy/statewide` carry no city/place column — every row drops on the city
-filter — so SF was replaced by Berkeley+Marin and Wyoming was omitted.
+and `us/wy/statewide` have no city/place column. Every row drops on the city
+filter, so SF was replaced by Berkeley+Marin and Wyoming was omitted.
 
 ### License / attribution
 
-OpenAddresses aggregates **open government data**; the OA collection itself is
+OpenAddresses aggregates **open government data**. The OA collection itself is
 distributed under permissive terms (predominantly public-domain / CC-BY /
 attribution). Per-source licenses vary by upstream authority — the
 authoritative string is in each source's definition at
@@ -187,12 +187,12 @@ node scripts/eval/ingest-openaddresses.ts --offline \
 Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work:
 
 - **`openaddresses-de-sample.jsonl`** (3,000 records) is the _resolver_ eval set
-  (admin-level: `expected` carries `locality`/`region`/`postcode`). Built by the
+  (admin-level: `expected` holds `locality`/`region`/`postcode`). Built by the
   same `ingest-openaddresses.ts`, selected with `--sources de/berlin,de/sn/statewide`.
 - **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
   _parser_ eval set (`{raw, components}` with street + house_number), rendered in
-  idiomatic German order. Built by the root script `build-german-shard.mjs --golden`, since deleted;
-  the recipe that replaced it is `packages/corpus/lib/de/recipes/locale.ts`.
+  idiomatic German order. Built by the root script `build-german-shard.mjs --golden`, since deleted.
+  The recipe that replaced it is `packages/corpus/lib/de/recipes/locale.ts`.
 
 Two changes make non-US OpenAddresses usable here:
 
@@ -220,7 +220,7 @@ tuples by the `locale` recipe's `--golden` mode
   **`openaddresses-nl-golden.jsonl`** (1,500 records each, held-out seed 7 vs
   the training rows' seed 42 — the same seed split the DE golden used).
   ~60% native order (house-after-street, postcode-before-city), ~40%
-  international; the `order` field stratifies them.
+  international. The `order` field stratifies them.
 - Surface diversity matches the observed eval forms: ES rows mix the
   template's comma join (`CALLE MAYOR, 12`) with the OA/eval space join
   (`CALLE MAYOR 12`); NL rows mix the conventional spaced postcode (`1011 AB`)
@@ -257,10 +257,10 @@ arena (`packages/mailwoman/tools/dev-tools/summarize-arenas.run.ts`).
 
 ## Done / next
 
-1. ✅ Harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
-2. ✅ Labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
-3. ✅ Push-button runner (`external-arenas.ts`) + three-bucket summarizer.
-4. ✅ Wired `openaddresses-us-sample.jsonl` into the resolver end-to-end eval
+1. Done: harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
+2. Done: labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
+3. Done: push-button runner (`external-arenas.ts`) + three-bucket summarizer.
+4. Done: wired `openaddresses-us-sample.jsonl` into the resolver end-to-end eval
    (`scripts/eval/resolver-eval.ts` + the OA admin-match runner): resolve each
    `input` → admin centroid, great-circle error to `lat`/`lon` by state.
 5. ⏳ Re-run all three arenas against the v0.7.2 model for the final capability

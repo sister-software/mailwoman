@@ -3,8 +3,8 @@
 OpenAddresses (<https://openaddresses.io>) aggregates open-data address
 dumps from hundreds of city, county, and state sources worldwide. The
 adapter consumes the **line-delimited GeoJSON** (`.geojsonl` /
-`.ndgeojson`) shape one Feature per line, which streams line by line for the
-multi-gigabyte national dumps.
+`.ndgeojson`) shape with one Feature per line. The adapter streams that shape line by line
+for the multi-gigabyte national dumps.
 
 ## Input
 
@@ -23,7 +23,7 @@ Files land at:
 
 Point `--input` at that `.geojsonl`. The runner is invoked with
 `--country US|CA|FR|...` to stamp the country on every row —
-OpenAddresses Features themselves do not carry a country code, so this
+OpenAddresses Features themselves have no country code, so this
 flag is required.
 
 ```sh
@@ -51,10 +51,10 @@ Downstream training code can stratify or exclude by license via the
 ## Share-alike filter (default-on)
 
 OpenAddresses includes a non-trivial fraction of **ODbL** and
-**CC-BY-SA** rows (notably parts of Canada and several European
-countries) that — per the licensing strategy in [#26][licensing] —
+**CC-BY-SA** rows (parts of Canada and several European
+countries among them). Per the licensing strategy in [#26][licensing], those rows
 must not enter the training corpus for the proprietary
-`@mailwoman/neural-weights-*` packages. Training on share-alike data
+`@mailwoman/neural-weights-*` packages. A model trained on share-alike data
 would create a copyleft obligation on the weights themselves.
 
 The adapter drops rows whose `license` matches the share-alike pattern:
@@ -96,8 +96,8 @@ build script that calls `createOpenaddressesAdapter()` directly.
 | `hash`, `id`            | `source_id` seed (`hash` preferred)            |
 | `LICENSE` / `license`   | per-row `license` (overrides `defaultLicense`) |
 
-`district` is **not** mapped — for US data it carries borough or
-county, which is not part of postal addresses and would inflate the
+`district` is **not** mapped. In US data it holds a borough or
+county. Neither is part of a postal address, and mapping them would inflate the
 alignment quarantine pile. A future Phase 6+ adapter for non-US locales
 (where district names do appear on the envelope) can revisit.
 
@@ -117,10 +117,10 @@ One `CanonicalRow` per usable Feature:
 ## Known quirks
 
 - Real OA dumps store `street` and `city` in UPPERCASE (legacy USPS
-  convention). The adapter preserves case verbatim; synthesis (`synthesizers/utils.ts`)
+  convention). The adapter preserves case verbatim, and synthesis (`synthesizers/utils.ts`)
   handles case-perturbation as its own augmentation.
 - Feature lines that fail to parse, are blank, are comments (`#…`), or
-  carry a non-`Feature` `type` (e.g. a stray `FeatureCollection`) are
+  have a non-`Feature` `type` (e.g. a stray `FeatureCollection`) are
   skipped silently. Counted neither yielded nor written.
 - Features without `street` or without both `city` and `postcode` are
   dropped at the source — they'd be quarantined downstream anyway.

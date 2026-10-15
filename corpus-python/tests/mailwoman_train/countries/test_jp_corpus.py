@@ -34,7 +34,7 @@ def spans_of(record: dict) -> list[tuple[str, str]]:
 def test_halfwidth_kana_fold_composes_dakuten_and_shortens_the_string() -> None:
     assert fold_halfwidth_kana("ﾃﾞ") == "デ"
     assert len(fold_halfwidth_kana("ﾃﾞ")) == 1
-    # The shape it actually meets in the data (14,739 number values).
+    # The shape it meets in the data (14,739 number values).
     assert fold_halfwidth_kana("813ﾛ号-2") == "813ロ号-2"
 
 
@@ -318,7 +318,7 @@ def test_town_level_join_beats_the_municipality_catch_all(tmp_path) -> None:
 
 
 def test_the_aza_prefix_is_stripped_on_the_retry(tmp_path) -> None:
-    # Overture writes 字崎枝, KEN_ALL writes 崎枝. This retry is worth 17.8% → 89.6% of rows.
+    # Overture writes 字崎枝, KEN_ALL writes 崎枝. This retry raises the matched share of rows from 17.8% to 89.6%.
     index = kenall(tmp_path)
     assert index.lookup("沖縄県", "石垣市", "字崎枝") == ("9070003", "town_aza_stripped")
     assert index.lookup("沖縄県", "石垣市", "崎枝") == ("9070003", "town")

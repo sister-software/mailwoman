@@ -249,7 +249,9 @@
 		"2026-08-25: gazetteer build admin — 2,923,923 WOF + 1,590,314 overture@2026-07-22.0 + 772,507 geonames; verify PASS; sealed; md5 eabe8560; $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.REBUILD.db",
 		"2026-08-25: gazetteer build admin — 2,923,923 WOF + 1,590,314 overture@2026-07-22.0 + 772,507 geonames; verify PASS; sealed; md5 a2637ca5; $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.REBUILD.db",
 		"2026-09-15: gazetteer build admin — 2,664,438 WOF + 1,590,314 overture@2026-07-22.0 + 772,507 geonames; verify PASS; sealed; md5 8976ec85; $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.REBUILD.db",
-		"2026-09-15: gazetteer build admin — 2,664,438 WOF + 1,590,314 overture@2026-07-22.0 + 772,507 geonames; verify PASS; sealed; md5 12a9d4b4; $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.REBUILD.db"
+		"2026-09-15: gazetteer build admin — 2,664,438 WOF + 1,590,314 overture@2026-07-22.0 + 772,507 geonames; verify PASS; sealed; md5 12a9d4b4; $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.REBUILD.db",
+		"2026-10-12: gazetteer build admin — 2,664,438 WOF + 1,593,453 overture@2026-09-23.1 + 772,507 geonames; verify PASS; sealed; md5 d4236342; /mnt/mw/db/wof/admin-global-priority.REBUILD.db",
+		"2026-10-12: gazetteer build admin — 2,664,438 WOF + 1,593,453 overture@2026-09-23.1 + 772,507 geonames; verify SKIPPED; sealed; md5 18cff4b2; /mnt/mw/db/wof/admin-heapcheck-2026-10-12.db"
 	],
 	"postcode_locality_cjk": {
 		"_comment": "CJK postcode→locality via authoritative NAME-MATCH (not PIP — WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",

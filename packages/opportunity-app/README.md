@@ -48,7 +48,7 @@ construction, and wider when two selected buildings share it.
 
 ## Controls
 
-Each control sets one model input, and Recalculate applies them all. A changed input that carries an `InputBasis`
+Each control sets one model input, and Recalculate applies them all. A changed input that has an `InputBasis`
 takes the basis `operator_assumption`, stated by the scenario controls. `Scenario` gives month zero, the horizon, the
 discount rate and the cost adjustment no `InputBasis` field, so the inputs table states for each of them whether the
 scenario or the controls set it.
@@ -69,11 +69,11 @@ date before that day, and the page shows that refusal in place of figures.
 
 ## Words and shapes
 
-Color never carries a fact alone. Each building state has its words and a shape: partial availability is a circle
+Every fact that a color shows is also shown in words. Each building state has its words and a shape: partial availability is a circle
 with its left half filled, known unserved a circle crossed by a bar, zero premises a hollow square, unknown coverage a
 dashed circle around a question mark, and unknown unit count a dashed diamond around a question mark. A selected
 building has the word selected, a check mark and a heavier outline. Each segment states `verified existing segment` or
-`proposed construction`, and `shared` when two selected buildings use it. Every economic figure carries the word
+`proposed construction`, and `shared` when two selected buildings use it. Every economic figure is labeled with the word
 synthetic. The legend names every shape in words.
 
 The building list is the keyboard path. Tab reaches each checkbox row, Space selects or clears the building, and the
@@ -86,8 +86,8 @@ from assistive technology. A live region announces the recalculated figures afte
 
 | Spec                                     | Asserts                                                                                                                                                                                                                                                                                                                                   |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test/browser/scenario-controls.spec.ts` | Each control, changed with Example Buildings A, B and C selected, shows the figures of `selectionEconomics` for the changed scenario or its refusal's message; the evidence controls also change each building's state and denominator and each district's sums. A selection links to its dossier parts and to its cost and value report. |
-| `test/browser/keyboard.spec.ts`          | With the keyboard alone, a reader selects and clears buildings and reads each state, selection, source list and segment status from accessible names, descriptions and text.                                                                                                                                                              |
+| `test/browser/scenario-controls.spec.ts` | Each control, changed with Example Buildings A, B and C selected, shows the figures of `selectionEconomics` for the changed scenario or its refusal's message. The evidence controls also change each building's state and denominator and each district's sums. A selection links to its dossier parts and to its cost and value report. |
+| `test/browser/keyboard.spec.ts`          | A reader with only the keyboard selects and clears buildings and reads each state, selection, source list and segment status from accessible names, descriptions and text.                                                                                                                                                                |
 
 Both specs fail when the page sends a request to a host other than the preview server.
 

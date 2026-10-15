@@ -9,6 +9,17 @@
 	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
 	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
 	"resolutions": {
+		"gb-mixed-regulatory-2": {
+			"addressRoles": {
+				"Address1,Address2,Address3,Town,Postcode": "facility"
+			},
+			"coverage": "DVSA's active MOT test stations CSV, `https://assets.publishing.service.gov.uk/media/6abcee45943e890cb55e5d00/active-mot-stations.csv`, read 2026-10-12: 2,391,015 bytes, sha256 `1feeed6fa09140db3cde595c59b0503aa597cdc75a4846444c11122a6e5241c4`, 22,988 data rows over 14 columns with 0 ragged rows under a quote-aware parse; 923 lines carry a quote character. One row is one approved test premises. 22,969 of 22,988 postcodes take a valid Great Britain postcode shape and 121 postcode areas are present, including AB 217, EH 309 and G 369 in Scotland and CF 386, SA 342 and LL 282 in Wales; BT, Northern Ireland, has 0 rows, because Northern Ireland tests vehicles through its own agency. 7,126 rows open `Address1` with a digit, so about a third carry a house number and the rest open with a building, unit or estate name.",
+			"upstreamLineage": ["https://www.gov.uk/government/publications/active-mot-test-stations"],
+			"personalDataReview": {
+				"reading": "present",
+				"because": "The address columns locate test premises, and the `Trading_Name` column names a natural person on some rows. Among 22,988 trading names, 235 take an initial-and-surname shape without a business word, as `J J GRIFFITHS`, `R C WILSON`, `V WILLIAMS` and `S BISHOP` do, and 106 carry `AND SON` or `& SONS`, some of which are limited companies. A sole trader's name beside the premises where that person trades identifies them, which is the reading this register gave Enhetsregisteret's sole proprietorships. The shape count is a lower bound. **Whether a build that reads only the five address columns and never `Trading_Name` changes this reading is the same open question recorded for swisstopo's `BDG_NAME`**, and it is the operator's and counsel's to answer: an approved MOT premises is a commercial site with test equipment, so the address alone locates a business."
+			}
+		},
 		"es-mixed-regulatory-1": {
 			"adapterID": "es-catastro",
 			"addressRoles": {

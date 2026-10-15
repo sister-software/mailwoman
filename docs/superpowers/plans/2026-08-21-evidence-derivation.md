@@ -30,7 +30,7 @@
 
 **Files:**
 
-- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict, which is a record rather than code)
+- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict, a record rather than code)
 - Read only: `packages/dev-mcp/lib/constraint-census.ts`
 
 **Interfaces:**
@@ -189,7 +189,7 @@ describe("evidence constructors", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/evidence/evidence.test.ts`
-Expected: FAIL — cannot resolve `./index.ts`.
+Expected: fail — cannot resolve `./index.ts`.
 
 - [ ] **Step 3: Create the package manifest**
 
@@ -442,7 +442,7 @@ Expected: builds clean. A `TS6305: Output file has not been built from source fi
 - [ ] **Step 10: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/evidence/evidence.test.ts`
-Expected: PASS, 4 tests.
+Expected: pass, 4 tests.
 
 - [ ] **Step 11: Lint**
 
@@ -569,7 +569,7 @@ describe("requireExclusionBasis", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/evidence/coverage.test.ts`
-Expected: FAIL — `requireExclusionBasis` is not exported.
+Expected: fail — `requireExclusionBasis` is not exported.
 
 - [ ] **Step 3: Write the coverage module**
 
@@ -656,7 +656,7 @@ export interface RequireExclusionInput {
 	cell: { basis?: CoverageBasis | null } | undefined
 	/**
 	 * Identity of the fold this probe folded its key with. NOT a hand-written label: three packages already
-	 * export a function named `foldName` and all three compute different answers (`Ångström` → `a ngstro m` /
+	 * export a function called `foldName` and all three compute different answers (`Ångström` → `a ngstro m` /
 	 * `angstrom` / `angstrom`), so a name is not an identity. Derive it with {@link foldIdentity}.
 	 */
 	probeFold: string
@@ -710,7 +710,7 @@ export * from "./coverage.ts"
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/evidence/coverage.test.ts`
-Expected: PASS, 6 tests.
+Expected: pass, 6 tests.
 
 - [ ] **Step 6: Move core's definitions to re-exports**
 
@@ -756,7 +756,7 @@ Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `suppo
 
 - [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes rather than what it is called**
 
-Three packages export a function named `foldName` and no two agree. Measured:
+Three packages export a function called `foldName` and no two agree. Measured:
 
 ```
 input        resolver/fold-name   codex/normalize   un-locode/index
@@ -849,7 +849,7 @@ describe("foldIdentity", () => {
 ```
 
 Run: `yarn vitest run packages/evidence/coverage.test.ts`
-Expected: PASS, 9 tests.
+Expected: pass, 9 tests.
 
 - [ ] **Step 11: Move `res9ShortCellToRes6Parent` to `@mailwoman/spatial`**
 
@@ -931,7 +931,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: pass. Record the test count, which must be identical after the change. **This task's only acceptance criterion is that this file's assertions do not change.**
+Expected: pass. Record the test count. It must be identical after the change. **This task's only acceptance criterion is that this file's assertions do not change.**
 
 - [ ] **Step 2: Add the dependency**
 
@@ -972,7 +972,7 @@ export type PlausibilitySharedEvidence =
 
 - [ ] **Step 4: Populate the new fields at every construction site**
 
-Find each place the module pushes into `evidence` and add `kind`, `source` and (for the physical variant) `vintage`. The filing variant already carries `vintage`; the physical one must take it from the poi layer manifest already read for `coverage_detail`.
+Find each place the module pushes into `evidence` and add `kind`, `source` and (for the physical variant) `vintage`. The filing variant already sets `vintage`. The physical one must take it from the poi layer manifest already read for `coverage_detail`.
 
 - [ ] **Step 5: Run the suite to verify it passes UNCHANGED**
 
@@ -1006,7 +1006,9 @@ the res-9 `h3_cell` index whose rings "stop as soon as geometry proves no unprob
 hit". It is capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000` and has an integration test. Its docstring
 already states this task's requirement:
 
-> callers building negative evidence must consult `readLayerCoverage` rather than this reader alone.
+> Node reader for `uprn.db`, where a `null` is evidence of absence only inside published coverage, so callers building negative evidence must consult `readLayerCoverage`.
+
+That docstring now sits at `packages/resolver-wof-sqlite/lib/uprn/lookup.ts:6`.
 
 This task therefore does not build a probe. It adds the coverage consult and puts the answer in the type,
 so a caller cannot skip it.
@@ -1020,7 +1022,7 @@ so a caller cannot skip it.
 
 **Interfaces:**
 
-- Consumes: `requireExclusionBasis`, `foldIdentity`, `CoverageBasis`, `Exclusion` from Task 3; `shortCellToParentInt` from Task 3 step 11; the existing `UPRNLookup`, `UPRN_H3_RESOLUTION`, `UPRN_COVERAGE_H3_RESOLUTION`, `uprnH3Cell`
+- Consumes: `requireExclusionBasis`, `foldIdentity`, `CoverageBasis`, `Exclusion` from Task 3, `shortCellToParentInt` from Task 3 step 11, and the existing `UPRNLookup`, `UPRN_H3_RESOLUTION`, `UPRN_COVERAGE_H3_RESOLUTION`, `uprnH3Cell`
 - Produces:
   - `const UPRN_EXISTENCE_FOLD: string` — the identity of the point-keying used by both builder and probe
   - `function uprnAbsenceAt(input: { lookup: UPRNLookup; schemadb: Kysely<layerschemadatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
@@ -1130,7 +1132,7 @@ describe("uprnAbsenceAt", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/resolver-wof-sqlite/uprn-existence.test.ts`
-Expected: FAIL — cannot resolve `./uprn-existence.ts`.
+Expected: fail — cannot resolve `./uprn-existence.ts`.
 
 - [ ] **Step 3: Add the dependency**
 
@@ -1176,7 +1178,7 @@ The function:
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `yarn compile && yarn vitest run packages/resolver-wof-sqlite/uprn-existence.test.ts`
-Expected: PASS, 5 tests.
+Expected: pass, 5 tests.
 
 - [ ] **Step 6: Verify against the real extract**
 
@@ -1287,7 +1289,7 @@ describe("demote-only exclusions", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/resolver/street-evidence.test.ts`
-Expected: FAIL — `exclusions` is not a known option; `demoted` is not on the pick.
+Expected: fail — `exclusions` is not a known option; `demoted` is not on the pick.
 
 - [ ] **Step 3: Add the dependency**
 
@@ -1326,7 +1328,7 @@ In the body, build the demoted index set first. Then run the existing G1/G2 loop
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/resolver/street-evidence.test.ts`
-Expected: PASS, including every pre-existing test unchanged.
+Expected: pass, including every pre-existing test unchanged.
 
 - [ ] **Step 6: Run the gauntlet for regression**
 
@@ -1392,7 +1394,7 @@ Use the fixture helpers already present in that file. If none matches, build the
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/geocode-core.test.ts`
-Expected: FAIL — `epistemic_status` is undefined.
+Expected: fail — `epistemic_status` is undefined.
 
 - [ ] **Step 3: Add the field and its derivation**
 
@@ -1420,12 +1422,12 @@ No task in this plan emits `Inferred`. Leave it defined and unused rather than r
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/geocode-core.test.ts`
-Expected: PASS.
+Expected: pass.
 
 - [ ] **Step 5: Check the drop-in surfaces still serialize**
 
 Run: `yarn vitest run packages/photon packages/nominatim packages/api`
-Expected: PASS. A new required field on `GeocodeResult` reaches every drop-in's passthrough.
+Expected: pass. A new required field on `GeocodeResult` reaches every drop-in's passthrough.
 
 - [ ] **Step 6: Commit**
 
@@ -1507,7 +1509,7 @@ describe("projectDerivation", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/evidence/derivation.test.ts`
-Expected: FAIL — `projectDerivation` is not exported.
+Expected: fail — `projectDerivation` is not exported.
 
 - [ ] **Step 3: Implement the projection**
 
@@ -1516,7 +1518,7 @@ Create `packages/evidence/derivation.ts` with the three types above and a `proje
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest run packages/evidence/derivation.test.ts`
-Expected: PASS, 2 tests.
+Expected: pass, 2 tests.
 
 - [ ] **Step 5: Wire the opt-in field**
 
@@ -1554,7 +1556,7 @@ Use the fixture helper already in that file.
 - [ ] **Step 7: Run both suites**
 
 Run: `yarn compile && yarn vitest run packages/evidence packages/resolver/resolve-trace.test.ts packages/mailwoman/geocode-core.test.ts`
-Expected: PASS.
+Expected: pass.
 
 - [ ] **Step 8: Commit**
 
@@ -1622,7 +1624,7 @@ describe("H1 field offsets", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/tiger/lib/sdk/redistricting.test.ts`
-Expected: FAIL — `parseH1` is not exported.
+Expected: fail — `parseH1` is not exported.
 
 - [ ] **Step 3: Add the columns**
 
@@ -1675,7 +1677,7 @@ Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `yarn compile && yarn vitest run packages/tiger/lib/sdk/redistricting.test.ts`
-Expected: PASS, 2 tests.
+Expected: pass, 2 tests.
 
 - [ ] **Step 6: Verify against the real file at county scale**
 
@@ -1728,14 +1730,14 @@ Expected, at the `ban:fr` release `2026-05-18` extract: `{ streets: 2195655, com
 
 - [ ] **Step 2: Find whether BAN publishes a per-commune completeness signal**
 
-Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for fields carried and dropped at ingest. Then check the upstream BAN distribution for a per-commune certification or source field (communes publishing a certified Base Adresse Locale versus communes backfilled from other sources).
+Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for fields kept and dropped at ingest. Then check the upstream BAN distribution for a per-commune certification or source field (communes publishing a certified Base Adresse Locale versus communes backfilled from other sources).
 
 - [ ] **Step 3: Write the verdict**
 
 Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 
-- **DESIGNATED, per commune:** the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only and writes no row for the rest. An absent row means unknown, so never write a zero-completeness row.
-- **SOURCE_PRESENT only:** no per-commune signal exists, and the FR lexical arm does not ship. Record this as a closed negative result so nobody proposes it again.
+- **DESIGNATED, per commune:** the signal exists and is kept at ingest or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only and writes no row for the rest. An absent row means unknown, so never write a zero-completeness row.
+- **SOURCE_PRESENT only:** no per-commune signal exists, and the FR lexical arm does not ship. Record this as a closed negative result so that a later arc does not propose it again.
 
 Either verdict must state what was measured rather than what was assumed.
 

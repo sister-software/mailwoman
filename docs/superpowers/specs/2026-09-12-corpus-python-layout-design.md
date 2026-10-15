@@ -58,7 +58,7 @@ the shared value type, lives in the module that also does the work. Because of t
 failing at startup.
 
 Their comment claims they keep `tokenizer.py` import-light. Measurement contradicts that: `gazetteer_anchor` adds
-2,263 µs and `country_lexicon` 117 µs on top of `tokenizer`'s 36,869 µs, which is 6.5%. Neither module imports
+2,263 µs and `country_lexicon` 117 µs on top of `tokenizer`'s 36,869 µs. The two together add 6.5%. Neither module imports
 torch. Deferred imports elsewhere in the tree do save real startup time and stay (see §11).
 
 Both `huggingface/nanotron` and `allenai/OLMo-core` hold value types in a `data/types.py` that everything imports.
@@ -112,7 +112,7 @@ keys the weights packages and the `--locale` flag.
 ## 5. What the prefix rule flags
 
 `packages/repo-health/lib/checks/prefix-directories.ts` treats two or more children sharing their first delimited
-segment as a family, with the sibling named for the prefix becoming the directory's `index`. The conversion of `_` to `-` reads:
+segment as a family, with the sibling whose name equals the prefix becoming the directory's `index`. The conversion of `_` to `-` reads:
 
 | Location                 | Prefix                                                                     | Members         | Destination                                            |
 | ------------------------ | -------------------------------------------------------------------------- | --------------- | ------------------------------------------------------ |
@@ -122,7 +122,7 @@ segment as a family, with the sibling named for the prefix becoming the director
 | `src/mailwoman_train/`   | `jp`                                                                       | 2 files         | `countries/jp/`                                        |
 | `src/mailwoman_train/`   | `kr`                                                                       | 2 files         | `countries/kr/`                                        |
 | `scripts/`               | `build`                                                                    | 3 files         | `cli/commands/`                                        |
-| `scripts/`               | `verify`                                                                   | 2 files         | split; see section 8                                   |
+| `scripts/`               | `verify`                                                                   | 2 files         | split, see section 8                                   |
 | `tests/mailwoman_train/` | `span`, `tokenizer`, `jp`, `char`, `audit`, `anchor`, `country`, `augment` | 4,3,3,3,3,3,2,2 | mirror the source tree                                 |
 | `modal/train_remote.py`  | `sync`                                                                     | 57 functions    | one function over a table                              |
 | `modal/train_remote.py`  | `mean`                                                                     | 7 functions     | `init.py`, one function over a table                   |
@@ -165,7 +165,7 @@ mailwoman_train/
     └── cjk/ overlay.py       regional grouping
 ```
 
-The tree uses `observability/` rather than `logging/`. Python resolves a subpackage named `logging` correctly inside
+The tree uses `observability/` rather than `logging/`. Python resolves a subpackage called `logging` correctly inside
 a package that also imports the standard library module of that name, but a reader would find it confusing.
 `torchtitan` uses the same name.
 
@@ -186,8 +186,8 @@ scaling model would organize files but give a new country no contract to impleme
 
 **`train/callbacks/`** follows `allenai/OLMo-core`, which has 22 callback modules, one per concern. `train()`'s 476
 lines become a loop plus five callbacks: console logging, the CSV row (`eval_csv_row`), the periodic evaluation
-(`_eval_val`), checkpointing (`save_checkpoint`), and trackio. Each becomes independently testable, which none of
-them is today.
+(`_eval_val`), checkpointing (`save_checkpoint`), and trackio. Each becomes independently testable. None of
+them is testable that way today.
 
 ## 8. Target tree: `launch/`
 
@@ -202,7 +202,7 @@ resolved to: None
 
 `None` means `import modal` resolved to the local `corpus-python/modal/` directory as a namespace package, shadowing
 the Modal SDK. It works today only because `modal run corpus-python/modal/train_remote.py` executes one file as a
-script, which puts `corpus-python/modal/` on `sys.path` rather than `corpus-python/`.
+script. That invocation puts `corpus-python/modal/` on `sys.path` rather than `corpus-python/`.
 
 The split requires Modal's module mode: an `__init__.py` imports every member module so the decorated
 functions register, and the package is invoked as `modal run -m <pkg>.<mod>`. That makes the directory a real
@@ -224,7 +224,7 @@ launch/
                           street_type_contrast, suffix_plasticity
 ```
 
-Each table entry carries what a clone varies: the version string, the rclone source and destination pairs, and the
+Each table entry holds what a clone varies: the version string, the rclone source and destination pairs, and the
 paths its verify block checks.
 
 ### 8.3 The duplication is a documented instruction
@@ -270,11 +270,11 @@ without `uv run` or an environment. The pre-commit hook would depend on a synced
   own project.
 - Delete `src/mailwoman_corpus/`: zero importers, a docstring and a `__version__`.
 - Add a Python counterpart of `prefix-directories` to `repo-health`, so section 5 stays satisfied. No structural
-  check in the repository covers the Python tree, which is why section 3's two defects went unreported.
+  check in the repository covers the Python tree. For that reason section 3's two defects went unreported.
 
 ## 10. Implementation sequence
 
-Each step ends green on the 983 tests, which run in 29.6 s, so every step is independently revertible.
+Each step ends green on the 983 tests. The tests run in 29.6 s, so every step is independently revertible.
 
 1. Add `types.py` and remove the five deferred imports.
 2. Add `text/` and repoint the five importers away from `build_jp_slice`.

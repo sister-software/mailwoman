@@ -1,4 +1,4 @@
-# v5.6.0 — v5.5.0's mixture plus the bare-postcode source, the shape the corpus never carried
+# v5.6.0 — v5.5.0's mixture plus the bare-postcode source, a shape absent from every earlier corpus
 #
 # Control: v5.5.0-restored-generations-60k.yaml at seed 42. This config differs from it in the corpus
 # version, one `source_reps` line and one receipt, so every difference between the two arms is the
@@ -6,7 +6,7 @@
 #
 # what is being fixed. `100 00` is a real Prague postcode. v5.3.0 read it as one. v5.4.0 and v5.5.0 read
 # `100` as a house number and `00` as a street, so the resolver is handed no postcode and returns
-# nothing. Held out, 32 CZ/SK codes of the `NNN NN` shape: 31/32 under v5.0.0, v5.2.0 and v5.3.0, then
+# no result. Held out, 32 CZ/SK codes of the `NNN NN` shape: 31/32 under v5.0.0, v5.2.0 and v5.3.0, then
 # 0/32 under v5.4.0 and v5.5.0. The v5.0.0/v5.2.0 pair share a corpus and differ only in seed, so their
 # agreement at 31/32 is what makes the collapse attributable to the corpus rather than to seed noise.
 #
@@ -14,11 +14,11 @@
 # appears zero times, and `nnnn LL` appears once. The correct reading was always generalization off
 # longer addresses. v5.4.0's added OpenStreetMap PK/BD/VN rows raise the evidence for "a leading digit
 # group is a house number" at that opening from 393.2 to 443.7 rows per pass, and an unsupported
-# generalization gives way. Nothing in v5.5.0 addressed that: restoring the two dropped generations put
+# generalization gives way. No change in v5.5.0 addressed that: restoring the two dropped generations put
 # 12,759 IN-context `NNN NN` rows back, and they do not transfer to the bare input — 0/32 confirms it.
 #
 # what is added. `synth-bare-postcode`: 20,460 rows of real codes read from the OpenAddresses extracts,
-# no synthesis, each emitting a postcode and nothing else. CZ 5,290 / SK 2,112 / SE 3,058 / NL 10,000,
+# no synthesis, each emitting a postcode as its only token span. CZ 5,290 / SK 2,112 / SE 3,058 / NL 10,000,
 # half spaced and half compact per country. Every surface is checked through `computeQueryShape` at build
 # time, so a surface the detector will not read as a postcode cannot ship.
 #
@@ -39,20 +39,20 @@
 # over 1,000,000 sampled rows at seed 43:
 #
 #   draw level      2,652 rows, 0.2652% of the epoch, 0.130 passes per row of the source
-#   emitted level   2,049 rows, 0.2049% — what the trainer actually reads
+#   emitted level   2,049 rows, 0.2049% — what the trainer reads
 #   CZ receipt        668 rows observed against a floor of 250
 #
 # The draw level matches the intent exactly: 0.130 per epoch x 7.68 epochs in a 60,000-step run is 1.0
 # pass per row, and it lands beside `synth-sg-register` (0.132) and `synth-pk-register` (0.130), well
 # under the audit's outlier threshold of 8 x a 0.2 median.
 #
-# the emitted level is 23% lower, and that is the number TO reason with. Augmentation expands long
+# the emitted level is 23% lower. The emitted level is the figure to reason from. Augmentation expands long
 # addresses into more rows, so a short-row source keeps a smaller part of a fixed emitted budget: at
 # 0.2049% this source delivers about 15,736 rows over the run, or 0.77 passes per row rather than 1.0. That is
 # not the `augment_exclude_sources` entry below — `synth-no-fragment` (0.7696) and `synth-fr-fragment`
-# (0.7708) are not excluded and carry the same ratio, and `synth-sg-register` sits at 0.8247.
+# (0.7708) are not excluded and show the same ratio, and `synth-sg-register` sits at 0.8247.
 #
-# there is no ratio TO beat AT this shape, and the 443.7 comparison this file used to carry was the
+# there is no ratio TO beat AT this shape, and the 443.7 comparison an earlier draft of this file made was the
 # wrong instrument. `census_opening_token` counted the openings over the same 1,000,000 sampled rows:
 #
 #   opening                      as house_number   as postcode
@@ -67,7 +67,7 @@
 # surfaces like `100 00 Praha, Czechia`, which the 0/32 result already showed do not transfer.
 #
 # What separates `100 00` from `100 00 Praha, Czechia` is that the row ends after two tokens. Counted as
-# a complete row, the mixture carries 508 per 1,000,000 emitted — 3,901 over the run, every one from
+# a complete row, the mixture contains 508 per 1,000,000 emitted — 3,901 over the run, every one from
 # this source — against zero labeled house_number at either level, and against zero of any kind before
 # v0.30.0. The quantity is a shape going from absent to present rather than a margin over rival evidence, so
 # the only open question is whether about 3,900 instances teach it. A census cannot answer that. the run
@@ -78,12 +78,12 @@
 #   1. The held-out spaced-postcode sweep — `eval bare-postcode`, 32 CZ/SK `NNN NN` and 24 NL `nnnn LL`,
 #      none of them on the board. v5.5.0 reads 0/32 and 19/24. This arm must recover CZ/SK without
 #      losing NL. a partial recovery is a partial result rather than a pass.
-#   2. `fr.bare_street_intact` in the promotion battery, which v5.5.0 raised 95 -> 100. FR is tier 1, so
-#      a drop here disqualifies the arm outright.
-#   3. The target-family boards v5.4.0 won and v5.5.0 held, which must not give any of it back:
+#   2. `fr.bare_street_intact` in the promotion battery. v5.5.0 raised it 95 -> 100. FR is tier 1, so
+#      a drop here disqualifies the arm.
+#   3. The target-family boards v5.4.0 won and v5.5.0 held. This arm must not lose any of those rows:
 #      `sg/register.jsonl` 118/240, `us/family-po-box.jsonl` 6/6, `ve/family-locality-postcode.jsonl` 5/5.
 #
-# The new receipt below fails the run if the added source does not actually draw. The check that would
+# The new receipt below fails the run if the added source draws zero rows. A check of that kind would
 # have caught the silent generation drop five model versions earlier.
 
 data:
@@ -266,8 +266,8 @@ data:
     synth-suffix-boundary: 2.5
   # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the seven
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
-  # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register sources take one pass each because they
-  # carry their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the
+  # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register sources take one pass each because their
+  # rows already vary. the four-to-five-thousand-row sources take eight. Eight passes is the
   # exposure `synth-suffix-boundary` already draws at weight 2.5.
   #
   # `synth-bare-postcode` takes one pass, the same as the two register sources, because its 20,460 rows
@@ -283,8 +283,8 @@ data:
     synth-bare-postcode: 1.0
   required_corpus_receipts:
     # The added source. A receipt is what turns "the weights name it" into "the sampler drew it": the
-    # generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing
-    # failed for five model versions.
+    # no config listed the generations dropped before v5.5.0, and their omission failed no check. For that
+    # reason no check failed for five model versions.
     #
     # The floor is counted rather than chosen by symmetry with the entries below. A reps target of 1.0 is exactly
     # rows/samples of the run (`derive_source_weights`), so 20,460 rows over 7,680,000 samples draw about
@@ -295,7 +295,7 @@ data:
       min_draws: 250
       source: synth-bare-postcode
       country: CZ
-    # The two restored generations. Carried forward from v5.5.0 unchanged.
+    # The two restored generations. Copied from v5.5.0 unchanged.
     - name: cz-postcode-first-current-generation
       min_draws: 1000
       source: synth-cz-pcfirst-preposition-v21
@@ -337,9 +337,9 @@ data:
       source: osm
   augment_exclude_sources:
     - synth-suffix-boundary
-    # A bare postcode has nothing to augment: a directional, a region or a glue token appended to
-    # `119 00` produces a row whose label sequence no longer matches its surface, and the shape this
-    # source exists to teach is the two-token input with nothing else in it.
+    # A bare postcode has no context for augmentation to vary. A directional, a region or a glue token
+    # appended to `119 00` produces a row whose label sequence no longer matches its surface. The shape
+    # this source exists to teach is the two-token input with no other token in it.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

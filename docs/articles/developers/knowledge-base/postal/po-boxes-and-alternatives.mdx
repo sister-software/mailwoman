@@ -10,12 +10,12 @@ role: explanation
 
 `PO Box 1234, San Francisco, CA 94119` parses without errors and then geocodes to the middle of San
 Francisco. No step failed, but the coordinate is not the box's location. This page explains what kind
-of address this is, which other address shapes behave the same way, and what a geocoder should return
+of address this is, what other address shapes behave the same way, and what a geocoder should return
 for them.
 
 ## The analog
 
-A PO box is a shelf behind a counter. The postal service carries the item to the shelf and stops, and
+A PO box is a shelf behind a counter. The postal service brings the item to the shelf and stops, and
 the recipient comes to collect it. That is a complete delivery, and the address that describes it is a
 complete address.
 
@@ -77,7 +77,7 @@ stops and deliverability checks begin.
 
 A person can also have several of these addresses at once: a street address where they live, a box
 where they receive mail, and a mail drop for a business, with no component shared between them. Record
-address-text matching alone treats them as three people. Resolved-component matching with an
+matching on address text only treats them as three people. Resolved-component matching with an
 explicit rule for box addresses avoids that
 ([Match messy records](../../how-to/match-messy-records.mdx)).
 

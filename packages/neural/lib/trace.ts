@@ -15,6 +15,7 @@ import type { TokenizedPiece } from "#tokenizer"
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
 	"fst",
+	"anchorRegion",
 	"streetMorphology",
 	"spanProposer",
 	"venueHead",

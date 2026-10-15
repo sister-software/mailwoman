@@ -1,10 +1,10 @@
-# Is per-piece tagging worth its incoherence? — the B0 verdict
+# Does per-piece tagging provide more than its incoherence costs? — the B0 verdict
 
 2026-07-16. Asked directly: does our intra-word emission incoherence vindicate or villainize the
 architecture?
 
-**Verdict: MIXED, and the mix is informative. The capability is real and provably beyond a word-unit
-tagger's ceiling. We exercise it only when a partner word licenses it — which is the same defect,
+**Verdict: MIXED, and the mix is informative. The capability is real and lies outside a word-unit
+tagger's output space, as the `12/345` row below shows. We exercise it only when a partner word licenses it — which is the same defect,
 for the third time, in a third component. The architecture is not the problem. The license is.**
 
 ---
@@ -36,7 +36,7 @@ Unit 12/345 Main St
 form. Our parity gold has demanded this since the v1 rules era (`v1-address.aus-2`).
 
 This is not deepparse scoring lower. **The correct answer is not in its output space.** One word gets
-one tag; there is no assignment of tags-to-words that yields unit=12 _and_ house_number=345. No amount
+one tag. There is no assignment of tags-to-words that yields unit=12 _and_ house_number=345. No amount
 of training or data fixes that — it is the unit of decision.
 
 An existence proof needs one instance and it has one. The per-piece unit provides a class of answers a
@@ -51,8 +51,8 @@ word unit cannot express.
 | `14 Glen Neaves`             | **postcode 14** ✗, street ✓                            | StreetNumber 14 ✓  |
 | `Epleskogen 39A`             | **locality** "Epleskogen", postcode 39A                | StreetNumber 39a ✓ |
 | `Tindvegen nedre 44B`        | **locality** "Tindvegen", street "nedre", postcode 44B | StreetNumber 44b ✓ |
-| `Tindvegen 44B` _(control)_  | street ✓, house_number ✓                               | ✓                  |
-| `Main St 44B` _(control)_    | street ✓, house_number ✓                               | ✓                  |
+| `Tindvegen 44B` _(control)_  | street ✓, house_number ✓                               | correct            |
+| `Main St 44B` _(control)_    | street ✓, house_number ✓                               | correct            |
 
 **The last two rows do the work.** `Tindvegen 44B` — an unfamiliar Norwegian street — parses
 correctly. Add one word and `Tindvegen nedre 44B` breaks. So the cost arm is not "unfamiliar street
@@ -106,18 +106,18 @@ counter-distribution, without touching the architecture at all.
 
 **The remaining risk:**
 
-- Their failure mode is bounded; ours is not. A word-unit tagger's worst case is a wrong tag. Ours is
+- Their failure mode is bounded. Ours is not. A word-unit tagger's worst case is a wrong tag. Ours is
   a _self-contradictory_ one, and Viterbi resolves it by discarding a first piece that was correct
   (0.604 `B-house_number`, outvoted 3-to-1 by its own continuations). We destroy information we
   already had.
-- The `enforceWordConsistency` heal cannot reach this class, and the arithmetic says why: the vote
+- The `enforceWordConsistency` heal cannot reach this class, and the arithmetic shows why: the vote
   sums softmax mass, and the continuations have more of it (postcode 1.53 vs house_number 0.65 on
   `▁3|9|A`). It works exactly as designed and still lands on postcode. Do not tune it for this.
 - We collect the benefit only under license. An unexercised capability is not a capability.
 
-**Not settled here:** the arc's own research says a lower-fertility vocab is _upstream_ of any span
+**Not settled here:** the arc's own research places a lower-fertility vocab _upstream_ of any span
 head, and the span head was built and closed first — a conditional verdict flagged on its parked PR.
-Nothing on this page re-opens it. But note the direction: if the license defect is a data property
+This page does not re-open it. But note the direction: if the license defect is a data property
 and the extract fixes it, the vocab work is an optimization rather than a prerequisite.
 
 ## Caveats
@@ -127,7 +127,7 @@ and the extract fixes it, the vocab work is an optimization rather than a prereq
 - Three rows are marked `contested` (`Apt4B`, `1-2-3 Chome`, `Eberswalder Straße 100 104`) — each
   turns on a schema call we have not made — and are excluded from every count above.
 - deepparse is good research and this is not a scoreboard. It ties us where the schemas overlap and
-  beats us on one tag; the representational asymmetry runs both ways and this page is about ours.
+  beats us on one tag. The representational asymmetry runs both ways, and this page is about ours.
 
 ## Reproduce
 

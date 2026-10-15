@@ -5,17 +5,17 @@
 
 ## D1 — step budget + compute envelope
 
-Receipts. The shipped lineage's training totals: the v264-era base trained 40–100k-step runs;
-every arc since has been an 8k-step fine-tune (~35 min A100 at ~4.3 steps/s). A from-scratch base
+Receipts. The shipped lineage's training totals: the v264-era base trained 40–100k-step runs.
+Every arc since has been an 8k-step fine-tune (~35 min A100 at ~4.3 steps/s). A from-scratch base
 at the current geometry (~29M params, 128 seq) with the full feed:
 
 - **Proposed: 60k steps, cosine anneal, one seed** (s42), checkpoints every 5k, the over-trust
   watch grading every save from 40k on (the 6k-peak/8k-decay pattern was a _fine-tune constant-LR_
-  artifact; a from-scratch anneal changes the dynamics — the ladder decides empirically).
+  artifact. A from-scratch anneal changes the dynamics, and the ladder decides empirically).
 - Wall-clock ≈ 4 A100-hours for the run itself. The direct budget is the _ladder_ rather than the run:
   per-save P0 grids + exports + the local golden battery ≈ 1 agent-night per candidate window.
 - **Envelope: 2 runs maximum before a stop-and-report** (the arc discipline: one pre-registered
-  run; one contingency re-run for a named, single-delta fix; a third attempt is an operator
+  run, then one contingency re-run for a stated, single-delta fix. A third attempt is an operator
   conversation). Total ≈ 10 A100-hours + 2–3 agent-nights.
 
 ## D2 — feed assembly
@@ -25,23 +25,23 @@ the composition every golden floor was reduce against — **plus**:
 
 | Addition                                                       | Status                                                                     | Case                                                                                                                                                                     |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Evidence-channel painting (street v3 / locality-surface v6→v7) | street proven; locality UNTRAINED-TO-DATE (#1349 — see the addendum below) | the bundle native from step 0                                                                                                                                            |
+| Evidence-channel painting (street v3 / locality-surface v6→v7) | street proven, locality UNTRAINED-TO-DATE (#1349 — see the addendum below) | the bundle native from step 0                                                                                                                                            |
 | Ordinal-street augmentation 0.3                                | proven (v3.24)                                                             | the num-ordinal invariant                                                                                                                                                |
 | Absence + false-evidence curricula                             | proven                                                                     | anti-over-trust, from step 0                                                                                                                                             |
-| DE country fold → locality lexicon **v7**                      | new increment                                                              | the deliberately-deferred fold; built + conditional exactly like v5/v6 (four laws + digit guard; DE has 67k neighborhoods — the parent-vouch path gets its third locale) |
-| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost                                                   | from-scratch re-learns the class natively; the boost was fine-tune medicine                                                                                              |
+| DE country fold → locality lexicon **v7**                      | new increment                                                              | the deliberately-deferred fold, built + conditional exactly like v5/v6 (four laws + digit guard, DE has 67k neighborhoods — the parent-vouch path gets its third locale) |
+| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost                                                   | from-scratch re-learns the class natively, and the boost existed only to repair a fine-tune                                                                              |
 
 **Deploc passengers stay out** (synth-gb 10.0 / nz / es-pedania / fr-lieudit, punct_drop 0.6).
 Each re-enters only with its own promotion case — the v3.22 feed attribution is the receipt
 (GB street-boundary transfer, CA po-box dilution). The fragment classes those extracts fed are
-covered by the bundle channels now; if a G1 bare-locality bar misses, es-pedania/fr-lieudit are
-the named first re-entrants (the v3.22 pre-registration's own contingency).
+covered by the bundle channels now. If a G1 bare-locality bar misses, es-pedania/fr-lieudit are
+the designated first re-entrants (the v3.22 pre-registration's own contingency).
 
 ### Addendum 2026-07-29 — the #1349 reframe (locality channel never trained)
 
 Found after this memo merged: `_to_tensor_batch` never converted the locality_surface tensors, so
 **every bundle-era run (v3.16 → the shipped v3.24) trained the locality channel on zeros** — the
-shipped projection is frozen at xavier init (receipts on #1349: token embedding exactly 0/384;
+shipped projection is frozen at xavier init (receipts on #1349: token embedding exactly 0/384,
 projection absmax = the xavier bound). The trainer fix + a structural key-parity test landed in
 #1350. What this changes here:
 
@@ -49,7 +49,7 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
   (v3.16 damage classes, the fed-register heals) came from a CONSISTENT RANDOM MARKER — real
   painted features through a frozen random projection. Per-channel ablation on the shipped
   checkpoint: locality-fed is −0.058 net in asis but **+0.035 net in the lowercase user register
-  (homonym +0.270)** — the marker's existence helps where the case cue is dead; prod's
+  (homonym +0.270)** — the marker's existence helps where the case cue is dead. Prod's
   street-context check masks most of the asis damage (bare-locality −0.355 unconditional).
 - **The three-law selectivity receipts survive as PAINTING HYGIENE** (they made a blind marker
   net-positive by restricting it to discriminative hits) rather than as evidence of trained-channel
@@ -59,8 +59,8 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
   the accidental marker's own readings (homonym-lower +0.270 fed-vs-zeroed is the number to beat);
   target: the bare-locality damage class (the marker's cost) goes to ~0 under the now--
   reaching-the-channel absence/false-evidence curricula.
-- **Risk note for G-checks:** the shipped reference (6.7.0) carries the marker's lowercase homonym
-  behavior; a properly-trained channel plausibly clears it, but if the homonym-lower bar sits
+- **Risk note for G-checks:** the shipped reference (6.7.0) shows the marker's lowercase homonym
+  behavior. A properly-trained channel plausibly clears it, but if the homonym-lower bar sits
   exactly at the marker's accidental gain, read the miss against this addendum before iterating.
 
 ## D3 — tokenizer
@@ -74,8 +74,8 @@ the unification question rather than this base.
 
 ## The pre-registered check sheet (sketch → finalized in the launch config header)
 
-1. **G1–G7 as evolved through v3.19→v3.24** (fragment bars with lowercase legs; ablation vs the
-   6.7.0 same-grader reference; invariance vs 6.7.0 int8; gauntlet ×3; golden-ablated; canary;
+1. **G1–G7 as evolved through v3.19→v3.24** (fragment bars with lowercase legs, ablation vs the
+   6.7.0 same-grader reference, invariance vs 6.7.0 int8, gauntlet ×3, golden-ablated, canary, and
    the pre-ship gauntlet on the dev-linked flip).
 2. **Match-or-beat 6.7.0 with zero waivers** — including fr.cedex against the 85.6-class reading
    (the unwaived shipped-same-harness number), the entire point of from-scratch. All golden floors

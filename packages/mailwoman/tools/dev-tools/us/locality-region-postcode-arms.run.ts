@@ -2,7 +2,8 @@
  * The four surfaces the locality-region-postcode decision rests on, over the same
  * US localities, through the production path.
  *
- * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003` does.
+ * `Washington, DC 20003` answers a locality at a far lower rate than
+ * `123 Main St, Washington, DC 20003` does.
  * The corpus reason is that no US recipe ever put a locality in front of a region code
  * and a postcode without a street ahead of it.
  *
@@ -10,9 +11,9 @@
  * so the three-arm table and the reverse risk are one measurement rather than two.
  *
  * The `«locality», «region» «postcode»` training form risks the inverse,
- * where a genuine street before a region code is read as a locality.
+ * where a real street before a region code is read as a locality.
  * The reverse arm measures it by putting a street in that position and counting
- * how often it comes back tagged `locality`.
+ * the rate at which it comes back tagged `locality`.
  * A row whose locality is null there is correct.
  *
  * Three arms render through `formatAddress` and the codex layouts.
@@ -181,7 +182,7 @@ interface RowResult {
 	words: number
 }
 
-// A probe written to price a corpus change has to be able to point at the model that change produced.
+// A probe written to measure a corpus change has to be able to point at the model that change produced.
 // Without this option, the run grades only the installed model.
 // That is the comparison arm for a candidate change.
 const depsOptions: GauntletDepsOptions = {

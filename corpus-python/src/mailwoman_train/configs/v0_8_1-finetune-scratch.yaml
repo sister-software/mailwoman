@@ -1,8 +1,8 @@
-# decisive round (v0.8.1): the v0.8.0 40k/5e-5 fine-tune under-trained both arms (resolver ~50%
+# second round (v0.8.1): the v0.8.0 40k/5e-5 fine-tune under-trained both arms (resolver ~50%
 # vs shipped v0.7.2's 96%). Per DeepSeek turn-4: re-run at the v0.7.2-proven recipe (1.5e-4
 # constant / 100k / 1k warmup) — known to reach ~96% resolver — so pretraining is judged at the
 # task ceiling rather than the basement. ls 0.1 + CRF off retained. Only encoder init differs across arms.
-# v0.8.1 — supervised fine-tune from scratch (arm B of the decisive A/B. the honest baseline).
+# v0.8.1 — supervised fine-tune from scratch (arm B of the pretraining A/B. the no-pretraining baseline).
 #
 # Random encoder init (no init_from), identical recipe to v0_8_0-finetune-pretrained.yaml. This is
 # the fair baseline: the only difference between the two arms is the encoder initialization, so any
@@ -16,7 +16,7 @@
 #   - label_smoothing 0.1: shared calibration change on both arms.
 #   - CRF off (crf_loss_weight 0.0): matches what trained stably. avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
-#     so the comparison reflects the parser the product actually uses.
+#     so the comparison reflects the parser the product uses.
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \

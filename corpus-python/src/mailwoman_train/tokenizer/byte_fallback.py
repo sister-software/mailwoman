@@ -1,4 +1,4 @@
-"""How often a trained tokenizer falls back to raw bytes, overall and per script."""
+"""The rate at which a trained tokenizer falls back to raw bytes, overall and per script."""
 
 from __future__ import annotations
 

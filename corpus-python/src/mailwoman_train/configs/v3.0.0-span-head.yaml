@@ -5,8 +5,8 @@
 #
 # the check (pre-registered, docs/superpowers/plans/2026-07-15-727-stage2-phase1-span-head.md):
 #   seg@1 > token@1 on the parity corpus. Baselines (v264, ship config): street token@1 0.573. a
-#   segment decode over the summed-BIO stand-in scored 0.453 — worse, which is exactly why a trained
-#   span scorer is necessary and decode-hardening alone was falsified (night-3 postmortem).
+#   segment decode over the summed-BIO stand-in scored 0.453 — worse. That result is why a trained
+#   span scorer is necessary and why decode-hardening without a trained scorer was falsified (night-3 postmortem).
 # Secondary read: oracle@10 must rise from 0.749. If seg@1 crosses but oracle@10 is flat, the scorer
 # reshuffled the list without learning better spans.
 #

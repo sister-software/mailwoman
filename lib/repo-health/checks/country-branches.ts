@@ -5,14 +5,14 @@
  * @file Reports a branch on one hard-coded country in code that serves every country.
  *
  *   A comparison such as `country === "US"` in a shared module gives one country a path the rest of the
- *   planet does not get, and the code carries no mark of it. The venue-head exclusion read subdivision codes for
+ *   planet does not get, and the code has no mark of it. The venue-head exclusion read subdivision codes for
  *   US, CA and AU from codex tables while a planetary source sat in the admin database. The check makes
  *   every such branch declare itself.
  *
- *   A branch is admitted in three places. A module under a country directory or with a country file name,
- *   whose path has a segment that is an ISO 3166-1 alpha-2 code in lowercase such as
- *   `packages/corpus/lib/us/` or `postcode/locality/jp.ts`, is per-country code by its home. A module under `packages/codex/` holds per-country data by definition. Anywhere else, the
- *   statement's line or the line above it carries `country-branch: <reason>`, which states why the rule is
+ *   A branch is admitted in three places. A module under a country directory or with a country file name is
+ *   per-country code by its home. Its path has a segment that is a lowercase ISO 3166-1 alpha-2 code, such as
+ *   `packages/corpus/lib/us/` or `postcode/locality/jp.ts`. A module under `packages/codex/` holds per-country data by definition. Anywhere else, the
+ *   statement's line or the line above it contains `country-branch: <reason>`, which states why the rule is
  *   one country's and what planetary source would replace it.
  *
  *   `ZZ` is the synthetic-row country rather than a place, so a comparison against it is admitted.
@@ -82,7 +82,7 @@ export interface CountryBranch {
 
 /**
  * Returns every country branch in the given sources that sits outside a per-country home
- * and carries no `country-branch:` marker on its line or the line above.
+ * and has no `country-branch:` marker on its line or the line above.
  */
 export function findCountryBranches(files: ReadonlyArray<{ file: string; text: string }>): CountryBranch[] {
 	const found: CountryBranch[] = []
@@ -90,7 +90,7 @@ export function findCountryBranches(files: ReadonlyArray<{ file: string; text: s
 	for (const { file, text } of files) {
 		if (isCountryHome(file)) continue
 
-		// Most files compare no country, so a text search skips them before parsing.
+		// Most files compare no country, so a substring search skips them before parsing.
 		if (!/"[A-Z]{2}"/u.test(text)) continue
 
 		const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)

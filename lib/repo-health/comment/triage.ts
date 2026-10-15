@@ -81,7 +81,7 @@ const LONG_COMMENT_MINIMUM_LENGTH = 900
 const LONG_COMMENT_MINIMUM_SENTENCES = 8
 
 /**
- * How many sentences a comment's prose contains, splitting on terminal punctuation.
+ * The number of sentences a comment's prose contains, splitting on terminal punctuation.
  *
  * The split leaves an empty segment wherever two terminators meet and one at the end
  * when the prose closes on a terminator, so only segments carrying a non-space character count.

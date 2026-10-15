@@ -6,25 +6,25 @@
 
 ## Execution notes
 
-The plan below is the text the work started from. Where the code that landed differs, this section is the record; the
+The plan below is the text the work started from. Where the code that landed differs, this section is the record. The
 task bodies are left as written.
 
 - **No `fetchMock`.** `@cloudflare/vitest-pool-workers` 0.22 exports none. The Stripe client takes a fetch
   implementation (`stripeClient(env, fetchImplementation)`), and `test/support/stripe-mock.ts` exports `stripeFetch(routes)`,
-  a fetch that answers by method and path prefix and 404s anything else, which the SDK raises as an error.
+  a fetch that answers by method and path prefix and 404s anything else. The SDK raises a 404 as an error.
 - **`env` comes from `cloudflare:workers`.** The pool deprecates `env` from `cloudflare:test`. `test/support/env.d.ts`
-  declares `Cloudflare.Env` as the worker's bindings plus `TEST_MIGRATIONS`, and `tsconfig.test.json` carries the pool's
+  declares `Cloudflare.Env` as the worker's bindings plus `TEST_MIGRATIONS`, and `tsconfig.test.json` includes the pool's
   `cloudflare:test` types, so no test casts `env`.
 - **A charge no longer references its invoice directly.** Under the pinned API the link runs `charge.payment_intent` →
   `invoicePayments.list({ payment: { type: "payment_intent", payment_intent } })` → `data[0].invoice`
   (`invoiceIDForCharge` in `lib/stripe/handlers.ts`).
 - **The claim route re-reads an unseen session.** A Checkout Session the ledger has not seen is retrieved from Stripe by
-  id and its license row created there, so the success page never depends on webhook order; only a session Stripe does
+  id and its license row created there, so the success page never depends on webhook order. Only a session Stripe does
   not know is a 404.
-- **`takePendingRefreshSecret` is a read and a conditional clear.** `RETURNING` on the update alone answers the cleared
-  column, which is null.
+- **`takePendingRefreshSecret` is a read and a conditional clear.** `RETURNING` on the update by itself returns the cleared
+  column, and that column is null.
 - **Reconciliation has a third sweep and a `failed` list.** Every license is compared with its subscription's current
-  state; a dispute Stripe has ruled `won` hands a revoked license back to its subscription's state; a license whose
+  state. A dispute Stripe has ruled `won` hands a revoked license back to its subscription's state. A license whose
   Stripe records cannot be read is reported by id and never stops the sweep.
 - **The webhook checks `eventRecorded` first, runs the handler, then `recordEventOnce`.** This is the order the Task 6
   body argues for, with the pre-check added as an explicit step.
@@ -32,13 +32,13 @@ task bodies are left as written.
   It also refuses a private-key marker or a Stripe key prefix in the bundle, and `upload_source_maps = true`.
 - **From the PR #2160 review.** The email is re-sent while `pending` as well as `failed`, by the retry that finds the
   token and by reconciliation. The agreement version comes from the Checkout Session's `agreement_version` metadata
-  (set on the Payment Link), is recorded on the license once, and is signed into every token for its life; the plan
-  catalog carries no agreement. A subscription that ends leaves the license `active` until the current token's date
+  (set on the Payment Link), is recorded on the license once, and is signed into every token for its life. The plan
+  catalog stores no agreement. A subscription that ends leaves the license `active` until the current token's date
   passes, then reconciliation lapses it. In a sandbox (`liveMode === false`) the self-test trusts the worker's own key
-  when the public half derived from the private key (`publicKeyFromPrivateKey`) digests to the configured kid; live
+  when the public half derived from the private key (`publicKeyFromPrivateKey`) digests to the configured kid. Live
   mode still requires the shipped register. `expires` derives from `invoice.lines[0].period.end`, not the
-  subscription's current period. A verified event of a stray type or the other Stripe mode answers 200 and is logged;
-  only a failed signature answers 400, and Stripe retries every non-2xx. Refresh and status hold a per-lid and a
+  subscription's current period. A verified event of a stray type or the other Stripe mode answers 200 and is logged.
+  Only a failed signature answers 400, and Stripe retries every non-2xx. Refresh and status hold a per-lid and a
   per-address limit independently. `/health` reports `ledger` and answers 503 when D1 does not respond.
 
 **Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. The worker signs keys with `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
@@ -55,11 +55,11 @@ task bodies are left as written.
 - Production and sandbox are two Wrangler environments with separate D1 databases, secrets, key ids, Price IDs, and site origins. A sandbox signing key never enters the register in core.
 - Every event id is written in the same D1 batch as its effects. A duplicate event id is a 200 with no effect. Any failure after signature verification is a 500, so Stripe retries. A bad signature is a 400 and is not retried.
 - The webhook handler never trusts an event body's fields for entitlement: it retrieves the invoice, the subscription, and when needed the Checkout Session from Stripe by id.
-- `Cache-Control: no-store` on every route that can carry a token. CORS admits exactly `SITE_ORIGIN` on the claim route and no origin on the others.
+- `Cache-Control: no-store` on every route that can return a token. CORS admits exactly `SITE_ORIGIN` on the claim route and no origin on the others.
 - Money and time: `expires` is the subscription period end plus `graceDays` (14) as an inclusive UTC calendar date; `issued` is the invoice's paid date as a UTC calendar date. Both are persisted before signing so a retry reproduces the same payload.
-- Relative imports carry `.ts`; sibling modules go through `#*`. Do not use `enum`. Comments state invariants. Acronym casing: `ID`, `URL`, `PEM`, `D1` (`D1Database` is Cloudflare's own name and stays).
+- Relative imports end in `.ts`. Sibling modules go through `#*`. Do not use `enum`. Comments state invariants. Acronym casing: `ID`, `URL`, `PEM`, `D1` (`D1Database` is Cloudflare's own name and stays).
 - The worker is a new workspace and joins the registers AGENTS.md lists: root `workspaces`; both root `tsconfig.json` references; `SANCTIONED_RELEASE_ABSENCES` (reason: private infrastructure); `knip.json` workspace entry. It is private, so the release list, `bless-package`, and the smoke pack set do not apply. `checkReleaseListIdentity`'s `publishCount` pin stays 59.
-- The worker's tests run under their own vitest config; the root sweep excludes them the way it excludes `@mailwoman/react`'s browser tests, and CI runs them as their own step.
+- The worker's tests run under their own vitest config. The root sweep excludes them the way it excludes `@mailwoman/react`'s browser tests, and CI runs them as their own step.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `feat/license-worker` in the worktree `.claude/worktrees/license-posture`. The worktree Bash guard refuses `cat >>` heredocs, computed arguments, and the word `eval`; use `python3 - <<'EOF'` heredocs or the Edit/Write tools.
 
@@ -67,31 +67,31 @@ task bodies are left as written.
 
 ## File map
 
-| File                                                                                                                                             | Responsibility                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/license-worker/package.json`, `tsconfig.json`, `tsconfig.test.json`, `vitest.config.ts`, `wrangler.toml`, `.dev.vars.example`          | the workspace and its two environments                                                                                            |
-| `packages/license-worker/migrations/0001_ledger.sql`                                                                                             | the three tables, applied by `wrangler d1 migrations apply`                                                                       |
-| `packages/license-worker/lib/env.ts`                                                                                                             | the typed bindings: secrets, vars, the D1 binding, the rate limiters; zod-validated once per isolate                              |
-| `packages/license-worker/lib/plans.ts`                                                                                                           | the closed plan catalog: two Price IDs to two plan codes                                                                          |
-| `packages/license-worker/lib/ledger/schema.ts`                                                                                                   | the Kysely `Database` interface for the three tables                                                                              |
-| `packages/license-worker/lib/ledger/client.ts`                                                                                                   | `openLedger(env)`: Kysely over `kysely-d1`                                                                                        |
-| `packages/license-worker/lib/ledger/licenses.ts`                                                                                                 | typed reads and writes: `recordEvent`, `upsertLicense`, `mintToken`, `currentToken`, state transitions                            |
-| `packages/license-worker/lib/stripe/client.ts`                                                                                                   | `stripeClient(env)` on the fetch HTTP client                                                                                      |
-| `packages/license-worker/lib/stripe/webhook.ts`                                                                                                  | `verifyStripeEvent(request, env)` on the SubtleCrypto provider; the event-type allowlist                                          |
-| `packages/license-worker/lib/stripe/handlers.ts`                                                                                                 | one handler per event type                                                                                                        |
-| `packages/license-worker/lib/fulfil.ts`                                                                                                          | `fulfilInvoice(...)`: retrieve, check, compute dates, mint, persist, email                                                        |
-| `packages/license-worker/lib/dates.ts`                                                                                                           | `calendarDateUTC(seconds)`, `plusDays(date, n)`                                                                                   |
-| `packages/core/lib/crypto/digest.ts` (create, Task 0)                                                                                            | `sha256Bytes`, `hexOf`: the WebCrypto digest and its hex form, which `crypto/ed25519.ts`, `license/key.ts` and the worker all use |
-| `packages/license-worker/lib/identifiers.ts`                                                                                                     | `newLicenseID()`, `newRefreshSecret()`, `secretDigest(text)`                                                                      |
-| `packages/license-worker/lib/signing.ts`                                                                                                         | `signingSelfTest(env)`: the private key matches `LICENSE_SIGNING_KID` and an `active` register entry                              |
-| `packages/license-worker/lib/email/provider.ts`, `resend.ts`                                                                                     | the `EmailProvider` interface and the one implementation                                                                          |
-| `packages/license-worker/lib/routes/webhook.ts`, `claim.ts`, `refresh.ts`, `status.ts`, `health.ts`                                              | the routes                                                                                                                        |
-| `packages/license-worker/lib/app.ts`                                                                                                             | `createLicenseWorkerApp(env)`: Hono app, CORS, `no-store`, the routes                                                             |
-| `packages/license-worker/lib/index.ts`                                                                                                           | the Worker export: `fetch` and `scheduled`                                                                                        |
-| `packages/license-worker/lib/reconcile.ts`                                                                                                       | the scheduled pass                                                                                                                |
-| `packages/license-worker/test/**`                                                                                                                | unit tests under the Workers pool; `test/support/stripe-fixtures.ts` and `test/support/stripe-mock.ts`                            |
-| `.github/workflows/license-worker.yml`                                                                                                           | manual dispatch: `wrangler deploy --env <sandbox                                                                                  | production>` |
-| root `package.json`, `tsconfig.json`, `knip.json`, `vitest.config.ts`, `.github/workflows/test.yml`, `packages/release-kit/lib/release/stage.ts` | the registers                                                                                                                     |
+| File                                                                                                                                             | Responsibility                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `packages/license-worker/package.json`, `tsconfig.json`, `tsconfig.test.json`, `vitest.config.ts`, `wrangler.toml`, `.dev.vars.example`          | the workspace and its two environments                                                                                      |
+| `packages/license-worker/migrations/0001_ledger.sql`                                                                                             | the three tables, applied by `wrangler d1 migrations apply`                                                                 |
+| `packages/license-worker/lib/env.ts`                                                                                                             | the typed bindings: secrets, vars, the D1 binding, the rate limiters, zod-validated once per isolate                        |
+| `packages/license-worker/lib/plans.ts`                                                                                                           | the closed plan catalog: two Price IDs to two plan codes                                                                    |
+| `packages/license-worker/lib/ledger/schema.ts`                                                                                                   | the Kysely `Database` interface for the three tables                                                                        |
+| `packages/license-worker/lib/ledger/client.ts`                                                                                                   | `openLedger(env)`: Kysely over `kysely-d1`                                                                                  |
+| `packages/license-worker/lib/ledger/licenses.ts`                                                                                                 | typed reads and writes: `recordEvent`, `upsertLicense`, `mintToken`, `currentToken`, state transitions                      |
+| `packages/license-worker/lib/stripe/client.ts`                                                                                                   | `stripeClient(env)` on the fetch HTTP client                                                                                |
+| `packages/license-worker/lib/stripe/webhook.ts`                                                                                                  | `verifyStripeEvent(request, env)` on the SubtleCrypto provider, and the event-type allowlist                                |
+| `packages/license-worker/lib/stripe/handlers.ts`                                                                                                 | one handler per event type                                                                                                  |
+| `packages/license-worker/lib/fulfil.ts`                                                                                                          | `fulfilInvoice(...)`: retrieve, check, compute dates, mint, persist, email                                                  |
+| `packages/license-worker/lib/dates.ts`                                                                                                           | `calendarDateUTC(seconds)`, `plusDays(date, n)`                                                                             |
+| `packages/core/lib/crypto/digest.ts` (create, Task 0)                                                                                            | `sha256Bytes`, `hexOf`: the WebCrypto digest and its hex form, used by `crypto/ed25519.ts`, `license/key.ts` and the worker |
+| `packages/license-worker/lib/identifiers.ts`                                                                                                     | `newLicenseID()`, `newRefreshSecret()`, `secretDigest(text)`                                                                |
+| `packages/license-worker/lib/signing.ts`                                                                                                         | `signingSelfTest(env)`: the private key matches `LICENSE_SIGNING_KID` and an `active` register entry                        |
+| `packages/license-worker/lib/email/provider.ts`, `resend.ts`                                                                                     | the `EmailProvider` interface and the one implementation                                                                    |
+| `packages/license-worker/lib/routes/webhook.ts`, `claim.ts`, `refresh.ts`, `status.ts`, `health.ts`                                              | the routes                                                                                                                  |
+| `packages/license-worker/lib/app.ts`                                                                                                             | `createLicenseWorkerApp(env)`: Hono app, CORS, `no-store`, the routes                                                       |
+| `packages/license-worker/lib/index.ts`                                                                                                           | the Worker export: `fetch` and `scheduled`                                                                                  |
+| `packages/license-worker/lib/reconcile.ts`                                                                                                       | the scheduled pass                                                                                                          |
+| `packages/license-worker/test/**`                                                                                                                | unit tests under the Workers pool; `test/support/stripe-fixtures.ts` and `test/support/stripe-mock.ts`                      |
+| `.github/workflows/license-worker.yml`                                                                                                           | manual dispatch: `wrangler deploy --env <sandbox                                                                            | production>` |
+| root `package.json`, `tsconfig.json`, `knip.json`, `vitest.config.ts`, `.github/workflows/test.yml`, `packages/release-kit/lib/release/stage.ts` | the registers                                                                                                               |
 
 ---
 
@@ -103,7 +103,7 @@ task bodies are left as written.
 - Modify: `packages/core/lib/crypto/ed25519.ts` (drop `sha256Bytes`), `packages/core/lib/license/key.ts` (drop the local `hex`; import `hexOf` and `sha256Bytes` from the digest module), `packages/core/package.json` (`./crypto/digest` export), `packages/core/lib/crypto/ed25519.test.ts` (import the digest from its home)
 - Test: `packages/core/lib/crypto/digest.test.ts`
 
-`sha256Bytes` sits in `ed25519.ts` today because the key id needed it; the worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module serves all three importers.
+`sha256Bytes` sits in `ed25519.ts` today because the key id needed it. The worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module serves all three importers.
 
 - [x] **Step 1: Write the failing test**
 
@@ -372,7 +372,7 @@ namespace_id = "2003"
 simple = { limit = 60, period = 60 }
 ```
 
-The `REPLACE` values are what the operator fills when the Stripe objects and the D1 database exist; `readEnv` refuses them (Task 3) so a deploy with a placeholder answers 503 and never mints. The D1 binding is named `LICENSE_LEDGER`, not `DB`, so a grep for it finds only this worker.
+The `REPLACE` values are what the operator fills when the Stripe objects and the D1 database exist; `readEnv` refuses them (Task 3) so a deploy with a placeholder answers 503 and never mints. The D1 binding is called `LICENSE_LEDGER`, not `DB`, so a grep for it finds only this worker.
 
 `.dev.vars.example`:
 
@@ -566,25 +566,25 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 export default handler
 ```
 
-The `request as unknown as Request` cast reconciles `@cloudflare/workers-types`' `Request` with the DOM-typed one Hono declares; if the two unify under the installed types, drop the cast.
+The `request as unknown as Request` cast reconciles `@cloudflare/workers-types`' `Request` with the DOM-typed one Hono declares. If the two unify under the installed types, drop the cast.
 
 - [x] **Step 4: Register the workspace**
 
 - Root `package.json` `workspaces`: add `"packages/license-worker"` in alphabetical position. Add a script `"test:license-worker": "yarn workspace @mailwoman/license-worker test"`.
 - Root `tsconfig.json`: add `{ "path": "./packages/license-worker" }` and `{ "path": "./packages/license-worker/tsconfig.test.json" }` beside the tile-worker entry.
-- `knip.json`: `"packages/license-worker": { "entry": ["lib/index.ts", "test/**/*.ts"] }` (vitest-pool-workers imports `cloudflare:test`, which knip does not know; add `"ignoreDependencies": ["@cloudflare/vitest-pool-workers"]` if knip reports it unused).
+- `knip.json`: `"packages/license-worker": { "entry": ["lib/index.ts", "test/**/*.ts"] }` (vitest-pool-workers imports `cloudflare:test`, which knip does not know. Add `"ignoreDependencies": ["@cloudflare/vitest-pool-workers"]` if knip reports it unused).
 - `packages/release-kit/lib/release/stage.ts` `SANCTIONED_RELEASE_ABSENCES`: `"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes"`.
 - Root `vitest.config.ts` `exclude`: `"**/license-worker/**/*.test.ts"` with a comment in the shape of the react one: the tests import `cloudflare:test` and run under the Workers pool via the workspace's own `vitest.config.ts`; CI runs them as their own step.
-- `.github/workflows/test.yml`: add a step after the react browser step that runs `yarn test:license-worker` (read the react step and copy its shape; the Workers pool needs no browser).
+- `.github/workflows/test.yml`: add a step after the react browser step that runs `yarn test:license-worker` (read the react step and copy its shape. The Workers pool needs no browser).
 
-Run `yarn install` (the lockfile changes; commit it).
+Run `yarn install` (the lockfile changes, so commit it).
 
 - [x] **Step 5: Run the test**
 
 Run: `yarn workspace @mailwoman/license-worker test`
-Expected: PASS, 1 test. If `cloudflare:test` fails to resolve, the pool did not install; check `yarn why @cloudflare/vitest-pool-workers`.
+Expected: pass, 1 test. If `cloudflare:test` fails to resolve, the pool did not install. Check `yarn why @cloudflare/vitest-pool-workers`.
 
-Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/lib/release-stage.integration.test.ts` (the `publishCount` pin stays 59; the absence set grows by one).
+Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/lib/release-stage.integration.test.ts` (the `publishCount` pin stays 59, and the absence set grows by one).
 
 - [x] **Step 6: Commit**
 
@@ -831,7 +831,7 @@ CREATE TABLE stripe_events (
 );
 ```
 
-D1 migrations are SQL files by Wrangler's interface; that is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
+D1 migrations are SQL files by Wrangler's interface. That is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
 
 - [x] **Step 4: Write the schema, client, and access module**
 
@@ -904,7 +904,7 @@ export function openLedger(db: D1Database): Ledger {
 - [x] **Step 5: Run the tests**
 
 Run: `yarn workspace @mailwoman/license-worker test test/ledger.test.ts`
-Expected: PASS, 4 tests.
+Expected: pass, 4 tests.
 
 - [x] **Step 6: Commit**
 
@@ -1088,7 +1088,7 @@ describe("the signing self-test", () => {
 })
 ```
 
-There is no `ok` case at unit level: an `ok` needs a key the shipped register carries, and no test key is. The route tests inject `signingStatus` through `AppDependencies`.
+There is no `ok` case at unit level: an `ok` needs a key the shipped register lists, and no test key is. The route tests inject `signingStatus` through `AppDependencies`.
 
 - [x] **Step 2: Run to verify they fail**
 
@@ -1250,7 +1250,7 @@ export async function signingSelfTest(
 }
 ```
 
-`licenseKeyID` is imported for the sandbox-side check below; if it stays unused, drop it. (A sandbox deploy's kid is not in the register by design; `ISSUANCE_ENABLED` and a sandbox-only register override are how the sandbox mints: see Task 5's `trustedKeysForVerification` note.)
+`licenseKeyID` is imported for the sandbox-side check below. If it stays unused, drop it. (A sandbox deploy's kid is not in the register by design. `ISSUANCE_ENABLED` and a sandbox-only register override are how the sandbox mints: see Task 5's `trustedKeysForVerification` note.)
 
 - [x] **Step 4: Run the tests**
 
@@ -1439,7 +1439,7 @@ export async function verifyStripeEvent(
 }
 ```
 
-`charge.dispute.closed` from the spec's list is handled by the reconciliation pass reading Stripe's current state rather than by a webhook; that keeps the list at seven and the disputed license `revoked` until an operator or the reconciler sees the dispute won. Record this in the spec's event list when the PR opens.
+`charge.dispute.closed` from the spec's list is handled by the reconciliation pass reading Stripe's current state rather than by a webhook. That keeps the list at seven and the disputed license `revoked` until an operator or the reconciler sees the dispute won. Record this in the spec's event list when the PR opens.
 
 `test/support/stripe-mock.ts`:
 
@@ -1489,7 +1489,7 @@ export function mockStripe(routes: Record<string, unknown>): void {
 }
 ```
 
-`test/support/stripe-fixtures.ts` builds minimal Stripe objects: `invoicePaidEvent({ id = "evt_in_1", invoiceID = "in_1", subscriptionID = "sub_1" })`, `checkoutCompletedEvent(...)` with `custom_fields: [{ key: "licensee_legal_name", text: { value: "Example Ltd" } }]`, `consent: { terms_of_service: "accepted" }`, `customer_details.email`, `client_reference_id`, `subscription`; `invoiceObject(...)` with `status: "paid"`, `lines.data[0].price.id`, `subscription`, `status_transitions.paid_at`, `period_end`; `subscriptionObject(...)` with `current_period_end`, `items.data[0].price.id`, `status`; `checkoutSessionList(...)`. Fixtures carry only the fields the handlers read.
+`test/support/stripe-fixtures.ts` builds minimal Stripe objects: `invoicePaidEvent({ id = "evt_in_1", invoiceID = "in_1", subscriptionID = "sub_1" })`, `checkoutCompletedEvent(...)` with `custom_fields: [{ key: "licensee_legal_name", text: { value: "Example Ltd" } }]`, `consent: { terms_of_service: "accepted" }`, `customer_details.email`, `client_reference_id`, `subscription`; `invoiceObject(...)` with `status: "paid"`, `lines.data[0].price.id`, `subscription`, `status_transitions.paid_at`, `period_end`; `subscriptionObject(...)` with `current_period_end`, `items.data[0].price.id`, `status`; `checkoutSessionList(...)`. Fixtures contain only the fields the handlers read.
 
 - [x] **Step 4: Run and commit**
 
@@ -2041,7 +2041,7 @@ export async function fulfilInvoice(
 }
 ```
 
-`current_period_end` moved from the subscription to its items in recent Stripe API versions; read `subscription.items.data[0]?.current_period_end ?? subscription.current_period_end` and let the types decide which exists under the pinned version. `plan_code: "pending"` on a row created before its first invoice is overwritten by `fulfilInvoice` through a `setPlanCode` write once the plan is known; add that one-column update to the access module.
+`current_period_end` moved from the subscription to its items in recent Stripe API versions. Read `subscription.items.data[0]?.current_period_end ?? subscription.current_period_end` and let the types decide which exists under the pinned version. `plan_code: "pending"` on a row created before its first invoice is overwritten by `fulfilInvoice` through a `setPlanCode` write once the plan is known. Add that one-column update to the access module.
 
 `lib/stripe/handlers.ts`:
 
@@ -2165,7 +2165,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 **Files:**
 
 - Create: `lib/routes/webhook.ts`, `lib/routes/claim.ts`, `lib/routes/refresh.ts`, `lib/routes/status.ts`
-- Modify: `lib/app.ts` (register them; CORS on claim; rate limits), `lib/index.ts` (deps wiring: stripe client, ledger, email provider, signing status cached per isolate)
+- Modify: `lib/app.ts` (register them, CORS on claim, rate limits), `lib/index.ts` (deps wiring: stripe client, ledger, email provider, signing status cached per isolate)
 - Test: `test/routes.test.ts`
 
 **Interfaces produced:** the HTTP surface of the spec: `POST /v1/webhooks/stripe`, `GET /v1/checkout-sessions/:sessionID/license`, `POST /v1/licenses/refresh`, `POST /v1/license-status`, `GET /health`.
@@ -2410,9 +2410,9 @@ Expected: the routes answer 404.
 
 Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviors:
 
-- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete no record and answer 500. A failed handler must let Stripe's retry run, so the event is recorded only after the handler succeeds, in the same D1 batch as its last write. The simplest correct order runs the handler first and `recordEventOnce` second. The handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already written. Answer `{ received: true, handled }`.
-- **claim** (`lib/routes/claim.ts`): `CLAIM_LIMITER.limit({ key: clientIP })` → 429 when exceeded; `findTokenByCheckoutSession`; none → `{ status: "pending" }` when a `licenses` row exists for the session, 404 when none; `license_state` `revoked` → `{ status: "revoked" }`; else `{ status: "issued", token, lid, licensee, issued, expires, refresh_secret? }`. The refresh secret is stored hashed, so it can be shown only once: the `ensureLicenseFromCheckoutSession` return carries the plaintext on creation, and the claim route needs it too. Implement with a `refresh_secret_pending` column holding the plaintext until the first successful claim reads and clears it (one `UPDATE … SET refresh_secret_pending = NULL … RETURNING`), added to the migration in Task 2 (edit `0001_ledger.sql`; the D1 database is recreated from migrations in tests, and no production database exists yet). Exact-origin CORS via `hono/cors` with `origin: env.SITE_ORIGIN` on this route only.
-- **refresh** (`lib/routes/refresh.ts`): `REFRESH_LIMITER` keyed by lid; body `{ lid, secret }` validated by zod; `findLicense`; compare `await secretDigest(secret)` to the stored hash with a constant-time compare (`timingSafeEqual` is Node; compare byte arrays in a loop that runs to the end); wrong or unknown → the same `404 { error: "not found" }`; `license_state` `revoked` or `lapsed` → `{ status }` 200 without a token; else `{ status: "active", token, issued, expires }` from `currentToken`.
+- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try. On throw, delete no record and answer 500. A failed handler must let Stripe's retry run, so the event is recorded only after the handler succeeds, in the same D1 batch as its last write. The simplest correct order runs the handler first and `recordEventOnce` second. The handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler. The re-run finds everything already written. Answer `{ received: true, handled }`.
+- **claim** (`lib/routes/claim.ts`): `CLAIM_LIMITER.limit({ key: clientIP })` → 429 when exceeded; `findTokenByCheckoutSession`; none → `{ status: "pending" }` when a `licenses` row exists for the session, 404 when none; `license_state` `revoked` → `{ status: "revoked" }`; else `{ status: "issued", token, lid, licensee, issued, expires, refresh_secret? }`. The refresh secret is stored hashed, so it can be shown only once: the `ensureLicenseFromCheckoutSession` return contains the plaintext on creation, and the claim route needs it too. Implement with a `refresh_secret_pending` column holding the plaintext until the first successful claim reads and clears it (one `UPDATE … SET refresh_secret_pending = NULL … RETURNING`), added to the migration in Task 2 (edit `0001_ledger.sql`; the D1 database is recreated from migrations in tests, and no production database exists yet). Exact-origin CORS via `hono/cors` with `origin: env.SITE_ORIGIN` on this route only.
+- **refresh** (`lib/routes/refresh.ts`): `REFRESH_LIMITER` keyed by lid, body `{ lid, secret }` validated by zod, then `findLicense`. Compare `await secretDigest(secret)` to the stored hash with a constant-time compare (`timingSafeEqual` is Node, so compare byte arrays in a loop that runs to the end). Wrong or unknown → the same `404 { error: "not found" }`. `license_state` `revoked` or `lapsed` → `{ status }` 200 without a token. Otherwise `{ status: "active", token, issued, expires }` from `currentToken`.
 - **status** (`lib/routes/status.ts`): `STATUS_LIMITER` keyed by lid; `{ lid }` → `{ status: license_state }` mapped to `active | lapsed | revoked` (`review` reads `active`: the customer paid) or `unknown`.
 - **app.ts**: a middleware before the `/v1/*` routes that answers 503 `{ error: "signing unavailable" }` when `deps.signingStatus() !== "ok"`, except `/health`.
 - **index.ts**: build deps once per isolate: `const ledger = openLedger(bindings.LICENSE_LEDGER)`, `resendProvider(env)`, and a memoized `signingSelfTest(env)` promise whose result `signingStatus` reads (`"unchecked"` until it settles).
@@ -2655,11 +2655,22 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 ```
 
-Match the checkout, node, and yarn steps to what `test.yml` uses (`.nvmrc` may not exist; copy the exact lines). The two GitHub environments hold the Cloudflare token per target and let production require a reviewer.
+Match the checkout, node, and yarn steps to what `test.yml` uses (`.nvmrc` may not exist, so copy the exact lines). The two GitHub environments hold the Cloudflare token per target and let production require a reviewer.
 
 - [x] **Step 2: The README**
 
-A page for the operator, in the house voice: what the worker does in three sentences; the two environments; the bindings table from the spec with which are secrets; the first-deploy order (register the worker's key in core and release, `wrangler secret put` ×4 per environment, `migrate`, deploy with issuance off, check `/health` reads `signing: ok`, flip `ISSUANCE_ENABLED`); the kill switch; the reconciliation cron; where the tests run (`yarn test:license-worker`); and the refund and dispute table. Vale it with `config/vale/.vale-vocab.ini`.
+A page for the operator, in the house voice, with these sections:
+
+- What the worker does, in three sentences.
+- The two environments.
+- The bindings table from the spec, marking which bindings are secrets.
+- The first-deploy order (register the worker's key in core and release, `wrangler secret put` ×4 per environment, `migrate`, deploy with issuance off, check `/health` reads `signing: ok`, flip `ISSUANCE_ENABLED`).
+- The kill switch.
+- The reconciliation cron.
+- Where the tests run (`yarn test:license-worker`).
+- The refund and dispute table.
+
+Vale it with `config/vale/.vale-vocab.ini`.
 
 - [x] **Step 3: The dry run**
 
@@ -2706,7 +2717,7 @@ yarn test:license-worker
 yarn vitest run packages/release-kit/test packages/repo-health/test
 ```
 
-Then `yarn test` alone. The root sweep excludes the worker's tests; CI's new step runs them.
+Then run `yarn test` with no other process running. The root sweep excludes the worker's tests, and CI's new step runs them.
 
 - [x] **Step 3: Push and PR**
 

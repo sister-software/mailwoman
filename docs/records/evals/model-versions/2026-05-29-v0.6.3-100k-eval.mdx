@@ -52,7 +52,7 @@ and the predicted dilution failure mode materialized.
 
 The original v0.6.1 problem came back. 844 hallucinations vs v0.6.2's 0.
 Rate: 2110% of expected occurrences (40 expected dep_loc spans in the
-golden set; the model emitted 844 hallucinations).
+golden set, and the model emitted 844 hallucinations).
 
 This was DeepSeek's turn 10 dilution
 diagnosis: dropping
@@ -78,7 +78,7 @@ dep_locality. The model is confusing the two tags more than v0.6.2 did.
 ### Harness pass rate dropped below v0.6.0
 
 12.5% vs v0.6.0's 14.4%. v0.6.3 is **a sidegrade — worse than v0.6.0 on the
-breadth eval**. Per the decision tree, this alone is grounds for hold even
+breadth eval**. Per the decision tree, this result by itself is grounds for hold even
 if the check passed.
 
 ## Check verdict: HOLD

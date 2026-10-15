@@ -140,6 +140,50 @@ describe("ExtractGeocodeResult — a component the answer did not follow", () =>
 		expect(r.dropped_components).toBeNull()
 	})
 
+	it("reports a locality the rooftop row lies outside, and keeps the rooftop coordinate", () => {
+		const tree: AddressTree = {
+			raw: "12 High Street, Whitchurch",
+			roots: [
+				node({ tag: "house_number", value: "12", start: 0, end: 2 }),
+				node({
+					tag: "street",
+					value: "High Street",
+					start: 3,
+					end: 14,
+					metadata: {
+						resolution_tier: "address_point",
+						address_point: {
+							lat: 52.969088,
+							lon: -2.6835909,
+							source: "osm",
+							release: "1",
+							locality_norm: "whitchurch",
+						},
+					},
+				}),
+				node({
+					tag: "locality",
+					value: "Whitchurch",
+					start: 16,
+					end: 26,
+					lat: 51.23174,
+					lon: -1.332674,
+					placeID: "wof:101852471",
+					metadata: { rooftop_outside_locality_km: 214.1 },
+				}),
+			],
+		}
+
+		const r = extractGeocodeResult("12 High Street, Whitchurch", tree)
+
+		expect(r.unfollowed_components).toEqual([
+			{ tag: "locality", value: "Whitchurch", reason: "rooftop_outside_locality", distance_km: 214.1 },
+		])
+
+		expect(r.lat).toBe(52.969088)
+		expect(r.resolution_tier).toBe("address_point")
+	})
+
 	it("nulls the field when the answer followed everything it parsed", () => {
 		const agreeing: AddressTree = {
 			raw: "Paris, 75008",
@@ -401,9 +445,30 @@ describe("ExtractGeocodeResult — unit-grade postcodes lead the admin ladder ( 
 		expect(r.lon).toBeCloseTo(-0.130693, 4)
 	})
 
+	it("reports the postcode tier for the unit-postcode centroid, with no uncertainty for a point-only row", () => {
+		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree())
+		expect(r.resolution_tier).toBe("postcode")
+		expect(r.epistemic_status).toBe("derived")
+		expect(r.uncertainty_m).toBeNull()
+	})
+
+	it("derives the postcode tier's uncertainty from the row's stored extent", () => {
+		const tree = gbTree()
+		const postcode = tree.roots.find((n) => n.tag === "postcode")!
+
+		// About 222 m of latitude corner to corner.
+		postcode.metadata = {
+			...postcode.metadata,
+			resolver_bbox: { minLat: 51.549, maxLat: 51.551, minLon: -0.1307, maxLon: -0.1307 },
+		}
+
+		expect(extractGeocodeResult(tree.raw, tree).uncertainty_m).toBe(111)
+	})
+
 	it("keeps the locality centroid when the resolver only reached the OUTWARD stem", () => {
 		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree("N7"))
 		expect(r.lat).toBeCloseTo(51.500526, 4)
+		expect(r.resolution_tier).toBe("admin")
 	})
 
 	it("keeps the locality centroid for a US ZIP (area-class, the locality-first epoch convention)", () => {

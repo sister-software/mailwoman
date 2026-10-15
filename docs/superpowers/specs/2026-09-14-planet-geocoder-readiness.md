@@ -1,18 +1,18 @@
 # Planet geocoder — what the checkout can and cannot say
 
 A readiness survey taken from the checkout, with no board run. The per-country gazetteer section is the one
-exception and says so in place: it came through the `mailwoman-dev` daemon, which has the data root. Every other number here
-is reproducible from tracked files; where a question needs `candidate.db` or the regression board it is named as
-unanswered rather than estimated.
+exception and states so in place. It came through the `mailwoman-dev` daemon, and that daemon has the data root. Every other
+number here is reproducible from tracked files. Where a question needs `candidate.db` or the regression board, this survey
+lists it as unanswered rather than estimated.
 
 The question behind it: mailwoman's release list ships eleven locales, and the repository's own tables, guards and
 boards were built when it shipped two. This records where those have kept up and where they have not.
 
 ## What the repository claims, by three different registers
 
-| Register       | Says                                                                                                                       | Source                                                       |
+| Register       | Content                                                                                                                    | Source                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Locale tiers   | tier 1 **US, FR**; tier 2 IT PT PL AT CZ DE AU BE ES NL CH HR DK FI; tier 3 NO SE; tier 4 CZ PL SK SI; tier 5 **JP KR CN** | `docs/engineering/SCOPE.mdx`                                 |
+| Locale tiers   | tier 1 **US, FR**. tier 2 IT PT PL AT CZ DE AU BE ES NL CH HR DK FI. tier 3 NO SE. tier 4 CZ PL SK SI. tier 5 **JP KR CN** | `docs/engineering/SCOPE.mdx`                                 |
 | Release list   | eleven locales over eleven countries — AU CN DE ES FR GB IN IT JP NZ US                                                    | `release.config.json` (`locales` + `charWeights[].overlays`) |
 | Country tables | 35 country sets across 29 files, each its own subset                                                                       | measured, below                                              |
 
@@ -70,23 +70,23 @@ Three of the largest blocks are not shipping locales at all: a `GENERALIZATION` 
 
 **This is the finding the rest depend on.** A country with one or two checking rows cannot separate a real
 regression from noise, so for 78 of 130 countries the board reports a number without the power to act on it. India
-ships a weights package and is checked by two rows; China by two. The release list has moved past what the board
+ships a weights package and is checked by two rows, and China by two. The release list has moved past what the board
 can measure, and a summary score over 1,261 rows reads as planet coverage while a third of those rows track
 rather than check and 36% of the total sits in eleven countries.
 
-No claim here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
+No claim here states that the board is wrong. The claim is that a per-country verdict is only available where the rows are, and the
 places a planet geocoder is about to be judged — the other 119 countries — are not those places.
 
 **The instrument for this already ships.** `mailwoman data coverage` reports `boardRows` and `boardPassedRows`
-per country beside corpus rows, training admission, the weights package and gazetteer places, and its own
-docstring states the reason this survey exists:
-
-> It exists because the answer is held in five registers that do not agree, and reading any one of them alone
-> produces a confident wrong answer. […] Training is not verification (a board row that is not `status: pass`
-> tracks rather than checks).
+per country beside corpus rows, training admission, the weights package and gazetteer places, and its
+docstring at the time stated the reason this survey exists. Five registers that disagree hold the answer,
+and a reading of any single register gives a confident wrong answer. The docstring also stated that
+training is not verification, because a board row whose status is not `pass` tracks a case rather than
+checks it. The command now lives at `packages/mailwoman/cli/commands/data/coverage.tsx`, and its current
+header no longer contains that text.
 
 What is new here is having read the board-rows column across all 130 countries at once and stated what the
-distribution means. Reproduce it with that command rather than with a throwaway; the counts above come from the
+distribution means. Reproduce it with that command rather than with a throwaway. The counts above come from the
 committed case files, so they need no artifact, while the command's other four registers do.
 
 ## Two tables contradict a claim made elsewhere
@@ -110,7 +110,7 @@ only to GB, so that reading does not hold either. Either the list is wrong or th
 without `SCOPE.mdx` recording it, and only the operator can say which.
 
 Scope of the claim: `runArc` is a maintainer diagnostic rather than the release pipeline. The promotion battery and the
-regression board may catch a US regression by other means; what is measured here is that the constant encoding
+regression board may catch a US regression by other means. What is measured here is that the constant encoding
 "unconditionally" does not name its primary locale.
 
 ### The cross-country plausibility guard is fail-open for four shipping locales
@@ -126,7 +126,7 @@ Absent: **CN, IT, JP, NZ** — all four ship a locale. The constant's own docstr
 So guard B, "is this coordinate in the wrong country", cannot fire for Japan, China, Italy or New
 Zealand. JP and CN published in the CJK arc at 9.3.0, after the boxes were measured on 2026-07-15.
 
-This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` answering Wa in Ghana (11,279 km)
+This is adjacent to #2266. Its failures are all cross-country: `WA Sammamish` answering Wa in Ghana (11,279 km)
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
 or Chinese answer there is no box to check against.
 
@@ -135,9 +135,9 @@ never has — so it needs the board rather than a commit.
 
 ## Where the country tables' center of gravity still is
 
-35 country sets across 29 files, found by taking every declaration whose NAME says so (`*_COUNTRIES`,
-`*_BY_COUNTRY`, `COUNTRY_*`) **and** that holds at least three ISO 3166-1 alpha-2 literals. Both tests are needed:
-the name alone admits `TIGERClassCode`, the literals alone admit every US state table, since `AL`, `CA` and `DE`
+35 country sets across 29 files, found by taking every declaration whose name matches a country pattern (`*_COUNTRIES`,
+`*_BY_COUNTRY`, `COUNTRY_*`) **and** that holds at least three ISO 3166-1 alpha-2 literals. Both tests are needed.
+The name test by itself admits `TIGERClassCode`, and the literal test by itself admits every US state table, since `AL`, `CA` and `DE`
 are each a state and a country.
 
 Ranked by the count of the 35 that name them:
@@ -156,7 +156,7 @@ and `MEASURED_COUNTRY_COVERAGE` omit CN, IN, JP and NZ, and their docstrings say
 no recall regression, with the measurement that kept FI (69.5%) and PL (77.8%) out cited in place. Absence there is
 a measured state rather than a gap.
 
-## Script cannot carry the CJK distinction, except for Korean
+## Script cannot encode the CJK distinction, except for Korean
 
 `classifyCodepoint` folds Hiragana, Katakana, Han, Hangul, Yi and the halfwidth forms into one `cjk` class, and
 `scoreByScript` answers `ja-JP` at 0.8 for all of them. The ISO 15924 block count over the per-country sets
@@ -172,14 +172,14 @@ Korean is categorical: the address vocabulary itself — 로, 길, 동, 시 — 
 labeled `ja-JP`. Japanese is not: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are
 Han, so script offers almost no signal for the Japanese/Chinese distinction.
 
-The Japanese figure is a floor with a narrow denominator. That gold set carries postcode + prefecture +
+The Japanese figure is a floor with a narrow denominator. That gold set contains postcode + prefecture +
 municipality and no component below that level — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
 河口湖町` — which is the most Han-heavy part of a Japanese address. A full address with a building name
-(マンション, ハイツ, ビル) would carry Kana far more frequently, and this set cannot say how much more.
+(マンション, ハイツ, ビル) would contain Kana far more frequently, and this set cannot say how much more.
 
 ## What the gazetteer holds, per country
 
-Answered after the fact through the `mailwoman-dev` MCP daemon, which runs in the operator's environment and. Therefore, has the data root a plain checkout does not. Places in `admin-global-priority.db`:
+Answered after the fact through the `mailwoman-dev` MCP daemon. The daemon runs in the operator's environment and therefore has the data root a plain checkout does not. Places in `admin-global-priority.db`:
 
 ```
 IN 1,113,550   CN 678,311   US 259,485   RU 159,485   PL 154,742
@@ -205,13 +205,13 @@ value that reads as the promoted gazetteer losing the Netherlands. It has not:
 | `admin-global-priority.db`, FTS + names  |                 143 row-hits |                           97 |     135 |                 143 |
 | `candidate.db`, the resolver's own table | `wof:101751893`, pop 833,624 | `wof:101751843`, pop 629,606 |       — | three, by placetype |
 
-The census counts `spr` rows; the resolver reads the FTS index. Only the first is low. What remains true and
+The census counts `spr` rows. The resolver reads the FTS index. Only the first is low. What remains true and
 narrow is that the `spr` count for NL moved 19,812 → 28 between generations while the FTS content stayed rich,
-and no evidence reachable from here says why or what still reads `spr`.
+and no evidence reachable from here explains why or what still reads `spr`.
 
 ## What is still unanswered
 
-Named so the next reader does not mistake silence for absence:
+This list exists so the next reader does not mistake silence for absence:
 
 - **Whether any ranking change is safe.** Needs the regression board and the promotion battery. Every open item on
   #2266, plus #2267, #2268, #2269 and #2272, sits behind this.

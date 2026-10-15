@@ -16,7 +16,7 @@ So, the questions for the morning. How does a database that passes every check s
 
 The task was simple enough: add Canada to the map. The obvious change is postcodes — they're precise, they're public, and Overture ships them. I'd done exactly this for a dozen European countries the night before, same tool, same shape: read the country's address points, group by postcode, take a trimmed centroid, write one row per code. Canada came back with 843,000 of them, alphanumeric `A1A 1A1` codes that survive the build intact, each pinned to its own block. I spot-checked Toronto's financial district and it sat exactly where it should. I diffed the new gazetteer against the old — US postcodes untouched, every European set intact, 843,000 new Canadian rows. Every number I could check, I checked, and every one was right.
 
-That's the part worth sitting with, because it's the trap. I had checked everything I'd built.
+That is the trap. I had checked everything I'd built.
 
 ## The check that grades the pin
 
@@ -26,13 +26,13 @@ Four cases passed — Chicago, a Berlin postcode, the White House, all green. Th
 
 ## Why the perfect postcode never got a vote
 
-The gazetteer has two layers. There's the postcode layer I'd rebuilt, and underneath it the admin layer — the one that records a place's country and population. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Toronto, Montréal and Vancouver are all missing — Canada isn't in it at all. We'd built the gazetteer out of the European set, the US, and the CJK countries, and nobody had ever folded Canada in.
+The gazetteer has two layers. There's the postcode layer I'd rebuilt, and underneath it the admin layer — the one that records a place's country and population. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Toronto, Montréal and Vancouver are all missing — Canada isn't in it at all. We'd built the gazetteer out of the European set, the US, and the CJK countries, and no build step had ever folded Canada in.
 
 Now watch what that does. The parser reads "Toronto" off the address and hands it to the resolver. The only Toronto the resolver has ever heard of is the one in Ohio, so that's the city it picks. And then the cleverest piece of the cascade turns around and finishes the job. We added that piece a couple of weeks ago to keep Berlin's `10115` — which is also a perfectly good New York ZIP — from dragging German addresses to Manhattan: resolve the city first, then let that city restrict the postcode to its own country. It's a good rule. Here it's a guillotine. The city resolved to the United States, so the correct Canadian postcode is now "from the wrong country," and out it goes. All 843,000 of my perfect coordinates never get a vote, because the city votes first and the city is in Ohio.
 
 ## I validated the layer I made rather than the one that ships
 
-Here's the lesson, and it's an old one in a new coat. I validated the postcodes. The postcodes were never the problem. I checked the thing I'd built and not the thing the user receives — the coordinate, the pin, the assembled output of every layer working together. Each green check was accurate and beside the point, because not one of them graded the only number that matters.
+The lesson is an old one. I validated the postcodes. The postcodes were never the problem. I checked the thing I'd built and not the thing the user receives — the coordinate, the pin, the assembled output of every layer working together. Each green check was accurate and beside the point, because not one of them graded the only number that matters.
 
 This keeps happening to us, in different forms. A model's per-tag F1 climbs while the coordinate it produces goes nowhere. A reconcile pass improves a label and breaks the geocode that depended on it. The discipline that survives every version of it is the same: grade the assembled coordinate against the truth rather than the component you happened to touch. The e2e check isn't ceremony. It's the one thing in the stack that reads the pin the user sees, and it's the only thing that caught this.
 

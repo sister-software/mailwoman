@@ -33,14 +33,14 @@ for (const c of candidates) {
 }
 ```
 
-## A database that cannot answer says so on construction
+## A database that cannot answer throws on construction
 
 Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail without logging, and both now throw when you build the lookup:
 
-- The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
-- The database carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
+- The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits. A caller could not tell that result from "this country has no places".
+- The database has `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
 
-The predicate is the **table rather than the filename**: a database carrying `spr` is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default database list working.
+The predicate is the **table rather than the filename**: a database with an `spr` table is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` has no `spr`, never makes that claim, and is exempt. That exemption keeps the documented default database list working.
 
 ```
 WOFSQLitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
@@ -118,8 +118,8 @@ The CLI:
 - Populates it from `spr` + `names` (alternate-name concatenation included).
 - Builds the `place_bbox` R*Tree virtual table from `spr.min\_*`/`spr.max\_\*` columns for the
   proximity + bbox query support.
-- Reports progress to stderr per phase (`checking` → `creating` → `populating` → `creating-bbox`
-  → `populating-bbox` → `done`).
+- Reports progress to stderr per phase, in the order `checking`, `creating`, `populating`, `creating-bbox`,
+  `populating-bbox` and `done`.
 - Exits 0 with a no-op message if both indexes already exist.
 
 ```bash
@@ -131,7 +131,7 @@ mailwoman gazetteer build fts /path/to/wof.db --drop
 
 ### Slim builds (retired CLI — module only)
 
-Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Path B of the demo plan). The full admin-US distribution is ~4 GB; a slim US bundle with the top-1k localities by population plus all postcodes lands at **~35 MB** — small enough to ship as a static asset.
+Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Path B of the demo plan). The full admin-US distribution is ~4 GB. A slim US bundle with the top-1k localities by population plus all postcodes lands at **~35 MB**, small enough to ship as a static asset.
 
 ```bash
 # Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
@@ -158,7 +158,7 @@ What survives in the slim DB:
 - All `names` rows for the selected place IDs
 - Fresh `place_search` (FTS5), `place_bbox` (R\*Tree), `place_population` aux tables
 
-What gets dropped: the `geojson` table, which is build-time only — `lookup.ts` never reads it at query time, and it accounts for ~95% of the on-disk size. The `place_population` aux table consumes `wof:population` from geojson before we drop it.
+What gets dropped: the `geojson` table. That table is build-time only. `lookup.ts` never reads it at query time, and it accounts for ~95% of the on-disk size. The `place_population` aux table consumes `wof:population` from geojson before we drop it.
 
 `WOFSQLitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
 
@@ -186,7 +186,7 @@ The resolver scores candidates by:
 4. - `countryMatchBoost` when the country filter matches.
 5. - `directChildBoost` / `descendantBoost` when `parentId` is set.
 6. - `proximityBoost / (1 + distanceKm / proximityScaleKm)` when `near: {lat, lon}` is set — decays
-     smoothly with distance from the user's position. At distance 0 the boost is full magnitude; at
+     smoothly with distance from the user's position. At distance 0 the boost is full magnitude, and at
      `proximityScaleKm` (default 100 km) it's half.
 7. − `lengthPenaltyWeight` × excess-length penalty (favors short matches over long matches on short
    queries).
@@ -237,7 +237,7 @@ Defaults are in `lookup.ts::DEFAULT_WEIGHTS`.
 are all stripped safely before going to FTS5. Per-token rules:
 
 - **Bare tokens** (`"Paris"`, `"62701"`) become FTS5 **phrase matches**: `"Paris"` matches places
-  named exactly "Paris", `"62701"` matches the postcode 62701 exactly.
+  whose name is exactly "Paris", `"62701"` matches the postcode 62701 exactly.
 - **A trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
   postcode starting with 627, `Pari*` matches Paris / Parishville / etc. The caller explicitly
   signals "prefix"; bare tokens stay phrase-matched for safety.
@@ -249,21 +249,21 @@ matching the Los Angeles ZIP corridor.
 
 ## Attribution (CC-BY 4.0)
 
-Who's On First data is licensed [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Downstream applications shipping resolved results from this package **must** carry an attribution notice — for example:
+Who's On First data is licensed [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Downstream applications shipping resolved results from this package **must** display an attribution notice — for example:
 
 > Place data via [Who's On First](https://whosonfirst.org/) © Mapzen + contributors, CC-BY 4.0.
 
-This package itself is AGPL-3.0; the WOF data it indexes is CC-BY 4.0. The two licenses are separate — your application must comply with both.
+This package itself is AGPL-3.0, and the WOF data it indexes is CC-BY 4.0. The two licenses are separate — your application must comply with both.
 
 ## Integration tests
 
-`resolver-wof-sqlite/integration.test.ts` exercises the resolver against a real WOF SQLite distribution. The suite is **skipped** when no DB is present — set `MAILWOMAN_WOF_DB` to override the lookup path, otherwise it defaults to `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location). CI runs against the fixture-only suites; operators with real WOF data locally get an extra layer of validation.
+`resolver-wof-sqlite/integration.test.ts` exercises the resolver against a real WOF SQLite distribution. The suite is **skipped** when no DB is present — set `MAILWOMAN_WOF_DB` to override the lookup path, otherwise it defaults to `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location). CI runs against the fixture-only suites. Operators with real WOF data locally get an extra layer of validation.
 
 Coverage includes: placetype filtering, country filtering, the empty-result case, FTS5 special-character sanitization, Japanese alt-name resolution, parent-constrained lookup, and a performance budget (`findPlace` < 250 ms against the 142 k-row US admin database).
 
 ## Concurrency model
 
-This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / multiple-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is safe (queries queue) but won't parallelize across cores.
+This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / multiple-reader, and the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is safe (queries queue) but won't parallelize across cores.
 
 ## License
 

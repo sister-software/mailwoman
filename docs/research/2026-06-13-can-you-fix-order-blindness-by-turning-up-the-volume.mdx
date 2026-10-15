@@ -10,8 +10,8 @@ Two days ago we retired a piece of decode-time implementation we'd been leaning 
 and it exposed something the crutch had been hiding: our parser can't read a French
 address backwards. Last night we tried to teach it to. We got most of the way, hit a
 wall at 87%, and did the obvious thing and turned the training signal up, fully expecting
-the last few points to fall out. They didn't. The model got _worse_, and the way it got
-worse is the whole story. The questions on the table: can a pile of reordered examples
+the last few points to fall out. They didn't. The model got _worse_, and this post explains
+how it got worse. The questions on the table: can a pile of reordered examples
 teach a model where a house number lives? When that pile gets you 80% of the way, can you
 just add more? And what does the failure tell you about the thing you were
 training?
@@ -27,8 +27,8 @@ reaches for the first number-shaped thing it sees and labels `47110`, the postco
 the house number. It reads by position rather than by meaning.
 
 For a while we never noticed, because a decode-time span bridge was papering over the
-worst of it. When we shipped the char-offset corpus and retired that bridge, which had
-become a confirmed no-op everywhere else, French house numbers were the one tag that
+worst of it. When we shipped the char-offset corpus and retired that bridge (by then a
+confirmed no-op everywhere else), French house numbers were the one tag that
 fell out the bottom: 97.7 down to 89.6. The crutch came off and the limp showed. That's
 the regression we set out to fix.
 
@@ -62,7 +62,7 @@ Sainte-Livrade-sur-Lot, 69 Allée du Bugatel`, instead of grabbing the whole pos
 now split `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the
 postcode and the real house number into a single number, `47110 85`. We'd made the model
 so hungry for a leading house number that it started carving one out of the postcode
-itself. The postcode tag, which had been rock-solid, slipped too.
+itself. The postcode tag had been rock-solid, and it slipped too.
 
 Here's why the German precedent lied to us. A German house number is always _last_ —
 there's one position to find, and more practice sharpens the aim. A postcode-first French
@@ -83,9 +83,9 @@ or a signal that guards the postcode from being raided, and neither of those is 
 bigger number in a config file.
 
 So we held. The 87% model is a solid gain over what's live, and we'll likely put
-it in front of people once we decide how to price a number that beats the old one but
-misses its own bar. The recovery itself waits for the right change, which we now know is
-not this one. Two training runs and about ten dollars of GPU bought us a clean _no_ —
+it in front of people once we decide whether a number that beats the old one but
+misses its own bar is enough to ship. The recovery itself waits for the right change. We now know this change is
+not it. Two training runs and about ten dollars of GPU produced a clean _no_ —
 weight is the wrong knob, and we have the fragmented postcodes to prove it.
 
 That's the unglamorous half of training a model in the open: half the runs exist to tell

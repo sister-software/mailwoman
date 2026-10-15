@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Springfield's 0.05 margin across 144 bearers is ambiguous while Paris's 1.9 is decisive only once
+ *   Springfield's 0.05 margin across 144 bearers is ambiguous while Paris's 1.9 clears the winning-margin threshold only once
  *   the coincident `locality`/`localadmin` twin collapses, so a broken collapse fires on every capital
  *   while the correctness tests still pass.
  */
@@ -199,5 +199,20 @@ describe("coarserAnswerMarker", () => {
 				"unusedComponents"
 			]
 		).toEqual(["postcode"])
+	})
+
+	test("a postcode answer uses the postcode and still reports the street it did not locate", () => {
+		expect(
+			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "SY23 3DT" }, reachedTier: "postcode" })
+		).toBeNull()
+
+		const marker = coarserAnswerMarker({
+			kinds: STRUCTURED,
+			components: { street: "Nant llan industrial estate", postcode: "SY23 3DT" },
+			reachedTier: "postcode",
+		})
+
+		expect(marker?.evidence?.["unusedComponents"]).toEqual(["street"])
+		expect(marker?.evidence?.["requiredTier"]).toBe("street")
 	})
 })

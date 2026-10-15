@@ -1,4 +1,4 @@
-.TH MAILWOMAN 1 "" "mailwoman 10.3.0" "User Commands"
+.TH MAILWOMAN 1 "" "mailwoman 10.4.0" "User Commands"
 .SH NAME
 mailwoman \- calibrated, retrieval\-augmented postal\-address parser and geocoder
 .SH SYNOPSIS
@@ -106,7 +106,7 @@ Options:
   \-\-locale <locale>                           Locale tag matching a weights package, such as en\-US
                                               or fr\-FR. (default: en\-US)
   \-\-bias <points>                             Soft proximity\-bias points: lat,lon[:weight];lat,lon.
-  \-\-default\-country <country>                 ISO\-3166 resolver country scope; pass none to disable
+  \-\-default\-country <country>                 ISO\-3166 resolver country scope. Pass none to disable
                                               it.
   \-\-country\-scope <string>                    Apply the locale\-inferred resolver scope
                                               automatically, always, or never. (default: auto)
@@ -130,6 +130,10 @@ Options:
                                               true)
   \-\-venue\-head\-bias\-scale <multiplier>        Multiplier on the venue\-head table's biases. (default:
                                               2)
+  \-\-[no\-]street\-morphology\-prior              Bias a trailing street\-type affix toward the street
+                                              labels when its segment opens with a house number;
+                                              \-\-no\-street\-morphology\-prior disables it. (default:
+                                              true)
   \-\-[no\-]place\-country                        Use the coarse\-placer country prior;
                                               \-\-no\-place\-country disables it. (default: true)
   \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override
@@ -177,7 +181,7 @@ Arguments:
 Options:
   \-h, \-\-help                      Show command help.
   \-\-limit <number>                            Maximum number of completions. (default: 10)
-  \-\-fst <path>                                FST binary; defaults from $MAILWOMAN_FST_BIN.
+  \-\-fst <path>                                FST binary. The default comes from $MAILWOMAN_FST_BIN.
   \-\-json                                      Emit { engine, entries } as JSON instead of formatted
                                               text. (default: false)
 .fi
@@ -187,9 +191,9 @@ Usage: mw doctor [options]
 
 Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node,
 ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is
-reported, never fatal, and every failing line carries the one command that closes it. Then the
+reported, never fatal, and every failing line prints the one command that closes it. Then the
 license posture: the branch of mailwoman's license that applies to this installation, and the
-obligations each attached layer's recorded license carries (attribution, share\-alike, source offer).
+obligations each attached layer's recorded license imposes (attribution, share\-alike, source offer).
 
 
 Options:

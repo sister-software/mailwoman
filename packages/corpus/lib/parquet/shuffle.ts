@@ -10,8 +10,8 @@ import { shuffleWith } from "@mailwoman/core/random"
 /**
  * Rows held in memory while shuffling, when the caller names no window.
  *
- * Five 50,000-row groups span more than one output row-group and reach `wof-admin`'s
- * whole 13-country set, while a window below `ROW_GROUP_SIZE` buys no wider mix.
+ * Five 50,000-row groups span more than one output row-group and reach `wof-admin`'s whole
+ * 13-country set, while a window below `ROW_GROUP_SIZE` draws from no more than one row-group.
  */
 export const DEFAULT_SHUFFLE_WINDOW = 250_000
 

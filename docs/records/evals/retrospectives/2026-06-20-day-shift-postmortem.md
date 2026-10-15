@@ -10,7 +10,7 @@ Two arcs shipped today, both measurement-led: closing the EU coordinate gap with
 
 ### 1. EU coverage — zero GPU
 
-- **The change was coverage rather than a retrain.** The Three-Gap Matrix + a held-out coordinate eval (`scripts/eval/eu-coord-direct.ts`) showed the 15 zero-DB EU locales' median coordinate was reachable from gazetteer coverage alone; the "21% broken" was a loc-correct (whole-parse) artifact rather than the coordinate. The #566 trap, avoided. See `project-eu-coverage-not-retrain`.
+- **The change was coverage rather than a retrain.** The Three-Gap Matrix + a held-out coordinate eval (`scripts/eval/eu-coord-direct.ts`) showed the 15 zero-DB EU locales' median coordinate was reachable from gazetteer coverage without a retrain. The "21% broken" was a loc-correct (whole-parse) artifact rather than the coordinate. The #566 trap, avoided. See `project-eu-coverage-not-retrain`.
 - **Overture divisions → the canonical admin DB.** Built the divisions-theme gazetteer, folded the ingest into the canonical build (`build-unified-wof.ts --overture-countries`), and rebuilt + swapped `admin-global-priority.db`: **+15 EU locales (299 k divisions) + TW (16,750)**, with the 10 priority countries **byte-identical** to the prior DB and the US resolver eval **unchanged** (loc 97.6 / region 99.9 / coord p50 3.3 km). Median coordinate solved 14/15 at ES/IT/NL control parity (0.4–7.1 km).
 - The `overture` corpus adapter (#470) was realized along the way (`mailwoman corpus run overture`), and the build manifest records the new source for reproducibility.
 
@@ -18,34 +18,34 @@ Two arcs shipped today, both measurement-led: closing the EU coordinate gap with
 
 - **The measurement that started it.** Byte-ranging the full 2.6 GB admin DB worked but cost **243 serial range fetches / 16.5 MB per session** — FTS postings for a common name scatter across the file, and `requestChunkSize` tuning made it _worse_ (over-fetch). The slim DB was cheaper only because it was small + US/DE/FR-only.
 - **DeepSeek consult (2 turns) → a precomputed candidate table.** Explode each place's normalized name + aliases + region abbrevs + US postcodes into one `WITHOUT ROWID` B-tree keyed on `name_key`, population rank precomputed, rows denormalized (name, centroid, bbox) so a resolve is one contiguous probe. Measured: **~12 fetches / 0.9 MB per session**, **490 MB single file, global coverage**, US locality **96.8 %** (region-bbox disambiguation), EU coord parity **88.6 %**.
-- **Shipped end-to-end:** the `mailwoman-wof-build-candidate` CLI (TS port of the prototype), the `WofCandidateTableLookup` resolver (a drop-in for the slim httpvfs lookup), the demo wiring, and the **retirement of the slim build** (`build-slim` / `--wof-hot` / `SLIM_COUNTRIES` removed; polygons sourced from `--admin`). A Cloudflare WAF range-rule guards the 490 MB object from full-file downloads. See `project-candidate-table-byte-range`.
+- **Shipped end-to-end:** the `mailwoman-wof-build-candidate` CLI (TS port of the prototype), the `WofCandidateTableLookup` resolver (a drop-in for the slim httpvfs lookup), the demo wiring, and the **retirement of the slim build** (`build-slim` / `--wof-hot` / `SLIM_COUNTRIES` removed, with polygons sourced from `--admin`). A Cloudflare WAF range-rule guards the 490 MB object from full-file downloads. See `project-candidate-table-byte-range`.
 - **Browser e2e green (4/4):** Chicago locality, ZIP-only marker, the Berlin regression, and the White-House no-fail check — all in headless Chromium against the live R2 object.
 
 ## Key decisions
 
 - **Candidate table over both alternatives.** It beat the full-DB byte-range (243 → 12 fetches) _and_ the slim (global coverage, no `SLIM_COUNTRIES` upkeep). The decision was the spike number rather than the estimate.
-- **Coverage over a GPU retrain for EU.** The falsification made the retrain (#148) unnecessary for the coordinate; it stays on hold.
-- **US-only postcodes in the candidate table**, matching what the slim carried; international postcodes are country-blocked by the resolved locality so an ambiguous ZIP (10115 = Berlin DE _and_ NYC) can't drag a German address to Manhattan.
+- **Coverage over a GPU retrain for EU.** The falsification made the retrain (#148) unnecessary for the coordinate, and it stays on hold.
+- **US-only postcodes in the candidate table**, matching what the slim build contained. International postcodes are country-blocked by the resolved locality so an ambiguous ZIP (10115 = Berlin DE _and_ NYC) can't drag a German address to Manhattan.
 
 ## What went well
 
-- **Verify-before-verdict paid out repeatedly.** The spike caught 243 fetches against my ~1 MB estimate; the e2e caught the postcode regression _before_ the slim was torn out; the US A/B check proved the admin-DB swap was byte-identical before promotion.
-- **The consult earned its keep.** DeepSeek's candidate-table structure was the result; we trusted the structure and tested the numbers ourselves.
+- **Verify-before-verdict paid out repeatedly.** The spike caught 243 fetches against my ~1 MB estimate. The e2e caught the postcode regression _before_ the slim was torn out. The US A/B check proved the admin-DB swap was byte-identical before promotion.
+- **The consult supplied the design.** DeepSeek's candidate-table structure was the result. We trusted the structure and tested the numbers ourselves.
 
 ## What could've gone better
 
-- **Lockfile drift went to CI red.** The new `mailwoman-wof-build-candidate` bin changed workspace metadata yarn 4 records in the lockfile; the staged-scoped pre-commit hook missed it and `yarn install --immutable` failed in CI. Run `yarn install --immutable` after adding a bin/export.
-- **WAF propagation lag read as a bug.** The rule was correct on the right zone the whole time; testing within ~60 s of creation showed it not blocking. Cloudflare custom rules take a few minutes to reach all edges.
-- **`PRAGMA page_size` was a no-op.** `node:sqlite` initializes the file at the 4096 default before the pragma runs; set it right before `VACUUM`.
+- **Lockfile drift went to CI red.** The new `mailwoman-wof-build-candidate` bin changed workspace metadata yarn 4 records in the lockfile. The staged-scoped pre-commit hook missed it and `yarn install --immutable` failed in CI. Run `yarn install --immutable` after adding a bin/export.
+- **WAF propagation lag read as a bug.** The rule was correct on the right zone the whole time. A test within ~60 s of creation showed it not blocking. Cloudflare custom rules take a few minutes to reach all edges.
+- **`PRAGMA page_size` was a no-op.** `node:sqlite` initializes the file at the 4096 default before the pragma runs. Set it right before `VACUUM`.
 - **Immutable-cache churn.** Three candidate-DB version bumps (`-20` → `-20a` → `-20b`) for re-uploads, because the object is `immutable` and needs a fresh URL each rebuild.
 
 ## Open / next
 
-- **~11 % EU surface-variant recall** — the candidate table is exact-normalized-name; names like "Costa de Caparica" vs the gazetteer's "Costa da Caparica" miss. Mitigable with richer alias coverage.
-- **DE/FR postcodes** in the candidate table (currently US-only; international postcodes fall to the locality centroid).
+- **~11 % EU surface-variant recall** — the candidate table is exact-normalized-name, so names like "Costa de Caparica" vs the gazetteer's "Costa da Caparica" miss. Mitigable with richer alias coverage.
+- **DE/FR postcodes** in the candidate table (currently US-only, so international postcodes fall to the locality centroid).
 - A `build-candidate` unit test (the `build-slim.test.ts` convention).
 
-The candidate-table story is written up as a Research Log post: [243 round trips to find a city](/research/243-round-trips-to-find-a-city).
+The candidate-table work is written up as a Research Log post: [243 round trips to find a city](/research/243-round-trips-to-find-a-city).
 
 ## Numbers
 

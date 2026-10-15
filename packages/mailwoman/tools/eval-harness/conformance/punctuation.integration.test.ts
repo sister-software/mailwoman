@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The punctuation law against the live pipeline — the leg that actually geocodes.
+ *   The punctuation law against the live pipeline — the leg that geocodes.
  *
  *   It is an `.integration.test.ts` file because that is the suite the `mailwoman-data` runner runs,
  *   with `MAILWOMAN_DATA_ROOT` set and the weights materialized. The fast leg is portable by construction. A

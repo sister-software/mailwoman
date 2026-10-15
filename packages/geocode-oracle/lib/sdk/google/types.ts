@@ -22,7 +22,7 @@ export const GoogleGeocoderStatus = {
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
 	 * Transient status.
-	 * This is the only status here worth retrying.
+	 * This is the only status here that a retry can change.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
 	RequestDenied: "REQUEST_DENIED",

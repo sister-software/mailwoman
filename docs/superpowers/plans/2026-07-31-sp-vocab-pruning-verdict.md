@@ -34,8 +34,8 @@ so pruning it has a cost.
 The survey implied that the embedding was about 72.5% of params at no more than 24% utilization,
 so a prune could roughly halve the model. **That saving does not exist.** The real saving is 3.7
 MB, and it would add a permanent id-remap coupling between tokenizer.model and model.onnx. Every
-future fine-tune, splice and the browser loader would have to respect that new invariant. The trade
-is not worth it, so the change was not built.
+future fine-tune, splice and the browser loader would have to respect that new invariant. That cost
+exceeds the benefit, so the change was not built.
 
 The wrong number came from the 2026-07-30 synthesis line "(shipped-eval utilization ~6.7%,
 ceiling 24%)". The research agent did not commit the raw measurement behind it, so it cannot be
@@ -55,6 +55,6 @@ build.**
   sidecar, eval-fired.json and eval-texts.json). It feeds directly into the CJK Phase-3 full-vocab
   rebuild and any v9 tokenizer-sizing decision. Vocab size should be set when the tokenizer is
   trained, since the model learns whatever vocab exists, rather than by surgery afterwards.
-- The 13.7% never-fired band is real but small. The 100–999 band (37.2%) is the largest band,
-  which shows that the vocab's working pieces sit in the mid-frequency tail. That argues against
+- The 13.7% never-fired band is real but small. The 100–999 band (37.2%) is the largest band.
+  That shows that the vocab's working pieces sit in the mid-frequency tail. That argues against
   aggressive vocab shrinkage in any future retrain. It does not bear on this prune.

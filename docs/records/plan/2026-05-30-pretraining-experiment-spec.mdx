@@ -54,7 +54,7 @@ the whole sequence is available at inference, the objective must be bidirectiona
 | Objective                                  | Verdict for a 29M offline BIO tagger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **ELECTRA replaced-token-detection (RTD)** | **Primary recommendation.** Best-documented sample/compute efficiency at our exact scale — ELECTRA-Small (14M, ~our architecture: 12L/256h/4head/1024-FFN) reached 79.9 GLUE on 1 GPU × 4 days, beating BERT-Small (75.1) and GPT at ~45× less compute. Loss is over _all_ tokens (denser signal than masked-only). RTD's discrimination objective is plausibly less overconfidence-inducing than token-prediction.                                                                                                                                          |
-| **MLM at ~40% mask rate**                  | **Safe runner-up.** What every strong small NER encoder (BERT, RoBERTa, GLiNER's DeBERTa, NuNER) is built on; simpler than RTD's generator+discriminator. 40% (not the classic 15%) is optimal at small scale per Wettig et al. (EACL 2023): more predictions = better optimization. SpanBERT-style span masking is a close variant, well-matched to multi-token spans (BIO).                                                                                                                                                                                |
+| **MLM at ~40% mask rate**                  | **Safe runner-up.** What every strong small NER encoder (BERT, RoBERTa, GLiNER's DeBERTa, NuNER) is built on. It is simpler than RTD's generator+discriminator. 40% (not the classic 15%) is optimal at small scale per Wettig et al. (EACL 2023): more predictions = better optimization. SpanBERT-style span masking is a close variant, well-matched to multi-token spans (BIO).                                                                                                                                                                          |
 | **Pure CLM (GPT-style, causal)**           | **Wrong default for a tagger.** BERT's own ablation: a left-to-right variant scored 77.8 vs 88.5 F1 on the token-level SQuAD task. LLM2Vec confirms causal models must be _converted back to bidirectional_ to encode well.                                                                                                                                                                                                                                                                                                                                  |
 | **Biphasic CLM→MLM**                       | **Only if a generative head joins the roadmap.** The ICLR-2026 controlled study (Gisserot-Boukhlef et al., arXiv 2507.00994, 15k+ runs) found CLM is _more data-efficient and fine-tuning-stable_, ties-or-slightly-beats MLM on **token classification specifically**, and that a CLM→MLM two-stage protocol (≈25–50% CLM steps, then MLM) captures both. **Caveat:** the "CLM ≥ MLM on TC" result is contested by the paper's own author thread as a possible weak-backbone (EuroBERT) artifact, and all their models are 210M–1B — none at our 29M scale. |
 
@@ -83,11 +83,11 @@ already template, strip the labels, and run **whole-word MLM at ~40%** on the
 existing 29M architecture + the **frozen existing 16k SentencePiece tokenizer**
 for a few hours on one A100 — eventhe ~10M strings we can cheaply assemble.
 Then fine-tune the BIO head from those weights with a **low LR + label smoothing**
-(ideally keeping a small auxiliary MLM loss to resist catastrophic forgetting,
-which otherwise erases the calibration benefit — Tao et al. arXiv 2305.19249).
+(ideally keeping a small auxiliary MLM loss to resist catastrophic forgetting).
+Without that loss, forgetting erases the calibration benefit (Tao et al. arXiv 2305.19249).
 
 Why from-scratch domain MLM and not continue-pretraining a general model:
-addresses are vocabulary-distinct and terse; PubMedBERT (arXiv 2007.15779) showed
+addresses are vocabulary-distinct and terse. PubMedBERT (arXiv 2007.15779) showed
 from-scratch + in-domain vocab beats continued general-model pretraining for a
 narrow domain — and it lets us keep our existing custom 16k vocab and tiny size.
 
@@ -96,9 +96,9 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 
 ### Recipe (Stage A)
 
-- Mask rate ~40% (small-model optimum; not the classic 15%).
-- Seq len 128 (matches the model's max); AdamW; peak LR ~5e-4, ~6% warmup, linear
-  decay; large batch.
+- Mask rate ~40%, the small-model optimum. The classic rate is 15%.
+- Seq len 128 (matches the model's max).
+- AdamW, peak LR ~5e-4, ~6% warmup, linear decay, large batch.
 - **Tokenizer frozen and shared** between pre-train and fine-tune — a vocab swap
   invalidates transfer. (This is the single most important do-not-break rule.)
 - Fine-tune from the pre-trained weights with low LR + label smoothing.
@@ -113,7 +113,7 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 1. **Calibration** — fraction-of-wrong-predictions-at-≥0.9 (the 81% number) and
    ECE. _Primary_ — this is the pathology we're attacking.
 2. **OOD robustness** — accuracy on a comma-stripped / non-canonical held-out set.
-3. **Resolver end-to-end Acc@1** — the product metric (must not regress; ideally
+3. **Resolver end-to-end Acc@1** — the product metric. It must not regress, and it ideally
    improves via fewer confident-wrong parses).
 4. Harness pass-rate as a regression check (not the promote bar — see the
    harness-lineage doc).
@@ -127,7 +127,7 @@ pre-training isn't the change at this scale.
 ## Coordinate with the resolver-depth track
 
 **Parallel — touches zero resolver code.** The resolver consumes the parser's BIO
-output; pre-training changes only the encoder weights behind that interface.
+output, and pre-training changes only the encoder weights behind that interface.
 Convergence point: land the OpenAddresses real-point eval first so both tracks
 share one direct scoreboard, and **re-run the arbiter eval after any new model**
 (a better-calibrated parser may change the arbiter's win margin).
@@ -149,6 +149,7 @@ share one direct scoreboard, and **re-run the arbiter eval after any new model**
   aclanthology 2020.acl-main.740
 - Gu et al., "PubMedBERT" / domain-specific from-scratch (2020) — arXiv 2007.15779
 - Tao et al., calibration-preserving fine-tuning — arXiv 2305.19249
-- G2PTL (Cainiao, address pre-training, MLM+HTC+geocoding) — arXiv 2304.01559;
-  GeoBERT — MDPI Applied Sciences 12/24/12942; deepparse — arXiv 2006.16152
+- G2PTL (Cainiao, address pre-training, MLM+HTC+geocoding) — arXiv 2304.01559
+- GeoBERT — MDPI Applied Sciences 12/24/12942
+- deepparse — arXiv 2006.16152
 - AddrLLM (generative address rewriting, JD Logistics) — arXiv 2411.13584

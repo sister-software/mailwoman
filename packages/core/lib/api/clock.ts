@@ -6,7 +6,7 @@
  *
  *   The pacing and backoff suites inject the clock so they stay deterministic and finish in
  *   milliseconds instead of sleeping on the wall clock.
- *   clock — a rate-limit test that actually waits 100ms per grant costs 4s for a 40-call fan-out and
+ *   clock — a rate-limit test that waits in real time 100ms per grant costs 4s for a 40-call fan-out and
  *   is flaky under CI load. the same test against an injected clock is exact and instant.
  *
  *   Deliberately not `node:timers/promises`: `core/api` reaches a browser bundle (`docs`'s

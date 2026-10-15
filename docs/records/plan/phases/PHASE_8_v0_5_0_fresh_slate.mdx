@@ -2,9 +2,9 @@
 
 **Goal:** retire the inherited debt from v0.1.0 by rebuilding tokenizer + model + corpus + pipeline architecture together, in one coordinated iteration. This release pays one large cost to remove several structural limits at once, rather than working around them across incremental releases.
 
-**Cadence:** ~3-6 weeks wall-clock, depending on training compute budget. With rented GPU this compresses; on local iGPU it does not.
+**Cadence:** ~3-6 weeks wall-clock, depending on training compute budget. With rented GPU this compresses. On local iGPU it does not.
 
-**Branch convention:** `feat/v0.5.0-fresh-slate` umbrella; per-component sub-branches as the work decomposes.
+**Branch convention:** `feat/v0.5.0-fresh-slate` umbrella, with per-component sub-branches as the work decomposes.
 
 **Depends on:** v0.4.0 shipped (done 2026-05-23) and the issue #116 retrospective written. v0.4.1 is deliberately skipped: the operator decided on 2026-05-23 to skip the incremental warm-start in favor of fresh-slate.
 
@@ -14,11 +14,11 @@
 
 v0.4.0 shipped a `§4-only` recipe after the full §1+§3+§4 destabilized at every tested learning rate. The campaign's main finding concerned more than §1 or §3. The training-side improvements we were adding to v0.3.0 weights ran into architectural constraints inherited from v0.1.0:
 
-- **Tokenizer locked at v0.1.0:** byte-fallback on non-Latin scripts drives 92% of country FN and 18% of postcode FN. No model-side fix is possible without retraining the tokenizer, which forces a fresh model train.
-- **Single classifier head doing both boundary discovery and type classification:** BIO labeling couples these two problems, and v0.4.0's bio_slip class (6% of postcode FN) is the symptom. A phrase-grouping layer (new Stage 2.7) decouples them, but its outputs need to flow into the classifier's conditioning, which requires a classifier retrained to use them.
+- **Tokenizer locked at v0.1.0:** byte-fallback on non-Latin scripts drives 92% of country FN and 18% of postcode FN. No model-side fix is possible without retraining the tokenizer. A tokenizer retrain forces a fresh model train.
+- **Single classifier head doing both boundary discovery and type classification:** BIO labeling couples these two problems, and v0.4.0's bio_slip class (6% of postcode FN) is the symptom. A phrase-grouping layer (new Stage 2.7) decouples them, but its outputs need to flow into the classifier's conditioning. That conditioning requires a classifier retrained to use them.
 - **Stage 5 reconcile is structural-only today:** it sorts spans and attaches them via PARENT_OF. Real concordance matching (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg`) needs top-k from the classifier, top-k from the resolver, and concordance scoring. The classifier therefore needs to emit top-k sequences by design.
 
-Each of these three changes would require either a fresh train or a substantial runtime rewrite. The combined work costs roughly the same as the most expensive change alone and delivers much more.
+Each of these three changes would require either a fresh train or a substantial runtime rewrite. The combined work costs roughly the same as the most expensive single change and delivers all three.
 
 ## Scope decomposition
 
@@ -34,11 +34,11 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - Train on the same corpus the model will train on (consistency)
 - **Output:** `/data/models/tokenizer/v0.5.0/` + new model card
 - **Blocks:** Threads C (classifier needs new tokenizer to embed against) + E (phrase grouper benefits from cleaner sub-pieces).
-- **Blocked by:** Thread B (synthetic adversarial corpus must be generated first; tokenizer trains on the combined corpus).
+- **Blocked by:** Thread B (synthetic adversarial corpus must be generated first, because the tokenizer trains on the combined corpus).
 
 ### B. Synthetic adversarial corpus expansion
 
-- **What:** use DeepSeek (or comparable LLM) to generate transliteration pairs and incongruent-component examples. Add to `corpus-v0.4.0` (next corpus revision; bumps from v0.3.0).
+- **What:** use DeepSeek (or comparable LLM) to generate transliteration pairs and incongruent-component examples. Add to `corpus-v0.4.0` (the next corpus revision, bumped from v0.3.0).
 - **Why:** golden v0.1.2 evaluates against adversarial transliterations the model was never trained on. Either we close the train/eval gap, or we treat the eval as out-of-distribution and weight the regression denominator accordingly.
 - **Specifics:**
   - **Transliteration pairs**: generate N (target ~50K) US/FR addresses with their CJK/Cyrillic/Armenian script transliterations. Both as input → English gold pairs and as augmented training rows for the existing en-US/fr-FR classifiers.
@@ -53,12 +53,12 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 - **What:** retrain the BIO classifier with two structural changes:
   - **Top-k by design**: instead of always returning argmax, the inference path returns top-k tag sequences with calibrated scores. Stage 5 consumes these.
   - **Phrase-prior conditioning**: classifier input layer takes the phrase grouper's proposed spans as additional features (one-hot or learned-embedding for "this token is the start of a proposed phrase," "this token is mid-phrase," etc.). Trained jointly with the BIO objective.
-- **Why:** unblocks Stage 5 concordance work. The model becomes a candidate generator instead of a single-answer predictor, which matches the architecture's interface.
+- **Why:** unblocks Stage 5 concordance work. The model becomes a candidate generator instead of a single-answer predictor. That role matches the architecture's interface.
 - **Specifics:**
   - Likely a hidden_size bump (256 → 384 or 512), paid for by rented GPU. Validate before committing.
   - Label vocabulary unchanged from v0.3.0 (21 BIO classes) unless POI taxonomy expansion is bundled in (operator decision).
 - Corpus-v0.4.0 (adversarial-expanded) supplies training data. Tokenizer is v0.5.0.
-  - Use the lessons from v0.4.0: verdict smokes with constant-LR or long max_steps (not cosine-decay). Make one change at a time within this fresh-slate release, and do not combine §1 per-token CRF norm, §3 class weights, and phrase priors in a single run. The phrase priors are the headline change; everything else stays as-close-to-v0.3.0 as possible.
+  - Use the lessons from v0.4.0: verdict smokes with constant-LR or long max_steps (not cosine-decay). Make one change at a time within this fresh-slate release, and do not combine §1 per-token CRF norm, §3 class weights, and phrase priors in a single run. The phrase priors are the headline change. Everything else stays as-close-to-v0.3.0 as possible.
 - **Output:** new `neural-weights-en-us@v0.5.0` + `neural-weights-fr-fr@v0.5.0` packages.
 - **Blocks:** Thread D (Stage 5 needs top-k classifier output).
 - **Blocked by:** Threads A + B + E.
@@ -68,7 +68,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 - **What:** Stage 5 expanded from "sort spans by start" to "Viterbi over (span proposal × tag interpretation × resolver candidate)." Picks joint-coherent parse trees that maximize `phrase_grouper_confidence × classifier_confidence × resolver_score × concordance_bonus`.
 - **Why:** closes the kryptonite catalogue. Currently no layer checks whether a parse is internally consistent, and reconcile is meant to be that layer.
 - **Specifics:**
-  - New file `core/pipeline/reconcile.ts` (Stage 5 implementation; sibling to `runtime-pipeline.ts`)
+  - New file `core/pipeline/reconcile.ts` (Stage 5 implementation, sibling to `runtime-pipeline.ts`)
   - Concordance scoring uses WOF parent_id chains: a country/region/locality assignment is coherent iff their `parent_id` chain agrees in the gazetteer
   - Configurable trade-off weights (`concordanceWeight` opt) so callers can tune classifier-trust vs gazetteer-trust
   - Test surface: a fixture file of the operator's kryptonite catalogue with expected parses pre- and post-reconcile
@@ -81,12 +81,12 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 - **What:** new pipeline stage between kind classifier and neural classifier. Proposes coherent input units with confidence scores. Ships in two flavors:
   - **Rule-based** first (port of v1's section/sub-section logic): proximity, punctuation, capitalization, hyphenation. It is deterministic and fast, and it needs no training.
   - **Learned** later (small 1-2M param span proposer trained on segmentation labels derived from corpus). It tests whether learned generalization beats rules.
-- **Why:** decouples boundary discovery from type classification, which addresses v0.4.0's bio_slip class at the source rather than through a decoder post-trim. It feeds both Stage 3 (as input conditioning) and Stage 5 (as span candidates).
+- **Why:** decouples boundary discovery from type classification. The split addresses v0.4.0's bio_slip class at the source rather than through a decoder post-trim. It feeds both Stage 3 (as input conditioning) and Stage 5 (as span candidates).
 - **Specifics:**
   - New workspace `@mailwoman/phrase-grouper/` alongside `@mailwoman/locale-hint` + `@mailwoman/kind-classifier`
   - Output: `Array<{ span: Section; kindHypothesis: PhraseKind; confidence: number }>`
   - PhraseKind taxonomy includes NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND
-  - Rule-based version ships first as proof-of-concept; learned version is v0.5.0 stretch if time permits, otherwise v0.5.1
+  - Rule-based version ships first as proof-of-concept. The learned version is v0.5.0 stretch if time permits, otherwise v0.5.1
 - **Output:** new workspace + new stage in `runPipeline`. The pipeline keeps its existing behavior when the caller does not opt in (backward-compatible).
 - **Blocks:** Thread C (classifier conditioning), Thread D (reconcile consumes proposals).
 - **Blocked by:** no item. The rule-based version can start immediately.
@@ -94,10 +94,10 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 ### F. Process improvements landed during v0.4.0 to harden — **SHIPPED**
 
 - **Status:** shipped 2026-05-23 (branch `feat/v0.5.0-thread-f-verdict-smokes`).
-- **What:** carry the v0.4.0 sidecars + diagnostic tools into the v0.5.0 process from day one.
+- **What:** bring the v0.4.0 sidecars + diagnostic tools into the v0.5.0 process from day one.
   - `corpus-audit` is already in tree (`corpus/scripts/audit.ts`) and runs directly against `corpus-v0.3.0`. Use it to verify Thread B's corpus mix before tokenizer training and before classifier training.
   - `diagnose_regression.py` is already in tree (`corpus-python/scripts/diagnose_regression.py`). Use it for v0.5.0 eval bucketing during the run rather than after the fact.
-  - The verdict-smoke framework is redesigned: **constant LR for the smoke window**, or `max_steps >= 10000` so the cosine tail does not dominate. Documented in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands; defaults to constant for end-to-end smokes.
+  - The verdict-smoke framework is redesigned: **constant LR for the smoke window**, or `max_steps >= 10000` so the cosine tail does not dominate. Documented in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands. Both default to constant for end-to-end smokes.
   - Decoder span-trim sidecar (commit `c72ab4c`, `core/decoder/build-tree.ts:58`) stays in main and covers the long tail of bio_slip cases the phrase grouper might miss.
 - **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. A record of it keeps v0.5.0 from repeating it.
 - **Output:** new [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) + `--smoke-mode` CLI flag + updated TODO.md.
@@ -116,7 +116,7 @@ E (phrase grouper, rule-based)             → D (Stage 5 reconcile)
 Parallel-safe:
 
 - F (process improvements) ships independently throughout
-- E rule-based version can ship as a standalone improvement before A/C complete (slot it into the existing v0.4.0 pipeline as an opt-in stage; backward-compatible)
+- E rule-based version can ship as a standalone improvement before A/C complete (slot it into the existing v0.4.0 pipeline as an opt-in, backward-compatible stage)
 
 ## Success metrics
 
@@ -132,7 +132,7 @@ These metrics differ from v0.4.0's "≥2 of 4 axes" frame because v0.5.0 changes
 ## Pre-flight
 
 - [ ] DeepSeek API access confirmed + rate-limit budget understood
-- [ ] Rented-GPU pricing + provisioning understood (a single H100 day for the full train is likely sufficient; phrase-grouper learned-version is small and can run on local iGPU)
+- [ ] Rented-GPU pricing + provisioning understood (a single H100 day for the full train is likely sufficient, and the phrase-grouper learned-version is small and can run on local iGPU)
 - [ ] `corpus-v0.3.0` integrity verified before adapter additions
 - [ ] Tokenizer training pipeline reproducible end-to-end on a fresh clone
 - [ ] `mailwoman corpus-audit` runs directly against the planned corpus-v0.4.0 mix
@@ -142,7 +142,7 @@ These metrics differ from v0.4.0's "≥2 of 4 axes" frame because v0.5.0 changes
 - New language packs beyond en-US / fr-FR. ja-JP / ko-KR / zh-CN etc. wait on either v0.6.0 or v0.5.x patch releases after the tokenizer + reconcile layer are validated in production.
 - POI taxonomy expansion (Stage 3 label vocab expansion). Stays at v0.3.0's 21 BIO classes. v0.6.0+ work.
 - Web demo redesign. The browser demo at `/demo` works on v0.5.0 weights as-is via onnxruntime-web.
-- Resolver backend changes. WOF SQLite stays primary; remote-resolver (Pelias / BAN / Nominatim) is still v0.6.0+ work.
+- Resolver backend changes. WOF SQLite stays primary, and remote-resolver (Pelias / BAN / Nominatim) is still v0.6.0+ work.
 
 ## Wall-clock estimate (rented GPU)
 

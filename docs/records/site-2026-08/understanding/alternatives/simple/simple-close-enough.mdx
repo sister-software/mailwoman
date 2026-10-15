@@ -15,7 +15,7 @@ Not every application needs sub-meter accuracy. For most applications, "in the r
 ## The approach
 
 1. **Define your precision requirement.** Not "as accurate as possible." A specific distance that is sufficient for your use case. Market analysis: within the correct city. Sales territory: within the correct ZIP code. Regional logistics: within the correct metro area. Last-mile delivery: within the correct block.
-2. **Choose the cheapest geocoder that meets the requirement.** City-level accuracy → locality-only geocoding (free, a few hundred lines of code). ZIP-level accuracy → postcode-only geocoding plus a ZIP-to-centroid table (free, trivially updateable). Block-level accuracy → a geocoding API (Google, geocode.earth — costs money but requires zero infrastructure).
+2. **Choose the cheapest geocoder that meets the requirement.** City-level accuracy → locality-only geocoding (free, a few hundred lines of code). ZIP-level accuracy → postcode-only geocoding plus a ZIP-to-centroid table (free, and updated by replacing one table). Block-level accuracy → a geocoding API (Google, geocode.earth — costs money but requires zero infrastructure).
 3. **Stop.** Don't optimize past your requirement. A geocode that is accurate to 5 meters when your application needs 5 kilometers is wasted engineering effort. The last 10% of accuracy costs 90% of the infrastructure.
 
 This is the economic argument for "close enough". The cost of higher precision is not linear, and the value of higher precision drops off sharply after you meet your application's requirement.
@@ -61,7 +61,7 @@ Mailwoman targets the block-to-building level of the spectrum. The parser extrac
 
 Mailwoman is not the right choice for city-level or ZIP-level geocoding. Those problems are solved by simpler, cheaper approaches. Mailwoman is the right choice when you need finer precision than a locality centroid and can't or won't pay for a commercial API.
 
-Mailwoman is also the right choice when you need to **improve your precision over time.** The corpus pipeline accepts new training data. The resolver can be swapped for a better gazetteer. The parser improves with more data without changes to the downstream system. "Close enough" today at the block level can become building-level tomorrow with the same infrastructure.
+Mailwoman is also the right choice when you need to **improve your precision over time.** The corpus pipeline accepts new training data. The resolver can be swapped for a better gazetteer. The parser improves with more data without changes to the downstream system. A deployment that is close enough at the block level now can reach building level later with the same infrastructure.
 
 ## See also
 

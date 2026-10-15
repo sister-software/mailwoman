@@ -4,20 +4,20 @@ Scope notes for the training-corpus pipeline. The repo-wide rules live in the ro
 file covers what is specific to acquiring source data and turning it into recipe outputs, and it exists
 because each item below cost a real investigation to establish.
 
-## Acquiring OpenAddresses data
+## OpenAddresses acquisition
 
 OA has **two** distribution endpoints with different access rules, and picking the wrong one either
 blocks you on a credential or costs a multi-gigabyte download for a single county:
 
 - **Country collections** — `batch.openaddresses.io`, reached by
   `mailwoman corpus fetch openaddresses --country <cc>`. Requires a free registered account;
-  `fetchOpenAddresses` reads `OA_BATCH_TOKEN`. Granularity is a whole country (US is many GB).
+  `fetchOpenAddresses` reads `OA_BATCH_TOKEN`. Granularity is a whole country, and the US collection is several gigabytes.
 - **Per-source runs** — `https://results.openaddresses.io/latest/run/<path>.zip`, e.g.
-  `.../latest/run/us/ia/statewide.zip`. **Anonymous, no token**, and honors range requests. `<path>`
+  `.../latest/run/us/ia/statewide.zip`. **Anonymous access with no token**, and the endpoint honors range requests. `<path>`
   is exactly the member path the recipe names, so `oa-cache/us__ia__statewide.zip` ⇄
   `us/ia/statewide.csv` ⇄ `/latest/run/us/ia/statewide.zip`.
 
-The auth check is on collections only. If you need a handful of named sources, use the per-source
+The auth check is on collections only. If you need a handful of specific sources, use the per-source
 endpoint — all seven `us__*` sources the recipes read total ~117 MB.
 
 `HEAD` against the per-source endpoint returns no `Content-Length` (it redirects). To size one
@@ -25,8 +25,8 @@ without downloading it, issue a one-byte range GET and read `Content-Range`.
 
 ## A file's mtime is not its data's vintage
 
-`$MAILWOMAN_DATA_ROOT/openaddresses/europe.zip` has a 2021 mtime, which reads as five-year-old data
-and has been proposed for refresh on that basis. It is not stale: `fr/countrywide.csv`,
+`$MAILWOMAN_DATA_ROOT/openaddresses/europe.zip` has a 2021 mtime. That date reads as five-year-old data,
+and the file has been proposed for refresh on that basis. It is not stale: `fr/countrywide.csv`,
 `de/berlin.csv` and `de/sn/statewide.csv` are **byte-identical** to what OA's current run serves
 (`bf624492…`, `9903d438…`, `623b099b…`). The date records when someone downloaded the archive.
 
@@ -36,7 +36,7 @@ prevented one retrain proposed over a file timestamp.
 
 ## The embedded-newline census
 
-A CSV value may contain a newline (inside a quoted field). Whether any given source actually does is
+A CSV value may contain a newline (inside a quoted field). Whether any given source does is
 a property of the DATA rather than of the code, so measure rather than argue:
 
 ```sh
@@ -44,19 +44,19 @@ unzip -p <zip> <csv> | awk '{n=gsub(/"/,"&"); if(n%2==1) odd++} END{print FILENA
 ```
 
 Full results are in `docs/superpowers/specs/2026-08-02-taste-audit-findings.md`. The short version:
-of every source reachable on the lab host, only two carry any — `fr/countrywide.csv` has 1 record and
+of every source reachable on the lab host, only two contain any. `fr/countrywide.csv` has 1 record and
 `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"`. Everything else is zero.
 
-Two consequences worth not rediscovering:
+The census has two consequences:
 
 - **`readCSVRecords` collapses `\r\n` inside a value to a space**, and is deliberately scoped to
   `\r\n` rather than `\s`. The quote-blind splitter it replaced was acting as an accidental newline
-  sanitizer — those IA records used to split in two and get dropped by the field checks. Widening the
-  collapse to `\s+` also rewrites `NORTH   MAIN STREET` on rows with no line break at all, silently
+  sanitizer — those IA records used to split in two and get dropped by the field checks. A collapse
+  widened to `\s+` also rewrites `NORTH   MAIN STREET` on rows with no line break at all, silently
   changing values in every recipe output. `scaffold.test.ts` pins both directions.
-- **Line-based pre-filters run BEFORE the parser and can reduce a record in half.** `po-box-cedex`'s
-  `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count PHYSICAL lines. The parse cannot
-  repair what the pre-filter already reduce; a halved record fails the field checks and drops. This is a
+- **Line-based pre-filters run before the parser and can split a record in half.** `po-box-cedex`'s
+  `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count physical lines. The parse cannot
+  repair a record the pre-filter already split. A halved record fails the field checks and drops. This is a
   sampling artifact rather than a correctness bug, and it is documented at the call site. FR gets away with
   it by luck — neither physical line of its one multi-line record is `≡ 3 (mod 211)`.
 
@@ -66,7 +66,7 @@ Do not re-introduce buffer windowing around `CSVSpliterator.from`. It existed be
 re-scanned the whole buffer per delimiter before 5.0.0 — quadratic, and the pathological input was
 the ORDINARY one (a source with no quotes at all paid a full scan per row). Measured on a real OA
 extract: 8 MB took 27,405 ms on 4.0.0 and 175 ms on 5.0.0. Streaming callers never saw it because
-they were chunk-bounded; only a whole-buffer `.from()` exposed it.
+they were chunk-bounded. Only a whole-buffer `.from()` exposed it.
 
 `normalizeKeys` follows the row mode in both entry points. The default object mode normalizes headers to lower-case
 keys. A reader that indexes publisher spelling — for example OpenAddresses' `LON,LAT,NUMBER,STREET` — must set
@@ -82,20 +82,20 @@ artifacts. Two checks, one command each, before asserting that a code change inv
 2. **Does the artifact predate the fix?** Compare the recipe output's mtime against the commit date of
    the change. A recipe output built after a fix already contains it.
 
-Skipping both once produced a claim that `synth-es-pedania-v1.jsonl` needed re-pinning. Its reader
-had migrated on 2026-07-08 and the recipe output was built 2026-07-22 — the work was already done, and acting
-on the claim would have cost an 800,000-row rebuild to find that out.
+When both checks were skipped once, the result was a claim that `synth-es-pedania-v1.jsonl` needed
+re-pinning. Its reader had migrated on 2026-07-08 and the recipe output was built 2026-07-22. The work was
+already done, and acting on the claim would have cost an 800,000-row rebuild to find that out.
 
 ## A recipe-output `source` is a wire identifier
 
-A recipe's `source` string is stored on every row of every corpus that carries it, keyed by every
+A recipe's `source` string is stored on every row of every corpus that contains it, keyed by every
 training config that weights it, and quoted by every model card trained on it. `lib/recipes/sources.ts`
 records each one under its retired spelling (`synth-german`) and its current one (`rendered-de`),
 with the file that writes it. The tail is kept byte-for-byte in every other entry, so the mapping is a
 prefix swap. Germany is the exception because the retired name spelled a language word where every
 other locale reads as an ISO code. Read that table before renaming a source, adding one, or reading an
-archived corpus whose `source` column says `synth-`. The `wire-identifiers` repository-health check
-refuses a config key that no adapter, recipe or carried overlay emits under either spelling. A corpus
+archived corpus whose `source` column begins with `synth-`. The `wire-identifiers` repository-health check
+refuses a config key that no adapter, recipe or retained overlay emits under either spelling. A corpus
 assembled before 2026-09-26 stores the retired spelling, and the config that targets it keeps that
 spelling, because the loader reads the corpus rather than the table.
 

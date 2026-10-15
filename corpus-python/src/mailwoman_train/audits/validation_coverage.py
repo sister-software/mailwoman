@@ -4,11 +4,15 @@
 contributing no row to it changes none of those numbers, so a run cannot tell a locale it validates
 well from a locale it does not validate at all.
 
-`splitForRow` in `packages/corpus/lib/utils/split.ts` sends a row to val or test only when its
-`components.region` matches a declared holdout string for its country. `defaultHoldouts()` names
-US, FR and DE. The splits hold out three countries geographically rather than sampling the corpus.
-Every other country holds zero by construction. A street row without `region` cannot be held out,
-regardless of the holdout values.
+`splitForRow` in `packages/corpus/lib/utils/split.ts` sends a row to val or test when its place is
+held out. A country listed in `defaultHoldouts()` holds out the places its entry declares. Every
+other country holds out one place in `HASHED_PLACE_HOLDOUT_DIVISOR`, chosen by a hash of the row's
+venue, locality, postcode prefix or region. A row with none of the four stays in train. A corpus
+built before `splitForRow` hashed places holds val and test rows only for the countries
+`defaultHoldouts()` lists.
+
+A coverage entry whose `country` is `*` applies its floors to every country `country_weights`
+admits, except a country with its own entry for that split.
 
 Read a per-locale validation metric with its denominator beside it: a `macro_f1` computed over a split
 holding no GB row makes no statement about GB. `cross_pollution`'s per-locale readings share the same
@@ -121,6 +125,41 @@ class ValidationCoverageError(ValueError):
         self.report = report
 
 
+#: The ``country`` of a coverage entry that applies to every country ``country_weights`` admits.
+EVERY_ADMITTED_COUNTRY = "*"
+
+
+def expand_requirements(
+    required: list[ValidationCoverageConfig],
+    country_weights: dict[str, float],
+) -> list[ValidationCoverageConfig]:
+    """Replace each ``country: "*"`` entry with one entry per admitted country.
+
+    A country with an explicit entry for the same split keeps that entry.
+    A country with weight zero admits no row and receives no floor.
+    """
+    explicit = [entry for entry in required if entry.country != EVERY_ADMITTED_COUNTRY]
+    named = {(entry.country, entry.split) for entry in explicit}
+    expanded = list(explicit)
+
+    for template in required:
+        if template.country != EVERY_ADMITTED_COUNTRY:
+            continue
+
+        for country, weight in sorted(country_weights.items()):
+            if weight > 0 and (country, template.split) not in named:
+                expanded.append(
+                    ValidationCoverageConfig(
+                        country=country,
+                        split=template.split,
+                        min_rows=template.min_rows,
+                        min_street_rows=template.min_street_rows,
+                    )
+                )
+
+    return expanded
+
+
 def failing_requirements(
     report: dict[str, Any],
     required: list[ValidationCoverageConfig],
@@ -215,7 +254,7 @@ def run(
     else:
         print(f"  every one of {', '.join(countries)} holds street rows in every split.")
 
-    required = cfg.data.required_validation_coverage
+    required = expand_requirements(cfg.data.required_validation_coverage, cfg.data.country_weights)
     failures = failing_requirements(report, required) if required else []
     report["required_validation_coverage"] = {
         "declared": [

@@ -54,17 +54,17 @@ release operation (release-kit)
 
 Capabilities live in domain packages that contain the logic and no adapters. Interfaces are thin
 adapters that expose a capability set to a consumer: a private CLI for CI and humans, an MCP server
-for agents, the public `mailwoman` CLI for users. Neither adapter carries meaningful logic.
+for agents, the public `mailwoman` CLI for users. Neither adapter contains meaningful logic.
 
-| Kind                              | Home                                                           | Admission rule (mechanical)                                                                                                                |
-| --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| a release capability              | private `packages/release-kit` (`@mailwoman/release-kit`)      | the operation participates in the construction, verification, staging, or publication of a release artifact                                |
-| a repository health check         | private `packages/repo-health`                                 | inspects the repository and returns diagnostics or pass/fail; no mutation, generation, publishing, benchmark, probe, or one-shot migration |
-| a measurement                     | `packages/mailwoman/lib/dev-tools/*.run.ts` (33 today)         | reproducible, and it produces evidence a record can cite                                                                                   |
-| an agent adapter over diagnostics | `@mailwoman/dev-mcp` (24 tools today)                          | an adapter over maintained diagnostic and measurement capabilities, never a second implementation home                                     |
-| an agent adapter over release     | new private `@mailwoman/release-mcp`                           | an adapter over `release-kit`'s registry, separately enabled, the only MCP surface with external-write effects                             |
-| the private operator CLI          | `mwops`, either `packages/ops-cli` or a `bin` of `release-kit` | views over the two registries below; no logic                                                                                              |
-| a one-shot task or codemod        | nowhere                                                        | deleted after use, or graduated into a capability                                                                                          |
+| Kind                              | Home                                                           | Admission rule (mechanical)                                                                                                                     |
+| --------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| a release capability              | private `packages/release-kit` (`@mailwoman/release-kit`)      | the operation participates in the construction, verification, staging, or publication of a release artifact                                     |
+| a repository health check         | private `packages/repo-health`                                 | inspects the repository and returns diagnostics or pass/fail, with no mutation, generation, publishing, benchmark, probe, or one-shot migration |
+| a measurement                     | `packages/mailwoman/lib/dev-tools/*.run.ts` (33 today)         | reproducible, and it produces evidence a record can cite                                                                                        |
+| an agent adapter over diagnostics | `@mailwoman/dev-mcp` (24 tools today)                          | an adapter over maintained diagnostic and measurement capabilities, never a second implementation home                                          |
+| an agent adapter over release     | new private `@mailwoman/release-mcp`                           | an adapter over `release-kit`'s registry, separately enabled, the only MCP surface with external-write effects                                  |
+| the private operator CLI          | `mwops`, either `packages/ops-cli` or a `bin` of `release-kit` | views over the two registries below without logic                                                                                               |
+| a one-shot task or codemod        | nowhere                                                        | deleted after use, or graduated into a capability                                                                                               |
 
 Two rules apply everywhere. The repository has no directory-wide knip entry glob, and no workflow
 executes a `lib/*.ts` path. The earlier draft's `node packages/release-kit/lib/release/x.ts` repeated
@@ -74,8 +74,8 @@ is withdrawn.
 ## 4. Registries are the only executable entry points
 
 Each capability package exports one registry, and the registry is the package's knip entry point. knip
-can then report an implementation file that nobody registers as dead code. Section 2 describes that
-failure, which the `scripts/**/*.ts` entry glob hid.
+can then report an implementation file that no registry lists as dead code. Section 2 describes that
+failure. The `scripts/**/*.ts` entry glob hid it.
 
 `repo-health`:
 
@@ -138,7 +138,7 @@ plus `mwops release preflight`, in place of eight `node scripts/…` invocations
 
 `dev-mcp` stays non-publishing. Its package description covers a warm geocoder and measurement, and an
 ordinary agent session that receives it must not also receive npm, Hugging Face or R2 publishing
-authority. `release-mcp` is enabled separately, and every one of its tools carries `effect`.
+authority. `release-mcp` is enabled separately, and every one of its tools declares `effect`.
 
 ## 6. Destinations, file by file
 
@@ -158,8 +158,8 @@ AGENTS.md's release-pipeline pitfalls follow the operations.
 `verify-test-layout`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
 `typecheck-tests`, with `tracked-sources` and `ts-ast` as its internal helpers. `package.json`'s
 `health:*` targets become `mwops health <id>` and `mwops health all`. `generate-man` generates, so it
-fails the admission rule; it goes to the CLI's `commands/dev/generate/` beside the generators there.
-`verify-slice-acks` and `verify-export-quant-versions` are unreferenced, and one carries a retired
+fails the admission rule. It goes to the CLI's `commands/dev/generate/` beside the generators there.
+`verify-slice-acks` and `verify-export-quant-versions` are unreferenced, and one contains a retired
 word. Delete them unless a record cites them.
 
 **Eval (31 + 3 `.py`) → three destinations by a per-file triage.**
@@ -175,7 +175,7 @@ word. Delete them unless a record cites them.
 - The three Python files and `fixtures/` move to `corpus-python/`.
 
 **Other (14).** `merge-admin` and `check-board-pins` become `mailwoman wof merge-admin` and
-`mailwoman eval pins` (a `pins.tsx` command exists; confirm it is the same check). `process-util` is
+`mailwoman eval pins` (a `pins.tsx` command exists, so confirm it is the same check). `process-util` is
 deleted in favor of `@mailwoman/core/process`. `rewrite-workspace-imports` was a one-shot codemod, so
 delete it. The four probes follow the eval triage.
 
@@ -228,12 +228,12 @@ revised model as the target. Receipts, in merge order:
 
 | Step           | Receipt                           | What landed                                                                                                                                                                                                                                                                                                                                                          |
 | -------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0, scaffolds   | #2133                             | `packages/release-kit`, `packages/repo-health`, `packages/ops-cli` (`mwops`); knip's root entry list made explicit; the `scriptsUnreferenced` counter at baseline 27                                                                                                                                                                                                 |
+| 0, scaffolds   | #2133                             | `packages/release-kit`, `packages/repo-health`, `packages/ops-cli` (`mwops`). Knip's root entry list made explicit. The `scriptsUnreferenced` counter at baseline 27                                                                                                                                                                                                 |
 | eval triage    | #2137                             | 25 `dev-tools/*.run.ts`, two libraries, 12 deletions, `mailwoman release merge-admin`, `mailwoman eval pins --check`; two latent defects fixed (the merge-admin pin guard matched a pre-`lib/` path; `honest-eval` spawned a deleted script)                                                                                                                         |
 | health family  | #2138                             | eight registered checks, `mwops health <id>` and `mwops health all`, `mwops health baseline debt`; `generate-man` became `mailwoman dev generate man-page`                                                                                                                                                                                                           |
 | release family | #2140                             | fifteen registered operations with effect classes; `mwops release plan` → `planDigest`; `publish-workspace` and `bless-package` take `--plan` and refuse a dirty or moved HEAD; `.release-it.json`, `publish.yml`, `test.yml`, `version-parity.yml` call `mwops`. Found on the way: `auditStagedWorkspaces` never awaited the pack, so preflight had audited 0 of 58 |
-| closure        | #2144                             | `scripts/` deleted; residue rehomed (`data/gazetteer/wof-build-manifest.json`, `packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts`, `dev-tools/verify-export-quant-versions.run.ts`); `no-root-scripts` check registered; `scriptsUnreferenced` retired                                                                                         |
-| follow-ups     | #2139, #2141, #2145, #2146, #2147 | two release-list workspaces at `0.0.0` raised to the root version; five stale manifest targets removed and the `manifest-targets` check registered (#2142); `version-sync` imports release-kit's release-list reader and `@mailwoman/core/git` replaces seven git shell-outs (#2143)                                                                                 |
+| closure        | #2144                             | `scripts/` deleted. Residue rehomed (`data/gazetteer/wof-build-manifest.json`, `packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts`, `dev-tools/verify-export-quant-versions.run.ts`). `no-root-scripts` check registered. `scriptsUnreferenced` retired                                                                                         |
+| follow-ups     | #2139, #2141, #2145, #2146, #2147 | two release-list workspaces at `0.0.0` raised to the root version. Five stale manifest targets removed and the `manifest-targets` check registered (#2142). `version-sync` imports release-kit's release-list reader and `@mailwoman/core/git` replaces seven git shell-outs (#2143)                                                                                 |
 
 Two findings changed the measurement itself. The `scriptsUnreferenced` counter had only ever counted
 `scripts/eval/`. git's fnmatch reads `**` as two stars, so `scripts/**/*.ts` required a directory
@@ -243,7 +243,7 @@ packages for manifest entries whose targets had moved. §5's plan → execute in
 there, and #2141 and #2147 make that a PR-time check.
 
 Step 4, the `release-mcp` adapter, landed on 2026-09-05 as `packages/release-mcp` (private). It has one
-tool per registered operation, named after the operation's id. Every description opens with the
+tool per registered operation, and each tool's name comes from the operation's id. Every description opens with the
 declared `effect`, the writers accept `dry_run`, and a `release_operations` tool lists the whole
 registry. The operator decided that the two `external-write` operations are hidden from the tool list
 by default. They appear only when the server starts with `--allow-external-write`, and they still run

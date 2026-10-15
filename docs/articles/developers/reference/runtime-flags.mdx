@@ -1,6 +1,6 @@
 ---
 title: Runtime flags
-description: The environment variables the shipped packages read, and the behavior defaults worth knowing about.
+description: The environment variables the shipped packages read, and the behavior defaults that change results.
 role: reference
 source-of-truth: core/env/schema.ts, resolver-wof-sqlite/lib/env.ts, mailwoman/lib/env/schema.ts, core/utils/data-root.ts, mailwoman/resolver-backend.ts, resolver/resolve.ts, core/pipeline/runtime-pipeline.ts, mailwoman/runtime-pipeline.ts
 ---
@@ -25,19 +25,19 @@ option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the ta
 
 ## Environment variables
 
-Every variable below is read by shipped runtime code. Each has no default unless the table says so.
+Every variable below is read by shipped runtime code. Each has no default unless the table gives one.
 
 | Variable                         | Default                                           | Effect                                                                                      | Set it when                                                                                |
 | -------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `MAILWOMAN_DATA_ROOT`            | platform data directory                           | The root directory for every downloaded artifact: gazetteers, address databases, POI layer  | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
 | `MAILWOMAN_CONFIG_ROOT`          | platform config directory                         | Configuration files owned by Mailwoman                                                      | You need a deployment-specific configuration location                                      |
 | `MAILWOMAN_CACHE_ROOT`           | platform cache directory                          | Reusable downloaded and generated caches                                                    | You need caches on a different volume                                                      |
-| `MAILWOMAN_TEMP_ROOT`            | platform temporary directory                      | Named temporary outputs and evaluation staging                                              | Temporary artifacts need another volume                                                    |
+| `MAILWOMAN_TEMP_ROOT`            | platform temporary directory                      | Temporary output files and evaluation staging                                               | Temporary artifacts need another volume                                                    |
 | `MAILWOMAN_CANDIDATE_DB`         | `<data root>/db/wof/candidate.db`                 | Path to `candidate.db`, overriding the convention path. `none` pins the FTS backend instead | Your copy lives outside the data root, or you want the FTS backend                         |
 | `MAILWOMAN_WOF_DB`               | unset                                             | Path to a full Who's On First SQLite distribution, used by the search backend               | You resolve against a full distribution rather than `candidate.db`                         |
 | `MAILWOMAN_WOF_ADMIN_DB`         | unset                                             | Path to the full WOF distribution for `mailwoman reverse`                                   | You reverse geocode                                                                        |
 | `MAILWOMAN_WOF_POLYGONS_DB`      | unset                                             | Path to the polygon sidecar. Without it every reverse result is approximate                 | You need polygon-exact containment                                                         |
-| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset                                             | Path to the postal-city alias database, which adds an alias-aware scoring pass              | You geocode United States mailing addresses at volume                                      |
+| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset                                             | Path to the postal-city alias database. It adds an alias-aware scoring pass                 | You geocode United States mailing addresses at volume                                      |
 | `MAILWOMAN_FST_BIN`              | `<data root>/db/wof/fst-per-locale/fst-en-US.bin` | Path to the gazetteer index `mailwoman autocomplete` reads                                  | You run autocomplete against another index                                                 |
 | `MAILWOMAN_MODEL_CARD`           | the package's card                                | Path to a model card, read by the server's `/health` report                                 | You serve a model whose card is not beside it                                              |
 | `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer                                | Directory holding the coarse country placer                                                 | You replace the bundled placer                                                             |
@@ -53,7 +53,7 @@ drop-in never appears in that list: it parses and expands, and resolves no place
 
 Two things the variable is still for. Point it at a copy that lives outside the data root, or set it
 to the literal `none` (equivalently `--candidate-db none`) to pin the older FTS backend over a full
-Who's On First distribution. `data pull` still prints an `export` line on success; it is a leftover
+Who's On First distribution. `data pull` still prints an `export` line on success. That line is a leftover
 from when the export was required, and following it produces no change unless your file is elsewhere.
 
 The change has a real edge: a machine that had `candidate.db` sitting at the convention path while
@@ -72,8 +72,8 @@ The batch cap has two values, and both are correct. `@mailwoman/api` used as a l
 
 ## Precedence
 
-A command-line flag beats an environment variable, which beats the built-in default. The flag names
-are on [CLI](./cli.mdx); each flag's description gives the variable it falls back to.
+A command-line flag beats an environment variable, and an environment variable beats the built-in
+default. The flag names are on [CLI](./cli.mdx). Each flag's description gives the variable it falls back to.
 
 ```
 --resolve-db <path>   >   $MAILWOMAN_WOF_DB        >  error, with the fix printed
@@ -98,20 +98,20 @@ one off is the change that needs a reason. Each is an option rather than an envi
 | Mechanism                 | Where                                      | Effect                                                                             | Turn it off when                                                                |
 | ------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `spanRescore`             | `ResolveOpts`                              | On an UNRESOLVED tree only, recovers a locality the subword tokenizer split        | You need output identical to a build without it                                 |
-| `postcodeConsistency`     | `ResolveOpts`                              | A resolved postcode point pulls a same-named locality to the right one             | Your postcodes are unreliable                                                   |
+| `postcodeConsistency`     | `ResolveOpts`                              | A resolved postcode point pulls a locality with the same name to the correct one   | Your postcodes are unreliable                                                   |
 | `hierarchyCompletion`     | `ResolveOpts`                              | Recovers a locality dropped when one name plays two administrative roles           | Never, in normal use                                                            |
 | `parentFallback`          | `ResolveOpts`                              | Retries once without the parent constraint when a filtered lookup comes back empty | Never, in normal use                                                            |
 | `adminCoherence`          | `ResolveOpts`, `GeocodeDeps`               | Picks the administratively consistent combination rather than the most populous    | You want the older population-first ranking                                     |
 | `placeCountry`            | `CreateRuntimePipelineOpts`, `GeocodeDeps` | A confident whole-string country guess biases ranking. It never filters            | You already pin the country and want no prior at all                            |
 | `placerCountryUse`        | `CreateRuntimePipelineOpts`, `GeocodeDeps` | `"filter"` promotes that guess to a filter, inside a coverage safelist             | You geocode outside the safelist and want recall over precision. Pass `"prior"` |
-| `caseNormalization`       | pipeline, classifier, `GeocodeDeps`        | Title-cases detected all-caps ASCII input before the model                         | Your input's casing carries meaning. Pass `"preserve"`                          |
+| `caseNormalization`       | pipeline, classifier, `GeocodeDeps`        | Title-cases detected all-caps ASCII input before the model                         | Your input's casing has meaning. Pass `"preserve"`                              |
 | `enforceWordConsistency`  | the pipeline's classify call               | Arbitrates disagreeing tags inside one word                                        | You call the classifier directly and want raw per-token labels                  |
 | `postcodeRepair`          | the pipeline's classify call               | A deterministic postcode repair pass                                               | You call the classifier directly. It is off there by default                    |
 | `spanProposer`            | classifier config                          | Span-proposal priors from Stage 2.7                                                | You need output identical to a build without it                                 |
 | `poiQueryKind`            | `CreateRuntimePipelineOpts`                | Detects a POI query and extracts its intent, without executing it                  | You only ever parse addresses and want the earlier kind classification          |
 | Gazetteer index auto-load | `CreateRuntimePipelineOpts.fst`            | Loads the index from the classifier's weights package and biases emissions         | You need output identical to a build without the index                          |
 
-Two mechanisms are off by default and worth knowing about:
+Two mechanisms are off by default:
 
 | Mechanism                        | Where         | Effect                                                         | Turn it on when                                                              |
 | -------------------------------- | ------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -149,14 +149,14 @@ on disk is not one you can reason about. The cost is the step this page keeps re
 then export. The two drop-in servers take the opposite trade and read the convention path, because
 a drop-in that needs a second setup step is not a drop-in.
 
-The behavior defaults are on rather than opt-in because a default nobody turns on is a mechanism that
+The behavior defaults are on rather than opt-in because a default that no caller turns on is a mechanism that
 does not exist. Each one shipped on by default only after clearing an evaluation against the shipped model,
 and turning one off takes `false` rather than a rebuild.
 
 The environment schema is broader than this page because its split is about logging safety. A
 variable is in the non-secret half when printing it cannot leak a credential. That is the right axis
 for a log line and the wrong axis for a configuration reference, so this page draws the line
-somewhere else and says where.
+somewhere else and states where.
 
 ## See also
 

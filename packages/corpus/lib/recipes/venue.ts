@@ -4,11 +4,11 @@
 /**
  *   `venue` recipe. A real venue name written as the whole query, and the same name followed by a
  *   locality drawn from the country's admin tuples. The rows teach the model that
- *   `Manchester Art Gallery` is a venue rather than a locality and a region, which the venue-head
- *   prior in `@mailwoman/neural` also asserts, so the model and the prior agree.
+ *   `Manchester Art Gallery` is a venue rather than a locality and a region. The venue-head
+ *   prior in `@mailwoman/neural` asserts the same reading, so the model and the prior agree.
  *
  *   Venue names come from the Overture place-names Parquet file the venue-head table is built
- *   from, which holds `name`, `category` and `country` for every place at confidence 0.85 or
+ *   from. That file holds `name`, `category` and `country` for every place at confidence 0.85 or
  *   higher. The file has no locality column, so the locality row joins a name to a tuple of the
  *   same country and asserts no fact about where the venue stands, so its surface is
  *   `SurfaceOrigin.Composed`. The bare row is the publisher's own string, so its surface is
@@ -24,7 +24,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
+import { isSpacelessScriptWord, venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeGauntletSurface, readGauntletInputs } from "#gauntlet-inputs"
@@ -58,7 +59,7 @@ export const DEFAULT_VENUE_NAMES: PathBuilderLike = dataRootPath(
 export const DEFAULT_NAMES_PER_COUNTRY = 20_000
 
 /**
- * Share of locality rows that also carry the region when `--venue-region-fraction` is absent.
+ * Share of locality rows that also print the region when `--venue-region-fraction` is absent.
  */
 export const DEFAULT_REGION_FRACTION = 0.5
 
@@ -104,13 +105,12 @@ export interface VenueHeadSuffixLookup {
 	suffix(word: string): number | null
 }
 
-const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
-
 /**
  * Characters a spaceless-script name needs before it is written as a bare query.
  *
- * A two-character name such as `東京` is the length of a city name, and the head the table recognizes is
- * the name's last character, so a name shorter than this is a head with one character of stem.
+ * A two-character name such as `東京` is the length of a city name.
+ * The head the table recognizes is the name's last character, so a name shorter
+ * than this is a head with one character of stem.
  */
 export const MIN_SPACELESS_BARE_CHARACTERS = 3
 
@@ -134,7 +134,7 @@ export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): bo
 	return (
 		Boolean(heads) &&
 		[...word].length >= MIN_SPACELESS_BARE_CHARACTERS &&
-		SPACELESS_SCRIPT_RE.test(word) &&
+		isSpacelessScriptWord(word) &&
 		heads!.suffix(word) !== null
 	)
 }
@@ -143,7 +143,7 @@ export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): bo
  * The comparison key for a name against the country's localities.
  */
 export function venueNameKey(name: string): string {
-	return name.normalize("NFC").trim().toLowerCase().replaceAll(/\s+/gu, " ")
+	return foldCaseWhitespace(name.normalize("NFC"))
 }
 
 /**

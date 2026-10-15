@@ -2,7 +2,7 @@
 #
 # The model is out-of-distribution on German: it truncates `Straußstraße`→`Strau`, absorbs the
 # house number into the street, and mis-tags the native-order house number as a postcode. DE-0
-# confirmed the tokenizer round-trips German orthography cleanly, so this is a coverage gap (order:
+# confirmed the tokenizer round-trips German orthography without loss, so this is a coverage gap (order:
 # the model trained US+FR — house-number-first, postcode-after-city — and never saw German order:
 # house-number-after-street, postcode-before-city).
 #

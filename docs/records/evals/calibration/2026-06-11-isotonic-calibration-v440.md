@@ -2,7 +2,7 @@
 
 Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a resolver or human reads off the parse). Method: isotonic regression (PAVA) over `(raw confidence, correct?)` pairs from a 50/50 OpenAddresses + training-corpus calibration set. Fit on 80%, every number below measured on the held-out 20%. Task #59 (#240 PR3).
 
-> `correct?` is a normalized exact-or-token-subset span match (so street decomposition and multi-word fragmentation aren't penalized), so the absolute accuracy runs mildly optimistic — isotonic corrects the reliability _shape_, which the lenient threshold leaves intact. The corpus half is in-domain (the model trained on it); the OA-only row above is the trustworthy held-out ECE.
+> `correct?` is a normalized exact-or-token-subset span match (so street decomposition and multi-word fragmentation aren't penalized), so the absolute accuracy runs mildly optimistic — isotonic corrects the reliability _shape_, and the lenient threshold leaves that shape intact. The corpus half is in-domain (the model trained on it). The OA-only row above is the trustworthy held-out ECE.
 
 ## Headline
 
@@ -14,7 +14,7 @@ Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a
 
 MCE (bins n≥20) 0.3303 → 0.1338 · Brier 0.0278 → 0.0224 · n_fit=28556 n_eval=7139 spans.
 
-> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is the headline; it weights each bin by its mass.
+> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is the headline. It weights each bin by its mass.
 
 ## Reliability (held-out eval, raw confidence)
 
@@ -75,7 +75,7 @@ MCE (bins n≥20) 0.3303 → 0.1338 · Brier 0.0278 → 0.0224 · n_fit=28556 n_
 
 ## Abstention curve (calibrated confidence)
 
-Accept spans at or above the threshold; route the rest to review. Precision is the accuracy of the accepted set.
+Accept spans at or above the threshold, and route the rest to review. Precision is the accuracy of the accepted set.
 
 | threshold | coverage (accepted) | precision | reviewed |
 | --------- | ------------------: | --------: | -------: |

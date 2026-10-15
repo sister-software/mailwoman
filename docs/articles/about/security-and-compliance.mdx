@@ -45,13 +45,13 @@ One codebase is available under two licenses:
   [`LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/LICENSE.md). The license has
   one condition. If you distribute software built on Mailwoman, or run it as a network service that
   others use, those users are entitled to your corresponding source under the same license.
-- **A commercial license**, which releases you from that condition. The reference terms are in
+- **A commercial license.** It releases you from that condition. The reference terms are in
   [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md).
   That document is a template and grants no rights. Only the executed agreement is binding. Rates are on
   [Pricing](../pricing.mdx).
 
 The code license and the data license are separate. Our license covers the code. Data provenance,
-below, describes the terms that the reference data carries.
+below, describes the terms under which the reference data is licensed.
 
 ## Software bill of materials
 
@@ -67,14 +67,14 @@ published SBOM can lag behind the newest release. Check the version in the filen
 it.
 
 npm Trusted Publishing uses GitHub OIDC and removes the need for a long-lived registry token that
-could leak. Packages do not currently carry a sigstore provenance attestation.
+could leak. Packages do not currently include a sigstore provenance attestation.
 
 ## Data provenance
 
 The pipeline records each source with its license at the point the source enters. The legal notices
 ship as
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
-in the source distribution. Each built data artifact carries its own `ATTRIBUTION.json`, which
+in the source distribution. Each built data artifact includes its own `ATTRIBUTION.json`. That file
 records the source, release and license it was built from. The catalog of sources and their terms is
 [data licensing and provenance](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/data-provenance.md).
 
@@ -83,7 +83,7 @@ Two items on that page matter to a review, and we would rather you heard them fr
 - **The OpenStreetMap rooftop tier reaches no published artifact.** The rooftop extracts in
   `@mailwoman/osm` are built and deliberately unpublished, on npm and in the demo alike, because OSM
   data is share-alike and enabling that tier is waiting on legal review. The served `candidate`
-  gazetteer does carry a Northern Ireland postcode fold derived from OpenStreetMap under ODbL: 4,757
+  gazetteer does contain a Northern Ireland postcode fold derived from OpenStreetMap under ODbL: 4,757
   places, measured 2026-09-27 by downloading `gazetteer/2026-08-25b/candidate.db` in full and
   counting the rows in that fold's id range. What ODbL asks of that is with counsel, and this page
   states no conclusion about it. The

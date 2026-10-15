@@ -17,16 +17,16 @@ identity on its own.
   exact-match lookup over one or more `postalcode-*.db` extracts.
 - **`@mailwoman/neural` → `PostcodeBinaryResolver`** — the browser/WASM `PostcodeResolver`, a pure-JS
   binary-search over a compact flat binary (no SQLite). `scripts/build-postcode-binary.ts` emits one
-  `postcode-<cc>.bin` per locale into `docs/static/mailwoman/` (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB; the
+  `postcode-<cc>.bin` per locale into `docs/static/mailwoman/` (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB, and the
   browser fetches only the locale it needs). Same `lookup()` boundary as the SQLite resolver, so
   `extractPostcodeAnchors` is agnostic to which backs it.
 
 ### Posterior and confidence
 
-The country posterior is **uniform** over the countries a postcode actually exists in. Weighting by
+The country posterior is **uniform** over the countries whose gazetteers contain the postcode. A weight by
 per-country volume would skew an ambiguous code like `94105` (a valid shape in US, French dept 94, and
-German PLZ 94xxx) toward whichever country owns more 5-digit codes, which is the bias the anchor exists
-to avoid. Disambiguation is the parser's job, using script, city tokens, and user locale.
+German PLZ 94xxx) toward whichever country owns more 5-digit codes. The anchor exists to avoid that
+bias. Disambiguation is the parser's job, using script, city tokens, and user locale.
 
 Confidence combines gazetteer **membership** with country **ambiguity**:
 
@@ -35,19 +35,19 @@ confidence = exists ? (1 - log2(k) / log2(10)) : 0      // k = distinct member c
 ```
 
 So a real single-country code scores 1.0, a real two-country code about 0.70, and a regex-shaped string
-that is in no gazetteer scores 0 — the last case is what keeps a bare `99999` or a 5-digit house number
+that is in no gazetteer scores 0. The zero score keeps a bare `99999` or a 5-digit house number
 from being treated as a postcode.
 
-Pass `{ fuzzy: true }` to absorb typos and OCR slips. When an exact lookup finds nothing, the anchor
+Pass `{ fuzzy: true }` to absorb typos and OCR slips. When an exact lookup returns no match, the anchor
 retries class-aware edit-distance-1 variants (digit↔digit, letter↔letter substitutions, plus deletions,
 insertions, and adjacent transpositions), tags the result `matchType: "fuzzy"`, and multiplies the
 confidence by a 0.6 penalty. A mistyped `12624` recovers its real neighbor `12623` at low confidence,
 leaving the parser's city tokens to confirm it. Fuzzy is off by default so existing callers keep
 exact-match behavior.
 
-## Building the extracts
+## Build the extracts
 
-The WOF postcode records (and their ids) come from the operator's own WOF build; coordinates come from
+The WOF postcode records (and their ids) come from the operator's own WOF build. Coordinates come from
 the priority chain below (own → GeoNames → WOF admin). US already ships as `postalcode-us.db`. For another
 country, clone its WOF postcode repo, build the extract, then backfill:
 
@@ -83,10 +83,10 @@ The WOF postcode repos vary in quality (see the survey below), so `backfill-post
 a coordinate for every coordinate-less postcode, in priority order:
 
 1. **Own coordinate** — the record's own `geom:latitude/longitude` from the build (US/NL, ~22% of FR). Most authoritative.
-2. **GeoNames postal** (`--geonames <dir>`) — the postcode's OWN centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). The cleanest fill for ES/IT and ~half of DE; it is _finer_ than the WOF parent-borrow (the postcode's point rather than a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan rather than a Liguria village). WOF ids stay canonical; only the coordinate comes from GeoNames.
+2. **GeoNames postal** (`--geonames <dir>`) — the postcode's own centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). It fills ES/IT and ~half of DE with the fewest wrong links of the three passes. It is _finer_ than the WOF parent-borrow (the postcode's point rather than a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan rather than a Liguria village). WOF ids stay canonical, and only the coordinate comes from GeoNames.
 3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
 
-Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** an extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
+Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **License:** an extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 
 ### Coverage and accuracy
 
@@ -104,9 +104,9 @@ DE accuracy jumped once GeoNames supplied the postcode's own centroid: **p50 1.2
 
 ### WOF postcode data quality, by locale (why GeoNames was needed)
 
-WOF-alone placeability, from a sample survey (orphan = no `wof:parent_id`; region = a usable `wof:hierarchy` ancestor), and what GeoNames adds:
+Placeability from WOF without GeoNames, from a sample survey (orphan = no `wof:parent_id`; region = a usable `wof:hierarchy` ancestor), and what GeoNames adds:
 
-| locale | own coords | orphans | region ancestor |            WOF alone | with GeoNames                      |
+| locale | own coords | orphans | region ancestor |             WOF only | with GeoNames                      |
 | ------ | ---------: | ------: | --------------: | -------------------: | ---------------------------------- |
 | NL     |       100% |      0% |            100% |                ~100% | WOF wins (GeoNames is coarser PC4) |
 | FR     |        39% |     39% |             61% |                 ~91% | ~91%                               |
@@ -114,7 +114,7 @@ WOF-alone placeability, from a sample survey (orphan = no `wof:parent_id`; regio
 | ES     |         0% |     64% |             36% |                 ~36% | **95%**                            |
 | IT     |         0% |     73% |             27% | ~27% (+ wrong links) | **90%** (links fixed)              |
 
-WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countries: ES/IT are orphan-heavy and IT carries wrong links. GeoNames postal closes those gaps cleanly and keeps the WOF id as the key, so eval integrity holds. NL stays on WOF (its PC6 is finer than GeoNames' PC4). The wider supplement landscape is catalogued in `docs/engineering/reference/address-data-sources.md` ("Gazetteer / resolver coordinate sources").
+WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countries: ES/IT are orphan-heavy and IT has wrong links. GeoNames postal closes those gaps and keeps the WOF id as the key, so eval integrity holds. NL stays on WOF (its PC6 is finer than GeoNames' PC4). The wider supplement landscape is catalogued in `docs/engineering/reference/address-data-sources.md` ("Gazetteer / resolver coordinate sources").
 
 ### Per-country status
 
@@ -124,7 +124,7 @@ WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countr
 | NL      | `postalcode-intl.db` | 100% (own PC6 `1012LM`)                          |
 | ES      | `postalcode-intl.db` | 95% (GeoNames)                                   |
 | FR      | `postalcode-intl.db` | 91% (own + WOF borrow)                           |
-| IT      | `postalcode-intl.db` | 90% (GeoNames; WOF's bad links corrected)        |
+| IT      | `postalcode-intl.db` | 90% (GeoNames, WOF's bad links corrected)        |
 | DE      | `postalcode-intl.db` | 82% (GeoNames + WOF borrow)                      |
 | GB      | not built            | deferred — postcode-not-order locale, ~8 GB repo |
 

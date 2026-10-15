@@ -4,7 +4,7 @@
 # locale head over the pooled sequence) and FiLM-conditions its own per-token labeling on it
 # parses better and stops the Saint-Albans cross-tag collapse — without regressing US/FR. The
 # probe behind PR3 (docs/articles/plan/2026-06-04-pr3-self-conditioned-retrain.md) showed the
-# postcode alone pins the country only 28-44% of the time, so the city/street evidence the model
+# postcode by itself pins the country only 28-44% of the time, so the city/street evidence the model
 # reads is essential.
 #
 # single variable: this is the v0.7.2-proven recipe (1.5e-4 constant / 1k warmup, ls 0.1, CRF off,
@@ -15,13 +15,13 @@
 #   - cross_pollution < 1% per locale (the live regression check — watch it on the dashboard)
 #   - DE locality F1 >= 70% and rising
 #   - US/FR within ~1pp of v0.7.2 (no-regression on the incumbents)
-#   - locale_acc climbing (the aux head is actually learning "which country")
+#   - locale_acc climbing (the aux head is learning "which country")
 # If the check holds, a follow-up extends to a full 100k run. if it fails, stop and diagnose one
 # knob (NaN protocol).
 #
 # corpus: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with the German `synth-german` source (200K train
 # + 4K val rows, real OpenAddresses Berlin/Saxony tuples rendered German-order by the German recipe (`packages/corpus/lib/de/recipes/locale.ts`),
-# 40x the v0.8.0 continue-train supplement so a from-scratch model can actually learn German). Assembled
+# 40x the v0.8.0 continue-train supplement so a from-scratch model can learn German). Assembled
 # 2026-06-04. Reproduce + deploy to the Modal volume:
 #   built by the German recipe (packages/corpus/lib/de/recipes/locale.ts) with --output /tmp/german-train.jsonl --count 200000 --seed 42
 #   built by the German recipe (packages/corpus/lib/de/recipes/locale.ts) with --output /tmp/german-val.jsonl   --count 4000   --seed 99
@@ -89,7 +89,7 @@ model:
   crf_loss_weight: 0.0
   crf_normalization: per_sequence
   label_smoothing: 0.1
-  # PR3: the headline change. Self-conditioning on. the aux locale loss is a genuine but
+  # PR3: the headline change. Self-conditioning on. the aux locale loss is a weighted
   # secondary objective behind the per-token BIO task. num_locales is derived from labels rather than set
   # here (it can't drift from the aux-target vocabulary).
   use_locale_conditioning: true

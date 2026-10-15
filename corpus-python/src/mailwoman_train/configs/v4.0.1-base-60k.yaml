@@ -5,7 +5,7 @@
 # "venue, 20 Rue de la Huchette, 75005 Paris". A from-scratch base learns venues only from a venue source.
 #
 # Before launch, sync the v0.15.0-venue overlay from R2 to /data/corpus/versioned/v0.15.0-venue/.
-# Its base parquet files resolve into v0.13.0-latam, which must also be on the volume.
+# Its base parquet files resolve into v0.13.0-latam. That corpus must also be on the volume.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.0.1-base-60k.yaml --resume none
 

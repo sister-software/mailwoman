@@ -11,6 +11,12 @@
  */
 export const HIERARCHY_DEPTH = 7
 
+/**
+ * The hierarchy level a table-row record is written at.
+ * The indexer writes it and the ranker reads it.
+ */
+export const TABLE_ROW_LEVEL = 5
+
 export interface SearchRecord {
 	/**
 	 * The first 32 hex characters of `sha256(url + "#" + anchor + "\n" + position)`.
@@ -59,7 +65,7 @@ export interface SearchHit {
 export interface SearchResponse {
 	query: string
 	/**
-	 * The text actually searched when a token was corrected against the vocabulary.
+	 * The text the search ran on when a token was corrected against the vocabulary.
 	 * It is `null` when no token was.
 	 */
 	corrected: string | null

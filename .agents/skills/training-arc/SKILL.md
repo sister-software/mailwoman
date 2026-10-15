@@ -9,9 +9,9 @@ Eight training runs in one session were graded candidate-vs-shipped, and every o
 that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so ran
 eighth and ninth instead of first. The full ledger is
 `docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md` — a dated record, so its
-filename keeps the spelling the arc was named under.
+filename keeps the arc's original spelling.
 
-Nothing below is style advice. Each step is a mistake that shipped.
+The steps below are not style advice. Each step is a mistake that shipped.
 
 ## The whole protocol is one call
 
@@ -25,7 +25,7 @@ mwdev_arc candidate=<staged candidate dir> \
 
 It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
 before reporting a regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
-Omitting `control` or `null` does not skip the check without saying so — the result says which control never ran
+A call that omits `control` or `null` does not skip the check silently. The result reports which control never ran
 and marks the number an upper bound.
 
 Read the rest of this file when a leg needs building, or when the tool's verdict needs auditing.
@@ -67,14 +67,14 @@ Consequences, both required:
 - **A candidate's regressions are `candidate − placebo` rather than `candidate − shipped`.** Eighteen regressions
   where the placebo has ten is eight attributable rather than eighteen.
 - **A fine-tune must first recover the placebo's net loss.** If the placebo nets −5, a candidate at −5 has
-  achieved nothing and a candidate at −3 is an improvement.
+  achieved no gain and a candidate at −3 is an improvement.
 
-One 4,000-step run, ~13 minutes, ~$1; the one run covers every candidate on that base.
+The placebo is one 4,000-step run, ~13 minutes, ~$1. The one run covers every candidate on that base.
 
 ## Step 3 — state the RUN SHAPE, do not inherit it
 
-Copying last run's config carries `init_from` and `ewc_lambda` with it, and the shape then never gets
-re-decided. Six runs in a row were fine-tunes for this reason alone.
+A copy of last run's config brings `init_from` and `ewc_lambda` with it, and the shape then never gets
+re-decided. Six runs in a row were fine-tunes for this reason and no other.
 
 Before launching, write down:
 
@@ -104,7 +104,7 @@ and a candidate that flips them changed a low-confidence answer rather than brok
 
 `mwdev_diff_geocode` states which of three problems moved the answer: `parse-changed` (model),
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
-Grading a tier fall-through against a model wastes a run.
+A tier fall-through graded against a model wastes a run.
 
 ## Step 5 — the comparison is against the shipped model, and it is not the attribution
 
@@ -114,7 +114,7 @@ publishing costs a user the difference from what they have today.
 - net improved-minus-regressed ≥ 0 on the full regression board
 - FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
 - the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval
-  spec; use the passed and total counts printed by the command rather than a count copied into this
+  spec. Use the passed and total counts printed by the command rather than a count copied into this
   runbook
 
 ## Measurement invariants
@@ -132,15 +132,15 @@ measurement in this protocol.
   lexically.
 - **A smoke run proves the config loads rather than that the new rows are reached.** Read the file through
   the loader's own check (`country_weights.get(cc)`) first.
-- **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
+- **`country_weights` is a hard admission filter.** A country absent from it trains on zero rows
   regardless of the row count. Check with `mwdev_coverage` before assuming a locale is taught.
 - **A corpus change carrying a hypothesis declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
-  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source, or a label
+  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU. A missing source, or a label
   order whose source is drawn zero times, must stop the run. A source file or rendering branch is not evidence that the sampler
   reaches the target rows (#1869).
 
-## Reporting — the structure is part of the protocol
+## The report — its structure is part of the protocol
 
 Lead with the addresses that changed and the attribution. Give the aggregate as a footer. If a control was
 not run, say so — an unattributed regression count is not a finding.
@@ -148,7 +148,7 @@ not run, say so — an unattributed regression count is not a finding.
 - Name runs by version and role: "the control run (v5.0.1)", "the treatment run (v5.0.2)". Never a
   minted name — the operator has banned `the null` and `the cure` from reports; `null=` survives only
   as the literal `mwdev_arc` parameter.
-- Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count carries its
+- Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count states its
   denominator.
 - A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
   This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place rather than in a

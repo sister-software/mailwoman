@@ -1,7 +1,7 @@
 # 2026-07-02 — lab session postmortem: #884 ship evidence + the #885 measurement re-anchor
 
 Lab session off `HANDOFF-825-rev.md` (the re-railing sprint's Tracks 2 + 4 lab share). CPU-only
-as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
+as briefed, with one Modal call (int8 quantize, ~seconds). The session ran no training and promoted no model.
 
 ## What shipped
 
@@ -24,19 +24,19 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 | CZ-1k improve                                  | pass — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
 | PL-1k improve                                  | pass — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
 | int8 size                                      | 33.8 MB, **+3.8 MB over the ~30 MB browser SLO** (operator fallback call)   |
-| WASM latency (Node, 1-thread bound)            | flat ~41–44 ms p50/p95 both models; load 66→85 ms                           |
-| #885 re-score                                  | 17/17 floors pass; fp32↔int8 max delta 0.8pp                                |
+| WASM latency (Node, 1-thread bound)            | flat ~41–44 ms p50/p95 both models, load 66→85 ms                           |
+| #885 re-score                                  | 17/17 floors pass, fp32↔int8 max delta 0.8pp                                |
 
 ## What went well
 
 - **Pre-register → measure → verify-before-verdict, three times.** The CZ churn eyeball (43
   newly-wrong rows) turned an aggregate win into a mechanism: candidate parses are structurally
-  better; the flips are a pre-existing locality-truncation→namesake residual the baseline won by
+  better, and the flips are a pre-existing locality-truncation→namesake residual the baseline won by
   fluke. That nuance is now in the promote record instead of surfacing post-ship.
 - **The int8 U.S. result is the strongest possible form** — byte-identical row dumps, only
   CI-bounded non-inferiority. The embedding-growth quantization-scale worry was pre-registered
   and measured dead.
-- **Salvage-first held**: every grading tool existed; the only new code is two small flags and
+- **Salvage-first held**: every grading tool existed, and the only new code is two small flags and
   one probe.
 
 ## What could have gone better
@@ -45,8 +45,8 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   41→actual 30, postal 32→actual 24). Caught in-session by checking `verdict.json` + the results
   JSON before commit — but the draft should never have contained unmeasured numbers.
 - The handoff's issue numbers (#291/#293/#295/#296) don't exist as GitHub issues — they're the
-  #884 checklist items. Deliverables were posted to #884/#885 instead; future handoffs should
-  carry real issue links.
+  #884 checklist items. Deliverables were posted to #884/#885 instead. Future handoffs should
+  link real issues.
 - `onnxruntime-web` in Node took four iterations to run (fetch → blob → http-scheme ESM refusals);
   the working recipe (file:-URL `{mjs,wasm}` pair + `numThreads=1`) is now encoded in the probe.
 
@@ -58,7 +58,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 - Graded the shipped int8 as the #885 artifact (with fp32 delta legs) and md5-verified it against
   the published npm tarball first — treating "the shipped line" as bytes rather than a version label.
 - Framed the browser-SLO breach, ledger fate, and re-score cadence as operator decisions
-  (review addendum Track 3) — evidence supplied, no bar moved.
+  (review addendum Track 3). The session supplied evidence and moved no bar.
 
 ## Open questions for the operator
 

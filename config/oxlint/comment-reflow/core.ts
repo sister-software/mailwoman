@@ -90,7 +90,7 @@ const weights = {
 	line: 12,
 	/**
 	 * The formatter can break the line while a parenthesis remains open.
-	 * Buys roughly 17 columns of overrun.
+	 * This penalty equals roughly 17 columns of overrun.
 	 */
 	parenSplit: 1200,
 	/**
@@ -106,11 +106,11 @@ const weights = {
 	 */
 	orphan: 2400,
 	/**
-	 * A last line shorter than this many columns of content counts as an orphan.
+	 * A last line whose content is shorter than this column count counts as an orphan.
 	 */
 	orphanColumns: 24,
 	/**
-	 * The formatter joins a trailing sentence shorter than this many characters to the paragraph before it.
+	 * The formatter joins a trailing sentence shorter than this character count to the paragraph before it.
 	 */
 	orphanParagraph: 60,
 } as const
@@ -209,8 +209,8 @@ function isWhitespaceAt(text: string, index: number): boolean {
  * The words of `text`, split on whitespace.
  *
  * Whitespace inside a backtick span, an inline `{@tag}` or a bracketed link stays inside its word.
- * A word is always a contiguous slice of `text`, so the tokenizer tracks
- * where each began and slices once at its end.
+ * A word is always a contiguous substring of `text`, so the tokenizer tracks
+ * where each began and extracts the substring once at its end.
  *
  * The result is `null` when a span or a bracket is left open.
  */
@@ -293,7 +293,7 @@ const ABBREVIATIONS =
 	/^(?:e\.g\.|i\.e\.|etc\.|vs\.|cf\.|ca\.|approx\.|no\.|fig\.|eq\.|al\.|Mr\.|Mrs\.|Ms\.|Dr\.|St\.|Inc\.|Ltd\.|(?:[A-Z]\.)+)$/
 
 /**
- * Words that open a clause: breaking just before one reads as a deliberate choice.
+ * Words that open a clause: breaking immediately before one reads as a deliberate choice.
  */
 const CONJUNCTIONS = new Set([
 	"and",

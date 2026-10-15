@@ -43,7 +43,7 @@ its name, its alternate names in every language, its parents, and its coordinate
 engine sends the user's whole string to the index and ranks the results.
 
 This design deliberately does not label your string before the lookup. Some engines do run a query
-parser first. Pelias shapes its queries with libpostal, which accounts for the 4 GB in its row below.
+parser first. Pelias shapes its queries with libpostal. libpostal accounts for the 4 GB in its row below.
 That parse shapes the query without deciding the answer, and the ranking still runs against one index
 over everything. The system never decides that `Springfield` is a locality. It finds documents that
 score well against the token `springfield` and ranks them. The system does not resolve ambiguity. It
@@ -88,11 +88,11 @@ considers the rest of the planet, so it performs a small indexed read instead of
 why the data can stay on disk: the query reads a handful of pages instead of the whole corpus.
 
 Mailwoman uses this architecture. Any pipeline built on libpostal uses part of it. libpostal provides
-the labeling half without the lookup half, which is why it is a parser and not a geocoder.
+the labeling half without the lookup half. That is why it is a parser and not a geocoder.
 
 **What it is good at:**
 
-- **A breakdown of the input as well as a match.** The result says which piece of the input was the
+- **A breakdown of the input as well as a match.** The result reports which piece of the input was the
   street and which was the town, with offsets into your original string. Any downstream task that needs
   fields instead of a point (deduplication, validation, formatting, record matching) needs exactly
   this.
@@ -114,7 +114,7 @@ no useful labeling, so it has no useful lookup.
 
 Each project publishes what it recommends you provision. The figures below are quoted from each
 project's own documentation and were read on **2026-08-04**. Where a project publishes no figure, the
-row says so instead of estimating one.
+row states the absence instead of estimating one.
 
 | Engine          | Index                                     | Published requirement                                                                                                                                                                                                              | Source                                                                                     |
 | --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -122,7 +122,7 @@ row says so instead of estimating one.
 | Photon          | OpenSearch, embedded by default           | "A planet-wide database requires about 95GB disk space (as of 2026, grows by about 10% a year)." "At least 64GB RAM are recommended for smooth operations…"                                                                        | [Photon README](https://github.com/komoot/photon)                                          |
 | Addok           | Redis                                     | No hardware figure is published. The deployment behind France's national address register is described as "26+ million addresses indexed", "~2000 searches/second", "~15 minutes full import time".                                | [Addok README](https://github.com/addok/addok)                                             |
 | Pelias          | Elasticsearch                             | The published requirements document covers software dependencies rather than hardware. Its one size figure is that "Libpostal requires about 4GB of disk space to download all the required data."                                 | [Pelias requirements](https://github.com/pelias/documentation/blob/master/requirements.md) |
-| Mailwoman 8.6.0 | Sealed SQLite files, read from disk       | 707 MB installed, of which 523 MB is the ONNX runtime; the model itself is 39.4 MB. The global candidate gazetteer is a 2.88 GB download. US rooftop and interpolation coverage is 41.3 GB across 103 artifacts, pulled per state. | [Footprints](../../reference/footprints.mdx)                                               |
+| Mailwoman 8.6.0 | Sealed SQLite files, read from disk       | 707 MB installed, of which 523 MB is the ONNX runtime. The model itself is 39.4 MB. The global candidate gazetteer is a 2.88 GB download. US rooftop and interpolation coverage is 41.3 GB across 103 artifacts, pulled per state. | [Footprints](../../reference/footprints.mdx)                                               |
 
 Keep four points in mind before you draw a conclusion from that table.
 
@@ -131,7 +131,7 @@ and are recommendations for smooth operation under load. Mailwoman's figures are
 download sizes. The Footprints page states that runtime memory is measured per workload on other pages
 and is not re-measured there. A missing number is not a small number.
 
-**Addok combines traits of both categories**, which is why it is in the table. It uses a search-style
+**Addok combines traits of both categories**. That is why it is in the table. It uses a search-style
 index (Redis and ranked matching, without a parser), and it has no memory problem, because it indexes one
 country's address register instead of the whole planet. When the corpus is scoped down, the
 architectural cost of the search design mostly disappears. If all your addresses are in one country
@@ -142,8 +142,8 @@ against it.
 it. The difference is that the large part is optional, split by state, and unused until queried.
 
 **Both designs pay for the same thing in different ways.** A geocoder needs the world's places stored
-somewhere it can reach them. The search design reaches them by ranking, which needs them in memory. The
-label-then-look-up design reaches them by constrained lookups, which lets them stay on disk. It pays
+somewhere it can reach them. The search design reaches them by ranking, and ranking needs them in memory. The
+label-then-look-up design reaches them by constrained lookups, and those lookups let them stay on disk. It pays
 for that with a model and a labeled corpus per locale. That cost is paid before you run a single query,
 and no hardware page lists it.
 
@@ -159,7 +159,7 @@ would have to be post-processed into fields anyway.
 
 The two designs can also be combined. A pipeline can label first, use the constrained lookup when it
 succeeds, and fall back to a ranked full-text search over the raw string when the labeling produces
-no usable spans. That design is workable, and it carries both sets of costs.
+no usable spans. That design is workable, and it pays both sets of costs.
 
 ## Related
 

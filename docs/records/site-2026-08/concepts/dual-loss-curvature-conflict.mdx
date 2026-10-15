@@ -124,11 +124,11 @@ The same diagnostic applies to any training setup that sums two loss terms with 
 2. Compute the gradient norm of each loss with a separate backward pass.
 3. Read the ratio. A ratio far from one means one loss dominates. A multiplier set on loss values may not produce the gradient balance you assumed.
 
-The failure can go either way. The auxiliary loss can dominate, as in mailwoman's case, or the primary loss can dominate, which is rarer and looks like the auxiliary loss being ignored. The diagnostic and the repair are the same in both cases. If a loss term destabilizes training, remove it from training, and reintroduce it at inference if its structural contribution justifies the integration cost.
+The failure can go either way. The auxiliary loss can dominate, as in mailwoman's case, or the primary loss can dominate. The second case is rarer and looks like the auxiliary loss being ignored. The diagnostic and the repair are the same in both cases. If a loss term destabilizes training, remove it from training, and reintroduce it at inference if its structural contribution justifies the integration cost.
 
 ## Beginner's companion — the cooperative-vs-conflict model
 
-This section explains the same problem without math or ML jargon. Start here if you want the debugging story before the technical details.
+This section explains the same problem without math or ML jargon. Start here if you want the sequence of debugging steps before the technical details.
 
 ### The two voices
 
@@ -151,11 +151,11 @@ Lower in the valley, the loss is lower and the model is better, and the terrain 
 
 The direction you walk then depends on **the device with the larger signal**. We measured this with a snapshot of the model taken before the climb started. Voice B's gradient was **16× larger** than Voice A's. Even after scaling to 5%, Voice B contributed roughly 80% as much as Voice A to the parameter updates.
 
-Voice B pulled the model away from the basin Voice A was guiding it toward. Voice A's per-word accuracy score got worse, which appeared as the loss climbing back up.
+Voice B pulled the model away from the basin Voice A was guiding it toward. Voice A's per-word accuracy score got worse. The loss climbed back up as a result.
 
 ### The fix
 
-**Remove Voice B from training.** Keep it for inference, when the trained model parses addresses. At inference the frozen CRF mask enforces its structural rules, which forbid orphan tags and invalid BIO sequences. During training, Voice A guides the model alone.
+**Remove Voice B from training.** Keep it for inference, when the trained model parses addresses. At inference the frozen CRF mask enforces its structural rules. Those rules forbid orphan tags and invalid BIO sequences. During training, Voice A is the only voice that guides the model.
 
 One configuration line makes the change: `crf_loss_weight = 0.0`. The hand-encoded mask provides the structural guarantees. Transition-matrix training added no strength to those guarantees and conflicted with Voice A.
 

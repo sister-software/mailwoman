@@ -1,4 +1,4 @@
-# This 8k run repeats v3.12.0-comma-robust with a two-phase classifier learning rate.
+# This 8k run repeats the v3.12.0 comma-augmentation run with a two-phase classifier learning rate.
 # Phase 1 trains steps 0 to 2000 with classifier_learning_rate 1.0e-3.
 # Phase 2 resumes from step 2000 with classifier_learning_rate 1.0e-4 so the classifier head stops drifting.
 # The file holds the phase 2 rate. Set it back to 1.0e-3 before you rerun phase 1.

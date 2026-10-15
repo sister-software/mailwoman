@@ -2,13 +2,13 @@
 
 **Date:** 2026-08-05 · **Issue:** #42 · **Follows:**
 [`2026-08-04-postcode-country-coherence.md`](./2026-08-04-postcode-country-coherence.md) · **Status:** evidence
-complete; the flip is the operator's call. **→ FLIPPED 2026-08-05, see §7.**
+complete, and the flip is the operator's call. **→ FLIPPED 2026-08-05, see §7.**
 
-The landing record shipped `postcodeCountryCoherence` opt-in and named two gaps that stood between it and default-on:
+The landing record shipped `postcodeCountryCoherence` opt-in and listed two gaps that stood between it and default-on:
 
 1. **The gauntlet had no resolver-change pin.** The D-rule's standard instrument could swap the model under test but not
    the resolver configuration, so a resolver change could only ever be argued from bespoke probes.
-2. **Every scale number was candidate-backend**, while the FTS backend's exact-match tier demonstrably differs (it does
+2. **Every scale number was candidate-backend**, while the FTS backend's exact-match tier differs in a measured case (it does
    not fold `ü`→`u` — the `München` row).
 
 This record closes both, adds the coverage bound the landing record flagged in passing, and reports two defects the
@@ -23,10 +23,10 @@ work turned up on the way.
 `mailwoman eval gauntlet --postcode-country-coherence`, threaded through all three layers.
 
 The pin mirrors the model-swap idiom rather than inventing a parallel one. `GauntletResolverChanges` (`harness.ts`) sits
-beside `modelPath`/`tokenizerPath`/`weightsCacheRoot` in the same `buildGauntletDeps` options object; each field maps
+beside `modelPath`/`tokenizerPath`/`weightsCacheRoot` in the same `buildGauntletDeps` options object. Each field maps
 1:1 onto a `geocodeAddress` dep of the same name, exactly as `eval oa-resolver`'s `adminCoherence` /
 `postcodeCountryCoherence` pins do. `layerDepsOptions` (`regression.ts`) builds that object once for every layer — the
-metamorphic layer had been carrying its own copy of the model-selection ladder, which is the shape that drifts.
+metamorphic layer had kept its own copy of the model-selection ladder. Two copies of one ladder drift apart.
 
 Three properties are deliberate:
 
@@ -35,10 +35,10 @@ Three properties are deliberate:
   grading the old configuration. Only the on pin is forwarded; "no flag" means "grade whatever production does".
 - **Every run states its configuration**, pinned or not: `resolver changes: (none pinned — production defaults)` or
   `resolver changes: postcodeCountryCoherence=ON`, on the combined verdict block and in each layer's build banner. Two
-  check logs that differ only in a flag someone typed are not evidence about that flag unless each log says what it
+  check logs that differ only in a flag someone typed are not evidence about that flag unless each log records what it
   graded.
-- **The pass reports its own firing count.** `GeocodeResult.postcode_country_scope` carries the country the walk was
-  re-scoped to (null whenever nothing was overridden), and the regression layer prints
+- **The pass reports its own firing count.** `GeocodeResult.postcode_country_scope` holds the country the walk was
+  re-scoped to (null whenever the pass did not override the scope), and the regression layer prints
   `postcode-country coherence fired on N/M cases`.
 
 Tests: `mailwoman/eval-harness/gauntlet/pin.test.ts`, 16 assertions over the mapping
@@ -46,7 +46,7 @@ Tests: `mailwoman/eval-harness/gauntlet/pin.test.ts`, 16 assertions over the map
 assert a mapping on purpose — the check itself needs the extract set and a loaded ONNX, and the failure this surface
 exists to prevent is silent: a dropped pin does not throw, it produces a check log identical to the unpinned one.
 
-### 1.2 The first run, and why the pin alone was not enough
+### 1.2 The first run, and why the pin without new cases was not enough
 
 Pinned against the corpus as it stood:
 
@@ -57,7 +57,7 @@ postcode-country coherence fired on 0/116 cases
 The two runs were otherwise byte-identical. That is the 2026-08-04 oa-resolver trap wearing a different hat — an
 unchanged verdict from a mechanism that never ran is not evidence of anything.
 
-The cause is structural rather than incidental. The pass is inert without a `defaultCountry`, and the curated corpus carried
+The cause is structural rather than incidental. The pass is inert without a `defaultCountry`, and the curated corpus held
 **exactly one** case with one (`fr-lyonnais-3-bare-country-bias`, an FR address under `FR`, where the pass exits at
 step 1 by design). The corpus had no case in which a country prior is in tension with the address it is applied to —
 which is precisely the defect #42 exists to fix, so the check could not have seen the change no matter how it was pinned.
@@ -77,17 +77,17 @@ Seven cases, all measured through the compiled CLI on 2026-08-05 against the 202
 | `de-linden-us-scoped`  | `Unter den Linden 77, 10117 Berlin`   | US      | improvement\_target | Berlin, Connecticut — pairs against `us-berlin-nh-03570` |
 
 The four adversarial rows are conditional (`status: pass`): they must hold with the change pinned either way, and they are the
-"zero newly-failing cases" bar with teeth. The three rescue rows are `improvement_target`: they fail today, which is the
-point — they are the defect — and under the pin they pass, which the runner's anti-rot loop reports as
+"zero newly-failing cases" bar with teeth. The three rescue rows are `improvement_target`. They fail today because they are the defect.
+Under the pin they pass, and the runner's anti-rot loop reports that as
 "now passes — promote to status=pass". That is what a default-on flip should look like from inside the check.
 
-`us-berlin-nh-03570` and `de-linden-us-scoped` are the pair worth reading together: same city name, same 5-digit shape,
-same US default, opposite correct answers. Nothing about the name or the shape separates them. The geometry does.
+`us-berlin-nh-03570` and `de-linden-us-scoped` are the pair to read together: same city name, same 5-digit shape,
+same US default, opposite correct answers. Neither the name nor the shape separates them. The geometry does.
 
 ### 1.4 The verdicts
 
 Both legs, same corpus (137 cases, 68 conditional), same model (`model.onnx` md5 `c968c24a`), same backend (the candidate
-table, which is what `createResolverBackend` picks when one is present).
+table, the backend `createResolverBackend` picks when one is present).
 
 **Change unpinned — `mailwoman eval gauntlet`:**
 
@@ -147,7 +147,7 @@ verdict: PASS (with 3 tracked xfails)
 VERDICT: FAIL — do not ship
 ```
 
-**Both legs fail, on the same three cases, for reasons that have nothing to do with this change.** That is the baseline
+**Both legs fail, on the same three cases, for reasons unrelated to this change.** That is the baseline
 of a freshly-rebuilt corpus on today's `main`, and it is stated first so the rest is readable:
 
 - `si-sentinel-apace` was already failing before any of this work (it failed in the first pinned/unpinned pair too,
@@ -168,13 +168,13 @@ The complete difference between the two runs, `diff` on stdout, is five lines of
 | every other case       | —                                                 | identical            | 134 cases, byte-identical                       |
 
 **Newly-failing cases: zero.** All four adversarial rows pass in both legs, and pass by the cheap exit — the pass never
-proposes a foreign country for Addison TX, Paris TX, Berlin NH or Athens GA, which is visible in the firing list
-containing only the two rescues.
+proposes a foreign country for Addison TX, Paris TX, Berlin NH or Athens GA. The firing list shows this, because
+it contains only the two rescues.
 
 **`gb-downing-us-scoped` does not move, and the reason is a finding.** Under the **en-GB weights overlay** — which the
 check selects for GB cases, and which production's locale check also routes to — `10 Downing Street, London SW1A 2AA`
 parses as `region: SW1A` + `unit: 2AA`. There is no postcode node, so the coherence pass is inert by construction. The
-landing record's hand-probe showed this row fixed because the CLI probe ran the base en-US classifier, which parses the
+landing record's hand-probe showed this row fixed because the CLI probe ran the base en-US classifier. That classifier parses the
 same string's postcode correctly. Measured both ways on 2026-08-05:
 
 ```
@@ -183,7 +183,7 @@ base en-US,    --postcode-country-coherence:  51.500526,-0.109401   (London, GB)
 ```
 
 So the GB half of the defect has a second blocker — a GB postcode parse under the overlay — that #42 cannot reach.
-This is exactly the class of thing a bespoke probe hides and the standard instrument surfaces, which is the argument
+A bespoke probe hides this class of defect, and the standard instrument surfaces it. That difference is the argument
 for the pin existing at all.
 
 ---
@@ -214,29 +214,29 @@ hand-picked list.
 | OpenAddresses US under `FR` | 10,000 | **8,986 (89.9%)** |    **0** | 8,918 (89.2%)   |          0 |
 
 **Across all six FTS legs — 28,000 pair evaluations, three countries, both mis-scope directions — the false-positive
-count is 0. The per-case list is empty; there is no case to report.**
+count is 0. The per-case list is empty.**
 
 ### 2.3 Reading the two tables together
 
-- **The candidate-backend column reproduces the landing record to the row** (1,082 / 37 / 121 fell through; 8,918 /
+- **The candidate-backend column reproduces the landing record to the row** (1,082 / 37 / 121 fell through, and 8,918 /
   2,963 / 879 rescued). The two measurements were taken by different code four days apart, so the probe is measuring
   what the earlier one measured.
 - **The backend difference is real but small, and it does not point one way.** FTS is STRICTER on FR (68 fell through
-  vs 37) and GB (128 vs 121) — its exact-match tier admits fewer same-named localities, so more domestic pairs miss the
+  vs 37) and GB (128 vs 121) — its exact-match tier admits fewer localities with the same name, so more domestic pairs miss the
   cheap exit — and LOOSER on US (1,014 vs 1,082). The `München` asymmetry the landing record found by hand is the FR/GB
   direction of this, visible at scale.
 - **Fall-through moves the recall, never the precision.** In all six FTS legs, rescued equals the domestic
   coherent-default count exactly (2,932 / 872 / 8,986), the same identity the candidate legs showed. The mechanism
   rescues precisely the set of pairs whose geometry is resolvable at all and abstains on the rest, on both backends.
-  Its ceiling is the gazetteer's; its error rate is zero in 56,000 pair evaluations across the two backends.
+  Its ceiling is the gazetteer's. Its error rate is zero in 56,000 pair evaluations across the two backends.
 - **The fell-through column is what makes the zero mean something.** 1,210 domestic FTS rows did not take the cheap
-  exit; for each, every other country the postcode shape allows was tried and refuted by the locality test.
+  exit. For each, every other country the postcode shape allows was tried and refuted by the locality test.
 
 ### 2.4 What the regime classifier over-counts
 
 Unchanged from the landing record, restated because both tables depend on it: the coherent-default split is derived by
 re-running the pass with an impossible default (`ZZ`), which forces step 1 to fail and reports what the alternatives
-alone decide. A pair coherent in two countries reads as "fell through" under that probe although the real leg would
+decide without the default. A pair coherent in two countries reads as "fell through" under that probe although the real leg would
 have exited cheaply. The column therefore claims more at-risk rows than there were — the safe direction for the
 argument it supports.
 
@@ -244,7 +244,7 @@ argument it supports.
 
 ## 3. The coverage bound
 
-Where can default-on matter at all? Two numbers per country, because either alone misleads: rows present, and rows
+Where can default-on matter at all? Two numbers per country, because either one without the other misleads: rows present, and rows
 REACHABLE through the lookups the pass itself makes. Measured with
 `mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`.
 
@@ -268,13 +268,13 @@ universe:
 measured.
 
 **So the mechanism can speak for four countries on the production extract set and six on the candidate table.** The
-M5V 3L9 abstention the landing record recorded is the CA row here, and it is an extract-set fact: the FTS set carries zero
-CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex module with no
+M5V 3L9 abstention the landing record recorded is the CA row here, and it is an extract-set fact: the FTS set holds zero
+CA postcode rows while the candidate table holds 843,739. JP and NZ are unreachable on both — a codex module with no
 postcode data behind it.
 
 Two consequences must be explicit:
 
-- Default-on changes nothing outside those countries. Everywhere else the pass finds no candidate country and abstains,
+- Default-on changes no result outside those countries. Everywhere else the pass finds no candidate country and abstains,
   at the cost of the lookups it already spends.
 - The two backends do not have the same reach, so a default-on flip has a different footprint depending on which
   gazetteer is attached. `createResolverBackend` prefers the candidate table whenever one is present (the shipped
@@ -291,36 +291,36 @@ run the check throws:
 Error: expect_components key "unit" has no GauntletResult mapping — extend componentOf
 ```
 
-The sub-venue cases added 2026-08-01 assert a `unit` component; no result field ever carried one, and `componentOf`'s
+The sub-venue cases added 2026-08-01 assert a `unit` component. No result field ever held one, and `componentOf`'s
 unknown-key throw (added the same day, deliberately loud) kills the whole regression layer. The corpus had been
 ungradeable since the day those cases landed — the only thing hiding it was that the built artifact in the data root
-was older than the seed. Fixed here the same way `venue` was fixed in August: `GeocodeResult.unit` carries the parsed
+was older than the seed. Fixed here the same way `venue` was fixed in August: `GeocodeResult.unit` holds the parsed
 span, `componentOf` maps it, and the API schema drift guard is updated in step.
 
 **The built artifact drifts from its seed silently.** The shared `regression.db` held 116 cases against a seed of 130.
-Nothing warns; a case can sit committed and ungraded indefinitely. Not fixed here — it wants its own ticket (a
+No check warns. A case can sit committed and ungraded indefinitely. This record does not fix it. It needs its own ticket (a
 build-stamp comparison at layer start would do it).
 
 ---
 
 ## 5. Recommendation
 
-**The D-rule evidence now supports default-on.** Both named gaps are closed, and neither closed with a surprise.
+**The D-rule evidence now supports default-on.** Both listed gaps are closed, and neither closed with a surprise.
 
-The D-rule asks one question — does this default-on mechanism carry a known regression against the shipped model on
+The D-rule asks one question — does this default-on mechanism have a known regression against the shipped model on
 any tier-1 locale? The answer is measured rather than argued:
 
 - **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 counted cases pass with the change
-  pinned and with it unpinned; the three failures are identical, pre-date this work, and are unrelated. The full diff
+  pinned and with it unpinned. The three failures are identical, pre-date this work, and are unrelated. The full diff
   between the two runs is two rescues and a banner line.
 - **The mechanism ran.** 2/137 cases fired, both correctly, and the four adversarial rows that would break first were
   untouched by the cheap exit. This is the column that was missing from the first attempt, where an identical verdict
   meant only that the corpus could not see the change.
 - **56,000 pair evaluations across both backends, zero false positives.** 28,000 on FTS (new) and 28,000 on the
   candidate table (reproducing the landing record to the row). 1,210 domestic FTS rows and 1,240 domestic candidate
-  rows fell past the cheap exit and had every alternative country tried; every one was refuted.
-- **The backend dependence is measured and small.** FTS is stricter on FR/GB and looser on US; it moves the RESCUE rate
-  by 0.7–1.1 points and the false-positive count by nothing. The `exactMatch` disagreement the landing record flagged
+  rows fell past the cheap exit and had every alternative country tried. Every one was refuted.
+- **The backend dependence is measured and small.** FTS is stricter on FR/GB and looser on US. It moves the rescue rate
+  by 0.7–1.1 points and leaves the false-positive count at zero. The `exactMatch` disagreement the landing record flagged
   is real and it costs recall rather than precision.
 
 Three conditions attach, none of them blocking:
@@ -328,18 +328,18 @@ Three conditions attach, none of them blocking:
 1. **The corpus must be rebuilt for the check to see any of this.** `mailwoman eval gauntlet-build regression-db` — the
    seven cases here exist only in the seed until it runs, and the `unit` fix in §4 is required for the rebuilt corpus
    to run at all.
-2. **On the flip, promote the two rescue rows.** The check already says which (`fr-rivoli-us-scoped`,
+2. **On the flip, promote the two rescue rows.** The check already reports which (`fr-rivoli-us-scoped`,
    `de-linden-us-scoped`); leaving them at `improvement_target` after the default changes turns a conditional guarantee into
    a tracked note.
 3. **Read the result rate correctly.** The rescue leg simulates a UNIFORMLY mis-scoped default — the demo/CLI reality
-   (locale `en-US` → `US` on every query) but not traffic that already carries a correct country. The claim the
+   (locale `en-US` → `US` on every query) but not traffic that already supplies a correct country. The claim the
    numbers support is "when the default is wrong, this fixes ~9 in 10 of them and breaks none" rather than "this improves
    9 in 10 addresses".
 
 What default-on does not fix, so the flip is not oversold: `gb-downing-us-scoped` stays broken because the en-GB
 overlay does not parse the GB postcode (§1.4); JP and NZ have codex modules and no postcode data (§3); CA and AU need
-the candidate table (§3); and the coarse placer still cannot override `defaultCountry` even at 0.9999908844 confidence,
-which the landing record already flagged for its own ticket.
+the candidate table (§3); and the coarse placer still cannot override `defaultCountry` even at 0.9999908844 confidence.
+The landing record already flagged that last gap for its own ticket.
 
 ---
 
@@ -370,7 +370,7 @@ this in the primary checkout rebuilds the artifact in place instead.
 ## 7. The flip — appended 2026-08-05, operator-ruled
 
 `postcodeCountryCoherence` is **default-ON**. Sections 1–6 above are the evidence as it stood before the decision
-and are unedited; this section is what shipped and what it measured.
+and are unedited. This section is what shipped and what it measured.
 
 ### 7.1 What changed
 
@@ -383,9 +383,9 @@ and are unedited; this section is what shipped and what it measured.
 | gauntlet regression corpus                                           | `fr-rivoli-us-scoped`, `de-linden-us-scoped` at `improvement_target` | both `status: pass` (conditional)                                                   |
 
 The eval pins went tri-state for the reason §1.1 gave in the other direction: once the library default is ON, the on
-pin only restates production, and the pin that can carry evidence is the off one. `-off` rather than `--no-…` because
-commander reads a literal `--no-x` as the negation of `--x` on the same attribute, which collapses the tri-state —
-the same constraint that named `eval oa-resolver`'s `adminCoherenceOff`.
+pin only restates production, and the pin that can supply evidence is the off one. The flag ends in `-off` rather than starting with `--no-…` because
+commander reads a literal `--no-x` as the negation of `--x` on the same attribute. That reading collapses the tri-state.
+The same constraint produced the name of `eval oa-resolver`'s `adminCoherenceOff`.
 
 The regression-layer firing report was keyed on the on pin. That was right while the default was off and wrong the
 moment it flipped: the standard unpinned run is now the on configuration, and it is the run whose firing count a
@@ -448,7 +448,7 @@ verdict: FAIL
 four-line firing report. The metamorphic layer is byte-identical — it passes no `defaultCountry`, so the pass is
 inert there by construction.
 
-**The verdict is fail on both legs, on the same three cases, for reasons unrelated to this change** — §1.4 named all
+**The verdict is fail on both legs, on the same three cases, for reasons unrelated to this change** — §1.4 listed all
 three, and the promotion moves none of them. Read the counted count rather than the verdict word: 67/70 at the new default
 against 65/70 at the old, with the identical failure set. **Newly-failing counted cases: zero.**
 
@@ -469,18 +469,18 @@ rows where the coherence pass overrode the country (default-ON leg): 0
 ```
 
 Garbage does not produce a coherent (postcode, locality) pair, so the pass abstains on all 105 and the two legs are
-identical row for row. That is the expected shape, and it is worth having measured rather than assumed: the pass
-runs before the walk on every query that carries a default country and a postcode, so "it costs two lookups and
-changes nothing on malformed input" was a claim rather than a fact, until this ran.
+identical row for row. That is the expected shape, and this run measured it rather than assuming it: the pass
+runs before the walk on every query that has a default country and a postcode, so "it costs two lookups and
+leaves malformed input unchanged" was a claim rather than a fact, until this ran.
 
 ### 7.5 Tests changed, and why
 
 - `resolver/postcode-country-coherence.test.ts` — every "flag off" leg now sets `postcodeCountryCoherence: false`
-  explicitly. Two legs had expressed "off" by OMITTING the option, which after the flip means ON; the bug-reproduction
+  explicitly. Two legs had expressed "off" by omitting the option. After the flip, omission means on. The bug-reproduction
   row ("resolves to Paris TEXAS") and the domestic-control byte-identity row would both have silently stopped testing
   what their names say. A new row asserts the default itself: unset → the override fires.
 - `mailwoman/eval-harness/gauntlet/pin.test.ts` — two rows added for the off pin's path through
-  `runResolverChanges` and through the full end-to-end hop chain. `resolverChangeDeps` already carried an explicit OFF
+  `runResolverChanges` and through the full end-to-end hop chain. `resolverChangeDeps` already passed an explicit off value
   (it was written tri-state from the start); the CLI-options hop was the one that had only ever been exercised ON.
 - `mailwoman/eval-harness/gauntlet/cases/regression.ts` — the two rescue rows promoted to `status: pass`, and the
   block comment rewritten to say which row stayed an `improvement_target` and why.
@@ -490,7 +490,7 @@ No other test pinned this default. Full repo suite and the resolver suite both c
 ### 7.6 What is still not fixed
 
 Unchanged from §5, restated so the flip is not read as more than it is: `gb-downing-us-scoped` still fails (the GB
-postcode parse under the en-GB overlay rather than the resolver); JP and NZ have a codex module with no postcode data; CA and
-AU need the candidate table; the coarse placer still cannot override `defaultCountry`; and the built regression corpus
+postcode parse under the en-GB overlay rather than the resolver). JP and NZ have a codex module with no postcode data. CA and
+AU need the candidate table. The coarse placer still cannot override `defaultCountry`. The built regression corpus
 still drifts from its seed with no warning. These are recorded as D6 in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx).

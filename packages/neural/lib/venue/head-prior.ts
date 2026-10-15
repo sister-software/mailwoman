@@ -10,7 +10,7 @@
  *
  *   A first-word or last-word head is read only when the word has a neighbor in the same segment,
  *   so a single-word input such as `Rijksmuseum` receives a bias only through its suffix entry. A
- *   lone word is as often a locality as a venue, and the table's position rates were measured on
+ *   lone word is as likely a locality as a venue, and the table's position rates were measured on
  *   names of two or more words.
  *
  *   The extension stays inside one comma-separated segment and stops at an identifier word: one that
@@ -22,31 +22,11 @@
  *   `addEmissionMatrix`; where the admin FST also claims a word, the decoder weighs both biases.
  */
 
-import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "@mailwoman/core/pipeline"
+
+import { groupPiecesIntoWords, numberOpensSegment, wordsWithSegments, type SegmentWord } from "#fst-prior"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 
-/**
- * Venue-head lookups for one locale.
- * Each method returns a bias in natural-log units or `null`.
- */
-export interface VenueHeadLexiconLike {
-	/**
-	 * The bias of `word` as the first word of a venue name.
-	 */
-	first(word: string): number | null
-	/**
-	 * The bias of `word` as the last word of a venue name.
-	 */
-	last(word: string): number | null
-	/**
-	 * The bias of the longest suffix of `word`, shorter than `word`, that marks a venue name.
-	 */
-	suffix(word: string): number | null
-}
-
-/**
- * Overrides for {@linkcode buildVenueHeadEmissionPriors}.
- */
 /**
  * The default multiplier on the lexicon's bias.
  *
@@ -56,79 +36,22 @@ export interface VenueHeadLexiconLike {
  */
 export const DEFAULT_VENUE_HEAD_BIAS_SCALE = 2
 
-export interface VenueHeadPriorOpts {
-	/**
-	 * Multiplier on the lexicon's bias.
-	 *
-	 * @defaultValue {@link DEFAULT_VENUE_HEAD_BIAS_SCALE}
-	 */
-	biasScale?: number
-	/**
-	 * Maximum bias, in logits, on any one cell.
-	 *
-	 * The table's biases are log rate ratios and seldom exceed 6.
-	 * The cap bounds a scaled bias.
-	 *
-	 * @defaultValue `6`
-	 */
-	maxBias?: number
-	/**
-	 * The most words the venue span extends from its head.
-	 *
-	 * @defaultValue `3`
-	 */
-	extensionWords?: number
-	/**
-	 * Factor applied to the bias once for each word between a word and its head.
-	 *
-	 * The shipped model's venue logits trail the winning label by a near-constant margin
-	 * across a landmark name's pieces, so the default extends the head's bias undiminished.
-	 *
-	 * @defaultValue `1`
-	 */
-	extensionDecay?: number
-	/**
-	 * Whether a word is a street-type affix, in `normalizeFSTToken` form.
-	 *
-	 * A head followed by one is a street name (`Museum Street`) and gets no bias,
-	 * and an extension stops at one.
-	 */
-	isStreetAffix?: (word: string) => boolean
-}
+const DECORATION_SEPARATOR_RE = /[-–—]/u
 
-const SEGMENT_BREAK_RE = /[,;|\n]/u
-const DIGIT_RE = /\p{N}/u
-
-interface Word {
-	group: WordGroup
-	segment: number
-	/**
-	 * Whether the word is an identifier rather than a name word: it contains a digit or is a single letter.
-	 */
-	isIdentifier: boolean
-}
-
-function isIdentifierWord(token: string): boolean {
-	return DIGIT_RE.test(token) || [...token].length === 1
-}
-
-function wordsWithSegments(groups: readonly WordGroup[], pieces: ReadonlyArray<{ piece: string }>): Word[] {
-	const words: Word[] = []
-	let segment = 0
-
-	for (const group of groups) {
-		const text = group.pieceIndices.map((i) => pieces[i]!.piece).join("")
-
-		if (group.fstToken !== "") {
-			words.push({ group, segment, isIdentifier: isIdentifierWord(group.fstToken) })
-		}
-
-		if (SEGMENT_BREAK_RE.test(text)) {
-			segment++
-		}
+/**
+ * Reports whether a dash sits between two words' pieces, the separator a decorated venue
+ * name such as `Mischicks Day Spa - St Andrews Lakes` writes between its parts.
+ */
+function followsDecorationSeparator(
+	pieces: ReadonlyArray<{ piece: string }>,
+	previousEnd: number,
+	start: number
+): boolean {
+	for (let index = previousEnd + 1; index < start; index++) {
+		if (DECORATION_SEPARATOR_RE.test(pieces[index]!.piece)) return true
 	}
 
-	return words
+	return false
 }
 
 /**
@@ -153,12 +76,25 @@ export function buildVenueHeadEmissionPriors(
 	const extensionWords = opts.extensionWords ?? 3
 	const extensionDecay = opts.extensionDecay ?? 1
 	const isStreetAffix = opts.isStreetAffix ?? (() => false)
+	const isCountryName = opts.isCountryName ?? (() => false)
 	const words = wordsWithSegments(groupPiecesIntoWords(pieces), pieces)
+
+	// A segment that is a country name holds no venue head: `america` heads `Bank of America`,
+	// and `United States of America` is the country.
+	const segmentTexts = new Map<number, string[]>()
+
+	for (const word of words) {
+		segmentTexts.set(word.segment, [...(segmentTexts.get(word.segment) ?? []), word.group.fstToken])
+	}
+
+	const countrySegments = new Set(
+		[...segmentTexts.entries()].filter(([, tokens]) => isCountryName(tokens.join(" "))).map(([segment]) => segment)
+	)
 
 	// Every piece of the span takes the bias on both venue columns.
 	// A piece between two words, such as a bare `▁`, belongs to no word and keeps `O`.
 	// The next word can then open a new venue span only if its `B-venue` cell holds the bias too.
-	const mark = (word: Word, bias: number): void => {
+	const mark = (word: SegmentWord, bias: number): void => {
 		for (const pieceIndex of word.group.pieceIndices) {
 			const row = matrix[pieceIndex]!
 			row[bVenue] = Math.max(row[bVenue]!, bias)
@@ -183,24 +119,43 @@ export function buildVenueHeadEmissionPriors(
 	for (let index = 0; index < words.length; index++) {
 		const word = words[index]!
 
-		if (word.isIdentifier) continue
+		if (word.isIdentifier || countrySegments.has(word.segment)) continue
 		const token = word.group.fstToken
-		const sameSegment = (other: Word | undefined): boolean => other?.segment === word.segment && !other.isIdentifier
+
+		const sameSegment = (other: SegmentWord | undefined): boolean =>
+			other?.segment === word.segment && !other.isIdentifier
+
 		const following = words[index + 1]
 
 		// A head followed by a street type is the street's name, as in `Museum Street`.
 		if (sameSegment(following) && isStreetAffix(following!.group.fstToken)) continue
 		const scaled = (bias: number | null): number | null => (bias === null ? null : Math.min(maxBias, bias * biasScale))
 
-		const last = sameSegment(words[index - 1]) ? scaled(lexicon.last(token)) : null
-		const suffix = scaled(lexicon.suffix(token))
+		// A head that is itself a street type closes a street name when a house number
+		// opens the span, as `Plaza` does in `30 Rockefeller Plaza`.
+		// The table measured `plaza` and `center` as venue heads on names without a number,
+		// so its rate applies to an unnumbered name only.
+		const numbered = isStreetAffix(token) && numberOpensSegment(words, index)
+		const last = sameSegment(words[index - 1]) && !numbered ? scaled(lexicon.last(token)) : null
+		const suffix = numbered ? null : scaled(lexicon.suffix(token))
 		const backward = Math.max(last ?? 0, suffix ?? 0)
 
 		if (backward > 0) {
 			extend(index, -1, backward)
 		}
 
-		const first = sameSegment(words[index + 1]) ? scaled(lexicon.first(token)) : null
+		// A street type reads as a first-word head only when it opens its segment or a dash-separated
+		// decoration, as `St` does in `St Mary's Church` and in `Mischicks Day Spa - St Andrews Lakes`.
+		// After a street name, as in `6th St SW`, it is the street's type.
+		const previous = words[index - 1]
+
+		const opensSegment =
+			previous === undefined ||
+			previous.segment !== word.segment ||
+			followsDecorationSeparator(pieces, previous.group.pieceIndices.at(-1)!, word.group.pieceIndices[0]!)
+
+		const first =
+			sameSegment(words[index + 1]) && (opensSegment || !isStreetAffix(token)) ? scaled(lexicon.first(token)) : null
 
 		if (first !== null && first > 0) {
 			extend(index, 1, first)

@@ -31,7 +31,7 @@ console.log(decodeAsJSON(tree))
 
 Mailwoman is **not** an LLM and none of it is generative. It is a small
 transformer encoder (~30M params) doing BIO token classification over a 33-label
-address schema — boring NER, which is a feature for short, structured strings.
+address schema. That plain NER design suits short, structured strings.
 
 The design splits the problem in two:
 
@@ -121,7 +121,7 @@ decodeAsTuples(result.tree)
 // [["house_number", "350"], ["street", "5th"], …]
 ```
 
-The tree is hierarchical and carries calibrated confidence per node:
+The tree is hierarchical and records a calibrated confidence on each node:
 
 ```ts
 for (const root of result.tree.roots) {
@@ -136,7 +136,7 @@ right about 88% of the time) rather than raw scores.
 
 ### Options
 
-Factory options configure the pipeline; per-call `PipelineOpts` tune a single parse. The
+Factory options configure the pipeline, and per-call `PipelineOpts` tune a single parse. The
 ones you'll reach for most:
 
 ```ts
@@ -169,7 +169,7 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 Programmatically, build a `WOFSQLitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
-`result.tree` roots then carry a `wof:id` and coordinate. See
+`result.tree` roots then have a `wof:id` and coordinate. See
 [Getting started → Adding resolution](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse)
 for the worked example.
 

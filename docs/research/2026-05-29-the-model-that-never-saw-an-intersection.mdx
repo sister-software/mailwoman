@@ -29,7 +29,7 @@ We categorized every failure, and the results changed the direction of the work:
 
 - **55% of the gap was missing labels.** The model emitted _no tag at all_ where one belonged, rather than a wrong value or a fuzzy boundary.
 - The most-missed tags were `street` (×197) and `house_number` (×100).
-- One cluster stood out: **intersections**, which are addresses like `Broadway & W 42nd St`. They're 17% of our harness, and the model scored **0%** on them.
+- One cluster stood out: **intersections**: addresses like `Broadway & W 42nd St`. They're 17% of our harness, and the model scored **0%** on them.
 
 Calibration softens the confidence of labels the model _does_ emit. It cannot produce a label the model never emits. That is why the harness pass rate stayed flat.
 
@@ -55,10 +55,10 @@ This fix needed no training. A **deterministic regex repair** runs _after_ the m
 
 We are keeping these lessons:
 
-- **Pick a metric that the change you're testing cannot inflate on its own.** Per-tag F1 looked fine while the product was stuck. Harness pass rate, which asks whether the _whole_ address comes out right, showed the real state.
+- **Pick a metric that the change you're testing cannot inflate on its own.** Per-tag F1 looked fine while the product was stuck. Harness pass rate asks whether the _whole_ address comes out right, and it showed the real state.
 - **A confidently wrong model and a model missing training data need different fixes.** We assumed the first case, and the data showed the second. Calibration addresses overconfidence, and coverage addresses missing data.
 - **Structural validity is a separate signal.** A checker that flags incoherent parses, such as a house number without a street or an orphaned unit, caught a mid-training regression that the headline accuracy number hid.
-- **A model cannot learn a category that is absent from its training data.** The problem that looked most expensive had the cheapest cause, which was a missing synthesizer.
+- **A model cannot learn a category that is absent from its training data.** The problem that looked most expensive had the cheapest cause: a missing synthesizer.
 
 The fix for intersections is a couple thousand synthetic `X & Y St` examples, labeled and added to the corpus as a small targeted supplement, plus a retrain. That run is training as we publish this.
 

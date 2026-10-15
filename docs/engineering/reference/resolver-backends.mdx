@@ -65,7 +65,7 @@ arms**, or run the full 2×2. See
 [`2026-08-03-backend-parity.md`](../../records/evals/2026-08-03-backend-parity.md) for the
 investigation that established this, and
 [`2026-08-03-postcode-locality-scoping.md`](../../records/evals/2026-08-03-postcode-locality-scoping.md)
-for the country-filter half, which is still an open decision.
+for the country-filter half. That half is still an open decision.
 
 ## Why candidate is the default
 
@@ -75,7 +75,7 @@ by the great-circle distance from the resolved **locality-tier** coordinate to t
 point.
 
 **US** (`oa-us-coord-150`): the rows are identical at `dc=US` and `dc=none`, because a well-formed US
-address carries its own region and postcode, so the filter never changes a result:
+address contains its own region and postcode, so the filter never changes a result:
 
 |           | ≤1 km |   ≤5 km |  ≤25 km | ≤100 km |      p50 |  p90 |    p99 |    max |
 | --------- | ----: | ------: | ------: | ------: | -------: | ---: | -----: | -----: |
@@ -93,16 +93,16 @@ Candidate moves 1 US row and 19 FR rows inside the 25 km line and moves none out
 gains are in the tail. Worst-case error drops from 692 km to 20 km on US and from 572 km to 53 km on
 FR, and FR's p90 drops from 144.2 km to 2.4 km.
 
-### Residuals, named
+### Residuals, listed
 
 The regressions below are real, and the candidate backend shipped as the default despite them. The
 project grades the assembled coordinate, and on that measure candidate is equal or better at every
 threshold on both tier-1 locales.
 
 - **FR: 1 row of 150 stops resolving.** The row is
-  `Chemin de l'Acco des Guérins 128, 05130 Venterol`. Two French communes are named Venterol (05 and
+  `Chemin de l'Acco des Guérins 128, 05130 Venterol`. Two French communes are called Venterol (05 and
   26). FTS returns one, and candidate returns neither.
-- **FR: 5 rows of 150 resolve to a differently named commune within 25 km.** Locality name-match drops
+- **FR: 5 rows of 150 resolve to a commune with a different name within 25 km.** Locality name-match drops
   from 150/150 to 145/150, while every one of those rows' coordinates stays inside 25 km, and several
   stay inside 2 km. Examples: `Agudelle` → `Allineuc` (2.24 km), `Agassac` → `Saint-Pierre-Laval`
   (2.28 km).
@@ -110,15 +110,15 @@ threshold on both tier-1 locales.
   1151 km away. Canada is in **no** tier (see [SCOPE](../SCOPE.mdx)), and the cause is upstream of the
   backend. The parse emits `Ottawa ON` as one locality span, so no region token remains for the
   coherence check to use. `Ottawa, ON` passes only because the candidate table happens to contain a
-  synthetic Overture row named "Ottawa, ON".
+  synthetic Overture row with the name "Ottawa, ON".
 
 ### A trap when you measure this yourself
 
-Do not grade "the deepest coordinated node". The candidate table carries 3.66 M postcodes, and the
+Do not grade "the deepest coordinated node". The candidate table holds 3.66 M postcodes, and the
 FTS admin distribution has none, so "deepest" means _postcode_ on one arm and _locality_ on the
 other. That comparison on the FR set reports a 54-row gain at sub-km distance. That gain
 compares a commune centroid (0.5 km from the address) against a postcode-area centroid (7 km).
-French communes are small, and one postcode spans several of them. Choose a named tier and grade
+French communes are small, and one postcode spans several of them. Choose one specific tier and grade
 both arms at that tier.
 
 To reproduce, pass the model, tokenizer and model card explicitly, because the eval does not resolve
@@ -173,7 +173,7 @@ on candidate (≈5–7). A consumer must not keep a hardcoded threshold across a
 
 Within either backend, the score also **cannot screen out errors**. On 40 gold rows, the range of
 scores for wrong answers falls inside the range for correct answers, and their mean is _higher_ (FTS
-25.67 wrong vs 24.33 correct; candidate 6.52 vs 6.07). Any threshold that discards errors also
+25.67 wrong vs 24.33 correct, candidate 6.52 vs 6.07). Any threshold that discards errors also
 discards correct answers, so this field cannot support an abstention mechanism in its current form.
 
 ## Synthetic WOF IDs are not stable

@@ -17,7 +17,7 @@ The browser integration required a new deserializer (`fst-deserialize-web.ts`) t
 
 ## The tokenizer incident
 
-While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (24K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. Nobody noticed because the demo was "working" (it showed results), just badly.
+While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (24K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. The team did not notice because the demo was "working" (it showed results), just badly.
 
 The root cause: `docs/static/mailwoman/` was manually managed. Model and tokenizer were copied independently, and the tokenizer copy was missed during the v0.5.3 update.
 

@@ -13,7 +13,7 @@ tags: [training, retrospective]
 
 v0.5.0 was the **fresh-slate release**, with a new tokenizer, an expanded corpus, a new architecture, and a new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the integration cost once. Most of it landed as planned, but the classifier did not.
 
-This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining cause is. It is a companion to [the v0.4.0 retrospective](/research/v0-4-0-ablation-campaign), which describes the same failure shape with a different sequence of diagnostics.
+This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining cause is. It is a companion to [the v0.4.0 retrospective](/research/v0-4-0-ablation-campaign). That retrospective describes the same failure shape with a different sequence of diagnostics.
 
 {/* truncate */}
 
@@ -32,11 +32,11 @@ C-train was the first experiment to use all of these together.
 
 ## The recipe we tried first
 
-Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were carried over from the C-s scaffold. They came from a host-side YAML-drafting decision, and the operator had not confirmed them.
+Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were copied from the C-s scaffold. They came from a host-side YAML-drafting decision, and the operator had not confirmed them.
 
 The 50-step constant-LR smoke passed. val_macro_f1 climbed from 0.121 to 0.187 across 50 steps, and the recipe looked stable.
 
-We promoted it to a full run, which diverged at step 1000.
+We promoted it to a production-length run. That run diverged at step 1000.
 
 ## Four attempts, one fingerprint
 
@@ -76,7 +76,7 @@ The only difference between runs is **how low the loss gets before the climb sta
 
 We made three knob changes between v1 and h256-bisect, each testing a different hypothesis. The data ruled out all three.
 
-**The learning rate is not the cause.** v0.4.0's bisect already showed that halving the LR delays the collapse by only a factor of 1.3, which ruled out "we picked too high an LR" as a full explanation. v1 → v2 showed the same pattern. The lower LR, from 1.5e-4 to 1e-4, moved the divergence from step 700 to step 1000 without changing the curve's shape. The LR controls _when_ the model diverges rather than _whether_ it does.
+**The learning rate is not the cause.** v0.4.0's bisect already showed that halving the LR delays the collapse by only a factor of 1.3. That result ruled out "we picked too high an LR" as a full explanation. v1 → v2 showed the same pattern. The lower LR, from 1.5e-4 to 1e-4, moved the divergence from step 700 to step 1000 without changing the curve's shape. The LR controls _when_ the model diverges rather than _whether_ it does.
 
 **Recipe knobs §1+§3 are not the cause.** v0.4.0's retrospective concluded that the destabilizer was in the recipe rather than the LR, and v0.4.0 shipped with §1 (per_token CRF) and §3 (class_weights) OFF. v3 reverted those knobs and dropped back to LR=1.5e-4, the canonical v0.4.0-stable recipe. v3 trained better than v1 and v2 (a bottom of 0.41 against 0.61 and 0.51) and had zero GPU hangs against v2's six, but it still diverged at step 900.
 
@@ -90,24 +90,24 @@ Two architectural changes from the proven-stable v0.4.0 baseline remain:
 
 2. **A1 tokenizer**. Its new 48K vocab (up from v0.1.0's 16K) was trained on corpus-v0.4.0, including the transliteration adapter. The embedding table is sized to that vocab, and the model has never trained against it before.
 
-Both are real architectural changes from v0.4.0. Either could plausibly produce a confident but wrong degenerate minimum that the loss settles into and then leaves. The curves alone cannot tell them apart, because the shape is the same either way.
+Both are real architectural changes from v0.4.0. Either could plausibly produce a confident but wrong degenerate minimum that the loss settles into and then leaves. The curves by themselves cannot tell them apart, because the shape is the same either way.
 
 The cheapest next bisect is **phrase priors off**: revert PR #128's input-layer features and keep the A1 tokenizer. It needs one YAML knob change, a ~15min smoke, and a partial train if the smoke passes. That run isolates whether the destabilizer is the phrase-prior projection or the new tokenizer.
 
 If phrase-priors-off also diverges, the next bisect is the A1 tokenizer itself. That run reverts to v0.1.0's sentencepiece weights with the same corpus, recipe, and h256. It matches v0.4.0's proven-stable shipping configuration. If even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition, and the distribution of the transliteration extracts might be the problem rather than the tokenizer trained on them.
 
-## A discipline lesson worth keeping
+## A discipline lesson to keep
 
-We found a real bug in our verdict-smoke process along the way. The original 50-step smoke for v1 passed: train_loss descended, val_macro_f1 climbed, and no step produced a NaN or spike. We promoted it to a full run, which diverged at step 1000, in a regime the smoke had never reached.
+We found a real bug in our verdict-smoke process along the way. The original 50-step smoke for v1 passed: train_loss descended, val_macro_f1 climbed, and no step produced a NaN or spike. We promoted it to a production-length run. That run diverged at step 1000, in a regime the smoke had never reached.
 
-Two things had to change for the smoke to predict the full run:
+Two things had to change for the smoke to predict the production-length run:
 
 - **Smoke length matters.** 50 steps capture only the warmup descent. The sustained-peak-LR regime where the recipe destabilizes starts at step 500 in our schedule. Smokes need to spend several hundred steps near peak LR, and we set 1500 steps as the minimum.
-- **Effective batch must match the full run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8), and the full run used eff_batch=128. The smoke was stable, and the full run diverged. **The recipe's stability depends on batch geometry.** A smoke that doesn't reproduce the full-run gradient noise cannot detect this class of failure.
+- **Effective batch must match the production-length run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8), and the production-length run used eff_batch=128. The smoke was stable, and the production-length run diverged. **The recipe's stability depends on batch geometry.** A smoke that doesn't reproduce the full-run gradient noise cannot detect this class of failure.
 
-The constant-LR mode that landed in Thread F is still correct. It is what made the v0.5.0 destabilization observable at all instead of hidden under cosine decay. The smoke configuration also needs to mirror the full run's _throughput_ characteristics, in addition to its LR schedule.
+The constant-LR mode that landed in Thread F is still correct. It is what made the v0.5.0 destabilization observable at all instead of hidden under cosine decay. The smoke configuration also needs to mirror the production-length run's _throughput_ characteristics, in addition to its LR schedule.
 
-Both lessons will go into `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the check but doesn't say that the smoke's eff_batch must match the full run. That omission is easy to misuse and obvious in hindsight.
+Both lessons will go into `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the check but doesn't say that the smoke's eff_batch must match the production-length run. That omission is easy to misuse and obvious in hindsight.
 
 ## What didn't get burned
 

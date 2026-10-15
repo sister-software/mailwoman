@@ -1,8 +1,8 @@
 # What Pelias's dictionary overrides cost — 94 deletions, read as a bug log
 
 A read of `pelias/parser/resources/pelias/dictionaries` (2026-07-15). Pelias vendors a curated subset
-of libpostal's dictionaries and maintains a **patch layer** on top: a `!token` line means _"libpostal
-says this is a street type / place name / surname; we say no."_
+of libpostal's dictionaries and maintains a **patch layer** on top: a `!token` line removes a token
+that libpostal lists as a street type, place name or surname.
 
 **94 of the 276 non-comment lines are deletions.** A third of the vendored dictionary exists to
 un-say something. This is not a criticism of the engineers. Every line is a defensible call. It is a
@@ -49,15 +49,15 @@ Almost every override is a collision between a **rare-but-real** meaning and a *
 `ma` (Mannheim / Massachusetts) · `in` (preposition / Indiana) · `a` (article / A Street DC) ·
 `art` (Artery, Art TX / the word "art")
 
-A dictionary lookup has no locale, no context, and no confidence. A token has one meaning. So when
+A dictionary lookup takes no locale, context or confidence. A token has one meaning. So when
 two meanings collide, one must **die — globally and permanently**. There is no "unless the query
 smells like Spain."
 
-**This is pragmatism, and the EV is correct.** Art, Texas has eighteen residents; the word "art" appears
-in millions of queries. The dictionary should remove `art`. Nobody was careless.
+**This is pragmatism, and the EV is correct.** Art, Texas has eighteen residents. The word "art" appears
+in millions of queries. The dictionary should remove `art`, and the deletion was a careful decision.
 
 **It becomes scar tissue in one specific sense: it is irreversible and context-free.** The deletion has
-no locale check, no confidence, no conditions to revisit. It is a global `if false`, and the reason it
+no locale check, confidence or conditions to revisit. It is a global `if false`, and the reason it
 can never be anything else is architectural rather than intellectual.
 
 ## The receipts, ours
@@ -75,7 +75,7 @@ Italy, TX             → {country: Italy, region: TX}                      ✗ 
 
 **4 of 5 — and the miss is the direct part.** `Italy, TX` is the exact row Pelias hand-deleted
 (`# remove problematic locality names`), and we get it wrong too. We only get it wrong _differently_:
-Pelias deletes the locality; we call Italy a country.
+Pelias deletes the locality. We call Italy a country.
 
 So the thesis is not "we win." It is narrower and more defensible:
 
@@ -95,7 +95,7 @@ comment explaining who lost.
    `!` line is a place where context existed and could not be consulted.
 2. **`!art` is our own failure class too.** "Art" as a street-type abbreviation for "Artery" is the
    same rare-abbreviation-vs-common-word collision we hit with `rue` (0.149) being a gazetteer place
-   (#1142). We are not immune; we are _conditionable_.
+   (#1142). We are not immune. Our model can condition the decision on context.
 3. **The commented-out `#!new york` is a warning about #1142's fix.** A blunt global rule plus a
    hand-maintained exception list for famous things is exactly the failure we would ship if we
    "fixed" importance without the `matched`/`importance` split.

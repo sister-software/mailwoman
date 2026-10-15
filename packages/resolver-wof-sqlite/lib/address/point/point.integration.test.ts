@@ -23,6 +23,8 @@ let lookup: AddressPointSqliteLookup
 
 let fullKeys: AddressPointSqliteLookup
 
+let finestKeys: AddressPointSqliteLookup
+
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("ap-lookup-")).path
 	const path = dir("fixture.db")
@@ -94,6 +96,44 @@ beforeAll(async () => {
 
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
 
+	// OSM rows whose `locality_norm` is an Ortsteil or the short form of a disambiguated place name.
+	const teschenerKey = normalizeStreetForKey("Teschener Weg")
+
+	insert.run(
+		teschenerKey,
+		teschenerKey,
+		"5",
+		null,
+		"14163",
+		"zehlendorf",
+		"Teschener Weg",
+		52.4467,
+		13.2432,
+		"osm",
+		"r"
+	)
+
+	const krankenhausKey = normalizeStreetForKey("Krankenhausstraße")
+
+	insert.run(
+		krankenhausKey,
+		krankenhausKey,
+		"9",
+		null,
+		"02991",
+		"lauta",
+		"Krankenhausstraße",
+		51.4467,
+		14.1067,
+		"osm",
+		"r"
+	)
+
+	// A neighboring place holds one postcode key, and the queried place's own row has no postcode.
+	const dorfKey = normalizeStreetForKey("Dorfstraße")
+	insert.run(dorfKey, dorfKey, "2", null, "04509", "werlitzsch", "Dorfstraße", 51.4367, 12.1958, "osm", "r")
+	insert.run(dorfKey, dorfKey, "2", null, null, "schonwolkau", "Dorfstraße", 51.4835, 12.4999, "osm", "r")
+
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
 	insert.run(
@@ -114,6 +154,7 @@ beforeAll(async () => {
 
 	lookup = new AddressPointSqliteLookup(path)
 	fullKeys = new AddressPointSqliteLookup(path, { localityKeys: "full" })
+	finestKeys = new AddressPointSqliteLookup(path, { localityKeys: "full", localityLevel: "finest" })
 })
 
 describe("AddressPointSqliteLookup", () => {
@@ -252,6 +293,72 @@ describe("The postcode rung's locality contradiction", () => {
 		expect(
 			fullKeys.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas", bbox: null })
 		).toBeNull()
+	})
+})
+
+describe("A stored locality that names part of the query's place", () => {
+	const berlinBox = { minLat: 52.27, maxLat: 52.77, minLon: 13.15, maxLon: 13.65 }
+
+	it("answers an Ortsteil row in a finest-level extract when it is the only place holding the postcode key", () => {
+		expect(
+			finestKeys.find({ street: "Teschener Weg", number: "5", postcode: "14163", locality: "Berlin", bbox: berlinBox })
+				?.lat
+		).toBe(52.4467)
+
+		expect(
+			finestKeys.find({ street: "Teschener Weg", number: "5", postcode: "14163", locality: "Berlin", bbox: null })?.lat
+		).toBe(52.4467)
+	})
+
+	it("refuses that row when it lies outside the box around the query's locality", () => {
+		const elsewhere = { minLat: 50, maxLat: 50.5, minLon: 8, maxLon: 8.5 }
+
+		expect(
+			finestKeys.find({ street: "Teschener Weg", number: "5", postcode: "14163", locality: "Berlin", bbox: elsewhere })
+		).toBeNull()
+	})
+
+	it("refuses that row in a place-level extract, where a different stored locality is a different place", () => {
+		expect(
+			fullKeys.find({ street: "Teschener Weg", number: "5", postcode: "14163", locality: "Berlin", bbox: berlinBox })
+		).toBeNull()
+	})
+
+	it("still refuses a postcode key that two places share", () => {
+		expect(
+			finestKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau", bbox: null })
+		).toBeNull()
+	})
+
+	it("answers a row whose locality is the leading words of the query's disambiguated place name", () => {
+		expect(
+			fullKeys.find({
+				street: "Krankenhausstraße",
+				number: "9",
+				postcode: "02991",
+				locality: "Lauta b Hoyerswerda",
+				bbox: null,
+			})?.lat
+		).toBe(51.4467)
+	})
+
+	it("compares the leading words at a word boundary in the bbox fall-through", () => {
+		const lautaBox = { minLat: 51.3, maxLat: 51.6, minLon: 13.9, maxLon: 14.3 }
+
+		expect(
+			fullKeys.find({ street: "Krankenhausstraße", number: "9", locality: "Lauta b Hoyerswerda", bbox: lautaBox })?.lat
+		).toBe(51.4467)
+
+		expect(
+			fullKeys.find({ street: "Krankenhausstraße", number: "9", locality: "Lautabach", bbox: lautaBox })
+		).toBeNull()
+	})
+
+	it("prefers the queried place's own row over a neighboring place's postcode row", () => {
+		expect(
+			finestKeys.find({ street: "Dorfstraße", number: "2", postcode: "04509", locality: "Schönwölkau", bbox: null })
+				?.lat
+		).toBe(51.4835)
 	})
 })
 

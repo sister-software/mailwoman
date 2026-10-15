@@ -26,8 +26,8 @@ differ, the repository copy governs code contributions and this page will be cor
 - **Email, always answered:** teffen@sister.software — bug reports, enhancement requests, and
   questions. For geocoding bugs, include the input string, the result you got (the trial
   endpoint is fine for reproduction), and the result you expected.
-- The full issue tracker accompanies the source repository, which is in the final stage of
-  preparation for public release; until then, email is the front door and every report is
+- The full issue tracker accompanies the source repository. The repository is in the final stage of
+  preparation for public release. Until then, email is the front door and every report is
   triaged into the tracker.
 - A useful bug report for a parser/geocoder is small: one address in, one wrong answer out.
   Reports like that routinely become permanent regression tests within days.
@@ -41,7 +41,7 @@ own checks and runbook: [Contributing model work](https://github.com/sister-soft
 ### Requirements for acceptable contributions
 
 1. **Contribution terms — DCO + license grant.** Mailwoman is dual-licensed (AGPL-3.0-only or
-   commercial; see [Licensing](./licensing/index.md)). Every contribution must arrive under
+   commercial, as described in [Licensing](./licensing/index.md)). Every contribution must arrive under
    terms that permit both: you certify the
    [Developer Certificate of Origin 1.1](https://developercertificate.org/) and sign off each
    commit (`git commit -s`), you retain your copyright, and you grant Teffen Ellis (DBA Sister
@@ -50,10 +50,10 @@ own checks and runbook: [Contributing model work](https://github.com/sister-soft
    and the commercial license — plus a patent license on AGPL §11 terms. Corporate CLA needed
    instead? Email teffen@sister.software. The complete legal text lives in the repository's
    `CONTRIBUTING.md`.
-2. **Code standard.** The codebase uses TypeScript throughout; linting and formatting are enforced by
-   **oxlint + oxfmt** (`yarn lint` must pass — the pre-commit hook runs it on staged files and
+2. **Code standard.** The codebase uses TypeScript throughout. **oxlint + oxfmt** enforce linting and
+   formatting (`yarn lint` must pass — the pre-commit hook runs it on staged files and
    CI runs it repo-wide). Source runs directly under Node (erasable-syntax-only TypeScript: no
-   `enum`, no parameter properties); relative imports carry explicit `.ts` extensions. House
+   `enum`, no parameter properties). Relative imports include explicit `.ts` extensions. House
    conventions that lint can't express — acronym casing (`parseJSON`, not `parseJson`),
    workspace layout, database idioms — are documented in the repository's `AGENTS.md` and
    apply to all contributions.

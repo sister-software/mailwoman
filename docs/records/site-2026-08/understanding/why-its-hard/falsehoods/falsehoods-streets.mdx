@@ -19,7 +19,7 @@ Programmers consistently assume that streets have type suffixes, don't contain n
 
 `Piccadilly, London, W1J 9PN` has no type suffix. Neither do `Broadway, New York, NY` and `The Strand, London`. Several of the world's most famous streets lack the suffix pattern that address validators demand.
 
-Pelias's `street` classifier uses a suffix dictionary to identify street tokens. If a token ends in "Street," "Avenue," "Road," "Boulevard," or a similar word, it's likely part of a street name. Without a suffix, the classifier relies on position (the token after a house number) and neighboring components. `Piccadilly` alone, without a postcode or locality context, could be a venue, a locality, or a street, and Pelias has no way to tell which.
+Pelias's `street` classifier uses a suffix dictionary to identify street tokens. If a token ends in "Street," "Avenue," "Road," "Boulevard," or a similar word, it's likely part of a street name. Without a suffix, the classifier relies on position (the token after a house number) and neighboring components. A bare `Piccadilly`, without a postcode or locality context, could be a venue, a locality, or a street, and Pelias has no way to tell which.
 
 ### "When they do have a descriptor, there's only one."
 
@@ -33,7 +33,7 @@ This is a structural problem for rule-based classifiers. A US-trained parser exp
 
 ### "A street name won't include a number."
 
-Examples include `8 Seven Gardens Burgh, WOODBRIDGE, IP13 6SU` and `Plein 1944, Nijmegen, Netherlands`. Streets can be named after years, and those years look like building numbers. When the parser sees `Plein 1944 85` (street Plein 1944, building 85), it must distinguish the year in the street name from the building number, which are two adjacent numbers with different semantic roles.
+Examples include `8 Seven Gardens Burgh, WOODBRIDGE, IP13 6SU` and `Plein 1944, Nijmegen, Netherlands`. Some street names are years, and those years look like building numbers. When the parser sees `Plein 1944 85` (street Plein 1944, building 85), it must distinguish the year in the street name from the building number. The two are adjacent numbers with different semantic roles.
 
 ### "When a numbered street and a building number are adjacent, there's a separator."
 
@@ -47,7 +47,7 @@ This is the same problem as duplicate locality names (Springfield, Paris) at a f
 
 ### "A road has exactly one name."
 
-The A1 in the UK is a 410-mile road composed of Goswell Road, Regent Road, and dozens of other named segments. Multiple buildings numbered 1 exist on different segments. The road's official designation (A1) is not the street name anyone uses.
+The A1 in the UK is a 410-mile road composed of Goswell Road, Regent Road, and dozens of other segments with their own names. Multiple buildings numbered 1 exist on different segments. The road's official designation (A1) is not the street name anyone uses.
 
 ### "Addresses have exactly one street."
 
@@ -55,13 +55,13 @@ Royal Mail uses "dependent streets", as in `6 Elm Avenue, Runcorn Road, Birmingh
 
 ### "Addresses have a street at all."
 
-Japan does not use named streets for most addresses. `東京都千代田区丸の内1-1-1` is district Marunouchi, block 1, building 1, which is three levels of block-based numbering without a street name. Rural US routes such as `Box 1234, R.R. 1, Winthrop, ME 04364` identify a box on a route instead of a street. Nicaraguan addresses such as `From where the Chinese restaurant used to be, two blocks down` use landmarks and directions instead of streets.
+Japan does not use street names for most addresses. `東京都千代田区丸の内1-1-1` is district Marunouchi, block 1, building 1: three levels of block-based numbering without a street name. Rural US routes such as `Box 1234, R.R. 1, Winthrop, ME 04364` identify a box on a route instead of a street. Nicaraguan addresses such as `From where the Chinese restaurant used to be, two blocks down` use landmarks and directions instead of streets.
 
 Mannheim, Germany uses a grid system. `R 5, 6-13, D-68161 Mannheim` means block R, row 5, buildings 6-13, without any street name or street type.
 
 ## How traditional geocoders handled these
 
-**libpostal** handles suffix-less streets through its CRF's transition model, which learns that a token between a house number and a locality is likely a street even without a suffix. It handles European prefix-descriptor streets through locale-specific training. The French model learns `rue` as a street prefix, and the US model learns `Street` as a suffix. libpostal's per-locale models are separate binaries, however, so a single deployment serving multiple locales needs to know which model to invoke.
+**libpostal** handles suffix-less streets through its CRF's transition model. That model learns that a token between a house number and a locality is likely a street even without a suffix. It handles European prefix-descriptor streets through locale-specific training. The French model learns `rue` as a street prefix, and the US model learns `Street` as a suffix. libpostal's per-locale models are separate binaries, however, so a single deployment serving multiple locales needs to know which model to invoke.
 
 **Pelias** uses a suffix dictionary with locale-specific entries. `street` classification in Pelias relies on suffix matching plus adjacency to known components. `Piccadilly` without a suffix would be classified as `street` only if it appears between a house number and a locality. That positional heuristic fails when the address has non-standard ordering.
 

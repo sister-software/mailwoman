@@ -45,7 +45,7 @@ export class RequestPacer {
 	/**
 	 * @param intervalMs Minimum milliseconds between two grants.
 	 * Values `<= 0` are rejected.
-	 * A zero-interval pacer would never actually pace.
+	 * A zero-interval pacer would never delay a request.
 	 * Silently accepting one would make a misconfigured caller look throttled when it isn't.
 	 * @param clock Time source.
 	 * @defaultValue {@linkcode systemClock}

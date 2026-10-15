@@ -157,15 +157,17 @@ def _train_gpu(
         # before the GPU time is spent. `audits.py`'s own docstring already claimed that placement.
         from pathlib import Path
 
+        from mailwoman_train.audits.validation_coverage import expand_requirements
         from mailwoman_train.audits.validation_coverage import run as verify_validation_coverage
 
+        coverage = expand_requirements(cfg.data.required_validation_coverage, cfg.data.country_weights)
         coverage_report = Path(f"{VOL_MOUNT}/audits/validation-coverage-{Path(config_path).stem}.json")
         verify_validation_coverage(
             Path(config_path),
             json_path=coverage_report,
-            countries=tuple(entry.country.upper() for entry in cfg.data.required_validation_coverage),
+            countries=tuple(sorted({entry.country.upper() for entry in coverage})),
         )
-        print(f"Validation coverage: verified ({len(cfg.data.required_validation_coverage)} locales)")
+        print(f"Validation coverage: verified ({len(coverage)} floors)")
 
     if cfg.data.required_validation_label_support:
         # `macro_f1` weighs every supported label equally, so a label held by a few validation rows

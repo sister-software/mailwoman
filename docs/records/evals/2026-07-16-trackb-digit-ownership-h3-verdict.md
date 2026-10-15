@@ -7,13 +7,13 @@ prior problem.** H3 ("the corpus prior favours postcode over house_number") is r
 it can be posed at. So is the length-marginal theory that replaced it, and that theory was mine.
 
 The defect is real — parity precision reads `postcode 25/249 = 0.100` emitted where the gold has
-none — but it is a **tail** rather than a center, and nothing in the training distribution explains it.
+none — but it is a **tail** rather than a center, and no measured property of the training distribution explains it.
 
 ---
 
 ## 1. What H3 claimed, and why the first count was worthless
 
-The claim: the model calls `39A` a postcode because its corpus says digit-containing tokens are
+The claim: the model calls `39A` a postcode because its corpus labels digit-containing tokens as
 postcodes.
 
 The first count said the opposite (`P(house_number | bare digit) = 0.810` vs `postcode 0.101`) and
@@ -53,12 +53,12 @@ Reduce by country and token shape — 400k rows, 563,197 bare digit tokens:
 `P(postcode | a 2- or 3-digit token)` is **zero** — not rare — in every country with data, across
 100k+ samples. The model emits postcode on `121`, `178`, `104`, `14` regardless.
 
-**This looked decisive and it was the wrong unit.** The model has never seen a token.
+**This looked conclusive, but it counted the wrong unit.** The model has never seen a token.
 
-## 3. The unit error, and the story it made plausible
+## 3. The unit error, and the explanation it made plausible
 
 The model reads SentencePiece **pieces** and emits one label per piece. Digits tokenize about one
-piece per character — the fertility check confirms it (2 digits → 2 pieces 0.94; 5 digits → 5 pieces
+piece per character — the fertility check confirms it (2 digits → 2 pieces 0.94, and 5 digits → 5 pieces
 0.92) — so a 5-digit postcode `[9|0|2|1|0]` mints **four** `I-postcode` labels while a 2-digit house
 number `[1|4]` mints **one** `I-house_number`. Postcodes are long, and long runs mint proportionally
 more continuation labels: **4.2× per instance**.
@@ -76,7 +76,7 @@ the BIO expansion are the shipped ones (200k rows, 818,430 continuation pieces):
 5-digit runs supply **55.6%** of all continuations, so the marginal inverts the conditional —
 mechanically, by length.
 
-That produced a tempting story: **the model learned the marginal (0.66) rather than the conditional
+That produced a tempting hypothesis: **the model learned the marginal (0.66) rather than the conditional
 (0.04)**. A per-piece probe on two failing rows fit it almost exactly — `Tindvegen nedre 44B` emits
 `I-postcode` at 0.587/0.765, `Epleskogen 39A` at 0.657/0.643, against a marginal of 0.6623. The
 arithmetic worked, the mechanism was plausible, and it explained the tokenizer's role.
@@ -87,7 +87,7 @@ It is wrong.
 
 `piece-position-probe.run.ts` bins the model's **own** per-piece posterior over the parity corpus by
 (run length, position in run), split by whether the row emits a postcode the gold lacks. Its
-pre-registered read sits in its header, written before the numbers existed; it fired `REFUTE`.
+pre-registered read sits in its header, written before the numbers existed. It fired `REFUTE`.
 
 | digit run          | rows it gets right | rows w/ spurious postcode | corpus conditional |
 | ------------------ | -----------------: | ------------------------: | -----------------: |
@@ -99,14 +99,14 @@ pre-registered read sits in its header, written before the numbers existed; it f
 Two things fall out.
 
 **The model conditions on run length correctly.** On the rows it gets right it reproduces the
-length-conditioned corpus almost exactly (2d: 0.0270 vs 0.0427; 5d: 0.9444 vs 0.8792), monotonically,
+length-conditioned corpus almost exactly (2d: 0.0270 vs 0.0427, 5d: 0.9444 vs 0.8792), monotonically,
 crossing over at 4 digits. That crossover is **deepparse's measured ≥4 boundary**. The thing we were
 told it had and we lacked. We have it. It is in the emissions.
 
 **The failing rows sit at the same run length with 19× the postcode rate.** Length cannot be the
 variable, because length is held fixed across the split.
 
-So the marginal story dies: a model that had learned the marginal would read 0.66 everywhere rather than
+So the marginal hypothesis is refuted: a model that had learned the marginal would read 0.66 everywhere rather than
 0.027 on 351 rows and 0.52 on 25.
 
 ## 5. What is eliminated
@@ -138,10 +138,10 @@ The one variable that moves with the failures is the **street token**, and the e
 
 Every failing row is Norwegian, Polish, Dutch, or New Zealand. **Norway does not appear in the
 country census at all** at the ≥30-sample threshold. For those rows the question may not be "what did
-the corpus teach" but "the corpus has nothing to teach from" — which is coverage rather than prior, and a
-different fix. That census read is unfinished and is the next measurement rather than a conclusion.
+the corpus teach" but "the corpus has no Norwegian rows to teach from". That is coverage rather than prior, and it
+needs a different fix. That census read is unfinished and is the next measurement rather than a conclusion.
 
-### The symmetry worth noticing
+### A symmetry between the two defects
 
 The house-number **license** — the defect v310fixed — was: _a digit licenses the street
 reading_, so a street with no number read as a locality. The Track B lead is its mirror: _a known
@@ -154,14 +154,14 @@ distinction instead of flipping its default — is the same shape as the fix for
 
 That is a hypothesis with a strong prior and no measurement. It gets tested rather than assumed. The
 registry tiers say the extract would be BAN/BAG-sourced (tier A) with OSM (tier D) only as an
-experiment, and it stays **positive evidence only** — no validator, no veto.
+experiment, and it stays **positive evidence only**, without a validator or a veto.
 
 ## 7. What this does not touch
 
 The Dutch minimal pairs (`1234SA`, `1234SS`, `0123AB`) are a **different problem**. NL 4-digit runs
-→ postcode at 0.9875, so the model is _following_ its corpus correctly there; what is missing is the
-validity rule (the `SS`/`SD`/`SA` exclusion and the 1000 floor), which nothing in the system encodes
-and which deepparse does not have either. That is not digit ownership and should not be bundled with
+map to postcode at 0.9875, so the model is _following_ its corpus correctly there. The missing piece
+is the validity rule (the `SS`/`SD`/`SA` exclusion and the 1000 floor). No component in the system
+encodes it, and deepparse does not have it either. That is not digit ownership and should not be bundled with
 it.
 
 ## Reproduce

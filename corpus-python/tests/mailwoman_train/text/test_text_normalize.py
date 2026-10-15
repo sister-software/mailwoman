@@ -1,4 +1,4 @@
-"""The shared CJK text helpers and row machinery answer from their own homes.
+"""The shared CJK text helpers and row helpers answer from their own homes.
 
 A name several countries need lives in `text/` or `corpora/`, not inside one country's builder. The
 two tests below pin the halves of that rule a reader cannot see from the import list: that the
@@ -83,7 +83,7 @@ def test_verify_record_names_the_label_set_it_was_given() -> None:
 
     While the verifier read a module constant, a Taiwanese row with an out-of-set tag reported
     `stage3-jp` — the label set of the module the function was defined in — while the tag set it
-    had actually checked against was `stage3-cjk`.
+    had checked against was `stage3-cjk`.
     """
     with pytest.raises(RuntimeError, match="stage3-cjk"):
         verify_record(_record("B-nonsense"), frozenset({"B-region"}), label_set_name="stage3-cjk")

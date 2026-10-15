@@ -78,7 +78,7 @@ The "no leading digit" branch preserves the original surface form
 verbatim, deferring rural-route / PO-box specific handling to
 downstream classifiers and the Phase 1.6 §2.1 synthesis primitive.
 
-## Filtering
+## Row filters
 
 Rows are dropped (silently) when:
 
@@ -87,7 +87,7 @@ Rows are dropped (silently) when:
 - `city` is empty.
 - `zip` is empty.
 - `address_primary` is empty.
-- `address-formatter` returns an empty `raw` (extremely rare; only on
+- `address-formatter` returns an empty `raw` (extremely rare, and only on
   degenerate component dicts).
 - After `reconcileComponents`, no component value survives in `raw`
   (alignment-pre-flight check, mirrors the other adapters).
@@ -98,9 +98,9 @@ fabric entries that should not become training rows.
 
 ## License
 
-Every emitted row carries `license: "Public Domain"` per the FCC's
+Every emitted row has `license: "Public Domain"` per the FCC's
 federal-government distribution terms for the BDC fabric. The CostQuest
-Fabric upstream has its own commercial license; operators substituting
+Fabric upstream has its own commercial license. Operators substituting
 that path should re-stamp `defaultLicense` accordingly.
 
 ## Country filter
@@ -121,4 +121,4 @@ country value is rejected with a clear error.
 - A territory (Puerto Rico)
 - One unrecognized state code (`"ZZ"`) — silently dropped
 
-All location_ids are illustrative; none match a real BSL fabric record.
+All location_ids are illustrative, and none match a real BSL fabric record.

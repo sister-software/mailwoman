@@ -40,12 +40,12 @@ The layer never represents an absence with a small number. A consumer can tell a
 | there is no survey here at all                       | **no `layer_coverage` row, and no summary row**    |
 
 Class 8 is a determination and is a class share like any other. A merge with the absence readings
-produces a well-formed wrong answer, and 67,547 national components carry it. The irrigated rating shows
+produces a well-formed wrong answer, and 67,547 national components have class 8. The irrigated rating shows
 the same problem at a larger scale. `irrcapcl` is NULL on 85.1% of national components because it is
 populated only where irrigation is a considered use, so the layer stores it and never reduces it.
 
-`other_share` carries the truncated minority tail, so the five shares always sum to 1, and a reader can
-see how much was folded away without inferring it from a gap. `mapped_share` says how much of the cell
+`other_share` holds the truncated minority tail, so the five shares always sum to 1, and a reader can
+see how much was folded away without inferring it from a gap. `mapped_share` records how much of the cell
 any delineation covers. Without it, the unmapped remainder of a cell at a survey-area edge would silently
 shrink every class share.
 
@@ -68,12 +68,12 @@ complete.** Flood polygons are large relative to their cells, so most cells fall
 saves almost no space. At resolution 9, 369 whole cells compact to 315, a 14.6% reduction, while the flood
 layer's interiors collapse by orders of magnitude. At resolution 7 there are zero whole cells to collapse.
 
-For that reason this layer carries the reduced `soil_capability_cell` **alongside** the index instead of
+For that reason this layer stores the reduced `soil_capability_cell` **alongside** the index instead of
 relying on the index the way the flood layer can. The unsimplified geometry is still stored,
 and the reduction weights by it, but probes are answered from the reduced table.
 
 **The two numbers move in opposite directions, and only one of them distinguishes the candidates.** The
-`partial` share is 87–100% at every candidate, so it cannot select a resolution here, and that is itself
+`partial` share is 87–100% at every candidate, so it cannot select a resolution here. That inability is itself
 a finding. The mixture number can select one, and the choice rests on it.
 
 **Resolution 9 is the choice.** `poi.db` keys its rows at resolution 9, so a reader that already holds
@@ -84,7 +84,7 @@ against 2.7% at resolution 9. Resolution 11 was excluded before measuring, becau
 `IA153`'s delineations smaller than a cell at roughly 49× the resolution-9 cell count.
 
 For comparison, NRCS's own map-unit-grain `niccdcdpct` reads below half on 3.3% of national map units.
-Aggregation to a resolution-9 cell multiplies that roughly ninefold, which quantifies the cost of the cell
+Aggregation to a resolution-9 cell multiplies that roughly ninefold. That factor quantifies the cost of the cell
 grain.
 
 ## Acquisition
@@ -103,36 +103,38 @@ The code handles three measured behaviors:
 2. **The download host answers `HEAD` with 405 and ignores `Range`.** A request with `Range: bytes=0-0`
    returned HTTP 200 and transferred the whole 27,598,377 bytes. Freshness comes from
    `sacatalog.saverest`, which the archive's filename also embeds. A wrong date returns HTTP **400** (and never 404).
-3. **The tabular export carries embedded newlines.** `sacatlog.txt` holds 594 newline bytes and exactly
+3. **The tabular export contains embedded newlines.** `sacatlog.txt` holds 594 newline bytes and exactly
    one record, because `fgdcmetadata` is a 43,251-character XML document. `mstabcol.txt`, the column
    dictionary itself, holds 913 newlines and 865 records. The reader is quote-aware throughout.
 
 **The archive ships its own schema and its own vocabulary.** `mstab.txt` maps a logical table to the file
 that holds it (`component` → `comp.txt`, which cannot be guessed). `mstabcol.txt` gives every column's
-position. `msdomdet.txt` carries each `Choice` column's declared members **with NRCS's own prose
+position. `msdomdet.txt` lists each `Choice` column's declared members **with NRCS's own prose
 definition**: capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28 conditional farmland
 classifications, and the six component kinds. The layer reads its domain from the file it ingested instead
 of transcribing it, stores it in `soil_vocabulary`, and throws on a value outside it.
 
 ## License, and where the grant comes from
 
-data.gov's entry carries `usa.gov/publicdomain/label/1.0/`, which redirects to a page that declines to
+data.gov's entry links `usa.gov/publicdomain/label/1.0/`, which redirects to a page that declines to
 make a blanket grant and tells the reader to check with the agency. The strongest available agency
-statement is **the FGDC metadata that NRCS ships inside every archive**, and its use constraints say:
+statement is **the FGDC metadata that NRCS ships inside every archive**, and its use constraints field holds this sentence:
 
-> This is public information and may be interpreted by organizations, agencies, units of government, or
-> others based on needs; however, they are responsible for the appropriate application.
+```text
+This is public information and may be interpreted by organizations, agencies, units of government, or
+others based on needs; however, they are responsible for the appropriate application.
+```
 
 The build asserts that the sentence is present **per survey area**. If an area's use constraints no longer
-carry it, the license has changed, and a build that accepted the change would ship an artifact under terms
-nobody checked. The acknowledgement that the same metadata requests is stored in
+contain it, the license has changed, and a build that accepted the change would ship an artifact under terms
+that no reviewer checked. The acknowledgement that the same metadata requests is stored in
 `layer_manifest.attribution`: _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
 ## Two dates, and they are not the same fact
 
 `sacatalog.saverest` is the refresh date. NRCS runs one coordinated Annual Soils Refresh each October 1.
 The catalogue grouped by year returns 2016: 1, 2025: 3,323, 2026: 56, so a region's areas share a
-vintage. **The field survey underneath is far older.** `IA153` carries a 2025-09-09 refresh over a
+vintage. **The field survey underneath is far older.** `IA153` has a 2025-09-09 refresh over a
 _Soil Survey of Polk County, Iowa_ published in **1960** at 1:15,840, and the dataset's own
 time-period-of-content ends at the refresh. A consumer that reads the refresh date as the survey date is
 wrong by sixty-five years.
@@ -150,18 +152,18 @@ and never
 
 > this land can (or cannot) be farmed.
 
-The metadata NRCS ships says the second reading is wrong. It states that the data "do not eliminate the need for
+The metadata NRCS ships rules the second reading is wrong. It states that the data "do not eliminate the need for
 onsite sampling, testing, and detailed study of specific sites for intensive uses. Thus, these data and
-their interpretations are intended for planning purposes only." Every reading carries the product's own
+their interpretations are intended for planning purposes only." Every reading is subject to the product's own
 limits for that reason.
 
 **The farmland vocabulary is conditional, and two of its categories mean different things in different
-states.** 24 of its 28 declared values carry an "if", such as `Prime farmland if drained` and `Prime
+states.** 24 of its 28 declared values contain an "if", such as `Prime farmland if drained` and `Prime
 farmland if irrigated and reclaimed of excess salts and sodium`. The layer therefore stores the string
 whole, because a boolean `arable` column would be this layer's invention. 7 CFR 657.5 defines prime and
 unique farmland nationally, while §657.5(c) and (d) assign statewide and local importance to state and
 local agencies. `Farmland of statewide importance` in Iowa and in Georgia are therefore different claims.
-`soil_map_unit.farmland_scope` carries that distinction into the artifact.
+`soil_map_unit.farmland_scope` stores that distinction into the artifact.
 
 ## Build
 
@@ -192,7 +194,7 @@ vertex. A point a centimeter from a long edge can be meters from every vertex, a
 near-miss measured 1.58 m to vertices and 0.009 m to edges.
 
 The negative half samples points in every neighboring state, two of them close to the Iowa border, and
-requires `unknown` with no coverage row. A low-capability reading fails the check. The positive half alone would pass
+requires `unknown` with no coverage row. A low-capability reading fails the check. A check with only the positive half would pass
 on an artifact that answered class 8 for the whole planet.
 
 ## The observation
@@ -216,8 +218,8 @@ that a geocode without the layer is byte-identical to one with it, apart from th
   tooling. Whoever builds it will face a reversed meaning of zero in the source's own encoding. The
   derived Crop Frequency Layer's value domain runs from `"1"` (planted once in 18 years) through `"18"`
   (planted every year), then **`"255"` means planted zero times**, while **`"0"` is No Data**. A reader
-  that takes 0 as "never planted" reads _we have no data here_ as _no crop was ever grown here_, which is
-  the opposite of the truth. This vocabulary uses no numeric sentinel for either state and should not
+  that takes 0 as "never planted" reads _we have no data here_ as _no crop was ever grown here_. That reading
+  is the opposite of the truth. This vocabulary uses no numeric sentinel for either state and should not
   start.
 - **The layer computes no suitability score.** It repeats what an authority states, in the authority's
   vocabulary, with the authority's dates. The consumer converts that value into a number.

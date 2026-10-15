@@ -11,7 +11,7 @@ zoning is represented in the layer.** That figure describes jurisdictions only. 
 does not mean that a zoning polygon covers your address.
 
 **The artifact is built locally and never redistributed.** Three published statements disagree about the
-source's license, so the manifest carries `tier: build-local` and `license: NOASSERTION`. The builder refuses
+source's license, so the manifest records `tier: build-local` and `license: NOASSERTION`. The builder refuses
 a `shipped` tier until the license question is resolved in writing. See _License and posture_ below.
 
 ## What it reports, and what it refuses to
@@ -28,21 +28,21 @@ zones the Environment Agency states England-wide coverage, and the Planning Prac
 as the land outside Zones 2 and 3, so an empty flood answer inside England is a designation. The zoning layer has no
 such definition anywhere. A location with no zoning polygon can be in at least four different situations:
 
-1. Outside any adopted plan area, which covers most land in most countries. The authority has made no statement.
+1. Outside any adopted plan area. Most land in most countries lies outside one. The authority has made no statement.
 2. Inside a plan area, on land the plan does not zone.
 3. In a jurisdiction that has never adopted zoning at all.
-4. In a jurisdiction whose records nobody has read or published yet.
+4. In a jurisdiction whose records no person or program has read or published yet.
 
-**The source states one of these cases explicitly, which shows that the other cases are absences.** It
-carries `ZONE_ORIG = "UNZ - Unzoned"` with `ZONE_GZT = "N/A"` on 4 of its 85,330 rows. When the authority
+**The source states one of these cases explicitly. That shows the other cases are absences.** It
+stores `ZONE_ORIG = "UNZ - Unzoned"` with `ZONE_GZT = "N/A"` on 4 of its 85,330 rows. When the authority
 means unzoned, it writes that on a row. Every other absence is a missing row.
 
-Every `layer_coverage` row therefore carries `basis = source_present`. The reader refuses to open an artifact
-that carries anything stronger, and the observation stays silent where no polygon contains the point.
+Every `layer_coverage` row therefore records `basis = source_present`. The reader refuses to open an artifact
+that records any stronger basis, and the observation stays silent where no polygon contains the point.
 
 **Neither reading states what may be built.** The Department states that its data are "not published here as
 legal definitions of the current actuality with regard to Local Authority zoning or their geographic extents"
-and that "Original data should be sourced directly from the relevant Local Authority". Every reading carries
+and that "Original data should be sourced directly from the relevant Local Authority". Every reading is subject to
 those exclusions.
 
 ## The vocabulary decision — the verbatim code, and the crosswalk beside it
@@ -67,21 +67,21 @@ Council's `Special Policy Area` takes **14** different generic types, its `Green
 and Clare's `Utilities` takes **11**. A person assigned the mapping per polygon while reading a plan, and it
 cannot be reconstructed from the pair of columns.
 
-`zoning_area` therefore carries **both** columns, and `zoning_crosswalk_edge` ships **empty**. Code checks
+`zoning_area` therefore stores **both** columns, and `zoning_crosswalk_edge` ships **empty**. Code checks
 this: `assertCrosswalkIsNotATable` refuses a build that would write an edge while any pair maps to more than
 one type.
 
-The Department says the same thing in the item description:
+The Department states the same point in the item description:
 
 > This represents a consistent zoning scheme across all local authorities, and **complements (rather than
 > replaces) the existing statutory zoning used for each individual plan**.
 
 **The declared domain is closed, and the source already violates it.** The domain declares 54 codes and the
-data uses 55, because `N/A` appears on 4 rows and in no domain. `zoning_vocabulary` therefore carries the
+data uses 55, because `N/A` appears on 4 rows and in no domain. `zoning_vocabulary` therefore stores the
 declared domain **plus** the values observed in the data, and the `declared` column separates them. A merge of the
 two would either hide a source-schema change or invent a declaration that the Department never made. For the
 same reason, a declared code that the data never uses is kept with `observed_rows = 0`. `SDZ` is a real plan
-level that nobody has used yet.
+level that no row in the data uses yet.
 
 ## Three measured source behaviors a builder has to know
 
@@ -104,7 +104,7 @@ The gap between those two readings is the signal, and the 1% build tolerance sit
 each side. Irish Transverse Mercator's scale factor and the spherical approximation together contribute a few
 tenths of a percent, and ignoring holes contributes ten times that.
 
-89,967 rings are clockwise and 3,516 are counter-clockwise, and 1,309 features carry both windings. Of those,
+89,967 rings are clockwise and 3,516 are counter-clockwise, and 1,309 features contain both windings. Of those,
 1,210 nest their holes inside one polygon part as RFC 7946 expects. The rest put every ring in its own
 `MultiPolygon` part. The largest feature in the country, Meath's `RA - Rural Area`, arrives as 107 single-ring
 parts, of which 5 are clockwise and 102 counter-clockwise. **Both encodings reach the ingest, and orientation is
@@ -112,12 +112,12 @@ the only signal that means the same thing in both.**
 
 **Two residual cases are measured and handled instead of rejected.** Nine of the 3,516 holes share their
 parent's boundary instead of sitting inside it. Each is a sliver under 1.7 m², and each is assigned to the
-smallest exterior of its own feature, which on eight of the nine is the feature's only exterior. **Exactly one
+smallest exterior of its own feature. On eight of the nine, that is the feature's only exterior. **Exactly one
 feature of 85,330** has no ring that the rule can read as an exterior: `OBJECTID` 74040, Galway County
 Council's `Agriculture`, a three-vertex ring enclosing 3.0 × 10⁻⁷ m². At that magnitude a ring's winding is
 floating-point noise and not something the publisher stated. It reads clockwise in the source's own Irish
 Transverse Mercator meters and counter-clockwise after reprojection. The largest ring by magnitude therefore
-becomes the exterior, which is also the correct reading for a feature published wholly inverted. The build
+becomes the exterior. The same rule gives the correct reading for a feature published wholly inverted. The build
 receipt reports both counts explicitly.
 
 The area error is 4.1%, and it is the harmless consequence. The harmful consequence is that a ray cast
@@ -132,7 +132,7 @@ conversion written as CSV/WKT keeps the source's 5/102 split intact.
 ### The publisher's own area column is not in the archive
 
 `Shape__Area` is a service field, and the bulk GeoJSON export drops it. The area cross-check therefore reads
-it from the live service, which makes the check compare two independent paths instead of comparing the
+it from the live service. The check therefore compares two independent paths instead of comparing the
 archive with itself. The measured value is 5,444,492,956.40 m² over 85,330 features.
 
 ### The definition host has no DNS record
@@ -161,16 +161,16 @@ A probe walks the index first and reads the geometry only for a cell that a boun
 **The index records every cell that touches a polygon, never only cells whose center lies in it**, and a
 feature that reaches no cell fails the build. The measurements require this. `polygonToCells`, the usual
 first choice of polyfill, returns no cells for most of these polygons. Every dropped polygon would appear
-downstream as an absence of zoning, which is exactly the question this layer exists to answer.
+downstream as an absence of zoning. Whether a location is zoned is the question this layer exists to answer.
 
 `zoning_cell` rows are **mixed-resolution**. Each feature's whole tier is compacted toward parent cells, so a
-row carries its own `resolution`, and a probe walks its own `cellToParent` chain over every resolution the
+row stores its own `resolution`, and a probe walks its own `cellToParent` chain over every resolution the
 table holds. `layer_coverage` stays single-resolution.
 
 ## The resolution is a measurement, and not the one the size interface names
 
 The inherited size interface picks a resolution from the measured `partial` share. **For this subject that
-statistic carries no signal**, and measurement shows why. Most zoning polygons are smaller than a cell:
+statistic does not separate the candidates**, and measurement shows why. Most zoning polygons are smaller than a cell:
 
 | percentile |  p1 |  p5 | p10 |   p25 |   **p50** |    p75 |    p90 |    p95 |     p99 |
 | ---------- | --: | --: | --: | ----: | --------: | -----: | -----: | -----: | ------: |
@@ -193,7 +193,7 @@ over the full national set:
 **Resolution 10 was chosen from those numbers.** A move from 9 to 10 reduces the p90 candidate count from 9 to
 3, a threefold reduction in the geometry a fringe probe reads, for 4.9× the stored rows. A move from 10 to 11
 reduces p90 from 3 to 2 for another 4.7× the rows. The curve bends at 10. The `partial` share (58.0 / 40.6 /
-37.0%) shows no bend at all, which confirms that it is the wrong column to choose on.
+37.0%) shows no bend at all. That confirms it is the wrong column to choose on.
 
 **The polyfill column shows the most dangerous failure.** At resolution 9, `polygonToCells` returns no cells
 for **73,068 of 85,330 polygons (85.6%)**, because no cell center falls inside them. A builder that indexed
@@ -212,7 +212,7 @@ The full national build ran on this lab at the chosen resolution 10, with covera
 | what                | measured                                                                                                                      |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | acquisition         | 247,452,342 bytes in 42.0 s, one anonymous request following the Hub job's redirect                                           |
-| features            | **85,330**; the archive, the service's `returnCountOnly` and the build all agree                                              |
+| features            | **85,330**, and the archive, the service's `returnCountOnly` and the build all agree                                          |
 | authorities / plans | **30** local authorities, **63** plans                                                                                        |
 | rings               | 93,483 total · 89,967 exterior · 3,516 hole · 3,507 holes nested · **9** on a parent's boundary · **1** exterior by magnitude |
 | cells               | 64,273 whole (compacted) + 465,702 partial = **529,975** rows, at resolutions 6/7/8/9/10 · 0 features coarsened               |
@@ -262,7 +262,7 @@ reported the whole island as zoned.
 **Three published statements disagree about the grant**, all read 2026-08-27:
 
 1. `data.gov.ie` declares `license_id: "CC-BY-4.0"`.
-2. The ArcGIS item's `licenseInfo` says the Department "aims to publish its data holdings into the future,
+2. The ArcGIS item's `licenseInfo` states that the Department "aims to publish its data holdings into the future,
    **where possible**, as Open Data licensed under Creative Commons Attribution 4.0" and, in the same field,
    that copyright "belonging to our licensors (**Tailte Éireann**) may not be copied, transmitted or reproduced
    without their prior consent. … © Tailte Éireann. All rights reserved. License No. 2023/OSi_NMA_073".
@@ -271,13 +271,13 @@ reported the whole island as zoned.
 
 A shipped layer needs one grant that it can quote, and this record does not have one. As a result:
 
-- `layer_manifest.license` is **`NOASSERTION`**, SPDX's own token for a determination nobody has made. A `CC-BY-4.0` value
-  `CC-BY-4.0` there while an all-rights-reserved clause identifies a licensor would mean this program asserting
+- `layer_manifest.license` is **`NOASSERTION`**, SPDX's own token for a license that no one has determined. A
+  `CC-BY-4.0` value there while an all-rights-reserved clause identifies a licensor would mean this program asserting
   a grant.
 - `layer_manifest.tier` is **`build-local`**, and `assertTierMatchesLicense` refuses a `shipped` build while the
   license reads `NOASSERTION`. A tier change requires a deliberate edit at a line that states what is
   unresolved.
-- `layer_manifest.attribution` carries **both parts**, the Department's credit line and the Tailte Éireann
+- `layer_manifest.attribution` stores **both parts**, the Department's credit line and the Tailte Éireann
   clause, because a re-user who saw only the first would not know that the second exists.
 
 **What would change it:** The myplan.ie disclaimer points to a fourth statement as authoritative ("For full
@@ -286,11 +286,11 @@ ArcGIS instant-app configurations linked from the viewer page were read, and nei
 viewer. The splash text is the single fact that would move this layer from `build-local` to `shipped`.
 
 The npm package is unaffected. `@mailwoman/zoning` publishes with every release from `.release-it.json`'s
-workspace list. The `build-local` tier applies to the data alone.
+workspace list. The `build-local` tier applies only to the data.
 
 ## The mapped-footprint question — what is settled, and what would change it
 
-`zoning_mapped_extent` ships **empty**, which records that no mapped footprint is known. The Department states
+`zoning_mapped_extent` ships **empty**. The empty table records that no mapped footprint is known. The Department states
 "Awaiting data for some Local Authorities - please see map viewer for coverage details" and publishes that
 detail only inside a map application. Donegal's absence was found by measuring `LA_CODE`, not read from a
 coverage statement. It is unknown whether other authorities are only partially represented.

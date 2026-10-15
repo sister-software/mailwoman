@@ -1,6 +1,6 @@
 """Alignment tests for the gold-span anchor projection (#239/#240 de-risk pilot).
 
-DeepSeek flagged a span→sub-token off-by-one as the silent run-killer, so this nails the one
+DeepSeek flagged a span→sub-token off-by-one as a defect that corrupts a training run without an error, so this pins the one
 property that matters: the anchor confidence/features land on exactly the SP pieces the postcode
 covers and nowhere else. The test reuses the BIO labels' char→piece projection and uses mock
 ``PieceSpan``s (explicit char offsets) so no SentencePiece model is needed.

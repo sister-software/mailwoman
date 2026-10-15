@@ -12,6 +12,10 @@
 // If it ever stops firing, the Code rule has been replaced by the markdown one
 // and every interface in the exceptions list is being protected by the wrong mechanism.
 // Here it is: `the gate` and `a seam`.
+// The east gate check still fires on gate, and the airport-gate prefix stops at gate too.
+// Take a slice of the corpus.
+// Store the access-token in the job.
+// Worth the measurement.
 // The loader reads each row, which validates the fields and records the result,
 // so the report can compare runs.
 // The loader reads each row, which validates the fields and records the result.

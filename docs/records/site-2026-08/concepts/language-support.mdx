@@ -27,14 +27,14 @@ which layers back each claim.
 
 ## First class: US English and French
 
-Both carry per-tag floors in the release check — a model that regresses either does
+Both have per-tag floors in the release check. A model that regresses either does
 not ship. Both have rooftop-grade open registers wired in: the US situs layer
 (124.9M address points, built from state and federal open data) and the French BAN
 (26M points, Licence Ouverte). A house number in Lyon or Louisville resolves to the
 building, at 1 m reported uncertainty, and both paths are pinned by regression
 suites that run in the browser against production.
 
-French is the more instructive story. The tokenizer originally fragmented accented
+French took more work. The tokenizer originally fragmented accented
 street names ("Allée" split at the "é" and dropped the word), which cost
 resolution on exactly the addresses a French user types first. The fix required a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
@@ -54,7 +54,7 @@ national address register, but that register only fed the training corpus — no
 AU rooftop extract is wired into the resolver, so Australian addresses resolve at
 the same locality-and-postcode grade as the rest of this tier.
 
-German also carries a check floor of its own, and the West Slavic set (Czech,
+German also has a check floor of its own, and the West Slavic set (Czech,
 Polish, Slovak, Slovenian) got the same tokenizer-splice treatment as French —
 their wrong-city rates sit in single digits.
 
@@ -64,7 +64,7 @@ national register is wired in yet.
 
 ## Thin: Norwegian, Swedish, Slovenian
 
-Each of these is trained and paneled, and each has a named failure we track. Norway
+Each of these is trained and paneled, and each has a specific failure we track. Norway
 resolves at 92.7% with a long residual tail. The Swedish exonym class (Åbo for
 Turku) and the Slovenian leading-name boundary class (village names that start
 like street names) are improvement-target rows in the regression gauntlet: they run
@@ -84,7 +84,7 @@ different failure modes. Taiwan and Korea are open work rather than claims.
 The one evaluators poke at first, so here it is up front. UK addresses parse
 better than you'd expect — a postcode-format prior routes them correctly most of
 the time — but there is no UK training corpus, because the usable open data
-carries a share-alike license that conflicts with how we distribute training
+has a share-alike license that conflicts with how we distribute training
 extracts. The blocker is licensing rather than modeling, and the issue tracking it has a
 check-back owner. Ireland, Hungary, and Romania sit behind the same check.
 
@@ -94,8 +94,8 @@ We don't count graceful degradation as support.
 
 ## Short version
 
-Floor-blocked on US English and French with rooftop data behind both;
-coordinate-paneled across ~14 European locales at sub-10 km p90; Japan by
-postcode route; Britain is the known gap, blocked on licensing. When a locale is
+US English and French are floor-blocked, with rooftop data behind both.
+About 14 European locales are coordinate-paneled at sub-10 km p90. Japan resolves by
+postcode route. Britain is the known gap, blocked on licensing. When a locale is
 missing from this page, that is also a claim: we haven't measured it, so we don't
 say it works.

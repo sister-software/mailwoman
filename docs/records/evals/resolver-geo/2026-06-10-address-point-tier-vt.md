@@ -12,7 +12,7 @@ normalizer (`resolver-wof-sqlite/street-normalize.ts`) on both build and lookup 
 | **+ address-point**              |          93.8% |        99.9% | **0.0 km** | **0.0 km** | **6.2 km** | **93.1%** (1330/1428) |
 
 The tier changes _where_, never _which place_ — admin flags are identical by construction
-(the hook decorates the street node's metadata after the admin walk; it cannot alter
+(the hook decorates the street node's metadata after the admin walk and cannot alter
 attribution). On a hit, the resolved coordinate is the actual building: gold OA points and
 Overture NAD points agree to meters. The 6.9% miss population is exactly what house-number
 interpolation (#483) exists for — and this extract is its gold standard.
@@ -26,13 +26,13 @@ interpolation (#483) exists for — and this extract is its gold standard.
 - **Postcode scope first, locality fallback.** Postcode is the selective key and dodges the
   municipal-legal-name trap: NAD localities are charter names (`Barre City`,
   `Saint Albans City`) while parses say "Barre" — and VT's Barre City ≠ Barre Town, so the
-  locality key stays exact (no suffix stripping; conflating those two would be a real
+  locality key stays exact (no suffix stripping, because conflating those two would be a real
   wrong-answer class). Rows lacking a postcode in the query lean on locality and will miss
   more — measured, accepted for the prototype.
-- **No fuzz.** Exact-after-normalization got 93.1% on real holdout traffic; fuzzy street
+- **No fuzz.** Exact-after-normalization got 93.1% on real holdout traffic. Fuzzy street
   matching is a separate, later decision with its own eval.
 - **Tier policy:** opt-in `ResolveOpts.addressPoints` (an injected `AddressPointLookup`),
-  default absent = byte-stable. Server-side (Tier B) data; pocket-tier delivery is out of
+  default absent = byte-stable. The data is server-side (Tier B). Pocket-tier delivery is out of
   scope (#378's two-tier split).
 
 Next: DE/FR extracts need the analogous Overture pulls (street/number fill ≈100% in both);

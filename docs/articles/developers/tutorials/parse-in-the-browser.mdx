@@ -26,10 +26,10 @@ twenty minutes.
 The third item decides how this page is structured, so read it before you copy any URL.
 
 - **A bundler that can serve static assets** and an ESM project on Node.js 24.18.0 or later. The load
-  and parse transcripts below were produced with the plain Node runtime, which runs the identical
+  and parse transcripts below were produced with the plain Node runtime. That runtime runs the identical
   `onnxruntime-web` WASM path — see [How this page was verified](#how-this-page-was-verified).
 - **About 125 MB of static assets** to host: 50.4 MB of model files plus `onnxruntime-web`'s four
-  `.wasm` builds. A visitor fetches the model files and exactly one of those builds, which is between
+  `.wasm` builds. A visitor fetches the model files and exactly one of those builds. That build is between
   12.5 MB and 25.4 MB depending on the execution provider the browser lands on.
 - **The demo's asset host is not a public CDN.** `public.mailwoman.ai` answers a cross-origin
   request only for `https://mailwoman.ai`, so a browser on your own domain gets no
@@ -37,8 +37,8 @@ The third item decides how this page is structured, so read it before you copy a
   where they come from, and they arrive in an npm package you already have if you have installed the
   parser at all.
 - **The resolver runs separately.** The browser runtime turns text into components. A second step turns
-  those components into coordinates needs a gazetteer, and the browser story there is narrower than
-  the parse story — [Resolve addresses in the browser](#resolve-addresses-in-the-browser) says exactly how narrow
+  those components into coordinates needs a gazetteer, and browser support for that step is narrower than
+  for parsing. [Resolve addresses in the browser](#resolve-addresses-in-the-browser) states exactly how narrow
   and what the next step is.
 
 ## 1. Copy the model files out of the weights package
@@ -50,7 +50,7 @@ weights package:
 npm install @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web
 ```
 
-`onnxruntime-web` is named explicitly because `@mailwoman/neural` declares both ONNX runtimes as
+`onnxruntime-web` is listed explicitly because `@mailwoman/neural` declares both ONNX runtimes as
 **optional peer dependencies**, so neither arrives on its own. That is the point: a browser app
 installs `onnxruntime-web`, a Node service installs `onnxruntime-node`, and neither pays for the
 other's binaries. It also means the runtime is a dependency you can see and pin in your own manifest
@@ -71,10 +71,10 @@ done
 
 The split matters when you are trimming: the first three are required, the four lexicons feed model
 inputs, and `postcode-us.bin` is a ranking channel. [What the load costs](#what-the-load-costs)
-prices each one and says what dropping it does.
+gives each one's size in bytes and states what dropping it does.
 
-`onnxruntime-web` needs its own `.wasm` runtime files too. Left alone it resolves them relative to
-its own module URL, which holds only when your bundler emits those four files beside the JavaScript
+`onnxruntime-web` needs its own `.wasm` runtime files too. Without configuration it resolves them relative to
+its own module URL. That works only when your bundler emits those four files beside the JavaScript
 it emits. Copy them somewhere you control instead, and tell the runner:
 
 ```bash
@@ -118,7 +118,7 @@ the last path segment, keep the rest — which is why step 1 put them in the sam
 `gazetteerLexicon`, `countryLexicon`, `streetTypeLexicon` or `localitySurfaceLexicon` as `{ url }`
 if yours live elsewhere, or `"none"` to skip one. The default is `"auto"`.
 
-`modelCardURL` is the one optional-looking argument that is not optional. The card carries the label
+`modelCardURL` is the one optional-looking argument that is not optional. The card contains the label
 set, and this bundle emits 33 of them. Omit it and the classifier falls back to a built-in 21-label
 default, builds a 21×21 transition mask against a model emitting 33 logits, and the Viterbi pass
 reads past the end of it.
@@ -167,17 +167,17 @@ Three inputs, run in order against one loaded classifier:
 ```
 
 The indentation is containment rather than reading order: the region contains the locality, the locality
-contains the street and the postcode, and the street carries its own number, prefix and suffix. That
+contains the street and the postcode, and the street contains its own number, prefix and suffix. That
 is why the second input has no `region` level at all. A British address has no state to nest under —
 and the structure is what makes a resolver's job tractable later.
 [Read everything a parse returns](./understand-a-parse.mdx) walks the same tree with its spans and
-confidences. Everything that page shows is available here; the runner underneath is the only
+confidences. Everything that page shows is available here. The runner underneath is the only
 difference.
 
 All three inputs are lowercase, because that is the register a person types in.
 
 Per-parse cost above is 20–30 ms on the WASM backend, on a warm session. The first parse after load
-is not in that range, which is why the loader runs a warm-up inference before handing the classifier
+is not in that range. For that reason the loader runs a warm-up inference before handing the classifier
 back. That cost is inside step 2's number rather than step 3's.
 
 ## What the load costs
@@ -188,7 +188,7 @@ Measured by counting the bytes of every response the loader took, on the call in
 | ---------------------------------- | -------------- | ---------------------------- | -------------------------------------------------------- |
 | `model.onnx`                       | 39,419,629     | The int8 graph               | Required                                                 |
 | `locality-surface-lexicon-v6.json` | 7,346,004      | Locality surface forms       | Locality evidence channel runs off, with a console error |
-| `postcode-us.bin`                  | 1,904,322      | The US postcode anchor table | Rank quality drops; parses still work                    |
+| `postcode-us.bin`                  | 1,904,322      | The US postcode anchor table | Rank quality drops. Parses still work                    |
 | `tokenizer.model`                  | 1,632,289      | The SentencePiece model      | Required                                                 |
 | `model-card.json`                  | 42,380         | Label set and lineage        | The decoder cannot load the model                        |
 | `anchor-lexicon-v1.json`           | 11,238         | The gazetteer clue           | Segmentation degrades, with a console error              |
@@ -198,11 +198,11 @@ Measured by counting the bytes of every response the loader took, on the call in
 
 Every "degrades" row prints a `console.error` naming the missing file when the loaded model declares
 the matching input. That is deliberate: a model trained with a channel and run without it produces
-structurally valid, quality-degraded output, which is the failure mode that hides. Watch the console
+structurally valid, quality-degraded output. That failure mode is hard to see. Watch the console
 on your first load rather than reading it from a parse.
 
 One file is missing from that table because the loader never fetches it: the `onnxruntime-web`
-runtime, which the runtime itself loads. `onnxruntime-web` ships four builds — 12,528,402 bytes plain,
+runtime. The runtime loads it itself. `onnxruntime-web` ships four builds — 12,528,402 bytes plain,
 14,065,792 with JSPI, 22,819,905 with Asyncify, and 25,415,321 for the WebGPU path — and a browser
 takes exactly one, chosen from the execution provider and what the browser supports. Which one is not
 measurable from Node, where the runtime reads those files off the filesystem rather than over HTTP, so
@@ -213,7 +213,7 @@ Wall-clock for the same call, cold each time and with no HTTP cache: **1.7 s** w
 gap between the two is transfer, and it is a property of your link and your hosting. What is left in
 the local number is reading 39.4 MB into an inference session and running the warm-up pass.
 
-Two consequences worth designing around. You serve these files, so an immutable `Cache-Control` on
+Design around two consequences. You serve these files, so an immutable `Cache-Control` on
 them turns every visit after the first into a cache read. And sixty-odd megabytes is a real download
 on a phone — start the load on the interaction that needs it rather than on first
 paint.
@@ -221,14 +221,14 @@ paint.
 ## Where it runs
 
 `WebONNXRunner` asks for the `webgpu` execution provider first and falls back to `wasm` when the
-probe fails, which it does when the browser exposes no adapter. `diagnostics.backend` reports which
+probe fails. The probe fails when the browser exposes no adapter. `diagnostics.backend` reports which
 one answered — the string in step 2's output — and `runner: { useWebGPU: false }` skips the probe
-entirely, which is what you want in a test environment where the failure path only adds latency.
+entirely. Use that in a test environment where the failure path only adds latency.
 
 Two constraints ride on that:
 
 - **The parse runs on the thread that called it.** No code here moves inference to a worker. Session
-  creation reads a 39.4 MB model and each parse is tens of milliseconds; put both in a worker of your
+  creation reads a 39.4 MB model and each parse is tens of milliseconds. Put both in a worker of your
   own if your page has an animation to keep smooth.
 - **WebGPU availability is a browser and hardware property rather than a configuration one.** The fallback
   is automatic, so a device without it still parses — on the slower backend. Log
@@ -237,13 +237,13 @@ Two constraints ride on that:
 ## Resolve addresses in the browser
 
 Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
-over HTTP: a read-only SQLite VFS fetches only the chunks a lookup touches, which is three to five range
+over HTTP: a read-only SQLite VFS fetches only the chunks a lookup touches. That is three to five range
 requests for a cold name lookup. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
 
 The worker is one. The reader runs `@sqlite.org/sqlite-wasm` in a `Worker`, and a `Worker` cannot be constructed
 from a cross-origin script URL, so its worker JS and its `.wasm` must be served from your own origin
-even when the database itself is remote. The demo carries a `sqliteRuntimeBaseURL` option for exactly that
+even when the database itself is remote. The demo has a `sqliteRuntimeBaseURL` option for exactly that
 reason.
 
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its
@@ -264,8 +264,7 @@ Steps 2 and 3 ran under Node.js 26.2.0 rather than in a browser, against the sam
 build a browser loads and through the same `loadNeuralClassifierFromURLs` entry point. It is one code
 path rather than two: the browser runtime's own test suite exercises the WASM execution provider in Node for
 the same reason. The parse output, the label count, the byte counts and the timings are therefore
-measured. Step 1's file set was copied out of this repository's own weights workspace, which is what
-the npm package publishes, and served over HTTP from a local directory for the step-2 run.
+measured. Step 1's file set was copied out of this repository's own weights workspace. The npm package publishes that file set. The set was served over HTTP from a local directory for the step-2 run.
 
 Three claims are not measured here, and each is marked where it appears. WebGPU cannot be exercised
 without a browser, so the provider order and the fallback come from
@@ -285,5 +284,5 @@ component they return.
 - [Read everything a parse returns](./understand-a-parse.mdx) — the tree, the spans, the confidences.
 - [Run the API server](./run-the-api-server.mdx) — the server half, for the resolve step this page
   leaves out.
-- [What ships today](../status.mdx) — the model artifacts, their sizes, and the locales that carry a
+- [What ships today](../status.mdx) — the model artifacts, their sizes, and the locales that have a
   claim.

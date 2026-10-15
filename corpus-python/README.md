@@ -3,8 +3,8 @@
 Python helpers for the Mailwoman pipeline.
 
 The `uv` project that builds it lives at the repository root (`pyproject.toml`, `uv.lock`, `.venv/`,
-`.python-version` — Python 3.12) so that `uv run` works from the root without a `--project` flag;
-this directory holds only the source.
+`.python-version` — Python 3.12) so that `uv run` works from the root without a `--project` flag.
+This directory holds only the source.
 
 All the code is in one package, `src/mailwoman_train/`, with one directory per role:
 
@@ -34,7 +34,7 @@ now writes the `.parquet` files directly without Python.
 ## Install
 
 Everything runs under [`uv`](https://docs.astral.sh/uv/), from the repository root.
-`.python-version` pins the interpreter to 3.12, which matches the image in `launch/app.py`. Call
+`.python-version` pins the interpreter to 3.12. That version matches the image in `launch/app.py`. Call
 every tool through `uv run` so that it uses the project environment instead of a system install.
 
 ```sh
@@ -61,7 +61,7 @@ read the project environment and the root `pyproject.toml` config:
 - **Ruff** (`uv run ruff`) lints and formats. It is the Python counterpart of the repo's `oxlint`
   and `oxfmt`. Config: `[tool.ruff]`.
 - **mypy** (`uv run mypy`) runs `--strict` type checking over `src/` and currently reports zero
-  errors. It does not check `launch/`, because `launch/` imports the Modal SDK, which is installed
+  errors. It does not check `launch/`, because `launch/` imports the Modal SDK. That SDK is installed
   only where `modal run` runs. Config: `[tool.mypy]`.
 - **bandit** (`uv run bandit -r corpus-python/src`) runs security and static analysis. Config:
   `[tool.bandit]`.

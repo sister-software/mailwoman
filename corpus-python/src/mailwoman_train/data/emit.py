@@ -1,4 +1,4 @@
-"""The emit step: turn one sampled row into the rows a consumer actually reads.
+"""The emit step: turn one sampled row into the rows a consumer reads.
 
 WHY THIS IS ITS OWN MODULE. Two policies apply between the sampler and the consumer — augmentation
 (with a per-source opt-out) and affix relabelling — and they have to be applied in that ORDER, because

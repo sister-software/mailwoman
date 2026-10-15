@@ -29,7 +29,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     synth-affix: 2.0
     synth-country: 2.0

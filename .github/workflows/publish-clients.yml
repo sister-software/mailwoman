@@ -1,5 +1,5 @@
 # Generates the API clients once and publishes the same artifacts to PyPI and crates.io.
-# The dispatch inputs can skip either registry, which makes a single-registry retry cheap.
+# The dispatch inputs can skip either registry. A single-registry retry is therefore cheap.
 #
 # PyPI uses Trusted Publishing. Its publisher config is bound to this file name and the `pypi`
 # environment, so renaming either one breaks publishing until PyPI is updated.
@@ -112,7 +112,7 @@ jobs:
         run: tar xzf mailwoman-client-rust.tar.gz
 
       # The token check gives a clearer error than cargo's 401. `cargo publish` runs a verify
-      # build of the extracted crate, which is why the job installs a Rust toolchain.
+      # build of the extracted crate. The job therefore installs a Rust toolchain.
       - name: Publish to crates.io
         working-directory: rust
         env:

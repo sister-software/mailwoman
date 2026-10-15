@@ -2,7 +2,7 @@
 
 2026-07-31. Operator observation + Claude. Two things: one concrete gap in Phase 3 that a worked
 analysis exposed, and one thesis about where this architecture generalizes. The first is actionable
-now; the second is explicitly **a thesis rather than a roadmap commitment** — see §4 on scope discipline.
+now. The second is explicitly **a thesis rather than a roadmap commitment** (see §4 on scope discipline).
 
 ## 1. What the WOW analysis demonstrated
 
@@ -12,26 +12,26 @@ acquiring DigitalBridge itself, ~$4B, approved by its shareholders April 2026, F
 February 2026), the implied multiple (~5.5x EBITDA, ~$3,280 per broadband subscriber against 457,100
 subs and $68.8M quarterly adjusted EBITDA), the structural read (an overbuilder squeezed between
 fiber above and fixed wireless below, so the scarce asset is plant rather than the retail book), the
-named playbook (PropCo/OpCo separation, with Windstream/Uniti as its canonical failure), and a
+known playbook (PropCo/OpCo separation, with Windstream/Uniti as its canonical failure), and a
 checkable open question (whether common upstream ownership now spans two nominally competing
 providers in the same markets).
 
-Every input was public. None of it was assembled from a durable substrate. It was web fetches plus
-arithmetic plus recall, which is unreproducible, unsourced, and unauditable. **The product is that
+Every input was public. None of it was assembled from a durable, sourced dataset. It was web fetches plus
+arithmetic plus recall. That method is unreproducible, unsourced, and unauditable. **The product is that
 assembly made systematic.** Not the conclusion: the conclusion stays the customer's, per doctrine.
 What the customer provides is not having to spend a day in EDGAR, FCC dockets, and trade press to reach
 the point where judgment can start.
 
 ## 2. The concrete gap: a transaction layer, and where family-edge dates come from
 
-`2026-07-31-evidence-axes-beyond-filings.md` §2.1 established that crosswalk edges must carry
-`valid_from`/`valid_to`. It did not say where those dates come from. They come from here:
+`2026-07-31-evidence-axes-beyond-filings.md` §2.1 established that crosswalk edges must record
+`valid_from`/`valid_to`. It did not state where those dates come from. They come from here:
 
-| Source                                                | What it yields                                                                                 | Notes                                                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **FCC transfer-of-control applications**              | The authoritative date and structure of _every_ change of control over FCC-authorized entities | Date sequence: Filing → public-notice → approval. The approval date supplies `valid_from`. Applications disclose post-transaction ownership structure. Foreign acquirers additionally trigger executive-branch review, which is itself a dated public record. **This is the transaction spine.** |
-| **SEC merger filings** (8-K, S-4, DEF 14A, 10-K/10-Q) | Price, structure, financing, and the financials that make multiples computable                 | Public parents only; `CIK` is already in the Phase 3 identifier inventory                                                                                                                                                                                                                        |
-| **State PUC transfer approvals**                      | Per-state conditions and sometimes service-quality commitments                                 | Heterogeneous; deferred with the rest of state sources (D4)                                                                                                                                                                                                                                      |
+| Source                                                | What it yields                                                                                 | Notes                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **FCC transfer-of-control applications**              | The authoritative date and structure of _every_ change of control over FCC-authorized entities | Date sequence: Filing → public-notice → approval. The approval date supplies `valid_from`. Applications disclose post-transaction ownership structure. Foreign acquirers additionally trigger executive-branch review. That review is itself a dated public record. **This is the transaction spine.** |
+| **SEC merger filings** (8-K, S-4, DEF 14A, 10-K/10-Q) | Price, structure, financing, and the financials that make multiples computable                 | Public parents only; `CIK` is already in the Phase 3 identifier inventory                                                                                                                                                                                                                              |
+| **State PUC transfer approvals**                      | Per-state conditions and sometimes service-quality commitments                                 | Heterogeneous. Deferred with the rest of state sources (D4)                                                                                                                                                                                                                                            |
 
 Two consequences:
 
@@ -41,7 +41,7 @@ Two consequences:
 2. **A capital-structure attribute becomes available for the entities that file with the SEC.**
    use and capex trend explain a great deal of filing-versus-reality drift without any inference
    about intent: an operator with declining EBITDA under new use stops building to the edge of
-   its claimed footprint. Report the attribute and its source; never the motive.
+   its claimed footprint. Report the attribute and its source, and never the motive.
 
 ## 3. The portability thesis: regulated monopolies share this shape
 
@@ -53,16 +53,16 @@ layers join badly on purpose, and geocoded entity resolution is what makes them 
 direct ranking of second verticals by data quality rather than by market attractiveness:
 
 - **Electric and gas utilities — the strongest fit by a wide margin.** EIA Form 860 is plant-level and
-  geocoded with owner identity (a direct ASR analog); EIA Form 861 carries utility service territories
-  (a BDC-availability analog); FERC Form 1 gives financials; FERC Section 203 approves transfers (a
-  transfer-of-control analog); and holding-company opacity is, if anything, worse than telecom's.
+  geocoded with owner identity (a direct ASR analog). EIA Form 861 records utility service territories
+  (a BDC-availability analog). FERC Form 1 gives financials. FERC Section 203 approves transfers (a
+  transfer-of-control analog). Holding-company opacity is, if anything, worse than telecom's.
   All four layers exist with federal, public-domain sources.
-- **Pipelines** (PHMSA operator IDs and incident data; FERC for interstate gas) — good, narrower.
+- **Pipelines** (PHMSA operator IDs and incident data, FERC for interstate gas) — good, narrower.
 - **Rail** (Surface Transportation Board: ownership, mergers, network) — good, small buyer set.
 - **Water** — weak. EPA SDWIS covers systems and violations, but ownership is mostly municipal and
   poorly structured. Skip.
 
-The abstraction, stated directly: **mailwoman is a geocoded entity-resolution substrate for
+The abstraction, stated directly: **mailwoman is a geocoded entity-resolution layer for
 regulated-monopoly public record.** The address parser is the joining primitive because these
 datasets key on addresses and coordinates and no join happens directly without one. That framing
 explains why the geocoder is the foundation rather than the product — and it is a framing rather than a
@@ -80,5 +80,5 @@ This note is a thesis with one actionable extraction. To keep it from becoming a
   pre-registered checks.
 - **The delivery shape is already right.** The BDC spec's "the interface is an agent rather than a form"
   holds here: the customer-facing product is an agent with a deterministic, provenance-carrying tool
-  belt. This analysis is what that workflow looks like when the substrate exists — which is evidence
-  the MCP surface is the correct delivery mechanism rather than a reason to build something new.
+  belt. This analysis is what that workflow looks like when the sourced dataset exists. That is evidence
+  that the MCP surface is the correct delivery mechanism rather than a reason to build something new.

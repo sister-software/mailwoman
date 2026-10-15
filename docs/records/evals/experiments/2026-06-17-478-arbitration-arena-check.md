@@ -4,10 +4,10 @@ _2026-06-17. Per-component rule-vs-neural arbitration in the assembled `runPipel
 behind `arbitrate`). The arc, in three acts: (1) the **flatten+rebuild v1** passed the arena
 label-match (`v0-only` 56.4→27.1%) but **FAILED the coordinate check catastrophically** — locality −26pp,
 coord p50 3.3→1069 km, street+house_number precondition 100→48%; (2) diagnosis pinned it to **loss of
-containment**; (3) the **containment-preserving fix-v1** (edits on the nested neural tree, no flatten)
+containment**; (3) the **containment-preserving fix-v1** (edits on the nested neural tree without flattening it)
 **eliminated the regression** — the coordinate arm now matches neural — **but the arena collapsed to a
 net wash (+21/−21, v0-only unchanged at 56.9%)**. The +122 "win" was entirely label-conformance to v0's
-decomposition, the very thing that wrecked the geocode; removing the harm removed the result.
+decomposition, the very thing that wrecked the geocode. Once fix-v1 removed the harm, the result disappeared with it.
 **Verdict: arbitration is not promoted — fix-v1 makes it SAFE but provides no net benefit, while adding
 the full v0-parser cost to every parse.** It stays default-OFF. The #566 lesson, twice over: grade the
 assembled COORDINATE output, and a label-match "win" toward the other parser is not a quality win._
@@ -22,17 +22,17 @@ overlaps (the coherence pass), and rebuilds the tree.
 
 ## Result — arbitration nearly halves the v0-only gap
 
-| graded arm                                 | assembled/parser pass | **v0-only vs ASSEMBLED** (check target → ~0) |
-| ------------------------------------------ | --------------------: | -------------------------------------------: |
-| v0 (rules)                                 |                100.0% |                                            — |
-| raw neural                                 |                 43.1% |                                        56.9% |
-| assembled, no arbitration (inc 1 baseline) |                 43.6% |                                        56.4% |
-| **assembled + arbitration**                |             **72.9%** |                                    **27.1%** |
+| graded arm                                     | assembled/parser pass | **v0-only vs ASSEMBLED** (check target → ~0) |
+| ---------------------------------------------- | --------------------: | -------------------------------------------: |
+| v0 (rules)                                     |                100.0% |                                            — |
+| raw neural                                     |                 43.1% |                                        56.9% |
+| assembled without arbitration (inc 1 baseline) |                 43.6% |                                        56.4% |
+| **assembled + arbitration**                    |             **72.9%** |                                    **27.1%** |
 
-Against raw neural the arbitrated pipeline is **+122 / −10**: it captures 122 parses neural alone drops
+Against raw neural the arbitrated pipeline is **+122 / −10**: it captures 122 parses that raw neural drops
 (the v0 wins, kept "by construction" — the router routes clean structured input to the rule source and
 the registry keeps it) and loses 10 (cases where neural was right and arbitration preferred the rule
-parse). The run is clean across all 376 assertions, no errors.
+parse). The run completed all 376 assertions without errors.
 
 ## How to read the results
 
@@ -78,17 +78,17 @@ close.
 ## Check status — NOT PROMOTED
 
 - **Leg 1 (arena label-match): clears.** `v0-only vs ASSEMBLED` 56.4 → 27.1%, +122/−10 vs raw neural.
-- **Leg 2 (precondition + coordinate): fails decisively.** locality −26pp, coord p50 3.3 → 1069 km,
+- **Leg 2 (precondition + coordinate): fails.** locality −26pp, coord p50 3.3 → 1069 km,
   precondition 100% → 48%.
 
-**Both legs must clear to promote; leg 2 fails, so arbitration stays default-OFF.** The implementation and
-both check instruments are merged; no default changes. The methodology did its job — it caught a
+**Both legs must clear to promote. Leg 2 fails, so arbitration stays default-OFF.** The implementation and
+both check instruments are merged, and every default stays as it was. The methodology did its job — it caught a
 catastrophic coordinate regression that the label-match arena scored as a +122 win.
 
 ## Diagnosis — one root cause: loss of containment
 
 `scripts/eval/probe-arbitration.ts` traces the arbitration stages on real US addresses. The aggregate
-over 60 clean rows is decisive — **both** failure modes are the same root cause: the flat
+over 60 clean rows traces **both** failure modes to the same root cause. The flat
 proposal/tree representation has no containment.
 
 - **Precondition (street dropped 42%, all by overlap eviction).** Neural emits `street` + a separate
@@ -114,8 +114,8 @@ unnecessary and the resolver keeps its structure. The v1 edit algorithm:
 
 - `neural_preferred` / `abstain` routes → pass the neural tree **unchanged**.
 - `rule_preferred` → **override a neural node's value only** when a same-tag rule proposal overlaps it
-  with a different value; **add rule-only missing tags** as nodes; **never restructure** (no dropping
-  neural's sub-component decomposition, no flattening).
+  with a different value. **Add rule-only missing tags** as nodes. **Never restructure**: keep
+  neural's sub-component decomposition and never flatten the tree.
 
 This makes clean-address arbitration a **no-op** (killing both regressions), captures the high-value
 wins (value disagreements + tags neural missed entirely), and accepts losing the low-value
@@ -123,7 +123,7 @@ pure-decomposition wins. Then **re-run the coordinate check (leg 2)** before any
 
 ## Fix-v1 re-check — regression gone, but no net benefit
 
-Fix-v1 (`applyRuleArbitration` — edits on the nested neural tree; only `rule_preferred` mutates it,
+Fix-v1 (`applyRuleArbitration` — edits on the nested neural tree. Only `rule_preferred` mutates it, to
 relabel same-span tag disagreements + add rule-only non-overlapping missing tags, never restructure).
 
 **Coordinate leg (300 OA US rows) — regression ELIMINATED:**
@@ -146,19 +146,19 @@ Fix-v1's `assembled + arb` matches `neural` to the decimal — the catastrophe i
 
 The +122 was almost entirely the harmful decomposition-replacement (taking v0's coarser spans to match
 its labels) — the same edits the coordinate check proved wreck resolution. The _safe_ fix-v1 (no
-restructure) nets nothing on the arena: +21 helpful relabels/adds offset by 21 harmful ones, the
+restructure) nets zero on the arena: +21 helpful relabels/adds offset by 21 harmful ones, the
 `v0-only` gap unmoved.
 
 ## Final verdict — NOT PROMOTED (no net benefit)
 
 Fix-v1 is the correct, containment-preserving arbitration and removes the catastrophic regression — but
 it provides **no net benefit**: a no-op on the coordinate product metric, a +21/−21 wash on the arena,
-while every arbitrated parse pays the cost of a full v0 rule-parse. There is nothing here worth the
-latency. **Arbitration ships SAFE and default-OFF; it is not promoted.**
+while every arbitrated parse pays the cost of a full v0 rule-parse. The measured benefit does not
+justify the latency. **Arbitration ships SAFE and default-OFF. It is not promoted.**
 
 The durable findings: (1) the `v0-only` arena column conflates "neural is wrong" with "neural is
 _differently right_" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
 model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 is not a quality
 change. The implementation + the safe fix-v1 are banked behind the flag, with the check instruments, should a
 weaker model, a new locale, or a per-tag config (where the data shows arbitration nets positive on a
-specific tag) make it worth revisiting.
+specific tag) give a reason to measure it again.

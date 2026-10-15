@@ -22,7 +22,7 @@ def sample_address_points(path: Path, count: int, rng: random.Random) -> list[Ad
     """Sample by random rowid probe.
 
     `ORDER BY RANDOM()` scans the whole table. These tables are large enough that a scan costs
-    more than the sample is worth. A row missing any of the four fields is skipped rather than
+    more time than drawing the sample by rowid probe. A row missing any of the four fields is skipped rather than
     emitted partially filled.
     """
     db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)

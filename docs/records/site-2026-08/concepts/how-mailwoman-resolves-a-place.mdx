@@ -70,11 +70,11 @@ The resolver walks the tree top-down. At each node whose tag is a place type (co
 
 Retrieval performs an exact lookup on normalized name keys and uses a trigram index for fuzzy matches. The ranking follows a strict order:
 
-1. **Exact name matches outrank partial matches.** A place named exactly "Springfield" beats every "Springfield Gardens" the index also returns.
+1. **Exact name matches outrank partial matches.** A place whose name is exactly "Springfield" beats every "Springfield Gardens" the index also returns.
 2. **Within a tier, prominence decides.** Prominence is capped log-population, plus a proximity term when the caller supplies a map viewport or user location. This is the importance ranking a Pelias user expects, but it only breaks ties _within_ one match-quality tier. Applied across tiers, population would pull "ME" to Missouri (a populous partial match) over Maine (the exact match).
 3. **The raw text-match score is the last tiebreak.** Full-text scoring penalizes a famous city's long, alias-heavy index entry, by roughly 15 BM25 points compared with a small namesake's short entry. The text score therefore admits candidates to the pool but does not order them.
 
-Under that ranking, a bare `Springfield` with no other evidence resolves to Springfield, Missouri, the most populous place with that name. That is the right answer when there is no context.
+Under that ranking, a bare `Springfield` with no other evidence resolves to Springfield, Missouri, the most populous place with that name. With no other context, the most populous namesake is the most likely referent.
 
 ## The tree must agree with the map
 
@@ -83,9 +83,9 @@ Our query has more context than a bare Springfield, because the parse nested it 
 The scope search assumes that the parent resolved correctly. Several fallback passes cover incorrect parent resolutions, and these passes handle most namesake cases:
 
 - **An empty scope triggers one retry without the parent**, keeping the country constraint. A missing link in a gazetteer's ancestor chain should not turn a resolvable town into a null.
-- **A resolved region with a failed child locality** points to a likely greedy-order error. A bare "ME" can mean Maine or Messina, Italy. A post-walk pass then asks which same-named region candidate has a locality of this name under it. It re-picks both nodes as a pair and records the swap on the node.
-- **An explicit country token gets the same joint treatment.** For "Vienna, Austria", the resolver re-picks the locality to the same-named place inside the country the address names. The resolved output is the Austrian capital (48.2085, 16.3721) rather than a populous namesake abroad.
-- **A resolved postcode anchors the locality.** Postcodes are unambiguous within a country, and town names are not. If a locality resolves more than 50 km from its sibling postcode, the resolver re-picks the same-named candidate nearest that postcode. If no candidate is close enough, the coordinate falls back to the postcode's area, and the node is flagged `postcode_city_mismatch`. In that case the input, rather than the map, is likely wrong. This pass was added after a measured failure: "06260 Saint-Pierre", one of several French Saint-Pierres, once resolved 617 km from its own postcode.
+- **A resolved region with a failed child locality** points to a likely greedy-order error. A bare "ME" can mean Maine or Messina, Italy. A post-walk pass then asks which region candidate with the same name has a locality of this name under it. It re-picks both nodes as a pair and records the swap on the node.
+- **An explicit country token gets the same joint treatment.** For "Vienna, Austria", the resolver re-picks the locality to the place with the same name inside the country that the address gives. The resolved output is the Austrian capital (48.2085, 16.3721) rather than a populous namesake abroad.
+- **A resolved postcode anchors the locality.** Postcodes are unambiguous within a country, and town names are not. If a locality resolves more than 50 km from its sibling postcode, the resolver re-picks the candidate with the same name nearest that postcode. If no candidate is close enough, the coordinate falls back to the postcode's area, and the node is flagged `postcode_city_mismatch`. In that case the input, rather than the map, is likely wrong. This pass was added after a measured failure: "06260 Saint-Pierre", one of several French Saint-Pierres, once resolved 617 km from its own postcode.
 - **When no rung resolved**, a last-resort pass re-reads the raw text against the gazetteer. The model occasionally splits an accented name such as "Grudziądz" into pieces that no lookup can match. The pass inserts the recovered locality and marks it as recovered rather than parsed.
 
 Every pass records its action in node metadata (`admin_coherence_repicked`, `postcode_city_mismatch`, `span_rescore`, …). Each pass runs only on a failure, so a tree that resolved directly passes through byte-identical. The metadata always shows which reading the resolver chose.
@@ -95,7 +95,7 @@ Every pass records its action in node metadata (`admin_coherence_repicked`, `pos
 Admin resolution ends at centroids. "Springfield" resolves to a point near the middle of town, about 3 km from Lincoln's door for our query. The ladder runs after the admin walk. The resolver consults each rung only when the rung above found no candidate:
 
 1. **Rooftop** (`address_point`) is an exact (street, house number) match in an address-point extract, scoped by postcode or locality. Our example resolves here. The matching row copies its provenance (`source: "overture:NAD"`, `release: "2026-05-20.0"`) into the node's metadata, and `uncertainty_m` reports the 1 m floor. A registered address point is never overwritten by an estimate.
-2. **Interpolation** (`interpolated`) applies when there is no exact point but the house number falls within a known range along a street segment (US TIGER data). The estimate carries a calibrated radius: half the segment length times a per-region conformal calibration factor. The factor ranges from 1.44 in dense DC to 3.12 in sprawling Arizona, with 1.95 where unmeasured. It is sized so the stated radius contains the true point about 90% of the time. The uncalibrated radius covered only ~72%.
+2. **Interpolation** (`interpolated`) applies when there is no exact point but the house number falls within a known range along a street segment (US TIGER data). The estimate includes a calibrated radius: half the segment length times a per-region conformal calibration factor. The factor ranges from 1.44 in dense DC to 3.12 in sprawling Arizona, with 1.95 where unmeasured. It is sized so the stated radius contains the true point about 90% of the time. The uncalibrated radius covered only ~72%.
 3. **Street centroid** (`street`) applies to queries without a house number, such as "Place Bellecour, Lyon". It returns the center of the street, with a radius of half the street's extent. The BAN register backs this tier today, so in practice it covers France.
 4. **Admin centroid** (`admin`) is the floor wherever the gazetteer has the place. It returns a locality, postcode, or region centroid, with `uncertainty_m: null` because there is no finer estimate to size.
 
@@ -103,7 +103,7 @@ The tier appears first in the output. `resolution_tier` identifies the rung and 
 
 ## What to trust, and how much
 
-A resolved result includes two kinds of numbers, and they answer different questions. The `conf=` on each span comes from the parser and estimates how likely the text is to be a locality. An [isotonic-calibrated](./confidence-calibration.mdx) version is available, so 0.94 can mean correct about 94% of the time. The resolver does not reduce its result to one score. It reports the tier and radius, plus named flags where evidence conflicted, because its failure modes differ in kind rather than degree:
+A resolved result includes two kinds of numbers, and they answer different questions. The `conf=` on each span comes from the parser and estimates how likely the text is to be a locality. An [isotonic-calibrated](./confidence-calibration.mdx) version is available, so 0.94 can mean correct about 94% of the time. The resolver does not reduce its result to one score. It reports the tier and radius, plus labeled flags where evidence conflicted, because its failure modes differ in kind rather than degree:
 
 - **Coverage gaps.** When a region has no rooftop extract, the ladder stops at the admin rung and reports that tier. The coordinate is still the right town, and the output never presents a centroid as a rooftop.
 - **Namesakes.** The coherence passes resolve most of them. When the gazetteer's hierarchy cannot decide, the runner-up candidates are attached to the node (`alternatives`), so a consumer can re-rank them with context Mailwoman lacks.

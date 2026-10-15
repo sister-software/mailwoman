@@ -44,7 +44,7 @@ Consider `Saint Petersburg, FL`. The tokenizer produces:
 [Saint] [Petersburg] [,] [FL]
 ```
 
-The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence, because it is a common street prefix. "Petersburg" matches the WOF locality gazetteer, where over 30 populated places are named Petersburg. "FL" matches the US state abbreviation list.
+The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence, because it is a common street prefix. "Petersburg" matches the WOF locality gazetteer, where over 30 populated places are called Petersburg. "FL" matches the US state abbreviation list.
 
 Each individual classification is **correct in isolation**. The error is in the combination, because "Saint Petersburg" is one locality rather than a street prefix followed by a city name. The classifier cannot know this because it classifies tokens before grouping them.
 
@@ -147,7 +147,7 @@ The **neural classifier** (Stage 3) then types each proposed span. Because the c
 
 The classifier can disagree with the grouper's boundaries by merging or splitting spans, but it starts from a better prior than independent token-level classification.
 
-The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence, which adds cross-component consistency on top of per-span correctness. This stage solves the `NY-NY Steakhouse` problem. A `region` label on both "NY" tokens produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. A `venue` label for the "NY" tokens produces a joint-consistent parse, so the reconciler picks that interpretation.
+The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence. That choice adds cross-component consistency on top of per-span correctness. This stage solves the `NY-NY Steakhouse` problem. A `region` label on both "NY" tokens produces a joint parse with two regions for different places. The resolver's hierarchy cannot reconcile that parse. A `venue` label for the "NY" tokens produces a joint-consistent parse, so the reconciler picks that interpretation.
 
 ## What this doesn't solve
 

@@ -41,7 +41,8 @@ export type CaseNormalization = "title-case" | "preserve"
 /**
  * How a caller sources an optional stage.
  *
- * - `"auto"` loads the bundled default, usually on the first parse.
+ * - `"auto"` loads the bundled default when it is first needed.
+ *   For a typical caller that is the first parse.
  * - `"none"` disables the stage.
  * - Any other value is the stage itself.
  */
@@ -185,7 +186,7 @@ export interface QueryShapeLite {
 	segments: ReadonlyArray<{ body: string; index: number; span: { start: number; end: number } | null }> | null
 	characterClass: string | null
 	/**
-	 * ISO 15924 scripts ranked by share of script-bearing characters.
+	 * ISO 15924 scripts ranked by share of characters that belong to a script.
 	 */
 	scripts: ReadonlyArray<{ script: string; share: number }> | null
 	/**
@@ -211,7 +212,7 @@ export interface LocaleHint {
 	/**
 	 * ISO 15924 scripts in the input, ranked by character share.
 	 *
-	 * The array is empty when the input has no script-bearing text.
+	 * The array is empty when no character of the input belongs to a script.
 	 * `locale` stays a BCP-47 language tag.
 	 */
 	script: ReadonlyArray<{ script: string; confidence: number }>
@@ -262,7 +263,7 @@ export type QueryKind = z.infer<typeof QueryKindSchema>
  */
 export const QueryIntentCode = {
 	/**
-	 * Resolution found no decisive candidate for a place with a recognized name.
+	 * Resolution found no single candidate that outranks the rest for a place with a recognized name.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**
@@ -530,7 +531,112 @@ export interface FSTMatcherLike {
 		prev: { stateID: number; depth: number },
 		token: string
 	): { stateID: number; accepted: boolean; depth: number } | null
-	accepting(stateID: number): Array<{ wofID: number; placetype: string; referential: number }>
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; referential: number; name?: string }>
+}
+
+/**
+ * One admin ancestor an anchored postcode asserts.
+ */
+export interface AnchorRegionAncestor {
+	/**
+	 * The WOF placetype, such as `"region"`.
+	 */
+	placetype: string
+	wofID: number
+	/**
+	 * The place's name in the gazetteer, which the prior compares with the written surface.
+	 */
+	name: string
+}
+
+/**
+ * The admin ancestry a postcode's anchor asserts, read by the anchor-region prior.
+ */
+export interface AnchorRegionLookupLike {
+	/**
+	 * Returns the ancestors the index asserts for `postcode` in `country`, coarsest first.
+	 *
+	 * The array is empty when no index covers the country or the index holds no unanimous
+	 * answer for the postcode, as for a prefix whose units sit in two regions.
+	 */
+	ancestorsFor(postcode: string, country: string): readonly AnchorRegionAncestor[]
+}
+
+/**
+ * Venue-head lookups for one country.
+ * Each method returns a bias in natural-log units or `null`.
+ */
+export interface VenueHeadLexiconLike {
+	/**
+	 * The bias of `word` as the first word of a venue name.
+	 */
+	first(word: string): number | null
+	/**
+	 * The bias of `word` as the last word of a venue name.
+	 */
+	last(word: string): number | null
+	/**
+	 * The bias of the longest suffix of `word`, shorter than `word`, that marks a venue name.
+	 */
+	suffix(word: string): number | null
+}
+
+/**
+ * Overrides for the venue-head prior.
+ */
+export interface VenueHeadPriorOpts {
+	/**
+	 * Multiplier on the lexicon's bias.
+	 *
+	 * The prior's own default applies when this is absent.
+	 */
+	biasScale?: number
+	/**
+	 * Maximum bias, in logits, on any one cell.
+	 *
+	 * The table's biases are log rate ratios and seldom exceed 6.
+	 * The cap bounds a scaled bias.
+	 *
+	 * @defaultValue `6`
+	 */
+	maxBias?: number
+	/**
+	 * The most words the venue span extends from its head.
+	 *
+	 * @defaultValue `3`
+	 */
+	extensionWords?: number
+	/**
+	 * Factor applied to the bias once for each word between a word and its head.
+	 *
+	 * The shipped model's venue logits trail the winning label by a near-constant margin
+	 * across a landmark name's pieces, so the default extends the head's bias undiminished.
+	 *
+	 * @defaultValue `1`
+	 */
+	extensionDecay?: number
+	/**
+	 * Whether a word is a street-type affix, in `normalizeFSTToken` form.
+	 *
+	 * A head followed by one is a street name (`Museum Street`) and gets no bias,
+	 * and an extension stops at one.
+	 */
+	isStreetAffix?: (word: string) => boolean
+	/**
+	 * Whether a segment's words, joined by single spaces in `normalizeFSTToken` form,
+	 * are a country name, as `united states of america` is.
+	 *
+	 * No word of such a segment heads a venue, so `of America` keeps its country reading.
+	 */
+	isCountryName?: (segment: string) => boolean
+}
+
+/**
+ * The venue-head lexicon a pipeline stage selects for one parse, with the prior's overrides.
+ */
+export interface VenueHeadStage {
+	venueHead: VenueHeadLexiconLike
+	venueHeadOpts?: VenueHeadPriorOpts
 }
 
 /**
@@ -553,7 +659,30 @@ export interface ClassifierOpts {
 	/**
 	 * Emission-prior weights for the street-morphology matcher.
 	 */
-	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number }
+	fstStreetMorphologyOpts?: { biasScale?: number; dependentLocalityPenalty?: number; numberedSegmentOnly?: boolean }
+	/**
+	 * The scale for positive street-context emissions.
+	 */
+	fstStreetContextPositiveScale?: number
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 *
+	 * The prior raises an FST region match to the full bias when the postcode the anchor
+	 * channel fired on asserts that region and the written name is the region's own name.
+	 * It runs only with `fst` and the classifier's postcode anchor lookup.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
+	/**
+	 * Venue-head lookups for the input's country.
+	 *
+	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
+	 * Absent, the prior does not run.
+	 */
+	venueHead?: VenueHeadLexiconLike
+	/**
+	 * Overrides for the venue-head prior's bias magnitudes and extension.
+	 */
+	venueHeadOpts?: VenueHeadPriorOpts
 	/**
 	 * Applies deterministic postcode repair after decoding.
 	 */
@@ -645,6 +774,24 @@ export interface RuntimePipelineStages {
 	 * The street-context check runs only when `fst` is also set.
 	 */
 	streetMorphology?: FSTMatcherLike
+	/**
+	 * Whether the street-morphology matcher also biases a street affix on a segment that
+	 * opens with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
+	 *
+	 * Absent, the matcher serves the street-context check at zero emission weight.
+	 */
+	streetMorphologyPrior?: boolean
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 * The prior runs only when `fst` is also set.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
+	/**
+	 * The venue-head lexicon for the detected locale with the prior's overrides, or `null` for none.
+	 *
+	 * The pipeline calls it once per parse with the locale hint and passes both to the classifier.
+	 */
+	venueHead?: (locale: LocaleHint) => VenueHeadStage | null
 	resolver?: Resolver
 	/**
 	 * The backend for resolver candidate and parent-chain lookups during reconciliation.

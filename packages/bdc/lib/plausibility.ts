@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Collects BDC filings and nearby infrastructure as evidence for one broadband claim.
+ *   Collects BDC filings and infrastructure within the search radius as evidence for one broadband claim.
  *   The evidence can support a claim. An absent coverage region produces an abstention or lower confidence.
  *
  *   The filing channel uses `geoid` when present and otherwise approximates the block with the point's
@@ -56,7 +56,7 @@ export interface PlausibilityClaim {
 export type PlausibilityAbstainReason = "requires_build_local_layer" | "requires_bdc_layer" | "insufficient_survey_data"
 
 /**
- * One evidence item: a filing, a nearby physical-plant hit or an abstention.
+ * One evidence item: a filing, a physical-plant hit within the search radius or an abstention.
  *
  * A filing that does not match the claimed technology or speed still counts as
  * evidence, with `corroborates: false`.

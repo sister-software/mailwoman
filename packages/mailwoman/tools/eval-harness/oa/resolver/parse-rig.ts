@@ -13,6 +13,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { buildLocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { LookupCensus } from "#tools/eval-harness/oa/resolver/profile"
+import { productionPriorOptions } from "#tools/eval-harness/production-priors"
 import { switchPinEntry } from "#tools/eval-harness/switch-pin"
 
 /**
@@ -40,8 +41,8 @@ export async function buildParseRig(
 	// the model-card's `requires` block and feeds every declared channel
 	// (anchor, gazetteer, conventions=auto, suppress-gaz-near-postcode), and fails
 	// closed (strict) if a declared channel cannot be fed.
-	// This grades the parse the library and server actually ship rather than the
-	// hand-built anchor-only classifier this eval used before.
+	// This grades the parse the library and server ship rather than the hand-built
+	// anchor-only classifier this eval used before.
 	// `--model-anchor-lookup` still pins the anchor source
 	// (else createScorer's default /mnt pilot and the repo gazetteer lexicon).
 	// `--ablate-to-anchor` drops back to anchor-only (gazetteer and conventions off)
@@ -174,17 +175,22 @@ export async function buildParseRig(
 	// `--case-normalization` pins case handling.
 	// Without it, the library default applies.
 	// Pin explicitly in pre-registered legs.
-	const parseOpts = {
-		postcodeRepair: true,
-		...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
-	} as Parameters<typeof neural.parse>[1]
-
 	// `defaultCountry` is the hard country filter applied to admin lookups
 	// when the parse has no resolved country node.
 	// It must match the dataset's locale, since hardcoding "US" silently filters a non-US
 	// eval to US places (a German "Berlin" then loses to a tiny US Berlin).
 	// Settable via `--default-country <ISO|none>`, and `none` disables the filter so ranking decides.
 	const dc = options.defaultCountry || "US"
+
+	// The production priors, with the venue-head lexicon of the dataset's country.
+	const priorOptions = (await productionPriorOptions(neural, reportError))(dc.toLowerCase() === "none" ? null : dc)
+
+	const parseOpts = {
+		postcodeRepair: true,
+		...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
+		...priorOptions,
+	} as Parameters<typeof neural.parse>[1]
+
 	const resolveOpts = resolveOptsFrom(options, dc)
 
 	return { neural, resolver, localityMatches, parseOpts, defaultCountry: dc, resolveOpts, lookupCensus }

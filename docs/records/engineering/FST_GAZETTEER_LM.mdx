@@ -53,7 +53,7 @@ PlaceEntry {
 }
 ```
 
-Tokenization splits on whitespace and strips punctuation. The FST edge label is the normalized token. Each accepting state carries every valid interpretation — "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks; the neural model + reconciler do.
+Tokenization splits on whitespace and strips punctuation. The FST edge label is the normalized token. Each accepting state stores every valid interpretation. "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks. The neural model + reconciler do.
 
 ### Build pipeline
 
@@ -206,11 +206,11 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 1. **FST is an emission PRIOR rather than a replacement.** The neural model remains the authority for non-gazetteer components. The FST handles what the model can't: knowing which place names exist and their hierarchies.
 
-2. **Wikipedia importance-weighted bias when ambiguous.** Each place carries a [0,1] importance score derived from Wikipedia link count ([Nominatim methodology](https://nominatim.org/release-docs/latest/customize/Importance/)). "New York" biases both locality (0.95) and region (0.85) proportionally. Washington DC locality (0.815) correctly outranks Washington state (0.764) despite lower population. Formula: `importance × biasScale × maxBias` (linear, capped at 3.0 logits).
+2. **Wikipedia importance-weighted bias when ambiguous.** Each place has a [0,1] importance score derived from Wikipedia link count ([Nominatim methodology](https://nominatim.org/release-docs/latest/customize/Importance/)). "New York" biases both locality (0.95) and region (0.85) proportionally. Washington DC locality (0.815) correctly outranks Washington state (0.764) despite lower population. Formula: `importance × biasScale × maxBias` (linear, capped at 3.0 logits).
 
 3. **Negative suppression on non-place labels.** When the FST matches a place name, B-street, I-street, B-house_number, I-house_number, and B-venue receive -1.5 logit suppression. This narrows the gap between place-tag and non-place-tag logits without overriding the model.
 
-4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's not an admin component — the neural model handles it alone. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
+4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's not an admin component — the neural model handles it without a bias. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
 
 5. **The FST eliminates reconciler beam search for admin components.** Only concordant paths exist in the FST. Invalid admin combinations were pruned at build time.
 
@@ -222,7 +222,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 The FST is the "pay-it-forward" implementation of the mail-carrier philosophy: each carrier's knowledge is pre-compiled into a structure that narrows the search space with each token consumed. The deliberative assembly (phrase grouper + neural model + reconciler) still adjudicates — the FST gives them much better priors to work with.
 
-Where the QueryShape soft prior says "this 5-digit token is probably a postcode" (structural pattern), the FST prior says "this token sequence matches 'New York' which is either locality WOF:85977539 or region WOF:85688543" (factual knowledge from the gazetteer). Both are additive biases; neither overrides the neural model.
+The QueryShape soft prior encodes "this 5-digit token is probably a postcode" (structural pattern). The FST prior encodes "this token sequence matches 'New York' which is either locality WOF:85977539 or region WOF:85688543" (factual knowledge from the gazetteer). Both are additive biases. Neither overrides the neural model.
 
 ## See also
 

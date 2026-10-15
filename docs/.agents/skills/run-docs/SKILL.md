@@ -5,7 +5,7 @@ description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaur
 
 Paths below are relative to `docs/` (the workspace root). The skill directory is `docs/.claude/skills/run-docs/`.
 
-The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `docs/.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only; the driver is what you use to inspect pages, surface console errors, and take screenshots.
+The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `docs/.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only. The driver is what you use to inspect pages, surface console errors, and take screenshots.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ npx playwright install chromium
 You don't need to build for dev. Two optional pre-steps:
 
 - **Explainer runtime assets.** The explainers that resolve (`PipelineExplorer`, `GuidedTour`, `POIExplorer`)
-  read the model and the gazetteer from the public bucket at run time; the runtime-assets Docusaurus plugin stages
+  read the model and the gazetteer from the public bucket at run time. The runtime-assets Docusaurus plugin stages
   the sql.js worker and the MapLibre worker automatically in `loadContent()` for both `yarn start` and
   `yarn build`. The geocoder itself is the Earth app (`packages/earth`) rather than a docs page: `/demo`, `/debug` and
   `/trace` are redirect pages to https://earth.mailwoman.ai.
@@ -94,12 +94,12 @@ driver above is the right tool.
 ## Gotchas
 
 - **Docusaurus serves its 404 page with HTTP 200.** A `curl -o /dev/null -w '%{http_code}' http://localhost:7770/some/typo` returns `200` even though the page renders "Page Not Found." The driver's `check`/`smoke` commands sniff the rendered `<h1>` and flag this as `SOFT-404` — trust that rather than the status code. If you're writing your own check, do the same.
-- **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labeled "Docs" points there. The smoke list reflects this; don't add `/docs/` thinking it'll be a sanity check.
+- **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labeled "Docs" points there. The smoke list reflects this. Don't add `/docs/` thinking it'll be a sanity check.
 - **`/research/` has a known React console error.** A research blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug rather than driver flakiness — if you're not the one fixing it, ignore the `/research/` failure and check the other three routes individually.
-- **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
+- **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile lists it. Whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770 rather than the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
 - **`networkidle` is required rather than `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
-- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behavior is tested in `packages/earth` rather than here.
+- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact. The geocoder's behavior is tested in `packages/earth` rather than here.
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
 ## Diagnose common failures
@@ -107,7 +107,7 @@ driver above is the right tool.
 | Symptom                                                                                 | Fix                                                                                                                                                                      |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `browserType.launch: Executable doesn't exist at .../chrome-headless-shell`             | `npx playwright install chromium`                                                                                                                                        |
-| `[ERROR] Error: Docusaurus was unable to resolve the "@docusaurus/theme-mermaid" theme` | `yarn install` (lockfile has it; node_modules is out of date)                                                                                                            |
-| Driver screenshot shows a blank/loading page                                            | The page errored after hydration. Use `driver.mts --check <path>` to see console errors; or `eval <path> "return document.body.innerText.slice(0,200)"` to inspect text. |
-| `yarn start` hangs at "Starting the development server..." for >2 min                   | First-time builds with a cold `.docusaurus` cache can take that long; subsequent starts are seconds. If it sits beyond 3 min, kill it, `rm -rf .docusaurus`, retry.      |
+| `[ERROR] Error: Docusaurus was unable to resolve the "@docusaurus/theme-mermaid" theme` | `yarn install` (lockfile has it. node_modules is stale.)                                                                                                                 |
+| Driver screenshot shows a blank/loading page                                            | The page errored after hydration. Use `driver.mts --check <path>` to see console errors, or `eval <path> "return document.body.innerText.slice(0,200)"` to inspect text. |
+| `yarn start` hangs at "Starting the development server..." for >2 min                   | First-time builds with a cold `.docusaurus` cache can take that long. Subsequent starts are seconds. If it sits beyond 3 min, kill it, `rm -rf .docusaurus`, retry.      |
 | `EADDRINUSE :7770`                                                                      | A previous `yarn start` is still alive. `pkill -f 'docusaurus start'`.                                                                                                   |

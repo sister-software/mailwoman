@@ -8,13 +8,13 @@ prerequisites: "@mailwoman/spatial"
 verified-with: mailwoman v6.1.0
 ---
 
-You geocoded a customer's address and got a rooftop coordinate back — accurate to a few meters. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house; you typically want the neighborhood.
+You geocoded a customer's address and got a rooftop coordinate back — accurate to a few meters. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house, and you typically want the neighborhood.
 
 So coarsen it on purpose. You have two ways to do it, and the only real decision is how much accuracy you're willing to give up.
 
 ## Round the decimal degrees
 
-The cheapest coarsening is to drop decimal places. Each one you keep is worth roughly 10× the precision:
+The cheapest coarsening is to drop decimal places. Each one you keep adds roughly 10× the precision:
 
 | Decimals | Cell size | What it pins     |
 | -------- | --------- | ---------------- |

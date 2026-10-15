@@ -31,7 +31,7 @@ WOF provides something no other open dataset does: **a consistent hierarchy with
 
 WOF's canonical storage is one `.geojson` file per place, organized in a directory tree. A US admin subset has roughly 120,000 individual files, and the French equivalent has about 80,000. A build that opens, parses, and indexes 200,000 JSON files must complete substantial engineering work before it can run a single query.
 
-This layout suited WOF's original use case, which was tracking changes to individual places in git. A geocoder that needs to find all localities named Houston across 120K files needs a different access pattern. The SQLite distributions from Geocode Earth exist to provide it.
+This layout suited WOF's original use case: tracking changes to individual places in git. A geocoder that needs to find all localities called Houston across 120K files needs a different access pattern. The SQLite distributions from Geocode Earth exist to provide it.
 
 ### The property namespace explosion
 
@@ -68,14 +68,14 @@ A WOF GeoJSON feature's `properties` object uses namespaced keys:
 
 Key observations:
 
-- **Every key is namespaced.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema is a single flat object without nesting, and the key name carries the meaning.
+- **Every key is namespaced.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema is a single flat object without nesting, and the key name encodes the meaning.
 - **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name, `name:fra_x_preferred` is French, and `name:zho_x_preferred` is Chinese. The `_x_` separator divides the language code from the name kind.
 - **Name kinds vary.** The kinds are `preferred`, `variant`, `colloquial`, `abbr`, and `short`, and a place can have entries for several of them per language. A major city like Paris has `name:` entries in 50+ languages, while a rural US neighborhood might have only one.
 - **The hierarchy is precomputed.** WOF stores the full ancestry chain in each record, so a query does not need to walk `parent_id` up the tree. This is convenient for display, redundant for storage, and occasionally stale when a parent is reclassified.
 
 ### Brooklyn Integers
 
-WOF IDs come from [Brooklyn Integers](https://brooklynintegers.com/), a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. Their order carries no sequence, geography, or sort meaning. ID proximity therefore cannot identify geographically close places or reveal anything about their numeric values.
+WOF IDs come from [Brooklyn Integers](https://brooklynintegers.com/), a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. Their order encodes no sequence, geography, or sort meaning. ID proximity therefore cannot identify geographically close places or reveal anything about their numeric values.
 
 ### Supersession chains
 
@@ -105,7 +105,7 @@ The `whos_on_first` rule classifier checks whether a string is a locality, regio
 
 ### 2. Reconcile concordance — "do these components form a valid parent chain?"
 
-Stage 5 joint decoding scores parse candidates against the gazetteer's hierarchy. The reconciler needs richer queries, such as "give me all localities named Houston with their parent_id chains" and "walk this locality's parent_id up to region — does it reach Texas?"
+Stage 5 joint decoding scores parse candidates against the gazetteer's hierarchy. The reconciler needs richer queries, such as "give me all localities called Houston with their parent_id chains" and "walk this locality's parent_id up to region — does it reach Texas?"
 
 **`PlacetypeDataSource`** is a SQLite database per (placetype, language) pair:
 

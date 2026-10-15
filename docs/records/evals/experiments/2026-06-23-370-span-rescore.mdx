@@ -9,9 +9,9 @@ tags:
 
 # #370 — recovering the EU no-result tail with a span-rescore
 
-The competitive benchmark (the vs-Nominatim/Pelias scorecard, PR #775) put a number on where we lose to Nominatim and Pelias in Europe, and it wasn't precision. When mailwoman resolves an EU address its centroid is tight (p50 1–3 km). The gap is **no-result** — on the messy multi-order EU panel, mailwoman returns nothing for ~45% of addresses where the competitors return something. So the question for closing the gap isn't "place it more accurately." It's "place it at all."
+The competitive benchmark (the vs-Nominatim/Pelias scorecard, PR #775) put a number on where we lose to Nominatim and Pelias in Europe, and it wasn't precision. When mailwoman resolves an EU address its centroid is tight (p50 1–3 km). The gap is **no-result** — on the messy multi-order EU panel, mailwoman returns no result for ~45% of addresses where the competitors return a result. So the question for closing the gap isn't "place it more accurately." It's "place it at all."
 
-This is the story of one change against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate rather than the label, decide.
+This record covers one change against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate rather than the label, decide.
 
 ## Where the tail comes from
 
@@ -21,10 +21,10 @@ Run the shipped v4.13.0 model over a 7-locale coordinate-golden panel (IT/PT/PL/
 | ---------------------- | ------------------------------------------------------------------------------------- | ----: |
 | **swap**               | gold locality is in the gazetteer, but the model emitted a different/fragmented token |   116 |
 | **needsK**             | gold in gazetteer, model emitted no locality at all                                   |    34 |
-| **coverage-gap**       | gold not in the gazetteer — nothing to recover                                        |   104 |
+| **coverage-gap**       | gold not in the gazetteer — no place to recover                                       |   104 |
 | emitted-but-unresolved | model emitted the gold locality, resolver still missed                                |     5 |
 
-The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, which is in the gazetteer — but the model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation). Therefore, neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it; a whitespace tokenizer wouldn't.
+The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, and the gazetteer holds it. The model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation). Therefore, neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it. A whitespace tokenizer wouldn't.
 
 ## Falsify before building
 
@@ -37,7 +37,7 @@ top-1 (resolver-ranked, postcode-disambiguated): p50 1.8 km · p90 12 km
 best-of-5 (ceiling if disambiguation is perfect):  p50 1.4 km · p90  5 km
 ```
 
-p50 1.8 km. The swap is real coordinate-recall rather than a same-name mirage. Build it. (And note the division of labor the buckets already imply: PL/CZ/AT own the swap tail; IT and FR have **zero** swaps, so their unresolved rows are pure coverage gap, a job for more gazetteer rather than a rescore.)
+p50 1.8 km. The swap is real coordinate-recall rather than a same-name mirage. Build it. (And note the division of labor the buckets already imply: PL/CZ/AT own the swap tail. IT and FR have **zero** swaps, so their unresolved rows are pure coverage gap, a job for more gazetteer rather than a rescore.)
 
 ## The build, and the knob that was backwards
 
@@ -77,9 +77,9 @@ coordinate quality of the 175 recoveries:
 
 ## The consistency check
 
-The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator carries a postcode-region check — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns nothing for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The check is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
+The mis-fires share a cause: no stage checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator adds a postcode-region check — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns no point for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The check is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
 
-With the check on, the IT story flips directly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
+With the check on, the IT result flips: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km. The >100 km mis-fires fall 33 → 29. The right-place count holds (136 → 137).
 
 | metric (175→172 recovered) | check off | check on (50 km) |
 | -------------------------- | --------: | ---------------: |
@@ -88,7 +88,7 @@ With the check on, the IT story flips directly: from 4 recoveries all wrong (p50
 | coord p90                  |    206 km |       **145 km** |
 | >100 km mis-fires          |        33 |           **29** |
 
-The check's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country check can't supply). That's a coverage limit rather than a design flaw: the check's reach grows automatically as the postcode gazetteer fills in, with no code change.
+The check's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught. CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country check can't supply). That's a coverage limit rather than a design flaw: the check's reach grows automatically as the postcode gazetteer fills in, with no code change.
 
 ## Production wiring + the end-to-end result (#780)
 

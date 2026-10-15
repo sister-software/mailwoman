@@ -36,19 +36,19 @@ and today no layer can report what it holds.**
 
 The layer interface (`docs/engineering/reference/layer-interface.mdx`) already requires a
 `layer_coverage` table in every layer database, and the meaning-of-zero rule already states that a
-magnitude never carries its own absence. The interface is correct, but the values stored in it are wrong or
+magnitude never encodes its own absence. The interface is correct, but the values stored in it are wrong or
 missing:
 
 - poi.db ships `completeness = 1.0` for every cell (board #26). The value was a default and was never
   measured.
-- The address-point DBs (US per-state, 124.9M points) carry no per-locality completeness at all.
+- The address-point DBs (US per-state, 124.9M points) store no per-locality completeness at all.
   That is why falsifier 1 had to improvise its "held street set" from row counts.
 - The candidate gazetteer cannot record that a country's locality tier is unsurveyed. The NZ
   gap looks the same as a fully covered country without a matching name.
 
 ## The register's interface (proposed)
 
-Phase 1 carries two kinds of coverage, because the resolver asks two questions with
+Phase 1 stores two kinds of coverage, because the resolver asks two questions with
 different keys (operator correction, 2026-08-11 handoff §4):
 
 - **Spatial coverage** answers "how complete is this layer here?" It needs a geometry, so it applies
@@ -88,11 +88,11 @@ and the same basis / vintage / source-release fields as cell coverage:
 A resolver reads the scope row before it has a coordinate. `(candidate, NZ, locality)` →
 `surveyed_partial` means the region and locality tiers exist but the suburb tier does not. That answer differs
 from `(candidate, US, locality)` → `surveyed_partial` with a miss, and both differ from a
-namespace nobody ever extracted. The #1585 fuzzy-scope mechanism (shipped 2026-08-11) carries out the
-abstention. Scope coverage will let it abstain with a named reason, where today it abstains only
+namespace that no build ever extracted. The #1585 fuzzy-scope mechanism (shipped 2026-08-11) performs the
+abstention. Scope coverage will let it abstain with a stated reason, where today it abstains only
 because no candidates exist.
 
-Three rules from the OSM-ingest section of the design record carry over, now generalized:
+Three rules from the OSM-ingest section of the design record apply here, now generalized:
 
 1. **`surveyed_complete` requires evidence and is never a default.** A basis states how the claim is known (an
    authority's own completeness statement, a reconciliation against a second source above a
@@ -110,16 +110,16 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 
 1. **Runtime abstention** (the interface half of #1585). Consider a locale-hinted query whose scoped fuzzy probe
    targets a namespace whose `layer_scope_coverage` row is not `surveyed_complete`. That query abstains at that
-   tier with a named reason instead of falling through to world-fuzzy. It reads the scope row rather than a cell,
-   because the query has no coordinate to key a cell with. This change alone turns the NZ failure from a
+   tier with a stated reason instead of falling through to world-fuzzy. It reads the scope row rather than a cell,
+   because the query has no coordinate to key a cell with. This change, with no other change, turns the NZ failure from a
    silently wrong answer into an explicitly empty one before any new data ships. (The abstention mechanism shipped as the
-   #1585 fuzzy-tier country restriction. Today it abstains because candidates are absent and gives no named
+   #1585 fuzzy-tier country restriction. Today it abstains because candidates are absent and gives no stated
    reason.)
 2. **The NZ locality extract lands with measured coverage**: ~7.6k rows, from LINZ for the permissive tier, while the OSM copy
    stays build-local under the ODbL policy. `surveyed_complete` is asserted from the
-   authority's own coverage statement, which makes this the first layer whose register is accurate from its first build.
+   authority's own coverage statement. This extract is therefore the first layer whose register is accurate from its first build.
 3. **Falsifier 1 can be re-run as a real test**: negative evidence is scoped to
-   `surveyed_complete` locality cells, and the count of candidate sets that shrink usefully becomes the
+   `surveyed_complete` locality cells, and the count of candidate sets that shrink without losing the correct answer becomes the
    register's own acceptance metric.
 4. **Falsifier 3 becomes gradable**: fit the CPT prior only in `surveyed_complete` POI cells, so that the
    residual measures the theory rather than the coverage. The poi.db register rebuild (board #26)
@@ -157,7 +157,7 @@ before the full register is built. Receipts are in `scratchpad/falsifiers/f4-sco
 5. Reconcile sampled `surveyed_complete` claims against a second source. The disagreement rate measures
    the claim's calibration, and the schema must support the reconciliation query.
 
-Three more carry over from the night design:
+Three more come from the night design:
 
 6. Does a poi.db register with measured coverage change falsifier 3's grade? Re-fit on `surveyed_complete` cells
    only. If MARE stays ≥ 60%, the CPT prior fails on theory rather than coverage, and that result is useful either way.

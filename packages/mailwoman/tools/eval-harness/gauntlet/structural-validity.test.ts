@@ -36,7 +36,14 @@ const NEW_YORK_AS_REGION =
 const AUCKLAND_POSTCODE_AS_HOUSE_NUMBER =
 	"`Auckland 1010`: the postcode `1010` reads as a house number, which has no street anchor."
 
+const ROCKEFELLER_PLAZA_AS_VENUE =
+	"`Rockefeller Plaza` reads as a venue from the classifier alone, so the house number has no street anchor. The geocode path reads it as a street through the street-morphology prior on a trailing affix, which this sweep does not wire; the #2562 board rows pass there."
+
 const KNOWN_INVALID: Record<string, string> = {
+	"us-venue-as-street-1-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-10-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-30-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
+	"us-venue-as-street-45-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
 	"us-f3-brooklyn-new-york": NEW_YORK_AS_REGION,
 	"us-f3-brooklyn-new-york-lower": NEW_YORK_AS_REGION,
 	"us-f7-hell-s-kitchen-new-york": NEW_YORK_AS_REGION,

@@ -4,7 +4,7 @@
 
 **Goal:** A new workspace, `@mailwoman/dossier`, that checks supplied property records for dangling references, duplicates and malformed dates and projects the admitted ones into a reviewable building dossier, proven by executable fixtures for the eight synthetic scenarios in the inventory and rendered as a report an operator can read.
 
-**Architecture:** Pure TypeScript with no database and no network. Entities (parcel, building, entrance, unit) carry namespaced external identifiers; aliases and containment links carry their evidence; every claim names its subject, axis, value, `EpistemicStatus`, source record and three time concepts; counts stay interpretable by stage, scope and date; commercial events stay distinct; a dossier is built for an explicit `asOf` date and returns conclusions beside the unresolved questions and the one record that would resolve each. The report renderer turns a dossier into Markdown.
+**Architecture:** Pure TypeScript with no database and no network. Entities (parcel, building, entrance, unit) hold namespaced external identifiers. Aliases and containment links cite their evidence. Every claim names its subject, axis, value, `EpistemicStatus`, source record and three time concepts. Counts stay interpretable by stage, scope and date. Commercial events stay distinct. A dossier is built for an explicit `asOf` date and returns conclusions beside the unresolved questions and the one record that would resolve each. The report renderer turns a dossier into Markdown.
 
 **Tech Stack:** TypeScript on Node 24 with type stripping, `@mailwoman/evidence` (`EpistemicStatus`, `CoverageBasis`, `supportsExclusion`, `Observation`, `Relation`), `@mailwoman/record` (`PostalAddress`, `AddressGeocode`), Vitest (root fast sweep).
 
@@ -13,21 +13,21 @@
 ## Global Constraints
 
 - Read `AGENTS.md` at the repository root and `packages/release-kit/AGENTS.md` ("A new workspace joins SEVEN registers") before the first edit.
-- The package is `packages/dossier`, npm name `@mailwoman/dossier`, published (`publishConfig.access: public`), version `10.1.0` to match the sibling packages. It depends on `@mailwoman/evidence` and `@mailwoman/record` with `workspace:*`. Until the operator runs the `bless-package` first publish, the workspace is held in `SANCTIONED_RELEASE_ABSENCES` with the reason stated verbatim in Task 1; it joins `.release-it.json` only after the bless.
+- The package is `packages/dossier`, npm name `@mailwoman/dossier`, published (`publishConfig.access: public`), version `10.1.0` to match the sibling packages. It depends on `@mailwoman/evidence` and `@mailwoman/record` with `workspace:*`. Until the operator runs the `bless-package` first publish, the workspace is held in `SANCTIONED_RELEASE_ABSENCES` with the reason stated verbatim in Task 1. It joins `.release-it.json` only after the bless.
 - Every `packages/*` workspace keeps its library under `lib/`, exports `.`, `./package.json` and `./*`, and the `imports` map mirrors `#*`. A directory module is a sibling file `<dir>.ts`; the one index file is `lib/index.ts`.
 - Relative imports include `.ts`. Use `import type` for types. A constant object plus a derived union replaces `enum`. Constructor parameter properties and runtime namespaces are both excluded.
 - A declaration has one home: import `EpistemicStatus`, `CoverageBasis`, `supportsExclusion`, `Observation`, `Relation` from `@mailwoman/evidence` and `PostalAddress`, `AddressGeocode` from `@mailwoman/record`. Re-export none of them.
 - The library imports no Node builtin: every module under `lib/` must run in a browser, because #2289 renders the dossier in a map application.
 - Status values on a claim are `designated`, `observed`, `derived` or `inferred` from `EpistemicStatus`; an unresolved question is a separate type and never a claim value. An inferred claim and an observed claim are distinct union members and cannot be assigned to one another.
 - Three time fields on a source record: `observedAt` (when the source observed the fact), `availableAt` (when the record became available), `retrievedAt` (when the application retrieved it); each optional and ISO 8601 (`YYYY-MM-DD` or full timestamp). A claim's applicability interval is `validFrom` / `validTo` on the claim. An `asOf` dossier admits a record only when `availableAt` is known and not after `asOf`; a record with unknown `availableAt` is listed as undated and excluded from conclusions.
-- A unit total is computed only when every contributing count shares the stage, the date and a declared disjoint membership; otherwise the total is `unresolved` and lists the conflicting counts. An unresolved total is never `0` and never a sum.
+- A unit total is computed only when every contributing count shares the stage, the date and a declared disjoint membership. Otherwise the total is `unresolved` and lists the conflicting counts. An unresolved total is never `0` and never a sum.
 - Six commercial event kinds: `inquiry`, `commitment`, `order`, `active_subscription`, `landlord_permission`, `accepted_build`. A permission's scope is exactly the entity list on the event.
 - Provider availability is a dated relation; `availabilityAt` answers `available`, `withdrawn` or `unknown` for one date and never implies uptake.
 - A layer reading classifies as `unknown` when the layer has no survey for the extent, `surveyed_empty` when the layer's `basis` passes `supportsExclusion` and the survey returned zero records, `source_present_empty` when the basis is `source_present` and zero records (which supports no exclusion), and `conflicting` when a positive observation disagrees.
-- A reader that cannot produce part of a requested result throws or returns the unresolved value with its reason; it never returns zero, an empty collection or `unchanged` in place of a missing input.
-- Comments state the rule or invariant in plain register; JSDoc starts with a complete sentence.
-- Shell commands may not write files inside the repository; use the Write and Edit tools. Stage by path; never `git add -A`; `git add` new files before `yarn lint`.
-- Root `yarn test` collects `packages/dossier/lib/**/*.test.ts` by default; `yarn vitest run packages/dossier` runs the package alone.
+- A reader that cannot produce part of a requested result throws or returns the unresolved value with its reason. It never returns zero, an empty collection or `unchanged` in place of a missing input.
+- Comments state the rule or invariant in plain register. JSDoc starts with a complete sentence.
+- Shell commands may not write files inside the repository. Use the Write and Edit tools. Stage by path and never run `git add -A`. Run `git add` on new files before `yarn lint`.
+- Root `yarn test` collects `packages/dossier/lib/**/*.test.ts` by default; `yarn vitest run packages/dossier` runs only this package.
 
 ## Review Focus
 
@@ -35,7 +35,7 @@
 2. Two aliases that each link to a different candidate building with the same alias text: the identity section lists both candidates as unresolved rather than picking one. Test in Task 2.
 3. A unit count whose `membership` key equals another's but whose stage differs (planned 24 vs completed 20): the two never sum and both display. Test in Task 3.
 4. An `active_subscription` event with no `date`: validation reports it and the dossier excludes it from any count of active subscriptions. Test in Task 4.
-5. A layer reading with `basis: "source_present"` and zero records: classified as `source_present_empty`, which the report words as "the source looked and found no record; absence is unknown", never as absence. Test in Task 5.
+5. A layer reading with `basis: "source_present"` and zero records: classified as `source_present_empty`. The report words it as "the source looked and found no record. Absence is unknown", never as absence. Test in Task 5.
 
 ---
 
@@ -128,7 +128,7 @@ Each scenario in the spec is one `describe` block in the test beside the module 
 
 `packages/dossier/tsconfig.json` is `packages/evidence/tsconfig.json` with `"references": [{ "path": "../evidence" }, { "path": "../record" }]`. `packages/dossier/tsconfig.test.json` is `packages/evidence/tsconfig.test.json` unchanged.
 
-`packages/dossier/README.md`: three paragraphs. What a dossier is (the spec's definition). What the package does and does not do (validates and projects supplied records; acquires no source, computes no cost). Where the scenarios live (`lib/*.test.ts`, fixtures in `test/fixtures/example-house.ts`).
+`packages/dossier/README.md`: three paragraphs. What a dossier is (the spec's definition). What the package does and does not do (validates and projects supplied records, acquires no source, computes no cost). Where the scenarios live (`lib/*.test.ts`, fixtures in `test/fixtures/example-house.ts`).
 
 - [ ] **Step 2: Register the workspace**
 
@@ -141,7 +141,7 @@ Root `tsconfig.json`: add `{ "path": "./packages/dossier" }` after the `./packag
 		"published package awaiting the bless-package first publish of its npm name; move it to .release-it.json once blessed",
 ```
 
-`packages/release-kit/lib/release/smoke/clean-install.ts`: add `"@mailwoman/dossier": "packages/dossier",` beside the `@mailwoman/evidence` entry at line 19, and read the file's header to confirm the pack set admits a workspace that is held out of the release list; if it refuses one, leave the entry out and say so in the report.
+`packages/release-kit/lib/release/smoke/clean-install.ts`: add `"@mailwoman/dossier": "packages/dossier",` beside the `@mailwoman/evidence` entry at line 19, and read the file's header to confirm the pack set admits a workspace that is held out of the release list. If it refuses one, leave the entry out and say so in the report.
 
 `docs/engineering/reference/workspaces.mdx`: one row after `packages/evidence/`:
 
@@ -255,7 +255,7 @@ describe("appliesAt", () => {
 - [ ] **Step 4: Run the tests and confirm they fail**
 
 Run: `yarn vitest run packages/dossier`
-Expected: FAIL. `#identifiers` and `#time` cannot be resolved.
+Expected: fail. `#identifiers` and `#time` cannot be resolved.
 
 - [ ] **Step 5: Implement `identifiers.ts` and `time.ts`**
 
@@ -376,12 +376,12 @@ export function appliesAt(interval: ClaimInterval, date: ISODate): boolean | "un
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS, 13 tests.
+Expected: pass, 13 tests.
 
 - [ ] **Step 7: Lint, compile and commit**
 
 Run: `git add packages/dossier tsconfig.json packages/release-kit docs/engineering/reference/workspaces.mdx AGENTS.md yarn.lock && yarn tsc -b packages/dossier && yarn lint`
-Expected: zero errors; the `workspace-exports`, `workspace-files` and `nested-index` checks report the new workspace as conforming.
+Expected: zero errors, and the `workspace-exports`, `workspace-files` and `nested-index` checks report the new workspace as conforming.
 
 ```bash
 git commit -m "Add the dossier workspace with entity identifiers and the three time concepts" -- packages/dossier tsconfig.json packages/release-kit docs/engineering/reference/workspaces.mdx AGENTS.md yarn.lock
@@ -584,7 +584,7 @@ describe("indexes", () => {
 - [ ] **Step 3: Run the test and confirm it fails**
 
 Run: `yarn vitest run packages/dossier/lib/links.test.ts`
-Expected: FAIL. `#sources`, `#entities` and `#links` cannot be resolved.
+Expected: fail. `#sources`, `#entities` and `#links` cannot be resolved.
 
 - [ ] **Step 4: Implement the three modules**
 
@@ -762,7 +762,7 @@ Add `export * from "#sources"`, `"#entities"`, `"#links"` to `lib/index.ts`.
 - [ ] **Step 5: Run the test and confirm it passes**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS, 18 tests.
+Expected: pass, 18 tests.
 
 - [ ] **Step 6: Commit**
 
@@ -784,9 +784,9 @@ git commit -m "Model parcels, buildings, entrances and units with sourced aliase
 - Produces from `#claims`: `const ClaimAxis = { Identity, Premises, Network, Access, Engineering, Product, Demand, Evidence }` with snake-case values, `interface ClaimBase<V> { id: string; subject: EntityID; axis: ClaimAxis; predicate: string; value: V; evidence: Evidence }`, `type Claim<V = unknown> = (ClaimBase<V> & { status: "designated" }) | (… "observed") | (… "derived"; derivedFrom: readonly string[]) | (… "inferred"; derivedFrom: readonly string[]; explanation: string)`, `claimsFor(subject, claims, axis?)`, `assertStatusDistinct()` is a type-level test only (see Step 1).
 - Produces from `#counts`: `const UnitStage = { Planned: "planned", Completed: "completed", Occupied: "occupied" }`, `interface UnitCount { id: string; subject: EntityID; stage: UnitStage; count: number; at: ISODate; membership: string; evidence: Evidence }`, `type UnitTotal = { status: "resolved"; stage; at; total: number; parts: readonly UnitCount[] } | { status: "unresolved"; stage; at; reason: string; conflicting: readonly UnitCount[] }`, `totalUnits(counts: readonly UnitCount[], query: { subjects: readonly EntityID[]; stage: UnitStage; at: ISODate }): UnitTotal`, `countsByStage(counts, subject): Record<UnitStage, readonly UnitCount[]>`.
 
-`membership` is a key the supplier states for the set of units a count covers (for example `"example-house:all"`); two counts with the same subject, stage, date and membership but different numbers conflict; counts with distinct subjects and distinct memberships sum.
+`membership` is a key the supplier states for the set of units a count covers (for example `"example-house:all"`). Two counts with the same subject, stage, date and membership but different numbers conflict. Counts with distinct subjects and distinct memberships sum.
 
-Spec scenarios decided here: **Shared parcel** (12 + 8 = 20 completed units across two buildings) and **Conflicting counts** (24 planned, 20 completed, 18 occupied displayed separately; 20 versus 22 completed at the same date and scope stays unresolved).
+Spec scenarios decided here: **Shared parcel** (12 + 8 = 20 completed units across two buildings) and **Conflicting counts** (24 planned, 20 completed, 18 occupied displayed separately, and 20 versus 22 completed at the same date and scope stays unresolved).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -981,7 +981,7 @@ describe("conflicting counts", () => {
 - [ ] **Step 2: Run the tests and confirm they fail**
 
 Run: `yarn vitest run packages/dossier/lib/claims.test.ts packages/dossier/lib/counts.test.ts`
-Expected: FAIL. `#claims` and `#counts` cannot be resolved.
+Expected: fail. `#claims` and `#counts` cannot be resolved.
 
 - [ ] **Step 3: Implement `claims.ts` and `counts.ts`**
 
@@ -1161,7 +1161,7 @@ Add `export * from "#claims"` and `export * from "#counts"` to `lib/index.ts`.
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS, 26 tests. The shared-parcel assertion compares `parts` to `SHARED`, so `parts` is the matching counts in input order.
+Expected: pass, 26 tests. The shared-parcel assertion compares `parts` to `SHARED`, so `parts` is the matching counts in input order.
 
 - [ ] **Step 5: Commit**
 
@@ -1182,7 +1182,7 @@ git commit -m "Add sourced claims on eight axes and unit totals that stay unreso
 
 - Produces: `const CommercialEventKind = { Inquiry: "inquiry", Commitment: "commitment", Order: "order", ActiveSubscription: "active_subscription", LandlordPermission: "landlord_permission", AcceptedBuild: "accepted_build" }`, `interface Party { name: string; role: string }`, `interface CommercialEvent { id: string; kind: CommercialEventKind; parties: readonly Party[]; scope: readonly EntityID[]; date?: ISODate; evidence: Evidence }`, `eventsByKind(events, kind): readonly CommercialEvent[]`, `activeSubscriptionsAt(events, subject, date): { count: number; events: readonly CommercialEvent[]; undated: readonly CommercialEvent[] }`, `permissionCovers(events, entity): readonly CommercialEvent[]`, `const OrganizationRole = { Owner: "owner", Manager: "manager", Developer: "developer", Architect: "architect", Contractor: "contractor", Lender: "lender" }`, `interface OrganizationRelation { organization: string; role: OrganizationRole; subject: EntityID; signingAuthority: "yes" | "no" | "unknown"; evidence: Evidence }`, `signingAuthorityFor(relations, subject): { known: readonly OrganizationRelation[]; unknown: readonly OrganizationRelation[] }`, `interface ConstructionWindow { subject: EntityID; start?: ISODate; end?: ISODate; stage: string; evidence: Evidence }`.
 
-Spec scenarios decided here: **Separate customer events** (three households, three different events; permission scoped to the north entrance) and **Construction and authority** (a window from the permit, an owner and a manager, signing authority unknown for both).
+Spec scenarios decided here: **Separate customer events** (three households, three different events, permission scoped to the north entrance) and **Construction and authority** (a window from the permit, an owner and a manager, signing authority unknown for both).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1306,7 +1306,7 @@ describe("construction and authority", () => {
 - [ ] **Step 2: Run the test and confirm it fails**
 
 Run: `yarn vitest run packages/dossier/lib/events.test.ts`
-Expected: FAIL. `#events` cannot be resolved.
+Expected: fail. `#events` cannot be resolved.
 
 - [ ] **Step 3: Implement `events.ts`**
 
@@ -1431,7 +1431,7 @@ Add `export * from "#events"` to `lib/index.ts`.
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS, 30 tests.
+Expected: pass, 30 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1607,7 +1607,7 @@ describe("US denominator control", () => {
 - [ ] **Step 2: Run the tests and confirm they fail**
 
 Run: `yarn vitest run packages/dossier/lib/availability.test.ts packages/dossier/lib/coverage.test.ts packages/dossier/lib/filings.test.ts`
-Expected: FAIL. The three modules cannot be resolved.
+Expected: fail. The three modules cannot be resolved.
 
 - [ ] **Step 3: Implement the three modules**
 
@@ -1779,7 +1779,7 @@ Add the three `export *` lines to `lib/index.ts`.
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS, 39 tests.
+Expected: pass, 39 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1798,11 +1798,20 @@ git commit -m "Date provider availability, classify layer readings by coverage b
 
 **Interfaces:**
 
-- Produces from `#validate`: `interface DossierRecords { sources; entities; aliases; containment; claims; counts; events; relations: OrganizationRelation[]; windows: ConstructionWindow[]; availability; readings; filings }` (every field a readonly array), `interface ValidationIssue { severity: "error" | "warning"; code: string; message: string; ref?: string }`, `validateRecords(records): readonly ValidationIssue[]`. Errors: a duplicate source or entity id; a claim, count, event, link or reading whose `evidence.source` is absent from `sources`; a containment whose child or parent is absent from `entities`; a date that fails `isISODate`. Warnings: a source without `availableAt`; an event without `date`; a relation with `signingAuthority: "unknown"`.
+- Produces from `#validate`: `interface DossierRecords { sources; entities; aliases; containment; claims; counts; events; relations: OrganizationRelation[]; windows: ConstructionWindow[]; availability; readings; filings }` (every field a readonly array), `interface ValidationIssue { severity: "error" | "warning"; code: string; message: string; ref?: string }`, `validateRecords(records): readonly ValidationIssue[]`. Errors are a duplicate source or entity id, a claim, count, event, link or reading whose `evidence.source` is absent from `sources`, a containment whose child or parent is absent from `entities`, and a date that fails `isISODate`. Warnings are a source without `availableAt`, an event without `date`, and a relation with `signingAuthority: "unknown"`.
 - Produces from `#dossier`: `interface Unresolved { question: string; subject?: EntityID; candidates: readonly string[]; missingRecord: string }`, `interface BuildingSection { building: Building; entrances; aliases: readonly { text: string; resolution: AliasResolution }[]; counts: Record<UnitStage, UnitTotal>; events: readonly CommercialEvent[]; permissions; authority; windows; availability: readonly { provider; product; answer: AvailabilityAnswer }[]; readings: readonly { layer; extent; class: LayerReadingClass }[]; claims: readonly Claim[]; unresolved: readonly Unresolved[] }`, `interface Dossier { asOf: ISODate; admitted: readonly SourceRecordID[]; excluded: readonly { id; availableAt; observedAt? }[]; undated: readonly SourceRecordID[]; buildings: readonly BuildingSection[]; unresolved: readonly Unresolved[]; issues: readonly ValidationIssue[] }`, `buildDossier(records: DossierRecords, options: { asOf: ISODate }): Dossier` (throws when `validateRecords` reports an error).
 - Produces from `#report`: `renderReport(dossier: Dossier): string` (Markdown).
 
-A record is admitted when `admitsAsOf(source, asOf)` is `admitted`; every claim, count, event, link, availability and reading whose evidence cites an excluded or undated source is left out of the sections and the source is listed under `excluded` or `undated`. An `Unresolved` is produced for: an ambiguous or unlinked alias; an unresolved unit total per stage; an unknown signing authority (one per relation); a construction window with no end; an availability answer of `unknown`; a reading classed `unknown`, `source_present_empty` or `conflicting`. Each states the record that would resolve it, in words a reader can act on (for example "a dated record naming the signatory for Example House").
+A record is admitted when `admitsAsOf(source, asOf)` is `admitted`. Every claim, count, event, link, availability and reading whose evidence cites an excluded or undated source is left out of the sections, and the source is listed under `excluded` or `undated`. An `Unresolved` is produced for each of these:
+
+- an ambiguous or unlinked alias
+- an unresolved unit total per stage
+- an unknown signing authority (one per relation)
+- a construction window with no end
+- an availability answer of `unknown`
+- a reading classed `unknown`, `source_present_empty` or `conflicting`
+
+Each states the record that would resolve it, in words a reader can act on (for example "a dated record naming the signatory for Example House").
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1996,7 +2005,7 @@ describe("renderReport", () => {
 - [ ] **Step 2: Run the tests and confirm they fail**
 
 Run: `yarn vitest run packages/dossier`
-Expected: FAIL. `#validate`, `#dossier`, `#report` cannot be resolved, and the fixture lacks `EXAMPLE_RECORDS`.
+Expected: fail. `#validate`, `#dossier`, `#report` cannot be resolved, and the fixture lacks `EXAMPLE_RECORDS`.
 
 - [ ] **Step 3: Implement `validate.ts`**
 
@@ -2462,7 +2471,7 @@ function sectionFor(building: Building, asOf: ISODate, admitted: Admitted): Buil
 }
 ```
 
-The implementer adjusts the reading-to-building association if the fixture gives readings an explicit subject; the brief above associates every admitted reading with every building, which is acceptable for the single-extent fixtures and must be stated in the report file as a limit for #2289 to refine.
+The implementer adjusts the reading-to-building association if the fixture gives readings an explicit subject. The brief above associates every admitted reading with every building. That association is acceptable for the single-extent fixtures and must be stated in the report file as a limit for #2289 to refine.
 
 - [ ] **Step 5: Implement `report.ts`**
 
@@ -2586,7 +2595,7 @@ Add `export * from "#validate"`, `"#dossier"`, `"#report"` to `lib/index.ts`.
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 Run: `yarn vitest run packages/dossier`
-Expected: PASS for every file. If `dossier.test.ts`'s admitted list differs in order, keep the input order of `records.sources`.
+Expected: pass for every file. If `dossier.test.ts`'s admitted list differs in order, keep the input order of `records.sources`.
 
 - [ ] **Step 7: Commit**
 
@@ -2623,7 +2632,7 @@ git commit -m "Record the dossier package in the inventory and show the Example 
 
 - [ ] **Step 4: Issue bookkeeping (controller)**
 
-Through `mwdev_issue update_tasks` on #2285, check: fixtures for aliases/frontages, buildings on a parcel and conflicting counts; the six distinct events; provider presence as dated relations; the dossier explaining blockers, timing and next action. The "Inventory" item is already checked. Through `mwdev_issue append_comment` on #2291, check the second definition-of-done item ("A bounded set of synthetic ... building cases") by `update_tasks` with the test file paths as evidence.
+Through `mwdev_issue update_tasks` on #2285, check four items: fixtures for aliases/frontages, buildings on a parcel and conflicting counts, then the six distinct events, then provider presence as dated relations, then the dossier explaining blockers, timing and next action. The "Inventory" item is already checked. Through `mwdev_issue append_comment` on #2291, check the second definition-of-done item ("A bounded set of synthetic ... building cases") by `update_tasks` with the test file paths as evidence.
 
 ---
 
@@ -2632,4 +2641,4 @@ Through `mwdev_issue update_tasks` on #2285, check: fixtures for aliases/frontag
 Two operator steps remain, both outside the plan's reach:
 
 1. `mwops release bless-package` for `@mailwoman/dossier`, then move `packages/dossier` from `SANCTIONED_RELEASE_ABSENCES` to `.release-it.json` (and update the `publishCount` pin from 60 to 61).
-2. The One Park Point records: #2286 supplies independently retrieved sources with their three dates; when they exist, a fixture under `packages/dossier/test/fixtures/one-park-point.ts` produces the first real report, with `asOf` set to the 2022 decision date the operator chooses.
+2. The One Park Point records: #2286 supplies independently retrieved sources with their three dates. When they exist, a fixture under `packages/dossier/test/fixtures/one-park-point.ts` produces the first real report, with `asOf` set to the 2022 decision date the operator chooses.

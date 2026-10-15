@@ -31,8 +31,8 @@ land in the right component. The misses in those rows are elsewhere in the addre
 
 3. **Street/affix boundary wobble — the taxonomy's #1 parser change.** `Country Club Rd` keeps `Rd` in
    the street (no `street_suffix`); FR `Rue Jean-Baptiste Lebas` / `Rue Neuve-des-Capucines 5` drop the
-   `Rue` prefix and absorb the house number into the street. Pure boundary instability — nothing to do
-   with the hyphen.
+   `Rue` prefix and absorb the house number into the street. This is pure boundary instability. The
+   hyphen plays no part in it.
 
 4. **OOD-token leading-char drop — the #690 family.** `N9W16851` (a Wisconsin grid address) parses to
    house_number `9W16851` — the leading `N` is dropped, exactly the artifact behind all-caps
@@ -45,8 +45,8 @@ The within-token punctuation gap is **not a punctuation-tokenizer problem** and 
 punctuation-specific fix. It decomposes into:
 
 - the **#694 comma-less/delimiter** change (fixing concatenated-input segmentation — already validated),
-- the **#1 boundary-instability** change (street/affix; the taxonomy's highest-leverage parser fix),
-- the **#690 OOD-token** family (leading-char drops; foreign postcode formats),
+- the **#1 boundary-instability** change (street/affix, the taxonomy's top-ranked parser fix),
+- the **#690 OOD-token** family (leading-char drops and foreign postcode formats),
 - and **one new specific case**: the AU/UK slash unit-convention (`4/2A`).
 
 So three of the four are closed by changes already prioritized — fixing boundary instability + delimited

@@ -26,7 +26,7 @@ size — every new country, every new spelling, every business name is another k
 millions of keys is not a table any more, it is the corpus.
 
 The fix is the printer's type case rather than the dictionary. Keep a fixed inventory of fragments,
-and spell every word out of them. Rare words cost more fragments; unseen words still get spelled.
+and spell every word out of them. Rare words cost more fragments. Unseen words still get spelled.
 No input is unrepresentable.
 
 ## Pieces rather than words
@@ -34,7 +34,7 @@ No input is unrepresentable.
 Mailwoman spells input with [SentencePiece](https://github.com/google/sentencepiece), an
 open-source subword tokenizer. The inventory holds 73,143 pieces, chosen by a unigram language-model
 fit over training text, and the `▁` prefix marks a piece that begins a new word. Common words are one
-piece; `▁Washington` is a single unit. Uncommon ones fragment, and the fragmentation carries
+piece; `▁Washington` is a single unit. Uncommon ones fragment, and the fragmentation is
 information. A word that splits into five pieces is a word the training text did not see much of.
 
 Two properties matter downstream.
@@ -45,14 +45,14 @@ a multi-gigabyte one.
 
 **No input is out of vocabulary.** When a character is not covered by any piece, the tokenizer falls
 back to encoding it byte by byte. A Cyrillic street name or a stray emoji produces pieces rather than
-a failure. Those pieces carry no learned meaning — byte fallback is what stops the pipeline from
+a failure. Those pieces have no learned meaning. Byte fallback stops the pipeline from
 crashing, and it is not coverage of the script. [What the model cannot do](./what-the-model-cannot-do.mdx)
 draws that line.
 
 ## Pieces are not what you get back
 
 The piece boundaries are an implementation detail of the model, and the parse result never exposes
-them. Each piece carries the character range it came from, reported by the tokenizer itself rather
+them. Each piece records the character range it came from, reported by the tokenizer itself rather
 than reconstructed afterward, and the decoder projects labels back onto those ranges. `▁Ana ly t ic s`
 covers characters 13 through 22 of the input, so a venue span that runs from `▁Beacon` to `s` is
 reported as characters 0 through 22 — one span, in your coordinate system.
@@ -74,13 +74,13 @@ is two words and is never merged by this pass.
 **The rule-world version:** a regular expression returns a span directly. It matched from here to
 there, and the span is the match.
 
-**What happens here:** the model produces one label per piece, and a label alone cannot express a
+**What happens here:** the model produces one label per piece, and a type label by itself cannot express a
 boundary. If every piece of `Saint Petersburg, FL` were labeled just `locality`, `locality`,
 `region`, there would be no way to tell one two-word town from two one-word towns sitting side by
 side.
 
-BIO labeling is the standard fix, and it is older than any of this. It is what named-entity
-recognition has used since the 1990s. Each label carries a position as well as a type:
+BIO labeling is the standard fix, and it is older than any of this. Entity-recognition
+systems (NER) have used it since the 1990s. Each label encodes a position as well as a type:
 
 - `B-locality` — a locality span **begins** at this piece.
 - `I-locality` — this piece is **inside** the locality span already open.
@@ -100,13 +100,13 @@ where that gets ruled out.
 
 Three numbers get quoted around the label space, and they answer different questions.
 
-The **schema** defines 26 component tags — everything a parse result is allowed to carry, including
+The **schema** defines 26 component tags — everything a parse result is allowed to contain, including
 tags for Japanese and Chinese address structure and tags no shipped model produces. At two labels per tag plus
 one shared `O`, that is a capacity of 53 labels.
 
-The **shipped model's head** is fixed at training time and carries 33 labels over 16 tags. That is
+The **shipped model's head** is fixed at training time and has 33 labels over 16 tags. That is
 the alphabet this model can write in. Nine tags in the schema are outside it: seven belong to a
-separate Japanese head that is not shipped, and two are carried for annotation and formatting rather
+separate Japanese head that is not shipped, and two exist for annotation and formatting rather
 than produced by the parser.
 
 The gap between the two is not a defect to work around, and it is not post-processing that fills in

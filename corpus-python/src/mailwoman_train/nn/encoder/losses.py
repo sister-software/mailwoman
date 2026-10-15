@@ -128,7 +128,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         Returns the accumulated loss plus span scores. Span scores are an output rather than a term.
         """
         # Auxiliary locale cross-entropy, in fp32: supervises the locale head against the row's
-        # country so the pooled representation (and therefore the FiLM conditioning) actually
+        # country so the pooled representation (and therefore the FiLM conditioning)
         # encodes "which country". Rows whose country is unmapped use IGNORE_INDEX and are
         # skipped. An all-ignored batch contributes no term rather than 0/0 → NaN.
         if (

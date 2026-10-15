@@ -16,20 +16,20 @@ to the originating question on its own and is independently shippable.
 
 PR C (gap attribution + name match) and PR D (pair yield + manifest emission) get their own plan
 after B's numbers land, for two reasons recorded in the spec. First, C's source-gap leg is blocked on
-Open Question 1, which asks whether the cloned `whosonfirst-data*` repos are available anywhere
+Open Question 1. That question asks whether the cloned `whosonfirst-data*` repos are available anywhere
 (`wof/global` is empty). Second, the 5% parent-coverage floor needs a second calibration point, and
 B produces one.
 
 ## Global Constraints
 
 - **Do not use `enum`, constructor parameter properties, or runtime namespaces.** `erasableSyntaxOnly: true` is enforced repo-wide. Use `const X = {…} as const` plus `type X = (typeof X)[keyof typeof X]`.
-- **Relative imports carry explicit `.ts` extensions.** Source runs directly under `node`.
+- **Relative imports include explicit `.ts` extensions.** Source runs directly under `node`.
 - **Acronyms capitalize as whole camelCase components**, as in `parseJSON`, `readID` and `WOFPlacetype`, not `parseJson` / `readId`. This rule does not apply to `snake_case` DB columns.
 - **Data-root paths go through `@mailwoman/core/utils`**, for example `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`. Reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
 - **Databases are read-only artifacts.** This plan opens the admin DB only with `{ readOnly: true }`.
 - **The data structure encodes the meaning of zero.** A rung that was measured and found empty is a present row with a zero count. A rung that was never measured is an absent row. The two must never share a representation.
 - **Positive evidence only.** No step in this plan checks, masks, or forbids anything at decode time. It measures and reports.
-- Every new file carries the standard header: `@copyright Sister Software`, `@license AGPL-3.0`, `@author Teffen Ellis, et al.`, followed by a prose docstring explaining why the file exists.
+- Every new file starts with the standard header: `@copyright Sister Software`, `@license AGPL-3.0`, `@author Teffen Ellis, et al.`, followed by a prose docstring explaining why the file exists.
 
 ---
 
@@ -44,7 +44,7 @@ B produces one.
 
 **Interfaces:**
 
-- Consumes: `ComponentTag` from `@mailwoman/core/types` — the 26-member union in `core/types/component.ts:30-61`. There is **no** `intersection` tag; the union carries `intersection_a` and `intersection_b`.
+- Consumes: `ComponentTag` from `@mailwoman/core/types` — the 26-member union in `core/types/component.ts:30-61`. There is **no** `intersection` tag. The union contains `intersection_a` and `intersection_b`.
 - Produces: `WOF_PLACETYPES` (a `readonly string[]` of all 34), and a `PLACETYPE_PROJECTION` whose key set equals it. PR B's `placetypesForRung()` reads both.
 
 **Context the implementer needs.** `PLACETYPE_PROJECTION` is the executable copy of the projection
@@ -123,7 +123,7 @@ import { PLACETYPE_PROJECTION, WOF_PLACETYPES, buildPlacetypeCensus, toBaseRates
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/placetype-census.test.ts`
-Expected: FAIL. The import of `WOF_PLACETYPES` does not resolve, so the whole file errors before any
+Expected: fail. The import of `WOF_PLACETYPES` does not resolve, so the whole file errors before any
 assertion runs.
 
 - [ ] **Step 3: Add the vocabulary constant**
@@ -204,7 +204,7 @@ Then, in the context-only block after `planet: null,`, insert:
 
 - [ ] **Step 5: Update the module docstring**
 
-The header at `placetype-census.ts:12-17` says the projection table "also names
+The header at `placetype-census.ts:12-17` states that the projection table "also names
 macrohood/microhood/venue/building rows that this source does not stock." Replace that sentence with:
 
 ```
@@ -220,8 +220,8 @@ macrohood/microhood/venue/building rows that this source does not stock." Replac
 - [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/placetype-census.test.ts`
-Expected: PASS, all describe blocks. The three `buildPlacetypeCensus` tests and both `toBaseRates`
-tests must still pass unchanged. The fixture DB carries only `metroarea` as a non-counting
+Expected: pass, all describe blocks. The three `buildPlacetypeCensus` tests and both `toBaseRates`
+tests must still pass unchanged. The fixture DB holds only `metroarea` as a non-counting
 placetype, and that projection is untouched.
 
 - [ ] **Step 7: Verify no other test asserted on the old key set**
@@ -341,7 +341,7 @@ describe("SUB_LOCALITY_RUNGS", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts`
-Expected: FAIL — `Cannot find module './granularity.ts'`.
+Expected: fail — `Cannot find module './granularity.ts'`.
 
 - [ ] **Step 3: Create the module with the ladder**
 
@@ -424,7 +424,7 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts`
-Expected: PASS, all three describe blocks.
+Expected: pass, all three describe blocks.
 
 - [ ] **Step 5: Commit**
 
@@ -459,7 +459,7 @@ postcode is excluded: an orthogonal channel rather than a containment rung."
 
 **Context the implementer needs.** Three facts about the source shape, all verified 2026-08-02:
 
-1. `spr` carries `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
+1. `spr` has the columns `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
 2. `ancestors(id, ancestor_id)` is the transitive closure the freeze phase builds. `buildPlacetypeCensus` joins through it, and so does this.
 3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never merged into the WOF counts. For the 86-country backfill set, the locality rung and above already contain some Overture data, so those cells compare Overture with itself, and the report must say so.
 
@@ -584,7 +584,7 @@ describe("buildGranularityLadder", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts -t buildGranularityLadder`
-Expected: FAIL — `buildGranularityLadder is not a function` (the import is unresolved).
+Expected: fail — `buildGranularityLadder is not a function` (the import is unresolved).
 
 - [ ] **Step 3: Implement the builder**
 
@@ -783,7 +783,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts`
-Expected: PASS, all six `buildGranularityLadder` tests plus Task 2's three describe blocks.
+Expected: pass, all six `buildGranularityLadder` tests plus Task 2's three describe blocks.
 
 - [ ] **Step 5: Smoke against the real artifact**
 
@@ -840,10 +840,10 @@ rung is a present zero, never an absent row."
 - Produces: `DEFAULT_COVERAGE_FLOOR = 0.05` and `bottomsOutAt(country: CountryGranularity, floor?: number): ComponentTag | null`. Task 5 renders the result.
 
 **Context the implementer needs.** There are two presence rules, because parent-coverage is only
-meaningful below the locality backbone, which is its denominator. At or above `locality`, a rung
+meaningful below the locality backbone. The backbone is its denominator. At or above `locality`, a rung
 counts as reached when it has any nodes. Below `locality`, a rung counts as reached when its
 parent-coverage clears the floor. The walk goes deepest-first and returns the first rung that
-qualifies. `null` means the country has no data at all, which should happen only for a country code
+qualifies. `null` means the country has no data at all. That result should happen only for a country code
 with no live rows.
 
 The 5% default is the weakest number in the design, and the spec's open questions flag it. GB, the
@@ -949,7 +949,7 @@ import type { CountryGranularity, RungMeasurement } from "./granularity.ts"
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts -t bottomsOutAt`
-Expected: FAIL — `bottomsOutAt is not a function`.
+Expected: fail — `bottomsOutAt is not a function`.
 
 - [ ] **Step 3: Implement the derivation**
 
@@ -990,7 +990,7 @@ export function bottomsOutAt(country: CountryGranularity, floor: number = DEFAUL
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity.test.ts`
-Expected: PASS, every describe block in the file.
+Expected: pass, every describe block in the file.
 
 - [ ] **Step 5: Commit**
 
@@ -1132,7 +1132,7 @@ describe("renderGranularityReport", () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity-report.test.ts`
-Expected: FAIL — `Cannot find module './granularity-report.ts'`.
+Expected: fail — `Cannot find module './granularity-report.ts'`.
 
 - [ ] **Step 3: Implement the renderer**
 
@@ -1249,7 +1249,7 @@ ${body.join("\n")}
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/granularity-report.test.ts`
-Expected: PASS, all five tests.
+Expected: pass, all five tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1273,7 +1273,7 @@ meaning-of-zero rule made visible in the artifact."
 **Files:**
 
 - Create: `mailwoman/commands/gazetteer/granularity.tsx`
-- Test: manual smoke (the command layer is Ink/TSX; the logic it calls is covered by Tasks 2-5)
+- Test: manual smoke (the command layer is Ink/TSX, and the logic it calls is covered by Tasks 2-5)
 
 **Interfaces:**
 
@@ -1441,7 +1441,7 @@ Expected: writes `docs/articles/evals/coverage/gazetteer-depth-scorecard.md`.
 - [ ] **Step 5: Run the full unit suite**
 
 Run: `yarn ci:test:fast`
-Expected: PASS. This is the ~15s pure-surface leg, and it must be green before the commit.
+Expected: pass. This is the ~15s pure-surface leg, and it must be green before the commit.
 
 - [ ] **Step 6: Commit**
 

@@ -37,7 +37,7 @@ Two completely different stories under one average.
 
 **Saxony is a name-match artifact.** The model and resolver place Saxon addresses correctly 76% of the
 time, but the name-match metric only credits 51% — a 24.8-point gap. The reason is visible in every
-miss: OpenAddresses gold carries a regional suffix that WOF's canonical name drops.
+miss: OpenAddresses gold includes a regional suffix that WOF's canonical name drops.
 
 ```
 gold "Plauen Vogtl"   resolved "Plauen"       (point inside Plauen ✓)
@@ -46,22 +46,22 @@ gold "Marienberg Erzgeb" resolved "Marienberg" (point inside Marienberg ✓)
 gold "Treuen Vogtl"   resolved "Treuen"       (point inside Treuen ✓)
 ```
 
-These are not errors. The resolver found the right place; the metric demands an exact string the
+These are not errors. The resolver found the right place, and the metric demands an exact string the
 gazetteer doesn't use. Another training run cannot fix a measurement bug.
 
 **Berlin is an actual failure — but not the one we were retraining for.** Berlin's PIP equals its
 name-match (36.3%), so there's no hidden artifact. Of 1,500 Berlin rows, **955 resolve to
-nothing at all**, and the 545 that resolve all resolve correctly to Berlin. Berlin's problem is not a
+no place at all**, and the 545 that resolve all resolve correctly to Berlin. Berlin's problem is not a
 wrong pick or a too-small polygon — it's that the model drops the locality span entirely in the
 city-state layout `…, Berlin, Berlin 14199`, where locality and region are the same word. One "Berlin"
-gets labeled region, the other is lost, and there's nothing left for the resolver to place. This is a
-real segmentation bug, but it's specific to city-states (Berlin/Hamburg/Bremen) and has nothing to do
-with the postcode anchor or word order in general — which is exactly why three anchor/order retrains
+gets labeled region, the other is lost, and the resolver receives no locality span to place. This is a
+real segmentation bug, but it's specific to city-states (Berlin/Hamburg/Bremen) and is unrelated
+to the postcode anchor or word order in general — which is exactly why three anchor/order retrains
 never touched it.
 
 ## Native German is essentially solved
 
-The other half of the story is native order — the layout real feeds and users use. By PIP it is
+The other half of the result is native order — the layout real feeds and users use. By PIP it is
 **96.2%** (anchor on), against a name-match that said 83.5%, a 12.7pp undersell. Berlin native is 99.2%, so
 the city-state bug is international-order only. The full 2×2 (`scripts/eval/de-pip-eval.sh`):
 
@@ -97,5 +97,5 @@ DeepSeek signed off this pivot across four turns. The two real fixes, both off t
 
 v0.9.5 (the `[COUNTRY_DE]` start-token that was queued if PIP fell below 90%) is **cancelled**: the
 country signal helps neither half — Saxony is already correct, and Berlin's country is never in doubt.
-The corpus and anchor changes are spent; the German story moves to the resolver and a narrow city-state
+The corpus and anchor changes are spent. The German work moves to the resolver and a narrow city-state
 data fix.

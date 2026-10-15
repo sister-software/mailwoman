@@ -11,13 +11,14 @@
 
 import type { CalibrationTable, Calibrator } from "@mailwoman/core/decoder/calibration"
 import { createCalibrator } from "@mailwoman/core/decoder/calibration"
+import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
-import { postcodeAnchorAssetsOf, type ReleaseInfo } from "#browser-runtime/manifest"
+import { postcodeAnchorFilesOf, postcodePrefixFilesOf, type ReleaseInfo } from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
 	assetURL,
@@ -47,6 +48,12 @@ export interface ReleaseAssets {
 	 * which case the demo parses with the check off.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
+	/**
+	 * The anchor-region lookup over the release's postcode-prefix indexes, `null`
+	 * when the release lists none or every fetch failed.
+	 * The anchor-region prior is then off.
+	 */
+	anchorRegions: AnchorRegionLookupLike | null
 	/**
 	 * The byte-range gazetteer lookup, `null` when the release ships no gazetteer,
 	 * when the host asked for none, or when the load failed.
@@ -173,7 +180,8 @@ export async function loadReleaseAssets(
 		: fetchWithRetry
 
 	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-		postcodeAnchor: postcodeAnchorAssetsOf(release),
+		postcodeAnchors: postcodeAnchorFilesOf(release),
+		postcodePrefixes: postcodePrefixFilesOf(release),
 		splitEmbeddings: release.splitEmbeddings,
 	})
 
@@ -197,6 +205,7 @@ export async function loadReleaseAssets(
 		diagnostics,
 		postcodeAnchorLookup,
 		selectPairIndexForText,
+		anchorRegions,
 		// `release` is the ReleaseInfo parameter in this scope. The classifier's disposer needs its own name.
 		release: releaseClassifier,
 	} = (await loadNeuralClassifierFromURLs({
@@ -208,6 +217,7 @@ export async function loadReleaseAssets(
 		diagnostics?: { backend: string; modelBytes: number } | null
 		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
 		selectPairIndexForText?: SelectPairIndex | null
+		anchorRegions?: AnchorRegionLookupLike | null
 		release?: () => Promise<void>
 	}
 
@@ -245,8 +255,8 @@ export async function loadReleaseAssets(
 				const wofLookup = new WOFCandidateTableLookup(database)
 				// Fire-and-forget: pull the schema, code-table and upper B-tree pages through
 				// the VFS now so the first interactive query starts warm.
-				// The worker serializes queries, so a user query issued mid-warm-up simply
-				// queues behind pages it was going to need anyway.
+				// The worker serializes queries, so a user query issued mid-warm-up queues
+				// behind pages it was going to need anyway.
 				void wofLookup.warmUp().catch(() => {})
 				lookup = wofLookup
 			}
@@ -263,6 +273,7 @@ export async function loadReleaseAssets(
 		fstMatcher,
 		fstProvenance,
 		streetMorphologyMatcher,
+		anchorRegions: anchorRegions ?? null,
 		lookup,
 		calibrator,
 		selectPairIndex: selectPairIndexForText ?? null,

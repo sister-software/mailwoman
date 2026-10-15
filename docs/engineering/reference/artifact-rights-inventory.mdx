@@ -1,11 +1,11 @@
 ---
 title: Artifact and rights inventory
-description: What every published package ships, whose rights govern it, and which provenance questions are unresolved.
+description: What every published package ships, the party whose rights govern it, and the provenance questions that are unresolved.
 ---
 
 # Artifact and rights inventory
 
-This page records what each published package ships, which party grants rights to it, and where the
+This page records what each published package ships, the party that grants rights to it, and where the
 record is incomplete. It was observed on `main` on 2026-09-20 by reading manifests, model cards and
 rights documents in the checkout.
 
@@ -17,7 +17,7 @@ claim about a released model:
 3. **Runtime datasets and dependencies**: what an operator downloads separately.
 
 This page measures only the first. The second is unresolved for every published package, and this
-document says so explicitly.
+document states that explicitly.
 
 ## Rights chain
 
@@ -31,20 +31,20 @@ The licensor and the services operator are different parties, and the repository
 consistently. Nirrus LLC appears in the website Terms and Privacy Policy and in no rights document.
 Service operation does not make the operator the copyright holder.
 
-Two commercial documents exist and each says which it is. `COMMERCIAL-LICENSE.md` opens with a
+Two commercial documents exist and each states which it is. `COMMERCIAL-LICENSE.md` opens with a
 template notice stating it does not execute. `commercial-2026-10.mdx` states that acceptance is
 recorded by Stripe Checkout when a buyer ticks the box, and that the page is not edited after
 publication.
 
-**Repaired on the page.** `docs/src/pages/license.mdx` said `COMMERCIAL-LICENSE.md` "carries the same
-terms in the repository". The two differ in execution mechanism, so the page overstated their
+**Repaired on the page.** `docs/src/pages/license.mdx` described `COMMERCIAL-LICENSE.md` as a
+repository copy of the same terms. The two differ in execution mechanism, so the page overstated their
 relationship. The page now names `commercial-2026-10` as the agreement that binds and describes
-`COMMERCIAL-LICENSE.md` as the reference template its own opening notice says it is. Neither
+`COMMERCIAL-LICENSE.md` as the reference template that its own opening notice declares. Neither
 agreement was edited.
 
 **Repaired in the template.** `COMMERCIAL-LICENSE.md` section 4 waived attribution without saying whose: "Attribution
-is not required in end-user-facing software unless mutually agreed in writing." Section 2 of the same document says
-third-party obligations continue to apply, so the two are consistent read together and section 4 is not read alone. The
+is not required in end-user-facing software unless mutually agreed in writing." Section 2 of the same document states that
+third-party obligations continue to apply, so the two are consistent read together and section 4 is not read in isolation. The
 template now scopes the waiver to the licensor's own attribution and states that the licensor has no power to waive an
 upstream one. The checkout agreement records acceptance and is never edited after publication, so it is unchanged.
 
@@ -55,10 +55,10 @@ upstream one. The checkout agreement records acceptance and is never edited afte
 > attaching to those third-party components continue to apply and are not waived or relicensed by
 > this Agreement.
 
-The public license page carried no equivalent sentence. It now carries a section stating that the
+The public license page had no equivalent sentence. It now has a section stating that the
 commercial grant covers the code and model artifacts Sister Software authors, that third-party
 components stay under their own licenses, that attribution and share-alike obligations attaching to
-them continue to apply, and that separately downloaded reference data carries the terms of whoever
+them continue to apply, and that separately downloaded reference data stays under the terms of whoever
 published it.
 
 ## Published packages
@@ -67,7 +67,7 @@ The repository has thirteen `neural-weights-*` workspaces. Twelve publish, and `
 
 The SPDX column and the counts are as first observed. The data-artifact column counts files whose
 provenance is in question, so it excludes the README, the model card and the two generated rights
-files, which document the package rather than carrying data.
+files. Those files document the package rather than holding data.
 
 | package     | manifest | model card | SPDX field as first observed             | data artifacts | recorded digests | attribution entries | base    |
 | ----------- | -------- | ---------- | ---------------------------------------- | -------------: | ---------------: | ------------------: | ------- |
@@ -86,7 +86,7 @@ files, which document the package rather than carrying data.
 | `zh-cn`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |              1 |                0 |                   0 | `cjk`   |
 
 `base-latn` is private, so it ships no generated record and its row reads as unmeasured rather than
-as zero. `en-gb` now carries one attribution entry of its own, the OGL v3.0 entry for
+as zero. `en-gb` now has one attribution entry of its own, the OGL v3.0 entry for
 `pair-index-gb.bin` that moved there from `en-us`'s card.
 
 ### Four packages omit the commercial branch
@@ -97,8 +97,8 @@ in the repository including `@mailwoman/core` and `@mailwoman/codex`, declare
 
 The field has two defects. `AGPL-3.0` is a deprecated SPDX identifier, superseded by
 `AGPL-3.0-only` and `AGPL-3.0-or-later`, so it does not say which of the two applies. In addition,
-`docs/src/pages/license.mdx` line 11 says "every release ships under both", which those four
-manifests contradict.
+`docs/src/pages/license.mdx` line 11 states "every release ships under both". Those four
+manifests contradict it.
 
 The repository's own admissibility function already refuses the identifier. On this tree,
 `assertAdmissibleLicenseExpression("AGPL-3.0")` throws, and `summarizeLicense("AGPL-3.0")` returns
@@ -109,9 +109,9 @@ guarded spatial-layer manifests, and no check had applied it to a package manife
 gained the field it lacked, and the `package-license` repository check refuses a workspace manifest
 that declares no license, declares an identifier the obligations table does not know, or declares an
 expression other than the root's. The four packages have not been republished, so the versions on npm
-still carry the old field.
+still have the old field.
 
-### Twelve model cards carry a version their manifest does not, and the card says which series it is
+### Twelve model cards record a version their manifest does not, and the card states which series it is
 
 Every published package's model-card version differs from its manifest version, `fr-fr` most widely
 at 6.5.0 against 10.0.0.
@@ -131,7 +131,7 @@ graph: `en-us` at card 9.1.0 and `cjk` at card 0.0.3. Ten are data-only overlays
 graph its rows decode through is the base package's. No field in a published tarball said which of the
 two a reader was holding.
 
-**Repaired.** Each published package's generated `PROVENANCE.json` carries `version_series`, derived
+**Repaired.** Each published package's generated `PROVENANCE.json` records `version_series`, derived
 from `mailwoman.baseWeights` rather than asserted, together with a sentence stating what that series
 means and how it relates to `package_version`. The numbers are left free to differ.
 
@@ -144,32 +144,32 @@ column totals 62. The 6 packages with attribution account for 6 of 62 artifacts,
 
 `en-us` ships artifacts with separate lineages, and one `data_attribution` list covered all of them.
 
-**Repaired.** Each package's `PROVENANCE.json` now carries a role per artifact, derived from the
+**Repaired.** Each package's `PROVENANCE.json` now records a role per artifact, derived from the
 filename. `en-us`'s twelve declared files resolve to a model graph, a SentencePiece tokenizer, two
 calibration tables, a US postcode binary, a placetype-pair index, two gazetteer FST binaries and four
 lexicons. A model graph derives from the corpus a training run read. A tokenizer derives from the text
-it was fitted on. A pair index and a postcode binary are each built from one named register. Each
+it was fitted on. A pair index and a postcode binary are each built from one identified register. Each
 of these has its own provenance, and the record no longer covers them with one list.
 
-### Two packages carry training attribution, under two different keys
+### Two packages record training attribution, under two different keys
 
 `en-us` has ten entries at `training.data_attribution`. `cjk` has six at a top-level `attribution`.
-Those are the two packages that ship a model graph. The ten overlays record none, which is consistent
-with inheriting a graph and makes no statement about the artifacts each overlay ships itself.
+Those are the two packages that ship a model graph. The ten weights overlays record none. That is consistent
+with inheriting a graph, and it makes no statement about the artifacts each overlay ships itself.
 
-The table above counted `en-us` alone, because the first reading of these cards looked at
+The table above counted only `en-us`, because the first reading of these cards looked at
 `training.data_attribution` and stopped. A reader that checks one spelling reports the other package as recording
 no attribution.
 
 One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
 `pair-index-gb.bin` in `neural-weights-en-gb`, attributing it to HM Land Registry Price Paid Data
 under OGL v3.0 with Crown copyright and attribution required. `neural-weights-en-gb`'s own card has no
-`training` section at all. A consumer who installs the overlay alone receives the binary and no
+`training` section at all. A consumer who installs only that weights overlay receives the binary and no
 attribution.
 
 No package shipped a `LICENSE.md`.
 
-**Repaired.** Every published weights package now carries two generated files, written by
+**Repaired.** Every published weights package now contains two generated files, written by
 `mwops release write-rights-files` and held current by the `weights-rights` repository check.
 `LICENSE.md` states the terms this repository grants, that the commercial grant covers only the code
 and model artifacts Sister Software authors, and that third-party obligations continue to apply.
@@ -190,7 +190,7 @@ Eight of ten entries name a license, and five describe rows that trained the mod
 reproduced as stated in the card, without interpretation. The `use` column is read from each entry's own words and
 travels beside the verbatim text in the package's `PROVENANCE.json`.
 
-|   # | source                                     | license as named                          | use as stated         |
+|   # | source                                     | license as recorded                       | use as stated         |
 | --: | ------------------------------------------ | ----------------------------------------- | --------------------- |
 |   1 | HM Land Registry — Price Paid Data         | OGL v3.0                                  | training              |
 |   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 | training              |
@@ -198,24 +198,24 @@ travels beside the verbatim text in the package's `PROVENANCE.json`.
 |   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       | training              |
 |   5 | Overture Maps Foundation — Addresses theme | per-country register license              | training              |
 |   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 | tokenizer, evaluation |
-|   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   | tokenizer, evaluation |
+|   7 | OpenAddresses PL — GUGiK / PRG             | **none stated** — "public, BDOT-derived"  | tokenizer, evaluation |
 |   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  | evaluation            |
 |   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       | evaluation            |
 |  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` | **unstated**          |
 
 Four of the ten describe data this model never learned from. Entries 8 and 9 are coordinate
-evaluation sets recorded as free-rider validation, and 6 and 7 are tokenizer-splice text, which is a
+evaluation sets recorded as free-rider validation, and 6 and 7 are tokenizer-splice text. That text is a
 different and far smaller set than the training corpus. The card would falsely attribute all ten to training, saying
-the model learned from rows it never saw. The four dropped entries still carry attribution those sources
-require, so both readings are wrong and the record carries the split instead.
+the model learned from rows it never saw. The four dropped entries still hold attribution those sources
+require, so both readings are wrong and the record stores the split instead.
 
-Entry 10 states no use at all, which is recorded as `unstated` rather than assumed to be training.
+Entry 10 states no use at all. It is recorded as `unstated` rather than assumed to be training.
 
 Entry 5 reads the per-country register license because Overture's attribution page, read 2026-09-25 at
 `https://docs.overturemaps.org/attribution/` (sha256
 `0074f0dc0d9bbe582174f7efe0581863622a8c3b40897230def5e37ab0a6c383`), declares an SPDX identifier for five
-themes and prose for Addresses. Every `CDLA Permissive 2.0` occurrence on that page sits under Places,
-which is the grant behind the `poi` bundle. For Addresses the page lists the upstream register per
+themes and prose for Addresses. Every `CDLA Permissive 2.0` occurrence on that page sits under Places.
+Places is the grant behind the `poi` bundle. For Addresses the page lists the upstream register per
 country: Spain's `scne.es` under CC BY 4.0, Italy's ANNCSU under CC BY 4.0, and all 18 of Taiwan's county
 and city Civil Affairs bodies under CC BY 4.0. Whether any Overture release document attaches an
 identifier to the Addresses theme is unresolved, because `release/latest/` and `release/2026-05-20.0/`
@@ -285,14 +285,14 @@ unrecoverable.
 | 32 further values |   5,346 |  1.1% |
 | absent            |     961 |  0.2% |
 
-**Where the strings the corpus carries came from.** The adapters emit `wof:name`, the `name:*`
+**Where the strings in the corpus came from.** The adapters emit `wof:name`, the `name:*`
 localized variants and ancestor names. They emit no geometry, so the table above describes a field no
-corpus row carries.
+corpus row contains.
 
 Who's On First's own `LICENSE.md`, shipped in each bundle, gives `name:chi_p`, `name:ger_p` and
 `name:kor_p` as its examples of a localized name sourced from GeoPlanet, the `_p` suffix marking it.
-Zero of 7,189,494 `name:*` variant keys across the four bundles carry that suffix. Both postalcode
-bundles carry no `name:*` variant at all: the admin bundles carry only `_x_preferred` and `_x_variant`
+Zero of 7,189,494 `name:*` variant keys across the four bundles have that suffix. Both postalcode
+bundles have no `name:*` variant at all. The admin bundles have only `_x_preferred` and `_x_variant`
 forms, on 195,165 of 293,572 US records (66.5%) and 97,891 of 122,485 FR records (79.9%).
 
 **No record in any bundle declares `src:geom: osm`.** The search was verified with a control that
@@ -302,15 +302,15 @@ These four bundles do not support the Who's On First half of that sentence. The 
 separate adapter and is unmeasured here.
 
 **Lineage is recoverable.** `source_id` is `wof-<adapter>-<wof_id>-<slot>-<variant>`, so every
-`wof-*` corpus row carries the id of the Who's On First record it came from, and that record carries
+`wof-*` corpus row stores the id of the Who's On First record it came from, and that record has
 `src:geom`. `WOFRecord` in `packages/corpus/lib/utils/wof-json.ts` projects a feature to id, parent,
-name, placetype, country and name variants, which is where the provenance properties stop traveling.
+name, placetype, country and name variants. The provenance properties are dropped at that projection.
 
 **What the adapters assert.** `packages/corpus/lib/adapters/wof/admin/json/adapter.ts` and
 `packages/corpus/lib/adapters/wof/postalcode-json/adapter.ts` both set
-`defaultLicense: "CC0-1.0"`, so every `wof-*` row carries that label, and
-`packages/core/lib/license/obligations.ts` reads `CC0-1.0` as carrying no obligation. The bundles'
-`LICENSE.md` says Creative Commons Zero covers Mapzen's original work, that the dataset is also a
+`defaultLicense: "CC0-1.0"`, so every `wof-*` row has that label, and
+`packages/core/lib/license/obligations.ts` reads `CC0-1.0` as having no obligation. The bundles'
+`LICENSE.md` states that Creative Commons Zero covers Mapzen's original work, that the dataset is also a
 modification of existing open data, that some of those projects do require attribution, and that
 "linking back to this License is required". Whether the emitted strings fall inside the original-work
 part is a reading this document does not make.
@@ -320,16 +320,16 @@ corpus rows are most `wof-*`, are not measured here.
 
 ## Publication control
 
-`packages/corpus/lib/utils/license.ts` states the posture:
-
-> exclusion is a deliberate act rather than a silent default. The build includes every row an
-> adapter yields … No source is dropped on a license string unless the operator named it.
+The module header of `packages/corpus/lib/utils/license.ts` (lines 9–12) states the posture. The build includes
+every row an adapter yields and stamps its license. A build that needs a set free of share-alike obligations
+requests the `LicensePolicy.ShareAlikeFree` policy, and a source is dropped only when the operator selects that
+policy.
 
 Measured 2026-09-27 against commit `dc65605f0`: `--exclude-share-alike` appeared 12 times across 8
 TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any other
 command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
 `packages/corpus/lib/build.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
-carries `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
+has `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
 the row count for each refusal class, and the count of admitted rows whose license value resolves to
 no SPDX expression.
 
@@ -342,12 +342,12 @@ explicit eligibility decision per input, including inherited checkpoints and aux
 
 A permission is decided per operation. `SourceOperation` names the seven acts this repository
 performs on a source — fetch, extract, transform, train, redistribute-data, redistribute-model,
-commercial-sublicense — and an elected grant carries a reading per act with the clause it rests on.
+commercial-sublicense — and an elected grant records a reading per act with the clause it rests on.
 An act the grant does not name reads `unreviewed`, never `permitted`, so electing terms establishes
 which grant applies rather than that everything under it is allowed.
 
 A corpus build declares what it is for. `BuildProfile.Exploratory` includes every row an adapter
-yields, which is what the build always did. `BuildProfile.ReleaseEligible` admits a row only when the
+yields. The build always did that. `BuildProfile.ReleaseEligible` admits a row only when the
 register reports no problem for its source across the four acts ingest performs, and it refuses a
 source the register never names. The check runs before augmentation, so a refused source cannot
 re-enter as the ancestor of a synthetic row.
@@ -360,14 +360,14 @@ three ways a source fails to permit an act. No released model was built from a c
 ## Runtime datasets, and what they oblige
 
 The four downloadable bundles are the third record this document keeps apart, and they reach an
-operator through no file the npm tarball carries.
+operator through no file the npm tarball contains.
 
-| bundle      | publishers                                                                                          | terms as named                                                                      |
+| bundle      | publishers                                                                                          | terms as stated                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `candidate` | Who's On First, GeoNames                                                                            | CC0 over Mapzen's own work; GeoNames CC-BY                                          |
+| `candidate` | Who's On First, GeoNames                                                                            | CC0 over Mapzen's own work, GeoNames CC-BY                                          |
 | `poi`       | Overture Maps Foundation                                                                            | CDLA-Permissive-2.0                                                                 |
 | `fr`        | DINUM and IGN, for Base Adresse Nationale                                                           | Licence Ouverte 2.0, the attribution-only half of a dual grant                      |
-| `us`        | US DOT for the National Address Database, 119 OpenAddresses bodies, US Census Bureau for TIGER/Line | no copyright under 17 U.S.C. § 105 for NAD and TIGER/Line; OA terms differ per body |
+| `us`        | US DOT for the National Address Database, 119 OpenAddresses bodies, US Census Bureau for TIGER/Line | no copyright under 17 U.S.C. § 105 for NAD and TIGER/Line, OA terms differ per body |
 
 `mailwoman data pull` prints each bundle's publishers, terms, obligations and open questions before
 the transfer, and `--dry-run` prints the same lines. The declaration is required on the type, so a
@@ -375,17 +375,17 @@ bundle added without one fails to compile rather than downloading with its oblig
 
 The text behind each of those readings is committed under `packages/corpus/data/licenses/`, retrieved
 2026-09-21. A publisher's page moves and a grant is versioned where the page carrying it is not, so a
-reading recorded against what a page said cannot be rechecked once it says something else.
+reading recorded against a page's earlier text cannot be rechecked once the text changes.
 
 ### `@mailwoman/core` ships a trained model no record names
 
 Measured 2026-09-21 by unpacking `@mailwoman/core@10.0.0` from the registry. Its `data/` directory
-holds four families, and the notices named three.
+holds four families, and the notices listed three.
 
-Each row's directory is written as the tarball carries it, under `package/data/`. In the checkout the
+Each row's directory is written as the tarball stores it, under `package/data/`. In the checkout the
 same directories sit under `packages/core/data/`.
 
-| directory in the tarball | files | named in the notices                          |
+| directory in the tarball | files | listed in the notices                         |
 | ------------------------ | ----: | --------------------------------------------- |
 | `libpostal/`             |   825 | yes                                           |
 | `chromium-i18n/`         |   253 | yes                                           |
@@ -407,18 +407,18 @@ rows, and the Overture release pinned as `2026-06-17.0`. Read on this machine, t
 it committed, and each row is `{raw, country}` with no source field.
 
 The open question is the same one the twelve weights packages leave open: which records trained the
-committed `weights.bin`. The builder records a corpus version, but the shipped artifact carries no
+committed `weights.bin`. The builder records a corpus version, but the shipped artifact includes no
 manifest, so the two cannot be linked. A rebuild would answer the question by freezing a manifest,
 in the same way `buildCorpus` now writes `TRAINING_SOURCES.json`.
 
 ### Two scope limits kept `data-provenance` from finding it, and one is unstated
 
-The check reads every `data/` directory **that already carries a `PROVENANCE.md`** and reports each
+The check reads every `data/` directory **that already contains a `PROVENANCE.md`** and reports each
 artifact the file omits. `packages/core/data/` had no such file until now, so the directory was
-outside the check by construction, as the check's own header states. Four other packages carry
+outside the check by construction, as the check's own header states. Four other packages have
 one: `activity-lexicon`, `corpus`, `geographic-model` and `poi-taxonomy`.
 
-The check is also **non-recursive**, which its header does not say: it collects files whose directory
+The check is also **non-recursive**. Its header does not state that. It collects files whose directory
 equals the `data/` directory itself. Every artifact in `packages/core/data/` is a level down, in
 `libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. The new record brings the
 directory into scope, but the check finds zero artifacts to list and passes. The record itself
@@ -429,7 +429,7 @@ directory directly under `data/`, which holds **0 files** in the tarball. The di
 levels in, at `packages/core/data/internal/dictionaries/whosonfirst/`. A consumer following the
 notice to find the material found no such directory. Both copies are corrected.
 
-### The `us` bundle carries its own publisher list, and the record had the wrong majority
+### The `us` bundle records its own publisher list, and the record had the wrong majority
 
 Every row in every `address-points-us-*.db` has a `source` column the build stamps. Censused across
 all 52 state databases on 2026-09-21, 125,276,536 address points:
@@ -438,14 +438,14 @@ all 52 state databases on 2026-09-21, 125,276,536 address points:
 | -------------------------- | ---------: | ----: | ------------------------------------------------------ |
 | `overture:NAD`             | 85,482,142 | 68.2% | the US DOT National Address Database, through Overture |
 | `overture:OpenAddresses/…` | 39,446,017 | 31.5% | 119 county and state bodies, through Overture          |
-| `openaddresses`            |    348,377 |  0.3% | Hawaii alone, built through the `--oa-csv` path        |
+| `openaddresses`            |    348,377 |  0.3% | Hawaii only, built through the `--oa-csv` path         |
 
-The record named the Census Bureau and OpenAddresses. The publisher of 68.2% of the rows was absent,
+The record listed the Census Bureau and OpenAddresses. The publisher of 68.2% of the rows was absent,
 and its open question asked which OpenAddresses source supplied each state's rows while saying a
 per-state answer needed a list the bundle did not have. The bundle had it on every row.
 
-Thirty-six states are NAD-only, eleven are mixed, and four carry a single non-NAD source: Colorado,
-Hawaii, Massachusetts and Nevada. Hawaii's rows carry release `openaddresses-latest` rather than the
+Thirty-six states are NAD-only, eleven are mixed, and four have a single non-NAD source: Colorado,
+Hawaii, Massachusetts and Nevada. Hawaii's rows record release `openaddresses-latest` rather than the
 dated Overture release, so the fleet is not one build.
 
 **Scope.** The census read this machine's data root. Those files match the bytes `bundles.ts` records
@@ -456,10 +456,10 @@ reads version `2026-07-22.0` against a published path of `poi/2026-07-20a/`. Thi
 makes no claim about those bundles from a local read.
 
 The National Address Database's disclaimer revealed a second omission. The page states the
-data carries no copyright under 17 U.S.C. § 105 and is available for re-use without limitation, and
+data has no copyright under 17 U.S.C. § 105 and is available for re-use without limitation, and
 it also states that the data "is not intended for use as a mailing list and is subject to individual
 state statutes that prohibit it's use as a mailing list". That restriction does not arise from
-copyright, so a record stating the copyright status alone loses it, and a postal-address product is
+copyright, so a record stating only the copyright status loses it, and a postal-address product is
 what such a use is about.
 
 ### One grant addresses a trained model in its own text
@@ -475,18 +475,18 @@ answers it in two sentences:
 > machine learning models and models' insights.
 
 These clauses apply to this agreement only. They do not cover the sources Overture itself drew each
-row from, which remain an open question, and they resolve no question for Who's On First, GeoNames,
+row from. Those sources remain an open question. The clauses also resolve no question for Who's On First, GeoNames,
 TIGER/Line, OpenAddresses or Base Adresse Nationale. They show that a grant can answer the model
 question in writing. The question stays open for the other sources because their grants do not
 address it, and one publisher has answered it.
 
 The `poi` bundle's record now separates the two cases. §2.1 requires the agreement's text to
-accompany shared Data, which is an obligation on hosting `poi.db`. The agreement places no
+accompany shared Data. That is an obligation on hosting `poi.db`. The agreement places no
 obligation on the model.
 
 GeoNames states its terms twice, and only one statement gives a version. The export readme beside
 the files specifies Creative Commons Attribution 4.0, while the about page cites the license without
-a version. The record uses 4.0 and says which document it came from, because the conditions differ
+a version. The record uses 4.0 and states which document it came from, because the conditions differ
 across versions of that license.
 
 ### The one workspace held for a rights reason had no enforced hold
@@ -500,8 +500,8 @@ hand, would have published it.
 
 **Repaired.** `assertWorkspacePublishable` refuses any workspace the record names, quoting the
 recorded reason, and both publish paths call it: `publishWorkspace` before it packs, and
-`blessPackages` across every named directory before the first publish. A held-out workspace publish
-workspace now requires deleting its entry, which a reviewer sees in the diff. The check refuses every
+`blessPackages` across every listed directory before the first publish. A held-out workspace publish
+workspace now requires deleting its entry. A reviewer sees that deletion in the diff. The check refuses every
 entry, including those held for reasons other than rights. It therefore has no separate
 classification of rights-held entries that could drift out of date.
 
@@ -525,7 +525,7 @@ An evidence gap about a source is a gap to record. A finding against a source is
 a person has to reach, and a release control should not make it.
 
 **False-absence correction for this control.** The first version read
-`training.data_attribution` alone and refused `neural-weights-cjk` as recording no attribution. That card
+only `training.data_attribution` and refused `neural-weights-cjk` as recording no attribution. That card
 records six entries under a top-level `attribution` key instead, naming the Overture CDLA terms, the
 National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
 permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
@@ -535,9 +535,9 @@ Two spellings exist because the two graph packages were written separately, and 
 both. A control that reports a false absence blocks a release that did not need blocking, and its
 report looks identical to a real absence.
 
-Both graph packages pass. `en-us` records ten entries, eight naming a license; the two that do not are
-the OpenAddresses PL entry, whose parenthetical reads `public, BDOT-derived`, and the pointer to
-`THIRD_PARTY_NOTICES.md`. `cjk` records six, four naming a license; the two that do not state their
+Both graph packages pass. `en-us` records ten entries, eight naming a license. The two that do not are
+the OpenAddresses PL entry and the pointer to `THIRD_PARTY_NOTICES.md`. The PL entry's parenthetical
+reads `public, BDOT-derived`. `cjk` records six, four naming a license. The two that do not state their
 terms outside a parenthetical rather than stating none.
 
 ## How an operator reads any of this
@@ -555,10 +555,10 @@ includes `LICENSE.md` at 2.1 kB and `PROVENANCE.json` at 5.6 kB, so the records 
 will reach consumers. That result applies to this checkout. The next section describes what is on
 npm today.
 
-## What the tarballs already on npm carry
+## What the tarballs already on npm contain
 
 The generated rights files were written after `10.0.0` was published, so no published weights package
-carries one. Measured 2026-09-21 by unpacking the registry's own tarballs:
+contains one. Measured 2026-09-21 by unpacking the registry's own tarballs:
 
 | package                                  | `LICENSE.md` | `PROVENANCE.json` |
 | ---------------------------------------- | ------------ | ----------------- |
@@ -568,7 +568,7 @@ carries one. Measured 2026-09-21 by unpacking the registry's own tarballs:
 | `@mailwoman/neural-weights-ja-jp@10.0.0` | absent       | absent            |
 
 `en-gb@10.0.0` ships eleven files: `README.md`, `model-card.json`, `package.json` and eight data
-artifacts. A consumer who installed it holds the model card, which records attribution for `en-us`
+artifacts. A consumer who installed it holds the model card. That card records attribution for `en-us`
 rather than for the artifacts in front of them, and no file that states the terms or the open
 questions.
 
@@ -580,7 +580,7 @@ copy.
 
 The next release corrects both, and the existing tarballs stay as they are. A published tarball is
 immutable, and none of these has been altered. A consumer holding `10.0.0` can read the record in the
-repository at that tag, or install the version that carries the files.
+repository at that tag, or install the version that includes the files.
 
 ## What the record leaves open
 

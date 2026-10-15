@@ -23,17 +23,17 @@ Three things, and the second one will stop you partway through if it isn't done.
   npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite spliterator
   ```
 
-- **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`. Coordinates come from the gazetteer,
-  which is a 2.88 GB download you do once, and it lands at that path.
+- **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`. Coordinates come from the gazetteer.
+  The gazetteer is a 2.88 GB download you do once, and it lands at that path.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command. Every
-  transcript below assumes you ran it; none of them exports anything.
+  transcript below assumes you ran it. None of them exports anything.
 - **A CSV whose columns you know.** This page uses
   [customers.csv](/examples/customers.csv) — twenty invented companies at real street addresses across
   New York, Illinois, California, Massachusetts and the District of Columbia. Download it next to your
   script.
 
 `candidate.db` on its own answers at the admin tier: each row resolves to its city's centroid rather
-than to its building, which is what every transcript below shows. The loop asks for street databases too,
+than to its building. Every transcript below shows that. The loop asks for street databases too,
 finds none at this point in the sequence, and degrades to admin without complaining. Step 6 pulls one
 state and runs the same script again, so you can see what changes and what does not.
 
@@ -128,7 +128,7 @@ console.log(
 )
 ```
 
-Five decisions in there are worth naming.
+The loop makes five decisions.
 
 **The classifier, the lookup, the resolver and the `USStateDatabaseProvider` are built once, outside the loop.**
 The model load dominates geocoding cost. The script loads the model once, so row count barely affects
@@ -170,7 +170,7 @@ head -3 customers.geocoded.jsonl
 ```
 
 Twenty rows in 1.53 s wall on the machine this page was verified on, model load included. The three DC
-rows share a coordinate because they share a city, and `resolution_tier: "admin"` says so — three
+rows share a coordinate because they share a city, and `resolution_tier: "admin"` reports that — three
 different buildings, one centroid, and `uncertainty_m: null` because the admin tier has no radius to
 report. The `USStateDatabaseProvider` was asked for DC and had no database to give.
 
@@ -224,12 +224,12 @@ tail -1 customers.geocoded.jsonl
 
 `Zzyzx Falls, ZZ` is not a place, and the row came back with a coordinate anyway — in Pennsylvania. The
 gazetteer matched on `Falls`, found Falls Township, and returned it. No field in the result object is
-false: the coordinate is Falls Township's, and `matched_locality` says Falls Township. Only the
+false: the coordinate is Falls Township's, and `matched_locality` reads Falls Township. Only the
 assumption that a coordinate means a match is false.
 
 A returned coordinate is a match against a gazetteer rather than a check that the address exists — so compare
-`hierarchy[].name` against the value you sent and route the disagreements to review, which is the
-comparison already in the loop above. It costs one string compare per row and it is the difference
+`hierarchy[].name` against the value you sent and route the disagreements to review. The loop above
+already makes that comparison. It costs one string compare per row and it is the difference
 between twenty-one usable coordinates and twenty.
 
 ## 5. The one-command version
@@ -240,7 +240,7 @@ record matcher, so what it writes is an entity set rather than a row dump.
 Two things about it before you run it. Unlike `geocode`, it will not start without a `--resolve-db` or
 `$MAILWOMAN_WOF_DB`, even though the candidate gazetteer is what answers — so pass the
 gazetteer's own path to satisfy the check. And its output properties are the record matcher's normalized
-view of your row rather than your row: your `customer_id` rides in `sourceIDs`.
+view of your row rather than your row: your `customer_id` is stored in `sourceIDs`.
 
 ```bash
 npx mailwoman registry run customers.csv --infer-mapping \
@@ -279,7 +279,7 @@ jq '.features[0]' customers.geojson
 ```
 
 `20 rows → 20 records → 20 entities` is the line to read: twenty inputs in, twenty entities out, so no
-two records were linked. `26 candidate pairs` counts the comparisons the blocking pass thought worth
+two records were linked. `26 candidate pairs` counts the comparisons the blocking pass selected for
 scoring, out of the 190 a full cross-product of twenty records would have been — the pass runs whether
 or not it finds anything, and on a file of distinct customers it produces no change.
 
@@ -317,8 +317,8 @@ the file or the loop changed. The sixteen rows in other states still read `admin
 per jurisdiction rather than per install.
 
 One number to know if you compare this against `mailwoman geocode` on the same address: C-1004 reports
-`uncertainty_m: 98` here and `141` from the CLI. Both are right. 98 m is the raw half-segment radius,
-which is what `geocodeAddress` returns by default; the CLI multiplies it by DC's conformal factor of
+`uncertainty_m: 98` here and `141` from the CLI. Both are right. 98 m is the raw half-segment radius.
+`geocodeAddress` returns that radius by default. The CLI multiplies it by DC's conformal factor of
 1.44 for a roughly 90% bound, and 98 × 1.44 = 141. Pass `interpCalibration` to `geocodeAddress` when you
 want the calibrated figure from the library — the per-region table lives in
 [`interp-calibration.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/interp-calibration.ts).
@@ -326,7 +326,7 @@ want the calibrated figure from the library — the per-region table lives in
 ## What you have now
 
 Two files: `customers.geocoded.jsonl`, one line per input row with your ids intact, and
-`customers.geojson`, a FeatureCollection you can drag into QGIS or hand to a map library. Both carry
+`customers.geojson`, a FeatureCollection you can drag into QGIS or hand to a map library. Both include
 `resolution_tier`, the field that tells you whether a coordinate is a city centroid or a building — and
 a loop wired to pick up every street database you ever download without an edit.
 

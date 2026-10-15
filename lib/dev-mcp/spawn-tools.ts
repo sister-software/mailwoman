@@ -30,6 +30,21 @@ import { summarizeJob, type DevTool } from "#dev-mcp/tool-kit"
  */
 const promotionEvalOutDirs = new Map<string, string>()
 
+let checkLaunches = 0
+
+/**
+ * Names the out-dir of a check that gave none.
+ *
+ * The name takes the launch instant and a per-process counter.
+ * A name derived from the job count repeats after a worker restart, and the new run
+ * then reads the earlier run's `verdict.json` as its own until it writes one.
+ */
+export function defaultCheckOutDirName(now: Date = new Date()): string {
+	const stamp = now.toISOString().replaceAll(/[:.]/gu, "-").replace(/Z$/u, "")
+
+	return `mwdev-check-${stamp}-${++checkLaunches}`
+}
+
 /**
  * Build the CLI-spawning tools and the job poller over the given engine and job registries.
  */
@@ -176,7 +191,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// The eval runs its own recompile-before-eval guard, stricter than this one
 				// and surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
-				const outDir = (args["out_dir"] as string | null) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
+				const outDir = (args["out_dir"] as string | null) ?? tempRootPath(defaultCheckOutDirName())
 				// The promotion battery is `mailwoman eval promote --check <spec>`; a wrong
 				// subcommand can exit 0 with no verdict, so the job "succeeds" silently.
 				const argv = ["packages/mailwoman/out/cli/main.js", "eval", "promote", "--check", check, "--out-dir", outDir]
@@ -320,7 +335,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// A check job's numbers come from its own artifacts.
 				// Only a gauntlet job needs its log parsed.
 				const report = promotionEvalOutDir
-					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr)
+					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr, { startedAt: job.startedAt })
 					: parseGauntletReport(job.stdout, job.stderr)
 
 				const tail = args["tail_lines"] as number | undefined
@@ -329,7 +344,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				return {
 					...summary,
-					// A running job still reports what it has produced so far, clearly marked,
+					// A running job still reports what it has produced so far, marked as partial,
 					// because a partial log is useful and a silent "not ready" is not.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing

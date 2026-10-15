@@ -6,7 +6,7 @@ tags: [geocoding, resolver, concepts, night-shift]
 date: 2026-06-14
 ---
 
-We turned the demo into a real geocoder. You type an address and get a rooftop coordinate, computed in your browser without a server. The last feature was autocomplete, which completes the city name while you type. We had shipped autocomplete as a command-line tool days earlier and seen it rank San Francisco above San Diego, so we considered it done. We connected the same function to the search box, typed `New Yor`, and it suggested Denver.
+We turned the demo into a real geocoder. You type an address and get a rooftop coordinate, computed in your browser without a server. The last feature was autocomplete. It completes the city name while you type. We had shipped autocomplete as a command-line tool days earlier and seen it rank San Francisco above San Diego, so we considered it done. We connected the same function to the search box, typed `New Yor`, and it suggested Denver.
 
 This raised three questions. Why does a function that handles `San` correctly fail on `New Yor`? How does completing a word differ from completing the word a person is still typing? How does an autocomplete that knows ten thousand cities fail to complete one of them?
 
@@ -14,7 +14,7 @@ This raised three questions. Why does a function that handles `San` correctly fa
 
 ## The autocomplete we already had
 
-Our gazetteer (every country, region, county, and city we resolve against) is stored as a finite-state transducer. It is a trie over place-name tokens, and each accepting state carries the places whose names end at that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It is fast because the FST _is_ the index, so no separate search runs. The walk reaches a node, and the answers are stored there.
+Our gazetteer (every country, region, county, and city we resolve against) is stored as a finite-state transducer. It is a trie over place-name tokens, and each accepting state stores the places whose names end at that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It is fast because the FST _is_ the index, so no separate search runs. The walk reaches a node, and the answers are stored there.
 
 This design fits a command line. You type a whole word, press tab, and get completions. The unit of input is the word, and the trie is keyed by words.
 

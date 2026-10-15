@@ -4,7 +4,6 @@
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
@@ -13,7 +12,6 @@ import {
 	type InputMode,
 	type PipelineTiming,
 	type QueryKindResult,
-	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
 import {
 	type RegionDatabaseProvider,
@@ -22,6 +20,7 @@ import {
 	type Resolver,
 	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
@@ -46,7 +45,7 @@ import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"
 import type { SoilCapabilityRoute } from "#observations/soil-route"
 import type { ZoningDesignationRoute } from "#observations/zoning-route"
-import { poiTaxonomyLookup } from "#poi/intent"
+import { createStopwordPOIPhraseLookup } from "#poi/intent"
 import {
 	capitalIndexFor,
 	type CapitalTier,
@@ -62,6 +61,7 @@ import {
 export interface GeocodeSessionSettings {
 	gazetteerPrior: boolean
 	venueHeadPrior: boolean
+	streetMorphologyPrior: boolean
 	capitalTier: CapitalTier
 	variantAliasExemption: VariantAliasExemption
 }
@@ -72,6 +72,7 @@ export interface GeocodeSessionSettings {
 export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
 	gazetteerPrior: true,
 	venueHeadPrior: true,
+	streetMorphologyPrior: true,
 	capitalTier: "auto",
 	variantAliasExemption: "applied",
 }
@@ -83,6 +84,7 @@ export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>)
 	return {
 		gazetteerPrior: options.gazetteerPrior ?? GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
 		venueHeadPrior: options.venueHeadPrior ?? GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
+		streetMorphologyPrior: options.streetMorphologyPrior ?? GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior,
 		capitalTier: options.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: options.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 	}
@@ -113,6 +115,13 @@ export interface GeocodeSessionOptions {
 	 * @defaultValue `1`
 	 */
 	venueHeadBiasScale?: number
+	/**
+	 * Whether the street-morphology matcher biases a street affix on a segment that opens
+	 * with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
+	 */
+	streetMorphologyPrior?: boolean
 	locale: string
 
 	/**
@@ -445,52 +454,18 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const classifier = routed.primary
 
-	let fst: FSTMatcherLike | null = null
-	let streetMorphology: FSTMatcherLike | null = null
+	const { loadParsePriors } = await import("#geocode/parse-priors")
 
-	if (settings.gazetteerPrior) {
-		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
+	const priors = await loadParsePriors(classifier, {
+		gazetteerPrior: settings.gazetteerPrior,
+		venueHeadPrior: settings.venueHeadPrior,
+		label: `locale ${options.locale}`,
+	})
 
-		const fstPath = classifier.fstPath
+	const { fst, streetMorphology, anchorRegions } = priors
 
-		if (fstPath) {
-			try {
-				fst = deserializeFST(await readLocalBuffer(fstPath))
-			} catch (error) {
-				console.warn(`[mailwoman] failed to load the gazetteer FST at ${fstPath}: ${(error as Error).message}`)
-			}
-		}
-
-		if (!fst) {
-			console.warn(
-				`[mailwoman] --gazetteer-prior was requested for locale ${options.locale} but no FST artifact resolved` +
-					`${classifier.fstPath ? ` at ${classifier.fstPath}` : " (the weights package ships none)"} — the gazetteer ` +
-					"channel is OFF for this run. Results are the base model's, not the prior's."
-			)
-		}
-
-		if (fst) {
-			try {
-				streetMorphology = (
-					await loadStreetMorphologyFST({
-						...(classifier.streetMorphologyPath ? { artifactPath: classifier.streetMorphologyPath } : {}),
-						onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-					})
-				).matcher
-			} catch (error) {
-				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — check off`)
-			}
-		}
-	}
-
-	const venueHeadCountry = (options.defaultCountry ?? options.locale.split("-")[1] ?? "").toUpperCase()
-
-	const venueHead = settings.venueHeadPrior
-		? (await import("@mailwoman/poi-taxonomy/venue-heads")).venueHeadLexicon(venueHeadCountry)
-		: null
+	const venueHeadCountry = options.defaultCountry ?? options.locale.split("-")[1] ?? null
+	const venueHead = priors.venueHeadFor(venueHeadCountry)
 
 	const weightsLoadedAt = performance.now()
 
@@ -604,7 +579,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
-	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
+
+	const kindClassifierWithLexicon = createKindClassifier({
+		poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords),
+	})
 
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, {
@@ -661,15 +640,24 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		| "inputMode"
 		| "fst"
 		| "streetMorphology"
+		| "streetMorphologyPrior"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
-		...(venueHead ? { venueHead } : {}),
-		...(venueHead && options.venueHeadBiasScale !== undefined
-			? { venueHeadOpts: { biasScale: options.venueHeadBiasScale } }
+		...(anchorRegions ? { anchorRegions } : {}),
+		streetMorphologyPrior: settings.streetMorphologyPrior,
+		...(venueHead
+			? {
+					venueHead,
+					venueHeadOpts: {
+						...priors.venueHeadOptsFor(venueHeadCountry),
+						...(options.venueHeadBiasScale !== undefined ? { biasScale: options.venueHeadBiasScale } : {}),
+					},
+				}
 			: {}),
 	}
 
@@ -727,6 +715,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			classifier: routed,
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
+			...(anchorRegions ? { anchorRegions } : {}),
 			resolver,
 			databases,
 			nationalDatabases,

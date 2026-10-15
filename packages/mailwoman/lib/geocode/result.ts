@@ -5,6 +5,7 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { adminLadderForNodes } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 
 import { adminCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -40,17 +41,48 @@ function hierarchySourceNodeOf(node: AddressNode): HierarchySourceNode {
 }
 
 function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedComponent[] {
+	const unfollowed: UnfollowedComponent[] = []
+
 	const refusedKm = allNodes
 		.map((node) => node.metadata?.["postcode_move_refused_km"])
 		.find((km): km is number => typeof km === "number")
 
-	if (refusedKm === undefined) return []
-
 	const postcode = allNodes.find((node) => node.tag === "postcode")
 
-	if (!postcode) return []
+	if (refusedKm !== undefined && postcode) {
+		unfollowed.push({ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm })
+	}
 
-	return [{ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm }]
+	for (const node of allNodes) {
+		const outsideKm = node.metadata?.["rooftop_outside_locality_km"]
+
+		if (typeof outsideKm === "number") {
+			unfollowed.push({ tag: node.tag, value: node.value, reason: "rooftop_outside_locality", distance_km: outsideKm })
+		}
+	}
+
+	return unfollowed
+}
+
+/**
+ * Half the diagonal of a resolved place's bounding box, in meters, or `null`
+ * when the resolver recorded no extent for the place.
+ */
+function halfDiagonalM(bbox: unknown): number | null {
+	if (!bbox || typeof bbox !== "object") return null
+
+	const { minLat, minLon, maxLat, maxLon } = bbox as Record<string, unknown>
+
+	if (
+		typeof minLat !== "number" ||
+		typeof minLon !== "number" ||
+		typeof maxLat !== "number" ||
+		typeof maxLon !== "number"
+	) {
+		return null
+	}
+
+	return Math.round((haversineKm(minLat, minLon, maxLat, maxLon) * 1000) / 2)
 }
 
 /**
@@ -58,6 +90,7 @@ function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedCompo
  *
  * The coordinate comes from the most precise tier present, in the order address point,
  * interpolated point, street centroid and admin ladder.
+ * An admin-ladder coordinate taken from the postcode node reports the `postcode` tier.
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
 	const projected = decodeAsJSON(tree, { includeDropped: true })
@@ -135,6 +168,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 				break
 			}
+		}
+
+		// A coordinate from the postcode's own row locates the postcode.
+		// A postcode is finer than its locality.
+		if (adminWinnerNode?.tag === "postcode") {
+			tier = "postcode"
+			uncertaintyM = halfDiagonalM(adminWinnerNode.metadata?.["resolver_bbox"])
 		}
 	}
 

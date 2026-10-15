@@ -93,7 +93,7 @@ may import its module by relative path, by the package's `#` imports, or by the 
 A directory's role decides its source root, whether or not shipped code imports it. `lib/` holds only
 the library. `sdk/` holds data acquisition: fetching, downloading and extracting source data. `tools/`
 holds build, evaluation and maintenance code. `cli/` holds a command-line program, entered at
-`cli/main.ts`. Library code never imports the other three roots; the `no-library-to-role-directory`
+`cli/main.ts`. Library code never imports the other three roots. The `no-library-to-role-directory`
 dependency rule enforces this, and the `no-serve-package-to-build-tooling` rule keeps request-path
 packages away from every workspace's `sdk/` and `tools/`. The tooling workspaces listed in
 `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs` keep their tooling under `lib/`.
@@ -118,11 +118,12 @@ before writing.
 
 Use the established shared implementation before adding a local helper. `mailwoman/prefer-home` and
 the `private-name-shadows-export` repository check report repeated implementation shapes and private
-names that collide with exports. Price the dependency before moving code into a shared package;
-`nuts-lookup`, `timezone-lookup`, and the GBT test
-retain documented local implementations to avoid large dependency graphs. That pricing applies to
-runtime imports. A declaration several packages need has one home and is imported with `import type`,
-which adds no runtime dependency; the `duplicate-exported-shape` repository check reports an exported
+names that collide with exports. Before moving code into a shared package, count the runtime
+dependencies and shipped bytes the move adds to each importing package; `nuts-lookup`,
+`timezone-lookup`, and the GBT test retain documented local implementations to avoid large
+dependency graphs. That count covers runtime imports. A declaration several packages need has one
+home and is imported with `import type`,
+which adds no runtime dependency. The `duplicate-exported-shape` repository check reports an exported
 interface or type alias whose body another workspace also exports. When two platforms must
 agree on behavior, share the function rather than copying its constants.
 
@@ -151,10 +152,10 @@ each match is.
 
 Four kinds of match are data rather than prose, and each has been corrupted by a sweep. An external
 name, where the publisher's own spelling is the correct one: Iowa's `Active Construction Contractor
-Registrations`, the UK's `Contracts Finder`, an Overture category id. A wire identifier, which is the
+Registrations`, the UK's `Contracts Finder`, an Overture category id. A wire identifier, such as the
 `source` string on every row of a built corpus and the key a training config's `source_weights` map
 addresses. A recorded fact in a golden answer key, a preregistration, an eval receipt or a released
-SBOM, where the record's value is that it says what it said at the time. And a verbatim quotation of
+SBOM, where the record's value is that it states what it stated at the time. And a verbatim quotation of
 someone else's text, including a clause of a license agreement.
 
 State the file types a sweep touched in its commit message, so a later reader can tell whether a
@@ -169,7 +170,7 @@ and `packages/corpus/data/PROVENANCE.md` records which of those inputs are not c
 After moving a workspace, search quoted path literals whose first segment is the old workspace name.
 The compiler does not inspect CI commands, CLI defaults, hook patterns, and test skip conditions. Keep
 data-root-relative paths and package specifiers unchanged when they are not filesystem references.
-CodeQL raises existing findings at their new paths; restore justified dismissals after merge. The
+CodeQL raises existing findings at their new paths. Restore justified dismissals after merge. The
 required `test` context decides merge eligibility.
 
 ## Evidence and diagnostics

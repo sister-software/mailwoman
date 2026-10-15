@@ -2,6 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ * Marks a promise started ahead of the await that reads it as handled, and returns it unchanged.
+ *
+ * A rejection still reaches the later await.
+ * Before that await, or when the result goes unused, it is not reported as unhandled.
+ */
+export function startEarly<T>(promise: Promise<T>): Promise<T> {
+	promise.catch(() => {})
+
+	return promise
+}
+
+/**
  * Await every enumerable own property of an object while preserving its keys.
  */
 type AwaitedObject<T extends object> = {

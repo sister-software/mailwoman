@@ -10,7 +10,7 @@ measure the result. The plan targets the US first. DeepSeek signed off on it (co
 The resolver (Phase 4) is shipped and works end-to-end: `parse → resolveTree →
 WOF place + coords`, with parent-constraint inheritance and FTS5/population/
 proximity ranking over US admin + postcodes. But it consumes **neural-only**
-output. The capability map (three unbiased arenas) says neither parser
+output. The capability map (three unbiased arenas) shows that neither parser
 dominates — **input quality decides**: rules win clean/canonical (libpostal v0
 29% > neural 16%), neural wins noisy/degraded (perturbation neural 61% > v0 39%).
 Neural-only routing therefore gives up v0's advantage on clean input. We also
@@ -25,16 +25,16 @@ A per-input **routing layer** in front of the resolver:
   comma/delimiter count, capital-word ratio, gazetteer-token hits (WOF FST/bloom),
   ZIP-shape digits, word-length distribution → a tiny logistic regression →
   `p(v0-wins)`. It is interpretable and debuggable, and it adds no parse cost.
-- **Confidence bands:** `p > 0.8` → v0; `p < 0.2` → neural; the narrow ambiguous
+- **Confidence bands:** `p > 0.8` → v0, `p < 0.2` → neural, and the narrow ambiguous
   band → **resolver-as-arbiter** (run both, resolve both, pick the higher
   resolver-confidence result). The bands limit the 2× parse cost to a small share of traffic.
 - **resolver-as-arbiter** is the core mechanism. It makes
-  _resolvability_ (gazetteer support) the routing signal, which optimizes the
+  _resolvability_ (gazetteer support) the routing signal. That signal optimizes the
   end goal directly. It serves three purposes: online fallback (ambiguous band), offline
   auto-labeler for the scorer, and eval oracle.
 - **No fusion** in v1. A merge of v0's flat record with neural's tree is brittle: a
-  bad `PARENT_OF` nesting corrupts the resolver's parent-constraint inheritance,
-  which is its main strength. Revisit only if the data requires it.
+  bad `PARENT_OF` nesting corrupts the resolver's parent-constraint inheritance.
+  That inheritance is the resolver's main strength. Revisit only if the data requires it.
 
 ### The output-interface constraint
 
@@ -48,7 +48,7 @@ baseline that involves v0.
 **Phase 1 — prove the thesis (no routing code yet):**
 
 1. **Eval harness + ground truth.** WOF-bootstrap: sample stratified US WOF
-   places (localities/regions/postcodes; urban/rural/territories) → render to
+   places (localities, regions and postcodes across urban, rural and territory areas) → render to
    address strings via templates (full / no-street / state+ZIP) → **canonical +
    perturbed** variants (lowercase, comma-stripped, glued `NY14201`, mis-split ZIP,
    OCR). Label = WOF id at the rendered specificity (hierarchy-tolerant). Plus
@@ -71,7 +71,7 @@ baseline that involves v0.
 > perturbed subset**, and **≥3pp overall**, with coordinate error not >10% worse.
 > Oracle sits above arbiter (= headroom for the router).
 >
-> If met → routing is worth building (Phase 2). If arbiter ≈ neural-only →
+> If met → build routing (Phase 2). If arbiter ≈ neural-only →
 > routing is a dead end; **pivot to coverage** (the backlog's B3'/B5) instead.
 
 **Phase 2 — build routing (only if the check passes):**
@@ -104,10 +104,10 @@ makes no production-pipeline changes, because all of Phase 1 is offline scripts 
 
 - **Eval circularity:** WOF-bootstrap resolves WOF-rendered strings back to WOF.
   Mitigated by 142k-candidate ambiguity (real Springfield problem) + perturbation
-  stress + the golden regression set; the OA follow-on track is the independent
+  stress + the golden regression set. The OA follow-on track is the independent
   check. Do not describe WOF-bootstrap as "real-world" until OA lands.
 - **Admin-level ceiling:** the resolver resolves locality/region/postcode rather than
   street/house. "Correct place" = right city/ZIP rather than right building. Street-level
   (OSM/OpenAddresses) is a later phase.
 - **Resolver score isn't a probability:** calibrate before using it as arbiter
-  threshold or auto-label signal; reject below a min-score (both-garbage).
+  threshold or auto-label signal, and reject below a min-score (both-garbage).

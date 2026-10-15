@@ -1,22 +1,22 @@
 # PIX1 biases the child on an unchecked assumption about the parent (2026-08-04)
 
-**TL;DR.** `brooklyn, new york, ny` produces a tree with a `dependent_locality` and **no locality at
+**Summary.** `brooklyn, new york, ny` produces a tree with a `dependent_locality` and **no locality at
 all**, and the pre-prior model was right. The PIX1 placetype-pair prior demotes the child span on the
 stated assumption that "the parent keeps the model's own — typically strong `locality` — read"
 (`neural/placetype-pair-prior.ts:159`). Here the parent's own read is `B-region` by 4.21 nats,
 because the trailing `ny` re-anchors "New York" to the state. The prior is logit-blind by
-construction — `buildPlacetypePairPriors(opts, pieces, labels)` never receives the emissions — so
-nothing checks whether the assumption it rests on held.
+construction — `buildPlacetypePairPriors(opts, pieces, labels)` never receives the emissions. No
+code checks whether the assumption it rests on held.
 
 ## This is not a suppression problem
 
 I record this because the session that found it started from the opposite premise. There is **no
-`dependent_locality` suppression** anywhere in the runtime; R5
+`dependent_locality` suppression** anywhere in the runtime. R5
 (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`) went looking for one and
 overturned the doc that asserted it. The tag is dead **in the model, uniformly**, from a training-side
-class weight of 0.3 on `B/I-dependent_locality` carried v0.5.1 → v0.8.0 to "penalize hallucination of
-rare tags" — corrected to 1.0 but never retrained into the shipped lineage. PIX1 exists precisely to
-clear that ~7.0-logit deficit, which is the same enrichment direction as the venue / terminal / wing /
+class weight of 0.3 on `B/I-dependent_locality` that configs v0.5.1 → v0.8.0 kept to "penalize hallucination of
+rare tags". The weight was corrected to 1.0 but never retrained into the shipped lineage. PIX1 exists precisely to
+clear that ~7.0-logit deficit. That is the same enrichment direction as the venue / terminal / wing /
 sub-venue work rather than against it.
 
 So the finding below is not an argument for firing PIX1 less. It is that one of its firings inverts
@@ -50,7 +50,7 @@ region             = New York    42.921227, -75.596537
 region             = NY          42.921227, -75.596537
 ```
 
-Brooklyn itself resolves correctly. But a consumer asking "what locality?" gets nothing, and
+Brooklyn itself resolves correctly. But a consumer asking "what locality?" gets no locality, and
 coordinate grading that walks the admin tiers falls through to the region — **288 km out**. The
 pre-prior tree (`locality=Brooklyn`) would have graded at 0 km.
 
@@ -66,7 +66,7 @@ right pins it there:
 | `123 Main St, Park Slope, Brooklyn, NY 11215`             | dep_loc=Park Slope, locality=Brooklyn        | `Brooklyn` is unambiguous |
 
 The GB population is the same shape. The parent sits in the post-town position, left of a postcode.
-`brooklyn, new york, ny` is the tail case: a bare three-segment query, no postcode, and a parent whose
+`brooklyn, new york, ny` is the tail case: a bare three-segment query without a postcode, and with a parent whose
 surface is a state name. The trailing `ny` pushes the parent AWAY from locality at the exact moment
 the pair prior assumes it landed there.
 
@@ -74,15 +74,15 @@ the pair prior assumes it landed there.
 
 1. **Check the child bias on the parent's reading.** Thread the emissions into
    `buildPlacetypePairPriors` and skip the hit when the parent window's argmax is not in the
-   locality family. Restriction-only: byte-identical wherever the assumption already holds, which is
+   locality family. Restriction-only: byte-identical wherever the assumption already holds. That covers
    every pre-registered case above. Leaves `brooklyn, new york, ny` at the pre-prior tree
    (`locality=Brooklyn`), which grades at 0 km — correct, but it does not recover `New York` as the
    locality.
 2. **Bias the parent toward locality too, when a pair fires.** The pair index asserts a
-   (child, parent) admin relation; asserting only half of it is what produces the zero-locality tree.
+   (child, parent) admin relation. The prior asserts only half of it, and that half-assertion produces the zero-locality tree.
    Reaches the R5-intended shape (`dep_loc=Brooklyn, locality=New York`) rather than merely avoiding
    the bad one. Larger surface: it can now move a span the model was confident about, so it needs its
-   own δ and its own confound board — a region in fact named the same as a city ("New York",
+   own δ and its own confound board — a region whose name equals a city's name ("New York",
    "Washington", "Québec") is the confound class, and it is not small.
 
 Both are default-on changes on a tier-1 locale, so either needs the full gauntlet plus the GB/NZ pair

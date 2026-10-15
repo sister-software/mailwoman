@@ -8,7 +8,7 @@ date: 2026-06-17
 
 Mailwoman ships two address parsers in the same box.
 
-The first, which we call **v0**, is our TypeScript port of the [Pelias parser](https://github.com/pelias/parser) — a rules engine: tokenize, classify each token against dictionaries and patterns, solve for the most plausible arrangement under a pile of hand-written constraints. It is fast, deterministic, and the product of years of accumulated postal wisdom. It is also the thing we set out to beat.
+We call the first one **v0**. It is our TypeScript port of the [Pelias parser](https://github.com/pelias/parser) — a rules engine: tokenize, classify each token against dictionaries and patterns, solve for the most plausible arrangement under a pile of hand-written constraints. It is fast, deterministic, and the product of years of accumulated postal wisdom. It is also the thing we set out to beat.
 
 The second is the **neural** classifier — a sequence labeler trained on a BIO-tagged corpus, the one this blog has spent most of its life arguing with.
 
@@ -25,9 +25,9 @@ We don't grade the two parsers against each other's labels — thatmeasures whic
 | **neural**       |      **84.0%** |    **99.9%** |    3.3 km | **10.7 km** | **239 km** |
 | v0 (Pelias port) |          82.1% |        99.5% |    3.3 km |     11.2 km |     277 km |
 
-On clean US addresses it is close. Neural is a couple of points ahead on locality, a hair ahead on region, dead even at the median coordinate — and the difference you can feel is in the **tail**: neural's p99 error is 239 km versus 277. Both parsers nail the easy ones; the neural netthrows fewer wild misses.
+On clean US addresses it is close. Neural is a couple of points ahead on locality, a hair ahead on region, dead even at the median coordinate — and the difference you can feel is in the **tail**: neural's p99 error is 239 km versus 277. Both parsers nail the easy ones. The neural net throws fewer wild misses.
 
-(Pelias publishes no accuracy numbers of its own — only architecture docs — which is exactly why v0 _is_ our baseline. We can't compare to a number nobody printed, so we ported the thing and graded it ourselves.)
+(Pelias publishes no accuracy numbers of its own — only architecture docs — which is exactly why v0 _is_ our baseline. We can't compare to a number the Pelias project never printed, so we ported the thing and graded it ourselves.)
 
 A couple of points on clean addresses is not the headline. The headline is what happens off the beaten path.
 
@@ -42,7 +42,7 @@ v0    : street="PO Box"  house_number=1207  locality=Anchorage  region=AK  postc
 neural: po_box="PO Box 1207"  locality=Anchorage  region=AK  postcode=99510
 ```
 
-The rules parser reads "PO Box 1207" as a street named "PO Box" with house number 1207. It's not wrong by its own logic — "Box" looks like a street type, a number follows it — ithas no concept that this is a _post office box_, a different kind of place entirely. The neural net learned the `po_box` tag and uses it.
+The rules parser reads "PO Box 1207" as a street called "PO Box" with house number 1207. It's not wrong by its own logic — "Box" looks like a street type, a number follows it — it has no concept that this is a _post office box_, a different kind of place entirely. The neural net learned the `po_box` tag and uses it.
 
 **An intersection** — `5th & Main, Springfield, IL`:
 
@@ -60,7 +60,7 @@ v0    : house_number=1600  street="Pennsylvania Ave NW"  unit="4B"  ...
 neural: house_number=1600  street="Pennsylvania Ave NW"  unit="Apt 4B"  ...
 ```
 
-Both find the unit; the neural net keeps the designator ("Apt") attached, where v0 strips it to the bare "4B".
+Both find the unit. The neural net keeps the designator ("Apt") attached, where v0 strips it to the bare "4B".
 
 None of these are flukes. They're the payoff of a discipline we've written about before — **negative space**: you teach the model the tags the rules engine never had, by training on examples where they appear. The receipts, from our parity evals: `unit` coverage went from **0 → 92%**, `street_prefix` 0 → 78%, `street_suffix` 0 → 67% — components the Pelias port only doesn't emit. And on multi-locale evals the same recipe is why native-order German resolves locality at ~90% where a US-order assumption falls to the 40s (a story we've told before — the right name in the wrong state).
 
@@ -70,20 +70,20 @@ The pattern: on the addresses that fit the template, the parsers tie. On PO boxe
 
 Honesty is the house style, so:
 
-- **Clean addresses are a tie rather than a win.** The two parsers above agree on `350 5th Ave` down to the components — neural splits `street="5th"` + `street_suffix="Ave"` where v0 keeps `"5th Ave"` whole, and _both are correct_. For a model this good on US structure, the rules engine is not a thing to beat there; it's a thing to match.
-- **Reordered house numbers.** French addresses that lead with the postcode still trip the model — `fr.house_number` plateaus around 87% on the hardest reordered stratum, where the model assigns the leading number to `house_number`. We pushed it from 54% to 87% and then hit a wall that a training-weight tweak won't move; the next change is real reordered data rather than more synthetic.
+- **Clean addresses are a tie rather than a win.** The two parsers above agree on `350 5th Ave` down to the components — neural splits `street="5th"` + `street_suffix="Ave"` where v0 keeps `"5th Ave"` whole, and _both are correct_. For a model this good on US structure, the rules engine is not a thing to beat there. It's a thing to match.
+- **Reordered house numbers.** French addresses that lead with the postcode still trip the model — `fr.house_number` plateaus around 87% on the hardest reordered stratum, where the model assigns the leading number to `house_number`. We pushed it from 54% to 87% and then hit a wall that a training-weight tweak won't move. The next change is real reordered data rather than more synthetic.
 - **Whole locales we haven't tackled.** Japanese, Korean, and Taiwanese addressing — block-and-lot systems that don't map onto a Western street grid — are scoped but unbuilt. So is the last stubborn 0% class in the postal arena: Commonwealth and military PO-box formats (BFPO, APO/FPO).
 - **Coordinate precision.** Today's US coordinate is the admin-centroid tier — we land you in the right city, and "right city" is a centroid that can sit tens of kilometers from an edge address. The finer tiers (postcode centroid, then street-level interpolation) are wired but not yet the default everywhere.
 
 ## We even tried to have both
 
-If the neural net wins on weird addresses and ties on clean ones, the obvious move is to run both parsers and keep the better answer per component. We built exactly that — a per-component arbitration layer — and it taught us something worth the detour.
+If the neural net wins on weird addresses and ties on clean ones, the obvious move is to run both parsers and keep the better answer per component. We built exactly that — a per-component arbitration layer — and the result showed why label-match is the wrong grade.
 
-On our label-match arena, arbitration looked like a triumph: it captured 122 parses the neural net alone "missed." Then we graded the **assembled coordinate output** instead of the labels, and it was a catastrophe — locality match fell from 83% to 57%, the median coordinate error blew from 3 km to **over a thousand**, and half the addresses lost their street-and-number entirely.
+On our label-match arena, arbitration looked like a triumph: it captured 122 parses that the neural net by itself "missed." Then we graded the **assembled coordinate output** instead of the labels, and it was a catastrophe — locality match fell from 83% to 57%, the median coordinate error blew from 3 km to **over a thousand**, and half the addresses lost their street-and-number entirely.
 
-The diagnosis is the interesting part. The arena's "neural missed it" column conflates two very different things: addresses the neural net gets _wrong_, and addresses it gets _differently right_. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse — and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure; the regression vanished, and so did the result. The safe version is a net wash.
+The diagnosis is the interesting part. The arena's "neural missed it" column conflates two very different things: addresses the neural net gets _wrong_, and addresses it gets _differently right_. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse — and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure. The regression vanished, and so did the result. The safe version is a net wash.
 
-The lesson we're keeping: for a model this strong on the addresses we serve, **there is no free lunch in blending it with the rules parser** — neural isn't wrong where it differs, it's differently right, and "differently right" is not something to overwrite. We grade the coordinate now, never the label, and we let the arbitration implementation sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
+The lesson we're keeping: for a model this strong on the addresses we serve, **blending it with the rules parser left coordinate accuracy where the neural model put it without the blend, once the blend kept the tree intact** — neural isn't wrong where it differs, it's differently right, and "differently right" is not something to overwrite. We grade the coordinate now, never the label, and we let the arbitration implementation sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
 
 ## What's on deck
 

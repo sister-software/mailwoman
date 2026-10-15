@@ -51,6 +51,7 @@ import { JSONSpliterator } from "spliterator"
 import { $public } from "#env"
 import { deriveGeocodeRegister } from "#geocode/core"
 import { normalizeComponent } from "#tools/eval-harness/per/tag-f1"
+import { productionPriorOptions } from "#tools/eval-harness/production-priors"
 
 /**
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts`
@@ -467,6 +468,8 @@ export async function perLocaleF1(
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
 
+	const priorOptionsFor = await productionPriorOptions(neural, reportError)
+
 	const reports: FileReport[] = []
 
 	for (const file of args.files) {
@@ -513,6 +516,8 @@ export async function perLocaleF1(
 				// `--case-normalization preserve` disables the all-caps title-case shim.
 				// The shim would hide the model's own case handling from this measurement.
 				caseNormalization: args.caseNormalization,
+				// The production priors, with the venue-head lexicon of the row's country.
+				...priorOptionsFor(row.country ?? null),
 			})
 
 			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country ?? null))

@@ -79,7 +79,7 @@ body:
         The measured quantity with its denominator, threshold, artifact, and
         comparison arm. Name the tool that produced it (the mwdev_* suite, or
         the CLI command and version). A measured zero states the coverage it
-        was measured across. an unknown says the system did not measure.
+        was measured across. An unknown states that the system did not measure.
       placeholder: |
         41/58 rows resolved on the board subset (baseline 40/58).
         The one differing row is `07691 Portopetro, Illes Balears, Spain`.
@@ -126,7 +126,7 @@ body:
           required: true
         - label: Every number has its denominator.
           required: true
-        - label: Every WOF id or row name carries the entity or address it names.
+        - label: Every WOF id or row name appears beside the entity or address it identifies.
           required: true
         - label: No judgment word stands where a fact belongs.
           required: true

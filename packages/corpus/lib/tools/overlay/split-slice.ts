@@ -15,15 +15,7 @@ import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
 import type { CanonicalRow } from "#types"
-import { type CountryHoldout, defaultHoldouts, type SplitName, splitForRow } from "#utils/split"
-
-/**
- * The component tags the holdout policy reads.
- *
- * `splitForRow` consults `region`, `postcode` and `locality` and no other field,
- * so reconstructing the rest would cost a string slice per span for no decision.
- */
-const HOLDOUT_TAGS = new Set<string>(["region", "postcode", "locality"])
+import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
 
 /**
  * The fields {@linkcode holdoutComponents} reads, with the span triple optional
@@ -63,7 +55,7 @@ export function holdoutComponents(row: SpannedRow, index: number, input: string)
 	const components: Record<string, string> = {}
 
 	for (const [span, tag] of tags.entries()) {
-		if (!HOLDOUT_TAGS.has(tag) || components[tag]) continue
+		if (!HOLDOUT_COMPONENT_TAGS.has(tag) || components[tag]) continue
 
 		components[tag] = raw.slice(starts[span]!, ends[span]!)
 	}

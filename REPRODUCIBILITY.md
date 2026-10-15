@@ -1,7 +1,7 @@
 # Reproduction of a shipped model (worked example: v4.2.0)
 
-The "clone + train" recipe (#480). A shipped model is reproducible from five inputs; this
-page names exactly where each lives and the commands that consume them. The worked example
+The "clone + train" recipe (#480). A shipped model is reproducible from five inputs. This
+page lists exactly where each lives and the commands that consume them. The worked example
 is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 (`evals/scores-by-version.json`) for any other version — every row records the same five.
 
@@ -67,7 +67,7 @@ constant-folds twelve shape-plumbing nodes (1 Mul, 9 Concat, 2 Reshape) into six
 fp32 grows 2,576 bytes and int8 seven, while opset, `ir_version`, inputs, outputs and every weight
 tensor stay identical and both graphs answer bit-for-bit equal logits at sequence 8, 64 and 128.
 **A rebuild of an artifact exported before that pin will differ in md5 and be correct.** When a
-rebuild's digest does not match, compare the graphs and the outputs before concluding drift; the
+rebuild's digest does not match, compare the graphs and the outputs before concluding drift. The
 md5 below is the v4.2.0 artifact's and predates the `onnxscript` bump.
 
 Check your local env against the set:
@@ -81,5 +81,5 @@ node packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts   # 
 Gaz-trained models (v4.2.0+) are always evaluated with
 `--gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --suppress-gaz-near-postcode`
 (zero-filled clues depress country recall and fake an affix crash). Never compare F1 across
-tokenizer versions. fp32-to-fp32 for measurement; int8 for ship claims. Recompile
+tokenizer versions. Compare fp32 to fp32 for measurement. Use int8 for ship claims. Recompile
 (`yarn compile`) before any eval — harnesses load `core/out`.

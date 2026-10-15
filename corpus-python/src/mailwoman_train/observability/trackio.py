@@ -139,7 +139,7 @@ def _run_config(cfg: Any) -> dict[str, Any]:
     Why flat scalars only:
     - Cleaner Trackio table columns.
     - Easier filtering/sorting across runs.
-    - Focused on knobs actually changed between model versions.
+    - Focused on knobs that changed between model versions.
     """
     t, m, d = cfg.train, cfg.model, cfg.data
     return {

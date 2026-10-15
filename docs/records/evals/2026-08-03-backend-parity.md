@@ -1,17 +1,17 @@
 # Resolver backend parity — FTS vs candidate table (2026-08-03)
 
-**TL;DR.** The candidate-table backend is **at parity or ahead of FTS everywhere I measured**, and
+**Summary.** The candidate-table backend is **at parity or ahead of FTS everywhere I measured**, and
 the stale `46/51` result is obsolete: on current main the POI board reads **FTS 51/51, candidate
 50/51**. But the A/B that motivated this investigation measures the wrong thing. Candidate-backend
 selection also silently drops the locale-derived country filter, so
 `12 Rue de Rivoli, 75001 Paris` resolving to Paris TX on FTS and Paris FR on candidate is **entirely
 the country filter rather than the backend** — FTS with `--default-country none` returns Paris FR, and
 candidate with `--default-country US` returns Dallas TX. On the same 40 gold rows, the
-country filter is worth **+10 cases**, the backend **+1**. At scale on 1050 real international
+country filter accounts for **+10 cases** and the backend for **+1**. At scale on 1050 real international
 addresses the candidate backend fixes 66 gross errors and breaks 16 (net **+4.8pp** inside 25 km);
 on 1200 US addresses it is better at every distance threshold with a **10× better p99** (259 km →
-25.7 km) at identical locality-match. Across 2382 graded cases the candidate backend loses no
-country, no placetype and no query shape — its only reproducible loss is a single POI-anchor case.
+25.7 km) at identical locality-match. Across 2382 graded cases the candidate backend loses on
+zero countries, zero placetypes and zero query shapes. Its only reproducible loss is a single POI-anchor case.
 The candidate backend can safely become the default. The country filter needs a separate,
 riskier, separate decision — see the companion diagnosis in
 [`2026-08-03-postcode-locality-scoping.md`](./2026-08-03-postcode-locality-scoping.md).
@@ -72,60 +72,60 @@ invalid.
 
 ### Per-case
 
-Format: `✅/❌ resolved-name/country distance-from-gold`.
+Format: `pass/fail: resolved-name/country distance-from-gold`.
 
-| input                                           | gold                 | FTS+US                      | FTS+none                    | cand+US                     | cand+none                   |
-| ----------------------------------------------- | -------------------- | --------------------------- | --------------------------- | --------------------------- | --------------------------- |
-| New York City                                   | New York/US          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          |
-| new york city                                   | New York/US          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          |
-| Brooklyn                                        | Brooklyn/US          | ✅ Brooklyn/US 0km          | ✅ Brooklyn/US 0km          | ✅ Brooklyn/US 0km          | ✅ Brooklyn/US 0km          |
-| brooklyn, new york, ny                          | Brooklyn/US          | ❌ New York/US 288km        | ❌ New York/US 288km        | ❌ New York/US 288km        | ❌ New York/US 288km        |
-| Chicago                                         | Chicago/US           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           |
-| Seattle                                         | Seattle/US           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           |
-| San Francisco                                   | San Francisco/US     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     |
-| Washington, DC                                  | Washington/US        | ✅ Washington/US 0km        | ✅ Washington/US 0km        | ✅ Washington/US 0km        | ✅ Washington/US 0km        |
-| Saint Paul, MN                                  | St. Paul/US          | ✅ St. Paul/US 0km          | ✅ St. Paul/US 0km          | ✅ St. Paul/US 0km          | ✅ St. Paul/US 0km          |
-| Springfield, IL                                 | Springfield/US       | ✅ Springfield/US 0km       | ✅ Springfield/US 0km       | ✅ Springfield/US 0km       | ✅ Springfield/US 0km       |
-| Berlin                                          | Berlin/DE            | ❌ Berlin/US 6242km         | ✅ Berlin/DE 0km            | ❌ Berlin/US 6242km         | ✅ Berlin/DE 0km            |
-| Paris                                           | Paris/FR             | ❌ Paris/US 7781km          | ✅ Paris/FR 0km             | ❌ Paris Township/US 6493km | ✅ Paris/FR 0km             |
-| 1600 Pennsylvania Ave NW, Washington, DC 20500  | Washington/US        | ✅ Washington/US 0km        | ✅ Washington/US 0km        | ✅ Washington/US 0km        | ✅ Washington/US 0km        |
-| 350 5th Ave, New York, NY 10118                 | New York/US          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          | ✅ New York/US 0km          |
-| Pier 39, San Francisco, CA 94133                | San Francisco/US     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     | ✅ San Francisco/US 0km     |
-| 1060 W Addison St, Chicago, IL 60613            | Chicago/US           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           | ✅ Chicago/US 0km           |
-| 400 Broad St, Seattle, WA 98109                 | Seattle/US           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           | ✅ Seattle/US 0km           |
-| Straußstraße 27, 12623 Berlin                   | Berlin/DE            | ❌ Berlin/US 6242km         | ✅ Berlin/DE 0km            | ❌ Berlin/US 6242km         | ✅ Berlin/DE 0km            |
-| 5 Hauptstraße, Berlin, Berlin 10115             | Berlin/DE            | ❌ Berlin/US 6242km         | ✅ Berlin/DE 0km            | ❌ Berlin/US 6376km         | ✅ Berlin/DE 0km            |
-| 181 Rue du Chevaleret, Paris                    | Paris/FR             | ❌ Paris/US 7781km          | ✅ Paris/FR 0km             | ❌ Paris Township/US 6493km | ✅ Paris/FR 0km             |
-| Los Angeles                                     | Los Angeles/US       | ✅ Los Angeles/US 0km       | ✅ Los Angeles/US 0km       | ✅ Los Angeles/US 0km       | ✅ Los Angeles/US 0km       |
-| Houston                                         | Houston/US           | ✅ Houston/US 0km           | ✅ Houston/US 0km           | ✅ Houston/US 0km           | ✅ Houston/US 0km           |
-| Philadelphia                                    | Philadelphia/US      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      |
-| Denver                                          | Denver/US            | ✅ Denver/US 0km            | ✅ Denver/US 0km            | ✅ Denver/US 0km            | ✅ Denver/US 0km            |
-| Austin, TX                                      | Austin/US            | ✅ Austin/US 0km            | ✅ Austin/US 0km            | ✅ Austin/US 0km            | ✅ Austin/US 0km            |
-| Boston                                          | Boston/US            | ✅ Boston/US 6km            | ✅ Boston/US 6km            | ✅ Boston/US 0km            | ✅ Boston/US 0km            |
-| Portland, OR                                    | Portland/US          | ✅ Portland/US 0km          | ✅ Portland/US 0km          | ✅ Portland/US 0km          | ✅ Portland/US 0km          |
-| München                                         | München/DE           | ⚠ NO HIT                    | ✅ München/DE 0km           | ⚠ NO HIT                    | ✅ München/DE 0km           |
-| **Munich**                                      | München/DE           | ❌ Munich/US 7344km         | ❌ Munich/US 7344km         | ❌ Munich/US 7344km         | ✅ **München/DE 0km**       |
-| Hamburg                                         | Hamburg/DE           | ❌ Hamburg/US 6263km        | ✅ Hamburg/DE 0km           | ❌ Hamburg/US 6263km        | ✅ Hamburg/DE 0km           |
-| Lyon                                            | Lyon/FR              | ❌ Lyon/US 6688km           | ✅ Lyon/FR 0km              | ❌ Lyon/US 6688km           | ✅ Lyon/FR 0km              |
-| Marseille                                       | Marseille/FR         | ⚠ NO HIT                    | ✅ Marseille/FR 0km         | ⚠ NO HIT                    | ✅ Marseille/FR 0km         |
-| 200 E Colfax Ave, Denver, CO 80203              | Denver/US            | ✅ Denver/US 0km            | ✅ Denver/US 0km            | ✅ Denver/US 0km            | ✅ Denver/US 0km            |
-| 1600 Amphitheatre Pkwy, Mountain View, CA 94043 | Mountain View/US     | ✅ Mountain View/US 0km     | ✅ Mountain View/US 0km     | ✅ Mountain View/US 0km     | ✅ Mountain View/US 0km     |
-| Frankfurt am Main                               | Frankfurt am Main/DE | ❌ Main/US 6334km           | ✅ Frankfurt am Main/DE 0km | ❌ Main/US 6334km           | ✅ Frankfurt am Main/DE 0km |
-| Frankfurt, Germany                              | Frankfurt am Main/DE | ✅ Frankfurt am Main/DE 0km | ✅ Frankfurt am Main/DE 0km | ✅ Frankfurt am Main/DE 0km | ✅ Frankfurt am Main/DE 0km |
-| Nashville, TN                                   | Nashville/US         | ✅ Nashville/US 0km         | ✅ Nashville/US 0km         | ✅ Nashville/US 0km         | ✅ Nashville/US 0km         |
-| 1776 Independence Ave, Philadelphia, PA 19106   | Philadelphia/US      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      | ✅ Philadelphia/US 0km      |
-| Toledo, Spain                                   | Toledo/ES            | ✅ Toledo/ES 0km            | ✅ Toledo/ES 0km            | ✅ Toledo/ES 0km            | ✅ Toledo/ES 0km            |
-| Barcelona, Venezuela                            | _(gold stale)_       | ✅ Barcelona/VE             | ✅ Barcelona/VE             | ✅ Barcelona/VE             | ✅ Barcelona/VE             |
+| input                                           | gold                 | FTS+US                         | FTS+none                       | cand+US                        | cand+none                      |
+| ----------------------------------------------- | -------------------- | ------------------------------ | ------------------------------ | ------------------------------ | ------------------------------ |
+| New York City                                   | New York/US          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          |
+| new york city                                   | New York/US          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          |
+| Brooklyn                                        | Brooklyn/US          | pass: Brooklyn/US 0km          | pass: Brooklyn/US 0km          | pass: Brooklyn/US 0km          | pass: Brooklyn/US 0km          |
+| brooklyn, new york, ny                          | Brooklyn/US          | fail: New York/US 288km        | fail: New York/US 288km        | fail: New York/US 288km        | fail: New York/US 288km        |
+| Chicago                                         | Chicago/US           | pass: Chicago/US 0km           | pass: Chicago/US 0km           | pass: Chicago/US 0km           | pass: Chicago/US 0km           |
+| Seattle                                         | Seattle/US           | pass: Seattle/US 0km           | pass: Seattle/US 0km           | pass: Seattle/US 0km           | pass: Seattle/US 0km           |
+| San Francisco                                   | San Francisco/US     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     |
+| Washington, DC                                  | Washington/US        | pass: Washington/US 0km        | pass: Washington/US 0km        | pass: Washington/US 0km        | pass: Washington/US 0km        |
+| Saint Paul, MN                                  | St. Paul/US          | pass: St. Paul/US 0km          | pass: St. Paul/US 0km          | pass: St. Paul/US 0km          | pass: St. Paul/US 0km          |
+| Springfield, IL                                 | Springfield/US       | pass: Springfield/US 0km       | pass: Springfield/US 0km       | pass: Springfield/US 0km       | pass: Springfield/US 0km       |
+| Berlin                                          | Berlin/DE            | fail: Berlin/US 6242km         | pass: Berlin/DE 0km            | fail: Berlin/US 6242km         | pass: Berlin/DE 0km            |
+| Paris                                           | Paris/FR             | fail: Paris/US 7781km          | pass: Paris/FR 0km             | fail: Paris Township/US 6493km | pass: Paris/FR 0km             |
+| 1600 Pennsylvania Ave NW, Washington, DC 20500  | Washington/US        | pass: Washington/US 0km        | pass: Washington/US 0km        | pass: Washington/US 0km        | pass: Washington/US 0km        |
+| 350 5th Ave, New York, NY 10118                 | New York/US          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          | pass: New York/US 0km          |
+| Pier 39, San Francisco, CA 94133                | San Francisco/US     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     | pass: San Francisco/US 0km     |
+| 1060 W Addison St, Chicago, IL 60613            | Chicago/US           | pass: Chicago/US 0km           | pass: Chicago/US 0km           | pass: Chicago/US 0km           | pass: Chicago/US 0km           |
+| 400 Broad St, Seattle, WA 98109                 | Seattle/US           | pass: Seattle/US 0km           | pass: Seattle/US 0km           | pass: Seattle/US 0km           | pass: Seattle/US 0km           |
+| Straußstraße 27, 12623 Berlin                   | Berlin/DE            | fail: Berlin/US 6242km         | pass: Berlin/DE 0km            | fail: Berlin/US 6242km         | pass: Berlin/DE 0km            |
+| 5 Hauptstraße, Berlin, Berlin 10115             | Berlin/DE            | fail: Berlin/US 6242km         | pass: Berlin/DE 0km            | fail: Berlin/US 6376km         | pass: Berlin/DE 0km            |
+| 181 Rue du Chevaleret, Paris                    | Paris/FR             | fail: Paris/US 7781km          | pass: Paris/FR 0km             | fail: Paris Township/US 6493km | pass: Paris/FR 0km             |
+| Los Angeles                                     | Los Angeles/US       | pass: Los Angeles/US 0km       | pass: Los Angeles/US 0km       | pass: Los Angeles/US 0km       | pass: Los Angeles/US 0km       |
+| Houston                                         | Houston/US           | pass: Houston/US 0km           | pass: Houston/US 0km           | pass: Houston/US 0km           | pass: Houston/US 0km           |
+| Philadelphia                                    | Philadelphia/US      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      |
+| Denver                                          | Denver/US            | pass: Denver/US 0km            | pass: Denver/US 0km            | pass: Denver/US 0km            | pass: Denver/US 0km            |
+| Austin, TX                                      | Austin/US            | pass: Austin/US 0km            | pass: Austin/US 0km            | pass: Austin/US 0km            | pass: Austin/US 0km            |
+| Boston                                          | Boston/US            | pass: Boston/US 6km            | pass: Boston/US 6km            | pass: Boston/US 0km            | pass: Boston/US 0km            |
+| Portland, OR                                    | Portland/US          | pass: Portland/US 0km          | pass: Portland/US 0km          | pass: Portland/US 0km          | pass: Portland/US 0km          |
+| München                                         | München/DE           | no hit                         | pass: München/DE 0km           | no hit                         | pass: München/DE 0km           |
+| **Munich**                                      | München/DE           | fail: Munich/US 7344km         | fail: Munich/US 7344km         | fail: Munich/US 7344km         | pass: **München/DE 0km**       |
+| Hamburg                                         | Hamburg/DE           | fail: Hamburg/US 6263km        | pass: Hamburg/DE 0km           | fail: Hamburg/US 6263km        | pass: Hamburg/DE 0km           |
+| Lyon                                            | Lyon/FR              | fail: Lyon/US 6688km           | pass: Lyon/FR 0km              | fail: Lyon/US 6688km           | pass: Lyon/FR 0km              |
+| Marseille                                       | Marseille/FR         | no hit                         | pass: Marseille/FR 0km         | no hit                         | pass: Marseille/FR 0km         |
+| 200 E Colfax Ave, Denver, CO 80203              | Denver/US            | pass: Denver/US 0km            | pass: Denver/US 0km            | pass: Denver/US 0km            | pass: Denver/US 0km            |
+| 1600 Amphitheatre Pkwy, Mountain View, CA 94043 | Mountain View/US     | pass: Mountain View/US 0km     | pass: Mountain View/US 0km     | pass: Mountain View/US 0km     | pass: Mountain View/US 0km     |
+| Frankfurt am Main                               | Frankfurt am Main/DE | fail: Main/US 6334km           | pass: Frankfurt am Main/DE 0km | fail: Main/US 6334km           | pass: Frankfurt am Main/DE 0km |
+| Frankfurt, Germany                              | Frankfurt am Main/DE | pass: Frankfurt am Main/DE 0km | pass: Frankfurt am Main/DE 0km | pass: Frankfurt am Main/DE 0km | pass: Frankfurt am Main/DE 0km |
+| Nashville, TN                                   | Nashville/US         | pass: Nashville/US 0km         | pass: Nashville/US 0km         | pass: Nashville/US 0km         | pass: Nashville/US 0km         |
+| 1776 Independence Ave, Philadelphia, PA 19106   | Philadelphia/US      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      | pass: Philadelphia/US 0km      |
+| Toledo, Spain                                   | Toledo/ES            | pass: Toledo/ES 0km            | pass: Toledo/ES 0km            | pass: Toledo/ES 0km            | pass: Toledo/ES 0km            |
+| Barcelona, Venezuela                            | _(gold stale)_       | pass: Barcelona/VE             | pass: Barcelona/VE             | pass: Barcelona/VE             | pass: Barcelona/VE             |
 
 Exactly **one** row separates the backends at `dc=none`: **Munich**, the English exonym. Candidate
-returns München/DE; FTS falls to Munich, North Dakota. Candidate regressions against FTS at
+returns München/DE. FTS falls to Munich, North Dakota. Candidate regressions against FTS at
 `dc=none`: **zero**.
 
 ### Two defects the run surfaced
 
 **The Barcelona gold row is rotted, and synthetic WOF IDs are not portable between the two
 databases.** Gold expects `8000001092006`. In `admin-global-priority.db` that ID is now _Dolok
-Merawan, Indonesia_; in `candidate-global-1026.db` it is _Skałówki, Poland_. Both backends returned
+Merawan, Indonesia_. In `candidate-global-1026.db` it is _Skałówki, Poland_. Both backends returned
 the correct place at the identical coordinate `10.1326, −64.6820` under _different_ IDs
 (`8000000325637` FTS, `8000000473947` candidate), and each of those IDs points at a different place
 in the other database. The Overture-derived `8000000000000+` range is reassigned on every gazetteer
@@ -133,7 +133,8 @@ build, so **ID-equality grading is invalid across backends and across builds** f
 scored the row as a pass for all four arms.
 
 **`brooklyn, new york, ny` fails on all four arms** — both backends return the New York _region_,
-288 km out. Backend-independent; a parse/cascade defect rather than in scope here.
+288 km out. The failure is independent of the backend. It is a parse/cascade defect and outside
+the scope of this report.
 
 ## Instrument B — the POI board, 51 cases (the historical instrument)
 
@@ -165,8 +166,8 @@ The single failure is `cat-ca-02`, `"gas station near Ottawa ON"` — candidate 
 province-abbreviation anchor passes. It is not a gazetteer-content problem either: the candidate
 table's own ranking already puts Ottawa CA on top (county 1,000,000 pop at `neg_rank` −6.000,
 locality 934,243 at −5.970) with Ottawa IL sixth at 18,752. Plain `mailwoman parse "Ottawa ON"`
-resolves correctly on **both** backends. The defect is confined to the POI anchor path. Worth its
-own issue; it is the only reproducible candidate loss in this whole investigation.
+resolves correctly on **both** backends. The defect is confined to the POI anchor path. It needs its
+own issue. It is the only reproducible candidate loss in this whole investigation.
 
 ## Instrument C — where the difference lives (41-case class probe)
 
@@ -180,7 +181,7 @@ Four query classes, gold coordinates taken from WOF itself, both backends at `dc
 | `endonym`    | `München`, `Napoli`, `Lisboa` |     11/13 |     11/13 |
 | **total**    |                               | **25/41** | **31/41** |
 
-The candidate advantage is **entirely the exonym class** and nothing else. Endonyms, province
+The candidate advantage is **entirely the exonym class**. Endonyms, province
 abbreviations and state abbreviations are byte-identical — including identical _failures_
 (`Winnipeg MB` no-hit on both, `Edmonton AB` → Alberta region on both, `London ON` → London GB on
 both, `Perth WA` → Perth US on both). Those are shared defects of the resolution path rather than backend
@@ -188,18 +189,18 @@ differences.
 
 The exonym wins, each one FTS landing on a US homonym:
 
-| input   | FTS+none             | cand+none          |
-| ------- | -------------------- | ------------------ |
-| Munich  | ❌ Munich/US 7344 km | ✅ München/DE 0 km |
-| Cologne | ❌ Cologne/IT 636 km | ✅ Köln/DE 0 km    |
-| Naples  | ❌ Naples/US 8614 km | ✅ Napoli/IT 0 km  |
-| Lisbon  | ❌ Lisbon/US 6409 km | ✅ Lisboa/PT 0 km  |
-| Athens  | ❌ Athens/US 9040 km | ✅ Αθήνα/GR 0 km   |
-| Milan   | ❌ Milan/US 7799 km  | ✅ Milano/IT 0 km  |
+| input   | FTS+none                | cand+none             |
+| ------- | ----------------------- | --------------------- |
+| Munich  | fail: Munich/US 7344 km | pass: München/DE 0 km |
+| Cologne | fail: Cologne/IT 636 km | pass: Köln/DE 0 km    |
+| Naples  | fail: Naples/US 8614 km | pass: Napoli/IT 0 km  |
+| Lisbon  | fail: Lisbon/US 6409 km | pass: Lisboa/PT 0 km  |
+| Athens  | fail: Athens/US 9040 km | pass: Αθήνα/GR 0 km   |
+| Milan   | fail: Milan/US 7799 km  | pass: Milano/IT 0 km  |
 
-Candidate carries alias `name_key` rows that map the English exonym onto the endonym place. FTS's
-FTS5 index does not, so it takes the highest-ranked literal-string match, which in a US-heavy
-gazetteer is the American namesake. `Florence` still fails on both; `Gothenburg` and `Antwerp`
+The candidate table stores alias `name_key` rows that map the English exonym onto the endonym
+place. FTS's FTS5 index does not, so it takes the highest-ranked literal-string match. In a
+US-heavy gazetteer that match is the American namesake. `Florence` still fails on both; `Gothenburg` and `Antwerp`
 no-hit on both.
 
 ## Instrument D — 1050 real international addresses (`mailwoman eval oa-resolver`, `dc=none`)
@@ -225,7 +226,7 @@ metric is the one that matters. Per-country locality-match puts the candidate "l
 PL (99.3% → 90.7%), PT (94.0 → 90.7) and CZ (73.3 → 70.7). We inspected the 13 PL rows individually:
 
 - **12 of the 13 still land within 25 km** of the true address point, most within 1–7 km. Candidate
-  returned a coarser or differently-named admin unit (the gmina rather than the locality) whose
+  returned a coarser or differently titled admin unit (the gmina rather than the locality) whose
   centroid is fine. Only `Zofiówka` is an actual blow-out (0.5 km → 400.1 km).
 - One row FTS scored as a locality-**match** was **424.9 km** from the true point (`Łagów`);
   candidate scored it a miss at **6.2 km**.
@@ -248,7 +249,7 @@ The decision-critical leg, since `--locale` defaults to `en-US`.
 Two clean results:
 
 1. **The country filter is a complete no-op on well-formed US addresses**. The rows are
-   byte-identical between `dc=US` and `dc=none` on both backends, because the parse already carries
+   byte-identical between `dc=US` and `dc=none` on both backends, because the parse already contains
    its own region and postcode. The filter only bites on bare, country-less city names.
 2. **The backend is a strict improvement on US data**: equal locality-match and region-match, better
    at every distance threshold, worst-case error 1358 km → 71 km, p99 10× better. Fixes 30 rows,
@@ -268,8 +269,8 @@ is **higher**. There is no threshold that checks errors without discarding corre
 score-based abstention or confidence surface cannot be built on this field as it stands.
 
 The two scales are also not comparable to each other — FTS is bm25-derived (≈19–41), candidate is
-population/`neg_rank`-derived (≈5–7). Any consumer switching backends must not carry a hardcoded
-score threshold across.
+population/`neg_rank`-derived (≈5–7). Any consumer switching backends must not reuse a hardcoded
+score threshold from the other backend.
 
 ## Structural note: the two databases hold different things
 
@@ -286,10 +287,10 @@ Distinct places, `admin-global-priority.db` `spr` vs `candidate-global-1026.db` 
 | country        |       237 |           237 |              0 |
 | **postalcode** |     **0** | **3,661,017** | **+3,661,017** |
 
-Candidate carries 3.66M postcodes the FTS extract has none of — which is why the candidate arm of the
+The candidate table stores 3.66M postcodes the FTS extract has none of — which is why the candidate arm of the
 Paris reproduction also resolves `75001` to `wof:421307175` while FTS leaves it bare — and drops
 ~873k admin places, mostly thin-tail localities and neighborhoods. I did **not** determine whether
-those dropped rows are deprecated/superseded WOF records (a cleanup) or real coverage loss. Nothing
+those dropped rows are deprecated/superseded WOF records (a cleanup) or real coverage loss. Zero rows
 in the measured sets tripped on it, but a thin-tail rural probe would be the way to close it.
 
 ## Verdict
@@ -307,16 +308,16 @@ policy:
 
 **The candidate backend can safely become the default.** It costs one known POI-anchor case (`Ottawa ON`
 without a comma) and provides the exonym class plus a materially shorter error tail on both US and
-international data. There is no country, no placetype, and no query shape where it loses
-systematically. The one loss is a reproducible singleton with a clear owner, and the fine-precision
+international data. It loses systematically on zero countries, zero placetypes and zero
+query shapes. The one loss is a reproducible singleton with a clear owner, and the fine-precision
 p50 cost (1.5 → 2.4 km international) is real but small next to the coordinate improvement (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
 the country filter, or the change is untestable against these numbers. They are separate changes
-with separate risk, and it is the filter rather than the backend, that carries the +10 on bare
-international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change;
-splitting `resolverDefaultCountry`'s `candidateActive` branch from the backend selection is a
-prerequisite for shipping either independently.
+with separate risk, and it is the filter rather than the backend, that accounts for the +10 on bare
+international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change.
+To ship either change independently, the code must separate `resolverDefaultCountry`'s
+`candidateActive` branch from the backend selection.
 
 ## What I did not measure
 
@@ -329,12 +330,12 @@ prerequisite for shipping either independently.
   I ran no benchmark and report no p50/p99 timings.
 - **Postcode-only queries**, despite candidate holding 3.66M postcodes and FTS none. A likely large
   candidate win, entirely unquantified.
-- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point` rather than `node.lat`; my walker reads admin-grade coordinates only. Nothing here speaks to
+- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point` rather than `node.lat`; my walker reads admin-grade coordinates only. This report does not measure
   address-point or interpolation resolution.
-- **`node.interpretations[]`.** Dual-role places (city-states) carry a second resolved place there
-  which my primary-node pick ignores. Berlin-class rows may hide a second answer.
+- **`node.interpretations[]`.** Dual-role places (city-states) store a second resolved place there,
+  and my primary-node pick ignores. Berlin-class rows may hide a second answer.
 - **Whether the dropped ~873k admin places are deprecated records or real coverage loss.**
-- **Reproducibility of `candidate-global-1026.db` itself** — it is a 2026-07-07 artifact; I did not
+- **Reproducibility of `candidate-global-1026.db` itself** — it is a 2026-07-07 artifact. I did not
   verify it rebuilds identically from current main.
 - **Older candidate DBs.** I used `candidate-global-1026.db` throughout: newest (2026-07-07) and
   largest (12.16M rows / 7.71M distinct places, against 10.20M / 10.14M / 8.97M for

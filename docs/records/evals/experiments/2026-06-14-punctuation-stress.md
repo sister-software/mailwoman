@@ -17,10 +17,10 @@ delimiters are **excluded** from component values unless postal-meaningful (the 
 
 Scored by `scripts/eval/score-punctuation-stress.ts` (per-component exact match, case-insensitive, on each
 engine's own vocabulary view of identical gold). Each row also measures **parse survival** — a thrown parse
-fails every component, which is exactly what the unbalanced-delimiter rows exist to catch.
+fails every component. The unbalanced-delimiter rows exist to catch exactly that.
 
-- **v0** — the legacy rule parser (`createAddressParser`), deterministic, no model.
-- **neural** — the shipped int8 model (`model-v140-step-40000-int8`, package v4.6.0; tokenizer `v0.6.0-a0`),
+- **v0** — the legacy rule parser (`createAddressParser`), deterministic and without a model.
+- **neural** — the shipped int8 model (`model-v140-step-40000-int8`, package v4.6.0, tokenizer `v0.6.0-a0`),
   full ship config (anchor + gazetteer + convention auto + punctuation-gap bridge). Graded on the **folded
   gold view** (affixes joined into `street`) for an apples-to-apples head-to-head with v0.
 - **neural + span proposer** — the Stage 2.7 paired-delimiter proposer (`--span-proposer`, default-off rather than
@@ -52,8 +52,8 @@ At **every** bias tested, the Stage 2.7 span proposer is a no-op or a regression
 classes it was built for:
 
 - **Default (no bias): exactly zero effect** — `+0.0pp` on every class. As wired, the proposer contributes
-  no bias unless `--sp-bias` is set, so the shipped default does literally nothing.
-- **Gentle (bias 2): −0.7pp overall, no help** — the four paired-delimiter classes are unchanged; the only
+  no bias unless `--sp-bias` is set, so the shipped default leaves every parse unchanged.
+- **Gentle (bias 2): −0.7pp overall, with no class improved** — the four paired-delimiter classes are unchanged. The only
   movement is slash and mixed-hard going _down_.
 - **Strong (bias 4 / annotation 4): −3.9pp overall, actively harmful** — paren-annotation collapses 87.5 →
   68.2 and bracketed 85.6 → 76.5, because the annotation bias pushes the **wrong direction**: it _merges_
@@ -61,9 +61,9 @@ classes it was built for:
   of stripping it.
 
 So the abandoned Chevrotain-style proposer isn't a drop-in win waiting to be switched on. Its annotation
-semantics need a **fix** (the bias has the wrong sign — it should suppress, not absorb), not a parameter
-sweep. An unchanged revival would regress the very class it targets. **Recommendation: do not revive on these
-numbers; if pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
+semantics need a **fix** rather than a parameter sweep. The bias has the wrong sign: it should suppress the
+delimited content rather than absorb it. An unchanged revival would regress the very class it targets.
+**Recommendation: do not revive on these numbers. If pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
 exhaustive sweep — but a feature that's a no-op at default and net-negative at the two non-trivial settings
 has not cleared the bar #518 set.)
 
@@ -81,10 +81,10 @@ The head-to-head is the real takeaway:
   delimiter run into the current span — `Sydney NSW` (locality eats the region), `Oxford OX1 4DB` (locality
   eats the postcode), `Rue du Bac (escalier B` (street eats the unbalanced paren).
 - **v0 still wins the within-token classes** — apostrophe (89.0 vs 80.8), dotted (82.3 vs 74.0), hyphen
-  (86.9 vs 80.8), slash (71.8 vs 61.5). Its rules handle `123 1/2`, `O'Brien`, `St.` precisely; neural
+  (86.9 vs 80.8), slash (71.8 vs 61.5). Its rules handle `123 1/2`, `O'Brien`, `St.` precisely. Neural
   wobbles on fractional house numbers and absorbs trailing tokens.
 
-The implication for the roadmap: the highest-leverage punctuation-stress change is **not** a new span
+The implication for the roadmap: the punctuation-stress change most likely to raise these scores is **not** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
 break, and it's a sharper, cheaper target than reviving Stage 2.7.
@@ -105,7 +105,7 @@ node scripts/eval/score-punctuation-stress.ts \
 
 ## Caveats
 
-- Folded-gold view (affixes → `street`) for the head-to-head; per-engine vocabularies graded on their own
+- Folded-gold view (affixes → `street`) for the head-to-head. Per-engine vocabularies graded on their own
   view of identical gold (stated in the scorer header).
 - Neural numbers are the shipped int8 v140 / `v0.6.0-a0` tokenizer. Don't compare these absolute figures
   across tokenizer versions — the head-to-head and the span-proposer deltas are what matter here.

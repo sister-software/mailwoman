@@ -51,7 +51,7 @@ console.log("opencage:", JSON.stringify(toOpenCage(set), null, 2))
 ```
 
 `countryCode` is what the country annotator keys on — without it, that annotator abstains and you get
-the coordinate formats alone. On a real pipeline it comes from the geocode result's `countryCode`
+only the coordinate formats. On a real pipeline it comes from the geocode result's `countryCode`
 field, and `placeName` from the resolved locality.
 
 ## 2. Emit it in the shape the consumer wants
@@ -135,7 +135,7 @@ Which one to emit is decided by the consumer rather than by preference. An exist
 `toOpenCage` maps only the fields OpenCage has a slot for. Two things in the transcript above do not
 survive the trip:
 
-- **`iso3166`** — the alpha-2/alpha-3/numeric country codes. OpenCage carries these in its `components`
+- **`iso3166`** — the alpha-2/alpha-3/numeric country codes. OpenCage puts these in its `components`
   block rather than in `annotations`, so the projection has nowhere to put them.
 - **`sun.noon`** — OpenCage's sun object has `rise` and `set`, and no solar noon.
 
@@ -158,8 +158,8 @@ it, build each lookup database per its package README first.
 | `makeUNLocodeAnnotator(lookup)` | `@mailwoman/un-locode-lookup` | `unLocode` | `un-locode.db`                  |
 | `makeNUTSAnnotator(lookup)`     | `@mailwoman/nuts-lookup`      | `nuts`     | `nuts.db`, and an EU coordinate |
 
-Switch each one on only when its file is present rather than assuming it, which is what the Nominatim drop-in
-does. The shape below is that call site, reduced to one annotator:
+Switch each one on only when its file is present rather than assuming it. The Nominatim drop-in
+does this. The shape below is that call site, reduced to one annotator:
 
 ```js
 const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
@@ -176,7 +176,7 @@ no timezone".
 
 ## Verify
 
-The round trip is checkable in one line. The OpenCage projection of a set must carry the same
+The round trip is checkable in one line. The OpenCage projection of a set must contain the same
 coordinate formats under its own names:
 
 ```bash
@@ -195,7 +195,7 @@ If you see one and not the other, the annotator list you composed is not the one
 - **`toOpenCage` is a projection rather than a round trip.** There is no `fromOpenCage`. Keep the
   `AnnotationSet` if you need to emit both shapes.
 - **`toSchemaOrg` exists and is lossier still.** `@mailwoman/annotations` also exports a schema.org
-  JSON-LD projection, which drops tiers, confidence and provenance by design. It is for structured-data
+  JSON-LD projection. That projection drops tiers, confidence and provenance by design. It is for structured-data
   markup rather than for data exchange.
 - **The date matters and defaults to now.** Sun times are computed for `input.date`, which defaults to
   the current instant per annotator. Pin it whenever you compare outputs or write a test.

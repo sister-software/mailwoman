@@ -4,10 +4,13 @@
 import { SYSTEM_CODES, type SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
+	AnchorRegionLookupLike,
 	CaseNormalization,
 	PlacetypePairSelection,
 	SpanProposerLexicon,
 	StageSource,
+	VenueHeadLexiconLike,
+	VenueHeadPriorOpts,
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
@@ -27,7 +30,6 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
-import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "#venue/head-prior"
 
 /**
  * Configures a neural address classifier.
@@ -93,6 +95,13 @@ export interface NeuralAddressClassifierConfig {
 	 * The path to the street-morphology FST (`fst-street-morphology.bin`) beside the resolved weights.
 	 */
 	streetMorphologyPath?: string
+
+	/**
+	 * The paths of the PFX1 postcode-prefix indexes beside the resolved weights.
+	 *
+	 * The parse priors loader reads them for the anchor-region prior.
+	 */
+	postcodePrefixPaths?: readonly string[]
 
 	/**
 	 * The path to the loaded `model.onnx`, reported through `resolvedWeights`
@@ -303,6 +312,15 @@ export interface ParseOpts {
 	 * @internal
 	 */
 	fstStreetContextPositiveScale?: number
+
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 *
+	 * The prior raises an FST region match to the full bias when a postcode the anchor
+	 * channel fired on asserts that region and the written name is the region's own name.
+	 * It runs only with `fst` and the classifier's postcode anchor lookup.
+	 */
+	anchorRegions?: AnchorRegionLookupLike
 
 	/**
 	 * Whether the FST street-context check runs, defaulting to true so `false` keeps

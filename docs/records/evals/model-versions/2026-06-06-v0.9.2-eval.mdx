@@ -5,7 +5,7 @@ anchor-on pilot) · **Question:** the German "collapse" was largely an eval-orde
 native German order, our OA eval renders US/international order. Does training the German extract in **both**
 orders close the international-order gap?
 
-The direct answer: **partly, and not where it counts yet** — and the 2×2 says something more interesting than
+The direct answer: **partly, and not where it counts yet** — and the 2×2 shows more than
 a single number would have.
 
 ## The 2×2 (DE locality-match, 3,000 real OpenAddresses points, through the resolver)
@@ -33,7 +33,7 @@ Two real movements, and they pull in opposite directions:
 The harm concentrates exactly where you'd predict — **Berlin**, the colliding `10xxx` postcode. Berlin
 international goes 40.5% (anchor off) → 34.4% (anchor on): the ambiguous `{DE, US}` posterior, injected at the
 **trailing** postcode, drags the already-read city toward the US reading. In native order the postcode sits
-_before_ the city and primes it correctly; in international order it trails, and the anchor fires too late, on
+_before_ the city and primes it correctly. In international order it trails, and the anchor fires too late, on
 the wrong side of the locality.
 
 ## The residual gap has a clear, cheap cause
@@ -53,22 +53,22 @@ The model never saw a German `City, Region Postcode` tail, so it doesn't know ho
 gets swallowed into the locality or the locality collapses. That is the v0.9.3 fix: render the international
 order **with the region in the tail**, matching real US/feed renderings.
 
-## No collapse, no regression
+## Without collapse or regression
 
 - **Per-tag val F1** (anchor-aware, both-order val): locality **0.820**, postcode 1.00, street 0.950,
   house_number 0.998, region 0.703, macro **0.781**. Locality is intact — none of the v0.8.0/PR3 collapse
   signature. The run had no NaN, `cross_pollution` stayed at 0.00%, and `locale_acc` was 0.965.
 - **Functional check** — all 6 demo presets parse identically to the v0.6.0 default (the both-order German
   change does not touch US).
-- **No-regression** — US **97.5%** (pilot 96.1%), FR **84.9%** (pilot 85.1%). Both held; the both-order
+- **No-regression** — US **97.5%** (pilot 96.1%), FR **84.9%** (pilot 85.1%). Both held, and the both-order
   German extract didn't cost the incumbents a thing.
 
-## Verdict — not shipped; a research result that warrants its next experiment
+## Verdict — not shipped, with two next experiments
 
 This is the multi-locale research line rather than the production default (v0.6.0 stays the shipped en-US model), so
 there's no promotion at stake — the check's job was to tell us whether both-order training works. It does,
 intrinsically (+12.5pp anchor-off), but the production-anchor config is flat because the anchor and the word
-order now fight. **v0.9.2 is not shipped.** What it bought us is two precise, cheap next steps:
+order now fight. **v0.9.2 is not shipped.** The run identified two precise, cheap next steps:
 
 1. **Render the region in the international tail** (the synth currently drops it) — the direct fix for the
    `City, Region Postcode` collapse the diagnostic caught.
@@ -85,16 +85,16 @@ We took the first fix — render the `City, Region Postcode` tail the synth had 
 | native             |       48.3 |  **83.6** |
 | international      |       47.1 |      44.7 |
 
-US 97.2 / FR 84.9 held; no collapse. The region tail did _exactly_ what it was designed to — international
+US 97.2 / FR 84.9 held without collapse. The region tail did _exactly_ what it was designed to — international
 **region-match went 0% → ~40%** (Berlin 45.6, Sachsen 30.9), and Berlin's international locality nudged
-34.4 → 38.7 — but **locality stayed flat**. The model now segments the tail correctly; itdoesn't move
+34.4 → 38.7 — but **locality stayed flat**. The model now segments the tail correctly, but it doesn't move
 the number we care about, because the number we care about was never capped by the tail. The anchor-on
 international gap is `83.6 − 44.7 = 38.9pp`, four times the 10pp the pre-registered check allowed.
 
 So the corpus change — both-order rendering, then the region tail — is **exhausted** for the anchor-on
 international gap. Three independent lines now point at the same place: anchor-off is order-agnostic at ~48%,
-forcing the posterior to `DE=1.0` changed nothing, and rendering the region tail changed nothing. The ceiling
-is the anchor's _structure_ — an additive vector injected at the postcode token, which lands on the wrong side
+forcing the posterior to `DE=1.0` left locality unchanged, and rendering the region tail left it unchanged. The ceiling
+is the anchor's _structure_ — an additive vector injected at the postcode token. That vector lands on the wrong side
 of the locality when the postcode trails it.
 
 **Next is architectural, and it's the operator's call.** The designed fix (v0.9.4) is **dual-injection**:
@@ -109,16 +109,16 @@ it's a +35pp native win and a −4pp international loss, and an order-conditione
 We took the fork. DeepSeek's signed-off fix — pool the anchor and inject it _also_ at position 0, an
 order-independent cue the locality can attend back to regardless of where the postcode sits (it explicitly
 preferred this over fragile position-blocking). It's a clean change: no new parameters, the c=0 identity holds,
-de-risked locally (8/8 anchor tests, ONNX export equivalent to the baseline). And it did **nothing** to the
-international gap:
+de-risked locally (8/8 anchor tests, ONNX export equivalent to the baseline). And it left the
+international gap **unchanged**:
 
 | DE locality   | anchor OFF | anchor ON |
 | ------------- | ---------: | --------: |
 | native        |       48.3 |  **83.5** |
 | international |       47.3 |      43.7 |
 
-US 96.4 / FR 84.9 held; native beats Pelias. The anchor still _hurts_ international (off 47.3 > on 43.7) — the
-position-0 cue changed nothing. Three retrains now tell one story:
+US 96.4 / FR 84.9 held, and native beats Pelias. The anchor still _hurts_ international (off 47.3 > on 43.7). The
+position-0 cue left that gap unchanged. Three retrains now tell one story:
 
 | retrain                  | native-on | international-on |
 | ------------------------ | --------: | ---------------: |
@@ -127,43 +127,43 @@ position-0 cue changed nothing. Three retrains now tell one story:
 | v0.9.4 dual-injection    |      83.5 |             43.7 |
 
 The anchor-on international number is _immovable_ at ~44%. We threw corpus order coverage, the region tail, and
-an architectural change at it; none of them moved it. **The anchor's native-help (+35pp) / international-hurt
-(−4pp) asymmetry is fundamental** — not a corpus gap, not the region tail, not where the anchor sits in the
-sequence. And it's a real geographic miss rather than a metric mirage: PIP-containment is 96.3% on native German, 57%
+an architectural change at it, and none of them moved it. **The anchor's native-help (+35pp) / international-hurt
+(−4pp) asymmetry is fundamental.** A corpus gap, the region tail, and the anchor's position in the
+sequence are each ruled out as the cause. And it's a real geographic miss rather than a metric mirage: PIP-containment is 96.3% on native German, 57%
 on international.
 
 So the corpus and the architecture are both exhausted, and the direct conclusion is the one DeepSeek raised at
 the very start: a trained-in, always-on anchor may only be the wrong shape for order robustness. The next
 move is a strategic choice rather than another tuning pass — an order-conditioned anchor, or accepting the asymmetry
 (native German is excellent and that's what production would ship), or a different international approach
-entirely. It's also cross-reducing: the same anchor would carry the same asymmetry into every locale, so it
+entirely. It's also cross-reducing: the same anchor would reproduce the same asymmetry in every locale, so it
 checks the multi-locale retrain program. v0.6.0 stays the production default throughout.
 
 ## The decision: accept the asymmetry, and the anchor learns its direction per locale
 
-With the operator away and the data in, we put the fork to DeepSeek, which held delegated authority for the
-shift, across a third consult turn. Its call was **(b): accept the asymmetry, and burn no more GPU.** Three
-independent retrains had failed to move the anchor-on international number; the result (+35pp) is large,
+With the operator away and the data in, we put the fork to DeepSeek across a third consult turn. DeepSeek held delegated authority for the
+shift. Its call was **(b): accept the asymmetry, and burn no more GPU.** Three
+independent retrains had failed to move the anchor-on international number. The result (+35pp) is large,
 resilient, and generalizes (US 96.4, FR 84.9 hold), while the international penalty (−4pp) is small and stable.
 Anchor-_off_ international already lands near 48% locality-match, competitive with the non-neural baselines, so
-a model can serve international-order German through the `c=0` identity path and lose nothing the anchor was
-giving it. This is the research line; v0.6.0 ships unchanged regardless.
+a model can serve international-order German through the `c=0` identity path without losing any accuracy the anchor
+provided. This is the research line, and v0.6.0 ships unchanged regardless.
 
-The turn earned its keep on the _why_, and it reframes the whole multi-locale question. The anchor's
+The consult turn explained the _why_, and it reframes the whole multi-locale question. The anchor's
 directionality is **learned from each locale's dominant training order** rather than baked into the architecture. US
 addresses always train with the postcode trailing the city, so the US anchor learns to look _left_ for the
 locality — which is exactly why it never hurt US. German's native order puts the postcode _before_ the city, so
-the German anchor learns to look _right_; feeding it both orders asked a single additive vector to point two
+the German anchor learns to look _right_. A corpus with both orders asked a single additive vector to point two
 ways at once, and it settled on an average that serves the dominant native order and misfires on the trailing
 one. So the asymmetry is locale-specific learning showing through, and the multi-locale plan is constrained
 rather than dead: give each locale its own anchor direction. The highest-value next thread is a
 **country-conditioned anchor vector** — the DE anchor specializes on postcode-before-city, the US anchor on
-postcode-after-city, no shared vector forced to compromise. That is a future iteration with its own check rather than
+postcode-after-city, and no shared vector is forced to compromise. That is a future iteration with its own check rather than
 a one-run patch, so it waits.
 
-One cheap operational change falls out of (b) in the meantime, no GPU and no retrain: route an input to the
+One cheap operational change falls out of (b) in the meantime, without a GPU or a retrain: route an input to the
 `c=0` (anchor-off) path when a lightweight order check — the postcode's position relative to the locality in
-the raw string — says the layout is international, and keep the anchor on when the postcode leads. The
+the raw string — reports that the layout is international, and keep the anchor on when the postcode leads. The
 research-line model would then read native German at 83.5% and international German at ~48%, taking the better
 of the two columns on each address. Filed against #327 alongside the country-conditioned-anchor thread.
 

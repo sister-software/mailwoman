@@ -7,7 +7,7 @@ verified-with: mailwoman 8.7.0
 
 # Install the Claude Code skill
 
-**Outcome.** Your project carries a skill file that teaches a coding agent how Mailwoman is set up, so it
+**Outcome.** Your project contains a skill file that teaches a coding agent how Mailwoman is set up, so it
 stops guessing at the parts that are easy to get wrong.
 
 The two things agents reliably get wrong here are the same two things people get wrong: they debug a
@@ -17,7 +17,7 @@ calibrated. The skill front-loads both.
 ## Prerequisites
 
 - `mailwoman` 8.7.0 or later installed, globally or in the project.
-- A project that reads `.claude/skills/`. Claude Code does; the file is plain Markdown with YAML
+- A project that reads `.claude/skills/`. Claude Code does. The file is plain Markdown with YAML
   frontmatter, so another agent runner can read it too.
 
 ## 1. Install it
@@ -86,21 +86,21 @@ Five sections, and each one exists because it is a place agents go wrong:
   in `@mailwoman/codex/component` for the tag vocabulary. It points at the shipped type rather than at a
   documentation URL, because the skill installs into projects that may be offline.
 - **Geocode.** `mailwoman data pull candidate` as the whole setup — the file lands where every entry
-  point looks — plus the measured case for leaving that default alone, and the one trap in the
+  point looks — plus the measured case for keeping that default unchanged, and the one trap in the
   override.
 - **File a bug.** The five things a report needs, covered on
   [Report a parsing bug](./report-a-parsing-bug.mdx).
 - **Install this skill in a new project.** An agent that has read it once can set up the next
   project.
 
-One correction it carries that is worth knowing about yourself: **confidence is the model's raw score
+The skill also states a correction that applies to your own code: **confidence is the model's raw score
 and is not calibrated by default.** Wire `createCalibrator` from `@mailwoman/core/decoder` before routing
 on it. [Tune confidence thresholds](./tune-confidence-thresholds.mdx) is the long version.
 
 ## Verify
 
 Read the frontmatter back. The `description` is what a client matches against to decide whether to load
-the skill, so an empty or truncated file is the failure mode worth checking for:
+the skill, so check for an empty or truncated file:
 
 ```bash
 head -4 .claude/skills/mailwoman/SKILL.md

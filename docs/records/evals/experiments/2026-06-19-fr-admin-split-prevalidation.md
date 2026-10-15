@@ -2,7 +2,7 @@
 
 The international admin-split retrain (night 2026-06-19, surpass-v1.5.0) rests on one premise: that
 teaching the model to **split the département out of the locality** moves the assembled, anchor-ON
-coordinate. The whole measurement-integrity campaign says to prove that before spending an A100 —
+coordinate. The measurement-integrity campaign requires proving that before spending an A100 —
 the v1.7.0 trap was a label change the resolver ignored. So this is the falsification check, run
 **before** any training.
 
@@ -47,22 +47,22 @@ one metric instead of averaging over different resolved subsets. n=200 per strat
 
 Three findings, all the same direction:
 
-1. **The région tag is decisive.** Collision communes drop 172 → 67 km (p50 132 → 0). Without
-   the région, the resolver picks the wrong same-named commune about half the time — exactly the
+1. **The région tag drives the collision result.** Collision communes drop 172 → 67 km (p50 132 → 0). Without
+   the région, the resolver picks the wrong commune of the same name about half the time — exactly the
    disambiguation the split restores.
 2. **The merge failure is catastrophic rather than cosmetic.** `locality = "Villeneuve Creuse"` resolves to
-   **nothing** (0% across both strata). The AU-style locality+admin fuse doesn't mis-resolve — it
+   **no place** (0% across both strata). The AU-style locality+admin fuse doesn't mis-resolve — it
    fails to resolve at all. The change should improve those cases without adding ambiguity.
 3. **Even unique communes benefit.** The département lifts resolve-rate 65 → 87%: a bare
    `{commune}` doesn't always resolve, and the admin context helps the resolver find it.
 
-**Verdict: the change is real. The resolver demonstrably uses the région tag, so a model that emits
+**Verdict: the change is real. The resolver uses the région tag (finding 1), so a model that emits
 the split will move the anchor-ON coordinate.** The GPU is justified.
 
 **direct caveat:** this measures the _ceiling_ with perfect, hand-constructed splits. The retrain
 must still learn to (a) emit the right département and (b) keep the commune right. So the live check
 on the trained candidate (`check rubric` in the night plan — FR centroid-shift, anchor-ON, vs v1.5.0)
-is what counts; this only proves the ceiling is worth climbing toward. It is: a 55–61% reduction and
+is what counts. This check only proves the ceiling justifies the retrain. The ceiling is a 55–61% reduction and
 a 0% → 97% resolve-rate flip on the merge class.
 
 Reproduce: `node scripts/eval/fr-admin-split-selfvalidation.ts --n 200`.

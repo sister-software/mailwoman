@@ -49,7 +49,7 @@ Birmingham, Michigan
 
 What breaks: the parser may correctly identify `"Paris"` as a locality, but a resolver that lacks the `"Texas"` qualifier or was trained without a "US bias" will return Paris, France.
 
-Mailwoman's defense: the parser does not resolve. It hands `locality=Paris, region=Texas` to the resolver, which scores candidates with `(locality match) × (region agreement) × (population prior)`. Paris, Texas wins because the region matches, even though Paris, France has a higher population. The risk comes when the region is missing. `"Paris"` alone resolves to France because population dominates.
+Mailwoman's defense: the parser does not resolve. It hands `locality=Paris, region=Texas` to the resolver. The resolver scores candidates with `(locality match) × (region agreement) × (population prior)`. Paris, Texas wins because the region matches, even though Paris, France has a higher population. The risk comes when the region is missing. A bare `"Paris"` resolves to France because population dominates.
 
 ## 2. Repeated admin names
 
@@ -120,14 +120,14 @@ This is the [bitter-lesson case](../our-approach/why-a-neural-parser.mdx) for ad
 
 A conference attendee in Paris contributed four field examples in July 2026. All four are real venues, and in each one the toponym points to the wrong place:
 
-| venue name              | actual address                             | the trap                                                                      |
-| ----------------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
-| `COMER parís.méxico`    | 96 Rue d'Hauteville, 75010 Paris           | two toponyms, Spanish orthography, dot-joined — and neither is the answer     |
-| `2Ne1 Paris Bubble Tea` | 89 Rue Beaubourg, 75003 Paris              | digit-leading brand + "Paris" as decoration rather than location              |
-| `Shinjuku Pigalle`      | 52 Rue Condorcet, 75009 Paris              | a Tokyo ward and a Paris district in one name; the address contains neither   |
-| `Shinjuku`              | 166 Bd de Stalingrad, 94200 Ivry-sur-Seine | a bare foreign toponym as the whole venue name — the hardest call of the four |
+| venue name              | actual address                             | the trap                                                                        |
+| ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------- |
+| `COMER parís.méxico`    | 96 Rue d'Hauteville, 75010 Paris           | two toponyms, Spanish orthography, dot-joined — and neither is the answer       |
+| `2Ne1 Paris Bubble Tea` | 89 Rue Beaubourg, 75003 Paris              | digit-leading brand + "Paris" as decoration rather than location                |
+| `Shinjuku Pigalle`      | 52 Rue Condorcet, 75009 Paris              | a Tokyo ward and a Paris district in one name, and the address contains neither |
+| `Shinjuku`              | 166 Bd de Stalingrad, 94200 Ivry-sur-Seine | a bare foreign toponym as the whole venue name — the hardest call of the four   |
 
-We ran these against our own live endpoint the day we received them. Three of the four resolved confidently to the wrong continent. One resolved to Comer, Georgia, USA, a namesake nobody in the conversation had predicted, because the Spanish verb "comer" is also a town name. The release gauntlet now tracks these cases as improvement targets. The bare-`Shinjuku` case is annotated as irreducibly ambiguous. A lone toponym query plausibly _does_ mean Tokyo, and only conversational context says otherwise, so the correct output is a low-confidence result rather than a guessed coordinate.
+We ran these against our own live endpoint the day we received them. Three of the four resolved confidently to the wrong continent. One resolved to Comer, Georgia, USA, a namesake that no participant in the conversation had predicted, because the Spanish verb "comer" is also a town name. The release gauntlet now tracks these cases as improvement targets. The bare-`Shinjuku` case is annotated as irreducibly ambiguous. A lone toponym query plausibly _does_ mean Tokyo, and only conversational context points elsewhere, so the correct output is a low-confidence result rather than a guessed coordinate.
 
 ## 5. Numeric chaos
 
@@ -178,7 +178,7 @@ What breaks:
 
 - **Case folding.** `"İstanbul"` lowercased in Turkish locale gives `"i̇stanbul"` (with a combining dot above). In en-US locale it gives `"i̇stanbul"` as well, but a naive `String.toLowerCase()` may strip the dot. A resolver comparing the lowercased input to its index may miss the match.
 - **NFC vs NFD normalization.** `"São"` can be encoded as one codepoint (`S + ã + o`) or two (`S + a + ̃ + o`). The two encodings render identically but differ in bytes. Resolvers that index in one form and query in the other miss matches.
-- **Dual scripts.** `"Beograd / Белград"` is the same place written twice. WOF (and Mailwoman's resolver) carries multi-language names so both spellings resolve to the same WOF ID.
+- **Dual scripts.** `"Beograd / Белград"` is the same place written twice. WOF (and Mailwoman's resolver) stores multi-language names so both spellings resolve to the same WOF ID.
 - **Right-to-left scripts.** Arabic addresses written in RTL plus mixed Latin numerals create renderer and tokenizer headaches even when the underlying data is clean.
 
 Mailwoman's defense: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](../../concepts/tokenization.mdx#byte-fallback)), so the pipeline does not crash. The model, however, was trained on en-US and fr-FR data. Non-Latin scripts pass through the tokenizer, but the model has no signal to label them. Per-locale weights packages are how this scales, and Japan and Korea each need their own training run.
@@ -221,7 +221,7 @@ Salem
 Newport
 ```
 
-What breaks: there are 41 Springfields in the United States alone. `"Springfield"` with no qualifier is undecidable. `"Springfield, MA"` narrows it to one, but `"Springfield, IL"` and `"Springfield, MO"` are equally valid. A running joke on The Simpsons is that the show never identifies its Springfield's state.
+What breaks: there are 41 Springfields in the United States. `"Springfield"` with no qualifier is undecidable. `"Springfield, MA"` narrows it to one, but `"Springfield, IL"` and `"Springfield, MO"` are equally valid. A running joke on The Simpsons is that the show never identifies its Springfield's state.
 
 A resolver that picks the most populous candidate when no region is provided will pick Springfield, MO (~170K residents). That may not be what the consumer wanted. The caller can provide IP geolocation, a user-supplied country, or prior place mentions to supply more context.
 
@@ -244,18 +244,18 @@ Geocoders that report their failures openly are easier to work with than ones th
 
 ## Summary — what mostly defeats geocoders
 
-| Failure class                           | Pattern                         | Mailwoman's situation today                                          |
-| --------------------------------------- | ------------------------------- | -------------------------------------------------------------------- |
-| Locality/business ambiguity             | "Paris Cafe in Paris"           | neural classifier learns context; needs more training                |
-| Duplicate names across countries/states | "Springfield"                   | unfixable without context; the answer is a candidate list            |
-| Multilingual scripts                    | CJK, Arabic, Cyrillic           | byte-fallback prevents crash; per-locale weights needed for accuracy |
-| Inconsistent abbreviations              | "Avenue" vs "Ave" vs "Av"       | synthesis pass in corpus build covers common cases                   |
-| Whitespace/punctuation variance         | "12 1/2 Main St"                | subword tokenizer is resilient; CRF helps span recovery              |
-| Unofficial landmarks                    | "Behind gas station"            | out of scope for parsing; reverse-geocoding only                     |
-| Nested POI names                        | "New York, New York Steakhouse" | neural classifier can learn; rule classifiers cannot                 |
-| Absent admin hierarchy                  | "Springfield" alone             | resolver returns top-k; consumer disambiguates                       |
-| Unicode normalization                   | NFC vs NFD                      | resolver normalizes before lookup                                    |
-| Transliteration drift                   | "Beograd / Белград"             | WOF carries multi-language names; resolves to same ID                |
+| Failure class                           | Pattern                         | Mailwoman's situation today                                         |
+| --------------------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| Locality/business ambiguity             | "Paris Cafe in Paris"           | neural classifier learns context, but needs more training           |
+| Duplicate names across countries/states | "Springfield"                   | unfixable without context, so the answer is a candidate list        |
+| Multilingual scripts                    | CJK, Arabic, Cyrillic           | byte-fallback prevents crash, but accuracy needs per-locale weights |
+| Inconsistent abbreviations              | "Avenue" vs "Ave" vs "Av"       | synthesis pass in corpus build covers common cases                  |
+| Whitespace/punctuation variance         | "12 1/2 Main St"                | subword tokenizer is resilient, and CRF helps span recovery         |
+| Unofficial landmarks                    | "Behind gas station"            | out of scope for parsing, reverse-geocoding only                    |
+| Nested POI names                        | "New York, New York Steakhouse" | neural classifier can learn, rule classifiers cannot                |
+| Absent admin hierarchy                  | bare "Springfield"              | resolver returns top-k, and the consumer disambiguates              |
+| Unicode normalization                   | NFC vs NFD                      | resolver normalizes before lookup                                   |
+| Transliteration drift                   | "Beograd / Белград"             | WOF stores multi-language names, so both resolve to the same ID     |
 
 A geocoder that handles half of these well is already useful, and no geocoder handles all of them.
 

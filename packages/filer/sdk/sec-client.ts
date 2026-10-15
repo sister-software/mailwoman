@@ -89,7 +89,7 @@ import { $private } from "#env"
 export const SEC_MAX_REQUESTS_PER_SECOND = 10
 
 /**
- * What this client actually paces at — deliberately one below {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
+ * The rate this client paces at — deliberately one below {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
  *
  * A grant schedule at the ceiling has zero slack.
  * SEC measures arriving requests rather than the grant schedule.
@@ -148,7 +148,7 @@ const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
  * `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as `0` in the cache
  * interceptor's `createdAt + ttl < Date.now()` expiry test, so a "permanent" entry would
  * round-trip through disk into one that is expired the instant it is read.
- * `buildDiskStorage` refuses a non-finite TTL outright for exactly this reason.
+ * `buildDiskStorage` throws on a non-finite TTL for this reason.
  */
 const PERMANENT_CACHE_TTL_MS = 100 * 365 * 24 * 60 * 60 * 1000
 
@@ -162,7 +162,7 @@ const HTTP_FORBIDDEN = 403
 /**
  * The lowest success status and the first status past the success range.
  *
- * The window a response must land in before its body is worth caching.
+ * The window a response must land in before the client caches its body.
  *
  * The interceptor's default admits 3xx responses.
  * This interval excludes them.
@@ -318,13 +318,13 @@ export interface SECClientConfig extends APIClientConfig {
 	/**
 	 * The fair-access User-Agent sent with every request.
 	 *
-	 * Included in the 403 explanation so a maintainer can see what was actually sent.
+	 * Included in the 403 explanation so a maintainer can see the header that was sent.
 	 */
 	userAgent: string
 }
 
 /**
- * Rewrite a 403 into an error that tells a maintainer what actually went wrong.
+ * Rewrite a 403 into an error that tells a maintainer the cause of the refusal.
  *
  * A generic "403 Forbidden" reads as "blocked" or "missing" and sends the reader down the wrong path.
  * The real cause is almost always the User-Agent.
@@ -440,10 +440,9 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
 }
 
 /**
- * The cache's `validate` predicate — decides whether a response body is worth
- * persisting at all, before it reaches disk.
+ * The cache's `validate` predicate — decides whether a response body is persisted, before it reaches disk.
  *
- * Two response shapes are worth caching.
+ * Two response shapes are cached.
  * The same edgar host serves both, depending on the endpoint:
  *
  * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`).
@@ -451,8 +450,8 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *   (see the `axios` config below), so this is the second check rather than the first.
  *   A decoded body that isn't an object means the upstream served something other than what it claimed.
  * - A non-empty string (every `getDocument` call — a filing document is html/text, never JSON):
- *   admits the body `getDocument`'s `responseType: "text"` override actually produces.
- *   A `typeof === "object"` test by itself would reject it outright,
+ *   admits the body `getDocument`'s `responseType: "text"` override produces.
+ *   A `typeof === "object"` test by itself would reject every such body,
  *   since a string is never `typeof "object"`.
  *   `.length > 0` is the truncated/empty guard on this shape.
  *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,

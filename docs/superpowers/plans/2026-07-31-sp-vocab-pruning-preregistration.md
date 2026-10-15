@@ -37,7 +37,7 @@ piece.
   and the kept rows are byte-identical. Any difference means the surgery changed something it
   should not have.
 - **B3 — the full battery:** the gauntlet (regression + metamorphic) and the `v7.0.0-base` check
-  run on the pruned pair, which must **PASS with scores identical** to the shipped pair. Scores
+  run on the pruned pair. The pruned pair must **pass with scores identical** to the shipped pair. Scores
   within margins are not enough. B1 and B2 imply identical parses, so any score delta is a defect.
 - **Receipt:** artifact sizes before and after (int8 onnx + tokenizer.model), the percentage of
   params removed, and utilization telemetry (fired counts and the band of pieces that almost never

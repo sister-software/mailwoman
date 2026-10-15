@@ -7,9 +7,9 @@ hide_footer: true
 
 # Data licensing & provenance
 
-The [code licensing](./index.md) pages cover the engine, which is AGPL or commercial. This page covers the **data**: where Mailwoman's gazetteer comes from, the license each source carries, and the one boundary to check before you ship anything derived from OSM.
+The [code licensing](./index.md) pages cover the engine. The engine is AGPL or commercial. This page covers the **data**: where Mailwoman's gazetteer comes from, the license of each source, and the one boundary to check before you ship anything derived from OSM.
 
-The core gazetteer is built entirely from permissive sources, so a resolved coordinate carries no copyleft. One optional precision tier, OpenStreetMap rooftop, is share-alike. It is kept separate from the core so that its obligations never apply to the default product.
+The core gazetteer is built entirely from permissive sources, so a resolved coordinate is subject to no copyleft. One optional precision tier, OpenStreetMap rooftop, is share-alike. It is kept separate from the core so that its obligations never apply to the default product.
 
 :::danger[Correction, 2026-09-27: the sentence above is contradicted by the artifact]
 
@@ -27,10 +27,10 @@ Overture Divisions release `2026-07-22.0`, and the builder that produced both fo
 same way. Which Overture release reached the published 2026-08-25 chain is unmeasured. Overture's
 attribution page gives its Divisions theme `License for theme: ODbL`.
 
-So the core gazetteer reads a share-alike source, and this page says it does not. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
+So the core gazetteer reads a share-alike source, and this page stated that it does not. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
 
 Both quantities that bear on the answer were measured on 2026-09-27, over the lab host's `2026-09-15`
-chain. `spr` carries no source column, but each fold mints ids from its own base in
+chain. `spr` has no source column, but each fold mints ids from its own base in
 `@mailwoman/core/resolver/synthetic-id-ranges`, and the Overture fold writes only rows in
 `[8e12, 9e12)` and updates no Who's On First row, so the range is an exact count rather than a floor.
 
@@ -41,7 +41,7 @@ carrying 2,539,196 of its 16,307,416 candidate rows. The fields that survive are
 longitude, the bounding box taken from the matching `division_area`, the parent division, the population
 and the Wikidata concordance.
 
-The GERS id does not survive. `fold-overture` writes a concordance under `wd:id` alone, so no row in
+The GERS id does not survive. `fold-overture` writes a concordance under `wd:id` only, so no row in
 either artifact can be traced back to the Overture record it came from. Counsel should know that before
 considering whether an alteration file is producible.
 
@@ -49,12 +49,12 @@ The same measurement over the published `2026-08-25` artifact was taken on 2026-
 in full. Overture Divisions contributes **1,590,314 of its 8,346,136 distinct places, 19.05%**, over
 2,152,892 of its 15,183,707 candidate rows. The place count is identical in both chains.
 
-The published artifact's expression covers the terms of three folds, which are 6,537,182 of 8,346,136
+The published artifact's expression covers the terms of three folds. Those folds hold 6,537,182 of 8,346,136
 places, 78.33%. The remaining 1,808,954 places, 21.67%, come from folds the expression leaves out:
 Code-Point Open at 1,746,976 places under the Open Government License v3.0, GeoNames postal at 57,221, and
 the Northern Ireland OpenStreetMap fold at 4,757.
 
-`packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and carries the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer whose `tier` or license expression forbids it, which catches this artifact.
+`packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and records the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer when its `tier` or license expression forbids publication. That check catches this artifact.
 
 :::
 
@@ -64,7 +64,7 @@ The OpenStreetMap precision tier is **built but not enabled** in any published a
 
 :::
 
-:::danger[Correction, 2026-09-27: a published artifact carries OpenStreetMap-derived rows]
+:::danger[Correction, 2026-09-27: a published artifact contains OpenStreetMap-derived rows]
 
 This page records the state as of 2026-08 and its text is left as it was written. The banner above is
 accurate about the tier it describes and inaccurate as a statement about the published gazetteer.
@@ -75,7 +75,7 @@ from every published artifact, and that part holds.
 A second OpenStreetMap-derived layer reaches a published artifact by a different route. The Northern Ireland
 unit-postcode database is built from OpenStreetMap `addr:postcode` tags, because Code-Point Open carves
 Northern Ireland out and the alternatives were a £9,224 license or no postcode data. Its rows were folded
-into the candidate gazetteer, which ships as the `candidate` bundle.
+into the candidate gazetteer. That gazetteer ships as the `candidate` bundle.
 
 Measured 2026-09-27 by downloading the published artifact in full,
 `gazetteer/2026-08-25b/candidate.db`, 2,880,921,600 bytes, and verifying the byte count against the
@@ -84,7 +84,7 @@ from the Northern Ireland OpenStreetMap fold's own id range. Sampled rows read `
 `BT11DA` and `BT11DD` at Belfast coordinates. The place count matches that database's own documented figure
 of 4,757 of the 50,032 live Northern Ireland postcodes, 9.5%.
 
-So a reader who relied on this banner to conclude that the published gazetteer carries no share-alike data
+So a reader who relied on this banner to conclude that the published gazetteer contains no share-alike data
 was misinformed on that point. The artifact's own `layer_manifest` records `tier = build-local` and a license
 expression including `ODbL-1.0`, so the file states its own terms correctly while this page does not.
 
@@ -96,13 +96,13 @@ operator's.
 
 ## Where the data comes from
 
-Each source below is recorded with its license at the point it enters the pipeline. The authoritative catalog is [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx). The legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution. Each built data artifact carries its own `ATTRIBUTION.json`, which records the source, release, and license at build time.
+Each source below is recorded with its license at the point it enters the pipeline. The authoritative catalog is [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx). The legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution. Each built data artifact includes its own `ATTRIBUTION.json`, which records the source, release, and license at build time.
 
 | Source                 | License             | Obligation                                     | Role in Mailwoman                                                                |
 | ---------------------- | ------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
 | Who's On First (WOF)   | CC0                 | none (public domain)                           | the gazetteer anchor — every place keeps its WOF id                              |
 | US Census TIGER        | Public Domain       | none                                           | US street interpolation + the situs rooftop base                                 |
-| Overture               | CDLA-Permissive-2.0 | attribution                                    | US address points; coverage centroids                                            |
+| Overture               | CDLA-Permissive-2.0 | attribution                                    | US address points, coverage centroids                                            |
 | OpenAddresses          | per-source, varies  | per-source attribution / share-alike           | US gap states (e.g. Hawaii); cross-checked centroids                             |
 | GeoNames               | CC-BY 4.0           | attribution                                    | the village-level + bilingual alt-name coverage fold                             |
 | France BAN             | Licence Ouverte 2.0 | attribution (we elect this over its dual ODbL) | FR rooftop + street tiers (26M address points) and the FR street training corpus |
@@ -119,15 +119,15 @@ OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/
 - A **Derivative Database** is a database built from ODbL data. For Mailwoman, that is the OSM rooftop extract (`address-points-<cc>-<slug>.db`). A distributor must provide attribution, share alike, and keep the database open.
 - A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database. Examples are a rendered map, a report, or, in the case that matters here, a single resolved coordinate returned from a lookup. ODbL does **not** impose share-alike on a Produced Work and requires only attribution.
 
-Our working position, which counsel needs to confirm, is that **serving a resolved coordinate is a Produced Work** (attribution without copyleft), while **distributing the extract itself is a Derivative Database** (full ODbL). The architecture assumes that this distinction holds.
+Our working position, pending counsel's confirmation, is that **serving a resolved coordinate is a Produced Work** (attribution without copyleft), while **distributing the extract itself is a Derivative Database** (full ODbL). The architecture assumes that this distinction holds.
 
 ## How the boundary is enforced
 
 The separation is built into the structure of the code and data, so it does not depend on a runtime flag that someone could forget to set. Four mechanisms keep ODbL data out of the permissive core:
 
-1. **Per-row provenance.** Every address point carries a `source` string ([`address-point-schema.ts:41`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/address-point-schema.ts)). OSM points are marked `openstreetmap:<cc>` ([`build-rooftop-extract.ts:88`](https://github.com/sister-software/mailwoman/blob/main/osm/scripts/build-rooftop-extract.ts)), and permissive points are `overture:*` or `openaddresses`. The license of every row can be identified.
+1. **Per-row provenance.** Every address point stores a `source` string ([`address-point-schema.ts:41`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/address-point-schema.ts)). OSM points are marked `openstreetmap:<cc>` ([`build-rooftop-extract.ts:88`](https://github.com/sister-software/mailwoman/blob/main/osm/scripts/build-rooftop-extract.ts)), and permissive points are `overture:*` or `openaddresses`. The license of every row can be identified.
 
-2. **The core never includes OSM data.** OSM points live in their own extracts beside the WOF-keyed gazetteer and are never merged into it. The `@mailwoman/osm` workspace contains **only code** and no OSM data, so depending on it carries no obligation.
+2. **The core never includes OSM data.** OSM points live in their own extracts beside the WOF-keyed gazetteer and are never merged into it. The `@mailwoman/osm` workspace contains **only code** and no OSM data, so depending on it creates no obligation.
 
 3. **The tier is off by default.** The cascade reaches the OSM extracts only through an _optional_ injected dependency (`osmExtracts?` in [`geocode-core.ts:86`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)). It consults them only for a non-US parse without a US situs match. The default product never injects the dependency, so the tier is absent unless a caller deliberately adds it.
 
@@ -147,7 +147,7 @@ over the row's `license` column. Measured over `v0.7.0-de-holdout` on 2026-09-26
 distinct values across 703,835,753 rows, of which 4 are SPDX identifiers covering 75,582,634 rows and 66
 are prose covering 628,203,119, plus 50,000 rows at `null`. A row whose license reads "Synthetic —
 OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) …" is share-alike-derived and
-begins with neither identifier, so the prefix match admitted it. 358,597 rows carry a license value of
+begins with neither identifier, so the prefix match admitted it. 358,597 rows have a license value of
 that shape.
 
 As of 2026-09-27 the decision reads the obligations recorded for a license expression rather than the
@@ -159,7 +159,7 @@ the row count for each refusal class, and the count of admitted rows whose licen
 expression, because unknown obligations are different from none.
 
 The claim's second sentence still holds: the `ban` adapter stamps `Licence Ouverte 2.0`, which resolves to
-`etalab-2.0` and carries attribution alone.
+`etalab-2.0` and requires attribution only.
 
 :::
 

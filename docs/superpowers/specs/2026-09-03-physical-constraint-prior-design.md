@@ -2,24 +2,24 @@
 
 Status: design record, the first item of #1975's definition of done. This record changes no
 runtime behavior. It decides where the prior sits, what it may express, what it must never be, what
-every exclusion carries, and how the GB prototype is built and graded.
+every exclusion records, and how the GB prototype is built and graded.
 
 ## 1. Inputs this record consumes
 
-| Input                                         | Result                                                                                                                                                                                                                                                                                                                                        |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                         |
-| License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                              |
-| #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                             |
-| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and no exclusion. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                |
-| Geographic-model boundary (2026-08-26 record) | No ranking weight, boost, penalty, or candidate order may be authored by a world-model record. First production integration of any world fact is diagnostic and observational only.                                                                                                                                                           |
-| Postcode-structure arc (2026-08-05 plan)      | Code-Point Open carries 1,746,976 unit postcodes and zero `BT` (Northern Ireland) units. Its M-2b note cites an NI "census file"; that file is the OSM Overpass acquisition described in section 7, and the 4,758 it counted included one malformed row. GB unit postcodes already build `postcode-gb.bin` and the outward-district ancestry. |
+| Input                                         | Result                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail. The mask with power also excludes 50 of 420 truth points, all rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                                |
+| License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                               |
+| #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                              |
+| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and no exclusion. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                 |
+| Geographic-model boundary (2026-08-26 record) | No ranking weight, boost, penalty, or candidate order may be authored by a world-model record. First production integration of any world fact is diagnostic and observational only.                                                                                                                                                            |
+| Postcode-structure arc (2026-08-05 plan)      | Code-Point Open contains 1,746,976 unit postcodes and zero `BT` (Northern Ireland) units. Its M-2b note cites an NI "census file"; that file is the OSM Overpass acquisition described in section 7, and the 4,758 it counted included one malformed row. GB unit postcodes already build `postcode-gb.bin` and the outward-district ancestry. |
 
 ## 2. What the prior is, stated precisely
 
 The GB granularity gap is an assignment problem. Code-Point Open gives one coordinate per unit
 postcode. OS Open UPRN gives one coordinate per addressable object: 41,629,393 points, GB only. The
-register that says which UPRN carries which unit postcode is the licensed product's content. The
+register that assigns each UPRN its unit postcode is the licensed product's content. The
 prior is a generative model of that register from open inputs: given the unit-postcode centroids,
 the UPRN points, and the buildings they sit in, assign each point to a unit postcode, and say for
 each assignment how it was reached.
@@ -43,7 +43,7 @@ prototype:
 - For GB, the open UPRN → unit postcode register exists. The shippable artifact is a sealed build of
   NSUL joined to Open UPRN's coordinates rather than a generative reconstruction of it.
 - The generative method is graded against NSUL as a measurement of how much of the register
-  physical inputs alone recover. That number is what Northern Ireland needs, where neither Open UPRN
+  the physical inputs recover without the register itself. That number is what Northern Ireland needs, where neither Open UPRN
   nor NSUL exists, and it is the only place the method's error can be measured.
 - NSUL's postcodes are those of Code-Point Open, so the two inputs agree by construction on the
   universe of unit postcodes. The grade's denominator is UPRNs present in both.
@@ -71,7 +71,7 @@ first, per #1571's rule that measurement precedes mechanism.
 ## 4. What the prior may express
 
 - **Hard physical exclusion.** A candidate coordinate that falls in a cell the assignment artifact
-  covers at exclusion grade and that carries no addressable object can be removed from the
+  covers at exclusion grade and that contains no addressable object can be removed from the
   candidate set. The exclusion records the cell, the basis, and the artifact version.
 - **Soft possibility structure.** For a unit postcode, the assigned points and their bound: the H3
   res-9 cells the assigned points occupy, and the count of points. This is a region with a
@@ -79,7 +79,7 @@ first, per #1571's rule that measurement precedes mechanism.
 - **The assignment itself**, per UPRN: the unit postcode, the rule that produced it (section 6), and
   its confidence class: `unique`, `tie`, or `unassigned`.
 
-## 5. What the prior must never be, and what every exclusion carries
+## 5. What the prior must never be, and what every exclusion records
 
 Never:
 
@@ -89,15 +89,15 @@ Never:
 - an exclusion from a cell whose coverage basis is `source_present`;
 - a guess for a point the rules leave `unassigned`.
 
-Every exclusion carries: the artifact name and version, the H3 cell, the coverage basis that licensed
-it, and the derivation kind `inferred`. Every result the prior touched carries the derivation kind in
+Every exclusion records the artifact name and version, the H3 cell, the coverage basis that licensed
+it, and the derivation kind `inferred`. Every result the prior touched records the derivation kind in
 its provenance, so a caller can tell a retrieved rooftop from an inferred bound without reading a
 distance.
 
 ## 6. The GB prototype — one postcode area, open data only
 
 **Area.** The prototype uses the `PO` postcode area (Portsmouth, Chichester, Bognor Regis, the Isle of
-Wight). It mixes dense terraces, suburbs, rural parishes and an island, and the board already carries a `PO21` row
+Wight). It mixes dense terraces, suburbs, rural parishes and an island, and the board already contains a `PO21` row
 (`University of Chichester, The Dome, Upper Bognor Rd, Bognor Regis PO21 1HR, United Kingdom`), so
 the prototype's output can be read against a row the resolver is graded on today. The run fills in the
 counts of unit postcodes and UPRNs in `PO`, with the arithmetic stated.
@@ -107,7 +107,7 @@ counts of unit postcodes and UPRNs in `PO`, with the arithmetic stated.
 | Input                     | Artifact                                                                   | Rows                                        | License                                                      |
 | ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
 | Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                           | OGL-UK-3.0                                                   |
-| Addressable-object points | `$MAILWOMAN_DATA_ROOT/db/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
+| Addressable-object points | `$MAILWOMAN_DATA_ROOT/db/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393, coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
 | Building-footprint data   | none on disk                                                               | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
 | Truth for grading         | none on disk; ~487 MB CSV collection to acquire                            | one row per GB UPRN, `PCDS` = unit postcode | ONS NSUL, OGL-UK-3.0 (F1 answered)                           |
 
@@ -116,7 +116,7 @@ OGL throughout. They return in section 7, where no OGL footprint source exists.
 
 **Method, in three rules applied in order, each recorded on the row it decides.**
 
-1. `nearest-centroid` is the null model. Each UPRN takes the unit postcode of the nearest Code-Point
+1. `nearest-centroid` is the baseline model. Each UPRN takes the unit postcode of the nearest Code-Point
    centroid. Every richer rule must beat this baseline.
 2. `same-building` gives all points inside one building footprint one postcode: the postcode that the
    majority of the building's points took under rule 1. Ties are left as `tie`.
@@ -126,12 +126,12 @@ OGL throughout. They return in section 7, where no OGL footprint source exists.
 
 **Grade.** The prototype is graded against NSUL for the same UPRNs on exact-assignment rate, `tie`
 rate, `unassigned` rate, and the confusion between adjacent unit postcodes. Each metric states its
-denominator (UPRNs in `PO` present in both inputs). The null model is graded first, then the two-rule
+denominator (UPRNs in `PO` present in both inputs). The `nearest-centroid` baseline is graded first, then the two-rule
 model, and the difference is the footprint input's measured contribution.
 
 **Pre-registered rule.** If rule 2 does not lift exact assignment by at least 5 percentage points
-over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the null model
-with its measured error. If the null model itself is under 80% exact, the assignment does not warrant a
+over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the `nearest-centroid`
+baseline with its measured error. If that baseline itself is under 80% exact, the assignment does not warrant a
 runtime surface at any tier and the artifact stays a measurement.
 
 ## 7. Northern Ireland — the hard test
@@ -158,7 +158,7 @@ test needs the licensed register.
 | ----------------------------- | ---------------------- | ------------------------ | ------------------------------------------------------------ |
 | Code-Point Open               | OGL-UK-3.0             | attribution              | already built and shipped in `postcode-gb.bin`               |
 | OS Open UPRN                  | OGL-UK-3.0             | attribution              | built, `build-local`; counsel review before shipping         |
-| OS Open Map – Local buildings | OGL-UK-3.0             | attribution              | to acquire; same review                                      |
+| OS Open Map – Local buildings | OGL-UK-3.0             | attribution              | to acquire, same review                                      |
 | ONS NSUL                      | OGL-UK-3.0 (confirmed) | attribution (four lines) | the GB register itself, once counsel reviews the attribution |
 | OSM buildings (NI only)       | ODbL-1.0               | attribution, share-alike | `build-local`; the same posture `packages/osm` holds         |
 
@@ -168,14 +168,14 @@ Once the artifact is built, the doctor summarizes each of these from the artifac
 ## 9. Falsifiers, in order
 
 - **F1.** Answered 2026-09-03: NSUL is published under OGL-UK-3.0, GB coverage, six-weekly, and each
-  row carries `PCDS`, the unit postcode from Code-Point Open. The user guide (May 2025, Epoch 118)
+  row contains `PCDS`, the unit postcode from Code-Point Open. The user guide (May 2025, Epoch 118)
   requires four attribution statements: `Contains OS data © Crown copyright and database right
   [year]`, `Contains Royal Mail data © Royal Mail copyright and Database right [year]`, `Contains
   GeoPlace data © Local Government Information House Limited copyright and database right [year]`,
   and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`.
   Northern Ireland (`BT`) postcode data is excluded from the open terms and needs a separate
-  Land & Property Services license, which the NI section already assumed.
-- **F2.** The null model on `PO`: exact-assignment rate against NSUL. Below 80%, stop.
+  Land & Property Services license. The NI section already assumed that license.
+- **F2.** The `nearest-centroid` baseline on `PO`: exact-assignment rate against NSUL. Below 80%, stop.
 - **F3.** The footprint rule must lift exact assignment by at least 5 pp over F2. Otherwise drop the
   footprint input.
 - **F4.** Only after F2 and F3, build the runtime decoration step as an opt-in pin first, and grade it

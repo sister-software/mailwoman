@@ -252,6 +252,13 @@
 			"censusProbedParents": null
 		},
 		{
+			"kind": "anchorRegion",
+			"applied": false,
+			"probePath": null,
+			"census": null,
+			"censusProbedParents": null
+		},
+		{
 			"kind": "streetMorphology",
 			"applied": false,
 			"probePath": null,

@@ -19,7 +19,7 @@ That's a small change to a decoder. It turns into a diagnostic you can point at 
 
 Once the gaps are typed, you can count them. We ran the parser over a few thousand real addresses and folded every `unknown` span into a frequency table: a ranked list of what the model systematically fails to read. We started calling it the shopping list, because that's what it is. The next retrain, in priority order, written by the model's own failures instead of our hunches.
 
-The first thing the list did was catch us lying to ourselves. Ninety-eight percent of inputs had an unknown span. Ninety-eight! That number is worthless, and it took about four minutes to see why: the gaps were almost all whitespace and commas, the spaces between tokens that no component owns. A metric that's mostly punctuation will tell you the sky is falling on every single address. Once we separated the trivial delimiter gaps from gaps holding an actual letter or digit, the direct figure dropped to nine percent. Nine percent of addresses carry a run of real content the model can't place. That one you can act on.
+The first thing the list did was catch us lying to ourselves. Ninety-eight percent of inputs had an unknown span. Ninety-eight! That number is worthless, and it took about four minutes to see why: the gaps were almost all whitespace and commas, the spaces between tokens that no component owns. A metric that's mostly punctuation will tell you the sky is falling on every single address. Once we separated the trivial delimiter gaps from gaps holding an actual letter or digit, the direct figure dropped to nine percent. Nine percent of addresses contain a run of real content the model can't place. That one you can act on.
 
 ## What it can't read is Polish
 
@@ -29,7 +29,7 @@ The United States and Australia came back spotless: zero content gaps. France, t
 
 The top entries said why in the plainest possible terms: `ł`, `á`, `ó`, `í`, `ě`, `ś`, `ę`, `č`. The whole Latin-Extended block. Our tokenizer isolates a Slavic diacritic into its own little subword, the model was never shown enough of them to learn what they are, so it files them under background noise. `Grudziądz` comes apart at the `ą`: the model labels `Grudzi`, drops the accent, and picks the city back up at `dz`, as if the letter in the middle were a coffee stain. `Bohaterów` splits at the `ó` and takes the neighboring house number down with it.
 
-We had a comfortable theory that this was a decoder bug, a character-offset mismatch around multi-byte characters, the kind of thing you fix in an afternoon without touching a GPU. We checked before we wrote it down, which is the entire point of the exercise. It wasn't the decoder. The offsets were fine; the model only doesn't know these letters, and there is no clever preprocessing that fixes not-knowing. It's a retrain. The difference is that now we know precisely which characters to weight and which locales to leave alone, because Australia and the US don't need a thing.
+We had a comfortable theory that this was a decoder bug, a character-offset mismatch around multi-byte characters, the kind of thing you fix in an afternoon without touching a GPU. We checked before we wrote it down. It wasn't the decoder. The offsets were fine. The model only doesn't know these letters, and there is no clever preprocessing that fixes not-knowing. It's a retrain. The difference is that now we know precisely which characters to weight and which locales to leave unchanged, because Australia and the US don't need a thing.
 
 ## Honesty you can query
 
@@ -39,8 +39,8 @@ The shopping list is checked in, and it runs before and after every retrain now.
 
 ## Update — July 2
 
-We wrote "it's a retrain" and then we tested it, because writing a thing down is not the same as it being true. The retrain held English and made Czech worse. What the ranked list had found was one layer lower: the tokenizer's vocabulary carried every one of those characters as its own lonely subword and not a single piece containing them, and a unigram model cannot emit a subword that isn't in its table. No volume of training data teaches a model to say a word its alphabet can't spell.
+We wrote "it's a retrain" and then we tested it, because writing a thing down is not the same as it being true. The retrain held English and made Czech worse. What the ranked list had found was one layer lower: the tokenizer's vocabulary stored every one of those characters as its own lonely subword and not a single piece containing them, and a unigram model cannot emit a subword that isn't in its table. No volume of training data teaches a model to say a word its alphabet can't spell.
 
-So the fix wasn't a retrain. We trained a small SentencePiece model on Czech and Polish addresses, spliced its 10,582 diacritic-containing pieces into the vocabulary, and initialized each new embedding from the mean of the pieces it used to shatter into. Zero GPU hours. Wrong-city rates fell from 22.4% to 14.8% in Czechia and from 27.9% to 7.9% in Poland, and Slovak and Slovenian came along for free because they share the codepoints. It shipped the next day.
+So the fix wasn't a retrain. We trained a small SentencePiece model on Czech and Polish addresses, spliced its 10,582 diacritic-containing pieces into the vocabulary, and initialized each new embedding from the mean of the pieces it used to shatter into. Zero GPU hours. Wrong-city rates fell from 22.4% to 14.8% in Czechia and from 27.9% to 7.9% in Poland, and Slovak and Slovenian improved with no further work because they share the codepoints. It shipped the next day.
 
-The shopping list paid for itself in under twenty-four hours, which is the part worth repeating: the fix was cheap because the blind spots were countable. `Grudziądz` is whole now.
+The shopping list went from measurement to a shipped fix in under twenty-four hours. The fix was cheap because the blind spots were countable. `Grudziądz` is whole now.

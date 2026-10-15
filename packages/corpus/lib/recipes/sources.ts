@@ -285,7 +285,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"osm-bd",
 	// One id per French overseas jurisdiction for the BAN department files,
 	// written by `corpus run ban --source-name`.
-	// Metropolitan rows keep `ban`, so its weight does not decide how often a territory is drawn.
+	// Metropolitan rows keep `ban`, so its weight does not decide the rate at which a territory is drawn.
 	"ban-gp",
 	"ban-mq",
 	"ban-gf",
@@ -371,7 +371,7 @@ export function defaultRecipeSource(retired: string): string {
  *
  * Its `source-names.json` records the mapping applied per file with the row count
  * and the ordered-`source_id` digest verified on both sides.
- * `v0.7.0-de-holdout/corpus-v0.7.0-de-holdout` is assembled from those bytes over 766 slices.
+ * `v0.7.0-de-holdout/corpus-v0.7.0-de-holdout` is assembled from those bytes over 766 recipe-output files.
  *
  * A recipe writing the retired spelling from here on would produce an output
  * disagreeing with the corpus it joins.
@@ -391,7 +391,7 @@ export const WRITE_CURRENT_SOURCE_NAMES = true
  * throw on every row in the corpus.
  *
  * Callers of those two tables resolve the key through this, so a lookup answers under
- * either spelling and a genuinely unknown source still refuses.
+ * either spelling and a source unknown under both spellings still refuses.
  *
  * The value is returned unchanged for a source outside the table — an adapter id,
  * or an overlay source id — because those tables are keyed by whatever the producer emits.

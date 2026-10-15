@@ -1,31 +1,33 @@
 # 2026-07-23 — placetype-pair-prior arc: ship-prep scorecard (Task 8)
 
 Branch `feat/placetype-pair-prior` (unswitched throughout the arc). This is the ship-PREP
-scorecard for Task 8. No release was dispatched, nothing was promoted, no npm version was
-bumped. It documents every number blocking the decision, both checkpoints, and the one new
+scorecard for Task 8. This task dispatched no release, promoted no checkpoint, and bumped
+no npm version. It documents every number blocking the decision, both checkpoints, and the one new
 ship-blocking finding this task surfaced (the Gauntlet). Full battery/ablation source:
 `.superpowers/sdd/task-7-report.md`; this task's own additions (Gauntlet, model cards, release
 wiring): `.superpowers/sdd/task-8-prep-report.md`.
 
 ## Config-canonical bars (pre-registered, `v3.11.0-deploc-feed.yaml` header)
 
-> PRIMARY : decode-layer dependent_locality emission MATERIALLY above probe-2 floors (NZ > 3/246,
-> GB > 1/69) with tag-correct majority; raw-BIO emission + gap trajectory reported.
->
-> GUARDS (each REGISTERED, none composite-maskable):
->
-> - golden us micro within ±0.7pp of v385 (probe-2 missed by 0.1pp — must recover)
-> - golden fr micro within ±0.7pp of v385
-> - FR-fragment BARE-LOCALITY class ≥ 0.90 (v385 baseline 0.978; probe-2 collapsed to 0.603 — the
->   composite board number is not the bar; this class is)
-> - digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
-> - 6 demo presets byte-identical to v385
-> - val macro_f1 within 1.0pp of v385's 0.7047
->
-> SHIP CHECK: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
-> PASS. Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the 2026-07-22
-> night shift CONDITIONAL on every bar above passing. Any bar fails → stage only, report, no
-> promote (no silent check drift; treadmill guard: no knob iteration).
+```text
+PRIMARY : decode-layer dependent_locality emission MATERIALLY above probe-2 floors (NZ > 3/246,
+GB > 1/69) with tag-correct majority; raw-BIO emission + gap trajectory reported.
+
+GUARDS (each REGISTERED, none composite-maskable):
+
+- golden us micro within ±0.7pp of v385 (probe-2 missed by 0.1pp — must recover)
+- golden fr micro within ±0.7pp of v385
+- FR-fragment BARE-LOCALITY class ≥ 0.90 (v385 baseline 0.978; probe-2 collapsed to 0.603 — the
+  composite board number is not the bar; this class is)
+- digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
+- 6 demo presets byte-identical to v385
+- val macro_f1 within 1.0pp of v385's 0.7047
+
+SHIP CHECK: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
+PASS. Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the 2026-07-22
+night shift CONDITIONAL on every bar above passing. Any bar fails → stage only, report, no
+promote (no silent check drift; treadmill guard: no knob iteration).
+```
 
 ## Digit check revision (operator-ratified 2026-07-23, Teffen Ellis)
 
@@ -43,7 +45,7 @@ v385's own fresh-measured baseline, taken in the same session on the same board:
 | old bar (0.902, probe-anchor)        | historical context only — CI excludes it rather than the active bar |
 | **result**                           |                               **pass** (bar restated against 0.755) |
 
-The 0.902 probe-anchor number is retained in this record as historical context; it is not the bar
+The 0.902 probe-anchor number is retained in this record as historical context. It is not the bar
 this ship decision was graded against.
 
 ---
@@ -55,7 +57,7 @@ this ship decision was graded against.
 | feed-2k checkpoint                                      | `v3.11.0-deploc-feed` step-002000                   | `fc7ad3cb1b8982eb047e8db40ab3f7f7` | 39,411,976 bytes                                                     |
 | feed-8k checkpoint (SHIP CHECKPOINT, operator-ratified) | `v3.11.0-deploc-feed` step-008000                   | `7f75fc449d8abcaa06fb6d4a5502ced7` | 39,411,976 bytes                                                     |
 | v385 (shipped baseline, 6.6.0)                          | `model-v385-latam-step-008000-int8.onnx`            | `700f3cf4c08f31536f0bc053c281b19e` | dereferenced from the real shipped `neural-weights-en-us/model.onnx` |
-| Tokenizer                                               | `v0.9.0-multisplice/tokenizer.model`                | `5c01cdcd4ae25849c5cb26b69fd3dde9` | byte-identical across all three, no tokenizer change                 |
+| Tokenizer                                               | `v0.9.0-multisplice/tokenizer.model`                | `5c01cdcd4ae25849c5cb26b69fd3dde9` | byte-identical across all three: the tokenizer is unchanged          |
 | PPD source CSV                                          | `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv` | `dbd675bdc970ea60f96f0a470429a128` | 25,674,048 rows                                                      |
 | `pair-index-gb.bin` (shipped artifact)                  | `neural-weights-en-gb/pair-index-gb.bin`            | header `delta: 5.0`                | 19,209 pairs, 457,842 bytes — matches feed-8k's calibrated δ         |
 | Model card                                              | `neural-weights-en-us/model-card.json` v6.7.0       | `num_labels: 33` (STAGE3)          | labels unchanged from 6.6.0                                          |
@@ -84,7 +86,7 @@ as measured.
 | bare-locality       | 0.983 [0.964,0.991] | **0.665 [0.617,0.709] — FAIL** | 0.988 [0.971,0.995] — PASS |
 | OVERALL (composite) | 0.676 [0.659,0.693] |            0.780 [0.764,0.795] |        0.745 [0.729,0.761] |
 
-feed-2k fails this bar **outright** — a 400-row board, CI entirely below 0.90. Not a marginal
+feed-2k fails this bar on a 400-row board with its whole CI below 0.90. Not a marginal
 miss: a hallucinated-street regression, the same shape as the sibling en-gb-locale-arc's own
 probe-2 checkpoint at its equivalent step (bare-locality collapsed 0.978→0.603 there too). feed-8k
 avoids it and beats v385's own 0.983.
@@ -106,7 +108,7 @@ cross-validating the harness.
 - **feed-8k: 0.7176** (coordinator-reported, cross-confirmed live). Δ = **+1.29pp** — outside the
   literal magnitude, favorable direction.
 - **feed-2k: unrecoverable.** Modal's log retention had already truncated the step-2000 eval by
-  the time Task 7 queried it; no other doc in this repo records this run's own step-2000 number.
+  the time Task 7 queried it. No other doc in this repo records this run's own step-2000 number.
   Open item for the operator if this matters to the promotion decision.
 
 ### Four dependent_locality boards, full pipeline
@@ -124,10 +126,10 @@ multi-locale resurrection, the actual reason these extracts were fed into this t
 | fr-lieudit-golden (checkpoint only)        |  80 | 0/80, 0/80                              | 2/80, **1/80 (1.25%)**                  |
 
 **GB recall is tied between checkpoints (67/69 both)** — the same two rows miss under both
-(`"Goulbourne Road, St Georges, Telford, TF2 9LE"` — word-boundary, wrong-value; and `"101
+(`"Goulbourne Road, St Georges, Telford, TF2 9LE"` — word-boundary, wrong-value, and `"101
 Coniston Avenue, Knott End on Sea, Poulton-le-Fylde"` — pre-existing model-level miss). This is
 the arc's central structural finding: **the pair-index prior rather than the checkpoint's own
-resurrected classifier row, carries nearly all of GB's dependent_locality recall** — see the
+resurrected classifier row, produces nearly all of GB's dependent_locality recall** — see the
 ablation table below. NZ shows **zero** decode-layer recovery at either checkpoint, despite being
 the arc's original target locale.
 
@@ -167,8 +169,8 @@ number.
 |                                    6 |               98.2% |       1.646% |
 |                                    7 |               98.9% |       2.062% |
 
-FP grows **monotonically** with δ for both checkpoints (roughly 6–10× from δ=3 to δ=7) — δ is a
-actual recall/FP dial rather than a free lunch; the smallest δ clearing the recall bar is required.
+FP grows **monotonically** with δ for both checkpoints (roughly 6–10× from δ=3 to δ=7) — raising δ
+buys recall at the cost of FP. The smallest δ clearing the recall bar is required.
 
 ### 6 demo presets
 
@@ -190,33 +192,33 @@ Both checkpoints, both weights worlds (en-us control path and en-gb weights with
 | po_box             |             88.9% |             88.9% |      0.0 |             88.9% |      0.0 |
 | **Exact-match**    | 1150/4561 (25.2%) | 1152/4561 (25.3%) |  +0.02pp | 1147/4561 (25.1%) |  −0.07pp |
 
-Worst mover: feed-2k venue −1.7pp; feed-8k street −1.5pp. **No tag regresses >2pp for either
+Worst mover: feed-2k venue −1.7pp, and feed-8k street −1.5pp. **No tag regresses >2pp for either
 checkpoint** — both pass this leg directly.
 
 ---
 
 ## Three-way ablation (GB dependent_locality, full pipeline)
 
-| Condition                                      |                       GB emit/tag-correct | Notes                                                                                |
-| ---------------------------------------------- | ----------------------------------------: | ------------------------------------------------------------------------------------ |
-| v385 (pre-feed) + prior @ δ=6 (rung-3 control) |                                      3/69 | weights matter — even the un-fine-tuned base gets a little lift from the prior alone |
-| feed (either checkpoint) + prior OFF           |                                      0/69 | prior matters — the fine-tune's own resurrection is invisible at decode without it   |
-| feed (either checkpoint) + prior ON @ δ\*      | 69/69 emit, **67/69 (97.1%) tag-correct** | together: +67pp over either ingredient alone                                         |
+| Condition                                      |                       GB emit/tag-correct | Notes                                                                               |
+| ---------------------------------------------- | ----------------------------------------: | ----------------------------------------------------------------------------------- |
+| v385 (pre-feed) + prior @ δ=6 (rung-3 control) |                                      3/69 | weights matter — even the un-fine-tuned base gets a little lift from the prior only |
+| feed (either checkpoint) + prior OFF           |                                      0/69 | prior matters — the fine-tune's own resurrection is invisible at decode without it  |
+| feed (either checkpoint) + prior ON @ δ\*      | 69/69 emit, **67/69 (97.1%) tag-correct** | together: +67pp over either ingredient by itself                                    |
 
-Each ingredient is provably necessary; the fine-tune's resurrection puts the tag within δ of
-winning, the prior supplies the calibrated final push. Neither alone reaches production-usable
-recall.
+At δ=6 each ingredient is necessary. The fine-tune's resurrection puts the tag within δ of
+winning, and the prior supplies the remaining margin. Neither ingredient by itself reaches
+production-usable recall at δ=6.
 
 > **CORRECTION + SUPERSESSION (2026-07-23, Option-A δ-sweep — later the same day).** Two fixes to
 > the table above. (1) The 3/69 "v385 + prior" row was a rung-3 hand-rolled probe at δ=6 rather than a
 > production-decode measurement — the production number is **0/69 at δ=5–6's low end** (δ=5: 0/69;
-> δ=6: 6/69). (2) The conclusion "neither alone reaches production-usable recall" was
+> δ=6: 6/69). (2) The conclusion that neither ingredient by itself reaches production-usable recall was
 > **δ-conditional and is now falsified**: sweeping δ on the untouched v385 shows both curves
 > saturate at **δ=10 — 69/69 emit, 69/69 tag-correct, golden-FP 0/51** — exceeding every trained
 > candidate in the arc, at a venue-confound floor of 3.338% (vs 0.738% for the feed candidate at
 > δ=5). v385's dead-classifier deficit is large but _uniform_ (~7.0 logits mean), so a δ that
 > clears it clears the whole board at once. The ablation's necessity conclusion applies only in this
-> form: at δ≤6, weights-resurrection is necessary; at δ=10, the prior alone suffices for this
+> form. At δ≤6, weights-resurrection is necessary. At δ=10, the prior without the fine-tune suffices for this
 > board, and the trade moves entirely into the venue-confound FP floor. Full sweep:
 > `.superpowers/sdd/task-8-report.md` § "Option A: v385 δ-sweep".
 
@@ -224,14 +226,14 @@ recall.
 
 ## Gauntlet — NEW finding, Task 8, 2026-07-23
 
-Not run by Task 6 or Task 7; this task closed that gap and found a real ship blocker.
+Neither Task 6 nor Task 7 ran the Gauntlet. This task closed that gap and found a real ship blocker.
 
-| Layer           | feed-8k verdict        | Detail                                                                                                                                                                                                                                        |
-| --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| regression      | PASS                   | 33/33 counted cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                    |
-| **metamorphic** | **FAIL**               | new violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 HOLDS this exact case (confirmed same session, same board) |
-| held-out        | PASS                   | z=0.00 (candidate not by a measured margin worse), n=300 fresh FR/BAN draw                                                                                                                                                                    |
-| **combined**    | **fail — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                |
+| Layer           | feed-8k verdict        | Detail                                                                                                                                                                                                                                               |
+| --------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| regression      | PASS                   | 33/33 counted cases. 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                           |
+| **metamorphic** | **FAIL**               | new violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 holds this exact case (confirmed in the same session, same board) |
+| held-out        | PASS                   | z=0.00 (candidate not by a measured margin worse), n=300 fresh FR/BAN draw                                                                                                                                                                           |
+| **combined**    | **fail — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                       |
 
 **This is not checkpoint-specific.** feed-2k independently fails the same layer with different
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
@@ -241,7 +243,7 @@ pattern reads as a lineage-wide `v3.11.0-deploc-feed` cost rather than a single-
 transcripts: `.superpowers/sdd/task-8-prep-report.md`.
 
 **Ship-checkpoint choice is unaffected by this finding**. The operator-ratified reasoning
-(feed-2k's FR-fragment failure is the more dangerous, unbounded class; feed-8k's digit miss is
+(feed-2k's FR-fragment failure is the more dangerous, unbounded class, and feed-8k's digit miss is
 narrower and now covered by the check revision) stands regardless of which checkpoint also happens
 to fail the Gauntlet. Both do. The Gauntlet failure blocks promotion of **either** checkpoint until
 triaged — it is a new, independent finding layered on top of the existing checkpoint decision rather than
@@ -266,7 +268,7 @@ a tiebreaker between the two.
 
 ---
 
-## Decision matrix (carried from Task 7, Gauntlet row added)
+## Decision matrix (copied from Task 7, Gauntlet row added)
 
 | Bar                                                    | feed-2k                                                                                                      | feed-8k                                                                                           |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
@@ -282,15 +284,16 @@ a tiebreaker between the two.
 | FR-lieudit dep-loc (checkpoint only)                   | 0/80                                                                                                         | 1/80 (1.25%) — feed-8k ahead                                                                      |
 | Venue-confound FP @ own δ\*                            | 0.569% (37/6500)                                                                                             | 0.738% (48/6500) — feed-2k lower                                                                  |
 | 6 demo presets byte-identical (both weights worlds)    | PASS                                                                                                         | PASS                                                                                              |
-| Error-analysis, no tag >2pp                            | pass (worst venue −1.7pp)                                                                                    | pass (worst street −1.5pp)                                                                        |
+| Error-analysis, every tag within 2pp                   | pass (worst venue −1.7pp)                                                                                    | pass (worst street −1.5pp)                                                                        |
 | **Gauntlet (NEW, Task 8)**                             | **fail** (`BAND[num-ordinal]`/`INV[comma-drop]`/`INV[abbrev]`, "350 Fifth Avenue, New York, NY" 283.5km off) | **fail** (`INV[comma-drop]`, "1600 Pennsylvania Ave NW, Washington DC 20500" loses rooftop → 0,0) |
 
 **Ship checkpoint (operator-ratified 2026-07-23): feed-8k.** Task 7 supports this choice — the
 FR-fragment miss is the more dangerous failure class (fires on any bare-locality input, any
 locale), while feed-8k's digit miss is narrower and now clears the revised bar. GB dep-loc recall
-doesn't differentiate the checkpoints (the prior carries it rather than either checkpoint). **Promotion
-itself remains blocked** — not by the checkpoint choice, but by the Gauntlet finding above, which
-applies to both candidates and was not part of the original six pre-registered guards.
+doesn't differentiate the checkpoints, because the prior produces it rather than either
+checkpoint. **Promotion itself remains blocked.** The Gauntlet finding above blocks it, and the
+checkpoint choice leaves it unchanged. That finding applies to both candidates and was not part of the original six
+pre-registered guards.
 
 ---
 
@@ -301,7 +304,7 @@ applies to both candidates and was not part of the original six pre-registered g
   it is out of this task's scope (ship-prep rather than model debugging).
 - **val macro_f1 for feed-2k remains unrecoverable** from any log or doc found.
 - **`neural-weights-en-gb` has not shipped to npm.** This entire arc, prior included, is
-  pre-promotion; the `runtime-flags.mdx` `placetypePair` row stays Default-OFF.
+  pre-promotion. The `runtime-flags.mdx` `placetypePair` row stays Default-OFF.
 - If the operator ultimately promotes feed-2k instead of feed-8k, the shipped `pair-index-gb.bin`
   must be rebuilt at `--delta 4.5` and `neural-weights-en-gb/scripts/link-dev-weights.ts`'s
   `PAIR_INDEX_DELTA` flipped back down (both one-line changes, documented inline in that file).
@@ -324,7 +327,7 @@ one regression this run existed to fix did not move at all.
 pre-registration"), a second attempt was not made. **The v3.11.x lineage is CLOSED for shipping** —
 neither feed-2k nor feed-8k nor this consolidation checkpoint promotes. The currently-shipped
 model remains v385 (6.6.0); `neural-weights-en-us/model-card.json`'s `version` field was corrected
-back to 6.6.0 accordingly (it had briefly carried an unshipped 6.7.0), with the intended candidate
+back to 6.6.0 accordingly (it had briefly held an unshipped 6.7.0), with the intended candidate
 number preserved as `staged_candidate_version`.
 
 **Root-cause hypothesis for the redesign:** the four dependent_locality feed extracts (GB/NZ/ES/
@@ -343,8 +346,8 @@ separately pre-registered recipe: **v3.12**, sketched at
 `docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
 extended to the new locale extracts (the augmentation implementation already exists from v381), blocked on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
-registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
-lockstep — read it, notthis scorecard, for the authoritative current status.
+registration. `neural-weights-en-us/model-card.json`'s `phase` field records this same verdict.
+That field holds the authoritative current status, and this scorecard does not.
 
 ---
 
@@ -360,7 +363,7 @@ probe chain segment→anchored) was built and passed every bar first try: comma-
 the chain, presets + golden byte-identical, invariance profile improved (138 invariant vs 134).
 Shipped: bundle 6.6.1 (δ=10 pair-index, model bytes unchanged) + `@mailwoman/neural` 7.7.0 (auto
 probe chain). The training-side resurrection lineage closed at five falsified mechanisms and
-three stop-rule executions; the capability ships on the untouched v385. Receipts:
+three stop-rule executions. The capability ships on the untouched v385. Receipts:
 `.superpowers/sdd/task-8-report.md` §§ "Option A" through "v1.1 anchored-mode battery"; design
 record `2026-07-24-pair-prior-comma-scope-{KIMI_HANDOFF,BRAINSTORM_RESPONSE}.md`.
 
@@ -371,7 +374,7 @@ record `2026-07-24-pair-prior-comma-scope-{KIMI_HANDOFF,BRAINSTORM_RESPONSE}.md`
 **en-nz shipped** (bundle 6.6.2 / npm 7.8.0): LINZ-derived pair index (3,134 pairs, δ=10 — the
 uniform-deficit shape replicates cross-country: NZ gap mean 7.8 logits vs GB 7.0, same δ works),
 plus the identical-adjacent-segment (x,x) rule for NZ's repeated-name convention ("Mangawhai,
-Mangawhai" — 21.6% of NZ register names carry identity pairs; GB has zero, verified). NZ board:
+Mangawhai" — 21.6% of NZ register names are identity pairs, and GB has zero, verified). NZ board:
 246/246 emit + tag-correct as-written (100%), 244/246 comma-free. E2E verified off the public
 registry, both probe paths. Venue precision on real data (6,500 Overture NZ rows, synthetic
 interim retired): segment 3.569%, anchored 1.354% in the shipped no-anchor-bin configuration
@@ -382,7 +385,7 @@ documented rather than buried).
 reassignment (namesakes) FALSIFIED — the parse was never wrong there (189/189 region tagging);
 transition-level pair evidence MEASURED OPEN — β=5 on the boundary transition recovers 13/17 of
 the comma-free path-fusion misses (β=8: 15/17) with zero collateral on 47 correct rows + 200
-venue rows; graduates to a build proposal. Venue pairs (#1287) and street pairs (#1288) filed
+venue rows, so it becomes a build proposal. Venue pairs (#1287) and street pairs (#1288) filed
 with probe designs. The GB postcode-clip fix (#1290) rode the same night: a 41.5% silent clip
 rate traced to an unreachable repair pass — one codex conventions row + a card pin, exact
 26→83, clips 0, all pair-prior surfaces byte-identical.

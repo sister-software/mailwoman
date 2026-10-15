@@ -17,7 +17,7 @@ result as `node:readline` while adding:
   yielding it. `TextSpliterator` operates on byte ranges and decodes once at the
   consumer, so large JSONL files spend less time in GC.
 - **Deterministic file-handle lifecycle.** `readline`'s `close` event fires
-  asynchronously after the stream ends; an early `break` out of a `for await` can
+  asynchronously after the stream ends. An early `break` out of a `for await` can
   leave the fd open until GC runs (Node 24+ warns). `AsyncSpliterator` has an
   explicit `[Symbol.asyncDispose]()` lifecycle, and `autoDispose: false` +
   caller-owned handles (the `registry/ingest.ts` pattern) give full control.
@@ -30,34 +30,34 @@ result as `node:readline` while adding:
 
 ## Call-site inventory
 
-| File                                                     | Pattern                                                                            | Spliterator replacement                                                                          |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `corpus/scripts/build-kryptonite-extract.ts:87`          | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)`                                                               |
-| `corpus/scripts/build-transliteration-extract.ts:116`    | same shape                                                                         | `TextSpliterator.fromAsync(jsonl)`                                                               |
-| `corpus/scripts/ingest-csv.ts:206,311`                   | CSV ingest — two passes                                                            | `CSVSpliterator.fromAsync(path, { mode: "array" })` ⚠️                                           |
-| `corpus/src/build.ts:338`                                | `streamJsonl<T>` helper                                                            | `JSONSpliterator.fromAsync<T>(path)`                                                             |
-| `corpus/src/split.ts:219`                                | shuffle-split of labeled JSONL                                                     | `JSONSpliterator.fromAsync(labeledJsonlPath)` (read phase only; write needs `createWriteStream`) |
-| `corpus/src/adapters/gnaf/adapter.ts:81`                 | pipe-delimited G-NAF                                                               | `TSVSpliterator.fromAsync` with `delimiter: "\|"`                                                |
-| `corpus/src/adapters/openaddresses/adapter.ts:142`       | OA GeoJSONL                                                                        | `JSONSpliterator.fromAsync(adapterOpts.inputPath)`                                               |
-| `corpus/src/adapters/overture/adapter.ts:81`             | Overture JSONL                                                                     | `JSONSpliterator.fromAsync(opts.inputPath)`                                                      |
-| `corpus/src/adapters/synth-po-box/adapter.ts:94`         | synthetic PO box JSONL                                                             | `JSONSpliterator.fromAsync(options.inputPath)`                                                   |
-| `corpus/src/adapters/usgov-nad/adapter.ts:252`           | NAD GeoJSON                                                                        | `JSONSpliterator.fromAsync(join(opts.inputPath, extract))`                                       |
-| `corpus/src/extract-recipes/fr-admin-split.ts:66`        | `readCommunes` CSV                                                                 | `CSVSpliterator.fromAsync(path, { mode: "object" })`                                             |
-| `corpus/src/extract-recipes/locale.ts:220`               | OA CSV reservoir sample                                                            | `CSVSpliterator.fromAsync(input, { mode: "array" })`                                             |
-| `corpus/src/extract-recipes/scaffold.ts:71`              | tuple JSONL → `ExtractTuple`                                                       | `JSONSpliterator.fromAsync<ExtractTuple>(input)`                                                 |
-| `mailwoman/commands/gazetteer/importance.tsx:131`        | gzipped TSV via `createInterface({ input: fileStream.pipe(gunzip) })`              | `TextSpliterator.fromAsync(fileStream.pipe(gunzip), { delimiter: Delimiters.Tab })`              |
-| `mailwoman/commands/gazetteer/postcode-intl.tsx:89`      | GeoNames TSV                                                                       | `TSVSpliterator.fromAsync(file)`                                                                 |
-| `mailwoman/corpus-tools/align-extract.ts:40`             | canonicalize JSONL + rewrite                                                       | `JSONSpliterator.fromAsync(args.input)` (read phase)                                             |
-| `scripts/jsonl-to-parquet.ts:159`                        | validate JSONL → DuckDB                                                            | `JSONSpliterator.fromAsync(args.input)`                                                          |
-| `scripts/eval/audit-po-box-cedex-extract.ts:156`         | JSONL audit                                                                        | `JSONSpliterator.fromAsync(opts.input)`                                                          |
-| `scripts/eval/reverse-geocode-eval.ts:105`               | JSONL eval rows                                                                    | `JSONSpliterator.fromAsync(args.eval)`                                                           |
-| `scripts/eval/gauntlet/holdout.ts:101`                   | JSONL reservoir sample                                                             | `JSONSpliterator.fromAsync(src.file)`                                                            |
-| `scripts/eval/record-matcher/train-cross-gbt.ts:146`     | CSV with manual quote handling                                                     | `CSVSpliterator.fromAsync(path, { mode: "object", enableQuoteHandling: true })`                  |
-| `scripts/eval/record-matcher/train-org-cross-gbt.ts:129` | same pattern                                                                       | same                                                                                             |
-| `tiger/sdk/fetch.ts:310`                                 | `ogr2ogr` stdout (GeoJSON per line)                                                | `JSONSpliterator.fromAsync(child.stdout)` ⚠️                                                     |
-| `tiger/sdk/redistricting.ts:122,203`                     | pipe-delimited census files                                                        | `TSVSpliterator.fromAsync(path, { delimiter: "\|" })`                                            |
-| `osm/sdk/extract.ts:127`                                 | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                         |
-| `osm/sdk/street-recovery.ts:126`                         | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                         |
+| File                                                     | Pattern                                                                            | Spliterator replacement                                                                                            |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `corpus/scripts/build-kryptonite-extract.ts:87`          | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)`                                                                                 |
+| `corpus/scripts/build-transliteration-extract.ts:116`    | same shape                                                                         | `TextSpliterator.fromAsync(jsonl)`                                                                                 |
+| `corpus/scripts/ingest-csv.ts:206,311`                   | CSV ingest — two passes                                                            | `CSVSpliterator.fromAsync(path, { mode: "array" })` ⚠️                                                             |
+| `corpus/src/build.ts:338`                                | `streamJsonl<T>` helper                                                            | `JSONSpliterator.fromAsync<T>(path)`                                                                               |
+| `corpus/src/split.ts:219`                                | shuffle-split of labeled JSONL                                                     | `JSONSpliterator.fromAsync(labeledJsonlPath)` (read phase only, because the write phase needs `createWriteStream`) |
+| `corpus/src/adapters/gnaf/adapter.ts:81`                 | pipe-delimited G-NAF                                                               | `TSVSpliterator.fromAsync` with `delimiter: "\|"`                                                                  |
+| `corpus/src/adapters/openaddresses/adapter.ts:142`       | OA GeoJSONL                                                                        | `JSONSpliterator.fromAsync(adapterOpts.inputPath)`                                                                 |
+| `corpus/src/adapters/overture/adapter.ts:81`             | Overture JSONL                                                                     | `JSONSpliterator.fromAsync(opts.inputPath)`                                                                        |
+| `corpus/src/adapters/synth-po-box/adapter.ts:94`         | synthetic PO box JSONL                                                             | `JSONSpliterator.fromAsync(options.inputPath)`                                                                     |
+| `corpus/src/adapters/usgov-nad/adapter.ts:252`           | NAD GeoJSON                                                                        | `JSONSpliterator.fromAsync(join(opts.inputPath, extract))`                                                         |
+| `corpus/src/extract-recipes/fr-admin-split.ts:66`        | `readCommunes` CSV                                                                 | `CSVSpliterator.fromAsync(path, { mode: "object" })`                                                               |
+| `corpus/src/extract-recipes/locale.ts:220`               | OA CSV reservoir sample                                                            | `CSVSpliterator.fromAsync(input, { mode: "array" })`                                                               |
+| `corpus/src/extract-recipes/scaffold.ts:71`              | tuple JSONL → `ExtractTuple`                                                       | `JSONSpliterator.fromAsync<ExtractTuple>(input)`                                                                   |
+| `mailwoman/commands/gazetteer/importance.tsx:131`        | gzipped TSV via `createInterface({ input: fileStream.pipe(gunzip) })`              | `TextSpliterator.fromAsync(fileStream.pipe(gunzip), { delimiter: Delimiters.Tab })`                                |
+| `mailwoman/commands/gazetteer/postcode-intl.tsx:89`      | GeoNames TSV                                                                       | `TSVSpliterator.fromAsync(file)`                                                                                   |
+| `mailwoman/corpus-tools/align-extract.ts:40`             | canonicalize JSONL + rewrite                                                       | `JSONSpliterator.fromAsync(args.input)` (read phase)                                                               |
+| `scripts/jsonl-to-parquet.ts:159`                        | validate JSONL → DuckDB                                                            | `JSONSpliterator.fromAsync(args.input)`                                                                            |
+| `scripts/eval/audit-po-box-cedex-extract.ts:156`         | JSONL audit                                                                        | `JSONSpliterator.fromAsync(opts.input)`                                                                            |
+| `scripts/eval/reverse-geocode-eval.ts:105`               | JSONL eval rows                                                                    | `JSONSpliterator.fromAsync(args.eval)`                                                                             |
+| `scripts/eval/gauntlet/holdout.ts:101`                   | JSONL reservoir sample                                                             | `JSONSpliterator.fromAsync(src.file)`                                                                              |
+| `scripts/eval/record-matcher/train-cross-gbt.ts:146`     | CSV with manual quote handling                                                     | `CSVSpliterator.fromAsync(path, { mode: "object", enableQuoteHandling: true })`                                    |
+| `scripts/eval/record-matcher/train-org-cross-gbt.ts:129` | same pattern                                                                       | same                                                                                                               |
+| `tiger/sdk/fetch.ts:310`                                 | `ogr2ogr` stdout (GeoJSON per line)                                                | `JSONSpliterator.fromAsync(child.stdout)` ⚠️                                                                       |
+| `tiger/sdk/redistricting.ts:122,203`                     | pipe-delimited census files                                                        | `TSVSpliterator.fromAsync(path, { delimiter: "\|" })`                                                              |
+| `osm/sdk/extract.ts:127`                                 | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                                           |
+| `osm/sdk/street-recovery.ts:126`                         | `osmconvert` stdout                                                                | `TextSpliterator.fromAsync(proc.stdout)`                                                                           |
 
 > ⚠️ denotes a call site that warrants extra care (see "Risks" below).
 
@@ -128,7 +128,7 @@ for await (const row of CSVSpliterator.fromAsync(path, { mode: "object" })) {
 ```
 
 > **Resolved in v3.1.0:** the column tokenizer now always preserves empty fields
-> (`skipEmpty: false` internally; probed: `"a,,c,"` keeps all 4 columns including trailing
+> (`skipEmpty: false` internally). A probe confirmed that `"a,,c,"` keeps all 4 columns including trailing
 > empties). The `registry/ingest.ts:54` workaround comment is stale on this point.
 > **⚠️ New known issue found during execution:** `enableQuoteHandling: true` still splits on
 > embedded delimiters inside quoted fields. The option applies to row splitting only and
@@ -239,7 +239,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
 | **2** | All adapter JSONL call sites: `openaddresses/adapter.ts`, `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`, `gnaf/adapter.ts`, `scaffold.ts`, `align-extract.ts` | All JSONL. Same shape as Phase 1.                                                                                 |
 | **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low scope for regressions.                                                            |
 | **4** | CSV sites: `fr-admin-split.ts`, `locale.ts`, `ingest-csv.ts`                                                                                                                             | ⚠️ `skipEmpty` caveat — verify column counts match before landing.                                                |
-| **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`                                             | Straightforward delimiter substitution.                                                                           |
+| **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`                                             | One-line delimiter substitution per site.                                                                         |
 | **6** | Child-process stdout sites: `tiger/sdk/fetch.ts`, `osm/sdk/extract.ts`, `osm/sdk/street-recovery.ts`, `locale.ts:218`                                                                    | ⚠️ Highest risk — external process pipelines. Test with real data.                                                |
 
 ## Risks
@@ -258,8 +258,8 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
    spliterator may miss it. Test with real `ogr2ogr`/`osmconvert` output.
 
 3. ~~**`createInterface` with `process.stdin`.**~~ **Resolved 2026-08-02. This is no longer a
-   risk.** `scripts/bless-package.ts` used `readline/promises` to prompt for an npm OTP;
-   that prompt is gone. The script now inherits stdio so the npm CLI runs its own auth
+   risk.** `scripts/bless-package.ts` used `readline/promises` to prompt for an npm OTP.
+   That prompt is gone. The script now inherits stdio so the npm CLI runs its own auth
    handshake (printing an approval URL for a hardware security key, or prompting for a
    code itself). Should another interactive prompt appear, the reasoning still holds:
    spliterator is a byte-range splitter rather than a line-editor, and such a site would be
@@ -301,9 +301,9 @@ installed spliterator v3.1.0 (live probes rather than docs). Everything above ma
    (child stdout, gunzip/unzip pipes) use `as unknown as AsyncDataResource` with a comment.
 5. **Streams of strings silently break the byte scanner**: `createReadStream(path, { encoding: "utf8" })`
    yields string chunks the splitter can't scan (probed: all offsets -1). `locale.ts` had exactly
-   this; the encoding option was removed so the stream yields Buffers.
+   this, and the encoding option was removed so the stream yields Buffers.
 6. **Tolerance parity ruled most JSONL sites.** `JSONSpliterator` throws on the first malformed
-   row; every adapter/stream site that deliberately skipped bad lines (OA `#` comments,
+   row. Every adapter/stream site that deliberately skipped bad lines (OA `#` comments,
    non-`Feature` shapes, ogr2ogr noise) stayed on `TextSpliterator` + its existing try/catch.
    `JSONSpliterator` landed only where the original was fail-loud (`build.ts` streamJsonl,
    `split.ts`, the two eval readers).
@@ -320,12 +320,12 @@ installed spliterator v3.1.0 (live probes rather than docs). Everything above ma
   slept 150 ms, and wrote 3 more lines. Spliterator-over-stdout read 100,003/100,003, identical to the
   readline baseline, and the exit code was observed. An early break after 1k lines released the handle without fd
   warnings, and the child stayed killable/awaitable as before.
-- **skipEmpty (risk 1): fixed upstream in v3.1.0** (empty fields preserved; probed).
+- **skipEmpty (risk 1): fixed upstream in v3.1.0** (a probe confirmed that empty fields are preserved).
 
 ### Performance (the standing 2026-06-10 benchmark, re-run)
 
 Same protocol (labeled-train.jsonl v0.1.1, 21.8M rows / 11 GB, JSON.parse both arms, checksummed,
-warm cache, Node 26.2.0): spliterator v2 measured **0.45×** readline; v3.1.0 measures
+warm cache, Node 26.2.0): spliterator v2 measured **0.45×** readline, and v3.1.0 measures
 **0.91–0.92×** (readline 0.52–0.53M rows/s, spliterator 0.48M rows/s, checksums identical). The
 rewrite roughly doubled v2's throughput. The residual ~8% deficit is an acceptable cost for the fd-lifecycle
 and dependency-surface improvements rather than a blocker.

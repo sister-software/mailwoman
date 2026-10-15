@@ -35,7 +35,7 @@ export function loadValeIgnore(filePath: PathBuilder) {
 }
 
 /**
- * The surface's files narrowed to the ones a caller named.
+ * The surface's files narrowed to the paths a caller passed.
  *
  * We intersect here instead of passing the caller paths to git with the exclude pathspecs.
  *
@@ -51,8 +51,8 @@ export function narrowTo(files: readonly string[], narrowing: readonly string[])
 	if (!narrowing.length) return [...files]
 
 	const wanted = new Set(narrowing.map((path) => path.replace(/^\.\//, "").replace(/\/$/, "")))
-	// A named directory reaches every file under it, so a sweep over one runs as one command.
-	// Without this a directory matches no file, because the surface lists files alone.
+	// A directory argument reaches every file under it, so a sweep over one runs as one command.
+	// Without this a directory matches no file, because the surface lists only files.
 	const prefixes = [...wanted].map((path) => `${path}/`)
 
 	return files.filter((file) => wanted.has(file) || prefixes.some((prefix) => file.startsWith(prefix)))
@@ -78,15 +78,16 @@ export function configFor(value: Surface) {
 }
 
 /**
- * Each named path that reached no file, with the reason it did.
+ * Each path argument that reached no file, with the reason it did.
  *
  * Three causes produce one empty set and want three different repairs.
  * A path absent from the working tree is a typo or a stale reference.
  *
  * A path an ignore rule covers is a build output, and linting one would report
  * findings its author cannot act on.
- * A path present and carried by git is one this surface excludes by design,
- * which is the only case where silence was ever the right answer.
+ * A path present and tracked by git is one this surface excludes by design.
+ *
+ * That third case is the only one where an empty result is correct.
  *
  * The second `git ls-files` runs only when something failed to match,
  * so an ordinary invocation pays for one.
@@ -98,7 +99,7 @@ export async function describeUnmatched(
 ): Promise<string[]> {
 	const found = new Set(matched)
 
-	// A directory reaches its files rather than itself, so a named directory that
+	// A directory reaches its files rather than itself, so a directory argument that
 	// matched anything is satisfied and only an empty one is reported.
 	const missing = narrowing
 		.map((path) => path.replace(/^\.\//, "").replace(/\/$/, ""))

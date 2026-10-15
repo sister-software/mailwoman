@@ -112,14 +112,14 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 
 **Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (increment B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). The public `normalize()` function always applies NFC, punctuation, and whitespace normalization, and optionally applies abbreviation expansion and case folding. It composes the `offsetMap` across transforms. The en-US and fr-FR abbreviation dictionaries are small.
 
-**Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
+**Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants, while normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
 **Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../site-2026-08/understanding/why-its-hard/addresses-that-break-geocoders.mdx).
 
 **Open questions.**
 
-- How much locale-specific case-folding (Turkish `İ`, Greek final sigma)? Recommend: cover the locales we ship; byte-fallback the rest.
-- Should `NormalizedInput` carry the inverse map (`raw[i]` → `normalized[i]`) too? Recommend: yes — bidirectional offset lookup is cheap and prevents a class of off-by-one bugs.
+- How much locale-specific case-folding (Turkish `İ`, Greek final sigma)? Recommend: cover the locales we ship, and byte-fallback the rest.
+- Should `NormalizedInput` store the inverse map (`raw[i]` → `normalized[i]`) too? Recommend: yes — bidirectional offset lookup is cheap and prevents a class of off-by-one bugs.
 - Where does language detection live — Stage 1 or Stage 2? Recommend: Stage 2 (it needs `QueryShape.characterClass` as input).
 
 ## Boundary — compute QueryShape
@@ -177,20 +177,20 @@ export interface LocaleHintStage {
 }
 ```
 
-**Today.** `@mailwoman/locale-hint` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. It always returns a locale (falling back to en-US at 0.3) and never abstains. `createRuntimePipeline` does not wire it by default, so callers must pass `detectLocale` explicitly. Without it, the coordinator falls back to a stub that trusts the caller's locale.
+**Today.** `@mailwoman/locale-hint` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0, otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. It always returns a locale (falling back to en-US at 0.3) and never abstains. `createRuntimePipeline` does not wire it by default, so callers must pass `detectLocale` explicitly. Without it, the coordinator falls back to a stub that trusts the caller's locale.
 
-**Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, `locale-hint` signals an ensemble run downstream.
+**Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already store the `locale` field — supervised training data is free. Below the confidence floor, `locale-hint` signals an ensemble run downstream.
 
 **Failure classes owned.** Unicode/transliteration script-handling (#6); language-switch hybrids (#7).
 
 **Open questions.**
 
-- Hand-rolled rule classifier vs trained model? Recommend: trained model — small, fast, and gets better with the corpus we already have (each row carries `locale`).
+- Hand-rolled rule classifier vs trained model? Recommend: trained model — small, fast, and gets better with the corpus we already have (each row stores `locale`).
 - Where do non-shipped locales fall back? Recommend: nearest-locale heuristic — a Polish input falls back to `en-US` weights with a low-confidence flag rather than an error.
 
 ## Stage 2.5 — Kind classifier
 
-**Purpose.** Categorize the input by query shape so downstream stages can route appropriately. Trivial inputs short-circuit to Stage 6; structured inputs run the full pipeline; specialist inputs route to dedicated heads (future).
+**Purpose.** Categorize the input by query shape so downstream stages can route appropriately. Trivial inputs short-circuit to Stage 6. Structured inputs run the full pipeline. Specialist inputs route to dedicated heads (future).
 
 **Interface.**
 
@@ -219,14 +219,14 @@ export interface KindClassifier {
 
 **Today.** `@mailwoman/kind-classifier` workspace shipped 2026-05-23. Rule-based, pure functions. Composes per-kind scorers (po_box, intersection, landmark, postcode_only, locality_only, structured_address, vague) and returns the top kind plus alternatives sorted by confidence. Wired in as the default `classifyKind` by `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
 
-**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from labeled corpus rows (Phase 5 Studio is the source of those labels).
+**Future.** Hybrid rule + tiny model. Rule path is shipped. The model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from labeled corpus rows (Phase 5 Studio is the source of those labels).
 
 **Failure classes owned.** Routes around the encoder for the trivial cases that don't need it (postcode-only, locality-only). Improves accuracy on intersection / PO box by routing to specialist heads when they exist (v0.6.0+).
 
 **Open questions.**
 
 - Should `kind` be exclusive (one label) or distributional (probability over kinds)? Recommend: distributional via `alternatives` — graceful failure on ambiguous cases.
-- Specialist heads vs single multi-purpose encoder? Recommend: single encoder for v1; revisit when there's enough labeled `intersection` / `po_box` data to justify specialization.
+- Specialist heads vs single multi-purpose encoder? Recommend: single encoder for v1. Revisit when there's enough labeled `intersection` / `po_box` data to justify specialization.
 
 ## Stage 2.7 — Phrase grouper
 
@@ -261,7 +261,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). It is bitter-lesson-safe because it uses no place-name dictionaries. It is wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`. In v0.5.0 it is a hard dependency rather than an opt-in shim, because there are no v0.4.0 users to migrate. The result is exposed on `PipelineResult.phraseProposals`.
 
-**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
+**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface. The consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
 **Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip class at source rather than via decoder post-trim.
 
@@ -300,7 +300,7 @@ export interface ClassifierContext {
 **Open questions.**
 
 - Should `NeuralSequenceClassifier` consume `QueryShape.segments` as input today, or wait for v0.6.0? Recommend: v0.5.0+ — requires a retrain anyway.
-- How do specialist heads (intersection, PO box) compose with the main encoder? Recommend: shared encoder + per-kind head; see ARCHITECTURE.md's multi-head extension section.
+- How do specialist heads (intersection, PO box) compose with the main encoder? Recommend: shared encoder + per-kind head, as described in ARCHITECTURE.md's multi-head extension section.
 
 ## Stage 4 — Sequence correct
 
@@ -325,7 +325,7 @@ export interface CrfDecoder {
 
 ### Stage 4b — Span re-reader (future)
 
-When Stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning. **The re-reader is additive: it proposes new alternatives and never deletes existing ones.**
+When Stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on only that span with extra structural conditioning. **The re-reader is additive: it proposes new alternatives and never deletes existing ones.**
 
 **Interface.**
 
@@ -408,11 +408,11 @@ Score per beam = `phrase_conf × classifier_score × resolver_score × concordan
 
 **Future.** Add learned-reranker comparison now that joint decoding has a kryptonite-eval baseline. Long-term: replace the concordance scoring with a learned reranker trained on the kryptonite catalogue.
 
-**Failure classes owned.** Consistency portion of numeric chaos (#5); the hybrid-policy decision in general; cross-component coherence for the kryptonite catalogue.
+**Failure classes owned.** Consistency portion of numeric chaos (#5), the hybrid-policy decision in general, and cross-component coherence for the kryptonite catalogue.
 
 **Open questions.**
 
-- Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent; carry forward into the resolver.
+- Should `Components` include a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent. Pass it forward into the resolver.
 - ~~Joint decoding wired as default vs opt-in?~~ **Resolved twice:** default-on at v4.4.0, then retired to opt-in on 2026-06-14 ([#566](https://github.com/sister-software/mailwoman/issues/566)) on the assembled-pipeline grade. Argmax is the default; `jointReconcile: true` opts back in.
 
 ## Stage 6 — Resolve with candidates
@@ -449,7 +449,7 @@ export interface Resolution {
 }
 ```
 
-**Today.** Shipped through Phase 4.3.x. Each resolved `AddressNode` now carries `alternatives: ResolvedPlace[]` (added 2026-05-23) — the runner-up candidates the backend returned for that node. Surfaces failure mode #8 (Springfield-class ambiguity) without changing the `resolveTree` return type.
+**Today.** Shipped through Phase 4.3.x. Each resolved `AddressNode` now has `alternatives: ResolvedPlace[]` (added 2026-05-23) — the runner-up candidates the backend returned for that node. Surfaces failure mode #8 (Springfield-class ambiguity) without changing the `resolveTree` return type.
 
 **Future.** Add `regionalPriorFromLanguage` and `regionalPriorFromUserLocation` factors (today's scoring uses only match + population).
 
@@ -457,8 +457,8 @@ export interface Resolution {
 
 **Open questions.**
 
-- Default `maxResults`: 5 vs 10? Recommend: 5 — most consumers want top-1; callers wanting more can ask.
-- Should the resolver expose alternatives for each component (e.g. multiple plausible `locality` matches)? Recommend: no — that's the reconciler's job; resolver returns place candidates only.
+- Default `maxResults`: 5 vs 10? Recommend: 5 — most consumers want top-1, and callers wanting more can ask.
+- Should the resolver expose alternatives for each component (e.g. multiple plausible `locality` matches)? Recommend: no — that's the reconciler's job. The resolver returns place candidates only.
 - Multiple gazetteer sources (WOF + BAN + others) — how to compose? Recommend: separate `Resolver` impls per source, composed by a `CompositeResolver` that merges candidates. Defer until BAN integration lands.
 
 ## The coordinator
@@ -528,7 +528,7 @@ export async function runPipeline(raw: string, opts?: PipelineOpts): Promise<Pip
 
 - Every stage is async (matches existing `Classifier.classify` shape).
 - `PipelineTiming` is exposed for caller diagnostics — fast paths show up as missing `token-classify` / `sequence-correct` / `reconcile` entries.
-- The function never throws on a stage failure; degraded stages emit empty results and the pipeline continues. Caller decides whether to retry / surface to user / fall back.
+- The function never throws on a stage failure. Degraded stages emit empty results and the pipeline continues. Caller decides whether to retry / surface to user / fall back.
 
 ## Fast-path routing
 
@@ -559,7 +559,7 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShape, opts?: Pipeli
 
 ## Package map
 
-Each stage lives in its own workspace where possible. Current workspaces extend; new ones are net-new.
+Each stage lives in its own workspace where possible. Current workspaces extend, and new ones are net-new.
 
 | Stage                          | Workspace                                                         | Status                           |
 | ------------------------------ | ----------------------------------------------------------------- | -------------------------------- |
@@ -587,19 +587,19 @@ The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mai
 
 ## Open questions across the pipeline
 
-These don't belong to one stage; they affect composition.
+These don't belong to one stage. They affect composition.
 
 1. **Cancellation.** Every stage accepts an `AbortSignal`. Should partial results be returned on abort, or just `undefined`? Recommend: partial results (a normalized + locale-detected + kind-classified input is useful even if classification was cancelled).
-2. **Cache.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator; configurable size.
+2. **Cache.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator, with a configurable size.
 3. **Telemetry.** `PipelineTiming` is per-call. Should we also expose per-stage success rates and per-stage error counters? Recommend: yes, but as a plug-in observability hook rather than baked into the core interface.
 4. **Stream.** Today the pipeline is request/response. For autocomplete workflows, would a streaming variant ever ship? Recommend: not in v1. The fast path covers most of the autocomplete case via cheap repeated calls.
-5. **Server vs browser parity.** Every stage must run in both. The `locale-hint` and kind classifier should be small enough to bundle; the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
+5. **Server vs browser parity.** Every stage must run in both. The `locale-hint` and kind classifier should be small enough to bundle, and the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
 
 ## How this relates to existing files
 
 - [`INTERFACES.md`](./INTERFACES.mdx) defines the **classifier-level** interfaces (`Classifier`, `ClassificationProposal`, `PolicyRegistry`, etc.). This file is the **stage-level** interface that composes them.
 - [`SCHEMA.md`](../../../engineering/reference/SCHEMA.mdx) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
-- [`ARCHITECTURE.md`](./ARCHITECTURE.mdx) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture; reconcile gradually.
+- [`ARCHITECTURE.md`](./ARCHITECTURE.mdx) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture. Reconcile them gradually.
 - [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
 - [`concepts/the-staged-pipeline`](../../site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) is the **public-facing narrative** version. This file is the implementer's interface.
 
@@ -607,7 +607,7 @@ These don't belong to one stage; they affect composition.
 
 The staging picture is now formalized. Implementation order, in suggested priority:
 
-1. **Stage 1 + boundary QueryShape together.** Cheap to build; every downstream improvement depends on it.
+1. **Stage 1 + boundary QueryShape together.** Cheap to build, and every downstream improvement depends on it.
 2. **Stage 6 candidate-list API.** Small change, big win for failure mode #8.
 3. **Stage 2 + Stage 2.5 together.** Enables fast paths and informs the encoder.
 4. **JS Viterbi for Stage 4a.** Already on the v0.4.0 list.

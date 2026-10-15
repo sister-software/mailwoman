@@ -2,7 +2,7 @@
 
 Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a resolver or human reads off the parse). Method: isotonic regression (PAVA) over `(raw confidence, correct?)` pairs from a 50/50 OpenAddresses + training-corpus calibration set. Fit on 80%, every number below measured on the held-out 20%. Task #59 (#240 PR3).
 
-> `correct?` is a normalized exact-or-token-subset span match (so street decomposition and multi-word fragmentation aren't penalized), so the absolute accuracy runs mildly optimistic — isotonic corrects the reliability _shape_, which the lenient threshold leaves intact. The corpus half is in-domain (the model trained on it); the OA-only row above is the trustworthy held-out ECE.
+> `correct?` is a normalized exact-or-token-subset span match (so street decomposition and multi-word fragmentation aren't penalized), so the absolute accuracy runs mildly optimistic — isotonic corrects the reliability _shape_, and the lenient threshold leaves that shape intact. The corpus half is in-domain (the model trained on it). The OA-only row above is the trustworthy held-out ECE.
 
 ## Headline
 
@@ -14,7 +14,7 @@ Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a
 
 MCE (bins n≥20) 0.2282 → 0.0367 · Brier 0.0285 → 0.0236 · n_fit=10766 n_eval=2691 spans.
 
-> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is the headline; it weights each bin by its mass.
+> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is the headline. It weights each bin by its mass.
 
 ## Reliability (held-out eval, raw confidence)
 
@@ -66,7 +66,7 @@ MCE (bins n≥20) 0.2282 → 0.0367 · Brier 0.0285 → 0.0236 · n_fit=10766 n_
 
 ## Abstention curve (calibrated confidence)
 
-Accept spans at or above the threshold; route the rest to review. Precision is the accuracy of the accepted set.
+Accept spans at or above the threshold, and route the rest to review. Precision is the accuracy of the accepted set.
 
 | threshold | coverage (accepted) | precision | reviewed |
 | --------- | ------------------: | --------: | -------: |
@@ -105,4 +105,4 @@ Accept spans at or above the threshold; route the rest to review. Precision is t
 
 ## How it's wired
 
-The table ships as `neural-weights-en-us/calibration.json` (this v4.13.0 fit; staged on R2 under `en-us/v4.13.0/` and fetched live by the demo) and is turned into a `(raw)=>calibrated` function by the OPT-IN decoder calibrator (`core/decoder/calibration.ts` → `createCalibrator`). Default parse output is unchanged (byte-stable); pass the calibrator via `ParseOpts.calibrate` / `BuildTreeOpts.calibrate` to emit calibrated `conf=`. The demo wires it through `DemoEmbed`'s `calibrator` and the `CalibrationShowcase` component draws the reliability + abstention curves from the same JSON. Regenerate with `scripts/eval/{build-calibration-set.py,collect-span-confidences.ts,fit-isotonic-calibration.py}`.
+The table ships as `neural-weights-en-us/calibration.json` (this v4.13.0 fit, staged on R2 under `en-us/v4.13.0/` and fetched live by the demo) and is turned into a `(raw)=>calibrated` function by the OPT-IN decoder calibrator (`core/decoder/calibration.ts` → `createCalibrator`). Default parse output is unchanged (byte-stable). Pass the calibrator via `ParseOpts.calibrate` / `BuildTreeOpts.calibrate` to emit calibrated `conf=`. The demo wires it through `DemoEmbed`'s `calibrator` and the `CalibrationShowcase` component draws the reliability + abstention curves from the same JSON. Regenerate with `scripts/eval/{build-calibration-set.py,collect-span-confidences.ts,fit-isotonic-calibration.py}`.

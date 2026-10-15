@@ -303,8 +303,9 @@ def _headline_lines(args: argparse.Namespace, fit: Fit) -> list[str]:
         "",
         "> `correct?` is a normalized exact-or-token-subset span match (so street decomposition and "
         "multi-word fragmentation aren't penalized), so the absolute accuracy runs mildly optimistic — "
-        "isotonic corrects the reliability *shape*, which the lenient threshold leaves intact. The corpus "
-        "half is in-domain (the model trained on it); the OA-only row above is the trustworthy held-out ECE.",
+        "isotonic corrects the reliability _shape_, and the lenient threshold leaves that shape intact. The "
+        "corpus half is in-domain (the model trained on it). The OA-only row above is the trustworthy "
+        "held-out ECE.",
         "",
         "## Headline",
         "",
@@ -321,8 +322,8 @@ def _headline_lines(args: argparse.Namespace, fit: Fit) -> list[str]:
         "",
         "> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans "
         "sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their "
-        "all-bins max gap is single-sample noise, not a calibration failure. ECE (sample-weighted) is the "
-        "headline; it weights each bin by its mass.",
+        "all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is "
+        "the headline. It weights each bin by its mass.",
         "",
     ]
 
@@ -362,7 +363,7 @@ def _abstention_lines(fit: Fit) -> list[str]:
     lines = [
         "## Abstention curve (calibrated confidence)",
         "",
-        "Accept spans at or above the threshold; route the rest to review. Precision is the accuracy of the accepted set.",
+        "Accept spans at or above the threshold, and route the rest to review. Precision is the accuracy of the accepted set.",
         "",
         "| threshold | coverage (accepted) | precision | reviewed |",
         "| --- | ---: | ---: | ---: |",

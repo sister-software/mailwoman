@@ -140,7 +140,7 @@ export interface ProbeControlRow {
 	expect: POIBoardExpect
 	/**
 	 * The grade the row holds at baseline and must keep; `controlRegressionTolerance`
-	 * limits how many rows may lose it.
+	 * limits the number of rows that may lose it.
 	 */
 	expectedGrade: "pass"
 	/**
@@ -170,7 +170,7 @@ export interface ProbeThresholds {
 	 */
 	minimumPrimaryNumerator: number
 	/**
-	 * How many rows the primary numerator must gain over the frozen baseline for GO.
+	 * The number of rows the primary numerator must gain over the frozen baseline for GO.
 	 *
 	 * The delta bar is needed because a nonzero baseline could meet the absolute bar with no change.
 	 */
@@ -180,7 +180,7 @@ export interface ProbeThresholds {
 	 */
 	minimumDiagnosticNumerator: number
 	/**
-	 * How many rows the diagnostic numerator must gain over the frozen baseline for DIAGNOSTIC-ONLY.
+	 * The number of rows the diagnostic numerator must gain over the frozen baseline for DIAGNOSTIC-ONLY.
 	 */
 	minimumDiagnosticDelta: number
 	/**

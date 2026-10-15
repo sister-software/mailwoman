@@ -51,7 +51,7 @@ To synthesize a JP address you concatenate the parent chain top-to-bottom: `東�
 
 Western addresses identify locations by street + number. "1600 Pennsylvania Avenue NW" picks a specific building because Pennsylvania Avenue is a known line and 1600 is a known offset along that line.
 
-Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on; the grid is the addressing primitive rather than the line.
+Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on. The grid is the addressing primitive rather than the line.
 
 Implications for the parser:
 
@@ -97,7 +97,7 @@ The `wof-admin-jp` adapter prototype walks the WOF parent chain for every 丁目
 | 千葉 (Chiba)      | 380   |
 | 埼玉 (Saitama)    | 263   |
 
-Tokyo dominates because of its density of named neighborhoods — every chome of every ward is tagged. Smaller prefectures have fewer registered neighborhoods.
+Tokyo dominates because of its density of registered neighborhoods — every chome of every ward is tagged. Smaller prefectures have fewer registered neighborhoods.
 
 ## What's still missing
 

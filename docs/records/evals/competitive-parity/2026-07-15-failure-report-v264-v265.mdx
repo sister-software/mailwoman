@@ -113,16 +113,16 @@ The persistent core: addresses no current candidate parses. Per-country breakdow
 
 ## Model-specific — where candidates disagree (9)
 
-A ✓ under one model and a failure under another = a fix or a regression **between** candidates — the diff you track release-over-release.
+A pass under one model and a failure under another marks a fix or a regression between candidates. That difference is the one to track from release to release.
 
 | country | input                                                  | v264                                              | v265                                                         |
 | ------- | ------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------ |
-| `FR`    | `47110 2 place de verdun sainte-livrade-sur-lot`       | ✓                                                 | street→`Place DE` · locality→`Verdun Sainte-Livrade-Sur-Lot` |
-| `FR`    | `47110, 1 rue des hirondelles, sainte-livrade-sur-lot` | ✓                                                 | house_number→`47110 1` · postcode→`∅`                        |
-| `FR`    | `IFS 14123 France`                                     | postcode→`14123 France`                           | ✓                                                            |
-| `FR`    | `54000 Nancy, 13 Boulevard Albert 1er`                 | house_number→`13 1er` · street→`Boulevard Albert` | ✓                                                            |
-| `US`    | `STATE RTE 100, VT 05350, USA`                         | ✓                                                 | street→`State Rte 100 VT` · region→`∅`                       |
-| `US`    | `N Seventh St, Wyoming 82637`                          | ✓                                                 | region→`∅`                                                   |
-| `US`    | `SARAH SOWERWINE, 1201 E 7TH ST, POWELL, WYOMING`      | ✓                                                 | house_number→`∅`                                             |
-| `US`    | `Фортјуна, North Dakota, US`                           | locality→`Фортјуна, North` · region→`Dakota`      | ✓                                                            |
-| `US`    | `روولینگ هیل وایومینگ Wyoming`                         | ✓                                                 | locality→`روولینگ هیل وایومینگ Wyoming` · region→`∅`         |
+| `FR`    | `47110 2 place de verdun sainte-livrade-sur-lot`       | pass                                              | street→`Place DE` · locality→`Verdun Sainte-Livrade-Sur-Lot` |
+| `FR`    | `47110, 1 rue des hirondelles, sainte-livrade-sur-lot` | pass                                              | house_number→`47110 1` · postcode→`∅`                        |
+| `FR`    | `IFS 14123 France`                                     | postcode→`14123 France`                           | pass                                                         |
+| `FR`    | `54000 Nancy, 13 Boulevard Albert 1er`                 | house_number→`13 1er` · street→`Boulevard Albert` | pass                                                         |
+| `US`    | `STATE RTE 100, VT 05350, USA`                         | pass                                              | street→`State Rte 100 VT` · region→`∅`                       |
+| `US`    | `N Seventh St, Wyoming 82637`                          | pass                                              | region→`∅`                                                   |
+| `US`    | `SARAH SOWERWINE, 1201 E 7TH ST, POWELL, WYOMING`      | pass                                              | house_number→`∅`                                             |
+| `US`    | `Фортјуна, North Dakota, US`                           | locality→`Фортјуна, North` · region→`Dakota`      | pass                                                         |
+| `US`    | `روولینگ هیل وایومینگ Wyoming`                         | pass                                              | locality→`روولینگ هیل وایومینگ Wyoming` · region→`∅`         |

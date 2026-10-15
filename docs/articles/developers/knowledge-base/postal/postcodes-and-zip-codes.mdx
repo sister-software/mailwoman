@@ -14,8 +14,8 @@ least accurate coordinates. This page explains why.
 
 ## The analog
 
-A postcode is a sorting instruction. It encodes a path through a postal network: which regional
-facility, which delivery office, which carrier route. It is written for the sorting machine and the
+A postcode is a sorting instruction. It encodes a path through a postal network: the regional
+facility, the delivery office, the carrier route. It is written for the sorting machine and the
 carrier, and it encodes what they need in the order they need it.
 
 The US structure runs from east to west. The first digit is "a general geographic area of the
@@ -39,7 +39,7 @@ The UK splits the code into an outward half and an inward half, and the hierarch
 124 postcode areas, 3,118 districts, 12,463 sectors, and roughly 1.79 million live unit postcodes. A
 small-user unit postcode covers about fifteen addresses and never more than a hundred
 ([ONS](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)). At that level of
-detail a UK postcode is close to a point, which is why `SW1A 1AA` behaves like an address in a geocoder
+detail a UK postcode is close to a point. That is why `SW1A 1AA` behaves like an address in a geocoder
 and `90210` does not.
 
 Ireland went further. An Eircode has seven characters: a three-character routing key that identifies
@@ -60,8 +60,8 @@ discrete addresses tied to delivery points, including specific housing unit loca
 a point-based dataset unsuitable for mapping …"
 ([Census](https://www.census.gov/programs-surveys/geography/guidance/geo-areas/zctas.html)). The
 Bureau generalized census blocks into areas so that statistics keyed by ZIP Code could be mapped at
-all. The Bureau constructed these areas, and they are not Postal Service boundaries. The same page states that the Postal Service "assigns ZIP Code ranges to regional post offices, which in turn assign ZIP
-Codes to delivery routes."
+all. The Bureau constructed these areas, and they are not Postal Service boundaries. The same page states that the Postal Service assigns ZIP Code ranges to regional post offices. Those offices then
+assign ZIP Codes to delivery routes.
 
 The UK states the same limitation from the other direction: "postcode boundaries mostly do not align
 with other geographic boundaries," and they move as addresses are built and mail volumes change
@@ -85,8 +85,8 @@ French pattern and part of the German one, so the country of a bare `75001` is a
 Mailwoman's kind classifier reports that it received only a postcode.
 [Handle PO boxes and other edge kinds](../../how-to/handle-po-boxes-and-edge-kinds.mdx) has a measured
 table of where five bare postcodes resolved without a country scope. Four of them are US codes, and
-none of those four resolved to the US. That page also shows the fix, which is to scope the query by
-country, and the remaining problem, which is that scoping turns some wrong answers into no answer.
+none of those four resolved to the US. That page also shows the fix: scope the query by
+country. It also shows the remaining problem: scoping turns some wrong answers into no answer.
 
 ## Related
 

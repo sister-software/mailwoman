@@ -40,11 +40,11 @@ This document defines the canonical `ComponentTag` union. Where another document
 > Earlier suffix-like tokens remain part of the street name unless they are the final suffix element.
 > Preserve post-directionals separately. So `Finel Hollow Road` → street `Finel Hollow` + suffix `Road`,
 > while `Sutton Hollow` → street `Sutton` + suffix `Hollow` (terminal there) — the arrival of a later
-> suffix reverts the earlier ambiguous token to the name. Suffix spans never extend beyond one word;
-> a model emitting `Hollow Road` as a suffix is making a suffix-BOUNDARY error rather than a recognition error.
+> suffix reverts the earlier ambiguous token to the name. Suffix spans never extend beyond one word.
+> A model emitting `Hollow Road` as a suffix is making a suffix-BOUNDARY error rather than a recognition error.
 
 For a **US** address the street type is a SEPARATE span. `6220 SE Salmon St` is four components rather than two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
-`street_suffix: "St"`. `street` never carries the type.
+`street_suffix: "St"`. `street` never includes the type.
 
 The split is defined by the USPS Publication 28 Appendix C table in
 [`packages/codex/lib/us/street/suffix.ts`](../../../packages/codex/lib/us/street/suffix.ts). `matchTrailingSuffix` is the only
@@ -83,11 +83,11 @@ the eval floor because of a convention disagreement rather than a model regressi
 
 ### Venue-level (Phase 3)
 
-| Tag         | Description                            | Example                           |
-| ----------- | -------------------------------------- | --------------------------------- |
-| `venue`     | Named place (business, landmark, park) | `Mt Tabor Park`, `Eiffel Tower`   |
-| `attention` | "Attention" or "care of" line          | `c/o Jane Doe`, `Att: Sales Dept` |
-| `po_box`    | Post office box                        | `PO Box 1234`, `BP 42`            |
+| Tag         | Description                                         | Example                           |
+| ----------- | --------------------------------------------------- | --------------------------------- |
+| `venue`     | Place with a proper name (business, landmark, park) | `Mt Tabor Park`, `Eiffel Tower`   |
+| `attention` | "Attention" or "care of" line                       | `c/o Jane Doe`, `Att: Sales Dept` |
+| `po_box`    | Post office box                                     | `PO Box 1234`, `BP 42`            |
 
 ### Locale-specific
 
@@ -95,7 +95,7 @@ the eval floor because of a convention disagreement rather than a model regressi
 | ------- | ------ | ---------------------------------- | ------------------------------------ |
 | `cedex` | FR     | Special postal routing designation | `CEDEX 08` in `75008 PARIS CEDEX 08` |
 
-### JP-specific (ACTIVATED — CJK Phase 2, 2026-07-29; the JP sibling model's label set)
+### JP-specific (ACTIVATED — CJK Phase 2, 2026-07-29, the JP sibling model's label set)
 
 | Tag               | Description                     | Example                |
 | ----------------- | ------------------------------- | ---------------------- |
@@ -105,17 +105,17 @@ the eval floor because of a convention disagreement rather than a model regressi
 | `block`           | JP chōme (丁目)                 | `1丁目`                |
 | `sub_block`       | JP banchi (番地)                | `1番地`                |
 | `building_number` | JP gō (号)                      | `1号`                  |
-| `building_name`   | JP named building (romaji form) | `Tokyo Building`       |
+| `building_name`   | JP building name (romaji form)  | `Tokyo Building`       |
 
 **Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`corpus-python labels.py`, 47 BIO labels = STAGE3 + these seven). That set is the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Under the encoder-design D4 rule, compact numbers (`2-3-16`) remain whole-span `house_number`, and `block`/`sub_block`/`building_number` label only the kanji-designator long form (`2丁目3番16号`). The `componentsSupported` field on `LocaleProfile` declares which tags a locale uses. `ja-JP` declares these seven plus `house_number`/`country`/`postcode`.
 
 ### CN-specific — organizational units (#2034)
 
-| Tag             | Description                                                                                                | Example                                  |
-| --------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `locality_unit` | The ordinal organizational chain below a named settlement or farm: sub-farm, brigade, team, company, group | `三分场八队`, `一零三团七连`, `民权三组` |
+| Tag             | Description                                                                                                             | Example                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `locality_unit` | The ordinal organizational chain below a settlement or farm with a proper name: sub-farm, brigade, team, company, group | `三分场八队`, `一零三团七连`, `民权三组` |
 
-The whole chain is one span, and its generics type each rung. China's rural and state-farm addresses carry a hierarchy that the universal tags cannot represent. Examples include `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm → No. 8 production team), the XPCC ladder `一四三团十二连` (143rd regiment → 12th company), and the villager group `民权三组`. Five overlapping ladders share the same shape: an ordinal followed by a generic (`分场`, `大队`, `队`, `生产队`, `连`, `团`, `组`, `场部`). A census of the 50,000 CN rows in the coarse-placer data found 328 carrying that vocabulary, and 85 of them were numbered teams without any farm marker (`新合七队`). A tag per rung would grow the schema with every new ladder. The whole ordinal chain is therefore one `locality_unit` span. `@mailwoman/core`'s CN unit reader then reads each generic's rung off the suffix deterministically. The named head unit that the chain belongs to (`孟定农场`, `新合`, `赵光`) is `dependent_locality`. A farm headquarters marker (`场部`) stays inside the chain, because it denotes a point in the unit rather than a further rung. Only the CJK sibling model emits the tag, and the Latin model never sees it. For ancestry, `locality_unit` nests under `dependent_locality`, then `locality`. A `house_number` may attach directly to it (`古北口村南关生产队6号`).
+The whole chain is one span, and its generics type each rung. China's rural and state-farm addresses contain a hierarchy that the universal tags cannot represent. Examples include `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm → No. 8 production team), the XPCC ladder `一四三团十二连` (143rd regiment → 12th company), and the villager group `民权三组`. Five overlapping ladders share the same shape: an ordinal followed by a generic (`分场`, `大队`, `队`, `生产队`, `连`, `团`, `组`, `场部`). A census of the 50,000 CN rows in the coarse-placer data found 328 carrying that vocabulary, and 85 of them were numbered teams without any farm marker (`新合七队`). A tag per rung would grow the schema with every new ladder. The whole ordinal chain is therefore one `locality_unit` span. `@mailwoman/core`'s CN unit reader then reads each generic's rung off the suffix deterministically. The head unit with a proper name that the chain belongs to (`孟定农场`, `新合`, `赵光`) is `dependent_locality`. A farm headquarters marker (`场部`) stays inside the chain, because it denotes a point in the unit rather than a further rung. Only the CJK sibling model emits the tag, and the Latin model never sees it. For ancestry, `locality_unit` nests under `dependent_locality`, then `locality`. A `house_number` may attach directly to it (`古北口村南关生产队6号`).
 
 ## BIO labeling
 

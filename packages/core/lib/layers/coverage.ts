@@ -75,7 +75,7 @@ export function designatedCoverageCells(
  * writes a stronger basis without settling the footprint question, the build refuses
  * rather than letting an absent polygon be read as a designation.
  *
- * @param scope Names the caller in the refusal, e.g. `coastal build`.
+ * @param scope The caller the refusal identifies, e.g. `coastal build`.
  * @param limitSentence The product's own sentence saying why its coverage licenses no negative claim.
  */
 export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<CoverageCell>, limitSentence: string): void {
@@ -139,7 +139,7 @@ export interface ResolutionMeasurementOptions {
 	resolutions: readonly number[]
 	onProgress?: (message: string) => void
 	/**
-	 * How often to report progress, in features.
+	 * The progress interval, in features.
 	 */
 	progressEvery?: number
 }
@@ -249,7 +249,7 @@ export function areaAgreementFrom(streamed: StreamedAreaTotals, sourceM2: number
  * The message includes the hole-blind total beside the nested one, because the gap between them
  * is the diagnosis: a hole read as an exterior ring answers "inside" for every point in it.
  *
- * @param scope Names the builder in the error, e.g. `coastal build`.
+ * @param scope The builder the error message identifies, e.g. `coastal build`.
  */
 export function assertAreaAgreement(scope: string, area: AreaAgreementReading, tolerance: number): void {
 	if (area.witness === "absent") return

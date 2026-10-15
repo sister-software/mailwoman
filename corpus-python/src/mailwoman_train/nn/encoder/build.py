@@ -82,7 +82,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         num_locales=NUM_LOCALES,
         locale_loss_weight=getattr(cfg.model, "locale_loss_weight", 0.0),
         # Postcode-anchor channel (#239/#240). anchor_feature_dim derived from NUM_LOCALES (posterior
-        # over the locale set) + 2 (centroid) — single source of truth, can't drift from the loader.
+        # over the locale set) + 2 (centroid). The loader derives it from the same constant, so the two cannot drift.
         use_postcode_anchor=getattr(cfg.model, "use_postcode_anchor", False),
         anchor_feature_dim=NUM_LOCALES + 2,
         inject_first_token=getattr(cfg.model, "inject_first_token", False),

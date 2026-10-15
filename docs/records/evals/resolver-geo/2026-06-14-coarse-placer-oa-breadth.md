@@ -11,13 +11,13 @@ DeepSeek's refinements (leave-one-language-family-out + an abstention-threshold 
   to the in-map address format via DuckDB `read_csv_auto` (`union_by_name` for per-source schema variance),
   deduped, capped at 6 K rows/country (`scripts/coarse-placer/build-outlier-oa.mjs`).
 - **Split — leave-one-language-FAMILY-out** (not random, per DeepSeek): **16 TRAIN** countries across 7
-  families (slavic, romance, germanic, nordic, hellenic, central-asian, maritime) feed the `OTHER` class;
+  families (slavic, romance, germanic, nordic, hellenic, central-asian, maritime) feed the `OTHER` class,
   **11 HELDOUT** countries across 3 families **never trained** (baltic EE/LV/LT, oceania AU/NZ/NC,
   middle-east AE/IL/KW/QA/SA) are the direct generalization probe.
 - **Models:** M3 baseline (Overture, 4 off-map countries) vs the OA-broadened retrain, both evaluated on
   the same OA test set. Coarse-placer is a char-ngram hashed **linear** classifier.
 
-## Result — breadth works for trained families, partially generalizes, and the threshold carries the rest
+## Result — breadth works for trained families, partially generalizes, and the threshold rejects the remaining off-map rows
 
 At the default decision threshold (abstain 0.5):
 
@@ -51,15 +51,15 @@ threshold gets _close_ but not all the way.
 
 ## Verdict
 
-- **Breadth was worth pulling.** The OA retrain is a strict Pareto improvement (trained families →100%,
+- **Breadth improved every measure.** The OA retrain is a strict Pareto improvement (trained families →100%,
   unseen +13pp at every threshold, in-map held). The 27-country / 10-family leave-one-out probe is a far
   honester generalization signal than night-15's 7 countries.
-- **But breadth alone doesn't clear the bar** — confirming DeepSeek's pushback. The final change is **method,
-  not more data**: an open-set / novelty detector (Mahalanobis on the in-map manifold, or an explicit
+- **But breadth without a method change doesn't clear the bar**, as DeepSeek's pushback predicted. The final change is **a method
+  change rather than more data**: an open-set / novelty detector (Mahalanobis on the in-map manifold, or an explicit
   "not-any-of-the-11" head) to push heldout toward 100% without the in-map cost the raw threshold imposes.
 - **Shippable now (operator's call):** the OA-broadened model + a tuned threshold (~0.85) is a real,
   Pareto-dominant upgrade over M3 — ship it as the coarse-placer's new default, with the open-set method as
-  the next milestone. (Not promoted here; PR-and-flag.)
+  the next milestone. (Not promoted here. It ships as a PR behind a flag.)
 
 ## Reproduce
 

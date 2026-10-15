@@ -106,7 +106,7 @@ def test_the_fourteen_fresh_rows_share_one_tensor_with_the_other_thirty_three():
 
 
 def test_the_scheduler_scales_both_groups_and_preserves_their_ratio():
-    """`LambdaLR` multiplies each group's own `initial_lr`, so warmup/cosine composes for free."""
+    """`LambdaLR` multiplies each group's own `initial_lr`, so warmup/cosine composes with no per-group code."""
     cfg = load_config(FULL)
     model = _model(cfg)
     optim, _ = _optimizer(cfg, model)
@@ -126,7 +126,7 @@ def test_the_scheduler_scales_both_groups_and_preserves_their_ratio():
 
 
 def test_the_2k_probe_builds_the_same_optimizer_shape_as_the_full_run():
-    """The probe is only worth running if its optimizer matches what the full run will build."""
+    """The probe measures the full JP training config only if its optimizer matches the one that config builds."""
     full, probe = load_config(FULL), load_config(PROBE_2K)
     for field in ("label_set", "char_mode", "char_ctx", "max_unit_width", "max_units", "max_length"):
         assert getattr(probe.data, field) == getattr(full.data, field), field

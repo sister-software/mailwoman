@@ -84,14 +84,14 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven change rides at its solo-validated weight.
+    # Every proven change runs at its solo-validated weight.
     synth-unit: 1.5
     # Run C (the resume-fix): affix at the exact value the diagnostic hit prefix 75 with — synth-affix
     # 20.0. Run A (10.0, resume) → 65. Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
     # the confound — momentum is required to slide the CRF into the prefix→street→suffix basin). This is
     # resume (output_dir below = consolidation dir, --resume auto finds clean step-040000. Run A's
     # 042k-060k deleted). note: 20.0 rather than DeepSeek's "40.0" — its "20×" arithmetic mislabeled the
-    # diagnostic, which actually used 20.0. Run to convergence (15k) so suffix asymptotes past 64.
+    # diagnostic. The diagnostic used 20.0. Run to convergence (15k) so suffix asymptotes past 64.
     synth-affix: 20.0
     synth-country: 2.0
   train_rows_per_epoch: 1000000
@@ -147,7 +147,7 @@ model:
     I-house_number: 1.5
     # Run A: tag-loss-weight 1.5->2.0 on the affix tags — a second gradient path that can't be starved
     # by other sources' token dominance even when the affix source isn't in the current batch.
-    # Run C: prefix recovers on weight alone (diagnostic 75); suffix is recall-limited → 4.0 loss boost
+    # Run C: prefix recovers from the weight with no loss boost (diagnostic 75); suffix is recall-limited → 4.0 loss boost
     # (surgical, doesn't touch country's batch share — country isn't in the affix source).
     B-street_prefix: 2.0
     I-street_prefix: 2.0

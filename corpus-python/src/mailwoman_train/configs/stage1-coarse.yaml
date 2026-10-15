@@ -53,7 +53,7 @@ train:
   # every ~50-100 steps at b=64, even with the v0.1.0 model architecture unchanged. The
   # v0.1.0 ship session evidently got lucky on the gfx1103 hang RNG. Drop to b=32 with
   # grad_accum=4 → same effective batch 128. The 200-step pre-flight at b=32 ran without
-  # a single hang, and per-step rate (~4.5/s) is actually faster than b=64 (~2.4/s) in
+  # a single hang, and per-step rate (~4.5/s) is faster than b=64 (~2.4/s) in
   # this container's specific firmware state. Phase 2 plan asks for batch 256 nominally,
   # "lower if OOM" — gfx1103 hangs are the equivalent of OOM here.
   batch_size: 32

@@ -6,7 +6,7 @@
 #   - label_smoothing: 0.0 → 0.1 (softens overconfident predictions)
 #   - lr_schedule: constant → cosine (decay after step 50K prevents overfitting)
 #
-# Everything else carries from v0.5.1 unchained:
+# Every other setting is copied from v0.5.1 unchained:
 #   - h384, batch=128 direct, CE-only, phrase priors on, class weights tuned
 #
 # Expected improvement: model learns positional "locality precedes region abbreviation"

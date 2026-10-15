@@ -10,7 +10,7 @@ tags:
 
 # Try it: the POI intent tester
 
-Type a query below to see how Mailwoman handles it. The kind classifier decides whether the query is a POI query or an address. The tester then extracts the subject, which is either a taxonomy category (`hospital`, `drinking fountain`) or a chain brand (`chevron`, `applebee's`). It splits off the location anchor and renders an OverpassQL export you can paste into [Overpass Turbo](https://overpass-turbo.eu/).
+Type a query below to see how Mailwoman handles it. The kind classifier decides whether the query is a POI query or an address. The tester then extracts the subject. The subject is either a taxonomy category (`hospital`, `drinking fountain`) or a chain brand (`chevron`, `applebee's`). It splits off the location anchor and renders an OverpassQL export you can paste into [Overpass Turbo](https://overpass-turbo.eu/).
 
 Intent detection runs entirely in your browser without a network request. It uses the same `matchPOISubject`, `createKindClassifier`, and OverpassQL emitter that Mailwoman ships as a library in [`@mailwoman/kind-classifier`](https://www.npmjs.com/package/@mailwoman/kind-classifier) and [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy). A brand subject resolves to its Wikidata QID from the same brand table the runtime uses. A click on "Search live" for a category result sends byte-range HTTP requests against the published gazetteer and POI layer. That step uses no server-side code or model weights, but it does need a network connection.
 
@@ -22,7 +22,7 @@ import { POIExplorer } from "@site/src/components/POIExplorer/POIExplorer"
 
 - **Kind badge.** This badge shows the Stage 2.5 kind classifier's verdict (`poi_query`, `structured_address`, …) with its confidence. Expand it to see the runner-up kinds.
 - **Category chip.** When the kind is `poi_query`, this chip shows which taxonomy category the subject phrase matched.
-- **Brand chip and QID.** When the subject is a chain brand, this chip shows the brand's canonical name and a linked Wikidata QID (`Q319642` = Chevron). Brands resolve by that QID against the layer's `brand_wikidata` index rather than by category, so they carry neither an OverpassQL export nor an OSM-tag k-ring.
+- **Brand chip and QID.** When the subject is a chain brand, this chip shows the brand's canonical name and a linked Wikidata QID (`Q319642` = Chevron). Brands resolve by that QID against the layer's `brand_wikidata` index rather than by category, so they get neither an OverpassQL export nor an OSM-tag k-ring.
 - **build-local badge.** This badge means the category's data lives only in ODbL sources (OpenStreetMap). Mailwoman ships the builder for the local layer rather than the data itself. [Amenity queries](./amenity-queries.mdx) explains why that split exists.
 - **anchor.** The anchor is the text left over after the subject phrase is split off (`near Springfield`, `, New York`). The runtime pipeline would hand this text to the address parser to resolve a location constraint.
 - **OverpassQL export.** This is a ready-to-run query against the category's OSM tag, scoped to the anchor when one resolved. Overpass is only an export target. Mailwoman prints the query and never runs it for you.

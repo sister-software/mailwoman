@@ -9,7 +9,7 @@ hide_footer: true
 
 Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from its source register. Maintainers who expect one license to cover every database can be surprised by those differences.
 
-This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you are deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md), which covers the same sources from the legal side.
+This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you are deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md). That page covers the same sources from the legal side.
 
 ## How to read an entry
 
@@ -18,7 +18,7 @@ This page lists the databases, with one entry per artifact. Each entry covers wh
 - **shipped**: built only from permissive sources. We build and publish it.
 - **build-local**: built from share-alike or otherwise unpublishable sources. We ship the **builder**, you run it on your own disk, and we distribute no data.
 - **private**: your own data, conforming to the same schema, loaded from `$MAILWOMAN_DATA_ROOT`. It never leaves your machine.
-- **planned**: designed but not built. These entries show the roadmap and are marked so that nobody depends on them.
+- **planned**: designed but not built. These entries show the roadmap and are marked so that no reader or integrator depends on them.
 
 **Cadence** describes current practice rather than a goal. Most of these artifacts are rebuilt when coverage changes or an ingest bug is fixed. They have no fixed schedule. Each entry states when that is the case.
 
@@ -69,7 +69,7 @@ Every other artifact depends on this one. Given a place name, it returns a coord
 [Data licensing & provenance](./data-provenance.md) and the address-data-sources reference both
 say **CC0**. [`resolver-wof-sqlite/README.md`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/README.md)
 and the Hugging Face dataset card both say **CC-BY 4.0** and ask for an attribution notice.
-`THIRD_PARTY_NOTICES.md` says WOF draws on several sources with their own licenses. These statements cannot all be right, and the answer decides whether the gazetteer carries a standing attribution obligation. Until the question is settled, attribute Who's On First to be safe. It is tracked as an item to resolve before shipping on the Lite artifact line.
+`THIRD_PARTY_NOTICES.md` states that WOF draws on several sources with their own licenses. These statements cannot all be right, and the answer decides whether the gazetteer has a standing attribution obligation. Until the question is settled, attribute Who's On First to be safe. It is tracked as an item to resolve before shipping on the Lite artifact line.
 
 :::
 
@@ -87,7 +87,7 @@ and the Hugging Face dataset card both say **CC-BY 4.0** and ask for an attribut
 
 This is the canonical local build that `candidate.db` is derived from. It is listed here because the FST priors and every offline eval read it, and because the repository contains a Hugging Face dataset card for it.
 
-**Contents.** Tables `spr` (one row per place), `names` (multi-language variants), `concordances` (cross-source ids), `place_population`, and `ancestors`, plus a `place_search` FTS5 index and a separately built `place_bbox` R\*Tree. It is deliberately **not** the off-the-shelf geocode.earth WOF dump. Those dumps assign different WOF ids to the same place, which would break every id we have published.
+**Contents.** Tables `spr` (one row per place), `names` (multi-language variants), `concordances` (cross-source ids), `place_population`, and `ancestors`, plus a `place_search` FTS5 index and a separately built `place_bbox` R\*Tree. It is deliberately **not** the off-the-shelf geocode.earth WOF dump. Those dumps assign different WOF ids to the same place. A switch to them would break every id we have published.
 
 **Tier:** internal. It is not part of the npm release and is not currently published anywhere. Its published derivative is `candidate.db` above.
 
@@ -133,17 +133,17 @@ This is the precision tier for the United States. It returns an exact building c
 
 **Contents.** One `address_point` table per state. Each row has the normalized and raw street, house number, unit, postcode, normalized locality, and coordinate. For licensing, the important fields are the per-row `source` string and source release. The extracts hold 124.9 million points across 50 per-state files.
 
-**Upstream sources.** Overture's Addresses theme, which for the US combines the National Address Database (68%, US public domain) and OpenAddresses (32%, government open data). A 2026-06-14 measurement found **zero** OpenStreetMap/ODbL rows in the US set, so the build applies no license filter by default. Per-row provenance is `overture:<dataset>` or `openaddresses`.
+**Upstream sources.** Overture's Addresses theme. For the US, the theme combines the National Address Database (68%, US public domain) and OpenAddresses (32%, government open data). A 2026-06-14 measurement found **zero** OpenStreetMap/ODbL rows in the US set, so the build applies no license filter by default. Per-row provenance is `overture:<dataset>` or `openaddresses`.
 
-**Obligation.** Attribution. NAD is public domain and requires no attribution, and the named OpenAddresses sources require credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the extracts on disk. Pass that document to your downstream users.
+**Obligation.** Attribution. NAD is public domain and requires no attribution, and the listed OpenAddresses sources require credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the extracts on disk. Pass that document to your downstream users.
 
 **Tier:** shipped. The extracts are served with byte-range requests from R2 at `https://public.mailwoman.ai/mailwoman/street/us/<slug>/situs.db` for 52 slugs: all 50 states plus DC and the US Virgin Islands.
 
 **Version / cadence.** Release `2026-05-20.0`, pinned per artifact family in a `releases.json` manifest at the data root. There is no fixed rebuild schedule.
 
-**Approximate size.** Size varies widely by state population. The only figure this repository records is DC, at 119,889,920 bytes (~114 MB). A demo lookup against it reads about 280 KB of that file, which is why the extracts are served with byte-range requests.
+**Approximate size.** Size varies widely by state population. The only figure this repository records is DC, at 119,889,920 bytes (~114 MB). A demo lookup against it reads about 280 KB of that file. That access pattern is why the extracts are served with byte-range requests.
 
-**Coverage gaps worth knowing.** Hawaii is built from OpenAddresses (348K rooftop points) because the primary source does not cover it. New Hampshire has **no** rooftop source and resolves at street level through interpolation only.
+**Coverage gaps.** Hawaii is built from OpenAddresses (348K rooftop points) because the primary source does not cover it. New Hampshire has **no** rooftop source and resolves at street level through interpolation only.
 
 **Build.** `mailwoman situs address-points --state VT` builds one state, and `mailwoman situs build` builds all states.
 
@@ -153,7 +153,7 @@ This is the precision tier for the United States. It returns an exact building c
 
 This is the fallback below the situs tier. Where no rooftop point exists, the resolver estimates the coordinate from the street segment's house-number range. An exact situs point always takes precedence over interpolation.
 
-**Contents.** A `street_segment` table with one row **per side** of each road edge that carries addresses, because the source gives each side its own number range and ZIP. Each row also has parity, county FIPS, and the segment geometry as GeoJSON text. The extracts cover all 3,143 counties of the contiguous US.
+**Contents.** A `street_segment` table with one row **per side** of each road edge that has addresses, because the source gives each side its own number range and ZIP. Each row also has parity, county FIPS, and the segment geometry as GeoJSON text. The extracts cover all 3,143 counties of the contiguous US.
 
 **Upstream source.** US Census TIGER/Line 2023 EDGES shapefiles. **License:** public domain.
 **Obligation:** none.
@@ -181,7 +181,7 @@ This is France's national address register in the same situs schema as the US ex
 
 **License.** **Licence Ouverte / Open Licence 2.0 (Etalab)**, which requires attribution only and has **no share-alike** clause. BAN is dual-licensed and we elect the permissive option. The extract therefore ships under the same terms as the permissive core and needed no counsel check.
 
-**Attribution.** "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)". It is carried per row as `source = ban:fr` and recorded in `ban/ATTRIBUTION.json` with the source URL, release, row count, and md5 at build time.
+**Attribution.** "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)". Each row stores it as `source = ban:fr`, and it is also recorded in `ban/ATTRIBUTION.json` with the source URL, release, row count, and md5 at build time.
 
 **Tier:** shipped. Hosted at `https://public.mailwoman.ai/mailwoman/street/fr/<version>/situs.db`, currently `2026-07-10` (the rebuild that fixed quoting and folded arrondissements).
 
@@ -189,7 +189,7 @@ This is France's national address register in the same situs schema as the US ex
 
 **Build.** `node ban/out/scripts/build-address-point-extract.js --csv-dir <dir> --release 2026-05-18`. The `--depts` flag builds a temporary sample to validate first.
 
-**Not included.** France has no interpolation extract. The exact-point tier covers France, and house numbers that BAN does not carry are not interpolated.
+**Not included.** France has no interpolation extract. The exact-point tier covers France, and house numbers that BAN does not list are not interpolated.
 
 ---
 
@@ -207,9 +207,9 @@ Measured extracts, from the 2026-06-29 build session:
 | NL / national                      | 9,919,996    | 2.3 GB       | 0.0%                   |
 | FR (with nearest-highway recovery) | 477k → 1.13M | not recorded | 58% → 1.3%             |
 
-**Upstream source.** Geofabrik PBF extracts of OpenStreetMap. **License:** ODbL, which requires attribution **and** share-alike on a Derivative Database.
+**Upstream source.** Geofabrik PBF extracts of OpenStreetMap. **License:** ODbL. It requires attribution **and** share-alike on a Derivative Database.
 
-**Tier:** build-local, and specifically **publish-blocked**. No OSM extract ships to npm, R2, or the public demo until counsel has reviewed how ODbL share-alike applies to this distribution model. The `@mailwoman/osm` workspace contains **only code** and no OSM data, so depending on it carries no obligation. You can build and benchmark locally today, but you cannot publish.
+**Tier:** build-local, and specifically **publish-blocked**. No OSM extract ships to npm, R2, or the public demo until counsel has reviewed how ODbL share-alike applies to this distribution model. The `@mailwoman/osm` workspace contains **only code** and no OSM data, so depending on it creates no obligation. You can build and benchmark locally today, but you cannot publish.
 
 [Data licensing & provenance](./data-provenance.md#the-odbl-boundary) lists the three open questions and the four structural mechanisms that keep ODbL data out of the permissive core.
 
@@ -245,7 +245,7 @@ Walkthrough: [looking up a timezone](../recipes/timezones.md).
 
 **Tier:** build-local. `@mailwoman/un-locode-lookup` is published to npm at 8.3.0, and the `.db` is not published.
 
-**Row counts.** 116k entries, of which roughly 93k have coordinates. An older docstring in the package says about a third have coordinates. Use the README and recipe figures given here.
+**Row counts.** 116k entries, of which roughly 93k have coordinates. An older docstring in the package states that about a third have coordinates. Use the README and recipe figures given here.
 
 **Build.** `npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db`.
 Walkthrough: [UN/LOCODE lookup](../recipes/un-locode-lookup.md).
@@ -254,7 +254,7 @@ Walkthrough: [UN/LOCODE lookup](../recipes/un-locode-lookup.md).
 
 ## NUTS lookup — `nuts.db`
 
-**Contents.** A single `nuts_regions` table with one row per region: its NUTS id, level, bounding box, and geometry. It covers levels 1–3 and queries outward from the finest level, which matches the shape OpenCage returns.
+**Contents.** A single `nuts_regions` table with one row per region: its NUTS id, level, bounding box, and geometry. It covers levels 1–3 and queries outward from the finest level. That order matches the shape OpenCage returns.
 
 **Upstream source.** [Eurostat GISCO](https://ec.europa.eu/eurostat/web/gisco) NUTS boundaries, from a `NUTS_RG_*_4326.geojson` export. No vintage is pinned.
 
@@ -272,7 +272,7 @@ Walkthrough: [UN/LOCODE lookup](../recipes/un-locode-lookup.md).
 
 These packages are the parser itself, distributed as data-only npm packages that `@mailwoman/neural` loads at runtime. Unlike everything else on this page, they ship on npm rather than R2, and they are a **first-party artifact**. We trained them, so we set their license.
 
-**License.** `AGPL-3.0-only OR LicenseRef-Commercial`, the same dual license as the engine. The Hugging Face READMEs list only the AGPL half. The `package.json` and model card carry the dual form and are authoritative.
+**License.** `AGPL-3.0-only OR LicenseRef-Commercial`, the same dual license as the engine. The Hugging Face READMEs list only the AGPL half. The `package.json` and model card state the dual form and are authoritative.
 
 | Package                               | Role                         | npm   | Unpacked |
 | ------------------------------------- | ---------------------------- | ----- | -------- |
@@ -282,11 +282,11 @@ These packages are the parser itself, distributed as data-only npm packages that
 | `@mailwoman/neural-weights-en-nz`     | data-only overlay            | 8.3.0 | ~8 MB    |
 | `@mailwoman/neural-weights-base-latn` | parked rather than published | 7.8.1 | —        |
 
-**Contents.** The en-US package carries the model (`model.onnx`), the SentencePiece tokenizer, the model card, calibration tables, the US postcode FST, the en-US and street-morphology FST gazetteer priors, and four evidence lexicons. The overlays share the base's byte-identical model and tokenizer. Each overlay ships only its locale-specific files: a postcode FST, a locale FST, and, where the locale has one, a `pair-index-<cc>.bin` placetype-pair index (GB: 19,209 pairs, ~458 KB; NZ: 3,134 pairs, ~55 KB).
+**Contents.** The en-US package contains the model (`model.onnx`), the SentencePiece tokenizer, the model card, calibration tables, the US postcode FST, the en-US and street-morphology FST gazetteer priors, and four evidence lexicons. The overlays share the base's byte-identical model and tokenizer. Each overlay ships only its locale-specific files: a postcode FST, a locale FST, and, where the locale has one, a `pair-index-<cc>.bin` placetype-pair index (GB: 19,209 pairs, ~458 KB. NZ: 3,134 pairs, ~55 KB).
 
 **Model.** Version 7.0.0, the base trained from scratch. It is ONNX int8, dynamically quantized from fp32, with opset 17, max sequence 128, six layers at hidden size 384, vocabulary 73,143, and roughly 29M parameters. It is **37.6 MB int8** (146.6 MB fp32). The en-US package README prints older size and vocabulary figures. `model-card.json` is the authoritative source.
 
-**Corpus sources.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
+**Corpus sources.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources impose real attribution obligations. Those obligations travel with the model card.
 
 :::danger[Correction, 2026-09-27: the filter cited above never ran]
 
@@ -294,17 +294,17 @@ This page records the state as of 2026-08 and its text is left as it was written
 cites `--exclude-share-alike`, which was never a flag on `mw corpus build` or on any other command. Its
 underlying option, `buildCorpus({ excludeLicenses })`, was reachable only from the library and its only
 caller was `packages/corpus/lib/build.test.ts`, so no released corpus was built with it. `SHARE_ALIKE_PATTERN`
-was an anchored prefix match over the row's `license` column, which admitted 358,597 rows of
+was an anchored prefix match over the row's `license` column. That match admitted 358,597 rows of
 `v0.7.0-de-holdout` whose license value is prose citing ODbL rather than the identifier.
 
 The paragraph's third and fourth sentences are about the model card's own attribution list and are
 unaffected. What is corrected is the mechanism the second sentence offers as the reason to believe them.
-[The data licensing page](./data-provenance.md) carries the same correction with the replacement named.
+[The data licensing page](./data-provenance.md) makes the same correction and identifies the replacement.
 
 Its third sentence also gives `CDLA-Permissive-2.0` for Overture Addresses. That identifier is the
 Places grant. Overture declares no identifier for the Addresses theme and lists the upstream register per
-country instead, so those rows carry the register's terms. The model card now reads that way, and
-`docs/engineering/reference/artifact-rights-inventory.mdx` carries the citation.
+country instead, so those rows take the register's terms. The model card now reads that way, and
+`docs/engineering/reference/artifact-rights-inventory.mdx` holds the citation.
 
 :::
 

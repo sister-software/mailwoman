@@ -24,7 +24,7 @@ v0.3.0 had shipped with a known regression on coarse labels (country, region, lo
 1. **Per-token CRF NLL normalization.** Eliminate the hand-tuned `crf_loss_weight=0.05` knob by scaling the CRF loss to per-token magnitude, so it sums directly with cross-entropy.
 2. **Longer training.** v0.3.0 early-stopped at step 1800 of 50K. The v0.4.0 floor was step 5000.
 3. **Class-weighted cross-entropy.** Pull softmax mass back onto the coarse classes that the 21-label expansion had diluted.
-4. **Source-weight rebalance.** Drop NAD's per-sample weight, which had grown to ~52% of the sampled corpus, and promote the WOF admin sources to compensate.
+4. **Source-weight rebalance.** Drop NAD's per-sample weight. That weight had grown to ~52% of the sampled corpus. Promote the WOF admin sources to compensate.
 5. **JS-side Viterbi decoder** and label vocabulary loading from `model-card.json`, as runtime cleanup.
 6. **Reuse `corpus-v0.3.0`**, which needed no rebuild.
 
@@ -75,7 +75,7 @@ We had not anticipated this. Future smokes should use a constant LR for the verd
 
 ## What we shipped
 
-We shipped the §4-only recipe, which layers the source rebalance on top of v0.3.0's existing dual-loss recipe at v0.3.0's safe LR. It was the only recipe that stayed stable through both a verdict smoke and a full 50K run.
+We shipped the §4-only recipe. It layers the source rebalance on top of v0.3.0's existing dual-loss recipe at v0.3.0's safe LR. It was the only recipe that stayed stable through both a verdict smoke and a full 50K run.
 
 The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. The architecture is unchanged from v0.3.0 (256-dim, 6 layers, 9M params), and so is the label vocabulary (the same 21 BIO classes). Only the choice of extracts that the training loader oversamples differs.
 
@@ -118,7 +118,7 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
-The empty-prediction class is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance. NAD carried several "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`), and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
+The empty-prediction class is the one to act on. NAD's downweight was the most aggressive change in the §4 source rebalance. NAD contained several "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`), and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
 v0.4.1 should target that fix. The problem is narrower than the headline regression number suggests. The 6% boundary-slip class is a different bug. The model gets the tag right but emits a span that includes the preceding comma and space. The fix is in the decoder, requires no retraining, and has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
@@ -138,9 +138,9 @@ Three orthogonal threads for v0.4.1:
 
 This campaign produced a few lessons for the next iteration:
 
-1. **Verdict smokes need to test the same conditions as the full run.** If the full run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a reasonable training schedule and a poor verdict schedule.
+1. **Verdict smokes need to test the same conditions as the production-length run.** If the production-length run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a reasonable training schedule and a poor verdict schedule.
 2. **Look at failure modes before trusting the F1 delta.** The country regression looked real until we bucketed the failures. 92% of the "regression" came from the golden set counting v0.3.0's known failure modes against v0.4.0. Categorize failures before reporting.
-3. **Make one change at a time.** v0.4.0 stacked three orthogonal training changes (per-token CRF, class weights, source rebalance) and shipped them together. The campaign spent most of its time separating them. Next time, ship one per release. When one change destabilizes training, three stacked changes each need isolation, and that cost is not worth the time saved.
+3. **Make one change at a time.** v0.4.0 stacked three orthogonal training changes (per-token CRF, class weights, source rebalance) and shipped them together. The campaign spent most of its time separating them. Next time, ship one per release. When one change destabilizes training, three stacked changes each need isolation, and that isolation work exceeds the time saved.
 4. **Build diagnostic tooling early.** The `corpus-audit` and `diagnose_regression.py` tools we built during the campaign would have saved most of v0.3.0's investigation time if they'd existed earlier. We're keeping them in the tree.
 
 ## Where to look

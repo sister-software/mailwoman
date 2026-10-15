@@ -6,7 +6,7 @@
 - Version stated in the text: 2.0
 
 The canonical page `https://www.etalab.gouv.fr/licence-ouverte-open-licence/` now redirects to
-`https://www.data.gouv.fr/`, so the text was taken from Etalab's own repository, which is where the page sourced it.
+`https://www.data.gouv.fr/`, so the text was taken from Etalab's own repository. The page sourced its text from that repository.
 
 ## Rights granted, quoted
 
@@ -27,10 +27,10 @@ adapting, modifying, distributing, and exploiting the information commercially.
 - The reuser must not mislead a third party about the content, source or update date of the information.
 - The information is provided `telle que produite ou reçue, sans autre garantie expresse ou tacite`, with no warranty
   against defects, errors, or continued availability.
-- The reuser carries sole responsibility for the reuse.
+- The reuser bears sole responsibility for the reuse.
 
 ## What this text does not settle
 
 It grants reuse of the information. Whether model weights trained on that information are themselves a reuse under this
 grant, and what attribution discharges the condition for a trained model where no individual record is recoverable, are
-readings the text does not make. The grant carries no share-alike condition.
+readings the text does not make. The grant imposes no share-alike condition.

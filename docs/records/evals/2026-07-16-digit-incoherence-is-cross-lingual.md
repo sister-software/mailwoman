@@ -6,7 +6,7 @@ not explain — and that explains why B4's probe barely moved.
 **Result: the intra-word digit incoherence B0 measured on Norwegian is the same defect on
 correctly-parsed Polish streets that are in-corpus and admitted by the filter. It is not coverage, it
 is not the street→locality leak, and it is length-conditioned — the model reproduces a real corpus
-prior on long digit-run continuations. A targeted fragment extract fights that prior uphill, which is
+prior on long digit-run continuations. A targeted fragment extract works against that prior. That is
 why B4 (weight 12, 2k steps) moved the target only +1.7pp.**
 
 ---
@@ -45,8 +45,8 @@ climbs with it (`I-pc` 0.417 → 0.735 across the two continuations of `178`).
 
 That is precisely what the [H3 piece-prior](./2026-07-16-trackb-digit-ownership-h3-verdict.md)
 measured in the _corpus_: `P(I-postcode | digit-run continuation)` rises with length — 0.043 at 2
-digits, 0.879 at 5. **The model is not malfunctioning; it is reproducing its corpus prior faithfully,
-and that prior says a long digit run's continuations are postcode.** Postcodes are long, house
+digits, 0.879 at 5. **The model is not malfunctioning. It is reproducing its corpus prior faithfully,
+and that prior labels a long digit run's continuations as postcode.** Postcodes are long, house
 numbers are short, digits tokenize one piece per character, so length is the signal the model has,
 and it uses it.
 
@@ -58,29 +58,29 @@ Three measurements, one mechanism:
 | B0   | the model reproduces it: B-hn first, I-pc continuations         | model, per piece (Norwegian) |
 | this | same on correctly-parsed, in-corpus Polish — not coverage       | model, per piece (Polish)    |
 
-## Why B4 barely moved — this is the reason, not just the ratio
+## Why B4 barely moved — a second reason beside the ratio
 
-B4's verdict named `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
+B4's verdict identified `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
 probe adds the deeper reason: **a fragment extract is fighting a real, strong, length-conditioned
 corpus prior.** At 3+ digits the corpus itself pushes continuations toward postcode with mass up to
-0.879. A targeted signal at weight 12 for 2k steps dents that; it does not overturn it. That is why
+0.879. A targeted signal at weight 12 for 2k steps dents that but does not overturn it. That is why
 the guards held (no harm) but the target barely moved — the extract and the prior are pulling against
 each other on the same pieces.
 
 **Two implications for B4b, both to be pre-registered not spun tonight:**
 
 1. **Oversample long house numbers.** The defect is worst at 3+ digits, where the postcode prior is
-   strongest. An extract drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
+   strongest. An extract drawn from real NO/PL numbers is mostly 2–3 digits. Deliberately weighting
    3–4-digit house numbers aims the signal where the prior is hardest to beat.
-2. **The representation direction is the real change.** The #727 research says a lower-fertility vocab
-   is upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
+2. **The representation direction is the real change.** The #727 research places a lower-fertility vocab
+   upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
    with 2 postcode-leaning continuations _because_ digits tokenize one-per-character. A vocab where
    `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than an
    extract, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
 ## The vocab change, quantified
 
-The tokenizer (`v0.9.0-multisplice`, 73,143 pieces) carries **exactly two multi-digit numeric
+The tokenizer (`v0.9.0-multisplice`, 73,143 pieces) contains **exactly two multi-digit numeric
 pieces** — `▁10` and `▁16` — and **none at 3+ digits**. So:
 
 ```
@@ -91,8 +91,8 @@ pieces** — `▁10` and `▁16` — and **none at 3+ digits**. So:
 ```
 
 Digit fertility ≡ digit count. **The model's only length signal is the continuation count**, and the
-continuation is where the postcode mass lives. That is not a tuning accident; it is the mechanism's
-root. `178` fails and `24` succeeds because `178` has two postcode-leaning continuations and `24` has
+continuation is where the postcode mass lives. That is not a tuning accident. It is the root of the
+mechanism. `178` fails and `24` succeeds because `178` has two postcode-leaning continuations and `24` has
 one.
 
 This makes the #727 "lower-fertility vocab is upstream" claim concrete and scoped: a **number-piece
@@ -104,7 +104,7 @@ length-driven continuation prior. Postcodes becoming single pieces too is a feat
 5-digit piece and a 3-digit piece are _different_ pieces, so the model is no longer forced to use
 continuation-count as its only length discriminator.
 
-**Cost, stated directly:** a splice grows the vocab and the embedding table; the new rows need
+**Cost, stated directly:** a splice grows the vocab and the embedding table. The new rows need
 gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
 an extract — a tokenizer + model bump rather than a corpus edit — so whether Track B justifies it is squarely
 the operator's call. But it attacks the root the extract only dents.
@@ -113,9 +113,9 @@ the operator's call. But it attacks the root the extract only dents.
 
 - **The fix is still an extract or the vocab — not a validator.** The house condition is true: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
-  `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it rather than
+  `B-house_number` is typically _right_. The fix is to stop the continuations from overriding it rather than
   to forbid postcodes.
-- **B4b is still the operator's call.** This sharpens the hypothesis (oversample long numbers; or go
+- **B4b is still the operator's call.** This sharpens the hypothesis (oversample long numbers, or go
   to vocab) but does not license a solo 3am run.
 
 ## Reproduce

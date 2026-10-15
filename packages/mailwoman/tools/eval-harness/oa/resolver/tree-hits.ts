@@ -59,7 +59,7 @@ export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: numb
 }
 
 /**
- * Collect all resolver-attributed nodes (we want per-placetype names rather than just the most-specific).
+ * Collect all resolver-attributed nodes (we want per-placetype names rather than only the most-specific).
  */
 export function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
@@ -128,7 +128,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 /**
  * The deepest resolved place in the set, the one whose coordinate the eval grades.
  *
- * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns.
+ * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly returns.
  * A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` above the locality.
  * That reversed production's ranking order for one arm.
  */

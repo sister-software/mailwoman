@@ -21,19 +21,19 @@
 #   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
 #
 # The leading arm is not filler. It is the counter-distribution. `no-fragment.ts`'s header records
-# what happens without one: teaching a new surface alone flips the model's default rather than
+# what happens without one: teaching a new surface without a counter-distribution flips the model's default rather than
 # teaching it a distinction. FR/DE/ES/IT pass on the leading form today and must keep passing.
 #
-# VE gets zero rows and cannot get any — GeoNames does not publish Venezuela and nothing else on disk
-# carries a VE postcode. Whether IN's after_region rows generalize to VE's after_locality is the
+# VE gets zero rows and cannot get any — GeoNames does not publish Venezuela and no other file on disk
+# contains a VE postcode. Whether IN's after_region rows generalize to VE's after_locality is the
 # question this run exists to answer, against 4 ve_city_postcode_trailing_state rows already on the board.
 #
 # known limitation for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
-# "learned after_region" from "learned India" using the trailing arm alone. The VE rows separate them.
+# "learned after_region" from "learned India" using only the trailing-arm rows. The VE rows separate them.
 #
 # extraction is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
-# that never landed, which is why the recipe output was unbuildable for a new country. Route notes in its
-# docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames carries the triple inline for PT/MX/IN,
+# that never landed. That missing script made the recipe output unbuildable for a new country. Route
+# notes in its docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames supplies the triple inline for PT/MX/IN,
 # and nearest-locality-centroid was measured (13.5-81.1% agreement) and rejected.
 #
 # COUNTRY_WEIGHTS is now 134 codes, up from 25. `data_loader.py:301` drops any country absent from the
@@ -41,17 +41,17 @@
 # — the Norway bug's mechanism, still live for every other country. The new map is the union of the
 # shipped 25, IN, all 129 gauntlet-board countries, and KR/TW.
 #
-# KR and TW are the one judgment call here: neither is on the board, but both carry corpus rows
-# (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP, which the board does carry.
+# KR and TW are the one judgment call here: neither is on the board, but both have corpus rows
+# (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP. The board does include CN and JP.
 # #288 validates JP/KR/TW together. admitting two of the three would teach the model that Korean and
 # Taiwanese toponyms are not places.
 #
 # cost of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
 # per-row admission check applied inside each source's stream, and the source multinomial fixes each
 # source's draw share — so admitting CN's 11.36M rows does not add CN 1.7% of the run. CN's rows live
-# almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
+# almost entirely in wof-admin. wof-admin is 1.155% of draws, so CN lands at 0.368%.
 #
-# 101 of the 134 codes have zero rows in the corpus. They admit nothing today and are declarations of
+# 101 of the 134 codes have zero rows in the corpus. They admit zero rows today and are declarations of
 # intent; `country_census_raw`'s completeness audit reports them as "0 rows seen", which is correct and not
 # a failure. The two that matter and are not inert: IN (this source's 16,000 rows) and NZ (11,957).
 #

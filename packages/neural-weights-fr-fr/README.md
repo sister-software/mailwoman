@@ -37,7 +37,7 @@ model-index:
 The trained-model bundle (`@mailwoman/neural-weights-fr-fr`) for
 [Mailwoman](https://mailwoman.ai), a postal-address parser. This
 package is **data only** — `model.onnx`, `tokenizer.model`, and metadata. It has
-no JavaScript; it is loaded at inference time by `@mailwoman/neural`.
+no JavaScript. It is loaded at inference time by `@mailwoman/neural`.
 
 > **This locale is served by the shared multi-locale model.** The fr-fr bundle
 > ships the same encoder as the en-us release at an earlier checkpoint
@@ -50,14 +50,13 @@ Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the sequence-labeler half: a small transformer
 encoder doing BIO token classification over the address schema. It is not an LLM
-and none of it is generative; for a closed label set over short strings,
-boring NER is a feature.
+and none of it is generative. Plain NER suits a closed label set over short strings.
 
 The design splits the problem in two: **the model learns the grammar, the
 gazetteer knows the atlas.** The model never memorizes place names — postcode
 and gazetteer knowledge arrive at inference as _soft input features_ (anchors)
 retrieved from provenance-tracked databases that grow without retraining.
-Knowledge informs; it never overrides.
+These features inform the model's prediction and never override it.
 
 - **Base model:** none. Trained **from scratch** (no pretrained checkpoint).
 - **Tokenizer:** SentencePiece unigram, `byte_fallback=true`.
@@ -95,18 +94,18 @@ are the multi-locale model's strong FR tags, **anchor-on, canonical order**. Two
 known gaps on the FR numbers:
 
 - **FR `region` is a known open gap** — F1 is low and tracked as an outstanding
-  issue; do not expect region-level accuracy on FR comparable to en-us.
+  issue. Do not expect region-level accuracy on FR comparable to en-us.
 - **Reversed-order (postcode-first) FR house numbers are harder.** On a
   diversified golden that mixes both orders, house_number drops well below the
   canonical-order figure — the published frontier for reordered house numbers is
   ~90–91% (neural parsers collapse much further on reorder). The en-us release's
-  later checkpoint adds a reversed-order training subset that recovers this; this fr-fr
+  later checkpoint adds a reversed-order training subset that recovers this. This fr-fr
   bundle predates that change.
 
 Because the older anchor-off / pre-diversified-golden figures in this bundle's
 `model-card.json` `eval` block were measured before the anchor-on grading
-discipline, treat them as historical; the per-tag parity tables under
-[`docs/articles/evals/`](https://mailwoman.ai) carry the
+discipline, treat them as historical. The per-tag parity tables under
+[`docs/articles/evals/`](https://mailwoman.ai) hold the
 config-stated numbers.
 
 ## Calibration
@@ -118,10 +117,10 @@ output is byte-stable when calibration is omitted.
 ## Train
 
 From-scratch (no pretrained base) on an NVIDIA A100 (Modal cloud), CE loss only
-(the dual CRF loss diverged and was retired; CRF is inference-only Viterbi). The
-gazetteer anchor channel is fed during training, which is why it is required at
-inference. This bundle is the shared multi-locale model (step 20000); the en-us
-card carries the full corpus + recipe provenance.
+(the dual CRF loss diverged and was retired, and CRF is inference-only Viterbi). The
+gazetteer anchor channel is fed during training, so it is required at
+inference. This bundle is the shared multi-locale model (step 20000). The en-us
+card records the full corpus + recipe provenance.
 
 ## Limitations
 
@@ -131,8 +130,8 @@ card carries the full corpus + recipe provenance.
   _Evaluation_).
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;
-  quality there is unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
+  and quality there is unmeasured.
 
 ## License & links
 

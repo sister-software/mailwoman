@@ -8,7 +8,7 @@ test pins the two properties the parquet leg must now hold:
    converter read back bit-identical through PyArrow (the reader stack the training
    loader uses), including the empty-triple (all-O) row.
 2. **Loud refusal** — a row missing the triple, or carrying a partial one, fails the conversion
-    with a row identifier. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
+    with a row identifier. Silent loss (the pre-#519 behavior: columns dropped) is the hazard
    this step exists to close.
 
 Runs the converter via subprocess so the check covers the actual converter rather than a

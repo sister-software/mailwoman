@@ -2,11 +2,11 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Every browser-runtime module under `docs/src/shared/` moves to the package that owns it, the docs site consumes the packages and still serves the geocoder page unchanged, and the result interface the runtime produces and the UI renders is written once. After this plan the docs site owns no runtime module; the second runtime plan mounts the real runtime in `packages/earth` and retires the docs page.
+**Goal:** Every browser-runtime module under `docs/src/shared/` moves to the package that owns it, the docs site consumes the packages and still serves the geocoder page unchanged, and the result interface the runtime produces and the UI renders is written once. After this plan the docs site owns no runtime module. The second runtime plan mounts the real runtime in `packages/earth` and retires the docs page.
 
 **Architecture:** Four homes. `@mailwoman/core/pipeline/client-result` keeps parse results compatible that `@mailwoman/react` renders and the loader produces (today written twice, as react's `ParseResult` and docs' `DemoResult`). `@mailwoman/resolver-wof-wasm/httpvfs/*` holds the sql.js-httpvfs readers, their tests, and the host-side asset staging. `mailwoman/browser-runtime/*` holds the release manifest, the asset URL composition and version pins, the classify stage, and the release-asset loader; `mailwoman` already depends on `neural` and `resolver-wof-wasm`, so it is the one package that can compose them, and the version bump `mailwoman gazetteer publish` prints becomes package-local. `@mailwoman/react/common/*` holds the two presentation helpers. No file is copied: every move is a `git mv` followed by import rewrites, and every consumer imports the new home.
 
-**Tech Stack:** TypeScript under Node type stripping; vitest (fast leg for core, react, mailwoman unit tests; slow leg where a test opens a SQLite fixture); the docs Docusaurus build and its two Playwright specs as the parity proof; `bundle-graph` for the browser condition on every new subpath.
+**Tech Stack:** TypeScript under Node type stripping. vitest (fast leg for core, react, mailwoman unit tests, and the slow leg where a test opens a SQLite fixture). The docs Docusaurus build and its two Playwright specs as the parity proof; `bundle-graph` for the browser condition on every new subpath.
 
 **Spec:** `docs/superpowers/specs/2026-09-06-earth-app-design.md` ("The move map"). Three placements differ from the spec's table and are recorded in Task 8: the runtime assembly stays application code (react must not depend on the runtime graph), the loader lives in `mailwoman` rather than `neural` (it composes neural and the gazetteer), and the sql.js staging stays in docs because the docs explainers resolve against the gazetteer.
 
@@ -16,13 +16,13 @@
 - `@mailwoman/react` never depends on `neural`, `resolver-wof-wasm`, `cartographer` or `mailwoman`; it gains `@mailwoman/core` for the result interface and no other dependency.
 - `mailwoman` never depends on `@mailwoman/react`; the loader's progress interface is its own structural type.
 - `@mailwoman/resolver-wof-wasm` never depends on `mailwoman` (cycle); a URL the reader needs is a parameter.
-- A test imports the package under test through its public exports; a moved test moves with its module and gets an `exports` entry for what it names.
+- A test imports the package under test through its public exports. A moved test moves with its module and gets an `exports` entry for what it names.
 - Every new browser-reachable subpath gets a `bundle-graph` row in `packages/repo-health/lib/checks/bundle-graph.ts`.
 - `node:*` imports only under `packages/core/lib/fs/`; filesystem work through `@mailwoman/core/fs`.
 - Dependency ranges match existing declarations (`sherif`): `sql.js-httpvfs` `^0.8.12`.
-- Comments state invariants rather than history; the move is recorded in the commit rather than in the file.
+- Comments state invariants rather than history. The move is recorded in the commit rather than in the file.
 - The docs geocoder page keeps working after every task: `cd docs && yarn build` exits 0 and the two Playwright specs `100-demo-cold-load` and `200-demo-resolve` pass.
-- Branch: `git fetch origin main && git checkout -b feat/earth-runtime-homes origin/main`. Land the shell plan first or rebase onto it; this plan does not touch `packages/earth`.
+- Branch: `git fetch origin main && git checkout -b feat/earth-runtime-homes origin/main`. Land the shell plan first or rebase onto it. This plan does not touch `packages/earth`.
 
 ## Move map
 
@@ -31,8 +31,8 @@
 | `resources/index.ts` types `DemoResult`, `ResultNode`, `ResolvedHit`, `KindResult`, `StageTiming`                | `@mailwoman/core/pipeline/client-result` (merged with react's)           | 1    |
 | `httpvfs-resolver.ts`, `httpvfs-street.ts`, `poi-httpvfs.ts`, `sqljs-rows.ts`; `demo-helpers.ts` `resolveStreet` | `@mailwoman/resolver-wof-wasm/httpvfs/{resolver,street,poi,rows}`        | 2    |
 | `docs/plugins/demo-assets/artifacts.ts` `stageSQLJSHTTPVFS`, `syncArtifact`                                      | `@mailwoman/resolver-wof-wasm/host-assets`                               | 2    |
-| `candidate-resolver-backend.ts` (no consumer; the live class is in `browser-cascade`)                            | deleted                                                                  | 2    |
-| `resources/index.ts` URLs, pins, FST loaders, pair index; the `…Like` interfaces                                 | `mailwoman/browser-runtime/resources`, `mailwoman/browser-runtime/types` | 3    |
+| `candidate-resolver-backend.ts` (no consumer, and the live class is in `browser-cascade`)                        | deleted                                                                  | 2    |
+| `resources/index.ts` URLs, pins, FST loaders, pair index, the `…Like` interfaces                                 | `mailwoman/browser-runtime/resources`, `mailwoman/browser-runtime/types` | 3    |
 | `demo-helpers.ts` manifest half                                                                                  | `mailwoman/browser-runtime/manifest`                                     | 3    |
 | `demo-helpers.ts` classify half, calibrator, defaults                                                            | `mailwoman/browser-runtime/classify`                                     | 3    |
 | `demo-loader.ts`                                                                                                 | `mailwoman/browser-runtime/load-assets`                                  | 3    |
@@ -47,7 +47,7 @@
 
 - Create: `packages/core/lib/pipeline/client-result.ts`
 - Modify: `packages/core/package.json` (`exports["./pipeline/client-result"]`)
-- Modify: `packages/react/lib/pipeline/types.ts` (delete the six moved interfaces; import what `PipelineRuntime` needs), `packages/react/lib/index.ts` (stop exporting the moved names), `packages/react/package.json` (dependency `@mailwoman/core`), `packages/react/tsconfig.json` (reference `../core`), the 11 files under `packages/react/lib` that import the moved names, and the react stories and tests that do
+- Modify: `packages/react/lib/pipeline/types.ts` (delete the six moved interfaces and import what `PipelineRuntime` needs), `packages/react/lib/index.ts` (stop exporting the moved names), `packages/react/package.json` (dependency `@mailwoman/core`), `packages/react/tsconfig.json` (reference `../core`), the 11 files under `packages/react/lib` that import the moved names, and the react stories and tests that do
 - Modify: `docs/src/shared/resources/index.ts` (delete `KindResult`, `ResultNode`, `StageTiming`, `DemoResult`, `ResolvedHit`), and the docs consumers of those five names and of react's `ParseResult` family
 - Modify: `packages/repo-health/lib/checks/bundle-graph.ts` (one row)
 
@@ -64,7 +64,7 @@ grep -n "export interface QueryKindResult" -A6 packages/core/lib/pipeline/types.
 grep -n "export interface KindBadgeResult" -A6 packages/react/lib/common/KindBadge.tsx
 ```
 
-Rules: if `stateHint` has a reader, `ParseResult` keeps it optional; if none, it is dropped. If `DualRole` (resolver side) and `DualRoleView` (UI side) carry the same five fields, `browser-cascade.ts` imports `DualRoleView` from core and `DualRole` is deleted; if they differ, both stay and `projectCascadeHits` in Task 3 maps one to the other explicitly. If `QueryKindResult` already is `{ kind, confidence, alternatives }`, `ParseResult.kindResult` is typed as it and no `KindView` is written; otherwise `KindView` is written with docs' three fields and `KindBadgeResult` in react becomes an alias-free import of it.
+Rules: if `stateHint` has a reader, `ParseResult` keeps it optional. If it has none, it is dropped. If `DualRole` (resolver side) and `DualRoleView` (UI side) declare the same five fields, `browser-cascade.ts` imports `DualRoleView` from core and `DualRole` is deleted. If they differ, both stay and `projectCascadeHits` in Task 3 maps one to the other explicitly. If `QueryKindResult` already is `{ kind, confidence, alternatives }`, `ParseResult.kindResult` is typed as it and no `KindView` is written. Otherwise `KindView` is written with docs' three fields and `KindBadgeResult` in react becomes an alias-free import of it.
 
 - [ ] **Step 2: Write the module**
 
@@ -194,7 +194,7 @@ grep -rln "\bDemoResult\b\|\bResultNode\b\|\bResolvedHit\b\|\bKindResult\b\|\bSt
 grep -rln "ParseResult\|ResolvedPlaceView\|ParsedComponent\|DualRoleView\|FSTProvenance" docs/src docs/test --include='*.ts' --include='*.tsx' | xargs grep -ln 'from "@mailwoman/react"'
 ```
 
-The second command lists the docs files that took those names from react; they switch to the core subpath. `docs/package.json` already depends on `@mailwoman/core`.
+The second command lists the docs files that took those names from react. They switch to the core subpath. `docs/package.json` already depends on `@mailwoman/core`.
 
 - [ ] **Step 5: The bundle-graph row, compile, tests, docs build**
 
@@ -209,7 +209,7 @@ yarn vitest --run --config vitest.fast.config.ts docs packages/core/lib
 cd docs && yarn typecheck && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
 
-Expected: every command passes; the docs build exits 0.
+Expected: every command passes, and the docs build exits 0.
 
 - [ ] **Step 6: Commit**
 
@@ -245,7 +245,7 @@ git mv docs/src/shared/sqljs-rows.ts       packages/resolver-wof-wasm/lib/httpvf
 git rm docs/src/shared/candidate-resolver-backend.ts
 ```
 
-In `resolver.ts`: `from "./resources"` becomes `from "#browser-cascade"` (both `DualRole` and `MailwomanLookupLike` are defined there; if Step 1 of Task 1 replaced `DualRole` with core's `DualRoleView`, import that from core); `from "./sqljs-rows.ts"` becomes `from "#httpvfs/rows"`; a `ResolvedHit` type becomes `ResolvedPlaceView` from `@mailwoman/core/pipeline/client-result`. In `street.ts`: `./sqljs-rows.ts` → `#httpvfs/rows`. In `poi.ts`: `./httpvfs-resolver.ts` → `#httpvfs/resolver`, `./sqljs-rows.ts` → `#httpvfs/rows`, and every value it took from `./resources/index.ts` (`poiLayerURL`, `adminGazetteerURL`, the `sqljsBaseURL` composition) becomes a parameter:
+In `resolver.ts`: `from "./resources"` becomes `from "#browser-cascade"` (both `DualRole` and `MailwomanLookupLike` are defined there. If Step 1 of Task 1 replaced `DualRole` with core's `DualRoleView`, import that from core); `from "./sqljs-rows.ts"` becomes `from "#httpvfs/rows"`; a `ResolvedHit` type becomes `ResolvedPlaceView` from `@mailwoman/core/pipeline/client-result`. In `street.ts`: `./sqljs-rows.ts` → `#httpvfs/rows`. In `poi.ts`: `./httpvfs-resolver.ts` → `#httpvfs/resolver`, `./sqljs-rows.ts` → `#httpvfs/rows`, and every value it took from `./resources/index.ts` (`poiLayerURL`, `adminGazetteerURL`, the `sqljsBaseURL` composition) becomes a parameter:
 
 ```ts
 export async function loadPOIWorker(poiDatabaseURL: string, sqljsBaseURL: string): Promise<POIHTTPVFSWorker>
@@ -256,7 +256,7 @@ export async function resolveAnchorCenter(
 ): Promise<AnchorCenter | null>
 ```
 
-so the package never reaches the URL table that lives in `mailwoman` (Task 3), which depends on this package. Read each moved file's header and rewrite any sentence that says it lives in the docs site.
+so the package never reaches the URL table that lives in `mailwoman` (Task 3). `mailwoman` depends on this package. Read each moved file's header and rewrite any sentence that states it lives in the docs site.
 
 - [ ] **Step 2: `resolveStreet` joins `street.ts`**
 
@@ -335,7 +335,7 @@ export async function stageSQLJSAssets(destDir: string): Promise<boolean> {
 }
 ```
 
-Compare with `docs/plugins/demo-assets/artifacts.ts`'s `syncArtifact` and `stageSQLJSHTTPVFS` before deleting them: carry over any behavior above omits (the size-identical skip and the per-file warning are the two the docstrings name). Then in `artifacts.ts` delete both functions; `stageMapLibreWorker` and `stagePairIndexes` stay, and if they called `syncArtifact`, they import it from `@mailwoman/resolver-wof-wasm/host-assets`. In `plugin.ts` replace `stageSQLJSHTTPVFS(sqljsDir)` with `stageSQLJSAssets(sqljsDir)` imported from the same subpath. Add `"sql.js-httpvfs": "^0.8.12"` to `packages/resolver-wof-wasm/package.json` `dependencies`; if `docs/package.json` still declares it after this task, `knip` in Task 8 says whether docs still needs it.
+Compare with `docs/plugins/demo-assets/artifacts.ts`'s `syncArtifact` and `stageSQLJSHTTPVFS` before deleting them: port any behavior the code above omits (the size-identical skip and the per-file warning are the two the docstrings name). Then in `artifacts.ts` delete both functions. `stageMapLibreWorker` and `stagePairIndexes` stay, and if they called `syncArtifact`, they import it from `@mailwoman/resolver-wof-wasm/host-assets`. In `plugin.ts` replace `stageSQLJSHTTPVFS(sqljsDir)` with `stageSQLJSAssets(sqljsDir)` imported from the same subpath. Add `"sql.js-httpvfs": "^0.8.12"` to `packages/resolver-wof-wasm/package.json` `dependencies`. If `docs/package.json` still declares it after this task, `knip` in Task 8 reports whether docs still needs it.
 
 - [ ] **Step 4: Exports and the moved tests**
 
@@ -383,7 +383,7 @@ yarn health:architecture
 cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
 
-Expected: all pass; `health:architecture` (dependency-cruiser) reports no cycle from `resolver-wof-wasm → spatial`; the docs build exits 0 and its log carries `[host-assets]`-free staging output (`sql.js-httpvfs index.js: synced` lines come from `syncArtifact`'s caller if it logs; add a one-line log per staged file in `stageSQLJSAssets` if the docs build log no longer shows staging and you want it visible).
+Expected: all pass. `health:architecture` (dependency-cruiser) reports no cycle from `resolver-wof-wasm → spatial`. The docs build exits 0 and its log shows `[host-assets]`-free staging output (`sql.js-httpvfs index.js: synced` lines come from `syncArtifact`'s caller if it logs. Add a one-line log per staged file in `stageSQLJSAssets` if the docs build log no longer shows staging and you want it visible).
 
 - [ ] **Step 7: Commit**
 
@@ -411,7 +411,7 @@ git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, 
   - `mailwoman/browser-runtime/manifest`: `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest`.
   - `mailwoman/browser-runtime/classify`: `runClassifyStage`, `ClassifyStageDeps`, `ClassifyStageHooks`, `ClassifyStageResult`, `SelectPairIndex`, `resolveDualRoles`, `projectCascadeHits`, `parseStageLabelsFor`, `pairCountryForInput`, `createCalibrator`, `Calibrator`, `DEFAULT_LOCALE`, `DEFAULT_ADDRESS`, `EXAMPLE_ADDRESSES`, `ParsedNode`, `TreeNode`, `FlatNode`.
   - `mailwoman/browser-runtime/load-assets`: `loadReleaseAssets(release: ReleaseInfo, progress: AssetLoadProgress, options: { gazetteer?: { sqljsBaseURL: string } }): Promise<ReleaseAssets>` and `ReleaseAssets` (the former `DocsDemoAssets`, its `wofLookup` field `null` when `gazetteer` is not passed).
-  - `mailwoman/browser-runtime` (index): re-exports no name; it is the subpath a bundler resolves for the row and exports `loadReleaseAssets` and `fetchReleasesManifest` directly by importing them, so a host has one entry.
+  - `mailwoman/browser-runtime` (index): re-exports no name. It is the subpath a bundler resolves for the row and exports `loadReleaseAssets` and `fetchReleasesManifest` directly by importing them, so a host has one entry.
 
 - [ ] **Step 1: Move the three modules into the split**
 
@@ -424,8 +424,8 @@ git mv docs/src/shared/demo-loader.ts      packages/mailwoman/lib/browser-runtim
 
 Then split by moving text within the package rather than by retyping:
 
-1. From `resources.ts`, move the `…Like` interfaces (`FSTProvenanceLike` through `ParseTraceLike`, and the `DualRole`/`MailwomanLookupLike` re-export line, which is deleted because consumers import `@mailwoman/resolver-wof-wasm/browser-cascade` directly) into a new `types.ts`. `resources.ts` keeps the URL functions, pins and loaders; it imports the `Like` types it references from `#browser-runtime/types`.
-2. From `classify.ts`, move `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest` into a new `manifest.ts`; `manifest.ts` imports `releasesManifestURL` from `#browser-runtime/resources`. `resolveStreet` and `StreetResolution` already left in Task 2. What remains in `classify.ts` is the list in the Interfaces block; its `ParseResult`/`ResolvedPlaceView` imports come from `@mailwoman/core/pipeline/client-result` (never `@mailwoman/react`), and `runCascade` from `@mailwoman/resolver-wof-wasm/browser-cascade`.
+1. From `resources.ts`, move the `…Like` interfaces (`FSTProvenanceLike` through `ParseTraceLike`, but not the `DualRole`/`MailwomanLookupLike` re-export line) into a new `types.ts`. Delete that re-export line, because consumers import `@mailwoman/resolver-wof-wasm/browser-cascade` directly. `resources.ts` keeps the URL functions, pins and loaders, and it imports the `Like` types it references from `#browser-runtime/types`.
+2. From `classify.ts`, move `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest` into a new `manifest.ts`, and `manifest.ts` imports `releasesManifestURL` from `#browser-runtime/resources`. `resolveStreet` and `StreetResolution` already left in Task 2. What remains in `classify.ts` is the list in the Interfaces block. Its `ParseResult`/`ResolvedPlaceView` imports come from `@mailwoman/core/pipeline/client-result` (never `@mailwoman/react`), and `runCascade` from `@mailwoman/resolver-wof-wasm/browser-cascade`.
 3. In `load-assets.ts`, rename `DocsDemoAssets` → `ReleaseAssets` and `loadDemoAssets` → `loadReleaseAssets`; replace the `ctx: DemoAssetsLoadContext` parameter type with `progress: AssetLoadProgress`, defined in `types.ts` from the fields the function uses (`setProgress`, `setStepLabels`, `setStepIndex`, `setBackend`, `signal`, `forceWASM`; confirm against `packages/react/lib/runtime/useDemoRuntime.ts`'s `DemoAssetsLoadContext` so react's context satisfies it structurally); replace the `sqljsBaseURL: string` parameter with `options: { gazetteer?: { sqljsBaseURL: string } }` and wrap the WOF branch (`loadHTTPVFSDatabase` … `WOFCandidateTableLookup`) in `if (options.gazetteer)`, leaving `wofLookup: null` and no "Loading WOF database" step label otherwise. Its httpvfs import is `@mailwoman/resolver-wof-wasm/httpvfs/resolver`; its `#shared/*` imports become `#browser-runtime/*`.
 
 Write `index.ts`:
@@ -445,7 +445,7 @@ export { fetchReleasesManifest } from "#browser-runtime/manifest"
 export { loadReleaseAssets } from "#browser-runtime/load-assets"
 ```
 
-Rewrite each moved file's header for its new home; a sentence about the docs site, `/demo`, or "docs-side" goes.
+Rewrite each moved file's header for its new home. Delete a sentence about the docs site, `/demo`, or "docs-side".
 
 - [ ] **Step 2: Exports and the package's own references**
 
@@ -454,7 +454,7 @@ Add to `packages/mailwoman/package.json` `exports`, in the shape of `"./gazettee
 - `packages/mailwoman/lib/commands/gazetteer/publish.tsx:89`: the string becomes `` `demo: ADMIN_GAZETTEER_VERSION → ${version} (commit packages/mailwoman/lib/browser-runtime/resources.ts)` `` (and "demo:" becomes "browser runtime:" — it is no longer the docs demo's pin).
 - `packages/mailwoman/lib/gazetteer-pipeline/index.ts:500`: same path.
 - `packages/mailwoman/lib/release-tools/publish-hf.ts:286` and `packages/mailwoman/lib/data/bundles.ts:69`: the fetcher's home is `packages/mailwoman/lib/browser-runtime/resources.ts`.
-- `packages/mailwoman/lib/eval-harness/demo-cascade-smoke.ts:38`: this paragraph is history that no longer describes a file that exists; replace the sentence naming `docs/src/shared/demo-helpers.ts` with one that says `runCascade` comes from `@mailwoman/resolver-wof-wasm/browser-cascade` and `flattenTreeNodes` from `@mailwoman/core/decoder`, and drop the rest of the incident narration.
+- `packages/mailwoman/lib/eval-harness/demo-cascade-smoke.ts:38`: this paragraph is history that no longer describes a file that exists. Replace the sentence naming `docs/src/shared/demo-helpers.ts` with one that states `runCascade` comes from `@mailwoman/resolver-wof-wasm/browser-cascade` and `flattenTreeNodes` from `@mailwoman/core/decoder`, and drop the rest of the incident narration.
 
 - [ ] **Step 3: The moved tests**
 
@@ -494,7 +494,7 @@ yarn health:architecture
 cd docs && yarn typecheck && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -3 /tmp/docs-build.log; cd -
 ```
 
-Expected: every command passes. If the `mailwoman/browser-runtime` row reports a static Node edge, the file it names imported a Node-only sibling through the package's `#` map; the fix is a narrower import from that sibling's browser-safe subpath, never a stub.
+Expected: every command passes. If the `mailwoman/browser-runtime` row reports a static Node edge, the file it names imported a Node-only sibling through the package's `#` map. The fix is a narrower import from that sibling's browser-safe subpath, never a stub.
 
 - [ ] **Step 6: Commit**
 
@@ -510,7 +510,7 @@ git commit -m "feat(mailwoman): browser-runtime — the release manifest, asset 
 **Files:**
 
 - Move: `docs/src/shared/confidence-tiers.ts` → `packages/react/lib/common/confidence-tiers.ts`; `docs/src/shared/text-tokens.ts` → `packages/react/lib/common/text-tokens.ts`
-- Modify: `packages/react/lib/pipeline/ConfidenceCell.tsx` (delete its private `HIGH_CONFIDENCE_MIN`/tier function; import the shared one), `packages/react/package.json` (two exports), the docs consumers
+- Modify: `packages/react/lib/pipeline/ConfidenceCell.tsx` (delete its private `HIGH_CONFIDENCE_MIN`/tier function and import the shared one), `packages/react/package.json` (two exports), the docs consumers
 
 - [ ] **Step 1: Move, export, dedupe**
 
@@ -519,7 +519,7 @@ git mv docs/src/shared/confidence-tiers.ts packages/react/lib/common/confidence-
 git mv docs/src/shared/text-tokens.ts      packages/react/lib/common/text-tokens.ts
 ```
 
-Add exports `./common/confidence-tiers` and `./common/text-tokens` in the shape of `./common/KindBadge`. In `ConfidenceCell.tsx`, delete the local `HIGH_CONFIDENCE_MIN`, `MID…` and the private tier function (lines 13-30 region; read them first) and `import { confidenceTierOrMid } from "#common/confidence-tiers"` (or `confidenceTier`, whichever the cell's null handling matches). Rewrite the docs consumers:
+Add exports `./common/confidence-tiers` and `./common/text-tokens` in the shape of `./common/KindBadge`. In `ConfidenceCell.tsx`, delete the local `HIGH_CONFIDENCE_MIN`, `MID…` and the private tier function (lines 13-30 region, read them first) and `import { confidenceTierOrMid } from "#common/confidence-tiers"` (or `confidenceTier`, whichever the cell's null handling matches). Rewrite the docs consumers:
 
 ```bash
 grep -rln "#shared/confidence-tiers\|#shared/text-tokens" docs/src --include='*.tsx' --include='*.ts'
@@ -539,7 +539,7 @@ git add packages/react docs
 git commit -m "refactor(react): confidence tiers and word tokens are common helpers, and ConfidenceCell uses the shared tiers"
 ```
 
-Expected: the shadow check no longer lists a private confidence threshold in react; the docs build exits 0.
+Expected: the shadow check no longer lists a private confidence threshold in react, and the docs build exits 0.
 
 ---
 
@@ -552,7 +552,7 @@ ls docs/src/shared
 grep -rn "docs/src/shared" packages --include='*.ts' --include='*.tsx' | grep -v "/out/"
 ```
 
-Expected: `maplibre-worker.ts`, `maplibre-worker-url.ts`, `register-range-sw.ts` and no other file; the second command prints only the two twin comments in `resolver-wof-sqlite` (`candidate-lookup.ts:8`, `primary-preference.ts:8`) and `spatial/polyline.ts:11`, which now name the wasm subpath:
+Expected: `maplibre-worker.ts`, `maplibre-worker-url.ts`, `register-range-sw.ts` and no other file. The second command prints only the two twin comments in `resolver-wof-sqlite` (`candidate-lookup.ts:8`, `primary-preference.ts:8`) and `spatial/polyline.ts:11`. Those comments now name the wasm subpath:
 
 ```bash
 sed -i 's#docs/src/shared/httpvfs-resolver.ts#packages/resolver-wof-wasm/lib/httpvfs/resolver.ts#' packages/resolver-wof-sqlite/lib/candidate-lookup.ts packages/resolver-wof-sqlite/lib/primary-preference.ts
@@ -560,7 +560,7 @@ sed -i 's#docs/src/shared/httpvfs-street.ts#packages/resolver-wof-wasm/lib/httpv
 sed -i 's#docs/src/shared/#packages/resolver-wof-wasm/lib/httpvfs/#' packages/resolver-wof-wasm/lib/browser-cascade.ts
 ```
 
-Read each edited sentence afterwards; one that only makes sense as a "this used to live in docs" story is deleted rather than repointed.
+Read each edited sentence afterwards. A sentence that only makes sense as a "this used to live in docs" note is deleted rather than repointed.
 
 - [ ] **Step 2: Commit**
 
@@ -585,7 +585,7 @@ kill %1
 cd -
 ```
 
-Expected: `EXIT=0`; 7 of 7 specs pass. `docusaurus serve` opens a browser through the `BROWSER` variable, which the lab sets to `none`; `--no-open` is the flag that stops it.
+Expected: `EXIT=0`, and 7 of 7 specs pass. `docusaurus serve` opens a browser through the `BROWSER` variable. The lab sets that variable to `none`. `--no-open` is the flag that stops it.
 
 - [ ] **Step 2: The lockstep test still holds**
 
@@ -593,7 +593,7 @@ Expected: `EXIT=0`; 7 of 7 specs pass. `docusaurus serve` opens a browser throug
 yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/lib/httpvfs/candidate-parity.test.ts
 ```
 
-Expected: pass. This is the browser-versus-Node candidate ranking parity; it moved packages and must still compare the same two implementations.
+Expected: pass. This is the browser-versus-Node candidate ranking parity. It moved packages and must still compare the same two implementations.
 
 ---
 
@@ -609,7 +609,7 @@ yarn ci:test:fast > /tmp/fast.log 2>&1; echo "EXIT=$?" >> /tmp/fast.log; grep -E
 yarn workspace @mailwoman/react test:browser
 ```
 
-`health:knip` decides which docs dependencies are now unused; remove each one it names from `docs/package.json` in this task (the spec's list is a prediction; knip is the measurement), run `yarn install`, and rebuild the docs once more. `health:debt` failing only on counters `main` already fails is not this branch's.
+`health:knip` decides which docs dependencies are now unused. Remove each one it names from `docs/package.json` in this task (the spec's list is a prediction, and knip is the measurement), run `yarn install`, and rebuild the docs once more. `health:debt` failing only on counters `main` already fails is not this branch's.
 
 - [ ] **Step 2: Push and open the PR**
 
@@ -642,7 +642,7 @@ In `docs/superpowers/specs/2026-09-06-earth-app-design.md`, "The move map": the 
 
 > The runtime assembly (`_runtime.ts`) stays application code: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and maplibre graph by design, and the assembly imports all three. The loader lives in `mailwoman`, the one package that already depends on `neural` and `resolver-wof-wasm`, so the version pins `mailwoman gazetteer publish` bumps are package-local. The sql.js staging stays in docs: `PipelineExplorer` and `GuidedTour` resolve against the gazetteer, so the docs embed keeps the gazetteer half of the loader and the staged worker.
 
-And in "Docs after the move", replace the dependency list with: "`docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave; the list is measured at that point rather than predicted here."
+And in "Docs after the move", replace the dependency list with: "`docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave. The list is measured at that point rather than predicted here."
 
 ```bash
 git add docs/superpowers/specs/2026-09-06-earth-app-design.md

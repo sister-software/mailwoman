@@ -1,6 +1,6 @@
 # This 2k probe repeats the v310 recipe with Norwegian rows in the training mix.
 # Earlier configs wrote the Norway key unquoted, so YAML read it as a boolean and the loader dropped every Norwegian row.
-# The probe tests whether Norwegian coverage alone fixes streets that the model reads as localities.
+# The probe tests whether Norwegian coverage, with no other change, fixes streets that the model reads as localities.
 #
 # Launch the run from corpus-python:
 #   modal run -d -m launch.train_remote --config v3.4.0-norway-coverage-probe.yaml --resume none

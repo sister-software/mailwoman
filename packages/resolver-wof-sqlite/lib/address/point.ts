@@ -52,9 +52,17 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	readonly #db: DatabaseClient<DB>
 	readonly #locale: StreetLocale
 	readonly #localityKeys: "full" | "abbreviated"
+	readonly #localityLevel: "place" | "finest"
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey, number: string], AddressPointRow> | undefined
 	readonly #byPostcodeLocality:
 		| PreparedGet<[postcode: string, locality: NameKey, street: StreetKey, number: string], AddressPointRow>
+		| undefined
+	/**
+	 * This query counts the distinct stored localities that hold one (postcode, street, number) key.
+	 * Unit siblings share a locality, so they count once.
+	 */
+	readonly #postcodeKeyPlaces:
+		| PreparedGet<[postcode: string, street: StreetKey, number: string], { places: number }>
 		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
 	/**
@@ -82,16 +90,29 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * Some counties abbreviate them (`addi` for Addison).
 	 * Other counties replace them with the parent town.
 	 *
+	 * @param opts.localityLevel The kind of place the extract stores in `locality_norm`.
+	 * With `"place"`, `locality_norm` holds the place an address line gives, such as a BAN commune.
+	 * With `"finest"`, `locality_norm` holds the finest place the source recorded.
+	 * That place can be a part of the place the line gives.
+	 * The OSM builder stores `addr:suburb` before `addr:city`, so
+	 * `Teschener Weg 5, 14163 Berlin` is stored under `zehlendorf`.
+	 *
 	 * @defaultValue `"us"`
 	 * @defaultValue `"abbreviated"` for `"us"` and `"full"` for every other locale.
+	 * @defaultValue `"place"`
 	 */
 	constructor(
 		dbPath: PathBuilderLike,
-		opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}
+		opts: {
+			streetLocale?: StreetLocale
+			localityKeys?: "full" | "abbreviated"
+			localityLevel?: "place" | "finest"
+		} = {}
 	) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
 		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
+		this.#localityLevel = opts.localityLevel ?? "place"
 
 		// An extract without an `address_point` table, such as an interrupted build, makes every lookup miss.
 		if (hasTable(this.#db, "address_point")) {
@@ -105,6 +126,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				this.#db,
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE postcode = ? AND locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
+			)
+
+			this.#postcodeKeyPlaces = prepareGet(
+				this.#db,
+				`SELECT COUNT(DISTINCT locality_norm) AS places FROM address_point
+				 WHERE postcode = ? AND street_norm = ? AND number = ?`
 			)
 
 			this.#byLocality = prepareGet(
@@ -246,6 +273,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		}
 	): AddressPointRow | null {
 		let row: AddressPointRow | null = null
+		// A postcode row stored under a different locality waits until the probe for the query's own locality misses.
+		let heldBack: AddressPointRow | null = null
 
 		if (query.postcode) {
 			const postcode = query.postcode.trim()
@@ -257,7 +286,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			const agreeing = localityKey ? this.#byPostcodeLocality!(postcode, localityKey, streetNorm, number) : null
 			const candidate = agreeing ?? this.#byPostcode!(postcode, streetNorm, number)
 
-			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : null
+			if (candidate && !this.#scopeContradicts(candidate, query)) {
+				row = candidate
+			} else if (candidate && this.#isSublocalityRow(candidate, postcode, streetNorm, number, query.bbox)) {
+				heldBack = candidate
+			}
 		}
 
 		if (!row && query.locality) {
@@ -267,6 +300,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		if (!row && query.localityTail && this.#byLocalityTail) {
 			// A Han key contains no `%` or `_`, so the pattern matches a literal suffix.
 			row = this.#byLocalityTail(streetNorm, number, `%${query.localityTail}`)
+		}
+
+		if (!row && heldBack) {
+			row = heldBack
 		}
 
 		// The bounding box serves extracts whose points have no postcode or locality, such as OSM.
@@ -299,15 +336,56 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * A row field that is empty never contradicts.
 	 * The locality is compared only when the extract's `localityKeys` is `"full"`,
 	 * because abbreviated keys would reject correct rows.
+	 *
+	 * Two locality keys agree when they are equal or when one is the leading words of the other.
+	 * A German disambiguated name such as `Lauta b Hoyerswerda` or `Freiberg Sachs` begins with the place
+	 * name that OSM's `addr:city` records, and a word boundary keeps `lauta` apart from `lautabach`.
 	 */
 	#scopeContradicts(row: AddressPointRow, query: { postcode?: string; locality?: string }): boolean {
 		if (query.postcode && row.postcode && row.postcode.trim() !== query.postcode.trim()) return true
 
 		if (this.#localityKeys === "full" && query.locality && row.locality_norm) {
-			return row.locality_norm !== this.#localityKey(query.locality)
+			const queryKey = this.#localityKey(query.locality)
+
+			const [shorter, longer] =
+				row.locality_norm.length <= queryKey.length ? [row.locality_norm, queryKey] : [queryKey, row.locality_norm]
+
+			return shorter !== longer && !longer.startsWith(`${shorter} `)
 		}
 
 		return false
+	}
+
+	/**
+	 * Returns whether a postcode row stored under a different locality lies in a part of the queried place.
+	 *
+	 * Only an extract whose `localityLevel` is `"finest"` can store a part of a place.
+	 * In a `"place"` extract, a different stored locality is a different place.
+	 *
+	 * In a `"finest"` extract, the row is accepted as part of the queried place when two conditions hold.
+	 *
+	 * No other stored locality holds the same (postcode, street, number) key.
+	 * When the caller supplies the box around the query's resolved locality, the row lies inside it.
+	 *
+	 * The caller probes the query's own locality before it uses this row.
+	 * A postcode key that two places share therefore still answers the place the query gives.
+	 */
+	#isSublocalityRow(
+		row: AddressPointRow,
+		postcode: string,
+		streetNorm: StreetKey,
+		number: string,
+		bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
+	): boolean {
+		if (this.#localityLevel !== "finest") return false
+
+		if (row.postcode && row.postcode.trim() !== postcode) return false
+
+		if ((this.#postcodeKeyPlaces?.(postcode, streetNorm, number)?.places ?? 0) !== 1) return false
+
+		if (!bbox) return true
+
+		return row.lat >= bbox.minLat && row.lat <= bbox.maxLat && row.lon >= bbox.minLon && row.lon <= bbox.maxLon
 	}
 
 	[Symbol.dispose](): void {

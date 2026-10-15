@@ -28,7 +28,7 @@ swap:
   geo-code: geocode
   lat/long|lat-long: latitude/longitude
   postal code: postcode
-  access token|access-token: API key
+  access token|(?<!x-)access-token: API key
   datalayer|data-layer: data layer
   '(?:^|[^-\w])text search': forward geocoding
   coordinate lookup: reverse geocoding

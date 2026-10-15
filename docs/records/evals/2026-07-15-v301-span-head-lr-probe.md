@@ -22,7 +22,7 @@ title: v3.0.1 span-head re-probe — CHECK PASS, the arc's assumption is support
 **seg@1 beats token@1 by +7.9pp under identical conditions.** Phase 1's question — _does a segment
 decode over LEARNED span scores beat the token decode?_ — is answered **yes**.
 
-## The secondary read confirms the diagnosis, not just the outcome
+## The secondary read confirms the diagnosis as well as the outcome
 
 The v3.0.0 write-up called the failure _under-training rather than falsification_, on the strength of a loss
 that was still falling at 2k with raw span NLL ~35. One variable (the head's LR) tested that claim:
@@ -48,7 +48,7 @@ mis-specified, exactly as diagnosed, and repairing it changed the answer complet
   `house_number="10"`, the boundary-inside-a-number failure that motivated this whole arc. The span
   decode gets it right. Compare v3.0.0's random-per-token output
   (`▁Kor:street un:region ni:subregion`).
-- **`Rue Montmartre` → locality is still wrong**, and that is _expected_: it is the bare-fragment
+- **`Rue Montmartre` → locality is still wrong**. The plan _expected_ this. It is the bare-fragment
   recall class (66% of street failures, night-3 partition), which the span head was never going to
   fix. It is option C's target (kind-posterior soft channel + recall-weighted loss) and is
   deliberately out of Phase 1's scope. Its survival here is the plan's prediction holding rather than a
@@ -59,19 +59,19 @@ mis-specified, exactly as diagnosed, and repairing it changed the answer complet
 token@1 went **0.348 → 0.4906** on the same channel-starved harness between v3.0.0 and v3.0.1, and
 val macro F1 went 0.7405 → **0.7479**. The two runs differ only in the head's LR, so the co-trained
 span objective is shaping the shared encoder to the BIO head's benefit — the same "span-consistency
-pressure helps" effect stage-1's aux head showed, but larger. Worth confirming on production config
-in Phase 2; not claimed as a shipped win here.
+pressure helps" effect stage-1's aux head showed, but larger. Phase 2 should confirm it on production
+config. This page does not claim it as a shipped win.
 
 ## What this does not establish
 
 - **These absolutes are channel-starved.** `eval_seg_at_1.py` feeds no anchor/gazetteer/country
-  channels, no postcodeRepair, no word-consistency heal (the #718 trap). Its token@1 reads 0.4906
+  channels and runs neither postcodeRepair nor the word-consistency heal (the #718 trap). Its token@1 reads 0.4906
   where the JS harness reads **0.573 on v264**. Do not compare across harnesses. The check is valid
   because it is a _relative_ comparison — both heads read the same starved encoder state.
-- **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote check; this checkpoint
-  ships nowhere. Whether seg@1 clears 0.90 under production config is a Phase-2 question, and the
-  night-3 oracle@10 ceiling (0.749 over v264's emissions) says the floor needs the recall class too,
-  not just the boundary class.
+- **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote check. This checkpoint
+  ships nowhere. Whether seg@1 clears 0.90 under production config is a Phase-2 question. The
+  night-3 oracle@10 ceiling (0.749 over v264's emissions) shows the floor needs the recall class as
+  well as the boundary class.
 - **2k steps, one seed.** No claim about the 8k shape.
 
 ## Run facts
@@ -90,6 +90,6 @@ in Phase 2; not claimed as a shipped win here.
 Phase 2 (ONNX export of the span scores + the #378 SLO check) is now justified. It was blocked on
 exactly this crossing. Then Phase 3 (JS k-best) and Phase 4 (resolver rerank + option C).
 
-The one thing worth deciding first: an **8k run at this LR** would tell us whether seg@1 keeps
+One decision comes first: an **8k run at this LR** would tell us whether seg@1 keeps
 climbing before Phase 2's export work commits to a checkpoint — cheap (~1.5h A100) and it is the
 same one-variable step the campaign already knows how to grade.

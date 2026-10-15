@@ -1,21 +1,21 @@
 # v4.15.0 is the Russian exposure curve: five fine-tunes of the shipped v4.4.0 step-60000 graph that differ
-# only in how many OpenStreetMap Russia rows they draw. This file is the arm drawing none, which is the
-# placebo every other arm is attributed against.
+# only in the number of OpenStreetMap Russia rows they draw. This file is the arm drawing zero such rows.
+# It is the placebo every other arm is attributed against.
 #
 # Run shape, decided rather than inherited:
 #   kind: fine-tune from /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000, EWC brake 1e4,
 #         lr 1e-5 cosine, 2,000 steps, seed 42.
-#   why: the curve measures how many Russian rows change behavior on a fixed graph. A from-scratch arm
+#   why: the curve measures the number of Russian rows needed to change behavior on a fixed graph. A from-scratch arm
 #        per point would cost 4.3 GPU-hours each and mix the exposure with everything else a base learns.
 #   control_run: this file, the d0 arm. Its regressions are the fine-tune's own cost, and a treated arm's
 #        regressions attribute to Russian rows only after this arm's are subtracted.
 #
 # The five arms share every setting except `source_weights.osm-ru`. `country_weights` admits RU in every
-# arm, including this one, so the RU rows other sources already carry (`wof-admin`, `wof-postalcode`) are
+# arm, including this one, so the RU rows other sources already contain (`wof-admin`, `wof-postalcode`) are
 # drawn alike in all five and do not confound the curve.
 #
 # The draw target is the expected number of `osm-ru` rows over 2,000 × 128 = 256,000 draws. A source's
-# share follows its weight alone, so with the other weights summing to W = 161.0, weight
+# share is set by its weight and by no other setting, so with the other weights summing to W = 161.0, weight
 # w = D × 161 / (256,000 − D) draws D rows:
 #
 #   arm      osm-ru weight   expected draws
@@ -74,7 +74,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-nad: 1.0
     # The v4.4.0 run's loader never indexed these two sources. The current loader sees them in the base
-    # corpus and refuses a source without a weight, so they are named at zero to draw what v4.4.0 drew.
+    # corpus and refuses a source without a weight, so this config lists them at weight zero to draw what v4.4.0 drew.
     state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
     state-tx-notaries: 1.5
@@ -102,7 +102,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-    # The overlay carries all eight 2026-10-02 OSM sources. Only `osm-ru` varies across the curve.
+    # The v0.19.1 corpus overlay contains all eight 2026-10-02 OSM sources. Only `osm-ru` varies across the curve.
     osm-ru: 0.0
     osm-cn: 0.0
     osm-in: 0.0

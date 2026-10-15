@@ -87,7 +87,7 @@ formatAddress({ locality: "New York", postcode: "10118" }, "US", { singleLine: t
 ```
 
 An unknown country returns `""` instead of a guessed order. 55 of the 252 shipped country
-records carry no usable layout, and the empty string reports that absence.
+records have no usable layout, and the empty string reports that absence.
 
 ### `formatAddressRow(components, countryCode, options?)`
 
@@ -136,7 +136,7 @@ address.
 `renderAddress` is the layer under `formatAddress`. It serves callers that need the pieces
 instead of a string, such as a syntax highlighter, a template that wraps each component in its
 own element, or an aligner that turns a render into labeled spans. It returns `AddressPiece[]`,
-and each piece carries the tag that produced it (or `null` for a separator).
+and each piece records the tag that produced it (or `null` for a separator).
 
 ## Where the order comes from
 
@@ -174,7 +174,7 @@ measurement: the street line's spelling (183 countries space-join the number and
 
 ## Reference data
 
-The formatter sits on top of the per-address-system tables, which are useful on their own.
+The formatter sits on top of the per-address-system tables. Callers can also use those tables directly.
 
 ```ts
 import { us, fr } from "@mailwoman/codex"
@@ -245,15 +245,15 @@ populations. These tables exist to prevent a tier claim that averages two granul
 The layouts and the parsing conventions cover different numbers of places. The difference is
 intentional and does not represent a backlog.
 
-| Table                                                         | Keyed by     | Coverage                                         |
-| ------------------------------------------------------------- | ------------ | ------------------------------------------------ |
-| `ADDRESS_LAYOUTS` (`./address-layouts`)                       | country code | 197 countries; 55 of 252 records carry no layout |
-| `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                             |
-| `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`             |
+| Table                                                         | Keyed by     | Coverage                                       |
+| ------------------------------------------------------------- | ------------ | ---------------------------------------------- |
+| `ADDRESS_LAYOUTS` (`./address-layouts`)                       | country code | 197 countries, 55 of 252 records lack a layout |
+| `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                           |
+| `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`           |
 
-A layout says how to print an address, so a country needs one before it can be served. A
-conventions row says what is ungrammatical in that system, and the decoder applies it as a hard
-mask before Viterbi. A wrong row therefore breaks parses that currently work. Each row carries
+A layout defines how to print an address, so a country needs one before it can be served. A
+conventions row defines what is ungrammatical in that system, and the decoder applies it as a hard
+mask before Viterbi. A wrong row therefore breaks parses that currently work. Each row records
 the measurement that justified it. An absent row means "no constraints known" and never "no
 constraints exist". Contributors can add a country to the layouts directly. A conventions row requires a measured receipt.
 
@@ -264,7 +264,7 @@ code. codex cannot express any of them today
 ([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
 
 - **One code, several postal regimes.** `SH` covers Saint Helena, Ascension Island and Tristan da
-  Cunha, which format addresses differently.
+  Cunha. Those three territories format addresses differently.
 - **BFPO identifiers.** BFPO identifiers are routing instructions and do not represent a GB
   locality plus postcode. The American half of this family is modeled in
   `lib/us/military-address.ts`, which covers APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states. The
@@ -291,7 +291,7 @@ dependency-free so that a consumer who only wants to print an address does not d
 - **Zero runtime dependencies.** The package is pure TypeScript data and a small evaluator, with
   no database, I/O, or network access. It is suitable for bundling into browser and edge
   environments.
-- **Branded types.** ZIP codes, postcodes and abbreviations carry nominal types, so the type
+- **Branded types.** ZIP codes, postcodes and abbreviations have nominal types, so the type
   system catches locale mismatches at compile time.
 - **An absence is reported, never invented.** A country with no layout returns `""`, and a
   component that the layout has no slot for is listed in `unplaced`.
@@ -300,7 +300,7 @@ dependency-free so that a consumer who only wants to print an address does not d
 
 ## The normative tier (codex vs the libpostal dictionaries)
 
-Mailwoman carries two closed-class vocabularies that overlap intentionally and must stay
+Mailwoman maintains two closed-class vocabularies that overlap intentionally and must stay
 separate:
 
 - **Codex is normative.** It reproduces USPS Pub-28 (and each system's equivalent) verbatim: the
@@ -319,7 +319,7 @@ questions, so they stay in different tables.
 
 ## Related
 
-- [`mailwoman`](https://www.npmjs.com/package/mailwoman): the parser, which turns free text into components.
+- [`mailwoman`](https://www.npmjs.com/package/mailwoman): the parser. It turns free text into components.
 - [`@mailwoman/record`](../record): the record schema and per-field normalizers for entity matching.
 - [`@mailwoman/address-id`](../address-id): stable address primary keys, built on these tables.
 - [`@mailwoman/resolver`](../resolver): uses the granularity tiers to order a resolved tree.

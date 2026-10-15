@@ -9,7 +9,7 @@ HRSA's Health Center Service Delivery Site Locations dataset is the
 authoritative federal directory of FQHCs and look-alikes. Compared to
 gazetteer rows it warrants its adversarial-source label on two fronts:
 
-1. **Venue + address co-occurrence**: every row carries a hand-typed
+1. **Venue + address co-occurrence**: every row has a hand-typed
    site name (e.g. "Buffalo Health Center Inc.") alongside the postal
    address. The model learns the venue token boundary against real
    facility-name surface forms — not synthesized ones.
@@ -23,21 +23,21 @@ gazetteer rows it warrants its adversarial-source label on two fronts:
 
 A CSV file the operator pre-downloads from `data.hrsa.gov` (Health
 Center Service Delivery Site Locations dataset). The adapter consumes
-the file directly via `CSVSpliterator` in streaming mode; no SQLite step
-needed (the national export is ~10K rows).
+the file directly via `CSVSpliterator` in streaming mode. A SQLite step is
+unnecessary because the national export is ~10K rows.
 
 ### Expected columns
 
 | Column                    | Use                                         |
 | ------------------------- | ------------------------------------------- |
 | `Site ID`                 | Optional. Used in `source_id` when present. |
-| `Site Name`               | → `venue` component                         |
+| `Site Name`               | The `venue` component                       |
 | `Site Address`            | Split into `house_number` + `street`        |
-| `Site City`               | → `locality` component                      |
-| `Site State Abbreviation` | → `region` component (2-char USPS)          |
-| `Site Postcode`           | → `postcode` component                      |
+| `Site City`               | The `locality` component                    |
+| `Site State Abbreviation` | The `region` component (2-char USPS)        |
+| `Site Postcode`           | The `postcode` component                    |
 
-Any other column the HRSA export carries is ignored.
+The adapter ignores every other column in the HRSA export.
 
 ## Output
 
@@ -51,7 +51,7 @@ quarantine venue.
 
 `source_id` shape:
 
-- `usgov-hrsa-fqhc-<Site ID>` when the CSV row carries a Site ID
+- `usgov-hrsa-fqhc-<Site ID>` when the CSV row has a Site ID
 - `usgov-hrsa-fqhc-<content-hash>` otherwise (via `stableSourceId`)
 
 The adapter splits `Site Address` into `(house_number, street)`:
@@ -61,7 +61,7 @@ The adapter splits `Site Address` into `(house_number, street)`:
 - `"PO Box 1234"` → `{ street: "PO Box 1234" }` (no house number)
 
 Suite / floor / unit designators stay on `street` (no separate `unit`
-slot for Phase 1; see file-level comment in `adapter.ts`).
+slot for Phase 1. See the file-level comment in `adapter.ts`).
 
 ## Raw line shape
 
@@ -78,7 +78,7 @@ Buffalo Health Center Inc., 123 Main St, Buffalo, NY 14201
 US-conventional addressee-then-address ordering, matching how HRSA
 users type into geocoders.
 
-## Filtering
+## Row filters
 
 Rows are silently dropped when:
 
@@ -91,7 +91,7 @@ Rows are silently dropped when:
 
 ## License
 
-Every emitted row carries `license: "Public Domain"` per the HRSA Data
+Every emitted row has `license: "Public Domain"` per the HRSA Data
 Warehouse's federal-government distribution terms.
 
 ## Country filter
@@ -113,4 +113,4 @@ country value is rejected with a clear error.
 - One row missing `Site Name` (silently dropped)
 - One row with unrecognized state code `"ZZ"` (silently dropped)
 
-All Site IDs are illustrative; none match a real HRSA record.
+All Site IDs are illustrative, and none match a real HRSA record.

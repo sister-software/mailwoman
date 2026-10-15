@@ -15,7 +15,7 @@ import { type CompiledGeographicModel, parseCompiledGeographicModel } from "#art
 /**
  * The authoring directory and the artifact it compiles to.
  *
- * Probes for `model/model.json`, so a genuinely missing `data/` throws naming the path.
+ * Probes for `model/model.json`, so a missing `data/` throws naming the path.
  */
 export async function packagedModelPaths(): Promise<{ source: string; artifact: string }> {
 	const candidates = [resolvePackagePath("@mailwoman/geographic-model", "data")]

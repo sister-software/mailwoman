@@ -1,6 +1,6 @@
 """Generate the TS↔Python EVIDENCE-CHANNEL parity fixture (Option-A Phase 2).
 
-Paints a probe set with MINI street-type + locality-surface lexicons through corpus-python's REAL
+Paints a probe set with MINI street-type + locality-surface lexicons through corpus-python's production
 painter (`mailwoman_train.features.gazetteer_anchor.realign_gazetteer_to_pieces`) against the in-repo fixture
 tokenizer, and snapshots per-piece features + confidence. The TS test
 (`neural/evidence-inference.test.ts`) replays the same lexicons + piece offsets through
@@ -95,7 +95,7 @@ PROBES = [
     "Springfield",
     "nothing to see here",
     "Chemin de Belleville",
-    # Digit-guard probes (v3.23): matched spans beside/containing digits must paint nothing.
+    # Digit-guard probes (v3.23): matched spans beside/containing digits must paint all-zero features.
     "Springfield 62704",  # trailing digit neighbor guards the locality match
     "12b rue du Springfield",  # alnum house number guards "rue"; "Springfield" (neighbor "du") still paints
     "Boulevard 7 des Capucines",  # digit inside the neighborhood of both matches

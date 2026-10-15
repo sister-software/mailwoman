@@ -23,7 +23,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 - **9 GB of free disk for Vermont.** The parts, in decimal GB as your disk vendor counts them: a 6.93 GB
   national Overture parquet you need even for one state (the ingest has no per-state mode), 215 MB of
   Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 2.88 GB gazetteer.
-  That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
+  That sums to 8.94 GB. `du -sh` will report that back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
 - **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
   resident set size 7,445,032 KB", and that field is kibibytes despite the label, so the GB figure is
@@ -48,7 +48,7 @@ them yourself.
 
 ## The Overture release pin, before it bites you
 
-The ingest and every command that reads its output carry a built-in `--release 2026-05-20.0`. That release
+The ingest and every command that reads its output have a built-in `--release 2026-05-20.0`. That release
 is no longer in Overture's bucket, so the default fails:
 
 ```bash
@@ -92,8 +92,8 @@ npx mailwoman data status
 ...
 ```
 
-`data status` reports the four published bundles against your data root, and every one of them is missing,
-which is the correct starting state. It is also the check you come back to in step 7, so run it now and
+`data status` reports the four published bundles against your data root, and every one of them is missing.
+That is the correct starting state. It is also the check you come back to in step 7, so run it now and
 know what empty looks like.
 
 ## 2. Ingest the US addresses
@@ -117,7 +117,7 @@ is the scan rather than the write: Overture's addresses theme is partitioned by 
 one-country ingest reads the planet's address parquet and filters. Liechtenstein, the smallest country in
 the theme, takes 132 s for 12,950 rows on the same connection. The floor is the scan.
 
-The run writes a fill-rate report beside the parquet, and it is worth opening before you build anything on
+The run writes a fill-rate report beside the parquet. Open it before you build anything on
 top of it:
 
 ```bash
@@ -138,11 +138,11 @@ downstream issue proceeds on a country whose relevant field fills <80% without a
 Street fills at 99.2% and number at 98.9%, which is what a rooftop database keys on. `unit` at 14.3% is the
 number to plan around: apartment and suite detail is present for one row in seven, so a build on this
 source resolves buildings rather than doors. Below the table the report lists every contributing dataset by row
-count — 120 of them. `NAD`, the US National Address Database, supplies 85,482,422 rows; the other 119
+count — 120 of them. `NAD`, the US National Address Database, supplies 85,482,422 rows. The other 119
 arrive through OpenAddresses one jurisdiction at a time, 57 of them California counties.
 
 If you want that report again later without re-ingesting, `--probe-only` reruns the probe against the
-parquet already on disk. It took 9.67 s here against the 21 minutes of the full run, and it overwrites the
+parquet already on disk. It took 9.67 s here against the 21 minutes of the complete ingest, and it overwrites the
 report each time — a second ingest for a different country replaces it rather than appending, so keep a
 copy if you need to compare two countries.
 
@@ -163,7 +163,7 @@ npx mailwoman situs address-points --state VT --release 2026-06-17.0
 7.32 s over the 6.93 GB parquet, and 81.9 MB on disk. That ratio is the reason step 2 is a one-time cost:
 the parquet is scanned once per state and every state after the first is seconds.
 
-The provenance block is per-row rather than per-file. Every Vermont point traces to `NAD`, so this database carries
+The provenance block is per-row rather than per-file. Every Vermont point traces to `NAD`, so this database has
 one license. A California build prints 57 OpenAddresses county sources under that heading, and each of
 them wants credit — which is what step 5 is for.
 
@@ -213,17 +213,17 @@ Building VT…
 58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is no data
 to fetch first.
 
-Three lines in that output are worth knowing. **Parity** splits the segment-sides into odd and even runs,
-which is how the interpolator picks the correct side of the street for 118 rather than 117; the 8 `mixed`
-sides are the ones TIGER records as carrying both, and the lookup accepts them for either parity after it
+Three lines in that output matter. **Parity** splits the segment-sides into odd and even runs.
+That split is how the interpolator picks the correct side of the street for 118 rather than 117. The 8 `mixed`
+sides are the ones TIGER records as having both, and the lookup accepts them for either parity after it
 fails to find an exact side. **146 skipped non-numeric ranges** are segments whose house numbers are not
 numbers at all, so they are dropped rather than guessed. And the **baked radius calibration of ×1.95** is
-what turns the raw half-segment radius into the `uncertainty_m` you read at query time; it travels inside
+what turns the raw half-segment radius into the `uncertainty_m` you read at query time. It is stored inside
 the database, so the number does not depend on which client opens it.
 
 If you were reaching for `mailwoman tiger fetch` here, don't — that command loads census blocks, places
-and address features for demographic work, into a different database. The interpolation tier is built by
-`situs interpolation` alone.
+and address features for demographic work, into a different database. Only
+`situs interpolation` builds the interpolation tier.
 
 ## 5. Record where the rows came from
 
@@ -241,16 +241,16 @@ vt            333,610 points · 1 sources
 
 This reads every database in the directory and aggregates the per-row `source` column into one ledger. Run it
 after the last state you build rather than after each one: it counts what is on disk, so a partial run undercounts
-and a rerun fixes it. NAD is US public domain; the OpenAddresses sources named in `ATTRIBUTION.json` are
+and a rerun fixes it. NAD is US public domain. The OpenAddresses sources listed in `ATTRIBUTION.json` are
 the ones you owe credit to when you redistribute a database.
 
 ## 6. Add the gazetteer
 
 The two databases you built hold streets and house numbers, and no entry in either resolves the word
-"Burlington". That comes from the candidate gazetteer, which mailwoman publishes as a download rather than
+"Burlington". That comes from the candidate gazetteer. Mailwoman publishes it as a download rather than
 asking you to build it — the build needs the Who's On First data repositories cloned first, and the
 database it produces is over 5 GB before the query-time one is derived from it.
-[Build the planet](./full-planet-build.mdx) covers that path; here, take the download:
+[Build the planet](./full-planet-build.mdx) covers that path. Here, take the download:
 
 ```bash
 npx mailwoman data pull candidate
@@ -264,7 +264,7 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-us-build/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-4 minutes and 7 seconds for the 1.65 GB `2026-07-07a` build shown in this transcript; the current
+4 minutes and 7 seconds for the 1.65 GB `2026-07-07a` build shown in this transcript. The current
 `2026-08-25b` build is 2.88 GB, so your download will be larger. `content-length verified` is the check the pull does: it HEADs
 the object and compares the byte count it downloaded against what the server declared. The bucket publishes
 no checksum sidecar for any artifact, so content-length is the strongest integrity signal available.
@@ -287,7 +287,7 @@ npx mailwoman doctor
 PASS — core checks ok (weights + runtime); parse is ready
 ```
 
-The POI layer is a separate artifact and geocoding does not need it, which is why `doctor` marks it
+The POI layer is a separate artifact and geocoding does not need it. For that reason `doctor` marks it
 optional and passes anyway. `(convention path)` on the gazetteer line means it was found at
 `<data root>/db/wof/candidate.db` with no configuration — which is why step 6 was one command and no
 `export`, and why the `export` line the pull printed can be ignored.
@@ -304,10 +304,10 @@ npx mailwoman data status us 2>&1 | grep -i vt
 ```
 
 Both files are correct and both report `stale`, so know what that word means before you act on it.
-`data status` compares each file's byte count against the size recorded for the **published** bundle; it is
+`data status` compares each file's byte count against the size recorded for the **published** bundle. It is
 a "does your download match ours" check rather than a validity check on a database you built. A locally-built one
 fails it by construction. The rooftop file is 81,903,616 bytes against the bucket's 72,945,664 because you
-built it from a newer Overture release; the interpolation file is 58,511,360 against 58,507,264, one
+built it from a newer Overture release. The interpolation file is 58,511,360 against 58,507,264, one
 4 KB SQLite page apart, and both round to 58.5 MB in the message — which is why that second line reads as a
 contradiction and is not one. After a build, `doctor` plus a real geocode is the check that means something.
 
@@ -335,7 +335,7 @@ hierarchy:
 
 `address_point` with `uncertainty_m: 1` — a rooftop hit out of the database you built in step 3. The
 `hierarchy` block underneath comes from the gazetteer, and it is the reason to keep both: Burlington's own
-centroid is 1,942 m from this building, which is the error you would have carried without step 3.
+centroid is 1,942 m from this building. Without step 3, your result would have had that error.
 
 Church Street holds 131 rooftop points between numbers 1 and 272, with gaps. Ask for one of the gaps:
 
@@ -389,8 +389,8 @@ npx mailwoman situs interpolation
 ```
 
 Those two are the only commands on this page that were not run to produce it. A national build is days of
-wall clock rather than an afternoon. So the numbers below are the published national tier's, which was built by
-these same two commands, read off the bundle registry the CLI ships:
+wall clock rather than an afternoon. So the numbers below are the published national tier's. That tier was built by
+these same two commands, and the numbers are read off the bundle registry the CLI ships:
 
 | Artifact                         | Files | Size    |
 | -------------------------------- | ----- | ------- |
@@ -420,8 +420,8 @@ coverage:
 ## What you have now
 
 A data root holding one state's address data that you built rather than downloaded: 333,610 rooftop points
-with per-row provenance back to a named federal dataset, 137,256 TIGER segment-sides behind them, and an
-`ATTRIBUTION.json` that says which license each row arrived under. The same commands, given a longer
+with per-row provenance back to a specific federal dataset, 137,256 TIGER segment-sides behind them, and an
+`ATTRIBUTION.json` that records which license each row arrived under. The same commands, given a longer
 `--states` list, produce the other 49 against the parquet already on your disk.
 
 ## Next

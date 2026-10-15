@@ -58,6 +58,7 @@ export const ArtifactRole = {
 	CharacterVocabulary: "character-vocabulary",
 	Lexicon: "lexicon",
 	PlacetypePairIndex: "placetype-pair-index",
+	PostcodePrefixIndex: "postcode-prefix-index",
 	PostcodeBinary: "postcode-binary",
 	Gazetteer: "gazetteer-fst",
 	Calibration: "calibration",
@@ -79,8 +80,10 @@ export function roleForArtifact(path: string): ArtifactRole {
 		"char-vocab.json": ArtifactRole.CharacterVocabulary,
 	}
 
+	// The prefix index is tested before the postcode binary, because both names open with `postcode-`.
 	const byPrefix: ReadonlyArray<readonly [string, ArtifactRole]> = [
 		["pair-index-", ArtifactRole.PlacetypePairIndex],
+		["postcode-prefix-", ArtifactRole.PostcodePrefixIndex],
 		["postcode-", ArtifactRole.PostcodeBinary],
 		["fst-", ArtifactRole.Gazetteer],
 		["calibration", ArtifactRole.Calibration],

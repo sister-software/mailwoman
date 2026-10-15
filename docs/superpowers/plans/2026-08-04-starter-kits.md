@@ -4,7 +4,7 @@
 
 **Goal:** Four single-sourced starter templates, an `npm init @mailwoman` engine with four shims, generated template repos in the mailwoman org, and the CI that keeps all of it true.
 
-**Architecture:** `templates/` in the monorepo is the only hand-edited copy; the `create` package ships rendered templates; a release job syncs them to `mailwoman/starter-*`; pack-based cold-scaffold smokes check every change.
+**Architecture:** `templates/` in the monorepo is the only hand-edited copy. The `create` package ships rendered templates. A release job syncs them to `mailwoman/starter-*`. Pack-based cold-scaffold smokes check every change.
 
 **Tech Stack:** Node 24+, plain `node:util` parseArgs + prompts (no framework), zx for the sync job, GitHub Actions.
 
@@ -12,13 +12,13 @@
 
 ## Global Constraints
 
-- Register rules and the writing system bind all template READMEs and printed CLI text (they are public copy; CLI help source strings are public copy — the wave-2 standing rule).
-- Templates never download data at scaffold time; the next-steps print offers `mailwoman data pull` and names sizes.
-- Version stamping: rendered templates pin exact published versions; no `latest`, no `workspace:*` in rendered output.
+- Register rules and the writing system bind all template READMEs and printed CLI text (they are public copy, and CLI help source strings are public copy under the wave-2 standing rule).
+- Templates never download data at scaffold time. The next-steps print offers `mailwoman data pull` and states sizes.
+- Version stamping: rendered templates pin exact published versions. Rendered output contains neither `latest` nor `workspace:*`.
 - Every commit leaves repo checks green: `yarn compile`, `yarn lint`, `yarn install --immutable`, docs build where docs change, and the new template smokes.
 - Repos outside the monorepo go under the `mailwoman` GitHub org (operator directive 2026-08-04).
 - Commit trailers: Co-Authored-By: Claude Fable 5 <noreply@anthropic.com> + Claude-Session link, every commit.
-- First-publish of the five npm packages is OPERATOR-CONDITIONAL (Trusted Publishing cannot create packages): the plan prepares everything; the blessing session is a handoff item, never automated.
+- First-publish of the five npm packages is conditional on the operator (Trusted Publishing cannot create packages). The plan prepares everything. The blessing session is a handoff item, never automated.
 
 ## Phase overview
 
@@ -37,23 +37,23 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 **Files:**
 
-- Create: `templates/_shared/{data-bootstrap.md,doctor-first.mjs}`, `templates/geocoder/{package.json.tmpl,README.md.tmpl,index.mjs,smoke.sh}`, `scripts/render-template.ts` (compose _shared + kit → a rendered dir; version-stamp from a supplied version map), `scripts/render-template.test.ts`
-- Test: vitest on the renderer (pure: given kit + versions → file map; assert stamping, no `workspace:*`, no `latest`), plus `templates/geocoder/smoke.sh` executed against a rendered dir with packed tarballs.
+- Create: `templates/_shared/{data-bootstrap.md,doctor-first.mjs}`, `templates/geocoder/{package.json.tmpl,README.md.tmpl,index.mjs,smoke.sh}`, `scripts/render-template.ts` (compose _shared + kit → a rendered dir, version-stamped from a supplied version map), `scripts/render-template.test.ts`
+- Test: vitest on the renderer (pure: given kit + versions → file map. Assert stamping and the absence of `workspace:*` and `latest`), plus `templates/geocoder/smoke.sh` executed against a rendered dir with packed tarballs.
 
 **Interfaces:**
 
-- Produces: `renderTemplate(kit: string, versions: Record<string,string>, outDir: string)` — Tasks 2–6 consume it; smoke interface: `smoke.sh <projectDir>` exits 0 when the kit's first command produced its expected output.
+- Produces: `renderTemplate(kit: string, versions: Record<string,string>, outDir: string)` — Tasks 2–6 consume it. Smoke interface: `smoke.sh <projectDir>` exits 0 when the kit's first command produced its expected output.
 
-- [ ] Write the renderer test (RED): stamping replaces `__MAILWOMAN_VERSION__` tokens; output contains no `workspace:` or `"latest"`; `_shared` files land composed.
-- [ ] Implement renderer (GREEN). The geocoder template: `index.mjs` = the CSV-loop worked example from `geocode-a-csv.mdx` reduced to one file (candidate-default world: no env exports; doctor-first; next-steps print).
+- [ ] Write the renderer test (RED): stamping replaces `__MAILWOMAN_VERSION__` tokens, output contains neither `workspace:` nor `"latest"`, and `_shared` files land composed.
+- [ ] Implement renderer (GREEN). The geocoder template: `index.mjs` = the CSV-loop worked example from `geocode-a-csv.mdx` reduced to one file (candidate-default world without env exports, doctor-first, with a next-steps print).
 - [ ] Render + pack workspaces (`scripts/pack-workspace.ts` exists) + `npm install` tarballs in a temp dir + run `smoke.sh` — transcript in the report.
 - [ ] Commit `feat(templates): shared scaffolding, geocoder kit, renderer`.
 
 ### Task 2: server, browser, dropin templates
 
-**Files:** Create `templates/{server,browser,dropin}/...` (same shape; server carries Dockerfile+compose lifted from the deploy-docker page's corrected pair; browser = web-loader + WASM resolver minimal page with self-hosted weights layout; dropin = photon-compatible serve + a pointing-your-client snippet).
+**Files:** Create `templates/{server,browser,dropin}/...` (same shape. Server includes Dockerfile+compose lifted from the deploy-docker page's corrected pair. Browser = web-loader + WASM resolver minimal page with self-hosted weights layout. Dropin = photon-compatible serve + a pointing-your-client snippet).
 
-- [ ] Each kit: template + smoke (server smoke curls health; browser smoke = node-side loader check per the browser tutorial's measurement basis; dropin smoke = the Task 7 cold-start sequence).
+- [ ] Each kit: template + smoke (server smoke curls health. Browser smoke = node-side loader check per the browser tutorial's measurement basis. Dropin smoke = the Task 7 cold-start sequence).
 - [ ] All three smokes green against packed tarballs (transcripts). Commit `feat(templates): server, browser, dropin kits`.
 
 ### Task 3: the engine — `mailwoman create` (operator amendment: day-1 in the entry package)
@@ -61,7 +61,7 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 **Files:** Create `mailwoman/scaffold/{index.ts,prompts.ts}` (pure engine: template resolution from the package's bundled `templates/`, name validation, offer-not-run data-pull print, `npm install` invocation injectable), `mailwoman/commands/create.tsx` (Pastel command — house stack, sibling style), `mailwoman/test/scaffold.test.ts`; Modify `mailwoman/package.json` (`files` += rendered `templates/`; `prepack` renders via Task 1's renderer with CURRENT versions).
 
 - [ ] TDD the pure engine: RED → GREEN per the cases above.
-- [ ] Pastel command: `mailwoman create [template] [dir]` — picker when no template; sibling `useCommandTask`/`CheckList` conventions.
+- [ ] Pastel command: `mailwoman create [template] [dir]` — picker when no template is given, following sibling `useCommandTask`/`CheckList` conventions.
 - [ ] End-to-end: `yarn compile`, pack the mailwoman workspace, install in a temp dir, `mailwoman create geocoder demo` from the tarball, run the kit's smoke. Transcript.
 - [ ] Commit `feat(cli): mailwoman create — the scaffolder ships in the box`.
 
@@ -83,10 +83,10 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 ### Task 6: repo sync + npm-reality canary
 
-**Files:** Create `scripts/sync-starter-repos.ts` (zx; renders with the RELEASE version map; force-pushes each kit to `mailwoman/starter-<kit>`; asserts template flag via gh api; writes the generated banner), `.github/workflows/publish.yml` gains the post-publish sync step; each rendered repo carries `.github/workflows/smoke.yml` (weekly cron: scaffold-from-npm + smoke — the publish-reality canary).
+**Files:** Create `scripts/sync-starter-repos.ts` (zx. It renders with the release version map, force-pushes each kit to `mailwoman/starter-<kit>`, asserts template flag via gh api, and writes the generated banner). `.github/workflows/publish.yml` gains the post-publish sync step. Each rendered repo includes `.github/workflows/smoke.yml` (weekly cron: scaffold-from-npm + smoke — the publish-reality canary).
 
 - [ ] Repo creation is operator-conditional (org admin): the script CHECKS for repo existence and reports missing ones rather than creating them — the runbook (Task 8) lists the `gh repo create mailwoman/starter-* --template` commands for the operator.
-- [ ] Dry-run mode renders + diffs against the remote without pushing; the real push only in the publish workflow.
+- [ ] Dry-run mode renders + diffs against the remote without pushing. The real push runs only in the publish workflow.
 - [ ] Commit `feat(release): starter-repo sync + scheduled npm-reality smoke`.
 
 ### Task 7: docs integration
@@ -98,12 +98,12 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 ### Task 8: publish runbook + handoff
 
-**Files:** Create `docs/engineering/starter-kits-runbook.md` (bless list: the five packages with the exact `npm init` mapping; the org repo-creation checklist; the sync job's creds expectations; the first-publish OIDC gap note), ledger/handoff notes.
+**Files:** Create `docs/engineering/starter-kits-runbook.md` (bless list: the five packages with the exact `npm init` mapping, the org repo-creation checklist, the sync job's creds expectations, and the first-publish OIDC gap note), ledger/handoff notes.
 
 - [ ] Commit `docs(engineering): starter-kits runbook`.
 
 ## Self-review
 
 - Spec Decisions 1–5 → Tasks 1–2 (kits), 3–4 (engine+shims), 6 (org repos + canary), 5 (executed-before-shipped), 7 (docs). Acceptance bullets: cold-scaffold smoke (5), repos byte-match (6's dry-run diff), publish blessing (8, operator), docs (7).
-- No placeholders; interfaces named; the renderer is the single composition point so kits cannot drift from _shared.
+- No placeholders. Interfaces are stated. The renderer is the single composition point so kits cannot drift from _shared.
 - Operator-conditional steps (repo creation, first publishes) are explicitly fenced as handoffs, never automated.

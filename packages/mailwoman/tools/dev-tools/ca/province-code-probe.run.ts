@@ -4,10 +4,10 @@
  * Several collide with an ISO alpha-2 country code.
  * A code left unattested by the corpus is read as the country it spells.
  *
- * Two arms per province, because `NL` contradicts the country with or without a postal code
+ * Two arms per province, because `NL` contradicts the country with or without a postcode
  * while `PE` takes the locality slot once one is present.
  *
- * Each postal code is real and nearest its seat.
+ * Each postcode is real and nearest its seat.
  * The report includes the distance so a reader can see the city and code name the same town.
  *
  * Run:
@@ -57,7 +57,7 @@ const SEATS: Readonly<Record<string, string>> = {
 }
 
 /**
- * The first letter of a Canadian postal code names its province.
+ * The first letter of a Canadian postcode names its province.
  *
  * The probe uses that letter to select a real code for each province without a name join.
  */
@@ -96,7 +96,7 @@ interface ProbeRow {
 using db = new DatabaseClient<WOFDatabase>(values["postcode-db"]!)
 
 /**
- * The postal code nearest the seat, spaced the way an address writes it, with the distance it sits at:
+ * The postcode nearest the seat, spaced the way an address writes it, with the distance it sits at:
  * ranking a province's codes by address-point count selects a rural code that spans a whole district.
  */
 async function postcodeNearest(code: string, seat: { lat: number; lon: number }): Promise<PostcodePick | null> {

@@ -278,7 +278,7 @@ export interface EffectiveTrainingManifest {
 	 * Sources the epoch emitted that the corpus's frozen manifest does not name, with their emitted rows.
 	 *
 	 * `freezeTrainingManifest` runs inside `buildCorpus` and records the base build's sources.
-	 * An overlay is merged into the corpus afterwards by `overlay-manifest`,
+	 * A corpus overlay is merged into the corpus afterwards by `overlay-manifest`,
 	 * so its rows are in the corpus and outside that manifest.
 	 *
 	 * Measured over `v0.6.0-register-surface` on 2026-09-28: the frozen manifest names 11 sources
@@ -329,7 +329,7 @@ export interface EpochMixtureAudit {
 		/**
 		 * Per-source detail the audit computes from the corpus files rather than from the corpus manifest.
 		 *
-		 * `rows` is how many rows of that source the corpus holds.
+		 * `rows` is the number of rows of that source the corpus holds.
 		 * It is the only place a source outside the frozen manifest has a corpus row count, so it is what
 		 * lets a reader read a source's rows in the corpus beside the rows one epoch drew and emitted.
 		 */

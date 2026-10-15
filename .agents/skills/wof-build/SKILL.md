@@ -34,7 +34,7 @@ node packages/mailwoman/out/cli/main.js gazetteer importance --db $MAILWOMAN_DAT
 ```
 
 **This step must precede step 3. Check whether it has ever run against the live admin DB:** while
-`admin-global-priority.db` carries `place_population` and no `place_importance`, the FST builder
+`admin-global-priority.db` has `place_population` and no `place_importance`, the FST builder
 takes its documented fallback and every shipped FST's `importance` is population-scaled. In that
 state a rebuild reproduces importance values bit-identically across admin swaps, and the
 `place_population` row counts match the provenance field both builds record as `importanceMatches`.
@@ -81,7 +81,7 @@ node packages/mailwoman/out/cli/main.js gazetteer verify --no-reverse-panel
 ```
 
 It compares each artifact's stamped `sourceDBMD5` against the DB on disk. The section is ADVISORY —
-it never changes the exit code, because a stale FST says nothing about whether the database is sound,
+it never changes the exit code, because a stale FST is no evidence about whether the database is sound,
 and a dev tree with an old bias list must still run. The same check runs from the weights linkers
 (`neural-weights-{en-us,en-gb,fr-fr}/scripts/link-dev-weights.ts`), so `yarn test` surfaces the drift
 too.
@@ -103,9 +103,9 @@ for (const p of r.accepting.slice(0, 3)) console.log(' ', p.placetype, p.name, '
 ```
 
 **Watch `importanceMatches` in the stamp.** The builder falls back to `place_population` when the DB
-has no `place_importance` table, and no admin DB has ever carried one (#1142) — so the FST's
+has no `place_importance` table, and no admin DB has ever contained one (#1142) — so the FST's
 `importance` field is population-scaled rather than Wikipedia importance, and the provenance field counts
-population rows rather than importance matches. Step 2 exists to fix that; until it runs against the
+population rows rather than importance matches. Step 2 exists to fix that. Until it runs against the
 live DB, that is what the number means.
 
 ## Expected output

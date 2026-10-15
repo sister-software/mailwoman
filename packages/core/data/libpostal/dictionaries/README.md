@@ -19,7 +19,7 @@ Each language can define one or more dictionaries (sometimes called "gazetteers"
 
 - **academic_degrees.txt**: for post-nominal strings like "M.D.", "Ph.D.", etc.
 - **ambiguous_expansions.txt**: e.g. "E" could be expanded to "East" but could
-  be "E Street", so if the string is encountered, it can either be left alone or expanded. In general, add single-letter abbreviations in most languages to ambiguous_expansions.txt because single letters also serve as initials
+  be "E Street", so if the string is encountered, it can either be kept as written or expanded. In general, add single-letter abbreviations in most languages to ambiguous_expansions.txt because single letters also serve as initials
 - **building_types.txt**: strings indicating a building/house
 - **categories.txt**: category strings e.g. from [Nominatim Special Phrases](http://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases) expected to be used in searches like "restaurants in Manhattan". Singular and plural forms can be included here.
 - **company_types.txt**: company suffixes like "Inc" or "GmbH"
@@ -63,7 +63,7 @@ Each language can define one or more dictionaries (sometimes called "gazetteers"
   just be treated as string replacement.
 - **toponyms.txt**: abbreviations for certain abbreviations relating to
   toponyms like regions, places, etc. Note: GeoNames covers most of these.
-  In most cases better to leave these alone
+  In most cases, keep these strings as written.
 - **unit_directions.txt**: phrases to indicate which side of the building the apartment/unit is on, such as "left", "right", "front", or "rear".
 - **unit_types_numbered.txt**: strings indicating a apartment or unit e.g. we expect a number to follow (or in some languages, precede) strings like "flat", "apt", "unit", etc.
 - **unit_types_standalone.txt**: for unit type that can stand on their own without an accompanying number e.g. "penthouse".
@@ -79,7 +79,7 @@ Most of the dictionaries have been derived using the following process:
 
 ## Contribute a language dictionary
 
-If you're a native speaker of one or more languages in libpostal, we'd love your contribution. Edit the text files under this directory and open a pull request; there are no other steps. Dictionaries are organized by [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), so find the language you speak and start editing. If your language has no directory yet, add one. It needs no additional configuration.
+If you're a native speaker of one or more languages in libpostal, we'd love your contribution. Edit the text files under this directory and open a pull request. There are no other steps. Dictionaries are organized by [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), so find the language you speak and start editing. If your language has no directory yet, add one. It needs no additional configuration.
 
 To get started adding new language dictionaries or improving support for existing languages, check out the [address_languages](https://github.com/openvenues/address_languages) repo, where we've published lists of 1-5 word phrases found in street/venue names in every language in OSM.
 

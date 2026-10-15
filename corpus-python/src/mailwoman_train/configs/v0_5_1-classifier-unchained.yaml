@@ -7,7 +7,7 @@
 #   - max_steps: 50K → 100K (double training budget, $10 on A100)
 #   - use_phrase_priors: true (the architectural thesis — phrase-prior conditioning)
 #   - class_weights: tuned to penalize dependent_locality/subregion hallucination
-#   - crf_loss_weight: 0.0 (CE-only stability fix carries forward)
+#   - crf_loss_weight: 0.0 (CE-only stability fix is kept)
 #
 # Recipe rationale:
 #   - h384 + phrase priors = the model the v0.5.0 architecture was designed around

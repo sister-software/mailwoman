@@ -235,6 +235,8 @@
 		"model_card": "model-card.json",
 		"$comment_postcode_anchor": "RESTORED 2026-08-06 (9.0.0): postcode-gb.bin returns — Code-Point Open (OGL v3.0), 1,749,839 keys (1,746,976 units + 2,863 outward districts), built by `mailwoman gazetteer postcode-binary` from postalcode-gb-codepoint.db. The 2026-08-05 absence (#1467) was the untrained-slot mitigation; v4.2.0 is the cure.",
 		"postcode_anchor": "postcode-gb.bin",
+		"$comment_postcode_prefix": "Added 2026-10-15 (#2585). The PFX1 postcode-prefix index the anchor-region prior reads: one node per outward code, built from Code-Point Open (OGL v3.0) for England, Scotland and Wales. The Northern Ireland scope is OpenStreetMap under ODbL, tier build-local, and does not ship.",
+		"postcode_prefix": "postcode-prefix-gb-esw.bin",
 		"pair_index": "pair-index-gb.bin",
 		"gazetteer_lexicon": "anchor-lexicon-v1.json",
 		"country_lexicon": "country-surface-lexicon-v1.json"

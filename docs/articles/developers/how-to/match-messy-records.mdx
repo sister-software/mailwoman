@@ -23,7 +23,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
 - [customers-messy.csv](/examples/customers-messy.csv) — twenty rows, in which five organizations appear
   two or three times each with different spellings. Thirteen distinct organizations, twenty rows.
 - Per-state rooftop databases, at your data root, for the states in your file. Every transcript below ran
-  against a data root that has them, which is why the geocode tiers in step 2 are `address_point` rather
+  against a data root that has them. That is why the geocode tiers in step 2 are `address_point` rather
   than `admin`. [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) covers pulling
   one. The entity counts on this page are the same either way — the tier changes the coordinates rather than
   the linking.
@@ -46,7 +46,7 @@ for a file this size, and the rest of this page is about why and what to do.
 
 Note `--resolve-db` in that command, and note what it is doing, because it is not what it looks like.
 `mailwoman registry` discovers the candidate gazetteer at the convention path like everything else —
-the banner above says which file it opened, and no argument on the command line named it. What the flag
+the banner above prints the file it opened, and no argument on the command line supplied that path. What the flag
 satisfies is a separate boot check: registry refuses to start without a WOF admin path from
 `--resolve-db` or `$MAILWOMAN_WOF_DB`, and then discards it whenever a candidate gazetteer is reachable.
 
@@ -70,7 +70,7 @@ wrote 20 features → entities.geojson
 ```
 
 So the recipe is: **have `candidate.db` where the resolver looks, and pass anything to `--resolve-db` to
-get past the boot check.** Pass the gazetteer's own path to satisfy the check; this page and the tutorial
+get past the boot check.** Pass the gazetteer's own path to satisfy the check. This page and the tutorial
 both use it, but the path does not select a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
@@ -83,8 +83,8 @@ Error: WOFSQLitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFT
 resolver-wof-sqlite/README.md).
 ```
 
-Before the convention-path fallback, that was the outcome whenever the variable was merely unset, which
-made it easy to hit. Now it takes a data root with no gazetteer in it. The requirement itself is unchanged: a
+Before the convention-path fallback, that was the outcome whenever the variable was merely unset.
+That made it easy to hit. Now it takes a data root with no gazetteer in it. The requirement itself is unchanged: a
 command that demands an argument and then ignores it is a defect in this command rather than a convention to
 learn. It is recorded here because the workaround is needed today.
 
@@ -93,7 +93,7 @@ learn. It is recorded here because the workaround is needed today.
 Before touching the threshold, check that the pairs were even proposed. A pair the blocker never
 generates can never link, and that failure is silent.
 
-The run reported **38 candidate pairs**, which is the important number in that line. The blocker put
+The run reported **38 candidate pairs**. That count is the important number in that line. The blocker put
 every record in a metro area into the same block, so all five duplicate groups had their pairs
 generated. The geocodes were rooftop-quality too:
 
@@ -158,7 +158,7 @@ groups are below zero, and the default link threshold is at or above zero.
 The reason is in the arithmetic. A weight is a prior plus the field contributions:
 `-4.64 = prior + 6.32 + 2.32`, so the prior is `-13.28` bits. That prior is `log2(λ / (1 - λ))`, where λ
 is the probability that two records drawn at random are the same entity. On a twenty-row file the seed λ
-is small, so the prior swamps evidence worth 8.6 bits. On a file with real duplicate density the prior
+is small, so the prior swamps 8.6 bits of evidence. On a file with real duplicate density the prior
 moves and the defaults land where they were calibrated to.
 
 ## 4. Set the threshold from what you measured
@@ -187,16 +187,16 @@ for (const entity of entities.filter((e) => e.records.length > 1)) {
   2x — C-2011 C-2012
 ```
 
-Thirteen entities, which is the number of distinct organizations in the file. All five groups merged,
+The run gives thirteen entities. Thirteen is the number of distinct organizations in the file. All five groups merged,
 including the three-way one, and no incorrect merge occurred. At `-10` the run gives 14 entities
 — `C-2008`, the row that abbreviates both the company and the street, stays separate. Between `-15` and
-`-20` the answer does not move, which is the sign that the threshold sits inside the gap rather than on
+`-20` the answer does not move. That stability shows that the threshold sits inside the gap rather than on
 an edge.
 
 `learnedScorer: false` in that call matters. The bundled gradient-boosted scorer is on by default and
 its output is a logit rather than a Fellegi-Sunter weight in bits — so a threshold read off the weights above
-is meaningless against it. It was also trained on US healthcare provider records, which a generic
-customer file is not; its own documentation says to A/B it or turn it off for a different domain.
+is meaningless against it. It was also trained on US healthcare provider records, and a generic
+customer file is a different domain. Its own documentation tells you to A/B it or turn it off for a different domain.
 
 ## 5. Read the entities
 
@@ -216,7 +216,7 @@ jq -c '.features[] | select(.properties.recordCount > 1)
 ```
 
 The properties are the matcher's normalized view of your row rather than your row. Your own identifier column
-rides in `sourceIDs`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
+is stored in `sourceIDs`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
 can be lower than the entity count — compare the two before you treat the file as complete.
 
 ## Verify
@@ -235,7 +235,7 @@ jq '[.features[].properties.recordCount] | {entities: length, rows: add}' entiti
 ```
 
 `rows` has to equal your input count — every record lands in exactly one entity, so anything else means
-rows were dropped. `entities` moving toward `rows` means the threshold is too strict; collapsing toward
+rows were dropped. `entities` moving toward `rows` means the threshold is too strict. A count that collapses toward
 the number of distinct places means it is too loose.
 
 ## Limits
@@ -245,8 +245,8 @@ the number of distinct places means it is too loose.
   learned-scorer units. A sweep on this file goes from 20 entities to 5 with no value in between,
   because the negative thresholds that clear the learned scorer's whole range merge every metro area.
   Use the library for a small file.
-- **The defaults are conservative, and that is the safer direction.** A missed link leaves two entities
-  where one belonged; a false link fuses two real organizations and is much harder to notice downstream.
+- **The defaults are conservative in the safer direction.** A missed link leaves two entities
+  where one belonged. A false link fuses two real organizations and is much harder to notice downstream.
   Take the twenty-out-of-twenty as a prompt to measure rather than as a bug.
 - **The blocking stage can fail silently.** The system never compares records more than one 0.05° cell apart without a shared address key,
   phone or email are never compared. Check `candidatePairs` against the number of comparisons you
@@ -255,7 +255,7 @@ the number of distinct places means it is too loose.
   record count always adds back to your input size.
 - **Address canonical keys differ across spellings by design.** The three Harbor & Vine rows produce
   `1275|pennsylvania ave nw|…`, `1275|pennsylvania avenue nw|…` and `1275|pennsylvania ave n w|…`. The
-  exact-key blocking pass will not join them; the geographic pass is what does.
+  exact-key blocking pass will not join them. The geographic pass joins them.
 
 ## Related
 

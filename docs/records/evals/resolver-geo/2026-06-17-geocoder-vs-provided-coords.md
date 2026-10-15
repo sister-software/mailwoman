@@ -17,9 +17,9 @@ Reproduce: `scripts/record-matcher/txhhsc-to-oarow.ts` → `scripts/eval/oa-reso
 | **+ address-point (rooftop)** | **0.7 km** |   13.5 km |  486.8 km | **47.0%** (551/1172) |
 | **+ interpolation (street)**  | **0.1 km** |    8.2 km |  476.7 km | **12.5%** (146/1172) |
 
-**The finer tiers are the story.** The admin-centroid tier lands a facility in the right city — p50
-3.4 km, which is just "the city's middle is a few km from the facility." Switch in the **address-point**
-tier where we have a rooftop for the parsed street + number, and p50 collapses to **0.7 km**; the
+**The finer tiers reduce the coordinate error.** The admin-centroid tier lands a facility in the right city — p50
+3.4 km. That distance only means "the city's middle is a few km from the facility." Switch in the **address-point**
+tier where we have a rooftop for the parsed street + number, and p50 collapses to **0.7 km**. The
 **interpolation** tier (no exact point, interpolated along the street segment) lands p50 **0.1 km** —
 100 m, street-accurate. The direct caveat is **coverage**: the rooftop tier fires on 47% of these
 facilities and interpolation on a further 12.5%, so ~40% still fall back to the city centroid. The tail
@@ -63,10 +63,10 @@ small, fixable artifact (preserve all-caps 2-letter state codes) against a large
 
 - **The geocoder works where it has data.** On real TX facility addresses, the address-point + street
   tiers put p50 error at 0.1–0.7 km — rooftop-to-street accuracy rather than city-centroid. The pre-geocoded
-  seed (#619's other half) lets us skip re-geocoding where the source already carries an authoritative
-  point; this validation is what justifies trusting our own coordinate where it doesn't.
+  seed (#619's other half) lets us skip re-geocoding where the source already provides an authoritative
+  point. This validation is what justifies trusting our own coordinate where it doesn't.
 - **Coverage rather than precision, is the frontier.** ~40% of these facilities fall back to the city centroid
   for lack of a TX rooftop/interp hit on the parsed street — the address-point extract coverage is the
   change rather than the tier math.
 - **Case robustness is a measurable neural gap.** All-caps compliance/registry data is common, and we
-  lose 6.7pp of locality there vs the rules parser. Cheap to fix, worth fixing.
+  lose 6.7pp of locality there vs the rules parser. The fix is cheap.

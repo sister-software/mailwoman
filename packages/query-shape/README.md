@@ -1,6 +1,6 @@
 # @mailwoman/query-shape
 
-This package is **stage 1.5 of the Mailwoman runtime pipeline**, which computes
+This package is **stage 1.5 of the Mailwoman runtime pipeline**. It computes
 cheap structural priors.
 
 Its pure functions compute a structural fingerprint of an address string in
@@ -58,9 +58,9 @@ normalize → query-shape → locale-hint → kind-classifier → phrase-grouper
 
 ## Related
 
-- [`@mailwoman/normalize`](../normalize): stage 1, which feeds this stage.
-- [`@mailwoman/locale-hint`](../locale-hint): stage 2, which reads `QueryShape` for locale detection.
-- [`@mailwoman/kind-classifier`](../kind-classifier): stage 2.5, which reads `QueryShape` for kind classification.
+- [`@mailwoman/normalize`](../normalize): stage 1. It feeds this stage.
+- [`@mailwoman/locale-hint`](../locale-hint): stage 2. It reads `QueryShape` for locale detection.
+- [`@mailwoman/kind-classifier`](../kind-classifier): stage 2.5. It reads `QueryShape` for kind classification.
 - [Query Shape design rationale](https://github.com/sister-software/mailwoman/blob/main/docs/records/engineering/QUERY_SHAPE.mdx)
 
 ## License

@@ -8,10 +8,10 @@
 # project-v07-calibration-result). 0.05 is the gentler middle ground (the staged fork): the
 # hypothesis is it recovers most of the calibration improvement without the house_number damage.
 #
-# honest expectation (articulated before launch, per night-shift iteration discipline):
+# expectation (articulated before launch, per night-shift iteration discipline):
 # calibration improves (overconfidence down), harness ~flat-to-slightly-up, house_number
 # neutral-vs-0.1, resolver/differentiators stable (calibration barely moves ranking). This is
-# unlikely to clear the operator's "significant harness gain" bar — it's a clean data point
+# unlikely to clear the operator's bar for a harness gain — it's a clean data point
 # that closes the staged ls=0.05 fork, run within budget. Promote only if harness improves
 # meaningfully and no tag regresses >2pp. else ship experimental / don't promote.
 #

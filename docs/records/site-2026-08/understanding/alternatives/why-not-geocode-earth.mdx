@@ -11,7 +11,7 @@ tags:
 
 # Why not use geocode.earth?
 
-If Google's API is the proprietary default, [geocode.earth](https://geocode.earth) is the open-source default. It runs Pelias — the geocoder Mailwoman forked — as a hosted service with global coverage, open data, and transparent pricing. For several applications, geocode.earth is the right answer. For applications that need to own their parser, it has the same fundamental limitation as every hosted API: you do not own the parsing layer.
+If Google's API is the proprietary default, [geocode.earth](https://geocode.earth) is the open-source default. It runs Pelias — the geocoder Mailwoman forked — as a hosted service with global coverage, open data, and transparent pricing. For several applications, geocode.earth is the better choice. For applications that need to own their parser, it has the same fundamental limitation as every hosted API: you do not own the parsing layer.
 
 ## What geocode.earth is
 
@@ -36,12 +36,12 @@ Geocode.earth uses the same Pelias rule-based parser that Mailwoman v1 was forke
 
 - **Deterministic.** The same input always produces the same output.
 - **Debuggable.** When a classification is wrong, you can read the rule and see why.
-- **Battle-tested.** Pelias has been geocoding addresses in production since 2014.
+- **Production history.** Pelias has been geocoding addresses in production since 2014.
 
 It also has the same limitations that motivated Mailwoman's neural classifier:
 
-- **The tokenization tautology.** Rules classify tokens independently; context-dependent decisions (multi-word place names, venue-vs-address ambiguity) require solver post-processing.
-- **The exception pile.** Each new address format adds a new rule; rules accumulate and conflict.
+- **The tokenization tautology.** Rules classify tokens independently, so context-dependent decisions (multi-word place names, venue-vs-address ambiguity) require solver post-processing.
+- **The exception pile.** Each new address format adds a new rule, and rules accumulate and conflict.
 - **International fragility.** Every locale needs its own rule set, hand-written by someone who reads the language.
 - **No graceful degradation.** Rules match or don't — binary. There is no confidence gradient between "confident" and "guess."
 
@@ -58,7 +58,7 @@ If the parser is open-source, why not run your own Pelias instance and avoid the
 - Data updates arrive on different schedules (WOF weekly, OSM continuously).
 - Infrastructure management (Elasticsearch tuning, monitoring, failover).
 
-The team at Geocode Earth estimates that running a production Pelias instance costs **$500-2,000 per month** in infrastructure alone, plus engineering time for maintenance and updates. For a company with one or two full-time geospatial engineers, this is viable. For a team without dedicated infrastructure staff, it is not.
+The team at Geocode Earth estimates that running a production Pelias instance costs **$500-2,000 per month** in infrastructure, plus engineering time for maintenance and updates. For a company with one or two full-time geospatial engineers, this is viable. For a team without dedicated infrastructure staff, it is not.
 
 Geocode.earth's hosted service abstracts this cost: you pay per request instead of managing infrastructure. For most organizations, this is a better deal than self-hosting.
 

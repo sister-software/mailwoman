@@ -5,7 +5,7 @@ Design record for #1964, under the coverage register design of
 `layer_coverage` interface in
 [`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx).
 
-Every one of the 158,813 coverage cells in the shipped `poi.db` carries `basis = source_present` at
+Every one of the 158,813 coverage cells in the shipped `poi.db` stores `basis = source_present` at
 `completeness = 1.0`, exactly as `build-poi.ts` writes them. `supportsExclusion` is therefore false
 everywhere, and the program's rule — missing data becomes negative evidence only through
 exclusion-grade coverage — has no cell to act on. This record is what it took to produce cells that
@@ -24,19 +24,19 @@ A `layer_coverage` row describes the layer it lives in — `observed_rows` is de
 layer holds in the cell". Coverage about one layer's rows cannot directly be written into a
 different layer's table. That settles the artifact shape on its own:
 
-- Exclusion cells in `poi.db` would mean rebuilding the shipped artifact, which the pilot
-  scope excludes and the sealed-artifact rule forbids patching.
+- Exclusion cells in `poi.db` would mean rebuilding the shipped artifact. The pilot
+  scope excludes that rebuild, and the sealed-artifact rule forbids patching.
 - Coverage cells that describe `poi.db`'s Overture rows in a new database would make
   `observed_rows` a claim about somebody else's rows.
 
 So the pilot builds a complete layer of its own — manifest, domain rows, coverage — and its coverage
-describes its own rows. That is the shape the interface already supports; no schema change was needed
+describes its own rows. That is the shape the interface already supports, and no schema change was needed
 to reach an exclusion-grade basis, only a builder willing to write one.
 
 ## The completeness basis
 
 **Two-source capture-recapture between two independently-built inventories of one class in one
-bounded region.** Named data on both sides, with provenance:
+bounded region.** Identified datasets on both sides, with provenance:
 
 | role      | source                                                                       | vintage      | license             |
 | --------- | ---------------------------------------------------------------------------- | ------------ | ------------------- |
@@ -45,7 +45,7 @@ bounded region.** Named data on both sides, with provenance:
 | region    | OSM relation 8649, `boundary=administrative`, `admin_level=4`, Île-de-France | 2026-06-27   | ODbL-1.0            |
 
 The two inventories are independently built, and the licenses are the evidence: Overture Places is
-CDLA-Permissive-2.0, which it could not be if OSM were in its lineage. The class correspondence is
+CDLA-Permissive-2.0. It could not hold that license if OSM were in its lineage. The class correspondence is
 not improvised either — `@mailwoman/poi-taxonomy` already declares `pharmacy` with
 `osmTag: "amenity=pharmacy"`, so both sides are selected by one shipped declaration rather than by
 two hand-written predicates.
@@ -55,7 +55,7 @@ two hand-written predicates.
 The region is **the union of res-6 H3 cells lying wholly inside the Île-de-France outline**, and both
 inventories are clipped to exactly that cell set. A cell is interior when its whole `gridDisk(cell, 1)`
 is in the region's own polyfill and all six of its boundary vertices are inside the outline. The
-polyfill keeps a cell whose center is inside, so its edge ring is half outside the region; the vertex
+polyfill keeps a cell whose center is inside, so its edge ring is half outside the region. The vertex
 test catches a boundary that re-enters between two neighbors. Measured: 371 polyfilled cells, 290
 interior.
 
@@ -89,7 +89,7 @@ defensible reading of "the same pharmacy", so the claim is only as strong as the
 ### The match protocol
 
 A candidate pair clears a NEAR band, or a FAR band, or — when either row is unnamed — a distance
-alone. Names are compared with `@mailwoman/codex`'s `foldName` and `@mailwoman/match`'s
+band with no name test. Names are compared with `@mailwoman/codex`'s `foldName` and `@mailwoman/match`'s
 `nameSimilarity`; distance is haversine meters. Assignment is one-to-one and greedy, best pair first,
 so one row cannot answer for three.
 
@@ -100,8 +100,8 @@ so one row cannot answer for three.
 | loose    | ≤ 100 m, s ≥ 0.55 | ≤ 250 m, s ≥ 0.85 | ≤ 50 m  |
 
 The grid was fixed before any completeness value was read off it. The bands come from the
-nearest-neighbor distance distribution, which is strongly bimodal: over OSM rows with any Overture
-row near, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m; past ~150 m the near row is
+nearest-neighbor distance distribution. That distribution is strongly bimodal: over OSM rows with any Overture
+row near, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m. Past ~150 m the near row is
 a different pharmacy.
 
 ### Uniform completeness across the region, and the measurement that licenses it
@@ -141,30 +141,30 @@ Two-source capture-recapture bounds **sampling error only**. It cannot see **dep
 sources**: if a pharmacy is more likely to be in both inventories than chance would have it — a chain
 branch on a high street against a single officine on a village lane — then `m` runs high, `N̂` runs
 low, and completeness runs **high**. That is the direction that turns a data gap into confident
-negative evidence, which is the worst failure this system has. The conservative reading (a lower
+negative evidence. Confident negative evidence from a data gap is the worst failure this system has. The conservative reading (a lower
 confidence bound, minimized across the grid) controls the sampling half and addresses no part of this
 half.
 
 Two smaller limits, both measured rather than argued:
 
-- **Class tail.** 8 features in the extract carry `healthcare=pharmacy` without `amenity=pharmacy`
+- **Class tail.** 8 features in the extract have `healthcare=pharmacy` without `amenity=pharmacy`
   (0.24% of 3,308). The taxonomy's declared predicate is `amenity=pharmacy` and that is what both
   sides use. `shop=chemist` (83 features — a parapharmacie rather than an officine) is correctly outside the
   class on the OSM side, and Overture's sibling `drugstore` category holds 0 rows in the region, so
   the class boundary agrees on both sides.
 - **Cell assignment at the boundary.** A row's coverage cell is `cellToParent` of its res-9 cell,
-  matching every existing reader; a direct res-6 `latLngToCell` disagrees for a real fraction of
+  matching every existing reader. A direct res-6 `latLngToCell` disagrees for a real fraction of
   points and would move an observed count off the cell it was observed in.
 
 ## What breadth requires
 
 Not a wider run of this command. Either:
 
-1. **A third independent inventory**, which makes the dependence between any two of them estimable
-   rather than assumed; or
+1. **A third independent inventory**. A third inventory makes the dependence between any two of them estimable
+   rather than assumed. Or:
 2. **An authoritative register** — for French pharmacies the Ordre national des pharmaciens' roll is
    the obvious candidate, and would license `basis = designated` rather than `surveyed`. A register we
-   cannot obtain is not a basis, which is why it is not this one.
+   cannot obtain is not a basis. This pilot cannot obtain that roll, so the roll is not its basis.
 
 Until one of those lands, more region-class pairs multiply an unquantified bias rather than extending
 a measurement. The command is parameterized so the claim can be **re-run and audited** — falsifier 7
@@ -186,7 +186,7 @@ on their own disk. It is not published and not in the data-bundles registry.
 | `packages/mailwoman/lib/gazetteer-pipeline/poi/coverage-region.ts`     | region outline → interior cell set, pure                         |
 | `packages/mailwoman/lib/gazetteer-pipeline/poi/exclusion-coverage.ts`  | composition into coverage cells, pure                            |
 | `packages/mailwoman/lib/gazetteer-pipeline/poi/reference-inventory.ts` | the read-only probe of a sealed reference layer                  |
-| `packages/osm/lib/sdk/extract-boundary.ts`                             | the named administrative outline, refusing a multi-match         |
+| `packages/osm/lib/sdk/extract-boundary.ts`                             | the requested administrative outline, refusing a multi-match     |
 | `packages/core/lib/layers/manifest.ts`                                 | coverage-cell invariants, now enforced at write and read         |
 
 To rebuild it:

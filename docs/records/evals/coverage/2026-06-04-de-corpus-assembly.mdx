@@ -1,6 +1,6 @@
 # DE-inclusive corpus assembly (2026-06-04)
 
-The data step that checks the PR3 self-conditioning pilot ([plan](../../plan/2026-06-04-pr3-self-conditioned-retrain.mdx)). The Pilot A config wanted a US/FR/**DE** corpus from scratch; v0.4.0 is US/FR only. This records how the German rows were added and how to deploy them.
+The data step that checks the PR3 self-conditioning pilot ([plan](../../plan/2026-06-04-pr3-self-conditioned-retrain.mdx)). The Pilot A config wanted a US/FR/**DE** corpus from scratch, and v0.4.0 is US/FR only. This records how the German rows were added and how to deploy them.
 
 ## What was built
 
@@ -37,4 +37,4 @@ modal volume put mailwoman-training <NEW>/val/part-german-val.parquet     corpus
 modal volume put mailwoman-training <NEW>/MANIFEST.json                    corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
 ```
 
-After the upload, Pilot A is a one-command launch (`modal run -d scripts/modal/train_remote.py --config v0.9.0-pilot-selfcond.yaml --resume none --trackio`), against a regression check already wired to report at 20k whether self-conditioning warrants the full run.
+After the upload, Pilot A is a one-command launch (`modal run -d scripts/modal/train_remote.py --config v0.9.0-pilot-selfcond.yaml --resume none --trackio`), against a regression check already wired to report at 20k whether self-conditioning warrants the full-length training run past 20k.

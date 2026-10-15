@@ -63,7 +63,7 @@ The headline metric is the **A1 vs A0 delta on each script**:
 - **Stretch**: per-script rates well below v0.1.0 on the scripts B2 explicitly covers (cjk, cyrillic, hangul, han, armenian).
 - **Anti-goal**: regression on Latin. A1 should not lose ground on the en-US + fr-FR mass.
 
-The A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0`. It is deterministic with `--seed 42` and takes the same ~1 hour. The output writes to `/data/models/tokenizer/v0.5.0-a1/` and the model card carries the same shape (a JSON file with sentencepiece flags, training-line count, training duration, byte-fallback per-script, and a SHA-256 of the `.model` file).
+The A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0`. It is deterministic with `--seed 42` and takes the same ~1 hour. The output writes to `/data/models/tokenizer/v0.5.0-a1/` and the model card has the same shape (a JSON file with sentencepiece flags, training-line count, training duration, byte-fallback per-script, and a SHA-256 of the `.model` file).
 
 ## What A0 is good for, even though it lost
 
@@ -75,7 +75,7 @@ A0 validated three things:
 
 ## Model card schema
 
-A0's `model_card.json` is the interface for every future tokenizer. It carries:
+A0's `model_card.json` is the interface for every future tokenizer. It records:
 
 ```json
 {

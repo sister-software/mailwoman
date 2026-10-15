@@ -9,7 +9,7 @@ import { useCallback, useSyncExternalStore } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
 
 /**
- * The map's bearing and a callback that returns the map to north.
+ * The map's rotation angle and a callback that returns the map to north.
  */
 export interface UseMapBearing {
 	/**
@@ -25,7 +25,7 @@ export interface UseMapBearing {
 }
 
 /**
- * Reads the live map bearing and exposes `resetNorth`.
+ * Reads the live map rotation angle and exposes `resetNorth`.
  */
 export function useMapBearing(map: MapInstance | null): UseMapBearing {
 	const subscribe = useCallback(
@@ -43,8 +43,8 @@ export function useMapBearing(map: MapInstance | null): UseMapBearing {
 		[map]
 	)
 
-	// The server snapshot is the same reading: the server renders no map.
-	// and north is what a compass shows with no bearing to report.
+	// The server snapshot is the same reading: the server renders no map, and north
+	// is what a compass shows with no rotation angle to report.
 	const readBearing = useCallback(() => map?.getBearing() ?? 0, [map])
 
 	const bearing = useSyncExternalStore(subscribe, readBearing, () => 0)

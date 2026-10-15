@@ -8,7 +8,7 @@
 # release version. The `latest` tag is skipped for prereleases.
 #
 # The image is linux/amd64 only because onnxruntime-node ships glibc x64 prebuilds.
-# The job authenticates with the runtime GITHUB_TOKEN, which needs packages:write.
+# The job authenticates with the runtime GITHUB_TOKEN. That token needs packages:write.
 
 name: Docker publish
 

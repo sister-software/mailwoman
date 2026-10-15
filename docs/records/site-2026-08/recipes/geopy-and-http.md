@@ -4,17 +4,17 @@ id: geopy-and-http
 role: guide
 audience: product-reader
 source-of-truth: nominatim/routes.ts, nominatim/cli.ts, docker/README.md, docker/docker-compose.yml
-prerequisites: Docker or Podman; a Python environment with geopy for the client examples; a mounted gazetteer for geocoding (parse-only needs none)
+prerequisites: Docker or Podman, a Python environment with geopy for the client examples, and a mounted gazetteer for geocoding (parse-only needs none)
 verified-with: mailwoman v7.3.0, geopy 2.5.0
 ---
 
-You already have a geocoding client. It's a `geopy.Nominatim` call in a Python script, or a `fetch` against `/search` somewhere in a batch job. It points at the public Nominatim server, and that server asks for at most one request per second, so a table of any size takes days. Or it points at a hosted API that bills per request, and the bill scales with the table. Or you run your own Nominatim, which means PostgreSQL, an `osm2pgsql` import measured in hours and tens of gigabytes, and a box you can't put inside an app.
+You already have a geocoding client. It's a `geopy.Nominatim` call in a Python script, or a `fetch` against `/search` somewhere in a batch job. It points at the public Nominatim server, and that server asks for at most one request per second, so a table of any size takes days. Or it points at a hosted API that bills per request, and the bill scales with the table. Or you run your own Nominatim. That requires PostgreSQL, an `osm2pgsql` import measured in hours and tens of gigabytes, and a box you can't put inside an app.
 
 You don't have to rewrite the client to fix any of that. Mailwoman ships a [Nominatim-compatible endpoint](../concepts/switching-from-nominatim.mdx) — same `/search` and `/reverse` interface, from a SQLite file instead of a PostgreSQL cluster. Point the client you already have at a local instance and it works, with no code change. By the end of this page you'll have that instance running from one `docker run`, and your geopy (or plain-HTTP) calls hitting it.
 
 ## Start the server
 
-The container installs the published `@mailwoman/*` packages and bakes the model weights in, so a first run parses with no data at all. The geocoder needs a gazetteer, which stays out of the image and mounts at `/data`. Run the Nominatim drop-in and point it at a mailwoman data root:
+The container installs the published `@mailwoman/*` packages and bakes the model weights in, so a first run parses with no data at all. The geocoder needs a gazetteer. The gazetteer stays out of the image and mounts at `/data`. Run the Nominatim drop-in and point it at a mailwoman data root:
 
 ```bash
 docker run --rm -p 8080:8080 \
@@ -64,7 +64,7 @@ print(loc.latitude, loc.longitude)
 print(loc.raw["address"])
 ```
 
-That prints a rooftop-level result — the query carried a house number, so the resolver returns the point rather than a street or city centroid:
+That prints a rooftop-level result. The query included a house number, so the resolver returns the point rather than a street or city centroid:
 
 ```text
 1600, Pennsylvania Avenue NW, Washington, DC, 20500
@@ -130,7 +130,7 @@ curl -s "http://localhost:8080/search?q=350+5th+Ave,+New+York,+NY+10118&format=j
 
 `format=json` and `addressdetails=1` are the standard Nominatim query parameters, so a client you built against the real thing sends the same request here.
 
-For type-ahead and autocomplete — the partial-query, as-you-type case — reach for the [Photon drop-in](../concepts/switching-from-photon.mdx) instead. It's the same image with a different command (`node node_modules/@mailwoman/photon/out/cli.js serve`, port 2322) and returns GeoJSON `FeatureCollection`s, which is what Photon clients expect.
+For type-ahead and autocomplete — the partial-query, as-you-type case — reach for the [Photon drop-in](../concepts/switching-from-photon.mdx) instead. It's the same image with a different command (`node node_modules/@mailwoman/photon/out/cli.js serve`, port 2322) and returns GeoJSON `FeatureCollection`s. Photon clients expect that format.
 
 ## Where to go next
 

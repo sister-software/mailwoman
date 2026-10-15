@@ -7,11 +7,11 @@ when pushed, and (2) is the 91% threshold an accurate measure of success for thi
 independent inquiries — a literature/benchmark review and a DeepSeek-v4-pro architectural consult —
 converged on the same answers. Sources are listed at the end._
 
-## TL;DR
+## Summary
 
 1. **The 91% floor is mis-calibrated for the postcode-first case.** It was inherited from a
    canonical-order eval where house*number is the \_easiest* field (published SOTA 99–100% F1). On the
-   hard reordered/international case, the nearest published SOTA — Chinese flexible-order
+   hard reordered/international case, the nearest published SOTA — Chinese free-order
    address parsing — reports house-number F1 of **~90–91%**, and neural parsers _collapse_ on reorder
    (deepparse: 100% → 28%; libpostal overall 0.992 → 0.781). **87.4% is respectable-to-SOTA for this
    stratum rather than a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
@@ -36,8 +36,8 @@ house number because in French BAN (canonical, street-first) the house number al
 This is a textbook **shortcut** (Geirhos et al. 2020): a cue that aces the training distribution and
 fails under shift. The mechanistic match is Yu et al. (NeurIPS 2025): **low positional diversity →
 the transformer learns a positional shortcut rather than a content-based rule, and it's data
-_diversity_ rather than _volume_, that flips it.** Our synthetic extract adds diversity, which is why it
-helped (+32.9pp) — but synthetic diversity has a ceiling.
+_diversity_ rather than _volume_, that flips it.** Our synthetic extract helped (+32.9pp) because it adds
+diversity — but synthetic diversity has a ceiling.
 
 Why more weight made it _worse_, with a new failure (postcode fragmentation):
 
@@ -53,34 +53,34 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
   number (`4`) out of the front of the postcode (`47110`), leaving `7110`. This is the piece pure
   position-bias doesn't explain on its own, and it's the clearest signal that _more of the same
   synthetic data is the wrong direction._
-- **One thing to verify (cheap):** does the synthetic extract itself carry any token-level label noise
+- **One thing to verify (cheap):** does the synthetic extract itself contain any token-level label noise
   at the postcode/house_number boundary? Even 2–3% of rows splitting a label at a digit boundary
-  would also produce fragmentation. Worth a check of the extract's span emission before the next run.
+  would also produce fragmentation. Check the extract's span emission before the next run.
 
 Why the German precedent didn't transfer: German house numbers are always **last** — one position to
 learn, so more practice sharpens the aim. FR postcode-first puts a 5-digit and a 1–4-digit number in
-the same neighborhood; turning up exposure amplifies the "grab a leading number" bias instead of
+the same neighborhood. More exposure amplifies the "grab a leading number" bias instead of
 teaching discrimination.
 
 ## Question 2 — is 91% an accurate measure?
 
 **No — it's a canonical-order bar applied to a reordered-order problem.** The evidence:
 
-| Policy                                    | House-number / number-field accuracy                        | Source                                         |
-| ----------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| Clean, canonical, US single-order         | **99–100% F1** (house*number is the \_easiest* field)       | Yin et al. 2023 (US geocoding benchmark)       |
-| Hard, flexible-order, non-Latin (Chinese) | **HOUSENO F1 89.83–91.30%** (numeric tail is the weak spot) | Li et al., NAACL 2019                          |
-| Reorder a learned country (deepparse)     | 100% → **28%** sequence accuracy                            | Yassine/Beauchemin 2020                        |
-| Inverse-order zero-shot (Hungary/Japan)   | **25.5% / 35.3%**                                           | Yassine/Beauchemin 2020                        |
-| libpostal under reorder/noise             | overall F1 **0.992 → 0.781**                                | "Fighting crime with Transformers", NAACL 2024 |
+| Policy                                  | House-number / number-field accuracy                        | Source                                         |
+| --------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
+| Clean, canonical, US single-order       | **99–100% F1** (house*number is the \_easiest* field)       | Yin et al. 2023 (US geocoding benchmark)       |
+| Hard, free-order, non-Latin (Chinese)   | **HOUSENO F1 89.83–91.30%** (numeric tail is the weak spot) | Li et al., NAACL 2019                          |
+| Reorder a learned country (deepparse)   | 100% → **28%** sequence accuracy                            | Yassine/Beauchemin 2020                        |
+| Inverse-order zero-shot (Hungary/Japan) | **25.5% / 35.3%**                                           | Yassine/Beauchemin 2020                        |
+| libpostal under reorder/noise           | overall F1 **0.992 → 0.781**                                | "Fighting crime with Transformers", NAACL 2024 |
 
 The 91% floor was set against an easier (pre-#563, near-single-town) FR eval where the canonical-order
 regime made house*number near-trivial. On the diversified golden (#563, 56 localities, both orders),
 **v4.5.0 itself scores only 54.5%** — proof the eval got materially harder. Against the only published
 hard-case analog (~90–91%), **87.4% is at the frontier rather than below a reasonable bar.** Both the
 literature and the independent DeepSeek consult judged the 91% floor mis-calibrated and 87.4%
-respectable for this stratum; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
-order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
+respectable for this stratum. DeepSeek stated that 87.4% on the hardest subfield in the hardest order
+permutation is not a miss and may be state-of-the-art for that stratum.
 
 This **does not** mean re-baseline silently. That would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
@@ -94,8 +94,9 @@ The research shifts my earlier "hold" lean. The direct reading:
   improvement that sits at the literature frontier for reordered house numbers. The published SOTA cannot clear this bar, so the team has little reason to hold v1.5.0 back.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored
   ~88–90% (stated + reasoned in the check config + ledger), and ship v1.5.0** — _while_ opening the
-  targeted-change work below as the real fix. This is the operator's call to make explicitly; the
-  research removes the ambiguity that made it a coin-flip.
+  targeted-change work below to address the postcode/house-number confusion. The operator makes
+  this decision explicitly. Before the research, the evidence supported holding and shipping
+  about equally, and the literature now favors shipping.
 - **Next improvement is cheap and targeted rather than another weight tweak:** (1) postcode-anchor span
   protection (we already compute the signal — add a consistency term / CRF penalty so postcode-anchored
   tokens can't be relabeled house_number), (2) gazetteer-conditional numeric disambiguation (a number before
@@ -104,19 +105,19 @@ The research shifts my earlier "hold" lean. The direct reading:
 
 ## Changes, ranked (DeepSeek + literature consensus)
 
-1. **Postcode-anchor span protection** — highest ROI; reuses an existing signal; directly kills the
-   fragmentation. No data/architecture change.
+1. **Postcode-anchor span protection** — highest ROI. It reuses an existing signal and directly removes
+   the fragmentation. No data/architecture change.
 2. **Curriculum / denoising** — decay synthetic weight 3.0 → ~0.5–1.0, or per-token loss reweighting
-   on conflicting labels; preserves the +32.9pp without letting synthetic dominate late training.
+   on conflicting labels. Either preserves the +32.9pp without letting synthetic dominate late training.
 3. **Real reordered data** — high but expensive; ~500–1000 real postcode-first FR rows likely beat 10K
    synthetic (real co-occurrence statistics teach the discrimination synthetic can't).
-4. **Architecture (PE → RoPE/relative/NoPE)** — low-ROI here; the Chinese SOTA hits ~91% with standard
+4. **Architecture (PE → RoPE/relative/NoPE)** — low-ROI here. The Chinese SOTA hits ~91% with standard
    transformers, and the confusion is also token-identity (both are digit strings), which RoPE doesn't
    fix. Only if 1–3 fail.
 
 - **Another change DeepSeek surfaced:** gazetteer-conditional disambiguation — concatenate a
   "gazetteer-locality-hit-in-same-utterance" flag so the model learns "5-digit number before a known
-  locality = postcode." Leverages an existing component; directly targets the confusion pair.
+  locality = postcode." It reuses an existing component and directly targets the confusion pair.
 
 ## References
 
@@ -131,10 +132,10 @@ The research shifts my earlier "hold" lean. The direct reading:
   house_number F1 (99–100% on clean US). https://arxiv.org/abs/2310.14360 · benchmark:
   https://github.com/zhengcongyin/Geocoding-Address-Parsing-Benchmark
 - Li, Lu, Xie, Li, "Neural Chinese Address Parsing", NAACL 2019. **HOUSENO F1 89.83–91.30%** (hard
-  flexible-order analog). https://aclanthology.org/N19-1346/
+  free-order analog). https://aclanthology.org/N19-1346/
 - "Fighting crime with Transformers" (address parsing under noise/reorder), NAACL 2024 industry.
   libpostal 0.992 → 0.781 under reorder. https://arxiv.org/abs/2404.05632 _(per-version F1 read via
-  page summary; verify Table 3 before quoting exact decimals)_
+  page summary. Verify Table 3 before quoting exact decimals)_
 - Pelias parser — no published accuracy numbers (architectural docs only).
   https://github.com/pelias/parser
 
@@ -143,7 +144,7 @@ The research shifts my earlier "hold" lean. The direct reading:
 - Geirhos et al., "Shortcut Learning in Deep Neural Networks", Nature Machine Intelligence 2020.
   https://www.nature.com/articles/s42256-020-00257-z
 - Yu et al., "From Shortcut to Induction Head: How Data Diversity Shapes Algorithm Selection in
-  Transformers", NeurIPS 2025 (positional shortcut vs. content rule; diversity not volume).
+  Transformers", NeurIPS 2025 (positional shortcut vs. content rule, diversity not volume).
   https://arxiv.org/abs/2512.18634 _(very recent)_
 - Shah et al., "The Pitfalls of Simplicity Bias in Neural Networks", NeurIPS 2020 (fallback to
   next-simplest spurious feature — the fragmentation mechanism). https://arxiv.org/abs/2006.07710
@@ -158,7 +159,7 @@ The research shifts my earlier "hold" lean. The direct reading:
 - Dai & Adel, "An Analysis of Simple Data Augmentation for NER", COLING 2020.
   https://arxiv.org/abs/2010.11683
 
-_Independent DeepSeek-v4-pro consult (2026-06-13) reached the same two top-line conclusions (91% floor
-mis-calibrated; changes are anchor-protection + curriculum + real data rather than weight) and contributed the
+_Independent DeepSeek-v4-pro consult (2026-06-13) reached the same two top-line conclusions (the 91% floor is
+mis-calibrated, and the changes are anchor-protection + curriculum + real data rather than weight) and contributed the
 simplicity-bias-fallback explanation and the gazetteer-blocking change. Transcript distilled into this
-note; raw at `~/.cache/ds-consult/sessions/`._
+note. The raw transcript is at `~/.cache/ds-consult/sessions/`._

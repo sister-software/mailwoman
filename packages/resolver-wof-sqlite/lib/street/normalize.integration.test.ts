@@ -234,7 +234,7 @@ describe("normalizeStreetForKeyLocale — the es branch (Spanish rooftop keying)
 		// and `plaza` beside `plaça`.
 		// A broader key would point a query to the wrong token in the other region,
 		// so an abbreviation misses instead.
-		// `streetKeyVariants` is where a one-to-many key belongs.
+		// `streetKeyVariants` is where a street name with several keys belongs.
 		expect(normalizeStreetForKeyLocale("C/ Mayor", "es")).toBe("c/ mayor")
 		expect(normalizeStreetForKeyLocale("Av. Diagonal", "es")).toBe("av diagonal")
 

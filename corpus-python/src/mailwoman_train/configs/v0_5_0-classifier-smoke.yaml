@@ -41,7 +41,7 @@ data:
   country_weights:
     US: 1.0
     FR: 1.0
-  # Carry-over of v0.4.0's source rebalance (the only §-recipe change that shipped clean
+  # Reuse of v0.4.0's source rebalance (the only §-recipe change that shipped clean
   # in v0.4.0). Re-evaluate after the first v0.5.0 eval run — corpus-v0.4.0's adversarial
   # additions may shift the optimal mix.
   source_weights:
@@ -65,7 +65,7 @@ data:
 model:
   # Hidden-size stays at v0.3.0/v0.4.0 baseline per Thread C-s scope. The plan doc mentions
   # a 256 → 384 or 512 bump as "likely paid for by rented GPU" for the full v0.5.0 run,
-  # but the scaffold validates that the new architecture trains cleanly at the current
+  # but the scaffold validates that the new architecture trains without divergence at the current
   # size first. Treat the bump as an orthogonal training-side concern, bumped in a
   # follow-up `v0_5_0-classifier-large.yaml` if the v0.5.0 baseline lands clean.
   hidden_size: 256
@@ -78,7 +78,7 @@ model:
   attention_probs_dropout_prob: 0.1
   use_crf: true
   label_smoothing: 0.0
-  # v0.4.0 dual-loss lessons carry over.
+  # v0.4.0 dual-loss lessons still apply.
   crf_normalization: per_token
   crf_loss_weight: 1.0
   # v0.4.0 class-weight recipe — coarse-biased CE. Re-validate after the v0.5.0 corpus

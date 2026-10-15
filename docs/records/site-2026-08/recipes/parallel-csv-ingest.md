@@ -4,7 +4,7 @@ id: parallel-csv-ingest
 role: guide
 audience: product-reader
 source-of-truth: registry/ingest.ts, mailwoman/geocode-stream.ts, mailwoman/geocode-worker.ts
-prerequisites: "@mailwoman/registry; a CSV too big for memory; gazetteer data for the optional geocode stage"
+prerequisites: "@mailwoman/registry, a CSV too big for memory, and gazetteer data for the optional geocode stage"
 verified-with: mailwoman v6.1.0
 ---
 
@@ -40,11 +40,11 @@ With a million rows, it is tempting to spread the work across all cores. That he
 
 A worker-thread round trip has a fixed cost: serializing the row, deserializing the result, and a few microseconds of structured clone in each direction. Row normalization costs about the same. A worker therefore spends a microsecond to save a microsecond on the normalize step. Eight-core runs make light CSV work _slower_ because the main thread spends its time packing and unpacking messages. Our measurements put that work at 0.3–0.9× single-threaded speed. Keep the cheap stage on one thread.
 
-The cost profile reverses for geocoding. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer, which takes milliseconds, about a thousand times the dispatch cost. At that scale the fixed overhead is negligible, and threads help. The division follows from these costs: **normalize on the main thread, geocode in workers.**
+The cost profile reverses for geocoding. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer. That work takes milliseconds, about a thousand times the dispatch cost. At that scale the fixed overhead is negligible, and threads help. The division follows from these costs: **normalize on the main thread, geocode in workers.**
 
 ## Compose them, and filter in between
 
-`geocodeStream` (from `mailwoman/geocode-stream`) is the threaded stage. It takes the record stream and a geocoder config, runs the addresses across a worker pool, and yields the records with `address` populated. It consumes and produces an async iterable, so it composes directly with `normalizeCSV`. The main thread sits between the two stages, which is where your filter belongs:
+`geocodeStream` (from `mailwoman/geocode-stream`) is the threaded stage. It takes the record stream and a geocoder config, runs the addresses across a worker pool, and yields the records with `address` populated. It consumes and produces an async iterable, so it composes directly with `normalizeCSV`. The main thread sits between the two stages, and your filter belongs there:
 
 ```ts
 import { normalizeCSV } from "@mailwoman/registry"
@@ -94,7 +94,7 @@ A sweep over real NPPES addresses on a 16-core machine with a single 4 GB gazett
 |       4 |     47 rows/s |     1.1× |
 |       6 |     43 rows/s |       1× |
 
-Two workers produce peak throughput; each additional worker lowers it. Six workers return to the single-threaded rate while using six cores. A per-worker inference-thread cap did not change the result because the shared database, rather than the CPU, sets the limit. Measure several `concurrency` values for your data and disk, starting low. The geocode-stage threads give a measured ~1.4× gain, and more workers erase it.
+Two workers produce peak throughput, and each additional worker lowers it. Six workers return to the single-threaded rate while using six cores. A per-worker inference-thread cap did not change the result because the shared database, rather than the CPU, sets the limit. Measure several `concurrency` values for your data and disk, starting low. The geocode-stage threads give a measured ~1.4× gain, and more workers erase it.
 
 If your gazetteer fits in RAM or is spread across several disks, your throughput curve will be higher, so measure it. The default (`min(4, cores)`) is deliberately conservative, so that the default behavior improves throughput instead of overloading the database.
 

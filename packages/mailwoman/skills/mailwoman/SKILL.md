@@ -6,7 +6,7 @@ description: Use when a project has installed mailwoman (or is deciding whether 
 # Mailwoman
 
 Mailwoman parses postal addresses into a tagged tree and, with a gazetteer on disk, geocodes them —
-entirely inside the host process. No API key, no network call for a plain parse. The parser and the
+entirely inside the host process. A plain parse needs no API key and makes no network call. The parser and the
 gazetteer ship separately: the parser works the moment `npm install` finishes, the gazetteer is a
 download you fetch once.
 
@@ -22,7 +22,7 @@ It checks seven things: model weights, the Node runtime, the ONNX runtime, the d
 gazetteer, the POI layer, and any locale overlays (e.g. fr-fr), and prints the one command that
 closes each gap. Exit code 0 means the two CORE checks
 (weights + runtime) passed — parsing works even with every data layer missing. A red `✗` on a data
-layer is a reported gap with a `fix:` line rather than a failure; read that line before guessing at a fix.
+layer is a reported gap with a `fix:` line rather than a failure. Read that line before guessing at a fix.
 `--json` emits the same report as `{ checks: [...], exitCode }` for scripting.
 
 ## Parse
@@ -57,7 +57,7 @@ review, say — wire the calibrator shipped in the weights package first (`creat
 
 ## Geocode
 
-Geocoding needs a gazetteer database on disk. Downloading it is the whole setup:
+The geocoder needs a gazetteer database on disk. One download is the whole setup:
 
 ```bash
 npx mailwoman data pull candidate
@@ -66,8 +66,8 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 
 The file lands at `<data-root>/db/wof/candidate.db`, and since `8.7.0` every entry point looks there —
 `geocode`, `parse --resolve`, `serve`, `registry`, the MCP server and the drop-in servers alike. The
-`export MAILWOMAN_CANDIDATE_DB=...` line the pull prints is a leftover from when that was required;
-ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
+`export MAILWOMAN_CANDIDATE_DB=...` line the pull prints is a leftover from when that was required.
+Ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
 pin the older FTS admin backend.
 
 `registry run` is the one exception, and it is a boot check rather than a backend choice: it refuses to
@@ -78,16 +78,16 @@ Do not pin `none` casually. The candidate backend ranks population-first, and on
 OpenAddresses rows per locale it is ahead on both tier-1 locales: US within-25 km 149/150 → 150/150
 with worst case 692 km → 20 km, FR within-25 km 126/150 → 145/150 with p90 144.2 km → 2.4 km.
 
-One trap worth knowing: a `$MAILWOMAN_CANDIDATE_DB` naming a file that is not there does **not** fall
-back to the convention path. It resolves to nothing and you land on the FTS backend. Unset it rather
+A `$MAILWOMAN_CANDIDATE_DB` that points at a missing file does **not** fall
+back to the convention path. The variable resolves to no database, and you land on the FTS backend. Unset it rather
 than fixing it.
 
-`npx mailwoman data status` reports what's already on disk; add `--check-remote` to compare against
+`npx mailwoman data status` reports what's already on disk. Add `--check-remote` to compare against
 the live remote size instead of trusting the local file.
 
-## Filing a bug
+## File a bug
 
-A wrong parse or a wrong geocode is worth a precise report — a concrete address that broke rather than a
+Report a wrong parse or a wrong geocode precisely. Give a concrete address that broke rather than a
 description of the class of address that broke:
 
 - The exact input string, copied — not retyped. Whitespace and punctuation are the bug about half
@@ -102,11 +102,11 @@ description of the class of address that broke:
 
 File at https://github.com/sister-software/mailwoman/issues.
 
-## Installing this skill in a new project
+## Install this skill in a new project
 
 ```bash
 npx mailwoman skill install
 ```
 
 Copies this directory to `.claude/skills/mailwoman/` in the current project. Pass `--dest <dir>` to
-target a different project root. Safe to re-run — it overwrites cleanly.
+target a different project root. The command is safe to re-run, because it overwrites the existing copy.

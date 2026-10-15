@@ -69,5 +69,5 @@ set is letters, numbers, `.`, and `-`). See the header of
 [`scripts/generate-sbom.ts`](https://github.com/sister-software/mailwoman/blob/main/scripts/generate-sbom.ts)
 for the full rationale.
 
-Future releases regenerate these artifacts as a post-publish step; the version-stamped filenames mean
+Future releases regenerate these artifacts as a post-publish step. The version-stamped filenames mean
 each release keeps its own SBOM rather than overwriting the last.

@@ -6,7 +6,7 @@
 #
 # The init_from checkpoint is v381's step-008000 with the embedding table expanded to 75,453 rows.
 # Each new row is the mean of the rows for the pieces the old tokenizer produced. The new rows still
-# need this fine-tune, because a splice shipped with mean-initialized rows alone regressed FR streets.
+# need this fine-tune, because a splice shipped with mean-initialized rows and no fine-tune regressed FR streets.
 #
 # RO is absent from country_weights, so the model sees Romanian only through the new pieces and shared
 # Romance morphology.

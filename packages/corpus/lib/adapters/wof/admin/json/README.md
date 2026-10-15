@@ -43,11 +43,11 @@ Per WOF feature, the adapter consults:
 | ----------------- | ------------------------------------------------------------------------------------------------------------ |
 | `wof:id`          | Record id (also accepts the GeoJSON top-level `id` field as a fallback)                                      |
 | `wof:name`        | Canonical name (one row per record uses this in the `default` slot)                                          |
-| `wof:placetype`   | Mapped to a `ComponentTag` per the table below; unknown placetypes are skipped                               |
-| `wof:country`     | ISO 3166-1 alpha-2; stamped onto every row                                                                   |
+| `wof:placetype`   | Mapped to a `ComponentTag` per the table below, and unknown placetypes are skipped                           |
+| `wof:country`     | ISO 3166-1 alpha-2, stamped onto every row                                                                   |
 | `wof:parent_id`   | Walked upward to build the ancestry chain                                                                    |
 | `mz:is_current`   | `1` or `-1` → keep; `0` → drop. `-1` ("unknown but treated as active") is WOF's default for multiple distros |
-| `name:eng_x_*`, … | Localized name variants; each produces an additional emission slot for the record's own component            |
+| `name:eng_x_*`, … | Localized name variants. Each produces an additional emission slot for the record's own component            |
 
 ## Placetype mapping
 
@@ -97,7 +97,7 @@ WOF tags each record's `mz:is_current` as one of:
 
 - `1` — current, in service.
 - `-1` — unknown, treated as active. The official Pelias importer accepts
-  these; the Phase 1.5 SQLite adapter did not, and silently emitted **zero
+  these. The Phase 1.5 SQLite adapter did not, and it silently emitted **zero
   rows** from the production distribution as a result.
 - `0` — superseded. Skipped.
 
@@ -110,7 +110,7 @@ This adapter accepts `1` and `-1`, skipping only `0`.
 country: `US → en-US`, `FR → fr-FR`. Extend `LOCALE_BY_COUNTRY` in
 `adapter.ts` as new locales come online.
 
-Rendering uses `formatAddress`, so US rows look like `Portland, OR` and FR
+The renderer uses `formatAddress`, so US rows look like `Portland, OR` and FR
 rows look like `Paris, Île-de-France, France`.
 
 ## Known quirks
@@ -118,8 +118,8 @@ rows look like `Paris, Île-de-France, France`.
 - The adapter holds an in-memory ancestry index (`Map<id, [parent, grandparent,
   ...]>`) keyed by every record it sees. For the full US admin distro
   (~270 k recognized records) this peaks at ~50 MB. The fully streaming
-  alternative would require resolving parents lazily, which is more code
-  for no real memory-budget win at corpus-build scale.
+  alternative would require resolving parents lazily. That alternative is more code
+  and saves no meaningful memory at corpus-build scale.
 - Alternate-geometry sibling files (`<id>-alt-<source>-<lang>.geojson`) are
   identified by the `-alt-` substring in the filename and skipped. They are
   not separate records.
@@ -133,7 +133,7 @@ rows look like `Paris, Île-de-France, France`.
 US (Oregon → Multnomah → Portland, Florida → Saint Petersburg) and FR
 (Île-de-France → Paris, Auvergne-Rhône-Alpes → Rhône → Lyon).
 
-`Saint Petersburg` carries `name:eng_x_colloquial = ["St. Petersburg",
+`Saint Petersburg` has `name:eng_x_colloquial = ["St. Petersburg",
 "St Pete"]` and `Portland` ships with an `<id>-alt-quattroshapes.geojson`
 sibling to exercise the alt-skip behavior. One superseded record
 (`1099.geojson`, `mz:is_current = 0`) exercises the `is_current` filter.

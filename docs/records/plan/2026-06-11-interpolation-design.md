@@ -28,7 +28,7 @@ reports the limits of its data.
 The same per-county shapefiles the real-intersection eval already reads
 (`scripts/eval/build-intersection-real.ts`, DuckDB spatial `ST_Read`, downloaded from
 `www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip` into
-`/tmp/tiger-edges/`). Each road edge carries:
+`/tmp/tiger-edges/`). Each road edge has these fields:
 
 | Field               | Definition                                                   |
 | ------------------- | ------------------------------------------------------------ |
@@ -41,7 +41,7 @@ The same per-county shapefiles the real-intersection eval already reads
 
 TIGER conventions that shape the schema:
 
-- **Sides are independent.** Left and right carry separate ranges and separate ZIPs (a
+- **Sides are independent.** Left and right have separate ranges and separate ZIPs (a
   street can be a ZIP boundary). We emit one row per side rather than per edge.
 - **Parity is per side, by convention but not by interface.** Typically one side of a US
   street is odd and the other even, and TIGER's from/to numbers typically agree on parity
@@ -88,16 +88,16 @@ address-point extract and lookup use. There is one normalizer, never two, as the
 bug showed. The key also uses `canonicalizeRouteKey`, a route-designator fold applied by both the
 builder and the lookup. The fold is needed because TIGER spells routes `State Rte 100` / `US Hwy 5`
 where E911/Overture say `VT ROUTE 100` / `US ROUTE 5`. That mismatch was the largest street-name
-miss class in the VT eval, and the fold alone added +3.1pp coverage without a tail cost. The
+miss class in the VT eval, and the fold by itself added +3.1pp coverage without a tail cost. The
 address-point tier does not apply the fold yet, because adopting it there needs a #476 extract
 rebuild (follow-up). Geometry is a plain JSON polyline: segments are short, the per-row
 cost is small at state scale, and the reader stays dependency-free. Revisit the encoding
 only if a national build makes the size a problem.
 
-**The scope starts with the postcode, as the address-point tier does.** TIGER edges carry no
+**The scope starts with the postcode, as the address-point tier does.** TIGER edges have no
 locality name, so locality scope cannot be matched directly against this table. This is a known
 limitation of this increment (see open questions). Queries without a postcode fall back to a
-statewide street-name match, which is direct but ambiguous for common names ("Main
+statewide street-name match. That match is direct but ambiguous for common names ("Main
 Street" exists in several towns). The lookup abstains when the statewide candidates span
 multiple postcodes and no signal distinguishes them.
 
@@ -123,7 +123,7 @@ Given `{ street, number, postcode? }`:
 5. **Interpolate:** `t = (n − from_hn) / (to_hn − from_hn)` (0.5 when the range is a
    single number), clamped to [0, 1], then walk the polyline by cumulative haversine arc
    length to the point at fraction `t`. A descending range needs no special case: `t` is
-   computed against the raw from/to, which already encodes direction.
+   computed against the raw from/to, and the raw pair already encodes direction.
 6. **Answer:** `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
    release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
@@ -172,7 +172,7 @@ where the truth is unknown, so measuring on known points is the only direct prox
   range-gaps within the right ZIP+name, 166 ZIP-mismatches (name+range exists in a
   neighboring ZIP, the class the rejected statewide retry would have answered inaccurately),
   33 range-gaps statewide.
-- **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km; parity-matched n=3927 p50
+- **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km, parity-matched n=3927 p50
   65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
   137 m, so the p50 error sits inside the claimed radius.
 - **Check: MISS.** The pilot does not meet the pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m),
@@ -186,9 +186,9 @@ where the truth is unknown, so measuring on known points is the only direct prox
 ## Density characterization (2026-06-12, resolution-ladder Phase 1 step 1)
 
 Same eval, same check, same seed-42 5000-key sampling, on a dense county: Cook County IL
-(FIPS 17031; TIGER2023 EDGES + a county-scoped #476 extract. Overture has no county
+(FIPS 17031, TIGER2023 EDGES + a county-scoped #476 extract. Overture has no county
 field, so the point extract is PIP-filtered against the TIGER2023 COUNTY polygon via the
-builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
+builder's new `--county-fips` flag, giving 1,460,216 points and 231 ZIPs).
 
 | county                  | coverage |  p50 |   p90 | check (≤50 / ≤150)   |
 | ----------------------- | -------: | ---: | ----: | -------------------- |
@@ -198,7 +198,7 @@ builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
 Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m. The
 segment geometry accounts for the difference. **Verdict: the VT check miss is substantially a
 rural-geometry artifact rather than a method error.** TIGER uniform-spacing interpolation clears
-the check where segments are short; long sparse rural segments cap precision below the
+the check where segments are short. Long sparse rural segments cap precision below the
 check. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
 the corrective for the sparse stratum, and any county-stratified check re-baseline requires
 operator sign-off and is not made here.
@@ -208,9 +208,9 @@ operator sign-off and is not made here.
 `resolver-wof-sqlite/address-point-interpolation.ts` (`AddressPointInterpolator`): bracket the
 query number with real neighbor points from the #476 extract on the same route-folded street key
 (`street_key`, a new extract column — the fold adoption the pilot deferred), interpolate linearly
-in house-number space between the bracket's centroids; single-sided bracket = extrapolation
+in house-number space between the bracket's centroids. A single-sided bracket = extrapolation
 along the two nearest same-side numbers, capped at one pair-span (`t ≤ 2`), with an explicitly
-larger `uncertaintyM`; no bracket = fall through to TIGER range interpolation. Hits carry
+larger `uncertaintyM`. No bracket = fall through to TIGER range interpolation. Hits record
 `method: "address_point" | "tiger_range"` + `bracket: "both" | "single"`.
 
 **Non-circularity:** the lookup excludes every row at the queried house number by construction,
@@ -228,13 +228,13 @@ Method 2 clear the check on its bracketed stratum?
 | method 2 — single-sided extrapolation |  382 |     74 m / 223 m |    121 |    46 m / 102 m |
 | tiger_range fallback                  |  301 |     69 m / 237 m |     54 |    47 m / 124 m |
 | all hits (ladder)                     | 4883 |     53 m / 191 m |   4982 |     42 m / 62 m |
-| tiger-alone, same sample (baseline)   | 4100 |     66 m / 249 m |   4389 |     41 m / 79 m |
+| tiger-only, same sample (baseline)    | 4100 |     66 m / 249 m |   4389 |     41 m / 79 m |
 
 - **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%.** The bracketed range answers most of TIGER's
-  name-absent/range-gap miss classes because the neighbor points carry the E911/Overture names.
+  name-absent/range-gap miss classes because the neighbor points have the E911/Overture names.
 - **Check on the bracketed stratum: Cook pass (42/61). VT miss: p50 50.5 m (over by 0.5 m),
   p90 182 m.** Method 2 moved VT's bracketed p90 249 → 182 m and its p50
-  66 → 50.5 m, and that is still a miss. The check was not re-baselined.
+  66 → 50.5 m. The result is still a miss. The check was not re-baselined.
 - The VT residual is concentrated in wide brackets, and the claimed `uncertaintyM` (half bracket
   span) predicts it. Bracketed rows claiming ≤ 100 m (71.4% of the stratum) measure p50 42 m /
   p90 116 m, inside the check, while the > 250 m claims (7.2%) measure p50 143 m / p90 917 m.
@@ -256,7 +256,7 @@ Method 2 clear the check on its bracketed stratum?
    the opposite-parity fallback absorb violations. The eval's parity-split
    reporting measures this. If fallback hits dominate the error tail in a denser
    state, revisit before national rollout.
-3. **Locality scope.** TIGER carries ZIPs rather than locality names. A locality-only query
+3. **Locality scope.** TIGER stores ZIPs rather than locality names. A locality-only query
    (without a postcode) currently uses the statewide fallback + abstention. The ZIP →
    locality via the postcode extract (or place ancestry) would restore locality scoping
    in a follow-up after the pilot.

@@ -1,6 +1,6 @@
 # @mailwoman/normalize
 
-This package is **stage 1 of the Mailwoman runtime pipeline**, which performs
+This package is **stage 1 of the Mailwoman runtime pipeline**. It performs
 deterministic input preprocessing.
 
 It provides pure-function text normalization that prepares free-text address
@@ -22,7 +22,7 @@ const result = normalize("123  Main   St.")
 | ----------------------------- | --------------------------------------------------------------------------- |
 | **NFC normalization**         | Unicode canonical composition                                               |
 | **Punctuation normalization** | Smart-quotes → straight, fullwidth → ASCII, elision/apostrophe preservation |
-| **Whitespace collapse**       | Multi-space, tab, non-breaking → single space; leading/trailing trim        |
+| **Whitespace collapse**       | Multi-space, tab, non-breaking → single space, plus leading/trailing trim   |
 | **Abbreviation expansion**    | Opt-in: `"St."` → `"Street"`, `"Ave"` → `"Avenue"` etc.                     |
 | **CJK normalization**         | CJK-specific whitespace and punctuation handling                            |
 

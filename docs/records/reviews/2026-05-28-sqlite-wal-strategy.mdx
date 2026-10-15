@@ -123,7 +123,7 @@ Some pragmas are persistent on the file (`journal_mode`, `page_size`, `auto_vacu
 | `page_size`      | Before first write | `8192`                | Larger pages can help blob-heavy DBs. Must be set before any table exists.      |
 | `journal_mode`   | Ingest             | `WAL`                 | Better multi-connection writer hand-off.                                        |
 | `journal_mode`   | Freeze             | `DELETE`              | Strip sidecars, restore default.                                                |
-| `synchronous`    | Ingest             | `NORMAL`              | Safe from corruption in WAL mode; may lose last commits on OS crash/power loss. |
+| `synchronous`    | Ingest             | `NORMAL`              | Safe from corruption in WAL mode. May lose last commits on OS crash/power loss. |
 | `foreign_keys`   | All                | `ON`                  | Default varies by wrapper/version. Be explicit.                                 |
 | `busy_timeout`   | Ingest             | `30000`               | Workers wait for writer lock instead of immediate `SQLITE_BUSY`.                |
 | `cache_size`     | Ingest             | `-64000` to `-200000` | Negative = KiB. Remember this is per connection, so multiply by worker count.   |
@@ -357,7 +357,7 @@ Never share a `DatabaseSync` instance across threads. Each worker opens its own 
 
 ### `VACUUM INTO` target must be absent or empty
 
-`VACUUM INTO ?` fails if the output file already exists and is non-empty. Check this before freeze. Bind the path as a parameter; do not interpolate it into SQL.
+`VACUUM INTO ?` fails if the output file already exists and is non-empty. Check this before freeze. Bind the path as a parameter. Do not interpolate it into SQL.
 
 ### WAL requires a local filesystem
 
@@ -399,7 +399,7 @@ The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are
 
 ### 5. Resumability
 
-**Manifest-based for GeoJSON ingestion; rebuild-from-scratch for aux tables.**
+**Manifest-based for GeoJSON ingestion. Rebuild-from-scratch for aux tables.**
 
 For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, status}`) lets resumed builds skip already-processed files. The manifest fits the existing spliterator batching pipeline: the glob emits candidates, and the manifest filters out completed ones. Aux tables (FTS5, R\*Tree, population) are always rebuilt from scratch since they depend on final `spr` state.
 
@@ -411,7 +411,7 @@ This design fixes the database lock bug that blocked the current `wof/prepare` c
 
 ---
 
-## 8. Prior art worth reading before writing code
+## 8. Prior art to read before writing code
 
 - **Current builder:** `scripts/build-unified-wof.ts`.
 - **Current schema helper:** `resolver-wof-sqlite/unified-schema.ts`.

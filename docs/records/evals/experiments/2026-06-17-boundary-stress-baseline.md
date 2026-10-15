@@ -1,6 +1,6 @@
 # Boundary-instability: the current model's gap, quantified (#375)
 
-The failure taxonomy named boundary instability the #1 parser change and the within-token decomposition
+The failure taxonomy ranked boundary instability as the #1 parser change and the within-token decomposition
 (#702) showed it surfacing under several names. The boundary-stress extract (#703) is the training-data fix.
 This is the **"before" baseline** — how badly today's model places these boundaries, on the exact
 synthetic shapes the extract teaches (`scripts/eval/boundary-stress-baseline.ts`, 300 rows/shape through
@@ -15,7 +15,7 @@ base-consistency section for why.
 | house-number-after-street | house_number  | **51.3%** |                      53% |
 
 _(Measured on the base-consistent locality vocabulary — see the #511 section. Earlier drafts read
-street_suffix 40.7 / fr-prefix 47.7 on a vocab that contradicted the base; the numbers above are on the
+street_suffix 40.7 / fr-prefix 47.7 on a vocab that contradicted the base. The numbers above are on the
 corrected vocab. house-number-after-street is now FR-only.)_
 
 (On the delimited shapes the uncontested tags read ~100% — the failures concentrate on the contested
@@ -36,7 +36,7 @@ caught two things, only one of them a true problem:
 - **AU content was a real contradiction → FIXED.** An earlier draft used AU/NZ/UK tuples (for an
   `au-uk-slash-unit` shape + AU comma-less). AU isn't a base locale (the base is US/FR/DE), and **AU
   4-digit postcodes collide with US house numbers** (`3000` is a common US street number). The lint
-  flagged it; the extract is now **base-locales-only**, and the AU/UK slash convention (the worst
+  flagged it. The extract is now **base-locales-only**, and the AU/UK slash convention (the worst
   within-token class, #702) is deferred to a separately-scoped AU/NZ/UK extract that also adds AU **base
   coverage** — it cannot ride a US/FR/DE extract without contradicting the base.
 - **The affix-tag flags are train-time-relabel artifacts** (`Ave`/`Place`/`NW` → suffix/prefix): the lint
@@ -47,7 +47,7 @@ caught two things, only one of them a true problem:
   class, well-sampled across ~23 US extracts). Fixed: the US vocab is now **derived + verified
   locality-dominant** (Albuquerque 258584:8, Indianapolis 219700:29, Sacramento, Jacksonville…). The
   **FR** flag, by contrast, was a _sampling artifact_ — the all-extract scan barely touched the FR ban block
-  (parts 180–209) and mixed in US street-contexts; the FR-block scan shows Paris (515605:24789), Marseille,
+  (parts 180–209) and mixed in US street-contexts. The FR-block scan shows Paris (515605:24789), Marseille,
   Lyon are 95–99% **locality** in the FR data, so familiar dept-diverse FR cities are kept. **DE** yielded
   no locality-dominant towns (German cities are street-dominated too, "Berliner Straße"), so
   house-number-after-street is FR-only (DE's native order is covered by `synth-german`). Net: every extract

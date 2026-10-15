@@ -20,7 +20,7 @@ Postcodes, rural routes, and descriptive addresses all represent areas or paths 
 
 The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons. ZIP codes are carrier routes rather than areas, and a ZIP code follows the path a carrier walks.
 
-UK postcodes cover ~15 addresses on average, which makes them effectively points. UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
+UK postcodes cover ~15 addresses on average. That size makes them effectively points. UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
 Irish Eircodes are unique per delivery point, so the postcode is the point. French postcodes correspond to commune boundaries, so the postcode is the polygon. The same concept ("postcode") has fundamentally different spatial semantics in different countries.
 
@@ -53,7 +53,7 @@ The vertical dimension matters. Buildings have floors, and different floors can 
 - **Below ground.** Basement apartments, underground parking, subway stations, wine cellars, bomb shelters, and data centers are below ground. `123 Main St, Basement` is a different delivery point from `123 Main St, Apt 1`. The two share a building footprint but differ in vertical position and possibly in entrance.
 - **Above ground.** Consider floor 50 of a skyscraper. The Empire State Building has different ZIP+4 codes for different floors and tenants. A geocode to the building centroid places all addresses at the same coordinate. A geocode with floor-level resolution would place Floor 50 at 200 meters above ground level, but no geocoder returns elevation data.
 - **Sky lobbies.** Some skyscrapers have separate entrance lobbies at ground level and sky lobbies at transfer floors. A delivery to "85th Floor, 1 World Trade Center" may route through the sky lobby on the 64th floor rather than the ground floor, so the address's entrance is above ground.
-- **Underground complexes.** Tokyo Station has a city's worth of retail and office space underground, with addresses that resolve to the surface station coordinates. Montreal's RÉSO (underground city) connects 1,600 shops and 200 restaurants. All of them have surface addresses and are functionally underground.
+- **Underground complexes.** Tokyo Station has retail and office space the size of a small city underground, with addresses that resolve to the surface station coordinates. Montreal's RÉSO (underground city) connects 1,600 shops and 200 restaurants. All of them have surface addresses and are functionally underground.
 
 ### "An address doesn't share its lat/lon with another address."
 
@@ -61,7 +61,7 @@ A shopping mall at one lat/lon can have 100+ addresses, one per store. An office
 
 A marina has addresses for each berth. The berths are adjacent rather than stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad. The pads share a lat/lon to within 10 meters and are distinguished by pad number.
 
-A post office with PO boxes has hundreds of addresses (the PO box numbers), all at the lat/lon of the post office building. A geocoder that receives a PO box returns the post office building, which is correct at the building level but wrong for the recipient's actual location.
+A post office with PO boxes has hundreds of addresses (the PO box numbers), all at the lat/lon of the post office building. A geocoder that receives a PO box returns the post office building. That answer is correct at the building level but wrong for the recipient's actual location.
 
 ### "An address stays where it is."
 
@@ -100,7 +100,7 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 - **Vertical disambiguation.** Two addresses in the same building on different floors resolve to the same coordinate. The `unit` tag preserves the floor/apartment information in the output, but the resolver does not use it for spatial disambiguation.
 - **Non-building addresses.** For `50 miles West of Socorro`, the parser can identify "Socorro" as a locality reference, but "50 miles West of" is a relative offset that requires spatial computation rather than gazetteer lookup. Mailwoman's resolver does not compute relative offsets from gazetteer points.
 - **Shape output.** The resolver returns a coordinate and optionally a bounding box from WOF. It does not return the building footprint, the parcel boundary, or the ZIP code area. Shape-level output requires a spatial database (PostGIS, Elasticsearch with geo_shape) rather than a SQLite point-in-polygon index.
-- **Elevation data.** WOF does not include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate, which is a GIS operation rather than a resolver operation.
+- **Elevation data.** WOF does not include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate. That lookup is a GIS operation rather than a resolver operation.
 
 ## References
 

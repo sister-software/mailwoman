@@ -3,7 +3,7 @@
 **Status:** design approved 2026-09-05 (placement, wording rules, and the every-invocation decision chosen by the operator).
 **Builds on:** PR #2117 (the signed license key and the doctor's posture line).
 **Precedes:** the self-service commercial licensing design (Stripe subscription, license worker), which
-links to the same `/license` page and depends on the release that carries this work.
+links to the same `/license` page and depends on the release that ships this work.
 
 ## The problem
 
@@ -31,7 +31,7 @@ configured key's offline verification). No output re-derives it.
 
 **Responses never include the licensee or the key id.** The doctor prints those locally for the
 operator. A Photon deployment serving the public must not expose its operator's commercial relationship
-in every response. The stamp says which branch applies and makes no statement about who holds it.
+in every response. The stamp states which branch applies and makes no statement about who holds it.
 
 **The notice prints on every CLI invocation, TTY or not.** A notice that only prints to a terminal
 never reaches the deployment it describes. For a compliant AGPL user, the cost is two stderr lines they
@@ -39,11 +39,11 @@ can redirect. Only a valid key silences the notice, and no environment variable 
 
 **The report uses the doctor's vocabulary.** The doctor reports three obligations: attribution,
 share-alike on modifications, and the source offer to network users. The notice states the source
-offer, because that is the obligation a network deployment carries and the one the commercial
+offer, because that is the obligation a network deployment incurs and the one the commercial
 agreement waives.
 
 **Drop-in protocols stay intact.** A field is added only where the protocol has room for one. Where it
-has none, headers carry the posture.
+has none, headers report the posture.
 
 ## The stamp
 
@@ -102,7 +102,7 @@ is the one read of mailwoman's own manifest and lives in the `mailwoman` package
 and the three drop-ins may not depend on `mailwoman` (the engine-agnosticism boundary in
 `packages/api/lib/schema.ts`), so the `mailwoman` package builds the stamp once and hands it to each
 app as an option. Each drop-in's `cli.ts` already wires its engine from `mailwoman`, so the hand-off
-point exists. The app packages carry only the type and the placement.
+point exists. The app packages contain only the type and the placement.
 
 A `resolveEngineStamp()` in the `mailwoman` package runs the manifest read,
 `verifyConfiguredLicenseKey()`, and `buildEngineStamp`, and memoizes the result for the process. The
@@ -134,23 +134,23 @@ One function in `stamp.ts`, `licenseNotice(verification)`, produces the text. It
 or `undefined`, and the launcher writes what it returns. The doctor's `detail` line is unchanged.
 
 The same notice prints once at server startup, in `serveNode` (`packages/api-kit/lib/serve.ts`), after
-the `listening on` line, when the app options carry a stamp with a `notice`.
+the `listening on` line, when the app options include a stamp with a `notice`.
 
 ### The response body, per output
 
-| Output                                                       | Placement                                                                   | Constraint that decides it                                                                                                                                            |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mailwoman geocode --json`                                   | top-level `engine` on each record                                           | `--stdin` emits one record per line, so per record is the only place                                                                                                  |
-| `mailwoman reverse --json`                                   | top-level `engine` on the record                                            | same shape                                                                                                                                                            |
-| `mailwoman autocomplete --json`                              | `engine` on a wrapping object `{ engine, entries }`                         | today's output is a bare array; wrapping it is a change to that command's `--json` interface, recorded in the CHANGELOG                                               |
-| `mailwoman parse --format json`                              | top-level `engine` on the decoded object                                    | `tuple` and `xml` are unchanged                                                                                                                                       |
-| `mailwoman geocode --jsonld`                                 | none                                                                        | schema.org vocabulary; a foreign key breaks consumers. The stderr notice still prints                                                                                 |
-| `POST /v1/geocode`, `/v1/parse`, `/v1/resolve`, `/v1/format` | top-level `engine` on the response                                          | `GeocodeOutcomeLikeSchema` is `.loose()` and the route passes the outcome through verbatim, so the field is additive; adding it to the schema documents it in OpenAPI |
-| `POST /v1/batch`                                             | once, on the envelope beside `results`                                      | one stamp per response rather than per row                                                                                                                            |
-| Nominatim `/search`, `/reverse`, `/lookup`                   | `engine` on each result object; `licence` stays the data attribution string | top level is a bare array by protocol; `NominatimResultSchema` is `.loose()`, and geopy and its peers ignore unknown keys                                             |
-| Photon `/api`, `/reverse`                                    | `engine` as a foreign member on the FeatureCollection                       | RFC 7946 section 6.1 permits foreign members; `PhotonFeatureCollection` gains the optional field                                                                      |
-| libpostal `/parse`, `/expand`                                | none in the body                                                            | `/parse` is a bare array of `{label, value}` by protocol; headers carry the posture                                                                                   |
-| `/health`, `/metrics`, `/openapi.json`                       | none in the body                                                            | operational routes; headers carry the posture                                                                                                                         |
+| Output                                                       | Placement                                                                   | Constraint that decides it                                                                                                                                     |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mailwoman geocode --json`                                   | top-level `engine` on each record                                           | `--stdin` emits one record per line, so per record is the only place                                                                                           |
+| `mailwoman reverse --json`                                   | top-level `engine` on the record                                            | same shape                                                                                                                                                     |
+| `mailwoman autocomplete --json`                              | `engine` on a wrapping object `{ engine, entries }`                         | today's output is a bare array. A wrapper is a change to that command's `--json` interface, recorded in the CHANGELOG                                          |
+| `mailwoman parse --format json`                              | top-level `engine` on the decoded object                                    | `tuple` and `xml` are unchanged                                                                                                                                |
+| `mailwoman geocode --jsonld`                                 | none                                                                        | schema.org vocabulary. A foreign key breaks consumers. The stderr notice still prints                                                                          |
+| `POST /v1/geocode`, `/v1/parse`, `/v1/resolve`, `/v1/format` | top-level `engine` on the response                                          | `GeocodeOutcomeLikeSchema` is `.loose()` and the route passes the outcome through verbatim, so the field is additive. The schema entry documents it in OpenAPI |
+| `POST /v1/batch`                                             | once, on the envelope beside `results`                                      | one stamp per response rather than per row                                                                                                                     |
+| Nominatim `/search`, `/reverse`, `/lookup`                   | `engine` on each result object; `licence` stays the data attribution string | top level is a bare array by protocol; `NominatimResultSchema` is `.loose()`, and geopy and its peers ignore unknown keys                                      |
+| Photon `/api`, `/reverse`                                    | `engine` as a foreign member on the FeatureCollection                       | RFC 7946 section 6.1 permits foreign members; `PhotonFeatureCollection` gains the optional field                                                               |
+| libpostal `/parse`, `/expand`                                | none in the body                                                            | `/parse` is a bare array of `{label, value}` by protocol. Headers report the posture                                                                           |
+| `/health`, `/metrics`, `/openapi.json`                       | none in the body                                                            | operational routes. Headers report the posture                                                                                                                 |
 
 ### The response headers
 
@@ -186,8 +186,8 @@ The URL is the interface, and the self-service design places its Payment Link on
 
 | Package                   | Change                                                                                                                                                                      |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@mailwoman/core/license` | new `stamp.ts`: `EngineStamp`, `buildEngineStamp`, `licenseNotice`, the notice text constant; re-exported from `index.ts`                                                   |
-| `mailwoman`               | `resolveEngineStamp()` in `cli-kit`; the launcher prints the notice; `geocode`, `reverse`, `autocomplete`, `parse` attach the stamp; each drop-in `cli.ts` passes the stamp |
+| `@mailwoman/core/license` | new `stamp.ts`: `EngineStamp`, `buildEngineStamp`, `licenseNotice`, the notice text constant, re-exported from `index.ts`                                                   |
+| `mailwoman`               | `resolveEngineStamp()` in `cli-kit`. The launcher prints the notice. `geocode`, `reverse`, `autocomplete`, `parse` attach the stamp. Each drop-in `cli.ts` passes the stamp |
 | `@mailwoman/api-kit`      | `engineHeaders(stamp)` middleware; `serveNode` prints the notice when given a stamp                                                                                         |
 | `@mailwoman/api`          | `MailwomanAPIOptions.engine?: EngineStamp`; `engine` on `GeocodeOutcomeLikeSchema`, the parse/resolve/format response schemas, and `BatchResponseSchema`                    |
 | `@mailwoman/nominatim`    | `NominatimAppOptions.engine?`; `engine` on `NominatimResultSchema`; `format.ts` attaches it                                                                                 |
@@ -214,18 +214,18 @@ CLI, in `packages/mailwoman/test/`:
 
 - `mailwoman --version` writes the notice to stderr and the bare version string to stdout, so
   `--json` consumers are unaffected.
-- `mailwoman geocode --json` and `--stdin` records carry `engine`; `--jsonld` output carries no
+- `mailwoman geocode --json` and `--stdin` records include `engine`, and `--jsonld` output includes no
   `engine` key.
 - With `MAILWOMAN_LICENSE_KEY` set to a token signed by a test key that the test injects as trusted,
-  stderr carries no notice and the record's `engine.license` reads `LicenseRef-Commercial`.
+  stderr prints no notice and the record's `engine.license` reads `LicenseRef-Commercial`.
 
 HTTP, in each app's existing test file:
 
-- every route, including `/health` and `/openapi.json`, carries both headers when an `engine` option
-  is given and neither when it is not;
-- Nominatim results carry `engine` and an unchanged `licence`; the Photon collection carries `engine`
-  as a top-level member and every feature is unchanged; libpostal bodies are byte-identical with and
-  without the option;
+- every route, including `/health` and `/openapi.json`, sends both headers when an `engine` option
+  is given and neither when it is not.
+- Nominatim results include `engine` and an unchanged `licence`. The Photon collection includes `engine`
+  as a top-level member, and every feature is unchanged. Libpostal bodies are byte-identical with and
+  without the option.
 - the OpenAPI document emitted by `mailwoman openapi` documents `engine` on the native routes.
 
 Docs: `yarn docs:build` routes `/license`, and the existing link check passes.
@@ -233,8 +233,8 @@ Docs: `yarn docs:build` routes `/license`, and the existing link check passes.
 ## Out of scope
 
 - Any change to the doctor's `LicensePosture` or its `detail` line.
-- The MCP server's advertised version (`packages/mcp/lib/server.ts`) and the Fastify plugin; both
+- The MCP server's advertised version (`packages/mcp/lib/server.ts`) and the Fastify plugin. Both
   can adopt the stamp later through the same option.
 - The library API. A library import prints no notice, and a `GeocodeResult` returned in-process
-  carries no stamp.
-- Payment, checkout, and the license worker, which the separate design that follows this one covers.
+  includes no stamp.
+- Payment, checkout, and the license worker. The separate design that follows this one covers them.

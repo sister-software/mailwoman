@@ -12,7 +12,7 @@ import os
 LABEL_CORPUS = "v8-tw-2026-09-08"
 #: The noisy register corpus: company registrations, a separate build with its own single part.
 REGISTER_CORPUS = "v8-tw-registry-2026-09-08"
-#: How many numbered train parts the label build writes.
+#: The number of numbered train parts the label build writes.
 TRAIN_PARTS = 8
 
 

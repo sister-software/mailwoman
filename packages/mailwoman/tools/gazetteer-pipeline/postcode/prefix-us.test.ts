@@ -125,7 +125,7 @@ describe("the US arm's exclusions", () => {
 
 	it("excludes null island without losing the unit from the count", () => {
 		expect(built.excludedUnits["nullIsland"]).toBe(1)
-		// `unitCount` counts postal units, regardless of how many coordinates survived hygiene.
+		// `unitCount` counts postal units, regardless of the count of coordinates that survived hygiene.
 		expect(nodeFor("300")?.unitCount).toBe(2)
 		expect(nodeFor("300")?.lat).toBeCloseTo(1.5, 6)
 	})

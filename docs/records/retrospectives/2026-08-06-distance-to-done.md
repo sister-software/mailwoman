@@ -28,14 +28,16 @@ informative.
 
 This is the only place the project writes a finish line as a sentence. Verbatim:
 
-> When this list is checked, mailwoman is: a parser that never does worse than v0 (arbitration, by
-> construction) and decisively better on real-world input; forward geocoding to street level (point
-> lookup + interpolation) in the countries we cover; reverse geocoding; autocomplete; batch + served
-> API with observability; a trustworthy, leakage-free eval story in every shipped locale; reproducible
-> training; a pocket tier that still requires no install — and documentation a stranger can onboard
-> from. That is the geocoder.
+```text
+When this list is checked, mailwoman is: a parser that never does worse than v0 (arbitration, by
+construction) and decisively better on real-world input; forward geocoding to street level (point
+lookup + interpolation) in the countries we cover; reverse geocoding; autocomplete; batch + served
+API with observability; a trustworthy, leakage-free eval story in every shipped locale; reproducible
+training; a pocket tier that still requires no install — and documentation a stranger can onboard
+from. That is the geocoder.
+```
 
-The definition has nine clauses. Seven are shipped and two are not. _"Decisively better on real-world input"_ is measured
+The definition has nine clauses. Seven are shipped and two are not. The clause on real-world input is measured
 against libpostal and the retired v0 rule engine but not against the system that competes
 (§2.4), and _"an eval story in every shipped locale"_ is where the largest single gap sits (§2.3).
 
@@ -45,14 +47,14 @@ behind its own issue tracker by four rows.
 
 ### 1.2 The scope declaration — locale tiers and five standing invariants
 
-`docs/engineering/SCOPE.mdx`, declared 2026-07-02. Tier 1 is **US and FR** and no other locale; tier 2
-is fourteen locales with coordinate panels; tier 5 is **JP, resolver-route only, "no parser training
+`docs/engineering/SCOPE.mdx`, declared 2026-07-02. Tier 1 is **US and FR** and no other locale. Tier 2
+is fourteen locales with coordinate panels. Tier 5 is **JP, resolver-route only, "no parser training
 claim."** The invariants that function as checks:
 
-1. Grade the assembled coordinate, never label-F1 alone; full per-tag re-score every 5 promotes or
+1. Grade the assembled coordinate, never label-F1 by itself. Run a full per-tag re-score every 5 promotes or
    on any promote that lowers a floor.
 2. The demo is the geocoder. _"A win that doesn't reach the demo is discounted to zero."_
-3. Pre-registered checks; falsified changes get reverted rather than shipped.
+3. Pre-registered checks. Falsified changes get reverted rather than shipped.
 4. Repair retirement — every post-model patch shrinks at each consolidation.
 5. Runtime flags are instruments rather than homes.
 
@@ -61,19 +63,19 @@ Invariant 1's re-score cadence is **currently unmet** (§2.4). The others hold.
 ### 1.3 The identity claim
 
 `what-mailwoman-is.mdx`: a **calibrated, retrieval-augmented sequence labeler over a microlanguage**,
-coupled to a gazetteer. The claim has four required terms. Three are demonstrably true today. The
+coupled to a gazetteer. The claim has four required terms. Three are true today, by the measurements in §2. The
 fourth, "calibrated", needs a qualification. The isotonic calibrators ship in the weights bundle, but `calibrate` is
 **default-OFF** in `ParseOpts` (runtime-flag register, "opt-in at parse, the demo exposes a toggle").
 The confidences a default consumer reads are therefore uncalibrated softmax rather than the calibrated
-probabilities the README promises at line 150 ("when it says `0.88`, it is right about 88% of the
-time"). A one-line documentation fix or a checked flag flip would resolve it. As written, the claim
+probabilities the README promises at line 150 (now at line 153: "When it reports `0.88`, it is right about 88% of the
+time."). A one-line documentation fix or a checked flag flip would resolve it. As written, the claim
 and the default disagree.
 
 ### 1.4 The founding objective
 
 The README states the operational form: _"no Elasticsearch and no multi-gigabyte libpostal
 install,"_ three wire-compatible drop-ins, ~30 MB model plus a SQLite gazetteer. The north-star
-framing carried in project memory — beat Pelias's rules parser without Elasticsearch — has a
+framing recorded in project memory — beat Pelias's rules parser without Elasticsearch — has a
 measured answer, and it is not yet yes (§2.4).
 
 ---
@@ -102,7 +104,7 @@ lockstep. The promotion check `v9.0.0-base` **passes all 18 floors**. Ledger row
 Two of those rows deserve their own paragraph.
 
 **us.street's −15.3 is an answer-key change rather than a capability loss.** Golden v0.1.2 folded a US
-street into one span while the corpus splits it; v0.1.3 moves the key onto the corpus convention.
+street into one span while the corpus splits it. v0.1.3 moves the key onto the corpus convention.
 Under the corrected key the candidate reads 75.2 against the 7.0.0 baseline's 71.7, a lead of
 3.5pp. The check spec argues this at length and re-anchors the floor instead of ratcheting it. The reasoning is
 sound and documented. What matters for a position read is the **absolute** number: street-name span
@@ -128,7 +130,7 @@ each remains below its bar. The check record it links to is titled _"measurement
 decision is taken or implied here"_ and its combined gauntlet verdict is **fail in both arms**. The
 promotion decision was taken separately and deliberately (ROAD_TO_V9 §1, "promotes with conditions,"
 operator-ratified) — that is a legitimate call. The release note reads as though the record endorsed
-it, and the record says otherwise.
+it, and the record states otherwise.
 
 **Run B's own pre-registered sheet: 5 PASS, 1 FAIL (G3 invariance, 4 new violations), 2 MIXED,
 1 INCONCLUSIVE, and 5 NOT SCORED.** Five of fourteen bars had no instrument on the host — missing
@@ -161,7 +163,7 @@ number after the failures were removed from the denominator.
 ### 2.3 The country sweep — what coverage looks like
 
 400 oracle-verified candidates. 400/400 resolved by the Google oracle with zero `ZERO_RESULTS`;
-7 `partial_match` rows parked; **393 through the pipeline; 279 pass (71.0%); 114 fail.**
+7 `partial_match` rows parked. **393 went through the pipeline. 279 pass (71.0%). 114 fail.**
 
 Failure taxonomy, computed from the JSONL:
 
@@ -186,18 +188,18 @@ does not violate the meaning-of-zero requirement."_
 **29 of the 114 share one root cause, and it is a data defect rather than a model one.** `candidate.db` and
 `admin-global-priority.db` disagree on what a synthetic place id means: **743,853 of 1,670,055 joined
 rows (44.5%) name a different place in each**, 212,993 of them `is_primary=1`. `geocode "Gaborone"`
-returned a Styrian hamlet named Aichegg. `Kinshasa` returned a Lithuanian place with a population
-field of 16,000,000. The #1514/#1517 fold fix addressed the mechanism; the artifact rebuild is what
+returned Aichegg, a Styrian hamlet. `Kinshasa` returned a Lithuanian place with a population
+field of 16,000,000. The #1514/#1517 fold fix addressed the mechanism. The artifact rebuild is what
 converts the fix into resolved rows, and #1507's grading wire-up on 2026-08-06 moved 5 of 7
-family-A rows to passing. Two remain wrong on coordinate alone (`dj-cs-djibouti` 65.9 km,
+family-A rows to passing. Two remain wrong when graded on coordinate (`dj-cs-djibouti` 65.9 km,
 `cg-cs-brazzaville` 453.1 km).
 
 ### 2.4 Competitive position — the number that decides bar (b)
 
 The newest competitive parity scorecard is **`parity-scorecard-2026-07-02.md`, 35 days old, scoring
 model 5.0.0** — four model majors behind shipped. SCOPE invariant 1 requires a full re-score every
-five promotes or on any floor-lowering promote; 5.0.0 → 9.0.0 is well past that, and the v9.0.0-base
-spec re-anchored two floors outright. **The cadence rule is unmet.**
+five promotes or on any floor-lowering promote. 5.0.0 → 9.0.0 is well past that, and the v9.0.0-base
+spec re-anchored two floors. **The cadence rule is unmet.**
 
 Its only competitor column is libpostal, on three arenas: libpostal-clean 30% (down from 36%),
 perturb 78%, postal-edge 24%. The parser edges the retired v0 rule baseline on canonical input by
@@ -222,8 +224,8 @@ has been scored against Pelias.** The founding objective's status is therefore _
 last measurement had mailwoman behind. Re-running it is the most valuable measurement available to
 this project right now, and it needs no GPU.
 
-Google appears in no benchmark. It is a verification oracle for case authoring only, which the
-`geocode-oracle` README states correctly.
+Google appears in no benchmark. It is a verification oracle for case authoring only. The
+`geocode-oracle` README states that correctly.
 
 ### 2.5 Drop-in API surfaces
 
@@ -231,33 +233,33 @@ The README sells three wire-compatible drop-ins. All three ship at 9.0.0 and ser
 **None has a single test comparing its output to the upstream it claims to replace.**
 
 The two files that look like parity fixtures — `nominatim/test-fixtures/search-golden.jsonl` and
-`libpostal/test-fixtures/parse-golden.jsonl` — are self-captures. The capture script says so in its
+`libpostal/test-fixtures/parse-golden.jsonl` — are self-captures. The capture script states this in its
 own header: it spawns `nominatim/out/cli.js serve` on port 8199 and records mailwoman's output. Their
 only consumer is a file-integrity guard that asserts row counts and field types. The only upstream
 verification anywhere in the repo is a comment in `photon/projection.ts:43` saying "verified against
 photon.komoot.io". A person checked it by eye once, and no executable test verifies it.
 
-Named gaps, verified in the code:
+Specific gaps, verified in the code:
 
-| Surface     | Gap                                                                                                                                     |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| nominatim   | **`/search` returns at most one result regardless of `limit`** (`cli.ts:246` `[out].slice(0, limit)`)                                   |
-| nominatim   | `viewbox` not accepted at all; `bounded` parsed with no box to bound to                                                                 |
-| nominatim   | `polygon_geojson` / `_kml` / `_svg` / `_text` / `_threshold`: zero occurrences                                                          |
-| nominatim   | `extratags`, `namedetails`, `dedupe`, `exclude_place_ids`, `featureType`, `layer`, `email`: absent                                      |
-| nominatim   | structured query is faked — fields joined into free text; **`county` parsed then dropped**                                              |
-| nominatim   | `/lookup` → 501 (documented as planned)                                                                                                 |
-| photon      | **`bbox` is a typed engine field with no wire path** — in `engine.ts:68`, absent from `schema.ts` and the handler                       |
-| photon      | `osm_tag` / `layer` / `lang` / `radius` parsed, never read by the real engine; the test proves plumbing to a mock                       |
-| photon      | `location_bias_scale`, `distance_sort`, `debug`, `zoom`: absent                                                                         |
-| libpostal   | `/expand` has **no language handling** — upstream's `languages` option has no analogue                                                  |
-| libpostal   | `/expand` returns `{expansions:[...]}` rather than the bare array common REST servers return                                            |
-| annotations | `sun` carries only `apparent`; OpenCage returns astronomical/civil/nautical. `SunTimes.noon` has no `toOpenCage` mapping and is dropped |
-| annotations | `roadinfo`, `what3words`, `OSM` blocks absent; `wikidata`/`fips` typed but unpopulated                                                  |
+| Surface     | Gap                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| nominatim   | **`/search` returns at most one result regardless of `limit`** (`cli.ts:246` `[out].slice(0, limit)`)                                 |
+| nominatim   | `viewbox` not accepted at all; `bounded` parsed with no box to bound to                                                               |
+| nominatim   | `polygon_geojson` / `_kml` / `_svg` / `_text` / `_threshold`: zero occurrences                                                        |
+| nominatim   | `extratags`, `namedetails`, `dedupe`, `exclude_place_ids`, `featureType`, `layer`, `email`: absent                                    |
+| nominatim   | structured query is faked — fields joined into free text; **`county` parsed then dropped**                                            |
+| nominatim   | `/lookup` → 501 (documented as planned)                                                                                               |
+| photon      | **`bbox` is a typed engine field with no wire path** — in `engine.ts:68`, absent from `schema.ts` and the handler                     |
+| photon      | `osm_tag` / `layer` / `lang` / `radius` parsed, never read by the real engine. The test proves plumbing to a mock                     |
+| photon      | `location_bias_scale`, `distance_sort`, `debug`, `zoom`: absent                                                                       |
+| libpostal   | `/expand` has **no language handling** — upstream's `languages` option has no analogue                                                |
+| libpostal   | `/expand` returns `{expansions:[...]}` rather than the bare array common REST servers return                                          |
+| annotations | `sun` holds only `apparent`; OpenCage returns astronomical/civil/nautical. `SunTimes.noon` has no `toOpenCage` mapping and is dropped |
+| annotations | `roadinfo`, `what3words`, `OSM` blocks absent; `wikidata`/`fips` typed but unpopulated                                                |
 
 `@mailwoman/api` (native, 40 tests plus a live-engine suite) and `@mailwoman/mcp` (9 tools, 50 tests)
 are in better shape. mcp's `server.ts` and `cli.ts` contain the stdio transport, arg parsing, and lazy
-weight load, which make up the whole operational claim. The test header states that they have
+weight load. Those three make up the whole operational claim. The test header states that they have
 **zero coverage**.
 
 The AGENTS.md table is wrong in three places: `fastify` is at 9.0.0 with a complete plugin, four
@@ -266,19 +268,19 @@ serves `/` and `/openapi.json`.
 
 ### 2.6 Per-surface summary
 
-| Surface              | Where we sit                                                                                                                                                    |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                           |
-| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                 |
-| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier**. It has capability without a tier claim |
-| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                            |
-| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to no result; last competitor measurement had Pelias ahead 88 to 80                                            |
-| Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                      |
-| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                 |
-| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                     |
-| Docs                 | Site ships; the repo-root documents have drifted (§5.4)                                                                                                         |
-| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                 |
-| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                          |
+| Surface              | Where we sit                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                               |
+| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                     |
+| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed, and dependent_locality 0 → 205/207. **GB is not a declared tier**. It has capability without a tier claim |
+| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                                |
+| Geocode              | 71% on the 393-row oracle sweep. 27 rows resolve to no result. Last competitor measurement had Pelias ahead 88 to 80                                                |
+| Drop-in APIs         | Routes ship, zero upstream parity tests, listed parameter gaps in all three                                                                                         |
+| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction rather than by memory)                                                     |
+| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                         |
+| Docs                 | Site ships. The repo-root documents have drifted (§5.4)                                                                                                             |
+| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                     |
+| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                              |
 
 ---
 
@@ -298,11 +300,11 @@ Each stands between today and one of the project's own definitions of done.
 | 493  | lossless decomposition — serializer default decision         | #488 Phase 4, last unfinished item                                                                    |
 | 1039 | lexical country prior for the no-postcode tail               | The country sweep's dominant failure class                                                            |
 | 1102 | fragment/twin mass erodes US region+locality recall (~2.5pp) | Its own title calls it "the promote blocker"                                                          |
-| 1142 | gazetteer importance unknown-as-zero; shipped FST stale      | PARTIAL — #1538 cured defects 1 and 2; the stale-FST rebuild remains                                  |
+| 1142 | gazetteer importance unknown-as-zero, shipped FST stale      | PARTIAL — #1538 cured defects 1 and 2. The stale-FST rebuild remains                                  |
 | 1492 | promoted-artifact swaps race CI on the shared data root      | ROAD_TO_V9 §6 I5, untouched                                                                           |
 | 1497 | FST decoder bias invisible to every live eval                | PARTIAL — board now discriminates; `eval gauntlet` still FST-blind, per the fixing commit's own words |
-| 1516 | invariance runner measures a path users don't take           | PARTIAL — I4 landed, **I1 (the issue title) untouched**; runner still defaults en-US per row          |
-| 1519 | multi-word toponym/street truncation, 15 rows                | Demoted from blocking; returns to blocking when fixed                                                 |
+| 1516 | invariance runner measures a path users don't take           | PARTIAL — I4 landed, **I1 (the issue title) untouched**. Runner still defaults en-US per row          |
+| 1519 | multi-word toponym/street truncation, 15 rows                | Demoted from blocking. Returns to blocking when fixed                                                 |
 | 1529 | intersection queries have no crossing-point computation      | Explicitly labeled a Pelias-parity gap                                                                |
 | 1537 | geocode path collapses famous-namesake candidates to one     | Starves the declared-ambiguity margin — blocks ROAD_TO_V9 §2/§4                                       |
 | 1539 | suffix-boundary over-greed, 125 golden rows                  | Directly moves `us.street`, the metric furthest from target                                           |
@@ -318,7 +320,7 @@ New capability rather than debt: #13, #29, #35–#40 (eight adapter clusters, pa
 #288, #293, #295, #296, #297, #470, #477, #488 (the epic itself), #598, #602, #603, #655, #733,
 #994, #996, #1070, #1100, #1176, #1177, #1266, #1267, #1366, #1494, #1503.
 
-Two are worth naming. **#1176 (the v8 CJK epic)** states its success criterion as _"v8 ships a model
+Two need a note. **#1176 (the v8 CJK epic)** states its success criterion as _"v8 ships a model
 that parses JP… the first non-Latin parse claim mailwoman makes."_ v8 shipped without it and v9
 shipped without it, and ROAD_TO_V9 §8 parks it explicitly. The epic has outlived two majors of its
 own name. **#598 (record matching)** is parked by an operator decision with the evidence recorded.
@@ -326,27 +328,28 @@ That is a deliberate park rather than a stall.
 
 ### (d) STALE — recommend closing with receipts, 5
 
-| #        | Receipt                                                                                                                                                                        | Confidence                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
-| **1507** | `58ce7a17e` (#1525) — `check-case.ts:107-124` grades `expect_place_id`/`expect_place_name` against `hierarchy[0]`; 7 rows carry it; mutation-checked (disabling fails 4 of 16) | Highest                      |
-| **1505** | `91e6f8b88` (#1522) — AGENTS.md now lists bdc:45, filer:46, fastify:62, react:65, apps:76, hf-publish:78                                                                       | High                         |
-| **1491** | `91e6f8b88` — `--corpus-version` rename plus an AST guard over all 133 command modules                                                                                         | High                         |
-| **1493** | `91e6f8b88` — `RELEASING.md:399` records `fst-global-priority.bin` RETIRED 2026-08-06; note the HF-bucket deletion is a release-time operator action                           | High, with a caveat          |
-| **1495** | `91e6f8b88` — `build-candidate.ts:311` `foldPostcodeExtract`. Code-complete; **the artifact lands at the next `gazetteer build candidate`**                                    | Close with the caveat stated |
+| #        | Receipt                                                                                                                                                                      | Confidence                   |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **1507** | `58ce7a17e` (#1525) — `check-case.ts:107-124` grades `expect_place_id`/`expect_place_name` against `hierarchy[0]`. 7 rows set it. Mutation-checked (disabling fails 4 of 16) | Highest                      |
+| **1505** | `91e6f8b88` (#1522) — AGENTS.md now lists bdc:45, filer:46, fastify:62, react:65, apps:76, hf-publish:78                                                                     | High                         |
+| **1491** | `91e6f8b88` — `--corpus-version` rename plus an AST guard over all 133 command modules                                                                                       | High                         |
+| **1493** | `91e6f8b88` — `RELEASING.md:399` records `fst-global-priority.bin` RETIRED 2026-08-06. Note the HF-bucket deletion is a release-time operator action                         | High, with a caveat          |
+| **1495** | `91e6f8b88` — `build-candidate.ts:311` `foldPostcodeExtract`. Code-complete. **The artifact lands at the next `gazetteer build candidate`**                                  | Close with the caveat stated |
 
 **Two issues look closed and are not.** #1539 and #1519 look closed by their commit subjects. `f2c9810b7` touches
-three files for 18 lines and its own message says the over-greed is _"now a NAMED failure mode
-… with its training change recorded"_ — recorded rather than fixed. #1516 is half done and **its title
+three files for 18 lines and its own message states that the 125-row over-greed is now a recorded failure
+mode (suffix-boundary, #1539) and that the training change that would address it is recorded. The behavior is recorded rather than
+fixed. #1516 is half done and **its title
 describes the half that is not**.
 
 ### (e) INFRA / PROCESS — 4
 
-#1123 (worktree isolation), #1492, #1523, #1528. #1492 is also in (a) because ROAD_TO_V9 named it a
+#1123 (worktree isolation), #1492, #1523, #1528. #1492 is also in (a) because ROAD_TO_V9 listed it as a
 release-check item.
 
 ### The stale board rather than the stale issues
 
-Epic #488's checkboxes carry four unchecked rows whose issues are closed: #473 and #375 and #294
+Epic #488's checkboxes show four unchecked rows whose issues are closed: #473 and #375 and #294
 (all COMPLETED 2026-08-05 with substantive receipts) and #379 (2026-07-06). The 2026-07-02 truth-pass
 note in that issue warns about the same drift in the other direction. The drift has built up again.
 
@@ -362,19 +365,19 @@ before it starts), **external-dependency** (waits on someone outside the project
 
 Tier 1 is US and FR only. This is the nearest bar and the gaps are mostly bounded.
 
-| #   | Gap                                                                                                                                            | Shape                    | Kind                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------ |
-| a1  | Re-score the competitive parity scorecard on model 9.0.0 (invariant 1 is unmet; the last one scores 5.0.0)                                     | single-lane              | bounded engineering                        |
-| a2  | Restore the five NOT-SCORED Run B bars — G1 harness, G2 reference, G5/G8 fixtures, G6 harness                                                  | single-lane              | bounded engineering                        |
-| a3  | Write the arena.perturb 78 → 66 delta into the release row, model card and a record; decide whether it is a regression or an instrument change | single-lane              | bounded engineering, then an operator call |
-| a4  | Fix #1539 (125 golden rows of suffix over-greed) — the training change is recorded                                                             | arc-with-preregistration | needs a training run                       |
-| a5  | Fix #1537 (famous-namesake candidate collapse) — pre-existing, upstream of intent                                                              | single-lane              | bounded engineering                        |
-| a6  | Close #1516 I1 — invariance runner on the pipeline path with per-row locale                                                                    | single-lane              | bounded engineering                        |
-| a7  | Rebuild and reship the stale FST (#1142 residual) and the candidate DB carrying #1495                                                          | single-lane              | bounded, plus a release action             |
-| a8  | Close #1492 — private symlink-overlay data root for CI                                                                                         | single-lane              | bounded engineering                        |
-| a9  | Publish a gauntlet results artifact and re-stamp `regression.db`; make "88/88" a measurement                                                   | single-lane              | bounded engineering                        |
-| a10 | Reconcile the `calibrate` default with the calibrated claim                                                                                    | single-lane              | one doc fix or one conditional flip        |
-| a11 | Move `us.street` from 75.2 toward the 0.90 parity target; `house_number` 0.9315 → 0.97                                                         | arc-with-preregistration | open research plus training                |
+| #   | Gap                                                                                                                                                 | Shape                    | Kind                                       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------ |
+| a1  | Re-score the competitive parity scorecard on model 9.0.0 (invariant 1 is unmet, and the last one scores 5.0.0)                                      | single-lane              | bounded engineering                        |
+| a2  | Restore the five NOT-SCORED Run B bars — G1 harness, G2 reference, G5/G8 fixtures, G6 harness                                                       | single-lane              | bounded engineering                        |
+| a3  | Write the arena.perturb 78 → 66 delta into the release row, model card and a record, then decide whether it is a regression or an instrument change | single-lane              | bounded engineering, then an operator call |
+| a4  | Fix #1539 (125 golden rows of suffix over-greed) — the training change is recorded                                                                  | arc-with-preregistration | needs a training run                       |
+| a5  | Fix #1537 (famous-namesake candidate collapse) — pre-existing, upstream of intent                                                                   | single-lane              | bounded engineering                        |
+| a6  | Close #1516 I1 — invariance runner on the pipeline path with per-row locale                                                                         | single-lane              | bounded engineering                        |
+| a7  | Rebuild and reship the stale FST (#1142 residual) and the candidate DB carrying #1495                                                               | single-lane              | bounded, plus a release action             |
+| a8  | Close #1492 — private symlink-overlay data root for CI                                                                                              | single-lane              | bounded engineering                        |
+| a9  | Publish a gauntlet results artifact and re-stamp `regression.db`; make "88/88" a measurement                                                        | single-lane              | bounded engineering                        |
+| a10 | Reconcile the `calibrate` default with the calibrated claim                                                                                         | single-lane              | one doc fix or one conditional flip        |
+| a11 | Move `us.street` from 75.2 toward the 0.90 parity target; `house_number` 0.9315 → 0.97                                                              | arc-with-preregistration | open research plus training                |
 
 a1 through a10 are bounded. **a11 is the one open research question on this bar**, and it is the
 oldest: the #492 stability-ceiling work established that `us.street` sits at an equilibrium set by
@@ -386,7 +389,7 @@ Everything in (a), plus:
 
 | #   | Gap                                                                                                                           | Shape       | Kind                                                                     |
 | --- | ----------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------ |
-| b1  | Re-run the three-way benchmark on 9.0.0; the standing result has Pelias ahead 88 to 80 @25 km                                 | single-lane | bounded engineering — **the most valuable single measurement available** |
+| b1  | Re-run the three-way benchmark on 9.0.0. The standing result has Pelias ahead 88 to 80 @25 km                                 | single-lane | bounded engineering — **the most valuable single measurement available** |
 | b2  | Precision rather than recall: 26% @1 km against Nominatim 77 / Pelias 71. The gap is address-point coverage rather than parse | multi-lane  | data acquisition, per-country                                            |
 | b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                                    | multi-lane  | data plus an extract                                                     |
 | b4  | #1529 — crossing-point computation. TIGER edges already back the interpolation DB                                             | single-lane | bounded engineering                                                      |
@@ -394,10 +397,10 @@ Everything in (a), plus:
 | b6  | Nominatim `limit` capped at 1; `viewbox`, `polygon_*`, structured `county`                                                    | single-lane | bounded engineering                                                      |
 | b7  | Photon `bbox` wire path; `osm_tag`/`layer` honored or removed from the schema                                                 | single-lane | bounded engineering                                                      |
 | b8  | libpostal `/expand` language handling                                                                                         | single-lane | bounded engineering                                                      |
-| b9  | Coverage: 27 sweep rows resolve to no result; 71 of 114 failures are class-1 namesake                                         | multi-lane  | data plus the #1039 country prior                                        |
+| b9  | Coverage: 27 sweep rows resolve to no result. 71 of 114 failures are class-1 namesake                                         | multi-lane  | data plus the #1039 country prior                                        |
 | b10 | The synthetic-id artifact rebuild that closes the 44.5% join disagreement                                                     | single-lane | bounded, but it is a full gazetteer rebuild                              |
 
-b2 and b9 are the substance; the rest is bounded work. **No item on this bar is blocked on research.**
+b2 and b9 are the substance. The rest is bounded work. **No item on this bar is blocked on research.**
 It is blocked on measurement (b1), on data (b2, b3, b9), and on finishing surfaces that were built to
 80% (b5–b8).
 
@@ -408,9 +411,9 @@ Everything above, plus:
 | #   | Gap                                                                                                                                                                     | Shape                                              | Kind                                                                     |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
 | c1  | JP serving path — char-path inference, weights packaging, the `ja-jp` overlay. The 0.9928 model exists and cannot be called                                             | arc-with-preregistration                           | bounded engineering, meaningful volume                                   |
-| c2  | Suggestion layer — **0 of 13 bars met**; no `suggest/` workspace; the C.4 attribution triple (`core` + `resolver-wof-sqlite` + `formatter`) blocks every downstream bar | multi-lane, then arc                               | bounded; §C.6 says explicitly no retrain needed                          |
-| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built and no code reads it                                                                         | single-lane mostly; B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                             |
-| c4  | Intent §4 — 4 kinds landed; blocked downstream on #1537 and on poi.db debt                                                                                              | single-lane                                        | bounded engineering                                                      |
+| c2  | Suggestion layer — **0 of 13 bars met**. No `suggest/` workspace. The C.4 attribution triple (`core` + `resolver-wof-sqlite` + `formatter`) blocks every downstream bar | multi-lane, then arc                               | bounded. §C.6 states explicitly that no retrain is needed                |
+| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built and no code reads it                                                                         | single-lane mostly. B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                             |
+| c4  | Intent §4 — 4 kinds landed. Blocked downstream on #1537 and on poi.db debt                                                                                              | single-lane                                        | bounded engineering                                                      |
 | c5  | KR, CN, TW parse                                                                                                                                                        | arc-with-preregistration                           | data acquisition first — KR has no adopted open path                     |
 | c6  | Record matching (#598 family)                                                                                                                                           | multi-lane                                         | **operator decision** — parked pending funding or a pilot                |
 | c7  | `@mailwoman/osm` publish, HK ALS, the Lite artifact line                                                                                                                | external-dependency                                | **ODbL counsel review, unretained**                                      |
@@ -418,10 +421,15 @@ Everything above, plus:
 | c9  | Secondary address support (#1100), locator[] (#295/#296), script-extract routing (#245)                                                                                 | arc-with-preregistration                           | schema changes ride retrains                                             |
 
 **The only actual external blocker across the whole project is c7** — the ODbL question holding
-`osm/`, and it has no counsel behind it. The dossier records the operator's position verbatim: _"do
-your best and I'll forward it over when the project actually pays for one."_ Two items in that
+`osm/`, and it has no counsel behind it. The dossier records the operator's position verbatim:
+
+```text
+do your best and I'll forward it over when the project actually pays for one.
+```
+
+Two items in that
 dossier (L4 — the repo contradicts itself on the WOF license, CC0 in the licensing pages against
-CC-BY 4.0 in `resolver-wof-sqlite/README.md` and the HF card; and L5) are fact-finding that needs no
+CC-BY 4.0 in `resolver-wof-sqlite/README.md` and the HF card, and L5) are fact-finding that needs no
 lawyer and can proceed today.
 
 ---
@@ -456,7 +464,7 @@ the designed fix and **none of those three bars has been run**.
 
 ### 5.3 The venue-name-reads-as-structure class
 
-The same failure shape recurs where a named place carries digits or a street-type word: the venue's
+The same failure shape recurs where a venue name contains digits or a street-type word: the venue's
 year read as a postcode, the venue fragment read as an outward code, `Pier 39`'s long-standing unit-tag
 quirk. The v9 sub-venue extract is the first training-side fix for it. The class is not resolved.
 
@@ -486,13 +494,13 @@ known, bounded data fix (ROAD_TO_V9 §5-C) that has not started.
 ### 5.6 Documentation drift at the repo root
 
 - `CHANGELOG.md` stops at **4.15.0** and links `docs/articles/releases.mdx`, which is missing.
-- `README.md` links `docs/articles/plan/` and `docs/articles/evals/`, and neither exists. It says
+- `README.md` links `docs/articles/plan/` and `docs/articles/evals/`, and neither exists. It states
   **"33 published packages"** where the release list holds 48, and it contains the **"Drop-in
   servers" section twice**.
 - `TODO.md` is frozen at 2026-05-25 and describes a training run as "in-flight."
 - `AGENTS.md` is wrong on `fastify` (a working 9.0.0 plugin rather than a name reservation) and on mcp's
   tool count.
-- The v9.0.0 release row states 121 country dirs; the tree has 115.
+- The v9.0.0 release row states 121 country dirs. The tree has 115.
 
 The #488 DoD ends with _"documentation a stranger can onboard from."_ The published site is in good
 shape. The first four files a stranger opens in the repo are not.
@@ -501,7 +509,7 @@ shape. The first four files a stranger opens in the repo are not.
 
 §5-B, tier B: _"the release notes state coverage directly (the 'what mailwoman does not cover'
 register)."_ No such register exists anywhere in the tree. The v9.0.0 release row names four
-territory rows and the truncation pair; it does not carry the 27 no-coordinate rows or the 114-row
+territory rows and the truncation pair. It does not list the 27 no-coordinate rows or the 114-row
 sweep failure taxonomy. **This is the one ROAD_TO_V9 B-tier item that did not land**, and it is the
 cheapest remaining item on the list.
 
@@ -520,7 +528,7 @@ This section states what the record shows, without extrapolation.
 
 **The method.** The project pre-registers bars, reverts falsified changes instead of shipping them,
 and writes verdicts down with the numbers that produced them. Twelve preregistration documents in
-`docs/superpowers/plans/` carry graded verdicts, including three that read NEGATIVE and stopped. The
+`docs/superpowers/plans/` record graded verdicts, including three that read NEGATIVE and stopped. The
 sp-vocab-prune arc was stopped by its own premise check. This practice is uncommon, and it made this
 review possible. Someone had already measured almost everything this review needed and written the
 measurement down.
@@ -528,7 +536,7 @@ measurement down.
 **The v9 anchor fix.** The #1467 root cause was that every training config used a 67,708-key anchor
 lookup with _zero letter-containing keys_, so the GB slot never received gradient. The fix was
 verified with Fisher mass on the GB slot at 11.28% against CA/JP exact-zero controls. gb-golden went 294 → 318
-of 318 across three registers; GB `dependent_locality` went 0 → 205/207. That is a real capability
+of 318 across three registers, and GB `dependent_locality` went 0 → 205/207. That is a real capability
 gain with a mechanism-level receipt rather than a metric that moved.
 
 **FR.** `fr.region` 44.1 → 81.2, `fr.cedex_real` 90.5 → 99.8, held-out BAN beating production at
@@ -564,7 +572,7 @@ whole life. Only the serving path is missing.
 
 **Bar (b), Pelias replacement: unknown, and the last measurement had mailwoman behind.** The next
 step is the measurement itself. Pelias led 88 to 80 @25 km forty-five days and two model majors ago.
-Precision at 1 km is the real gap (26 against 71), and it comes from address-point coverage rather
+Precision at 1 km is the largest measured gap (26 against 71), and it comes from address-point coverage rather
 than parsing. Re-running that benchmark on 9.0.0 costs no GPU and would tell this project more about
 its position than any other single task.
 
@@ -586,12 +594,12 @@ quarter of engineering. Each project claim about completion can then match a rec
 | Claim                          | Actual                                                                                                                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | "gauntlet 88/88"               | 88 is the count of **blocking** rows after six failing rows were demoted on 2026-08-05/06. The last measured run is #1525's **92/94 conditional, 177 tracked**. No results artifact exists |
-| "279/400 pass"                 | 400 candidates → 7 `partial_match` parked → **393 through the pipeline**; 279 pass = 71.0% of 393, 69.75% of 400                                                                           |
-| "45 namesake rows"             | No 45 anywhere. `bare_city_namesake` = **17**; the draft's class-1 (bare capital / namesake) = **71 of 114**                                                                               |
+| "279/400 pass"                 | 400 candidates → 7 `partial_match` parked → **393 through the pipeline**. 279 pass = 71.0% of 393, 69.75% of 400                                                                           |
+| "45 namesake rows"             | No 45 anywhere. `bare_city_namesake` = **17**. The draft's class-1 (bare capital / namesake) = **71 of 114**                                                                               |
 | "27 no-coordinate rows"        | Correct                                                                                                                                                                                    |
 | Ledger 9.0.0 `corpus_version`  | Copied verbatim from the 7.0.0 row (`v0.13.0-latam`); the model card and release row both say `v0.17.0-batch`. `training_steps: 8000` contradicts "step-60000" in both rows                |
 | Release row "121 country dirs" | 115 two-letter dirs plus `generalization/`                                                                                                                                                 |
-| README "33 published packages" | 48 in the release list; 53 workspaces                                                                                                                                                      |
+| README "33 published packages" | 48 in the release list, 53 workspaces                                                                                                                                                      |
 
 ## Sources
 

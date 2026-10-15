@@ -40,7 +40,7 @@ def run_tests(pattern: str = "") -> None:
 
 @app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=120)
 def debug_volume(config_name: str = "v1.4.0-charoffset.yaml") -> None:
-    """What a container actually sees on the volume, before and after `vol.reload()`.
+    """What a container sees on the volume, before and after `vol.reload()`.
 
     The two snapshots are the point: a file the CLI reports as present can be absent from a mount
     that started before it was committed. Their difference shows which of the two you

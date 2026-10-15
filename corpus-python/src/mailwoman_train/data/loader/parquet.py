@@ -45,12 +45,18 @@ def _file_row_iter(
     country_weights: dict[str, float],
     max_weight: float,
     coarse_filter: bool,
+    row_group_limit: int | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
     Applies the country-weight acceptance test and the coarse-label check when ``coarse_filter`` is set.
     It also checks per-row source equality when ``expected_source`` is given. A file can span sources,
     so without it the per-source iterator would yield rows from the wrong source.
+
+    ``row_group_limit`` caps the accepted rows taken from each row group. A caller that wants a small
+    sample of the file sets it, so the sample spreads over the file's row groups rather than coming
+    from the first one the shuffled order visits. A row group holds consecutive rows of the writer's
+    stream, and in a multi-source file that is one source's rows.
 
     Does **not** apply source weighting. That is the multinomial sampler in ``_raw_row_stream``, which
     makes the observed mix match ``source_weights`` exactly.
@@ -80,7 +86,10 @@ def _file_row_iter(
         span_cols = {c: t[c] for c in _SPAN_COLUMNS} if has_spans else None
         idx_order = list(range(t.num_rows))
         rng.shuffle(idx_order)
+        taken = 0
         for i in idx_order:
+            if row_group_limit is not None and taken >= row_group_limit:
+                break
             source = sources[i].as_py()
             if expected_source is not None and source != expected_source:
                 continue
@@ -112,8 +121,8 @@ def _file_row_iter(
                         "fallback to token labels"
                     )
                 # Empty is the quieter way a span-schema file lies: a writer that projects rows without
-                # the span triple emits `[]` for all three. Those values pass the null check above
-                # and train as all-`O`. A row whose BIO labels include a tag cannot honestly have no spans.
+                # the span triple emits `[]` for all three. Those values pass the `None` check above
+                # and train as all-`O`. A row whose BIO labels include a tag must have at least one span.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
                         f"corrupt row in {path} (row-group {rg}, raw={row['raw']!r}): "
@@ -122,6 +131,7 @@ def _file_row_iter(
                         "would train as all-O"
                     )
                 row.update(spans)
+            taken += 1
             yield row
 
 
@@ -136,8 +146,8 @@ def _source_iter(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from a sequence of parquet files, restricted to ``expected_source``.
 
-    Files, row-groups and row indices are all visited in shuffled order (see ``_file_row_iter``). One
-    row-group's worth of rows is held in memory at a time per source, so total RAM is bounded by the
+    Files, row-groups and row indices are all visited in shuffled order (see ``_file_row_iter``). The rows
+    of one row-group are held in memory at a time per source, so total RAM is bounded by the
     number of distinct sources rather than by any file-pool parameter.
 
     A draw reads one row-group. Rows are ordered by country within a source, so a draw sees only

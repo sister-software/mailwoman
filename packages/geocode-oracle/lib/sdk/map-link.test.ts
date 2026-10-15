@@ -57,8 +57,8 @@ describe("parseMapURL", () => {
 	})
 
 	it("reports an unresolvable URL rather than inventing a coordinate", () => {
-		// Never 0,0 and never a silent drop: a batch that loses rows quietly produces
-		// a case file whose denominator cannot be reconstructed.
+		// Never 0,0 and never a silent drop: a batch that loses rows without a report
+		// produces a case file whose denominator cannot be reconstructed.
 		const row = parseMapURL("https://maps.app.goo.gl/nope", "https://www.google.com/maps/search/nothing+here")
 
 		expect(row.resolved).toBe(false)

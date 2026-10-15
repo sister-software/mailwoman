@@ -52,12 +52,12 @@ across them:
 - Commercial / business
 - PO boxes
 - Intersections (no number)
-- Venues (parks, transit, named buildings)
+- Venues (parks, transit, buildings with names)
 - Single-line variants (no commas)
 - Multi-line variants (newlines)
 - Abbreviations (state, directional, road type)
 - Typos (single-char edits, ~5% of entries)
-- Accent variations (FR; US Spanish-origin names)
+- Accent variations (FR, and US Spanish-origin names)
 - Non-standard casing (all lower, all upper)
 - US-specific: ZIP vs ZIP+4, state name vs alpha-2, directional N/S/E/W/NW/etc.
 - FR-specific: CEDEX, arrondissement notation (Paris 8e ↔ 75008), particle
@@ -94,7 +94,7 @@ and directional initials. The same surface form plays different roles in a venue
 locality. For example, in "P'tit St. Denis Street Café" the venue's "St." is an honorific instead
 of a street_prefix.
 
-**`kryptonite/disambiguation`**: a locality alone (or a locality and region) that could resolve to
+**`kryptonite/disambiguation`**: a bare locality (or a locality and region) that could resolve to
 several real places. The ground truth matches what was written, even when a more famous place shares the name.
 
 **`graceful/typo`**: single-character edits or transpositions on a clean address, such as
@@ -106,12 +106,12 @@ commas without spaces, and dots as separators. These cases test token-boundary h
 **`graceful/whitespace`**: runs of multiple spaces inside the address. The model must collapse
 internal whitespace.
 
-**`graceful/no-commas`**: the address with separators stripped, which is common in legacy systems.
+**`graceful/no-commas`**: the address with separators stripped, a form common in legacy systems.
 
 **`graceful/label-prefix`** / **`graceful/contamination`** / **`graceful/trailing-junk`**:
 extraneous noise around the address. Noise tokens should be labeled `O`.
 
-**`graceful/attention`**: "c/o" forms, which belong to the `attention` component.
+**`graceful/attention`**: "c/o" forms. They belong to the `attention` component.
 
 **`graceful/unit`**: non-standard unit designators (hyphenated, hash-prefixed, or multi-part
 building and suite).
@@ -119,12 +119,12 @@ building and suite).
 **`graceful/country`**: dotted "U.S.A." variants on the country line.
 
 The per-entry `notes` field also describes _what the model should ideally do_ on each adversarial
-case. For some cases, a partial parse with a low-confidence flag is the right answer instead of a
+case. For some cases, a partial parse with a low-confidence flag is the expected answer instead of a
 full but wrong parse.
 
 ## Why hand-labeled rather than synthesized?
 
-Phase 1 corpus rows come from public data sources (WOF, BAN, OSM, …) and carry adapter-level
+Phase 1 corpus rows come from public data sources (WOF, BAN, OSM, …) and have adapter-level
 ground truth. Those sources have their own biases: BAN over-represents urban France, and WOF is
 mostly coarse. The golden set tests for those biases. It is small enough for a human reviewer to
 inspect and broad enough to catch class regressions.

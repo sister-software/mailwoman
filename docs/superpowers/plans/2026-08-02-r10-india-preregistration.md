@@ -16,20 +16,20 @@ this tree, so the figure could not be audited, only re-derived. Re-derived throu
 | **live only** (`is_current != 0 AND is_deprecated = 0`) | **86,754**  |
 | live + parent-alias expansion (shipped)                 | **175,744** |
 
-**53.4% of India's borough/neighborhood nodes carry `edtf:deprecated`** (100,860 of 189,002),
+**53.4% of India's borough/neighborhood nodes have `edtf:deprecated`** (100,860 of 189,002),
 against 0.0% for DE, 0.1% for GB and FR, and 2.5% for US. India is an extreme outlier, so a raw-repo
 count overstates its usable yield by roughly 2×. The operator suspected that our WOF implementation
 already handled deprecation, and checking that suspicion found the problem. The implementation
 existed, but the pair extraction was not using it (fixed separately, #1411).
 
 India is therefore **not** 6× GB. Live and alias-expanded, it has 175,744 pairs against GB's 30,825.
-It is still the campaign's largest instance and still worth the rebuild, but the direct multiple is
+It is still the campaign's largest instance and still justifies the rebuild, but the direct multiple is
 about 5.7× with aliases and about 2.8× without them.
 
-## Parent-alias expansion, and why India alone
+## Parent-alias expansion, and why only India
 
 `12 MG Road, Indiranagar, Bengaluru` emitted no dependent locality even with the index loaded. WOF stores
-**Bangalore**, while the address says **Bengaluru**. The city was renamed in 2014, and the `names`
+**Bangalore**, while the address reads **Bengaluru**. The city was renamed in 2014, and the `names`
 table holds Bengaluru as an `eng` variant rather than the preferred name. The pair existed but could
 never fire.
 
@@ -58,7 +58,7 @@ too strict here, because the rows a rename leaves behind are the non-official on
   560038` previously fused the locality as `"Indiranagar Bengaluru Karnataka"` and emitted no
   dependent locality. It now yields `dependent_locality=Indiranagar, locality=Bengaluru`.
 
-## Consolidation carried in the same change
+## Consolidation included in the same change
 
 DE moved from its checked-in 85k-line pairs file to the shared `--borough-db` extractor. The data had
 two homes, and one could go stale relative to the other. `data/gazetteer/de-pairs-v1.jsonl` is
@@ -71,7 +71,7 @@ India. It passed **verify 21/21** and was sealed, and the previous artifact is p
 `wof/superseded/`. Before the swap, a comparison confirmed that the change was additive: GB/US/DE/FR
 live pair counts were identical across old and new, and India went from 0 to 86,754.
 
-## What the scorecard says after the rebuild, and why it still says "locality"
+## What the scorecard reports after the rebuild, and why it still reports "locality"
 
 The regenerated `gazetteer granularity` report against the swapped artifact changes India's `source` column
 from `overture (rebuild pending)` to `wof-repo` and fills its dependent-locality rung with **88,142

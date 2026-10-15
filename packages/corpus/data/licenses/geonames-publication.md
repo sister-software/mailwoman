@@ -6,7 +6,7 @@
 - Publisher: GeoNames
 - Version stated in the text: Creative Commons Attribution 4.0, in the export readme
 
-GeoNames folds into the `candidate` runtime bundle, whose record names its terms. Two of the
+GeoNames folds into the `candidate` runtime bundle. That bundle's record identifies its terms. Two of the
 publisher's own pages state them and only one gives a version.
 
 ## What the export readme states, quoted in full
@@ -24,11 +24,11 @@ publisher's own pages state them and only one gives a version.
 The about page names no version. The readme beside the files themselves names 4.0. That readme travels
 with the data, so the bundle's record states 4.0 and names this file.
 
-Both sources matter because the two pages give different information. The about page alone leaves the
-version unknown. Creative Commons Attribution's conditions differ across versions.
+Both sources matter because the two pages give different information. Read without the readme, the about
+page leaves the version unknown. Creative Commons Attribution's conditions differ across versions.
 
 ## What this text does not settle
 
 Which GeoNames records reached the `candidate` bundle, and therefore what has to be attributed for
-which rows. GeoNames itself integrates data from other sources, which its about page states in those
-words, and this text makes no statement about the terms of those. No election is made here.
+which rows. GeoNames itself integrates data from other sources. Its about page states that in those
+words. This text makes no statement about the terms of those. No election is made here.

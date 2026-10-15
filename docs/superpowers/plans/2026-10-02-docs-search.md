@@ -4,7 +4,7 @@
 
 **Goal:** Replace Algolia DocSearch on `https://mailwoman.ai` with a gzip-compressed SQLite FTS5 index written by the docs build and queried in the browser through the sqlite-wasm worker the repository already ships, behind a native-element search modal in `@mailwoman/react`.
 
-**Architecture:** The docs build extracts heading-scoped records from the built HTML and writes `search-index.db.gz`. The browser opens it whole in the existing range worker, which gains a `whole` open strategy with `DecompressionStream`. Pure query code in `docs/src/search/` runs BM25 lexical search with prefix matching and vocabulary-based typo correction over a two-method `SearchDatabase` interface, so the same code is tested in Node over `node:sqlite`. The modal in `@mailwoman/react` takes a `search` function and owns no data access.
+**Architecture:** The docs build extracts heading-scoped records from the built HTML and writes `search-index.db.gz`. The browser opens it whole in the existing range worker. The worker gains a `whole` open strategy with `DecompressionStream`. Pure query code in `docs/src/search/` runs BM25 lexical search with prefix matching and vocabulary-based typo correction over a two-method `SearchDatabase` interface, so the same code is tested in Node over `node:sqlite`. The modal in `@mailwoman/react` takes a `search` function and owns no data access.
 
 **Tech Stack:** Docusaurus 3 plugin API, `htmlparser2`, `node:sqlite`, `node:zlib`, `@sqlite.org/sqlite-wasm` 3.53, React 19, Vitest (node and browser modes), Playwright.
 
@@ -19,8 +19,8 @@
 - Node-side filesystem access goes through `@mailwoman/core/fs`; paths use `path-ts`.
 - Browser code imports no Node builtin. The worker file `range-worker.ts` is bundled for the browser.
 - The index file is `search-index.db.gz` at the site root. Pages are emitted as `<route>.html`.
-- Lexical query reads 40 rows; `limit` is 1 to 20 with default 8; the modal caps text at 200 characters before a query runs.
-- Typo correction: 10 candidates from `terms_trigram`; accepted when the Damerau-Levenshtein distance is at most 2, and at most 1 for a token under 6 characters; only tokens of at least 3 characters are corrected.
+- Lexical query reads 40 rows. `limit` is 1 to 20 with default 8. The modal caps text at 200 characters before a query runs.
+- Typo correction: 10 candidates from `terms_trigram`. A candidate is accepted when the Damerau-Levenshtein distance is at most 2, and at most 1 for a token under 6 characters. Only tokens of at least 3 characters are corrected.
 - The modal uses `<dialog>` with `showModal()`, `<input type="search">` with `role="combobox"`, and a `role="listbox"` result list. It adds no focus-trap code and no `role="dialog"` attribute.
 - Shell commands may not write files inside the repository. Create and edit files with the file-editing tool.
 - Stage by path. Never run `git add -A`. Run `git add` on a new file before `yarn lint`.
@@ -31,7 +31,7 @@
 2. Text of punctuation only (`--`, `***`) returns zero hits without a query reaching the database. Test in Task 3.
 3. A response for an earlier query that resolves after a later query's response does not replace the later results in the modal. Test in Task 5.
 4. A page with two headings sharing an `id`, or a heading without an `id`, yields distinct record ids and the build succeeds. Test in Task 2.
-5. The gzip file is corrupt or truncated on the server: the worker rejects the open with the SQLite error text, and the modal states that search is unavailable. The worker half runs only in a browser and is covered by the Playwright test in Task 6; the modal's failure text is tested in Task 5.
+5. The gzip file is corrupt or truncated on the server: the worker rejects the open with the SQLite error text, and the modal states that search is unavailable. The worker half runs only in a browser and is covered by the Playwright test in Task 6. The modal's failure text is tested in Task 5.
 
 ---
 
@@ -88,7 +88,7 @@ packages/react/lib/search/search.css
 
 - Produces: `openWholeDatabase(databaseURL: string, runtimeBaseURL: string): Promise<RangeDatabase>`; `OpenRequest.strategy: "range" | "whole"`.
 
-Read `range-worker.ts` in full first; its `open` handler installs the range VFS and opens the database by name. The whole strategy skips the VFS.
+Read `range-worker.ts` in full first. Its `open` handler installs the range VFS and opens the database by name. The whole strategy skips the VFS.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -166,12 +166,12 @@ describe("the open request", () => {
 })
 ```
 
-Check how this package's other tests run (its `vitest.config.ts` or the root sweep) and whether `Worker` and `location` exist in that environment; the stubs assume they do not.
+Check how this package's other tests run (its `vitest.config.ts` or the root sweep) and whether `Worker` and `location` exist in that environment. The stubs assume they do not.
 
 - [ ] **Step 2: Run the test and confirm it fails**
 
 Run: `yarn vitest run packages/resolver-wof-wasm/lib/httpvfs/database.test.ts`
-Expected: FAIL. `openWholeDatabase` is not exported, and the posted request has no `strategy`.
+Expected: fail. `openWholeDatabase` is not exported, and the posted request has no `strategy`.
 
 - [ ] **Step 3: Extend the protocol and the worker**
 
@@ -258,12 +258,12 @@ export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: str
 - [ ] **Step 4: Run the test and the package's existing tests**
 
 Run: `yarn vitest run packages/resolver-wof-wasm/lib/httpvfs`
-Expected: PASS, including the existing `resolver.test.ts`, `street.test.ts` and `candidate-parity.test.ts`.
+Expected: pass, including the existing `resolver.test.ts`, `street.test.ts` and `candidate-parity.test.ts`.
 
 - [ ] **Step 5: Compile and commit**
 
 Run: `yarn tsc -b packages/resolver-wof-wasm`
-Expected: zero errors, and `packages/resolver-wof-wasm/out/httpvfs/range-worker.js` is rewritten; the docs plugin stages this file.
+Expected: zero errors, and `packages/resolver-wof-wasm/out/httpvfs/range-worker.js` is rewritten. The docs plugin stages this file.
 
 ```bash
 git add packages/resolver-wof-wasm/lib/httpvfs/worker-protocol.ts packages/resolver-wof-wasm/lib/httpvfs/range-worker.ts packages/resolver-wof-wasm/lib/httpvfs/database.ts packages/resolver-wof-wasm/lib/httpvfs/database.test.ts
@@ -456,7 +456,7 @@ describe("extractRecords", () => {
 - [ ] **Step 3: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/plugins/search-index/extract.test.ts`
-Expected: FAIL. `./extract.ts` does not exist.
+Expected: fail. `./extract.ts` does not exist.
 
 - [ ] **Step 4: Implement the extractor**
 
@@ -597,7 +597,7 @@ The `mailwoman/prefer-home` lint may direct the HTML parsing to `@mailwoman/core
 - [ ] **Step 5: Run the test and confirm it passes**
 
 Run: `yarn vitest run docs/plugins/search-index/extract.test.ts`
-Expected: PASS, 8 tests.
+Expected: pass, 8 tests.
 
 - [ ] **Step 6: Write the fixtures and the failing writer test**
 
@@ -744,7 +744,7 @@ Check the names of the binary reader and writer in `@mailwoman/core/fs/readers` 
 - [ ] **Step 7: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/plugins/search-index/write-index.test.ts`
-Expected: FAIL. `./write-index.ts` does not exist.
+Expected: fail. `./write-index.ts` does not exist.
 
 - [ ] **Step 8: Implement the schema and the writer**
 
@@ -899,12 +899,12 @@ export async function writeSearchIndex(
 }
 ```
 
-`packages/sqlite/AGENTS.md` says whether the repository wraps `node:sqlite`'s `DatabaseSync`; use that wrapper if it exists and accepts raw `exec`.
+`packages/sqlite/AGENTS.md` states whether the repository wraps `node:sqlite`'s `DatabaseSync`. Use that wrapper if it exists and accepts raw `exec`.
 
 - [ ] **Step 9: Run the tests and confirm they pass**
 
 Run: `yarn vitest run docs/plugins/search-index`
-Expected: PASS, 11 tests.
+Expected: pass, 11 tests.
 
 - [ ] **Step 10: Write the plugin and register it**
 
@@ -967,7 +967,7 @@ Add `"./plugins/search-index/plugin.ts",` to the `plugins` array in `docs/docusa
 - [ ] **Step 11: Build the docs and record the counts**
 
 Run: `yarn workspace @mailwoman/docs build`
-Expected: the log line `search-index: N records from M pages, X raw, Y gzip` and the file `docs/build/search-index.db.gz`. The probe build produced 2,173 records from 181 pages, 4.06 MB raw; a count far from that means the route-to-file mapping skipped pages.
+Expected: the log line `search-index: N records from M pages, X raw, Y gzip` and the file `docs/build/search-index.db.gz`. The probe build produced 2,173 records from 181 pages, 4.06 MB raw. A count far from that means the route-to-file mapping skipped pages.
 
 - [ ] **Step 12: Commit**
 
@@ -986,9 +986,9 @@ git commit -m "Write a gzip SQLite search index from the docs build (N records f
 
 **Interfaces:**
 
-- Consumes: `insertRecords`, `SCHEMA_SQL`, `FILL_SQL`, `FIXTURE_RECORDS` from Task 2; the types.
+- Consumes: `insertRecords`, `SCHEMA_SQL`, `FILL_SQL`, `FIXTURE_RECORDS` from Task 2, and the types.
 - Produces from `database.ts`: `interface SearchDatabase { query<Row>(sql: string, parameters?: readonly SQLValue[]): Promise<Row[]> }`, `type SQLValue = string | number | bigint | Uint8Array | null`.
-- Produces from `database.node.ts` (tests only; imported by no browser module): `nodeSearchDatabase(db: DatabaseSync): SearchDatabase`, `fixtureDatabase(records: readonly SearchRecord[]): SearchDatabase`.
+- Produces from `database.node.ts` (tests only, imported by no browser module): `nodeSearchDatabase(db: DatabaseSync): SearchDatabase`, `fixtureDatabase(records: readonly SearchRecord[]): SearchDatabase`.
 - Produces from `lexical.ts`: `queryTokens(text: string): string[]`, `quoteTerm(text: string): string`, `matchExpression(tokens: readonly string[]): string | undefined`, `lexicalRows(db: SearchDatabase, tokens: readonly string[]): Promise<SearchRecord[]>`, `LEXICAL_ROWS = 40`.
 - Produces from `correct.ts`: `correctTokens(db: SearchDatabase, tokens: readonly string[]): Promise<string[] | undefined>` (undefined when no token changed), `damerauLevenshtein(a: string, b: string): number`.
 - Produces from `snippet.ts`: `snippet(content: string, tokens: readonly string[]): { snippet: string; highlights: [number, number][] }`, `SNIPPET_LENGTH = 160`.
@@ -1064,7 +1064,7 @@ describe("lexicalRows", () => {
 - [ ] **Step 2: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/src/search/lexical.test.ts`
-Expected: FAIL. The modules do not exist.
+Expected: fail. The modules do not exist.
 
 - [ ] **Step 3: Implement `database.ts`, `database.node.ts` and `lexical.ts`**
 
@@ -1198,7 +1198,7 @@ export async function lexicalRows(db: SearchDatabase, tokens: readonly string[])
 - [ ] **Step 4: Run the test and confirm it passes**
 
 Run: `yarn vitest run docs/src/search/lexical.test.ts`
-Expected: PASS, 17 tests. The error message of a failing syntax case contains the token that reached the parser unquoted; fix `queryTokens` or `quoteTerm` and leave the case list as it is.
+Expected: pass, 17 tests. The error message of a failing syntax case contains the token that reached the parser unquoted. Fix `queryTokens` or `quoteTerm` and leave the case list as it is.
 
 - [ ] **Step 5: Write the failing correction test**
 
@@ -1258,12 +1258,12 @@ describe("correctTokens", () => {
 })
 ```
 
-Confirm the stemmed vocabulary against the fixture database with `SELECT term FROM terms` before trusting the expectations above; adjust an expected term to what the porter tokenizer stores, and keep the behavior: a corrected token is a vocabulary term, and the primary query stems it again.
+Confirm the stemmed vocabulary against the fixture database with `SELECT term FROM terms` before trusting the expectations above. Adjust an expected term to what the porter tokenizer stores, and keep the behavior: a corrected token is a vocabulary term, and the primary query stems it again.
 
 - [ ] **Step 6: Run the test and confirm it fails**
 
 Run: `yarn vitest run docs/src/search/correct.test.ts`
-Expected: FAIL. `./correct.ts` does not exist.
+Expected: fail. `./correct.ts` does not exist.
 
 - [ ] **Step 7: Implement `correct.ts`**
 
@@ -1363,7 +1363,7 @@ export async function correctTokens(db: SearchDatabase, tokens: readonly string[
 - [ ] **Step 8: Run the test and confirm it passes**
 
 Run: `yarn vitest run docs/src/search/correct.test.ts`
-Expected: PASS, 11 tests.
+Expected: pass, 11 tests.
 
 - [ ] **Step 9: Write the failing snippet test, then implement**
 
@@ -1415,7 +1415,7 @@ describe("snippet", () => {
 ```
 
 Run: `yarn vitest run docs/src/search/snippet.test.ts`
-Expected: FAIL. `./snippet.ts` does not exist.
+Expected: fail. `./snippet.ts` does not exist.
 
 `docs/src/search/snippet.ts`:
 
@@ -1469,7 +1469,7 @@ export function snippet(
 ```
 
 Run: `yarn vitest run docs/src/search/snippet.test.ts`
-Expected: PASS, 5 tests.
+Expected: pass, 5 tests.
 
 - [ ] **Step 10: Write the failing search test**
 
@@ -1532,7 +1532,7 @@ describe("search", () => {
 ```
 
 Run: `yarn vitest run docs/src/search/search.test.ts`
-Expected: FAIL. `./search.ts` does not exist.
+Expected: fail. `./search.ts` does not exist.
 
 - [ ] **Step 11: Implement `search.ts`**
 
@@ -1610,7 +1610,7 @@ export async function search(db: SearchDatabase, text: string, limit = DEFAULT_L
 - [ ] **Step 12: Run the whole query suite and commit**
 
 Run: `yarn vitest run docs/src/search docs/plugins/search-index`
-Expected: PASS for every file.
+Expected: pass for every file.
 
 ```bash
 git add docs/src/search
@@ -1706,7 +1706,7 @@ describe("the acceptance list", () => {
 - [ ] **Step 2: Run it against the build from Task 2**
 
 Run: `yarn vitest run docs/src/search/search.integration.test.ts`
-Expected: PASS, 6 tests. For a failing row, print the first eight hits with their hierarchy before changing anything, and name which stage ranks the expected page low: the `bm25` order with the 10:1 column weights, the correction, or the collapse. Change the weights in `lexical.ts` only when the `bm25` order is the cause, and rerun `lexical.test.ts` afterward. If an expected URL is absent from the build, correct the spec's table and this list to the published URL and say so in the commit message.
+Expected: pass, 6 tests. For a failing row, print the first eight hits with their hierarchy before changing anything, and name which stage ranks the expected page low: the `bm25` order with the 10:1 column weights, the correction, or the collapse. Change the weights in `lexical.ts` only when the `bm25` order is the cause, and rerun `lexical.test.ts` afterward. If an expected URL is absent from the build, correct the spec's table and this list to the published URL and say so in the commit message.
 
 - [ ] **Step 3: Commit**
 
@@ -1876,7 +1876,7 @@ test("shows the corrected query, and announces zero hits and a failure in the li
 - [ ] **Step 2: Run the test and confirm it fails**
 
 Run: `yarn workspace @mailwoman/react test:browser lib/search/SearchModal.test.tsx`
-Expected: FAIL. `@mailwoman/react/search/SearchModal` cannot be resolved.
+Expected: fail. `@mailwoman/react/search/SearchModal` cannot be resolved.
 
 - [ ] **Step 3: Implement the modal**
 
@@ -2180,12 +2180,12 @@ export type { SearchHit, SearchRecord, SearchResponse } from "./search/types.ts"
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `yarn workspace @mailwoman/react test:browser lib/search/SearchModal.test.tsx`
-Expected: PASS, 6 tests.
+Expected: pass, 6 tests.
 
 - [ ] **Step 5: Register exports, lint and commit**
 
 Run: `git add packages/react/lib/search packages/react/lib/search.ts && yarn lint`
-Expected: the `workspace-exports` check reports the missing `./search` entries; apply the fix it names, rerun `yarn lint`, and expect zero findings under `packages/react`.
+Expected: the `workspace-exports` check reports the missing `./search` entries. Apply the fix it names, rerun `yarn lint`, and expect zero findings under `packages/react`.
 
 ```bash
 git commit -m "Add a docs search modal on a native dialog and an ARIA combobox" -- packages/react
@@ -2347,7 +2347,7 @@ Then check in a browser with the Chrome DevTools tools:
 
 1. `Ctrl+K` opens the dialog with focus in the field.
 2. The network panel shows one request for `/search-index.db.gz` whose size is near the gzip size the build logged, and no second request for it after the dialog is closed and reopened.
-3. `Escape` closes the dialog and focus returns to the Search button; a backdrop click closes it.
+3. `Escape` closes the dialog and focus returns to the Search button. A backdrop click closes it.
 4. `git grep -niE "algolia|docsearch" -- docs/docusaurus.config.ts docs/src docs/package.json` prints zero lines.
 
 Run the `chrome-devtools-mcp:a11y-debugging` audit on the open dialog and fix each finding in `packages/react/lib/search/`.

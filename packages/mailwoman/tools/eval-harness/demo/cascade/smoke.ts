@@ -33,6 +33,7 @@
  *   `@mailwoman/core/decoder`: the same functions the browser runtime calls, so this measures the real cascade.
  */
 
+import { CountryISO2 } from "@mailwoman/codex/country/codes"
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -138,7 +139,7 @@ export async function demoCascadeSmoke(
 	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
 	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
 	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
-	// loads only when the leg actually runs.
+	// loads only when the leg runs.
 	// In a clean install without the package the leg fails here, loudly, with the import in the message.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = PathBuilder.from(options.stageDir || wofHotStageDir())
@@ -191,7 +192,8 @@ export async function demoCascadeSmoke(
 
 	const postcodeBinaries = (
 		await Promise.all(
-			["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"].map(async (f) => {
+			Object.values(CountryISO2).map(async (cc) => {
+				const f = `postcode-${cc.toLowerCase()}.bin`
 				const p = STAGE(f)
 
 				return { p, exists: await pathExists(p) }

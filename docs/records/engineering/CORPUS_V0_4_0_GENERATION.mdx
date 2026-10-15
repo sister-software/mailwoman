@@ -9,7 +9,7 @@ for the conceptual framing and with [`OPERATIONS.md`](../plan/reference/OPERATIO
 ## Scope
 
 corpus-v0.4.0 = corpus-v0.3.0 + DeepSeek-generated rows. The v0.3.0 parquet files are not
-re-emitted; the v0.4.0 MANIFEST points at the same on-disk parquet files plus the new
+re-emitted. The v0.4.0 MANIFEST points at the same on-disk parquet files plus the new
 kryptonite parquet file(s).
 
 Two row classes are in scope for the v0.5.0 plan. Both are now shipped — kryptonite in
@@ -67,20 +67,20 @@ $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/
 | Timeout        | 300s per call                                  |
 
 The OpenAI-compatible Chat Completions schema is used directly via stdlib `urllib` —
-no SDK dependency. 429 / 5xx are retried; 4xx (other) bubble out as fatal.
+no SDK dependency. 429 / 5xx are retried. 4xx (other) bubble out as fatal.
 
 ### Concurrency + rate
 
 Default `--concurrency 15`, `--batch-size 50`. Wall-clock observation on the production
 run: ~12 rows/s sustained, dominated by DeepSeek server latency rather than client
-throughput. 5,000 rows takes ~7 minutes. No rate-limit headers are surfaced; if the API
+throughput. 5,000 rows takes ~7 minutes. No rate-limit headers are surfaced. If the API
 ever returns 429 the backoff loop handles it.
 
 ### License hygiene
 
 Raw DeepSeek API responses are AGPL-compatible for the operator's use case (no
 output-source-attribution constraints from DeepSeek's terms as of 2026-05-23). Every
-emitted row carries:
+emitted row records:
 
 - `license: "Synthetic (DeepSeek-v4-flash, AGPL-compatible)"`
 - `synth.method: "deepseek-kryptonite:<category>"` (or `deepseek-translit:<script>`)
@@ -114,18 +114,18 @@ The generator's `KRYPTONITE_CATEGORIES` list defines 10 adversarial flavors, eac
 a category id, a description, 2-3 hand-written seed examples, and a weight that
 allocates the total budget proportionally:
 
-| Category                  | Description                                                          | Weight |
-| ------------------------- | -------------------------------------------------------------------- | ------ |
-| `venue-shadow-region`     | Venue brand contains a region-like token; actual region is elsewhere | 1.0    |
-| `locality-shadow-country` | US locality shadows a famous foreign city (Paris TX, Moscow ID)      | 1.0    |
-| `mid-position-postcode`   | Postcode appears between locality and country rather than at the end | 1.0    |
-| `repeated-token`          | Same token in venue and locality (Buffalo Buffalo, Walla Walla)      | 0.9    |
-| `abbrev-collision`        | State abbreviation collides with a venue/street token                | 0.8    |
-| `saint-shadow`            | Saint X / St. X colliding with a famous European saint-name city     | 0.8    |
-| `compass-prefix`          | Compass-prefixed locality whose base name is a famous other place    | 0.7    |
-| `region-shadow-venue`     | Venue brand embeds a US state name as a token                        | 0.7    |
-| `french-saint`            | FR equivalent of saint-shadow                                        | 0.7    |
-| `po-box`                  | PO Box intermixed with street-style tokens                           | 0.5    |
+| Category                  | Description                                                                  | Weight |
+| ------------------------- | ---------------------------------------------------------------------------- | ------ |
+| `venue-shadow-region`     | Venue brand contains a region-like token, but the actual region is elsewhere | 1.0    |
+| `locality-shadow-country` | US locality shadows a famous foreign city (Paris TX, Moscow ID)              | 1.0    |
+| `mid-position-postcode`   | Postcode appears between locality and country rather than at the end         | 1.0    |
+| `repeated-token`          | Same token in venue and locality (Buffalo Buffalo, Walla Walla)              | 0.9    |
+| `abbrev-collision`        | State abbreviation collides with a venue/street token                        | 0.8    |
+| `saint-shadow`            | Saint X / St. X colliding with a famous European saint-name city             | 0.8    |
+| `compass-prefix`          | Compass-prefixed locality whose base name is a famous other place            | 0.7    |
+| `region-shadow-venue`     | Venue brand embeds a US state name as a token                                | 0.7    |
+| `french-saint`            | FR equivalent of saint-shadow                                                | 0.7    |
+| `po-box`                  | PO Box intermixed with street-style tokens                                   | 0.5    |
 
 The substring-match invariant (every component value must appear verbatim in `raw`) is
 enforced in the system prompt **and** revalidated locally before the row is committed
@@ -147,7 +147,7 @@ prompt or substring-match regression and should be investigated before commit.
 
 ## Split policy
 
-All kryptonite rows land in **train**. Synthetic adversarial data is augmentation; it
+All kryptonite rows land in **train**. Synthetic adversarial data is augmentation. It
 must not appear in val or test where it would inflate the eval against itself. The
 v0.3.0 splitter's locality-holdout policy (`corpus/src/split.ts`) does not apply —
 kryptonite rows have no natural locality boundary and are not produced by the holdout
@@ -167,7 +167,7 @@ npx tsx corpus/scripts/audit.ts \
 The audit reports per-source parquet-file counts and (with `--config`) effective sample
 weights. `deepseek-kryptonite` is now in `KNOWN_SOURCE_PREFIXES`. Expected:
 1 train parquet file with `source: "deepseek-kryptonite"`, sub-1% of the total (the
-v0.3.0 baseline has 674 train parquet files; one more is noise at the audit level).
+v0.3.0 baseline has 674 train parquet files, so one more is noise at the audit level).
 
 ## Transliteration generation (Thread B2)
 
@@ -187,9 +187,9 @@ v0.3.0 baseline has 674 train parquet files; one more is noise at the audit leve
 
 This section records the run as it happened. The generator stamped each target script's locale
 **and country** on every row it produced, so a US address rendered in katakana was written with
-`country: "JP"`, `locale: "ja-JP"`. The rows reached no model — every recipe reading corpus-v0.4.0
-weighted US and FR alone, and the training loader drops a row whose country carries no weight — but
-the mapping is wrong and a re-run under it would be accepted by a CJK recipe, which admits `JP: 1.0`.
+`country: "JP"`, `locale: "ja-JP"`. The rows reached no model. Every recipe reading corpus-v0.4.0
+weighted only US and FR, and the training loader drops a row whose country has no weight. The
+mapping is still wrong, and a CJK recipe that admits `JP: 1.0` would accept a re-run under it.
 
 A transliterated row now keeps the **seed's** country and locale and names its surface separately, in
 `surface_script` (ISO 15924, `Jpan`) and `surface_language` (a language subtag with no region, `ja`).
@@ -199,7 +199,7 @@ Do not reconstruct the table above from this page. See
 :::
 
 - Target row count: 15K seeds × 5 scripts = ~75K transliterations. The original plan
-  said ~50K; the seed pool grew during sampling and the upper bound is what fits the
+  said ~50K. The seed pool grew during sampling and the upper bound is what fits the
   v0.5.0 byte-fallback budget on Thread A.
 
 ### Mode + invocation
@@ -235,14 +235,14 @@ rate are pinned in the Changelog below.
 
 Each batch is built per-script (not per-seed): one chat completion handles 50 seeds in
 one target script. The response is JSONL keyed by `i` (batch index 0..49). Substring
-validation rejects malformed transliterations before commit; rejection rate in initial
-prompt-engineering smoke was ~3% — acceptable, but the prompt is worth tuning before
+validation rejects malformed transliterations before commit. The rejection rate in the initial
+prompt-engineering smoke was ~3%. That rate is acceptable, but tune the prompt before
 the production 75K pass.
 
 ### Cost + wall time estimate
 
 - 75K rows / 50 per batch = 1,500 batches.
-- Per-batch latency is API-dominated; with reasoning headroom (see below), 30–60 s.
+- Per-batch latency is API-dominated. With reasoning headroom (see below), 30–60 s.
 - Wall time at conc=15: ~1,500 batches × 45 s / 15 ≈ 75 min on a clean run.
 
 ### `max_tokens` and the reasoning budget
@@ -259,7 +259,7 @@ also marks `finish_reason=length` batches with a `!RETRY:` prefix so they don't 
 and get retried on subsequent runs — defense in depth for the rare batches that still
 truncate at 60K.
 
-This budget reasoning is transliteration-specific; the kryptonite mode at `max_tokens=20000`
+This budget reasoning is transliteration-specific. The kryptonite mode at `max_tokens=20000`
 remains correct because English-only ASCII output uses ~1 token per row character and 50
 rows fit comfortably.
 
@@ -273,8 +273,8 @@ rows fit comfortably.
 (Thread B2 translit-<slug> extracts)`.
 4. Migrates v0.3.0 parquet descriptors in MANIFEST from `$MAILWOMAN_DATA_ROOT/...`
    to `/data/...`, the form that container loaders resolve at training time. The on-disk
-   bytes are unchanged; only the path strings in MANIFEST move. (Thread B's MANIFEST mixed
-   the two forms; this PR canonicalizes.)
+   bytes are unchanged. Only the path strings in MANIFEST move. (Thread B's MANIFEST mixed
+   the two forms, and this PR canonicalizes them.)
 5. `KNOWN_SOURCE_PREFIXES` in `audit.ts` already contains the five `deepseek-translit-*`
    slugs from Thread B — no audit.ts edit needed.
 
@@ -283,11 +283,11 @@ rows fit comfortably.
 - **Cross-script seed pollution.** If the seed pool is biased (e.g. all FR seeds are
   Île-de-France because the BAN sampling skewed there), the resulting transliterations
   would teach the tokenizer about that bias 5× over. The current staging files were
-  sampled stratified by `source` only. Region stratification is deferred — accepted as
-  a known limitation of this pass; can be revisited if Thread A's byte-fallback eval
+  sampled stratified by `source` only. Region stratification is deferred and accepted as
+  a known limitation of this pass. Revisit it if Thread A's byte-fallback eval
   surfaces a regional skew.
-- **Whitespace-tokenizer interaction with CJK.** Alignment uses the whitespace tokenizer,
-  which treats space-less CJK as a single token. The substring invariant still holds
+- **Whitespace-tokenizer interaction with CJK.** Alignment uses the whitespace tokenizer.
+  That tokenizer treats space-less CJK as a single token. The substring invariant still holds
   (raw and component values are space-matched verbatim), so alignment passes — but
   per-character labeling at training time comes from the sentencepiece tokenizer
   Thread A retrains rather than from the corpus alignment.

@@ -30,7 +30,7 @@ coordinates.
 Every word matters:
 
 - **Sequence labeler.** The model is a small transformer encoder doing BIO
-  token classification — the named-entity-recognition lineage
+  token classification, in the entity-recognition (NER) lineage
   (BiLSTM-CRF → BERT token classification → this). It is not an LLM and
   no part of it is generative. For a closed label set over short strings,
   this is a well-tested architecture for NLP. Its suitability comes from the
@@ -61,10 +61,10 @@ Every word matters:
 
 This one sentence is the architecture. Everything in the pipeline is the
 model (grammar), a knowledge base (world), or evidence routing between the
-two. The two halves scale independently — corpus and compute grow the
-grammar; data builds grow the atlas — and neither requires the other to
+two. The two halves scale independently. Corpus and compute grow the
+grammar, data builds grow the atlas, and neither requires the other to
 retrain. A model that memorizes the world's place names spends capacity it could use elsewhere.
-have to spend; asking a database to understand "Friedrichstraße 43-45, 10117
+A request that a database understand "Friedrichstraße 43-45, 10117
 Berlin-Mitte" written four different ways asks it to do what rule systems have
 always failed at. Each side does the job the other is structurally bad at.
 
@@ -76,7 +76,7 @@ resolved against a database instead of guessed by a model that was never going
 to memorize every coffee shop. The consumer here is frequently an agent rather than
 a person typing into a search box, so mailwoman ships the layers and the tools
 (`@mailwoman/mcp`) and leaves the planning and the narrative to whatever's
-driving. The model still owns the grammar; the atlas gains layers.
+driving. The model still owns the grammar, and the atlas gains layers.
 
 ## The sieve and the posterior
 
@@ -85,25 +85,25 @@ matchers, libpostal's averaged perceptron, Pelias's rules — are **sieves**.
 Input either fits a slot or falls through to the next pattern, and what those
 systems call confidence is _rule specificity_: how tightly the template
 matched rather than how likely the reading is to be correct. A sieve cannot say "I'm not sure." Novel
-input doesn't get a hedged answer; it gets a hole.
+input doesn't get a hedged answer. It gets a hole.
 
 A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
 does this string match?"_ — it asks _"what is the most probable reading of
-this string as an address, given what the atlas says exists?"_ This approach treats parsing as
+this string as an address, given what the atlas records as existing?"_ This approach treats parsing as
 inference instead of template matching. The practical consequence is that
 uncertainty becomes an actionable measurement: the resolver can
 abstain on it, soft-score with it, or fall back to rules because of it. The
 capability difference shows up exactly where the
 [arena evals](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/parity-scorecard-2026-06-09.md) say it does: on noisy,
 degraded, real-user input — the queries a geocoder receives — the
-model wins decisively, because degraded input is where sieves leak and
+model resolves more of the queries, because degraded input is where sieves leak and
 posteriors bend.
 
 ## The bitter lesson, read carefully
 
-The bitter lesson is routinely misread as "no knowledge engineering." It
-says: no knowledge engineering _inside the learner_. The pre-model
-machines encoded the world's structure into the rules themselves, which is
+The bitter lesson is routinely misread as "no knowledge engineering." Its
+actual claim is no knowledge engineering _inside the learner_. The pre-model
+machines encoded the world's structure into the rules themselves. That design is
 why every novel input was a hole. Mailwoman puts the grammar in weights and
 the atlas in a database — knowledge engineering on the _outside_, where it
 belongs, as data with provenance rather than as code with exceptions. The
@@ -129,14 +129,14 @@ best architectural decision twice over:
 
 The cost: the _data_ doesn't fit the pocket even though the model
 does. So the constraint resolves into **two tiers, same code, different
-payloads** — Tier A ("pocket"): parser + anchors + the slim hot gazetteer;
+payloads**. Tier A ("pocket") is parser + anchors + the slim hot gazetteer, with
 full parse quality, coarse resolution, offline, address data never leaves the
 device. Tier B ("library"): the identical pipeline with full SQLite payloads
 on a server or desktop, where street-level data lives. The pocket claim stays
 true because it's scoped rather than because we stopped checking. There is also
 headroom: the model could grow severalfold before challenging a
-conservative mobile budget — the constraint that binds is iteration
-cost, and that's the one worth defending.
+conservative mobile budget. The constraint that binds is iteration
+cost, and we keep iteration cost low on purpose.
 
 ## Two ways to un-make it
 
@@ -146,7 +146,7 @@ in our history:
 - **The override.** A lookup table takes precedence over the model
   because it scored well on a friendly eval. We did this once, for `country`,
   and reversed it within a day when the homograph eval caught the sieve
-  sneaking back in. Knowledge informs; it never overrides.
+  sneaking back in. Knowledge informs, and it never overrides.
 - **The accreting patch.** Post-model repairs — regex fixups, span merges,
   audit passes — are individually defensible and collectively the sieve
   regrowing around the model's edges. The rule: every patch is either
@@ -159,7 +159,7 @@ in our history:
 
 The neural-parsing literature validates the parser half — multiple
 independent efforts reached the same conclusion about transformers beating
-CRFs on degraded input. But the published systems are parser-only. Nobody
+CRFs on degraded input. But the published systems are parser-only. No published system
 couples calibrated neural parsing, gazetteer fusion at inference time, and
 coordinate-first resolution into one system. If you've been struggling to
 explain Mailwoman by analogy, that's why: no other system combines all three,

@@ -1,4 +1,4 @@
-# v2.9.0-country-counterweight — #1104 fix. One variable vs v257: the fragment recipe output now carries
+# v2.9.0-country-counterweight — #1104 fix. One variable vs v257: the fragment recipe output now contains
 # country-ending rows (full address + a codex country surface tail, comma'd + comma-free) so the
 # country-sparse fine-tune stops eroding country recall (88.6%→82.0% on v257. bisected to the source,
 # not the tokenizer, via v242). Same recipe as v2.5.7 (init_from multisplice-expanded, 8k, gentle

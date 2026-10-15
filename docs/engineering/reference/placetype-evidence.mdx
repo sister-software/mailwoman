@@ -26,16 +26,16 @@ evidence is computed over projections.**
 
 | WOF placetype                                                                    | Projects onto                                                   | Evidence use                                                                                                                                                                                                                                      |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locality`, `localadmin`                                                         | `locality`                                                      | The trained backbone; census denominator for everything below it.                                                                                                                                                                                 |
+| `locality`, `localadmin`                                                         | `locality`                                                      | The trained backbone, and the census denominator for everything below it.                                                                                                                                                                         |
 | `borough`, `neighbourhood`, `macrohood`, `microhood`                             | `dependent_locality`                                            | The pair/census family. Macro/micro variants measure nesting depth under a parent — a parent rich in microhoods signals multi-level structure.                                                                                                    |
 | `region`, `macroregion`                                                          | `region`                                                        | Live.                                                                                                                                                                                                                                             |
 | `county`, `macrocounty`                                                          | `subregion` (US); **`region` for IE-style formats**             | Ireland writes county as an address line ("Co. Kerry") — a county census under IE contexts is the same conditional nudge GB's dep-loc got.                                                                                                        |
 | `country`, `nation`, `dependency`, `disputed`                                    | `country`                                                       | `dependency` covers crown dependencies (Isle of Man, Faroes-adjacent forms) — country-channel surface coverage rather than new grammar.                                                                                                           |
 | `postalcode`                                                                     | `postcode`                                                      | Shipped: the postcode-anchor channel is this pattern's first production instance.                                                                                                                                                                 |
 | `venue`                                                                          | `venue`                                                         | Venue-density per parent (poi.db can answer it) — venue-led parse likelihood by `neighbourhood` of the hierarchy.                                                                                                                                 |
-| `intersection`, `address`                                                        | — (structurally multi-span; deliberately null)                  | Neither projects onto a single tag — an intersection is `intersection_a` + `intersection_b`, and an address is a whole record. Both are `null` in `PLACETYPE_PROJECTION`. Consumed by the kind-classifier and the resolver's address-point tiers. |
+| `intersection`, `address`                                                        | — (structurally multi-span, deliberately null)                  | Neither projects onto a single tag — an intersection is `intersection_a` + `intersection_b`, and an address is a whole record. Both are `null` in `PLACETYPE_PROJECTION`. Consumed by the kind-classifier and the resolver's address-point tiers. |
 | `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | `venue` (building, campus) / `unit` (the interior subdivisions) | The sub-venue census: "does this venue-parent have wing/concourse children?" is the airport-terminal / campus parsing nudge.                                                                                                                      |
-| `metroarea`, `marketarea`, `postalregion`, `timezone`                            | — (context only)                                                | Context features and annotation surfaces; never emitted spans.                                                                                                                                                                                    |
+| `metroarea`, `marketarea`, `postalregion`, `timezone`                            | — (context only)                                                | Context features and annotation surfaces, never emitted spans.                                                                                                                                                                                    |
 | `continent`, `ocean`, `marinearea`, `planet`                                     | — (out of grammar)                                              | Resolver/meta only. A query landing in ocean-parented space is evidence it's a feature name rather than a postal address.                                                                                                                         |
 
 ## From pairs to the census
@@ -43,7 +43,7 @@ evidence is computed over projections.**
 The shipped **placetype-pair index** (`pair-index-gb.bin`, `pair-index-nz.bin`) is the most
 specific form of the general idea. It stores known (child surface, parent surface) memberships and
 applies them as a soft logit bias at decode time. Its three-way ablation shows that the model and
-the index work in combination: 0/69 for the model alone, 3/69 for the index alone, and 69/69
+the index work in combination: 0/69 for the model without the index, 3/69 for the index without the model, and 69/69
 together.
 
 The general form is the **placetype census**. For each gazetteer node, it records the distribution
@@ -64,19 +64,19 @@ The offline probe measured the following, with these limits:
 - A census hit is **real conditional evidence**. Of GB's 16,987 distinct locality-class surfaces,
   33.2% have any dependent-locality child, so a hit rules out two thirds of the parent population.
   Against PPD post towns (25.7M rows, a source the census never read), **74.3% of rows** land in a
-  covered town, and 77.5% of the rows that carry a dependent locality do.
+  covered town, and 77.5% of the rows that have a dependent locality do.
 - The complementary measurement concerns the pair index. It resolves **11.6%** of WOF's 22,843 GB
   dependent-locality links. The long tail makes up most of the space, and the census is designed to
   cover it.
 - **The census is parent-scoped and cannot do span-level work.** On the 56-row law-1 confound
   board, where directional `neighbourhood` surfaces begin venue names, every row shares the London
   parent with the true positives. The census therefore has dependent-locality mass on 100% of them.
-  A census bias alone would raise the venue span exactly as much as the real dependent locality.
+  A census bias with no other evidence would raise the venue span exactly as much as the real dependent locality.
   This is a limit of the artifact, and tuning cannot remove it.
 
 The census therefore ships **without a `delta`**. The header field exists and is optional, and it
 stays unset until a calibration step combines the census with span-level evidence and measures a
-magnitude. The share within a node turned out to carry no information, because WOF rarely parents a
+magnitude. The share within a node turned out to hold no information, because WOF rarely parents a
 locality under a locality, so covered nodes read ~100% dependent-locality everywhere. The useful
 statistics are presence and magnitude across the parent population.
 
@@ -99,7 +99,7 @@ no census node, because `PARENT_PLACETYPES` is `["locality", "localadmin"]` and 
 `borough`. The US pair index's characteristic edge, a dependent locality under a borough, is the
 case PIX2 was built to express. That edge is currently outside the census's parent vocabulary. A
 calibration step that reads only GB traces will not detect this. (Re-measured on the post-rebuild
-gazetteer, 2026-08-05: GB 5,577 nodes / 136,675 bytes / 33,936 links; US 7,532 nodes / 164,764
+gazetteer, 2026-08-05: GB 5,577 nodes / 136,675 bytes / 33,936 links, and US 7,532 nodes / 164,764
 bytes / 123,909 links.)
 
 The census does not become more pair entries for the following reason. A pair entry _asserts_ that
@@ -112,13 +112,13 @@ tail that a batch-by-batch board process would never finish.
 
 1. **Use positive evidence only.** Presence boosts a tag, and absence stays neutral. A subtree
    without boroughs must never _forbid_ borough, because absence from the gazetteer can reflect
-   coverage rather than fact (WOF Japan is point-geometry; see the meaning-of-zero rule).
+   coverage rather than fact (WOF Japan is point-geometry, as the meaning-of-zero rule describes).
 2. **Bias, never mask.** The model decides segmentation, and the hierarchy contributes soft
    evidence. Hard matching produces venue-confound false positives (window mode measured 52% FP,
    and the constrained segment mode keeps the shipped floor below 2%).
 3. **Per-locale conventions still decide expectations.** One model serves every locale, and each
    locale's conventions (codex address-system conventions) govern what it _expects_ to emit.
-4. **Locale-scoped artifacts must be provably inert elsewhere.** en-us ships no pair index, and a
+4. **Locale-scoped artifacts must be inert elsewhere, and a test must show it.** en-us ships no pair index, and a
    dedicated test asserts that GB-shaped input receives no pair bias through en-us. That test is a
    packaging safeguard rather than doctrine. The US joins the census program through its own instances,
    starting with boroughs. The other direction was measured on 2026-08-01 too: an experimental US
@@ -128,7 +128,7 @@ tail that a batch-by-batch board process would never finish.
 
 ## Why en-us has no pair index today (and why that's sequencing rather than doctrine)
 
-The GB/NZ indexes exist because those postal formats carry a dependent-locality or suburb line,
+The GB/NZ indexes exist because those postal formats include a dependent-locality or suburb line,
 and national registers (HM Land Registry PPD, LINZ) provide millions of pair rows. The US format has
 no such line, because USPS routes by city/state/ZIP. The US therefore has no postal register to
 harvest, and mail delivery does not depend on the line. The schema's umbrella term still means that
@@ -186,7 +186,7 @@ recorded a false positive.
 that "the pair parent needs post towns", which requires a licensed Royal Mail table. That premise
 came from the shape of GB's source (PPD's parent column happens to be the post town), not from what
 a pair requires. WOF parents NI `neighbourhood` rows to Belfast, Newtownabbey, Londonderry and
-Lisburn, which _are_ those post towns. When a premise changes, re-check any blocker that depended
+Lisburn. Those parents _are_ the post towns. When a premise changes, re-check any blocker that depended
 on it.
 
 The GB work had to make two differences between register spellings and written addresses
@@ -196,8 +196,8 @@ explicit. Both apply generally:
   one key that matches neither alternative, so such pairs ship in the artifact but can never fire.
   Emit one pair per alternative.
 - A civil-parish suffix (`Pontypridd Community`, `Llanelli Rural`) is part of the administrative
-  name only. The register uses that form for the parish, but an address says `Pontypridd`. Strip
-  the suffix instead of dropping the pair, which would have discarded 1,545 Welsh pairs.
+  name only. The register uses that form for the parish, but an address reads `Pontypridd`. Strip
+  the suffix instead of dropping the pair. A drop would have discarded 1,545 Welsh pairs.
 
 **Every locale on the original wave 2–4 list has now shipped.** Data availability was never the
 blocker. The pair index only fires for the resolved locale's country, so an artifact inside another
@@ -208,10 +208,10 @@ remaining work was routine.
 | locale |   pairs | source       | note                                                  |
 | ------ | ------: | ------------ | ----------------------------------------------------- |
 | GB     |  30,825 | PPD + WOF    | England, Scotland, Wales, NI, London                  |
-| US     |  47,878 | WOF          | no postal register carries the line                   |
-| DE     |  85,603 | WOF          | Deutsche Post carries no Ortsteil field               |
+| US     |  47,878 | WOF          | no postal register records the line                   |
+| DE     |  85,603 | WOF          | Deutsche Post has no Ortsteil field                   |
 | FR     | 199,282 | BAN `nom_ld` | the lieu-dit is the postal line                       |
-| IN     | 176,086 | WOF          | 53% of source nodes are deprecated; a city instrument |
+| IN     | 176,086 | WOF          | 53% of source nodes are deprecated, a city instrument |
 | ES     |   3,559 | WOF          |                                                       |
 | IT     |   4,026 | WOF          |                                                       |
 | NZ     |       — | LINZ         | shipped earlier                                       |
@@ -223,7 +223,7 @@ be harvested.
 The non-GB instances established three things that the GB work never encountered:
 
 - **The postal format determines the source.** France's lieu-dit comes from BAN because it _is_
-  the postal line. The US, DE, ES, IT and IN use WOF because no postal register carries their
+  the postal line. The US, DE, ES, IT and IN use WOF because no postal register records their
   sub-city line.
 - **A leading postcode makes the artifact inert.** France, Germany, Spain and Italy write
   `12210 Montpeyroux`, so a parent segment folds to a key that no bare-locality entry matches. Each

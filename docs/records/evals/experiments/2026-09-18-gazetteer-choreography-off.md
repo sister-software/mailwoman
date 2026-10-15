@@ -1,6 +1,6 @@
 # v5.8.0 — training with the near-postcode gazetteer choreography off
 
-Closed 2026-09-18. Two of four pre-registered bars fail; the arm does not ship as the default model.
+Closed 2026-09-18. Two of four pre-registered bars fail, and the arm does not ship as the default model.
 Config: `corpus-python/src/mailwoman_train/configs/v5.8.0-gazetteer-choreography-off-60k.yaml`.
 Issues [#2308](https://github.com/sister-software/mailwoman/issues/2308),
 [#2311](https://github.com/sister-software/mailwoman/issues/2311).
@@ -34,7 +34,7 @@ linked files each, differing in exactly two things:
 Bar 2 is quoted verbatim from the config: "Per-tag US postcode F1 may not regress against v5.7.0. A
 loss here is the expected cost of the change and the number that decides whether it ships." The loss
 is 0.4pp. The battery's standard per-locale floor tolerance is 1pp, so it sits inside the usual slack
-and outside the bar as written; the bar governs.
+and outside the bar as written. The bar governs.
 
 ## Mechanism
 
@@ -61,14 +61,14 @@ One change, three symptoms:
    95.0% (n=2660).
 
    The FR half of that line reports a denominator the measurement does not have. `n=1546` is the row
-   count of `fr.jsonl`, and 1 of those rows carries a gold venue, so the FR venue reading is
+   count of `fr.jsonl`, and 1 of those rows has a gold venue, so the FR venue reading is
    `tp: 1, fp: 1, fn: 0` and 66.7% → 50.0% is one row moving. The US half stands: 970 of the 2,660
-   rows carry a gold venue. FR and GB venue behavior is graded by the regression board alone, so the
+   rows have a gold venue. Only the regression board grades FR and GB venue behavior, so the
    seven regressions above are what this point rests on rather than the FR F1.
 
 The clue fires where the locality lexicon holds the name and is silent where it does not, and when it
 is silent the name's shape decides. Lexicon coverage tracks the direction — IL 91.3% (63/69) and CA
-68.2% (15/22) both gain; VT 57.0% (81/142) and MT 48.1% (51/106) both lose. Across the panel the rows
+68.2% (15/22) both gain. VT 57.0% (81/142) and MT 48.1% (51/106) both lose. Across the panel the rows
 v5.8.0 gains are 82.9% in-lexicon (34/41) against a 52.3% base rate (277/530). Coverage does not
 account for every row: SD sits at 35.8% (38/106) and neither gains nor loses, and 7 of Vermont's 16
 lost rows are in the lexicon.
@@ -89,7 +89,7 @@ lost rows are in the lexicon.
 
 The choreography is the cause of the bare `locality, REGION postcode` defect, and the corpus gap is
 not its only cause. CA suffix-tail localities move 7.7% → 76.9% and IL suffix-tail 25% → 100% from the
-training flag alone, with no corpus change.
+training flag, with no corpus change.
 
 ## Pre-registration defect, for the next arm
 
@@ -102,7 +102,7 @@ measured a 100-point per-region spread on this surface. Condition the next pre-r
 Leave `gazetteer_choreography` on and add the bare `locality, REGION postcode` surface to the US
 corpus. The #2303 diagnosis was that no US recipe put a locality in front of a region code and a
 postcode without a street ahead of it. That targets the gap without changing which evidence the model
-trusts for every input, which is what cost the venues and the Vermont names here.
+trusts for every input. That change of evidence is what cost the venues and the Vermont names here.
 
 ## Artifacts
 

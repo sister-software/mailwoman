@@ -1,7 +1,7 @@
 # === v4.2.0-base-anchor-v2 — draft rather than launch-ready. The base rebuild that closes the GB anchor hole. ===
 #
 # naming: the next base in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
-# GB-venue fine-tunes off v4.0.1). Nothing here is the npm major. That is a separate number.
+# GB-venue fine-tunes off v4.0.1). No version number in this file is the npm major. That is a separate number.
 #
 # why this RUN exists. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
 # anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
@@ -12,9 +12,9 @@
 # seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
 # mitigation (en-gb ships no bin, the channel resolves off). This run is the fix.
 #
-# the one named delta vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
-# v4.0.1-base-60k verbatim unless a comment says otherwise, and the two comments that follow are
-# both no-op restatements of what v4.0.1 already carried, kept because a reader will look for them.
+# the one stated delta vs v4.0.1-base-60k: `anchor_lookup_path`. Every other setting below is
+# v4.0.1-base-60k verbatim unless a comment states a difference. The two comments that follow both
+# restate settings v4.0.1 already had, and they stay because a reader will look for them.
 #
 # measured, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
 # --include DE,FR,US,GB,NL,ES,IT`), 2026-08-05:
@@ -26,7 +26,7 @@
 #   painted rows, `corpus-python/scripts/count_painted_anchor_rows.py`, 50,000-row prefixes:
 #     synth-gb-v1        0 -> 42,634 of 42,634 shaped spans (0.0% -> 85.3% of rows)
 #     synth-es-pedania   32,638 -> 42,339  (ES codes did paint before — under a DE/FR/US posterior;
-#                        the ES slot itself was never lit, which is worse than silence)
+#                        the ES slot itself never received a value, and that failure gave no signal)
 #     synth-fr-lieudit   49,577 -> 49,577  (unchanged)
 #     house-venue-v2     49,666 -> 49,666  (unchanged)
 #
@@ -46,7 +46,7 @@
 #      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
 #   4. cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2.yaml --resume none
 #
-# ship obligation — the inference half, which belongs elsewhere. The train painter keys a
+# ship obligation. The inference half of this change belongs in another file. The train painter keys a
 # postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->
 # `SW1A2AA`). Inference's default scan keys `[A-Za-z0-9]+` runs and so can never produce that key.
 # The model this run produces must therefore ship a card declaring:
@@ -60,7 +60,7 @@
 # PRE-registered checks: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity), plus:
 #   - gb-golden: exact `postcode` >= 318/318 across three registers with the anchor channel fed
 #     (the #1467 mitigation reached 318/318 by switching the channel off. this run has to hold it
-#     with the channel on, which is the whole point).
+#     with the channel on. Holding it with the channel on is the purpose of this run).
 #   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
 #   - Anchor-ablation delta: score the resulting model anchor-on vs anchor-off on gb-golden. A
 #     delta of zero means slot 4 still took no gradient and the lookup swap did not land.
@@ -141,7 +141,7 @@ data:
     # the other single-country synth sources rather than the 12.0 saturation tier.
     synth-gb: 6.0
     # The `synth-sub-venue` source (#1486): 120k rows (84k pos / 36k neg), weight 12.0 per the recipe report —
-    # `unit` is a starved tag and the recipe output's negatives (rejection-ledger confounds) carry the
+    # `unit` is a starved tag and the recipe output's negatives (rejection-ledger confounds) encode the
     # identifier-required shape rule, so the saturation weight is deliberate.
     synth-sub-venue: 12.0
   train_rows_per_epoch: 1000000
@@ -152,7 +152,7 @@ data:
   augment_glue_prob: 0.25
   augment_ordinal_prob: 0.3
   augment_punct_drop_prob: 0.3
-  # the one named delta. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
+  # `anchor_lookup_path` is the one stated delta. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
   # Rebuild with: mailwoman gazetteer build anchor-lookup --include DE,FR,US,GB,NL,ES,IT --output <path>
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -206,8 +206,8 @@ model: # Verbatim from v4.0.1.
     # 1.0 rather than the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
-    # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead. It was
-    # weighted down. Corrected in v4.0.1 and carried here. the shipped lineage still predates the
+    # contain more raw dep-loc mass than the GB ones that work, so the tag was never dead. It was
+    # weighted down. Corrected in v4.0.1 and kept here. the shipped lineage still predates the
     # correction, so this run is the first base to retrain it in.
     B-dependent_locality: 1.0
     I-dependent_locality: 1.0

@@ -37,6 +37,7 @@ import type {
 	VenueHeadPosition,
 	VenueHeadTable,
 } from "@mailwoman/poi-taxonomy/venue-heads"
+import { isSpacelessScriptWord } from "@mailwoman/poi-taxonomy/venue-heads"
 
 /**
  * The minimum number of distinct venue names in which a head must appear before it gets an entry.
@@ -59,7 +60,7 @@ export const MIN_BIAS = Math.LN2
 export const MIN_COUNTRY_VENUE_NAMES = 10_000
 
 /**
- * A suffix entry that differs from the next shorter kept suffix by less than this many logits
+ * A suffix entry that differs from the next shorter kept suffix by less than this number of logits
  * is dropped, because the runtime falls back to that shorter suffix with nearly the same bias.
  */
 export const SUFFIX_PRUNE_DELTA = 0.5
@@ -73,7 +74,6 @@ export const MIN_SUFFIX_STEMS = 3
 
 const MAX_SUFFIX_LENGTH = 8
 const MIN_ALPHABETIC_SUFFIX_LENGTH = 4
-const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
 
 /**
  * The placetypes whose single-word names are excluded as first-word
@@ -120,7 +120,7 @@ export function wordSuffixes(word: string): string[] {
 	for (let length = 1; length < characters.length && length <= MAX_SUFFIX_LENGTH; length++) {
 		const suffix = characters.slice(-length).join("")
 
-		if (length >= MIN_ALPHABETIC_SUFFIX_LENGTH || SPACELESS_SCRIPT_RE.test(suffix)) {
+		if (length >= MIN_ALPHABETIC_SUFFIX_LENGTH || isSpacelessScriptWord(suffix)) {
 			out.push(suffix)
 		}
 	}
@@ -209,7 +209,8 @@ export function suffixCounts(
 /**
  * Returns the single-word names of a country held by the codex: the country's name in every ICU locale.
  *
- * Subdivision names and codes come from the admin database, which covers every country.
+ * Subdivision names and codes come from the admin database.
+ * That database covers every country.
  */
 export function codexAdminWords(country: string): Set<string> {
 	const words = new Set<string>()
@@ -247,7 +248,7 @@ const WORD_POSITIONS = ["first", "last"] as const satisfies readonly VenueHeadPo
  * or an article rather than a head.
  */
 function isSingleLetter(head: string): boolean {
-	return [...head].length === 1 && !SPACELESS_SCRIPT_RE.test(head)
+	return [...head].length === 1 && !isSpacelessScriptWord(head)
 }
 
 /**
@@ -292,7 +293,7 @@ export function scoreCountry(counts: CountryCounts): VenueHeadEntries {
 	for (const [suffix, { count, stems }] of suffixCounts(counts.venue.lastWords, counts.adminWords)) {
 		if (count < MIN_SUPPORT || stems < MIN_SUFFIX_STEMS) continue
 
-		if (!SPACELESS_SCRIPT_RE.test(suffix) && (counts.venue.lastWords.get(suffix) ?? 0) < MIN_SUPPORT) continue
+		if (!isSpacelessScriptWord(suffix) && (counts.venue.lastWords.get(suffix) ?? 0) < MIN_SUPPORT) continue
 
 		const bias = score(count, placeSuffixes.get(suffix)?.count ?? 0, streetSuffixes.get(suffix)?.count ?? 0)
 
@@ -331,24 +332,47 @@ export function pruneSuffixes(suffixes: VenueHeadBiases): VenueHeadBiases {
 }
 
 /**
- * Averages country entries into one language aggregate, weighting each country equally
- * and counting a head a country lacks as zero.
- * Means below {@link MIN_BIAS} are omitted.
+ * The fewest member countries whose tables must list a head before it enters a language aggregate.
+ *
+ * A head that only one or two country tables list belongs to those countries' own tables.
+ */
+export const MIN_LANGUAGE_CARRIERS = 3
+
+/**
+ * Averages country entries into one language aggregate over the countries whose tables list each head.
+ *
+ * A country without a head is left out of that head's mean.
+ * Most of a language's countries have too few venue names to score any head,
+ * so counting them as zero would erase nearly every head.
+ *
+ * Heads with fewer carriers than {@link MIN_LANGUAGE_CARRIERS}, or than the language's
+ * scoring countries when it has fewer, and means below {@link MIN_BIAS} are omitted.
  */
 export function aggregateLanguage(members: readonly VenueHeadEntries[]): VenueHeadEntries {
 	const out: VenueHeadEntries = { first: {}, last: {}, suffix: {} }
 
 	for (const position of POSITIONS) {
-		const sums = new Map<string, number>()
+		const sums = new Map<string, { total: number; carriers: number }>()
 
 		for (const member of members) {
 			for (const [head, bias] of Object.entries(member[position])) {
-				sums.set(head, (sums.get(head) ?? 0) + bias)
+				const entry = sums.get(head) ?? { total: 0, carriers: 0 }
+
+				entry.total += bias
+				entry.carriers += 1
+				sums.set(head, entry)
 			}
 		}
 
-		for (const [head, sum] of sums) {
-			const mean = sum / members.length
+		// A language with fewer scoring countries than the minimum requires every one of them,
+		// so a language one country speaks keeps that country's heads.
+		const scoring = members.filter((member) => Object.keys(member[position]).length > 0).length
+		const required = Math.min(MIN_LANGUAGE_CARRIERS, scoring)
+
+		for (const [head, { total, carriers }] of sums) {
+			if (carriers < required) continue
+
+			const mean = total / carriers
 
 			if (mean >= MIN_BIAS) {
 				out[position][head] = round(mean)
@@ -392,11 +416,11 @@ export interface BuildVenueHeadOptions {
 	 */
 	adminDB: string
 	/**
-	 * A corpus `MANIFEST.json` whose train slices supply street spans.
+	 * A corpus `MANIFEST.json` whose train files supply street spans.
 	 */
 	corpusManifest: string
 	/**
-	 * Rewrites a manifest slice path to a local path.
+	 * Rewrites a manifest file path to a local path.
 	 */
 	slicePath?: (path: string) => string
 	/**

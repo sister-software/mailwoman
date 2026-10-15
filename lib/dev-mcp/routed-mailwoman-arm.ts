@@ -35,6 +35,7 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"poi_venue_tier",
 	"venue_head_prior",
 	"venue_head_bias_scale",
+	"street_morphology_prior",
 ])
 
 /**
@@ -43,7 +44,7 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
  * `resolveWeights` reports a name, a path and an origin.
  * Two arms can resolve one name from one origin and read different bytes, so a comparison
  * of names by itself cannot establish that the arms were fed the same artifact.
- * The digest is what settles it.
+ * A comparison of the two digests establishes it.
  *
  * The routed arm writes `digest` as `null` only when the artifact resolved to no path.
  * That states this arm fed no such artifact rather than that its bytes are unknown.
@@ -254,6 +255,7 @@ export async function buildRoutedMailwomanArm(
 				poiVenueTier: config.poi_venue_tier ?? "production",
 				venueHeadPrior: config.venue_head_prior ?? "production",
 				venueHeadBiasScale: config.venue_head_bias_scale ?? "production",
+				streetMorphologyPrior: config.street_morphology_prior ?? "production",
 			},
 		})
 	)

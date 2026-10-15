@@ -35,7 +35,7 @@ def build_optimizer(
     head plus the separate dependent-locality head. The street-type and locality-surface input
     channels are also fresh for the same reason.
 
-    Schedules compose for free: LambdaLR scales each group's own base rate by the same multiplier,
+    Schedules compose with no per-group code: LambdaLR scales each group's own base rate by the same multiplier,
     so every group keeps its shape and the ratios between them hold.
 
     Frozen parameters are excluded. With no overrides there is one group. The base group is dropped

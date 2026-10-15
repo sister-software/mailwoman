@@ -10,9 +10,9 @@ incumbents.
 
 - **Identical inputs.** Every system gets the same raw OA address string and the same country hint
   (mailwoman `defaultCountry`, Nominatim `countrycodes`, Pelias `boundary.country`). The Pelias arm was
-  country-scoped for this run — previously it ran unscoped, which _understated_ it by allowing
+  country-scoped for this run. Previously it ran unscoped. That _understated_ it by allowing
   wrong-country matches.
-- **PRIMARY metric — resolve-rate @ 25 km.** Within 25 km of truth = right-locality-area; a no-result
+- **PRIMARY metric — resolve-rate @ 25 km.** Within 25 km of truth = right-locality-area. A no-result
   counts as a miss. Coarse on purpose: mailwoman resolves to admin/postcode **centroids**, so a
   km-to-rooftop metric would reward the incumbents' rooftop-when-they-match and penalize our centroid.
   Right-_place_ is the fair test.
@@ -50,32 +50,32 @@ incumbents.
    stack over mixed sources resolves nearly everything and places most of it at rooftop. It is the real
    bar, and it is ahead of us overall.
 2. **On Europe (six EU locales) mailwoman+rescore beats Nominatim by ~10pp (88 vs 78) and is level with
-   Pelias (88 vs 89)** — while running as a 30 MB browser model with no Elasticsearch. We win IT, PT, FR
-   outright; CZ now edges Pelias (87 vs 78).
+   Pelias (88 vs 89)** — while running as a 30 MB browser model with no Elasticsearch. We win IT, PT and FR.
+   CZ now edges Pelias (87 vs 78).
 3. **Australia drags the aggregate.** mailwoman 35% vs Nominatim 97 / Pelias 78. The whole EU-vs-all-panel
-   gap (88 → 80) is AU. The failure mode is same-named towns scattered across states, which the
-   country-level postcode-consistency check can't disambiguate. EU-only is the legitimate headline for a
-   Europe comparison _because_ AU is its own, named, unsolved problem — not because hiding it flatters us.
+   gap (88 → 80) is AU. The failure mode is towns with the same name scattered across states. The
+   country-level postcode-consistency check can't disambiguate them. EU-only is the legitimate headline for a
+   Europe comparison _because_ AU is its own documented, unsolved problem — not because hiding it flatters us.
 4. **Centroids rather than rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
-   right-_area_ parity; the incumbents are far more precise when they hit. State it, don't bury it.
+   right-_area_ parity. The incumbents are far more precise when they hit. State it, don't bury it.
 5. **Two changes, partly substitutes.** On `-20h` (no PL/CZ postcodes) the #370 rescore change lifted EU
    ~+16pp by _recovering the fragmented town_. On `-20i` the postcode resolves the address directly, so
    base is already high and the rescore's marginal EU lift shrinks to +4pp. Postcode coverage (#193) and
    word-recovery (#370) both close the "silence," by different mechanisms — the postcode does most of the
-   work where we now have it; the rescore catches the no-postcode tail (PT, AU).
+   work where we now have it, and the rescore catches the no-postcode tail (PT, AU).
 
 ## Changes A + B (post-benchmark, default-off — measured on the same grader)
 
 The benchmark's failure dump (`scripts/eval/failure-dump.ts`) classified the 82 misses and pointed at
-two compounding changes. Both are default-off; numbers are mailwoman+rescore on the same harness/grader,
+two compounding changes. Both are default-off. Numbers are mailwoman+rescore on the same harness/grader,
 candidate gazetteer noted.
 
 - **Change A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
-  only, no data/GPU): when a same-named locality resolves far from a resolved sibling postcode, re-pick
+  only, without data or GPU work): when a locality with the postcode's town name resolves far from a resolved sibling postcode, re-pick
   the instance nearest the postcode (or fall back to the postcode point). Fixed the 16 "postcode-
   available-but-ignored" misses with zero regressions.
 - **Change B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
-  uncovered postcodes into anchors, which Change A then disambiguates. AU 35→65 (+30pp), PT 78→88.
+  uncovered postcodes into anchors. Change A then disambiguates them. AU 35→65 (+30pp), PT 78→88.
 
 | locale      | baseline (-20h) | +A (-20i) | +A+B (-20j) | Nominatim | Pelias |
 | ----------- | --------------: | --------: | ----------: | --------: | -----: |
@@ -90,22 +90,22 @@ candidate gazetteer noted.
 | **all (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
 
 With both changes, mailwoman leads both incumbents on the @25km right-area metric — EU 94.2 and all-panel
-90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
-stands; this is right-AREA rather than rooftop.
+90.0 — from a 30 MB browser model without Elasticsearch. The @1km precision gap (centroids vs rooftops)
+stands. This is right-area rather than rooftop.
 
 Residuals after A+B (the next changes): AU's remaining misses are mostly a PARSE issue — the model emits a
 house number as a second postcode ("Grantson Street 51" → postcode=51), and the anchor picks the first
 postcode (51) not the real one (4030); a Change-A-v2 anchoring on the postcode that RESOLVES would catch
-them. AT's 5 EMPTY are postcodes GeoNames AT doesn't carry.
+them. AT's 5 EMPTY are postcodes absent from GeoNames AT.
 
 ## Caveats / next
 
 - **Clean input only.** This run is clean OA strings. The "calibrated parser degrades better than a token-
   matching search index on messy input" claim needs a separate `--messy` run before it can be made.
 - **AU** is the open coverage/disambiguation problem (#208 G-NAF ingest + a sub-country consistency check).
-- **AT** (73→80) is the next EU postcode-coverage candidate — GeoNames has 18,937 AT rows; the gazetteer
+- **AT** (73→80) is the next EU postcode-coverage candidate — GeoNames has 18,937 AT rows, and the gazetteer
   has only 809. Same change as PL/CZ.
 
-Harness: `scripts/eval/competitive-benchmark.ts` (`--span-rescore` grades base + change from one parse;
-the Pelias arm rides the git-excluded `diag-geocode-earth.ts`, country-scoped, throttled to respect
+Harness: `scripts/eval/competitive-benchmark.ts` (`--span-rescore` grades base + change from one parse,
+and the Pelias arm runs through the git-excluded `diag-geocode-earth.ts`, country-scoped, throttled to respect
 geocode.earth's 1000/day + 10/s). Raw: `candidate-global-20i.db`, model `out/v191/model.onnx` (v4.13.0).

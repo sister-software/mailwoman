@@ -31,7 +31,7 @@ Mailwoman turns free-text postal addresses into structured components (house num
 street, locality, region, postcode, country) and resolves them to coordinates against an
 open gazetteer. It is a small transformer encoder (~30M params) that performs BIO token
 classification over a 33-label schema. It is **not** an LLM, and no part of it is
-generative. It is conventional named-entity recognition, which suits short, structured strings.
+generative. It performs conventional entity recognition. That method suits short, structured strings.
 
 It runs in Node.js and the browser, without Elasticsearch or a multi-gigabyte libpostal
 install. The model is about 30 MB. It resolves coordinates from a SQLite gazetteer at the finest
@@ -115,11 +115,11 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 |                               | Mailwoman                       | libpostal          | Nominatim                  | Photon                         |
 | ----------------------------- | ------------------------------- | ------------------ | -------------------------- | ------------------------------ |
 | Footprint                     | ~30 MB model + SQLite gazetteer | multi-GB data blob | PostgreSQL + planet import | Elasticsearch/OpenSearch index |
-| Runs in the browser           | ✓ (WebGPU / WASM)               | ✗                  | ✗                          | ✗                              |
-| Parse → labeled components    | ✓ with calibrated confidence    | ✓                  | —                          | —                              |
-| Forward + reverse geocoding   | ✓ (Who's On First gazetteer)    | ✗ (parse only)     | ✓                          | ✓                              |
-| Autocomplete / type-ahead     | ✓ (Photon-compatible API)       | ✗                  | ✗                          | ✓                              |
-| Annotations (tz, currency, …) | ✓ OpenCage-style block          | ✗                  | ✗                          | ✗                              |
+| Runs in the browser           | Yes (WebGPU / WASM)             | No                 | No                         | No                             |
+| Parse → labeled components    | Yes, with calibrated confidence | Yes                | —                          | —                              |
+| Forward + reverse geocoding   | Yes (Who's On First gazetteer)  | No (parse only)    | Yes                        | Yes                            |
+| Autocomplete / type-ahead     | Yes (Photon-compatible API)     | No                 | No                         | Yes                            |
+| Annotations (tz, currency, …) | Yes, OpenCage-style block       | No                 | No                         | No                             |
 
 ## Drop-in servers
 
@@ -163,10 +163,10 @@ A locale appears here only when a coordinate-graded eval backs it.
 | Tier                                 | Locales                                                | What backs the claim                                                                                         |
 | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | **1 — first-class, floor-enforced**  | US, FR                                                 | Per-tag eval floors block every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km     |
-| **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set; NL resolved-p50 0.05 km     |
+| **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set, and NL resolved-p50 0.05 km |
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
-The [browser demo](https://mailwoman.ai/demo) carries the same coverage. Full
+The [browser demo](https://mailwoman.ai/demo) covers the same locales. Full
 receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
 reports](./docs/records/evals/).
 

@@ -1,10 +1,10 @@
 # v0.5.0 char-offset launch — shift postmortem (2026-06-12)
 
-Continuation of the night-12 build session. The build finished and validated; this shift's job was
+Continuation of the night-12 build session. The build finished and validated. This shift's job was
 to get the first model to TRAIN on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
 that should have been caught earlier and routing around a Modal volume consistency failure.
 The run completed all 40k steps, and the check ran: **the bridge-retirement test passes** (po_box 90 bridge-OFF
-≥ 89.1, intrinsic). 15/17 tags hold flat-or-better actual-vs-actual; the one real casualty is
+≥ 89.1, intrinsic). 15/17 tags hold flat-or-better actual-vs-actual. The one real casualty is
 fr.house_number, **−8.1pp vs v4.4.0's actual 97.7** (the check floor of 91 understated it). Held
 experimental — hold promotion pending #560.
 
@@ -12,30 +12,30 @@ experimental — hold promotion pending #560.
 
 `v1.4.0-charoffset` step-40000, graded bridge-OFF against `v0.5.0-bridge.json` and bridge-ON against
 `v4.4.0-boundary.json` (apples-to-apples). The two are **byte-identical on every tag**. The bridge is
-a confirmed NO-OP for this model (it never fragments po_box, so there's nothing to merge).
+a confirmed NO-OP for this model (it never fragments po_box, so the bridge finds no fragments to merge).
 
 - **Bridge retirement VALIDATED:** `us.po_box_real = 90.0` bridge-OFF (floor 89.1). The char-offset
   format does exactly what it was built for — the model learns dotted P.O. Box spans intrinsically,
-  so the decode-side span bridge can retire at zero cost.
+  so the decode-side span bridge can retire without lowering po_box.
 - **16/17 floors pass**, several beaten: us.micro 85.4 (▲81.6), locality 74.1 (▲62.2), region 89.5
   (▲80.1), unit_real 97, fr.cedex_real 96.7, intersection_real 100, de.native_locality 91.
 - **One real miss — and bigger than the floor implies:** `fr.house_number` 89.6. The check FAILs the
   floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 measured 97.7**, so the
   true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so an actual
   char-offset-format regression isolated to FR house_number rather than a bridge-off cost. The floor comparison
-  floor first understated it — the actual-vs-actual read is what matters. Model held experimental rather than promoted; **hold promotion** until the FR house_number cause is understood (#560). The
+  floor first understated it — the actual-vs-actual read is what matters. Model held experimental rather than promoted. **Hold promotion** until the FR house_number cause is understood (#560). The
   bridge-retirement win is real and independent of this.
 
 ## What shipped
 
 - **First v0.5.0 char-offset training run is LIVE on A100** (`v1.4.0-charoffset`, Modal app
   `ap-tG4Os3vGel5MHREGwR9R0X`). Step-2000 val: `macro_f1=0.627` (street 0.81 / house_number 0.99 /
-  locality 0.70 / region 0.65 / postcode 0.70), loss converging, no NaN. The char-offset format
+  locality 0.70 / region 0.65 / postcode 0.70), loss converging, without NaN. The char-offset format
   (#519 span triple) trains end-to-end — the headline de-risking of the whole v0.5.x line.
 - **The corpus was completed.** The from-source build was BASE-ONLY (11 adapters); the shippable
   corpus also needs the 7 parity overlays. Re-emitted all 7 (synth-affix/german/country/unit/
   po-box-cedex/intersection + deepseek-kryptonite, ~485k rows) through the current span-native
-  aligner so they carry the char-offset triple, merged into the v0.5.0 MANIFEST (689 extracts, 676.6M
+  aligner so they include the char-offset triple, merged into the v0.5.0 MANIFEST (689 extracts, 676.6M
   train), re-validated: 18/18 weighted sources present, 0 out-of-bounds spans, 0 golden-in-val.
 - **PR #559** — config (`v1.4.0-charoffset.yaml`), bridge-retirement check (`v0.5.0-bridge.json`),
   `align-canonical-extract.mjs`, and the `train_remote.py` reroute (`sync_v050` + launcher fix).
@@ -51,7 +51,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   minutes and prevented wrong conclusions.
 - **The R2 reroute used the architecture's own grain.** Once CLI `volume put` proved container-blind,
   the fix was `sync_corpus`'s existing pattern (R2 → container-side rclone) rather than a bespoke hack.
-- **Held the GPU.** Zero A100 spend until a fresh container provably saw the corpus + config. The
+- **Held the GPU.** Zero A100 spend until a test showed that a fresh container saw the corpus + config. The
   launcher's own `config not found` caught the volume issue before any training money burned.
 
 ## What could've gone better
@@ -63,7 +63,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   in isolation rather than against the training config's `source_weights` — that cross-check is the fix.
 - **A long Modal-infra detour ate most of the shift.** Two retries + a marker test + an env-mismatch
   hypothesis + a container-write test before the cause was nailed. Faster path: the marker test (CLI
-  put → fresh container can't see it) is the 2-minute decisive probe; reach for it first next time.
+  put → fresh container can't see it) is a 2-minute probe that identifies the cause. Run it first next time.
 - **Trackio dashboard was down** (`sister-software/mailwoman-trackio` Space not running), so the run
   logs CSV-only — no live web dashboard for the operator. Should have checked the Space was up before
   relying on `--trackio`.
@@ -73,7 +73,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 - **Re-emit overlays + complete the corpus before launching**, rather than launch base-only as a
   fast format-control signal. Base-only can't ship and can't answer the bridge question (the run's
   scientific point); the overlay re-emit was bounded (~minutes, builders are span-native). Surfaced
-  the gap to the operator; proceeded under "start training now" + extended trust once corrected.
+  the gap to the operator, and proceeded under "start training now" + extended trust once corrected.
 - **R2 reroute over volume recreation.** A new volume would be faster to create but would destroy the
   container-visible model history (every `output-*` checkpoint). The R2 path is non-destructive and
   reusable. Chose it without waiting on the operator since it risks only bandwidth rather than data.
@@ -92,7 +92,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 2. **Bridge-retirement check thresholds.** `over-merge precision` + `#518 punctuation lens` need
    numeric floors before the check is authoritative. Operator/DeepSeek to pin.
 3. ~~Will char-offset hold v4.4.0 parity?~~ **MOSTLY: 15/17 tags flat-or-better actual-vs-actual**,
-   bridge retired at zero cost (po_box intrinsic 90 > v4.4.0 bridged 89.1). The one real casualty is
+   bridge retired without a po_box loss (po_box intrinsic 90 > v4.4.0 bridged 89.1). The one real casualty is
    **fr.house_number −8.1pp** (97.7 → 89.6, #560) — an actual char-offset regression rather than noise and
    NOT the bridge. Lesson re-learned: grade actual-vs-actual rather than vs the conservative floor (which
    said −1.4pp and nearly let an 8pp regression read as trivial).
@@ -101,7 +101,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 ## Concrete next steps
 
 - **When the run finishes (~4h):** run the full battery against the final checkpoint with the
-  `v0.5.0-bridge` check (bridge off). The decisive read: does `us.po_box_real` hold ≥89.1 bridge-off?
+  `v0.5.0-bridge` check (bridge off). The question to answer: does `us.po_box_real` hold ≥89.1 bridge-off?
   If yes → retire the decode-side span bridge. If no → keep it, flip `requires_bridge:true` for the
   ship check, treat as a MISS (don't re-baseline). Compare every tag against v4.4.0 — format-only
   change should be ~flat.
@@ -119,9 +119,9 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 | Corpus                      | 689 extracts, 676.6M train / 1.89M val / 1.89M test                                                                                                        |
 | Models trained              | 1 (v1.4.0-charoffset, completed 40k steps)                                                                                                                 |
 | A100 spend before launch    | 0 (held on the volume issue)                                                                                                                               |
-| Training rate               | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total                                                                                                   |
+| Step rate                   | warmed to ~5 steps/s (num_workers:0 loader), ~3.5h total                                                                                                   |
 | Check verdict               | fail (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement pass (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
 | Bridge                      | confirmed no-op (bridge-on == bridge-off on every tag) → retire                                                                                            |
-| Infra incidents             | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2)                                                                                     |
+| Infra incidents             | 1 (Modal volume CLI-write blindness, both directions, rerouted via R2)                                                                                     |
 | NaN incidents               | 0                                                                                                                                                          |
 | PRs / issues                | PR #559 · issue #560                                                                                                                                       |

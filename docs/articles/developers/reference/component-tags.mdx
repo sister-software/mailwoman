@@ -1,6 +1,6 @@
 ---
 title: Component tags
-description: The 25 address component tags a parse can carry, what each one means, and which of them the shipped model emits.
+description: The 25 address component tags a parse can contain, what each one means, and which of them the shipped model emits.
 role: reference
 source-of-truth: core/types/component.ts, docs/engineering/reference/SCHEMA.mdx, neural-weights-en-us/model-card.json
 ---
@@ -19,7 +19,7 @@ This page derives from both. Where a tag is added or renamed, that happens there
 
 Tags appear in three places a consumer touches: as `tag` on each node of an `AddressTree`, as the keys
 of the flat object `decodeAsJSON` and `/v1/parse` produce, and as the `label` values a libpostal-shaped
-response carries.
+response contains.
 
 ## Universal
 
@@ -47,17 +47,17 @@ Every locale uses these six.
 | `intersection_b`         | The second street of an intersection query       | `42nd St`   |
 | `unit`                   | Apartment, suite, or floor                       | `Suite 200` |
 
-`street` carries the bare base span. A renderer that wants the full street name joins
+`street` holds the bare base span. A renderer that wants the full street name joins
 `street_prefix`, `street`, and `street_suffix`. `geocodeAddress` does that join for you and returns
 the assembled name in its `street` field.
 
 ## Venue level
 
-| Tag         | Meaning                                    | Example        |
-| ----------- | ------------------------------------------ | -------------- |
-| `venue`     | A named place: business, landmark, or park | `Eiffel Tower` |
-| `attention` | An attention or care-of line               | `c/o Jane Doe` |
-| `po_box`    | A post office box                          | `PO Box 1234`  |
+| Tag         | Meaning                                                 | Example        |
+| ----------- | ------------------------------------------------------- | -------------- |
+| `venue`     | A place with a proper name: business, landmark, or park | `Eiffel Tower` |
+| `attention` | An attention or care-of line                            | `c/o Jane Doe` |
+| `po_box`    | A post office box                                       | `PO Box 1234`  |
 
 ## Locale-specific
 
@@ -73,7 +73,7 @@ the assembled name in its `street` field.
 | `block`           | JP     | Chōme                                                                                                                   | `1丁目`          |
 | `sub_block`       | JP     | Banchi                                                                                                                  | `1番地`          |
 | `building_number` | JP     | Gō                                                                                                                      | `1号`            |
-| `building_name`   | JP     | A named building, in Latin script or kana                                                                               | `Tokyo Building` |
+| `building_name`   | JP     | A building's proper name, in Latin script or kana                                                                       | `Tokyo Building` |
 | `locality_unit`   | CN     | The organizational ladder below a rural settlement: sub-farm, brigade, team, regiment, villager group, held as one span | `三分场八队`     |
 
 The Japanese tags label the long form written with kanji designators. A compact Japanese number such
@@ -90,7 +90,7 @@ model's output alphabet.
 
 ## What the shipped model emits
 
-A model's head is fixed at training time and carries the label set that training used. The count is
+A model's head is fixed at training time and contains the label set that training used. The count is
 in the model card as `architecture.num_labels`.
 
 | Model                                  | Labels | Tags | What it can emit                                                                           |
@@ -115,7 +115,7 @@ A tag is a closed set, so the failure modes are about absence rather than about 
 | ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | A tag you expected is missing from the response | The model did not find that component, or its head cannot emit the tag | Check the tag against the shipped-model row above                                                 |
 | `street` looks truncated                        | `street` is the bare base span by design                               | Join `street_prefix`, `street` and `street_suffix`, or read `geocodeAddress`'s assembled `street` |
-| A Japanese tag never appears                    | The shipped Latin model has no Japanese labels                         | Japanese addresses resolve by postcode; there is no parser claim today                            |
+| A Japanese tag never appears                    | The shipped Latin model has no Japanese labels                         | Japanese addresses resolve by postcode. There is no parser claim today                            |
 | Two components share one span                   | This cannot happen. Spans are disjoint                                 | If you observe it, report it with the input string                                                |
 
 ## Rationale
@@ -127,13 +127,13 @@ instruction rather than a postcode, and folding it into `postcode` corrupts Fren
 statistics.
 
 The schema is deliberately wider than any shipped head. A tag enters the union when the design work
-for it is settled, which is earlier than when a model trains on it. That ordering is what lets a
+for it is settled. That happens earlier than when a model trains on it. That ordering is what lets a
 corpus be labeled before the head that consumes it exists.
 
 ## See also
 
 - [Library API](./library-api.mdx) — where tags appear in `AddressTree` and `decodeAsJSON`.
 - [HTTP APIs](./http-apis.mdx) — where tags appear in a `/v1/parse` response.
-- [Locales and tiers](./locales-and-tiers.mdx) — which locales carry a measured claim.
+- [Locales and tiers](./locales-and-tiers.mdx) — which locales have a measured claim.
 - [Understand a parse](../tutorials/understand-a-parse.mdx) — tags on a real input, walked through.
 - [`SCHEMA.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx) — the design record and the change rule.

@@ -1,13 +1,13 @@
 ## R2 groundwork (2026-08-01, verified against the shipped admin DB)
 
-`admin-global-priority.db` carries **exactly 211 borough rows** (the design doc's number,
+`admin-global-priority.db` contains **exactly 211 borough rows** (the design doc's number,
 confirmed). Extraction: `spr.placetype='borough'` joined through `ancestors` to
 locality/localadmin parents. Distribution: London 33, Cardiff 33 (inspect — Welsh communities
-mis-typed?), Tokyo 23, Rotterdam 23, Paris 20, Amsterdam 8. NOTE: Amsterdam's boroughs are
-compass-named (Noord/Zuid/West/Oost/Nieuw-West/Zuidoost) — the directional-homograph class at
-placetype grain; law-1-style care applies when these become pair entries. Berlin rows appear
+mis-typed?), Tokyo 23, Rotterdam 23, Paris 20, Amsterdam 8. Note: Amsterdam's boroughs take
+compass names (Noord/Zuid/West/Oost/Nieuw-West/Zuidoost) — the directional-homograph class at
+placetype grain. Law-1-style care applies when these become pair entries. Berlin rows appear
 twice (locality + localadmin parents) — dedupe on (child, parent-surface). Next: emit these as
-PIX1 rows into the per-locale indexes (London → pair-index-gb; others blocked on their locale's
+PIX1 rows into the per-locale indexes (London → pair-index-gb, others blocked on their locale's
 carrier + tag-aliveness per the placetype-evidence doc).
 
 ---
@@ -15,12 +15,12 @@ carrier + tag-aliveness per the placetype-evidence doc).
 ## R3 survey opening (2026-08-01)
 
 **ONSPD FEB 2026 is ALREADY ON DISK** (`$MAILWOMAN_DATA_ROOT/onspd/2026-07-22/`, OGL). The
-current ward lookup (`WD ... 05_25.csv`) carries both probe targets (Nine Elms E05014015,
+current ward lookup (`WD ... 05_25.csv`) contains both probe targets (Nine Elms E05014015,
 Islandmagee N08000826). London extraction executed: live postcodes in the 8 London postal areas,
 LAD filter E09*, wd25cd → ward name → **459 (ward, London) pairs**
 (`scratch-gbvenue/london-ward-pairs.jsonl`), incl. Nine Elms + the Clapham ward family. Boundary
 recorded: "Clapham North" is a neighborhood rather than a ward — ward grain covers part of the
-neighborhood class; the residual wants a finer source (OS Open Names) in a later increment. NI:
+neighborhood class. The residual wants a finer source (OS Open Names) in a later increment. NI:
 ward names exist (N08*) but the PAIR parent needs post towns. An outcode→post-town table is the
 missing piece, deferred. IE: license survey still open (Tailte Éireann/logainm).
 
@@ -28,7 +28,7 @@ missing piece, deferred. IE: license survey still open (Tailte Éireann/logainm)
 
 ## R4 groundwork + the WOF-neighborhood vein (2026-08-01)
 
-**Census measurement (shipped admin DB): 26,431 parents carry dep-loc-class children.** London:
+**Census measurement (shipped admin DB): 26,431 parents have dep-loc-class children.** London:
 675 (33 boroughs + 675-class neighborhoods), NYC: 5 + 309, Manchester: 134, Springfield: 158 —
 the conditional prior has real discriminative mass, confirming the census artifact's premise.
 
@@ -54,11 +54,11 @@ law-1 rows graded for venue-confound FPs before the artifact ships them.
 
 **R4b — the neighborhood increment shipped (2026-08-01):** the pre-registered bar PASSED — the
 56-row law-1 confound board (directional neighborhood surfaces opening venue names) shows
-**0 dep-loc false positives before and after** the 424-fresh merge; the segment-mode blocking holds.
+**0 dep-loc false positives before and after** the 424-fresh merge, so the segment-mode blocking holds.
 Positive side verified: "East Acton"/"Crystal Palace"/"Nine Elms" all extract as
 dependent_locality. Artifact: `data/gazetteer/london-pairs-v2.jsonl` (966 rows = wards ∪
-neighborhoods, sorted-unique) supersedes v1; link-dev-weights repointed; full GB index =
-19,209 PPD + 830 secondary = 20,039, cross-checked + self-verified; TRANSITION-BETA green.
+neighborhoods, sorted-unique) supersedes v1. link-dev-weights is repointed. The full GB index is
+19,209 PPD + 830 secondary = 20,039, cross-checked + self-verified. TRANSITION-BETA is green.
 
 ---
 
@@ -73,17 +73,17 @@ admin DB, via `mailwoman gazetteer census`.
 ASSERTS a surface is a dependent locality, so every batch needs a venue-confound board before it
 ships (R4b's law-1 discipline). A census node asserts no fact about any surface — it can only tilt
 a reading the model already entertains under a parent it already identified. That is what makes it
-the safe carrier for the long tail (GB alone has 22,843 WOF dep-loc-class links; individually
-boarding them is not a plan).
+the safe carrier for the long tail. GB by itself has 22,843 WOF dep-loc-class links, and
+boarding them individually is not a plan.
 
 **Scope: data + loader + offline probe. no decode wiring, and the header ships with NO `delta`** —
-a calibrated bias is a later rung's output, and an artifact carrying an unmeasured one would ship a
-change nobody measured.
+a calibrated bias is a later rung's output, and an artifact carrying an unmeasured one would ship an
+unmeasured change.
 
 **Pre-registered bars:**
 
-- **B-C1 (artifact sanity).** Build reports 0 unmapped placetypes; the self-check readback finds
-  nodes for London/Manchester/Birmingham with nonzero dependent-locality mass; artifact ≤ 2 MB.
+- **B-C1 (artifact sanity).** Build reports 0 unmapped placetypes. The self-check readback finds
+  nodes for London/Manchester/Birmingham with nonzero dependent-locality mass. Artifact ≤ 2 MB.
 - **B-C2 (discrimination).** Median dependent-locality LIFT over the GB base rate, across the
   parents of a held-out GB dep-loc sample, is **≥ 2.0×**. A lift near 1 means the census is not
   conditional evidence at all and the rung closes NEGATIVE.
@@ -96,7 +96,7 @@ change nobody measured.
   finding to state directly rather than to bury. It is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
-### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it
+### R4c Addendum 1 — B-C2 is mis-specified, and the amended bar is pre-registered before reading it
 
 The GB build (5,577 nodes, 136,674 bytes, 33,899 counted links, 0 unmapped placetypes) makes
 B-C2 unreadable as written, and the reason is structural rather than a property of any parent:
@@ -109,9 +109,9 @@ covered parent — London, Manchester, Birmingham alike — reads share 100.0%, 
 mechanism.** The pre-registration exists to stop exactly the move of without output swapping in a
 friendlier statistic, so the miss stands in the record.
 
-The diagnosis says which statistic carries the information. A census node's evidence is
-not "what fraction of this parent's children are dependent localities" (trivially all of them);
-it is **presence and magnitude across the parent population** — most localities have no such
+The diagnosis identifies which statistic holds the information. A census node's evidence is
+not "what fraction of this parent's children are dependent localities", because by construction
+that fraction is all of them. It is **presence and magnitude across the parent population** — most localities have no such
 children at all and never enter the artifact.
 
 - **B-C2′ (amended, pre-registered before computing it).** Of GB locality-class places in the
@@ -124,14 +124,14 @@ children at all and never enter the artifact.
 
 ### R4c Addendum 2 — the readings, and B-C3's circularity
 
-**B-C1 PASS.** GB census: 5,577 nodes, 136,674 bytes, 33,899 links, 0 unmapped placetypes;
-readback probes return nonzero dependent-locality mass for London (707), Manchester (65),
+**B-C1 PASS.** GB census: 5,577 nodes, 136,674 bytes, 33,899 links, 0 unmapped placetypes.
+Readback probes return nonzero dependent-locality mass for London (707), Manchester (65),
 Birmingham (110).
 
 **B-C2 MISS (of the metric — see Addendum 1).** Median within-node lift 1.31× against a 2.0× bar.
 
 **B-C2′ PASS, both halves.** GB has 28,872 locality-class places (16,987 distinct surfaces); the
-census covers 5,637 = **33.2%** (bar ≤ 50%), and the median covered node carries **2**
+census covers 5,637 = **33.2%** (bar ≤ 50%), and the median covered node has **2**
 dependent-locality children (bar ≥ 2). A census hit does rule out two thirds of the parent
 population.
 
@@ -143,7 +143,7 @@ in the small/middle tail, where the median parent has two.
 **B-C3 VOID — the measurement is circular, and the 97.1% it produced has no meaning.** The sample
 drew (child, parent) links from WOF, and the census is built from WOF under an inclusion rule that
 admits a parent precisely because it has such a child. Every sampled parent was therefore in the
-census by construction. The reading (20,186 of 22,843 links miss the shipped pair index; 97.1% of
+census by construction. The reading (20,186 of 22,843 links miss the shipped pair index, and 97.1% of
 those misses have census parent coverage) is recorded as void rather than as a pass.
 
 The one fact in it that is not circular, because it concerns the other artifact: **the shipped pair
@@ -153,8 +153,8 @@ set out to cover is real and mostly uncovered.
 - **B-C3′ (pre-registered before running, replaces B-C3).** Take GB post towns from the PPD
   tuples — HM Land Registry, a source the census never read — and measure the fraction with
   nonzero census dependent-locality mass, both unweighted and weighted by PPD row volume (the
-  unit real queries arrive in). Bar: **≥ 20% unweighted**. Report the weighted figure alongside;
-  a large gap between the two is itself the finding about where the census does and does not speak.
+  unit real queries arrive in). Bar: **≥ 20% unweighted**. Report the weighted figure alongside.
+  A large gap between the two is itself the finding about where the census does and does not speak.
 
 **D-C4 (disclosure) confirmed as predicted.** All 56 law-1 confound rows share the London parent
 with the true positives, so the census has dependent-locality mass on 100% of them. The census
@@ -166,7 +166,7 @@ ceiling on what the artifact can ever contribute, and the reason it ships withou
 
 **B-C3′ PASS.** Against GB post towns from the PPD tuples (25.7M rows, a source the census never
 read): **54.2% of the 1,167 post towns** have census dependent-locality mass, and **74.3% of PPD
-rows** land in a covered town. On the subset of post towns whose PPD rows carry a
+rows** land in a covered town. On the subset of post towns whose PPD rows include a
 dependent locality: 56.8% of towns, **77.5% of rows**.
 
 The gap between unweighted and weighted coverage (54% → 74%) is the useful part: the census speaks
@@ -178,7 +178,7 @@ neighborhood records — coverage rather than fact, and the reader treats it as 
 - It is actual conditional evidence: a hit rules out two thirds of GB's parent population
   (B-C2′) and is available on three quarters of real dependent-locality-containing rows (B-C3′).
 - It cannot do span-level work (D-C4). Every law-1 confound row shares London with the true
-  positives. A census delta alone would raise dependent-locality odds on the venue span exactly as
+  positives. A census delta by itself would raise dependent-locality odds on the venue span exactly as
   much as on the real one — which is why no delta is written and why the calibration rung, if it
   runs, has to compose the census with span-level evidence rather than replace it.
 - The complementary fact about the other artifact: the shipped pair index resolves 11.6% of WOF's

@@ -21,7 +21,7 @@ A postal sorting machine reads what it can and passes the rest to a person. The 
 did not consider that a defect, because the machine's job was never to be right about everything.
 It was to be right about most things, fast, and clear about which envelopes it was handing over.
 
-The parser has no equivalent hand-off, and that is the single most important thing to know about it.
+The parser has no equivalent hand-off. That absence is the most important fact about it.
 There is no envelope it declines. Everything below follows from that.
 
 ## It never abstains
@@ -44,8 +44,8 @@ upstream, and the parse result is not the place to make it.
 
 ## It makes no statement about existence or delivery
 
-[What Mailwoman is](../../get-started/what-mailwoman-is.mdx) states the boundary and it is worth
-restating with the mechanism: a parse tells you a string reads like an address and where the
+[What Mailwoman is](../../get-started/what-mailwoman-is.mdx) states the boundary. Here it is again
+with the mechanism: a parse tells you a string reads like an address and where the
 components sit. It does not consult a register of real delivery points, because it does not have
 one. Those are licensed products from postal authorities, and open data does not substitute for
 them.
@@ -78,11 +78,11 @@ checked, and geocoding's resolution tier tells you what the coordinate is ground
 A share of inputs do not contain the information required to parse them, and no model, gazetteer or
 rule fixes that. Three shapes recur.
 
-**A bare name.** `springfield` returns a locality, which is a reasonable reading and could be any of
-dozens of places. The parse is not wrong; the input is under-determined, and the right response is a
-result that says so rather than a better guess.
+**A bare name.** `springfield` returns a locality. That is a reasonable reading, and it could be any of
+dozens of places. The parse is not wrong. The input is under-determined, and the correct response is a
+result that reports the ambiguity rather than a better guess.
 
-**A digit with no owner.** A number beside a name has at least two readings, and a short input carries
+**A digit with no owner.** A number beside a name has at least two readings, and a short input contains
 no evidence for either:
 
 ```
@@ -95,8 +95,8 @@ is a postcode shape in several countries. Add the one token that decides it — 
 class: the number's owner is determined by the tokens around it, and when those tokens are absent
 the owner cannot be recovered.
 
-**A name doing a job other than naming its own place.** A venue called after a city, a street named
-after a state. [Why addresses are hard](../geocoding/why-addresses-are-hard.mdx) is the full treatment
+**A name doing a job other than naming its own place.** Examples are a venue called after a city and a street
+called after a state. [Why addresses are hard](../geocoding/why-addresses-are-hard.mdx) is the full treatment
 of why this is structural rather than a backlog.
 
 ## Locale and script boundaries are hard, and quiet
@@ -111,7 +111,7 @@ how much measurement supports each country's claim.
 
 **A script outside the training data produces a confident wrong reading rather than an error.** The
 tokenizer encodes unknown characters byte by byte, so the pipeline never crashes — and the pieces it
-produces carry no learned meaning:
+produces have no learned meaning:
 
 ```
 東京都千代田区丸の内1丁目      →  locality = "東京都千代田区丸の内1丁目"
@@ -121,7 +121,7 @@ produces carry no learned meaning:
 
 The first two collapse the whole address into one locality. The third gets the city right and leaves
 the house number inside the street. Every one of them returns a well-formed tree with a confidence on
-it. Byte fallback is what stops a crash; it is not coverage of the script, and the two are easy to
+it. Byte fallback stops a crash. It is not coverage of the script, and the two are easy to
 mistake for each other because they look identical from the outside.
 
 ## The input register is bridged, and the bridge is narrow
@@ -130,11 +130,11 @@ Users type in lowercase. The training corpus is labeled in mixed case. The parse
 deterministically before the model runs: a fully lowercase pure-ASCII input is restored to canonical
 mixed case, with words of three or more letters title-cased and words of one or two letters
 uppercased, so `dc` reaches the model as `DC`. A shouting all-caps input is handled by the mirror
-of the same pass, which title-cases the long words and leaves the short ones shouting, since those
+of the same pass. That pass title-cases the long words and leaves the short ones in capitals, since those
 are already the form the corpus uses for state codes and directionals.
 
 The restriction is in the phrase _pure ASCII_. Case conversion outside ASCII is language-dependent and
-can change a string's length, which would break the character offsets the whole result is built on. Therefore,
+can change a string's length. A length change would break the character offsets the whole result is built on. Therefore,
 an input containing any non-ASCII character is left exactly as typed. The consequence is visible:
 
 ```
@@ -166,13 +166,13 @@ the address at the end:
 ```
 
 The tail of the string was never seen. Fragmented words spend the window faster than common ones, so
-the effective character limit is lower for languages that fragment more. If your input can carry long
+the effective character limit is lower for languages that fragment more. If your input can contain long
 routing preambles, trim them before the parse rather than after.
 
 ## Where rules still win
 
-The rule-based approach is not a worse version of this one. It is better at a specific set of jobs,
-and it is worth being precise about which.
+The rule-based approach is not a worse version of this one. It is better at the specific set of jobs
+listed below.
 
 **A closed vocabulary in a fixed slot, with no homographs.** If the value must be one of a known list
 and the list has no collisions with other components, a lookup is exact, instant, and needs no
@@ -189,7 +189,7 @@ because rendering is deterministic. The inverse of a hard problem is not
 always hard.
 
 **Any requirement for a guarantee rather than a score.** A rule can promise never to emit a tag. A model
-can be measured at never having emitted it on the data anyone tried, which is a different and weaker
+can be measured at never having emitted it on the data anyone tried. That is a different and weaker
 statement.
 
 **Auditability.** A rule is readable, and the fix for a wrong rule is a diff a reviewer can evaluate.

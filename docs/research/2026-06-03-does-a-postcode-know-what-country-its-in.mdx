@@ -15,7 +15,7 @@ That question leads to a larger one, and this post is mostly about the larger on
 
 ## The thing we wanted
 
-Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer; you hand it `DE` and it searches the German one. It works, but in production nobody hands you the country. You parse the address because you _don't_ know where it is yet. A flag that makes you supply the country up front solves the easy half of the problem and leaves the hard half unsolved.
+Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer. You hand it `DE` and it searches the German one. It works, but production input does not come with the country. You parse the address because you _don't_ know where it is yet. A flag that makes you supply the country up front solves the easy half of the problem and leaves the hard half unsolved.
 
 The postcode is the most information-dense token in an address. Its five or six characters encode a routing hierarchy, a region, and frequently a neighborhood. We already extract it before the neural parser runs. We wanted the postcode to _tell_ the resolver which country to search. That would let us delete the flag, and it would also give the street-vocabulary check the locale signal it needed.
 
@@ -33,7 +33,7 @@ When a decision seems larger than it looks, we run it past a second model (a dif
 
 The second opinion argued that the street-vocabulary check was a symptom of a larger gap. A locale condition would fix that helper while leaving the larger gap in place: the codebase had no _single, early, reliable place_ to decide the country and share the result. We had three partial answers in different places: the extractor computed a country posterior from the gazetteer, a rule-based stage guessed locale from the postcode's shape, and the model eventually made a learned guess. No component defined which answer was authoritative or how the three related. The street-vocabulary helper was the place where the gap showed.
 
-The resulting design had one central idea: **share the postcode data between modules instead of merging the modules.** Every address system in our reference package already defines its own postcode shape. The one new piece we built is the _inverse_ of those shapes, a function that takes a postcode and asks every system whether the postcode matches its shape. A bare `68161` returns `[us, de, fr]`, because a five-digit shape belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. The two stages do not call each other. They share a table, which scales as countries are added.
+The resulting design had one central idea: **share the postcode data between modules instead of merging the modules.** Every address system in our reference package already defines its own postcode shape. The one new piece we built is the _inverse_ of those shapes, a function that takes a postcode and asks every system whether the postcode matches its shape. A bare `68161` returns `[us, de, fr]`, because a five-digit shape belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. The two stages do not call each other. They share a table, and the table scales as countries are added.
 
 The rest of the design followed. A small fused "locale prior" object holds the country evidence and passes it to the resolver. The resolver always accepts that object's _shape_, and the code that _produces_ it can be swapped (a cheap pre-pass today, the trained model later).
 
@@ -54,7 +54,7 @@ The confidence result is weaker.
 
 A US postcode identifies its own country with confidence a little over a quarter of the time. A German postcode does so a little under half the time. In the remaining cases, the postcode is consistent with several countries.
 
-The reason is simple: the same five-digit code exists in several countries. `75001` is the first arrondissement of Paris. It is also Addison, Texas. The gazetteer correctly reports both, and a uniform posterior over `{FR, US}` is the right answer when the postcode alone cannot decide. Across every country with numeric postcodes, the confident cases are the minority.
+The reason is simple: the same five-digit code exists in several countries. `75001` is the first arrondissement of Paris. It is also Addison, Texas. The gazetteer correctly reports both, and a uniform posterior over `{FR, US}` is the correct output when the postcode by itself cannot decide. Across every country with numeric postcodes, the confident cases are the minority.
 
 (An early version of the probe looked much better because of an alphabetical tie-break. When the posterior is a flat `{DE, US}`, "DE" sorts first and wins, so the German numbers looked almost perfect. That result came from the sort order. The correct measure is the confident-single-country rate in the table above.)
 
@@ -62,13 +62,13 @@ The reason is simple: the same five-digit code exists in several countries. `750
 
 The result ruled out one plan and supported another.
 
-It ruled out removing the flag. An extractor-only locale prior cannot retire the `--default-country` flag, because more than half the time it would give the resolver an even split between countries, which is worse than a default. The PR we had sketched would have failed its own acceptance test. We had not written it yet, which is why the probe was worth running first.
+It ruled out removing the flag. An extractor-only locale prior cannot retire the `--default-country` flag, because more than half the time it would give the resolver an even split between countries. An even split is worse than a default. The PR we had sketched would have failed its own acceptance test. We had not written it yet, so the probe spared us that work.
 
-It supported a claim our design document had made months earlier without evidence: _determining the country is most of the work of parsing an address._ The most information-dense token settles the country only a third of the time. The rest of the answer has to come from the surrounding text: the city, the street, and the order of the pieces. A regex that runs before the model cannot supply that. The model can, because it reads the whole string at once and conditions its decisions on what it infers. The measurement showed that country detection belongs in the model, which is the most expensive layer to change.
+It supported a claim our design document had made months earlier without evidence: _determining the country is most of the work of parsing an address._ The most information-dense token settles the country only a third of the time. The rest of the answer has to come from the surrounding text: the city, the street, and the order of the pieces. A regex that runs before the model cannot supply that. The model can, because it reads the whole string at once and conditions its decisions on what it infers. The measurement showed that country detection belongs in the model. The model is the most expensive layer to change.
 
-## What shipped, and what we left alone
+## What shipped, and what we left unchanged
 
-We shipped the part the measurement supported. The street-vocabulary check now uses the postcode's gazetteer membership to choose vocabularies. A US-only ZIP consults the American vocabulary and skips the German one. Words from an unrelated language can no longer lower the score of a postcode from another country. The change scales to twenty countries directly. The resolver evals come out byte-identical to before, which is the expected result for a precision change on a clean sample. The shared inverse-shape function is now available to other callers.
+We shipped the part the measurement supported. The street-vocabulary check now uses the postcode's gazetteer membership to choose vocabularies. A US-only ZIP consults the American vocabulary and skips the German one. Words from an unrelated language can no longer lower the score of a postcode from another country. The change scales to twenty countries directly. The resolver evals come out byte-identical to before. Byte-identical evals are the expected result for a precision change on a clean sample. The shared inverse-shape function is now available to other callers.
 
 We deliberately kept the flag, and the measurement explains why. `--default-country` stays until the trained model produces the country signal by conditioning on the full address. That is a larger piece of work, and the measurement now justifies it.
 

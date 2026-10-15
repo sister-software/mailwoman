@@ -125,7 +125,7 @@ train:
   warmup_steps: 1000
   grad_clip_norm: 1.0
   # Cap at 3000 — enough to clear both previously-observed NaN windows (step 950
-  # and step 1700) with margin. We don't need a full training. we just need to
+  # and step 1700) with margin. This diagnostic does not need a complete training run. It needs to
   # know if the model survives the moment of suspected instability.
   max_steps: 3000
   eval_every_steps: 500

@@ -1,14 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "@mailwoman/core/pipeline"
 import { describe, expect, it } from "vitest"
 
-import {
-	buildVenueHeadEmissionPriors,
-	DEFAULT_VENUE_HEAD_BIAS_SCALE,
-	type VenueHeadLexiconLike,
-	type VenueHeadPriorOpts,
-} from "#venue/head-prior"
+import { buildVenueHeadEmissionPriors, DEFAULT_VENUE_HEAD_BIAS_SCALE } from "#venue/head-prior"
 
 const LABELS = ["O", "B-locality", "I-locality", "B-venue", "I-venue"]
 const B = LABELS.indexOf("B-venue")
@@ -89,6 +85,89 @@ describe("buildVenueHeadEmissionPriors", () => {
 
 		expect(stopped[1]![I]).toBeCloseTo(2)
 		expect(stopped[2]![I]).toBe(0)
+	})
+
+	it("gives no first-word bias to a street type after a street name, and keeps it when the type opens the segment", () => {
+		const isStreetAffix = (w: string) => w === "st" || w === "rd"
+		const lex = lexicon({ first: { st: 2 }, last: { school: 2 } })
+
+		const afterName = build(lex, pieces("6th", "St", "SW"), LABELS, { isStreetAffix })
+
+		expect(afterName.flat().every((v) => v === 0)).toBe(true)
+
+		const saint = build(lex, pieces("St", "Mary's", "Church"), LABELS, { isStreetAffix })
+
+		expect(saint[0]![B]).toBeCloseTo(2)
+		expect(saint[1]![I]).toBeCloseTo(2)
+
+		// `School` heads no venue before the street type `Rd`, once `rd` reads as one.
+		const streetName = build(lex, pieces("Mountain", "School", "Rd"), LABELS, { isStreetAffix })
+
+		expect(streetName.flat().every((v) => v === 0)).toBe(true)
+
+		// A dash opens a decoration, so the `St` of a Saint name inside it keeps the first-word bias.
+		const decorated = build(lex, pieces("Day", "Spa", "-", "St", "Andrews", "Lakes"), LABELS, { isStreetAffix })
+
+		expect(decorated[3]![B]).toBeCloseTo(2)
+		expect(decorated[4]![I]).toBeCloseTo(2)
+		expect(decorated[0]![B]).toBe(0)
+	})
+
+	it("gives no bias inside a segment that is a country name", () => {
+		const isCountryName = (segment: string) => segment === "united states of america"
+		const lex = lexicon({ last: { america: 2 } })
+
+		const country = build(lex, pieces("United", "States", "of", "America", ",", "Vermont"), LABELS, { isCountryName })
+
+		expect(country.flat().every((v) => v === 0)).toBe(true)
+
+		const bank = build(lex, pieces("Bank", "of", "America", ",", "Vermont"), LABELS, { isCountryName })
+
+		expect(bank[2]![B]).toBeCloseTo(2)
+		expect(bank[0]![I]).toBeCloseTo(2)
+
+		const unguarded = build(lex, pieces("United", "States", "of", "America", ",", "Vermont"), LABELS)
+
+		expect(unguarded[3]![B]).toBeCloseTo(2)
+	})
+
+	it("gives no bias to a street-type head whose span opens with a house number", () => {
+		const isStreetAffix = (w: string) => w === "plaza" || w === "center" || w === "garden"
+		const lex = lexicon({ last: { plaza: 2, center: 3, gallery: 2 } })
+
+		const numbered = build(lex, pieces("30", "Rockefeller", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(numbered.flat().every((v) => v === 0)).toBe(true)
+
+		const twoWordName = build(lex, pieces("1", "Dag", "Hammarskjold", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(twoWordName.flat().every((v) => v === 0)).toBe(true)
+
+		// The number opens the segment even when a street affix or a single letter sits inside the name.
+		const affixInside = build(lex, pieces("42", "Garden", "Center"), LABELS, { isStreetAffix })
+
+		expect(affixInside.flat().every((v) => v === 0)).toBe(true)
+
+		const letterInside = build(lex, pieces("110", "Issac", "S", "Cole", "Plaza"), LABELS, { isStreetAffix })
+
+		expect(letterInside.flat().every((v) => v === 0)).toBe(true)
+
+		// The number must open the span itself: a number before a comma belongs to another segment.
+		const venueAfterNumber = build(lex, pieces("45", ",", "Rockefeller", "Center"), LABELS, { isStreetAffix })
+
+		expect(venueAfterNumber[2]![B]).toBeCloseTo(3)
+		expect(venueAfterNumber[3]![I]).toBeCloseTo(3)
+
+		// A head that is not a street type keeps its bias after a number.
+		const gallery = build(lex, pieces("30", "City", "Gallery"), LABELS, { isStreetAffix })
+
+		expect(gallery[1]![B]).toBeCloseTo(2)
+		expect(gallery[2]![I]).toBeCloseTo(2)
+
+		// A single letter is an identifier but not a number, so `Concourse B` keeps the rule out.
+		const letter = build(lex, pieces("B", "Food", "Center"), LABELS, { isStreetAffix })
+
+		expect(letter[2]![I]).toBeCloseTo(3)
 	})
 
 	it("decays the bias by extensionDecay once for each word from the head", () => {

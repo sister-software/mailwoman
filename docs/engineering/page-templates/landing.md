@@ -6,7 +6,7 @@ role.
 
 ## Frontmatter skeleton
 
-Copy this to the top of the new page. `audience` is required for this role; the values in use are
+Copy this to the top of the new page. `audience` is required for this role. The values in use are
 `product-reader`, `contributor`, and `maintainer`.
 
 ```yaml
@@ -36,7 +36,7 @@ Define the thing in one sentence, in the reader's vocabulary rather than the cod
 > `@mailwoman/address-id` turns a parsed address into a key you can `GROUP BY` or `JOIN ON`. The key has
 > three parts: a coarse region prefix, an H3 cell at resolution 9, and a hash of the address after
 > normalization. Because the hash runs on the normalized form, `123 Main St` and `123 MAIN STREET` produce
-> the same key; because the cell is coarse, two geocodes of the same building a few meters apart still land
+> the same key. Because the cell is coarse, two geocodes of the same building a few meters apart still land
 > together. This is the exact-match half of record resolution. When two records disagree in ways
 > normalization cannot settle, you want the fuzzy matcher instead.
 

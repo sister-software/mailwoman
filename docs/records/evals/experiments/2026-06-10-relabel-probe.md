@@ -20,12 +20,12 @@ audit on 250K real base rows across five databases: every sampled split correct,
 rates 8–87% consistent with the 69.4% aggregate measurement.
 
 Design was pressure-tested in a 3-turn DeepSeek consult (curl fallback — the `pi` wrapper timed
-out again at 180s): concurrence on all-rows scope (GB splits are schema-correct; a country filter
+out again at 180s): concurrence on all-rows scope (GB splits are schema-correct, and a country filter
 adds brittleness), relabel probability 1.0 (partial relabeling is a weaker form of the same
 contradiction — p=0.9 still leaves ~156:1), and probe decisiveness. Its push-back we adopted: the
 32-row affix eval is too small to check on (one instance ≈ 4pp); expand to ≥100/≥100 instances
 before the full-run check. One correction ours: the probe keeps extract weight 20.0 for probe-0
-parity — the weight-reduction discussion belongs to the full run.
+parity — the weight-reduction discussion belongs to the full 40k consolidation run.
 
 ## Result: HOLD
 
@@ -47,23 +47,23 @@ suffix ROSE to 100. Verdict: hold, with the caveat recorded here rather than hid
 Residual misses at +4k: four prefixes, all prefix+ordinal/numeric names ("Northwest 23rd
 Avenue", "E 63rd Street", "NE Loop 410"). The suffix splits fire correctly even on those rows
 (`model street="northwest 23rd"`). A long tail that 4k corrective steps on a 20.0-weight resume
-has not migrated; the full run owns it.
+has not migrated. The full 40k consolidation run owns it.
 
-## The full run
+## The full 40k consolidation run
 
 `v1.1.0-relabel-consolidation` launched the same evening (from scratch, 40k): the v4.2.0 recipe
 on the consistent mix with both anti-contradiction compensations REVERTED as stated decisions —
 synth-affix 17.0 → 2.0 and affix tag class-weights 2.0/4.0 → 1.5/1.5 (suffix now appears on ~65%
-of base street rows; a 4× boost on a majority tag risks over-fire). Check: the v4.2.0 ship floors
+of base street rows, and a 4× boost on a majority tag risks over-fire). Check: the v4.2.0 ship floors
 unchanged, affix measured at 20k and 40k (stability is the claim under test), plus the consult
 watches (folded-street invariance, short-street recall, house_number→street_prefix transition).
-The expanded NAD-native affix eval re-baselines before the verdict; the 32-row result is recorded
+The expanded NAD-native affix eval re-baselines before the verdict. The 32-row result is recorded
 alongside rather than substituted. All hold → v4.3.0 candidate.
 
 ## Probe economics, for the record
 
 The entire #492 → #511 arc — three falsification probes, the audit, the corpus measurement, the
-fix, and its confirmation — cost under one hour of A100 total. The width run alone (the
+fix, and its confirmation — cost under one hour of A100 total. The width run by itself (the
 hypothesis the ladder was built to avoid betting on blind) would have been ~1h for a 6/12 FAIL
 with no explanation. Pre-registered cheap probes against a measured control remain the best
 purchase in this project.

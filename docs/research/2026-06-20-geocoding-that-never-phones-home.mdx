@@ -14,7 +14,7 @@ That is unusual, because each of the three kinds of product on the market today 
 
 ## The three options, and what each one costs you
 
-The first option is a cloud API: Google, Mapbox, HERE Technologies, AWS, or Azure. You send the address over the network and get coordinates back. The results are fast and globally accurate, and depending on the vendor, they come with usage restrictions. Google's terms let you cache a coordinate for thirty days, after which you must delete it, so if you geocode the same ten thousand delivery addresses every morning, you pay for them every morning. AWS forbids caching autocomplete results and bills storage at a higher tier when you do cache. The address always leaves your infrastructure, which rules these services out when the address itself is sensitive, such as a shelter, a clinic, or a residence whose address is confidential.
+The first option is a cloud API: Google, Mapbox, HERE Technologies, AWS, or Azure. You send the address over the network and get coordinates back. The results are fast and globally accurate, and depending on the vendor, they come with usage restrictions. Google's terms let you cache a coordinate for thirty days, after which you must delete it, so if you geocode the same ten thousand delivery addresses every morning, you pay for them every morning. AWS forbids caching autocomplete results and bills storage at a higher tier when you do cache. The address always leaves your infrastructure. That rules these services out when the address itself is sensitive, such as a shelter, a clinic, or a residence whose address is confidential.
 
 The second option is to self-host: Nominatim, Pelias, and Photon are all mature, free software that you control. The license is fine. The cost is the infrastructure. Nominatim needs a Postgres/PostGIS install with more than a terabyte of disk and a planet import that takes days. Pelias is Elasticsearch plus five supporting services and a 450 GB index. Photon is OpenSearch with a 64 GB heap. You own your data, but you have to operate a search cluster to use it, and none of them can run in a browser.
 
@@ -30,13 +30,13 @@ The resolver used to need 243 round trips. An index change reduced that count to
 
 ## A neural parser the size of a photo
 
-The 29.8 MB model is roughly sixty times smaller than libpostal's default model and about seventy times smaller than the Senzing one. The smaller model is also the _better_ parser on search-box input: typos, half-finished lines, and partial prefixes. A transformer trained on degraded queries reads `123 Penslyvania Av NW` the way you meant it; a CRF over hand-built features can miss those inputs. The model is small enough to ship to a browser and performs better on the input browsers produce.
+The 29.8 MB model is roughly sixty times smaller than libpostal's default model and about seventy times smaller than the Senzing one. The smaller model is also the _better_ parser on search-box input: typos, half-finished lines, and partial prefixes. A transformer trained on degraded queries reads `123 Penslyvania Av NW` the way you meant it. A CRF over hand-built features can miss those inputs. The model is small enough to ship to a browser and performs better on the input browsers produce.
 
 ## Your queries never leave, and the results are yours forever
 
 This matters most to anyone holding addresses they cannot send to a third party. Without a server, there is no storage clause, zero data retained, zero deletion after thirty days, and zero leakage. You geocode once and keep the coordinate as long as you like. Healthcare and other workflows with confidential addresses can require on-device processing as a procurement condition.
 
-This argument has limits. geocode.earth's hosted Pelias and Smarty both already offer generous data-ownership terms, so the argument applies mainly to vendors that require deletion: Google, AWS, and HERE Technologies. Against those vendors it is decisive.
+This argument has limits. geocode.earth's hosted Pelias and Smarty both already offer generous data-ownership terms, so the argument applies mainly to vendors that require deletion: Google, AWS, and HERE Technologies. Against those vendors, local geocoding removes the deletion requirement.
 
 ## The bill is zero
 
@@ -46,7 +46,7 @@ Google's geocoder costs five dollars per thousand requests after the free tier. 
 
 I would rather you hear the limits from me than discover them in production.
 
-Rooftop precision (the actual building rather than the neighborhood) currently works only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver returns an administrative or postcode centroid, which gives the right town and ZIP but not the building. The large cloud vendors have much better global rooftop coverage. If you need a rooftop in Lagos today, use Google.
+Rooftop precision (the actual building rather than the neighborhood) currently works only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver returns an administrative or postcode centroid. That centroid gives the right town and ZIP but not the building. The large cloud vendors have much better global rooftop coverage. If you need a rooftop in Lagos today, use Google.
 
 Mapbox does ship on-device geocoding, but only in their native mobile SDK, and it performs reverse geocoding (coordinate to address) rather than forward geocoding. The precise claim is that Mailwoman is the only geocoder that runs the full forward pipeline in a browser without a server. That is a narrow claim, and no other product we know of meets it. There is not yet a batch endpoint or an SLA. Mailwoman is infrastructure you embed, and it is not a hosted service with an on-call team.
 

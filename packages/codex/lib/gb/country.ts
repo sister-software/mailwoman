@@ -8,7 +8,7 @@
  *   The UK's top-level admin tier is itself the first oddity of this system. France has régions,
  *   Germany has Bundesländer and the US has states as a single flat layer.
  *   The UK has constituent _countries_ within the country. An address rarely names its constituent
- *   country directly. It usually has a `street, town, postcode` shape. The postcode area provides a
+ *   country directly. Its common shape is `street, town, postcode`. The postcode area provides a
  *   useful signal for inferring the constituent country, with documented exceptions in `postcode-area.ts`.
  *   This file provides the coarse admin label. The postcode area provides the geographic signal.
  */
@@ -27,16 +27,21 @@ export interface UkCountryInfo {
 	 * English name (e.g. `Scotland`).
 	 */
 	name: string
+	/**
+	 * The ONS GSS code for the country (e.g. `S92000003`).
+	 * NSUL and other ONS products write it in `CTRY25CD`.
+	 */
+	gss: string
 }
 
 /**
  * ISO 3166-2:GB country code → info, for all four constituent countries.
  */
 export const GB_COUNTRIES = {
-	ENG: { code: "ENG", name: "England" },
-	SCT: { code: "SCT", name: "Scotland" },
-	WLS: { code: "WLS", name: "Wales" },
-	NIR: { code: "NIR", name: "Northern Ireland" },
+	ENG: { code: "ENG", name: "England", gss: "E92000001" },
+	SCT: { code: "SCT", name: "Scotland", gss: "S92000003" },
+	WLS: { code: "WLS", name: "Wales", gss: "W92000004" },
+	NIR: { code: "NIR", name: "Northern Ireland", gss: "N92000002" },
 } as const satisfies Record<string, UkCountryInfo>
 
 /**
@@ -45,6 +50,19 @@ export const GB_COUNTRIES = {
 export type UkCountryCode = keyof typeof GB_COUNTRIES
 
 const COUNTRY_CODE_SET: ReadonlySet<string> = new Set(Object.keys(GB_COUNTRIES))
+
+const COUNTRY_BY_GSS: ReadonlyMap<string, UkCountryCode> = new Map(
+	(Object.keys(GB_COUNTRIES) as UkCountryCode[]).map((code) => [GB_COUNTRIES[code].gss, code])
+)
+
+/**
+ * The constituent country an ONS GSS country code identifies, such as `W92000004` → `WLS`.
+ *
+ * Returns null for any other code.
+ */
+export function ukCountryForGSS(gss: string): UkCountryCode | null {
+	return COUNTRY_BY_GSS.get(gss.trim().toUpperCase()) ?? null
+}
 
 /**
  * Type-predicate for an ISO 3166-2:GB country code.

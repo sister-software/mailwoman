@@ -3,7 +3,7 @@
 A full-day session that closed the **country** and **affix** changes, ran the **v1.0.0
 consolidation** (every proven change in one model), and then ran three corrective
 iterations (Runs A/B/C) under two DeepSeek consults. **The campaign is now STOPPED at the
-treadmill guard with a decisive result:** the consolidation's guardrail win is large, real,
+treadmill guard with this result:** the consolidation's guardrail win is large, real,
 and stable across every variant — and the affix split has a demonstrated **stability
 ceiling at 29M params** that no sampling-weight recipe clears. A ship/re-baseline/escalate
 decision is pending operator review (see "The fork" below).
@@ -30,12 +30,12 @@ the open question, **negatively and informatively**:
 
 **Conclusion: the affix-75 peak is a TRANSIENT rather than an equilibrium.** The model can
 briefly represent the affix split at solo level but cannot _hold_ it under the full data
-distribution; sustained density high enough to reach it starves the rest. Combined with
+distribution. Sustained density high enough to reach it starves the rest. Combined with
 the stable ~65 ceiling at moderate density (Runs A/B) and **US street stuck at ~74–76.5
 in every variant** (canonical bar 80.4), this is a demonstrated
 **capacity/stability constraint at 29M params** — a fork rather than a tuning problem.
 (DeepSeek's two predictions here — "5× clears ≥72" and "75 is not a transient, suffix
-will asymptote" — were both falsified; the operator's treadmill guard and the original
+will asymptote" — were both falsified. The operator's treadmill guard and the original
 capacity-competition hypothesis were right.)
 
 **Training-check scorecard (canonical config bars, all fp32, gaz-fed + suppress):**
@@ -61,18 +61,18 @@ regression of the consolidation itself, likely the affix-split pressure costing 
 
 ## The fork — decision pending operator review
 
-Per the treadmill guard, no further recipe iteration. Three options, stated:
+Per the treadmill guard, recipe iteration stops here. The three options are:
 
 1. **Re-baseline with reason + ship Run B as v4.2.0** _(recommended)_. Run B is the
    strongest stable model: US postcode 97.3 ✓, country 89.8 ✓ (best ever), FR ✓ (hn 94.6
    best ever), DE ✓, micro/locality/region far above v4.1.0. Stated re-baselines it
    needs: **affix 64.9/48.8** (vs solo 78/67 — still infinitely better than the shipped
-   v4.1.0's 0/0; the tag exists and fires at P≈100), **US street 76.2** (−4.2 vs v0.9.8,
+   v4.1.0's 0/0, because the tag exists and fires at P≈100), **US street 76.2** (−4.2 vs v0.9.8,
    −2.3 vs v4.1.0 — the one true regression vs the shipped default), **unit 90.6** (−1.5).
    Then the full SHIP check (below) before tagging.
-2. **Architecture escalation** (DeepSeek's named path, now evidence-backed): wider model
+2. **Architecture escalation** (DeepSeek's proposed path, now evidence-backed): wider model
    (~48M) or a dedicated affix head with shared backbone. A funded next-campaign item —
-   the transient proves the representation exists; stability is what's missing.
+   the transient proves the representation exists, and stability is what's missing.
 3. **Don't ship** — keep v4.1.0 default, bank the findings + salvaged evals, proceed to
    the queue (#478) and revisit after the architecture work.
 
@@ -90,7 +90,7 @@ scorecard above):**
 **The check targets below are the CANONICAL pre-registration from `v1.0.0-consolidation.yaml`.**
 (2026-06-10 correction: an earlier revision of this table had silently relaxed several — affix
 72/64 vs the config's **78/67**, unit 91 vs 92, FR postcode 99 vs 99.5 — and had dropped the US-street
-row entirely. Restored to the config; see "Check provenance & decisions" below.)
+row entirely. The bars were restored to the config, as "Check provenance & decisions" below describes.)
 
 | tag                       |     **check (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
 | ------------------------- | ---------------------: | ------------: | ---------: | --------: | ----------: |
@@ -113,7 +113,7 @@ region 80.1 · micro 81.6 · FR hn 92.0.
 
 - **country ≥83.3** is config-canonical (the v0.9.12 banked-change floor, "don't regress #464"). The
   consolidation _demonstrated_ 87.5, but that's a bonus rather than the pre-registered bar. A first doc draft
-  wrote ≥85; it was reconciled down to the config's 83.3 — recorded here rather than silent.
+  wrote ≥85, and it was reconciled down to the config's 83.3 — recorded here rather than silent.
 - **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two real open gaps.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
   at ~76 (−4.4 vs v0.9.8) in every run** — an actual guardrail regression the relaxed table had hidden.
@@ -125,16 +125,16 @@ region 80.1 · micro 81.6 · FR hn 92.0.
 this tree governed Runs A–C and terminated at its STOP branch. Run C's transient-decay
 result (affix 75→52.9 + FR-region collapse under sustained density, vs the stable ~65
 ceiling at moderate density) is the two-opposite-directions fork in its sharpest form:
-density high enough for affix destroys the guardrail; density low enough for the guardrail caps
-affix at ~65. Per the guard, all recipe iteration stopped; the live decision is "The fork"
-section at the top of this doc. (Historical note: DeepSeek's pre-named capacity-tell —
+density high enough for affix destroys the guardrail, and density low enough for the guardrail caps
+affix at ~65. Per the guard, all recipe iteration stopped. The live decision is the "The fork"
+section at the top of this doc. (Historical note: DeepSeek's pre-registered capacity-tell —
 suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
-not anticipate the transient-then-decay shape; the guard caught what the tell didn't.)
+not anticipate the transient-then-decay shape. The guard caught what the tell didn't.)
 
 **4. SHIP check — REQUIRED before tagging v4.2.0 (training-check pass is necessary rather than sufficient).**
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
 
-- **direct-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
+- **direct-eval (VT holdout)** — this model moved locality +14 / region +10, and resolver behavior
   changed and the per-tag guardrail evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
   **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-direct-eval-region-fix]]).
 - **Demo presets** — functional tests before verdicts (house law, [[feedback-functional-before-verdict]]).
@@ -144,7 +144,7 @@ The flag-plant claim is made on the artifact users get, with resolver-coupled be
   at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
   at all" interface — v4.2.0 is its first test).
 
-**5. Merge debt — these merge to main before v4.2.0 is reduce (RELEASING flows from main; a model whose
+**5. Merge debt — these merge to main before v4.2.0 is reduce (RELEASING flows from main, and a model whose
 recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreography) → **#469**
 (affix reroll) → **`feat/consolidation-466`** (consolidation + Run A/B configs + assemblers). PR
 **#489** (docs/releases page) is independent + conflict-free — merge any order. Operator-conditional (merge wall).
@@ -161,10 +161,10 @@ in **epic #488** rather than an ad-hoc grab.
 ## What shipped / landed today
 
 - **Country change resolved, bookkept.** v0.9.12 gazetteer anchor = country **83.3 F1**
-  (homograph, P95/over-fire 0). Choreography = **PR #468**. #464 closed; plan doc + memory
-  updated. (Choreography later found not decisive for the postcode dip — see below.)
+  (homograph, P95/over-fire 0). Choreography = **PR #468**. #464 closed, and plan doc + memory
+  updated. (Choreography was later found to explain little of the postcode dip — see below.)
 - **Affix multi-locale reroll = PR #469** (v0.9.14, corpus v0.4.11-affix-ml). Proved the
-  FR-postcode fix (95.6→99.7) but was a lateral move on FR solo → carried into consolidation.
+  FR-postcode fix (95.6→99.7) but was a lateral move on FR solo → included in consolidation.
   #462 closed.
 - **Consolidation v1.0.0** (corpus v0.4.12-consolidation, config `v1.0.0-consolidation.yaml`,
   40k): the strongest guardrail yet — **US micro 81.6→85.5**, region +10, locality +14, country
@@ -174,17 +174,17 @@ in **epic #488** rather than an ad-hoc grab.
   `consolidation-tradeoff-2026-06-10`; notes in `.agents/skills/deepseek-consult/`):
   - Affix is **scheduling-bound rather than capacity-bound** (diagnostic: prefix 27.6→75 in 2k
     steps @ affix 20×, postcode even +1.6, guardrail flat). _[SUPERSEDED by Run C: the 75 is a
-    transient that decays under sustained density — it is a capacity/stability constraint;
+    transient that decays under sustained density — it is a capacity/stability constraint,
     see "Final result" above.]_
   - **Weight-merge is unsound** for our from-scratch (non-fine-tune) solo models — would
     wreck the CRF transition matrix. _(Stands.)_
   - **US postcode needed convergence rather than a structural fix** — improved +1.6 with zero
-    postcode-position changes; the #468 choreography is not decisive for it. _(Stands;
+    postcode-position changes, so the #468 choreography explains little of it. _(Stands:
     Run B confirmed 97.3 at moderate density.)_
   - Fix = **continue-resume** (cheaper than fresh) with affix 5× + tag-weights → **Run A**.
 - **Runs A/B/C — the affix-recovery arc** (full scorecard in "Final result"): A (5×,
-  resume) → stable 64.9/52.4; B (17×, but my `init_from` error) → flat 64.9, postcode
-  97.3✓, country 89.8✓; C (20×, resume) → transient 75 @ 2k, **decayed to 52.9 + FR-region
+  resume) → stable 64.9/52.4, B (17×, but my `init_from` error) → flat 64.9, postcode
+  97.3✓, country 89.8✓, C (20×, resume) → transient 75 @ 2k, **decayed to 52.9 + FR-region
   collapse @ 15k** → treadmill STOP, fork to operator.
 
 ## What went well
@@ -193,14 +193,14 @@ in **epic #488** rather than an ad-hoc grab.
   for ~5 min of GPU before committing to a 35-min run. Reusable pattern.
 - Caught the score-affix harness artifact (zero-filled gazetteer → fake affix crash);
   fixed the tool to feed the lexicon for gazetteer-trained models.
-- Operator-in-the-loop on every GPU launch; DeepSeek consensus on the consequential fork.
+- Operator-in-the-loop on every GPU launch, and DeepSeek consensus on the consequential fork.
 
 ## What could've gone better
 
 - I framed the US-postcode dip as feature-channel interference and built choreography (#468)
-  for it; the diagnostic showed it was mostly under-convergence. Choreography is still
+  for it. The diagnostic showed it was mostly under-convergence. Choreography is still
   default-off/byte-stable and harmless, but it wasn't the right tool for that nail.
-- Missed the affix-run step-2000 ping window (did git commits first; the run was faster than
+- Missed the affix-run step-2000 ping window (did git commits first, and the run was faster than
   estimated). Fixed by setting the poller immediately on later launches.
 - **Run B used `init_from` instead of the specified `resume`** (to avoid a checkpoint delete)
   — a fresh optimizer can't re-enter the affix basin, so the run tested the substitution rather than
@@ -209,8 +209,8 @@ in **epic #488** rather than an ad-hoc grab.
   pre-registered bars (affix 78/67→72/64, unit, FR postcode) and dropped the US-street row,
   hiding its −4.4 regression. Restored; `feedback-no-silent-check-drift` memory written. No
   GPU lost (no decision flipped on the relaxed numbers) but ~2h of delayed detection.
-- DeepSeek's two quantitative predictions (5× clears ≥72; "75 not a transient") were wrong;
-  the cheap-diagnostic-first pattern and the treadmill guard are what bounded the damage.
+- DeepSeek's two quantitative predictions (5× clears ≥72, and "75 not a transient") were wrong.
+  The cheap-diagnostic-first pattern and the treadmill guard are what bounded the damage.
 
 ## Open / next
 
@@ -220,8 +220,8 @@ in **epic #488** rather than an ad-hoc grab.
 - **Merge debt (ordering for the result):** #468 (choreography) → #469 (affix) →
   `feat/consolidation-466` (consolidation + Run A/B/C configs + assemblers + salvaged
   #463 evals). #489 already merged; #463 closed (assets salvaged).
-- **Post-parity queue:** #478 arbitration layer next (zero-GPU); po_box/cedex ride the next
-  consolidation-class run; lossless decomposition needs a real issue in epic #488. The
+- **Post-parity queue:** #478 arbitration layer next (zero-GPU). po_box/cedex go into the next
+  consolidation-class run. Lossless decomposition needs a real issue in epic #488. The
   **affix/width architecture question** (option 2) should also get an issue if pursued.
 
 ## Numbers
@@ -232,5 +232,5 @@ in **epic #488** rather than an ad-hoc grab.
 | GPU lost to error      | Run B ~35 min (init_from confound)                                                                                    |
 | consults               | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment               |
 | PRs/branches           | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the result                         |
-| regressions shipped    | 0 (nothing promoted; v4.1.0 still default)                                                                            |
+| regressions shipped    | 0 (no model promoted, v4.1.0 still default)                                                                           |
 | canonical-check status | no variant passes (affix + US street); fork pending review                                                            |

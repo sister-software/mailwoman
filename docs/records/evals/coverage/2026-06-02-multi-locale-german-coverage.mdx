@@ -18,8 +18,8 @@ That looks like the resolver being hopelessly US-centric, and for about ten minu
 Then I found the eval harness hardcoded `defaultCountry: "US"`, which the lookup applies as a _hard
 filter_. Therefore, every German address was restricted to US places before ranking ever ran. German Berlin was never even a candidate. Fix the
 one string and the same resolver, against the same global gazetteer, puts German Berlin first on
-population alone: coordinate error collapses from 5,940 km to **10 km**. The ranking was fine the
-whole time. (The full autopsy is in the resolver-vs-eval-artifact notes; the short version is: when
+population, with no other ranking signal: coordinate error collapses from 5,940 km to **10 km**. The ranking was fine the
+whole time. (The full autopsy is in the resolver-vs-eval-artifact notes. The short version is: when
 a finding feels like a crisis, check whether you're holding the instrument upside down.)
 
 So the resolver and the gazetteer already handle German. The gap is narrower than it looked, and it
@@ -49,8 +49,8 @@ been, and you have to rule it out.
 
 `Straußstraße → Strau` is suspicious. The span dies exactly at the `ß`. If the tokenizer can't
 represent German orthography, if `ß` and the long compound street names fall apart into pieces the
-model can't reassemble, then no amount of training data will help, and the right move is a
-tokenizer change, which is a much bigger, more expensive decision.
+model can't reassemble, then no amount of training data will help, and the fix is a
+tokenizer change. A tokenizer change is a much bigger, more expensive decision.
 
 So that's the check, and it's an afternoon's work rather than a GPU run. Feed the v0.6.0-a0 SentencePiece
 tokenizer a batch of German streets and check the round-trip:
@@ -90,9 +90,9 @@ Straußstraße/B-street  27/B-house_number  12623/B-postcode  Berlin/B-locality
 Five thousand of those, weighted at 0.2 (a supplement rather than a flood), continue-trained on top of
 v0.7.2. One variable changed against the previous recipe.
 
-## The baseline, and an honest stopping point
+## The baseline, and where this record stops
 
-Here's the "before," measured on a held-out German set the model has never seen:
+The "before" baseline, measured on a held-out German set the model has never seen:
 
 | tag          | v0.7.2 (out of distribution) |
 | ------------ | ---------------------------- |

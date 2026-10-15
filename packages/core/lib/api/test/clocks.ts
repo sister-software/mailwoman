@@ -15,12 +15,12 @@ import type { ClockLike } from "#api/clock"
  * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with no
  * work pending before declaring the work stuck.
  *
- * Finite, so a genuinely blocked test reports what happened instead of timing out.
+ * Finite, so a blocked test reports what happened instead of timing out.
  *
  * Measured with `performance.now()`, not `Date.now()`: consumers run under
  * `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` while leaving `performance`
  * and `setTimeout` real, so a Date-based budget would never expire inside those blocks
- * and genuinely stuck work would hang exactly where this is supposed to report it.
+ * and stuck work would hang exactly where this is supposed to report it.
  */
 const IDLE_BUDGET_MS = 5000
 

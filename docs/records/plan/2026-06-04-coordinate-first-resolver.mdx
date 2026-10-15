@@ -8,7 +8,7 @@ DeepSeek signed off on it across the Pilot-A postmortem consult (`.agents/skills
 
 [PR3 Pilot A](../evals/experiments/2026-06-04-pr3-pilot-a-eval.mdx) (self-conditioning, from scratch US/FR/DE) came back negative. DE locality resolver-match was 25.6% vs v0.7.2's 77.4%, and the v0.8.0 span collapse reproduced through a new mechanism on correct data and _converged_ (flat 10k→20k). The decoder follow-up, the [postcode-trim](https://github.com/sister-software/mailwoman/pull/272), hands a swallowed city-start back to the city. It fixed the parse (`auen Vogtl` → `Plauen Vogtl`, +36pp DE exact-locality) and moved the resolver score by **zero**.
 
-That zero explains the problem. The parse matched the string exactly and the resolver still missed, because **our resolver matches the parsed locality string against WOF names, and OA's gold carries a region suffix WOF doesn't store** (`Plauen Vogtl` vs WOF's `Plauen`). Even v0.7.2, which parses German directly, only resolves 54.7% of Saxony for this reason. We were optimizing a name-equality the gazetteer's canonical names can't satisfy.
+That zero explains the problem. The parse matched the string exactly and the resolver still missed, because **our resolver matches the parsed locality string against WOF names, and OA's gold includes a region suffix WOF doesn't store** (`Plauen Vogtl` vs WOF's `Plauen`). v0.7.2 parses German directly, and even it only resolves 54.7% of Saxony for this reason. We were optimizing a name-equality the gazetteer's canonical names can't satisfy.
 
 ## The reframe: the German "wall" is largely a metric artifact
 
@@ -22,7 +22,7 @@ The fix starts with the metric. **The non-gameable metric:** a locality is corre
 
 **Airmail** (and Nominatim, Photon) are retrieval geocoders that run BM25 over indexed places. A wrong postcode lowers a document's score, and the right city still ranks it up. This is resilient, but these geocoders have no explicit signal that two fields disagree, so they _silently mislocate_ when a wrong combination scores high (`90210 Los Angeles` → Beverly Hills). We can fill that gap.
 
-The lesson: Pelias trusts the coordinate because at _import_ it has the true address point. We are a query-time parser+resolver. The postcode is the user's _claim_, which can be transposed, stale, or borrowed from the next town over. So we cannot blindly trust it the way Pelias does. The parsed city name is our independent cross-check, and the trim made it reliable.
+The lesson: Pelias trusts the coordinate because at _import_ it has the true address point. We are a query-time parser+resolver. The postcode is the user's _claim_. A claim can be transposed, stale, or borrowed from the next town over. So we cannot blindly trust it the way Pelias does. The parsed city name is our independent cross-check, and the trim made it reliable.
 
 ## The design
 
@@ -55,21 +55,21 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 - One signal dominates (e.g. `S_pc` > 0.8, `S_name` < 0.3) → return top, confidence ~0.7, flag `postcode_city_mismatch`.
 - Small margin (< 0.1) with disagreement → confidence ~0.5, flag `ambiguous_locality`, optionally return both as an ordered list.
 
-### The three auxiliary tables — what's worth building
+### The three auxiliary tables — which ones to build
 
 - **Transposed/alias city names:** _skip the dedicated table._ WOF ships `alt_name`/`name:*`; edit-distance + double-metaphone over a 5-item candidate set catches the rest on the fly (see #189 for splitting alt-names into their own FTS table).
 - **Misappropriated postcode → target:** _do not build a table of user mistakes_, because no source records intent. Instead, fold the _sourceable_ half (WOF/`postal-cities` postcode→multiple-postal-city aliases) into the candidate table. That covers "the postal city differs from the admin city"; the actual mistakes are caught by the conflict flag.
-- **Abutting/adjacent postcodes:** _use a radius rather than a table._ Candidate generation within ~10 km already captures the neighbor. Add an optional build-time `is_adjacent` boolean only if the data requires it. The containment metric handles this case without extra work: if the gold point is in the next town, the next town is the right answer.
+- **Abutting/adjacent postcodes:** _use a radius rather than a table._ Candidate generation within ~10 km already captures the neighbor. Add an optional build-time `is_adjacent` boolean only if the data requires it. The containment metric handles this case without extra work: if the gold point is in the next town, a resolve to the next town counts as correct.
 
 ## Falsehoods: the part Pelias and Airmail skip
 
-`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and makes no statement about postcode/city _conflicts_. We extend it with the cases that affect travelers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy; conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
+`data/eval/falsehoods/postcodes.jsonl` currently tests alphanumeric postcode _parsing_ and makes no statement about postcode/city _conflicts_. We extend it with the cases that affect travelers and border-town residents: digit transposition (`75008`→`57008`), wrong-city-for-postcode (`10115 München`), and adjacent-town borrowing. The metric is whether the resolver **catches** the conflict (raises the flag) rather than confidently mislocating. Clean-OA containment measures accuracy. Conflict-falsehoods measures the robustness that justifies a parse-then-resolve pipeline over a BM25 box.
 
-## Staged plan (cheapest and most decisive first)
+## Staged plan (cheapest first)
 
 1. **PIP-containment metric + re-measure.** Implement the geometric metric (gold OA point inside resolved WOF locality polygon, using the WOF GeoJSON polygons already on disk) and re-score the _current_ resolver on DE without a build or a retrain. **Check: if DE clears ~85%, the German wall was largely a measurement artifact** and the candidate table is a refinement rather than a rescue. If lower, the table is mandatory. (#273)
 2. **Postcode → locality candidate table** (offline precompute, WOF alt-name aliases folded in). Re-measure. (#274)
-3. **Soft-scoring reconciliation + conflict flag** in the resolver. (#275; builds on #227 population tiebreak, #189 alt-names.)
+3. **Soft-scoring reconciliation + conflict flag** in the resolver. (#275. It builds on #227 population tiebreak and #189 alt-names.)
 4. **Conflict-falsehoods eval:** extend the falsehoods doc and check whether mismatches are caught. (#276)
 5. **No-postcode fallback:** country-filtered fuzzy matching over the alias index, where the trim's clean string is most useful.
 

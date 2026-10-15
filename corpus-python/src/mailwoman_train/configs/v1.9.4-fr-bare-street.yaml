@@ -9,7 +9,7 @@
 # (clean attribution).
 #
 # root mechanism (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
-# comprehensive FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
+# full-coverage FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
 # boundary as "the token after the 5-digit postcode," never as "comma + city." Strip the postcode and proper-
 # noun street tokens leak into the following locality ("Rue René Cassin, Paris" → street="Rue Ren",
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
@@ -24,7 +24,7 @@
 # check (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
 # scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) and US/intl
 # no-regression (the per-tag floors). If the bare FR street-intact rate rises above 90%, the imbalance is
-# confirmed: scale to a full run within the $20 cap. If it stays at 90%, the deficit is in the model
+# confirmed: scale to the full-length resumed run within the $20 cap. If it stays at 90%, the deficit is in the model
 # (comma-boundary feature / decoder), a different fix. conventions-loss-mask is off in this lineage
 # already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.

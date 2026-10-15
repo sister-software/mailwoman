@@ -55,7 +55,7 @@ Pelias stack required. The table below is emitted verbatim by the eval runner
 **Neural beats the Pelias parser on real US addresses** — +1.7pp locality, +0.5pp
 region, and a higher resolve rate — and wins in every state (per-state below).
 Both share identical coordinate error because they feed the same resolver and,
-when both resolve to the right admin, land on the same centroid; the difference is
+when both resolve to the right admin, land on the same centroid. The difference is
 purely _which_ addresses each parser resolves correctly at all.
 
 ### Neural per-state (locality-match)
@@ -90,12 +90,12 @@ make that class of error impossible.)
 - It **does** confirm the resolver maps real addresses to the right city/state at
   scale, independent of the gazetteer's own id scheme — the credibility check the
   WOF-bootstrap number couldn't give.
-- It **does not** measure street/house precision (the resolver is admin-level;
+- It **does not** measure street/house precision (the resolver is admin-level, so
   coord error reflects centroid-to-point distance rather than a geocoding miss).
-- Region-match required a name↔abbrev map: resolved regions carry the gazetteer's
-  canonical full name ("California", "District of Columbia") while OA carries the
+- Region-match required a name↔abbrev map: resolved regions hold the gazetteer's
+  canonical full name ("California", "District of Columbia") while OA holds the
   USPS abbreviation ("CA", "DC"). An early reduce scored region-match at 30% purely
-  from that mismatch — a matcher bug rather than a resolver one; fixed in the runner.
+  from that mismatch — a matcher bug rather than a resolver one. The runner now has the fix.
 
 ## Resolver change that landed with this
 

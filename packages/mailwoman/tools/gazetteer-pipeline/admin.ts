@@ -35,11 +35,11 @@ import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
-	DEFAULT_OVERTURE_RELEASE,
 	geonamesAdminGapCountries,
 } from "#gazetteer/defaults"
 import { buildFTS, type BuildFTSResult } from "#gazetteer/fts"
 import { checkOvertureRelease } from "#gazetteer/overture-release"
+import { DEFAULT_RELEASE as DEFAULT_OVERTURE_RELEASE } from "#gazetteer/poi/defaults"
 import { buildSHA, stampLayerManifest } from "#gazetteer/stamp-manifest"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "#gazetteer/verify"
 
@@ -151,10 +151,10 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			// Reads the same per-country extracts that fold-geonames consumes.
 			// A data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
-			onProgress: (processed, skipped, total) =>
+			onProgress: (processed, skipped, found) =>
 				phase(
 					"ingest-wof",
-					`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
+					`${processed.toLocaleString()} ingested, ${skipped.toLocaleString()} skipped, of ${found.toLocaleString()} files found so far`
 				),
 		})
 
@@ -168,7 +168,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
 		// The A-class admin fold for the zero-coverage locales — country + region nodes +
-		// locality ancestry — scoped to the countries actually in this run's geonames set.
+		// locality ancestry — scoped to the countries in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
 		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
@@ -240,8 +240,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced rather than the lists it was given,
-			// so a fold that ingested no places does not appear as a source — see manifest.ts.
+			// The counts the build produced rather than the lists it was given, so a fold that
+			// ingested no places does not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },

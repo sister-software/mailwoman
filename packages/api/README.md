@@ -75,10 +75,10 @@ serveNode({ fetch: app.fetch, port: 3000, hostname: "0.0.0.0" })
 
 `createMailwomanAPI(engine, options?)`:
 
-- `cors` — permissive CORS (`Access-Control-Allow-Origin: *`, `GET, POST, OPTIONS`) on by default; browser
+- `cors` — permissive CORS (`Access-Control-Allow-Origin: *`, `GET, POST, OPTIONS`) on by default. Browser
   clients (the demo, a map widget) need it for the mutating `/v1/*` preflight. Set `false` when a reverse
   proxy already owns the CORS headers.
-- `bodyLimitBytes` — max request body size, enforced ahead of every `/v1/*` handler. Default 2 MiB (carried
+- `bodyLimitBytes` — max request body size, enforced ahead of every `/v1/*` handler. Default 2 MiB (kept
   from the express server's `express.json({ limit: "2mb" })`). Oversized bodies answer `413` before the body
   is buffered into memory.
 - `batchMax` — max `addresses` rows accepted by `POST /v1/batch`. Default 500. The endpoint answers `413` when the request exceeds this limit.

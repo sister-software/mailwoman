@@ -18,11 +18,11 @@ configuration or dependency.
 
 - **The index is a static file.** The docs build writes it, GitHub Pages serves it, and the browser
   queries it. There is no server, schedule, ingest or secret. The 2026-10-02 design put the index in a
-  Cloudflare worker with D1 and Vectorize; the probe below replaced it.
+  Cloudflare worker with D1 and Vectorize. The probe below replaced it.
 - **The browser fetches the file whole.** The probe measured a range VFS against a whole-file fetch on
-  the real index and the whole file won; the numbers are under "Probe".
+  the real index and the whole file won. The numbers are under "Probe".
 - **The index is lexical.** FTS5 with BM25 ranking, prefix matching on the last token, and typo
-  correction against the index vocabulary. A vector arm is out of scope; the result assembly in
+  correction against the index vocabulary. A vector arm is out of scope. The result assembly in
   `search.ts` is the point where a second ranked list would merge if one is added later.
 - **The search box is a modal owned by `@mailwoman/react`**, built on `<dialog>`, `<input type="search">`
   and the ARIA combobox pattern. The site stops depending on `@docsearch/react`.
@@ -34,7 +34,7 @@ configuration or dependency.
 ## Probe, 2026-10-03
 
 Measured in headless Chromium against a local static server, three runs per arm with a fresh browser
-context each; the runs agreed within 3%. `broadband` is CDP emulation of a 100 ms round trip at
+context each. The runs agreed within 3%. `broadband` is CDP emulation of a 100 ms round trip at
 10 Mbit/s. The session is the six acceptance queries typed one character at a time, 90 keystrokes.
 The index was built from the docs at `caef32d7b`: 181 pages, 164 URLs, 2,173 records, of which 1,055
 are table rows.
@@ -47,7 +47,7 @@ are table rows.
 
 An FTS5 prefix query walks the term index and the join reads scattered `records` pages, so the range
 VFS reads 47% of the file in 29 sequential round trips before the first result. The whole file
-compresses to 1.30 MB with gzip and 1.00 MB with brotli; the range VFS cannot use compression.
+compresses to 1.30 MB with gzip and 1.00 MB with brotli. The range VFS cannot use compression.
 
 A trigram FTS5 table over the content was 6.34 MB of a 10.47 MB file, and on `jurisdction coverage`
 it ranked a long unrelated record first, because an `OR` of trigrams over content favors long records.
@@ -67,12 +67,12 @@ Pages are emitted as `<route>.html` because `trailingSlash` is `false`. The writ
 trailing `/index`, and extracts records with the rules below. `/404.html` is skipped, and any other
 page that fails to read throws.
 
-Extraction rules, carried over from the Algolia crawler config:
+Extraction rules, kept from the Algolia crawler config:
 
 - `lvl0` is the text of the last element with the classes `menu__link--sublist` and
   `menu__link--active`, or with `navbar__link--active`, and `"Documentation"` otherwise.
 - Inside `article`, an `h1` through `h6` starts a record at that level and resets deeper levels. A
-  heading's `id` is the record's anchor; an `h1` record has the empty anchor.
+  heading's `id` is the record's anchor. An `h1` record has the empty anchor.
 - A `tr` whose cells are `td` is a level-5 record whose heading is the first cell's text and whose
   content is the last cell's text. Each row of a reference table is therefore one hit.
 - A `p` or `li` appends its text to the current record. A `li` that contains a `p` is skipped, so the
@@ -192,7 +192,7 @@ define.
   inert background, the `::backdrop`, the close on `Escape` and the return of focus to the navbar
   button. The component adds no focus-trap code and no `role="dialog"` attribute. A click whose target
   is the dialog element itself landed on the backdrop and closes the dialog.
-- The query field is `<input type="search">` inside a `<form role="search">`. It carries
+- The query field is `<input type="search">` inside a `<form role="search">`. It has
   `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls` for the result list
   and `aria-activedescendant` for the selected hit. DOM focus stays on the input for the whole
   session.
@@ -210,7 +210,7 @@ define.
 
 `docs/src/theme/SearchBar.tsx` renders the navbar button and the modal. When the modal first opens it calls
 `openWholeDatabase("/search-index.db.gz", "/mailwoman/sqlite/")` and keeps the handle for the page's
-lifetime; a second open reuses it. The `search` function it passes composes the query code over that
+lifetime. A second open reuses it. The `search` function it passes composes the query code over that
 handle. The `algolia` block is deleted from `docs/docusaurus.config.ts`.
 
 The query code and the index writer live in the docs workspace, under `docs/src/search/` and
@@ -233,7 +233,7 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
 - `docs/src/search/search.integration.test.ts`: the acceptance list against the shipped
   `docs/build/search-index.db.gz`, inflated and opened read-only. The test checks that the `records`
   table holds more than 1,000 rows and that the `build` row's count equals it. In CI it throws when the
-  file is absent; elsewhere it skips.
+  file is absent. Elsewhere it skips.
 - `packages/react/lib/search/SearchModal.test.tsx`: the dialog and combobox attributes, groups and
   options, arrow-key wrap and Enter, Enter ignored before the results answer the typed query, Escape,
   stale-response ordering, the loading announcement, and the live region.
@@ -244,7 +244,7 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
 ## Acceptance list
 
 Each query must return the expected page within the first 3 hits. The URLs are published pages
-observed in the 2026-10-03 build; the implementation confirms each against the index before the list
+observed in the 2026-10-03 build. The implementation confirms each against the index before the list
 is final, and the operator may extend it.
 
 | Query                  | Expected page                                                               |
@@ -262,7 +262,7 @@ The last row is misspelled on purpose and exercises the vocabulary correction.
 
 - A vector arm. `search.ts` is the merge point if one is added.
 - Search inside the Earth, Moon and Mars applications. The modal and the query code are reusable by
-  them; the index is the docs site's.
+  them. The index is the docs site's.
 - Query analytics, and versioned or localized facets.
 
 ## Retirement of Algolia

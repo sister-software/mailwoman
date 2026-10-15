@@ -95,7 +95,7 @@ export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArra
 }
 
 /**
- * Deliberately non-integer position for an area-grade postal code on `PLACETYPE_SPECIFICITY`:
+ * Deliberately non-integer position for an area-grade postcode on `PLACETYPE_SPECIFICITY`:
  * below the whole locality tier and above `county` (2).
  */
 export const AREA_GRADE_POSTALCODE_SPECIFICITY = 2.5

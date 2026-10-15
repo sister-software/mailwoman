@@ -3,7 +3,7 @@
 **Status:** design approved 2026-09-05. The operator chose the subscription model, the Payment Link, the portal
 without a Mailwoman login, the D1-only worker, and the per-period token.
 **Builds on:** PR #2117 (the signed key), PR #2153 (the engine stamp, the `/license` page, the notice), issue #2121
-(the original proposal, whose security requirements this design keeps).
+(the original proposal). This design keeps that proposal's security requirements.
 **Supersedes:** the scratchpad proposal's one-time payment, `POST /v1/checkout-sessions` endpoint, and Cloudflare Queue.
 **Revised 2026-09-05:** the design adds neither a separate key package nor compatibility re-exports. The key format
 stays in core on WebCrypto, and the worker imports it by subpath under export conditions.
@@ -48,7 +48,7 @@ and idempotency without a queue. A queue can be added when a measurement shows t
 onto WebCrypto. Node, `workerd`, and browsers all implement WebCrypto, so one implementation signs and
 verifies everywhere. The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`. It never imports
 the `license` barrel or a module that reaches `node:fs`, and a bundle test enforces that. Where a core module's
-implementation must differ per platform, its `package.json` export carries `workerd` and `browser` conditions beside
+implementation must differ per platform, its `package.json` export declares `workerd` and `browser` conditions beside
 `node`, as the browser tier of `@mailwoman/neural` already does. The design adds no second package.
 
 **The design adds no compatibility re-exports.** When a name moves, every caller imports it from its new home in the
@@ -65,13 +65,13 @@ reports which one occurred.
 
 These items are operator work. The first sale waits on them, and the implementation does not:
 
-1. **Self-executing terms.** `COMMERCIAL-LICENSE.md` says it is a non-self-executing template and that no rights are
+1. **Self-executing terms.** `COMMERCIAL-LICENSE.md` states that it is a non-self-executing template and that no rights are
    granted until terms are agreed in writing. A paid Checkout cannot grant under that text. A versioned clickwrap
    agreement, published at a stable URL under `/license/terms/<version>` and accepted through Stripe's
-   `consent_collection.terms_of_service`, replaces it for self-service; the agreement version is recorded on every
+   `consent_collection.terms_of_service`, replaces it for self-service. The agreement version is recorded on every
    license. The template stays for negotiated agreements. Legal and tax review for the markets Checkout is enabled in
    is part of this item.
-2. **Merchant identity.** The Stripe account's legal name matches the licensor named in the terms.
+2. **Merchant identity.** The Stripe account's legal name matches the licensor the terms identify.
 3. **A release that trusts the worker's key.** The worker's public key enters `TRUSTED_LICENSE_SIGNING_KEYS` and the
    well-known register, and a mailwoman release publishes, before the first token is sold. A token signed by a key
    the installed release does not trust reads `unknown_key`.
@@ -97,11 +97,11 @@ flowchart LR
 
 Three places, each with one job:
 
-| Place                                                                  | Job                                                                                                                                 |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/` (GitHub Pages, `mailwoman.ai`)                                 | the `/license` page with both Payment Links and the portal link; the `/license/issued` success page; the static well-known register |
-| `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.ai`) | webhook verification, fulfillment, D1 ledger, signing, claim, refresh, status, email                                                |
-| `@mailwoman/core/license/key`, `/register` (subpath exports)           | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto; the typed key register        |
+| Place                                                                  | Job                                                                                                                                     |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/` (GitHub Pages, `mailwoman.ai`)                                 | the `/license` page with both Payment Links and the portal link, the `/license/issued` success page, and the static well-known register |
+| `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.ai`) | webhook verification, fulfillment, D1 ledger, signing, claim, refresh, status, email                                                    |
+| `@mailwoman/core/license/key`, `/register` (subpath exports)           | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto, and the typed key register        |
 
 ## The key format on WebCrypto, worker-safe by subpath
 
@@ -117,7 +117,7 @@ and `buildEngineStamp`'s input, `resolveEngineStamp`, `runtimeLicenseCheck`'s ob
 keygen|issue|verify` command, and the tests. `resolveEngineStamp` already answers a promise and the doctor's runner is
 already async, so the change is in signatures rather than in control flow.
 
-**Export conditions.** The worker bundles with Wrangler's esbuild, which resolves `exports` under the `workerd`,
+**Export conditions.** The worker bundles with Wrangler's esbuild. Esbuild resolves `exports` under the `workerd`,
 `worker`, and `browser` conditions before `default`. Every core subpath the worker imports must resolve to a module
 graph free of `node:*` on those conditions. For `./license/key` and `./license/register` the graph is already free of
 them once Ed25519 is on WebCrypto (`#objects` reaches `spliterator` and a type from `path-ts`, both platform-neutral).
@@ -131,9 +131,9 @@ A core module that needs a platform-specific implementation gets two files and a
 }
 ```
 
-is the shape for a neutral module; a split module adds `"workerd"` and `"browser"` entries pointing at its web file,
-as `@mailwoman/neural/onnx-runner` does with its `browser` condition today. The bundle test below is what says whether a
-subpath is neutral or needs the split; the design does not guess.
+is the shape for a neutral module. A split module adds `"workerd"` and `"browser"` entries pointing at its web file,
+as `@mailwoman/neural/onnx-runner` does with its `browser` condition today. The bundle test below decides whether a
+subpath is neutral or needs the split. The design does not guess.
 
 **The bundle test.** `packages/core/lib/worker-bundle.integration.test.ts` runs esbuild with
 `--platform=neutral --conditions=workerd,worker,browser` over an entry that imports `@mailwoman/core/license/key` and
@@ -151,12 +151,12 @@ subpath is neutral or needs the split; the design does not guess.
 ```
 
 An installed release that predates the fields still verifies such a token, because the schema is a plain object
-that strips unknown keys and the signature covers the raw payload bytes. The token carries no email, Stripe IDs,
+that strips unknown keys and the signature covers the raw payload bytes. The token contains no email, Stripe IDs,
 amount, or currency. `licensee` remains its only human identity.
 
 **Key states** become data rather than prose. One typed register, `packages/core/lib/license/register.ts`, exported as
 `@mailwoman/core/license/register`, holds every key with its `status`: `active` (may sign and verify), `retired` (may no
-longer sign; existing tokens still verify offline), `revoked` (compromised; online status rejects at once and the next
+longer sign, but existing tokens still verify offline), `revoked` (compromised: online status rejects at once, and the next
 release removes offline trust). `TRUSTED_LICENSE_SIGNING_KEYS` and the well-known JSON both derive from it at build
 time, so the two cannot disagree. `trusted-keys.ts` is deleted, and its importers read the register. Today `retired`
 acts as revocation, and after this change it no longer does.
@@ -247,7 +247,7 @@ and a wrong secret. Rate-limited per lid and per address. This is the customer's
 fetch.
 
 **`POST /v1/license-status`.** Body `{ lid }`. Answers only `active`, `lapsed`, `revoked`, or `unknown`.
-`mailwoman license verify --online` and the doctor call it for tokens that carry `lid`, beside the key-id check
+`mailwoman license verify --online` and the doctor call it for tokens that include `lid`, beside the key-id check
 against the well-known register.
 
 **`GET /health`.** Reports the signing self-test result, D1 reachability, and `ISSUANCE_ENABLED`, without customer
@@ -260,7 +260,7 @@ data.
 (`active | lapsed | revoked | review`), `created_at`, `updated_at`.
 
 `license_tokens`: `invoice_id` (PK), `lid` (FK), `issued`, `expires`, `payload_json`, `token`, `email_state`
-(`sent | failed`), `email_message_id`, `created_at`. One row per paid invoice; the current token is the row with the
+(`sent | failed`), `email_message_id`, `created_at`. One row per paid invoice. The current token is the row with the
 latest `expires`.
 
 `stripe_events`: `event_id` (PK), `type`, `object_id`, `received_at`, `outcome`.
@@ -284,7 +284,7 @@ negotiated terms.
 **`/license/issued`** (`docs/src/pages/license/issued.tsx`): reads `session_id` from the query, polls the claim route
 until `issued`, then shows the licensee, scope, `issued`, `expires`, the token with a copy button, the refresh secret
 with its own copy button and a one-line warning that it is shown once, the `.env` fragment, the two commands to run, and
-the portal link. A `pending` beyond two minutes shows the support address and says the email will arrive on its own.
+the portal link. A `pending` beyond two minutes shows the support address and states that the email will arrive on its own.
 
 **`/license/terms/<version>`**: the clickwrap agreement, one page per version, never edited after publication.
 
@@ -300,8 +300,8 @@ publication, and report `active`, `lapsed`, `revoked`, `unknown`, or `unreachabl
 ## Key rollout and rotation
 
 1. Generate the worker's key pair offline.
-2. Add the public half to the register as `active`; open the release PR; publish the mailwoman release.
-3. Confirm the published tarball and the deployed well-known JSON both carry it.
+2. Add the public half to the register as `active`, open the release PR, and publish the mailwoman release.
+3. Confirm the published tarball and the deployed well-known JSON both contain it.
 4. Install the private half as the production secret.
 5. Deploy the worker with `ISSUANCE_ENABLED=false`; confirm `/health` reports the self-test passed.
 6. Enable the Payment Links on the page.
@@ -312,19 +312,19 @@ register and release, and keep it `retired` until every token it signed has expi
 
 ## Refunds, disputes, lapses
 
-| Event             | `license_state`        | Online status  | Offline token                                        |
-| ----------------- | ---------------------- | -------------- | ---------------------------------------------------- |
-| full refund       | `revoked`              | `revoked`      | valid until its `expires`; the documentation says so |
-| dispute opened    | `revoked`              | `revoked`      | as above                                             |
-| dispute won       | back to Stripe's state | as Stripe says | unchanged                                            |
-| partial refund    | `review`               | `active`       | unchanged; operator decides                          |
-| subscription ends | `lapsed` after grace   | `lapsed`       | expires with the grace window, by construction       |
+| Event             | `license_state`        | Online status  | Offline token                                          |
+| ----------------- | ---------------------- | -------------- | ------------------------------------------------------ |
+| full refund       | `revoked`              | `revoked`      | valid until its `expires`, as the documentation states |
+| dispute opened    | `revoked`              | `revoked`      | as above                                               |
+| dispute won       | back to Stripe's state | Stripe's state | unchanged                                              |
+| partial refund    | `review`               | `active`       | unchanged, operator decides                            |
+| subscription ends | `lapsed` after grace   | `lapsed`       | expires with the grace window, by construction         |
 
-Public status answers carry no reason.
+Public status answers include no reason.
 
 ## Security requirements
 
-These requirements are carried over from #2121:
+These requirements come unchanged from #2121:
 
 - a deploy credential and service distinct from the tile worker's;
 - production and sandbox separated in every binding;
@@ -337,37 +337,60 @@ These requirements are carried over from #2121:
 
 ## Verification
 
-Unit (core): the WebCrypto round trip verifies a token signed by the `node:crypto` implementation it replaces and
-produces a byte-identical token for the same key and payload (a fixture token committed before the swap); `lid` and
-`agreement` optional-but-required-for-self-service; register derivation yields today's trusted-key map and today's
-well-known JSON exactly; the three key states have distinct verdicts. Integration (core): the worker bundle test
-resolves `./license/key` and `./license/register` under `workerd,worker,browser` with no `node:` specifier.
+Unit (core):
 
-Unit (worker): the plan catalog refuses an unknown Price and a mismatched mode; period-end plus grace across a
-month boundary, a year boundary, and February 29; the licensee-row-missing path on an early `invoice.paid`; every state
-transition in the refunds table; refresh answers the same 404 for unknown lid and wrong secret.
+- The WebCrypto round trip verifies a token signed by the `node:crypto` implementation it replaces and produces a
+  byte-identical token for the same key and payload (a fixture token committed before the swap).
+- `lid` and `agreement` are optional in the schema and required for self-service.
+- Register derivation yields today's trusted-key map and today's well-known JSON exactly.
+- The three key states have distinct verdicts.
 
-Worker integration (Miniflare): a valid signature over the untouched body passes and a one-byte mutation is a 400; the
-same event twice is one token; two events for one invoice in either order are one token; a D1 failure after
-verification is a 500 and the event id is not recorded; the claim route answers `pending` before `invoice.paid` and the
-same token afterward; CORS admits `SITE_ORIGIN` only; `ISSUANCE_ENABLED=false` refuses the mint and still answers
-refresh.
+Integration (core): the worker bundle test resolves `./license/key` and `./license/register` under
+`workerd,worker,browser` with no `node:` specifier.
 
-Stripe sandbox end to end: Payment Link → Checkout → webhooks → token; `mailwoman license verify` on the current
-release reads `unknown_key` for the sandbox key (the shipped register does not carry it) and `valid` once the test
-register is injected, which is the demonstration that trust is release-bound; a card that fails 3DS mints no token; a
-renewal in Stripe's test clock mints a second token with the next period's dates; a refund flips online status; the
-email resend under the same invoice id is one message.
+Unit (worker):
 
-Before production issuance is enabled: prerequisites 1 to 5 done; the trust release published; the signing self-test green in production;
-the webhook destination subscribed to exactly the listed events; the kill-switch drill performed; alerts on `/health`
-failure, on any `email_state = failed` older than an hour, and on reconciliation drift.
+- The plan catalog refuses an unknown Price and a mismatched mode.
+- Period-end plus grace is correct across a month boundary, a year boundary, and February 29.
+- The licensee-row-missing path on an early `invoice.paid` works.
+- Every state transition in the refunds table is covered.
+- Refresh answers the same 404 for unknown lid and wrong secret.
+
+Worker integration (Miniflare):
+
+- A valid signature over the untouched body passes, and a one-byte mutation is a 400.
+- The same event twice is one token.
+- Two events for one invoice in either order are one token.
+- A D1 failure after verification is a 500, and the event id is not recorded.
+- The claim route answers `pending` before `invoice.paid` and the same token afterward.
+- CORS admits `SITE_ORIGIN` only.
+- `ISSUANCE_ENABLED=false` refuses the mint and still answers refresh.
+
+Stripe sandbox end to end:
+
+- Payment Link → Checkout → webhooks → token.
+- `mailwoman license verify` on the current release reads `unknown_key` for the sandbox key, because the shipped
+  register does not contain it. It reads `valid` once the test register is injected. That pair demonstrates that trust
+  is release-bound.
+- A card that fails 3DS mints no token.
+- A renewal in Stripe's test clock mints a second token with the next period's dates.
+- A refund flips online status.
+- The email resend under the same invoice id is one message.
+
+Before production issuance is enabled:
+
+- prerequisites 1 to 5 are done
+- the trust release is published
+- the signing self-test is green in production
+- the webhook destination is subscribed to exactly the listed events
+- the kill-switch drill is performed
+- alerts exist on `/health` failure, on any `email_state = failed` older than an hour, and on reconciliation drift
 
 ## Acceptance
 
 - A customer pays through either Payment Link and, within the webhook's arrival, holds exactly one token whose signed
   payload matches the server-side plan and whose `expires` is the paid period's end plus fourteen days.
-- Each renewal mints exactly one new token; `mailwoman license refresh` fetches it; the email carries the same one.
+- Each renewal mints exactly one new token. `mailwoman license refresh` fetches it, and the email contains the same one.
 - Stripe event replay, duplication, or reordering never creates a second token for one invoice.
 - No token is issued for an unpaid invoice, an unallowlisted Price, or a test-mode event in production.
 - A full refund or a dispute makes the license read `revoked` online while the offline token keeps its date, and the
@@ -391,7 +414,7 @@ are out of scope. Each continues to use the local issuer.
 - [ ] **C — Worker foundation**: workspace, the seven registers, Wrangler environments, D1 schema, deploy workflow,
       signing self-test, kill switch.
 - [ ] **D — Fulfillment**: webhook verification, the event handlers, the early-`invoice.paid` path, minting, email.
-- [ ] **E — Customer routes**: claim, refresh, status; rate limits; CORS.
+- [ ] **E — Customer routes**: claim, refresh, status, rate limits, and CORS.
 - [ ] **F — Site**: Payment Links and portal link on `/license`, the `/license/issued` page, the refresh paragraph.
 - [ ] **G — CLI**: `license adopt`, `license refresh`, the config-root key file, `--online` lid status in verify and the
       doctor.

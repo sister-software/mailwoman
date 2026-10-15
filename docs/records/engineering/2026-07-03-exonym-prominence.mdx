@@ -1,6 +1,6 @@
 ---
 title: "Design note: exonym prominence in the exact tier (the Åbo problem)"
-description: How the name-exact vs alias-exact sub-tier handles bilingual official names. The note compares three candidate rules and recommends one, which is not yet implemented.
+description: How the name-exact vs alias-exact sub-tier handles bilingual official names. The note compares three candidate rules and recommends one. The recommended rule is not yet implemented.
 status: active-decision
 ---
 
@@ -30,7 +30,7 @@ alias holder.
 ## Why "Åbo" is not an alias
 
 Finland is officially bilingual. "Åbo" is Turku's **official Swedish name**, in the same class as
-Karjaa/Karis, which the #743 bilingual-recall fix already treats as first-class names on ingest. Our
+Karjaa/Karis. The #743 bilingual-recall fix already treats those as first-class names on ingest. Our
 gazetteer stores one primary name (`spr.name` = "Turku") and demotes every other official-language
 name into the alias bag. The sub-tier's ordering is correct. The defect is that **the name-exact test
 consults only a single primary name, although places like Turku have official names in more than
@@ -50,7 +50,7 @@ one language.**
    trivia.
 3. **Official-language names are names** _(recommended)_: widen the name-exact sub-tier's
    definition from `spr.name` to "any official-language name of the place". These are the
-   language-tagged name rows the gazetteer already carries, such as `name_swe` for Turku in WOF.
+   language-tagged name rows the gazetteer already stores, such as `name_swe` for Turku in WOF.
    Alias-exact remains the tier for abbreviations, colloquialisms, and historical forms. Turku
    becomes name-exact for "Åbo" and beats the hamlet on population _within_ the sub-tier. Paris
    Township stays alias-exact, because its "Paris" is a truncation rather than an official name in
@@ -60,7 +60,7 @@ one language.**
 ## What option 3 needs (scoping rather than commitment)
 
 - Ingest: mark official-language name rows separately from alternate and colloquial names. WOF's
-  `name_*` language tags and `official` flags carry this information. The candidate and FTS builders
+  `name_*` language tags and `official` flags record this information. The candidate and FTS builders
   would store one extra bit per name row.
 - Lookup: the exact-tier classifier consults `names WHERE official = 1` for the name-exact test. This
   is one indexed probe, with the same shape as today's alias check.

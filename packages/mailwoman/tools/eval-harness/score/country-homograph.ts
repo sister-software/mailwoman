@@ -4,8 +4,8 @@
 /**
  *   Country homograph scorer, the baseline for the model-first country change. Measures
  *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
- *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
- *   "trailing token = country" failure), and how often gold country is missed.
+ *   over-fire confusion: the count of gold region/locality spans mistagged as `country` (the
+ *   "trailing token = country" failure), and the count of missed gold country spans.
  *
  *   Every printed line goes through the `report` sink, one call per line.
  */
@@ -22,6 +22,7 @@ import {
 	perTagRates,
 	scorePerTagCounts,
 } from "#tools/eval-harness/per/tag-f1"
+import { productionPriorOptions } from "#tools/eval-harness/production-priors"
 
 /**
  * Options for {@linkcode scoreCountryHomograph}.
@@ -141,6 +142,9 @@ export async function scoreCountryHomograph(
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
+	// The homograph fixture is US, so the venue-head lexicon is the US one.
+	const priorOptions = (await productionPriorOptions(neural))("US")
+
 	let overfire = 0 // gold region/locality token tagged as country
 	let missedCountry = 0 // gold country present, model emitted no country
 	const overfireCases: string[] = []
@@ -149,11 +153,11 @@ export async function scoreCountryHomograph(
 	const stat = await scorePerTagCounts(
 		rows,
 		TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw)),
+		async (raw) => decodeAsJSON(await neural.parse(raw, priorOptions)),
 		(row, got) => {
 			const exp = row.components
 
-			// over-fire: model emitted a country that is actually the gold region or locality
+			// over-fire: model emitted a country where gold has the region or locality
 			const gc = normalizeComponent(got.country)
 
 			if (

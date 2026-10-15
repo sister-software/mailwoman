@@ -19,7 +19,7 @@ you have already ruled out the two configurations that produce a wrong-looking r
 
 Both of these look like parser bugs. You can check each with one command.
 
-**A missing coordinate on a parse-only install.** `mailwoman parse` never resolves anything; it returns
+**A missing coordinate on a parse-only install.** `mailwoman parse` never resolves a coordinate. It returns
 components. If you expected a latitude/longitude, you wanted `mailwoman geocode` and a gazetteer.
 
 **A coordinate in the wrong country from an ambiguous input.** A bare postcode matches several countries'
@@ -36,7 +36,7 @@ mailwoman parse --debug "1275 Pennsylvania Ave NW, Washington, DC 20004"
 ```
 
 It emits one JSON object with eight keys: `input`, `normalized`, `locale`, `kind`, `path`, `queryShape`,
-`timing` and `tree`. The whole object is worth attaching, but four fields answer most first questions,
+`timing` and `tree`. Attach the whole object, but four fields answer most first questions,
 so lead with them:
 
 ```bash
@@ -69,7 +69,7 @@ mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, 
 node directly, so a wrong answer there is a classifier bug rather than a model one. A surprising `kind`
 explains a surprising set of components.
 
-The `normalized` block matters when the input carries unusual characters: it lists the transforms that
+The `normalized` block matters when the input contains unusual characters: it lists the transforms that
 were applied before the model saw anything, so it distinguishes "the model read it wrong" from "the
 model never saw what you typed".
 
@@ -114,7 +114,7 @@ mailwoman doctor --json
 }
 ```
 
-That is most of a reproduction: which model version, which Node build, which data layers are present.
+That is most of a reproduction: the model version, the Node build, and the data layers that are present.
 The weights line in particular pins the model, and parses are not comparable across model versions.
 
 ## 4. Add a link to the demo
@@ -148,7 +148,7 @@ Then add the two things no command can produce: what you expected, and what you 
 for a security issue — which is email, never a public issue.
 
 Send the address that broke rather than a description of the class of address that broke. A concrete
-string becomes a test case; a description becomes a conversation.
+string becomes a test case. A description becomes a conversation.
 
 ## Limits
 
@@ -156,7 +156,7 @@ string becomes a test case; a description becomes a conversation.
   people. If the components are right and the coordinate is wrong, say so in the title — that routes it
   to the gazetteer rather than the model.
 - **`--debug` prints the input back.** If the address is one you cannot paste into a public issue, say so
-  and a private route will be arranged; do not sanitize the string, because the sanitized version tends
+  and a private route will be arranged. Do not sanitize the string, because the sanitized version tends
   to parse fine.
 - **Locale matters and defaults to `en-US`.** A French address parsed with the `en-US` model is expected
   to be worse. Name the locale you passed, or that you passed none.

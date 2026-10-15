@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `storage.status` — capacity and the compression ratio the volume is actually achieving.
+ *   `storage.status` — capacity and the compression ratio the volume achieves.
  *
  *   The compression ratio changes a 2 TB drive's effective capacity between 2 TB and 4 TB.
  *   The ratio shifts as the mix of text and already-compressed artifacts changes.

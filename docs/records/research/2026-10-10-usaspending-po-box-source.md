@@ -3,7 +3,7 @@ title: "USAspending foreign recipients as a PO box source for thin address syste
 description: Evaluation of USAspending FY2023–FY2025 prime financial-assistance transactions to foreign recipients as a training source for po_box and unit rows, with the rights, the personal-data filter, the fields, and the measured yield.
 ---
 
-# USAspending foreign recipients as a PO box source for thin address systems
+# A PO box source for thin address systems: USAspending foreign recipients
 
 #2438 asks whether USAspending's foreign-recipient address lines can supply real `po_box` and `unit`
 rows to the training mix, where the building registers hold none. This record states what was read,
@@ -12,23 +12,23 @@ what was measured, and the decision.
 ## The source
 
 USAspending.gov publishes federal award data under the DATA Act. The publishing repository,
-`fedspendingtransparency/usaspending-api`, carries the CC0-1.0 license and describes the data as
+`fedspendingtransparency/usaspending-api`, declares the CC0-1.0 license and describes the data as
 "open source and provided to the public as part of the DATA Act". The address-source register row
-`us-procurement-grants-1` ("SAM.gov / USAspending") carries status `retained-original` with its
-license `unchecked`; this record is the reading behind the row's next status, and the change goes
+`us-procurement-grants-1` ("SAM.gov / USAspending") has status `retained-original` with its
+license `unchecked`. This record is the reading behind the row's next status, and the change goes
 through the register's research input rather than the built register.
 
 The award download (`POST /api/v2/bulk_download/awards/`) accepts a one-year `date_range`, a
-`date_type`, `prime_award_types` and `recipient_scope: foreign`. A financial-assistance row carries
+`date_type`, `prime_award_types` and `recipient_scope: foreign`. A financial-assistance row has
 `recipient_address_line_1`, `recipient_address_line_2`, `recipient_foreign_city_name`,
 `recipient_foreign_province_name`, `recipient_foreign_postal_code`, `recipient_country_code` and
 `recipient_country_name`, with `business_types_code` and `record_type_code`. Rows with an action
-date on or after 2022-04-04 are past FPDS's Dun & Bradstreet limit, which is why the earlier
-thin-systems rows start there.
+date on or after 2022-04-04 are past FPDS's Dun & Bradstreet limit. The earlier
+thin-systems rows start there for that reason.
 
 ## Personal data
 
-A corpus carries organization addresses and no natural person's address. USAspending's own rule is
+A corpus holds organization addresses and no natural person's address. The USAspending rule is
 the same: an award to an individual is published as record type 3, "a Non-Aggregate Record to an
 Individual Recipient with Redacted Personally Identifiable Information", or aggregated under the
 recipient name `MULTIPLE RECIPIENTS`, and "these records omit location information that would
@@ -37,7 +37,7 @@ that "Agencies are prohibited from publishing PII on USAspending."
 
 The adapter therefore admits a financial-assistance row only when `record_type_code` is `2` and
 `business_types_code` holds neither `P` nor `21`, the two codes `get_business_categories` maps to
-`individuals`. A contract row has no individual code; its `sole_proprietorship` flag marks a business
+`individuals`. A contract row has no individual code. Its `sole_proprietorship` flag marks a business
 that may sit at a person's home, and a row with that flag is refused for the same reason.
 
 ## Yield
@@ -67,14 +67,14 @@ Uganda 35 of 205, Tanzania 18 of 140, Malawi 18 of 93, Zambia 12 of 153, South A
 Australia 12 of 143, Cameroon 9 of 99. The forms are `P.O. BOX 2356`, `PO BOX 36207`, `01 BP 1740`,
 `13 BP 1885 ABIDJAN 13` and `BP 2720`; the West African `NN BP NNNN <city> NN` form, with the box
 district before and after, is the one the invented rows never produced. The measurement script and
-the pattern lists are `usaspending-measure.py` in the session scratchpad; the patterns are a lower
+the pattern lists are `usaspending-measure.py` in the session scratchpad. The patterns are a lower
 bound, because a box written without a marker is not matched.
 
 ## Decision
 
-Admitted as a source, with a yield too small to carry `po_box` alone: 411 distinct PO box lines
+Admitted as a source. Its yield is too small to supply `po_box` without the invented rows: 411 distinct PO box lines
 against the 2,135 invented PO box rows a 200,000-row training draw holds. Its value is the real West
-African `BP` forms and the unit lines, which no register in the corpus states. The adapter reads the
+African `BP` forms and the unit lines. No register in the corpus states them. The adapter reads the
 three fiscal-year downloads, keeps record type 2 rows whose business type is not `P` or `21`, refuses
 `USA` recipients, and labels the box with the span rules the GLEIF adapter already applies to
 `PO BOX 309`. The register row `us-procurement-grants-1` moves to elected through the research input

@@ -7,6 +7,8 @@
  *   because a 404 is an answer the loaders interpret.
  */
 
+import { startEarly } from "@mailwoman/core/promises"
+
 const ATTEMPTS = 3
 
 const FIRST_RETRY_DELAY_MS = 500
@@ -131,7 +133,7 @@ export async function fetchWithRetry(
 
 /**
  * `fetchWithRetry` bound to a progress callback, as a plain `fetch` a loader can take
- * for its `fetchImpl`; `shouldReport` picks the request whose bytes are worth a bar,
+ * for its `fetchImpl`; `shouldReport` picks the request whose bytes the bar reports,
  * since reporting every small artifact would make the bar jump backwards.
  */
 export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: string) => boolean): typeof fetch {
@@ -159,9 +161,7 @@ export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[
 	const started = new Map<string, Promise<Response>>()
 
 	for (const url of urls) {
-		const response = fetchImpl(url)
-		response.catch(() => {})
-		started.set(url, response)
+		started.set(url, startEarly(fetchImpl(url)))
 	}
 
 	return (input, init) => {

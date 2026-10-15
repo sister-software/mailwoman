@@ -40,7 +40,7 @@ is a license grant rather than an assignment.
    you own that are necessarily infringed by your contribution.
 
 3. **You have the right to grant this.** Your contribution is your original work,
-   or you otherwise have the rights to submit it under these terms; and if your
+   or you otherwise have the rights to submit it under these terms. If your
    employer has rights to work you create, you have permission to make the
    contribution, or your employer has waived those rights.
 
@@ -50,7 +50,7 @@ rather than the DCO certification, contact teffen@sister.software.
 <details>
 <summary><strong>Developer Certificate of Origin 1.1</strong> (full text)</summary>
 
-```
+```text
 Developer Certificate of Origin
 Version 1.1
 
@@ -107,7 +107,7 @@ yarn test                # vitest (Ctrl-C to exit watch; `yarn ci:test` runs onc
 ```
 
 If `yarn install --immutable` fails, the lockfile is out of date — fix that
-before anything else; it'll otherwise hide behind every later step.
+before anything else. A stale lockfile otherwise makes every later step fail.
 
 ### A note on the model weights
 
@@ -120,7 +120,7 @@ without them.
 If you do need the weights — to run the neural classifier locally or work on the
 model — see [`REPRODUCIBILITY.md`](./REPRODUCIBILITY.md) for how the artifacts are
 produced and fetched. The published `@mailwoman/neural-weights-en-us` /
-`-fr-fr` npm packages also carry a usable bundle.
+`-fr-fr` npm packages also contain a usable bundle.
 
 ## Repository layout
 
@@ -159,15 +159,15 @@ frozen evaluations, and fixture directories are excluded. Tests outside fixture 
 checked, with specific exceptions for malformed inputs and multilingual source values.
 
 Review the diff after `yarn lint:spelling:fix`. Preserve geographic names, external names, wire
-identifiers, quotations, and expected fixture values. Prefer an exact identifier or literal exception;
-use accepted words only where the vocabulary is needed. File-type globs match basenames, and the most
+identifiers, quotations, and expected fixture values. Prefer an exact identifier or literal exception.
+Use accepted words only where the vocabulary is needed. File-type globs match basenames, and the most
 specific matching type applies. A type exception therefore also applies to another file with that
 basename. `typos` detects known spelling mistakes rather than rejecting every unknown word.
 
 A vitest config in `packages/core/` and `packages/neural/` aliases sibling `@mailwoman/*` imports
 to source, so `yarn test` runs without a precompile step.
 
-**One failure mode worth knowing:** when a test file imports `@mailwoman/core` _both_
+**A bare-and-subpath import failure:** when a test file imports `@mailwoman/core` _both_
 bare and via a subpath, Vite can leave the bare re-exports unbound and a base
 class evaluates as `undefined`. The fix is a side-effect `import "@mailwoman/core"`
 at the top of the test file. `AGENTS.md` documents this under the bare/subpath
@@ -187,11 +187,11 @@ node packages/mailwoman/out/cli/main.js --help
 - **Branch off `main`.** Open the PR against `main`.
 - **Conventional commits.** Match the existing history: `feat(scope): …`,
   `fix(scope): …`, `refactor(scope): …`, `docs(scope): …`, `chore(scope): …`.
-- **The pre-commit hook** (Husky + lint-staged) runs oxlint and oxfmt on your staged files. Let it run; it catches the formatting and
+- **The pre-commit hook** (Husky + lint-staged) runs oxlint and oxfmt on your staged files. Let it run. It catches the formatting and
   type drift that CI would otherwise bounce. It only checks staged files, so for
   a change that spans packages, run the full `yarn ci:test` before pushing.
 - **CI must be green** — the Test and Docs workflows run on every push. A red
-  Docs build means an MDX syntax slip; a red Test build is a real failure.
+  Docs build means an MDX syntax slip. A red Test build is a real failure.
 - Keep PRs focused. One concept per PR is much easier to review (and to revert).
 
 ## Where to read next

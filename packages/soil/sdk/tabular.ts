@@ -151,7 +151,7 @@ export interface TabularTable {
 	 */
 	rows: ReadonlyArray<Record<string, string>>
 	/**
-	 * How many records the file held, before projection.
+	 * The count of records the file held, before projection.
 	 */
 	recordCount: number
 }

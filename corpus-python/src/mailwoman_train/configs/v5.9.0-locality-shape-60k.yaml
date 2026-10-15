@@ -5,7 +5,7 @@
 # receipts are unchanged, and the run starts from scratch with `--resume none`.
 #
 # The corpus change: v0.32.0-locality-shape overlays v0.30.0-bare-postcode with the three sources
-# that v0.31.0 carries. Two of them are byte-identical copies. `synth-trailing-region-us` is rebuilt
+# that v0.31.0 adds. Two of them are byte-identical copies. `synth-trailing-region-us` is rebuilt
 # with locality name shape added to the `applyCountryBudget` bucket key:
 #
 #   bucket                        v0.31.0            v0.32.0
@@ -28,7 +28,7 @@
 #
 #   1. On `us-shape-stratified.jsonl`, the bare-arm suffix-word bucket (123/379 under v5.7.0) must rise.
 #   2. On the same panel, the other multi-word (189/358) and single-word (321/395) buckets must not fall.
-#      If they rise as much as bucket 1, the extra rows explain the result and the shape split adds nothing.
+#      If they rise as much as bucket 1, the extra rows explain the result and the shape split adds no measured gain.
 #   3. On `us.jsonl`, bare (555/603) and `street_only` (594/603) must not fall.
 #   4. `mwdev_promotion_eval --spec v9.0.0-base` must pass every floor with no FR, GB or DE row
 #      regression, and US `postcode` per-tag F1 must stay at 95.6%.
@@ -136,7 +136,7 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # The key is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+    # The key is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -192,7 +192,7 @@ data:
     usgov-nad: 1.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
-    # These two sources are set to zero to match v5.7.0, whose loader never indexed them. The current
+    # These two sources are set to zero to match v5.7.0. The v5.7.0 loader never indexed them. The current
     # loader sees them and rejects any source without a weight, so they must be listed.
     state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
@@ -300,7 +300,7 @@ data:
       source: osm
   augment_exclude_sources:
     - synth-suffix-boundary
-    # This source teaches a postcode alone, such as `119 00`, so augmentation would add tokens the row
+    # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
     # must not contain.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000

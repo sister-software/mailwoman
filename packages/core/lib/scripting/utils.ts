@@ -39,7 +39,7 @@ export function logScriptError(error: unknown): void {
 export type ScriptCallback = (...args: unknown[]) => unknown | Promise<unknown>
 
 /**
- * Cleans up services and exits the script cleanly.
+ * Cleans up services and exits the script.
  *
  * @param exitCode - Explicit exit code.
  * When omitted, the `process.exitCode` the script set stands, or `0` when it set none.

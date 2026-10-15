@@ -50,7 +50,7 @@ model:
   crf_normalization: per_token
   crf_loss_weight: 1.0
   # §3 ablated: class_weights block removed entirely → uniform per-class weighting
-  # (config.py default is class_weights: None, which the encoder reads as uniform).
+  # (config.py default is class_weights: None. The encoder reads None as uniform.)
 
 train:
   output_dir: /data/models/checkpoints/v0_4_0-ablate-cw

@@ -3,13 +3,13 @@
 **Date:** 2026-07-19. **Command:** `mailwoman eval poi-board`. **Fixtures:**
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (45 cases, committed). **DB:**
 `$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db` (the full 4-country build — 13,681,698 rows,
-release 2026-05-20.0; **not** a `--limit` sample, per the poi-layer-runbook's warning against
+release 2026-05-20.0. It is **not** a `--limit` sample, per the poi-layer-runbook's warning against
 grading coverage off a limited build). **Resolver:** default FTS admin extract
 (`admin-global-priority.db`).
 
 **Status: BASELINE ONLY. No floors yet — this is the pre-registered first run** (spec §3.6:
-"written floors set at Phase-1 baseline"). A case failing here is not a regression; there is
-nothing to regress from. Floors land in a follow-up PR once these numbers exist to set them
+"written floors set at Phase-1 baseline"). A case failing here is not a regression, because
+no earlier floor exists to regress from. Floors land in a follow-up PR once these numbers exist to set them
 against.
 
 ## Composition (45 cases)
@@ -28,8 +28,8 @@ Traced against `poi-executor.ts`'s actual precedence, that reason is only reacha
 `poi.db` lookup is configured **and the anchor resolves to a center** — a bare (anchor-less)
 category query hits the `anchor_required` early-return first whenever a lookup is wired,
 regardless of whether the category is build-local. Since this board always grades against a
-real `poi.db`, the three build-local abstain fixtures carry an anchor (`"fire hydrant near
-Springfield IL"`); the three `anchor_required` fixtures are the ones left bare (`"coffee"`,
+real `poi.db`, the three build-local abstain fixtures include an anchor (`"fire hydrant near
+Springfield IL"`). The three `anchor_required` fixtures are the ones left bare (`"coffee"`,
 `"hospital"`, `"bank"`). Verified against both possible orderings live before fixing the
 fixtures — see `eval-harness/poi-board.ts`'s header comment.
 
@@ -54,36 +54,36 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
 - **abstain 7/7 (100%)** — both abstain paths (`requires_build_local_layer`,
   `anchor_required`) fire exactly where expected, including the conditional-synonym→build-local
   case (`mailbox`, en-CA).
-- **address 6/6 (100%)** — no address-guard false-positive; the venue-led shape
+- **address 6/6 (100%)** — zero address-guard false-positives. The venue-led shape
   (`"hospital, 350 5th Ave, New York, NY 10118"`) correctly stays on the address path in both
   the US and FR forms tested.
 - **results 29/32 (90.6%)** — 3 failures, all actual product behavior (below).
 - **gersID non-null 100%, ancestry present 100%** — every one of the 496 returned result rows
-  carries a GERS id and a read-time WOF ancestry chain (the poiQueryKind register row's
+  has a GERS id and a read-time WOF ancestry chain (the poiQueryKind register row's
   second debt payment, landed 2026-07-19). Both report-only per the schema's meaning-of-zero
   convention.
 - **nearest-distance distribution** — p50 0.58 km, p95 8.42 km, all well inside the 25 km
   tolerance on passing cases. The board is not measuring at the edge of its own tolerance
-  band; when a case fails it fails on zero results rather than a near-miss on distance.
+  band. When a case fails, it fails on zero results rather than a near-miss on distance.
 
 ## Notable failures (3/45, all left failing — not tuned away)
 
-| id     | query                                  | why                                                                                                                                                                                                                                                            |
-| ------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago and near Austin (spot-checked separately) — a real poi.db coverage gap for that category rather than an anchor-resolution miss                                                                              |
-| nm-06  | `supermarket near Guadalajara, Mexico` | same `supermarket` coverage gap, MX side                                                                                                                                                                                                                       |
-| nm-04  | `hiking trail near Marseille`          | `trail` category (Overture `route=hiking`) returns 0 rows near Marseille, Toulouse, and Denver (spot-checked) — Overture Places carries few if any point-shaped trail rows; a structural fit issue for a line-geometry feature rather than a query-parsing bug |
+| id     | query                                  | why                                                                                                                                                                                                                                                              |
+| ------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago and near Austin (spot-checked separately) — a real poi.db coverage gap for that category rather than an anchor-resolution miss                                                                                |
+| nm-06  | `supermarket near Guadalajara, Mexico` | same `supermarket` coverage gap, MX side                                                                                                                                                                                                                         |
+| nm-04  | `hiking trail near Marseille`          | `trail` category (Overture `route=hiking`) returns 0 rows near Marseille, Toulouse, and Denver (spot-checked) — Overture Places has few if any point-shaped trail rows. It is a structural fit issue for a line-geometry feature rather than a query-parsing bug |
 
 Both gaps are **subject-match successes, execution misses** — `matchPOISubject` correctly
-resolved `grocery`→`supermarket` and `hiking trail`→`trail` in every case; the poi.db search
+resolved `grocery`→`supermarket` and `hiking trail`→`trail` in every case. The poi.db search
 came back empty. That is exactly the signal this board exists to surface: the runner has no
 bug here, the underlying category coverage does.
 
-One additional near-anomaly worth recording even though it didn't fail a fixture: anchor
-resolution is locale-sensitive in ways that aren't obvious from the query text alone. `"cafe
-near Montreal QC"` resolves the FTS backend to a same-named town in Wisconsin rather than Montréal,
+One additional near-anomaly did not fail a fixture: anchor resolution is locale-sensitive in
+ways the query text does not reveal. `"cafe
+near Montreal QC"` resolves the FTS backend to a homonymous town in Wisconsin rather than Montréal,
 Québec — dropping the `QC`/state-style suffix in favor of `"cafe near Montreal, Canada"`
-resolves correctly. `"pharmacy near Calgary AB"` abstains `anchor_required` outright (the
+resolves correctly. `"pharmacy near Calgary AB"` abstains with `anchor_required` (the
 parse doesn't attach a resolvable center to the region-suffixed form), while bare `"bank near
 Calgary"` resolves directly. The 22 category+anchor fixtures were phrased around this — not to
 inflate the pass rate, but because a fixture that fails on an already-known resolver quirk
@@ -93,17 +93,17 @@ this board's job to fix.
 
 ## Runner notes
 
-- `gradeCase` (the grading core) is pure and unit-tested against synthetic outcomes — no db,
-  no classifier, no resolver (`eval-harness/poi-board.test.ts`, 20 tests, all green). The live
+- `gradeCase` (the grading core) is pure and unit-tested against synthetic outcomes, without a db,
+  a classifier or a resolver (`eval-harness/poi-board.test.ts`, 20 tests, all green). The live
   run above exercises the real `createRuntimePipeline({ classifier, resolver, poiQueryKind:
   { poiDatabasePath } })` construction, mirroring `commands/poi.tsx`.
 - Exit code is 0 regardless of case failures — non-zero is reserved for harness errors
   (missing fixtures file, pipeline construction failure). Confirmed live: the 3-failure run
   above exits 0.
 - `--json` prints the full machine-readable report (all 45 per-case grades + the aggregate
-  metrics) instead of the human table; verified it round-trips through `JSON.parse` directly at
-  411 lines — the CLI's own `poi --json` mode has a known Ink line-wrapping trap on long
-  string values piped through `<Text>`, which this command avoids by building the report
+  metrics) instead of the human table. Its output round-trips through `JSON.parse` directly at
+  411 lines. The CLI's own `poi --json` mode has a known Ink line-wrapping trap on long
+  string values piped through `<Text>`. This command avoids that trap by building the report
   in-process rather than shelling out to the compiled CLI and parsing its text output.
 
 ## Floors set — 2026-07-20 (follow-up PR)
@@ -117,7 +117,7 @@ The pre-registered floors are now **live** in the harness (`POI_BOARD_FLOORS` /
 | abstain       | = 100%    | hard — an abstain miss is the poi branch claiming a query poi.db structurally cannot answer  |
 | address-guard | = 100%    | hard — the poi branch must never hijack a full address                                       |
 
-Floors print on every run; `mailwoman eval poi-board --enforce` turns a breach into a
+Floors print on every run. `mailwoman eval poi-board --enforce` turns a breach into a
 non-zero exit (the CI-check mode). Without `--enforce` the command stays report-only.
 
 **Current standing (v1.1, 2026-07-20 promotion battery — `2026-07-20-poi-promotion-battery.md`):**
@@ -126,7 +126,7 @@ the fixture set has grown from v1's 45 to **51** (v1.1 added 6 brand cases — s
 **abstain 8/8 (100%)**, and **address-guard 6/6 (100%)** — both hard floors met, and overall
 clears the 90% soft floor with margin. The `results` misses are the known coverage-gap
 holdouts already logged under "Notable failures" above (the `supermarket` and `trail`
-category gaps — `syn-05`, `nm-06`, `nm-04`), plus a brand case; all are `results`-kind, so
+category gaps — `syn-05`, `nm-06`, `nm-04`), plus a brand case. All are `results`-kind, so
 they cost the overall rate but touch neither hard floor. **All three floors pass at the
 current standing.**
 
@@ -139,11 +139,11 @@ category set each register as a breach.
 
 - Set floors off these numbers once the operator reviews them (spec §3.6's own sequencing).
 - The `supermarket` and `trail` category coverage gaps are candidates for a poi.db builder
-  investigation — worth checking whether Overture's `taxonomy.primary` values for those two
+  investigation. The investigation should check whether Overture's `taxonomy.primary` values for those two
   categories match what `osmTag`/category-id mapping in `poi-taxonomy/data/taxonomy.json`
   expects.
 - The Montreal/Calgary anchor-resolution quirks are FTS-backend homonym-ranking behavior,
-  independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering rather than
+  independent of this board. They belong under `resolver-wof-sqlite`'s bm25 tiering rather than
   logged as a poi-board failure because no fixture encodes an expectation against it.
 
 ## Current status — 2026-07-20 (after #1206 / #1208 / #1209)

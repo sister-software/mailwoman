@@ -5,7 +5,7 @@
 The scorer and bar were pre-registered on #1176 (2026-07-29, scorer pinned at `34c7b6c2`): blended
 coordinate-acceptability ≥ 0.70 at 15 km on the held-out 20,000-row board, scored with
 `corpus-python/scripts/score_jp_probe_board.py --label-set stage3-jp`. The board holds out whole
-municipalities (the probe's bucket rule), so nothing on it was seen in training.
+municipalities (the probe's bucket rule), so no row on it was seen in training.
 
 ---
 
@@ -56,11 +56,11 @@ printed, supported labels separated, scorer ran end to end) — which is all a p
 **Correction, 2026-09-05.** The 0.2237 / 0.1847 probe read above was a scorer artifact rather than a model
 state. Re-scored on 2026-09-05 with the current `score_jp_probe_board.py --label-set stage3-jp` against
 the same jp-board.jsonl, the `v8-jp-full-2k` step-2000 checkpoint reads coordinate-acceptability
-**0.9931** (19,862 / 20,000; 107 unresolved) with municipality span exact-match **0.9947**, prefecture
+**0.9931** (19,862 / 20,000, with 107 unresolved) with municipality span exact-match **0.9947**, prefecture
 1.0000, district 0.9870, block 0.9980, house_number 0.9899. The probe ran before the `--label-set`
 parameterization existed, so the 47-label checkpoint was LIKELY read through the 33-label `ID_TO_LABEL`,
 the silent mislabeling the scorer's docstring names. The probe's own log had token macro-F1 0.9996 at
-step 2,000, which was never compatible with a 0.18 span match on the same board. Consequence for the
+step 2,000. That F1 was never compatible with a 0.18 span match on the same board. Consequence for the
 reading above: the head learns municipality by step 2,000 rather than "at 24k"; the cosine-anneal explanation
 was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its comparison arm.
 
@@ -70,7 +70,7 @@ was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its com
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
   keys by shipped npm model versions and does not take this row.
 - The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged
-  with it; nothing here isolates its contribution. The A/B the probe config describes (delete the
+  with it. No measurement in this record isolates its contribution. The A/B the probe config describes (delete the
   key, diff per-label F1) remains unrun and optional.
 
 Checkpoint: `$MAILWOMAN_DATA_ROOT/models/v8-jp-full-s42/step-024000/` (pulled from

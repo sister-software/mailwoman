@@ -9,7 +9,7 @@
 # time — no new source). check: golden
 # country recall recovers toward the 88.6% shipped bar on WOF-admin rows while real-postal recall stays
 # 3/4 + hallucination 0.7%. US/FR coord + parity street/hn/postcode flat vs v261. mask-regression passes.
-# zero NaN. Grade package-shaped (--weights-cache), never --model alone (#718 country-off trap).
+# zero NaN. Grade package-shaped (--weights-cache), never --model by itself (#718 country-off trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

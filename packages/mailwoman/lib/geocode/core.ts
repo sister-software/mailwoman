@@ -32,7 +32,6 @@ import {
 	type QueryKindResult,
 	type StageSource,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
-	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
 import type {
 	AuthoritativeProvider,
@@ -57,6 +56,7 @@ import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
+import { parsePriorOptions } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
 import {
@@ -189,14 +189,25 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
+	 * Whether the street-morphology matcher also biases a street affix on a numbered segment.
+	 *
+	 * Absent, the matcher serves the street-context check at zero weight.
+	 */
+	streetMorphologyPrior?: boolean
+	/**
+	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
+	 * Absent, the prior does not run.
+	 */
+	anchorRegions?: import("@mailwoman/core/pipeline").AnchorRegionLookupLike
+	/**
 	 * Venue-head lookups for the session's locale.
 	 * Absent, the venue-head prior does not run.
 	 */
-	venueHead?: import("@mailwoman/neural/venue/head-prior").VenueHeadLexiconLike
+	venueHead?: import("@mailwoman/core/pipeline").VenueHeadLexiconLike
 	/**
 	 * Overrides for the venue-head prior's bias scale, cap and extension.
 	 */
-	venueHeadOpts?: import("@mailwoman/neural/venue/head-prior").VenueHeadPriorOpts
+	venueHeadOpts?: import("@mailwoman/core/pipeline").VenueHeadPriorOpts
 	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
@@ -323,7 +334,15 @@ export function geocodeParseInputs(
 	input: string,
 	deps: Pick<
 		GeocodeDeps,
-		"normalizeInput" | "caseNormalization" | "inputMode" | "fst" | "streetMorphology" | "venueHead" | "venueHeadOpts"
+		| "normalizeInput"
+		| "caseNormalization"
+		| "inputMode"
+		| "fst"
+		| "streetMorphology"
+		| "streetMorphologyPrior"
+		| "anchorRegions"
+		| "venueHead"
+		| "venueHeadOpts"
 	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
@@ -360,15 +379,19 @@ export function geocodeParseInputs(
 			inputMode,
 			// Default word-consistency enforcement.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			// Optional gazetteer prior.
-			...(deps.fst ? { fst: deps.fst } : {}),
-			// Street-context requirements from shared helper.
-			...streetContextRequirementFor({
-				...(deps.fst ? { fst: deps.fst } : {}),
-				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
-			}),
-			...(deps.venueHead ? { venueHead: deps.venueHead } : {}),
-			...(deps.venueHead && deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
+			// The loaded priors, through the options builder every production parse path uses.
+			...parsePriorOptions(
+				{
+					fst: deps.fst ?? null,
+					streetMorphology: deps.streetMorphology ?? null,
+					anchorRegions: deps.anchorRegions ?? null,
+				},
+				{
+					streetMorphologyPrior: deps.streetMorphologyPrior ?? false,
+					venueHead: deps.venueHead ?? null,
+					...(deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
+				}
+			),
 		},
 	}
 }
@@ -387,6 +410,8 @@ export async function parseForGeocode(
 		| "inputMode"
 		| "fst"
 		| "streetMorphology"
+		| "streetMorphologyPrior"
+		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
 	>
@@ -764,7 +789,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// Apply entity tiers (declared-fork rescue and the venue tier).
 	// The tier reads the merged switch, so a caller that leaves `poiVenueTier` unset
 	// gets the switch's default as a session does.
-	applyEntityTiers(result, markers, parseInput, resolved.roots, { ...deps, poiVenueTier: switches.poiVenueTier })
+	applyEntityTiers(result, markers, parseInput, resolved.roots, {
+		...deps,
+		poiVenueTier: switches.poiVenueTier,
+		kind: verdict.kind,
+	})
 
 	// Append designation markers from attached spatial layers.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]

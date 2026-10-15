@@ -31,7 +31,7 @@ def diagnose_corpus(
     verify_country: str = "",
     verify_source: str = "",
 ) -> None:
-    """Check which corpus parquet files the data loader actually sees on the Modal volume.
+    """Check which corpus parquet files the data loader sees on the Modal volume.
 
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
@@ -136,8 +136,8 @@ def country_census_raw(
     """Which countries the corpus CONTAINS, before any filter touches it.
 
     Reads the country column out of the raw parquet rather than going through `iter_rows`, because
-    the loader is the thing under suspicion whenever this is asked. The question it settles has a
-    shape worth recognizing: downstream, the loader cannot distinguish a country whose rows the
+    the loader is the thing under suspicion whenever this is asked. The question it answers has this
+    shape: downstream, the loader cannot distinguish a country whose rows the
     filter drops from a country the corpus never had. Only dropped rows indicate a filter bug.
 
     The shape that produced it: `country_weights` in 44 configs held an unquoted `NO: 1.0`. YAML
@@ -228,7 +228,7 @@ def digit_prior(
     """Which tag owns a bare digit-containing token, as the SAMPLER draws it?
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
-    reflects it. The prior the model actually sees is the weighted multinomial over ~700 parquet
+    reflects it. The prior the model sees is the weighted multinomial over ~700 parquet
     files, after the country filter, the coarse filter and the augmentations. `augment_glue_prob`
     The only augmentation here that rewrites token boundaries is `augment_glue_prob`. This census pulls rows through `iter_rows`, the same entry point
     the trainer uses, with the config's own weights. It does not reimplement the sampler.
@@ -360,7 +360,7 @@ def digit_prior(
     for src in sorted(by_source, key=lambda s: -sum(by_source[s].values()))[:6]:
         table(by_source[src], f"source {src}")
 
-    # The control: the countries whose rows actually fail in production, at the shapes that fail.
+    # The control: the countries whose rows fail in production, at the shapes that fail.
     # A country with no rows has no prior. Its failures are OOD rather than mis-taught.
     # The census prints before the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
@@ -400,7 +400,7 @@ def piece_prior(
     rows: int = 200000,
     seed: int = 42,
 ) -> None:
-    """The digit prior at the unit the MODEL actually sees — the SentencePiece piece.
+    """The digit prior at the unit the MODEL sees — the SentencePiece piece.
 
     The model sees pieces rather than tokens. It emits one label per piece. Digits tokenize
     roughly one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode`
@@ -550,10 +550,10 @@ def locale_supply_census(
     corpus_dir: str = "/data/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape",
     splits: str = "train,val,test",
 ) -> None:
-    """How much INDEPENDENT address data one country has, as opposed to how many rows.
+    """How much INDEPENDENT address data one country has, as opposed to its row count.
 
     A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
-    exhausted source with a fresh shuffled pass, so a small source is presented many times and its
+    exhausted source with a fresh shuffled pass, so a small source is presented repeatedly and its
     row count reads as supply it does not have. A corpus can contain one street rendered a hundred
     ways. Those rows represent one street.
 
@@ -561,11 +561,11 @@ def locale_supply_census(
     a distinct count is the one statistic a sample cannot extrapolate:
 
     - **rows**, per split, the number already in hand from the epoch-mixture audit.
-    - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how
+    - **distinct raw surfaces**, the strings the tokenizer sees. Rows over surfaces is how
       much of the corpus is the same text written again.
     - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
     stable across reruns so dedup and holdout manifests are reproducible. The stable ID supplies the
-    independent-record count. Surfaces over source IDs show how many ways one record is rendered.
+    independent-record count. Surfaces over source IDs give the number of renderings per record.
     - **distinct component sequences**, the tuple of `span_tags` a row lists. This is the shape
       vocabulary the country teaches: a corpus of 800,000 rows with four sequences teaches four
       forms.

@@ -84,7 +84,7 @@ export function processForm499Lifecycle(
 	}
 
 	if (lifecycle?.replacedByForm499ID) {
-		// The successor's node is minted here: its own row is usually in the same file,
+		// The successor's node is minted here: its own row is in the same file in most filings,
 		// but no ordering guarantees this row is processed first and `insNode` is insert or ignore.
 		const successorNodeID = `${FilerIdentifierType.Form499ID}:${lifecycle.replacedByForm499ID}`
 		insNode.run(successorNodeID, FilerIdentifierType.Form499ID, lifecycle.replacedByForm499ID)

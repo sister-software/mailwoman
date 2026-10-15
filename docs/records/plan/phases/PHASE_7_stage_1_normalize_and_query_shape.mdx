@@ -12,7 +12,7 @@
 
 Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Reasons:
 
-- QueryShape can run on raw input directly (treating raw as already-normalized) for a v0, which helps early integration.
+- QueryShape can run on raw input directly (treating raw as already-normalized) for a v0. That option helps early integration.
 - QueryShape's interface is smaller, so there is less to get wrong on the first pass.
 - Normalize's offsetMap is essential, and building it second lets us see QueryShape's actual access patterns before committing to the offsetMap shape.
 
@@ -50,26 +50,26 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 
 - [ ] `tokenize(text: string): SpanRange[]` — whitespace + punctuation split, preserves character offsets
 - [ ] Treats consecutive non-whitespace-non-punct as one token
-- [ ] Internal helper; downstream sees `TokenClass[]` only
+- [ ] Internal helper. Downstream sees `TokenClass[]` only
 
 #### 5. Segmentation — `segmentation.ts`
 
 - [ ] `segment(text: string, locale?: LocaleTag): Segment[]` — punctuation-grammar-aware chunking
-- [ ] Default rules: commas, newlines, tabs separate segments; consecutive whitespace inside segment preserved
+- [ ] Default rules: commas, newlines, tabs separate segments, and consecutive whitespace inside a segment is preserved
 - [ ] Locale-specific overrides reserved for future (JP whitespace, KR honorifics)
-- [ ] Each Segment carries its separator and 0-based index
+- [ ] Each Segment records its separator and 0-based index
 
 #### 6. Known-format detection — `known-formats.ts`
 
 - [ ] Regex patterns: US ZIP, US ZIP+4, UK postcode, CA postcode, JP postcode, generic 5-digit (FR/DE ambiguous), PO Box
 - [ ] `detectKnownFormats(text: string, tokens: TokenClass[]): KnownFormatHit[]`
-- [ ] Confidence rules: unambiguous patterns (US ZIP+4, UK, CA, JP) → 0.95; ambiguous 5-digit → 0.6 (caller disambiguates via locale)
+- [ ] Confidence rules: unambiguous patterns (US ZIP+4, UK, CA, JP) → 0.95, ambiguous 5-digit → 0.6 (caller disambiguates via locale)
 - [ ] Reuse `core/data/chromium-i18n/ssl-address/*.json` for additional country regexes if cheap (defer if it adds a core dependency we don't already need)
 
 #### 7. Entry point — `compute.ts`
 
 - [ ] `computeQueryShape(input: string | NormalizedInputLite, opts?: ComputeOpts): QueryShape`
-- [ ] `NormalizedInputLite = { normalized: string; appliedLocale?: string }` — minimal structural shape; full `NormalizedInput` from `@mailwoman/normalize` satisfies it without import
+- [ ] `NormalizedInputLite = { normalized: string; appliedLocale?: string }` is a minimal structural shape. The full `NormalizedInput` from `@mailwoman/normalize` satisfies it without import
 - [ ] Composes character classification + tokenization + segmentation + known-format detection
 - [ ] Returns frozen `QueryShape` (immutable)
 
@@ -94,7 +94,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 
 #### Ship
 
-- [ ] One commit, one push. Do not publish to npm; the package is internal until Increment B lands.
+- [ ] One commit, one push. Do not publish to npm. The package is internal until Increment B lands.
 
 ### Increment B — `@mailwoman/normalize`
 

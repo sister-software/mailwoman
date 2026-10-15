@@ -33,17 +33,17 @@ the **wrong city entirely** (80–280km off), because the diacritic parse was br
 verify-before-verdict firing on our own summary statistic: the aggregate wasn't the verdict, the evidence
 was. CZ/PL was **parse-bound** rather than coverage-bound, and coverage can't touch a wrong-city row.
 
-**The research said we weren't alone.** A tokenizer probe showed the cause: the 48k SentencePiece vocab
+**The research showed other projects had hit the same defect.** A tokenizer probe showed the cause: the 48k SentencePiece vocab
 has the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its
 own piece — CZ localities at 3.3× English fertility. This is the documented "tokenizer fertility tax." Four
 parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expansion (byte-identical English
 by construction), byte/char-level models (universal but latency-heavy), and a CharCNN front-end (cheap +
-universal). The fix was tokenizer-side; the extract was the wrong change.
+universal). The fix was tokenizer-side, and the extract was the wrong change.
 
 **The 80k check confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
-PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat; the
+PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat. The
 extra 40k steps at constant LR overfit the extract and broke the Czech parses. NO-PROMOTE. The retrain didn't
-just fail to help — at scale it did harm. We only know because we graded the assembled coordinate; on
+just fail to help — at scale it did harm. We only know because we graded the assembled coordinate. On
 label-F1 the content-gap went 100→17% and the model looked fixed.
 
 **The tokenizer splice fixed it at nearly zero cost.** We trained a Czech/Polish SentencePiece unigram, kept
@@ -54,7 +54,7 @@ constituents, a 2k-step fine-tune, and grade with the spliced tokenizer.
 
 ## The numbers
 
-Same golden sets, same grader; the B columns are graded with the spliced tokenizer.
+The golden sets and grader are the same, and the B columns are graded with the spliced tokenizer.
 
 | metric                | baseline v4.15.0 | v196 retrain (80k) | B splice + 2k FT | **B splice, mean-init only ($0)** |
 | --------------------- | ---------------- | ------------------ | ---------------- | --------------------------------- |
@@ -71,7 +71,7 @@ as whole names where the baseline truncated them to `Fr`, `St`, `B`.
 
 **The ablation is the punchline: the fine-tune was unnecessary.** We ran the splice + mean-init model _without
 any fine-tune_ and it matches or beats the fine-tuned version on every metric (CZ wrong-city 28% vs the
-fine-tune's 30%; PL and US identical). The 2k fine-tune not only added nothing — it began drifting toward the
+fine-tune's 30%; PL and US identical). The 2k fine-tune added no gain, and it began drifting toward the
 same overfit that killed v196. So the fix is a tokenizer splice plus an embedding average: no GPU training.
 And because it leaves v4.15.0's encoder byte-for-byte untouched, US identity is a **guarantee** (encoder
 unchanged + English input_ids unchanged → identical logits) rather than an observation — the freeze-encoder variant
@@ -82,17 +82,17 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 ## What worked
 
-- **Coordinate grading rather than label-F1.** This is the whole story. The retrain's content-gap win (100→17)
+- **Coordinate grading rather than label-F1.** Coordinate grading is what exposed the regression. The retrain's content-gap win (100→17)
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
   wrong-city buckets) is the direct metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
   atomic) showed that the implementation worked before a single GPU dollar. The expensive retrain came first only because it
-  was the pre-registered plan; the cheap tokenizer probe should have been the opening move.
+  was the pre-registered plan. The cheap tokenizer probe should have been the opening move.
 - **Verify-before-verdict, twice.** The eyeball corrected our own aggregate p50 (parse-bound rather than
   coverage-bound), and we re-graded the CZ regression in fp32 to rule out int8 quantization before blaming
   training. Both saved a wrong conclusion.
 - **Parallel research that paid off.** Four SOTA agents + DeepSeek turned "we have a tokenizer problem" into a
-  ranked, cited fix space with a named, English-safe recipe (FVT mean-init, the Chinese-LLaMA/EEVE lineage).
+  ranked, cited fix space with a specific, English-safe recipe (FVT mean-init, the Chinese-LLaMA/EEVE lineage).
 
 ## What could have gone better
 
@@ -100,7 +100,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
   tokenizer probe could have flagged in an hour. The fertility check should have run before the ship
   candidate rather than after. We reached for the pre-registered change instead of the cheapest falsifier.
 - **The 150-row CZ/PL eval sets are underpowered.** The CZ resolved-p50 CI was [−40, −0.34] — barely negative
-  at the top, huge at the bottom. The wrong-city _rate_ carried the verdict; the p50 was noise. A promote
+  at the top, huge at the bottom. The wrong-city _rate_ decided the verdict, and the p50 was noise. A promote
   decision needs ~1k rows.
 - **The first grade in each batch kept getting skipped** (heat throttle), forcing standalone re-runs. Minor,
   but it cost a couple of confused minutes each time.
@@ -109,23 +109,23 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 1. **Fragmentation rather than data.** For diacritic-heavy scripts, a data extract at a frozen tokenizer cannot fix
    span boundaries — the tokenizer decides the boundaries. Fix the tokenizer.
-2. **The cheapest falsifier goes first.** The tokenizer fertility probe was $0 and decisive; it should have
+2. **The cheapest falsifier goes first.** The tokenizer fertility probe cost $0 and identified the cause. It should have
    preceded the GPU spend rather than followed it.
 3. **Disjoint-codepoint vocab splicing is a real tool.** Append only non-ASCII pieces to a unigram vocab
-   keeps the source language byte-identical _by construction_ — a guarantee rather than a hope. Worth remembering for
+   keeps the source language byte-identical _by construction_ — a guarantee rather than a hope. Apply it to
    any future non-Latin extension (with the caveat that it does not scale to CJK, where char-level is the
    natural unit).
 4. **A recipe copied from vN-1 inherits vN-1's bugs.** Diff the corpus and source-weights against the shipped
    recipe before launching rather than after.
-5. **Mean-init alone can be the whole fix.** The 2k fine-tune we assumed we needed added nothing — a good
+5. **Mean-init without a fine-tune can be the whole fix.** The 2k fine-tune we assumed we needed added no gain. A good
    embedding average over already-trained constituents was enough for the existing tagger to read the now-
-   atomic token. Run the mean-init-only ablation before spending a training run; the training might be dead
+   atomic token. Run the mean-init-only ablation before spending a training run. The training might be dead
    weight (and here it started to overfit).
 
 ## Where this leaves us
 
 The B vocab-splice is a clean promote candidate — the successor fix to #825. The ablation resolved the biggest
-open question: the fix is **training-free** (splice + mean-init, no GPU) and US byte-identity is a **guarantee**
+open question: the fix is **training-free** (splice + mean-init, without a GPU) and US byte-identity is a **guarantee**
 (the encoder is v4.15.0 untouched), which retires the freeze-encoder task before we built it. What remains is
 mechanical: larger CZ/PL eval sets (150 rows is underpowered for a promote call), an int8 bundle-size check
 against the browser SLO (the vocab growth is a real cost), reproducible build scripts for the splice +
@@ -135,12 +135,12 @@ parallel and is parked as the CJK-forward path (the one place vocab-splice won't
 
 ## Ledger
 
-|                     |                                                                                                       |
-| ------------------- | ----------------------------------------------------------------------------------------------------- |
-| Shift               | Day, 2026-07-01, ~15:00–19:45 UTC                                                                     |
-| Models trained      | 2 (v196 ship candidate 80k; v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing                   |
-| Total Modal GPU     | ~$25–30 (retrain dominates; the winning fix — splice + mean-init — needed 0 training, just an export) |
-| Promotions          | 0 shipped — v4.15.0 remains default; B is a candidate pending the checklist                           |
-| Regressions shipped | 0                                                                                                     |
-| NaN / divergence    | 0                                                                                                     |
-| Net result          | #825-as-retrain falsified; an English-safe CZ/PL fix found and validated                              |
+|                     |                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| Shift               | Day, 2026-07-01, ~15:00–19:45 UTC                                                                         |
+| Models trained      | 2 (v196 ship candidate 80k, v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing                       |
+| Total Modal GPU     | ~$25–30 (retrain dominates, and the winning fix — splice + mean-init — needed 0 training, just an export) |
+| Promotions          | 0 shipped — v4.15.0 remains default, B is a candidate pending the checklist                               |
+| Regressions shipped | 0                                                                                                         |
+| NaN / divergence    | 0                                                                                                         |
+| Net result          | #825-as-retrain falsified, an English-safe CZ/PL fix found and validated                                  |

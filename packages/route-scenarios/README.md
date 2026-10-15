@@ -5,9 +5,9 @@ rate cards, the scenario inputs, the calculations and the economic report text. 
 `@mailwoman/dossier`, which supplies each building's identity and unit totals and computes no cost. The workspace is
 private, and this repository holds synthetic inputs only.
 
-Every figure is a scenario computed from supplied assumptions. The report section says so in its first lines and never
-presents a figure as a quote. Its low and high cases are scenarios built from named assumptions, and no probability is
-attached to either. Calibrated bounds need a frozen population of comparable jobs and a holdout, which
+Every figure is a scenario computed from supplied assumptions. The report section states that in its first lines and never
+presents a figure as a quote. Its low and high cases are scenarios built from stated assumptions, and no probability is
+attached to either. Calibrated bounds need a frozen population of comparable jobs and a holdout. Issue
 [#2288](https://github.com/sister-software/mailwoman/issues/2288) tracks.
 
 ## What a scenario states
@@ -16,12 +16,12 @@ A scenario states its as-of date, currency, month zero, horizon, price basis, ta
 rate and NPV target. It selects buildings by their dossier identifiers and plans each one: the route segments its
 connection is assumed to need, its own works, its first service month and its occupancy. A versioned rate card prices
 every quantity. The operating assumptions set the price, the promotion, uptake, churn, service, maintenance, working
-capital and replacements. Each rate, quantity and assumption carries its basis, which is a source record the dossier
+capital and replacements. Each rate, quantity and assumption records its basis. The basis is a source record the dossier
 admitted or an operator's stated assumption.
 
 `validateScenario` and `prepareScenario` refuse an incomplete scenario with a `ScenarioInputError`. Its `input` names the
-kind of input, and its `path` locates it, so a missing rate, unit, date or selected building identity is named where it
-occurs. A selected building whose dossier unit total is unresolved throws `UnresolvedUnitTotalError`, which carries the
+kind of input, and its `path` locates it, so a missing rate, unit, date or selected building identity is reported where it
+occurs. A selected building whose dossier unit total is unresolved throws `UnresolvedUnitTotalError`. The error holds the
 dossier's reason and conflicting counts. The calculator never turns that total into zero units or a subscriber count. A
 unit membership counted for two selected buildings throws `SharedUnitMembershipError`.
 
@@ -65,7 +65,7 @@ never exceed the occupied units left after a building's existing subscribers.
 The section below is the verbatim output of
 `renderScenarioReport(scenarioReport(syntheticDossier(), SHARED_ROUTE, REPORT_OPTIONS))` over
 `test/fixtures/shared-route.ts`, and `lib/report.test.ts` checks that the two match. It reproduces the handoff's
-construction figures: USD 13,000.00 for Building A alone, USD 14,000.00 for Building B alone, USD 16,000.00 for both,
+construction figures: USD 13,000.00 for Building A by itself, USD 14,000.00 for Building B by itself, USD 16,000.00 for both,
 and USD 3,000.00 to add Building B to Building A.
 
 ```markdown

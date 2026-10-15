@@ -118,7 +118,7 @@ export interface OAResolverEvalOptions {
 	 * Pins `postcodeConsistency`.
 	 * @defaultValue `"production"`
 	 *
-	 * Paired with {@link postcodeConsistencyMaxMoveKm}, `"off"` prices the cap without a sweep,
+	 * Paired with {@link postcodeConsistencyMaxMoveKm}, `"off"` measures the cap's effect without a sweep,
 	 * because the rows whose answer differs from the shipped arm are exactly the ones the
 	 * pass touched and the coordinate distance is how far its fallback moved each.
 	 */

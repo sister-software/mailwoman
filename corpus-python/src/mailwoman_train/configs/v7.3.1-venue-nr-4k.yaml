@@ -1,4 +1,4 @@
-# v7.3.1 treatment: the v7.2.0 base fine-tuned with venue rows whose locality rows carry no region tail (#2511).
+# v7.3.1 treatment: the v7.2.0 base fine-tuned with venue rows whose locality rows have no region tail (#2511).
 #
 # The v7.3.0 treatment retagged the city before the country as region on 7 of 12 inspected thin-system rows
 # (`GABORONE`, `LILONGWE`, `DOHA`, `MUSCAT`, `HARARE`). Half its locality rows ended `, <region>`. This corpus,

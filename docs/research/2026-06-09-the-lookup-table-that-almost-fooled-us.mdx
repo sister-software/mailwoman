@@ -13,21 +13,21 @@ retrained model scored a mess. Case closed, we wrote.
 
 By the afternoon we'd reopened the case, and the verdict flipped — hard enough that
 we've retracted the morning post rather than leave the wrong conclusion lying around
-for someone to cite. This is the story of how a perfect score nearly talked us out of
+for someone to cite. This post describes how a perfect score nearly talked us out of
 the entire premise of the project.
 
 {/* truncate */}
 
 ## The score held. The fight was rigged.
 
-Here's what the morning's comparison was. In one corner: a flat lookup,
+The morning's comparison had two sides. In one corner: a flat lookup,
 matching the trailing chunk of an address against the ISO country list. In the other: a
 model we had retrained on a synthetic extract where _every single row_ ended in a country.
 That model learned exactly what we taught it — "the last thing in an address is a
 country" — and started promoting cities and states to nationhood. Precision: 23%.
 
 And the referee? An eval with no homographs in it. Not one "Georgia." Not one "CA."
-Fifty-four addresses where the trailing token was never ambiguous, which is to say,
+Fifty-four addresses where the trailing token was never ambiguous. Those are
 fifty-four addresses where a lookup table cannot lose.
 
 A crippled model, an unloseable eval, and a perfect score. We looked at that 100% and
@@ -50,8 +50,9 @@ We rebuilt the training extract with the homographs _in_ it, both ways. "Tbilisi
 labeled as a country, "Atlanta, Georgia 30309" labeled as a state, the same surface
 form pulling in opposite directions until the only way to win is to read the
 neighbors. We added addresses with no country at all, so abstaining stays on the menu.
-Then we built the eval the morning's comparison never had: Paris, Texas against Paris,
-France; Kingston, New York against Kingston, Jamaica; person-named countries; the works.
+Then we built the eval the morning's comparison never had. It pairs Paris, Texas with Paris,
+France. It pairs Kingston, New York with Kingston, Jamaica. It also includes countries that
+share a name with a person.
 
 ## The fair fight
 
@@ -65,11 +66,11 @@ What it missed, it missed for a plain reason: Eswatini. Timor-Leste. Bhutan. Cou
 training data mentions a handful of times. That failure mode is recognition, a
 vocabulary problem, and vocabulary is what gazetteers are for.
 
-Which is where the lookup table re-enters the story — demoted. It doesn't get to be
-the judge anymore; it gets to be a witness. We feed gazetteer membership into the model
-as a per-token clue: _this word is on the country list; this word is on two lists, so
-pay attention._ The model still rules on every tag. Add Liechtenstein to the gazetteer
-tomorrow and the clue fires with no retrain, because the knowledge lives outside the
+The lookup table returns at that point with a smaller role. It no longer decides the tag.
+It supplies evidence to the model. We feed gazetteer membership into the model as a
+per-token clue: _this word is on the country list_, or _this word is on two lists, so pay
+attention._ The model still decides every tag. Add Liechtenstein to the gazetteer and the
+clue fires with no retrain, because the knowledge lives outside the
 weights. The morning's matcher survives intact, doing the one job it was always
 qualified for: knowing what's on the list. It cannot infer which place the address describes.
 

@@ -30,7 +30,7 @@ const objectTable = (name: string, pairs: ReadonlyArray<readonly [string, string
 		.join("\n")}\n}\n`
 
 /**
- * Two entries is the discovery minimum, so every fixture's census table includes at least that many.
+ * Two entries is the discovery minimum, so every fixture's census table includes at least two.
  */
 const SHIPPING_TWO = [
 	["US", "en-us"],

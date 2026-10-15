@@ -1,6 +1,6 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to the data root ($MAILWOMAN_DATA_ROOT, resolved by `dataRootPath()` — override individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
-	"version": "10.3.0",
+	"version": "10.4.0",
 	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz", "en-au"],
 	"weights": {
 		"model": "models/quantized/model-v720-address-systems-step-060000-int8.onnx",
@@ -21,6 +21,11 @@
 			"gb": "postalcode-gb-codepoint.db",
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db"
+		},
+		"postcodePrefixByCountry": {
+			"$comment": "The PFX1 postcode-prefix indexes the anchor-region prior reads (#2585), one scope per entry, copied by copy-weights.ts from the newest dated file under the data root's `postcode-prefix/` directory as `postcode-prefix-<scope>.bin`. A scope whose PFX1 header records tier `build-local` is refused: `gb-ni` is built from OpenStreetMap under ODbL and stays out of every package.",
+			"us": ["us"],
+			"gb": ["gb-esw"]
 		},
 		"pairIndexByCountry": {
 			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) — mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default — see `mailwoman gazetteer pair-index --help`). `source` and `banDir` are relative to the data root. `boroughDB` is a WOF database filename, resolved under the data root's `db/wof/` like postcodeDBByCountry. COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",

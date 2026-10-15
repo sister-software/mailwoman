@@ -9,8 +9,8 @@ The operator pre-downloads the CSV via `fetch-nppes.ts`. The adapter expects col
 
 ## Output
 
-One `CanonicalRow` per provider with a populated practice location address (~7M rows). Organization records
-carry `venue` (legal business name); individual records carry the composed provider name. The address quad
+One `CanonicalRow` per provider with a populated practice location address (~7M rows). An organization record
+sets `venue` to the legal business name. An individual record sets it to the composed provider name. The address quad
 `(house_number, street, locality, region, postcode)` is parsed from the practice location columns.
 
 ## License

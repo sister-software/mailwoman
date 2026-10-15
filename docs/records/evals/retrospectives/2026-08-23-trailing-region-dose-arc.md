@@ -1,7 +1,6 @@
 # The trailing-region arc: three extract shapes, three failures, one measured cause
 
-**2026-08-23.** This postmortem closes #1748 / #1821. Nothing from this arc shipped, and the reason is worth more
-than the model would have been.
+**2026-08-23.** This postmortem closes #1748 / #1821. No model from this arc shipped. The measured cause of that outcome is the result this record keeps.
 
 ## What we were trying to fix
 
@@ -17,12 +16,12 @@ and the STATE is promoted to locality.
 
 The cause is position, and it is reproducible outside VE. The tag flips when the same digits move one slot:
 
-| Input                                     | postcode tag     | locality          |
-| ----------------------------------------- | ---------------- | ----------------- |
-| `… Barcelona 6001, Anzoátegui, Venezuela` | ✗ `house_number` | ✗ `Anzoátegui`    |
-| `… 6001 Barcelona, Anzoátegui, Venezuela` | ✓ `postcode`     | ✓ **`Barcelona`** |
-| `Sandton 2196, Gauteng, South Africa`     | ✗ `house_number` | ✗ `Gauteng`       |
-| `2196 Sandton, Gauteng, South Africa`     | ✓ `postcode`     | ✗ `Gauteng`       |
+| Input                                     | postcode tag          | locality                 |
+| ----------------------------------------- | --------------------- | ------------------------ |
+| `… Barcelona 6001, Anzoátegui, Venezuela` | wrong: `house_number` | wrong: `Anzoátegui`      |
+| `… 6001 Barcelona, Anzoátegui, Venezuela` | correct: `postcode`   | correct: **`Barcelona`** |
+| `Sandton 2196, Gauteng, South Africa`     | wrong: `house_number` | wrong: `Gauteng`         |
+| `2196 Sandton, Gauteng, South Africa`     | correct: `postcode`   | wrong: `Gauteng`         |
 
 `postcodeShapeCoherence: true` leaves all eight VE rows **byte-identical**, so no decode-time change
 touches it. Corpus lane, confirmed before spending a GPU.
@@ -43,7 +42,7 @@ All fine-tunes off the v4.4.0 base (60k steps), 8,000 steps, EWC λ=1e4, A100-40
 | v4.10.0 | v4.9.0 extract, 1 rep | 31,815 |  3.1% | **9 improved / 22 regressed**  |
 | v4.11.0 | house-venue INTL      | 18,000 |   n/a | **5 improved / 18 regressed**  |
 
-### v4.8.0 — the extract taught "the first named segment is the locality"
+### v4.8.0 — the extract taught "the first name segment is the locality"
 
 Eleven of the twenty-five regressions were venue-led rows, across seven countries:
 
@@ -58,18 +57,18 @@ Le Colimaçon, 44 Rue Vieille du Temple, 75004 Paris, France
 ```
 
 Every row in that extract began with the locality — `01445 Radebeul, Saxony` and `Sawai, Andaman &
-Nicobar Islands 744301` alike — and it contained no venue, no street, no dependent locality. Even the
+Nicobar Islands 744301` alike — and it contained no venue, street, or dependent locality. Even the
 IN row it targeted regressed, `locality` sliding from `Bengaluru` to `Indiranagar`.
 
 The house-number prefix on every fourth row is **not** a counter-distribution. A NUMBER before the
 locality does not teach that a NAME can precede one. `no-fragment.ts`'s header records the same trap
-from the other side; it was quoted in v4.8.0's own config header while both of that extract's arms
+from the other side. That header was quoted in v4.8.0's own config header while both of that extract's arms
 shared the defect.
 
 ### v4.9.0 — a real data fix, a worse board
 
 Underneath v4.8.0 was a plain data error. **GeoNames column 3 is not the city.** It is the
-finest-grained named place for the code:
+finest-grained place name for the code:
 
 |             | column 3 (`place`)                   | column 5 (`admin2`) | column 4 (`admin1`) |
 | ----------- | ------------------------------------ | ------------------- | ------------------- |
@@ -79,7 +78,7 @@ finest-grained named place for the code:
 
 v4.8.0 therefore trained street names and colonias **as cities**. v4.9.0 maps `admin2`→locality,
 `admin1`→region, column 3→`dependent_locality` — correct labels, and it supplies the missing left
-context: 62% of rows now carry a name before the locality, against 0%.
+context: 62% of rows now have a name before the locality, against 0%.
 
 It worked on its target: **IN went 2 improved / 0 regressed.** The board still got worse, and how it
 got worse is the finding. Venue regressions went **12 → 15**, and a new class appeared:
@@ -88,7 +87,7 @@ got worse is the finding. Venue regressions went **12 → 15**, and a new class 
 bare_street_boundary ×7   Calle de Alcalá · Corso Vittorio Emanuele II · Madison Square West
 ```
 
-A dependent locality moved the "first named segment" binding from `locality` to
+A dependent locality moved the "first name segment" binding from `locality` to
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
@@ -102,12 +101,12 @@ Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 | v4.9.0      |     9.4% |       11 |        31 |     −20 |                    15 |
 | **v4.10.0** | **3.1%** |        9 |        22 | **−13** |                     9 |
 
-The damage scales with the share and does not vanish with it. A 3× reduce bought back 7 net rows and 6 venue
+The damage scales with the share and does not vanish with it. A 3× reduce recovered 7 net rows and 6 venue
 rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
 for a 3× reduce) because what remains is not over-exposure. It is that the extract's signal is wrong for
 the classes it does not contain, at any exposure that teaches anything.
 
-**All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
+**All four runs are DO-NOT-SHIP. No model was promoted or published.**
 
 ### v4.11.0 — the composition hypothesis, tested and eliminated
 
@@ -115,7 +114,7 @@ The conclusion below was that an admin-only extract damages the classes it does 
 tested it directly by putting the same surface into rows that do contain them.
 
 `house-venue` was already emitting the target tail — `Springfield, IL 02101` and `Bengaluru,
-Karnataka 560038` are the same locality-region-postcode shape — and every row it emits carries a
+Karnataka 560038` are the same locality-region-postcode shape — and every row it emits contains a
 venue, a street and a house number. 18,000 IN/PT/MX rows with real
 postcodes were emitted under the EXISTING `synth-house-venue` source, so they took a share of a bucket
 that has shipped at weight 2.0 rather than claiming a new share. Measured on the extract: venue 100%,
@@ -126,7 +125,7 @@ street 100%, house_number 100%.
 
 **5 improved / 18 regressed, net −13. FR −3, GB −5, IE −3. Nine venue-led regressions.**
 
-No new source, no new share, the alternatives present in every row — and the same countries lost the
+The run added neither a new source nor a new share, and the alternatives were present in every row. The same countries lost the
 same classes. So the cause is not the extract's internal composition, and it is not exposure:
 
 | run         | new source? | own share? | venue/street present? |     net | venue-led |
@@ -138,7 +137,7 @@ same classes. So the cause is not the extract's internal composition, and it is 
 
 What every run shares is the DATA: non-US/FR admin tails entering a model whose tail expectations were
 set by US and FR. They shift those expectations for countries the model already knows, and FR/GB/
-IE venue rows are where that shows. Composition and share modulate the size of the shift; neither
+IE venue rows are where that shows. Composition and share modulate the size of the shift, and neither
 removes it.
 
 ### v4.12.0 — the brake is not the change either, and a FLOOR appears
@@ -162,18 +161,18 @@ them.
 
 ### The control, RUN — and it splits the ledger
 
-**v4.13.0: the v0.22.0 base corpus, no added extract, same 4,000 steps, same seed, same brake.**
+**v4.13.0: the v0.22.0 base corpus without an added extract, with the same 4,000 steps, seed, and brake.**
 
     5 improved / 10 regressed, net -5. Five of the ten venue-led.
 
 A plain fine-tune of this base costs ten rows before any new data is involved. And every one of those
 ten also appears in v4.11.0's eighteen and v4.12.0's nineteen, so the cost separates exactly:
 
-| run          | regressed | fine-tune tax | attributable to the DATA |
-| ------------ | --------: | ------------: | -----------------------: |
-| v4.13.0 null |        10 |            10 |                        — |
-| v4.11.0      |        18 |            10 |                    **8** |
-| v4.12.0      |        19 |            10 |                    **9** |
+| run          | regressed | placebo fine-tune regressions | attributable to the DATA |
+| ------------ | --------: | ----------------------------: | -----------------------: |
+| v4.13.0 null |        10 |                            10 |                        — |
+| v4.11.0      |        18 |                            10 |                    **8** |
+| v4.12.0      |        19 |                            10 |                    **9** |
 
 Both readings matter and neither was available before:
 
@@ -189,8 +188,9 @@ the four.
 
 ### What this changes for anything shipped from here
 
-The baseline for grading a candidate is the NULL RUN rather than the shipped model. A candidate that costs
-ten rows has cost nothing; one that costs eighteen has cost eight. Every check in this arc used the
+The baseline for grading a candidate is the placebo fine-tune (v4.13.0) rather than the shipped model. A
+candidate that regresses ten rows adds zero regressions beyond the placebo. A candidate that regresses
+eighteen adds eight. Every check in this arc used the
 wrong denominator.
 
 It also sets a floor on what a fine-tune can deliver: **it must recover five net rows before it breaks
@@ -210,22 +210,22 @@ under no intervention: **fine-tune the base corpus with no added extract at all,
   measuring the wrong thing.
 - If they hold, the data is implicated after all and the floor is a real interaction.
 
-It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further extract work.** Nothing in
+It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further extract work.** No result in
 this arc should be trusted until it is answered, including the sections above.
 
 ### v4.14.0 — steps is not the change, and the tax is IMMEDIATE
 
-The null control suggested the last untested variable: if 4,000 steps costs ten rows, fewer steps
+The v4.13.0 placebo fine-tune suggested the last untested variable: if 4,000 steps costs ten rows, fewer steps
 should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
 
 **4 improved / 10 regressed, net -6.**
 
-Regressions fell 18 -> 10. But ten is the null's tax, so the extract now costs nothing beyond it — and
-adds nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
+Regressions fell 18 -> 10. Ten is the placebo fine-tune's regression count, so the extract now adds zero
+regressions beyond the placebo. It adds zero improvements either, and the improvements fall 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
 The finding is in the shape of the tax rather than the net. **It is paid in the first 1,000 steps and barely
-grows to 4,000** — 10 rows at both. It is not proportional to how far the weights travel; it is a
+grows to 4,000** — 10 rows at both. It is not proportional to how far the weights travel. It is a
 fixed cost of touching this base at all. No shorter run avoids it.
 
 ### The fine-tune route is closed, on measurement
@@ -242,12 +242,12 @@ Eight runs. Every change that exists for an additive fine-tune, each isolated:
 | v4.14.0     | steps -> 1,000                          |             -6 |        10 |
 | **v4.13.0** | **NULL — no added data at all**         |         **-5** |    **10** |
 
-The null is the best of them. Every arm that adds data is worse than adding none, and the arm that adds
-data most cautiously converges on the null rather than beating it.
+The v4.13.0 placebo fine-tune is the best of them. Every arm that adds data is worse than adding none, and the arm that adds
+data most cautiously converges on v4.13.0 rather than beating it.
 
 **No fine-tune of this base can ship an additive surface.** The tax is fixed, immediate, and larger
-than anything an additive extract has been able to recover. That is not a judgement about these extracts;
-it is a property of the starting point, and it holds across exposure, composition, regularization and
+than anything an additive extract has been able to recover. That is not a judgement about these extracts.
+It is a property of the starting point, and it holds across exposure, composition, regularization and
 distance.
 
 The next attempt is a from-scratch base that sees every tail convention at once, so the surface is
@@ -255,11 +255,11 @@ learned rather than grafted. That is a different order of commitment and should 
 
 ## The cause, stated once
 
-**PROVISIONAL, pending the null-run control described above.** Non-US/FR admin tails in this model
+**PROVISIONAL, pending the placebo fine-tune control described above.** Non-US/FR admin tails in this model
 regress FR/GB/IE venue parsing, and neither composition, share, nor the EWC brake removes the regression. Five runs: three admin-only extracts at three shares, one share reduce on
-a byte-identical extract, and one that carried venue+street+house_number in every row inside an
+a byte-identical extract, and one that contained venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
-countries. Composition and share modulate the size of the shift; the shift itself tracks the data.
+countries. Composition and share modulate the size of the shift, and the shift itself tracks the data.
 
 That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
 US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
@@ -269,13 +269,13 @@ larger commitment than a fine-tune and should be scoped as one.
 
 ## What this does and does not license
 
-- **The share is not the action, and that is now measured rather than argued.** v4.10.0 held the extract
+- **The share is not the action, and the runs now measure that.** v4.10.0 held the extract
   byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. The observed
   sub-linear fall, the share that stops hurting is below the share that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
-  precedes the locality before it can carry a meaningful share. That is authoring rather than tuning.
-- **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela and nothing on
-  disk carries a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
+  precedes the locality before it can take a meaningful share. That is authoring rather than tuning.
+- **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela, and no file on
+  disk contains a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
   VE's `after_locality` in any of the three runs.
 
 ## The VE data question, closed
@@ -283,20 +283,20 @@ larger commitment than a fine-tune and should be scoped as one.
 "Get the data we're missing" deserves a definite answer for the country this arc was about. Every open
 source this project consumes was checked on 2026-08-23:
 
-| source                                                                               | VE postcodes                                       |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| WOF — every `postalcode-*.db` extract in the data root                               | none                                               |
-| GeoNames postal (`download.geonames.org/export/zip/VE.zip`)                          | **HTTP 404** — not published                       |
-| OpenAddresses (`results.openaddresses.io/latest/run/ve/{countrywide,statewide}.zip`) | **HTTP 404**                                       |
-| Overture, local snapshot                                                             | `places` theme only; no addresses theme downloaded |
+| source                                                                               | VE postcodes                                        |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| WOF — every `postalcode-*.db` extract in the data root                               | none                                                |
+| GeoNames postal (`download.geonames.org/export/zip/VE.zip`)                          | **HTTP 404** — not published                        |
+| OpenAddresses (`results.openaddresses.io/latest/run/ve/{countrywide,statewide}.zip`) | **HTTP 404**                                        |
+| Overture, local snapshot                                                             | `places` theme only, addresses theme not downloaded |
 
 So VE postcodes are not an acquisition someone forgot to run. They are absent from the open corpus this
-project is built on. The one avenue not checked is Overture's upstream `addresses` theme, which is not
-mirrored locally — worth one query before concluding it is unobtainable rather than worth assuming it helps.
+project is built on. The one avenue not checked is Overture's upstream `addresses` theme. That theme is not
+mirrored locally. Run one query against it before concluding it is unobtainable, and do not assume it helps.
 
 That makes the VE question a product decision rather than a data-fetching task: either a synthetic
 4-digit code paired with a real (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
-`house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
+`house-venue` synthesizer now emits VE's tail ordering, so the shape has a home either way — see
 `packages/corpus/lib/synthesizers/house-venue.ts`.
 
 ## The control that licenses all of the above
@@ -311,14 +311,14 @@ dereferenced lexicons, same loader — and graded against itself.
 
     0 of 649 inputs differed. supportsAbsenceClaim: true, upper bound 0.5%.
 
-Identical bytes give identical results, exactly. The harness is deterministic and the staging path
-adds nothing. **Every regression reported in this document is real.**
+Identical bytes give identical results, exactly. The harness is deterministic, and the staging path
+adds no differences. **Every regression reported in this document is real.**
 
-Worth keeping as a habit rather than a one-off: a self-comparison costs one board run and is the only
+Keep this as a habit rather than a one-off: a self-comparison costs one board run and is the only
 thing that separates "the candidate is worse" from "my rig is noisy". It should precede the first
 candidate of any arc rather than follow the eighth.
 
-## Method notes worth keeping
+## Method notes to keep
 
 - **Grade the board rather than the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
   and `cross_pollution=0.00%`. Every one of them was a do-not-ship. The val split cannot see the venue

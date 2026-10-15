@@ -1,4 +1,4 @@
-# Building dossier: interface inventory and first cases
+# Interface inventory and first cases for the building dossier
 
 This inventory completes the interface review for
 [#2285](https://github.com/sister-software/mailwoman/issues/2285), under the building feasibility
@@ -13,25 +13,25 @@ building in the extent ([#2477](https://github.com/sister-software/mailwoman/iss
 
 A dossier is a reviewable account of one property's identity, physical premises, network evidence,
 access, engineering, available products and demand. Each conclusion identifies the records behind it
-and the next investigation needed. A multi-dwelling unit building, abbreviated MDU, can contain many
-units and several entrances.
+and the next investigation needed. A multi-dwelling unit building, abbreviated MDU, can contain
+dozens or hundreds of units and several entrances.
 
 ## Observed interfaces
 
-The inventory reads source at `09b58960a`. It establishes the interfaces available for reuse;
-it does not measure their accuracy on the selected building.
+The inventory reads source at `09b58960a`. It establishes the interfaces available for reuse.
+It does not measure their accuracy on the selected building.
 
 | Module                                                                                    | What it supplies                                                                                                                                                                       | Consequence for the dossier                                                                                                                   |
 | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`PostalAddress`](../../../packages/record/lib/address.ts)                                | Parsed components, a canonical match key, optional original text and a geocode with resolution tier and uncertainty. `AddressGeocode` distinguishes PO boxes and multi-unit buildings. | Preserve the input and geocode uncertainty when investigating identity. Shared coordinates cannot distinguish units.                          |
-| [`PostalAddressID`](../../../packages/address-id/lib/index.ts)                            | A key composed of a region prefix, an H3 cell and a hash of normalized address text.                                                                                                   | Keep it as an address reference. Different aliases can produce different keys for the same building; a cell boundary can also change the key. |
-| [`Observation` and `Relation`](../../../packages/evidence/lib/evidence.ts)                | Source, vintage, observed value, and whether a relationship is authoritative or inferred. An authoritative relation cannot carry a match score.                                        | Import these types from their owning package. Add explicit subject, source-record reference and time fields in the application record.        |
+| [`PostalAddressID`](../../../packages/address-id/lib/index.ts)                            | A key composed of a region prefix, an H3 cell and a hash of normalized address text.                                                                                                   | Keep it as an address reference. Different aliases can produce different keys for the same building. A cell boundary can also change the key. |
+| [`Observation` and `Relation`](../../../packages/evidence/lib/evidence.ts)                | Source, vintage, observed value, and whether a relationship is authoritative or inferred. An authoritative relation cannot have a match score.                                         | Import these types from their owning package. Add explicit subject, source-record reference and time fields in the application record.        |
 | [`EpistemicStatus`](../../../packages/evidence/lib/status.ts)                             | Distinct designated, observed, derived, inferred and unresolved states.                                                                                                                | Preserve how a value was established separately from its subject and business meaning.                                                        |
 | [`CoverageBasis` and `requireExclusionBasis`](../../../packages/evidence/lib/coverage.ts) | Conditions under which a layer's coverage supports an exclusion.                                                                                                                       | Keep a missing reading distinct from a surveyed empty result, within the scope that the survey establishes.                                   |
 | [`DerivationProjection`](../../../packages/evidence/lib/derivation.ts)                    | An answer's status, contributing evidence and uncertainty radius.                                                                                                                      | Reuse it when displaying geographic derivations. Record application calculations and their input references separately.                       |
-| [`filer_node` and `filer_edge`](../../../packages/filer/lib/schema.ts)                    | Provider identifiers and dated, sourced relationships, including separate ownership and management relations.                                                                          | Reuse supported provider identities. A corporate relationship alone cannot establish permission to build at a property.                       |
+| [`filer_node` and `filer_edge`](../../../packages/filer/lib/schema.ts)                    | Provider identifiers and dated, sourced relationships, including separate ownership and management relations.                                                                          | Reuse supported provider identities. A corporate relationship by itself cannot establish permission to build at a property.                   |
 | [`FilingLandscape`](../../../packages/bdc/lib/filing/landscape.ts)                        | Provider and technology groups counted by distinct block, plus surveyed and unknown block counts.                                                                                      | Label these results as block-level filing evidence. Their denominator cannot become buildings, residential units or subscribers.              |
-| [`nearestInfrastructure`](../../../packages/bdc/lib/nearest-infrastructure.ts)            | Nearby infrastructure categories, distances and associated coverage readings.                                                                                                          | Present proximity as an observation. Capacity, connection topology and permission require their own records.                                  |
+| [`nearestInfrastructure`](../../../packages/bdc/lib/nearest-infrastructure.ts)            | Categories of the closest infrastructure, distances and associated coverage readings.                                                                                                  | Present proximity as an observation. Capacity, connection topology and permission require their own records.                                  |
 | [`SourceObservationRecord`](../../../packages/geographic-model/lib/schema.ts)             | A relation between two concept identifiers, with modality and provenance. The schema has no numeric fields.                                                                            | Keep reusable concept semantics here. Individual buildings, unit counts, prices and customer events need an application model.                |
 | [Spatial-layer interface](../../engineering/reference/layer-interface.mdx)                | Artifact provenance, declared spatial keys, coverage and data tiers.                                                                                                                   | Read each layer at its declared resolution and vintage. Preserve its coverage limits in the dossier.                                          |
 
@@ -39,13 +39,13 @@ it does not measure their accuracy on the selected building.
 
 The first implementation should validate and project supplied records without adding a database,
 training a model or acquiring a new dataset. Choose its existing package home after checking the
-consumer's dependency graph; this inventory does not establish a new workspace.
+consumer's dependency graph. This inventory does not establish a new workspace.
 
 1. **Identify physical objects explicitly.** Represent a parcel, building, entrance and unit as
    distinct entities. Retain external identifiers with their issuing namespace. Use application IDs
-   for unresolved objects, and preserve candidate matches rather than merging on proximity alone.
+   for unresolved objects, and preserve candidate matches rather than merging on proximity without other evidence.
 2. **Keep aliases and relationships sourced.** An alias points to a candidate entity through evidence.
-   Entrance-to-building, unit-to-building and building-to-parcel relationships each carry their own
+   Entrance-to-building, unit-to-building and building-to-parcel relationships each record their own
    source record, observation date and applicable validity interval. One parcel can contain several
    buildings. A postal alias can refer to more than one entrance.
 3. **Store independent claims.** Each claim names its subject, predicate, typed value, evidence and
@@ -63,7 +63,7 @@ consumer's dependency graph; this inventory does not establish a new workspace.
    into an accepted build.
 
 A claim needs three time concepts: when the source observed the fact, when the application retrieved
-the record, and the interval for which the source says it applies. Missing dates stay unknown.
+the record, and the interval for which the source states it applies. A date the source omits stays unknown.
 An explicit `asOf` input makes a dossier reproducible. A freshness policy must identify its owner
 and basis before it can reject evidence as stale.
 
@@ -75,15 +75,15 @@ turn these scenarios into executable fixtures.
 | Case                       | Supplied records                                                                                                                                                                                                         | Required result                                                                                                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Two frontages              | The fictional aliases `North entrance, Example House` and `South entrance, Example House` identify two entrances. A source explicitly links both entrances to Example House.                                             | Report one building and two entrances. Preserve both original aliases and the evidence for each link.                                                              |
-| Shared parcel              | Example Parcel contains Example House and Example Annex. A source identifies 12 completed units in the house and 8 in the annex, with distinct unit membership at the same date.                                         | Report two buildings and 20 completed units, calculated as 12 + 8. Counting the parcel must not collapse the buildings.                                            |
-| Conflicting counts         | A permit states 24 planned units for Example House. A later inspection states 20 completed units. A manager states 18 occupied units. Two sources disagree between 20 and 22 completed units at the same date and scope. | Display planned, completed and occupied claims separately. Preserve the 20-versus-22 conflict; an unresolved completed-unit total cannot become zero or their sum. |
+| Shared parcel              | Example Parcel contains Example House and Example Annex. A source identifies 12 completed units in the house and 8 in the annex, with distinct unit membership at the same date.                                         | Report two buildings and 20 completed units, calculated as 12 + 8. A count of the parcel must not collapse the buildings.                                          |
+| Counts in conflict         | A permit states 24 planned units for Example House. A later inspection states 20 completed units. A manager states 18 occupied units. Two sources disagree between 20 and 22 completed units at the same date and scope. | Display planned, completed and occupied claims separately. Preserve the 20-versus-22 conflict. An unresolved completed-unit total cannot become zero or their sum. |
 | Separate customer events   | One household inquires, another orders, and a third has an active subscription. A manager signs a permission record whose stated scope covers only Example House's north entrance.                                       | Report each event with its own scope and date. Three events do not establish three active subscriptions. Permission remains scoped to the north entrance.          |
-| Dated availability         | A provider advertises availability at Example House on one date. A later source withdraws the product. A nearby cabinet has no supplied connectivity or capacity record.                                                 | Answer the availability claim for the requested date. Preserve unknown connectivity and capacity. Provider presence does not establish uptake.                     |
-| Missing and empty coverage | One layer has no survey for the query area. Another explicitly surveys the relevant feature category and extent and returns zero records. A third supplies a conflicting positive observation.                           | Preserve unknown, surveyed empty and conflicting evidence separately. Show each source's extent and date.                                                          |
-| US denominator control     | Two filing rows describe different speed groups in the same block. The fixture supplies neither building membership nor a unit count.                                                                                    | Report one distinct block for the combined scope. Building, unit and subscriber totals remain unknown.                                                             |
+| Dated availability         | A provider advertises availability at Example House on one date. A later source withdraws the product. A cabinet in the same block has no supplied connectivity or capacity record.                                      | Answer the availability claim for the requested date. Preserve unknown connectivity and capacity. Provider presence does not establish uptake.                     |
+| Absent and empty coverage  | One layer has no survey for the query area. Another explicitly surveys the relevant feature category and extent and returns zero records. A third supplies a conflicting positive observation.                           | Preserve unknown, surveyed empty and conflicting evidence separately. Show each source's extent and date.                                                          |
+| US denominator control     | Two filing rows describe different speed groups in the same block. The fixture supplies neither building membership nor a unit count.                                                                                    | Report one distinct block for the combined scope. The building, unit and subscriber totals remain unknown.                                                         |
 | Construction and authority | A permit gives a construction window. A company owns Example House, another manages it, and signing authority is unknown in both records.                                                                                | Show the dated window and both roles. Request evidence of signing authority and build acceptance before asserting either.                                          |
 
-## Existing extraction evidence
+## Prior extraction evidence
 
 [#1375](https://github.com/sister-software/mailwoman/issues/1375) is closed. Its final comment records
 real OSM extraction runs for District of Columbia and Vermont on 2026-08-11. The receipts report
@@ -114,9 +114,9 @@ access and engineering evidence is missing, and which construction window the ev
 **Observed on 2026-10-04:** the [property's website](https://oneparkpoint.com/) lists One Park Point at
 11 Ocean Parkway, Brooklyn, NY 11218. The search-indexed extract of
 [JEMB's project page](https://www.jembrealty.com/project/1-park-point-brooklyn-ny/) describes 375
-residential units; direct retrieval returned HTTP 403. Preserve a directly retrieved source record
-before using the count as a fixture assertion. This is a developer-reported residential count for the project;
-occupied units, parcel unit totals and active subscriptions each require separate evidence.
+residential units. Direct retrieval returned HTTP 403. Preserve a directly retrieved source record
+before using the count as a fixture assertion. This is a developer-reported residential count for the project.
+Occupied units, parcel unit totals and active subscriptions each require separate evidence.
 
 These pages establish what their publishers currently state. A 2022 dossier must admit only records
 available at its chosen cutoff. For every historical claim, retain both the event date and the date

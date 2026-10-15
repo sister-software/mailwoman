@@ -24,6 +24,7 @@ import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import { loadParsePriors, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
@@ -169,6 +170,10 @@ export interface GauntletResolverPins {
 	 */
 	venueHeadBiasScale: "production" | number
 	/**
+	 * The street-morphology emission prior on a segment that opens with a house number.
+	 */
+	streetMorphologyPrior: SwitchPin
+	/**
 	 * A span-rescore sub-span may drop context but never a word of the name.
 	 */
 	spanRescoreRequireContextRemainder: SwitchPin
@@ -192,6 +197,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	poiVenueTier: "production",
 	venueHeadPrior: "production",
 	venueHeadBiasScale: "production",
+	streetMorphologyPrior: "production",
 	spanRescoreRequireContextRemainder: "production",
 	spanRescoreWeakResolution: "production",
 }
@@ -255,6 +261,10 @@ export function describeResolverPins(pins: GauntletResolverPins): string {
 		entries.push(`venueHeadBiasScale=${pins.venueHeadBiasScale}`)
 	}
 
+	if (pins.streetMorphologyPrior !== "production") {
+		entries.push(`streetMorphologyPrior=${pins.streetMorphologyPrior.toUpperCase()}`)
+	}
+
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
 
 	return `resolver pins: ${entries.join(", ")}`
@@ -289,7 +299,7 @@ export interface GauntletGeocodeOpts {
  * The check only examines the shipped default.
  *
  * The md5 it receives is of the model `resolveWeights` returned rather than of a path
- * spelled out here, because the guard must check the artifact the run will actually grade.
+ * spelled out here, because the guard must check the artifact the run will grade.
  */
 async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolvePath("packages/neural-weights-en-us/model-card.json")
@@ -368,7 +378,8 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 /**
  * Build the geocode deps.
  *
- * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate against production fairly.
+ * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate
+ * against production with every other input held equal.
  * Omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the vocab, required for a
@@ -389,7 +400,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// Stamp the model under test so a stale dev symlink is never silent.
 	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
-	// will actually open, rather than naming a package directory that may not be materialized.
+	// will open, rather than naming a package directory that may not be materialized.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolvePath(opts.modelPath) : resolvedModel!)
 
@@ -398,7 +409,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
-		// The shipped default must match the model-card's `files_md5` (the card is the source of truth);
+		// The shipped default must match the model-card's `files_md5` (the card's hash decides);
 		// a `--candidate` run intentionally grades a different artifact, so it is exempt.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
 			await assertShippedModelMatchesCard(md5)
@@ -563,13 +574,13 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// overlay case a gazetteer for the wrong country, a pairing production never runs.
 	// Cached per resolved path, because the overlay classifiers are themselves cached
 	// and several countries share one.
-	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
+	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">>()
 	const warnedMissingPriorFST = new Set<string>()
 
 	async function priorDepsFor(
 		forClassifier: typeof classifier,
 		label: string
-	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">> {
 		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
 		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
@@ -594,21 +605,21 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		if (cached) return cached
 
-		const [{ deserializeFST }, { loadStreetMorphologyFST: loadMorph }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
+		// The loader reports a missing or unreadable artifact and returns no prior for it,
+		// because a silent absent prior scores lower and reads as a model difference.
+		const loaded = await loadParsePriors(
+			{
+				fstPath,
+				streetMorphologyPath: (forClassifier as { streetMorphologyPath?: string }).streetMorphologyPath,
+				postcodePrefixPaths: (forClassifier as { postcodePrefixPaths?: readonly string[] }).postcodePrefixPaths,
+			},
+			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
+		)
 
-		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
-
-		try {
-			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: (await loadMorph()).matcher }
-		} catch (error) {
-			// A missing or unreadable artifact degrades to no prior, with its reason recorded
-			// because a silent absent prior scores lower and reads as a model difference.
-			console.error(
-				`[gauntlet] gazetteer prior unavailable at ${fstPath}: ${(error as Error).message} — grading without it`
-			)
+		const deps: Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions"> = {
+			...(loaded.fst ? { fst: loaded.fst } : {}),
+			...(loaded.streetMorphology ? { streetMorphology: loaded.streetMorphology } : {}),
+			...(loaded.anchorRegions ? { anchorRegions: loaded.anchorRegions } : {}),
 		}
 
 		priorDepsByPath.set(fstPath, deps)
@@ -621,27 +632,48 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const venueHeadByCountry = new Map<string, Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">>()
 
 	async function venueHeadDepsFor(
-		caseCountry: string | undefined
+		caseCountry: string | undefined,
+		streetMorphology: FSTMatcherLike | null
 	): Promise<Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">> {
 		if (!pinnedSwitch(pins.venueHeadPrior, GEOCODE_SESSION_DEFAULTS.venueHeadPrior)) return {}
 
 		const country = (caseCountry ?? "").toUpperCase()
-		const cached = venueHeadByCountry.get(country)
+		// The street-type test reads the case's morphology matcher, so a country is cached per matcher.
+		const key = `${country}:${streetMorphology ? "fst" : "none"}`
+		const cached = venueHeadByCountry.get(key)
 
 		if (cached) return cached
 
 		const { venueHeadLexicon } = await import("@mailwoman/poi-taxonomy/venue-heads")
 
-		// An unpinned scale leaves `venueHeadOpts` unset, so the prior applies its own default.
+		// An unpinned scale leaves `biasScale` unset, so the prior applies its own default.
 		const deps: Pick<GeocodeDeps, "venueHead" | "venueHeadOpts"> = {
 			venueHead: venueHeadLexicon(country),
-			...(pins.venueHeadBiasScale === "production" ? {} : { venueHeadOpts: { biasScale: pins.venueHeadBiasScale } }),
+			venueHeadOpts: {
+				...venueHeadOptsFor(streetMorphology, country || null),
+				...(pins.venueHeadBiasScale === "production" ? {} : { biasScale: pins.venueHeadBiasScale }),
+			},
 		}
 
-		venueHeadByCountry.set(country, deps)
+		venueHeadByCountry.set(key, deps)
 
 		return deps
 	}
+
+	/**
+	 * The prior deps for one case: the classifier's matchers and the country's venue-head
+	 * lexicon with a street-type test over those matchers.
+	 */
+	async function caseDepsFor(
+		caseClassifier: typeof classifier,
+		caseCountry: string | undefined
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions" | "venueHead" | "venueHeadOpts">> {
+		const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+
+		return { ...priorDeps, ...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)) }
+	}
+
+	const streetMorphologyPrior = pinnedSwitch(pins.streetMorphologyPrior, GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior)
 
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
@@ -688,8 +720,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			osmDatabases: osmProvider.for,
 			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
-			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-			...(await venueHeadDepsFor(caseCountry)),
+			...(await caseDepsFor(caseClassifier, caseCountry)),
+			streetMorphologyPrior,
 			...forkEntityDeps,
 			...forwarded,
 			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
@@ -703,8 +735,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			const caseClassifier = await classifierFor(caseCountry)
 
 			const priorDeps = {
-				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-				...(await venueHeadDepsFor(caseCountry)),
+				...(await caseDepsFor(caseClassifier, caseCountry)),
+				streetMorphologyPrior,
 			}
 
 			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)

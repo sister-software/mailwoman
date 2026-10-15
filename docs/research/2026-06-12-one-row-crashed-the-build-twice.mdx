@@ -19,7 +19,7 @@ change once you know that a correct assertion can still be an unsafe one?
 
 The build failed with a clear error that identified the row: a Who's On First record for the
 `name:ben` variant of South Korea, `দক্ষিণ কোরিয়া`, which is the country's name written in
-Bengali. We carry localized name variants on purpose. "Saint Petersburg", "St. Petersburg", and
+Bengali. We keep localized name variants on purpose. "Saint Petersburg", "St. Petersburg", and
 the Bengali rendering of South Korea are all rows we _want_, because a parser that knows only
 the Latin spelling of a place fails on most of the world's scripts.
 
@@ -32,7 +32,7 @@ stopped because one record out of nearly 700 million arrived in the wrong normal
 
 The assertion is correct, and we would write it again.
 
-Our labels are character offsets. When the corpus says the postcode is at `[10, 15)`, it means
+Our labels are character offsets. When the corpus records the postcode is at `[10, 15)`, it means
 code units 10 through 15 of the raw string. Those numbers are unambiguous only if every stage
 agrees on how the string is encoded, and Unicode allows the same visible text to be encoded more
 than one way. The letter `é` can be one code unit (NFC, precomposed) or two (NFD, a bare `e`
@@ -49,8 +49,8 @@ the work done so far.
 The fix for the first crash replaced the assertion with normalization. Where alignment used to
 throw, it now normalizes the raw text _and_ every component value to NFC, computes the spans over
 the normalized text, and stores the normalized text on the row. Offsets and text still share one
-form, and the multi-locale row stays in the corpus. DeepSeek, which we use as an independent
-reviewer for decisions like this, agreed that the offsets and the stored text still used one normalization form after the
+form, and the multi-locale row stays in the corpus. We use DeepSeek as an independent
+reviewer for decisions like this. It agreed that the offsets and the stored text still used one normalization form after the
 change. We shipped it
 and re-ran.
 
@@ -72,11 +72,11 @@ Unicode combining marks are a common source of bugs in character-offset code. A 
 `ক্ষ` is several code units. The boundary logic that keeps a short component from matching inside
 a longer component's word behaves correctly on Latin script. On this string it stepped one code
 unit too far across the combining sequence and returned an impossible offset. The span-invariant
-check caught it and threw, which is how we found it.
+check caught it and threw. That exception is how we found it.
 
 We had validated the build on nine of the eleven sources, covering every Latin-script shape we
-could think of, and they passed. The two sources we had not fully rehearsed were the WOF adapters,
-which carry almost all of the non-Latin name variants. The failing rows were in the part of the
+could think of, and they passed. The two sources we had not fully rehearsed were the WOF adapters.
+Those adapters supply almost all of the non-Latin name variants. The failing rows were in the part of the
 data we had not tested.
 
 ## Stop trusting the row
@@ -87,7 +87,7 @@ properly. A 3 a.m. fix during recovery could introduce a worse bug while trying 
 a multi-hour build.
 
 The recovery fix was smaller: no single row can crash hours of work. It has two parts. First, an
-out-of-bounds span (one that cannot be a valid character offset) quarantines the row with a named
+out-of-bounds span (one that cannot be a valid character offset) quarantines the row with a stated
 reason instead of throwing. Second, a `try`/`catch` wraps the per-row alignment in the build loop,
 so _any_ unforeseen exception on _any_ one row sends that row to quarantine and the build
 continues.
@@ -109,11 +109,11 @@ A third change made the crash much cheaper to recover from.
 
 By the time the build crashed, it had already finished the slow, expensive half of its job:
 reading all eleven sources and writing 36 gigabytes of canonical rows to disk. That took two and
-a half hours of I/O. The crash was in the _next_ phase, alignment, which reads those canonical
+a half hours of I/O. The crash was in the _next_ phase, alignment. Alignment reads those canonical
 files back and turns them into labeled rows.
 
 The build as written kept no state between runs. Re-running it meant re-emitting all 36 gigabytes
-from scratch, which would take another two and a half hours to return to the failing row. That
+from scratch. A re-run would take another two and a half hours to reach the failing row. That
 re-run cost is larger than the cost of the original bug.
 
 The recovery therefore also shipped resume. Each adapter writes its canonical file and then, only
@@ -133,7 +133,7 @@ instead of crashing, and resume instead of restarting. Together they let the bui
 overnight without someone awake to restart it.
 
 All three reflect the same point: a check that is correct in principle can still be unsafe in
-production. The failures come from rows nobody anticipated, such as a combining mark, the one
+production. The failures come from rows we did not anticipate, such as a combining mark, the one
 record in 690 million in the wrong normalization form, or a boundary check that is correct on
 every tested script and one code unit wrong on an untested one. That tail is too long to
 enumerate, and much of it is in scripts the team cannot read. What you _can_ do is decide in

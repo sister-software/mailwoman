@@ -3,7 +3,7 @@
 This package provides the Environment Agency's **National Coastal Erosion Risk Mapping (NCERM) —
 National (2024)** for England as a sealed spatial layer. It covers acquisition, the
 `coastal-england.db` build, and the reader that reports what the authority's mapping assigns at a
-coordinate **under a named scenario**.
+coordinate **under a specified scenario**.
 
 Design record: [`docs/superpowers/specs/2026-08-27-erosion-layer-survey.md`](../../docs/superpowers/specs/2026-08-27-erosion-layer-survey.md).
 Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/engineering/reference/layer-interface.mdx).
@@ -18,19 +18,19 @@ The layer has two readings. The reading it **lacks** is the main difference from
 | `designated` | the authority's mapping places the location inside an erosion zone under the scenario asked for                            |
 | `unknown`    | no polygon of that scenario contains the point. This reading does not claim absence, and this layer has no absence reading |
 
-**This layer has no `designated_absence` reading, which is the opposite of the flood layer.** For
+**This layer has no `designated_absence` reading. The flood layer has one.** For
 flood zones the Environment Agency states England-wide coverage, and the Planning Practice Guidance
 defines Zone 1 as "all land outside Zones 2, 3a and 3b". An empty flood answer inside England is
 therefore a designation. NCERM publishes no coverage statement. A location in England with no
-erosion polygon is either **inland**, which covers most of the country and about which the product
-makes no statement, or **on the coast and outside the mapped risk area**, which is the designation a caller
-wants. The published layers cannot tell those two cases apart. A reader that applied the flood rule
+erosion polygon is in one of two cases. It may be **inland**, as most of the country is, and the
+product makes no statement about it. It may instead be **on the coast and outside the mapped risk area**.
+A caller wants the designation for that second case. The published layers cannot tell those two cases apart. A reader that applied the flood rule
 would report the whole country as free of coastal-erosion risk, from a well-formed artifact that
 passed every structural check.
 
-`layer_coverage` therefore carries `basis = source_present` on every row. Both ends check this
+`layer_coverage` therefore stores `basis = source_present` on every row. Both ends check this
 condition in code. The build refuses to write a row that would support an exclusion, and the reader
-refuses to open an artifact that carries one. A stronger basis for this layer requires a
+refuses to open an artifact that contains one. A stronger basis for this layer requires a
 deliberate edit at a guard that states the reason.
 
 **A probe must specify its scenario.** NCERM publishes twelve erosion-zone layers because the answer
@@ -40,8 +40,8 @@ instead of answering as an absence, because "no such scenario" and "no zone here
 that would otherwise look identical.
 
 **No reading is a statement about a property.** The layer reports what the authority's map assigns
-at a location under a named scenario, which is a fact about the map. The Environment Agency states
-that its data "cannot provide details for individual properties", and every reading carries the
+at a location under a specified scenario. That is a fact about the map. The Environment Agency states
+that its data "cannot provide details for individual properties", and every reading is subject to the
 product's own exclusions. An erosion answer makes no statement about flooding or about foreshore features.
 
 ## The twelve scenarios
@@ -83,17 +83,17 @@ the geodatabase archive is 70,296,882 bytes.
 **`frontageid` is not a unique key, and this finding shaped the schema.** The survey proposed
 scoping `area_id` by scenario and keying it on the frontage. The measured frontage id is not unique
 even **within** one layer. `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage
-ids, and frontage 39260 alone appears ten times. Across the twelve layers, **835 rows would have
+ids, and frontage 39260 by itself appears ten times. Across the twelve layers, **835 rows would have
 collided**. `area_id` is therefore `<scenario key>:<OBJECTID>`, which uses the authority's own
 feature id, and `frontage_id` is stored as an attribute.
 
 **Polygons within one scenario overlap in practice.** 3,727 of the 7,492 features on
-`NCERM_SMP_2105_95CC` carry a non-zero `maxoverlap`. A cell can therefore reference several polygons
+`NCERM_SMP_2105_95CC` have a non-zero `maxoverlap`. A cell can therefore reference several polygons
 of one scenario, and a reading reports every polygon that contains the point. The reader applies no
 tie-break, because any tie-break would be this package's rule and not the authority's.
 
 **The declared domains were censused across all twelve layers** instead of one. A domain read from a
-single layer would throw on the day another layer carries its ninth value:
+single layer would throw on the day another layer contains its ninth value:
 
 | field                       | distinct | note                                                                                                                                                                                    |
 | --------------------------- | -------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -107,12 +107,12 @@ fold handles the source's own inconsistent capitalization and is not meant to ac
 type.
 
 **A blank field holds a single space.** The value `" "` appears on the same 87 rows
-that carry `published = 0`, all on SMP layers (13 to 16 per layer; the NFI layers have none). A reader
+that have `published = 0`, all on SMP layers. Each SMP layer has 13 to 16 of them, and the NFI layers have none. A reader
 that tests `=== ""` finds no match and reports the anomalous rows as ordinary ones. The Environment
 Agency documents no meaning for these rows, so the build stores them as published instead of dropping
 or coercing them.
 
-Erosion distances carry no nulls. They range over 0–386 m on NFI/2055/0CC and 0–1,053 m on
+Erosion distances contain no nulls. They range over 0–386 m on NFI/2055/0CC and 0–1,053 m on
 SMP/2105/95CC.
 
 ## Three measured client behaviors
@@ -126,11 +126,11 @@ The code encodes each of these behaviors directly:
    verification while still reporting a clean run.
 2. **`HEAD` answers 405, and `Range` is ignored.** A ranged GET returns HTTP 200 with the whole
    70,296,882-byte body, so content length cannot be used to check freshness. The cached archive is
-   keyed on the product's ISO revision date instead, which is the authority's own statement about
-   what changed.
-3. **The attribution comes from the structured license field.** The abstract carries the statement
+   keyed on the product's ISO revision date instead. That date is the authority's own statement
+   about what changed.
+3. **The attribution comes from the structured license field.** The abstract contains the statement
    twice. The **first copy, inherited from the superseded 2018–2021 record, has no year**, and the
-   ISO record has no `gmd:credit` element. `parseAttributionStatement` takes the copy that carries a
+   ISO record has no `gmd:credit` element. `parseAttributionStatement` takes the copy that includes a
    year and rejects text where no copy does. OGL v3.0 makes the statement a license condition, so a
    parser that took the first match would ship a license condition stated incorrectly.
 
@@ -140,7 +140,7 @@ The code encodes each of these behaviors directly:
 containment answer is decided against those rings. `coastal_zone_cell` is the H3 containment index above it. It classifies each
 cell as `whole` or `partial` **per polygon** instead of per class, because the distance, the policy,
 and the defense belong to each feature, so an erosion answer is a polygon. A `whole` cell answers
-with primary-key probes alone. Only a `partial` cell falls through to the ray cast, and the ray cast
+with primary-key probes and no ray cast. Only a `partial` cell falls through to the ray cast, and the ray cast
 runs only against the polygons that the cell lists for that scenario.
 
 **The build has no build-time touch table, because of how the cell key works.** The flood build
@@ -150,7 +150,7 @@ An erosion cell row references one polygon, so the row is final as soon as that 
 classified. Rows are written directly, memory use does not grow with row count, and no table needs
 resolving afterwards.
 
-`coastal_ground_instability` holds NCERM's two ground-instability layers, which describe a
+`coastal_ground_instability` holds NCERM's two ground-instability layers. Those layers describe a
 **different hazard**. The table has 160 rows. The two layers share feature ids and attributes and
 differ in geometry. The table has **no cell index**. A bounding-box scan over 160 rows costs less than
 an index would, and leaving the rows unindexed makes it impossible for a landslide polygon to reach an
@@ -238,7 +238,7 @@ The difference between the stored 729,519 rows and the measurement's 588,095 is 
 described above, at 24 %. Two frontages of one scenario that reach one cell count as one cell in the
 measurement and two rows in the table.
 
-Four named coordinates, read back from the sealed artifact, show why readings are scoped by scenario:
+Four labeled coordinates, read back from the sealed artifact, show why readings are scoped by scenario:
 
 | coordinate                                   | `NFI_2055_0CC`            | `SMP_2105_95CC`           |
 | -------------------------------------------- | ------------------------- | ------------------------- |
@@ -260,7 +260,7 @@ The reader does not present it as reassurance.
 
 ## The footprint question — what is settled, and what would change it
 
-**Settled as built:** This product has no mapped-footprint source, so `layer_coverage` carries
+**Settled as built:** This product has no mapped-footprint source, so `layer_coverage` stores
 `basis = source_present`, `coastal_mapped_extent` is empty, and the layer supports **presence only**.
 A coverage row means "this product has data in this cell", and a missing coverage row asserts no fact.
 Neither reading supports a claim that a location is free of risk.
@@ -271,7 +271,7 @@ verified**:
 
 - The **Shoreline Management Plan Mapping** record, a sibling dataset on the same platform. NCERM's
   own lineage states that it is derived from the Shoreline Management Plans, and every erosion feature
-  carries `smp_no`, `smp_name` and `smp_pu`. The measured `smp_no` runs 0–22 over 21 distinct values.
+  has `smp_no`, `smp_name` and `smp_pu` fields. The measured `smp_no` runs 0–22 over 21 distinct values.
   Its coverage statement, license, extent and schema were not read.
 - The **frontage geometry behind `frontageid`**. It is unknown whether the Environment Agency
   publishes the frontages themselves or only their ids.
@@ -282,7 +282,7 @@ negative answer would need to report. The flood layer states the same rule for t
 
 The coverage row cannot express two further limits, both taken from the authority's own text. The
 product "considers the predominant risk at the coast" and generally excludes foreshore features, so an
-NCERM answer makes no statement about flooding. The 87 anomalous rows carry blank policy and defense fields
+NCERM answer makes no statement about flooding. The 87 anomalous rows have blank policy and defense fields
 with `published = 0`, and the Environment Agency documents no policy or defense fields for those rows.
 
 ## Build it
@@ -326,7 +326,7 @@ one verdict against another.
 Welsh and Scottish coastal points must return `unknown` with no designation. Wales publishes NCERM
 with the previous generation's vocabulary (three periods from a 2005 base, percentile bands).
 Scotland's Dynamic Coast explicitly prohibits property-level assessment. Northern Ireland publishes
-122 line segments that carry one attribute. None of these products is interchangeable with England's.
+122 line segments that have one attribute each. None of these products is interchangeable with England's.
 A positive-only check would pass on an artifact that reported the entire country as designated.
 
 Distances are measured to the **edge** instead of to the nearest vertex. A point a centimeter from a
@@ -343,7 +343,7 @@ The reader runs on the geocode path only, after the resolver has produced a coor
 layer file the route does not run, and the geocode result is byte-identical to a build without the
 field.
 
-The artifact is named for its **extent** instead of its subject, because products for other extents
+The artifact's filename states its **extent** instead of its subject, because products for other extents
 are not interchangeable with it. A file called `coastal.db` would invite a Welsh or Scottish product
 to overwrite an English one.
 

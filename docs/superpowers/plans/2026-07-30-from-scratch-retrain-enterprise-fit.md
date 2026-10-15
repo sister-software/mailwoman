@@ -26,13 +26,13 @@ harness becomes the per-customer acceptance battery.
    run, it is a side artifact (one extra pass, stored beside the checkpoint); retrofitted later, it
    is a separate expensive job against a distribution we no longer sample. If B11 ships, the
    Fisher diagonal becomes part of the _weights bundle interface_ — every customer fine-tune gets
-   forgetting-protection against the base capabilities for free, and "your fine-tune cannot break
+   forgetting-protection against the base capabilities with no extra training pass of its own, and "your fine-tune cannot break
    core parsing" becomes a **sellable guarantee** instead of a hope. That artifact can only ride a
    from-scratch run.
 
 3. **The QA harness is the acceptance battery.** The v8.2.0 arc built, run by run, exactly what a
    customer fine-tune needs at delivery: pre-registered checks, the ablated-vs-fed columns, canary
-   fixtures with receipts, replay dosing, the misroute-cost measurement, the pre-ship gauntlet.
+   fixtures with receipts, replay-row weighting, the misroute-cost measurement, the pre-ship gauntlet.
    B11 productization largely means _packaging this harness_ — per-customer canaries from their own
    golden rows, the same check sheet, the same verdict discipline. The retrain is the first
    consumer of the packaged form (dogfooding the acceptance battery on our own base).
@@ -48,22 +48,22 @@ harness becomes the per-customer acceptance battery.
 
 | Debt                                              | Today                                                                | After                                                                                               |
 | ------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| fr.cedex forgetting + re-anchored floor (82.2)    | named watch, waived                                                  | re-learned natively; floor rebuilt from the new base                                                |
+| fr.cedex forgetting + re-anchored floor (82.2)    | listed watch, waived                                                 | re-learned natively, floor rebuilt from the new base                                                |
 | Fifth-Ave / num-ordinal brittleness               | trained out in v3.24 + permanent gauntlet fixture                    | invariant trained from step 0 (augmentation in the base recipe)                                     |
-| Fine-tune-of-fine-tune stacking (v385←v381←v310…) | four generations deep                                                | flattened; every capability from one recipe with one provenance                                     |
+| Fine-tune-of-fine-tune stacking (v385←v381←v310…) | four generations deep                                                | flattened, every capability from one recipe with one provenance                                     |
 | Evidence bundle as a fine-tune graft              | channels added at 6k-step fine-tunes, over-trust curricula bolted on | channels + curricula in the base objective from step 0 (the over-trust pattern may not form at all) |
-| Capability manifest / calibration drift           | carried-forward blocks, re-anchors                                   | regenerated from one run                                                                            |
+| Capability manifest / calibration drift           | inherited blocks, re-anchors                                         | regenerated from one run                                                                            |
 
 ## Recommended sequence
 
 1. **Pre-work (no GPU, this week if desired):** the char-encoder decision memo (CharCNN vs
-   byte-fallback status quo — the v8 design notes in the scratchpad archive carry the candidates);
+   byte-fallback status quo — the v8 design notes in the scratchpad archive list the candidates);
    the base-recipe assembly (v385's feed + the bundle channels + all curricula + ordinal/directional
    augmentation + JP/KR extracts behind the encoder decision); Fisher-capture design (~1 day of
    training-code work).
 2. **The run itself:** materially bigger than the arc's fine-tunes (from-scratch, larger step
    budget, possibly the encoder change) — plan in agent-nights with the full G1–G7 ladder plus
-   per-locale checks; the acceptance battery in its packaged form is the exit criterion.
+   per-locale checks. The acceptance battery in its packaged form is the exit criterion.
 3. **B11 alpha after:** the packaged battery + the Fisher-guarded fine-tune recipe make the
    first enterprise fine-tune engagement mostly configuration rather than research.
 

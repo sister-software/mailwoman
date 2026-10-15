@@ -1,6 +1,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
 import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"
@@ -9,7 +10,13 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it, vi } from "vitest"
 
 import { loadDefaultReverseGeocoder } from "#default"
-import { bindCountryScope, createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi"
+import {
+	bindCountryScope,
+	createPOIIntentStage,
+	createPOINameLookup,
+	createStopwordPOIPhraseLookup,
+	poiTaxonomyLookup,
+} from "#poi"
 import { createRuntimePipeline } from "#runtime-pipeline"
 
 const LOCALE: LocaleHint = {
@@ -55,12 +62,20 @@ describe("poiTaxonomyLookup adapter", () => {
 	it.each([
 		["an art gallery", "art_gallery"],
 		["the pharmacies", "pharmacy"],
-	])("reads %s past its leading determiner", (phrase, categoryID) => {
-		expect(poiTaxonomyLookup(phrase, "en-GB")[0]?.categoryID).toBe(categoryID)
+	])("reads %s past its leading libpostal stopword", async (phrase, categoryID) => {
+		const lookup = createStopwordPOIPhraseLookup(await readLibPostalSingleWordStopwords("en"))
+
+		expect(lookup(phrase, "en-GB")[0]?.categoryID).toBe(categoryID)
 	})
 
-	it("keeps a determiner-led name that is no category", () => {
-		expect(poiTaxonomyLookup("the manchester art gallery", "en-GB").some((m) => m.kind === "category")).toBe(false)
+	it("keeps a stopword-led name that is no category", async () => {
+		const lookup = createStopwordPOIPhraseLookup(await readLibPostalSingleWordStopwords("en"))
+
+		expect(lookup("the manchester art gallery", "en-GB").some((m) => m.kind === "category")).toBe(false)
+	})
+
+	it("drops no leading word without a stopword set", () => {
+		expect(poiTaxonomyLookup("an art gallery", "en-GB").some((m) => m.kind === "category")).toBe(false)
 	})
 
 	it.each([

@@ -3,7 +3,7 @@
 **Pre-registered check (config header + `baselines.json` profile `fragment-fr-v264`, registered against
 the shipped model before the run):** targets move, guards hold.
 
-**Verdict: PASS on both boards. Every target moved, and the two contextful guards
+**Verdict: the candidate passes both boards. Every target moved, and the two contextful guards
 improved.** The house-number-license diagnosis (T1c) is confirmed by the fix working.
 
 This is **not** a promote check — see §5.
@@ -13,7 +13,7 @@ This is **not** a promote check — see §5.
 | Run       | `ap-onoBImKJriMFy7Pz3i5t0D`, config `v3.1.0-fr-fragment`             |
 | Change    | one variable vs shipped v264: the `synth-fr-fragment` extract @ 12.0 |
 | Extract   | 144,865 rows, BAN (Licence Ouverte), 0 eval surfaces                 |
-| Training  | 8000/8000 steps, 0 errors, no NaN, `cross_pollution 0.00%`           |
+| Run state | 8000/8000 steps, 0 errors, 0 NaN, `cross_pollution 0.00%`            |
 | Precision | int8 candidate vs int8 baselines (asserted, see §4)                  |
 
 ---
@@ -47,11 +47,11 @@ accidentally right. Bare-street examples gave the model every incentive to flip 
 broken prior for another.
 
 **It held exactly: 0.980 → 0.980.** Same interval. The model learned the **distinction** rather than a
-new default, and the discriminating evidence is the designator, which is the only thing that
+new default. The discriminating evidence is the designator. The designator is the only feature that
 separates the two classes.
 
-That is what the counter-distribution was for. 20% of the extract is bare communes carrying no street
-label; without them, the cheapest way to satisfy every other row is to start calling bare toponyms
+That is what the counter-distribution was for. 20% of the extract is bare communes without a street
+label. Without them, the cheapest way to satisfy every other row is to start calling bare toponyms
 streets. The guard is why we can say the model learned rather than swapped.
 
 **The contextful guards did not merely hold — they improved** (+2.3pp, +3.5pp). The extract did not buy
@@ -65,7 +65,7 @@ fragments with full addresses.
 | house_number | 117/146 = 0.8014 | **117/146 = 0.8014** |  identical |
 | postcode     |   71/72 = 0.9861 |   **71/72 = 0.9861** |  identical |
 
-Nothing regressed; street gained **+8 fixtures** on the broad corpus. The `FAIL` verdicts printed by
+No label regressed. Street gained **+8 fixtures** on the broad corpus. The `FAIL` verdicts printed by
 `eval parity` are the **v7 campaign floors** (street 0.90 / hn 0.97) — v264 fails them too. They are a
 target rather than a regression check.
 
@@ -78,13 +78,14 @@ target rather than a regression check.
 | locality | 0.7969 |  0.799 |  0.794 |  0.794 |     0.795 |
 | val_loss | 1.1819 | 1.1992 | 1.1990 | 1.1995 |    1.2009 |
 
-**The val split contains no bare streets.** It is base-distribution, so it could only ever price the
-cost — never the metric. Read alone it says "regression"; the fragment board says +50pp. Both numbers are
+**The val split contains no bare streets.** It is base-distribution, so it could only ever measure the
+cost — never the metric. Read without the boards, the val split reports a regression. The fragment
+board reports +50pp. Both numbers are
 correct about different questions.
 
 Two things survive from it:
 
-- **street dipped and re-converged** (0.798 → 0.811) _while carrying the fragment mass_ — the same
+- **street dipped and re-converged** (0.798 → 0.811) _while training on the fragment mass_ — the same
   story the boards tell.
 - **region found a new lower equilibrium at ~0.830 (−1.0pp) and plateaued** across four evals. It
   looked like the open item — **#1102** is titled _"fragment/twin training mass erodes US
@@ -117,16 +118,16 @@ ship config, int8 both sides):
 
 **Every tag is inside the 2pp bar. Two improve. The pre-publish check passes.**
 
-So the val split's −1.0pp region was a **false positive** rather than a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
-real; this one reported a problem that was not. Same root — a metric on a distribution nobody asked
-about — and the same rule: read the instrument the check names.
+So the val split's −1.0pp region was a **false positive** rather than a preview. This inverts the arc's usual failure. The other instruments here missed
+problems that were real. This one reported a problem that was not. The root is the same: a metric on
+a distribution the check did not ask about. The rule is also the same: read the instrument the check names.
 
 That does not make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
 and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch rather than a thing to ignore, and it is cheap to watch: this table is one command.
 
 ### 4.2 The pre-registered "ALSO" — which did not come out as predicted
 
-The check carried a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
+The check had a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
 holds."_ Measured on the 54 street-free parity rows — the MESSY population (venues, all-caps junk,
 French zone names), as distinct from the fragment board's clean BAN communes:
 
@@ -137,7 +138,7 @@ French zone names), as distinct from the fragment board's clean BAN communes:
 
 **It rose.** 6 introduced, 1 removed. The intervals overlap heavily and McNemar on the paired
 discordants (6 vs 1) gives p ≈ 0.125, so the rate change is **not established** — but the direction is
-against the prediction, and two of the six have a mechanism worth naming:
+against the prediction, and two of the six share one mechanism:
 
 ```
 ✗ "ZAC sous la Combe Lavancia-Epercy" -> street="Combe Lavancia-Epercy"
@@ -150,7 +151,7 @@ extract installs — "French designator + particle + name = street" — is sligh
 zone names sitinside its edge. The other four (`BOOM` → `Boom`, `new south wales aus`,
 `philadelphia museum of art`) are pre-existing non-French confusions that shifted.
 
-The two populations do not contradict each other; they partition:
+The two populations do not contradict each other. They partition as follows:
 
 - **Clean French communes** (board, n=400): `bare-locality` **held at 0.980**. The counter-distribution
   worked exactly where it was aimed.
@@ -159,11 +160,11 @@ The two populations do not contradict each other; they partition:
 - **Non-French junk**: noise.
 
 The fix is a sibling of what is already there — extend the counter-distribution to French zone
-designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). Not a new idea, a wider one.
-It is an extract change, so it belongs to the next run, not to this verdict.
+designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). That widens an existing mechanism.
+It is an extract change, so it belongs to the next run rather than to this verdict.
 
-**This is what pre-registration is for.** Two of the three check clauses passed decisively; the third
-went the other way and is on the page at the same size as the wins.
+**This is what pre-registration is for.** Two of the three check clauses passed with non-overlapping
+intervals. The third went the other way and is on the page at the same size as the wins.
 
 ## 5. What this does and does not establish
 
@@ -177,10 +178,10 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
 - **Promotion.** The 2pp pre-publish check passes (§4.1), which clears the largest single hurdle — but
   that is one leg rather than the battery. A promote still wants `mailwoman eval check --check <spec>` (the
   per-locale floors, the int8↔fp32 delta cap, the cascade smoke, the mask-regression lock) and an
-  operator GO. Nothing ships on this page.
+  operator GO. This page ships no model.
 - **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
 - **`date-name`.** 0.158 is +10.3pp and still 84% wrong. BAN holds only ~1,418 date-name streets and
-  the extractor already takes every one; the extract has 655 rows of it. The change there is **extract
+  the extractor already takes every one. The extract has 655 rows of it. The change there is **extract
   weight** rather than more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
   house number) is the same one the span decode shows from the other side.
 - **Other locales.** FR only. Generalization goes **by tier** (BAN → BAG → TIGER-with-scope), never
