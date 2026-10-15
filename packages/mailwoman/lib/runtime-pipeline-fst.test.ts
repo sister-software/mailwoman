@@ -77,7 +77,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
 		const pipeline = createRuntimePipeline({ classifier })
 
-		// A locale whose country has no street-type table in the codex, so the test reads the FST alone.
+		// A locale whose country has no street-type table in the codex, so the test reads the FST and no table.
 		await pipeline("1 Testville Road", { locale: "en-JM" })
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
