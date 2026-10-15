@@ -37,6 +37,24 @@ import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
  */
 export const DEFAULT_VENUE_HEAD_BIAS_SCALE = 2
 
+const DECORATION_SEPARATOR_RE = /[-–—]/u
+
+/**
+ * Reports whether a dash sits between two words' pieces, the separator a decorated venue
+ * name such as `Mischicks Day Spa - St Andrews Lakes` writes between its parts.
+ */
+function followsDecorationSeparator(
+	pieces: ReadonlyArray<{ piece: string }>,
+	previousEnd: number,
+	start: number
+): boolean {
+	for (let index = previousEnd + 1; index < start; index++) {
+		if (DECORATION_SEPARATOR_RE.test(pieces[index]!.piece)) return true
+	}
+
+	return false
+}
+
 /**
  * Builds a `[seqLen][numLabels]` bias matrix toward `B-venue` and `I-venue` from venue-head lookups.
  * A vocabulary without `B-venue` returns the zero matrix.
@@ -127,10 +145,15 @@ export function buildVenueHeadEmissionPriors(
 			extend(index, -1, backward)
 		}
 
-		// A street type reads as a first-word head only when it opens its segment,
-		// as `St` does in `St Mary's Church`.
+		// A street type reads as a first-word head only when it opens its segment or a dash-separated
+		// decoration, as `St` does in `St Mary's Church` and in `Mischicks Day Spa - St Andrews Lakes`.
 		// After a street name, as in `6th St SW`, it is the street's type.
-		const opensSegment = words[index - 1]?.segment !== word.segment
+		const previous = words[index - 1]
+
+		const opensSegment =
+			previous === undefined ||
+			previous.segment !== word.segment ||
+			followsDecorationSeparator(pieces, previous.group.pieceIndices.at(-1)!, word.group.pieceIndices[0]!)
 
 		const first =
 			sameSegment(words[index + 1]) && (opensSegment || !isStreetAffix(token)) ? scaled(lexicon.first(token)) : null

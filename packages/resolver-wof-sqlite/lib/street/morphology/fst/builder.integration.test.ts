@@ -36,17 +36,39 @@ describe("buildStreetMorphologyFST", () => {
 		expect(avenue.accepting[0]!.placetype).toBe("street_affix")
 		expect(avenue.accepting[0]!.name).toBe("avenue")
 
-		// Variants 'ave' and 'aven' should resolve to the same canonical's wofID.
-		// (The 2-char abbreviation 'av' is filtered out by the default `minVariantLength: 3`
-		// to avoid state-abbreviation collisions — see the builder's docstring.)
+		// Variants 'av', 'ave' and 'aven' resolve to the same canonical's wofID.
+		const av = matcher.query("av")
 		const ave = matcher.query("ave")
 		const aven = matcher.query("aven")
+		expect(av.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 		expect(ave.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 		expect(aven.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
+	})
 
-		// Demonstrate the length filter — 'av' should not match under default opts.
-		const av = matcher.query("av")
-		expect(av.accepting).toHaveLength(0)
+	it("admits two-character street types and excludes the region abbreviations", async () => {
+		const { matcher } = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
+
+		const street = matcher.query("street").accepting[0]!.wofID
+		const road = matcher.query("road").accepting[0]!.wofID
+
+		expect(matcher.query("st").accepting[0]?.wofID).toBe(street)
+		expect(matcher.query("rd").accepting[0]?.wofID).toBe(road)
+
+		// `ct` is court and Connecticut, `la` is lane and Louisiana, `wy` is way and Wyoming.
+		expect(matcher.query("ct").accepting).toHaveLength(0)
+		expect(matcher.query("la").accepting).toHaveLength(0)
+		expect(matcher.query("wy").accepting).toHaveLength(0)
+
+		// A one-character variant stays out.
+		expect(matcher.query("a").accepting).toHaveLength(0)
+
+		const unguarded = await buildStreetMorphologyFST({
+			dictionariesDir: DICTIONARIES_DIR,
+			locales: ["en"],
+			excludedVariants: new Set(),
+		})
+
+		expect(unguarded.matcher.query("ct").accepting[0]?.placetype).toBe("street_affix")
 	})
 
 	it("recognizes French 'rue' and German 'straße' canonicals", async () => {

@@ -13,7 +13,7 @@
  *   The artifact is locale-general: one binary covering every locale that ships a
  *   `street_types.txt`, with entries mapped to the synthetic `street_affix` placetype (see
  *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` for the trie construction and the
- *   `minVariantLength` collision guard). Build provenance (locales ingested, counts, source dir)
+ *   `excludedVariants` region-abbreviation guard). Build provenance (locales ingested, counts, source dir)
  *   appears in the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` and
  *   `readFSTProvenanceWeb`.
  *
@@ -46,7 +46,7 @@ export interface BuildStreetMorphologyArtifactOpts {
 	/**
 	 * Minimum post-normalization variant length.
 	 *
-	 * @defaultValue the builder's 3, the state-abbreviation collision guard
+	 * @defaultValue the builder's 2, with the region abbreviations the codex holds excluded by name
 	 */
 	minVariantLength?: number
 	/**

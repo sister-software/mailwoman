@@ -24,6 +24,9 @@
  *   `fst-street-morphology.bin`.
  */
 
+import { AU_STATE_ABBREVIATIONS } from "@mailwoman/codex/au/state"
+import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
+import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -45,6 +48,17 @@ const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
 const STREET_TYPES_FILENAME = "street_types.txt"
 
+/**
+ * The region abbreviations the codex holds, in the lower-case joined form the trie keys use.
+ *
+ * A street-type variant that spells one of these is excluded from the trie by default.
+ */
+export const REGION_ABBREVIATION_VARIANTS: ReadonlySet<string> = new Set(
+	[...US_STATE_ABBREVIATIONS, ...Object.keys(AU_STATE_ABBREVIATIONS), ...Object.keys(CA_PROVINCES)].map((code) =>
+		code.toLowerCase()
+	)
+)
+
 export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
@@ -59,19 +73,25 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
-	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time,
-	 * including US state abbreviations (`or`, `CA`, `ND`, `NY`).
-	 * Single-letter unit designators and other short tokens also collide.
+	 * libpostal's street_types dictionaries hold one-character variants (`a`, `b`, `c`) that collide
+	 * with unit designators and single letters at parse time, so the default admits two characters
+	 * and more: `st`, `rd`, `av`, `dr`, `ln`, `pl` and `sq` beside `ave`, `blvd`, `rue` and `str`.
+	 * The two-character variants that are a region abbreviation go through {@link excludedVariants}.
 	 *
-	 * Empirically these collisions push the morphology prior to mis-tag state
-	 * abbreviations as `street_suffix`.
-	 *
-	 * A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
-	 *
-	 * @defaultValue `3`
+	 * @defaultValue `2`
 	 */
 	minVariantLength?: number
+	/**
+	 * Variant surface forms, in joined post-normalization form, that the trie never holds.
+	 *
+	 * A two-character street type that is also a region abbreviation, `ct` for court
+	 * and Connecticut or `la` for lane and Louisiana, reads as the region at parse time,
+	 * and the artifact is locale-general, so the variant stays out for every locale.
+	 *
+	 * @defaultValue {@link REGION_ABBREVIATION_VARIANTS}, the codex's US state, Australian state and
+	 *   Canadian province abbreviations
+	 */
+	excludedVariants?: ReadonlySet<string>
 	/**
 	 * Optional progress callback.
 	 */
@@ -111,7 +131,8 @@ export async function buildStreetMorphologyFST(
 	opts: BuildStreetMorphologyFSTOpts
 ): Promise<BuildStreetMorphologyFSTResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const minVariantLength = opts.minVariantLength ?? 3
+	const minVariantLength = opts.minVariantLength ?? 2
+	const excludedVariants = opts.excludedVariants ?? REGION_ABBREVIATION_VARIANTS
 	const dictionariesDir = PathBuilder.from(opts.dictionariesDir)
 
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
@@ -236,11 +257,10 @@ export async function buildStreetMorphologyFST(
 			const tokens = normalizeTokens(variant)
 
 			if (!tokens.length) continue
-			// Filter out collision-prone short surface forms — see `minVariantLength` docstring.
-			// We measure against the joined token form (no spaces) since FST keys are token sequences.
+			// The length and the exclusions read the joined token form, since FST keys are token sequences.
 			const joined = tokens.join("")
 
-			if (joined.length < minVariantLength) continue
+			if (joined.length < minVariantLength || excludedVariants.has(joined)) continue
 			insertName(tokens, entry)
 
 			insertCount++
