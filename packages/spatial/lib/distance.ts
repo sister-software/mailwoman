@@ -192,6 +192,36 @@ export function segmentDistanceMetres(
 }
 
 /**
+ * The squared distance from a point to a line segment in a planar projection.
+ *
+ * The answer is in the projection's units squared.
+ * For EPSG:27700 those units are meters, and no latitude scaling applies.
+ *
+ * The squared form saves a square root per comparison.
+ * A caller compares it against a squared radius.
+ *
+ * @category Position
+ */
+export function planarSegmentDistanceSquared(
+	px: number,
+	py: number,
+	ax: number,
+	ay: number,
+	bx: number,
+	by: number
+): number {
+	const vx = bx - ax
+	const vy = by - ay
+	const lengthSquared = vx * vx + vy * vy
+	// A zero-length segment is a repeated vertex.
+	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / lengthSquared))
+	const dx = ax + t * vx - px
+	const dy = ay + t * vy - py
+
+	return dx * dx + dy * dy
+}
+
+/**
  * Meters from a point to the nearest ring edge of an areal geometry.
  *
  * `Infinity` when the geometry bounds no area or contains no segment.

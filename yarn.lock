@@ -6452,6 +6452,7 @@ __metadata:
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:^26.6.4"
@@ -7274,6 +7275,7 @@ __metadata:
   dependencies:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@types/google.maps": "npm:^3.66.5"
     geo-coordinates-parser: "npm:^1.7.4"

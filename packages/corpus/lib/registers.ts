@@ -205,6 +205,13 @@ export const SourceRegister = {
 	 */
 	LandRegistryPricePaid: "gb-hm-land-registry-ppd",
 	/**
+	 * Ordnance Survey's OpenData products under the Open Government Licence v3.0.
+	 *
+	 * The `gb-os-open` adapter joins three of them per row.
+	 * Code-Point Open, OS Open Names and OS Open Roads share one publisher and one license.
+	 */
+	OrdnanceSurveyOpenData: "gb-os-opendata",
+	/**
 	 * Australia's Geocoded National Address File.
 	 */
 	GNAF: "au-gnaf",

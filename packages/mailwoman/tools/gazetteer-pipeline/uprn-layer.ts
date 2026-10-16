@@ -31,6 +31,7 @@ import {
 	shortCellToInt,
 	type H3Cell,
 } from "@mailwoman/spatial"
+import { OS_DOWNLOADS_API_BASE, type OSDownload } from "@mailwoman/spatial/gb/os-downloads"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent } from "h3-js"
@@ -39,7 +40,7 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer/database-lifecycle"
-import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer/postcode/codepoint/fetch"
+import { createOSDownloadsClient } from "#gazetteer/postcode/codepoint/fetch"
 
 /**
  * The OS Data Hub product ID for Open UPRN.
@@ -86,20 +87,6 @@ export const OPEN_UPRN_COVERAGE_NOTE =
  * The row count below which {@link buildUPRNLayer} reports a likely truncated read.
  */
 export const OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS = 40_000_000
-
-/**
- * Describes one file that the OS Downloads API lists for the product.
- *
- * {@link downloadOpenUPRN} verifies the archive against `md5`.
- */
-export interface OpenUPRNDownload {
-	md5: string
-	size: number
-	url: string
-	format: string
-	area: string
-	fileName: string
-}
 
 /**
  * The OS product record.
@@ -226,7 +213,7 @@ export interface DownloadOpenUPRNResult {
 	 * The OS release label, such as `2026-08`.
 	 */
 	version: string
-	download: OpenUPRNDownload
+	download: OSDownload
 	reused: boolean
 }
 
@@ -246,7 +233,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 
 	const [productResponse, downloadsResponse] = await Promise.all([
 		client.fetch<OpenUPRNProduct>({ url: `/products/${OPEN_UPRN_PRODUCT_ID}`, method: "GET" }),
-		client.fetch<OpenUPRNDownload[]>({ url: `/products/${OPEN_UPRN_PRODUCT_ID}/downloads`, method: "GET" }),
+		client.fetch<OSDownload[]>({ url: `/products/${OPEN_UPRN_PRODUCT_ID}/downloads`, method: "GET" }),
 	])
 
 	const product = productResponse.data

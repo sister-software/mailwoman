@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CSV reader and the metadata manifest parser. The tests pin quoted fields at both the resident-line compatibility
+ *   The Code-Point Open CSV reader. The tests pin quoted fields at both the resident-line compatibility
  *   helper and the streaming reader, because a newline crossing a chunk boundary is where line-first parsing fails.
  */
 
@@ -12,14 +12,13 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePath } from "path-ts"
 import { expect, test } from "vitest"
 
-import { parseCodePointMetadata } from "#gazetteer/postcode/codepoint/extract"
 import {
 	createCodePointParseStats,
 	normalizeCodePointSpacing,
 	postcodeArea,
 	readCodePointCSV,
 	splitCSVLine,
-} from "#gazetteer/postcode/codepoint/parse"
+} from "#gb/codepoint"
 
 test("splitCSVLine strips the wrapping quotes Code-Point puts on every text field", () => {
 	const row = splitCSVLine('"SW10 0AA",10,526506,176966,"E92000001","E19000003","E18000007","","E09000013","E05013747"')
@@ -96,39 +95,4 @@ test("postcodeArea takes the leading letters, which is what the manifest counts 
 	expect(postcodeArea("B33 8TH")).toBe("B")
 	expect(postcodeArea("EC1A 1BB")).toBe("EC")
 	expect(postcodeArea("ZE1 0AA")).toBe("ZE")
-})
-
-test("parseCodePointMetadata reads the header fields and the per-area row manifest", () => {
-	// Verbatim head of the 2026-05 `Doc/metadata.txt`, including its leading whitespace on the count rows.
-	const metadata = parseCodePointMetadata(
-		[
-			"ORDNANCE SURVEY",
-			"PRODUCT: OS CODE-POINT_03.02",
-			"DATASET VERSION NUMBER: 2026.2.0",
-			"COPYRIGHT DATE: 20260420",
-			"RM UPDATE DATE: 20260417",
-			"      AB\t17403",
-			"      AL\t7789",
-			"       B\t41835",
-			"      ZE\t658",
-		].join("\n")
-	)
-
-	expect(metadata.product).toBe("OS CODE-POINT_03.02")
-	expect(metadata.datasetVersion).toBe("2026.2.0")
-	expect(metadata.copyrightDate).toBe("20260420")
-	expect(metadata.royalMailUpdateDate).toBe("20260417")
-	expect(metadata.rowsByArea).toEqual({ AB: 17_403, AL: 7789, B: 41_835, ZE: 658 })
-	expect(metadata.totalRows).toBe(17_403 + 7789 + 41_835 + 658)
-})
-
-test("parseCodePointMetadata survives an unknown header field", () => {
-	// OS has added header rows before (RM update date postdates the product).
-	// A new one must not be fatal and must not be mistaken for an area count.
-	const metadata = parseCodePointMetadata(
-		["PRODUCT: OS CODE-POINT_03.02", "SOME NEW FIELD: whatever", "      AB\t17403"].join("\n")
-	)
-
-	expect(metadata.product).toBe("OS CODE-POINT_03.02")
-	expect(metadata.rowsByArea).toEqual({ AB: 17_403 })
 })

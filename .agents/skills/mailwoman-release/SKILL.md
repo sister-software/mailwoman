@@ -237,6 +237,46 @@ npm view @mailwoman/neural-weights-en-us@<target> --json | jq '.dist.attestation
 
 Then fast-forward local main: `git merge --ff-only origin/main`.
 
+## Step 4a — the npm validation hold and the dist-tag repoint (needs the operator's OTP)
+
+npm scans every publish before it lists the version. A held version shows `validating` on the
+authenticated status endpoint and is invisible to public reads: `npm view <pkg>@<target>` answers
+E404 while the publish log printed `+ <pkg>@<target>`. Read the endpoint for every workspace in
+`.release-it.json` right after the publish run, with the `_authToken` from `~/.npmrc` as a Bearer
+token:
+
+```
+GET https://registry.npmjs.org/-/package/<scope>%2f<name>/version/<target>/status
+```
+
+A version still `validating` fifteen minutes after the publish is a manual-review hold. The weights
+bundles are the usual subjects: at 10.2.x five workspaces were held, and at 10.4.0 the three
+weights bundles `neural-weights-en-us`, `-en-gb` and `-fr-fr` were held for 57 minutes. Do not
+republish, because every new version joins the same queue.
+
+A held bundle breaks fresh installs of every published package that pins it at exactly `<target>`.
+`mailwoman` pins `@mailwoman/neural-weights-en-us`, so `npm install mailwoman` fails with E404 on
+the bundle until the hold lifts. Compute the affected set from the published manifests: read each
+published package's `dependencies` at `<target>` from the registry and keep the packages that reach a
+held one transitively. At 10.4.0 that set was twelve packages: `mailwoman`, `@mailwoman/mcp`,
+`@mailwoman/fastify`, the three drop-in servers and the six other locale overlays.
+
+The mitigation repoints `latest` on each affected package to the last fully listed version:
+
+```bash
+npm dist-tag add mailwoman@<last good> latest
+```
+
+That command requires a one-time password. The lab host's token has publish rights, and npm still
+answers `EOTP` with a browser URL for the dist-tag write, so the agent cannot run it. The operator
+runs each command in the session with the `!` prefix and completes the browser step once per
+command, one command per affected package. Once the hold lifts, repoint every tag back with
+`npm dist-tag add <pkg>@<target> latest`, again one OTP per command.
+
+Whether to repoint at all is the operator's call: a hold that lifts within the hour, as at 10.4.0,
+costs less than twenty-four OTP prompts. Report the held packages, the affected set and the elapsed
+time, and let the operator decide. Keep polling the status endpoint every ten minutes meanwhile.
+
 ## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
 
 The npm publish leaves the browser demo (mailwoman.ai/demo) on the old model.
@@ -252,6 +292,9 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **`--minor` → patch** through the yarn wrapper → pass the explicit semver to `-f version=`.
 - **CI fetches weights from HF at the card version** → stage to HF before the real run (model releases).
 - **Local npm is E401** → CI only, because the OIDC path needs no token.
+- **A published version can sit in npm's `validating` hold** (invisible to `npm view`, E404 on install) → read
+  the status endpoint for every workspace, never republish, and hand the `npm dist-tag` repoint to the operator
+  because it asks for a one-time password (Step 4a).
 - **The materialized `model.onnx` can read stale** (post-dry-run cleanup) → verify the published tarball.
 - **The FST is model-independent** → reuse the prior version's and don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.

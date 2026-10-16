@@ -14,6 +14,7 @@
 	"references": [
 		// ---
 		{ "path": "../annotations" },
+		{ "path": "../codex" },
 		{ "path": "../core" }
 	]
 }
