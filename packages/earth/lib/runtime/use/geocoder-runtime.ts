@@ -264,6 +264,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					fst: assets?.fstMatcher,
 					streetMorphology: assets?.streetMorphologyMatcher,
 					selectPairIndex: assets?.selectPairIndex,
+					anchorRegions: assets?.anchorRegions,
 				},
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
