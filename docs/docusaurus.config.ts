@@ -361,7 +361,7 @@ const config: Config = {
 					],
 				},
 			],
-			copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
+			copyright: `Copyright © ${new Date().getFullYear()} Nirrius LLC, DBA Sister Software.`,
 		},
 		prism: {
 			theme: prismThemes.github,
