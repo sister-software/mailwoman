@@ -15,6 +15,7 @@ import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { type CodePointParseStats, createCodePointParseStats, readCodePointCSV } from "@mailwoman/spatial/gb/codepoint"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -35,12 +36,9 @@ import {
 	CODEPOINT_LICENSE_URL,
 	NORTHERN_IRELAND_OPTIONS_NOTE,
 	type CodePointMetadata,
-	type CodePointParseStats,
 	codePointAttribution,
-	createCodePointParseStats,
 	downloadCodePointOpen,
 	extractCodePointOpen,
-	readCodePointCSV,
 } from "#gazetteer/postcode/codepoint"
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer/postcode/geonames/tail"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer/stamp-manifest"

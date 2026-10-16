@@ -16,15 +16,15 @@
  *      mean.
  */
 
+import { normalizePostcodeDisplay } from "@mailwoman/codex/postcode/display-form"
 import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
 
-import { normalizePostcodeDisplay } from "#gazetteer/postcode/display-form"
 import type { OverpassElement, OverpassResponse } from "#gazetteer/postcode/ni/osm/fetch"
 
 /**
  * A Northern Ireland unit postcode.
  *
- * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`)
+ * This is the GB unit-postcode shape (`@mailwoman/spatial/gb/codepoint`'s `UNIT_POSTCODE`)
  * with the area pinned to `BT`.
  * The outward code's second character is optional.
  *

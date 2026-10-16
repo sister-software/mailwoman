@@ -63,6 +63,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"geo-coordinates-parser": "^1.7.4",
 		"h3-js": "^4.5.0",

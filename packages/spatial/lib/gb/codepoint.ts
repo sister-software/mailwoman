@@ -7,10 +7,10 @@
  *   coordinates to WGS84.
  */
 
-import { osgb36ToWGS84 } from "@mailwoman/spatial"
+import { normalizePostcodeDisplay } from "@mailwoman/codex/postcode/display-form"
 import { CSVSpliterator } from "spliterator"
 
-import { normalizePostcodeDisplay } from "#gazetteer/postcode/display-form"
+import { osgb36ToWGS84 } from "#osgb36"
 
 /**
  * The positional quality indicator for a row with no coordinate.

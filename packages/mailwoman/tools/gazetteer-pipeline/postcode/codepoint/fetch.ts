@@ -11,13 +11,8 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { createHash, md5File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
 import { streamToDisk } from "@mailwoman/core/utils"
+import { OS_DOWNLOADS_API_BASE, type OSDownload } from "@mailwoman/spatial/gb/os-downloads"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-
-/**
- * The root of the OS Downloads API.
- * It serves OpenData products without authentication.
- */
-export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 
 /**
  * The OS Data Hub product ID for Code-Point Open.
@@ -45,42 +40,6 @@ export function codePointAttribution(year: number): string {
 		`Contains National Statistics data © Crown copyright and database right ${year}.`,
 		`Licensed under the ${CODEPOINT_LICENSE} (${CODEPOINT_LICENSE_URL}).`,
 	].join(" ")
-}
-
-/**
- * One downloadable file for a product, as the Downloads API reports it.
- */
-export interface CodePointDownload {
-	/**
-	 * The OS-published MD5 of the archive.
-	 */
-	md5: string
-
-	/**
-	 * The archive size in bytes.
-	 */
-	size: number
-
-	/**
-	 * The download URL.
-	 * It redirects to a CDN object.
-	 */
-	url: string
-
-	/**
-	 * The archive format, such as `CSV` or `GeoPackage`.
-	 */
-	format: string
-
-	/**
-	 * The coverage area, where Code-Point Open publishes only `GB` and excludes Northern Ireland.
-	 */
-	area: string
-
-	/**
-	 * The archive file name, such as `codepo_gb.zip`.
-	 */
-	fileName: string
 }
 
 /**
@@ -154,10 +113,8 @@ export async function fetchCodePointProduct(client: APIClient = createOSDownload
 /**
  * Lists the Code-Point Open archives that the OS Downloads API offers, one per format.
  */
-export async function fetchCodePointDownloads(
-	client: APIClient = createOSDownloadsClient()
-): Promise<CodePointDownload[]> {
-	const { data } = await client.fetch<CodePointDownload[]>({
+export async function fetchCodePointDownloads(client: APIClient = createOSDownloadsClient()): Promise<OSDownload[]> {
+	const { data } = await client.fetch<OSDownload[]>({
 		url: `/products/${CODEPOINT_PRODUCT_ID}/downloads`,
 		method: "GET",
 	})
@@ -208,7 +165,7 @@ export interface DownloadCodePointResult {
 
 	/**
 	 * The MD5 of the archive on disk.
-	 * It matches {@link CodePointDownload.md5}.
+	 * It matches {@link OSDownload.md5}.
 	 */
 	md5: string
 
@@ -220,7 +177,7 @@ export interface DownloadCodePointResult {
 	/**
 	 * The Downloads API record for the archive.
 	 */
-	download: CodePointDownload
+	download: OSDownload
 
 	/**
 	 * True when the existing archive already matched and no download occurred.
