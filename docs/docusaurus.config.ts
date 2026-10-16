@@ -351,6 +351,10 @@ const config: Config = {
 							href: "mailto:hello@sister.software?subject=Hello%20Sister...",
 						},
 						{
+							label: "About Sister Software",
+							href: "https://sister.software",
+						},
+						{
 							label: "Privacy Policy",
 							to: "/privacy",
 						},
@@ -361,7 +365,7 @@ const config: Config = {
 					],
 				},
 			],
-			copyright: `Copyright © ${new Date().getFullYear()} Nirrius LLC, DBA Sister Software.`,
+			copyright: `© ${new Date().getFullYear()} Nirrius LLC, DBA Sister Software.`,
 		},
 		prism: {
 			theme: prismThemes.github,
