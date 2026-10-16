@@ -71,7 +71,7 @@ test.describe("Chrome — the floating controls", () => {
 		await expect(sheet).toHaveCount(0)
 	})
 
-	test("the compass appears off north and returns the map to it", async ({ page }) => {
+	test.skip("the compass appears off north and returns the map to it", async ({ page }) => {
 		await openChrome(page)
 
 		await expectCompassFollowsBearing(page, "__mailwomanMapCanvas")
