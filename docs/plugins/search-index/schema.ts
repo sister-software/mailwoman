@@ -15,7 +15,6 @@
  */
 export interface SearchIndexDatabase {
 	records: {
-		id: string
 		url: string
 		anchor: string
 		hierarchy: string
@@ -30,10 +29,17 @@ export interface SearchIndexDatabase {
 
 /**
  * Creates the tables and the FTS5 virtual tables, all empty.
+ *
+ * A record is identified by its rowid.
+ * The extractor's hash id serves the duplicate check at build time and is not stored,
+ * because 32 random hex characters per row compress poorly.
+ *
+ * `detail=column` keeps a term's count per column, which `bm25` ranks by,
+ * and drops its positions, which only phrase and NEAR queries read.
+ * The query code issues neither.
  */
 export const SCHEMA_SQL = `
 CREATE TABLE records (
-  id        TEXT PRIMARY KEY,
   url       TEXT NOT NULL,
   anchor    TEXT NOT NULL,
   hierarchy TEXT NOT NULL,
@@ -43,7 +49,8 @@ CREATE TABLE records (
   position  INTEGER NOT NULL
 );
 CREATE VIRTUAL TABLE records_fts USING fts5(
-  headings, content, content='records', content_rowid='rowid', tokenize='porter unicode61'
+  headings, content, content='records', content_rowid='rowid', tokenize='porter unicode61',
+  detail=column
 );
 CREATE TABLE terms (term TEXT PRIMARY KEY, documents INTEGER NOT NULL);
 CREATE VIRTUAL TABLE terms_trigram USING fts5(term, content='terms', content_rowid='rowid', tokenize='trigram');

@@ -69,7 +69,7 @@ export async function stageMapLibreWorker(destDir: PathBuilderLike): Promise<str
 			throw new Error(`[runtime-assets] maplibre-gl worker imports ${file}, which is missing from ${distDir}`)
 		}
 
-		// `syncArtifact` skips a size-identical copy, so this stage is idempotent.
+		// `syncArtifact` skips a byte-identical copy, so this stage is idempotent.
 		if (await syncArtifact(src, resolvePath(destDir, file), `maplibre-gl ${file}`)) {
 			copied++
 		}

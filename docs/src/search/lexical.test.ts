@@ -12,9 +12,18 @@ import { lexicalRows, matchExpression, queryTokens } from "./lexical.ts"
 
 const db = fixtureDatabase(FIXTURE_RECORDS)
 
+/**
+ * The fixture id of each row.
+ *
+ * The index identifies a record by its rowid, which follows the insertion order of the fixtures.
+ */
+async function fixtureIDs(tokens: readonly string[]): Promise<string[]> {
+	return (await lexicalRows(db, tokens)).map((row) => FIXTURE_RECORDS[Number(row.id) - 1]?.id ?? row.id)
+}
+
 describe("queryTokens", () => {
-	test("keeps tokens that contain a letter or a digit", () => {
-		expect(queryTokens('  tier-1  "regression" -- *** ')).toEqual(["tier-1", '"regression"'])
+	test("splits the text into runs of letters and digits, as the index tokenizer does", () => {
+		expect(queryTokens('  tier-1  "regression" -- *** ')).toEqual(["tier", "1", "regression"])
 	})
 })
 
@@ -34,21 +43,19 @@ describe("matchExpression", () => {
 
 describe("lexicalRows", () => {
 	test("ranks a heading match above a content match", async () => {
-		const rows = await lexicalRows(db, ["viterbi"])
-
-		expect(rows.map((row) => row.id)).toEqual(["viterbi-top", "viterbi-section"])
+		expect(await fixtureIDs(["viterbi"])).toEqual(["viterbi-top", "viterbi-section"])
 	})
 
 	test("ranks a page whose heading matches above a table row whose name matches", async () => {
-		expect((await lexicalRows(db, ["norway"])).map((row) => row.id)).toEqual(["norway-page", "row"])
+		expect(await fixtureIDs(["norway"])).toEqual(["norway-page", "row"])
 	})
 
 	test("matches the last token as a prefix", async () => {
-		expect((await lexicalRows(db, ["decoder", "gram"])).map((row) => row.id)).toContain("viterbi-section")
+		expect(await fixtureIDs(["decoder", "gram"])).toContain("viterbi-section")
 	})
 
 	test("matches a singular query against a plural word", async () => {
-		expect((await lexicalRows(db, ["parser"])).map((row) => row.id)).toEqual(["parsers"])
+		expect(await fixtureIDs(["parser"])).toEqual(["parsers"])
 	})
 
 	test("returns an empty list for zero tokens", async () => {

@@ -61,13 +61,12 @@ export function insertRecords(
 	records: readonly SearchRecord[],
 	build: BuildStamp
 ): void {
-	const insert = db.prepare("INSERT INTO records VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	const insert = db.prepare("INSERT INTO records VALUES (?, ?, ?, ?, ?, ?, ?)")
 
 	db.exec("BEGIN")
 
 	for (const record of records) {
 		insert.run(
-			record.id,
 			record.url,
 			record.anchor,
 			stringifyJSON(record.hierarchy),
