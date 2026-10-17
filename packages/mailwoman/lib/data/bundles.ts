@@ -247,21 +247,28 @@ export const BUNDLES: Record<string, DataBundle> = {
 			},
 		],
 		rights: {
-			publishers: ["Who's On First", "GeoNames", "Overture Maps Foundation, for its Divisions theme"],
+			publishers: [
+				"Who's On First",
+				"GeoNames",
+				"Overture Maps Foundation, for its Divisions theme",
+				"OpenStreetMap contributors, for the Northern Ireland postcode fold",
+			],
 			// The published artifact's own `layer_manifest.license`, read over HTTP range requests on 2026-09-27.
 			expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
 			terms: [
 				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
 				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
 				"Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name folds Overture Divisions. On the lab host's 2026-09-15 chain, where each fold's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places.",
+				"OpenStreetMap, for the Northern Ireland postcode fold: the Open Database License, with the credit `© OpenStreetMap contributors` and https://www.openstreetmap.org/copyright. The fold is an independent part of a collective database, so the license governs the fold and the rest of the file keeps its own terms. Read-only queries against the published artifact on 2026-10-17 found 9,514 fold rows for 4,757 places, ids 9800000000000 to 9800000004756, whose names, coordinates and bounding boxes equal the rows of postalcode-ni-osm-2026-08-05.db. They carry region 0, population 0 and no importance or name role. No row outside the fold shares a name key or a coordinate with them, and the fold has no row in candidate_ancestor or candidate_interval. The fold step runs after every pass over the admin rows and reads no other row. The fold is published by itself under the Open Database License, as the section 4.6 offer, at https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold. The 22 Prague district rows from GeoNames share the ids 9800000000000 to 9800000000021 with the fold because both builders used one id base at the build revision 2b9894111, and they are excluded from that dataset by country and placetype.",
 			],
 			conditions: [
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
-				"Read the Open Database License before redistributing this database or a database derived from it. Its share-alike term is what the unresolved question below is about.",
+				"Credit OpenStreetMap contributors for the Northern Ireland postcode fold, and keep the Open Database License on that fold and on any database derived from it.",
+				"Read the Open Database License before redistributing this database or a database derived from it. Its share-alike term for the Overture Divisions rows is the first unresolved question below.",
 			],
 			unresolved: [
-				"Whether the Open Database License's share-alike term reaches this database and its consumers. The expression on the artifact records ODbL-1.0, and what that requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. Issue #2618 tracks that question for the Northern Ireland postcode fold, and this entry states no conclusion about it.",
+				"Whether the Open Database License's share-alike term reaches the rest of this database through the Overture Divisions rows. The expression on the artifact records ODbL-1.0, and what that requires of a redistributor depends on whether those rows form a Derivative Database with the others, an independent part of a Collective Database, or an extraction below the threshold the license sets. The Northern Ireland postcode fold is settled in the terms above.",
 				"Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download.",
 				"Which Overture record each of those places came from. `fold-overture` writes a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible.",
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
