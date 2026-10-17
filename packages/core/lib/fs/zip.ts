@@ -44,8 +44,12 @@ async function openStreamingArchive(
 ): Promise<StreamingArchive & AsyncDisposable> {
 	// `decodeStrings: false` returns the central directory's raw name bytes.
 	// This lets the caller read a name when the archive does not declare its encoding.
-	// See {@link ZipNameOptions}.
-	const archive = await openArchive(archivePath.toString(), options?.filenameEncoding ? { decodeStrings: false } : {})
+	// See {@link ZipNameOptions}. yauzl's own name check is off because it throws on a
+	// leading slash. {@link memberPath} checks every name instead.
+	const archive = await openArchive(archivePath.toString(), {
+		validateFilenames: false,
+		...(options?.filenameEncoding ? { decodeStrings: false } : {}),
+	})
 
 	return Object.assign(archive, { [Symbol.asyncDispose]: () => archive.close() })
 }
@@ -88,9 +92,44 @@ export interface ZipNameOptions {
 function entryName(entry: Entry, options?: ZipNameOptions): string {
 	const raw = entry.filename as unknown
 
-	if (typeof raw === "string") return raw
+	if (typeof raw === "string") return memberPath(raw)
 
-	return iconv.decode(Buffer.from(raw as Uint8Array), options?.filenameEncoding ?? "utf8")
+	return memberPath(iconv.decode(Buffer.from(raw as Uint8Array), options?.filenameEncoding ?? "utf8"))
+}
+
+/**
+ * A member name as a path relative to the archive root.
+ * Every reader here matches and writes this form.
+ *
+ * Backslashes become forward slashes and leading slashes are removed, as `unzip` does when it extracts.
+ * OS Open Roads' GML archive stores `/data/`, `/doc/licence.txt` and `/readme.txt`
+ * beside `data/OSOpenRoads_HP.gml`.
+ * A reader that refused a leading slash refused that archive.
+ *
+ * @throws When the name has a drive letter or a `..` segment, so no member is
+ * written outside the extraction directory.
+ */
+export function memberPath(name: string): string {
+	const relative = name.replaceAll("\\", "/").replace(/^\/+/, "")
+
+	if (/^[a-z]:/i.test(relative)) {
+		throw new Error(`Zip member '${name}' names a drive`)
+	}
+
+	if (relative.split("/").includes("..")) {
+		throw new Error(`Zip member '${name}' has a .. segment, so it would extract outside its directory`)
+	}
+
+	return relative
+}
+
+/**
+ * Whether a member name, already passed through {@link memberPath}, is a directory entry.
+ *
+ * The root itself, a stored `/`, normalizes to the empty name.
+ */
+function isDirectoryMember(name: string): boolean {
+	return name === "" || name.endsWith("/")
 }
 
 /**
@@ -185,7 +224,7 @@ export type ZipEntrySelector = string | RegExp
  */
 export interface ZipEntryInfo {
 	/**
-	 * The archive-internal path, e.g. `it/countrywide.csv`.
+	 * The archive-internal path, e.g. `it/countrywide.csv`, as {@link memberPath} normalizes it.
 	 *
 	 * Directory entries keep their trailing slash.
 	 */
@@ -265,7 +304,7 @@ export async function extractZipEntry(
 	await using archive = await openStreamingArchive(archivePath)
 
 	for await (const entry of archive) {
-		if (!selectorMatches(selector, entry.filename)) continue
+		if (!selectorMatches(selector, entryName(entry))) continue
 
 		await pipeline(await entry.openReadStream(), openWriteStream(destinationPath))
 
@@ -317,11 +356,13 @@ export async function extractZipEntries(
 	const written: string[] = []
 
 	for await (const entry of archive) {
-		if (entry.filename.endsWith("/")) continue
+		const name = entryName(entry)
 
-		if (selector && !selectorMatches(selector, entry.filename)) continue
+		if (isDirectoryMember(name)) continue
 
-		const relative = flatten ? basename(entry.filename) : entry.filename
+		if (selector && !selectorMatches(selector, name)) continue
+
+		const relative = flatten ? basename(name) : name
 		const destination = resolvePath(destinationDirectory, relative)
 
 		if (!flatten) {
@@ -334,7 +375,7 @@ export async function extractZipEntries(
 			await pipeline(await entry.openReadStream(), openWriteStream(destination))
 		}
 
-		written.push(entry.filename)
+		written.push(name)
 	}
 
 	return written
@@ -361,7 +402,7 @@ export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<
 	let checked = 0
 
 	for await (const entry of archive) {
-		if (entry.filename.endsWith("/")) continue
+		if (isDirectoryMember(entryName(entry))) continue
 
 		await using contents = await openEntryStream(entry, { validateCrc32: false })
 		let checksum = 0
