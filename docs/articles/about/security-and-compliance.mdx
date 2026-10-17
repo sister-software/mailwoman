@@ -85,10 +85,15 @@ Two items on that page matter to a review, and we would rather you heard them fr
   country's rooftop database locally from a Geofabrik extract. Neither npm nor the demo serves one. The
   served `candidate` gazetteer does contain a Northern Ireland postcode fold derived from OpenStreetMap
   under ODbL: 4,757 places, measured 2026-09-27 by downloading `gazetteer/2026-08-25b/candidate.db` in
-  full and counting the rows in that fold's id range. Whether the fold is an independent part of a
-  collective database, so that ODbL governs the fold alone, or was matched against other rows, so that
-  ODbL reaches the whole file, is open and tracked in
-  [issue #2618](https://github.com/sister-software/mailwoman/issues/2618). The
+  full and counting the rows in that fold's id range. The fold is an independent part of a collective
+  database, so ODbL governs the fold and the rest of the file keeps its own terms. Read-only queries
+  on 2026-10-17 found that the fold's 9,514 rows equal the rows of the OpenStreetMap database they came
+  from, that no other row shares a lookup key or a coordinate with them, and that they carry no
+  ancestry, population or importance taken from other rows. The fold is published by itself under ODbL
+  as the
+  [Northern Ireland postcode fold dataset](https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold),
+  which is the section 4.6 offer, and
+  [issue #2618](https://github.com/sister-software/mailwoman/issues/2618) records the measurement. The
   [data products](../product/data-products.mdx#as-served) page shows what each published bundle's
   own manifest records.
 - **One source's license is recorded inconsistently in our own files.** Who's On First appears as
