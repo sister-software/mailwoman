@@ -15,7 +15,7 @@
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "OpenStreetMap contributors (ODbL-1.0): the `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` training extracts taken from the 2026-10-02 Geofabrik extracts (2,487,302 rows in corpus v0.7.1-osm-exposure), plus the `rendered-pk-register` and `rendered-bd-register` training extracts rendered from OSM tuples. The v7.2.0 epoch audit draws 103,322 of 1,000,000 rows from these sources. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0 and the effective training manifest packages/corpus/data/training-manifests/v0.7.2-address-systems.effective.json records what reached the trainer.",
+				"text": "OpenStreetMap contributors (ODbL-1.0): the `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` training extracts taken from the 2026-10-02 Geofabrik extracts (2,282,782 rows in corpus v0.7.1-osm-exposure), plus the `rendered-pk-register` and `rendered-bd-register` training extracts rendered from OSM tuples. The v7.2.0 epoch audit emits 103,322 of 1,000,000 rows from the seven `osm-*` sources and 15,609 from the two registers. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0 and the effective training manifest packages/corpus/data/training-manifests/v0.7.2-address-systems.effective.json records what reached the trainer. The extracts are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
 				"license_named": "ODbL-1.0"
 			},
 			{
@@ -264,6 +264,28 @@
 				"statement": null
 			}
 		],
+		"data_access_offers": [
+			{
+				"license": "ODbL-1.0",
+				"provision": "ODbL 1.0 section 4.6(a)",
+				"sources": [
+					"osm-ru",
+					"osm-cn",
+					"osm-in",
+					"osm-id",
+					"osm-ng",
+					"osm-vn",
+					"osm-pk",
+					"osm-bd",
+					"osm",
+					"rendered-pk-register",
+					"rendered-bd-register"
+				],
+				"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract",
+				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/db2f338af5f95f84d6511bbb120ec4576234d141/MANIFEST.json",
+				"statement": "The OpenStreetMap-derived training extracts of corpus v0.7.2-address-systems, as the 29 parquet files the trainer read (2,572,934 rows), © OpenStreetMap contributors"
+			}
+		],
 		"unresolved": null
 	},
 	"artifacts": [
@@ -320,6 +342,7 @@
 	"corpus_version": null,
 	"effective_training_sources": null,
 	"required_attributions": null,
+	"data_access_offers": [],
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 7 of 7 declared artifacts: pair-index-es.bin, fst-es-es.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",

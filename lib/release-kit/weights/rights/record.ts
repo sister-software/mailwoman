@@ -180,6 +180,76 @@ export interface AttributionRecord {
 }
 
 /**
+ * A published copy of training data that its license requires be offered to the recipients
+ * of a work produced from it, such as the ODbL's section 4.6 offer of a Derivative Database.
+ *
+ * The card records it under `training.data_access_offers`.
+ */
+export interface DataAccessOffer {
+	/**
+	 * The license of the offered data, as the rows it describes carry it.
+	 */
+	license: string
+	/**
+	 * The clause of that license the offer satisfies, such as `ODbL 1.0 section 4.6(a)`.
+	 */
+	provision: string
+	/**
+	 * The corpus sources whose rows the offer publishes.
+	 */
+	sources: string[]
+	/**
+	 * Where a recipient obtains the data.
+	 */
+	url: string
+	/**
+	 * A machine-readable list of the offered files with their row counts and digests.
+	 */
+	manifestURL: string
+	statement: string
+}
+
+/**
+ * Reads the card's data-access offers.
+ *
+ * An absent field reads as no recorded offer.
+ *
+ * @throws When the field is present and an entry lacks a field, so a malformed
+ * offer cannot render as no offer.
+ */
+function readDataAccessOffers(value: unknown, cardPath: string): DataAccessOffer[] {
+	if (value == null) return []
+
+	if (!Array.isArray(value)) throw new Error(`${cardPath}: training.data_access_offers must be an array`)
+
+	return value.map((entry: Record<string, unknown>, index) => {
+		const field = (name: string): string => {
+			const text = stringOrNull(entry?.[name])
+
+			if (!text)
+				throw new Error(`${cardPath}: training.data_access_offers[${index}].${name} must be a non-empty string`)
+
+			return text
+		}
+
+		const sources = entry?.sources
+
+		if (!Array.isArray(sources) || !sources.length || !sources.every((source) => typeof source === "string")) {
+			throw new Error(`${cardPath}: training.data_access_offers[${index}].sources must list the offered sources`)
+		}
+
+		return {
+			license: field("license"),
+			provision: field("provision"),
+			sources: [...sources],
+			url: field("url"),
+			manifestURL: field("manifest_url"),
+			statement: field("statement"),
+		}
+	})
+}
+
+/**
  * The attribution that an overlay inherits from the package that owns its model graph,
  * repeated so a consumer of the overlay by itself can read it and labeled as the base's
  * because the overlay's own artifacts did not contribute to that model.
@@ -197,6 +267,10 @@ interface InheritedLineage {
 	 * about the checkout rather than about the graph's inputs.
 	 */
 	requiredAttributions: RequiredAttribution[]
+	/**
+	 * The base's data-access offers, repeated for the same reason as {@linkcode requiredAttributions}.
+	 */
+	dataAccessOffers: DataAccessOffer[]
 	/**
 	 * The package names from this package to the graph package, in walk order.
 	 */
@@ -266,6 +340,10 @@ export interface WeightsRightsRecord {
 	 * rather than that the epoch drew from no source.
 	 */
 	effectiveTraining: EffectiveTrainingManifest | null
+	/**
+	 * The published copies of training data the card records offering, empty when it records none.
+	 */
+	dataAccessOffers: DataAccessOffer[]
 	tokenizerVersion: string | null
 	/**
 	 * What the package's own model graph can emit, read from the `.onnx` file.
@@ -290,6 +368,7 @@ interface ModelCard {
 		 * The attribution field spelling that the `en-us` card uses.
 		 */
 		data_attribution?: unknown
+		data_access_offers?: unknown
 		corpus_version?: unknown
 		tokenizer_version?: unknown
 	}
@@ -390,13 +469,14 @@ async function readWeightsRightsRecord(repoRoot: PathBuilderLike, workspace: str
 		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
 		effectiveTraining: await readEffectiveTrainingManifest(repoRoot, stringOrNull(card?.training?.corpus_version)),
+		dataAccessOffers: readDataAccessOffers(card?.training?.data_access_offers, `${workspace}/model-card.json`),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
 		// Read from the file rather than from the card's `num_labels`, because the
 		// card is a claim about the graph.
 		// The `cjk` graph has 49 labels while `en-us` has 33, so a value copied from
 		// one card would misdescribe the other.
 		modelGraph: artifacts.some((artifact) => artifact.path === MODEL_GRAPH_FILE)
-			? await readModelGraph(resolvePath(repoRoot, workspace, MODEL_GRAPH_FILE))
+			? await readModelGraph(resolvePath(repoRoot, workspace, MODEL_GRAPH_FILE), `${workspace}/${MODEL_GRAPH_FILE}`)
 			: null,
 	}
 }
@@ -470,6 +550,7 @@ function resolveInherited(
 				modelCardVersion: null,
 				attribution: [],
 				requiredAttributions: [],
+				dataAccessOffers: [],
 				chain: [...chain, current],
 				unresolved: `the base chain returns to ${current}, so no package in it owns a model graph`,
 			}
@@ -484,6 +565,7 @@ function resolveInherited(
 				modelCardVersion: null,
 				attribution: [],
 				requiredAttributions: [],
+				dataAccessOffers: [],
 				chain: [...chain, current],
 				unresolved: `${current} is not among the packages read, so its lineage could not be resolved here`,
 			}
@@ -499,6 +581,7 @@ function resolveInherited(
 				modelCardVersion: base.modelCardVersion,
 				attribution: base.attribution,
 				requiredAttributions: base.effectiveTraining?.requiredAttributions ?? [],
+				dataAccessOffers: base.dataAccessOffers,
 				chain,
 				unresolved: null,
 			}

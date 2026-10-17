@@ -80,10 +80,17 @@ const TEXT_CAPABLE_TYPES: ReadonlySet<string> = new Set(["string", "int32", "int
  *
  * Returns a record carrying `unreadable` rather than throwing, so a rights record over
  * several packages reports the one graph it could not open instead of failing the whole pass.
+ *
+ * @param displayPath The path printed in `unreadable`.
+ * A committed record prints a repository-relative path, so its bytes do not
+ * depend on the checkout that generated it.
  */
-export async function readModelGraph(modelPath: PathBuilderLike): Promise<ModelGraphRecord> {
+export async function readModelGraph(
+	modelPath: PathBuilderLike,
+	displayPath: string = modelPath.toString()
+): Promise<ModelGraphRecord> {
 	if (!(await pathExists(modelPath))) {
-		return { format: "ONNX", outputs: [], textEmittingOutput: false, unreadable: `no file at ${modelPath}` }
+		return { format: "ONNX", outputs: [], textEmittingOutput: false, unreadable: `no file at ${displayPath}` }
 	}
 
 	try {
@@ -107,7 +114,7 @@ export async function readModelGraph(modelPath: PathBuilderLike): Promise<ModelG
 			format: "ONNX",
 			outputs: [],
 			textEmittingOutput: false,
-			unreadable: `${modelPath}: ${(error as Error).message}`,
+			unreadable: `${displayPath}: ${(error as Error).message}`,
 		}
 	}
 }
