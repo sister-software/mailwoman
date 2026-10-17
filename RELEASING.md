@@ -556,7 +556,7 @@ curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, bot
 curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the conditional md5
 ```
 
-#### Pair-index binaries are VERSIONED; each rebuild gets a new generation
+#### Pair-index binaries are VERSIONED, and each rebuild gets a new generation
 
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies that the browser demo reads require a
 separate push. They reach the bucket only through `publish-demo-assets-to-r2.run.ts`, from a `--src` tree you
