@@ -80,13 +80,15 @@ records the source, release and license it was built from. The catalog of source
 
 Two items on that page matter to a review, and we would rather you heard them from us:
 
-- **The OpenStreetMap rooftop tier reaches no published artifact.** The rooftop extracts in
-  `@mailwoman/osm` are built and deliberately unpublished, on npm and in the demo alike, because OSM
-  data is share-alike and enabling that tier is waiting on legal review. The served `candidate`
-  gazetteer does contain a Northern Ireland postcode fold derived from OpenStreetMap under ODbL: 4,757
-  places, measured 2026-09-27 by downloading `gazetteer/2026-08-25b/candidate.db` in full and
-  counting the rows in that fold's id range. What ODbL asks of that is with counsel, and this page
-  states no conclusion about it. The
+- **The OpenStreetMap rooftop tier reaches no published data artifact.** `@mailwoman/osm` publishes
+  the builder to npm as code with no OpenStreetMap data in it, and an operator who opts in builds each
+  country's rooftop database locally from a Geofabrik extract. Neither npm nor the demo serves one. The
+  served `candidate` gazetteer does contain a Northern Ireland postcode fold derived from OpenStreetMap
+  under ODbL: 4,757 places, measured 2026-09-27 by downloading `gazetteer/2026-08-25b/candidate.db` in
+  full and counting the rows in that fold's id range. Whether the fold is an independent part of a
+  collective database, so that ODbL governs the fold alone, or was matched against other rows, so that
+  ODbL reaches the whole file, is open and tracked in
+  [issue #2618](https://github.com/sister-software/mailwoman/issues/2618). The
   [data products](../product/data-products.mdx#as-served) page shows what each published bundle's
   own manifest records.
 - **One source's license is recorded inconsistently in our own files.** Who's On First appears as

@@ -23,7 +23,10 @@ done)
 # - `oxfmt --write` can bump mtime even when file bytes do not change.
 # - So the `-newer` freshness check must use timestamps captured before formatter runs,
 #   otherwise command-file commits can fail forever until timing changes.
-CLI_REF=packages/mailwoman/tsconfig.tsbuildinfo
+# The `cli/` sources compile in their own project, whose buildinfo `tsc -b` writes under `out/cli/`.
+# The library project's buildinfo stays untouched when only `cli/` changed.
+CLI_REF=packages/mailwoman/out/cli/tsconfig.tsbuildinfo
+[ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/tsconfig.tsbuildinfo
 [ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 [ -f "$CLI_REF" ] || CLI_REF=packages/mailwoman/out/cli/main.js
 CLI_STALE_SRC=""

@@ -240,6 +240,13 @@ export default {
 			},
 		},
 		{
+			// `@mailwoman/core/git` is the module the raw-git rule points at.
+			files: ["packages/core/lib/git.ts"],
+			rules: {
+				"mailwoman/no-raw-git-spawn": "off",
+			},
+		},
+		{
 			// These modules resolve package directories and convert `file:` URLs with `node:url`.
 			files: ["packages/core/lib/module/**/*.ts"],
 			rules: {
@@ -307,6 +314,7 @@ export default {
 		"mailwoman/no-database-handle-cast": "error",
 		"mailwoman/no-import-meta-dirname-walk": "error",
 		"mailwoman/no-import-meta-resolve": "error",
+		"mailwoman/no-raw-git-spawn": "error",
 		"mailwoman/no-relative-dynamic-import": "error",
 		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
@@ -335,6 +343,13 @@ export default {
 							"database be described by two schemas with nothing making them agree, and split ownership so the " +
 							"first `destroy()` closed the connection under the other holder. `exec`, `prepare` and `function` " +
 							"reach the same connection for the statements Kysely does not model.",
+					},
+					{
+						group: ["zx", "zx/*", "execa", "simple-git"],
+						message:
+							"Child processes go through `@mailwoman/core/process`: `runProcess` (pass `reject: false` to read a " +
+							"non-zero exit), `ProcessTask` for line and progress events, and the `*Sync` functions for a synchronous " +
+							"caller. Git goes through `@mailwoman/core/git`.",
 					},
 				],
 			},

@@ -15,6 +15,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { runFileSync } from "@mailwoman/core/process"
@@ -201,7 +202,7 @@ export async function runWorktreeArm(args: {
 	// The stack unwinds last-in, first-out, so the prune is registered first.
 	if (!live) {
 		resources.defer(() => {
-			runFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
+			gitSync(["worktree", "prune"], { cwd: repoRoot })
 		})
 	}
 
@@ -209,12 +210,12 @@ export async function runWorktreeArm(args: {
 	const worktree = parent ? parent.path("checkout") : repoRoot
 
 	if (!live) {
-		runFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
+		gitSync(["worktree", "add", "--detach", worktree.toString(), ref], { cwd: repoRoot })
 
 		// The runner and the symlink farm are untracked, so removal always needs `--force`.
 		resources.defer(() => {
 			try {
-				runFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
+				gitSync(["worktree", "remove", "--force", worktree.toString()], { cwd: repoRoot })
 			} catch {
 				// A failed removal must not hide the arm's own error.
 				// The parent removal and the prune still clean up.
@@ -222,11 +223,9 @@ export async function runWorktreeArm(args: {
 		})
 	}
 
-	const head = runFileSync("git", ["rev-parse", "HEAD"], { cwd: worktree, encoding: "utf8" }).trim()
+	const head = gitSync(["rev-parse", "HEAD"], { cwd: worktree })
 
-	const dirty = live
-		? runFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
-		: false
+	const dirty = live ? gitSync(["status", "--porcelain"], { cwd: repoRoot }).length > 0 : false
 
 	// The suffix records that the arm ran uncommitted edits on top of the commit.
 	const commit = dirty ? `${head}+dirty` : head

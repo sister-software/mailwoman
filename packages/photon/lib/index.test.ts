@@ -1,4 +1,6 @@
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
+import { OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { expect, test } from "vitest"
 
@@ -22,6 +24,43 @@ const searchEngine: PhotonEngine = {
 const reverseEngine: PhotonEngine = {
 	reverse: async () => ({ type: "FeatureCollection", features: [] }),
 }
+
+test("route: /api keeps an OpenStreetMap row's stamp and credit, and a non-OSM row gains neither", async () => {
+	const place: PhotonForwardInput = { lat: -37.137364, lon: 175.541779, places: [{ tag: "locality", name: "Thames" }] }
+
+	const app = createPhotonApp({
+		search: async (params) =>
+			photonForwardCollection(
+				{
+					primary: {
+						...place,
+						coordinateSource: {
+							source: params.q === "osm" ? "openstreetmap:nz" : "overture:NAD",
+							release: "2026-08-06",
+						},
+					},
+					alternatives: [],
+				},
+				1
+			),
+	})
+
+	interface Body {
+		features: Array<{ properties: { mailwoman?: { coordinate_source: { source: string } } } }>
+	}
+
+	const osm = (await (await app.request("/api?q=osm")).json()) as Body
+	const other = (await (await app.request("/api?q=other")).json()) as Body
+
+	expect(osm.features[0]?.properties.mailwoman).toEqual({
+		coordinate_source: { source: "openstreetmap:nz", release: "2026-08-06" },
+		attribution: OPENSTREETMAP_CREDIT,
+	})
+
+	expect(other.features[0]?.properties.mailwoman?.coordinate_source.source).toBe("overture:NAD")
+	expect(stringifyJSON(other)).not.toContain("openstreetmap")
+	expect(stringifyJSON(other)).not.toContain("OpenStreetMap")
+})
 
 test("forward: name/city from the RESOLVED gazetteer name, not the parsed span casing", () => {
 	const props = photonForwardProperties({

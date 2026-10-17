@@ -8,12 +8,13 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { Check } from "#check"
 import { readMailwomanVersion } from "#metadata"
-import { runProcessOrFail } from "#process"
 
 /**
  * The HTTP surfaces that each get an emitted OpenAPI spec and a generated Python and Rust client.
@@ -105,8 +106,16 @@ function fail(message: string): never {
 	throw new Error(message)
 }
 
-function run(cmd: string, args: string[], options: { cwd?: PathBuilderLike } = {}): void {
-	runProcessOrFail(cmd, args, { ...options, echo: true })
+async function run(cmd: string, args: string[], options: { cwd?: PathBuilderLike } = {}): Promise<void> {
+	console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
+
+	await runProcess(cmd, args, {
+		cwd: options.cwd,
+		env: childEnv(),
+		stdin: "inherit",
+		stdout: "inherit",
+		stderr: "inherit",
+	})
 }
 
 async function checkCompiled(): Promise<void> {
@@ -139,7 +148,7 @@ async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) =
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
 
-			run("node", [cli, "openapi", "--flavor", flavor, "--out", out])
+			await run("node", [cli, "openapi", "--flavor", flavor, "--out", out])
 			;(flavor === "3.1" ? v31 : v30)[surface] = out
 		}
 	}
@@ -158,7 +167,7 @@ async function generatePythonModules(
 	for (const surface of CLIENT_SURFACES) {
 		phase("python-generate", surface)
 
-		run("uvx", [
+		await run("uvx", [
 			"openapi-python-client@0.29",
 			"generate",
 			"--path",
@@ -466,7 +475,7 @@ async function verifyPython(
 
 	phase("python-build", pythonDir.toString())
 	await removePathIfPresent(distDir)
-	run("uv", ["build"], { cwd: pythonDir })
+	await run("uv", ["build"], { cwd: pythonDir })
 
 	const entries = (await pathExists(distDir))
 		? await Globerator.from("*", { cwd: distDir, absolute: false }).toArray()
@@ -487,7 +496,7 @@ async function verifyPython(
 
 	phase("python-import-check", wheelPath)
 
-	run("uv", [
+	await run("uv", [
 		"run",
 		"--no-project",
 		"--with",

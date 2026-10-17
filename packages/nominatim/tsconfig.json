@@ -12,6 +12,7 @@
 	"references": [
 		{ "path": "../sqlite" },
 		{ "path": "../api-kit" },
+		{ "path": "../core" },
 		{ "path": "../ban" },
 		{ "path": "../annotations" },
 		{ "path": "../codex" },

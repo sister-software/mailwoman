@@ -427,6 +427,55 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
+ * The `@mailwoman/core/process` entry points that start a command named by their first argument.
+ */
+const PROCESS_SPAWNERS = new Set([
+	"runFile",
+	"runFileSync",
+	"runProcess",
+	"spawnProcess",
+	"spawnProcessSync",
+	"ProcessTask",
+])
+
+/**
+ * Route git through `@mailwoman/core/git`, whose `GitClient` reports transfer progress
+ * and stops its processes on disposal, and whose `gitSync` serves a synchronous caller.
+ */
+const noRawGitSpawnRule: Rule = {
+	meta: {
+		name: "no-raw-git-spawn",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		const check = (node: AstNode): void => {
+			const callee = node.callee
+
+			if (callee?.type !== "Identifier" || !callee.name) return
+
+			const first = literalDelimiter(node.arguments?.[0])
+
+			const spawnsGit =
+				(PROCESS_SPAWNERS.has(callee.name) && first === "git") ||
+				(callee.name === "runShellSync" && first !== null && /^git(\s|$)/.test(first))
+
+			if (!spawnsGit) return
+
+			context.report({
+				node,
+				message:
+					"Run git through `@mailwoman/core/git`: a `GitClient` method or `client.read(args)` for an async caller, " +
+					"`client.start(args)` for a transfer whose progress a caller renders, or `gitSync(args, { cwd })` " +
+					"for a synchronous one.",
+			})
+		}
+
+		return { CallExpression: check, NewExpression: check }
+	},
+}
+
+/**
  * Package import aliases can resolve a sibling executable without a filesystem path literal.
  *
  * Other module paths use the shared resolver.
@@ -967,6 +1016,7 @@ const mailwomanPlugin: Plugin = {
 		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
 		"no-import-meta-resolve": noImportMetaResolveRule,
+		"no-raw-git-spawn": noRawGitSpawnRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-home": preferHomeRule,

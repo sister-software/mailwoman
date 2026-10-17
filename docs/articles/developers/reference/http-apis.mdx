@@ -2,7 +2,7 @@
 title: HTTP APIs
 description: The native /v1 surface and the three drop-in servers — endpoints, request shapes, error tables, and the emitted OpenAPI documents.
 role: reference
-source-of-truth: api/operations/*.ts, api/routes.ts, api/app.ts, core/geocode/result.ts, api-kit/error.ts, nominatim/routes.ts, photon/routes.ts, libpostal/routes.ts
+source-of-truth: api/operations/*.ts, api/routes.ts, api/app.ts, core/geocode/result.ts, api-kit/error.ts, nominatim/routes.ts, nominatim/format.ts, photon/routes.ts, photon/projection.ts, libpostal/routes.ts
 ---
 
 # HTTP APIs
@@ -269,6 +269,41 @@ one and then fails validation. The body limit is 100 KiB rather than the native 
 Nominatim's `/status` is the one endpoint that answers `200` with no engine method wired, reporting
 `{ "status": 0, "message": "OK" }`. Every other absent method on every surface answers `501`.
 
+## Coordinate provenance and the OpenStreetMap credit
+
+A house-grade coordinate comes from one row of an address-point or interpolation register, and every
+surface that returns a coordinate names that row's provenance stamp verbatim. A row from an
+OpenStreetMap layer reads `openstreetmap:<cc>`, or `openstreetmap:<cc>#recovered` when the street
+recovery pass placed it. A row from any other register reads that register's own stamp, such as
+`overture:NAD`, and never an `openstreetmap:` one. A coordinate from the gazetteer's admin ladder, a
+venue or a plus code names no row.
+
+| Surface   | Where the stamp appears                                                       | Where the OpenStreetMap credit appears                                                             |
+| --------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Native    | `coordinate_source: { source, release }` on each `GeocodeResult`, else `null` | This page, the [attribution page](../../resources/osm/attribution.mdx) and the package README      |
+| Nominatim | `mailwoman.coordinate_source` on each result and each geojson feature         | Appended to that result's `licence` field, where upstream Nominatim states its own credit          |
+| Photon    | `properties.mailwoman.coordinate_source` on the primary feature               | `properties.mailwoman.attribution` on that feature, for a client that draws an attribution control |
+| libpostal | None: `/parse` and `/expand` return parses and expansions, never a coordinate | None: the surface serves no geocode result and no OpenStreetMap data                               |
+
+Each `mailwoman` block is an extension a client of the original server passes over, the same key the
+Nominatim `/status` payload already uses. Nominatim's `format=jsonld` and Photon's `format=jsonld`
+re-serialize a result as a schema.org `Place`, which carries neither the stamp nor the credit.
+
+The credit is:
+
+> © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright
+
+It applies when the operator has built and attached an OpenStreetMap address-point layer. The
+Nominatim and Photon servers, like `mailwoman geocode`, open the layers built under
+`$MAILWOMAN_DATA_ROOT/db/osm/` when `@mailwoman/osm` is installed, and `mailwoman serve` attaches none.
+A deployment without an OpenStreetMap layer serves no OpenStreetMap data, and its results contain
+neither the stamp nor the credit. The OpenStreetMap Foundation's
+[Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline)
+asks a public geocoder that serves OpenStreetMap data to credit OpenStreetMap at the service level, in
+documentation or interface a user can find, rather than on each result. The per-result fields above
+preserve provenance. A public deployment with an OpenStreetMap layer still states the credit in its own
+documentation or interface.
+
 ## OpenAPI
 
 Each server serves its document at `/openapi.json` and each CLI emits it to a file:
@@ -308,3 +343,4 @@ and keep answering `/v1/parse`.
 - [Run the API server](../tutorials/run-the-api-server.mdx) — a server booted, with real responses.
 - [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) — replacing a running deployment.
 - [Use annotations](../how-to/use-annotations.mdx) — the `annotations` block on Nominatim results.
+- [OpenStreetMap attribution](../../resources/osm/attribution.mdx) — what an OpenStreetMap layer obliges a deployment to do.

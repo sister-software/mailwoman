@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/react",
-	"version": "10.5.0",
+	"version": "10.6.0",
 	"description": "React components + headless hooks for mailwoman — parse/geocode/POI explorers, Storybook-tested, Docusaurus-independent.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -79,20 +79,10 @@
 			"node": "./lib/common/KindBadge.tsx",
 			"default": "./out/common/KindBadge.js"
 		},
-		"./search": {
-			"types": "./out/search.d.ts",
-			"node": "./lib/search.ts",
-			"default": "./out/search.js"
-		},
 		"./search/SearchModal": {
 			"types": "./out/search/SearchModal.d.ts",
 			"node": "./lib/search/SearchModal.tsx",
 			"default": "./out/search/SearchModal.js"
-		},
-		"./search/types": {
-			"types": "./out/search/types.d.ts",
-			"node": "./lib/search/types.ts",
-			"default": "./out/search/types.js"
 		},
 		"./map/AppIdentity": {
 			"types": "./out/map/AppIdentity.d.ts",

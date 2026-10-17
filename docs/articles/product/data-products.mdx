@@ -48,9 +48,11 @@ and tens of gigabytes of source data.
 `@mailwoman/un-locode-lookup` publish code to npm and build their own databases locally. No bundle in
 the bucket serves them.
 
-**OpenStreetMap rooftop databases.** Built, and deliberately unpublished — ODbL is share-alike on a
-derived database, and no file goes to npm or the bucket until counsel has reviewed how that applies
-to serving a coordinate from one. Build one and the obligation is yours.
+**OpenStreetMap rooftop databases.** `@mailwoman/osm` publishes the builder to npm as code with no
+OpenStreetMap data in it, and you build each country's database from a Geofabrik extract you download.
+No bundle in the bucket serves one. The database you build is an OpenStreetMap Derivative Database under
+ODbL 1.0, and its share-alike and database-access terms apply to you when you publicly use it. The
+[OpenStreetMap attribution page](../resources/osm/attribution.mdx) states what that asks.
 
 [Build the planet](../developers/tutorials/full-planet-build.mdx)
 
@@ -59,9 +61,10 @@ to serving a coordinate from one. Build one and the obligation is yours.
 Every source is recorded with its license at the point it enters the pipeline, and each built
 artifact includes an `ATTRIBUTION.json` naming the source, release and license behind it. Two items
 matter to a review and are stated in full on the compliance page. The OpenStreetMap **rooftop**
-extracts in `@mailwoman/osm` reach no published artifact. The served `candidate` gazetteer does contain
-a Northern Ireland postcode fold derived from OpenStreetMap under ODbL, 4,757 places measured
-2026-09-27, and what ODbL asks of that is with counsel. And one source's license is recorded
+databases reach no published artifact, because each operator builds them locally with `@mailwoman/osm`.
+The served `candidate` gazetteer does contain a Northern Ireland postcode fold derived from
+OpenStreetMap under ODbL, 4,757 places measured 2026-09-27, and how far ODbL reaches into that file is
+open in [issue #2618](https://github.com/sister-software/mailwoman/issues/2618). And one source's license is recorded
 inconsistently in our own files, so attribute Who's On First until that is settled.
 
 [Data provenance](../about/security-and-compliance.mdx#data-provenance) on the compliance page, and

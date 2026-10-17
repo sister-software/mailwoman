@@ -61,4 +61,14 @@ describe("forwardToResolved", () => {
 			country: "United Kingdom",
 		})
 	})
+
+	it("carries the register row behind the coordinate, verbatim", () => {
+		const osm = result({
+			resolution_tier: "address_point",
+			coordinate_source: { source: "openstreetmap:jp", release: "2026-08-06" },
+		})
+
+		expect(forwardToResolved(osm).coordinateSource).toEqual({ source: "openstreetmap:jp", release: "2026-08-06" })
+		expect(forwardToResolved(result({ coordinate_source: null })).coordinateSource).toBeNull()
+	})
 })

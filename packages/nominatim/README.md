@@ -89,6 +89,29 @@ from a file's timestamp or a record kept alongside. An artifact built without a 
 listed with `"manifest": "absent"` rather than left out. When none of them has one, `data_updated` is omitted
 instead of guessed. A Nominatim client ignores the `mailwoman` key.
 
+## Coordinate provenance and the OpenStreetMap credit
+
+A result whose coordinate came from an address-point or interpolation register names that row under
+the same extension key, verbatim:
+
+```jsonc
+{
+	"licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER; © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright",
+	"mailwoman": { "coordinate_source": { "source": "openstreetmap:nz", "release": "2026-08-06" } },
+}
+```
+
+`serve` opens the OpenStreetMap address-point layers an operator built under
+`$MAILWOMAN_DATA_ROOT/db/osm/` when `@mailwoman/osm` is installed. A result placed by one of those rows
+carries `openstreetmap:<cc>` and appends the credit
+"© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to its `licence`,
+the field upstream Nominatim uses for its own credit. A result from any other register carries that
+register's stamp and the gazetteer credit alone. A deployment without an OpenStreetMap layer serves no
+OpenStreetMap data and never emits either. The OpenStreetMap Foundation's Geocoding Guideline asks a
+public geocoder serving its data for a service-level credit, so a public deployment with a layer
+attached also states the credit in its own documentation or interface. `format=jsonld` carries neither
+field. See the [HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
+
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`

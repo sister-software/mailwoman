@@ -61,5 +61,6 @@ export function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 		lon: r.lon,
 		address,
 		displayName: joinNonEmpty(address.city, address.state, address.postcode, address.country) || r.input,
+		coordinateSource: r.coordinate_source,
 	}
 }

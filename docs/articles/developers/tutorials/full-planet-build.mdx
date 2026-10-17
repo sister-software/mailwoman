@@ -173,91 +173,85 @@ npm. If you are working from a checkout instead, the same file is at
 
 ## 3. Build the same ground from OpenStreetMap
 
-For a country with no open register, OpenStreetMap is the fallback. Two constraints come before the
-command, because both of them stop the step rather than complicate it.
+For a country with no open register, OpenStreetMap is the fallback.
 
-**The license.** OSM is ODbL. ODbL is share-alike on a derived database, and what you build here is a
-derived database. Mailwoman publishes no OSM rooftop database to npm, R2 or the demo, and will not until counsel has
-reviewed how share-alike applies to serving a coordinate from one. If you build one, the obligation is
-yours and it applies to the file.
+**The license.** OpenStreetMap data is published under the Open Database License 1.0 (ODbL), and the
+database you build here is an OpenStreetMap Derivative Database. Mailwoman publishes no OpenStreetMap
+rooftop database to npm, the bucket or the demo. The builder, `@mailwoman/osm`, is on npm as code with no
+OpenStreetMap data in it, and it builds the database on your machine. The ODbL applies to the file you
+build: credit OpenStreetMap where its data is shown, and when you publicly use the database, or a
+database derived from it, offer that database under ODbL to its recipients. The
+[OpenStreetMap attribution page](../../resources/osm/attribution.mdx) states the terms in full.
 
-**The package.** The same review keeps the _builder_ off npm too, so this step cannot run from an install
-the way step 2 did:
+Five countries have a registered street-normalization locale for this path: `de`, `fr`, `gb`, `nl` and
+`nz`. A build that adds another means registering the country and writing its branch in the street
+normalizer in the same commit. That is why the list grows one considered country at a time.
+
+Install the builder and download an extract. The fetch tool dates the file name from the server's
+`Last-Modified` header and writes a receipt beside it with the URL and the SHA-256, which the builder
+records in the database's manifest. The Corsica extract is 34 MB, small enough to finish in seconds:
 
 ```bash
 npm install @mailwoman/osm
+OSM="$(npm root)/@mailwoman/osm/out/tools"
+
+node "$OSM/fetch/extract.js" --region europe/france/corse
+
+node "$OSM/build-rooftop-database.js" \
+  --country fr --slug corse --release 261017 \
+  --created-at 2026-10-17T00:00:00.000Z --build-sha "@mailwoman/osm@10.6.0" \
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-261017.osm.pbf"
 ```
 
-```
-npm error code E404
-npm error 404 Not Found - GET https://registry.npmjs.org/@mailwoman%2fosm - Not found
-npm error 404
-npm error 404  The requested resource '@mailwoman/osm@*' could not be found or you do not have permission to access it.
-```
-
-That is the state today, with no date attached to it. The package is absent from the registry while the
-license review is open, and this page will not guess when that changes. Until it does, the builder comes
-from a checkout:
-
-```bash
-git clone https://github.com/sister-software/mailwoman.git
-cd mailwoman && yarn install && yarn compile
-```
-
-The two `node packages/osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
-back to the npm CLI and does not care where the database was built.
-
-Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. A build that adds
-a fourth means registering the country and writing its branch in the street normalizer in the same commit.
-That is why the list grows one considered country at a time.
-
-Pull an extract and build. The Corsica extract is 34 MB, small enough to finish in seconds:
-
-```bash
-mkdir -p "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik"
-curl -sL -o "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf" \
-  "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
-
-node packages/osm/out/tools/build-rooftop-database.js \
-  --country fr --slug corse --release 260803 \
-  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
-```
+The run below was recorded on 2026-10-17 from a checkout, with the data root's path shown as
+`$MAILWOMAN_DATA_ROOT`. The six license lines the builder prints before and after the build are shown once:
 
 ```
-[osm] building fr/corse rooftop extract from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-corse.db is an OpenStreetMap Derivative Database under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).
+[osm] Credit "© OpenStreetMap contributors" wherever data from it is shown, with a link to https://www.openstreetmap.org/copyright.
+[osm] If you publicly use this database, or a database derived from it, ODbL section 4.4 requires that
+[osm] database to be offered under ODbL, and section 4.6 requires offering it, or a file that reproduces
+[osm] your changes, to its recipients. A geocoding service built on it must credit OpenStreetMap.
+[osm] Individual geocoding results are ordinarily insubstantial extracts under the OSMF Geocoding Guideline.
+[osm] extract https://download.geofabrik.de/europe/france/corse-latest.osm.pbf sha256 9b1bdf6622578f1e48e5fdda8760c108b9cda2eb41877a4196b417c6356e665f
+[osm] building fr/corse rooftop extract from $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-261017.osm.pbf
 [osm] indexing…
-[osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
-      total addr:housenumber features : 15,774
-      written total                    : 8,674  (of which recovered: 0)
-      skipped (no addr:street)         : 7,100  (45.0% raw association gap)
+[osm] DONE $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-corse.db
+      total addr:housenumber features : 15,868
+      written total                    : 8,740  (of which recovered: 0)
+      bilingual streets (one row per form): 0
+      skipped (no addr:street)         : 7,128  (44.9% raw association gap)
       skipped (bad coord)              : 0
-      source                           : openstreetmap:fr  release=260803  recover=false
+      source                           : openstreetmap:fr  release=261017  recover=false
 ```
 
-2.41 s, and the `skipped` line is the one to read. 7,100 of 15,774 house-number features have no
-`addr:street`, so 45.0% of the data is unqueryable as an address. The build counts them instead of
-inventing a street, and that count is the input to the fix: rerun with `--recover` and the builder
-attaches each orphan to the nearest highway with a `name` tag within 30 m.
+The run took 4.81 s of wall time, and the `skipped` line is the one to read. 7,128 of 15,868 house-number
+features have no `addr:street`, so 44.9% of the data is unqueryable as an address. The build counts them
+instead of inventing a street, and that count is the input to the fix: rerun with `--recover` and the
+builder attaches each orphan to the nearest highway with a `name` tag within 30 m.
 
 ```bash
-node packages/osm/out/tools/build-rooftop-database.js \
-  --country fr --slug corse --release 260803 --recover \
-  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
+node "$OSM/build-rooftop-database.js" \
+  --country fr --slug corse --release 261017 --recover \
+  --created-at 2026-10-17T00:00:00.000Z --build-sha "@mailwoman/osm@10.6.0" \
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-261017.osm.pbf"
 ```
 
 ```
-[osm] recovery index: 369,423 highway vertices (radius 30m)
-[osm] building fr/corse rooftop extract from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] extract https://download.geofabrik.de/europe/france/corse-latest.osm.pbf sha256 9b1bdf6622578f1e48e5fdda8760c108b9cda2eb41877a4196b417c6356e665f
+[osm] recovery index: 370,848 highway vertices (radius 30m)
+[osm] building fr/corse rooftop extract from $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-261017.osm.pbf
 [osm] indexing…
-[osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
-      total addr:housenumber features : 15,774
-      written total                    : 14,714  (of which recovered: 6,040)
-      skipped (no addr:street)         : 1,060  (6.7% raw association gap)
+[osm] DONE $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-corse.db
+      total addr:housenumber features : 15,868
+      written total                    : 14,803  (of which recovered: 6,063)
+      bilingual streets (one row per form): 0
+      skipped (no addr:street)         : 1,065  (6.7% raw association gap)
       skipped (bad coord)              : 0
-      source                           : openstreetmap:fr  release=260803  recover=true
+      source                           : openstreetmap:fr  release=261017  recover=true
 ```
 
-3.32 s, 6,040 points recovered, and the gap falls from 45.0% to 6.7%. The recovered rows have
+The run took 9.72 s, recovered 6,063 points, and the gap falls from 44.9% to 6.7%. The recovered rows have
 `openstreetmap:fr#recovered` in their `source` column rather than `openstreetmap:fr`, so a consumer that
 does not trust a geometric guess can filter them out with one predicate.
 

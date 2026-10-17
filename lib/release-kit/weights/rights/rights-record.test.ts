@@ -339,6 +339,125 @@ describe("readWeightsRightsRecords", () => {
 		}
 	})
 
+	it("prints a card's data-access offer and repeats it for an overlay of that graph", async () => {
+		const offer = {
+			license: "ODbL-1.0",
+			provision: "ODbL 1.0 section 4.6(a)",
+			sources: ["osm-fixture"],
+			url: "https://example.org/extract",
+			manifest_url: "https://example.org/extract/MANIFEST.json",
+			statement: "The fixture extract",
+		}
+
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "9.1.0", training: { data_access_offers: [offer] } },
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0" },
+			},
+		])
+
+		try {
+			const [graph, overlay] = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			expect(renderProvenance(graph!).data_access_offers).toEqual([offer])
+			expect(renderLicenseFile(graph!)).toContain("https://example.org/extract/MANIFEST.json")
+
+			// The overlay's own card records no offer.
+			// The offer it prints is the base's, under inherited_lineage.
+			expect(renderProvenance(overlay!).data_access_offers).toEqual([])
+			expect(renderProvenance(overlay!).inherited_lineage?.data_access_offers).toEqual([offer])
+			expect(renderLicenseFile(overlay!)).toContain("## Access to the training data")
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("refuses an offer missing a field rather than printing no offer", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "9.1.0", training: { data_access_offers: [{ license: "ODbL-1.0", sources: ["osm"] }] } },
+			},
+		])
+
+		try {
+			await expect(readWeightsRightsRecords(tree.root, ["packages/neural-weights-graph"])).rejects.toThrow(
+				/data_access_offers\[0\]\.provision/
+			)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("keeps an overlay's own inputs unattributed when its card credits only the base graph's OpenStreetMap data", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: [],
+				},
+				card: { version: "9.1.0", training: { data_attribution: ["OpenStreetMap contributors (ODbL-1.0): rows."] } },
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0", attribution: ["OpenStreetMap contributors (ODbL-1.0): through the base graph."] },
+			},
+		])
+
+		try {
+			const records = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			const document = renderProvenance(records[1]!)
+
+			expect(document.training_attribution.status).toBe("recorded")
+
+			expect(document.unresolved).toContain(
+				"This package's model card attributes only the OpenStreetMap data behind @mailwoman/neural-weights-graph's graph. It ships 1 artifacts and no model graph, so its own inputs are unattributed here."
+			)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
 	it("reports a base outside the set as unresolved rather than as an empty lineage", async () => {
 		const tree = await treeWith([
 			{
@@ -505,7 +624,8 @@ describe("the records this repository holds today", () => {
 		// installs only the overlay receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
-		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])
+		// The second entry is the OpenStreetMap credit the overlay owes through the base graph it decodes through.
+		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0", "ODbL-1.0"])
 		expect(gb?.attribution[0]?.text).toContain("pair-index-gb.bin")
 	})
 

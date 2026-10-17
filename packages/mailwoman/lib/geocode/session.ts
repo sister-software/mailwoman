@@ -14,7 +14,6 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import {
-	type RegionDatabaseProvider,
 	type RegionDatabases,
 	type ResolveNodeTrace,
 	type Resolver,
@@ -39,6 +38,7 @@ import {
 } from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
+import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
@@ -538,14 +538,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
 	}
 
-	let osmProvider: RegionDatabaseProvider | null = null
-
-	try {
-		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
-		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
-	} catch {
-		osmProvider = null
-	}
+	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
+	const osmProvider = await openOSMRegionDatabases(options.dataRoot)
 
 	const optionalProvidersLoadedAt = performance.now()
 

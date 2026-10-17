@@ -70,6 +70,13 @@ its obligations are unknown rather than absent:
 - `Synthetic rendering of reviewed postal facts — Universal Postal Union; source terms recorded in reviewed-ve-postcode-tuples.json`: reviewed-postcode-tail
 - `TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails`: invented-intersection
 
+## Access to the training data
+
+The license of these training databases requires that the recipients of a work produced from them be offered
+the databases, so each is published in machine-readable form under its own license:
+
+- The OpenStreetMap-derived training extracts of corpus v0.7.2-address-systems, as the 29 parquet files the trainer read (2,572,934 rows), © OpenStreetMap contributors (`ODbL-1.0`, ODbL 1.0 section 4.6(a): osm-ru, osm-cn, osm-in, osm-id, osm-ng, osm-vn, osm-pk, osm-bd, osm, rendered-pk-register, rendered-bd-register): https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. Files, rows and sha256 digests: https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/db2f338af5f95f84d6511bbb120ec4576234d141/MANIFEST.json
+
 ## Where the sources are recorded
 
 `PROVENANCE.json` in this package records, per artifact, what the repository holds about its

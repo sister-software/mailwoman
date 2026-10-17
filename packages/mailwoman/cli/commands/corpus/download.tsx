@@ -12,6 +12,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { runProcess } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
@@ -51,17 +52,26 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 	}
 
 	useCommandTask(async () => {
-		const { $ } = await import("zx")
-
 		const rcloneBase = `:s3:${options.bucket}`
-		const dryFlag = options.dryRun ? "--dry-run" : ""
+		const dryFlag = options.dryRun ? ["--dry-run"] : []
 		const out = options.outDir
 
 		// Step 0: Download v0.3.0 corpus
 		updateStep(0, { status: "running" })
 
 		try {
-			await $`rclone sync ${rcloneBase}/corpus/v0.3.0/ ${out}/corpus/versioned/v0.3.0/corpus-v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
+			await runProcess("rclone", [
+				"sync",
+				`${rcloneBase}/corpus/v0.3.0/`,
+				`${out}/corpus/versioned/v0.3.0/corpus-v0.3.0/`,
+				"--progress",
+				"--transfers",
+				"8",
+				"--checkers",
+				"16",
+				...dryFlag,
+			])
+
 			updateStep(0, { status: "done" })
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>
@@ -74,7 +84,16 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 		updateStep(1, { status: "running" })
 
 		try {
-			await $`rclone sync ${rcloneBase}/corpus/v0.4.0/ ${out}/corpus/versioned/v0.4.0/corpus-v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
+			await runProcess("rclone", [
+				"sync",
+				`${rcloneBase}/corpus/v0.4.0/`,
+				`${out}/corpus/versioned/v0.4.0/corpus-v0.4.0/`,
+				"--progress",
+				"--transfers",
+				"4",
+				...dryFlag,
+			])
+
 			updateStep(1, { status: "done" })
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>
@@ -87,7 +106,14 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 		updateStep(2, { status: "running" })
 
 		try {
-			await $`rclone sync ${rcloneBase}/models/tokenizer/ ${out}/models/tokenizer/ --progress ${dryFlag}`.quiet()
+			await runProcess("rclone", [
+				"sync",
+				`${rcloneBase}/models/tokenizer/`,
+				`${out}/models/tokenizer/`,
+				"--progress",
+				...dryFlag,
+			])
+
 			updateStep(2, { status: "done" })
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>
@@ -100,7 +126,7 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 		updateStep(3, { status: "running" })
 
 		try {
-			await $`rclone sync ${rcloneBase}/corpus-python/ ./corpus-python/ --progress ${dryFlag}`.quiet()
+			await runProcess("rclone", ["sync", `${rcloneBase}/corpus-python/`, "./corpus-python/", "--progress", ...dryFlag])
 			updateStep(3, { status: "done" })
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>

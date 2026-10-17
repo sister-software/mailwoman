@@ -5,9 +5,10 @@ The repository also contains 73 scoped `@mailwoman/*` packages. The root `worksp
 75 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-one workspaces publish to npm. `.release-it.json` defines that set. Thirteen workspaces are private,
-and `packages/osm` remains unpublished pending ODbL counsel sign-off. Run the workspace check described
-in `lib/release-kit/AGENTS.md` after adding or moving a workspace.
+Sixty-two workspaces publish to npm. `.release-it.json` defines that set, and the thirteen others are
+private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
+audit refuse a tarball that ships a data file. Run the workspace check described in
+`lib/release-kit/AGENTS.md` after adding or moving a workspace.
 
 Every `packages/*` workspace keeps its library under `lib/`, with each test beside the module it covers.
 A workspace may add up to three more source roots, `sdk/`, `tools/` and `cli/`, described under

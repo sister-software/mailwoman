@@ -13,7 +13,8 @@ import { isIdentical } from "@mailwoman/core/identical"
 import type { RequiredAttribution } from "@mailwoman/corpus/source-register"
 
 import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
-import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"
+import { declaresOpenStreetMapAttribution } from "#release-kit/weights/rights/osm-ancestry"
+import type { AttributionRecord, DataAccessOffer, WeightsRightsRecord } from "#release-kit/weights/rights/record"
 
 /**
  * The name of the generated obligations file inside a weights workspace.
@@ -58,6 +59,10 @@ export interface ProvenanceDocument {
 		 * Empty when the base has no such manifest.
 		 */
 		required_attributions: RequiredAttributionEntry[]
+		/**
+		 * The base's data-access offers, repeated for the same consumer.
+		 */
+		data_access_offers: DataAccessOfferEntry[]
 		unresolved: string | null
 	} | null
 	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
@@ -148,8 +153,38 @@ export interface ProvenanceDocument {
 	 * `null` when no effective training manifest is committed for the corpus the card records.
 	 */
 	required_attributions: RequiredAttributionEntry[] | null
+	/**
+	 * Where a recipient obtains training data whose license requires an offer of access to the recipients
+	 * of a work produced from it, such as the ODbL's section 4.6 offer of the Derivative Database.
+	 *
+	 * Empty when the card records no offer.
+	 */
+	data_access_offers: DataAccessOfferEntry[]
 	tokenizer_version: string | null
 	unresolved: string[]
+}
+
+/**
+ * One data-access offer as the provenance document prints it.
+ */
+interface DataAccessOfferEntry {
+	license: string
+	provision: string
+	sources: string[]
+	url: string
+	manifest_url: string
+	statement: string
+}
+
+function dataAccessOfferEntries(offers: readonly DataAccessOffer[]): DataAccessOfferEntry[] {
+	return offers.map((offer) => ({
+		license: offer.license,
+		provision: offer.provision,
+		sources: [...offer.sources],
+		url: offer.url,
+		manifest_url: offer.manifestURL,
+		statement: offer.statement,
+	}))
 }
 
 /**
@@ -202,6 +237,12 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 			record.inherited?.attribution.length
 				? `This package's model card records no training attribution of its own. It ships ${record.artifacts.length} artifacts and no model graph, so its own inputs are unattributed here while the ${record.inherited.attribution.length} entries under inherited_lineage describe ${record.inherited.package}'s graph.`
 				: "This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs."
+		)
+	} else if (record.inherited && record.attribution.every((entry) => declaresOpenStreetMapAttribution([entry]))) {
+		// An overlay ships no graph, so its OpenStreetMap entry credits the base graph it decodes
+		// through, and the card still attributes none of the artifacts the overlay itself ships.
+		questions.push(
+			`This package's model card attributes only the OpenStreetMap data behind ${record.inherited.package}'s graph. It ships ${record.artifacts.length} artifacts and no model graph, so its own inputs are unattributed here.`
 		)
 	}
 
@@ -310,6 +351,7 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 						license_named: entry.licenseNamed,
 					})),
 					required_attributions: requiredAttributionEntries(record.inherited.requiredAttributions),
+					data_access_offers: dataAccessOfferEntries(record.inherited.dataAccessOffers),
 					unresolved: record.inherited.unresolved,
 				}
 			: null,
@@ -374,6 +416,7 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 		required_attributions: record.effectiveTraining
 			? requiredAttributionEntries(record.effectiveTraining.requiredAttributions)
 			: null,
+		data_access_offers: dataAccessOfferEntries(record.dataAccessOffers),
 		tokenizer_version: record.tokenizerVersion,
 		unresolved: unresolvedQuestions(record),
 	}
@@ -457,6 +500,33 @@ function renderAttributionLists(attributions: readonly RequiredAttribution[]): s
 }
 
 /**
+ * The section naming where the training data a license requires be offered is published,
+ * or an empty string when neither the card nor the base's card records an offer.
+ *
+ * An overlay repeats its base's offers, because a consumer of the overlay alone
+ * receives rows decoded through the graph those databases trained.
+ */
+function renderDataAccessSection(record: WeightsRightsRecord): string {
+	const offers = record.dataAccessOffers.length ? record.dataAccessOffers : (record.inherited?.dataAccessOffers ?? [])
+
+	if (!offers.length) return ""
+
+	return [
+		"## Access to the training data",
+		"",
+		"The license of these training databases requires that the recipients of a work produced from them be offered",
+		"the databases, so each is published in machine-readable form under its own license:",
+		"",
+		...offers.map(
+			(offer) =>
+				`- ${offer.statement} (\`${offer.license}\`, ${offer.provision}: ${offer.sources.join(", ")}): ${offer.url}. Files, rows and sha256 digests: ${offer.manifestURL}`
+		),
+		"",
+		"",
+	].join("\n")
+}
+
+/**
  * Whether a committed provenance document equals the one this record renders, compared as
  * parsed JSON rather than text so the repository formatter may lay the file out as it likes.
  */
@@ -498,7 +568,7 @@ components continues to apply and is not waived or relicensed by a commercial ag
 
 ${renderAttributionSection(record)}
 
-## Where the sources are recorded
+${renderDataAccessSection(record)}## Where the sources are recorded
 
 \`${PROVENANCE_FILE}\` in this package records, per artifact, what the repository holds about its
 inputs and which questions it cannot answer. Read it as the record it is: a package with no recorded

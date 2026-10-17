@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "10.5.0",
+	"version": "10.6.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -260,21 +260,24 @@
 		"path-ts": "^2.5.0",
 		"react": "^19.3.0",
 		"spliterator": "^9.2.1",
-		"zod": "^4.6.5",
-		"zx": "^8.8.5"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.6-r.1"
+		"@duckdb/node-api": "1.5.6-r.1",
+		"@mailwoman/osm": "workspace:*"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {
 			"optional": true
 		},
 		"@inkjs/ui": {
+			"optional": true
+		},
+		"@mailwoman/osm": {
 			"optional": true
 		},
 		"ink": {

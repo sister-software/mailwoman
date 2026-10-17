@@ -10,7 +10,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { workingTreeFiles } from "@mailwoman/core/git"
+import { GitClient, workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -207,11 +207,7 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 }
 
 async function stagedPaths(): Promise<string[]> {
-	const result = await runFile("git", ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"], {
-		cwd: repoRootPathBuilder,
-	})
-
-	return result.stdout.split("\0").filter((path) => path.length > 0)
+	return new GitClient().readNulDelimited(["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"])
 }
 
 async function lint(surface: Surface, narrowing: readonly string[], staged: boolean) {

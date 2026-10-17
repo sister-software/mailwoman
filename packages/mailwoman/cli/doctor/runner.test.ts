@@ -35,6 +35,7 @@ function healthyDeps(): DoctorDeps {
 		}),
 		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
 		layerAlternates: async () => [],
+		addressPointDatabases: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
 		licenseKey: async () => null,
 		confirmLicenseKeyPublished: async () => "unreachable",
@@ -419,6 +420,49 @@ describe("runDoctor (injected boundaries)", () => {
 		expect(check.status).toBe(CheckStatus.Degraded)
 		expect(check.license?.recognized).toBe(false)
 		expect(unasserted.exitCode).toBe(0)
+	})
+
+	it("reports an OpenStreetMap address-point database with its credit and the share-alike terms", async () => {
+		const osmPath = "/data/db/osm/address-points-nz-nz.db"
+
+		const report = await runDoctor({
+			...healthyDeps(),
+			addressPointDatabases: async () => [
+				{ id: "address-points-nz-nz", label: "Address points (address-points-nz-nz)", path: osmPath },
+			],
+			readLayerIdentity: async (path) =>
+				path === osmPath
+					? {
+							name: "osm-address-points-nz-nz",
+							version: "260806",
+							sourceVintage: "2026-08-06",
+							license: "ODbL-1.0",
+							attribution: "© OpenStreetMap contributors",
+						}
+					: {
+							name: "poi",
+							version: "2026-07-20a",
+							sourceVintage: "2026-07",
+							license: "CDLA-Permissive-2.0",
+							attribution: "Overture Maps Foundation",
+						},
+			refusedObligations: () => ["share-alike"],
+		})
+
+		const license = byID(report.checks, "license-address-points-nz-nz")
+
+		expect(license.status).toBe(CheckStatus.OK)
+		expect(license.detail).toContain("ODbL-1.0 · obligations: attribution, share_alike")
+		expect(license.consequence).toContain('Credit "© OpenStreetMap contributors"')
+		expect(license.consequence).toContain("offered under the same terms")
+
+		// The POI layer records a permissive license, so the notice is specific to share-alike layers.
+		expect(byID(report.checks, "license-poi").consequence).toBeNull()
+
+		const posture = byID(report.checks, "obligation-posture")
+
+		expect(posture.status).toBe(CheckStatus.Degraded)
+		expect(posture.detail).toContain("address-points-nz-nz: ODbL-1.0 carries share-alike")
 	})
 
 	it("Poi.db present but manifest unreadable → degraded (not a hard error)", async () => {

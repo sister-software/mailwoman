@@ -8,15 +8,17 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { trackedFiles } from "@mailwoman/core/git"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isPresent } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
-import { $ } from "zx"
 
-import { literalFilesEntries, verifyTarball } from "#release-kit/pack/verify-tarball"
+import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
+import { collectDataFileEntries, literalFilesEntries, verifyTarball } from "#release-kit/pack/verify-tarball"
 import {
 	assertWorkspacePublishable,
 	checkReleaseListIdentity,
@@ -29,14 +31,14 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 61 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 62 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(repoRootPath())
 
-		expect(identity.publishCount).toBe(61)
+		expect(identity.publishCount).toBe(62)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(14)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(13)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {
@@ -69,25 +71,23 @@ describe("checkReleaseListIdentity", () => {
 })
 
 describe("assertWorkspacePublishable", () => {
-	it("refuses packages/osm and quotes the rights reason it is held for", () => {
-		expect(() => assertWorkspacePublishable("packages/osm")).toThrow(/ODbL counsel sign-off pending/)
+	it("refuses a held-out workspace and quotes the reason it is held for", () => {
+		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(/held out of the release/)
+		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(/private demo-map tile worker/)
 	})
 
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
 		// `@release-it-plugins/workspaces` passes `./<workspace>`
 		// through RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE.
 		// A literal key check would admit that spelling while refusing the bare one.
-		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
-		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
-	})
-
-	it("refuses a private workspace as well, so one rule covers every entry", () => {
-		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(/held out of the release/)
+		expect(() => assertWorkspacePublishable("./packages/tile-worker")).toThrow(/held out of the release/)
+		expect(() => assertWorkspacePublishable("./packages/tile-worker/")).toThrow(/held out of the release/)
 	})
 
 	it("admits a workspace the release list names", () => {
 		expect(() => assertWorkspacePublishable("./packages/neural-weights-en-us")).not.toThrow()
 		expect(() => assertWorkspacePublishable("packages/core")).not.toThrow()
+		expect(() => assertWorkspacePublishable("packages/osm")).not.toThrow()
 	})
 })
 
@@ -112,7 +112,7 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 
 		const tarball = dir("fixture.tgz")
 
-		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
+		const packed = await runProcess("tar", ["czf", tarball, "-C", dir, "package"], { reject: false })
 
 		if (packed.exitCode !== 0) {
 			throw new Error(`tar czf failed: ${packed.stderr}`)
@@ -164,6 +164,49 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 		expect(audit.literalFiles).toBe(1)
 		expect(audit.exportTargets).toBe(1)
 	})
+
+	it("refuses data files in a package that declares mailwoman.codeOnly, listing each one", async () => {
+		const tarball = await tarballWith(
+			{
+				name: "@fixture/code-only",
+				version: "0.0.0",
+				mailwoman: { codeOnly: true },
+			},
+			["out/index.js", "fixtures/address-point.osm", "address-points-nz-nz.db", "points.geojson"]
+		)
+
+		expect(() => verifyTarball(tarball)).toThrow(/declares mailwoman\.codeOnly and ships data files/)
+		expect(() => verifyTarball(tarball)).toThrow(/fixtures\/address-point\.osm/)
+		expect(() => verifyTarball(tarball)).toThrow(/address-points-nz-nz\.db/)
+		expect(() => verifyTarball(tarball)).toThrow(/points\.geojson/)
+	})
+
+	it("admits the same data files in a package that makes no code-only declaration", async () => {
+		const tarball = await tarballWith({ name: "@fixture/data-package", version: "0.0.0" }, ["points.geojson"])
+
+		expect(() => verifyTarball(tarball)).not.toThrow()
+	})
+})
+
+describe("the packed @mailwoman/osm tarball", () => {
+	it("declares itself code-only and ships no OpenStreetMap, SQLite or GeoJSON file", async () => {
+		const workspace = repoRootPathBuilder("packages", "osm")
+		const manifest = await readPackageJSON<{ mailwoman?: { codeOnly?: boolean } }>(workspace("package.json"))
+
+		expect(manifest.mailwoman?.codeOnly).toBe(true)
+
+		const dir = fixtures.use(await temporaryDirectory("mw-osm-pack-")).path
+		const tarball = dir("osm.tgz")
+
+		await packWorkspaceForPublish(workspace, tarball)
+
+		const listing = await runProcess("tar", ["-tzf", tarball])
+		const entries = TextSpliterator.from(listing.stdout).filter(isPresent).toArray()
+
+		expect(entries.length).toBeGreaterThan(0)
+		expect(collectDataFileEntries(entries)).toEqual([])
+		expect(() => verifyTarball(tarball)).not.toThrow()
+	})
 })
 
 describe("the Hugging Face materialization plan", () => {
@@ -178,10 +221,8 @@ describe("the Hugging Face materialization plan", () => {
 		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
 	}
 
-	function trackedPaths(): Set<string> {
-		const listing = $.sync({ cwd: repoRoot })`git ls-files -- packages`
-
-		return TextSpliterator.from(listing.stdout).filter(isPresent).toSet()
+	async function trackedPaths(): Promise<Set<string>> {
+		return new Set(await trackedFiles(repoRoot, ["--", "packages"]))
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
@@ -195,7 +236,7 @@ describe("the Hugging Face materialization plan", () => {
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
 		// The manifests and the git listing are read here independently of the recipe, so a planner
 		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
-		const tracked = trackedPaths()
+		const tracked = await trackedPaths()
 
 		const planned = new Set(
 			(await planWeightsMaterialization(repoRoot)).map((plan) => `${plan.workspace}/${plan.filename}`)
@@ -222,7 +263,7 @@ describe("the Hugging Face materialization plan", () => {
 		// The other direction: a recipe that materialized `model-card.json`
 		// or `calibration.json` would overwrite committed content in the checkout on the
 		// publish path, where the destination root is the checkout.
-		const tracked = trackedPaths()
+		const tracked = await trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))
 			.map((plan) => `${plan.workspace}/${plan.filename}`)
@@ -244,12 +285,8 @@ describe("the pair-index parity selector", () => {
 		expect(script).toBeDefined()
 
 		const filter = script!.split(/\s+/).at(-1)!
-		const listing = $.sync({ cwd: repoRoot })`git ls-files`
 
-		const matches = TextSpliterator.from(listing.stdout)
-			.filter(isPresent)
-			.filter((path) => path.endsWith(".test.ts") && path.includes(filter))
-			.toArray()
+		const matches = (await trackedFiles(repoRoot)).filter((path) => path.endsWith(".test.ts") && path.includes(filter))
 
 		expect(matches.length).toBeGreaterThan(0)
 	})
