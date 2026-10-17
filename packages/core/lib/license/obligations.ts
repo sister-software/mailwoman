@@ -60,6 +60,13 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["CC-BY-4.0", [LicenseObligation.Attribution]],
 	["CC0-1.0", []],
 	["PDDL-1.0", []],
+	// The Datenlizenz Deutschland pair.
+	// Zero permits any use without restrictions or conditions.
+	// Namensnennung requires a source note naming the provider, the license and the dataset URI.
+	// It also requires a mark on changed data.
+	// Both texts are retained at internal/strategy/rights-receipts/address-skeletons-2026-10-17/.
+	["DL-DE-ZERO-2.0", []],
+	["DL-DE-BY-2.0", [LicenseObligation.Attribution]],
 	// US Government works have no copyright under 17 U.S.C. § 105. SPDX has no identifier for them, so this
 	// `LicenseRef` is defined in docs/engineering/reference/layer-interface.mdx.
 	["LicenseRef-USGov-Public-Domain", []],

@@ -1718,6 +1718,150 @@
 					"because": "CC BY 3.0 AU §4A states 'You are not granted the right to sublicense the Work.' A recipient takes their rights from the licensor under §9 rather than from this repository."
 				}
 			}
+		},
+		"unchecked-access-free-gb-gb-property-building-1": {
+			"state": "refused",
+			"publisherStatement": "Free",
+			"retrievedCopy": "internal/strategy/rights-receipts/address-skeletons-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "HM Land Registry licenses Price Paid Data in two parts, and the part this repository reads is the restricted one. The download page, `https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads`, 129,747 bytes, sha256 `1f3aab231a5a27359dd7ef94c39970eed918395626e7b9f267fafca2282f89f3`, states `Price Paid Data is released under the Open Government Licence (OGL)` with the attribution `Contains HM Land Registry data © Crown copyright and database right 2021. This data is licensed under the Open Government Licence v3.0.`, and then: `However, OGL does not cover the use of third party rights, which we are not authorised to license. Price Paid Data contains address data processed against Ordnance Survey’s AddressBase Premium product, which incorporates Royal Mail’s PAF® database (Address Data). Royal Mail and Ordnance Survey permit your use of Address Data in the Price Paid Data: for personal and/or non-commercial use; to display for the purpose of providing residential property price information services. If you want to use the Address Data in any other way, you must contact Royal Mail.` The same page defines the Address Data as `Postcode`, `PAON`, `SAON`, `Street`, `Locality`, `Town/City`, `District` and `County`. Those eight fields are every field this repository takes from the file: the house number, street, locality, county and postcode of a Great Britain address skeleton. OGL v3.0 itself, `https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/`, 10,450 bytes, sha256 `f5b2b9f2af63647cde889fa6c3508f5705925295b74912c68caa28dd37e64aa5`, excludes `third party rights the Information Provider is not authorised to license`. Training a general-purpose address parser, publishing rows that carry these fields, and shipping an index built from them are neither personal nor non-commercial use, and none of them displays residential property prices, so the OGL grant reaches the price, date and property-type columns and not the address. The route to permission is Royal Mail, at the `address.management@royalmail.com` address the page names. The guidance page `https://www.gov.uk/guidance/about-the-price-paid-data`, 130,925 bytes, sha256 `1ec6dda91071cf30490b6077e212bfc6938c330645d391a59c2ec24a54d6e704`, states that `Addresses used by HM Land Registry to describe land are mostly derived from Royal Mail address data`, which agrees. This is the reading MHCLG's energy performance notice gave for `gb-property-building-2`, from a second publisher whose address fields pass through the same AddressBase Premium match."
+		},
+		"unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u": {
+			"state": "elected",
+			"electedTerms": "Datenlizenz Deutschland – Zero – Version 2.0",
+			"spdx": "DL-DE-ZERO-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/address-skeletons-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher's dataset record grants the Zero licence. OpenAddresses' source record `sources/de/berlin.json`, 3,506 bytes, sha256 `8dd97bcfaa31e78db99965ad7eb45c7e8a7108d2bfe4eaf930a067e3ac7dfe77`, names `DL-DE->Zero-2.0` with `\"attribution\": false` and links the Geoportal Berlin service record `796582aa-dbfc-3fa5-9aa6-2846306fc185`, `Adressen Berlin Dienst`, 31,049 bytes, sha256 `3b485e5bee17a955d5725788958eb70220126a93176d9ab2f8d0a0270e19e740`. That record's `operatesOn` resolves through `registry.gdi-de.org` to the dataset record `47500aa2-b511-4167-8da6-da80e32dfbc9`, `Adressen Berlin`, hierarchy level `dataset`, 39,976 bytes, sha256 `d011c885982e786673d241b8ccee95c37c741296f0aa74a0d78ee8ee9ae3bf9b`, whose `otherConstraints` read `Für die Nutzung der Daten ist die Datenlizenz Deutschland - Zero - Version 2.0 anzuwenden.` and whose points of contact are the Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen and the Amt für Statistik Berlin-Brandenburg. Berlin's open-data register lists `Hauskoordinaten als Teildatenbestand Adressen Berlin` under `dl-de-zero-2.0` as well. The licence text, `https://www.govdata.de/dl-de/zero-2-0`, 30,768 bytes, sha256 `4db34493da3969ffca2112cbfb27737b7fbe756691b2fcc35e9ff3d181acafba`, states `Jede Nutzung ist ohne Einschränkungen oder Bedingungen zulässig.` **The copy this repository read is older than the record.** The file is the `de/berlin.csv` member of OpenAddresses' `europe.zip`, downloaded in 2021, and OpenAddresses' source record at that time (commit `83db4b816d`, 2020-08-22, 1,341 bytes, sha256 `a1c25626797bab558ad5cfab19944da92e866da7305dd6c992c1743739bb595f`) named `Nutzungsbestimmungen Geoportal Berlin` at `http://www.stadtentwicklung.berlin.de/geoinformation/download/nutzIII.pdf` with attribution required. That URL now answers HTTP 403 and redirects to `https://www.berlin.de/sen/stadt/`, so the earlier instrument cannot be read. The election rests on the publisher's present grant over the same dataset, which names no edition and excludes none. The publisher's suggested credit is `Geoportal Berlin / Hauskoordinaten Berlin`, and the licence requires none.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the data to be `vervielfältigt` and `an Dritte übermittelt`, copied and transmitted, with no condition, which covers downloading the archive."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the data to be `verändert, bearbeitet`, altered and processed, which covers reading the house-number, street, postcode and locality columns out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Item 2 permits the data to be `mit eigenen Daten und Daten Anderer zusammengeführt und zu selbständigen neuen Datensätzen verbunden`, merged with other data into new datasets, which is what rendering a row into this repository's components does."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Jede Nutzung ist ohne Einschränkungen oder Bedingungen zulässig`, for commercial and non-commercial use, and item 3 names integration into products and applications. Fitting a model is a use the sentence covers without exception."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Item 1 permits transmission to third parties, and the licence attaches no attribution or other condition to it. Crediting `Geoportal Berlin / Hauskoordinaten Berlin` is good practice and nothing in the text requires it."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Whether trained weights are a derivative of the rows does not change the answer, because every use is permitted without condition and item 3 names integration into public products and applications."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence is made to the public, permits commercial use and transmission to third parties, and places no condition on either, so a commercial recipient holds the same grant from the publisher and no right needs sublicensing."
+				}
+			}
+		},
+		"unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo": {
+			"state": "elected",
+			"electedTerms": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+			"spdx": "DL-DE-BY-2.0",
+			"termsVersion": "2.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/address-skeletons-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher states the grant three times and each statement agrees. The dataset record `1cf02f99-3e1c-471e-b2a3-573e2d345c18`, `Amtliche Hauskoordinaten Sachsen`, 23,512 bytes, sha256 `3a3958689ccf64890c2e805a6d3644c4fbbc2ce7240b04e4558cd0e7e9089e12`, reads in `otherConstraints`: `Dieser Datensatz kann gemäß den Nutzungsbestimmungen von Datenlizenz Deutschland – Namensnennung – Version 2.0 (https://www.govdata.de/dl-de/by-2-0) unter Angabe der Quelle: GeoSN genutzt werden.` Its `useLimitation` quotes § 13 SächsVermKatG, under which the data may be copied, published or passed on only with the surveying authority's permission. GeoSN's general terms of use, `https://www.landesvermessung.sachsen.de/allgemeine-nutzungsbedingungen-8954.html`, 49,890 bytes, sha256 `7bb830370b6035669a1e865850c64d2141aa8bd71d9c86962115f0a55fed7999`, give that permission: under § 1 Nr. 3 SächsGDNutzVO the authority `erteilt … eine Erlaubnis zur Nutzung, die eine uneingeschränkte Weiterverwendung der Informationen durch jedermann ermöglicht. … Die Erlaubnis entspricht dem Lizenzmuster der Datenlizenz Deutschland – Namensnennung – Version 2.0 unter Angabe des Quellenvermerks \"Landesamt für Geobasisinformation Sachsen (GeoSN)\" oder kurz \"GeoSN\"`, with the example `Quelle: GeoSN, dl-de/by-2-0`. The same terms restrict cadastral map presentations and owner data, which this file does not contain. GovData's DCAT entry for the same dataset, publisher `Landesamt für Geobasisinformation Sachsen (GeoSN)`, gives `http://dcat-ap.de/def/licenses/dl-by-de/2.0` with `licenseAttributionByText` `Quelle: GeoSN` on each resource. The download page itself, 47,023 bytes, sha256 `a70084b182fa4d978f1d92dddb059e9d7e625eb8e225ec56504c641e4c5ed82e`, states only that the file is free of charge. OpenAddresses' source record `sources/de/sn/statewide.json`, 1,618 bytes, sha256 `352531a9212d9fc22bc042998dbe376b8980970cfc27f5d3b0236ccb1cf7ddd4`, names `dl-de/by-2-0` with the attribution `Staatsbetrieb Geobasisinformation und Vermessung Sachsen`, the agency's earlier name, and stated the same licence at commit `83db4b816d` in 2020, before the `europe.zip` copy this repository read was downloaded. The credit to use is GeoSN's own form rather than OpenAddresses'.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (1) of the licence permits the data to be `vervielfältigt` and `an Dritte übermittelt` for commercial and non-commercial use, which covers downloading the archive."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (1) permits the data to be `verändert, bearbeitet`, which covers reading the house-number, street, postcode and locality columns out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (1) permits merging the data with other data into new datasets, and clause (3) requires that changes be marked in the source note: `Veränderungen, Bearbeitungen, neue Gestaltungen oder sonstige Abwandlungen sind im Quellenvermerk mit dem Hinweis zu versehen, dass die Daten geändert wurden.`"
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Jede Nutzung ist unter den Bedingungen dieser „Datenlizenz Deutschland – Namensnennung – Version 2.0“ zulässig`, commercial use included, and the only conditions are the source note in clause (2) and the change mark in clause (3)."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (1) permits transmission to third parties. Clause (2) requires the source note to name the provider in its own form, the licence as `dl-de/by-2-0` with a link to `www.govdata.de/dl-de/by-2-0`, and the dataset URI, and clause (3) requires the note to say the data were changed. GeoSN's form is `Quelle: GeoSN, dl-de/by-2-0`."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (1) names integration into products and applications in public networks among the permitted uses. Whether or not trained weights are a changed form of the data, the use is permitted, and the clause (2) source note travels with the weights in their rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence is made to the public, permits commercial use and transmission to third parties, and contains no clause against sublicensing. A commercial recipient holds the same grant from GeoSN on the same source-note condition, which the agreement must pass on."
+				}
+			}
+		},
+		"unchecked-access-free-es-instituto-geogr-fico-nacional": {
+			"state": "elected",
+			"electedTerms": "Licencia de uso de los productos y servicios de datos geográficos del IGN (CC BY 4.0)",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/address-skeletons-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher's licence document makes the grant CC BY 4.0 by name. OpenAddresses' source record `sources/es/countrywide.json`, 1,870 bytes, sha256 `1c55fccaa3a5ab7cbef5f5d181a7b642622577daac03ce06602c5ea45cf8e8d9`, gives `CC BY 4.0` with the attribution `scne.es`, points at the CNIG download centre, and records that the source is CNIG's 52 provincial GeoPackages trimmed to addresses and merged into one CSV, uploaded on 2026-06-03 (commit `a068b458cf`). The copy this repository read, `openaddresses/extracted/es/countrywide.csv`, is dated 2026-07-02. CNIG's catalogue page for CartoCiudad, series `02122`, 228,186 bytes, sha256 `ee673465a39c83f738ca1863674a0324933b85d7b0c37a22a11bb32dfb1d6987`, describes that product, provincial GeoPackages whose `portalpk_publi` layer holds postal-address points `procedentes de diferentes fuentes de nivel nacional, regional y local`, and states that its use `conlleva la aceptación por el usuario de las condiciones generales de dicha orden, concretada en una licencia de uso, compatible con CC-BY 4.0`. The licence document OpenAddresses links, `https://www.ign.es/resources/licencia/Condiciones_licenciaUso_IGN.pdf`, 145,381 bytes, sha256 `48b745c62276e4d5ae8870922b9db89d276e9b339f66e3d1f9eea6379f2957d9`, covers products `producidos por el IGN y de los coproducidos por las CC. AA. y la AGE en el marco del Sistema Cartográfico Nacional`, quotes Orden FOM/2807/2015 Article 4, `El uso … tendrá carácter libre y gratuito, siempre que se mencione el origen y propiedad de los datos`, and states that use `conlleva la aceptación por el usuario de una licencia CC-BY 4.0`. It sets the credit for a derived work as `Obra derivada de <identificador del producto> <fecha> CC-BY 4.0 <atribución de productores>`, permits `scne.es` as the producer attribution, and under point 5 requires a new dataset made by modifying the original to carry that credit in its metadata, in the abstract, the lineage and the access constraints. The licence covers co-produced products, so the regional and local origins of individual CartoCiudad points do not need a separate grant.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material, which is what downloading the CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers reading the number, street, postcode and municipality columns out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation for any purpose, and §3(a)(1)(B) requires modifications to be indicated, which the IGN licence implements as the `Obra derivada de` prefix."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material, commercial purposes included, and CC BY 4.0 carries no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing, conditioned by §3(a) on the credit. The IGN licence fixes its form as `Obra derivada de CartoCiudad <fecha> CC-BY 4.0 scne.es` and, for a new dataset, requires it in the dataset's abstract and lineage as well as beside the data."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the credit. If they are not, the licence does not reach them. Both readings permit publishing the weights, and the credit goes in their rights files under the first."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the material. §2(a)(5)(A) offers every recipient a licence from the Licensor directly, so a commercial recipient takes the Spanish data from IGN on the same credit condition rather than from this repository."
+				}
+			}
 		}
 	}
 }
