@@ -17,8 +17,8 @@
 import { gitHead } from "@mailwoman/core/git"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
-import { $ } from "zx"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -68,17 +68,17 @@ async function reportStalePins(drift: string, testPath: string): Promise<string>
 		`Run \`mailwoman eval pins --update\`, commit ${testPath}, and this issue closes on the next green audit.`
 
 	const search = `in:title ${stringifyJSON(STALE_PIN_ISSUE_TITLE)}`
-	const issueList = await $`gh issue list --state open --search ${search} --json number`.quiet()
+	const issueList = await runProcess("gh", ["issue", "list", "--state", "open", "--search", search, "--json", "number"])
 	const existing = parseJSONStrict<Array<{ number: number }>>(issueList.stdout)
 	const first = existing[0]
 
 	if (first) {
-		await $`gh issue comment ${first.number} --body ${body}`.quiet()
+		await runProcess("gh", ["issue", "comment", String(first.number), "--body", body])
 
 		return `updated issue #${first.number}`
 	}
 
-	await $`gh issue create --title ${STALE_PIN_ISSUE_TITLE} --body ${body}`.quiet()
+	await runProcess("gh", ["issue", "create", "--title", STALE_PIN_ISSUE_TITLE, "--body", body])
 
 	return "opened the audit issue"
 }

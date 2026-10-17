@@ -8,9 +8,20 @@
  *   reason the fork exists is that corrections are authored in these directories.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { GitClient, type GitProgress } from "@mailwoman/core/git"
 import { describe, expect, it } from "vitest"
 
-import { type CloneState, planRepoSync, sameRemote, SyncAction, syncSentence } from "#gazetteer/repos/sync"
+import {
+	applyRepoSyncPlan,
+	type CloneState,
+	inspectClone,
+	planRepoSync,
+	sameRemote,
+	SyncAction,
+	syncSentence,
+} from "#gazetteer/repos/sync"
 import { FORK_ORG, repoURL, UPSTREAM_ORG } from "#gazetteer/wof/repo-origin"
 
 const REPO = "whosonfirst-data-admin-gb"
@@ -171,5 +182,36 @@ describe("syncSentence", () => {
 
 	it("stays silent about fork lookups when every one succeeded", () => {
 		expect(syncSentence([planRepoSync(forkOrigin, DIR, clone())])).not.toContain("could NOT be checked")
+	})
+})
+
+describe("applyRepoSyncPlan", () => {
+	it("clones a missing repo through the client and reports its transfer progress", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-")
+
+		const origin = scratch.path("origin")
+
+		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", origin.toString()])
+		await writeLocalTextFile("fixture\n", origin("README"))
+
+		const originRepo = new GitClient({ cwd: origin })
+
+		await originRepo.read(["add", "README"])
+		await originRepo.read(["-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", "commit", "-qm", "x"])
+
+		const directory = scratch.path("repos", UPSTREAM_ORG, REPO).toString()
+		const plan = planRepoSync({ ...forkOrigin, url: `file://${origin}` }, directory, await inspectClone(directory))
+
+		expect(plan.action).toBe(SyncAction.Clone)
+
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const steps: GitProgress[] = []
+
+		client.on("progress", (step) => steps.push(step))
+
+		expect(await applyRepoSyncPlan(plan, { client })).toBe(`cloned ${REPO} from fork`)
+		expect(steps.length).toBeGreaterThan(0)
+		expect((await inspectClone(directory)).shallow).toBe(true)
 	})
 })

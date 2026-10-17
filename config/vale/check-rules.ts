@@ -48,9 +48,9 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { valeCommand } from "@mailwoman/core/vale"
-import { $ } from "zx"
 
 import { writePythonDocstringProjections } from "#config/vale/python-docstrings"
 
@@ -218,7 +218,6 @@ const LEGS: StyleLeg[] = [
 ]
 
 const VALE = await valeCommand(import.meta.url)
-const $vale = $({ cwd: VALE_DIR, nothrow: true })
 
 /**
  * A single Vale run: its parsed alerts plus the exit code, which the dirty legs assert on.
@@ -228,7 +227,11 @@ async function runVale(
 	fixtures: string | readonly string[]
 ): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const paths = typeof fixtures === "string" ? [fixtures] : fixtures
-	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${paths}`.quiet()
+
+	const result = await runProcess(VALE.file, [...VALE.argv, "--config", config, "--output=JSON", ...paths], {
+		cwd: VALE_DIR,
+		reject: false,
+	})
 
 	// Vale can fail by writing details to stderr and leaving stdout empty.
 	// Handle that directly so we preserve the real rule/config error message.

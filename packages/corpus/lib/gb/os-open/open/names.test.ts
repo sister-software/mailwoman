@@ -7,7 +7,7 @@
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { createOpenNamesReadStats, populatedPlaceName1, readOpenNamesRoads } from "#gb/os-open/open-names"
+import { createOpenNamesReadStats, populatedPlaceName1, readOpenNamesRoads } from "#gb/os-open/open/names"
 
 const fixtureCSV = workspacePath("corpus", "fixtures", "gb-os-open", "open-names", "Data", "SE23.csv").toString()
 

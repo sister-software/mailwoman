@@ -23,7 +23,7 @@ import {
 } from "@mailwoman/core/pipeline"
 import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/postcode-prefix-files"
 import { isStreetAffix } from "@mailwoman/neural/fst-prior"
-import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor-regions"
+import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
 import { PostcodePrefixIndexResolver } from "@mailwoman/neural/postcode/prefix-index"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"

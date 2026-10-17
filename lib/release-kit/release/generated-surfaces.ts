@@ -18,8 +18,8 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { dirtyTrackedFiles } from "@mailwoman/core/git"
+import { runProcess } from "@mailwoman/core/process"
 import { resolvePath } from "path-ts"
-import { $ } from "zx"
 
 /**
  * The generated surfaces, each with the generator that owns it.
@@ -59,7 +59,13 @@ export async function releaseGeneratedSurfaces(
 
 	for (const [entry, ...args] of generators.values()) {
 		log(`$ node ${entry} ${args.join(" ")}`.trimEnd())
-		await $({ cwd: repoRoot, stdio: "inherit" })`${process.execPath} ${resolvePath(repoRoot, entry!)} ${args}`
+
+		await runProcess(process.execPath, [resolvePath(repoRoot, entry!), ...args], {
+			cwd: repoRoot,
+			stdin: "inherit",
+			stdout: "inherit",
+			stderr: "inherit",
+		})
 	}
 
 	const states: GeneratedSurfaceState[] = []

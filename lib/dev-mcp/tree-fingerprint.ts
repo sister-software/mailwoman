@@ -9,8 +9,8 @@
  */
 
 import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { gitSync } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { runFileSync } from "@mailwoman/core/process"
 import { type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -124,7 +124,7 @@ async function newestSourceMtime(root: PathBuilder): Promise<{ mtimeMs: number; 
  */
 function git(repoRoot: PathBuilderLike, args: string[]): string {
 	try {
-		return runFileSync("git", args, { cwd: resolvePath(repoRoot), encoding: "utf8" }).replace(/\n+$/, "")
+		return gitSync(args, { cwd: resolvePath(repoRoot), trim: false }).replace(/\n+$/, "")
 	} catch {
 		return ""
 	}

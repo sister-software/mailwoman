@@ -34,6 +34,9 @@ import { promisify } from "node:util"
 
 import type { PathBuilderLike } from "path-ts"
 
+import type { IRuntimeLogger } from "#logging"
+import { TypedEventTarget } from "#utils/events"
+
 export type {
 	ChildProcess,
 	ChildProcessByStdio,
@@ -217,6 +220,323 @@ export function spawnProcessSync(
 		args.map((arg) => arg.toString()),
 		{ ...options, cwd: options.cwd?.toString(), encoding: "utf8" }
 	)
+}
+
+/**
+ * One step of a long-running command's progress, as a {@linkcode ProgressParser}
+ * reads it from a line of output.
+ */
+export interface ProcessProgress {
+	/**
+	 * The phase the command reports, such as git's `Receiving objects`.
+	 */
+	stage: string
+	/**
+	 * Completion of the stage, from 0 to 100, when the command states it.
+	 */
+	percent?: number
+	processed?: number
+	total?: number
+}
+
+/**
+ * Reads one line of a command's stderr and answers the progress it reports, or `null` for any other line.
+ */
+export type ProgressParser = (line: string) => ProcessProgress | null
+
+/**
+ * How a {@linkcode ProcessTask} ended.
+ *
+ * `exitCode` is `null` when a signal ended the process, and `signal` is `null` when it exited on its own.
+ */
+export interface ProcessResult extends ProcessOutput {
+	command: string
+	exitCode: number | null
+	signal: NodeJS.Signals | null
+}
+
+/**
+ * The stream a line of output arrived on.
+ */
+export const OutputStream = {
+	Stdout: "stdout",
+	Stderr: "stderr",
+} as const
+
+export type OutputStream = (typeof OutputStream)[keyof typeof OutputStream]
+
+/**
+ * The events a {@linkcode ProcessTask} dispatches, keyed by type, with each event's `detail`.
+ */
+export interface ProcessTaskEventMap {
+	/**
+	 * One line of piped output.
+	 *
+	 * A carriage return ends a line as a newline does, so each redraw of a progress meter arrives separately.
+	 */
+	line: { stream: OutputStream; text: string }
+	progress: ProcessProgress
+	exit: ProcessResult
+}
+
+/**
+ * Options for {@linkcode ProcessTask}.
+ */
+export interface ProcessTaskOptions extends Omit<SpawnOptions, "cwd" | "stdio" | "signal"> {
+	cwd?: PathBuilderLike
+	/**
+	 * Aborting the signal stops the process as disposal does.
+	 */
+	signal?: AbortSignal
+	/**
+	 * Receives the command line at debug level when the process starts and the result when it ends.
+	 */
+	logger?: IRuntimeLogger
+	/**
+	 * Whether a non-zero exit or a terminating signal rejects `result` with a {@linkcode ProcessError}.
+	 *
+	 * With `false`, `result` resolves with the {@linkcode ProcessResult}, and the caller reads `exitCode`.
+	 *
+	 * A command that could not start always rejects with the spawn error.
+	 *
+	 * @defaultValue `true`
+	 */
+	reject?: boolean
+	/**
+	 * `"pipe"` captures a stream and dispatches its lines.
+	 * `"inherit"` writes it to this process's terminal.
+	 *
+	 * @defaultValue `"ignore"` for stdin, `"pipe"` for stdout and stderr
+	 */
+	stdin?: "ignore" | "inherit" | "pipe"
+	stdout?: "ignore" | "inherit" | "pipe"
+	stderr?: "ignore" | "inherit" | "pipe"
+	/**
+	 * Leave a piped stdout unread, so the caller consumes `child.stdout` as bytes,
+	 * such as an archive piped into another process.
+	 *
+	 * The task then dispatches no stdout lines, and `result.stdout` is empty.
+	 */
+	rawStdout?: boolean
+	/**
+	 * Reads each stderr line for progress and dispatches a `progress` event for each match.
+	 */
+	progress?: ProgressParser
+	/**
+	 * How long disposal waits after SIGTERM before it sends SIGKILL.
+	 *
+	 * @defaultValue 5000
+	 */
+	killGraceMs?: number
+}
+
+const DEFAULT_KILL_GRACE_MS = 5000
+
+/**
+ * A running command that reports its output as events, settles `result` with its
+ * {@linkcode ProcessResult}, and is stopped by disposal.
+ *
+ * It follows the shape of `APIClient`: an `EventTarget` that owns its work
+ * and implements `AsyncDisposable`.
+ * A caller renders the `line` and `progress` events while the command runs.
+ *
+ * `await using` stops the command when the caller's scope ends early.
+ *
+ * Reach for {@linkcode runFile} when the caller needs only the finished output.
+ */
+export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implements AsyncDisposable {
+	public readonly command: string
+	public readonly child: ChildProcess
+	/**
+	 * Settles once the process has exited and both streams have closed.
+	 */
+	public readonly result: Promise<ProcessResult>
+
+	readonly #exited: Promise<void>
+	readonly #killGraceMs: number
+	readonly #signal: AbortSignal | undefined
+	readonly #onAbort = (): void => {
+		void this[Symbol.asyncDispose]()
+	}
+
+	#disposePromise: Promise<void> | null = null
+
+	constructor(file: PathBuilderLike, args: readonly PathBuilderLike[] = [], options: ProcessTaskOptions = {}) {
+		super()
+
+		const {
+			cwd,
+			signal,
+			logger,
+			reject = true,
+			stdin = "ignore",
+			stdout = "pipe",
+			stderr = "pipe",
+			progress,
+			rawStdout = false,
+			killGraceMs = DEFAULT_KILL_GRACE_MS,
+			...spawnOptions
+		} = options
+
+		const argStrings = args.map((arg) => arg.toString())
+
+		this.command = [file.toString(), ...argStrings].join(" ")
+		this.#killGraceMs = killGraceMs
+		this.#signal = signal
+
+		signal?.throwIfAborted()
+
+		logger?.debug(`$ ${this.command}`)
+
+		this.child = spawn(file.toString(), argStrings, {
+			...spawnOptions,
+			cwd: cwd?.toString(),
+			stdio: [stdin, stdout, stderr],
+		})
+
+		const captured: Record<OutputStream, string[]> = { stdout: [], stderr: [] }
+
+		const readLines = (stream: OutputStream, readable: Readable | null): void => {
+			if (!readable) return
+
+			let pending = ""
+
+			const emit = (text: string): void => {
+				captured[stream].push(text)
+				this.emit("line", { stream, text })
+
+				if (stream === OutputStream.Stderr && progress) {
+					const step = progress(text)
+
+					if (step) {
+						this.emit("progress", step)
+					}
+				}
+			}
+
+			readable.setEncoding("utf8")
+
+			readable.on("data", (chunk: string) => {
+				const pieces = (pending + chunk).split(/\r\n|\r|\n/u)
+
+				pending = pieces.pop() ?? ""
+
+				for (const piece of pieces) {
+					emit(piece)
+				}
+			})
+
+			readable.on("end", () => {
+				if (pending) {
+					emit(pending)
+				}
+
+				pending = ""
+			})
+		}
+
+		readLines(OutputStream.Stdout, rawStdout ? null : this.child.stdout)
+		readLines(OutputStream.Stderr, this.child.stderr)
+
+		this.#exited = new Promise<void>((resolve) => {
+			this.child.once("close", () => resolve())
+			// A process that never started emits `error` and no `close`.
+			this.child.once("error", () => resolve())
+		})
+
+		this.result = new Promise<ProcessResult>((resolve, rejectCompletion) => {
+			this.child.once("error", rejectCompletion)
+
+			this.child.once("close", (exitCode: number | null, exitSignal: NodeJS.Signals | null) => {
+				const result: ProcessResult = {
+					command: this.command,
+					exitCode,
+					signal: exitSignal,
+					stdout: captured.stdout.join("\n"),
+					stderr: captured.stderr.join("\n"),
+				}
+
+				logger?.debug(`${this.command} exited with ${exitSignal ?? exitCode}`)
+				this.emit("exit", result)
+
+				if (reject && exitCode !== 0) {
+					const error = new Error(
+						`Command failed with ${exitSignal ? `signal ${exitSignal}` : `exit code ${exitCode}`}: ${this.command}`
+					) as ProcessError
+
+					error.stdout = result.stdout
+					error.stderr = result.stderr
+					error.code = exitCode ?? undefined
+					error.signal = exitSignal ?? undefined
+
+					rejectCompletion(error)
+
+					return
+				}
+
+				resolve(result)
+			})
+		}).finally(() => {
+			this.#signal?.removeEventListener("abort", this.#onAbort)
+		})
+
+		// A task that is only disposed, never awaited, must not raise an unhandled rejection.
+		// Awaiting callers still receive the rejection through `result`.
+		this.result.catch(() => undefined)
+
+		signal?.addEventListener("abort", this.#onAbort, { once: true })
+	}
+
+	/**
+	 * Disposal sends SIGTERM to a running process, sends SIGKILL if it has not exited
+	 * after `killGraceMs`, and resolves once it has exited.
+	 * A process that already exited is left alone.
+	 *
+	 * Disposal never rejects.
+	 * The `result` promise still reports how the process ended.
+	 * Repeated calls return the same promise.
+	 */
+	public [Symbol.asyncDispose](): Promise<void> {
+		if (this.#disposePromise) return this.#disposePromise
+
+		this.#disposePromise = this.#stop()
+
+		return this.#disposePromise
+	}
+
+	async #stop(): Promise<void> {
+		const { child } = this
+
+		if (child.exitCode === null && child.signalCode === null && child.pid !== undefined) {
+			child.kill("SIGTERM")
+
+			const escalation = setTimeout(() => child.kill("SIGKILL"), this.#killGraceMs)
+
+			escalation.unref()
+			await this.#exited
+			clearTimeout(escalation)
+		} else {
+			await this.#exited
+		}
+	}
+
+	public override toString(): string {
+		return this.command
+	}
+}
+
+/**
+ * Run a command to completion as a {@linkcode ProcessTask} and answer its {@linkcode ProcessResult}.
+ *
+ * With `reject: false` a non-zero exit resolves, and the caller reads `exitCode`.
+ * Reach for the task itself when the caller renders its lines or progress while it runs.
+ */
+export function runProcess(
+	file: PathBuilderLike,
+	args: readonly PathBuilderLike[] = [],
+	options: ProcessTaskOptions = {}
+): Promise<ProcessResult> {
+	return new ProcessTask(file, args, options).result
 }
 
 /**

@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { NUMBERED_MORPHOLOGY_OPTS, ZEROED_MORPHOLOGY_OPTS, type FSTMatcherLike } from "@mailwoman/core/pipeline"
-import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor-regions"
+import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
 import { describe, expect, it } from "vitest"
 
 import { loadParsePriors, parsePriorOptions, postcodePrefixIndexPaths } from "#geocode/parse-priors"

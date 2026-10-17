@@ -35,10 +35,10 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { runProcess } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { $ } from "zx"
 
 import { oaResolverEval } from "#tools/eval-harness/oa/resolver/eval"
 
@@ -48,8 +48,6 @@ import { oaResolverEval } from "#tools/eval-harness/oa/resolver/eval"
 const PIP_CONTAINMENT_PATH = resolvePackagePath("mailwoman", "tools", "dev-tools", "pip-containment.run.ts")
 
 async function main() {
-	$.verbose = false
-
 	let MODEL = "packages/neural-weights-en-us/model.onnx"
 	let CARD = "packages/neural-weights-en-us/model-card.json"
 	let TOK = "packages/neural-weights-en-us/tokenizer.model"
@@ -116,10 +114,13 @@ async function main() {
 	await writeLocalTextFile("", US_HELD_OUT)
 
 	for (const st of US_HELD_REGIONS) {
-		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
+		const r = await runProcess("jq", ["-c", "--arg", "st", st, "select((.state|ascii_upcase) == $st)", US_SAMPLE], {
+			reject: false,
+		})
 
 		if (r.stdout) {
-			await appendLocalTextFile(r.stdout, US_HELD_OUT)
+			// Captured lines are joined without the final newline that each jq -c record ends with.
+			await appendLocalTextFile(`${r.stdout}\n`, US_HELD_OUT)
 		}
 	}
 
@@ -169,15 +170,17 @@ async function main() {
 		const p90 = cols[6] ?? ""
 		const pipJson = `${TMP}/${tag}.pip.json`
 
-		const pip = await $({
-			nothrow: true,
-		})`node ${PIP_CONTAINMENT_PATH} ${resolved} --label ${name} --json ${pipJson}`
+		const pip = await runProcess(
+			process.execPath,
+			[PIP_CONTAINMENT_PATH, resolved, "--label", name, "--json", pipJson],
+			{ reject: false }
+		)
 
-		await writeLocalFile(pip.stdout, `${TMP}/${tag}.pip.txt`)
+		await writeLocalFile(pip.stdout ? `${pip.stdout}\n` : "", `${TMP}/${tag}.pip.txt`)
 
 		// jq: percent rounded to 1 decimal, "-" when the field is null/missing, "" when the file can't be read.
 		const jqPct = async (field: string): Promise<string> => {
-			const r = await $({ nothrow: true })`jq -r ${`(.${field}*100|.*10|round/10) // "-"`} ${pipJson}`
+			const r = await runProcess("jq", ["-r", `(.${field}*100|.*10|round/10) // "-"`, pipJson], { reject: false })
 
 			return r.stdout.trim()
 		}

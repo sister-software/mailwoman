@@ -12,7 +12,8 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { $ } from "zx"
+
+import { runHostCommand } from "#storage-kit/command"
 
 export interface BlockDevice {
 	name: string
@@ -28,10 +29,12 @@ export interface BlockDevice {
  * The `lsblk` record for one device and its partitions.
  */
 export async function inspectDevice(device: string): Promise<BlockDevice> {
-	const probe = await $({
-		nothrow: true,
-		quiet: true,
-	})`lsblk --json --output NAME,SIZE,MODEL,SERIAL,TRAN,FSTYPE,MOUNTPOINT ${device}`
+	const probe = await runHostCommand("lsblk", [
+		"--json",
+		"--output",
+		"NAME,SIZE,MODEL,SERIAL,TRAN,FSTYPE,MOUNTPOINT",
+		device,
+	])
 
 	if (probe.exitCode !== 0) {
 		throw new Error(`${device} is not a block device this machine can see`)
@@ -123,7 +126,7 @@ export function claimFailures(device: BlockDevice, claim: DeviceClaim): readonly
  * Returned as a bare device name (`nvme0n1`) because that is what `lsblk --output NAME` reports.
  */
 export async function rootDeviceName(): Promise<string | null> {
-	const probe = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output SOURCE --target /`
+	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "SOURCE", "--target", "/"])
 
 	if (probe.exitCode !== 0) return null
 
@@ -131,7 +134,7 @@ export async function rootDeviceName(): Promise<string | null> {
 
 	if (!source.startsWith("/dev/")) return null
 
-	const resolved = await $({ nothrow: true, quiet: true })`lsblk --noheadings --output PKNAME ${source}`
+	const resolved = await runHostCommand("lsblk", ["--noheadings", "--output", "PKNAME", source])
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `lsblk PKNAME` for one device is a single line.
 	return resolved.exitCode === 0 ? resolved.stdout.trim().split("\n")[0]?.trim() || null : null

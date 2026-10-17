@@ -8,7 +8,7 @@ import type { MarkupElement } from "@mailwoman/core/html/elements"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { createOpenRoadsReadStats, readOpenRoadsLink, readOpenRoadsLinks } from "#gb/os-open/open-roads"
+import { createOpenRoadsReadStats, readOpenRoadsLink, readOpenRoadsLinks } from "#gb/os-open/open/roads"
 
 const fixtureGML = workspacePath("corpus", "fixtures", "gb-os-open", "open-roads", "data", "OSOpenRoads_SE.gml")
 

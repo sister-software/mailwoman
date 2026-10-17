@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { gitSync } from "@mailwoman/core/git"
 import { isIdentical } from "@mailwoman/core/identical"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { runFileSync } from "@mailwoman/core/process"
 import { PathBuilder, resolvePath } from "path-ts"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"
@@ -368,17 +368,9 @@ export function worktreeTreeDelta(
 	if (!commitA || !commitB || commitA.endsWith("+dirty") || commitB.endsWith("+dirty")) return null
 
 	try {
-		const commits = Number(
-			runFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
-				cwd: repoRoot,
-				encoding: "utf8",
-			}).trim()
-		)
+		const commits = Number(gitSync(["rev-list", "--count", `${commitA}...${commitB}`], { cwd: repoRoot }))
 
-		const diff = runFileSync("git", ["diff", "--name-only", commitA, commitB], {
-			cwd: repoRoot,
-			encoding: "utf8",
-		}).trim()
+		const diff = gitSync(["diff", "--name-only", commitA, commitB], { cwd: repoRoot })
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- This bounded diff is used only to count changed files.
 		const files = diff ? diff.split("\n").length : 0

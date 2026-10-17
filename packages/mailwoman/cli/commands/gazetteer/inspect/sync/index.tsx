@@ -21,6 +21,9 @@ import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { GitClient } from "@mailwoman/core/git"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { runFile } from "@mailwoman/core/process"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
@@ -33,7 +36,9 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	ProgressLines,
 	useCommandTask,
+	useProgressFeed,
 } from "#cli-kit"
 import {
 	assertDestinationNotARepoName,
@@ -92,12 +97,25 @@ interface SyncPlan {
  * failure surfaces as an opaque spawn error from deep inside the task.
  */
 async function discoverRepos(): Promise<DiscoveredRepo[]> {
-	const { $ } = await import("zx")
-
 	try {
-		return $.sync`gh repo list ${WOF_REPO_OWNER} --no-archived --limit 1000 --json name --json url --json diskUsage`
-			.json<Array<{ name: string; url: string; diskUsage: number }>>()
-			.map(({ name, url, diskUsage }) => ({ name, url, diskUsageKB: diskUsage }))
+		const { stdout } = await runFile("gh", [
+			"repo",
+			"list",
+			WOF_REPO_OWNER,
+			"--no-archived",
+			"--limit",
+			"1000",
+			"--json",
+			"name",
+			"--json",
+			"url",
+			"--json",
+			"diskUsage",
+		])
+
+		return parseJSONStrict<Array<{ name: string; url: string; diskUsage: number }>>(stdout).map(
+			({ name, url, diskUsage }) => ({ name, url, diskUsageKB: diskUsage })
+		)
 	} catch (error) {
 		throw new CommandError(
 			`Could not list ${WOF_REPO_OWNER} through \`gh\`. Install the GitHub CLI and run \`gh auth login\`.`,
@@ -110,6 +128,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 	const [plan, setPlan] = useState<SyncPlan>()
 	const [active, setActive] = useState<readonly string[]>([])
 	const [doneCount, setDoneCount] = useState(0)
+	const progress = useProgressFeed()
 
 	const state = useCommandTask(
 		async () => {
@@ -197,11 +216,18 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 					let action: SynchronizeAction | null = null
 					let failure: string | null = null
 
+					await using client = new GitClient({ cwd: destination })
+
+					const unwatch = progress.watch(client, source.name)
+
 					try {
-						action = await synchronizeRepo(source, destination)
+						action = await synchronizeRepo(source, destination, client)
 					} catch (error) {
 						ok = false
 						failure = error instanceof Error ? error.message : String(error)
+					} finally {
+						unwatch()
+						progress.clear(source.name)
 					}
 
 					const elapsed = `${((performance.now() - startedAt) / 1000).toFixed(1)}s`
@@ -260,12 +286,16 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				{ByteFormatter.formatSI(plan.selection.totalDiskUsageKB * 1024)}
 			</Text>
 
-			{active.map((name) => (
-				<Text key={name} color="cyan">
-					{" "}
-					⠋ {name}
-				</Text>
-			))}
+			{active
+				.filter((name) => !progress.entries.has(name))
+				.map((name) => (
+					<Text key={name} color="cyan">
+						{" "}
+						⠋ {name}
+					</Text>
+				))}
+
+			<ProgressLines entries={progress.entries} />
 
 			<Box paddingX={1}>
 				<ProgressBar value={percentage} />

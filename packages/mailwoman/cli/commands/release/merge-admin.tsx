@@ -14,8 +14,8 @@
 import { gitHead } from "@mailwoman/core/git"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
-import { $ } from "zx"
 
 import { type CommandSpec, CommandTaskResult, CLIUsageError, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -64,7 +64,7 @@ async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminR
 		throw new CLIUsageError(`--method ${stringifyJSON(method)} is not one of ${MERGE_METHODS.join("|")}`)
 	}
 
-	const prView = await $`gh pr view ${prNumber} --json state,title,headRefOid,files`.quiet()
+	const prView = await runProcess("gh", ["pr", "view", String(prNumber), "--json", "state,title,headRefOid,files"])
 
 	const pr = parseJSONStrict<{
 		state: string
@@ -109,7 +109,7 @@ async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminR
 	}
 
 	const methodFlag = `--${method}`
-	const merged = await $`gh pr merge ${prNumber} --admin ${methodFlag}`.quiet()
+	const merged = await runProcess("gh", ["pr", "merge", String(prNumber), "--admin", methodFlag])
 
 	return { prNumber, title: pr.title, method, ranChecks, mergeOutput: merged.stdout.trim() }
 }

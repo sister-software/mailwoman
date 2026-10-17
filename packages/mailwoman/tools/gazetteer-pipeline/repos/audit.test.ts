@@ -14,7 +14,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { runFileSync } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/git"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -54,11 +54,11 @@ async function clone(dir: PathBuilder, marker: string): Promise<void> {
 	await makeDirectories(dir)
 	await writeLocalFile(marker, dir("README.md"))
 
-	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir })
-	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: dir })
-	runFileSync("git", ["config", "user.name", "T"], { cwd: dir })
-	runFileSync("git", ["add", "-A"], { cwd: dir })
-	runFileSync("git", ["commit", "-qm", marker], { cwd: dir, env })
+	gitSync(["init", "-q", "-b", "main"], { cwd: dir })
+	gitSync(["config", "user.email", "t@example.com"], { cwd: dir })
+	gitSync(["config", "user.name", "T"], { cwd: dir })
+	gitSync(["add", "-A"], { cwd: dir })
+	gitSync(["commit", "-qm", marker], { cwd: dir, env })
 }
 
 describe("auditReposRoot — layouts", () => {

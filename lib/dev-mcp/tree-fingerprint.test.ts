@@ -6,8 +6,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, makeDirectories } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFileSync } from "@mailwoman/core/process"
 import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -118,12 +118,9 @@ describe("computeTreeFingerprint — dirty files", () => {
 		const root = await fakeCheckout()
 		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
 
-		runFileSync("git", ["init", "--quiet"], { cwd: root })
-		runFileSync("git", ["add", "."], { cwd: root })
-
-		runFileSync("git", ["-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "--quiet", "-m", "seed"], {
-			cwd: root,
-		})
+		gitSync(["init", "--quiet"], { cwd: root })
+		gitSync(["add", "."], { cwd: root })
+		gitSync(["-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "--quiet", "-m", "seed"], { cwd: root })
 
 		await writeLocalTextFile("export const x = 2\n", root(relative))
 

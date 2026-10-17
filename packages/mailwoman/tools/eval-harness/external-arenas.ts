@@ -33,16 +33,16 @@
  *   Scope note (de-shell): the three inner probes this still spawns as child processes are
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (three times) and `summarize-arenas.run.ts`.
  *   These probes live in `lib/dev-tools/` and run as child processes.
- *   De-shelling them is a separate job. `zx` remains here after its removal from `promotion-eval.ts`.
+ *   De-shelling them is a separate job.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { runProcess } from "@mailwoman/core/process"
 import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
-import { $ } from "zx"
 
 /**
  * The three child processes, located from the package root so the same file
@@ -105,12 +105,9 @@ export async function externalArenas(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<void> {
-	// zx: capture output ourselves (don't echo the full stream) and trim the way the bash `| tail` did.
-	$.verbose = false
-
+	// Each child's output is captured rather than echoed, and trimmed the way the bash `| tail` did.
 	const outDir = PathBuilder.from(options.outDir ?? tempRootPathBuilder("external-arenas"))
 	await makeDirectories(outDir)
-	// Strings, because zx interpolates only strings into a command line.
 	const emptyTests = outDir("empty-tests").toString()
 	await makeDirectories(emptyTests)
 
@@ -147,8 +144,15 @@ export async function externalArenas(
 	// 1. (re)generate the perturbation arena from golden v0.1.2.
 	report("== regenerating perturbation arena ==")
 
-	const perturbed =
-		await $`node ${PERTURB_GOLDEN_PATH} --golden data/eval/golden/v0.1.2 --out ${outDir("perturb", "perturbed.jsonl").toString()} --per-file 60`
+	const perturbed = await runProcess(process.execPath, [
+		PERTURB_GOLDEN_PATH,
+		"--golden",
+		"data/eval/golden/v0.1.2",
+		"--out",
+		outDir("perturb", "perturbed.jsonl").toString(),
+		"--per-file",
+		"60",
+	])
 
 	if (perturbed.stdout.trim()) {
 		report(perturbed.stdout.trimEnd())
@@ -167,10 +171,19 @@ export async function externalArenas(
 	const runArena = async (name: string): Promise<void> => {
 		report(`== arena: ${name} ==`)
 
-		const r =
-			await $`node ${HARNESS_NEURAL_PATH} --tests ${emptyTests} --falsehoods ${outDir(name).toString()} ${modelArgs} --postcode-repair --out-json ${outDir(`${name}.results.json`).toString()}`
+		const r = await runProcess(process.execPath, [
+			HARNESS_NEURAL_PATH,
+			"--tests",
+			emptyTests,
+			"--falsehoods",
+			outDir(name).toString(),
+			...modelArgs,
+			"--postcode-repair",
+			"--out-json",
+			outDir(`${name}.results.json`).toString(),
+		])
 
-		await writeLocalFile(r.stderr, outDir(`${name}.stderr`))
+		await writeLocalFile(r.stderr ? `${r.stderr}\n` : "", outDir(`${name}.stderr`))
 
 		report(TextSpliterator.from(r.stdout).toArray().slice(-40).join("\n"))
 	}
@@ -182,7 +195,11 @@ export async function externalArenas(
 	report("")
 	report("== arena summary + postal edge-class breakdown ==")
 
-	const summary = await $`node ${SUMMARIZE_ARENAS_PATH} ${outDir.toString()} data/eval/external/postal-cases.jsonl`
+	const summary = await runProcess(process.execPath, [
+		SUMMARIZE_ARENAS_PATH,
+		outDir.toString(),
+		"data/eval/external/postal-cases.jsonl",
+	])
 
 	report(summary.stdout.trimEnd())
 

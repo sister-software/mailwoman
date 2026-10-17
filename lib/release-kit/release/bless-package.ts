@@ -13,8 +13,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { type PackageJSONLike, readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { ProcessTask, runProcess } from "@mailwoman/core/process"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
-import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#release-kit/pack/verify-tarball"
@@ -66,10 +67,14 @@ export interface BlessPackageReport {
 /**
  * Runs an npm write with inherited stdin and stdout so npm keeps a real TTY for its prompts.
  *
- * Stderr is piped so {@link runNPMWrite} can read the approval URL.
- * Zx still forwards the piped output to the terminal.
+ * Stderr is piped so {@link runNPMWrite} can read the approval URL. {@link runNPMWrite}
+ * forwards the piped output to the terminal.
  */
-const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
+function npmWrite(args: readonly string[]): ProcessTask {
+	console.error(`$ npm ${args.join(" ")}`)
+
+	return new ProcessTask("npm", args, { stdin: "inherit", stdout: "inherit", stderr: "pipe" })
+}
 
 /**
  * Writes text to the clipboard of the operator's terminal with the OSC 52 escape sequence.
@@ -92,17 +97,20 @@ function copyToTerminalClipboard(text: string): boolean {
 /**
  * Runs an npm write and copies the first approval URL from its stderr to the clipboard.
  *
- * The listener only reads, because zx already forwards piped stderr to the terminal.
+ * The listener forwards each stderr chunk to the terminal as it arrives,
+ * so a prompt without a trailing newline still shows.
  * The listener matches against a rolling window because a URL can span two chunks.
  */
-async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): Promise<void> {
+async function runNPMWrite(task: ProcessTask, log: (line: string) => void): Promise<void> {
 	let tail = ""
 	let copied = false
 
-	proc.stderr.on("data", (chunk: Buffer) => {
+	task.child.stderr?.on("data", (chunk: string) => {
+		process.stderr.write(chunk)
+
 		if (copied) return
 
-		tail = (tail + chunk.toString("utf8")).slice(-512)
+		tail = (tail + chunk).slice(-512)
 
 		const [url] = AUTH_URL_PATTERN.exec(tail) ?? []
 
@@ -115,7 +123,7 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
 		}
 	})
 
-	await proc
+	await task.result
 }
 
 /**
@@ -158,7 +166,7 @@ function parseRepo(repository: PackageJSONLike["repository"]): string | null {
 
 async function existsOnRegistry(name: string): Promise<boolean> {
 	try {
-		await $`npm view ${name} version`.quiet()
+		await runProcess("npm", ["view", name, "version"])
 
 		return true
 	} catch {
@@ -174,9 +182,11 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 		// By default, npm follows the bump with a workspace-root install.
 		// That install cannot parse the Yarn `workspace:*` protocol.
 		// The `--no-workspaces-update` flag skips the install.
-		await $({
-			cwd: dir,
-		})`npm version ${options.version} --allow-same-version --no-git-tag-version --no-workspaces-update`
+		await runProcess(
+			"npm",
+			["version", options.version, "--allow-same-version", "--no-git-tag-version", "--no-workspaces-update"],
+			{ cwd: dir, stdout: "inherit", stderr: "inherit" }
+		)
 	}
 
 	const exists = await existsOnRegistry(pkg.name)
@@ -208,7 +218,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	}
 
 	// The `--no-browser` flag makes npm print the approval URL to stderr instead of opening a browser.
-	await runNPMWrite(npmWrite`npm publish ${tgz} --access public --no-browser`, log)
+	await runNPMWrite(npmWrite(["publish", tgz, "--access", "public", "--no-browser"]), log)
 
 	return true
 }
@@ -249,7 +259,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	// A failure does not block the remaining publishes.
 	// Npm has already printed the reason, so the log adds only the retry command.
 	try {
-		await runNPMWrite(npmWrite`npm ${args}`, log)
+		await runNPMWrite(npmWrite(args), log)
 
 		log(`• ${pkg.name}: trusted publisher configured`)
 
@@ -290,8 +300,6 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 		assertWorkspacePublishable(dir)
 	}
 
-	$.verbose = true
-
 	await assertWorkflowExists(options)
 
 	const blessed: BlessPackageReport["blessed"] = []
@@ -308,7 +316,7 @@ export async function blessPackages(options: BlessPackageOptions): Promise<Bless
 
 		// The pause limits the request rate.
 		// The npm auth grant can stay valid across the pause, so a run of packages can need only one approval.
-		await $`sleep 2`
+		await sleep(2000)
 	}
 
 	return { blessed }

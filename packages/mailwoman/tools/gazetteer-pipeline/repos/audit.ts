@@ -18,7 +18,7 @@
  */
 
 import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers/stat"
-import { runFileSync } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/git"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -109,7 +109,7 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
  */
 function headOf(dir: PathBuilder): string | null {
 	try {
-		return runFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: dir, encoding: "utf8", stdio: "pipe" }).trim()
+		return gitSync(["rev-parse", "--short", "HEAD"], { cwd: dir })
 	} catch {
 		return null
 	}

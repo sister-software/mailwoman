@@ -11,11 +11,11 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
+import { runProcess } from "@mailwoman/core/process"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { basename, type PathBuilderLike } from "path-ts"
-
-import { runProcessOrFail } from "#process"
 
 type RequiredFileOption = "model" | "tokenizer" | "char-vocab" | "model-card"
 
@@ -121,7 +121,9 @@ function fail(msg: string): never {
 	throw new CommandError(msg)
 }
 
-const run = (cmd: string, args: string[]): void => runProcessOrFail(cmd, args)
+async function run(cmd: string, args: string[]): Promise<void> {
+	await runProcess(cmd, args, { env: childEnv(), stdin: "inherit", stdout: "inherit", stderr: "inherit" })
+}
 
 const hfClient = new APIClient({ displayName: "publish-hf", retry: true })
 
@@ -162,14 +164,14 @@ async function stageOptionalBinary(spec: string | null, label: string): Promise<
 	return localPath
 }
 
-function uploadFlatByBasename(paths: string[], remoteBase: string): void {
+async function uploadFlatByBasename(paths: string[], remoteBase: string): Promise<void> {
 	for (const localPath of paths) {
 		const remoteName = localPath.split("/").pop()
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", localPath, dst])
+		await run("hf", ["buckets", "cp", localPath, dst])
 	}
 }
 
@@ -330,21 +332,21 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", localPath, dst])
+		await run("hf", ["buckets", "cp", localPath, dst])
 	}
 
-	uploadFlatByBasename(postcodeBins, remoteBase)
-	uploadFlatByBasename(postcodePrefixBins, remoteBase)
-	uploadFlatByBasename(pairIndexBins, remoteBase)
+	await uploadFlatByBasename(postcodeBins, remoteBase)
+	await uploadFlatByBasename(postcodePrefixBins, remoteBase)
+	await uploadFlatByBasename(pairIndexBins, remoteBase)
 
-	uploadFlatByBasename(fstBins, remoteBase)
+	await uploadFlatByBasename(fstBins, remoteBase)
 
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", fstPath, dst])
+		await run("hf", ["buckets", "cp", fstPath, dst])
 	}
 
 	if (gazetteerLexicon) {
@@ -352,7 +354,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
+		await run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
 
 	if (countryLexicon) {
@@ -360,7 +362,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", countryLexicon, dst])
+		await run("hf", ["buckets", "cp", countryLexicon, dst])
 	}
 
 	if (streetTypeLexicon) {
@@ -368,7 +370,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", streetTypeLexicon, dst])
+		await run("hf", ["buckets", "cp", streetTypeLexicon, dst])
 	}
 
 	if (localitySurfaceLexicon) {
@@ -376,7 +378,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
+		await run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
 	}
 
 	if (polygonsDB) {
@@ -384,12 +386,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", polygonsDB, dst])
+		await run("hf", ["buckets", "cp", polygonsDB, dst])
 	}
 
-	uploadFlatByBasename(fisherArtifacts, remoteBase)
+	await uploadFlatByBasename(fisherArtifacts, remoteBase)
 
-	uploadFlatByBasename(splitEmbeddingFiles, remoteBase)
+	await uploadFlatByBasename(splitEmbeddingFiles, remoteBase)
 
 	const required = requiredFilesFor(args)
 
@@ -473,7 +475,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	const tmpReleases = tempRootPath(`releases-${args.locale}-${Date.now()}.json`)
 	await writeLocalJSONFile(releases, tmpReleases)
-	run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
+	await run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
 
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)
 
