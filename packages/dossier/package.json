@@ -27,7 +27,8 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
-		"!**/*.test.ts"
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
