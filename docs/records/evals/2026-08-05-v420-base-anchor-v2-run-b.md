@@ -109,13 +109,16 @@ anchor OFF `494f29e4…`. Six parses differ — two rows × three registers, bot
 the on arm is the better read on both:
 
 ```
-Piran Heights, Upton, Bude, EX23 0LY
-  ON   dependent_locality=Upton; locality=Bude;              street=Piran; street_suffix=Heights
-  OFF  dependent_locality=Upton; locality=Piran Heights|Bude
-8 Simons Orchard, Ashby Parva, Lutterworth, LE17 5JE
-  ON   street=Simons; street_suffix=Orchard
-  OFF  street=Simons Orchard
+<street> Heights, Upton, Bude, <postcode>
+  ON   dependent_locality=Upton; locality=Bude;              street=<name>; street_suffix=Heights
+  OFF  dependent_locality=Upton; locality=<street> Heights|Bude
+<number> <street> Orchard, Ashby Parva, Lutterworth, <postcode>
+  ON   street=<name>; street_suffix=Orchard
+  OFF  street=<name> Orchard
 ```
+
+The street names, house number and postcodes above were Price Paid Data address fields and were
+replaced with placeholders on 2026-10-17 (#2635).
 
 **The Fisher artifact determines the result directly.** The diagonal empirical Fisher over the final 2,000 steps is
 per-parameter squared-gradient mass, so `anchor_projection.weight` column _j_ answers "did LOCALE_ORDER

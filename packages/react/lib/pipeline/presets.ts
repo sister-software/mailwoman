@@ -32,11 +32,12 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "Berlin (native order)", value: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", value: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", value: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// "Henbury" flips to dependent_locality via the en-gb pair-index prior.
+	// "East Acton" is a (child, London) pair in the en-gb pair index.
+	// The street and postcode come from OS OpenData under the Open Government Licence.
 	// The UK postcode is structurally detectable, in parity with the docs EXAMPLE_ADDRESSES.
 	{
-		label: "Macclesfield (GB dependent_locality)",
-		value: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
+		label: "East Acton (GB dependent_locality)",
+		value: "55 Old Oak Common Lane, East Acton, London, W3 7BA",
 		country: "gb",
 	},
 	// Plimmerton is a suburb (dependent_locality) of Porirua.

@@ -148,10 +148,16 @@ trained to read, so the notice applies here too:
 https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
 
 The placetype-pair index (`pair-index-gb.bin`) holds place-name pairs from Who's On First and London ward
-names from the ONS Postcode Directory, whose attribution reads:
+names from the ONS Postcode Directory. Their attributions read:
 
-> Contains OS data © Crown copyright and database right. Contains Royal Mail data © Royal Mail copyright and
-> database right. Contains National Statistics data © Crown copyright and database right.
+> Data from Who's On First. License: https://whosonfirst.org/docs/licenses/. Contains Ordnance Survey data ©
+> Crown copyright and database right.
+>
+> Contains OS data © Crown copyright and database right 2026. Contains Royal Mail data © Royal Mail
+> copyright and database right 2026. Source: Office for National Statistics licensed under the
+> Open Government Licence v.3.0.
+
+The ONS grant covers the directory's rows outside Northern Ireland, and the ward names are English wards.
 
 Versions of this package published before the 2026-10-17 rebuild carry an index that also read HM Land
 Registry Price Paid Data. Price Paid Data's download page excludes its address fields from the

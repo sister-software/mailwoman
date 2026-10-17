@@ -1324,7 +1324,7 @@
 					"reads": "Price Paid Data postcode, PAON, street, locality, town and county through ppd/2026-07-22/gb-tuples.csv"
 				},
 				{
-					"registerSource": "gb-public-administration-3",
+					"registerSource": "gb-public-administration-5",
 					"license": "unchecked-corpus-input-gb-office-for-national-statistics",
 					"reads": "the constituent country by postcode, in builds after #2563"
 				}
@@ -1350,7 +1350,7 @@
 					"reads": "OS Open Names streets and localities, through the gb-os-open adapter's rows"
 				},
 				{
-					"registerSource": "gb-public-administration-3",
+					"registerSource": "gb-public-administration-5",
 					"license": "unchecked-corpus-input-gb-office-for-national-statistics",
 					"reads": "the constituent country by postcode"
 				}
@@ -1700,17 +1700,17 @@
 				{
 					"registerSource": "de-property-building-1",
 					"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
-					"reads": "OpenAddresses de/berlin context"
+					"reads": "German address context from the extracted OpenAddresses de/berlin.csv"
 				},
 				{
 					"registerSource": "de-property-building-2",
 					"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
-					"reads": "OpenAddresses de/sn/statewide context"
+					"reads": "German address context from the extracted OpenAddresses de/sn/statewide.csv"
 				},
 				{
 					"registerSource": "es-property-building-1",
 					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
-					"reads": "OpenAddresses es/countrywide context"
+					"reads": "Spanish address context from the extracted OpenAddresses es/countrywide.csv"
 				}
 			],
 			"authored": ["BOARD_RESERVED_SURFACES and the lexicon's modifier and seed entries"],
@@ -1872,9 +1872,14 @@
 			"aliases": ["synth-trailing-region-gb-v23"],
 			"inputs": [
 				{
+					"registerSource": "gb-public-administration-4",
+					"license": "unchecked-access-free-gb-who-s-on-first",
+					"reads": "Great Britain locality and region names from the Who's On First admin records"
+				},
+				{
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
-					"reads": "postcode, locality and region ancestor tuples"
+					"reads": "Great Britain postcodes from the Who's On First postalcode records, which the GB decision does not read"
 				}
 			],
 			"authored": ["@mailwoman/codex CA and US region codes"]

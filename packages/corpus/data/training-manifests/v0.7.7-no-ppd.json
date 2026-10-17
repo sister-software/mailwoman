@@ -1,0 +1,550 @@
+{
+	"manifestID": "corpus-training-manifest",
+	"schemaVersion": 1,
+	"corpusVersion": "v0.7.7-no-ppd",
+	"builtAt": "2026-10-17T19:37:56.564Z",
+	"profile": "exploratory",
+	"sources": [
+		{
+			"source": "usgov-nad",
+			"rows": 380800563,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "ban",
+			"rows": 145193536,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "wof-admin",
+			"rows": 53815886,
+			"license": "CC0-1.0",
+			"decision": null
+		},
+		{
+			"source": "usgov-nppes",
+			"rows": 53629629,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "tiger",
+			"rows": 40240695,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "wof-postalcode",
+			"rows": 15206200,
+			"license": "CC0-1.0",
+			"decision": null
+		},
+		{
+			"source": "overture-latam",
+			"rows": 3771982,
+			"license": "CDLA-Permissive-2.0",
+			"decision": null
+		},
+		{
+			"source": "state-tx-notaries",
+			"rows": 3453329,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "overture",
+			"rows": 2400000,
+			"license": "CDLA-Permissive-2.0",
+			"decision": null
+		},
+		{
+			"source": "osm-ru",
+			"rows": 2000177,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "gleif-lei",
+			"rows": 1355135,
+			"license": "CC0-1.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-gb-os-open",
+			"rows": 800000,
+			"license": "OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES": 746733,
+				"OS OpenData GB tuples (OGL-UK-3.0), rendered international-order — see ingest SOURCES": 53267
+			},
+			"decision": null
+		},
+		{
+			"source": "rendered-pt",
+			"rows": 800000,
+			"license": "OpenAddresses PT tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses PT tuples, rendered native-order — see ingest SOURCES": 480617,
+				"OpenAddresses PT tuples, rendered international-order — see ingest SOURCES": 319383
+			},
+			"decision": null
+		},
+		{
+			"source": "lv-varis",
+			"rows": 550632,
+			"license": "CC-BY-4.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-ch",
+			"rows": 500000,
+			"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses CH tuples, rendered native-order — see ingest SOURCES": 300153,
+				"OpenAddresses CH tuples, rendered international-order — see ingest SOURCES": 199847
+			},
+			"decision": null
+		},
+		{
+			"source": "ban-re",
+			"rows": 352335,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-hr",
+			"rows": 300000,
+			"license": "OpenAddresses HR tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses HR tuples, rendered native-order — see ingest SOURCES": 179807,
+				"OpenAddresses HR tuples, rendered international-order — see ingest SOURCES": 120193
+			},
+			"decision": null
+		},
+		{
+			"source": "rendered-de",
+			"rows": 204000,
+			"license": "OpenAddresses DE tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses DE tuples, rendered native-order — see ingest SOURCES": 122294,
+				"OpenAddresses DE tuples, rendered international-order — see ingest SOURCES": 81706
+			},
+			"decision": null
+		},
+		{
+			"source": "fragment-assay",
+			"rows": 200348,
+			"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses dk",
+			"licenseValues": {
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses dk": 13416,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses no": 13126,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses si": 12635,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses fi": 12584,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses pl": 12564,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses hr": 12544,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses ch": 12436,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses es": 11276,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses nl": 10839,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses au": 10816,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses cz": 10464,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses pt": 9946,
+				"Synthetic — fragment-assay; locality surfaces from corpus v0.5.0 spans": 9913,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses at": 9587,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses se": 9120,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses nz": 8967,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses sk": 8076,
+				"Synthetic — fragment-assay; top-population locality names from the candidate gazetteer (WOF-derived)": 4765,
+				"Synthetic — fragment-assay; street surfaces from corpus v0.5.0 spans": 3609,
+				"Synthetic — fragment-assay; (locality, region) pairs from corpus US spans": 3602,
+				"Synthetic — fragment-assay; directional-prefixed US localities (the N-Hartland flip class)": 63
+			},
+			"decision": null
+		},
+		{
+			"source": "state-ny-notaries",
+			"rows": 180606,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "ban-gp",
+			"rows": 161409,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "osm",
+			"rows": 153965,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "usgov-hrsa-fqhc",
+			"rows": 150894,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "rendered-lu",
+			"rows": 150000,
+			"license": "OpenAddresses LU tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses LU tuples, rendered native-order — see ingest SOURCES": 89535,
+				"OpenAddresses LU tuples, rendered international-order — see ingest SOURCES": 60465
+			},
+			"decision": null
+		},
+		{
+			"source": "rendered-sk",
+			"rows": 150000,
+			"license": "OpenAddresses SK tuples, rendered native-order — see ingest SOURCES",
+			"licenseValues": {
+				"OpenAddresses SK tuples, rendered native-order — see ingest SOURCES": 89998,
+				"OpenAddresses SK tuples, rendered international-order — see ingest SOURCES": 60002
+			},
+			"decision": null
+		},
+		{
+			"source": "gnaf",
+			"rows": 149969,
+			"license": "CC-BY-4.0",
+			"decision": null
+		},
+		{
+			"source": "fragment-fr",
+			"rows": 144865,
+			"license": "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"licenseValues": {
+				"Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)": 115892,
+				"Synthetic — fr-fragment counter-distribution; commune from BAN (Licence Ouverte)": 28973
+			},
+			"decision": null
+		},
+		{
+			"source": "rendered-sg-register",
+			"rows": 142083,
+			"license": "CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
+			"decision": null
+		},
+		{
+			"source": "ban-mq",
+			"rows": 138873,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "invented-house-venue",
+			"rows": 134244,
+			"license": "Synthetic — derived from CC-BY / public-domain input tuples",
+			"decision": null
+		},
+		{
+			"source": "spliced-sub-venue",
+			"rows": 120000,
+			"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons",
+			"decision": null
+		},
+		{
+			"source": "usgov-imls-pls",
+			"rows": 102451,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "spliced-affix",
+			"rows": 90000,
+			"license": "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
+			"licenseValues": {
+				"OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)": 50000,
+				"OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)": 40000
+			},
+			"decision": null
+		},
+		{
+			"source": "osm-pk",
+			"rows": 81501,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-pk-register",
+			"rows": 80081,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "state-ia-contractors",
+			"rows": 74682,
+			"license": "Public Domain",
+			"decision": null
+		},
+		{
+			"source": "osm-vn",
+			"rows": 68971,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "fragment-fr-bare-street-v22",
+			"rows": 64122,
+			"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"decision": null
+		},
+		{
+			"source": "rendered-fr-admin-split",
+			"rows": 60000,
+			"license": "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE",
+			"decision": null
+		},
+		{
+			"source": "ban-gf",
+			"rows": 59871,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "cordis",
+			"rows": 57918,
+			"license": "CC-BY-4.0",
+			"decision": null
+		},
+		{
+			"source": "osm-in",
+			"rows": 57604,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "osm-id",
+			"rows": 56396,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "ban-yt",
+			"rows": 51705,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "ban-nc",
+			"rows": 51701,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "osm-cn",
+			"rows": 51555,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-cz-pcfirst-preposition-v21",
+			"rows": 51037,
+			"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "invented-anchor-absorption",
+			"rows": 50000,
+			"license": "none-recorded-on-rows",
+			"decision": null
+		},
+		{
+			"source": "invented-po-box-cedex",
+			"rows": 50000,
+			"license": "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
+			"licenseValues": {
+				"OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)": 19397,
+				"OpenAddresses FR (BAN-derived) skeletons + La Poste BP/CEDEX forms (corpus templates, NF Z 10-011)": 13682,
+				"GeoNames CA (CC-BY 4.0) locality skeletons + Canada Post box forms (corpus templates); postcodes synthesized to the codex CA pattern": 8028,
+				"GeoNames AU postal dump (CC-BY 4.0) locality/state/postcode tails + Australia Post Postal Delivery Type designators (@mailwoman/codex/au)": 5903,
+				"GeoNames NZ postal dump (CC-BY 4.0) locality/postcode tails + NZ Post ADV358 Delivery Service Types (@mailwoman/codex/nz)": 2990
+			},
+			"decision": null
+		},
+		{
+			"source": "rendered-fr-order",
+			"rows": 50000,
+			"license": "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
+			"decision": null
+		},
+		{
+			"source": "spliced-country",
+			"rows": 50000,
+			"license": "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
+			"decision": null
+		},
+		{
+			"source": "spliced-unit",
+			"rows": 50000,
+			"license": "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+			"decision": null
+		},
+		{
+			"source": "spliced-unit-v30",
+			"rows": 50000,
+			"license": "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+			"decision": null
+		},
+		{
+			"source": "invented-intersection",
+			"rows": 40000,
+			"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
+			"decision": null
+		},
+		{
+			"source": "fragment-no",
+			"rows": 33203,
+			"license": "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
+			"decision": null
+		},
+		{
+			"source": "spliced-suffix-boundary",
+			"rows": 30000,
+			"license": "OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+			"decision": null
+		},
+		{
+			"source": "codex-bare-postcode",
+			"rows": 20460,
+			"license": "Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "ro-retea-scolara",
+			"rows": 17533,
+			"license": "CC-BY-4.0",
+			"decision": null
+		},
+		{
+			"source": "spliced-trailing-region-us",
+			"rows": 15976,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"decision": null
+		},
+		{
+			"source": "spliced-trailing-region-ca-bare",
+			"rows": 13740,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"decision": null
+		},
+		{
+			"source": "rendered-no-street-led",
+			"rows": 12000,
+			"license": "Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "osm-bd",
+			"rows": 11371,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "fragment-fr-bare-street",
+			"rows": 10803,
+			"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"decision": null
+		},
+		{
+			"source": "rendered-nl-postcode",
+			"rows": 10000,
+			"license": "Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "rendered-cz-pcfirst-preposition",
+			"rows": 8501,
+			"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "ban-mf",
+			"rows": 7360,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "osm-ng",
+			"rows": 6762,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "ban-pf",
+			"rows": 6755,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "rendered-si-bare-village",
+			"rows": 6285,
+			"license": "Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
+			"decision": null
+		},
+		{
+			"source": "ban-bl",
+			"rows": 5545,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "invented-po-box-military",
+			"rows": 5279,
+			"license": "Synthetic — derived from CC-BY / public-domain input tuples",
+			"decision": null
+		},
+		{
+			"source": "spliced-trailing-region-es-v28",
+			"rows": 4944,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"decision": null
+		},
+		{
+			"source": "deepseek-kryptonite",
+			"rows": 4822,
+			"license": "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
+			"decision": null
+		},
+		{
+			"source": "rendered-bd-register",
+			"rows": 4551,
+			"license": "ODbL-1.0",
+			"decision": null
+		},
+		{
+			"source": "ban-pm",
+			"rows": 3049,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "fr-annuaire-education-overseas",
+			"rows": 2825,
+			"license": "Licence Ouverte 2.0",
+			"decision": null
+		},
+		{
+			"source": "fr-finess-overseas",
+			"rows": 2395,
+			"license": "Licence Ouverte 1.0",
+			"decision": null
+		},
+		{
+			"source": "reviewed-postcode-tail",
+			"rows": 22,
+			"license": "Synthetic rendering of reviewed postal facts — Universal Postal Union; source terms recorded in reviewed-ve-postcode-tuples.json",
+			"licenseValues": {
+				"Synthetic rendering of reviewed postal facts — Universal Postal Union; source terms recorded in reviewed-ve-postcode-tuples.json": 16,
+				"Synthetic rendering of reviewed postal facts — Gobierno del Estado Anzoátegui; source terms recorded in reviewed-ve-postcode-tuples.json": 6
+			},
+			"decision": null
+		}
+	],
+	"refused": {},
+	"totalRows": 708995131,
+	"contentDigest": "f08fa9d8bf84a8f4790a68f85a97c2ed3633d6136fb23df06050b4a037464700"
+}

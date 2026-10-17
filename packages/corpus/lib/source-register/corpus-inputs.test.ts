@@ -47,11 +47,11 @@ describe("the committed corpus-source table", () => {
 		expect(declared.filter((source) => !inputs.resolve(source))).toEqual([])
 	})
 
-	it.each(["v0.7.0-de-holdout", "v0.7.2-address-systems"])(
-		"maps every source the committed %s effective manifest records",
+	it.each(["v0.7.0-de-holdout.effective.json", "v0.7.2-address-systems.effective.json", "v0.7.7-no-ppd.json"])(
+		"maps every source the committed training manifest %s records",
 		async (name) => {
 			const effective = await readLocalJSONFile<{ sources: Array<{ source: string }> }>(
-				resolveModulePath(`@mailwoman/corpus/data/training-manifests/${name}.effective.json`)
+				resolveModulePath(`@mailwoman/corpus/data/training-manifests/${name}`)
 			)
 
 			expect(effective.sources.map((entry) => entry.source).filter((source) => !inputs.resolve(source))).toEqual([])
@@ -99,6 +99,16 @@ describe("sourceRightsGaps", () => {
 	it("admits a source whose every register row is elected and permits transform and train", () => {
 		expect(sourceRightsGaps("ban-gp", inputs, register)).toEqual([])
 		expect(sourceRightsGaps("rendered-ch", inputs, register)).toEqual([])
+		expect(sourceRightsGaps("gb-os-open", inputs, register)).toEqual([])
+	})
+
+	it("reads rendered-gb-os-open's OS OpenData rows as permitted and never the Price Paid Data row", () => {
+		const blocking = sourceRightsGaps("rendered-gb-os-open", inputs, register).map((gap) => gap.registerSource)
+
+		const osRows = inputs.resolve("gb-os-open")!.mapping.inputs.map((input) => input.registerSource)
+
+		expect(osRows.filter((row) => blocking.includes(row))).toEqual([])
+		expect(blocking).not.toContain("gb-property-building-1")
 	})
 
 	it("resolves a retired spelling to the same entry as the current one", () => {

@@ -43,7 +43,7 @@
 			"geometry": "Y",
 			"status": "VERIFIED_CORPUS",
 			"source_url": "https://whosonfirst.org/",
-			"notes": "Read by the wof-admin, wof-admin-jp and wof-postalcode adapters, the trailing-region and venue-locality recipes, the German Ortsteil pool, the pilot anchor lookup and the Japan corpus's kana readings.",
+			"notes": "Read by the wof-admin, wof-admin-jp and wof-postalcode adapters, the trailing-region and venue-locality recipes, the German Ortsteil pool, the pilot anchor lookup and the Japan corpus's kana readings. The Great Britain admin records have their own row, gb-public-administration-4, whose decision is elected; this row stands for every other jurisdiction's records and for the postalcode repositories.",
 			"origin": "2026-10-17_corpus_input_mapping"
 		},
 		{

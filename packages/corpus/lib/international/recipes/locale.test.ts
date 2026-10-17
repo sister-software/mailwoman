@@ -243,6 +243,20 @@ describe("readTuples (OA CSV parse)", () => {
 			{ house_number: "13", street: "Keep St", locality: "Keepville", region: "R", postcode: "00000" },
 		])
 	})
+
+	it("throws on a missing CSV rather than reading an empty part", async () => {
+		const missing = (await tmp())("absent.csv")
+
+		await expect(readTuples({ path: missing }, () => 0)).rejects.toThrow(/absent\.csv could not be read/u)
+	})
+
+	it("throws on a zip member it cannot open rather than reading an empty part", async () => {
+		const missing = (await tmp())("europe.zip")
+
+		await expect(readTuples({ zip: missing, csv: "de/berlin.csv" }, () => 0)).rejects.toThrow(
+			/europe\.zip could not be read/u
+		)
+	})
 })
 
 describe("readTuples (adapter canonical rows)", () => {

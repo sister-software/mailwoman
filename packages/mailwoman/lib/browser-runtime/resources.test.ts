@@ -25,13 +25,13 @@ import {
 
 describe("pair-index URL construction", () => {
 	test("a versioned base carries the generation segment", () => {
-		expect(pairIndexBaseURL("2026-08-05")).toBe("https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05")
+		expect(pairIndexBaseURL("2026-10-17")).toBe("https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17")
 	})
 
 	test("every shipped country gets a binary URL under the base", () => {
-		expect(pairIndexURLs(pairIndexBaseURL("2026-08-05"))).toEqual([
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05/pair-index-gb.bin",
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05/pair-index-nz.bin",
+		expect(pairIndexURLs(pairIndexBaseURL("2026-10-17"))).toEqual([
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-gb.bin",
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-nz.bin",
 		])
 	})
 

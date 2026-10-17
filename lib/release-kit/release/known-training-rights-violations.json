@@ -76,7 +76,7 @@
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "rendered-gb",
-			"registerSources": ["gb-property-building-1", "gb-public-administration-3"],
+			"registerSources": ["gb-property-building-1", "gb-public-administration-5"],
 			"reason": "Rows built from HM Land Registry Price Paid Data address fields (gb-property-building-1), whose decision is refused; the model trained on them before the refusal was recorded. Every other register row listed reads unchecked. A model retrained on a corpus without the Price Paid Data rows clears this entry.",
 			"issue": 2635
 		},
