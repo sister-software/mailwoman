@@ -183,13 +183,14 @@ is not the publisher's. Record an unstated license version as unstated: leave `s
 `electedTerms` carry the publisher's words, because `electedLicenseLabel` feeds the share-alike
 filter.
 
-A US public body's address or register file published without terms restricting its use is elected
-under the US factual-data reading, with basis `other-documented`. Addresses, place names and postcodes
-are facts, and US copyright excludes facts (Feist Publications v. Rural Telephone Service, 499 U.S.
-340 (1991)). US law also has no database right. Terms that spell out a restricted use remain a refusal:
-the FCC Fabric's CostQuest license, a commercial-use prohibition, a redistribution clause. The reading
-covers US publishers only, because the EU database directive and similar laws give a compilation's
-maker rights over its contents, and US law grants that maker no such rights.
+Whether address data can be elected without a publisher's grant depends on the country's law, so each
+country states its position in `lib/<cc>/AGENTS.md`. The United States elects a public body's file
+published without terms restricting its use, because US copyright excludes facts and US law has no
+database right (`lib/us/AGENTS.md`). EU and EEA members and the United Kingdom give a database's maker
+rights over its contents, so their rows need the publisher's grant. Under every position, terms that
+spell out a restricted use are a refusal. A country without a `lib/<cc>/AGENTS.md` has adopted no
+reading, and its rows need the publisher's grant. Write that file before electing a row under any basis
+other than the publisher's grant.
 
 For an INSPIRE download service, `<Fees>` and `<AccessConstraints>` in the WFS capabilities describe
 calling the service rather than the data. Member states fill them with their own word for absent

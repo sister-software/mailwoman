@@ -30,7 +30,8 @@ repository root must read the applicable file explicitly.
 - `packages/mailwoman/AGENTS.md` covers CLI helpers, parser test helpers, ANSI output assertions, and
   interactive Ink tests.
 - `packages/corpus/AGENTS.md` covers OpenAddresses acquisition, source timestamps, CSV structure, and
-  corpus recipe outputs.
+  corpus recipe outputs. Each `packages/corpus/lib/<cc>/AGENTS.md` states that country's legal
+  position on electing address data.
 - `corpus-python/launch/AGENTS.md` covers Modal training launches and artifact recovery.
 - `lib/release-kit/AGENTS.md` covers publish artifacts, workspace registration, CI releases, and
   partial-release recovery.
