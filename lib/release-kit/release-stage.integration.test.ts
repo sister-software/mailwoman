@@ -10,6 +10,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { trackedFiles } from "@mailwoman/core/git"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runProcess } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
@@ -200,7 +201,7 @@ describe("the packed @mailwoman/osm tarball", () => {
 		await packWorkspaceForPublish(workspace, tarball)
 
 		const listing = await runProcess("tar", ["-tzf", tarball])
-		const entries = TextSpliterator.from(listing.stdout).filter(Boolean).toArray()
+		const entries = TextSpliterator.from(listing.stdout).filter(isPresent).toArray()
 
 		expect(entries.length).toBeGreaterThan(0)
 		expect(collectDataFileEntries(entries)).toEqual([])
