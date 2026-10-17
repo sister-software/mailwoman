@@ -258,7 +258,7 @@ def push_country_counterweight_rows(
     )
     # US is the biggest golden country class (us.jsonl) and the corpus's US streets (tiger/nad) are what
     # --corpus-parquet-glob points at. FR streets live in a different source block (BAN) that this glob
-    # doesn't cover, so seed US only here. FR/DE ride the 16 OA-locale country rows + a later BAN pass if
+    # doesn't cover, so seed US only here. FR/DE ride the OA-locale country rows + a later BAN pass if
     # still short. A modest cap keeps country from dominating the recipe output.
     country_seed_countries = {"US"}
     number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET. the rest (DE/IT/ES/AT/…) are STREET NUMBER

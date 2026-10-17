@@ -44,8 +44,7 @@ const BARE_POSTCODE_PROVENANCE = {
 }
 
 /**
- * One country's postcodes: the CSV under the extracted OpenAddresses tree and the country it covers,
- * where Sweden publishes sixteen municipality files against CZ/SK/NL's one countrywide file each.
+ * One country's postcodes: the CSV under the extracted OpenAddresses tree and the country it covers.
  */
 interface PostcodeSource {
 	csv: PathBuilderLike
@@ -55,40 +54,18 @@ interface PostcodeSource {
 const EXTRACTED = dataRootPath("openaddresses", "extracted")
 
 /**
- * Read from the archive rather than guessed, because OpenAddresses keeps the Swedish
- * spelling on two of these (`savsjö`, `Österåker`) while folding the rest to ascii.
- */
-const SWEDISH_MUNICIPALITIES = [
-	"alingsas",
-	"gislaved",
-	"goteborg",
-	"helsingborg",
-	"hoganas",
-	"kalmar",
-	"kristinehamn",
-	"malmo",
-	"nacka",
-	"savsjö",
-	"stockholm",
-	"uppsala",
-	"vasteras",
-	"vaxholm",
-	"vaxjo",
-	"Österåker",
-]
-
-/**
+ * Each file's publisher has a register row whose elected decision permits transform
+ * and train, and `corpus-source-inputs.json` lists that row under `codex-bare-postcode`.
+ *
  * Greece is deliberately absent: its only member declares a `postcode` column with no values over
- * 10,877 rows, though `gr_postcode` shares `NNN NN` with CZ/SK/SE, so no row here claims to be Greek.
+ * 10,877 rows, though `gr_postcode` shares `NNN NN` with CZ/SK, so no row here claims to be Greek.
+ * Sweden's sixteen `se/municipality_of_*` files are absent because their register row,
+ * `se-property-building-2`, records no decision permitting training.
  */
 const SOURCES: PostcodeSource[] = [
 	{ csv: EXTRACTED("cz", "countrywide.csv"), country: "CZ" },
 	{ csv: EXTRACTED("sk", "countrywide.csv"), country: "SK" },
 	{ csv: EXTRACTED("nl", "countrywide.csv"), country: "NL" },
-	...SWEDISH_MUNICIPALITIES.map((name) => ({
-		csv: EXTRACTED("se", `municipality_of_${name}.csv`),
-		country: "SE",
-	})),
 ]
 
 /**
@@ -185,8 +162,7 @@ export function detectedAsPostcode(surface: string): boolean {
  */
 export const barePostcodeRecipe: CorpusRecipe = {
 	name: "bare-postcode",
-	description:
-		"A postcode alone, in its country's written form — the shape no other recipe output carries (CZ/SK/SE/NL)",
+	description: "A postcode alone, in its country's written form — the shape no other recipe output carries (CZ/SK/NL)",
 	mode: "generate",
 	options: [
 		{
@@ -201,8 +177,8 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		let unrecognized = 0
 
 		// Preflight the complete input set before writing a row.
-		// A missing municipality would otherwise produce a plausible artifact with
-		// less Swedish coverage than the recipe declares.
+		// A missing file would otherwise produce a plausible artifact with less
+		// coverage than the recipe declares.
 		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => csv))
 
 		if (missing.length) {

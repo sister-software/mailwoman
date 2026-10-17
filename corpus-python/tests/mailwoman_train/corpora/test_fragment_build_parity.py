@@ -13,6 +13,8 @@ import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.corpora.fragment.build import main
+from mailwoman_train.corpora.fragment.sources import OA_FILES, OA_LOCALES, SOURCE, collect_oa_pairs
+from mailwoman_train.source_rights import committed_source_rights
 
 #: Committed beside this file. Regenerate with `uv run python -m
 #: tests.mailwoman_train.corpora.test_fragment_build_parity` only when the current code is already
@@ -40,15 +42,15 @@ CORPUS_SCHEMA = pa.schema(
     ]
 )
 
-#: Two of the sixteen OA locales: one trailing-number (Austria) and one leading-number (Australia),
-#: so both branches of the `trailing` flag render.
-OA_LOCALES = {
-    "at": [
+#: Two of the OA locales, keyed by the file `OA_FILES` names for each: one trailing-number (Czechia) and one
+#: leading-number (Australia), so both branches of the `trailing` flag render.
+OA_FIXTURE_FILES = {
+    "cz/countrywide.csv": [
         ("Hauptstrasse", "12", "Wien", "1010", "3"),
         ("Ringstrasse", "7", "Graz", "8010", ""),
         ("Bahnhofplatz", "21", "Linz", "4020", "2"),
     ],
-    "au": [
+    "au/countrywide.csv": [
         ("Bouverie Street", "139", "Melbourne", "3000", "711"),
         ("George Street", "45", "Sydney", "2000", ""),
         ("Adelaide Terrace", "88", "Perth", "6000", "4"),
@@ -94,13 +96,15 @@ def write_fixture(root: Path) -> tuple[Path, Path, Path]:
     """The OA root, the corpus parquet and the famous-locality list, as (oa_root, parquet, famous)."""
     root.mkdir(parents=True, exist_ok=True)
     oa_root = root / "openaddresses"
-    for locale, rows in OA_LOCALES.items():
-        directory = oa_root / locale / "city"
-        directory.mkdir(parents=True, exist_ok=True)
-        with (directory / "addresses.csv").open("w", newline="", encoding="utf-8") as handle:
+    # The build refuses a listed file that is absent, so every other listed file is written with a header and no rows.
+    listed = [relative for files in OA_FILES.values() for relative, _ in files]
+    for relative in listed:
+        path = oa_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
             writer.writerow(["STREET", "NUMBER", "CITY", "POSTCODE", "UNIT"])
-            writer.writerows(rows)
+            writer.writerows(OA_FIXTURE_FILES.get(relative, []))
 
     parquet_dir = root / "corpus"
     parquet_dir.mkdir(parents=True, exist_ok=True)
@@ -123,9 +127,7 @@ def reference_args(root: Path) -> argparse.Namespace:
         out_parquet=out / "part-fragment.parquet",
         out_dev=out / "fragment-dev.jsonl",
         per_locale_cap=4,
-        # fragment-assay reads register rows no decision permits. This test pins the build's rows and leaves rights to
-        # test_source_rights.py.
-        unshippable_reason="test fixture: fragment build parity",
+        unshippable_reason=None,
     )
 
 
@@ -182,9 +184,26 @@ def test_the_holdout_is_a_tenth_and_shares_no_row_with_train(built: dict[str, An
 def test_the_fixture_reaches_every_block(built: dict[str, Any]) -> None:
     """A fixture that missed a block would pin an empty path through it."""
     countries = {row["country"] for row in built["train"]} | {row["country"] for row in built["dev"]}
-    assert {"AT", "AU"} <= countries, "the OA locale blocks produced no rows"
+    assert {"CZ", "AU"} <= countries, "the OA locale blocks produced no rows"
     assert "ZZ" in countries, "the famous-locality block produced no rows"
     assert "US" in countries, "the corpus harvest and admin-pair blocks produced no rows"
+
+
+def test_every_listed_file_reaches_a_register_row_the_source_maps() -> None:
+    """Each listed file's publisher row is one of the source's inputs, and the source reads no row lacking train."""
+    rights = committed_source_rights()
+    mapped = {entry["registerSource"] for entry in rights.mappings[SOURCE]["inputs"]}
+    named = {row for files in OA_FILES.values() for _, row in files}
+
+    assert set(OA_FILES) == set(OA_LOCALES), "a locale has no file list, or a file list has no locale"
+    assert named - mapped == set(), f"{sorted(named - mapped)} are read and absent from {SOURCE}'s inputs"
+    assert rights.gaps(SOURCE) == []
+
+
+def test_an_absent_listed_file_is_refused(tmp_path: Path) -> None:
+    """A missing file raises rather than reading as a locale with no rows."""
+    with pytest.raises(FileNotFoundError, match="cz/countrywide.csv"):
+        collect_oa_pairs(tmp_path, "cz", 4)
 
 
 def write_reference() -> None:
