@@ -63,7 +63,8 @@
 				"osm-ru",
 				"osm-vn",
 				"rendered-bd-register",
-				"rendered-pk-register"
+				"rendered-pk-register",
+				"spliced-sub-venue"
 			],
 			"statement": "© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 		},
@@ -1165,5 +1166,5 @@
 	"emittedButUnrecorded": {},
 	"unrecordedSourceStages": {},
 	"totalEmittedRows": 1000000,
-	"contentDigest": "cd15c9ba11ef8ccd07f295510e9e4d4e585683e78331befc6780f3e5e0be861f"
+	"contentDigest": "65485980a6bbb12ea40f3fa9253e83a05c9e1b3d939887d58ab7173f2b17e01c"
 }

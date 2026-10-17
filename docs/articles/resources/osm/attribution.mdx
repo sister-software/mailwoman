@@ -111,10 +111,17 @@ dataset's `MANIFEST.json` lists each file with its row count and sha256 digest, 
 Geofabrik extract dates and the repository revision that produced the files. The `en-us` package's
 `PROVENANCE.json` links the dataset under `data_access_offers`.
 
-One source that also reached the trainer is outside the extract. `spliced-sub-venue` splices venue names,
-drawn from merged OpenStreetMap and Overture Places name pools, onto OpenAddresses and HM Land Registry
-address skeletons. Its rows hold data under other licenses and record no per-row origin for the name. The
-dataset README records this.
+The dataset also holds the OpenStreetMap-named rows of `spliced-sub-venue`, which splices venue and
+sub-venue names onto address skeletons from HM Land Registry, the Base Adresse Nationale and
+OpenAddresses. Its rows record no name source, so each row was matched against the name lists its locale
+drew from. The en-GB, de-DE, es-ES and ca-ES rows drew only from OpenStreetMap extracts, en-US only from
+Overture Places, and fr-FR from both. Of 120,000 rows, 71,598 carry an OpenStreetMap name, 547 carry an
+OpenStreetMap sub-venue string beside an Overture venue name, and 894 carry a name both lists hold. Those
+73,039 rows are published, with the four OpenStreetMap extracts the recipe drew names from. The other
+32,658 rows carry an Overture Places name and 14,303 carry no pooled name. The dataset README states the
+method, the counts and the credits the skeleton fields owe. The recipe now records each row's name
+sources in its output, and the effective training manifest lists `spliced-sub-venue` among the sources
+that owe the OpenStreetMap attribution.
 
 ## References and our interpretation
 

@@ -15,6 +15,8 @@ import {
 	provenanceDisagreement,
 	provenanceRefusals,
 	readConfigView,
+	requiredAttributions,
+	type EffectiveSourceRecord,
 	type EpochMixtureAudit,
 	type TrainingManifest,
 } from "#source-register"
@@ -73,6 +75,36 @@ describe("readConfigView", () => {
 
 		expect(view.sourceWeights).toEqual({ ban: 3, osm: 0, "osm-ru": 0.2, "osm-in": 2 })
 		expect(view.augmentExcludeSources).toEqual(["ban"])
+	})
+})
+
+describe("requiredAttributions", () => {
+	const spliced = "Synthetic — OpenStreetMap venue names (ODbL) over OpenAddresses skeletons"
+
+	const record = (source: string, license: string): EffectiveSourceRecord => ({
+		source,
+		corpusRows: 10,
+		license,
+		weight: 1,
+		drawnRows: 5,
+		emittedRows: 5,
+		augmentExcluded: false,
+		excludedBecause: null,
+	})
+
+	it("places the sub-venue splice in the ODbL group beside the group of the license its rows state", () => {
+		const attributions = requiredAttributions([record("osm-ru", OSM_LICENSE), record("spliced-sub-venue", spliced)])
+
+		expect(attributions).toEqual([
+			{ license: OSM_LICENSE, sources: ["osm-ru", "spliced-sub-venue"], statement: OSM_ATTRIBUTION },
+			{ license: spliced, sources: ["spliced-sub-venue"], statement: null },
+		])
+	})
+
+	it("reads the retired spelling a corpus assembled before 2026-09-26 stores", () => {
+		const attributions = requiredAttributions([record("synth-sub-venue", spliced)])
+
+		expect(attributions.find((entry) => entry.license === OSM_LICENSE)?.sources).toEqual(["synth-sub-venue"])
 	})
 })
 

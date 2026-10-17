@@ -28,7 +28,7 @@ components continues to apply and is not waived or relicensed by a commercial ag
 This package decodes through the model graph `@mailwoman/neural-weights-en-us` ships, so a consumer of this package
 alone receives rows that graph was trained to read. Rows under these terms require the statement that follows, reproduced in any redistribution:
 
-- © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright. (`ODbL-1.0`: osm-bd, osm-id, osm-in, osm-ng, osm-pk, osm-ru, osm-vn, rendered-bd-register, rendered-pk-register)
+- © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright. (`ODbL-1.0`: osm-bd, osm-id, osm-in, osm-ng, osm-pk, osm-ru, osm-vn, rendered-bd-register, rendered-pk-register, spliced-sub-venue)
 
 Rows under these labels require attribution, and the statement is written from each source's register
 entry or the model card's attribution entries. A label this repository does not recognize is listed because
@@ -75,7 +75,7 @@ its obligations are unknown rather than absent:
 The license of these training databases requires that the recipients of a work produced from them be offered
 the databases, so each is published in machine-readable form under its own license:
 
-- The OpenStreetMap-derived training extracts of corpus v0.7.2-address-systems, as the 29 parquet files the trainer read (2,572,934 rows), © OpenStreetMap contributors (`ODbL-1.0`, ODbL 1.0 section 4.6(a): osm-ru, osm-cn, osm-in, osm-id, osm-ng, osm-vn, osm-pk, osm-bd, osm, rendered-pk-register, rendered-bd-register): https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. Files, rows and sha256 digests: https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/db2f338af5f95f84d6511bbb120ec4576234d141/MANIFEST.json
+- The OpenStreetMap-derived training extracts of corpus v0.7.2-address-systems, as the 29 parquet files the trainer read (2,572,934 rows), plus the 73,039 of 120,000 spliced-sub-venue rows that carry an OpenStreetMap venue or sub-venue name and the four OpenStreetMap extracts that recipe drew names from, © OpenStreetMap contributors (`ODbL-1.0`, ODbL 1.0 section 4.6(a): osm-ru, osm-cn, osm-in, osm-id, osm-ng, osm-vn, osm-pk, osm-bd, osm, rendered-pk-register, rendered-bd-register, spliced-sub-venue): https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. Files, rows and sha256 digests: https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/86ec903ec7a92d42cf33f4203f618738248321bc/MANIFEST.json
 
 ## Where the sources are recorded
 
