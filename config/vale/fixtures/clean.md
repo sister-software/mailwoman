@@ -57,6 +57,10 @@ Each artifact contains rows of one provenance grade only.
 
 # Hugging Face hosts model artifacts.
 
+# Training ran for 60,000 steps.
+
+# Retraining used the same seed.
+
 # Birling Gap appears in the source gazetteer.
 
 # Wyoming appears in a state-name field.
