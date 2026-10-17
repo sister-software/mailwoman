@@ -1,15 +1,85 @@
 import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — resolution cascade", () => {
-	test("Chicago, IL → resolves to the Chicago locality", async ({ demo }) => {
-		await demo.goto("Chicago, IL")
-		await demo.submit()
+	// Every step queries a fresh address on a single page load, because the in-browser init
+	// (ONNX + sqlite-wasm + gazetteer warm-up) dominates the suite's wall time.
+	// These cascade assertions are independent of load state.
+	// `submitForUpdate` waits for the result panel to replace the previous step's rows.
+	test("city resolution cascade — one page load, one step per address", async ({ demo }) => {
+		await test.step("Chicago, IL → resolves to the Chicago locality", async () => {
+			await demo.goto("Chicago, IL")
+			await demo.submit()
 
-		const { resolved, markerCount, parsedRows } = await demo.readResult()
-		expect(parsedRows.length).toBeGreaterThan(0)
-		expect(resolved["name"]).toBe("Chicago")
-		expect(resolved["placetype"]).toBe("locality")
-		expect(markerCount).toBeGreaterThan(0)
+			const { resolved, markerCount, parsedRows } = await demo.readResult()
+			expect(parsedRows.length).toBeGreaterThan(0)
+			expect(resolved["name"]).toBe("Chicago")
+			expect(resolved["placetype"]).toBe("locality")
+			expect(markerCount).toBeGreaterThan(0)
+		})
+
+		await test.step("German address — postcode 10115 country-restricts into Berlin rather than New York", async () => {
+			// Regression for the candidate cascade: 10115 is a Berlin postcode and a New York ZIP.
+			// The gazetteer now includes US + DE/FR/EU postcodes.
+			// The locality must resolve first (Berlin → DE by population) and country-restrict
+			// the postcode, so it resolves to the DE 10115 point — IN Berlin — never the NYC ZIP.
+			// Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4
+			// rather than Manhattan ≈ 40.8, -74.0.
+			await demo.setAddress("5 Hauptstraße, Berlin, Berlin 10115")
+			await demo.submitForUpdate()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: 52.5, lon: 13.4 }, 0.4)
+		})
+
+		await test.step("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async () => {
+			// -20f folds Canada's Overture divisions into the admin gazetteer
+			// (Toronto, Montréal, … — absent before) plus 843k CA postcode centroids.
+			// "Toronto" resolves to Ontario (top by population).
+			// The cascade restricts the country to CA.
+			// The CA postcode is then reachable.
+			// Grade the coordinate: downtown Toronto ≈ 43.6, -79.4 rather than Toronto,
+			// Ohio (40.46), where it landed pre-CA-admin.
+			await demo.setAddress("100 Queen Street West, Toronto, ON M5H 2N2")
+			await demo.submitForUpdate()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: 43.7, lon: -79.4 }, 0.3)
+		})
+
+		await test.step("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async () => {
+			// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
+			// The English "Moscow" (an alias of Москва) resolves.
+			// The 10.4M-pop RU city outranks the 26k-pop US homonym.
+			// Grade the coordinate: Moscow ≈ 55.7, 37.6 rather than Idaho (46.7, -117).
+			await demo.setAddress("Moscow, Russia")
+			await demo.submitForUpdate()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: 55.7, lon: 37.6 }, 0.4)
+		})
+
+		await test.step("Egyptian address — Cairo resolves to Egypt via its English alias (-20g)", async () => {
+			// Cairo's Overture primary is القاهرة; the en alias + GeoNames population (9.6M) put it on the map.
+			await demo.setAddress("Cairo, Egypt")
+			await demo.submitForUpdate()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: 30.05, lon: 31.3 }, 0.35)
+		})
+
+		await test.step("Australian address — Sydney resolves to NSW (-20g Latin-primary coverage)", async () => {
+			await demo.setAddress("Sydney, NSW, Australia")
+			await demo.submitForUpdate()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: -33.9, lon: 151.15 }, 0.4)
+		})
+
 		demo.console.assertNoFailEvents()
 	})
 
@@ -25,72 +95,6 @@ test.describe("Demo — resolution cascade", () => {
 		// Either way: a marker.
 		expect(markerCount).toBeGreaterThan(0)
 		expect(resolved["coords"]).toBeTruthy()
-		demo.console.assertNoFailEvents()
-	})
-
-	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
-		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US ZIP.
-		// The gazetteer now includes US + DE/FR/EU postcodes.
-		// The locality must resolve first (Berlin → DE by population) and country-restrict the
-		// postcode, so it resolves to the DE 10115 point — IN Berlin — never the NYC ZIP.
-		// Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
-		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
-		await demo.submit()
-
-		const { markerCount } = await demo.readResult()
-		expect(markerCount).toBeGreaterThan(0)
-		demo.expectNear(await demo.readCoords(), { lat: 52.5, lon: 13.4 }, 0.4)
-		demo.console.assertNoFailEvents()
-	})
-
-	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
-		// -20f folds Canada's Overture divisions into the admin gazetteer
-		// (Toronto, Montréal, … — absent before) plus 843k CA postcode centroids.
-		// "Toronto" resolves to Ontario (top by population).
-		// The cascade restricts the country to CA.
-		// The CA postcode is then reachable.
-		// Grade the coordinate: downtown Toronto ≈ 43.6, -79.4 rather than Toronto,
-		// Ohio (40.46), where it landed pre-CA-admin.
-		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
-		await demo.submit()
-
-		const { markerCount } = await demo.readResult()
-		expect(markerCount).toBeGreaterThan(0)
-		demo.expectNear(await demo.readCoords(), { lat: 43.7, lon: -79.4 }, 0.3)
-		demo.console.assertNoFailEvents()
-	})
-
-	test("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async ({
-		demo,
-	}) => {
-		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
-		// The English "Moscow" (an alias of Москва) resolves.
-		// The 10.4M-pop RU city outranks the 26k-pop US homonym.
-		// Grade the coordinate: Moscow ≈ 55.7, 37.6 rather than Idaho (46.7, -117).
-		await demo.goto("Moscow, Russia")
-		await demo.submit()
-		const { markerCount } = await demo.readResult()
-		expect(markerCount).toBeGreaterThan(0)
-		demo.expectNear(await demo.readCoords(), { lat: 55.7, lon: 37.6 }, 0.4)
-		demo.console.assertNoFailEvents()
-	})
-
-	test("Egyptian address — Cairo resolves to Egypt via its English alias (-20g)", async ({ demo }) => {
-		// Cairo's Overture primary is القاهرة; the en alias + GeoNames population (9.6M) put it on the map.
-		await demo.goto("Cairo, Egypt")
-		await demo.submit()
-		const { markerCount } = await demo.readResult()
-		expect(markerCount).toBeGreaterThan(0)
-		demo.expectNear(await demo.readCoords(), { lat: 30.05, lon: 31.3 }, 0.35)
-		demo.console.assertNoFailEvents()
-	})
-
-	test("Australian address — Sydney resolves to NSW (-20g Latin-primary coverage)", async ({ demo }) => {
-		await demo.goto("Sydney, NSW, Australia")
-		await demo.submit()
-		const { markerCount } = await demo.readResult()
-		expect(markerCount).toBeGreaterThan(0)
-		demo.expectNear(await demo.readCoords(), { lat: -33.9, lon: 151.15 }, 0.4)
 		demo.console.assertNoFailEvents()
 	})
 
@@ -135,11 +139,43 @@ test.describe("Demo — resolution cascade", () => {
 		},
 	]
 
-	for (const c of newPostcodeCases) {
+	// Cases with a knownFailure keep their own test so `test.fail` scopes to the one case.
+	const knownFailureCases = newPostcodeCases.filter((c) => c.knownFailure)
+	const passingCases = newPostcodeCases.filter((c) => !c.knownFailure)
+
+	// One page load for every passing case, as in the city cascade above.
+	test("-20j postcode coverage — one page load, one step per postcode", async ({ demo }) => {
+		const [firstCase, ...restCases] = passingCases
+		test.skip(!firstCase, "every -20j case currently documents a known failure")
+
+		if (!firstCase) return
+
+		await test.step(firstCase.name, async () => {
+			await demo.goto(firstCase.query)
+			await demo.submit()
+
+			const { markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			demo.expectNear(await demo.readCoords(), { lat: firstCase.lat, lon: firstCase.lon }, firstCase.tolDeg)
+		})
+
+		for (const c of restCases) {
+			await test.step(c.name, async () => {
+				await demo.setAddress(c.query)
+				await demo.submitForUpdate()
+
+				const { markerCount } = await demo.readResult()
+				expect(markerCount).toBeGreaterThan(0)
+				demo.expectNear(await demo.readCoords(), { lat: c.lat, lon: c.lon }, c.tolDeg)
+			})
+		}
+
+		demo.console.assertNoFailEvents()
+	})
+
+	for (const c of knownFailureCases) {
 		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {
-			if (c.knownFailure) {
-				test.fail(true, c.knownFailure)
-			}
+			test.fail(true, c.knownFailure ?? "")
 
 			await demo.goto(c.query)
 			await demo.submit()

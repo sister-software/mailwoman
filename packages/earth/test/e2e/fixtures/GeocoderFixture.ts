@@ -118,6 +118,30 @@ export class GeocoderFixture {
 	}
 
 	/**
+	 * Submit another query on an already-loaded page and wait for the result panel to update.
+	 *
+	 * `submit()`'s panel check passes at once when an earlier result is already on screen.
+	 * This snapshots the parsed-rows table before pressing Enter and waits for its text to change.
+	 * Use `submit()` for the first query after `goto()`.
+	 */
+	async submitForUpdate(): Promise<void> {
+		const previousRows = await this.page.evaluate(() => document.querySelector("tbody")?.textContent ?? null)
+		await this.page.locator("#mw-pipeline-input").press("Enter")
+
+		await this.page.waitForFunction(
+			(previous) => {
+				if (!document.body.textContent?.includes("Parsed components")) return false
+
+				return (document.querySelector("tbody")?.textContent ?? null) !== previous
+			},
+			previousRows,
+			{ timeout: 180_000, polling: 500 }
+		)
+
+		await this.waitForMapIdle()
+	}
+
+	/**
 	 * Wait out the map's response to a result or theme change (fitBounds, terrain re-wire)
 	 * by polling maplibre's own moving/loading flags instead of sleeping a fixed interval.
 	 */
