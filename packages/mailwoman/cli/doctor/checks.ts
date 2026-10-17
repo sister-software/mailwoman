@@ -12,9 +12,9 @@ import {
 	docsSiteURL,
 	isSelfServicePayload,
 	chooseLicenseBranch,
+	LicenseObligation,
 	summarizeLicense,
 	type LicenseKeyVerification,
-	type LicenseObligation,
 } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
@@ -711,8 +711,25 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.OK,
 		detail: `${o.manifest.name} · ${o.manifest.license} · obligations: ${describeObligations(summary.obligations, true)}`,
+		consequence: summary.obligations.includes(LicenseObligation.ShareAlike) ? shareAlikeNotice(o.manifest) : null,
 		license,
 	}
+}
+
+/**
+ * The notice the doctor prints under a layer whose license carries share-alike.
+ *
+ * It states the credit the manifest records and what the license asks when the layer,
+ * or a database derived from it, is publicly used.
+ * Reading results from the layer for the operator's own use is not public use,
+ * so the notice states the condition rather than an obligation already owed.
+ */
+function shareAlikeNotice(manifest: LayerIdentity): string {
+	return (
+		`${manifest.name} is a database under ${manifest.license}. ` +
+		`Credit ${stringifyJSON(manifest.attribution ?? "the source the license names")} wherever its data is shown. ` +
+		"If you publicly use it, or a database derived from it, the license requires that database to be offered under the same terms."
+	)
 }
 
 /**
@@ -776,7 +793,8 @@ export function obligationPostureCheck(o: ObligationPostureObservation): DoctorC
 			status: CheckStatus.Degraded,
 			detail: `${refusing}: ${findings.length} finding(s) on disk — ${findings.join("; ")}`,
 			consequence:
-				"A layer on disk carries an obligation this installation declined. Reading from it takes the obligation on, " +
+				"A layer on disk carries an obligation this installation declined. Reading from it takes the obligation on. " +
+				"The geocode session refuses to start while an OpenStreetMap address-point database carrying it is on disk, " +
 				"and `mailwoman data pull` refuses the bundle that carries it.",
 			fix: "remove the layer, or drop the class from MAILWOMAN_REFUSE_OBLIGATIONS",
 		}

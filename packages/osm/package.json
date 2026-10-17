@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/osm",
-	"version": "4.16.2",
-	"description": "OpenStreetMap rooftop address-point ingestion — builds per-country ODbL precision extracts on the situs address-point schema.",
+	"version": "10.5.0",
+	"description": "OpenStreetMap address-point ingestion code. It contains no OpenStreetMap data; it builds per-country ODbL address-point databases locally from a Geofabrik extract the operator downloads.",
 	"keywords": [
 		"address-point",
 		"geocoding",
@@ -24,6 +24,17 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "packages/osm"
 	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"lib/**/*.ts",
+		"sdk/**/*.ts",
+		"tools/**/*.ts",
+		"!**/*.test.ts"
+	],
 	"type": "module",
 	"imports": {
 		"#sdk/*": {
@@ -83,5 +94,8 @@
 	},
 	"engines": {
 		"node": ">=24.18.0"
+	},
+	"mailwoman": {
+		"codeOnly": true
 	}
 }

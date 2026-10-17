@@ -63,6 +63,8 @@ If your service exposes OSM-backed lookups, include a visible or conventionally 
 
 This may appear in the application, API documentation, service credits or another location users would ordinarily expect. Preserve provenance in your application where practical. **A source field inside an individual API response should not be your only attribution mechanism** for a public OSM-backed service.
 
+Each Mailwoman HTTP surface keeps a result's `openstreetmap:<cc>` source stamp when an OSM layer you attached supplied its coordinate, and the Nominatim and Photon surfaces add the credit "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to that result. A result from any other source never carries the stamp or the credit, and a deployment without an OSM layer serves no OSM data. [HTTP APIs](../../developers/reference/http-apis.mdx#coordinate-provenance-and-the-openstreetmap-credit) lists the field each surface uses.
+
 ## Sharing an OSM-derived database
 
 The [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) permits commercial use. It also contains conditions for publicly using or distributing modified OSM databases.
@@ -75,7 +77,7 @@ Choosing to use OpenStreetMap data does not remove its license requirements, and
 
 ## How to inspect your sources
 
-For a generated OSM layer, look for its **data layer manifest**, which records source provenance and license information. Where supported by your installed release, `mailwoman data bom` reports the licenses of enabled data layers; `MAILWOMAN_DATA_LICENSES` can be used as an operator policy to restrict which data licenses are permitted.
+For a generated OSM layer, look for its **data layer manifest**, which records the license, the credit, the Geofabrik URL and SHA-256 of the extract it was built from, and the code revision that built it. `mailwoman doctor` lists each address-point database under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and credit its manifest records, and `mailwoman data bom` reports each one as its own component. To decline share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: `mailwoman data pull` then refuses share-alike bundles, and the geocode session refuses to start while an OpenStreetMap database is on disk, naming the database and its recorded provenance.
 
 Model rights files and model cards are separate from the retrieval-layer manifest. They report the training lineage and notices associated with that model's weights.
 

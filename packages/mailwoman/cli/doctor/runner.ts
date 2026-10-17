@@ -42,9 +42,11 @@ import {
 import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import { $public } from "#env"
 import {
+	addressPointDatabases,
 	layerDatabaseAlternates,
 	layerDatabasePath,
 	layerDatabases,
+	type AddressPointDatabaseRef,
 	type LayerDatabaseRef,
 	type LayerID,
 } from "#geocode/layer-paths"
@@ -102,6 +104,11 @@ export interface DoctorDeps {
 	 * `.db` files in a layer's directory other than the one the session attaches, a build under another name.
 	 */
 	layerAlternates(id: LayerID): Promise<string[]>
+	/**
+	 * The per-country address-point databases on disk, including the OpenStreetMap
+	 * databases an operator built.
+	 */
+	addressPointDatabases(): Promise<AddressPointDatabaseRef[]>
 	runtimeLicense(): Promise<string>
 	/**
 	 * The configured license key, verified offline against the trusted keys this
@@ -196,6 +203,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
 		layerAlternates: (id) => layerDatabaseAlternates(dataRoot, id),
+		addressPointDatabases: () => addressPointDatabases(dataRoot),
 		runtimeLicense: readRuntimeLicense,
 		licenseKey: () => verifyConfiguredLicenseKey(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
@@ -313,6 +321,28 @@ async function gatherLayerLicense(deps: DoctorDeps, layer: LayerDatabaseRef): Pr
 	}
 }
 
+/**
+ * The license observation for an address-point database found on disk.
+ *
+ * The file was listed from its directory, so it exists, and an unreadable manifest
+ * is reported as unreadable rather than as an absent layer.
+ */
+async function gatherAddressPointLicense(
+	deps: DoctorDeps,
+	database: AddressPointDatabaseRef
+): Promise<LayerLicenseObservation> {
+	try {
+		return { ...database, manifest: await deps.readLayerIdentity(database.path), error: null, alternates: null }
+	} catch (error) {
+		return {
+			...database,
+			manifest: null,
+			error: error instanceof Error ? error.message : String(error),
+			alternates: null,
+		}
+	}
+}
+
 async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCheck> {
 	const packageName = deps.weightsPackageName(locale)
 
@@ -373,9 +403,15 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		lidStatus: lidStatus ?? null,
 	})
 
-	const layerObservations = (
+	const fixedLayerObservations = (
 		await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer)))
 	).filter((o): o is LayerLicenseObservation => o !== null)
+
+	const addressPointObservations = await Promise.all(
+		(await deps.addressPointDatabases()).map((database) => gatherAddressPointLicense(deps, database))
+	)
+
+	const layerObservations = [...fixedLayerObservations, ...addressPointObservations]
 
 	const layerLicenses = layerObservations.map(layerLicenseCheck)
 

@@ -6,7 +6,7 @@
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
-import type { GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
+import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { adminLadderForNodes } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -68,6 +68,28 @@ function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedCompo
 }
 
 /**
+ * The coordinate and provenance the street tier writes for an address-point or interpolated hit.
+ */
+interface RegisterRowPoint {
+	lat: number
+	lon: number
+	source?: unknown
+	release?: unknown
+}
+
+/**
+ * The register row's own provenance stamp and release, or `null` when the tree carries no stamp.
+ *
+ * The stamp is copied rather than derived, so a row is reported as the source it names and a
+ * coordinate whose row named none is reported as unstamped rather than given a guessed source.
+ */
+function coordinateSourceOf(point: RegisterRowPoint): CoordinateSource | null {
+	if (typeof point.source !== "string" || !point.source) return null
+
+	return { source: point.source, release: typeof point.release === "string" ? point.release : null }
+}
+
+/**
  * Half the diagonal of a resolved place's bounding box, in meters, or `null`
  * when the resolver recorded no extent for the place.
  */
@@ -113,11 +135,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	let answeringBasis: string | null = null
 
+	let coordinateSource: CoordinateSource | null = null
+
 	let adminWinnerNode: AddressNode | null = null
 
 	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
 		const ap = streetNode.metadata["address_point"] as
-			| { lat: number; lon: number; locality_norm?: string; postcode?: string; basis?: string }
+			| (RegisterRowPoint & { locality_norm?: string; postcode?: string; basis?: string })
 			| undefined
 
 		if (ap) {
@@ -126,6 +150,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			tier = "address_point"
 			uncertaintyM = 1
 			answeringBasis = ap.basis ?? null
+			coordinateSource = coordinateSourceOf(ap)
 
 			if (ap.locality_norm || ap.postcode) {
 				rooftop = {
@@ -137,12 +162,13 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	}
 
 	if (tier !== "address_point" && streetNode?.metadata?.["resolution_tier"] === "interpolated") {
-		const ip = streetNode.metadata["interpolated_point"] as { lat: number; lon: number } | undefined
+		const ip = streetNode.metadata["interpolated_point"] as RegisterRowPoint | undefined
 
 		if (ip) {
 			lat = ip.lat
 			lon = ip.lon
 			tier = "interpolated"
+			coordinateSource = coordinateSourceOf(ip)
 			uncertaintyM = (streetNode.metadata["uncertainty_m"] as number | null) ?? null
 		}
 	}
@@ -283,6 +309,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		hierarchy,
 		candidates,
 		rooftop,
+		coordinate_source: coordinateSource,
 
 		admin_coherence: adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,

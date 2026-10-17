@@ -7,7 +7,8 @@
 	"phase": "SHIPPED (6.6.1, 2026-07-24) — GB dependent_locality goes LIVE via the decode-time placetype-pair prior on the untouched shipped v385 base. The Option-A δ-sweep (task-8 report, 2026-07-23) showed v385's dead-classifier deficit for the tag is large but UNIFORM (~7.0 logits mean), so δ=10 clears the entire 69-row golden board at once: 69/69 emit, 69/69 tag-correct, 0/51 golden false positives — exceeding every trained candidate the resurrection arc produced. Comma-free coverage comes from @mailwoman/neural 7.7.0's anchored-adjacent probe path (50/69 emit, 94% tag-correct, venue floor 0.062%). The training-side resurrection lineage (v3.10–v3.13) is CLOSED: five mechanisms falsified, stop rule executed three times; model-side redesign is unhurried research, not this capability's dependency.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"attribution": [
-		"HM Land Registry — Price Paid Data (OGL v3.0): the `pair-index-gb.bin` placetype-pair index this package ships. Crown copyright, attribution required. The same source feeds the `synth-gb-v1` training extract recorded in `neural-weights-en-us`."
+		"HM Land Registry — Price Paid Data (OGL v3.0): the `pair-index-gb.bin` placetype-pair index this package ships. Crown copyright, attribution required. The same source feeds the `synth-gb-v1` training extract recorded in `neural-weights-en-us`.",
+		"OpenStreetMap contributors (ODbL-1.0): this overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on OpenStreetMap-derived training extracts that package's card and effective training manifest record. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright."
 	],
 	"locale": "en-gb",
 	"base_model": {

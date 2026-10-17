@@ -251,6 +251,8 @@ or with two, fails immediately instead of causing errors downstream.
 | `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (re-issued under the same name)                             |
 | `spine_keys`                                         | which spine columns this layer stores, and the H3 resolution (JSON-encoded)                                |
 | `created_at`                                         | ISO-8601, supplied by the build script — never generated in-library                                        |
+| `source_records`                                     | JSON object of input record counts per publisher, or NULL when the build recorded none                     |
+| `source_url`, `source_sha256`                        | the input file's download URL and SHA-256, or NULL when the build recorded neither                         |
 
 `created_at` is deliberately supplied by the caller. The library never stamps a timestamp, so a
 rebuild from the same inputs is reproducible instead of recording a new "now" on every run.
@@ -265,7 +267,8 @@ ship only the builder.
   like the gazetteer.
 - **`build-local`**: share-alike sources (ODbL: OSM POIs, Overture's _base_ theme). We ship the
   **builder CLI**, the user builds the layer on their own disk, and we distribute no data under
-  ODbL. The unpublished `osm/` workspace follows the same model. When a build-local layer is
+  ODbL. `@mailwoman/osm` follows the same model: npm carries its code, and its manifests record the
+  Geofabrik URL and SHA-256 of the extract in `source_url` and `source_sha256`. When a build-local layer is
   absent, the answer is "requires the locally-built layer," never a degraded or invented result.
 - **`private`**: the user's own data (CRM, survey notes, parcel relationships), conforming to the
   same schema, loaded from `$MAILWOMAN_DATA_ROOT`, and never leaving their machine. This tier lets

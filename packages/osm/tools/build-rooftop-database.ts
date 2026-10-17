@@ -7,9 +7,13 @@
  *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The existing
  *   `AddressPointSqliteLookup` reads it with zero changes.
  *
- *   ⚠ ODbL: the output extract is an OpenStreetMap Derived Database (share-alike). This code contains no
- *   OSM bytes. The obligation applies to the built `.db`. Source = `openstreetmap:<cc>`. See
- *   `osm/readme.md` for the licensing boundary and the counsel sign-off required before any extract ships.
+ *   The output is an OpenStreetMap Derivative Database under ODbL 1.0. This code contains no OpenStreetMap
+ *   data, and the license applies to the built `.db`, whose rows carry `source = openstreetmap:<cc>`. The
+ *   builder prints the license notice before it starts and after it finishes, and records the extract's URL
+ *   and SHA-256 in the database's `layer_manifest`. `README.md` states the licensing boundary.
+ *
+ *   The extract needs the receipt `tools/fetch/extract.ts` writes beside it, or `--source-url` naming where
+ *   it was downloaded from.
  *
  *   Usage:
  *     node packages/osm/tools/build-rooftop-database.ts \
@@ -20,13 +24,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
-import {
-	assertTierMatchesLicense,
-	LayerFreshnessPolicy,
-	LayerTier,
-	scriptBuildCommand,
-	writeLayerManifest,
-} from "@mailwoman/core/layers"
+import { scriptBuildCommand, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
 import {
@@ -48,10 +46,13 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "#address-point-schema"
+import { osmLicenseNotice } from "#license"
 import { osmDatabasePath } from "#paths"
 import { extractAddrPoints } from "#sdk/extract"
+import { readExtractProvenance } from "#sdk/extract-receipt"
 import { buildStreetRecoveryIndex } from "#sdk/street/recovery"
 import { streetLocaleForCountry } from "#street-locale"
+import { osmAddressPointLayerManifest } from "#tools/layer-manifest"
 import { streetNameForms } from "#tools/street-names"
 
 interface BuildArgs {
@@ -67,6 +68,10 @@ interface BuildArgs {
 	 */
 	recover: boolean
 	recoverRadiusKm: number
+	/**
+	 * Where the extract was downloaded from, required when it has no receipt.
+	 */
+	sourceURL: string | undefined
 }
 
 async function parse(): Promise<BuildArgs> {
@@ -81,6 +86,7 @@ async function parse(): Promise<BuildArgs> {
 			out: { type: "string" },
 			recover: { type: "boolean" },
 			"recover-radius-m": { type: "string" },
+			"source-url": { type: "string" },
 		},
 	})
 
@@ -90,7 +96,7 @@ async function parse(): Promise<BuildArgs> {
 	if (!country || !pbf) {
 		throw new Error(
 			"required: --country <cc> --pbf <path.osm.pbf> --created-at <ISO-8601> --build-sha <git-sha> " +
-				"[--slug <slug>] [--release <tag>] [--out <path>]"
+				"[--slug <slug>] [--release <tag>] [--out <path>] [--source-url <url, when the extract has no receipt>]"
 		)
 	}
 
@@ -111,12 +117,34 @@ async function parse(): Promise<BuildArgs> {
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 
-	return { country, slug, pbf, release, createdAt, buildSHA, output, recover, recoverRadiusKm }
+	return {
+		country,
+		slug,
+		pbf,
+		release,
+		createdAt,
+		buildSHA,
+		output,
+		recover,
+		recoverRadiusKm,
+		sourceURL: values["source-url"],
+	}
 }
 
 async function main(): Promise<void> {
 	const args = await parse()
 	const locale = streetLocaleForCountry(args.country)
+
+	for (const line of osmLicenseNotice(args.output)) {
+		console.error(`[osm] ${line}`)
+	}
+
+	// Hashed before the build starts, so a file that changed since its receipt stops the build
+	// before it spends an hour on bytes the manifest would misidentify.
+	const provenance = await readExtractProvenance(args.pbf, { sourceURL: args.sourceURL })
+
+	console.error(`[osm] extract ${provenance.sourceURL} sha256 ${provenance.sourceSHA256}`)
+
 	const source = `openstreetmap:${args.country}`
 	const recoverSource = `${source}#recovered`
 	const recoveryIndex = args.recover ? await buildStreetRecoveryIndex(args.pbf) : null
@@ -253,25 +281,18 @@ async function main(): Promise<void> {
 		await createAddressPointIndexes(kdb)
 		await createOSMAddressPointIndexes(kdb)
 
-		const distribution = { tier: LayerTier.BuildLocal, license: "ODbL-1.0" }
-
-		assertTierMatchesLicense(distribution, "osm build")
-
-		await writeLayerManifest(kdb, {
-			name: `osm-address-points-${args.country}-${args.slug}`,
-			version: args.release,
-			schemaVersion: 1,
-			...distribution,
-			attribution: "© OpenStreetMap contributors",
-			source,
-			sourceVintage: args.release,
-			buildCmd: scriptBuildCommand(import.meta.url),
-			buildSHA: args.buildSHA,
-			freshnessPolicy: LayerFreshnessPolicy.Sealed,
-			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
-			createdAt: args.createdAt,
-			sourceRecords: null,
-		})
+		await writeLayerManifest(
+			kdb,
+			osmAddressPointLayerManifest({
+				country: args.country,
+				slug: args.slug,
+				release: args.release,
+				createdAt: args.createdAt,
+				buildSHA: args.buildSHA,
+				buildCmd: scriptBuildCommand(import.meta.url),
+				provenance,
+			})
+		)
 
 		kdb.exec("ANALYZE")
 	}
@@ -292,6 +313,10 @@ async function main(): Promise<void> {
 			`      skipped (bad coord)              : ${badCoord.toLocaleString()}\n` +
 			`      source                           : ${source}  release=${args.release}  recover=${args.recover}`
 	)
+
+	for (const line of osmLicenseNotice(args.output)) {
+		console.error(`[osm] ${line}`)
+	}
 }
 
 await main()

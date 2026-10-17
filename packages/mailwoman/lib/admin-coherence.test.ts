@@ -225,6 +225,7 @@ describe("toGauntletResult threading (nullable field)", () => {
 		candidates: [{ name: "Weimar", tag: "locality", lat: 29.7, lon: -96.78, countryCode: "US", placeID: null }],
 		postcode_country_scope: null,
 		rooftop: null,
+		coordinate_source: null,
 		capital_promotion: null,
 		dropped_components: null,
 		unfollowed_components: null,

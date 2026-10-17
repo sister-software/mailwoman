@@ -10,6 +10,7 @@
  */
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
+import { type CoordinateSource, isOpenStreetMapSource, OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
 
 import type { NominatimAddressDetails, NominatimResult } from "#engine"
 
@@ -94,12 +95,31 @@ export interface ResolvedAddress {
 	 * A stable id from the resolver (WOF or gers), with a deterministic hash when absent.
 	 */
 	placeID?: string | number
+	/**
+	 * The register row that supplied the coordinate, from the geocode result's `coordinate_source`.
+	 */
+	coordinateSource?: CoordinateSource | null
 }
 
 /**
  * The attribution string emitted as `licence` (the data sources Mailwoman resolves over).
  */
 export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER"
+
+/**
+ * The text of a result's `licence` field.
+ *
+ * Upstream Nominatim serves only OpenStreetMap data and states the credit in this field,
+ * so it is where a Nominatim client already looks.
+ * For a coordinate from an OpenStreetMap row, the OpenStreetMap credit follows the gazetteer credit.
+ *
+ * For a coordinate from any other source, the field holds the gazetteer credit alone.
+ */
+export function nominatimCreditFor(coordinateSource: CoordinateSource | null | undefined): string {
+	return isOpenStreetMapSource(coordinateSource?.source)
+		? `${MAILWOMAN_LICENCE}; ${OPENSTREETMAP_CREDIT}`
+		: MAILWOMAN_LICENCE
+}
 
 function stableID(seed: string): number {
 	let h = 5381
@@ -129,10 +149,14 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 
 	const result: NominatimResult = {
 		place_id: r.placeID ?? stableID(`${lat},${lon},${displayName}`),
-		licence: MAILWOMAN_LICENCE,
+		licence: nominatimCreditFor(r.coordinateSource),
 		lat,
 		lon,
 		display_name: displayName,
+	}
+
+	if (r.coordinateSource) {
+		result.mailwoman = { coordinate_source: r.coordinateSource }
 	}
 
 	if (r.category) {

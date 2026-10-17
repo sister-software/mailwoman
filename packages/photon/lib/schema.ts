@@ -33,6 +33,22 @@ export const PhotonPropertiesSchema = z
 		country: z.string().optional(),
 		countrycode: z.string().optional(),
 		extent: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+		mailwoman: z
+			.object({
+				coordinate_source: z
+					.object({
+						source: z.string().openapi({ description: "The row's provenance stamp, such as `openstreetmap:nz`." }),
+						release: z.string().nullable().openapi({ description: "The data release the row came from." }),
+					})
+					.openapi("PhotonCoordinateSource"),
+				attribution: z.string().optional().openapi({
+					description: "The OpenStreetMap credit, present only when the row came from an OpenStreetMap layer.",
+				}),
+			})
+			.optional()
+			.openapi({
+				description: "Mailwoman's extension to upstream Photon, present when a register row supplied the coordinate.",
+			}),
 	})
 	.loose()
 	.openapi("PhotonProperties")

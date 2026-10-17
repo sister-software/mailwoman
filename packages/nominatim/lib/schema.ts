@@ -32,12 +32,25 @@ export const NominatimAddressDetailsSchema = z
 	.openapi("NominatimAddressDetails")
 
 /**
+ * The register row behind a house-grade result's coordinate, under the result's `mailwoman` block.
+ */
+const NominatimCoordinateSourceSchema = z
+	.object({
+		source: z.string().openapi({ description: "The row's provenance stamp, such as `openstreetmap:nz`." }),
+		release: z.string().nullable().openapi({ description: "The data release the row came from." }),
+	})
+	.openapi("NominatimCoordinateSource")
+
+/**
  * A single Nominatim result, in the shape that clients such as geopy parse.
  */
 export const NominatimResultSchema = z
 	.object({
 		place_id: z.union([z.number(), z.string()]),
-		licence: z.string(),
+		licence: z.string().openapi({
+			description:
+				"The data credit for this result. A result whose coordinate came from an OpenStreetMap layer the operator attached also carries the OpenStreetMap credit.",
+		}),
 		osm_type: z.string().optional(),
 		osm_id: z.union([z.number(), z.string()]).optional(),
 		lat: z.string(),
@@ -51,6 +64,10 @@ export const NominatimResultSchema = z
 		address: NominatimAddressDetailsSchema.optional(),
 		geojson: z.unknown().optional(),
 		annotations: z.looseObject({}).optional(),
+		mailwoman: z.object({ coordinate_source: NominatimCoordinateSourceSchema }).optional().openapi({
+			description:
+				"Mailwoman's extension to upstream Nominatim, present when a register row supplied the coordinate. A Nominatim client ignores it.",
+		}),
 	})
 	.loose()
 	.openapi("NominatimResult")

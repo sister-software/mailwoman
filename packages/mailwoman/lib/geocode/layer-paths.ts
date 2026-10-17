@@ -8,6 +8,8 @@
  */
 
 import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { floodDatabaseRoot } from "@mailwoman/flood/paths"
 import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { soilDatabaseRoot } from "@mailwoman/soil/paths"
@@ -79,4 +81,45 @@ export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: Lay
 	} catch {
 		return []
 	}
+}
+
+/**
+ * A per-country address-point database the doctor enumerates from disk.
+ */
+export interface AddressPointDatabaseRef {
+	/**
+	 * `address-points-<cc>-<slug>`, the file's basename without its extension.
+	 */
+	id: string
+	label: string
+	path: string
+}
+
+/**
+ * Every `address-points-*.db` under `<dataRoot>/db/osm`, sorted by name.
+ *
+ * The directory holds one database per country, written by `@mailwoman/osm`'s builder
+ * from an OpenStreetMap extract or by the G-NAF rooftop build.
+ * Each records its own license in its `layer_manifest`, so the doctor reports the
+ * file's recorded terms rather than assuming them from the directory.
+ *
+ * The location comes from core's `databaseRootPath` because `@mailwoman/osm`,
+ * which owns the directory, is an optional peer this package cannot import statically.
+ *
+ * An absent directory yields an empty list: the operator has built no address-point database.
+ */
+export async function addressPointDatabases(dataRoot: PathBuilderLike): Promise<AddressPointDatabaseRef[]> {
+	const directory = databaseRootPath(dataRoot)("osm")
+
+	if (!(await pathExists(directory))) return []
+
+	const names = await Globerator.files("db", { cwd: directory, absolute: false, recursive: false }).toSorted()
+
+	return names
+		.filter((name) => name.startsWith("address-points-"))
+		.map((name) => {
+			const id = name.replace(/\.db$/, "")
+
+			return { id, label: `Address points (${id})`, path: directory(name).toString() }
+		})
 }

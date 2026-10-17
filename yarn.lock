@@ -21040,6 +21040,7 @@ __metadata:
     zod: "npm:^4.6.5"
   peerDependencies:
     "@duckdb/node-api": 1.5.6-r.1
+    "@mailwoman/osm": "workspace:*"
   dependenciesMeta:
     "@mailwoman/tiger":
       optional: true
@@ -21047,6 +21048,8 @@ __metadata:
     "@duckdb/node-api":
       optional: true
     "@inkjs/ui":
+      optional: true
+    "@mailwoman/osm":
       optional: true
     ink:
       optional: true

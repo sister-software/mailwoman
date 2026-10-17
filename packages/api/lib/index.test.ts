@@ -36,8 +36,12 @@ function fixtureParseResponse(address: string, debug?: boolean): ParseResponse {
 	}
 }
 
-function fixtureGeocodeResult(address: string): GeocodeResult {
+function fixtureGeocodeResult(
+	address: string,
+	coordinateSource: GeocodeResult["coordinate_source"] = null
+): GeocodeResult {
 	return {
+		coordinate_source: coordinateSource,
 		input: address,
 		components: {},
 		dropped_components: null,
@@ -194,6 +198,34 @@ test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", a
 
 	expect(res.status).toBe(200)
 	expect(await res.json()).toEqual(fixtureGeocodeResult("1600 Pennsylvania Ave NW"))
+})
+
+test("POST /v1/geocode and /v1/batch: an OpenStreetMap row keeps its stamp, and a non-OSM row never carries one", async () => {
+	const osm = { source: "openstreetmap:nz", release: "2026-08-06" }
+	const nad = { source: "overture:NAD", release: "2026-05-20.0" }
+	const sourceFor = (address: string): GeocodeResult["coordinate_source"] => (address === "osm" ? osm : nad)
+
+	const app = createMailwomanAPI({
+		geocode: async (address) => fixtureGeocodeResult(address, sourceFor(address)),
+		batch: async (addresses) => ({ results: addresses.map((a) => fixtureGeocodeResult(a, sourceFor(a))) }),
+	})
+
+	const post = async (path: string, body: object): Promise<unknown> =>
+		(
+			await app.request(path, {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: stringifyJSON(body),
+			})
+		).json()
+
+	expect(((await post("/v1/geocode", { address: "osm" })) as GeocodeResult).coordinate_source).toEqual(osm)
+	expect(((await post("/v1/geocode", { address: "nad" })) as GeocodeResult).coordinate_source).toEqual(nad)
+
+	const batch = (await post("/v1/batch", { addresses: ["osm", "nad"] })) as { results: GeocodeResult[] }
+
+	expect(batch.results.map((row) => row.coordinate_source?.source)).toEqual(["openstreetmap:nz", "overture:NAD"])
+	expect(stringifyJSON(batch.results[1])).not.toContain("openstreetmap")
 })
 
 test('POST /v1/geocode: missing address -> 400 { error: "address is required" }', async () => {

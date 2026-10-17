@@ -96,6 +96,18 @@ export interface LayerManifest {
 	 * its bucket once a newer one lands.
 	 */
 	source_records?: string
+	/**
+	 * The URL the build downloaded its input file from.
+	 *
+	 * Undefined for a row written before the column existed and for a build that did not record it.
+	 */
+	source_url?: string
+	/**
+	 * The SHA-256 of the build's input file.
+	 *
+	 * Undefined for a row written before the column existed and for a build that did not record it.
+	 */
+	source_sha256?: string
 }
 
 export interface InventoryEntry {

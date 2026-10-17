@@ -58,6 +58,24 @@ Every error response is the native envelope: `{ error: string, detail?: string }
 a strict body (e.g. `/v1/format` with no `components`) maps through the same envelope — `{ error: "invalid
 request body", detail: "<short zod summary>" }` — never the raw zod shape.
 
+## Coordinate provenance and the OpenStreetMap credit
+
+Each `GeocodeResult` names the register row behind a house-grade coordinate in `coordinate_source`,
+verbatim, and is `null` when the gazetteer's admin ladder, a venue or a plus code placed it:
+
+```jsonc
+{ "resolution_tier": "address_point", "coordinate_source": { "source": "openstreetmap:nz", "release": "2026-08-06" } }
+```
+
+A row reads `openstreetmap:<cc>` only when an engine attached an OpenStreetMap address-point layer an
+operator built, as `geocodeAddress`'s `osmDatabases` dependency does, and a row from any other register
+reads that register's own stamp. `mailwoman serve` attaches no OpenStreetMap layer, so a deployment of it
+serves no OpenStreetMap data. An engine that attaches one serves OpenStreetMap data, and the
+OpenStreetMap Foundation's Geocoding Guideline asks a public geocoder serving that data for a
+service-level credit in its documentation or interface:
+
+> © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright
+
 ## Library use
 
 ```ts

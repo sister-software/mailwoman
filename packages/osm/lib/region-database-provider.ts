@@ -9,13 +9,16 @@
  *   builder wrote. The provider caches the open handle per country. Wire its bound `for` into
  *   `GeocodeDeps.osmExtracts`.
  *
- *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases. See `osm/readme.md` for the
- *   distribution boundary and the counsel sign-off required before shipping any of them.
+ *   The extracts it opens are OpenStreetMap Derivative Databases under ODbL 1.0, each built locally by the
+ *   operator. `README.md` states the licensing boundary. A caller that applies a license policy passes
+ *   `admit`, which sees each extract's manifest before the provider attaches it and throws to refuse it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { readLayerManifest, type LayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 
 import { osmDatabaseRoot } from "#paths"
@@ -27,6 +30,22 @@ import { streetLocaleForCountry, supportedOSMCountries } from "#street-locale"
  */
 export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
 	addressPoints?: AddressPointSqliteLookup
+}
+
+/**
+ * Inspects an extract's manifest before the provider attaches it, and throws to refuse the extract.
+ *
+ * The error propagates out of {@linkcode OSMRegionDatabaseProvider.create}, so a refused
+ * extract stops the session that would have read it rather than being skipped.
+ * A skipped extract would make its country read as having no OpenStreetMap data.
+ */
+export type OSMExtractAdmission = (manifest: LayerManifest, path: string) => void
+
+/**
+ * Options for {@linkcode OSMRegionDatabaseProvider.create}.
+ */
+export interface OSMRegionDatabaseProviderOptions {
+	admit?: OSMExtractAdmission
 }
 
 /**
@@ -50,19 +69,26 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	 * Extract paths {@linkcode warm} observed on disk, the synchronous existence source `for` consults.
 	 */
 	readonly #onDisk = new Set<string>()
+	readonly #admit: OSMExtractAdmission | undefined
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: PathBuilder) {
+	constructor(dataRoot: PathBuilder, options: OSMRegionDatabaseProviderOptions = {}) {
 		this.#dataRoot = dataRoot
+		this.#admit = options.admit
 	}
 
 	/**
 	 * Construct a provider and warm its existence map before answering.
 	 *
 	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
+	 *
+	 * @throws The error `options.admit` throws for an extract it refuses.
 	 */
-	static async create(dataRoot: PathBuilder): Promise<OSMRegionDatabaseProvider> {
-		const provider = new OSMRegionDatabaseProvider(dataRoot)
+	static async create(
+		dataRoot: PathBuilder,
+		options: OSMRegionDatabaseProviderOptions = {}
+	): Promise<OSMRegionDatabaseProvider> {
+		const provider = new OSMRegionDatabaseProvider(dataRoot, options)
 
 		await provider.warm()
 
@@ -85,9 +111,15 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 		for (const cc of supportedOSMCountries()) {
 			const path = this.#addressPointsPath(cc).toString()
 
-			if (await pathExists(path)) {
-				this.#onDisk.add(path)
+			if (!(await pathExists(path))) continue
+
+			if (this.#admit) {
+				using db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+
+				this.#admit(await readLayerManifest(db), path)
 			}
+
+			this.#onDisk.add(path)
 		}
 	}
 

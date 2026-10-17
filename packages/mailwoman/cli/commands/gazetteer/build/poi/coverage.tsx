@@ -117,8 +117,8 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const out = options.out ?? poiDatabasePath(`poi-coverage-${options.category}-${slugify(region)}.db`)
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
-		// Dynamic import is required: @mailwoman/osm is unpublished, so a top-level
-		// import breaks the published CLI on a clean install.
+		// Dynamic import is required: @mailwoman/osm is an optional peer, so a top-level
+		// import breaks the published CLI on an install without it.
 		const [{ extractOSMBoundary }, { extractOSMPOIs, tagRuleFromOSMTag }] = await Promise.all([
 			import("@mailwoman/osm/sdk/extract/boundary"),
 			import("@mailwoman/osm/sdk/extract/poi"),

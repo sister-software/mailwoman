@@ -55,3 +55,12 @@ web-standard runtime (edge, Workers, Deno). `serveNode` is only the Node listene
 ## CORS
 
 Browser clients call this server cross-origin, including the preflighted `POST /parse`, so the server sends permissive CORS headers by default. It sets `Access-Control-Allow-Origin: *` and answers a preflight `OPTIONS` with `204`. Behind a reverse proxy that already sets the headers, turn CORS off with `--no-cors` (or `createLibpostalApp(engine, { cors: false })`).
+
+## Data provenance
+
+libpostal's interface returns parses and expansions. It returns no coordinate and no geocode result,
+so this server reads no address-point layer, serves no OpenStreetMap data, and carries no row
+provenance or OpenStreetMap credit. Geocoding through an attached OpenStreetMap layer happens on the
+native, Nominatim and Photon surfaces, whose fields the
+[HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit)
+lists.

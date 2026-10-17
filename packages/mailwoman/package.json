@@ -267,13 +267,17 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.6-r.1"
+		"@duckdb/node-api": "1.5.6-r.1",
+		"@mailwoman/osm": "workspace:*"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {
 			"optional": true
 		},
 		"@inkjs/ui": {
+			"optional": true
+		},
+		"@mailwoman/osm": {
 			"optional": true
 		},
 		"ink": {

@@ -35,6 +35,8 @@ const MANIFEST: LayerManifest = {
 	spineKeys: { h3: { column: "h3_cell", resolution: 13 }, wofID: "wof_id" },
 	createdAt: "2026-07-18T00:00:00Z",
 	sourceRecords: null,
+	sourceURL: null,
+	sourceSHA256: null,
 }
 
 async function openschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
@@ -64,6 +66,44 @@ describe("layer manifest IO", () => {
 		await writeLayerManifest(db, counted)
 
 		expect(await readLayerManifest(db)).toEqual(counted)
+	})
+
+	it("round-trips the input file's URL and SHA-256", async () => {
+		using db = await openschemadb()
+
+		const pinned: LayerManifest = {
+			...MANIFEST,
+			sourceURL: "https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf",
+			sourceSHA256: "a".repeat(64),
+		}
+
+		await writeLayerManifest(db, pinned)
+
+		expect(await readLayerManifest(db)).toEqual(pinned)
+	})
+
+	it("refuses an input digest that is not 64 lowercase hex characters", async () => {
+		using db = await openschemadb()
+
+		await expect(writeLayerManifest(db, { ...MANIFEST, sourceSHA256: "ABC" })).rejects.toThrow(/sourceSHA256/)
+	})
+
+	it("writes and reads a manifest table created before the input-file columns existed", async () => {
+		using db = DatabaseClient.temp<layerschemadatabase>()
+
+		// The table as `createLayerManifestTable` built it before `source_url` and `source_sha256`.
+		await sql`CREATE TABLE layer_manifest (
+			name text primary key, version text not null, schema_version integer not null, tier text not null,
+			license text not null, attribution text, source text not null, source_vintage text not null,
+			build_cmd text not null, build_sha text not null, freshness_policy text not null,
+			spine_keys text not null, created_at text not null, source_records text)`.execute(db)
+
+		await writeLayerManifest(db, MANIFEST)
+
+		const back = await readLayerManifest(db)
+
+		expect(back.sourceURL).toBeNull()
+		expect(back.sourceSHA256).toBeNull()
 	})
 
 	it("reads a missing count as null and a zero-publisher count as empty", async () => {

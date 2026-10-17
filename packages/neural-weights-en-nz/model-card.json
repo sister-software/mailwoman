@@ -6,6 +6,9 @@
 	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model of its own — resolves both from `@mailwoman/neural-weights-en-us` via `mailwoman.baseWeights` (byte-identical artifact; one encoder serves both locales). What this package ships: `pair-index-nz.bin` (PIX1 placetype-pair retrieval index, built from the LINZ-derived OpenAddresses NZ countrywide CSV, δ=10) plus the shared gazetteer/country lexicons. UNLIKE en-gb there is NO postcode-nz.bin — see no_postcode_bin below.",
 	"phase": "en-nz battery PASS (2026-07-24, all 6 pre-registered bars — task-8 report § 'en-nz battery'). NZ dependent_locality goes live via the decode-time placetype-pair prior on the untouched shipped v385 base, same Option-A recipe as GB: v385's dead-classifier deficit on the NZ board is large but uniform (raw-BIO gap mean 7.817, min 5.790, any-fire 0/246 — same shape as GB's 7.024), so δ=10 clears the board at saturation (identical plateau to δ=12/15). The repeated-name suburb/town class (NZ-specific, 63/246 rows) is recovered by @mailwoman/neural 7.8.0's identical-adjacent-segment rule.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"attribution": [
+		"OpenStreetMap contributors (ODbL-1.0): this overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on OpenStreetMap-derived training extracts that package's card and effective training manifest record. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright."
+	],
 	"locale": "en-nz",
 	"base_model": {
 		"package": "@mailwoman/neural-weights-en-us",

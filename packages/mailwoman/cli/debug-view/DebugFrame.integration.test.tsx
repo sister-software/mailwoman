@@ -56,6 +56,7 @@ const RESULT = {
 	unit: null,
 	postcode_country_scope: null,
 	rooftop: null,
+	coordinate_source: null,
 	capital_promotion: null,
 	dropped_components: null,
 	unfollowed_components: null,

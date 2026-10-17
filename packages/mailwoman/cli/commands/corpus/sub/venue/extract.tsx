@@ -40,12 +40,12 @@ export const spec = {
 
 const CorpusSubVenueExtract: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		// @mailwoman/osm is a devDependency only. It is unpublished (ODbL counsel sign-off pending,
-		// see osm/readme.md), so a static import here breaks every clean install of the published CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
+		// @mailwoman/osm is an optional peer that an operator installs to opt in to OpenStreetMap data, so a
+		// static import would break every install without it. Lazy-load it and say how to install it when absent.
 		const { writeSubVenueJSONL } = await import("@mailwoman/osm/sdk/extract/subvenue").catch(() => {
 			throw new Error(
-				"corpus sub-venue-extract requires @mailwoman/osm, which is not yet published — " +
-					"run this command from the mailwoman monorepo (osm/README.md has the publish status)."
+				"corpus sub-venue-extract requires @mailwoman/osm, an optional package — install it with " +
+					"`npm install @mailwoman/osm` (its README states the OpenStreetMap license terms)."
 			)
 		})
 

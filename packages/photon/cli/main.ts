@@ -24,6 +24,7 @@ import {
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { openOSMRegionDatabases } from "mailwoman/geocode/osm-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 import { titleCase } from "spliterator"
 
@@ -91,6 +92,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// a no-op when the extract is absent.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
+	const osmExtracts = await openOSMRegionDatabases(dataRootPath())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {
@@ -109,6 +111,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolver,
 				databases: extracts.for,
 				nationalDatabases: banExtracts.for,
+				...(osmExtracts ? { osmDatabases: osmExtracts.for } : {}),
 				bias,
 				// Photon is an autocomplete front where a human types fragments.
 				inputMode: "fragmented",
@@ -163,6 +166,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				places,
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
+				coordinateSource: result.coordinate_source,
 			}
 
 			// candidates[0] is the primary.
