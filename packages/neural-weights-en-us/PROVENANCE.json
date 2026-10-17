@@ -104,8 +104,8 @@
 				"uses": ["training"]
 			},
 			{
-				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
-				"license_named": "OGL v3.0",
+				"text": "HM Land Registry — Price Paid Data address fields, held under no license that permits this use: this model was trained on the `synth-gb-v1` training extract, recorded as `rendered-gb` with 800,000 rows in corpus v0.7.2-address-systems, which the GB locale recipe renders from the Postcode, PAON, Street, Locality, Town/City and District fields of Price Paid Data. HM Land Registry's download page grants the Open Government Licence v3.0 for Price Paid Data but excludes those address fields, which Royal Mail and Ordnance Survey permit only for personal or non-commercial use and for displaying residential property price information. `packages/corpus/data/license-decisions.json` records the source as refused under `unchecked-access-free-gb-gb-property-building-1`. Earlier versions of this card credited these rows under OGL v3.0, and that credit was wrong. Removing the rows from the corpus and retraining is tracked in sister-software/mailwoman#2635. The GB placetype-pair index no longer reads this source.",
+				"license_named": null,
 				"uses": ["training"]
 			},
 			{
@@ -858,6 +858,7 @@
 	"tokenizer_version": "0.9.0-multisplice",
 	"unresolved": [
 		"No digest is recorded for 9 of 13 declared artifacts: calibration.json, calibration-per-locale.json, postcode-us.bin, postcode-prefix-us.bin, pair-index-us.bin, fst-en-us.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
+		"One attribution entry names no license: HM Land Registry — Price Paid Data address fields, held under no license that permits this use: this model was trained on the `synth-gb-v1` training extract, recorded as `rendered-gb` with 800,000 rows in corpus v0.7.2-address-systems, which the GB locale recipe renders from the Postcode, PAON, Street, Locality, Town/City and District fields of Price Paid Data. HM Land Registry's download page grants the Open Government Licence v3.0 for Price Paid Data but excludes those address fields, which Royal Mail and Ordnance Survey permit only for personal or non-commercial use and for displaying residential property price information. `packages/corpus/data/license-decisions.json` records the source as refused under `unchecked-access-free-gb-gb-property-building-1`. Earlier versions of this card credited these rows under OGL v3.0, and that credit was wrong. Removing the rows from the corpus and retraining is tracked in sister-software/mailwoman#2635. The GB placetype-pair index no longer reads this source.",
 		"One attribution entry names no license: OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
 		"One attribution entry names no license: See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
 		"4 of 11 attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0); OpenAddresses PL — GUGiK / PRG (public, BDOT-derived); OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source); OpenAddresses SI — GURS (CC-BY per OA source).",

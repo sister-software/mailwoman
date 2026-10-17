@@ -28,7 +28,7 @@ own. It is loaded at inference time by `@mailwoman/neural`.
 > the base package's model + tokenizer at runtime (a byte-identical artifact, so one
 > encoder serves both locales). What this package ships is the **GB-specific
 > soft-feed data**: the placetype-pair retrieval index (`pair-index-gb.bin`,
-> built from the HM Land Registry PPD tuples — see _Evaluation_ below), plus
+> built from Who's On First place pairs and ONS ward names — see _Attribution_ below), plus
 > the shared gazetteer/country lexicons.
 
 > **The postcode-anchor channel runs off for en-gb** (2026-08-05). This bundle
@@ -56,8 +56,8 @@ arrives at inference as a retrieval rather than a weight.
   the gazetteer resolver still handle full unit-postcode text. What is absent
   is the soft anchor feature rather than postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
-  built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
-  child of "Stockton-on-Tees") — a soft decode-time bias, restricted to GB
+  built from real (child, parent) place-name pairs (e.g. "Didsbury" is a real
+  child of "Manchester") — a soft decode-time bias, restricted to GB
   input only, that never fires for any other locale. See _Evaluation_.
 
 ## Intended use
@@ -146,6 +146,17 @@ trained to read, so the notice applies here too:
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
 https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+
+The placetype-pair index (`pair-index-gb.bin`) holds place-name pairs from Who's On First and London ward
+names from the ONS Postcode Directory, whose attribution reads:
+
+> Contains OS data © Crown copyright and database right. Contains Royal Mail data © Royal Mail copyright and
+> database right. Contains National Statistics data © Crown copyright and database right.
+
+Versions of this package published before the 2026-10-17 rebuild carry an index that also read HM Land
+Registry Price Paid Data. Price Paid Data's download page excludes its address fields from the
+Open Government Licence, so the index no longer reads them. The base model's card states where its
+training rows used them.
 
 ## License & links
 

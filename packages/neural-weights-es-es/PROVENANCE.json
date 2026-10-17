@@ -19,8 +19,8 @@
 				"license_named": "ODbL-1.0"
 			},
 			{
-				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
-				"license_named": "OGL v3.0"
+				"text": "HM Land Registry — Price Paid Data address fields, held under no license that permits this use: this model was trained on the `synth-gb-v1` training extract, recorded as `rendered-gb` with 800,000 rows in corpus v0.7.2-address-systems, which the GB locale recipe renders from the Postcode, PAON, Street, Locality, Town/City and District fields of Price Paid Data. HM Land Registry's download page grants the Open Government Licence v3.0 for Price Paid Data but excludes those address fields, which Royal Mail and Ordnance Survey permit only for personal or non-commercial use and for displaying residential property price information. `packages/corpus/data/license-decisions.json` records the source as refused under `unchecked-access-free-gb-gb-property-building-1`. Earlier versions of this card credited these rows under OGL v3.0, and that credit was wrong. Removing the rows from the corpus and retraining is tracked in sister-software/mailwoman#2635. The GB placetype-pair index no longer reads this source.",
+				"license_named": null
 			},
 			{
 				"text": "LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training extract (800,000 rows) NEW in 6.7.0.",

@@ -21,22 +21,6 @@ import {
 } from "#cli-kit"
 
 /**
- * The expected distinct-pair count for a GB build using only the PPD CSV.
- *
- * A mismatch means the fold changed, so the artifact needs investigation before use.
- */
-const EXPECTED_GB_PAIR_COUNT = 19_209
-
-/**
- * The GB pair count before folding, printed for context only.
- *
- * It exceeds {@link EXPECTED_GB_PAIR_COUNT} because the fold merges punctuation
- * variants such as "St Helens" and "St.
- * Helens".
- */
-const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
-
-/**
  * The expected distinct-pair count for a US build.
  *
  * Every US pair comes from WOF, so a snapshot refresh can legitimately change this number.
@@ -52,9 +36,9 @@ const EXPECTED_US_PAIR_COUNT = 47_878
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
 	gb: [
-		["Fishburn", "Stockton-on-Tees"],
 		["Shoreditch", "London"],
-		["Sedgefield", "Stockton-on-Tees"],
+		["Didsbury", "Manchester"],
+		["Henbury", "Bristol"],
 	],
 	nz: [
 		["Plimmerton", "Porirua"],
@@ -89,10 +73,9 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
- * The parent tag for each source that does not report one itself: the `--source`
- * CSV's `district` column is the post town in GB and the town above the suburb in NZ,
- * while `--borough-db` and `--ban-dir` supply a tag per pair and a `--pairs-jsonl`
- * line may override its default with `parentTag`.
+ * The parent tag for each source that does not report one itself: the `--source` CSV's
+ * `district` column is the town above the suburb in NZ, while `--borough-db` and `--ban-dir`
+ * supply a tag per pair and a `--pairs-jsonl` line may override its default with `parentTag`.
  */
 const SOURCE_PARENT_TAGS = {
 	registerDistrict: "locality",
@@ -137,7 +120,6 @@ export const spec = {
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
@@ -148,10 +130,19 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const country = options.country.toLowerCase()
 
-		// Only GB has a default CSV.
-		// Other countries build from the secondary sources.
-		const sourcePath =
-			options.source ?? (country === "gb" ? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") : undefined)
+		// country-branch: the only Great Britain tuple CSV this command has read is HM Land Registry
+		// Price Paid Data, whose address fields packages/corpus/data/license-decisions.json
+		// refuses (`unchecked-access-free-gb-gb-property-building-1`).
+		// Great Britain builds from the secondary sources alone, and a per-source
+		// license check would replace this branch.
+		if (options.source && country === "gb") {
+			throw new Error(
+				`pair-index: a Great Britain build reads no tuple CSV (--source ${options.source}). ` +
+					`The register refuses Price Paid Data's address fields; pass --borough-db and --pairs-jsonl instead.`
+			)
+		}
+
+		const sourcePath = options.source
 
 		if (sourcePath && !(await pathExists(sourcePath))) {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
@@ -159,7 +150,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!sourcePath && !options.boroughDB && !options.pairsJSONL && !options.banDir) {
 			throw new Error(
-				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
+				`pair-index: country "${country}" has no source — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
 					`or the build would write an empty index.`
 			)
 		}
@@ -192,7 +183,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		let secondaryPairsAdded = 0
 		let banFiles: readonly PathBuilderLike[] = []
 
 		if (options.boroughDB) {
@@ -202,9 +192,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
-			secondaryPairsAdded = builder.distinctCount - before
-
-			console.error(`pair-index: +${secondaryPairsAdded} distinct borough pairs (WOF admin DB)`)
+			console.error(`pair-index: +${builder.distinctCount - before} distinct borough pairs (WOF admin DB)`)
 		}
 
 		if (options.banDir) {
@@ -216,8 +204,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			for (const pair of pairs) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
-
-			secondaryPairsAdded += builder.distinctCount - before
 
 			console.error(
 				`pair-index: +${builder.distinctCount - before} distinct lieu-dit pairs ` +
@@ -236,8 +222,6 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				}>(path)) {
 					builder.addRow(pair.child, pair.parent, pair.parentTag ?? SOURCE_PARENT_TAGS.secondaryPairsJSONL)
 				}
-
-				secondaryPairsAdded += builder.distinctCount - before
 
 				console.error(
 					`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${path.split("/").pop()})`
@@ -317,22 +301,15 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		const preHoldoutCount = built.entries.length
-		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 
 		const checkLine =
-			country === "gb"
+			country === "us"
 				? options.holdoutFraction > 0
-					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + secondaryPairsAdded).toLocaleString()})${preFoldSuffix}`
-					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT + secondaryPairsAdded
-						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${secondaryPairsAdded} from secondary sources)${preFoldSuffix}`
-						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${secondaryPairsAdded} from secondary sources — investigate fold divergence before trusting this artifact${preFoldSuffix}`
-				: country === "us"
-					? options.holdoutFraction > 0
-						? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_US_PAIR_COUNT.toLocaleString()})`
-						: preHoldoutCount === EXPECTED_US_PAIR_COUNT
-							? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (all WOF-sourced; no postal register)`
-							: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != ${EXPECTED_US_PAIR_COUNT.toLocaleString()} — a WOF snapshot refresh moves this number, so re-anchor the constant DELIBERATELY (with the diff inspected) rather than trusting the artifact`
-					: `(cross-check only registered for gb/us; ${preHoldoutCount.toLocaleString()} distinct pairs)`
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_US_PAIR_COUNT.toLocaleString()})`
+					: preHoldoutCount === EXPECTED_US_PAIR_COUNT
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (all WOF-sourced; no postal register)`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != ${EXPECTED_US_PAIR_COUNT.toLocaleString()} — a WOF snapshot refresh moves this number, so re-anchor the constant DELIBERATELY (with the diff inspected) rather than trusting the artifact`
+				: `(cross-check only registered for us; ${preHoldoutCount.toLocaleString()} distinct pairs)`
 
 		const holdoutLine =
 			options.holdoutFraction > 0

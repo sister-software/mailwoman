@@ -78,9 +78,9 @@ with a new record, or a separately documented notice.
 The record makes three distinctions on purpose. A package whose card records no attribution reads
 `none-recorded-in-this-package`, which states what the card holds rather than that the artifacts have no attributable
 inputs. An artifact with no digest reads `unrecorded` rather than verified. And
-`attribution_recorded_in_another_package` names the case the single-card layout produced: `pair-index-gb.bin` ships in
-`@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0 sits
-in `@mailwoman/neural-weights-en-us`'s card.
+`attribution_recorded_in_another_package` names the case the single-card layout produced, where an artifact ships in one
+package and the entry attributing it sits in another package's card. `pair-index-gb.bin` was that case until its entry
+moved into `@mailwoman/neural-weights-en-gb`'s own card.
 
 ## One pass over the whole rights chain
 
