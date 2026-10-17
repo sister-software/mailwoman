@@ -29,13 +29,8 @@
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "spliced-country",
-			"registerSources": [
-				"us-property-building-5",
-				"us-property-building-6",
-				"us-property-building-7",
-				"us-property-building-8"
-			],
-			"reason": "The decisions for us-property-building-5, us-property-building-6, us-property-building-7, us-property-building-8 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
+			"registerSources": ["us-property-building-6"],
+			"reason": "The decisions for us-property-building-6 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
 			"issue": 2643
 		},
 		{
@@ -50,64 +45,32 @@
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "spliced-affix",
-			"registerSources": [
-				"us-property-building-3",
-				"us-property-building-5",
-				"us-property-building-6",
-				"us-property-building-7",
-				"us-property-building-8"
-			],
-			"reason": "The decisions for us-property-building-3, us-property-building-5, us-property-building-6, us-property-building-7, us-property-building-8 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
-			"issue": 2643
-		},
-		{
-			"package": "@mailwoman/neural-weights-en-us",
-			"corpusVersion": "v0.7.2-address-systems",
-			"source": "state-tx-notaries",
-			"registerSources": ["us-professional-licensing-3"],
-			"reason": "us-professional-licensing-3 still read unchecked: no publisher terms were found to elect. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
+			"registerSources": ["us-property-building-6"],
+			"reason": "The decisions for us-property-building-6 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
 			"issue": 2643
 		},
 		{
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "spliced-suffix-boundary",
-			"registerSources": [
-				"us-property-building-3",
-				"us-property-building-5",
-				"us-property-building-6",
-				"us-property-building-7",
-				"us-property-building-8"
-			],
-			"reason": "The decisions for us-property-building-3, us-property-building-5, us-property-building-6, us-property-building-7, us-property-building-8 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
+			"registerSources": ["us-property-building-6"],
+			"reason": "The decisions for us-property-building-6 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
 			"issue": 2643
 		},
 		{
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "spliced-unit-v30",
-			"registerSources": [
-				"us-property-building-3",
-				"us-property-building-5",
-				"us-property-building-6",
-				"us-property-building-7",
-				"us-property-building-8"
-			],
-			"reason": "The decisions for us-property-building-3, us-property-building-5, us-property-building-6, us-property-building-7, us-property-building-8 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
+			"registerSources": ["us-property-building-6"],
+			"reason": "The decisions for us-property-building-6 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
 			"issue": 2643
 		},
 		{
 			"package": "@mailwoman/neural-weights-en-us",
 			"corpusVersion": "v0.7.2-address-systems",
 			"source": "invented-po-box-cedex",
-			"registerSources": [
-				"us-property-building-3",
-				"us-property-building-5",
-				"us-property-building-6",
-				"us-property-building-7",
-				"us-property-building-8"
-			],
-			"reason": "The decisions for us-property-building-3, us-property-building-5, us-property-building-6, us-property-building-7, us-property-building-8 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
+			"registerSources": ["us-property-building-6"],
+			"reason": "The decisions for us-property-building-6 are refused after their publishers' terms were read on 2026-10-17. The model trained on this source before those decisions were recorded. A model retrained on a corpus without these rows clears this entry.",
 			"issue": 2643
 		},
 		{

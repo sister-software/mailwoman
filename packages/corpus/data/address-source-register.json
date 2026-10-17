@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "2b92630936b804cf0e4986ddb2a4acadf001d3582747bbdde773be6969cb1c3b",
+	"contentDigest": "1e037fe5307937e7f829f7adf6e8ab6f0a09ee67bb3dad114f732c85e6a19ca9",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -4086,77 +4086,91 @@
 			"licenseID": "unchecked-corpus-input-us-iowa-workforce-development"
 		},
 		{
-			"state": "refused",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-17",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
 			"retrievedAt": "2026-10-17",
-			"refusedBecause": "Marin County states no licence for its situs address points; its only rights text is a disclaimer. OpenAddresses' source record `sources/us/ca/marin.json`, 2,252 bytes, sha256 `a20719677c4b8d68db8b11fdb67735711efea86669bbba5fcb1396b3a15c87aa`, names the `Situs_Address_Points` FeatureServer and the hub page `marincounty::situs-address-points`, with `attribution` `Marin County` and no `license` field. The county's hub record for item `72f8b207d6d241618d66d983a14346ea_0` (owner `opendata_MarinCounty`), retained as `marin-hub-situs.json`, 82,242 bytes, sha256 `c3bcbb200d2864d579d2b42ffc780ace00cf0a1ae170128a7fb7ec65476935b9`, sets `license` to `custom` and its `licenseInfo` reads: `County of Marin makes no representation or warranties, express or implied, with respect to the use or reuse of the data provided herewith, regardless of its format or the means of its transmission. THE DATA IS PROVIDED 'AS IS' WITH NO GUARANTEE OR REPRESENTATION ABOUT THE ACCURACY, CURRENCY, SUITABILITY, PERFORMANCE, MERCHANTABILITY, RELIABILITY, OR FITNESS OF THE DATA FOR ANY PARTICULAR PURPOSE. … County of Marin shall not be liable for any direct, indirect, special, incidental, compensatory or consequential damages or third party claims resulting from the use of this data …` The layer metadata, `Situs_Address_Points/FeatureServer/0?f=pjson`, 18,013 bytes, sha256 `c1cfc77c1b1a30bafaea7115fa7ccaf7b27de8d9588d0e634d273e6e20b3db8b`, gives `copyrightText` `Marin County Community Development Agency, City Planning and Public Works Departments` and a description of the data, and nothing on use. The disclaimer mentions `use or reuse` only to disclaim warranties about it; it grants no right to copy, adapt or redistribute. An omission is not a permission. The route to permission is a written statement from the County of Marin's GIS program.",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. What the publisher's terms say, as read on 2026-10-17: Marin County states no licence for its situs address points; its only rights text is a disclaimer. OpenAddresses' source record `sources/us/ca/marin.json`, 2,252 bytes, sha256 `a20719677c4b8d68db8b11fdb67735711efea86669bbba5fcb1396b3a15c87aa`, names the `Situs_Address_Points` FeatureServer and the hub page `marincounty::situs-address-points`, with `attribution` `Marin County` and no `license` field. The county's hub record for item `72f8b207d6d241618d66d983a14346ea_0` (owner `opendata_MarinCounty`), retained as `marin-hub-situs.json`, 82,242 bytes, sha256 `c3bcbb200d2864d579d2b42ffc780ace00cf0a1ae170128a7fb7ec65476935b9`, sets `license` to `custom` and its `licenseInfo` reads: `County of Marin makes no representation or warranties, express or implied, with respect to the use or reuse of the data provided herewith, regardless of its format or the means of its transmission. THE DATA IS PROVIDED 'AS IS' WITH NO GUARANTEE OR REPRESENTATION ABOUT THE ACCURACY, CURRENCY, SUITABILITY, PERFORMANCE, MERCHANTABILITY, RELIABILITY, OR FITNESS OF THE DATA FOR ANY PARTICULAR PURPOSE. … County of Marin shall not be liable for any direct, indirect, special, incidental, compensatory or consequential damages or third party claims resulting from the use of this data …` The layer metadata, `Situs_Address_Points/FeatureServer/0?f=pjson`, 18,013 bytes, sha256 `c1cfc77c1b1a30bafaea7115fa7ccaf7b27de8d9588d0e634d273e6e20b3db8b`, gives `copyrightText` `Marin County Community Development Agency, City Planning and Public Works Departments` and a description of the data, and nothing on use. The disclaimer mentions `use or reuse` only to disclaim warranties about it; it grants no right to copy, adapt or redistribute. An omission is not a permission. The route to permission is a written statement from the County of Marin's GIS program.",
 			"operations": {
 				"fetch": {
-					"permission": "refused",
-					"because": "The county serves the layer publicly but no statement grants reproduction; the `licenseInfo` is a warranty disclaimer."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"extract": {
-					"permission": "refused",
-					"because": "No statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"transform": {
-					"permission": "refused",
-					"because": "No statement grants adaptation; the disclaimer's `use or reuse` disclaims warranties and grants nothing."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "No statement grants any use, commercial or otherwise."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "No statement grants redistribution."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"redistribute-model": {
-					"permission": "refused",
-					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Marin County states no restriction on this operation."
 				},
 				"commercial-sublicense": {
-					"permission": "refused",
-					"because": "No licence exists to pass on."
+					"permission": "unreviewed",
+					"because": "No grant exists to sublicense; recipients take the facts directly from the publisher."
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-marin-county"
 		},
 		{
-			"state": "refused",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-17",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
 			"retrievedAt": "2026-10-17",
-			"refusedBecause": "The Montana State Library states no licence for the Structures/Addresses Framework, and its use constraint confines the data to a purpose. OpenAddresses' source record `sources/us/mt/statewide.json`, 5,160 bytes, sha256 `b27f1c8dd6f55de043538719b8e02f93f1131dff9e4349a717837af4eaf8b815`, names `StructuresFramework_shp.zip` and the library's data-list page and carries no `license` field. The data-list page, `https://mslservices.mt.gov/Geographic_Information/Data/DataList/datalist_Details.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 96,268 bytes, sha256 `2aa30efc7dd48cf01275181d0dd1555a683304e1efc5eefb6dd80d853ee9f8db`, and its FGDC metadata, `datalist_MetadataDetailRaw.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 42,117 bytes, sha256 `e3ee8132a9e6a03a6854e94c194aea74a757bbf4f0549cf12b394a8ceafc30bf`, read in `accconst`: `None. All data contained in the Framework are publicly available and non-sensitive.` and in `useconst`: `DISCLAIMER: The Montana State Library Geographic Information Services provides this product/service for informational purposes only. … The Library makes these data and services available as a convenience to the public, and for no other purpose. The Library reserves the right to change or revise published data and/or services at any time.` The access constraint answers who may obtain the file, not what may be done with it, and the use constraint is a disclaimer that adds `for no other purpose`; neither names copying, adaptation, redistribution or commercial use. The same metadata lists the data's originators as the library and more than fifty counties, tribal nations, the Montana Department of Transportation and U.S. Customs and Border Patrol, and the abstract says the framework integrates `local, tribal, state, federal and private data providers`, so the library's silence is not even a single owner's silence. An omission is not a permission. The route to permission is a written statement from the Montana State Library (`geoinfo@mt.gov`) covering the contributed data.",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. What the publisher's terms say, as read on 2026-10-17: The Montana State Library states no licence for the Structures/Addresses Framework, and its use constraint confines the data to a purpose. OpenAddresses' source record `sources/us/mt/statewide.json`, 5,160 bytes, sha256 `b27f1c8dd6f55de043538719b8e02f93f1131dff9e4349a717837af4eaf8b815`, names `StructuresFramework_shp.zip` and the library's data-list page and carries no `license` field. The data-list page, `https://mslservices.mt.gov/Geographic_Information/Data/DataList/datalist_Details.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 96,268 bytes, sha256 `2aa30efc7dd48cf01275181d0dd1555a683304e1efc5eefb6dd80d853ee9f8db`, and its FGDC metadata, `datalist_MetadataDetailRaw.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 42,117 bytes, sha256 `e3ee8132a9e6a03a6854e94c194aea74a757bbf4f0549cf12b394a8ceafc30bf`, read in `accconst`: `None. All data contained in the Framework are publicly available and non-sensitive.` and in `useconst`: `DISCLAIMER: The Montana State Library Geographic Information Services provides this product/service for informational purposes only. … The Library makes these data and services available as a convenience to the public, and for no other purpose. The Library reserves the right to change or revise published data and/or services at any time.` The access constraint answers who may obtain the file, not what may be done with it, and the use constraint is a disclaimer that adds `for no other purpose`; neither names copying, adaptation, redistribution or commercial use. The same metadata lists the data's originators as the library and more than fifty counties, tribal nations, the Montana Department of Transportation and U.S. Customs and Border Patrol, and the abstract says the framework integrates `local, tribal, state, federal and private data providers`, so the library's silence is not even a single owner's silence. An omission is not a permission. The route to permission is a written statement from the Montana State Library (`geoinfo@mt.gov`) covering the contributed data.",
 			"operations": {
 				"fetch": {
-					"permission": "refused",
-					"because": "`accconst` says the data are publicly available, which describes access, but no statement grants reproduction, and the use constraint limits the data to `a convenience to the public, and for no other purpose`."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"extract": {
-					"permission": "refused",
-					"because": "No statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"transform": {
-					"permission": "refused",
-					"because": "No statement grants adaptation, and the contributing counties, tribes and private providers have stated nothing."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "Fitting a commercially licensed model is a use no statement grants."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "No statement grants redistribution."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"redistribute-model": {
-					"permission": "refused",
-					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Montana State Library states no restriction on this operation."
 				},
 				"commercial-sublicense": {
-					"permission": "refused",
-					"because": "No licence exists to pass on."
+					"permission": "unreviewed",
+					"because": "No grant exists to sublicense; recipients take the facts directly from the publisher."
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-montana-state-library"
@@ -4258,48 +4272,94 @@
 			"licenseID": "unchecked-corpus-input-us-overture-maps-foundation"
 		},
 		{
-			"state": "refused",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-17",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
 			"retrievedAt": "2026-10-17",
-			"refusedBecause": "No statement of terms from the South Dakota Bureau of Information and Telecommunications could be read, and OpenAddresses records none. OpenAddresses' source record `sources/us/sd/statewide.json`, 737 bytes, sha256 `920e0096e35af3e6a94e7b578a41d83145c3c16eee06066e63a6ae4f106f5fc2`, names only `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer/0`, with no `website`, `attribution` or `license` field. On 2026-10-17 `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer?f=pjson`, its layer 0, `http://arcgis.sd.gov/…`, `https://arcgis.sd.gov/arcgis/rest/services?f=pjson`, `https://arcgis.sd.gov/` and `https://www.arcgis.sd.gov/` each failed at the network layer with no HTTP response, from this host and from a second fetcher. `https://sd.gov/` answered by redirecting to `https://www.sd.gov/cs`, and `https://bit.sd.gov/` redirected to `https://www.sd.gov/bit`; every sd.gov path probed returned the same 1,447-byte script shell (sha256 `3abd78ef430c694c644bc390c3933812648258bb2d77a02b5bbad3bf39bda067`), a client-rendered catch-all that states nothing. ArcGIS Online and the ArcGIS Hub index hold no item for the AddressViewer service (`sd-arcgis-search-addressviewer.json`, 58 bytes, sha256 `94ba666d85d1cd9bf99d19e9eea2b30cff17f48ae6c0a7814f4d484e45bff351`; `sd-hub-search-address.json`, 450,609 bytes, sha256 `75c5219cf50c14d859e7f2421a740416fa0ef706fb4af9c2cc7720a756269d28`); the one South Dakota address layer found there is the City of Sioux Falls', another publisher. With no publisher statement read, nothing is granted. The route to permission is the service's own `copyrightText` and description once `arcgis.sd.gov` answers, or a written statement from BIT.",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. What the publisher's terms say, as read on 2026-10-17: No statement of terms from the South Dakota Bureau of Information and Telecommunications could be read, and OpenAddresses records none. OpenAddresses' source record `sources/us/sd/statewide.json`, 737 bytes, sha256 `920e0096e35af3e6a94e7b578a41d83145c3c16eee06066e63a6ae4f106f5fc2`, names only `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer/0`, with no `website`, `attribution` or `license` field. On 2026-10-17 `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer?f=pjson`, its layer 0, `http://arcgis.sd.gov/…`, `https://arcgis.sd.gov/arcgis/rest/services?f=pjson`, `https://arcgis.sd.gov/` and `https://www.arcgis.sd.gov/` each failed at the network layer with no HTTP response, from this host and from a second fetcher. `https://sd.gov/` answered by redirecting to `https://www.sd.gov/cs`, and `https://bit.sd.gov/` redirected to `https://www.sd.gov/bit`; every sd.gov path probed returned the same 1,447-byte script shell (sha256 `3abd78ef430c694c644bc390c3933812648258bb2d77a02b5bbad3bf39bda067`), a client-rendered catch-all that states nothing. ArcGIS Online and the ArcGIS Hub index hold no item for the AddressViewer service (`sd-arcgis-search-addressviewer.json`, 58 bytes, sha256 `94ba666d85d1cd9bf99d19e9eea2b30cff17f48ae6c0a7814f4d484e45bff351`; `sd-hub-search-address.json`, 450,609 bytes, sha256 `75c5219cf50c14d859e7f2421a740416fa0ef706fb4af9c2cc7720a756269d28`); the one South Dakota address layer found there is the City of Sioux Falls', another publisher. With no publisher statement read, nothing is granted. The route to permission is the service's own `copyrightText` and description once `arcgis.sd.gov` answers, or a written statement from BIT.",
 			"operations": {
 				"fetch": {
-					"permission": "refused",
-					"because": "No publisher statement could be read, so no grant to reproduce the layer is established."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"extract": {
-					"permission": "refused",
-					"because": "No publisher statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"transform": {
-					"permission": "refused",
-					"because": "No publisher statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "No publisher statement grants any use."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "No publisher statement grants redistribution."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"redistribute-model": {
-					"permission": "refused",
-					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. South Dakota BIT states no restriction on this operation."
 				},
 				"commercial-sublicense": {
-					"permission": "refused",
-					"because": "No licence exists to pass on."
+					"permission": "unreviewed",
+					"because": "No grant exists to sublicense; recipients take the facts directly from the publisher."
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-texas-secretary-of-state",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Texas Secretary of State in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-17",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. What the publisher's terms say, as read on 2026-10-17: The data.texas.gov dataset's license field is null, the portal's terms link reaches the Socrata platform's own terms, and the Secretary of State's pages state a right of public access. No reservation of rights was found. Receipts are in the D group.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Texas Secretary of State states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No grant exists to sublicense; recipients take the facts directly from the publisher."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-texas-secretary-of-state"
 		},
 		{
 			"state": "elected",
@@ -4394,39 +4454,46 @@
 			"licenseID": "unchecked-corpus-input-us-u-s-department-of-transportation"
 		},
 		{
-			"state": "refused",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-17",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
 			"retrievedAt": "2026-10-17",
-			"refusedBecause": "No publisher and no terms can be established for this file. OpenAddresses' source record `sources/us/ia/statewide.json`, 1,205 bytes, sha256 `f55d8c0e0589c4c9532e01b30762b39ae17bd625b72f9d5f106df762c9218ec6`, names only `https://data.openaddresses.io/cache/uploads/ingalls/bdc482/IOWA_911_ADDRESSES.zip`, a copy an OpenAddresses maintainer uploaded to OpenAddresses' own cache, with no `website`, `attribution` or `license` field. The commit that added it, `13b7e5cea6` (2020-04-29, `IA, Statewide`, author `ingalls`), retained as `oa-ia-commit-13b7e5cea6.json`, 5,434 bytes, sha256 `8211de5ec4f6e663529ce7cc638ed30b1eafc97912ed6e1a39b6f882e5353585`, points at `http://data.openaddresses.io/cache/uploads/ingalls/us-ia-2020-04-29.zip` and names no source either. The NENA NG9-1-1 field names (`AddNum_Pre`, `StN_PreMod`, `MSAG_Comm`) suggest the statewide 911 aggregation run for Iowa Homeland Security and Emergency Management, but that is an inference: a search of ArcGIS Online (`iowa-arcgis-search.json`, 3,873 bytes, sha256 `73a51bed508b8276ed68cc9629a8533e0e9c0ded4c3fead11f59e1ce31f6ed53`) and of the ArcGIS Hub index found only county address layers (Scott, Woodbury, Grundy), and `https://geodata.iowa.gov/`, 54,817 bytes, sha256 `73833e10ce6d2874a03de153a17b88361cf4f5515011ff24085ad59f903110a9`, lists no statewide 911 address layer. With no publisher identified there is no publisher's statement to read, and an uploaded copy carries no grant of its own. The route to permission is to identify the agency that released `IOWA_911_ADDRESSES.zip` and read its terms, or to replace this file with a county or state layer whose publisher states a licence.",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. What the publisher's terms say, as read on 2026-10-17: No publisher and no terms can be established for this file. OpenAddresses' source record `sources/us/ia/statewide.json`, 1,205 bytes, sha256 `f55d8c0e0589c4c9532e01b30762b39ae17bd625b72f9d5f106df762c9218ec6`, names only `https://data.openaddresses.io/cache/uploads/ingalls/bdc482/IOWA_911_ADDRESSES.zip`, a copy an OpenAddresses maintainer uploaded to OpenAddresses' own cache, with no `website`, `attribution` or `license` field. The commit that added it, `13b7e5cea6` (2020-04-29, `IA, Statewide`, author `ingalls`), retained as `oa-ia-commit-13b7e5cea6.json`, 5,434 bytes, sha256 `8211de5ec4f6e663529ce7cc638ed30b1eafc97912ed6e1a39b6f882e5353585`, points at `http://data.openaddresses.io/cache/uploads/ingalls/us-ia-2020-04-29.zip` and names no source either. The NENA NG9-1-1 field names (`AddNum_Pre`, `StN_PreMod`, `MSAG_Comm`) suggest the statewide 911 aggregation run for Iowa Homeland Security and Emergency Management, but that is an inference: a search of ArcGIS Online (`iowa-arcgis-search.json`, 3,873 bytes, sha256 `73a51bed508b8276ed68cc9629a8533e0e9c0ded4c3fead11f59e1ce31f6ed53`) and of the ArcGIS Hub index found only county address layers (Scott, Woodbury, Grundy), and `https://geodata.iowa.gov/`, 54,817 bytes, sha256 `73833e10ce6d2874a03de153a17b88361cf4f5515011ff24085ad59f903110a9`, lists no statewide 911 address layer. With no publisher identified there is no publisher's statement to read, and an uploaded copy carries no grant of its own. The route to permission is to identify the agency that released `IOWA_911_ADDRESSES.zip` and read its terms, or to replace this file with a county or state layer whose publisher states a licence.",
 			"operations": {
 				"fetch": {
-					"permission": "refused",
-					"because": "The file is a re-hosted copy whose publisher is unnamed, so no grant to reproduce it can be read."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"extract": {
-					"permission": "refused",
-					"because": "No publisher statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"transform": {
-					"permission": "refused",
-					"because": "No publisher statement grants adaptation."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"train": {
-					"permission": "refused",
-					"because": "No publisher statement grants any use, commercial or otherwise."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "No publisher statement grants redistribution."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"redistribute-model": {
-					"permission": "refused",
-					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. The Iowa 911 address-point file states no restriction on this operation."
 				},
 				"commercial-sublicense": {
-					"permission": "refused",
-					"because": "No licence exists to pass on."
+					"permission": "unreviewed",
+					"because": "No grant exists to sublicense; recipients take the facts directly from the publisher."
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-us-property-building-5"
