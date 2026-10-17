@@ -135,9 +135,9 @@ export async function planDemoAssetUploads(src: PathBuilderLike, prefix = "mailw
 					"refusing to publish an un-versioned object under an immutable Cache-Control:\n" +
 						`  ${relativePath}\n\n` +
 						"This directory needs a generation segment: <dir>/<generation>/<file>, for example:\n" +
-						"  pair-index/2026-08-05/pair-index-gb.bin\n" +
+						"  pair-index/2026-10-17/pair-index-gb.bin\n" +
 						"Overwriting a flat key leaves the CDN serving the old bytes for a week.\n" +
-						"Bump PAIR_INDEX_VERSION in docs/src/shared/resources.tsx to match."
+						"Bump PAIR_INDEX_VERSION in packages/mailwoman/lib/browser-runtime/resources.ts to match."
 				)
 			}
 

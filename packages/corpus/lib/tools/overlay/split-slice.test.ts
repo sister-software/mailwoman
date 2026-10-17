@@ -21,7 +21,9 @@ const root = await temporaryDirectory("mw-split-slice-")
 afterAll(() => root[Symbol.asyncDispose]())
 
 /**
- * One GB row whose postcode sits at the end of `raw`, the shape `synth-gb` renders.
+ * One GB row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.
+ *
+ * The streets and postcodes come from OS OpenData (OGL v3.0), not from HM Land Registry Price Paid Data.
  *
  * The span triple is what the splitter reads, so the offsets have to name the real substring:
  * a fixture whose spans point elsewhere would pass against a splitter reading the wrong column.
@@ -40,13 +42,13 @@ function gbRow(sourceID: string, street: string, locality: string, postcode: str
 		span_tags: ["street", "locality", "postcode"],
 		country: "GB",
 		locale: "en-GB",
-		source: "synth-gb",
+		source: "rendered-gb-os-open",
 		source_id: sourceID,
 		corpus_version: "0.6.0-test",
-		license: "HM Land Registry Price Paid Data",
-		register: "hm-land-registry-ppd",
+		license: "OGL-UK-3.0",
+		register: "gb-os-opendata",
 		surface: "composed",
-		recipe: "synth-gb",
+		recipe: "rendered-gb-os-open",
 		base_source_id: null,
 	}
 }
@@ -57,8 +59,8 @@ describe("splitOverlaySlice", () => {
 
 		await writeParquetFile(
 			[
-				gbRow("gb-1", "Rock Close", "Camborne", "TR14 7TT"),
-				gbRow("gb-2", "Waen Terrace", "Conwy", "LL32 8EA"),
+				gbRow("gb-1", "Parc Venton Close", "Camborne", "TR14 7TT"),
+				gbRow("gb-2", "Bangor Road", "Conwy", "LL32 8EA"),
 				gbRow("gb-3", "Stubbing Drive", "Hebden Bridge", "HX7 6LS"),
 				gbRow("gb-4", "Baker Street", "London", "NW1 6XE"),
 				gbRow("gb-5", "Hope Street", "Liverpool", "L1 9BP"),
@@ -98,7 +100,7 @@ describe("splitOverlaySlice", () => {
 
 describe("holdoutComponents", () => {
 	it("reads the postcode back out of `raw` at the span the row records", () => {
-		const row = gbRow("gb-8", "Rock Close", "Camborne", "TR14 7TT")
+		const row = gbRow("gb-8", "Parc Venton Close", "Camborne", "TR14 7TT")
 
 		expect(holdoutComponents(row, 0, "fixture")).toEqual({
 			locality: "Camborne",
@@ -109,14 +111,14 @@ describe("holdoutComponents", () => {
 	it("refuses a row carrying no span triple rather than reading it as a row with no postcode", () => {
 		// The key is absent rather than set to `undefined`, which is the shape a file written
 		// before the span triple existed produces.
-		const { span_tags, ...row } = gbRow("gb-9", "Rock Close", "Camborne", "TR14 7TT")
+		const { span_tags, ...row } = gbRow("gb-9", "Parc Venton Close", "Camborne", "TR14 7TT")
 
 		expect(span_tags).toHaveLength(3)
 		expect(() => holdoutComponents(row, 3, "fixture")).toThrow(/row 3/)
 	})
 
 	it("refuses a span triple whose three arrays disagree in length", () => {
-		const row = { ...gbRow("gb-10", "Rock Close", "Camborne", "TR14 7TT"), span_ends: [1] }
+		const row = { ...gbRow("gb-10", "Parc Venton Close", "Camborne", "TR14 7TT"), span_ends: [1] }
 
 		expect(() => holdoutComponents(row, 4, "fixture")).toThrow(/parallel/)
 	})

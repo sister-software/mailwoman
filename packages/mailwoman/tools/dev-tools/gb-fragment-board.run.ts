@@ -6,7 +6,7 @@
  *   A GB board in the fragment register, the one register that can see the Option-A evidence bundle.
  *
  *   The evidence-channel restore to the en-gb overlay (ROAD_TO_V9 §1 A4) is a default-on change, so
- *   the D-rule wants a before/after on GB. Every gb-golden row is a full address, the kind classifier
+ *   the D-rule wants a before/after on GB. Every board row is a full address, the kind classifier
  *   calls it `formatted`, and the register check (Decision A, `classifier.ts`'s `evidenceOn`) withholds
  *   both evidence channels in that register by design. A board over those rows is blind to the change
  *   by construction, so this projects each row onto the register where the channels are live.
@@ -17,7 +17,9 @@
  *   - `street`: only the street line (`components.street`, house number prefixed when the row has one).
  *     The street-type channel's own register.
  *   - `place`: `dependent_locality, locality`. This is the locality-surface channel's register.
- *     The shipped bundle's homonym wins were measured in this register.
+ *     The shipped bundle's homonym wins were measured in this register. The default board,
+ *     `gb-os-open-golden.jsonl`, comes from OS OpenData. OS OpenData records no dependent locality.
+ *     This shape therefore needs a `--fixtures` board that carries one.
  *
  *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
  *   graded in the wrong register.
@@ -42,7 +44,7 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-gb" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "candidate" },
-		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb-os-open-golden.jsonl" },
 		"dump-spans": { type: "string" },
 	},
 })
@@ -126,7 +128,7 @@ for (const shape of SHAPES) {
 	}
 }
 
-console.log(`\n=== gb-golden FRAGMENT register · ${values.label} · locale ${locale} ===`)
+console.log(`\n=== ${values.fixtures} FRAGMENT register · ${values.label} · locale ${locale} ===`)
 console.log("board                                   hit/total   per register")
 
 for (const shape of SHAPES) {

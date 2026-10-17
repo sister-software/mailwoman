@@ -78,7 +78,7 @@ async function tagsFor(text: string): Promise<Map<string, string[]>> {
 
 if (board === "gb") {
 	const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
-		"packages/mailwoman/tools/eval-harness/fixtures/gb-golden.jsonl"
+		"packages/mailwoman/tools/eval-harness/fixtures/gb-os-open-golden.jsonl"
 	).toArray()
 
 	const postcode = emptyBoard()
@@ -127,7 +127,12 @@ if (board === "gb") {
 		}
 	}
 
-	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} · caseNormalization ${caseNormalization} ===`)
+	// The board's rows come from OS OpenData.
+	// OS OpenData records no dependent locality.
+	// Both dependent_locality lines therefore print a zero denominator.
+	console.log(
+		`\n=== gb-os-open-golden · ${values.label} · locale ${locale} · caseNormalization ${caseNormalization} ===`
+	)
 	console.log("board                                   hit/total   per register")
 
 	reportBoard("exact postcode", postcode)

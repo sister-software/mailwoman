@@ -231,13 +231,13 @@ describe("formatConformanceFinding", () => {
 		})
 
 		const { findings } = await runConformanceFixtures(
-			[fixture({ rowRef: "gb-golden.jsonl#1", context: { caseCountry: "GB" } })],
+			[fixture({ rowRef: "gb-os-open-golden.jsonl#1", context: { caseCountry: "GB" } })],
 			observe
 		)
 
 		const rendered = formatConformanceFinding(findings[0]!)
 
-		expect(rendered).toContain("[case-folding-invariance] cnf-sample-01 (row gb-golden.jsonl#1)")
+		expect(rendered).toContain("[case-folding-invariance] cnf-sample-01 (row gb-os-open-golden.jsonl#1)")
 		expect(rendered).toContain("component_map expected equivalent, observed diverges")
 		expect(rendered).toContain("compareComponents verdict LOST")
 		expect(rendered).toContain('"caseCountry":"GB"')

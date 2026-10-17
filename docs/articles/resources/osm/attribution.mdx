@@ -105,23 +105,37 @@ repository under `packages/corpus/data/training-manifests/`.
 The OpenStreetMap-derived training extract of corpus `v0.7.2-address-systems` is published under ODbL 1.0
 at [huggingface.co/datasets/sister-software/mailwoman-osm-training-extract](https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract).
 It is the offer that ODbL section 4.6(a) requires for the weights above: the derivative database in
-machine-readable form, as the 29 parquet files the trainer read. The files hold 2,572,934 rows from the
-eight `osm-*` sources, the earlier `osm` source and the two registers rendered from OSM tuples. The
-dataset's `MANIFEST.json` lists each file with its row count and sha256 digest, and its README states the
-Geofabrik extract dates and the repository revision that produced the files. The `en-us` package's
+machine-readable form, as parquet files of the rows the trainer read. It holds 2,619,226 training rows in
+32 files. Twenty-nine of them hold the 2,572,934 rows of the eight `osm-*` sources, the earlier `osm`
+source and the two registers rendered from OSM tuples, each with the row count and sha256 digest the
+corpus manifest lists. The other three hold `spliced-sub-venue` rows, described below. The dataset's
+`MANIFEST.json` lists each file with its row count and sha256 digest, and its README states the Geofabrik
+extract dates and the repository revision that produced the files. The `en-us` package's
 `PROVENANCE.json` links the dataset under `data_access_offers`.
 
-The dataset also holds the OpenStreetMap-named rows of `spliced-sub-venue`, which splices venue and
-sub-venue names onto address skeletons from HM Land Registry, the Base Adresse Nationale and
-OpenAddresses. Its rows record no name source, so each row was matched against the name lists its locale
-drew from. The en-GB, de-DE, es-ES and ca-ES rows drew only from OpenStreetMap extracts, en-US only from
-Overture Places, and fr-FR from both. Of 120,000 rows, 71,598 carry an OpenStreetMap name, 547 carry an
-OpenStreetMap sub-venue string beside an Overture venue name, and 894 carry a name both lists hold. Those
-73,039 rows are published, with the four OpenStreetMap extracts the recipe drew names from. The other
-32,658 rows carry an Overture Places name and 14,303 carry no pooled name. The dataset README states the
-method, the counts and the credits the skeleton fields owe. The recipe now records each row's name
-sources in its output, and the effective training manifest lists `spliced-sub-venue` among the sources
-that owe the OpenStreetMap attribution.
+The `spliced-sub-venue` recipe splices venue and sub-venue names onto address skeletons. Its rows record no
+name source, so each row was matched against the name lists its locale drew from. The en-GB, de-DE, es-ES
+and ca-ES rows drew only from OpenStreetMap extracts, en-US only from Overture Places, and fr-FR from both.
+Of the corpus's 120,000 rows, 73,039 carry an OpenStreetMap name: 71,598 an OpenStreetMap venue name, 547
+an OpenStreetMap sub-venue string beside an Overture venue name, and 894 a name both lists hold. The other
+32,658 rows carry an Overture Places name and 14,303 carry no pooled name.
+
+The dataset publishes 46,292 of those 73,039 rows, every one outside the en-GB locale. The 26,747 en-GB
+rows were withdrawn on 2026-10-17. Their address skeletons (house number, street, locality, region and
+postcode) were fields of HM Land Registry Price Paid Data, whose download page excludes those Address
+Data fields from the Open Government Licence. Royal Mail and Ordnance Survey permit them only for personal
+or non-commercial use and for displaying residential property price information. The earlier revisions of
+the dataset that held those rows were removed from its history. The Great Britain extract file stays
+published. It holds the whole OpenStreetMap name list that locale drew from, including every name the
+en-GB rows carried.
+
+The published rows' skeletons come from the Base Adresse Nationale (fr-FR, Licence Ouverte 2.0), the
+Berlin and Sachsen address registers through OpenAddresses (de-DE, Datenlizenz Deutschland Zero 2.0 and
+Namensnennung 2.0), and CartoCiudad through OpenAddresses (es-ES and ca-ES, CC BY 4.0). The dataset also
+holds the four OpenStreetMap extracts the recipe drew names from, and its README states the method, the
+counts and the credit each skeleton source requires. The recipe now records each row's name sources in its
+output, and the effective training manifest lists `spliced-sub-venue` among the sources that owe the
+OpenStreetMap attribution.
 
 ## References and our interpretation
 

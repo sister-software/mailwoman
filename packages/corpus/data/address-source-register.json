@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "8bd11a80e1ff6183cc353cd91dbb12988fb89184efc8a33b464e5822b77a0c02",
+	"contentDigest": "95d45f0926f0708b4bdf6382dc7680b8a8426cebe1d00755e767451ea00d9256",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1551,6 +1551,97 @@
 			"retrievedAt": "2026-10-12",
 			"refusedBecause": "The General Pharmaceutical Council reserves commercial use in its web terms. `https://www.pharmacyregulation.org/web-terms-use`, 88,394 bytes, sha256 `c33632ff36e296d16919b1111b121206e59f261c0b6bad7a546f64e42b88983b`, states `You cannot use any of the content or material from or any part of our websites for commercial purposes without obtaining a licence to do so from either us or our licensors.` The registered premises list is published on that website, and this reading found no separate data license for it. A request to the council could produce one.",
 			"licenseID": "unchecked-access-free-gb-general-pharmaceutical-council"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0, for every row outside Northern Ireland",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-pair-index-sources-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "ONS states one grant for its postcode products in two places that agree. Section 3 of the ONSPD user guide shipped in `ONSPD_FEB_2026.zip` (`User Guide/ONSPD User Guide Feb 2026.pdf`, 815,965 bytes, sha256 `11c5bff8d149f7bfe7e97e57a77a4e8374cf8c2ac4d197ae374442c7edca5b0c`) and the `Postcode products` section of `https://www.ons.gov.uk/methodology/geography/licences`, 35,242 bytes, sha256 `8bdf15d6572e48458a62ef5c0becf253138a6c02686f0b4265d22cc7576d365d`, read: `Our postcode products (derived from Code-Point® Open) are subject to the Open Government Licence. If you also use the Northern Ireland data (postcodes starting with “BT”), you need a separate licence for commercial use direct from Land and Property Services. We only issue a Northern Ireland End User Licence (for internal business use only) with the data.` and `You may re-use this information (not including logos or Northern Ireland data) free of charge in any format or medium, under the terms of the relevant data owners' licence. In addition, the following attribution statements must be acknowledged or displayed whenever the owners data is used: Contains OS data © Crown copyright and database right [year]; Contains Royal Mail data © Royal Mail copyright and database right [year]; Source: Office for National Statistics licensed under the Open Government Licence v.3.0`. The same page puts names-and-codes lookups under the Open Government Licence with the ONS statement. The portal item `3080229224424c9cb53c0b48f5a64d27`, 3,682 bytes, sha256 `b31f29cf4d2e2594cf884360be0fcff4c4d804927631cd366c7b044dc57af650`, links that page as its licence and states that the product contains Royal Mail, Gridlink, LPS (Northern Ireland), Ordnance Survey and ONS rights. OGL v3.0, 10,450 bytes, sha256 `f5b2b9f2af63647cde889fa6c3508f5705925295b74912c68caa28dd37e64aa5`, grants copying, adaptation and commercial exploitation on the attribution condition. Unlike HM Land Registry's Price Paid Data page, which licenses its address fields to Royal Mail and Ordnance Survey's own personal or non-commercial terms, this grant names no restriction on the Royal Mail or Ordnance Survey fields beyond the three statements, and the relevant owners' licence for Code-Point Open is the Open Government Licence (`ogl-uk-3.0-gb-ordnance-survey-opendata`). **Northern Ireland is outside the grant.** `BT` rows come only with the Land & Property Services Northern Ireland End User Licence, 103,424 bytes, sha256 `712db2b0416e9ce9f55c73087e7d73178a8ecd0f94cac1a97eed60a200669a96`, which is `personal to you` (1.2) and permits use `solely for your own internal business use` (2.1). What this repository read: the London ward names in `data/gazetteer/london-pairs-v2.jsonl`, taken from live postcodes in the eight London postal areas, filtered to `E09` local authority districts and joined by `wd25cd` to `Documents/WD Ward names and codes UK as at 05_25.csv` (237,008 bytes, sha256 `56e80079e97bb13b3a35f662990b0db77489b06460628110f1db142f569e67e9`). Every ward it names is an English `E05` ward, and no `BT` row contributes. The election does not reach a Northern Ireland row; reading one would need Land & Property Services' licence.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `copy, publish, distribute and transmit the Information`, which covers downloading the archive. Northern Ireland rows arrive in the same archive under the End User Licence, which permits loading them on a system under the licensee's control for internal use."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `adapt the Information`, which covers reading the postcode, local authority district and ward columns and the ward-name lookup out of the files. The permission covers rows outside Northern Ireland."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation, which covers joining ward codes to ward names and writing (ward, London) pairs. The permission covers rows outside Northern Ireland."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `exploit the Information commercially and non-commercially for example, by combining it with other Information, or by including it in your own product or application`, conditioned on the attribution statements. The permission covers rows outside Northern Ireland."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the three statements ONS requires: `Contains OS data © Crown copyright and database right [year]`, `Contains Royal Mail data © Royal Mail copyright and database right [year]` and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`. `pair-index-gb.bin` and `london-pairs-v2.jsonl` carry ward names only, from English wards, and the en-gb model card and README print the statements. A Northern Ireland row may not be redistributed: the End User Licence is personal and internal."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 names inclusion `in your own product or application` among the permitted commercial uses, so shipping weights or an index built from rows outside Northern Ireland is permitted with the statements in the package's rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 is a licence the Licensor grants to every user of the Information, worldwide and royalty-free, so a commercial recipient holds the same grant from ONS and no right needs sublicensing. The agreement passes on the three statements. It cannot cover a Northern Ireland row."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-office-for-national-statistics"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Who's On First data licence statement (link to https://whosonfirst.org/docs/licenses/ required; contributing sources credited)",
+			"retrievedCopy": "internal/strategy/rights-receipts/gb-pair-index-sources-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The data repository's `LICENSE.md`, `https://raw.githubusercontent.com/whosonfirst/whosonfirst-data/master/LICENSE.md`, 725 bytes, sha256 `634276f100c598a3f8b79250a852383278857868a2d5efcf6639d485ae4a2cb0`, states: `Crediting Who's On First is recommended and linking back to the License is required. For example: > Data from Who's On First. [License](https://whosonfirst.org/docs/licenses/).`, then `The Who's On First dataset is both an original work and a modification of existing open data. Some of those open data projects do require attribution.`, and puts `The format and structure that allows Who's On First to operate` under a Creative Commons Zero designation. The licences page, `https://whosonfirst.org/docs/licenses/`, 48,404 bytes, sha256 `bb584e412810ef475b32264bf1d2b5c12f188006d5929b9441f56c2b5ddfc0ed`, repeats that text and lists 102 contributing sources, generated 2020-02-21. Its Great Britain and Northern Ireland entries are Ordnance Survey of Northern Ireland under the Open Government Licence v3.0, London Datastore under the Open Government Licence v2.0 (`ogl-v2.html`, 9,853 bytes, sha256 `f43b76732008f9cf9b51d6a8dc45db23289b784e79691e0de04cc08c51f6d9be`), GeoNames under Creative Commons Attribution 4.0 (`geonames-about.html`, 10,039 bytes, sha256 `5f2d1ce44aed6a4b7490e5381026ffe4228a2a19bdf4c08d2bb82ee4648bdc6f`), and Quattroshapes under CC BY 2.0 (`quattroshapes-LICENSE.md`, 3,962 bytes, sha256 `0cb7a0fed5e763159c9b43418381d722521d7c57d68b1bb87d9c26858eeb5887`), whose Great Britain input is Ordnance Survey with the statement `Contains Ordnance Survey data © Crown copyright and database right`. Each of those licences permits adaptation and commercial use with attribution, and none of them restricts the place names. The statement reserves nothing and names the link as its one required condition. It grants no licence of its own over Mapzen's original work beyond the format and structure, so this election reads the statement as permission conditioned on the link, together with the sources' own grants, and records the credits each source requires. What this repository reads: Great Britain and Northern Ireland place names, placetypes and parent ids from the admin database `admin-global-priority.db` (md5 `12a9d4b46242c18f6cd867f89208fdc3`), for the borough pairs in `pair-index-gb.bin`, `data/gazetteer/gb-regions-v1.jsonl`, `ni-pairs-v1.jsonl` and the neighbourhood rows of `london-pairs-v2.jsonl`. The database records a geometry source per record and no name source, so the credits cover the sources the page lists for Great Britain and Northern Ireland.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The project publishes the bundles for download and states the link as its one required condition. The contributing sources' licences (OGL v3.0, OGL v2.0, CC BY 4.0, CC BY 2.0) each grant copying."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement describes the dataset as a modification of open data and reserves nothing. The contributing sources' licences grant adaptation, which covers reading place names, placetypes and parent ids out of the database."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Joining a place to its parent and writing (child, parent) pairs adapts the records, which OGL v3.0 (`adapt the Information`), OGL v2.0, CC BY 4.0 §2(a)(1)(B) and CC BY 2.0 §3(b) grant on their attribution conditions."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "None of the contributing licences restricts commercial use, and the Who's On First statement adds only the link. Using the pairs as a decode-time prior or as training rows is a use those grants cover with attribution."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`pair-index-gb.bin` and the committed pair files redistribute place names and their parents. The statement requires the link `Data from Who's On First. License: https://whosonfirst.org/docs/licenses/`, and the contributing sources require their credits, including `Contains Ordnance Survey data © Crown copyright and database right` for the Ordnance Survey input. The en-gb model card prints the Who's On First credit."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Every contributing licence permits including the data in a product, and the Who's On First statement requires only the link, which the weights packages' rights files carry."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The statement grants no licence of its own that this repository could pass on, and the CC BY 4.0 and CC BY 2.0 sources are not sublicensable. Each grant is made to every recipient directly, so a commercial recipient takes the data on the link and credit conditions from Who's On First and its sources rather than from this repository."
+				}
+			},
+			"licenseID": "unchecked-access-free-gb-who-s-on-first"
 		},
 		{
 			"state": "elected",
@@ -14963,6 +15054,38 @@
 			"upstreamLineage": [
 				"https://raw.githubusercontent.com/openaddresses/openaddresses/master/sources/es/countrywide.json"
 			]
+		},
+		{
+			"sourceID": "gb-public-administration-3",
+			"iso2": "GB",
+			"sector": "public-administration",
+			"name": "ONS Postcode Directory",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "ONS Geography relates every current and terminated UK postcode to the statutory administrative, electoral and health areas, from Royal Mail's postcode list and the Gridlink consortium's grid references",
+			"geometry": "present",
+			"license": "unchecked-access-free-gb-office-for-national-statistics",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "quarterly CSV zip from the ONS Open Geography portal",
+			"publisher": "Office for National Statistics",
+			"sourceURL": "https://geoportal.statistics.gov.uk/datasets/ons::ons-postcode-directory-february-2026-for-the-uk-hosted-table",
+			"note": "The February 2026 release holds 2,723,719 lines across 222 postcode-area CSV files, live and terminated postcodes with their area codes, and a Documents folder of names-and-codes lookups. The London ward names in data/gazetteer/london-pairs-v2.jsonl were read from it: live postcodes in the eight London postal areas, filtered to E09 local authority districts, joined by wd25cd to WD Ward names and codes UK as at 05_25. Northern Ireland (BT) rows come under a separate Land & Property Services licence."
+		},
+		{
+			"sourceID": "gb-public-administration-4",
+			"iso2": "GB",
+			"sector": "public-administration",
+			"name": "Who's On First — Great Britain records",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "Open gazetteer of administrative places and their hierarchy, begun by Mapzen, combining its own work with open government and community data",
+			"geometry": "present",
+			"license": "unchecked-access-free-gb-who-s-on-first",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "SQLite or GeoJSON bundles from the Who's On First data repositories",
+			"publisher": "Who's On First",
+			"sourceURL": "https://whosonfirst.org/download/",
+			"note": "Read through the admin database $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db (md5 12a9d4b46242c18f6cd867f89208fdc3) for the en-gb pair index's borough pairs, and earlier for data/gazetteer/gb-regions-v1.jsonl, ni-pairs-v1.jsonl and the London neighbourhood rows of london-pairs-v2.jsonl. Rows are place names, placetypes and parent ids."
 		}
 	]
 }

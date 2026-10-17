@@ -69,14 +69,14 @@ describe("corpus types", () => {
 
 	it("register and surface answer separate questions on one row", () => {
 		const composed: CanonicalRow = {
-			raw: "9 Pollard Close, London, E16 1LG",
-			components: { house_number: "9", street: "Pollard Close", locality: "London", postcode: "E16 1LG" },
+			raw: "Crown Street, Aberdeen, AB11 6HQ",
+			components: { street: "Crown Street", locality: "Aberdeen", postcode: "AB11 6HQ" },
 			country: "GB",
-			source: "synth-gb",
-			source_id: "ppd-1",
+			source: "rendered-gb-os-open",
+			source_id: "gb-os-open-1",
 			corpus_version: "0.9.9",
 			license: "OGL-UK-3.0",
-			register: SourceRegister.LandRegistryPricePaid,
+			register: SourceRegister.OrdnanceSurveyOpenData,
 			surface: SurfaceOrigin.Composed,
 		}
 
@@ -92,10 +92,10 @@ describe("corpus types", () => {
 			surface: SurfaceOrigin.Invented,
 		}
 
-		// A template composed the first surface from fields HM Land Registry published,
-		// so the row is a real address written in the recipe's order.
+		// A template composed the first surface from fields Ordnance Survey published,
+		// so the row is a real street and postcode written in the recipe's order.
 		// The second names no published record at all.
-		expect(composed.register).toBe("gb-hm-land-registry-ppd")
+		expect(composed.register).toBe("gb-os-opendata")
 		expect(composed.surface).toBe("composed")
 		expect(invented.register).toBeNull()
 		expect(invented.surface).toBe("invented")

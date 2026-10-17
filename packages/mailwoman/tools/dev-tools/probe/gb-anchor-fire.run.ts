@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reports whether the GB postcode-anchor binary fires on the gb-golden board and by which route,
+ *   Reports whether the GB postcode-anchor binary fires on the GB golden board and by which route,
  *   replaying the `collectMatches` shaped recognizer that `parse` uses. Each register is reported
  *   separately. It reports three failure modes: no shaped span, a span whose key the lookup
  *   does not include. The third is a hit through the GB outward fallback.
@@ -32,7 +32,7 @@ const GB_INWARD_LENGTH = 3
 const { values } = parseArguments({
 	options: {
 		bin: { type: "string" },
-		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb-os-open-golden.jsonl" },
 	},
 })
 

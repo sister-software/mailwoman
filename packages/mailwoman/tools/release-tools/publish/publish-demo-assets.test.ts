@@ -73,7 +73,7 @@ describe("publishDemoAssets", () => {
 		const upload = vi.fn()
 
 		await expect(publishDemoAssets({ src: directory.path, upload })).rejects.toThrow(
-			/pair-index\/2026-08-05\/pair-index-gb\.bin/
+			/pair-index\/2026-10-17\/pair-index-gb\.bin/
 		)
 
 		expect(upload).not.toHaveBeenCalled()
