@@ -8,7 +8,9 @@ import { expect, test } from "../e2e/index.ts"
 test.describe("Demo — model-visualizer debug drawer", () => {
 	test("/debug opens the drawer and traces the parsed address", async ({ demo, page }) => {
 		// No trailing slash: the site builds debug.html, so /debug/ is a 404 status on Pages.
-		await page.goto("/debug", { waitUntil: "networkidle" })
+		// domcontentloaded suffices: the gazetteer's warm-up range reads keep the network busy
+		// past readiness (see GeocoderFixture.goto), and expectReady below is the real signal.
+		await page.goto("/debug", { waitUntil: "domcontentloaded" })
 		await demo.expectReady()
 		await demo.setAddress("1600 Pennsylvania Ave NW, Washington, DC 20500")
 		await demo.submit()
