@@ -26,8 +26,8 @@
 		"format": "ONNX",
 		"outputs": [],
 		"text_emitting_output": false,
-		"summary": "Model graph unread: no file at /home/lab/Projects/mailwoman/.claude/worktrees/osm-attribution/packages/neural-weights-cjk/model.onnx",
-		"unreadable": "no file at /home/lab/Projects/mailwoman/.claude/worktrees/osm-attribution/packages/neural-weights-cjk/model.onnx"
+		"summary": "Model graph unread: no file at packages/neural-weights-cjk/model.onnx",
+		"unreadable": "no file at packages/neural-weights-cjk/model.onnx"
 	},
 	"training_attribution": {
 		"status": "recorded",
@@ -71,6 +71,7 @@
 	"corpus_version": null,
 	"effective_training_sources": null,
 	"required_attributions": null,
+	"data_access_offers": [],
 	"tokenizer_version": null,
 	"unresolved": [
 		"One attribution entry names no license: Japanese address data © Overture Maps Foundation contributors, Addresses theme, under the upstream register's license (Overture declares no identifier of its own for this theme; read 2026-09-25 from https://docs.overturemaps.org/attribution/); administrative names from Who's On First.",

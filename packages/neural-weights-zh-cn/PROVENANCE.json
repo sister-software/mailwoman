@@ -40,6 +40,7 @@
 			}
 		],
 		"required_attributions": [],
+		"data_access_offers": [],
 		"unresolved": null
 	},
 	"artifacts": [
@@ -60,6 +61,7 @@
 	"corpus_version": null,
 	"effective_training_sources": null,
 	"required_attributions": null,
+	"data_access_offers": [],
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 1 of 1 declared artifacts: fst-zh-cn.bin. An unrecorded digest is not a verified one.",

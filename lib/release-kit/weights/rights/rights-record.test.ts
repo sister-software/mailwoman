@@ -339,6 +339,82 @@ describe("readWeightsRightsRecords", () => {
 		}
 	})
 
+	it("prints a card's data-access offer and repeats it for an overlay of that graph", async () => {
+		const offer = {
+			license: "ODbL-1.0",
+			provision: "ODbL 1.0 section 4.6(a)",
+			sources: ["osm-fixture"],
+			url: "https://example.org/extract",
+			manifest_url: "https://example.org/extract/MANIFEST.json",
+			statement: "The fixture extract",
+		}
+
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "9.1.0", training: { data_access_offers: [offer] } },
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0" },
+			},
+		])
+
+		try {
+			const [graph, overlay] = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			expect(renderProvenance(graph!).data_access_offers).toEqual([offer])
+			expect(renderLicenseFile(graph!)).toContain("https://example.org/extract/MANIFEST.json")
+
+			// The overlay's own card records no offer.
+			// The offer it prints is the base's, under inherited_lineage.
+			expect(renderProvenance(overlay!).data_access_offers).toEqual([])
+			expect(renderProvenance(overlay!).inherited_lineage?.data_access_offers).toEqual([offer])
+			expect(renderLicenseFile(overlay!)).toContain("## Access to the training data")
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("refuses an offer missing a field rather than printing no offer", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "9.1.0", training: { data_access_offers: [{ license: "ODbL-1.0", sources: ["osm"] }] } },
+			},
+		])
+
+		try {
+			await expect(readWeightsRightsRecords(tree.root, ["packages/neural-weights-graph"])).rejects.toThrow(
+				/data_access_offers\[0\]\.provision/
+			)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
 	it("reports a base outside the set as unresolved rather than as an empty lineage", async () => {
 		const tree = await treeWith([
 			{
