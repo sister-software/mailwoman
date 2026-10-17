@@ -7,11 +7,12 @@
  *   with a cap per page, each with its snippet. A second ranked list, such as a vector arm, would merge here.
  */
 
+import { queryTokens } from "@mailwoman/react/search/tokens"
 import type { SearchRecord, SearchResponse } from "@mailwoman/react/search/types"
 
 import { correctTokens } from "./correct.ts"
 import type { SearchDatabase } from "./database.ts"
-import { lexicalRows, queryTokens } from "./lexical.ts"
+import { lexicalRows } from "./lexical.ts"
 import { snippet } from "./snippet.ts"
 
 /**

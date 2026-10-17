@@ -99,32 +99,44 @@ test("emphasizes the query in the title and shows the heading path above a secti
 	expect(option.className).toContain("mw-search__option--section")
 })
 
-test("offers recent queries while the field is empty and removes one on request", async () => {
+function recentHit(url: string, anchor = "") {
+	return {
+		url,
+		anchor,
+		hierarchy: ["Guides", `Title ${url}`, anchor === "" ? null : "Section", null, null, null, null],
+	}
+}
+
+test("lists recent hits as options while the field is empty, opens one on Enter, and removes one on Delete", async () => {
 	const key = `mw-search-test-${Date.now()}`
 
-	localStorage.setItem(key, stringifyJSON(["earlier", "older"]))
+	localStorage.setItem(key, stringifyJSON([recentHit("/earlier", "part"), recentHit("/older"), "a query string"]))
 
-	const { container, input } = mount(async (q) => response(q, ["/x"]), key)
+	const { container, input, onNavigate } = mount(async (q) => response(q, ["/x"]), key)
 
-	await vi.waitFor(() => expect(container.querySelectorAll(".mw-search__recent-query")).toHaveLength(2))
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(2))
 
-	await userEvent.click(container.querySelector('[aria-label="Remove “older” from recent searches"]') as HTMLElement)
-	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["earlier"])
+	const options = [...container.querySelectorAll('[role="option"]')]
 
-	await userEvent.click(container.querySelector(".mw-search__recent-query") as HTMLElement)
-	expect(input.value).toBe("earlier")
+	expect(options[0]!.getAttribute("href")).toBe("/earlier#part")
+	expect(options[0]!.querySelector(".mw-search__path")?.textContent).toBe("Title /earlier")
+	expect(options[0]!.querySelector(".mw-search__title")?.textContent).toBe("Section")
+	expect(input.getAttribute("aria-controls")).toBe(container.querySelector('[role="listbox"]')!.id)
+
+	await userEvent.keyboard("{ArrowDown}{Delete}")
+	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual([recentHit("/earlier", "part")])
 	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(1))
-	expect(container.querySelector(".mw-search__recent")).toBeNull()
 
 	await userEvent.keyboard("{Enter}")
-	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["earlier"])
+	expect(onNavigate).toHaveBeenCalledWith("/earlier#part")
 	localStorage.removeItem(key)
 })
 
-test("remembers a query that led to a hit, newest first, five at most", async () => {
+test("remembers an opened hit, newest first, five at most", async () => {
 	const key = `mw-search-test-${Date.now()}-b`
+	const stored = ["/one", "/two", "/three", "/four", "/five"].map((url) => recentHit(url))
 
-	localStorage.setItem(key, stringifyJSON(["one", "two", "three", "four", "five"]))
+	localStorage.setItem(key, stringifyJSON(stored))
 
 	const { input, onNavigate } = mount(async (q) => response(q, ["/x"]), key)
 
@@ -133,8 +145,48 @@ test("remembers a query that led to a hit, newest first, five at most", async ()
 	await userEvent.keyboard("{Enter}")
 
 	expect(onNavigate).toHaveBeenCalledWith("/x")
-	expect(parseJSONStrict(localStorage.getItem(key)!)).toEqual(["six", "one", "two", "three", "four"])
+
+	const remembered = parseJSONStrict<{ url: string }[]>(localStorage.getItem(key)!)
+
+	expect(remembered.map((hit) => hit.url)).toEqual(["/x", "/one", "/two", "/three", "/four"])
+	expect(remembered[0]).not.toHaveProperty("snippet")
 	localStorage.removeItem(key)
+})
+
+test("emphasizes each word of a hyphenated query in the title", async () => {
+	const { container, input } = mount(async (q) => ({
+		query: q,
+		corrected: null,
+		hits: [
+			{
+				url: "/a",
+				anchor: "",
+				hierarchy: ["Reference", "Tier 1 locales", null, null, null, null, null],
+				snippet: "",
+				highlights: [],
+			},
+		],
+	}))
+
+	await userEvent.type(input, "tier-locales")
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(1))
+
+	const marks = [...container.querySelectorAll(".mw-search__title mark")].map((mark) => mark.textContent)
+
+	expect(marks).toEqual(["Tier", "locales"])
+})
+
+test("names no listbox while none is shown and starts empty after a close", async () => {
+	const { container, dialog, input } = mount(async (q) => response(q, ["/x"]))
+
+	await vi.waitFor(() => expect(dialog.open).toBe(true))
+	expect(input.hasAttribute("aria-controls")).toBe(false)
+
+	await userEvent.type(input, "decoder")
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(1))
+	dialog.close()
+
+	await vi.waitFor(() => expect(input.value).toBe(""))
 })
 
 test("shows the keyboard hints in the footer and the result count beside them", async () => {

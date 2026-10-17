@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { queryTokens } from "@mailwoman/react/search/tokens"
 import { describe, expect, test } from "vitest"
 
 import { fixtureDatabase } from "./database.node.ts"
 import { FIXTURE_RECORDS } from "./fixtures.ts"
-import { lexicalRows, matchExpression, queryTokens } from "./lexical.ts"
+import { lexicalRows, matchExpression } from "./lexical.ts"
 
 const db = fixtureDatabase(FIXTURE_RECORDS)
 
@@ -20,12 +21,6 @@ const db = fixtureDatabase(FIXTURE_RECORDS)
 async function fixtureIDs(tokens: readonly string[]): Promise<string[]> {
 	return (await lexicalRows(db, tokens)).map((row) => FIXTURE_RECORDS[Number(row.id) - 1]?.id ?? row.id)
 }
-
-describe("queryTokens", () => {
-	test("splits the text into runs of letters and digits, as the index tokenizer does", () => {
-		expect(queryTokens('  tier-1  "regression" -- *** ')).toEqual(["tier", "1", "regression"])
-	})
-})
 
 describe("matchExpression", () => {
 	test("quotes every token and marks the last one as a prefix", () => {

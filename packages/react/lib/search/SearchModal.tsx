@@ -7,8 +7,8 @@
  *   background, the backdrop, the close on Escape and the return of focus to the opener. The query field is an
  *   `<input type="search">` with the ARIA combobox role. DOM focus stays on the input, and
  *   `aria-activedescendant` identifies the selected hit. The component owns no data access: `search` is
- *   passed in. Recent queries are a per-viewer convenience in `localStorage`; the modal renders the same
- *   without them.
+ *   passed in. The hits a reader opened are kept as recent hits, a per-viewer convenience in
+ *   `localStorage`; the modal renders the same without them.
  */
 
 import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
@@ -16,6 +16,7 @@ import { type KeyboardEvent, type MouseEvent, type ReactNode, useEffect, useId, 
 
 import { useDebouncedValue } from "#common/useDebouncedValue"
 
+import { queryTokens } from "./tokens.ts"
 import type { SearchHit, SearchResponse } from "./types.ts"
 
 export interface SearchModalProps {
@@ -34,11 +35,16 @@ export interface SearchModalProps {
 	 */
 	search: (q: string, signal: AbortSignal) => Promise<SearchResponse>
 	/**
-	 * The `localStorage` key under which recent queries are kept.
-	 * Absent, recent queries are not kept.
+	 * The `localStorage` key under which recently opened hits are kept.
+	 * Absent, recent hits are not kept.
 	 */
 	recentKey?: string
 }
+
+/**
+ * A hit the reader opened earlier, kept without its snippet.
+ */
+type RecentHit = Pick<SearchHit, "url" | "anchor" | "hierarchy">
 
 type Status =
 	| { kind: "idle" }
@@ -79,17 +85,14 @@ function statusText(status: Status): string {
 
 /**
  * The ranges of `text` that match a query token, case-insensitively, for emphasis in a title.
+ *
+ * The tokens are the ones the index matched on, so `tier-1 locale` emphasizes `tier` and `locale`.
  */
 function tokenRanges(text: string, query: string): [number, number][] {
 	const lower = text.toLowerCase()
 	const ranges: [number, number][] = []
 
-	for (const token of new Set(
-		query
-			.toLowerCase()
-			.split(/\s+/)
-			.filter((part) => part.length >= 2)
-	)) {
+	for (const token of new Set(queryTokens(query.toLowerCase()).filter((part) => part.length >= 2))) {
 		for (let index = lower.indexOf(token); index >= 0; index = lower.indexOf(token, index + token.length)) {
 			ranges.push([index, index + token.length])
 		}
@@ -118,26 +121,43 @@ function emphasized(text: string, ranges: readonly [number, number][]): ReactNod
  * The deepest heading of a hit is its title.
  * The headings between the category and it are its path.
  */
-function headings(hit: SearchHit): { title: string; path: string[] } {
+function headings(hit: RecentHit): { title: string; path: string[] } {
 	const named = hit.hierarchy.slice(1).filter((entry): entry is string => entry !== null)
 	const title = named.at(-1) ?? hit.url
 
 	return { title, path: named.slice(0, -1) }
 }
 
-function readRecent(key: string | undefined): string[] {
+function isRecentHit(value: unknown): value is RecentHit {
+	if (typeof value !== "object" || value === null) return false
+
+	const entry = value as Record<string, unknown>
+
+	return typeof entry.url === "string" && typeof entry.anchor === "string" && Array.isArray(entry.hierarchy)
+}
+
+/**
+ * The stored recent hits.
+ *
+ * An entry of another shape, such as a query string an earlier version kept, is dropped.
+ */
+function readRecent(key: string | undefined): RecentHit[] {
 	if (!key) return []
 
 	try {
 		const stored = tryParsingJSON<unknown>(globalThis.localStorage.getItem(key))
 
-		return Array.isArray(stored) ? stored.filter((entry): entry is string => typeof entry === "string") : []
+		return Array.isArray(stored) ? stored.filter(isRecentHit) : []
 	} catch {
 		return []
 	}
 }
 
-function writeRecent(key: string | undefined, entries: readonly string[]): void {
+function sameHit(a: RecentHit, b: RecentHit): boolean {
+	return a.url === b.url && a.anchor === b.anchor
+}
+
+function writeRecent(key: string | undefined, entries: readonly RecentHit[]): void {
 	if (!key) return
 
 	try {
@@ -179,7 +199,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 	const [settled, setSettled] = useState<Status>({ kind: "idle" })
 	const [selected, setSelected] = useState(0)
 	const [loading, setLoading] = useState(false)
-	const [recent, setRecent] = useState<string[]>([])
+	const [recent, setRecent] = useState<RecentHit[]>([])
 	const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH)
 	const debounced = useDebouncedValue(trimmed, DEBOUNCE_MS)
 
@@ -254,31 +274,36 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		}))
 	}, [response])
 
-	const ordered = groups.flatMap((group) => group.entries)
+	// An empty field lists the recent hits as the options, so the arrow keys and Enter reach them.
+	const showRecent = trimmed === "" && recent.length > 0
+
+	const ordered: { hit: RecentHit; order: number }[] = showRecent
+		? recent.map((hit, order) => ({ hit, order }))
+		: groups.flatMap((group) => group.entries)
+
 	const optionID = (order: number) => `${baseID}-option-${order}`
 	const emphasis = response?.corrected ?? debounced
 
-	function remember(text: string) {
-		const entries = [text, ...recent.filter((entry) => entry !== text)].slice(0, RECENT_LIMIT)
+	function remember(hit: RecentHit) {
+		const entry: RecentHit = { url: hit.url, anchor: hit.anchor, hierarchy: hit.hierarchy }
+		const entries = [entry, ...recent.filter((other) => !sameHit(other, entry))].slice(0, RECENT_LIMIT)
 
 		setRecent(entries)
 		writeRecent(recentKey, entries)
 	}
 
-	function forget(text: string) {
-		const entries = recent.filter((entry) => entry !== text)
+	function forget(hit: RecentHit) {
+		const entries = recent.filter((other) => !sameHit(other, hit))
 
 		setRecent(entries)
 		writeRecent(recentKey, entries)
+		setSelected((current) => Math.min(current, Math.max(0, entries.length - 1)))
 	}
 
-	function go(hit: SearchHit) {
+	function go(hit: RecentHit) {
 		const href = hitHref(hit)
 
-		if (trimmed !== "") {
-			remember(trimmed)
-		}
-
+		remember(hit)
 		onClose()
 
 		if (onNavigate) {
@@ -293,6 +318,19 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		if (event.nativeEvent.isComposing) return
 
 		if (!ordered.length) return
+
+		// Delete removes the selected recent hit.
+		// An option may not contain a button of its own.
+		if (showRecent && event.key === "Delete") {
+			const entry = ordered[selected]
+
+			if (entry) {
+				event.preventDefault()
+				forget(entry.hit)
+			}
+
+			return
+		}
 
 		const last = ordered.length - 1
 
@@ -336,14 +374,33 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		}
 	}
 
-	function onLinkClick(event: MouseEvent<HTMLAnchorElement>, hit: SearchHit) {
+	function onLinkClick(event: MouseEvent<HTMLAnchorElement>, hit: RecentHit) {
 		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
 
 		event.preventDefault()
 		go(hit)
 	}
 
-	const showRecent = trimmed === "" && recent.length > 0
+	function renderOption(hit: RecentHit, order: number, children: ReactNode) {
+		return (
+			// The option is the link itself: an option may not contain an interactive element, and
+			// `option` is an allowed role on `a[href]`, which keeps the URL for open-in-new-tab.
+			<a
+				key={order}
+				id={optionID(order)}
+				role="option"
+				aria-selected={order === selected}
+				href={hitHref(hit)}
+				tabIndex={-1}
+				className={`mw-search__option ${hit.anchor === "" ? "mw-search__option--page" : "mw-search__option--section"}`}
+				onPointerMove={() => setSelected(order)}
+				onClick={(event) => onLinkClick(event, hit)}
+			>
+				{children}
+			</a>
+		)
+	}
+
 	const noResults = response !== undefined && response.hits.length === 0
 
 	return (
@@ -351,7 +408,12 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 			ref={dialogRef}
 			className="mw-search"
 			aria-label="Search the documentation"
-			onClose={onClose}
+			onClose={() => {
+				// The next open starts on the recent hits rather than the last query.
+				setQuery("")
+				setSelected(0)
+				onClose()
+			}}
 			onClick={onDialogClick}
 		>
 			<form role="search" className="mw-search__form" onSubmit={(event) => event.preventDefault()}>
@@ -365,7 +427,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						aria-label="Search the documentation"
 						aria-autocomplete="list"
 						aria-expanded={ordered.length > 0}
-						aria-controls={listboxID}
+						aria-controls={ordered.length ? listboxID : undefined}
 						aria-activedescendant={ordered.length ? optionID(selected) : undefined}
 						autoComplete="off"
 						spellCheck={false}
@@ -386,29 +448,6 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 			)}
 
 			<div className="mw-search__body">
-				{showRecent && (
-					<section className="mw-search__recent" aria-label="Recent searches">
-						<div className="mw-search__category">Recent</div>
-						<ul className="mw-search__recent-list">
-							{recent.map((entry) => (
-								<li key={entry} className="mw-search__recent-item">
-									<button type="button" className="mw-search__recent-query" onClick={() => setQuery(entry)}>
-										{entry}
-									</button>
-									<button
-										type="button"
-										className="mw-search__recent-remove"
-										aria-label={`Remove “${entry}” from recent searches`}
-										onClick={() => forget(entry)}
-									>
-										×
-									</button>
-								</li>
-							))}
-						</ul>
-					</section>
-				)}
-
 				{noResults && (
 					<p className="mw-search__empty">
 						No results for “{response.query}”. Try a different spelling or a shorter query.
@@ -416,43 +455,53 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 				)}
 
 				<div id={listboxID} role="listbox" aria-label="Search results" className="mw-search__results">
-					{groups.map((group, groupIndex) => (
-						<div
-							key={group.category}
-							role="group"
-							aria-labelledby={`${baseID}-group-${groupIndex}`}
-							className="mw-search__group"
-						>
-							<div id={`${baseID}-group-${groupIndex}`} className="mw-search__category">
-								{group.category}
+					{showRecent ? (
+						<div role="group" aria-labelledby={`${baseID}-recent`} className="mw-search__group">
+							<div id={`${baseID}-recent`} className="mw-search__category">
+								Recent
 							</div>
-							{group.entries.map(({ hit, order }) => {
+							{recent.map((hit, order) => {
 								const { title, path } = headings(hit)
 
-								return (
-									// The option is the link itself: an option may not contain an interactive element, and
-									// `option` is an allowed role on `a[href]`, which keeps the URL for open-in-new-tab.
-									<a
-										key={order}
-										id={optionID(order)}
-										role="option"
-										aria-selected={order === selected}
-										href={hitHref(hit)}
-										tabIndex={-1}
-										className={`mw-search__option ${hit.anchor === "" ? "mw-search__option--page" : "mw-search__option--section"}`}
-										onPointerMove={() => setSelected(order)}
-										onClick={(event) => onLinkClick(event, hit)}
-									>
+								return renderOption(
+									hit,
+									order,
+									<>
 										{path.length > 0 && <span className="mw-search__path">{path.join(" › ")}</span>}
-										<span className="mw-search__title">{emphasized(title, tokenRanges(title, emphasis))}</span>
-										{hit.snippet !== "" && (
-											<span className="mw-search__snippet">{emphasized(hit.snippet, hit.highlights)}</span>
-										)}
-									</a>
+										<span className="mw-search__title">{title}</span>
+									</>
 								)
 							})}
 						</div>
-					))}
+					) : (
+						groups.map((group, groupIndex) => (
+							<div
+								key={group.category}
+								role="group"
+								aria-labelledby={`${baseID}-group-${groupIndex}`}
+								className="mw-search__group"
+							>
+								<div id={`${baseID}-group-${groupIndex}`} className="mw-search__category">
+									{group.category}
+								</div>
+								{group.entries.map(({ hit, order }) => {
+									const { title, path } = headings(hit)
+
+									return renderOption(
+										hit,
+										order,
+										<>
+											{path.length > 0 && <span className="mw-search__path">{path.join(" › ")}</span>}
+											<span className="mw-search__title">{emphasized(title, tokenRanges(title, emphasis))}</span>
+											{hit.snippet !== "" && (
+												<span className="mw-search__snippet">{emphasized(hit.snippet, hit.highlights)}</span>
+											)}
+										</>
+									)
+								})}
+							</div>
+						))
+					)}
 				</div>
 			</div>
 
@@ -468,6 +517,11 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						<kbd>↑</kbd>
 						<kbd>↓</kbd> move
 					</li>
+					{showRecent && (
+						<li>
+							<kbd>del</kbd> remove
+						</li>
+					)}
 					<li>
 						<kbd>esc</kbd> close
 					</li>

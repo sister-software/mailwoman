@@ -52,17 +52,6 @@ export function quoteTerm(text: string): string {
 	return `"${text.replaceAll('"', '""')}"`
 }
 
-/**
- * The parts of the text that the tokenizer can index: its runs of letters and digits.
- *
- * The index drops term positions, so a quoted string must hold one token.
- * The text is split where the `unicode61` tokenizer splits it, at any character
- * that is neither a letter nor a digit.
- */
-export function queryTokens(text: string): string[] {
-	return text.split(/[^\p{L}\p{N}]+/u).filter((token) => token !== "")
-}
-
 export function matchExpression(tokens: readonly string[]): string | null {
 	if (!tokens.length) return null
 
