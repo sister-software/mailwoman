@@ -102,8 +102,8 @@ The operation also reads every source a graph package's effective training manif
 `packages/corpus/data/corpus-source-inputs.json` and the register, and fails on a source whose register rows
 lack an elected decision permitting `transform` and `train` unless
 `lib/release-kit/release/known-training-rights-violations.json` records it with its reason and issue. The
-published 10.1.0 model's 46 such sources are recorded there, `rendered-gb` and `spliced-sub-venue` under #2635
-for Price Paid Data and the rest under #2643 for unread terms. An entry no measured violation matches also
+published 10.1.0 model's 13 such sources are recorded there, `rendered-gb` and `spliced-sub-venue` under #2635
+for Price Paid Data and the rest under #2643 for refused or unfound terms. An entry no measured violation matches also
 fails, so a retrained model clears its entries by their removal, and a new violation needs a new entry
 stating why a release accepts it. A new corpus source joins the input table and the register before any build
 reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped source in a model trained after

@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "4144d5569f8dc862e1a9be78c0b2e88cfa7f4b9f000911036286ea597217ea35",
+	"contentDigest": "2b92630936b804cf0e4986ddb2a4acadf001d3582747bbdde773be6969cb1c3b",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -1786,10 +1786,50 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to kr-finance-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-kr-kr-professional-licensing-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to kr-professional-licensing-1 alone."
+			"state": "elected",
+			"electedTerms": "이용허락범위 제한 없음 (scope of permitted use: no restriction), as stated on the Ministry of the Interior and Safety's data.go.kr entries for local-government licensing data",
+			"termsVersion": "data.go.kr entries 15045016 and 15044979 (file data, 2025-11-27 snapshots) and 15154910 and 15155226 (Open API, 수정일 2026-04-16 and 2026-04-15)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "localdata.go.kr did not answer: `https://www.localdata.go.kr/` and `https://localdata.go.kr/` failed with `UND_ERR_CONNECT_TIMEOUT` and `http://www.localdata.go.kr/` with `ETIMEDOUT`. The ministry moved the data to the national portal; a 2026-01-26 report of its announcement (`https://newsseoul.co.kr/news/view/1065579617179088`, 72,582 bytes, sha256 `f774b93cdff08a807e38174e08a490e1af02fe3dcc046ac14c4ebd7d72d43328`) reads `행정안전부는 두 곳에 흩어져 있던 정보를 '공공데이터 포털' 한 곳으로 통합해` and `기존 누리집인 '지방행정 인허가데이터 개방 포털'도 4월 15일까지는 병행 운영할 예정이다` (\"the ministry consolidated the information scattered across two sites into the Public Data Portal\"; \"the existing Local Administration Licensing Data portal will run in parallel until April 15\"). The ministry's own entries for that data, managed by 지역디지털협력과, each read `이용허락범위 제한 없음` (\"scope of permitted use: no restriction\") and `비용부과유무 무료`: `행정안전부_식품_일반음식점` at `https://www.data.go.kr/data/15045016/fileData.do` (166,053 bytes, sha256 `f6f0e7697cda39a39d3bf38db25e39ee1375fc637346e8760a8031f5f141d25f`, `수집방법 지자체 인허가 데이터 활용`), `행정안전부_식품_식품판매업(기타)` at `https://www.data.go.kr/data/15044979/fileData.do` (166,147 bytes, sha256 `8dde7ce29389b5962e029a67bf6e3071d9545d5d6684f8d472e6a91949cac188`), `행정안전부_식품_외국인전용유흥음식점업 조회서비스` at `https://www.data.go.kr/data/15154910/openapi.do` (223,622 bytes, sha256 `4010f30d79a3d2c0734f73d12f0c9782823503dd94f8cb7e933e07914ba85dbb`, `심의유형 개발단계 : 자동승인 / 운영단계 : 자동승인`), and the 식용얼음판매업 service at `https://www.data.go.kr/data/15155226/openapi.do` (220,136 bytes, sha256 `12330bcaae3317db79d19b0d8f35129e53a6f55bce3a546d7d57c9bc91e1ad74`). The portal policy page (250,441 bytes, sha256 `e04d4136a33727efa6e05cb89641001a124b8a9cb3494303e32f0c3551054d08`) requires a KOGL type on public data containing a copyright work and requires agencies to let users use duty-made works `별도의 이용허락 없이 자유롭게` (\"freely, without separate permission\"). Four of the 195 licensing categories were read, and all four carry the same label from the same managing division; a category whose entry reads otherwise is outside this election. The rows are business licence records under 식품위생법 and similar acts and name businesses, so the personal-data review for representative names is separate from this decision.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Each entry is free and states `이용허락범위 제한 없음`; the Open API entries approve keys automatically at both stages."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No restriction on the scope of use leaves reading the 소재지 address columns unconditioned."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The label places no limit on modification, and it is broader than KOGL 제1유형, which the portal describes as permitting `변형 등 2차적 저작물 작성`."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The scope of use is unrestricted; fitting a model is a use."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The label places no limit on redistribution. Business names and addresses redistributed in bulk remain subject to the separate personal-data review."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Nothing in the label or the portal policy limits distributing a work trained on the data."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "An unrestricted scope of use leaves no condition a commercial licensee would need passed to it."
+				}
+			},
+			"licenseID": "unchecked-access-free-kr-kr-professional-licensing-1"
 		},
 		{
 			"state": "elected",
@@ -2621,10 +2661,50 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-business-legal-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-us-us-charity-nonprofit-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-charity-nonprofit-1 alone."
+			"state": "elected",
+			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105 (the IRS states no terms for the EO BMF extract)",
+			"termsVersion": "unstated",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The Exempt Organizations Business Master File Extract is compiled and published by the Internal Revenue Service, an agency of the United States, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The IRS states no terms of its own for it. `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`, 115,870 bytes, sha256 `6b8818573e9be19a51dd996dc68b654f1423a4bfe0f71ff10960ce2d13fb1c56`, describes `a cumulative file` in CSV, one per state plus Puerto Rico and international, `Updated data posting date: 10/13/2026 Record count: 1,975,975`, and imposes no condition; the only license strings in its bytes are Font Awesome's notices in HTML comments, which are about the page's icons. That is why the basis below is the statute rather than a grant. The rows describe organizations; the `ICO` (in care of) column can name a person, which is a matter for this source's personal-data review rather than for these terms, and `source-resolutions.json` holds no review for it yet.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Section 105 of title 17 denies copyright to a work of the United States Government, so copying the file the IRS publishes is unrestricted by copyright."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Reading columns out of a work no copyright protects is unrestricted by copyright."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Adaptation is an exclusive right only where copyright subsists, and section 105 denies it here."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Fitting a model on the rows reproduces and adapts a work that no copyright protects."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Distribution of a United States Government work needs no grant. Crediting the agency is courtesy rather than obligation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "The question whether trained weights are a derivative of the rows does not arise where the rows carry no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "No right subsists to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-access-free-us-us-charity-nonprofit-1"
 		},
 		{
 			"licenseID": "unchecked-access-free-us-us-education-1",
@@ -2657,16 +2737,96 @@
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-food-pharma-1 alone."
 		},
 		{
-			"licenseID": "unchecked-access-free-us-us-health-1",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-health-1 alone."
+			"state": "elected",
+			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105, disseminated as FOIA-disclosable data under the HHS notice of 2007-05-30 (72 FR, document 07-2651)",
+			"termsVersion": "unstated",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "CMS compiles and publishes the NPPES downloadable file, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The download index, `https://download.cms.gov/nppes/NPI_Files.html`, 6,817 bytes, sha256 `f00a6c37989e58ad6f227a89a102ae9c176cdebe5ea15e71eb07bdc356b15bdc`, lists `NPPES Data Dissemination V.2 (October 12, 2026) - ZIP format (1,106.00 MB)` and states no use condition. The instrument under which HHS releases it is `HIPAA Administrative Simplification: National Plan and Provider Enumeration System Data Dissemination`, `https://www.federalregister.gov/documents/full_text/html/2007/05/30/07-2651.html`, 34,894 bytes, sha256 `68f8af35106b73088e799fe00fa66cad0f502bdaf9d1e8c37807c9e0886ca0d4`, which states that HHS reviewed the data elements under FOIA and the Privacy Act, withholds SSNs, IRS ITINs and dates of birth as `not disclosable under FOIA`, and `will make the FOIA-disclosable NPPES health care provider data available in downloadable files`. The notice imposes no use restriction on the released elements. The ZIP's own `Data Dissemination File - Readme` was not opened because it sits inside the 1,106 MB archive. Type 1 records name individual providers with practice and mailing addresses; HHS's FOIA determination makes them public, and whether the corpus takes them is a matter for this source's personal-data review, which `source-resolutions.json` does not yet hold. The basis below is the statute rather than a grant.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Section 105 of title 17 denies copyright to a work of the United States Government, so copying the file CMS publishes is unrestricted by copyright."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Reading columns out of a work no copyright protects is unrestricted by copyright."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Adaptation is an exclusive right only where copyright subsists, and section 105 denies it here."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Fitting a model on the rows reproduces and adapts a work that no copyright protects."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Distribution of a United States Government work needs no grant. Crediting the agency is courtesy rather than obligation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "The question whether trained weights are a derivative of the rows does not arise where the rows carry no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "No right subsists to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-access-free-us-us-health-1"
 		},
 		{
-			"licenseID": "unchecked-access-free-us-us-health-2",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to us-health-2 alone."
+			"state": "elected",
+			"electedTerms": "HRSA Data Usage Terms & Conditions for Health Center Service Delivery Sites (HCSD) Data: Usage limitations: None; a work of the United States Government under 17 U.S.C. § 105",
+			"termsVersion": "unstated; as displayed on 2026-10-17",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "HRSA states the terms on the dataset itself. `https://data.hrsa.gov/data/download`, 471,324 bytes, sha256 `9e647feabe206956d44024db1af8f42cea6e41f09b45ce749d9e242e0b087d07`, lists `Health Center Program Service Delivery and Look–Alike Sites`, updated 10/16/2026, whose `Data Usage Terms & Conditions` read `Health Center Service Delivery Sites (HCSD) Data Published by: HRSA, Bureau of Primary Health Care (BPHC) Usage limitations: None`. That is the file the `usgov-hrsa-fqhc` fetcher reads, `https://data.hrsa.gov/DataDownload/DD_Files/Health_Center_Service_Delivery_and_LookAlike_Sites.csv`. The same page attaches `Usage limitations: Any alteration of the original data, including conversion to other medi…` to three other datasets, so the `None` on this one is a decision HRSA made per dataset rather than a page-wide default. HRSA is an agency of HHS, so the data is also a work of the United States Government under 17 U.S.C. § 105. The page's own note is a fact about the rows rather than a term: `The city and state are the only address components for domestic violence shelters (the building number, street name, and ZIP Code are suppressed and will be empty)`. No `spdx` is recorded because no license instrument is named.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Usage limitations: None` places no condition on retrieving the published CSV."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`Usage limitations: None`, and section 105 leaves no copyright in reading columns out of a federal work."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "HRSA states no limitation on this dataset where it states an alteration limitation on others, and section 105 leaves no adaptation right to reserve."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No limitation attaches to any use, so fitting a model on the rows is unrestricted."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No limitation and no attribution condition is stated. Crediting HRSA's Bureau of Primary Health Care is courtesy rather than obligation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question whether trained weights are a derivative of the rows does not arise where the publisher states no limitation and the rows carry no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No right subsists to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-access-free-us-us-health-2"
 		},
 		{
 			"licenseID": "unchecked-access-free-us-us-health-3",
@@ -2839,40 +2999,275 @@
 			"note": "An access label: varying by dataset. It states no grant. The research pass recorded no publisher, so this decision is scoped to cn-health-1 alone."
 		},
 		{
-			"licenseID": "unchecked-corpus-input-au-geoscape-australia",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Geoscape Australia in AU, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Open Geo-coded National Address File (G-NAF) End User Licence Agreement (26 February 2016)",
+			"termsVersion": "26 February 2016",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The open G-NAF is licensed under its own End User Licence Agreement, which is CC BY 4.0's text with one added use restriction. No SPDX identifier exists for it, so none is written. The data.gov.au entry `geocoded-national-address-file-g-naf`, organisation `Department of Industry, Science and Resources (DISR)`, 14,325 bytes, sha256 `5ca0881b1fa1bb8d78d6a315a79b4f6e5b3db5267ee385dddac2e5cea2d01c4c`, carries `license_id` `cc-by-4.0`. That label is not the instrument: the entry's own notes state `Use of the G-NAF downloaded from data.gov.au is subject to the End User Licence Agreement (EULA)` and `The EULA terms are based on the Creative Commons Attribution 4.0 International license (CC BY 4.0). However, an important restriction relating to the use of the open G-NAF for the sending of mail has been added.` The EULA resource, `20160226-eula-open-g-naf.pdf`, 235,236 bytes, sha256 `25d83084297928d5e1187e2aa8a31d6292db668405752208b0dc8bb275d3a95c`, grants in §2(a)(1) `a worldwide, royalty-free, non-sublicensable, non-exclusive, irrevocable licence` to `reproduce and Share the Licenced Material, in whole or in part` and to `produce, reproduce, and Share Adapted Material`. §2(a)(2) adds: `Use restriction. You must not use the Licensed Material for the generation of an address or a compilation of addresses for the sending of mail unless You have verified that each address to be used for the sending of mail is capable of receiving mail by reference to a secondary source of information other than the Licensed Material.` §3(a) carries CC BY 4.0's attribution conditions. The fact sheet, `fact-sheet-open-g-naf-use-restriction.pdf`, 85,389 bytes, sha256 `c80654fe35bb5b2a1ed95612fbbbf673918df199cfc20eedb24e2f29d7995174`, explains that the restriction `prohibits inappropriate use of the open G-NAF while permitting suitable use`. Parsing addresses and training a parser on G-NAF's address, street-locality and locality files does not generate an address or a list for sending mail, so the restriction does not bar this repository's use. It binds anyone who uses the Licensed Material itself for mailing, and it travels with any redistributed rows under §2(a)(6)(A). The current release on the entry is August 2026 (`g-naf_aug26_allstates_gda2020_psv_110.zip`). The EULA dated 26 February 2016 is the one the entry links, and it names no edition.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproducing and Sharing the Licenced Material, which is what downloading the PSV release performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, and §4(a) grants extracting all or a substantial portion of the database, which covers reading `ADDRESS_DETAIL`, `STREET_LOCALITY` and `LOCALITY`."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation, and §3(a)(1)(B) requires modifications to be indicated when shared."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1) grants reproduction and adaptation with no commercial limit. The §2(a)(2) use restriction covers generating addresses for sending mail, which training a parser does not do."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) and §4(c) permit Sharing, conditioned by §3(a) on the creator identification, notices, licence link and change note. The rows carry the EULA, and the §2(a)(2) mail restriction with it, to every recipient under §2(a)(6)(A)."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the credit. If they are not, the EULA does not reach them. Both readings permit publishing the weights, and the credit and a note of the §2(a)(2) restriction go in their rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense G-NAF. §2(a)(6)(A) offers every recipient the EULA from the Licensor directly, so a commercial recipient takes the data on the same attribution and mail-restriction terms."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-au-geoscape-australia"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-ch-geonames",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to GeoNames in CH, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International, crediting GeoNames (a link to www.geonames.org); the GB postal export also carries `Contains Royal Mail data Royal Mail copyright and database right 2022.`",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "GeoNames states CC BY 4.0 in each export it publishes. The gazetteer readme, `https://download.geonames.org/export/dump/readme.txt`, 8,843 bytes, sha256 `b1957379b6c1242c700c98ac9a8aa0a09f56c3c0a50ee72175527005f48ef2c5`: `This work is licensed under a Creative Commons Attribution 4.0 License, see https://creativecommons.org/licenses/by/4.0/`. The postal readme, `https://download.geonames.org/export/zip/readme.txt`, 2,893 bytes, sha256 `4e149bfffa351fe3d99690aa48bb05e35035df187ea4933a01b85e983817ffdc`: `This work is licensed under a Creative Commons Attribution 4.0 License. This means you can use the dump as long as you give credit to geonames (a link on your website to www.geonames.org is ok)`, followed by a link to the 3.0 deed and `UK (GB_full.csv.zip): Contains Royal Mail data Royal Mail copyright and database right 2022.` It also states `New countries area added when the national postal service starts publishing data under a compatible license.` The about page, `https://www.geonames.org/about.html`, 44,117 bytes, sha256 `81832a057e688095291f522eddd1e2061582efdef3914fd4dea655526471fd76`, states `This work is licensed under a Creative Commons Attribution 4.0 License` and names Unxos GmbH, St. Gallen, as the publisher. The text says 4.0 in all three places; the 3.0 link in the postal readme is a stale link, and this election takes the stated 4.0. CC BY 4.0, `https://creativecommons.org/licenses/by/4.0/legalcode.en`, 48,742 bytes, sha256 `58230517b7895aa219ff46a6ed63e67057a1582fb9ea054b16728a8c13525650`, grants in §2(a)(1) the right to `reproduce and Share the Licensed Material, in whole or in part; and produce, reproduce, and Share Adapted Material`, conditioned on §3(a) attribution. What this repository reads: country dumps, `admin1CodesASCII.txt` and `countryInfo.txt` (`geonames`), the postal code export (`geonames-postal`), the US postal export's place column (`spliced-trailing-region-us`), the CA gazetteer dump and AU and NZ postal exports (`invented-po-box-cedex`), IN, PT and MX tuples of `invented-house-venue`, and populated places inferred for the coarse-placer sample.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproduction of the Licensed Material, and GeoNames publishes the exports for download."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction `in whole or in part`, which covers reading columns out of the dumps."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers joining postal codes to places and rendering rows."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 places no field-of-use or commercial restriction; the condition is attribution under §3(a)."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1) grants Sharing the Licensed Material and Adapted Material, on §3(a): credit GeoNames, link the licence, and indicate modification. Rows from `GB_full.csv.zip` also carry `Contains Royal Mail data Royal Mail copyright and database right 2022.`"
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Sharing Adapted Material is granted on attribution, which the model's rights files carry (`GeoNames, geonames.org, CC BY 4.0`)."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "CC BY 4.0 §2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the material. §2(a)(5)(A) gives every recipient `an offer from the Licensor to exercise the Licensed Rights`, so a commercial recipient takes the data from GeoNames directly on the attribution condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-ch-geonames"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-ch-universal-postal-union",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Universal Postal Union in CH, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Universal Postal Union website Disclaimer: use or reproduction with acknowledgement of the UPU as source",
+			"termsVersion": "upu.int Disclaimer and Copyright pages as served 2026-10-17 (Copyright page marked ©2020); Venezuela addressing guide dated 05/2019",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The UPU's Copyright page, `https://www.upu.int/en/copyright` (93,479 bytes, sha256 `c93aa2c439cd313bfebfef37c9dd23509d6477abcce4febb3aabfd8c30c30864`), reads `©2020 Universal Postal Union - All rights reserved. None of the materials provided on this website may be used, reproduced or transmitted, in whole or in part, in any form or by any means ... except as provided for in this website (see the \"Disclaimer\" section), without permission in writing from the UPU or the publisher concerned.` The Disclaimer, `https://www.upu.int/en/disclaimer` (94,137 bytes, sha256 `8834b976595528736b63117343d8e5a2338ce83f91fd66d521d4355085198473`), provides the exception: `Anyone may use or reproduce any information presented on this website, subject to any specific terms of use that might appear with such information, provided that the use of such information is accompanied by an acknowledgement that the UPU is the source.` The guide, `https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/venEn.pdf` (339,119 bytes, sha256 `84313bdd9cd517bbabb79eac782817f61994a7c4cc383b44c2ce20ced108de2d`), carries only `05/2019 © www.upu.int` and IPOSTEL's contact details, so no specific terms displace the Disclaimer. The grant names use and reproduction and does not name adaptation, modification or derivative works. Under this register's rule that an enumerated grant grants only what it names, fetch, extract and redistribution of the information with acknowledgement are elected, and the operations that adapt the material are not.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Disclaimer states `Anyone may use or reproduce any information presented on this website`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Reading the postcode format and example address lines out of the guide is use of the information the Disclaimer permits, with acknowledgement of the UPU."
+				},
+				"transform": {
+					"permission": "unreviewed",
+					"because": "The Disclaimer grants `use or reproduce` and names no adaptation, modification or derivative work, and the Copyright page otherwise reserves all rights. The omission is recorded as an omission rather than read as permission."
+				},
+				"train": {
+					"permission": "unreviewed",
+					"because": "Training adapts the examples into a model, and the grant names no adaptation. The Disclaimer's `use` is unqualified and could carry it, but this register does not elect an operation the grant does not name."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Disclaimer permits reproduction `provided that the use of such information is accompanied by an acknowledgement that the UPU is the source`."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "A model is an adaptation, and the grant names none."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The Disclaimer grants `Anyone` the use directly and states nothing on sublicensing or on adapted results."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-ch-universal-postal-union"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Hangzhou DeepSeek Artificial Intelligence in CN, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "DeepSeek Open Platform Terms of Service",
+			"termsVersion": "Release date April 22, 2026; effective date April 29, 2026",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "Hangzhou DeepSeek Artificial Intelligence Co., Ltd. governs API use through its Open Platform Terms of Service, retrieved from `https://cdn.deepseek.com/policies/en-US/deepseek-open-platform-terms-of-service.html` (33,904 bytes, sha256 `2b433c53cbac75491959025eba5a27908f9f1886352dce0a05f3d5a936d87790`). Section 4.2 reads `Subject to your compliance to applicable law and our Terms, you have the following rights regarding the Inputs and Outputs of the Services: (1) You retain any rights, title, and interests—if any—in the Inputs you submit; (2) We assign any rights, title, and interests—if any—in the Outputs of the Services to you; (3) You may apply the Inputs and Outputs of the Services to a wide range of use cases, including personal use, academic research, derivative product development, training other models (such as model distillation), etc.` The Chinese text, which is the original, retrieved from `https://cdn.deepseek.com/policies/zh-CN/deepseek-open-platform-terms-of-service.html` (34,273 bytes, sha256 `2e4a09165b2d7b0994043e3caa5ecf4075eb67dc3a57c37d16c4d984f06c1cc1`), reads `（2）我们将本服务输出的内容的任何权利、所有权和利益（如有）归属于您。（3）您可将本服务的输入与输出应用于广泛的使用场景中，包括个人使用、学术研究、衍生产品开发、训练其他模型（如模型蒸馏）等。` (\"(2) We vest any rights, title and interest, if any, in the content output by the Service in you. (3) You may apply the Service's inputs and outputs to a wide range of use cases, including personal use, academic research, derivative product development, and training other models (such as model distillation).\") The Open Platform terms are a Specific Terms document under the general DeepSeek Terms of Use, retrieved from `https://cdn.deepseek.com/policies/en-US/deepseek-terms-of-use.html` (39,095 bytes, sha256 `e5c52c238ff59a6d274cd66c449f939ba6bd3183fe7927397b595df02887a76d`, `Last Update: March 27, 2026`) and in Chinese (35,277 bytes, sha256 `ab1fc6fe60602b6139e8d8c9672c66ff7093698204e78c4b0d434f5a8c3182e5`), which state `In the event of any conflict between these Terms and the Specific Terms, the provisions of the Specific Terms shall prevail` and repeat the training clause with the rider `as long as such usage is legal and adhere to these Terms`. Two conditions carry into use. Section 8.1 of the platform terms reads `You shall clearly disclose to your end users that the Output content is generated by AI`, which binds any redistribution of the generated text. The assignment is of rights `if any`, and section 7 disclaims that Output is `NON-INFRINGING`, so the grant settles DeepSeek's claim and no third party's; an address string in an Output that reproduces a third party's record is that third party's to license. The general terms' prohibition on `capturing, copying any content of the Services, including but not limited to using any robots, spiders, or other automatic setups` addresses scraping the consumer service and does not reach calls made under an API key, which the platform terms exist to govern.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Open Platform Terms govern calling the API with a developer key, which is how the completions are obtained."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 4.2(2) assigns `any rights, title, and interests—if any—in the Outputs` to the caller, so reading address strings out of the completions is use of the caller's own material."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 4.2(3) names `derivative product development` among the permitted uses of Outputs."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 4.2(3) names `training other models (such as model distillation)`; the Chinese original reads `训练其他模型（如模型蒸馏）`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Outputs are assigned to the caller under section 4.2(2). Section 8.1 requires that end users be told `the Output content is generated by AI`, so a redistributed corpus labels these rows as model-generated."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Training other models is a named permitted use and the trained weights are the caller's own work product. The terms attach no attribution or notice condition to a model trained on Outputs."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 4.2(2) assigns the Output rights rather than licensing them, so the caller holds what DeepSeek held and may license it onward. The assignment covers DeepSeek's rights only, `if any`, and no third party's."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Czech Office for Surveying, Mapping and Cadastre (ČÚZK) in CZ, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Uveďte původ 4.0 Mezinárodní (CC BY 4.0), per ČÚZK's Podmínky poskytování prostorových dat",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "This is a different product from the INSPIRE Addresses Atom feed elected for `unchecked-access-free-cz-czech-office-for-surveying-mapping-and-cadast`, whose rights elements read `žádné podmínky neplatí`. This product is the RÚIAN exchange-format CSV of address places, and ČÚZK licenses it by name. OpenAddresses' source record `sources/cz/countrywide.json`, 9,207 bytes, sha256 `9702523c30e309502728b4dd542f95fb12382d1d2c9e69a5e5ff7f81468a8f44`, names `CC-BY 4.0` with attribution `ČÚZK`. It points its `website` at `https://vdp.cuzk.cz/vymenny_format/csv/20240831_OB_ADR_csv.zip`, the RÚIAN address-place CSV from ČÚZK's public remote access (VDP), and serves it from an OpenAddresses upload. ČÚZK's conditions page, `https://cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-prostorovych-dat-CUZK.aspx`, 115,728 bytes, sha256 `d85c9aecf0a30e639adde67e4c5329e1d7f18c086a4ee62b695415482d8d1a9d`, states that ČÚZK `poskytuje prostorová data spadající do kategorie otevřený dat (včetně metadat) bezúplatně na základě licence Creative Commons CC-BY 4.0`. The first category it lists is `data vedená v Registru územní identifikace, adres a nemovitostí (RÚIAN) formou výměnného formátu RÚIAN v souladu s § 62 zákona č. 111/2009 Sb.`. The page summarises the right to `užívat komerčně i nekomerčně`, `kombinovat s dalšími údaji nebo vytvářet vlastní produkty` and `transformovat a upravovat`. It sets four duties: `Povinnost uvést původ`; `šířit údaje lze pouze společně s příslušnými metadaty`; outputs must credit `ČÚZK, [rok]`; and `v případě šíření upraveného díla, uvést popis úpravy`. It then reproduces the Czech legal code of CC BY 4.0, whose Article 2 grants a licence `bez možnosti udělení podlicence`. ČÚZK's open-data overview, `Otevrena-data-zakladni-informace.aspx`, 65,162 bytes, sha256 `54aa7d1a15a7ff3aca9f92959cdee780672c3db0c0d3f6cf9de592161e7a1d27`, states that ČÚZK has provided RÚIAN data as open data since 2012, under `jednotné licence Creative Commons CC BY 4.0`. Overture's attribution page credits Czechia to ČÚZK under CC BY 4.0 as well. The election covers the CSV, which this repository reads for postcodes and rendered tuples.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 Článek 2(a)(1)(A) grants reproducing and Sharing the licensed content, which is what downloading the CSV performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, and ČÚZK's summary names `transformovat a upravovat`, which covers reading the street, house number, postcode and municipality columns."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation, and ČÚZK's conditions require a description of the modification when the modified work is shared (`uvést popis úpravy`)."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ČÚZK names commercial and non-commercial use and `vytvářet vlastní produkty`, and CC BY 4.0 carries no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants Sharing, conditioned by §3(a) on the credit. ČÚZK adds that data may be shared only together with the relevant metadata, credited as `ČÚZK, [rok]`, and with a description of any modification, so a published row set carries the metadata link, the credit and the change note."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the `ČÚZK, [rok]` credit. If they are not, the licence does not reach them. Both readings permit publishing the weights, and the credit goes in their rights files under the first."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants the licence `bez možnosti udělení podlicence`, so this repository cannot sublicense the data. §2(a)(5)(A) offers every recipient a licence from ČÚZK directly, so a commercial recipient takes the Czech data from ČÚZK on the same credit condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Agence du Numérique en Santé in FR, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Code des relations entre le public et l'administration, livre III, titre II (réutilisation des informations publiques); the publisher states no licence for TRE_R35",
+			"termsVersion": "CRPA as consolidated by codes.droit.org, last modification 2026-05-28, edition 2026-09-24; TRE_R35_TypeVoie dateMaj 20231215120000",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "No document the Agence du Numérique en Santé publishes states a licence for TRE_R35_TypeVoie, and the election rests on the statute instead. The terminology file `https://mos.esante.gouv.fr/NOS/TRE_R35-TypeVoie/TRE_R35-TypeVoie.xml` (71,392 bytes, sha256 `93274972e89c62fdc625c42dc05f853e3ff096f989c3c287add1a0ad3c7c86fa`) carries no rights attribute; it is value set `1.2.250.1.213.2.44`, `dateMaj=\"20231215120000\"`, `dateFin=\"20171013120000\"`, so the code system is retired. Its FHIR CodeSystem in ANS's terminology guide, `https://ansforge.github.io/IG-terminologie-de-sante/ig/main/CodeSystem-TRE-R35-TypeVoie.json` (162,766 bytes, sha256 `bed6e0bc07c4313649325777d0d77e9296563ac6692e42e8fd405b28e364456b`), names `publisher` `Agence du Numérique en Santé (ANS)`, `status` `retired`, and has no `copyright` element; the guide's IP Statements section (`index.html`, 254,245 bytes, sha256 `79414e427e1216ee411fb68e22c220edfa503c950c4647756c6d2fdb4e3134f0`) lists rights for third-party terminologies (CIM-10 under CC BY-NC-ND 3.0 IGO, EDQM under LOv2, ISO 3166, HL7 under CC0) and lists no statement for TRE_R35. The NOS convention `https://interop.esante.gouv.fr/ig/nos/attach/NOS_ConventionNOS_V2.0.pdf` (1,168,464 bytes, sha256 `f6260123b6867264b763bfaaa7a180cab7d3db489af9a559e8fe6b32d73c253e`) reserves rights over itself, `Ce document est la propriété de l'ANS - Son utilisation, sa reproduction ou sa diffusion sans l'autorisation préalable et écrite de l'ANS sont interdites` (\"This document is the property of the ANS; its use, reproduction or distribution without the ANS's prior written authorisation is prohibited\"), a footer on the convention document rather than a term over the nomenclatures, and says of the NOS only `Les NOS sont disponibles sur le site de l'ANS ... visualisables sur le serveur https://mos.esante.gouv.fr/NOS/` (\"The NOS are available on the ANS site ... viewable on the server\"). The SMT conditions, `https://smt.esante.gouv.fr/cgu/` (95,036 bytes, sha256 `dbcb5c85c4e95b697e90721a09bc2d3cdd8c152c30e64af034b3e67bbd26ed2f`), govern the terminology server rather than the mos.esante.gouv.fr files, grant at §10 a `droit d'utilisation du SMT ... pour usage propre` (\"right to use the SMT ... for one's own use\"), defer to each terminology's own licence, and list `Les dispositions du code des relations entre le public et l'administration (CRPA)` in their applicable legal frame; the SMT catalogue renders its per-terminology licences in script and the retained copy shows none for TRE_R35. The only data.gouv.fr dataset matching the NOS is published by InterHop under `odc-odbl` (`datagouv-search-nos.json`, 5,386 bytes, sha256 `b37beab92add842df94ad1b5e86327c2200975822c4207201df0b7486a244d46`), a third party's licence on its own compilation and not the publisher's. ANS is a groupement d'intérêt public, a legal person of public law, so it is an administration under CRPA L. 300-2. The CRPA text retrieved from codes.droit.org (2,931,595 bytes, sha256 `88bd56805aff26399099f6acce38b055d2e2c63242c6bdfbbc85f115145159bb`) reads at L. 321-1 `Les informations publiques figurant dans des documents communiqués ou publiés par les administrations mentionnées au premier alinéa de l'article L. 300-2 peuvent être utilisées par toute personne qui le souhaite à d'autres fins que celles de la mission de service public pour les besoins de laquelle les documents ont été produits ou reçus` (\"Public information in documents communicated or published by the administrations named in L. 300-2 may be used by any person who wishes, for purposes other than the public-service mission for which the documents were produced or received\"), and at L. 322-1 `Sauf accord de l'administration, la réutilisation des informations publiques est soumise à la condition que ces dernières ne soient pas altérées, que leur sens ne soit pas dénaturé et que leurs sources et la date de leur dernière mise à jour soient mentionnées` (\"Unless the administration agrees, reuse is subject to the information not being altered, its meaning not being distorted, and its source and the date of its last update being stated\"). L. 321-2 c) excludes information on which third parties hold intellectual property rights; a list of French street-type words authored by ANS carries none that the retrieved documents name. Legifrance answered HTTP 403 to every article URL, so the consolidated text is the codes.droit.org copy.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "CRPA L. 321-1 permits any person to use public information that an administration publishes, and ANS publishes the file at mos.esante.gouv.fr."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Reading the street-type labels out of the value set is use of the public information under L. 321-1."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "L. 321-1 permits use for any purpose other than the original mission. L. 322-1 forbids altering the information or distorting its meaning, which tagging an unmodified label such as `Ancien chemin` as a street type does not do."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Training is use `à d'autres fins que celles de la mission de service public` under L. 321-1, subject to stating the source and the date of last update under L. 322-1."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "L. 321-1 sets no limit on publication, and L. 322-1 requires the redistributed rows to state `Agence du Numérique en Santé, TRE_R35_TypeVoie` and its last update, 2023-12-15."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "The statutory right covers any reuse, commercial or not, and L. 326-1 names commercial reuse as lawful when L. 322-1's conditions are met. The model card states the source and date."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "The reuse right runs from the statute to `toute personne`, so a commercial licensee of the result holds it directly. L. 323-2 allows restrictions only through a licence, and ANS has established none for TRE_R35."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant"
 		},
 		{
 			"state": "elected",
@@ -2922,52 +3317,373 @@
 			"licenseID": "unchecked-corpus-input-gb-office-for-national-statistics"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-gb-openstreetmap-foundation",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to OpenStreetMap Foundation in GB, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Open Data Commons Open Database License 1.0, with the OpenStreetMap attribution notice; the derivative training extract is published under ODbL 1.0 as the Hugging Face dataset sister-software/mailwoman-osm-training-extract",
+			"spdx": "ODbL-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The operator decided on 2026-10-17 to use OpenStreetMap data under ODbL 1.0 with attribution and to publish the derivative training extract; this decision records the terms that decision rests on. The OpenStreetMap copyright page, `https://www.openstreetmap.org/copyright`, 21,314 bytes, sha256 `8dc3059cb0774e9ca932533e87599d1c6a8500ceb5bc55ad44a1bf47c00e69fe`, states: `OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF). In summary: You are free to copy, distribute, transmit and adapt our data, as long as you credit OpenStreetMap and its contributors. If you alter or build upon our data, you may distribute the result only under the same license.` and `Where you use OpenStreetMap data, you are required to do the following two things: Provide credit to OpenStreetMap by displaying our attribution notice. Make clear that the data is available under the Open Database License.` The licence, `https://opendatacommons.org/licenses/odbl/1-0/`, 51,176 bytes, sha256 `b8d8aebb21bf405f93f6e21bbf0d8f0a749844f9812ec58692f189add6402b47`, grants in 3.1 `a worldwide, royalty-free, non-exclusive, terminable (but only under Section 9) license to Use the Database` and states `These rights explicitly include commercial use, and do not exclude any field of endeavour.` Its conditions are 4.2 (notices when a Derivative Database is Publicly Conveyed), 4.3 (a notice when a Produced Work is Publicly Used), 4.4 share-alike for a Derivative Database that is Publicly Used, 4.6 (`If You Publicly Use a Derivative Database or a Produced Work from a Derivative Database, You must also offer to recipients of the Derivative Database or Produced Work a copy in a machine readable form of: a. The entire Derivative Database; or b. A file containing all of the alterations made to the Database or the method of making the alterations`), and 4.8 (`You may not sublicense the Database.`). 4.4(b) makes the extracted address rows a Derivative Database, which the published training extract satisfies under ODbL 1.0. 4.5(b) states that `Using this Database, a Derivative Database, or this Database as part of a Collective Database to create a Produced Work does not create a Derivative Database for purposes of Section 4.4`. The OSMF board-endorsed Produced Work guideline, `https://osmfoundation.org/wiki/Licence/Community_Guidelines/Produced_Work_-_Guideline`, 42,647 bytes, sha256 `99b7c6cd7d8b2e23df72a60de68c941853d27980af6e9ae41be885af1242a895`, reads: `If the published result of your project is intended for the extraction of the original data, then it is a database and not a Produced Work. Otherwise it is a Produced Work. However, if you publish a produced work, the underlying database has to be published as well (or alternations to the original database as is the case of derived databases), according to section 4.6 of ODbL.` A parser's weights are not intended for extracting the original data, so they are a Produced Work, and the published extract meets 4.6. The extracts are read through Geofabrik, whose download page, `https://download.geofabrik.de/`, 9,609 bytes, sha256 `4b017225876c1edf6954a66da43dfb8104a7e7ecc93ca83f3d22c69eef59b570`, states `Data processed by Geofabrik GmbH and created by OpenStreetMap Contributors | License: ODbL 1.0`. The Substantial guideline, 44,919 bytes, sha256 `9a70503b9b062628cc63ddea60389dea9df9e51b0498551bf3d2b00289cf593f`, is retained. What this repository reads: address and name tags from Geofabrik extracts (`osm`, and the 2026-10-02 extracts for BD, CN, ID, IN, NG, PK, RU and VN), CN rows of the coarse-placer sample, the rendered BD and PK registers, and venue and sub-venue names from the Geofabrik GB, FR, DE and ES extracts plus OSM lexicon entries in `spliced-sub-venue`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 3.1 grants a licence to `Use the Database`, and the copyright page states `You are free to copy`. Geofabrik republishes the extracts under ODbL 1.0."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "ODbL 3.1 grants Use of the Database, which includes Extraction; 4.4(b) states that Extraction of a Substantial part into a new database makes a Derivative Database, which the licence permits on the share-alike condition."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The copyright page states `You are free to ... adapt our data`, and ODbL governs the adapted rows as a Derivative Database under 4.4."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "3.1 grants Use, `explicitly include[s] commercial use, and do[es] not exclude any field of endeavour`. Training on a Derivative Database creates a Produced Work, which 4.5(b) takes outside share-alike, on the 4.3 notice and the 4.6 offer of the Derivative Database."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "4.2 and 4.4 permit Publicly Conveying a Derivative Database only under ODbL 1.0 (or a 4.4(a) compatible licence), with a copy or URI of the licence and the notices kept intact. The training extract is published as `sister-software/mailwoman-osm-training-extract` under ODbL 1.0 with `© OpenStreetMap contributors`. Any other published split or index that contains OSM-derived rows must carry the same terms; it cannot be published under the repository's own licence."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Weights are a Produced Work under the OSMF guideline, so 4.5(b) leaves them outside share-alike. Publicly Using them needs the 4.3 notice that Contents came from OpenStreetMap under ODbL, carried in the model card and rights files, and 4.6 needs the offer of the Derivative Database, met by the published training extract."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "ODbL 4.8 states `You may not sublicense the Database. Each time You communicate the Database, the whole or Substantial part of the Contents, or any Derivative Database to anyone else in any way, the Licensor offers to the recipient a license to the Database on the same terms and conditions as this License.` A commercial agreement over the weights covers the Produced Work; it cannot grant rights in the OSM data or the extract, which a recipient takes from the OpenStreetMap Foundation under ODbL."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-gb-openstreetmap-foundation"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Državna geodetska uprava in HR, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Otvorena dozvola (Open Licence of the Republic of Croatia)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "DGU's dataset record names the Croatian Open Licence, and the licence names adaptation and commercial use. OpenAddresses' source record `sources/hr/countrywide.json`, 2,078 bytes, sha256 `463fd90929fe97d37506f7c98b703998ed01fb2d85d3c145d0a21d011392ca23`, gives only `no limitations to public access`, which is the INSPIRE access value and not a grant. Its data is `https://geoportal.dgu.hr/services/atom/INSPIRE_Addresses_(AD).zip`, and its `website` names INSPIRE dataset `d3104048-688a-4305-9471-77288cc6e350`. DGU's ISO 19139 record for that identifier in the national catalogue, `https://geoportal.nipp.hr/geonetwork/srv/api/records/d3104048-688a-4305-9471-77288cc6e350/formatters/xml`, resource title `Adrese INSPIRE`, organisation `Državna geodetska uprava`, 23,182 bytes, sha256 `2f2a93d7bc97dd639b0f79d70824245b06ef5331c0758707e0c86963d6cee736`, reads in `otherConstraints`: `Uvjeti korištenja podataka za ponovnu uporabu u skladu su s otvorenom dozvolom dostupnom na poveznici: https://data.gov.hr/otvorena-dozvola.`. data.gov.hr's entry `adrese-inspire`, organisation `Državna geodetska uprava`, 9,572 bytes, sha256 `6723eb58b7c5f6ce92304d30e7b1bcb2f5d0601e6c42ce1776ef55603a11873e`, gives `license_id` `open-license`, `Otvorena dozvola (OD)`, and describes the ATOM download of the ZIP of GML. **The licence text was read from an archived copy.** `https://data.gov.hr/otvorena-dozvola` now serves a 1,291-byte JavaScript application shell (sha256 `aeb93e5294c4dd54d730209091f9d8057c70f58cc6a7f5bd7f69d14ecad1335b`), so it has no server-rendered text. The Internet Archive's CDX index (`hr-otvorena-dozvola-wayback-cdx-2022-2026.json`) shows that the last full-HTML capture is 2023-10-03. That capture, `https://web.archive.org/web/20231003205748id_/https://data.gov.hr/otvorena-dozvola`, 53,084 bytes, sha256 `812ce9ad32f5422bfa5ad48354e5d181edd77e6c9f5399f62a05073d0686d025`, reads: `Otvorena dozvola omogućava korisniku svaku uporabu informacija na koje se odnosi, uključujući prostorno i vremenski neograničeno, besplatno, neisključivo i osobno pravo uporabe informacija koje su predmet dozvole.` Section I: `Informacije i metapodaci mogu se koristiti u komercijalnu i nekomercijalnu svrhu, a osobito: – reproducirati, distribuirati i stavljati na raspolaganje trećim osobama – prilagođavati i povezivati s vlastitim podacima i podacima trećih osoba u svrhu stvaranja novih skupova podataka – iskorištavati integriranjem u unutarnje i vanjske poslovne procese, proizvode i aplikacije u javnim i nejavnim elektroničkim mrežama`. Section II requires the source statement the body gives, with the date of last change, or `Sadrži informacije tijela javne vlasti u skladu s Otvorenom dozvolom` with a link, and the dataset URI. Section III requires changes to be marked in the source statement. No version is stated, so no `spdx` is written. A caution is recorded rather than resolved. DGU's record and its WMS capabilities also carry the public-access value `INSPIRE_Directive_Article13_1e`, which is the intellectual-property ground for limiting public access. That value describes access to the service and does not withdraw the reuse grant the same record names. The ATOM ZIP that OpenAddresses fetched is anonymous.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section I permits the information to be `reproducirati, distribuirati`, reproduced and distributed, which covers downloading the ATOM ZIP."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section I permits the information to be `prilagođavati`, adapted, which covers reading thoroughfare names, locators, postcodes and settlement names out of the GML."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section I permits linking the data with one's own and third parties' data `u svrhu stvaranja novih skupova podataka`, to create new datasets, and Section III requires the changes to be marked in the source statement."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence allows `svaku uporabu`, every use, commercial and non-commercial, and names integration into products and applications."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section I permits making the information available to third parties. Section II requires the source statement with the date of last change and the dataset URI, and Section III requires the change mark."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section I names exploiting the information `integriranjem u … proizvode i aplikacije u javnim i nejavnim elektroničkim mrežama`, so publishing weights is permitted with the Section II source statement in their rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The licence grants an `osobno pravo`, a personal right, to each user, and it states no right to sublicense. A commercial recipient holds the same Open Licence from the publisher directly, on the Section II condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Istat and Agenzia delle Entrate in IT, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)",
+			"spdx": "CC-BY-4.0",
+			"candidateGrants": ["CC-BY-4.0", "INSPIRE noConditionsApply"],
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher's own site states no licence. The national catalogue entry Agenzia delle Entrate publishes for the same file states CC BY 4.0. OpenAddresses' source record `sources/it/countrywide.json`, 1,354 bytes, sha256 `6404d81890d1f435e3c10893d18035b0f8e3f789148cc758f81b8173db5eb866`, names `CC-BY 4.0` with the attribution `Istat e dall'Agenzia delle Entrate`. Its data is `INDIR_ITA_20260703_GEO.csv.zip`, uploaded 2026-07-30. The ANNCSU open-data page, `https://www.anncsu.gov.it/it/consultazione-dellarchivio/open-data/`, 22,773 bytes, sha256 `4035660c9d0148d53cca83ec78710cf1e81586661f07a1cc185db5cdd4fff7b7`, describes the national and regional street lists and address lists as open data under the EU high-value-datasets regulation and states no licence. Its bulk-download page, 25,710 bytes, sha256 `e91cf2c394c49200e6e7f0bd9a0012c1d5a41111c2e097413e0e749036e02aa4`, links `https://anncsu.open.agenziaentrate.gov.it/age-inspire/opendata/anncsu/getds.php?INDIR_ITA` and also states no licence. The linked `metadata_indirizzario.json`, 5,636 bytes, sha256 `045de7385ee0d9f2a101b14d687353441d75699ae1da9e6ebd410a2787c6dcfa`, describes columns only. The national catalogue was queried by publisher. dati.gov.it's entry `stradari-ed-indirizzari-regionali-e-nazionali-da-anncsu`, 90,002 bytes, sha256 `1182b6a9b330ebac15935abbdb3f4670748a7f30aa07217f97fceb25bc62b1c2`, was harvested from RNDT, names the contact as `Agenzia delle Entrate` and gives the identifier `age:STRAD_IND_ITALIA`. Its distribution `Distribuzione - Formato CSV - Indirizzi Italia` has the same `getds.php?INDIR_ITA` URL that the bulk page links, which ties the two records to one artifact, and carries `license` `https://creativecommons.org/licenses/by/4.0/` with `license_type` `https://w3id.org/italia/controlled-vocabulary/licences/A21_CCBY40`. All 42 of the entry's distributions carry the same licence. Agenzia delle Entrate's ISO 19139 record in RNDT, `age:STRAD_IND_ITALIA`, 89,615 bytes, sha256 `1104a38c04747d26f2e270bfe829f85c07f2942ea66aadaf2b04d0d54d25fc91`, reads `useLimitation` `Nessuna condizione applicabile` and `otherConstraints` `Nessuna condizione per l'accesso e l'uso`, anchored to INSPIRE's `noConditionsApply`. It names no licence instrument. Both statements are recorded in `candidateGrants`. The election takes CC BY 4.0, which is the stricter of the two and the only one that names adaptation, so attribution is carried. Under the reading that no conditions apply, every operation below would be the same or less conditioned.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material, which is what downloading `INDIR_ITA` performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers reading the `ODONIMO`, `CIVICO`, `ESPONENTE` and municipality columns."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation for any purpose, and §3(a)(1)(B) requires modifications to be indicated when shared."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) and (B) grant reproduction and adaptation, commercial purposes included, and CC BY 4.0 carries no share-alike term. The record's `Nessuna condizione per l'accesso e l'uso` agrees."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing, conditioned by §3(a) on the credit. The credit is `Istat e Agenzia delle Entrate, ANNCSU` with a link to the licence and a change note."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the credit. If they are not, the licence does not reach them. Both readings permit publishing the weights, and the credit goes in their rights files under the first."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the data. §2(a)(5)(A) offers every recipient a licence from the Licensor directly, so a commercial recipient takes the Italian data from Agenzia delle Entrate on the same credit condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-jp-japan-post",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Japan Post in JP, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Japan Post's copyright non-assertion for postcode data (郵便番号データに限っては日本郵便株式会社は著作権を主張しません)",
+			"termsVersion": "readme for 郵便番号データ（ローマ字）, download page dated 2025年6月18日更新",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "Japan Post's explanation of the romanised postcode file, `郵便番号データ（ローマ字）の説明`, requested at `https://www.post.japanpost.jp/zipcode/dl/readme_ro.html` and served from `https://www.post.japanpost.jp/service/search/zipcode/download/readme_ro.html` (40,423 bytes, sha256 `d4774cbee3d9db9d24da8acae02c6e9a95ceb72de7f30018bdc2b118f5be56a7`), has a section headed `使用・再配布・移植・改良について` (\"On use, redistribution, porting and modification\") that reads in full `郵便番号データに限っては日本郵便株式会社は著作権を主張しません。自由に配布していただいて結構です。` (\"For postcode data only, Japan Post Co., Ltd. does not assert copyright. You are welcome to distribute it freely.\"). The download page that links `KEN_ALL_ROME.zip`, `https://www.post.japanpost.jp/service/search/zipcode/download/roman-zip.html` (35,489 bytes, sha256 `2e65dfd7f0fcb0d4f5669e2b81baf16c40c423c3caba5b70fecd4bafd12f6fb7`), dated `2025年6月18日更新`, directs readers to that explanation before downloading: `ダウンロードの前に必ず 郵便番号データ（ローマ字）の説明 をお読みください`. A non-assertion of copyright is not a licence and has no SPDX identifier, so `spdx` is left out; the heading names modification (`改良`) alongside use and redistribution, which settles adaptation.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Japan Post publishes the file for download and asserts no copyright in postcode data."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The section heading `使用・再配布・移植・改良について` names use, and the body asserts no copyright over it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The section covers `改良` (modification) and `移植` (porting), and Japan Post asserts no copyright that would limit either."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "With no copyright asserted over postcode data, fitting a model is use the statement leaves unconditioned."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`自由に配布していただいて結構です` (you are welcome to distribute it freely)."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Free distribution of the data itself is stated, and weights trained on it carry no condition from a holder that asserts no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "There is no asserted copyright to sublicense and no non-commercial limit in the statement."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-jp-japan-post"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-kr-ministry-of-the-interior-and-safety",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Ministry of the Interior and Safety in KR, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "이용허락범위 제한 없음 (scope of permitted use: no restriction), as stated on the Ministry of the Interior and Safety's data.go.kr entry for 도로명주소 주소DB",
+			"termsVersion": "data.go.kr file data 15050417, 수정일 2025-06-02",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The Ministry of the Interior and Safety (행정안전부) catalogues the road-name address database on the national portal at `https://www.data.go.kr/data/15050417/fileData.do` (165,854 bytes, sha256 `07c5c41411f790a08d24a95c5ce24924c007b0bec81917fbd49eba49fcd2de12`): `파일데이터명 행정안전부_도로명주소 주소DB_일간_20211220`, `제공기관 행정안전부`, `관리부서명 주소생활공간과`, `보유근거 도로명주소법 시행령`, `제공형태 기관자체에서 다운로드(제공데이터URL기재)` with `URL http://www.juso.go.kr/externalLink/goUrl.do?menuId=DT07`, and under `이용 조건 및 라이선스 정보`: `비용부과유무 무료` and `이용허락범위 제한 없음` (\"cost: free\"; \"scope of permitted use: no restriction\"). The entry is the ministry's own and points at the juso download that business.juso.go.kr serves, which ties the label to the 주소DB this register row names. The portal's policy page, `https://www.data.go.kr/ugs/selectPortalPolicyView.do` (250,441 bytes, sha256 `e04d4136a33727efa6e05cb89641001a124b8a9cb3494303e32f0c3551054d08`), states that public data containing a copyright work must carry a 공공누리 (KOGL) type, and quotes 공공데이터 관리지침 제8조 ③: `공공기관의 장은 소관 공공데이터에 포함된 저작물이 업무상 작성하여 공표된 것이거나 계약에 따라 해당 저작물의 저작재산권 전부를 보유한 경우에는 ... 이용자가 별도의 이용허락 없이 자유롭게 이용할 수 있도록 제공해야 한다` (\"where a work in the agency's public data was made and published in the course of duty, or the agency holds all economic rights under contract, the agency must provide it so that users may use it freely without separate permission\"). The 주소DB label is broader than KOGL 제0유형, which the same page describes as `상업적, 비상업적 이용가능 변형 등 2차적 저작물 작성 가능` (\"commercial and non-commercial use; modification and derivative works permitted\"). `https://business.juso.go.kr/` answered with a 1,753-byte script shell (sha256 `1ba8ad20aa994798e8e50a2a01aa4b2048d3f5ffb674f6cfe36977c4c6e7cb86`) and its download paths answered 404 or timed out, so the juso site's own download notice was not read. The scope is the text 주소DB (도로명, 건물번호, 지번, 우편번호). It does not cover the 도로명주소 위치정보요약DB or 전자지도, which the project's 2026-09-07 reading recorded as issued only after a separate application and purpose review and which were not re-read here, nor any coordinate product reached by 도로명주소법 제25조 제10항.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The ministry's entry states `이용허락범위 제한 없음` and `비용부과유무 무료`, and names a direct download without an application step."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No restriction on the scope of use leaves reading the address fields out of the file unconditioned."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`이용허락범위 제한 없음` places no limit on modification; the portal's own scale grants modification and derivative works at its least permissive open level, 제1유형, and this label is broader."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The scope of use is stated as unrestricted, and fitting a model is a use. The dataset carries no KOGL AI-type mark, so no AI-specific term applies either way."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The label states no restriction on the scope of use, which includes redistribution. Attribution to 행정안전부 is good practice and is not a stated condition."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The text product contains no coordinates, so 도로명주소법 제25조 제10항's export rule on maps with restricted spatial information does not reach weights trained on it, and the label places no other limit."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "An unrestricted scope of use leaves no condition that a commercial licensee would need passed to it; anyone may obtain the same file on the same terms."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-kr-ministry-of-the-interior-and-safety"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-nl-kadaster",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Kadaster in NL, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Public Domain Mark 1.0",
+			"spdx": "CC-PDM-1.0",
+			"candidateGrants": ["CC-PDM-1.0", "CC0-1.0"],
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "This is a different product from the INSPIRE Addresses theme elected under CC0 1.0 for `unchecked-access-free-nl-kadaster`, and Kadaster states a different instrument for it. OpenAddresses' source record `sources/nl/countrywide.json`, 1,512 bytes, sha256 `542740bd018dc6133458e5d2aa57d1d1256e55b74e9593d253e625e4255d6b81`, names `CC0 1.0` with `\"attribution\": false`. Its data is `verblijfsobject.csv.zip`, uploaded 2026-06-03, and it links Kadaster's BAG GeoPackage product page. That page, `https://www.kadaster.nl/zakelijk/producten/adressen-en-gebouwen/bag-geopackage`, 269,898 bytes, sha256 `00b061d4df8ed004a963bd5491adec335bf59fb032edb0eee8563d8f957e7d54`, states: `Voor het leveren van BAG-producten door het Kadaster gelden de algemene voorwaarden van het Kadaster. … BAG-data zijn open data. Voor het gebruik van de gegevens uit de BAG geldt de Creative Commons Public Domain Mark v1.0`. The page links `https://creativecommons.org/publicdomain/mark/1.0/deed.nl`. The general terms it names, `https://www.kadaster.nl/algemene-leveringsvoorwaarden`, 192,030 bytes, sha256 `9a688e598f63f59f8d41f1f7a751e235b2f6f3b21140ead6b94e6a72aac417ae`, apply to Kadaster's offers and agreements `met uitzondering van producten die onder het zg. ‘open data’ regime van het Kadaster vallen`, so they do not reach this download. Kadaster's ISO 19139 record for the BAG in the Nationaal Georegister, `aa3b5e6e-7baa-40c0-8972-3353e927ec2f`, resource title `Basisregistratie Adressen en gebouwen (BAG)`, organisation `Kadaster`, 50,022 bytes, sha256 `fd0aaac8b4210192dc77eb9c852bccddee967b480642799c8d65d2222b6ba5ed`, reads `useLimitation` `Geen gebruiksbeperkingen` and `otherConstraints` `Geen beperkingen`, anchored to `http://creativecommons.org/publicdomain/mark/1.0/deed.nl`, plus the INSPIRE values `noConditionsApply` and `noLimitations`. data.overheid.nl's entry `10491-bag`, harvested from that record, gives `license_id` `http://creativecommons.org/publicdomain/mark/1.0/deed.nl`. An older entry under the `DONL Dataregister` organisation, `basisregistratie-adressen-en-gebouwen--bag-`, last modified 2023-07-26, gives CC0 1.0 (portal search, 188,415 bytes, sha256 `86ef40a67500dd48f95c52e4ea3f15c699e384359d8a1a1410f920c38c1ebf05`). That is why both are recorded in `candidateGrants`. Kadaster's own page and record both state the Public Domain Mark, so the election follows them. The Public Domain Mark labels a work as free of known copyright restrictions. It is a statement rather than a licence with conditions, and Kadaster attaches it to the use of the data. `CC-PDM-1.0` is on the SPDX list (`spdx-CC-PDM-1.0.json`, 5,536 bytes, sha256 `01342e35f70b7adcbfc655d063b7cfdf737ffcaf2c4afbe806a11597692dbe14`). Neither candidate imposes a condition, so the choice between them changes no operation below.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Kadaster states that the Public Domain Mark governs the use of BAG data, and its record reads `Geen gebruiksbeperkingen`, so copying the GeoPackage-derived CSV is unrestricted."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Mark identifies the data as free of known copyright and database restrictions, which covers reading the street, house number, postcode and woonplaats columns out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Public Domain Mark deed states that the work may be copied, modified, distributed and performed, commercial purposes included, without asking permission, which covers rendering rows into components."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No right is reserved over the data, so fitting a model on the rows needs no permission. The CC0 reading in `candidateGrants` gives the same answer."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Distribution is among the acts the Mark leaves free, and no attribution condition attaches. Crediting `Kadaster, BAG` is good practice and nothing requires it."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Whether trained weights are a derivative of the rows does not matter here, because no right over the rows is asserted."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Mark leaves no right to license, so a commercial recipient needs no sublicence from this repository, and the data's status reaches the recipient directly."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-nl-kadaster"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-nz-land-information-new-zealand",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Land Information New Zealand in NZ, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "LINZ licenses the layer by name in its own data service. OpenAddresses' source record `sources/nz/countrywide.json`, 3,821 bytes, sha256 `0f862cb4444cf067b2d092cb01cf76f35900e2ea38c3776a619149e6f7f1884c`, fetches addresses from the LINZ Data Service WFS `typeNames=layer-123113`, names `CC BY 4.0` with the attribution `Land Information New Zealand`, and links `https://data.linz.govt.nz/layer/123113-nz-addresses/`. The LINZ Data Service API for that layer, `https://data.linz.govt.nz/services/api/v1.x/layers/123113/`, 9,183 bytes, sha256 `b425ee0ea0cb5a96e139be2d1780d020d609e83ac6b3cc8a71fb8032947584b8`, gives the title `NZ Addresses` and the licence `{\"id\":171,\"title\":\"Creative Commons Attribution 4.0 International\",\"type\":\"cc-by\",\"version\":\"4.0\"}`. The licence's full text from the same service, `licenses/171/fulltext/`, 18,666 bytes, sha256 `b8778b61709766c22c17ea656e98e32cb81af99c85eb6d241107ff32f3b77e99`, is the CC BY 4.0 International legal code. LINZ's attribution page, `https://www.linz.govt.nz/products-services/data/licensing-and-using-data/attributing-linz-data`, 91,094 bytes, sha256 `96b05312d78465ad18ae80e46a024b9b7d0b23dc278725c3c1423a89c1009592`, sets the credit for an adapted work as `Contains data sourced from the LINZ Data Service licensed for reuse under CC BY 4.0`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material, which is what retrieving the layer performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers reading the address number, road, suburb and town columns."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation for any purpose, and §3(a)(1)(B) requires modifications to be indicated when shared."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) and (B) grant reproduction and adaptation, commercial purposes included, and CC BY 4.0 carries no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing, conditioned by §3(a) on the credit, which LINZ words as `Contains data sourced from the LINZ Data Service licensed for reuse under CC BY 4.0` for an adapted work."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the LINZ credit. If they are not, the licence does not reach them. Both readings permit publishing the weights, and the credit goes in their rights files under the first."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the data. §2(a)(5)(A) offers every recipient a licence from LINZ directly on the same credit condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-nz-land-information-new-zealand"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-pt-instituto-nacional-de-estat-stica",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Instituto Nacional de Estatística in PT, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Licença de utilização - CC-BY-4.0",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "INE's dataset record names CC BY 4.0. OpenAddresses' source record `sources/pt/countrywide.json`, 1,511 bytes, sha256 `4a84c93d86d9b204861ff4ed9a13ba335f397676278df1191407a2bb713413e0`, names `CC BY 4.0` with the attribution `Instituto Nacional de Estatística, I.P.`. Its data is `pt_addresses.csv.zip`, uploaded 2026-02-23. Its `website` is INE's INSPIRE Addresses Atom service, and its licence URL is the INSPIRE geoportal page for dataset `1b772914-e3e9-4663-8557-a6aef5aa596a`. INE's Atom service page, `https://inspire.ine.pt/AD/atom/downloadservice.html`, 39,064 bytes, sha256 `355faa3988814c84ea1f7a372f562511db27239d0ee6dec15e994ad30e107475`, and its XML, 37,813 bytes, sha256 `0a2ab8047952e8ddeb3f0aec0c532efafd739948e1da7ece46749cde92f15fe6`, list the Base Nacional de Moradas per region (five mainland NUTS II regions, Madeira and two Azores groups) under `Sem restrições`. They tie the feeds to dataset identifiers `http://id.igeo.pt/cdg/1b772914-…`, `7ae7454a-…`, `6864cb40-…` and `dcb861e9-…`. The ISO 19139 record for `1b772914-e3e9-4663-8557-a6aef5aa596a` in SNIG, read through CSW `GetRecordById`, has resource title `Base Nacional de Moradas` and organisation `Instituto Nacional de Estatística, I.P.`, 23,621 bytes, sha256 `f497f0e440c2d47666467d7a1881861eddb242f847a8fdc957fcbbc58ee4ed32`. It reads in `otherConstraints`: `Licença de utilização - CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/)` and `Acesso público sem restrições`. Its bounding box runs from 31.27° W to 6.17° W and from 30.00° N to 42.15° N, which spans the mainland, Madeira and the Azores. The other three identifiers return an empty `GetRecordByIdResponse` from SNIG (122 bytes, sha256 `3931bbc69eed3209b8b0e7c2168b42604da84f46e8f23f702ad15539a274e8f3`), so the election rests on the one record that is published, which OpenAddresses also cites. Overture's attribution page credits Portugal to INE with no licence named, which is a gap in Overture's page rather than a statement by INE.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material, which is what downloading the GML feeds or the CSV built from them performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers reading the street, door number, postcode and locality fields."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation for any purpose, and §3(a)(1)(B) requires modifications to be indicated when shared."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) and (B) grant reproduction and adaptation, commercial purposes included, and CC BY 4.0 carries no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing, conditioned by §3(a) on crediting `Instituto Nacional de Estatística, I.P.` with a link to the licence and a change note."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) and §3(a) permit sharing them with the credit. If they are not, the licence does not reach them. Both readings permit publishing the weights, and the credit goes in their rights files under the first."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the data. §2(a)(5)(A) offers every recipient a licence from INE directly on the same credit condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-pt-instituto-nacional-de-estat-stica"
 		},
 		{
 			"licenseID": "unchecked-corpus-input-se-se-property-building-2",
@@ -2976,94 +3692,608 @@
 			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. The research pass recorded no publisher, so this decision is scoped to se-property-building-2 alone."
 		},
 		{
-			"licenseID": "unchecked-corpus-input-sg-singapore-land-authority",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Singapore Land Authority in SG, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Singapore Open Data Licence version 1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "SLA's OneMap publishes the Singapore Open Data Licence as the data licence, and Overture's copy arrives through OpenAddresses under that licence. Overture's attribution page, `https://docs.overturemaps.org/attribution/`, 125,952 bytes, sha256 `505d216b53064565c917110999e215fb04cbdabdf85b9332ef84c367792c57b2`, reads `Singapore data from Singapore Land Authority . Available under Singapore Open Data Licence . Distributed by OpenAddresses.` OpenAddresses' source record `sources/sg/countrywide.json`, 1,146 bytes, sha256 `893d9354574322f7c436bd83f8a0f98cf603668cf2dbb94f2985c1d810380cd2`, gives `website` `https://www.onemap.gov.sg/` and the licence URL `https://www.onemap.gov.sg/legal/opendatalicence.html`, with the attribution `Singapore Land Authority`. It maps `BLK_NO`, `ROAD_NAME`, `BUILDING` and `POSTAL`. That page, 10,945 bytes, sha256 `f976fb3a4d64fe2c5fc76417b955d0ace74d4c0c02091bec50927cf82aa08406`, is the `Singapore Open Data Licence version 1.0`, granting `a worldwide, perpetual, royalty-free, non-exclusive licence`. It states: `You can use, access, download, copy, distribute, transmit, modify and adapt the datasets, or any derived analyses or applications, whether commercially or non-commercially`. It allows a sub-licence `if this is necessary to enable users of your application and/or website … to use your application or access your website`, and states that `This Licence does not grant any rights to Downstream Sub-Licensees`. It excludes `any personal data in the dataset` and third-party rights. It requires `a conspicuous notice acknowledging the source of the datasets and including a link to the most recent version of this Licence`, with an indemnity. OneMap's separate Terms of Use, `https://www.onemap.gov.sg/legal/termsofuse.html`, 31,904 bytes, sha256 `8ccd8eb76df25639cf669f9daba3dc16700e2fffb83729fefde9ea8476dce455`, govern the site and its API. Clause 3(a) grants a `non-transferable, non-exclusive, royalty-free, revocable licence to access, view, download, print or otherwise use the SLA Data … for any usage`, and the next clause forbids modifying, adapting or distributing `Except as expressly permitted in Clause 3(a)`. That restriction governs material taken from the site under the Terms of Use. The OpenAddresses record names the Open Data Licence for this dataset, and this repository reads the Overture rows built from that dataset rather than calling the OneMap API, so the Open Data Licence is elected. A caution is recorded rather than resolved: if a later build fetches from the OneMap API, the Terms of Use govern that copy, and that copy has no adaptation right. No SPDX identifier exists for this licence, so none is written. `training-manifests/v0.7.2-address-systems.effective.json` already names this licence for the Overture Singapore rows.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the datasets to be accessed, downloaded and copied, which covers taking the Overture rows built from them."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the datasets to be modified and adapted, which covers reading block number, road name, building name and postal code."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`modify and adapt the datasets, or any derived analyses or applications`, commercially or not, covers rendering rows into components."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Use is defined to include modifying and adapting for commercial purposes, and the licence carries no share-alike term. Its one exclusion, personal data, is a question for the personal-data review in `source-resolutions.json`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the datasets to be distributed and transmitted, on the condition of the conspicuous source notice with a link to the licence, for example `Contains information from OneMap addresses accessed on <date> from Singapore Land Authority which is made available under the terms of the Singapore Open Data Licence version 1.0`."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant extends to `any derived analyses or applications`, so weights may be published with the source notice in their rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Only within the licence's own limit. A sub-licence may be granted where `necessary to enable users of your application and/or website … to use your application`, so the users of a shipped model or product are covered. A commercial recipient who redistributes further is a Downstream Sub-Licensee, holds no rights through this repository, and must take the licence from onemap.gov.sg, which the agreement has to say."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-sg-singapore-land-authority"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-si-geodetska-uprava-republike-slovenije",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Geodetska uprava Republike Slovenije in SI, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International (priznanje avtorstva), per GURS's Splošni pogoji uporabe geodetskih podatkov",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "GURS states CC BY 4.0 in its dataset record and in its general terms, and the two agree. OpenAddresses' source record `sources/si/countrywide.json`, 3,047 bytes, sha256 `17b2661a5d2aeee96f6bcbf68594eca074f34ed4f69f9d6ecc6725ab32de5c33`, fetches the countrywide composite product from `ipi.eprostor.gov.si/jgp-service-api` and names `CC BY 4.0` with the attribution `Geodetska uprava Republike Slovenije / Surveying and Mapping Authority of the Republic of Slovenia, Register naslovov / Register of addresses, 2024`. GURS's ISO 19139 record for the Register naslovov, `728e9d6a-46d0-4242-b8ef-255317da2ff3`, 64,175 bytes, sha256 `26faa9afdf5ae3b07c8fad1f8695616ce8b8ea431a48a4c5583adef31aa28260`, reads in `otherConstraints`: `Splošni pogoji uporabe geodetskih podatkov: https://www.e-prostor.gov.si/dostopi/javni-dostop/?acitem=1821-1822` and `Podatki so dostopni pod Creative Commons - Attribution 4.0 International (CC BY 4.0) licenco. (https://creativecommons.org/licenses/by/4.0)`, with public access `noLimitations`. The general terms that record names, 179,936 bytes, sha256 `3a3ff6dafb55a20a358a4ed5e63378265f48b300188523e3f163dab6ad279f2d`, state: `Podatki Geodetske uprave imajo status informacij javnega značaja in so na voljo pod pogoji mednarodne licence Creative Commons 4.0. (priznanje avtorstva). … V skladu s to licenco je dovoljeno vsakomur, da podatke iz evidenc Geodetske uprave, nekomercialno in komercialno, uporablja pod pogojem navedbe vira podatkov. Dovoljeno je tako deljenje kot predelovanje podatkov. Uporabnik podatkov se obvezuje, da bo pri vsaki objavi podatkov ali izdelkov zagotovil navedbo vira podatkov, ki obsega » Geodetska uprava Republike Slovenije, vrsta podatka in čas, na katerega se podatki nanašajo oziroma datum stanja zbirke podatkov «.` The national portal's entry `register-naslovov`, publisher `GEODETSKA UPRAVA REPUBLIKE SLOVENIJE`, 52,416 bytes, sha256 `4345311030489430b138da4e704a2c56bba3e26484036d18a5c2833b331d758f`, gives `licence` `Priznanje avtorstva (CC BY 4.0)` and lists the `Javni geodetski podatki (JGP)` application, which is the host OpenAddresses fetches from, among its resources.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants reproducing and sharing the Licensed Material, which is what downloading the JGP composite product performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "GURS's terms state `Dovoljeno je tako deljenje kot predelovanje podatkov`, that sharing and adapting are both allowed, which covers reading the street, house number, settlement and postcode fields."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation, which GURS's terms restate as `predelovanje`, and §3(a)(1)(B) requires modifications to be indicated when shared."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "GURS's terms allow use `nekomercialno in komercialno`, on the condition of the source statement, and CC BY 4.0 carries no share-alike term."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants sharing. GURS requires every publication of data or products to carry `Geodetska uprava Republike Slovenije, vrsta podatka in čas, na katerega se podatki nanašajo`, here `Register naslovov` and its reference date."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "GURS's terms put the source statement on every publication of `podatkov ali izdelkov`, data or products, so the weights are published with that statement in their rights files. If they are not Adapted Material, the licence does not reach them."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the data. §2(a)(5)(A) offers every recipient a licence from GURS directly on the same source-statement condition."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-si-geodetska-uprava-republike-slovenije"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-city-of-berkeley",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to City of Berkeley in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "City of Berkeley Open Data Portal statement: download, reuse, and redistribute the data from our portal without restrictions",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The City of Berkeley states one grant for every dataset on its portal, on its own Open Data Portal page, `https://berkeleyca.gov/your-government/public-records/open-data-portal`, 162,213 bytes, sha256 `02495340b5868dedd4e8a9fcb9ccc72a098764473275a545635df388e02ae17c`: `Explore over 40 datasets available to the public through the City of Berkeley’s Open Data Portal . … You can download, reuse, and redistribute the data from our portal without restrictions.` OpenAddresses' source record `sources/us/ca/city_of_berkeley.json`, 2,660 bytes, sha256 `6c38848d3ab083c932071f94586741a7d80d1e21612816dc1d9b11f6b42e138f`, reads the GeoJSON export of portal dataset `rax9-nuvx` (`TaxParcel2017`), which backs the `bhxd-e6up` Parcels map, and labels its licence `attribution: true`, `attribution name: City of Berkeley`, `presumed: true`; the presumption is OpenAddresses', and the city's page states no attribution condition. The portal's own metadata for `rax9-nuvx`, 33,020 bytes, sha256 `c8d2c2236b63d7ebe64346841ec53d5267dc87deef49712346f4747b8afce5cf`, and for `bhxd-e6up`, 5,303 bytes, sha256 `90fa63966a8529382396bedc059cd31a45f489d9d63d2c62a034b1ce5de88b54`, set no `license` field and give `attribution` `City of Berkeley - Department of Information Technology`, owner `CityofBerkeley`, which proves the file is a dataset `from our portal`. The grant names three acts, download, reuse and redistribution, and qualifies them with `without restrictions`. It does not name adaptation; the election reads `reuse … without restrictions` as covering reading, transforming and training, because a reuse limited to the original form would be a restriction the sentence disclaims. That reading is the decision on which transform and train rest. The dataset description says the parcels are `Sourced from Alameda County Information Technology Department and clipped to City of Berkeley parcels only`; the city's grant covers what its portal publishes, and Alameda County states no separate condition on this copy. The portal's `terms-of-use` path answered 403 to both fetchers, so no further site terms were read. The statement carries no version, so `spdx` and `termsVersion` are left out. Credit `City of Berkeley` in the rights files as a courtesy matching OpenAddresses' record.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page states `You can download … the data from our portal without restrictions`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant to `reuse … without restrictions` covers reading the situs number, street, unit, city and ZIP columns out of the export."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Adaptation is not named; `reuse … without restrictions` is read as covering it, since confining reuse to the original form would be a restriction the statement disclaims."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`reuse … without restrictions` names no purpose limit and no commercial exclusion, so fitting a commercially licensed model is a permitted reuse."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page states `You can … redistribute the data from our portal without restrictions`."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Whether or not weights are a form of the data, publishing them is either redistribution or reuse, and both are granted without restriction."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement is made to every user of the portal, so a commercial recipient holds the same unrestricted grant from the city and no right needs sublicensing."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-city-of-berkeley"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-cook-county",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Cook County in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "Cook County states no licence for its address points, and the only rights text in its own record withholds redistribution. OpenAddresses' source record `sources/us/il/cook.json`, 4,205 bytes, sha256 `26249dd1f8454ed05cc48413b5ef74eb965ca8d67b7053061ff81045a59e9e9f`, names the `addressZipCode` MapServer layer 0 and the hub page `cookcountyil::address-points` and carries no `license` field. The publisher's hub record for item `5ec856ded93e4f85b3f6e1bc027a2472_0` (owner `Cook_County_GIS`), retained as `cook-hub-address-points.json`, 352,042 bytes, sha256 `a2833f813833e9e47867a14679fffbdca309293810b24e3f135667fbc5949573`, sets `license` to `custom` and its `licenseInfo` is a disclaimer only: `While efforts have been made to be as accurate as possible, Cook County provides the data for use “as is”. The data is not guaranteed to be 100% accurate, correct, or complete. … Cook County or its staff assume no liability whatsoever for any losses that might occur from the use, misuse, or inability to use its geospatial data, maps or websites.` It grants no right to copy, adapt or redistribute. The MapServer service description, `https://gis.cookcountyil.gov/traditional/rest/services/addressZipCode/MapServer?f=pjson`, 3,492 bytes, sha256 `852534ffab53fd7f35c436f4b2b72737ec4ed8ba4c521aab293b97c797f3ec94`, states `copyrightText` `Cook County GIS` and nothing more; layer 0, 148,643 bytes, sha256 `0d72fcf2168c629644351717a8b342d889e3439a7ee785ac487797e1dce1ca58`, has an empty description and copyright. The county's earlier Cook Central conditions of use, as quoted on `https://wiki.openstreetmap.org/wiki/Illinois/Cook_Central`, 24,255 bytes, sha256 `8ea6a4b36f4e6133b3598ebbdcb61e335582940b18bc5100564a57c5c5b7a759`, read `All Cook County Government (Cook County) geospatial data and maps are copyrighted. By providing you with a copy of Cook County generated maps and geospatial data, via hardcopy, electronic media or online access, you are not entitled to repackage, resell or distribute this information without the written permission of the Cook County Board of Commissioners.` and `Cook County provides the data for your personal use \"as is\"`. That copy is a third party's quotation of an older portal, so it is recorded as context; the current publisher record, read alone, grants nothing, and an omission is not a permission. The route to permission is the Cook County Board of Commissioners' written permission the older conditions name.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "The publisher serves the layer publicly but states no grant to reproduce it; its record carries only a disclaimer, and the older conditions limit use to `your personal use`."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "No statement from Cook County grants adaptation, and reading fields into another dataset is not covered by a disclaimer of warranty."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "No statement grants adaptation; `repackage` is named among the acts that need the Board's written permission in the older conditions."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Fitting a commercially licensed model is neither personal use nor a use any Cook County statement grants."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The county's conditions state the recipient is `not entitled to repackage, resell or distribute this information without the written permission of the Cook County Board of Commissioners`."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The county grants no licence that could be passed on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-cook-county"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-district-of-columbia",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to District of Columbia in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0 International",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The District states two terms that apply in order, and the dataset's own notice governs. OpenAddresses' source record `sources/us/dc/statewide.json`, 2,406 bytes, sha256 `d63a225a797f764b79d15f5ba2bb740aec8d98a9d34301753a14b6aa64bad9ab`, downloads `https://opendata.dc.gov/api/download/v1/items/aa514416aaf74fdc94748f1e56e7cc8a/geojson?layers=0` and names `https://dc.gov/page/terms-and-conditions-use-district-data` as the licence. That page, 79,353 bytes, sha256 `fc7674c0a514cc3657e9df3284af8d464ced1d1c3e94fbc983de66e843f5063a`, reads: `Unless otherwise noted, the data on the Sites is public domain and made available with a Creative Commons CC0 1.0 Universal dedication. In short, the District waives all rights to the data worldwide under copyright law … You can copy, modify, distribute, and perform the data, even for commercial purposes, all without asking permission.` and `While not required, we ask that you give proper credit when using data from the Sites in your own work. … Data retrieved from Open Data DC catalog ( https://opendata.dc.gov )`. The item the download names, `aa514416aaf74fdc94748f1e56e7cc8a`, `Address Points`, owner `DCGISopendata`, `accessInformation` `Office of the Chief Technology Officer`, retained as `dc-item-aa514416.json`, 2,871 bytes, sha256 `e582e3ef45a15b0e6b3828207fae103061aec971428dd6c27c1320a9230824b6`, notes otherwise: its `licenseInfo` reads `This work is licensed under a Creative Commons Attribution 4.0 International License.` linking `https://creativecommons.org/licenses/by/4.0`. Because the item is `otherwise noted`, the election is CC BY 4.0, the more conditioned of the two; the operations it permits are a subset of what CC0 would permit, so the reading cannot overstate the grant. CC BY 4.0's legal code, `https://creativecommons.org/licenses/by/4.0/legalcode.en`, 48,742 bytes, sha256 `58230517b7895aa219ff46a6ed63e67057a1582fb9ea054b16728a8c13525650`, §2(a)(1) grants `a worldwide, royalty-free, non-sublicensable, non-exclusive, irrevocable license … to: reproduce and Share the Licensed Material, in whole or in part; and produce, reproduce, and Share Adapted Material`. The credit is `Office of the Chief Technology Officer, District of Columbia, Address Points, Open Data DC (https://opendata.dc.gov), CC BY 4.0, changed`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 §2(a)(1)(A) grants the right to reproduce the material, which covers downloading the GeoJSON export."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants producing Adapted Material, which covers reading the address number, street, quadrant, city, state and ZIP columns."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(B) grants adaptation for any purpose, so a token and tag corpus is permitted with the change indicated under §3(a)(1)(B)."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "§2(a)(1)(A) grants reproduction and §2(a)(1)(B) grants producing Adapted Material for any purpose, commercial use included, and fitting a model performs both."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Share grant covers redistribution in any medium, conditioned on the §3(a) attribution and on adding no restriction beyond the licence."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "If trained weights are Adapted Material, §2(a)(1)(B) grants sharing them for any purpose on the §3(a) attribution and change-statement conditions; if they are not, the licence does not reach them. Either way publishing the weights is permitted, with the credit and the statement of changes in the package's rights files."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "§2(a)(1) grants a `non-sublicensable` licence, so this repository cannot sublicense the material. §2(a)(5)(A) offers every recipient a licence from the Licensor directly, so a commercial recipient takes the District's data from the District on the same credit condition rather than from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-district-of-columbia"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-federal-communications-commission",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Federal Communications Commission in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "The address fields this source reads are the Broadband Serviceable Location Fabric, which the FCC distributes only under a limited end-user licence from its contractor CostQuest, and none of that licence's tiers covers commercial model training. The `fcc-bdc` adapter reads `address_primary`, `city`, `state`, `zip` and `zip_suffix` keyed by `location_id` from a SQLite database built outside this repository (`packages/corpus/lib/us/adapters/fcc-bdc/README.md`). The FCC's help article `How Entities Can Access the Location Fabric`, `https://help.bdc.fcc.gov/hc/en-us/articles/10419121200923-How-Entities-Can-Access-the-Location-Fabric`, read through the help centre's article API as `fcc-zendesk-entities.json`, 8,385 bytes, sha256 `c0657b80e8a4a01e18f24e97d1bd2855f043f33f5cb69a20090e9233ec9d357b` (the HTML page answered 403), states: `The FCC’s National Broadband Map allows users to download data reported by providers on the broadband serviceable locations (or BSLs) they serve and the type of service offered at each BSL. These downloadable data are available by Location ID … To obtain more information about the location beyond its Location ID, such its address, geographic coordinates, and building type, users will need to obtain access to the Fabric.` and `There are two Tier 4 Fabric License Agreements, the Standard Agreement and the Research License. … The Standard Agreement can only be used for the purpose of generating challenge and crowdsource data as part of the Broadband Data Collection . The Tier 4 Research License additionally supports non-commercial academic or public-policy research directly related to broadband availability.` The provider article (`fcc-zendesk-providers.json`, 7,937 bytes, sha256 `7854c01ad2319e7cf4dc085c639b225748e9609986fadb4d6b75fe63a9d4cdc8`) states `each service provider will need to execute a limited end-user license agreement`, scoped to `the counties in which they make broadband internet access service available`, and `Access to and use of the Fabric data will only be allowed via signing the published language in the agreement`; the government article (`fcc-zendesk-government.json`, 7,133 bytes, sha256 `fc85377060c8c380771637b237e6fbe3b5bbc749e62f79633079b62b31b5025a`) scopes government licences to `the counties in their jurisdiction`. So the public download carries no address, and every route to the address fields is a purpose-limited licence: BDC challenges, non-commercial broadband research, or a provider's or government's own service area. Training and publishing a commercially licensed general-purpose address parser is none of these. The adapter's README stamps rows `Public Domain` `per the FCC's federal-government distribution terms`; that holds for the FCC's own Location-ID-level availability files and not for the Fabric's addresses, so the stamp is wrong for every row this adapter emits. The licensed copy that fed `isp-nexus` was not available to read here, but no tier the FCC describes reaches this use.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The address fields are obtained only by executing a CostQuest Fabric licence, and `Access to and use of the Fabric data will only be allowed via signing the published language in the agreement`."
+				},
+				"extract": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Each licence tier limits use to a purpose (BDC challenge data, non-commercial broadband research, or a licensee's own counties), and building a parser corpus is outside each."
+				},
+				"transform": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "A derivative made for a purpose the licence does not name is outside it."
+				},
+				"train": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The Research License is limited to `non-commercial academic or public-policy research directly related to broadband availability`, and the Standard Agreement `can only be used for the purpose of generating challenge and crowdsource data`; commercial model training is neither."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The licence is a limited end-user agreement naming licensee, administrator and recipients; publishing Fabric addresses to the public is outside it."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "Whether weights are a derivative does not arise where the underlying use is refused."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"basis": "publisher-refusal",
+					"because": "The FCC states that CostQuest and the FCC `cannot entertain any changes to the language of the agreement`, and the agreement is a limited end-user licence with named recipients, so no right exists to sublicense."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-federal-communications-commission"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-hawaii-state-department-of-education",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Hawaii State Department of Education in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "refused",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "The Hawaiʻi State Department of Education prohibits commercial use of its website content, and the file the adapter reads is website content. `https://hawaiipublicschools.org/useful-links/terms-of-use/`, 182,550 bytes, sha256 `29295057df5ce6d349a35fd5e3464fe2af2f4dd02ad668e9ded88eefdb04237e`, defines `WEBSITE` as `all pages with the domain “hawaiipublicschools.org”` and `CONTENT` as including `the information, material, documents, text`, and its `Copyright Notice` states `Duplication or use of any CONTENT from this WEBSITE for commercial purposes or in any manner likely to give the impression of official approval by the state of Hawaiʻi is prohibited.` The `state-hi-schools` adapter fetches `https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx`, on that domain, to train a commercially licensed model, which is duplication and use for a commercial purpose. The adapter README's `Public Domain per Hawaii state government open-data terms` is not the publisher's statement about this file. A different artifact exists: Hawaii Open Data's CKAN record `hawaii-public-schools` (id `a761c69f-cfd5-4bd6-a79a-ea4c9cb92788`, organization `Education`) carries `license_id: ocd-by`, author `data.hawaii.gov`, with CSV, RDF, JSON and XML resources last modified 2020-01-10, retained in `hi-ckan-schools.json`, 197,050 bytes, sha256 `8684e3d7809ff58adc5aab17faeb76b708d30109616339b5cfde8f3978c378da`. Its resources are not SchoolList.xlsx, so it licenses that 2020 snapshot rather than the file read here; electing it would mean repointing the adapter at those resources and reading the ODC-By attribution terms. A request to HIDOE's Communications Branch, which the terms page names for logo permissions, could also produce a grant for the workbook.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "The terms prohibit duplication of website content for commercial purposes, and the purpose of this copy is a commercial model."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "Reading the workbook's rows into a corpus is use of website content for that commercial purpose."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "A derived corpus is use of the content for the purpose the notice prohibits."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Fitting a commercially licensed model on the rows is use for a commercial purpose."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "Republishing the rows in a commercial corpus is duplication for a commercial purpose."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where the underlying use is prohibited."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The terms grant nothing to sublicense and prohibit the commercial use a sublicense would pass on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-hawaii-state-department-of-education"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-institute-of-museum-and-library-services",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Institute of Museum and Library Services in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105, as IMLS's website copyright notice states",
+			"termsVersion": "unstated; as displayed on 2026-10-17",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "IMLS states the public-domain status of its own work. `https://www.imls.gov/about/privacy-terms`, 44,289 bytes, sha256 `9e79ba3ef89ede29bab14a202887a674240bf7b891c326176e31202f8cc53dbc`, under `Copyright`, reads `Most, but not all, material on IMLS’s website is considered a work of the U.S. Government, meaning the work was prepared by an IMLS officer or employee in the scope of their employment ( 17 U.S.C. § 105 ). These works are in the public domain, not subject to copyright restrictions, and may be copied and distributed without permission`, and asks, without requiring it, for the credit `Source: The Institute of Museum and Library Services, www.imls.gov`. The same section excepts material `contributed or licensed by private individuals, companies, or organizations`. The Public Libraries Survey outlet file is IMLS's own statistical compilation of what state library agencies report under its survey, published by IMLS at `https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip`, so it is the agency's work rather than third-party licensed material. The register row's `sourceURL`, `https://www.imls.gov/research-evaluation/data-collection/public-libraries-survey`, now answers HTTP 404; the fetcher's ZIP URL is the artifact this covers.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 105 of title 17 denies copyright to a work of the United States Government, so copying the file IMLS publishes is unrestricted by copyright."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Reading columns out of a work no copyright protects is unrestricted by copyright."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Adaptation is an exclusive right only where copyright subsists, and section 105 denies it here."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model on the rows reproduces and adapts a work that no copyright protects. IMLS states its works `may be copied and distributed without permission`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Distribution of a United States Government work needs no grant. Crediting the agency is courtesy rather than obligation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The question whether trained weights are a derivative of the rows does not arise where the rows carry no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No right subsists to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-institute-of-museum-and-library-services"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-iowa-workforce-development",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Iowa Workforce Development in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "CC BY (version unstated), as the State of Iowa Data Hub labels Active Iowa Construction Contractor Registrations",
+			"termsVersion": "unstated",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "Iowa's Data Hub states the license on the dataset. `https://data.iowa.gov/catalog/dataset/1052`, 125,944 bytes, sha256 `775caee67843b8dd6c42611f41bf3473cf29abbfeca57021c54d6a85bb5aba67`, titled `Active Iowa Construction Contractor Registrations` (table `active_construction_contractors`, 18,096 rows, created September 22, 2025, data last updated October 12, 2026), shows under `Licensing & Attribution`: `Publishing Agency Department of Inspections, Appeals, and Licensing Building & Construction Division Env. Health and Contractor Public License Type CC BY`. The label names no version, so `spdx` is left out and the version stays unstated. Every Creative Commons Attribution version grants reproduction, adaptation and commercial use on condition of attribution, which is why the missing version does not change the operations below. Two facts for whoever merges this. The publishing agency the State names is the Department of Inspections, Appeals, and Licensing, while this license key is scoped to Iowa Workforce Development, so the register row's publisher should be corrected to DIAL. And the adapter's URL, `https://data.iowa.gov/api/views/dpf3-iz94/rows.csv?accessType=DOWNLOAD`, now answers HTTP 404 with the Data Hub's 21,384-byte not-found page, sha256 `42d6d728ef240541183c1484d2a9a5e1b771b3594595bbd695688b2e40306240`, because the portal left Socrata; the old view and the new dataset could not be compared file to file, and the election covers the dataset the Data Hub now publishes. The State's site policies, `https://www.iowa.gov/policies`, add a DMCA notice procedure and no data terms.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants reproduction of the licensed material, which copying the published table is."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Reading columns out of the table is reproduction, which CC BY grants."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Every CC BY version grants the making of adapted material, conditioned on attribution and on indicating changes."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model reproduces and adapts the rows for a commercial purpose, which CC BY grants without a non-commercial restriction."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY grants redistribution, conditioned on crediting the Iowa Department of Inspections, Appeals, and Licensing, linking the license, and stating that changes were made."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "Whether trained weights are adapted material that carries the attribution condition is not answered by the label, which names no version and no further terms."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY grants no sublicensing right and offers each downstream recipient a license from the licensor directly. Whether that meets a commercial agreement is a drafting question the label does not answer."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-iowa-workforce-development"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-marin-county",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Marin County in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "Marin County states no licence for its situs address points; its only rights text is a disclaimer. OpenAddresses' source record `sources/us/ca/marin.json`, 2,252 bytes, sha256 `a20719677c4b8d68db8b11fdb67735711efea86669bbba5fcb1396b3a15c87aa`, names the `Situs_Address_Points` FeatureServer and the hub page `marincounty::situs-address-points`, with `attribution` `Marin County` and no `license` field. The county's hub record for item `72f8b207d6d241618d66d983a14346ea_0` (owner `opendata_MarinCounty`), retained as `marin-hub-situs.json`, 82,242 bytes, sha256 `c3bcbb200d2864d579d2b42ffc780ace00cf0a1ae170128a7fb7ec65476935b9`, sets `license` to `custom` and its `licenseInfo` reads: `County of Marin makes no representation or warranties, express or implied, with respect to the use or reuse of the data provided herewith, regardless of its format or the means of its transmission. THE DATA IS PROVIDED 'AS IS' WITH NO GUARANTEE OR REPRESENTATION ABOUT THE ACCURACY, CURRENCY, SUITABILITY, PERFORMANCE, MERCHANTABILITY, RELIABILITY, OR FITNESS OF THE DATA FOR ANY PARTICULAR PURPOSE. … County of Marin shall not be liable for any direct, indirect, special, incidental, compensatory or consequential damages or third party claims resulting from the use of this data …` The layer metadata, `Situs_Address_Points/FeatureServer/0?f=pjson`, 18,013 bytes, sha256 `c1cfc77c1b1a30bafaea7115fa7ccaf7b27de8d9588d0e634d273e6e20b3db8b`, gives `copyrightText` `Marin County Community Development Agency, City Planning and Public Works Departments` and a description of the data, and nothing on use. The disclaimer mentions `use or reuse` only to disclaim warranties about it; it grants no right to copy, adapt or redistribute. An omission is not a permission. The route to permission is a written statement from the County of Marin's GIS program.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "The county serves the layer publicly but no statement grants reproduction; the `licenseInfo` is a warranty disclaimer."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "No statement grants adaptation."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "No statement grants adaptation; the disclaimer's `use or reuse` disclaims warranties and grants nothing."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "No statement grants any use, commercial or otherwise."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "No statement grants redistribution."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "No licence exists to pass on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-marin-county"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-montana-state-library",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Montana State Library in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "The Montana State Library states no licence for the Structures/Addresses Framework, and its use constraint confines the data to a purpose. OpenAddresses' source record `sources/us/mt/statewide.json`, 5,160 bytes, sha256 `b27f1c8dd6f55de043538719b8e02f93f1131dff9e4349a717837af4eaf8b815`, names `StructuresFramework_shp.zip` and the library's data-list page and carries no `license` field. The data-list page, `https://mslservices.mt.gov/Geographic_Information/Data/DataList/datalist_Details.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 96,268 bytes, sha256 `2aa30efc7dd48cf01275181d0dd1555a683304e1efc5eefb6dd80d853ee9f8db`, and its FGDC metadata, `datalist_MetadataDetailRaw.aspx?did={E8C6A50B-EBC9-4625-93FC-B798179A8C04}`, 42,117 bytes, sha256 `e3ee8132a9e6a03a6854e94c194aea74a757bbf4f0549cf12b394a8ceafc30bf`, read in `accconst`: `None. All data contained in the Framework are publicly available and non-sensitive.` and in `useconst`: `DISCLAIMER: The Montana State Library Geographic Information Services provides this product/service for informational purposes only. … The Library makes these data and services available as a convenience to the public, and for no other purpose. The Library reserves the right to change or revise published data and/or services at any time.` The access constraint answers who may obtain the file, not what may be done with it, and the use constraint is a disclaimer that adds `for no other purpose`; neither names copying, adaptation, redistribution or commercial use. The same metadata lists the data's originators as the library and more than fifty counties, tribal nations, the Montana Department of Transportation and U.S. Customs and Border Patrol, and the abstract says the framework integrates `local, tribal, state, federal and private data providers`, so the library's silence is not even a single owner's silence. An omission is not a permission. The route to permission is a written statement from the Montana State Library (`geoinfo@mt.gov`) covering the contributed data.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "`accconst` says the data are publicly available, which describes access, but no statement grants reproduction, and the use constraint limits the data to `a convenience to the public, and for no other purpose`."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "No statement grants adaptation."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "No statement grants adaptation, and the contributing counties, tribes and private providers have stated nothing."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Fitting a commercially licensed model is a use no statement grants."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "No statement grants redistribution."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "No licence exists to pass on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-montana-state-library"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-new-york-department-of-state",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to New York Department of State in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "OPEN-NY Terms of Use",
+			"termsVersion": "2013-03-08",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The dataset `Commissioned NYS Notaries Public` (`rwbv-mz6z`), attributed to `New York State Department of State (DOS)`, carries no license field of its own in `https://data.ny.gov/api/views/rwbv-mz6z.json`, 31,799 bytes, sha256 `2adad1eae4e6226975d7c4de79422a96694c370912415bcd296b232b871919a4`, so the portal's terms govern. Those are the OPEN-NY Terms of Use, `https://data.ny.gov/download/77gx-ii52/application%2Fpdf`, served as `OPEN-NY Terms of Use.pdf`, 128,817 bytes, sha256 `9437c849705d58df008f01fc23f404444becce6b86676adc3974f9160a4cb650`, `LAST MODIFIED: March 8, 2013`, six pages read in full. The cover page states `use our government information however you wish, in private sector projects` and that the terms `do not contain restrictions requiring members of the public to use attribution, to re-post the license terms with any re-uses of the data, to impose share-alike or technical restrictions, nor require the public to obtain pre-approval before re-use of the data`, and `So long as you are not doing anything malicious with NYS data, you may use it as you wish, subject to no other requirements.` The operative clause under `Intellectual Property` is `The State grants you a non-exclusive, revocable license to use the Content contained on this website in a manner consistent with the Terms of Use`, and the adaptation verbs appear only as a limit on use `inconsistent with the Terms of Use`: `you will not reproduce, modify, adapt, prepare derivative works based on … OPEN-NY Content in a manner inconsistent with the Terms of Use`. Three conditions carry forward. The license is revocable: `Upon termination, all licenses and other rights granted to you in these Terms of Use will immediately cease`. `Any rights not expressly granted herein are reserved.` And use must be lawful, including compliance with intellectual property laws. The rows name individual notaries with business addresses; the terms state that content `has been vetted by the government agencies supplying the Content in order to reasonably ensure that information protected from disclosure by law is not released`, and impose no personal-data condition beyond lawful use, so that question belongs to this source's personal-data review, which `source-resolutions.json` does not yet hold.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`You are welcome to freely download and use this Content as long as you abide by these Terms of Use`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The license is `to use the Content`, and reading columns out of the export is use."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms forbid modification and derivative works only `in a manner inconsistent with the Terms of Use`, and the cover page states the terms impose no share-alike and no pre-approval, so a lawful derived corpus is consistent with them."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`use our government information however you wish, in private sector projects`; fitting a model is a lawful private-sector use."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms invite users to `share` the Content and state they impose no attribution or re-posting requirement, so republishing rows needs no credit line, though crediting the Department of State is courtesy."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The cover page states the data may be used `as you wish, subject to no other requirements` than lawful use, with no share-alike, so weights fitted on it carry no condition from these terms."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The grant is a `non-exclusive, revocable license` to the user, `Any rights not expressly granted herein are reserved`, and the terms state no sublicensing right; whether a downstream recipient holds the terms directly as a user of OPEN-NY, and how revocation would reach a sublicense, the text does not answer."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-new-york-department-of-state"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-openaddresses",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to OpenAddresses in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "refused",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "OpenAddresses grants no licence over the address data it collects, so the collection row has no grant of its own to elect. The repository README, `https://raw.githubusercontent.com/openaddresses/openaddresses/master/README.md`, 5,259 bytes, sha256 `beccea446f8a31b4eb67b5dd4104edccd4a8bb217cec0c918308d6c9ba394138`, states under `License`: `The data produced by the OpenAddresses processing pipeline (available on [batch.openaddresses.io](https://batch.openaddresses.io/)) is not relicensed from the original sources. Individual sources will have their own licenses. The OpenAddresses team does its best to summarize the source licenses in the source JSON for each source.` and `The source JSON in this repo (in the sources/ directory) is licensed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication ... The rest of the repository is licensed under the BSD 3-Clause License`. The BSD licence, 1,480 bytes, sha256 `0166cd89016fcfb1e1b1ed736507a384865e875c5bb7ee7bd07545312f50a3ee`, and `sources/LICENSE`, 419 bytes, sha256 `9e90a0117df55c4dd3f1bace28c79a25da71832035f3d7304548d573cc627a22`, cover the code and the source definitions, not the addresses. The home page, `https://openaddresses.io/`, 5,667 bytes, sha256 `89bb7f62b4909531277b9e3bb567e1f253c24352716862d067013ff48be9fccd`, states `OpenAddresses is open data . All data is openly licensed. Most sources only require attribution.`, which is the aggregator's characterisation of other publishers' licences, not a grant. `https://batch.openaddresses.io/`, 1,171 bytes, sha256 `b195777427a49dcb207d6f419b9b55c773906851adc105852d737ccbb48714ef`, is an application shell with no terms. The permission for any OpenAddresses row is its source's, and each source carries its own decision in this register keyed by that publisher. That route needs the source of each row: the `openaddresses` adapter reads batch collections `whose per-row upstream the adapter does not record`, and `fragment-assay` and `oa-slavic` record no file either, so no row read through this collection can reach a per-source decision today. Overture's attribution page shows the collection is not uniform: it lists OpenAddresses-distributed sources under `a non-exclusive, limited, and revocable license` (Allegan, Kent and Muskegon counties, Michigan) and Portugal's INE with no licence named. Recording each row's source (the OpenAddresses source definition, whose JSON names the source's licence) and electing that publisher's licence admits those rows; for the US skeletons in `invented-house-venue` (31.5%) and `spliced-sub-venue`, the county and state bodies need the same per-source record.",
+			"licenseID": "unchecked-corpus-input-us-openaddresses"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-overture-maps-foundation",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Overture Maps Foundation in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Overture Maps per-theme terms: Places theme under CDLA Permissive 2.0 (Apache 2.0 for Foursquare records, CC0 1.0 for AllThePlaces records); Addresses theme under each source's own licence as Overture's attribution page lists it and each row's sources[].license names",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "This repository reads two Overture themes, and Overture licenses them differently. Neither is OpenStreetMap-derived: the places guide, `https://docs.overturemaps.org/guides/places/`, 161,971 bytes, sha256 `37f2dd69d1971a1e23cd43c77bf7d51031a13c57dd9f21c7c5ca7e7ac9d168c5`, states `The theme is published under the CDLA Permissive 2.0 and Apache 2.0 licenses. It contains no OpenStreetMap data and carries none of the share-alike obligations of the Open Database License (ODbL)`, and the base, buildings, divisions and transportation themes, which carry ODbL, are not read. **Places** (`fragment-venue-bare`, `spliced-venue-locality`, and venue names and `poi.db` lexicon entries in `spliced-sub-venue`): the attribution page, `https://docs.overturemaps.org/attribution/`, 125,952 bytes, sha256 `505d216b53064565c917110999e215fb04cbdabdf85b9332ef84c367792c57b2`, lists Meta, Microsoft, PinMeTo, Krick, RenderSEO, DAC and BrightQuery under CDLA Permissive 2.0, Foursquare under Apache 2.0 (`Copyright 2024 Foursquare Labs, Inc. All rights reserved. Available under Apache 2.0`) and AllThePlaces under CC0 1.0. CDLA Permissive 2.0, `https://cdla.dev/permissive-2-0/`, 145,137 bytes, sha256 `fc9bdd715ca64b4e150348f07944698f7b8ebef2a507aae021afa7dc868c100e`, states `1.1. A Data Recipient may use, modify, and share the Data made available by Data Provider(s) under this agreement if that Data Recipient follows the terms of this agreement.`, `2.1. A Data Recipient may share Data, with or without modifications, so long as the Data Recipient makes available the text of this agreement with the shared Data.` and `3.1. This agreement does not impose any restriction or obligations with respect to the use, modification, or sharing of Results.`, with `5.4. \"Results\" means any outcome obtained by computational analysis of Data, including for example machine learning models and models' insights.` Apache 2.0, 11,358 bytes, sha256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`, grants reproduction, derivative works and sublicensing with the licence and NOTICE kept. **Addresses** (`overture`, `overture-jp`, `overture-latam`, `overture-tw`, `rendered-sg-register`, the alignment indexes for `gcis-tw` and `houjin-jp`, and US skeletons in `invented-house-venue` and `spliced-sub-venue`): the addresses guide, `https://docs.overturemaps.org/guides/addresses/`, 61,781 bytes, sha256 `017231a5a5b29c2a5a487c584eccdc2c94e89bf7927ef2e57bc0f511366ca34e`, states `Because it aggregates many independent datasets, the theme carries a variety of source licenses rather than a single overall license.`, and the attribution page states `The addresses data comes from a variety of sources. All carry permissive open licenses. Some have special terms or require attribution.` For the countries the adapters read it lists Spain `scne.es` CC BY 4.0, Italy ANNCSU CC BY 4.0, the Netherlands BAG CC0 1.0, France the national address base under Licence Ouverte 2.0, Japan MLIT CC BY 4.0, Taiwan's county civil-affairs offices CC BY 4.0, Singapore Land Authority under the Singapore Open Data Licence, Canada Statistics Canada's Open Licence (with Yukon and Quebec under their own), Mexico INEGI under `TÉRMINOS DE LIBRE USO DE LA INFORMACIÓN DEL INEGI`, and the United States NAD plus county and state bodies. Overture grants no licence of its own over the addresses: the grant for each row is its source's, which Overture names on the row in `sources[].license`. Two gaps follow from Overture's own list. Portugal reads `Instituto Nacional de Estatística . Distributed by OpenAddresses` with no licence named, and three Michigan counties (Allegan, Kent, Muskegon) are `subject to a non-exclusive, limited, and revocable license` under county data agreements. This election does not reach an address row whose `sources[].license` names no licence or one of those county agreements. The `overture` adapter stamps every address row with `OVERTURE_DEFAULT_LICENSE = \"CDLA-Permissive-2.0\"` (`packages/corpus/lib/adapters/overture/adapter.ts`), which is the places licence, not the addresses theme's; the row-level licence needs to come from `sources[].license` for the exclusion above to be applied.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CDLA Permissive 2.0 §1.1 permits use of the places data. Overture distributes the addresses theme publicly under its sources' licences, each of which Overture states is a permissive open licence."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CDLA Permissive 2.0 §1.1 permits modification, and Apache 2.0 §2 permits derivative works. For addresses, the named source licences (CC BY 4.0 §2(a)(1), CC0, Licence Ouverte 2.0, the Statistics Canada and Singapore open licences) permit adaptation. The permission does not cover address rows whose source names no licence (Portugal INE) or a Michigan county data agreement."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Same grants as extract: CDLA §1.1 modification for places, and each address source's adaptation grant. The same address-row exclusion applies."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CDLA Permissive 2.0 §3.1 places no restriction on Results, which §5.4 defines to include machine learning models. For addresses, the named open licences permit commercial use with attribution. The permission does not cover address rows whose source names no licence or a Michigan county data agreement."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CDLA §2.1 permits sharing places data with the agreement's text included; Apache 2.0 records need the licence and Foursquare's NOTICE. Address rows may be shared with their source's attribution as Overture's attribution page states it, as the CC BY 4.0 sources' §3(a) requires. The same address-row exclusion applies."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CDLA §3.1 imposes no obligation on Results, so weights trained on places data carry none. Address sources' attribution is carried in the model's rights files, as the CC BY 4.0 sources require."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The address sources are mostly CC BY 4.0, whose §2(a)(1) grant is `non-sublicensable`, and each address source's grant runs to every recipient directly. CDLA Permissive 2.0 likewise reaches every Data Recipient, `directly or indirectly` (§5.3), so a commercial recipient takes the data from Overture's sources rather than from this repository. Weights trained on places data are Results under CDLA §3.1 and need no sublicence."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-overture-maps-foundation"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to South Dakota Bureau of Information and Telecommunications in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "No statement of terms from the South Dakota Bureau of Information and Telecommunications could be read, and OpenAddresses records none. OpenAddresses' source record `sources/us/sd/statewide.json`, 737 bytes, sha256 `920e0096e35af3e6a94e7b578a41d83145c3c16eee06066e63a6ae4f106f5fc2`, names only `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer/0`, with no `website`, `attribution` or `license` field. On 2026-10-17 `https://arcgis.sd.gov/arcgis/rest/services/BIT/AddressViewer/MapServer?f=pjson`, its layer 0, `http://arcgis.sd.gov/…`, `https://arcgis.sd.gov/arcgis/rest/services?f=pjson`, `https://arcgis.sd.gov/` and `https://www.arcgis.sd.gov/` each failed at the network layer with no HTTP response, from this host and from a second fetcher. `https://sd.gov/` answered by redirecting to `https://www.sd.gov/cs`, and `https://bit.sd.gov/` redirected to `https://www.sd.gov/bit`; every sd.gov path probed returned the same 1,447-byte script shell (sha256 `3abd78ef430c694c644bc390c3933812648258bb2d77a02b5bbad3bf39bda067`), a client-rendered catch-all that states nothing. ArcGIS Online and the ArcGIS Hub index hold no item for the AddressViewer service (`sd-arcgis-search-addressviewer.json`, 58 bytes, sha256 `94ba666d85d1cd9bf99d19e9eea2b30cff17f48ae6c0a7814f4d484e45bff351`; `sd-hub-search-address.json`, 450,609 bytes, sha256 `75c5219cf50c14d859e7f2421a740416fa0ef706fb4af9c2cc7720a756269d28`); the one South Dakota address layer found there is the City of Sioux Falls', another publisher. With no publisher statement read, nothing is granted. The route to permission is the service's own `copyrightText` and description once `arcgis.sd.gov` answers, or a written statement from BIT.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "No publisher statement could be read, so no grant to reproduce the layer is established."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "No publisher statement grants adaptation."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "No publisher statement grants adaptation."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "No publisher statement grants any use."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "No publisher statement grants redistribution."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "No licence exists to pass on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco"
 		},
 		{
 			"licenseID": "unchecked-corpus-input-us-texas-secretary-of-state",
@@ -3072,40 +4302,233 @@
 			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Texas Secretary of State in US, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-u-s-census-bureau",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to U.S. Census Bureau in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Work of the United States Government, not subject to copyright (17 U.S.C. § 105), as stated in the TIGER/Line Shapefiles Technical Documentation; cite the Census Bureau as the source; TIGER/Line® trademark terms",
+			"termsVersion": "TIGER/Line Shapefiles 2024 Technical Documentation, issued September 2024, sections 1.1 and 1.2",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The Census Bureau's own documentation for the files read states the rights. The 2024 TIGER/Line Shapefiles Technical Documentation, `https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2024/TGRSHP2024_TechDoc.pdf`, 4,877,688 bytes, sha256 `5f837b8e8ed2d2da9389c3572a9e00c1253af9e2957323c754f42b21c9a16faf`, section 1.2 Citation Information: `Copyright protection is not available for any work of the United States Government (Title 17 U.S.C., Section 105). Thus, you are free to reproduce census materials as you see fit. We would ask, however, that you cite the Census Bureau as the source.` Section 1.1 adds a trademark condition: `TIGER/Line® is a registered trademark of the Census Bureau. TIGER/Line cannot be used as or within the proprietary product names of any commercial product including or otherwise relevant to Census Bureau data and may only be used to refer to the nature of such a product. The Census Bureau requests that any repackaging of the TIGER/Line Shapefile data, documentation, and other files accompanying it for distribution include a conspicuously placed statement to this effect on the product's cover, the first page of the website, or elsewhere of comparable visibility.` The statute, `https://www.law.cornell.edu/uscode/text/17/105`, 68,298 bytes, sha256 `e0f425493dd80314c4777e99d29a229f1e72ffedd433891c958dec0500fed6d5`, reads `Copyright protection under this title is not available for any work of the United States Government`. The ZCTA gazetteer files are the same publisher's work under the same statute; the gazetteer page, `https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html`, 533,187 bytes, sha256 `990e84211b8e9a6001c189af6719c03dbb4b9f1235180b8fe6e987715b562473`, and the TIGER/Line page, 349,892 bytes, sha256 `757523e39b6702adf463657375288397afb57fd883d83dc5f8c30fedd788bd86`, state no other terms. The Census Data API terms of service, 302,319 bytes, sha256 `a877bc0fdcc320aba29343f4f95fcc07986d2ab88128f3140e707046ccfc2fd1`, govern the API, which this repository does not call; they are retained because they carry the same non-endorsement rule (`You may not use the Census Bureau name, or the like to imply endorsement of any product`). What this repository reads: ADDRFEAT street names and ZIPs and PLACE names (`tiger`), TIGER/Line 2023 EDGES street pairs for Cook IL and Morris NJ, the top 1,000 TIGER 2024 street names, ZCTA 2024 centroids, and US seed rows of the transliteration recipes. The scope is files the Census Bureau itself publishes; a third party's repackaging is not covered by this reading.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Section 1.3 states that `Members of the public can obtain the TIGER/Line Shapefiles free of charge through the Census Bureau's website`, and section 1.2 states `you are free to reproduce census materials as you see fit`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No copyright subsists in the files under 17 U.S.C. § 105, and the publisher states `you are free to reproduce census materials as you see fit`."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A work with no copyright reserves no adaptation right, and the publisher's statement imposes only a citation request."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Nothing in sections 1.1 or 1.2 restricts use of the data; training on street names, place names and ZIP codes is a use the publisher leaves free, with the Census Bureau cited."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Reproduction is free under section 1.2. A redistributed corpus split cites the Census Bureau, and a product that repackages TIGER/Line data does not use `TIGER/Line` in a product name and states the trademark condition section 1.1 asks for."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No copyright restricts a work derived from the files; the model card cites the Census Bureau and does not imply its endorsement."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Material with no copyright leaves no right to sublicense, so a commercial recipient needs no grant from this repository. The trademark condition governs naming only."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-u-s-census-bureau"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-u-s-department-of-transportation",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to U.S. Department of Transportation in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "National Address Database Disclaimer: work of the federal government, not subject to copyright under 17 U.S.C. § 105, available for re-use without limitation or restriction; not for use as a mailing list",
+			"termsVersion": "NAD Disclaimer page, last updated 2026-01-09",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "USDOT's NAD Disclaimer, which the download links sit beneath, `https://www.transportation.gov/mission/open/gis/national-address-database/national-address-database-nad-disclaimer`, 59,768 bytes, sha256 `5fb380ab51a3a696761ec6440b1ecc86c682f21844d353f7685e403d2c09af55`, states: `The NAD is a compilation of data provided by state, local, and tribal governments and is made available \"as is.\" Although the NAD is open data, it is not intended for use as a mailing list and is subject to individual state statutes that prohibit it's use as a mailing list. The NAD is a work of the federal government and as such is not subject to copyright protection in accordance with 17 U.S.C. § 105. It is available for re-use without limitation or restriction.` It also states that users `agree to indemnify, defend, and hold harmless USDOT for any and all liability of any nature arising out of or resulting from the lack of accuracy or correctness of the data, or the use of the data`, a liability term rather than a use restriction. The NAD landing page, `https://www.transportation.gov/gis/national-address-database`, 59,742 bytes, sha256 `0577432f0a73c062cf195647dd46d20a6e4d4cb7bab57696948afb6e164e7fd2`, is retained. 17 U.S.C. § 105, 68,298 bytes, sha256 `e0f425493dd80314c4777e99d29a229f1e72ffedd433891c958dec0500fed6d5`. The publisher states the compilation is a federal work released without restriction even though states contribute it, so the contributing states' terms are not a condition of this grant. The one limit is the mailing-list prohibition under state statutes: a parser's training rows and weights are not a mailing list, and no published split may be offered as one. What this repository reads: NAD address points (`usgov-nad`), US street spans and admin pairs in `fragment-assay`, the 68.2% NAD share of `invented-house-venue`'s US tuples, US skeletons of `spliced-sub-venue`, and US seed rows of the transliteration recipes. Overture's attribution page names a `National Address Database Access and Usage License`; USDOT's own page is the publisher's statement and is the one recorded.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "USDOT publishes the downloads beneath the disclaimer and states the data `is available for re-use without limitation or restriction`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The NAD is `not subject to copyright protection in accordance with 17 U.S.C. § 105` and available for re-use without limitation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Re-use `without limitation or restriction` covers rendering address points into labelled corpus rows."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The publisher places no restriction on use except that the data is not for use as a mailing list; training a parser is not that use."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Re-use without restriction covers republishing rows. A published split must not be offered or usable as a mailing list, which the state statutes the disclaimer names prohibit; the dataset card states that limit."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "No copyright subsists and no use restriction reaches a trained model."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Material with no copyright leaves no right to sublicense, so a commercial recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-u-s-department-of-transportation"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-us-property-building-5",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. The research pass recorded no publisher, so this decision is scoped to us-property-building-5 alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/B/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "No publisher and no terms can be established for this file. OpenAddresses' source record `sources/us/ia/statewide.json`, 1,205 bytes, sha256 `f55d8c0e0589c4c9532e01b30762b39ae17bd625b72f9d5f106df762c9218ec6`, names only `https://data.openaddresses.io/cache/uploads/ingalls/bdc482/IOWA_911_ADDRESSES.zip`, a copy an OpenAddresses maintainer uploaded to OpenAddresses' own cache, with no `website`, `attribution` or `license` field. The commit that added it, `13b7e5cea6` (2020-04-29, `IA, Statewide`, author `ingalls`), retained as `oa-ia-commit-13b7e5cea6.json`, 5,434 bytes, sha256 `8211de5ec4f6e663529ce7cc638ed30b1eafc97912ed6e1a39b6f882e5353585`, points at `http://data.openaddresses.io/cache/uploads/ingalls/us-ia-2020-04-29.zip` and names no source either. The NENA NG9-1-1 field names (`AddNum_Pre`, `StN_PreMod`, `MSAG_Comm`) suggest the statewide 911 aggregation run for Iowa Homeland Security and Emergency Management, but that is an inference: a search of ArcGIS Online (`iowa-arcgis-search.json`, 3,873 bytes, sha256 `73a51bed508b8276ed68cc9629a8533e0e9c0ded4c3fead11f59e1ce31f6ed53`) and of the ArcGIS Hub index found only county address layers (Scott, Woodbury, Grundy), and `https://geodata.iowa.gov/`, 54,817 bytes, sha256 `73833e10ce6d2874a03de153a17b88361cf4f5515011ff24085ad59f903110a9`, lists no statewide 911 address layer. With no publisher identified there is no publisher's statement to read, and an uploaded copy carries no grant of its own. The route to permission is to identify the agency that released `IOWA_911_ADDRESSES.zip` and read its terms, or to replace this file with a county or state layer whose publisher states a licence.",
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "The file is a re-hosted copy whose publisher is unnamed, so no grant to reproduce it can be read."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "No publisher statement grants adaptation."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "No publisher statement grants adaptation."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "No publisher statement grants any use, commercial or otherwise."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "No publisher statement grants redistribution."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "Whether weights are a derivative does not arise where training itself is ungranted."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "No licence exists to pass on."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-us-property-building-5"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-who-s-on-first",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Who's On First in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Who's On First data licence statement (link to https://whosonfirst.org/docs/licenses/ required; contributing sources credited)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "This is the reading recorded for `unchecked-access-free-gb-who-s-on-first`, applied to every jurisdiction the corpus reads. The two documents retrieved today are byte-identical to that decision's copies. The data repository's `LICENSE.md`, `https://raw.githubusercontent.com/whosonfirst/whosonfirst-data/master/LICENSE.md`, 725 bytes, sha256 `634276f100c598a3f8b79250a852383278857868a2d5efcf6639d485ae4a2cb0`, states: `Crediting Who's On First is recommended and linking back to the License is required. For example: > Data from Who's On First. [License](https://whosonfirst.org/docs/licenses/).`, then `The Who's On First dataset is both an original work and a modification of existing open data. Some of those open data projects do require attribution.`, and puts `The format and structure that allows Who's On First to operate` under a Creative Commons Zero designation. The licences page, `https://whosonfirst.org/docs/licenses/`, 48,404 bytes, sha256 `bb584e412810ef475b32264bf1d2b5c12f188006d5929b9441f56c2b5ddfc0ed`, repeats that text and lists 102 contributing sources, each with its own licence link. The links are open-data licences in the large majority (CC BY 2.0/2.5/3.0/4.0, CC0, OGL v2.0 and v3.0, the Canadian federal, provincial and municipal open government licences, DL-DE BY 2.0, Licence Ouverte, Swisstopo's free geodata conditions, the Census Bureau's terms, GeoNames under CC BY 4.0, Quattroshapes under CC BY 2.0, Natural Earth's public-domain terms). A few link a site-wide copyright page rather than a data licence: ISO's and ITU's copyright pages, which carry country and region codes, and Wikipedia's copyright page, whose text is CC BY-SA. The statement reserves nothing and names the link as its one required condition. It grants no licence of its own over Mapzen's original work beyond the format and structure, so this election reads the statement as permission conditioned on the link, together with the sources' own grants, and the credit set is the whole 102-source list because the admin database records a geometry source per record and no name source. What this repository reads under this row: place names, placetypes and parent ids from the WOF admin SQLite for locality, county and region tuples (`invented-house-venue-v063`, `invented-no-street`, `invented-no-street-v063`, `invented-po-box`), CN rows of the coarse-placer sample, locality spans in `fragment-assay`, seed rows of the `deepseek-translit-*` recipes, and US ZIP codes from `postalcode-us.db` in `invented-anchor-absorption`. A place name, a placetype, a parent relation and a ZIP code are facts each source also states; none of these reads copies a source's descriptive text.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The project publishes the bundles and databases for download and states the link as its one required condition. The contributing sources' licences grant copying."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The statement describes the dataset as a modification of open data and reserves nothing. The contributing sources' licences grant adaptation, which covers reading place names, placetypes, parent ids and postal codes out of the databases."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Joining a place to its parents and writing locality, county and region tuples adapts the records, which the contributing licences grant on their attribution conditions (for example CC BY 4.0 §2(a)(1)(B), OGL v3.0 `adapt the Information`)."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Who's On First statement adds only the link, and the contributing open licences permit commercial use with attribution. Using place tuples as training rows is a use those grants cover."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A published corpus split or index that carries the place tuples must carry `Data from Who's On First. License: https://whosonfirst.org/docs/licenses/` and the contributing sources' credits, which the licences page lists. CC BY-SA text from Wikipedia does not reach a row: the rows carry names and codes, not article text."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Every contributing open licence permits including the data in a product, and the Who's On First statement requires only the link, which the weights packages' rights files carry."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The statement grants no licence of its own that this repository could pass on, and the CC BY sources are not sublicensable (CC BY 4.0 §2(a)(1) grants a `non-sublicensable` licence). Each grant is made to every recipient directly, so a commercial recipient takes the data on the link and credit conditions from Who's On First and its sources rather than from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-who-s-on-first"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-us-wikimedia-foundation",
-			"state": "unchecked",
-			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Wikimedia Foundation in US, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Creative Commons CC0 1.0 Universal for Wikidata structured data (main, Property, Lexeme and EntitySchema namespaces)",
+			"spdx": "CC0-1.0",
+			"termsVersion": "1.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/A/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "Wikidata's licensing page, `https://www.wikidata.org/wiki/Wikidata:Licensing`, 67,258 bytes, sha256 `442acd60583d1254c240853e2fe186380e00c4f79152b38b66e2991ecd739b4a`, states: `All structured data (i.e. the main, Property, Lexeme, and EntitySchema namespaces) is released into the public domain under Creative Commons Zero . Text in other namespaces is copyrighted and available under the Creative Commons Attribution-ShareAlike 4.0 License .` and `All data in Wikidata has a CC0 license.` The copyright policy page, `https://www.wikidata.org/wiki/Wikidata:Copyright`, 106,051 bytes, sha256 `978458dac02c064384bfebf102deb8aee0b4d9574ab7e8363abca84ede430385`, carries the footer `All structured data from the main, Property, Lexeme, and EntitySchema namespaces is available under the Creative Commons CC0 License`. CC0 1.0, `https://creativecommons.org/publicdomain/zero/1.0/legalcode.en`, 32,223 bytes, sha256 `b43732f4c1463b087cf10d4daf8d8766514b2bf8f21bc5ef50905f95be227726`, waives every copyright and related right, with a §3 fallback licence. The Wikimedia Terms of Use, `https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use`, 153,020 bytes, sha256 `f4bab7f81e9db28e1a3f8ce317f12c14d4b10b93b867601b7e9a6c2a0c2a882d`, govern conduct on the sites and the query service; they do not relicense CC0 data. What this repository reads: labels and aliases of designator items (`wikidata:label`, `wikidata:alt`) from `https://query.wikidata.org/sparql`, 877 rows recorded in `packages/corpus/data/sub-venue-lexicon.json` for `spliced-sub-venue`. Labels and aliases are main-namespace structured data, so no CC BY-SA text is read.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives every copyright and related right to the extent allowed by law, so querying and copying the labels is unrestricted by the dedication."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so reading labels and aliases out of the query result is unrestricted."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 permits modification without condition, which covers turning concept labels into designator surfaces."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 reserves no act, so fitting a model on rows built with the lexicon is unrestricted by the dedication."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 permits distribution, commercially included, with no attribution or share-alike condition. The lexicon file names Wikidata as its source anyway."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC0 waives the rights that would make a derived work's release a licensed act."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A dedication to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-wikimedia-foundation"
 		},
 		{
-			"licenseID": "unchecked-corpus-input-ve-gobierno-del-estado-anzo-tegui",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
-			"note": "A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. No reviewer has recorded a reading of them. Scoped to Gobierno del Estado Anzoátegui in VE, so electing it grants that publisher's sources in that jurisdiction alone."
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"refusedBecause": "The Gobernación del Estado Anzoátegui asserts copyright in its own footer, `Copyright © 2022 - Gobernación del Estado Anzoátegui.`, on the contact page `https://anzoategui.gob.ve/contacto/` (77,150 bytes, sha256 `ec33aa7d4b542d2370204c547bdec3728ef4379a50db2bc88cc8d44cfb2d681c`) and on the home page, and publishes no data licence, open-data statement or reuse permission. `https://www.anzoategui.gob.ve/` redirected to `https://anzoategui.gob.ve/`, which answered with 162,048 bytes (sha256 `4d50b34cea414dec212db724d88b19dd6036372a00cc2774cea97a1d4b0e7857`). `/terms-of-use/`, `/privacy-policy/`, `/copyright/` and `/downloads/` each answered HTTP 404 with bodies of 57,317, 57,329, 57,299 and 57,299 bytes, the near-identical lengths of a catch-all error page, so the site has no terms page at those paths. A footer notice is a site-wide assertion rather than a statement about the office addresses on the contact page, so a request to the state government could still produce a grant; what this records is that the terms available were read and no grant was found.",
+			"licenseID": "unchecked-corpus-input-ve-gobierno-del-estado-anzo-tegui"
 		},
 		{
 			"licenseID": "unchecked-national-terms-ad-government-of-andorra-commercial-register-aut",
@@ -4147,10 +5570,51 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Companies Control Department / Ministry of Industry and Trade in JO, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-jp-national-tax-agency",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to National Tax Agency in JP, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "公共データ利用規約（第1.0版） (Public Data License version 1.0, PDL1.0), as adopted by the National Tax Agency's Corporate Number Publication Site",
+			"spdx": "LicenseRef-PDL-1.0",
+			"termsVersion": "1.0, 令和6年7月5日 (2024-07-05)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The Corporate Number Publication Site's terms, `https://www.houjin-bangou.nta.go.jp/riyokiyaku/index.html` (15,368 bytes, sha256 `1e604116c2e56c6d0c72fda78b34736f77ba59b0032faf896b68dec64fe9b4a2`), read `国税庁法人番号公表サイト（以下「公表サイト」といいます。）で掲載・発信している情報（以下「コンテンツ」といいます。）の著作権は、特記されていない限り国税庁に帰属し、権利表記の記載がない限り「公共データ利用規約（第1.0版）」に準拠した利用条件の下で、利用することができます` (\"Copyright in information published on the site belongs to the National Tax Agency unless otherwise noted, and unless a rights notice states otherwise it may be used under conditions conforming to the Public Data License 1.0\"). The site's own rider requires the source line `出典：国税庁法人番号公表サイト（国税庁）（当該ページのURL）`, requires a separate statement when the content is `編集・加工等して利用する` (edited or processed), and forbids presenting processed information `あたかも国（又は府省等）が作成したかのような態様で` (as if the state had made it). The full-data download page, `https://www.houjin-bangou.nta.go.jp/download/zenken/` (282,618 bytes, sha256 `fe9fa71079f219b129ca5ce1dfc17908336cf0ce190be29e43db263a09c8d3f1`), states no other rights notice. PDL1.0 at `https://www.digital.go.jp/resources/open_data/public_data_license_v1.0` (59,216 bytes, sha256 `cc1d4a785dcfd9edf8e716f64c68a26da3f095298e611cfa94ec0628c6e2303c`) reads `どなたでも以下の1.1.から1.7.に定める利用ルール...に従って、複製、公衆送信、翻訳・変形等の翻案等、自由に利用できます...商用利用も可能です` (\"anyone may freely use it, including reproduction, public transmission, and adaptation such as translation and transformation, under rules 1.1 to 1.7 ... commercial use is also permitted\"), adds `数値データ、簡単な表・グラフ等は著作権による保護の対象ではありませんので、これらについては本利用ルールの適用はなく、自由に利用できます` (\"numerical data and simple tables and graphs are not protected by copyright, so these rules do not apply and they may be used freely\"), and states compatibility with CC BY 4.0: `国...は、本利用ルールが適用される本コンテンツについて、利用者がCC BYに従って利用することを許諾します` (\"the state permits users to use the content under CC BY\"). PDL1.0 has no SPDX identifier, so the id here is a LicenseRef.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "PDL1.0 permits `複製` (reproduction) by anyone."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "PDL1.0 permits `翻訳・変形等の翻案等` (adaptation, including transformation), and the register's name and address fields are records that PDL1.0 says fall outside copyright and may be used freely."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Adaptation is named; the site's rider requires a statement that the content was `編集・加工` (processed) and by whom."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "PDL1.0 permits free use including adaptation and states `商用利用も可能です` (commercial use is permitted)."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "PDL1.0 permits `公衆送信` (public transmission) and reproduction, conditioned on the source line and, for processed data, the processing statement."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A trained model is an adaptation that PDL1.0 permits commercially. The model card carries `国税庁法人番号公表サイト（国税庁）を加工して作成` and must not present the weights as made by the state."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "PDL1.0 grants its permission to `どなたでも` (anyone) and also licenses use under CC BY 4.0, whose licence runs from the licensor to every recipient, so a commercial licensee of the result holds the grant directly and needs no sublicence."
+				}
+			},
+			"licenseID": "unchecked-national-terms-jp-national-tax-agency"
 		},
 		{
 			"state": "refused",
@@ -5191,10 +6655,51 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Registrar of Companies / government registration authority in TV, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-tw-ministry-of-economic-affairs-gcis",
-			"state": "unchecked",
-			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Ministry of Economic Affairs / GCIS in TW, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/E/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The company registry is published on data.gov.tw by 經濟部商業發展署 (the MOEA Administration of Commerce, formerly GCIS). Dataset 22197, `公司登記基本資料-應用一`, at `https://data.gov.tw/dataset/22197` (525,240 bytes, sha256 `45c18db0f78e8989d33da1ecc7c385e4175a98c7c6c818538b05729ef60f2dea`) reads `提供機關 經濟部商業發展署`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`, and its API record `https://data.gov.tw/api/v2/rest/dataset/22197` (3,537 bytes, sha256 `1281655c8ebe5395b2046805df1fadbb8341f686703457c5de4cc61db944f159`) gives `\"license\": \"1\"`, `\"cost\": \"free\"`, publisher OID `2.16.886.101.20003.20007.20132`, contact `opendata.gcis@gmail.com`, and the field `Company_Location: 公司地址`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `4f564f7816fc17ec189b57fc4e4911b0be22a84dc2b5aae6e25bbfa0a118fe96`) grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物` (\"open data is licensed to users for any purpose, time and territory, non-exclusively, irrevocably and royalty-free, including reproduction, distribution, public transmission, broadcast, recitation, screening, performance, editing and adaptation, including but not limited to developing derivatives in any product or service form\"), and at 二(二) `使用者得再轉授權他人為前項之利用` (\"users may sublicense others for the uses in the preceding paragraph\"). The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權` (\"users of the open data and of later derivatives must clearly display the providing agency's attribution statement as the annex requires; a user who fails to attribute is deemed never to have received the licence\"). 四(二) states the licence is compatible with CC BY 4.0. The dataset's resource note points to `https://data.gcis.nat.gov.tw/od/rule`, which answered HTTP 504 and was not read; it is the API's usage-rule page and the licence above is the grant over the data. `Responsible_Name: 負責人` is a named person, so the personal-data review is separate from this decision.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the company address field out of the records."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives `包括但不限於開發各種產品或服務型態之衍生物`; a trained model is such a derivative."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 經濟部商業發展署."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明; omitting it voids the licence `自始` (from the start)."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			},
+			"licenseID": "unchecked-national-terms-tw-ministry-of-economic-affairs-gcis"
 		},
 		{
 			"licenseID": "unchecked-national-terms-tz-business-registrations-and-licensing-agency-b",
