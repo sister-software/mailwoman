@@ -267,7 +267,40 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 				files: [{ parquet, source: "ban", split: "train" }],
 				unshippableReason: null,
 			})
-		).rejects.toThrow(/cannot check the corpus sources of 1 file\(s\) of base/)
+		).rejects.toThrow(/cannot check the corpus sources of 1 file\(s\) of base.*absent locally/s)
+	})
+
+	it("reads the source column of a base file that names no source when the base carries no rights record", async () => {
+		const parquet = await writeOverlayParquet("part-fr.train.parquet", "ban")
+		const baseFile = await writeOverlayParquet("part-0000.parquet", "wof-admin")
+		const base = scratch.path("MANIFEST.json").toString()
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.1.0",
+				schema: {},
+				row_group_size: 50_000,
+				rows_per_slice: 1_000_000,
+				counts: { train: 1, val: 0, test: 0 },
+				total_rows: 1,
+				slices: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
+			},
+			base
+		)
+
+		await assembleOverlayManifest({
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "ban", split: "train" }],
+			unshippableReason: null,
+		})
+
+		const written = await readLocalJSONFile<{ source_rights: SourceRightsRecord }>(
+			scratch.path("MANIFEST.json").toString()
+		)
+
+		expect(written.source_rights.shippable).toBe(true)
+		expect(written.source_rights.sources_checked).toEqual(expect.arrayContaining(["ban", "wof-admin"]))
 	})
 
 	it("records the overlay as not shippable when the override admits an unpermitted source", async () => {
