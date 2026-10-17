@@ -13,8 +13,10 @@
 #
 #    `rendered-gb-os-open` is the `locale` recipe's GB part reading the `gb-os-open` adapter's rows: each Code-Point
 #    Open postcode joined to its nearest named OS Open Roads link, with the street and locality from OS Open Names,
-#    all three under OGL v3.0, and a house number the adapter draws. `spliced-sub-venue` keeps its name and is rebuilt
-#    over house-venue-tuples-v4.jsonl, whose GB rows come from the same adapter rows. No other source in the corpus
+#    all three under OGL v3.0, and a house number the adapter draws. `spliced-sub-venue` keeps its name. Its GB rows
+#    are replaced by GB rows rendered over house-venue-tuples-v4.jsonl, whose GB tuples come from the same adapter
+#    rows, and each new GB row takes an old GB row's position in the file. Its other 88,200 rows are v0.7.2's, in
+#    their original order, so the GB rows stay in the first 50,000-row group. No other source in the corpus
 #    holds a Price Paid Data row: `invented-house-venue` holds no GB row, and `fragment-assay`'s 907 GB rows are
 #    locality names harvested from the base corpus's WOF spans.
 #
@@ -38,10 +40,20 @@
 #   mailwoman corpus slice sub-venue --count 120000 --seed 42 --out <dir>/spliced-sub-venue-v4.jsonl
 #   mailwoman corpus migrate-recipe-outputs --files <dir>/spliced-sub-venue-v4.jsonl
 #   for each recipe output: `mailwoman corpus align-slice --corpus-version 0.7.7-no-ppd`, then
-#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`, then register the per-split files with
-#     `mailwoman corpus overlay-manifest --base <v0.7.2-address-systems MANIFEST.json>
-#     --replace-source rendered-gb,spliced-sub-venue --corpus-version 0.7.7-no-ppd --split …`.
-#     `packages/corpus/data/builds/v0.7.7-no-ppd/OVERLAY_PLAN.json` records the call.
+#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`
+#   per split, write `spliced-sub-venue-gbswap.<split>.parquet`: v0.7.0-de-holdout's
+#     `part-sub-venue.<split>.parquet` with its GB rows dropped, and the split's GB rows of
+#     `spliced-sub-venue-v4.<split>.parquet` placed, in file order, at the dropped rows' positions. A split with more
+#     new GB rows than old appends the extra rows, and one with fewer drops the unused positions. Every row takes the
+#     v4 rows' `license` text. v0.7.2's text named Price Paid Data among the skeleton sources of every sub-venue row,
+#     the non-GB rows included, and those rows' skeletons came from OpenAddresses, BAN and US situs data.
+#   register the per-split files with `mailwoman corpus overlay-manifest --base <v0.7.2-address-systems MANIFEST.json>
+#     --replace-source rendered-gb,spliced-sub-venue --corpus-version 0.7.7-no-ppd --split …`. The call is recorded
+#     in OVERLAY_PLAN.json beside the corpus's MANIFEST.json under the data root.
+#
+# Keeping v0.7.2's non-GB sub-venue rows isolates the change to the Price Paid Data rows. The sub-venue recipe at
+# 0b92c6fe4 writes different non-GB rows from v0.7.2's: 5,740 of 33,600 en-US rows and none of the es-ES or ca-ES
+# rows match v0.7.2's text.
 #
 # `--intl-fraction 0.0664` keeps v0.7.2's order mix: 53,096 of its 800,000 rendered-gb rows were international order
 # and carried a region span. The recipe's default of 0.4 would put a region span on about 318,000 GB rows, so the
