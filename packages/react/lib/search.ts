@@ -7,5 +7,6 @@
 
 export { hitHref, SearchModal } from "./search/SearchModal.tsx"
 export type { SearchModalProps } from "./search/SearchModal.tsx"
+export { queryTokens } from "./search/tokens.ts"
 export { HIERARCHY_DEPTH } from "./search/types.ts"
 export type { SearchHit, SearchRecord, SearchResponse } from "./search/types.ts"

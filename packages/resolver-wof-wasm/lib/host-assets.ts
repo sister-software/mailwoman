@@ -6,10 +6,11 @@
  *   What a host must stage to serve the httpvfs readers: this package's compiled range worker and the
  *   `@sqlite.org/sqlite-wasm` runtime it imports, all loaded at run time by URL, so no bundler ever sees them.
  *   Node-side, a build step, never the browser. `syncArtifact` is the idempotent copy every staged asset goes
- *   through: a size-identical destination remains unchanged so a dev server watching it sees no change.
+ *   through: a byte-identical destination remains unchanged so a dev server watching it sees no change.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
@@ -18,7 +19,11 @@ import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 import { RANGE_WORKER_FILE, SQLITE_RUNTIME_MODULE_FILE } from "#httpvfs/database"
 
 /**
- * Copy a file to the static directory, but only if it differs (by size) from what's already there.
+ * Copy a file to the static directory unless the destination already holds the same bytes.
+ *
+ * Sizes are compared first, and equal sizes are confirmed byte for byte.
+ * An edit that keeps a file's length, such as a changed constant in the range worker,
+ * therefore still reaches the destination.
  *
  * @param label - For logging
  *
@@ -40,7 +45,9 @@ export async function syncArtifact(
 	if (await pathExists(destPath)) {
 		const destSize = (await statPath(destPath)).size
 
-		if (sourceSize === destSize) return false
+		if (sourceSize === destSize && (await readLocalBuffer(destPath)).equals(await readLocalBuffer(sourcePath))) {
+			return false
+		}
 	}
 
 	await copyFileTo(sourcePath, destPath)
@@ -101,7 +108,7 @@ export async function stageSQLiteRuntimeAssets(destDir: PathBuilderLike): Promis
 
 		const dest = resolvePath(destDir, f)
 
-		// Idempotent stage — syncArtifact skips a size-identical copy.
+		// Idempotent stage — syncArtifact skips a byte-identical copy.
 		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload.
 		// `destDir` lives under the watched `static/` tree.
 		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,

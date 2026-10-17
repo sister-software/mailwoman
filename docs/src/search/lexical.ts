@@ -32,7 +32,7 @@ const CONTENT_WEIGHT = 1
 const TABLE_ROW_SCORE_FACTOR = 0.5
 
 interface RecordRow {
-	id: string
+	id: number
 	url: string
 	anchor: string
 	hierarchy: string
@@ -41,7 +41,7 @@ interface RecordRow {
 	position: number
 }
 
-const SQL = `SELECT r.id, r.url, r.anchor, r.hierarchy, r.content, r.level, r.position
+const SQL = `SELECT r.rowid AS id, r.url, r.anchor, r.hierarchy, r.content, r.level, r.position
  FROM records_fts JOIN records r ON r.rowid = records_fts.rowid
  WHERE records_fts MATCH ?
  ORDER BY bm25(records_fts, ${HEADINGS_WEIGHT}, ${CONTENT_WEIGHT})
@@ -50,13 +50,6 @@ const SQL = `SELECT r.id, r.url, r.anchor, r.hierarchy, r.content, r.level, r.po
 
 export function quoteTerm(text: string): string {
 	return `"${text.replaceAll('"', '""')}"`
-}
-
-/**
- * The whitespace-separated parts of the text that the tokenizer can index: those with a letter or a digit.
- */
-export function queryTokens(text: string): string[] {
-	return text.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token))
 }
 
 export function matchExpression(tokens: readonly string[]): string | null {
@@ -74,5 +67,9 @@ export async function lexicalRows(db: SearchDatabase, tokens: readonly string[])
 
 	const rows = await db.query<RecordRow>(SQL, [expression])
 
-	return rows.map((row) => ({ ...row, hierarchy: parseJSONStrict<(string | null)[]>(row.hierarchy) }))
+	return rows.map((row) => ({
+		...row,
+		id: String(row.id),
+		hierarchy: parseJSONStrict<(string | null)[]>(row.hierarchy),
+	}))
 }
