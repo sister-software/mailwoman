@@ -1,0 +1,112 @@
+---
+title: OpenStreetMap attribution and data licensing
+description: How Mailwoman credits OpenStreetMap, what its OSM-trained models mean, and what happens when you enable an OSM address-retrieval layer.
+---
+
+# OpenStreetMap attribution and data licensing
+
+Mailwoman uses data from many sources, each with its own license and provenance. [OpenStreetMap](https://www.openstreetmap.org/) is one of them. We value the work of OpenStreetMap contributors and aim to make it clear **when OSM data helped train a model**, **when OSM is being used to look up an address**, and **which obligations apply to an OSM-derived database**.
+
+> **OpenStreetMap attribution**
+> © OpenStreetMap contributors. OpenStreetMap data is available under the [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). See [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
+
+## Two different uses of OpenStreetMap
+
+Mailwoman makes a distinction between its **address-understanding models** and optional **address-retrieval datasets**.
+
+### 1. Address-understanding models
+
+Some released Mailwoman models have learned from address examples derived from OpenStreetMap. That training helps them recognize address patterns across countries and scripts.
+
+A trained model is **not the same artifact as the OpenStreetMap address dataset used to train it**. Our interpretation, informed by the ODbL and [OpenStreetMap Foundation's machine-learning attribution guidance](https://osmfoundation.org/wiki/Attribution_Guidelines), is that model weights can have their own license while their documentation credits OSM and the underlying OSM-derived training database remains subject to its own ODbL obligations.
+
+For models that have OSM in their effective training ancestry, we include attribution in the model's rights and provenance documentation. We also maintain the records needed to identify the relevant training inputs and satisfy applicable access/reconstruction requirements for derivative databases.
+
+**Not enabling the optional OSM retrieval layer does not erase a model's training history.** A model can carry OSM attribution even when your application never installs an OSM address-point database.
+
+Ordinary predictions or parsed address components are **not automatically licensed under ODbL** because the model was trained on OSM-derived data. Systematically extracting or reproducing substantial portions of OSM data is a different use case.
+
+### 2. Optional address retrieval
+
+Mailwoman can use an additional address-point layer built from an OpenStreetMap extract. This layer improves retrieval and matching in places where other datasets are incomplete.
+
+This is **opt-in**. The OSM adapter is software. The OSM data it processes is separately licensed. An OSM-backed layer leaves the license of Mailwoman's application code unchanged, and it does not automatically relicense your independently sourced address records.
+
+The intended workflow is to download an OSM extract from a provider such as [Geofabrik](https://download.geofabrik.de/), choose a country, and build a local address-point SQLite layer. The resulting OSM-derived database is identified as **ODbL-1.0** and kept distinguishable from other layers. Check your installed Mailwoman version for supported build commands and source availability.
+
+## What changes when you enable OSM retrieval?
+
+| Situation                                                                                     | What to expect                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| You use Mailwoman without an OSM retrieval layer                                              | Mailwoman by itself fetches and queries no OSM address-point layer. A model may still carry OSM training attribution.                                                  |
+| You build and use an OSM-derived layer internally                                             | Keep its ODbL license, attribution and provenance. Internal use generally does not by itself trigger the ODbL public-use share-alike requirements.                     |
+| You expose an OSM-backed geocoder or application publicly                                     | Credit OpenStreetMap in a place users can reasonably find. Additional database-access duties may apply if you use a modified OSM-derived database.                     |
+| You save an ordinary individual address match alongside a customer record                     | This does **not automatically** make the customer database ODbL. The OSMF's geocoding guidance distinguishes ordinary insubstantial results from derivative databases. |
+| You systematically incorporate, alter or reconstruct substantial OSM data in another database | The resulting database may be a **Derivative Database** subject to ODbL share-alike and database-access obligations.                                                   |
+
+These distinctions depend on what your system does with the data. How databases are named or stored decides none of them.
+
+## Your data and OSM data remain distinguishable
+
+Our retrieval design keeps source provenance attached to the datasets and results that use them. An OSM-derived SQLite layer is treated as OSM-derived data. Another independently sourced layer retains its own license.
+
+The [OSMF Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline) expressly discusses ordinary geocoding results stored with proprietary records. It says those results generally do not trigger share-alike for the surrounding database when they are insubstantial and are not aggregated to reproduce a substantial portion of OSM.
+
+**This is not a blanket exemption for every enrichment workflow.** If you use OSM to populate, correct or systematically assemble a larger database, the nature and scale of those changes matter. Keeping independent data and OSM-derived data separate, with clear provenance, helps maintain the distinction.
+
+## Attribution when you operate a public service
+
+If your service exposes OSM-backed lookups, include a visible or conventionally located credit such as:
+
+> Address data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
+This may appear in the application, API documentation, service credits or another location users would ordinarily expect. Preserve provenance in your application where practical. **A source field inside an individual API response should not be your only attribution mechanism** for a public OSM-backed service.
+
+## Sharing an OSM-derived database
+
+The [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) permits commercial use. It also contains conditions for publicly using or distributing modified OSM databases.
+
+In particular, §4.6 can require an offer to provide recipients with either the relevant derivative database in machine-readable form, or the alteration file/method that recreates it, including applicable additions. The details depend on whether you publicly use a **Derivative Database** or a Produced Work made from one.
+
+Mailwoman's licensing approach is to keep these obligations attached to the relevant **OSM-derived database** rather than claim ownership over OSM data or imply that every other dataset and application component must use the same license.
+
+Choosing to use OpenStreetMap data does not remove its license requirements, and Mailwoman's source attribution does not replace the obligations applicable to a service you operate.
+
+## How to inspect your sources
+
+For a generated OSM layer, look for its **data layer manifest**, which records source provenance and license information. Where supported by your installed release, `mailwoman data bom` reports the licenses of enabled data layers; `MAILWOMAN_DATA_LICENSES` can be used as an operator policy to restrict which data licenses are permitted.
+
+Model rights files and model cards are separate from the retrieval-layer manifest. They report the training lineage and notices associated with that model's weights.
+
+## Which released models trained on OpenStreetMap
+
+The `@mailwoman/neural-weights-en-us` model version 10.1.0 (model `v7.2.0-address-systems`) trained on
+corpus `v0.7.2-address-systems`, whose `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and
+`osm-bd` sources derive from the 2026-10-02 Geofabrik extracts. One audited training epoch drew 103,322
+of its 1,000,000 rows from those sources and from two registers rendered from OSM tuples. Every locale
+overlay that decodes through that graph (`en-gb`, `en-au`, `en-nz`, `en-in`, `de-de`, `es-es`, `it-it`,
+`fr-fr`) inherits this lineage.
+
+The npm packages published as 10.1.0, 10.2.0, 10.2.1, 10.2.2, 10.3.0 and 10.4.0 ship these weights
+without an OpenStreetMap notice in their `LICENSE.md`, `PROVENANCE.json`, `README.md` or
+`model-card.json`. A published npm tarball cannot be altered, so those versions remain as published and
+this page is the notice for them. Release 10.5.0, published 2026-10-17, is the first whose rights files
+derive the attribution from the training record: each weights package's `LICENSE.md` prints the
+OpenStreetMap statement over the sources that reached the trainer, `PROVENANCE.json` records the
+effective training sources with their row counts, and the `en-us` README and model card carry the
+notice in prose. The frozen training record and the effective training manifest are committed in the
+repository under `packages/corpus/data/training-manifests/`.
+
+## References and our interpretation
+
+We base our approach on the following publicly available documents:
+
+- [Open Database License 1.0 — full text](https://opendatacommons.org/licenses/odbl/1-0/), especially §§2.3, 3.1 and 4.3–4.6.
+- [OpenStreetMap Foundation Attribution Guideline](https://osmfoundation.org/wiki/Attribution_Guidelines), including its machine-learning section.
+- [OpenStreetMap Foundation Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline).
+- [OpenStreetMap Foundation Collective Database Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Collective_Database_Guideline_Guideline).
+- [OpenStreetMap Foundation FAQ on the license and legal questions](https://osmfoundation.org/wiki/Licence_and_Legal_FAQ).
+
+**Our position:** model weights, adapter software, independently sourced customer records and OSM-derived address databases are four different artifacts, each under its own terms. We attribute OpenStreetMap when its data contributes, preserve source provenance and respect the ODbL conditions on OSM-derived databases, including applicable availability obligations.
+
+This page explains Mailwoman's licensing interpretation and intended behavior. Legal advice for your own situation comes from your own adviser, and rulings on the license come from the OpenStreetMap Foundation. The ODbL text governs your use of OSM data.
