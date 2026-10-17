@@ -26,29 +26,13 @@ import { stableSourceID } from "#adapters/source-id"
 import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
+import {
+	NAD_SKELETON_DIRECTORY,
+	US_SKELETON_EVAL_SOURCE,
+	US_SKELETON_TRAIN_SOURCES,
+	type USSkeletonSource,
+} from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
-
-interface USSource {
-	zip: PathBuilderLike
-	csv: string
-	region: string
-}
-
-const TRAIN_SOURCES: readonly USSource[] = [
-	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
-	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
-]
-
-const EVAL_SOURCE: USSource = {
-	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
-	csv: "us/vt/statewide.csv",
-	region: "VT",
-}
 
 interface BalanceSource {
 	zip: PathBuilderLike
@@ -118,12 +102,12 @@ interface BalanceTuple {
 
 type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "canonical" | "abbreviation">
 
-async function readTuples(source: USSource): Promise<USTuple[]> {
+async function readTuples(source: USSkeletonSource): Promise<USTuple[]> {
 	return readOATuples(source, {
 		extra: (fields, _row, key) => ({
 			...fields,
 			region: source.region,
-			base_source_id: `openaddresses:${source.csv}:${key}`,
+			base_source_id: `${source.register}:${source.csv}:${key}`,
 		}),
 	})
 }
@@ -372,7 +356,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 		const count = opts.count ?? 50_000
 		const source = opts.sourceName ?? defaultRecipeSource("synth-affix")
 		const multilocaleCount = opts.multilocaleCount ?? 0
-		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
+		const sources = opts.golden ? [US_SKELETON_EVAL_SOURCE] : US_SKELETON_TRAIN_SOURCES
 
 		const pool: USTuple[] = []
 
@@ -387,7 +371,10 @@ export const streetAffixRecipe: CorpusRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error(`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
+			throw new Error(
+				`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")} and the NAD ` +
+					`skeletons in ${dataRootPath(NAD_SKELETON_DIRECTORY)}?`
+			)
 		}
 
 		let emitted = 0
@@ -448,7 +435,8 @@ export const streetAffixRecipe: CorpusRecipe = {
 				source,
 				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
-				license: "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
+				license:
+					"OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
 
 			const aligned = alignRow(canonical)
@@ -564,7 +552,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 30_000
 		const source = opts.sourceName ?? defaultRecipeSource("synth-suffix-boundary")
-		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
+		const sources = opts.golden ? [US_SKELETON_EVAL_SOURCE] : US_SKELETON_TRAIN_SOURCES
 
 		const venuePool = await readVenuePool(VENUE_POOL_CSV)
 
@@ -630,7 +618,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 				source_id: recipeSourceID(source, { ...components, class: rowClass, n: String(emitted) }),
 				corpus_version: "0.19.0",
 				license:
-					"OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+					"OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
 			}
 
 			const aligned = alignRow(canonical)
