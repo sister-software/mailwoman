@@ -120,8 +120,13 @@ class SourceRights:
             spellings=spellings,
         )
 
-    def gaps(self, source: str) -> list[SourceRightsGap]:
-        """Every reason ``source`` may not be built into a corpus or trained on. Empty means permitted."""
+    def gaps(self, source: str, corpus_version: str | None = None) -> list[SourceRightsGap]:
+        """Every reason ``source`` may not be built into a corpus or trained on. Empty means permitted.
+
+        ``corpus_version`` names a corpus already built. A source whose producer changed inputs under the same id
+        records the earlier inputs under ``history`` with the corpora built from them, and those rows are judged
+        by the inputs that built them, as `sourceRightsGaps` does in TypeScript.
+        """
         source_id = self.spellings.get(source)
         if source_id is None:
             return [
@@ -137,8 +142,14 @@ class SourceRights:
                     ),
                 )
             ]
+        mapping = self.mappings[source_id]
+        former = (
+            next((entry for entry in mapping.get("history", []) if corpus_version in entry["corpora"]), None)
+            if corpus_version
+            else None
+        )
         gaps: list[SourceRightsGap] = []
-        for entry in self.mappings[source_id]["inputs"]:
+        for entry in (former or mapping)["inputs"]:
             row = self.register_sources.get(entry["registerSource"])
             decision = self.decisions.get(row["license"]) if row else None
             if row is None or decision is None:
@@ -222,16 +233,18 @@ def admit_sources(
     context: str,
     unshippable_reason: str | None = None,
     rights: SourceRights | None = None,
+    corpus_version: str | None = None,
 ) -> SourceRightsRecord:
     """Admit ``sources`` or raise :class:`SourceRightsError` naming each gap.
 
     With ``unshippable_reason`` set, log each gap to stderr and return a record marked not shippable.
+    ``corpus_version`` judges a source by the inputs recorded for that built corpus (:meth:`SourceRights.gaps`).
     """
     if unshippable_reason is not None and not unshippable_reason.strip():
         raise ValueError(f"{context}: {UNSHIPPABLE_FLAG} must say why the output is not shippable")
     checked = sorted(set(sources))
     table = rights or committed_source_rights()
-    gaps = [gap for source in checked for gap in table.gaps(source)]
+    gaps = [gap for source in checked for gap in table.gaps(source, corpus_version)]
     if gaps and unshippable_reason is None:
         raise SourceRightsError(context, gaps)
     for gap in gaps:

@@ -239,7 +239,22 @@ def load_training_config(
             gaps=[],
             unverified=["the corpus sources a config without source_weights admits"],
         )
-    return cfg, admit_sources(admitted_sources(cfg), context=context, unshippable_reason=reason, rights=rights)
+    return cfg, admit_sources(
+        admitted_sources(cfg),
+        context=context,
+        unshippable_reason=reason,
+        rights=rights,
+        corpus_version=corpus_version(cfg),
+    )
+
+
+def corpus_version(cfg: Config) -> str:
+    """The version of the built corpus a config trains on, read from its `data.corpus_dir`.
+
+    A built corpus sits at `<versioned>/<version>/corpus-<version>`, and the version is the key a source's
+    `history` entries list in `corpus-source-inputs.json`.
+    """
+    return Path(cfg.data.corpus_dir).name.removeprefix("corpus-")
 
 
 def csv_log_path(cfg: Config) -> Path:

@@ -97,6 +97,17 @@ def test_the_published_models_config_is_refused_at_launch() -> None:
         load_training_config(path)
 
 
+def test_a_built_corpus_is_judged_by_the_inputs_that_built_it() -> None:
+    """fragment-assay now reads only elected publishers, but v0.7.7-no-ppd holds rows read through the refused
+    OpenAddresses collection, so a config training on that corpus cannot admit them."""
+    rights = committed_source_rights()
+    assert rights.gaps("fragment-assay") == []
+    stale = rights.gaps("fragment-assay", "v0.7.7-no-ppd")
+    assert [gap.register_source for gap in stale] == ["us-geodata-aggregate-3"]
+    with pytest.raises(SourceRightsError, match="fragment-assay reads register source us-geodata-aggregate-3"):
+        load_training_config(package_path("configs", "v7.7.0-no-ppd-60k.yaml"))
+
+
 def test_a_corpus_builder_refuses_before_it_reads_a_key_or_writes_a_row(tmp_path: Path) -> None:
     out_dir = tmp_path / "out"
     with pytest.raises(SourceRightsError, match="deepseek-kryptonite reads register source cn-generated-text-1"):
