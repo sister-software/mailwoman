@@ -2,7 +2,7 @@
 	"manifestID": "corpus-training-manifest",
 	"schemaVersion": 1,
 	"corpusVersion": "v0.7.8-rights-clean",
-	"builtAt": "2026-10-17T23:04:56.319Z",
+	"builtAt": "2026-10-17T23:27:22.564Z",
 	"profile": "exploratory",
 	"sources": [
 		{
@@ -124,36 +124,39 @@
 			"decision": null
 		},
 		{
+			"source": "fragment-assay",
+			"rows": 221335,
+			"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
+			"licenseValues": {
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses no": 16574,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses pl": 16213,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses hr": 16197,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses si": 16161,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses ch": 16020,
+				"Synthetic — fragment-assay; street/number/city from Ryhti (Finnish Environment Institute, CC BY 4.0)": 15916,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses es": 14806,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses nl": 14507,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses au": 14437,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses cz": 14099,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses pt": 13621,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses nz": 12498,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses sk": 11671,
+				"Synthetic — fragment-assay; locality surfaces from corpus v0.5.0 spans": 9900,
+				"Synthetic — fragment-assay; street/number/city from OpenAddresses dk": 8982,
+				"Synthetic — fragment-assay; top-population locality names from the candidate gazetteer (WOF-derived)": 4765,
+				"Synthetic — fragment-assay; (locality, region) pairs from corpus US spans": 3613,
+				"Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail) (leading)": 1353,
+				"Synthetic — fragment-assay; directional-prefixed US localities (the N-Hartland flip class)": 2
+			},
+			"decision": null
+		},
+		{
 			"source": "rendered-de",
 			"rows": 204000,
 			"license": "OpenAddresses DE tuples, rendered native-order — see ingest SOURCES",
 			"licenseValues": {
 				"OpenAddresses DE tuples, rendered native-order — see ingest SOURCES": 122294,
 				"OpenAddresses DE tuples, rendered international-order — see ingest SOURCES": 81706
-			},
-			"decision": null
-		},
-		{
-			"source": "fragment-assay",
-			"rows": 181013,
-			"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
-			"licenseValues": {
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses no": 16615,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses si": 16304,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses pl": 16269,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses hr": 16169,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses es": 14824,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses nl": 14379,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses au": 14365,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses cz": 14051,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses pt": 13573,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses nz": 12520,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses sk": 11691,
-				"Synthetic — fragment-assay; street/number/city from OpenAddresses dk": 8986,
-				"Synthetic — fragment-assay; locality surfaces from corpus v0.5.0 spans": 6311,
-				"Synthetic — fragment-assay; (locality, region) pairs from corpus US spans": 3609,
-				"Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail) (leading)": 1345,
-				"Synthetic — fragment-assay; directional-prefixed US localities (the N-Hartland flip class)": 2
 			},
 			"decision": null
 		},
@@ -530,6 +533,6 @@
 		}
 	],
 	"refused": {},
-	"totalRows": 708976468,
-	"contentDigest": "fa98fec38eeca360a88f2be46d827846a7a0ff63100adbc13f62abad0c8cfbc3"
+	"totalRows": 709016790,
+	"contentDigest": "931033ddaf9b7a7cc5392520d99984ce56b6781aa07fedaebc809ce4b9973f6c"
 }

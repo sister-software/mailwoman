@@ -13,7 +13,14 @@ import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.corpora.fragment.build import main
-from mailwoman_train.corpora.fragment.sources import OA_FILES, OA_LOCALES, SOURCE, collect_oa_pairs
+from mailwoman_train.corpora.fragment.sources import (
+    OA_FILES,
+    OA_LOCALES,
+    RYHTI_REGISTER_ROW,
+    SOURCE,
+    collect_oa_pairs,
+    collect_ryhti_pairs,
+)
 from mailwoman_train.source_rights import committed_source_rights
 
 #: Committed beside this file. Regenerate with `uv run python -m
@@ -124,6 +131,7 @@ def reference_args(root: Path) -> argparse.Namespace:
         corpus_parquet_glob=str(parquet),
         famous_localities_file=str(famous),
         locality_parquet_glob="",
+        ryhti_file="",
         out_parquet=out / "part-fragment.parquet",
         out_dev=out / "fragment-dev.jsonl",
         per_locale_cap=4,
@@ -193,7 +201,7 @@ def test_every_listed_file_reaches_a_register_row_the_source_maps() -> None:
     """Each listed file's publisher row is one of the source's inputs, and the source reads no row lacking train."""
     rights = committed_source_rights()
     mapped = {entry["registerSource"] for entry in rights.mappings[SOURCE]["inputs"]}
-    named = {row for files in OA_FILES.values() for _, row in files}
+    named = {row for files in OA_FILES.values() for _, row in files} | {RYHTI_REGISTER_ROW}
 
     assert set(OA_FILES) == set(OA_LOCALES), "a locale has no file list, or a file list has no locale"
     assert named - mapped == set(), f"{sorted(named - mapped)} are read and absent from {SOURCE}'s inputs"
@@ -204,6 +212,54 @@ def test_an_absent_listed_file_is_refused(tmp_path: Path) -> None:
     """A missing file raises rather than reading as a locale with no rows."""
     with pytest.raises(FileNotFoundError, match="cz/countrywide.csv"):
         collect_oa_pairs(tmp_path, "cz", 4)
+
+
+#: Ryhti's columns the reader uses, with the published rendering in `address_fin`. The second row has no Finnish
+#: street name and is skipped. The third renders a number with a subdivision letter.
+RYHTI_COLUMNS = ["address_fin", "address_swe", "postal_office_fin", "address_name_fin", "postal_code"]
+RYHTI_ROWS = [
+    ("Vuorijärventie 216", "", "YLÄ-KOLKKI", "Vuorijärventie", "42830"),
+    ("", "Storgatan 3", "", "", "65100"),
+    ("Hämeenkatu 12 a", "", "TAMPERE", "Hämeenkatu", "33100"),
+]
+
+
+def write_ryhti(path: Path) -> Path:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(RYHTI_COLUMNS)
+        writer.writerows(RYHTI_ROWS)
+    return path
+
+
+def test_the_ryhti_reader_takes_the_number_from_the_published_rendering(tmp_path: Path) -> None:
+    pairs, cities, city_postcodes, units, triples = collect_ryhti_pairs(write_ryhti(tmp_path / "open_address.csv"), 4)
+
+    assert sorted(pairs) == [("Hämeenkatu", "12 a"), ("Vuorijärventie", "216")]
+    assert sorted(cities) == ["TAMPERE", "YLÄ-KOLKKI"]
+    assert sorted(city_postcodes) == [("TAMPERE", "33100"), ("YLÄ-KOLKKI", "42830")]
+    assert units == []
+    assert sorted(triples) == [("Hämeenkatu", "12 a", "TAMPERE"), ("Vuorijärventie", "216", "YLÄ-KOLKKI")]
+
+
+def test_an_absent_ryhti_file_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="Ryhti"):
+        collect_ryhti_pairs(tmp_path / "open_address.csv", 4)
+
+
+def test_the_build_emits_finnish_rows_from_ryhti(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    args = reference_args(tmp_path)
+    args.ryhti_file = str(write_ryhti(tmp_path / "open_address.csv"))
+    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self, *a, **k: args)
+    main()
+
+    rows = pq.read_table(args.out_parquet).to_pylist()
+    rows += [json.loads(line) for line in args.out_dev.read_text(encoding="utf-8").splitlines()]
+    finnish = [row for row in rows if row["country"] == "FI"]
+
+    assert {row["register"] for row in finnish} == {"ryhti"}
+    assert {row["locale"] for row in finnish} == {"fi-FI"}
+    assert "Vuorijärventie 216" in {row["raw"] for row in finnish}
 
 
 def write_reference() -> None:

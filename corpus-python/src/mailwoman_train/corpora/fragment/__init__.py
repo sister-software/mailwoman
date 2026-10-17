@@ -30,6 +30,7 @@ from .sources import (
     SEED,
     admin_pairs_from_corpus,
     collect_oa_pairs,
+    collect_ryhti_pairs,
     span_rows_from_corpus,
 )
 
@@ -42,6 +43,7 @@ __all__ = [
     "SEED",
     "admin_pairs_from_corpus",
     "collect_oa_pairs",
+    "collect_ryhti_pairs",
     "main",
     "render",
     "render_admin_pair",

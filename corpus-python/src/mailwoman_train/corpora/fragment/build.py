@@ -31,6 +31,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ...paths import resolve_data_root_default
 from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from .rows import (
     COUNTRY_SURFACES,
@@ -43,12 +44,16 @@ from .rows import (
     render_unit,
 )
 from .sources import (
+    LOCALITY_PARQUET_GLOB,
     OA_LOCALES,
     PER_LOCALE_CAP,
+    RYHTI_FILE,
     SEED,
     SOURCE,
+    LocaleParts,
     admin_pairs_from_corpus,
     collect_oa_pairs,
+    collect_ryhti_pairs,
     span_rows_from_corpus,
 )
 
@@ -71,9 +76,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     ap.add_argument(
         "--locality-parquet-glob",
-        default="",
-        help="Separate glob for the GLOBAL locality-twin harvest (admin/ban blocks; the main glob "
-        "typically points at the US-only tiger block). Defaults to the main glob.",
+        default=None,
+        help="Separate glob for the GLOBAL locality-twin harvest. Omitted, LOCALITY_PARQUET_GLOB under the data "
+        "root, v0.5.0's wof-admin parts, whose first twelve reach the CN, JP, KR and TW locality spans. An empty "
+        "value reads the main glob.",
+    )
+    ap.add_argument(
+        "--ryhti-file",
+        default=None,
+        help="Ryhti's building address file, the source of Finland's rows. Omitted, RYHTI_FILE under the data root. "
+        "An empty value emits no Finnish rows.",
     )
     ap.add_argument("--out-parquet", type=Path, required=True)
     ap.add_argument("--out-dev", type=Path, required=True)
@@ -90,63 +102,103 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
     comma-free context, then the country counterweight.
     """
     for locale_dir, (country, locale, trailing) in sorted(OA_LOCALES.items()):
-        pairs, cities, city_postcodes, units, triples = collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap)
-        license_note = f"Synthetic — fragment-assay; street/number/city from OpenAddresses {locale_dir}"
+        push_locale_parts(
+            push,
+            collect_oa_pairs(args.oa_root, locale_dir, args.per_locale_cap),
+            country,
+            locale,
+            trailing,
+            f"Synthetic — fragment-assay; street/number/city from OpenAddresses {locale_dir}",
+            locale_dir,
+        )
 
-        for street, number in pairs:
-            push(render(street, None), country, locale, license_note)
 
-            if trailing and number and len(number) <= 8:
-                push(render(street, number), country, locale, license_note)
+def push_ryhti_rows(args: argparse.Namespace, push: Push) -> None:
+    """Finland's rows, from Ryhti's building address file, in the same blocks a locale's OpenAddresses extract yields.
 
-        # Bare-locality polarity twins (see collect_oa_pairs docstring).
-        for city in cities:
-            push(render(city, None, tag="locality"), country, locale, license_note)
+    An empty `--ryhti-file` skips the block. Every other row's id then stays where it was.
+    """
+    if not args.ryhti_file:
+        return
 
-        for city, postcode in city_postcodes:
-            push(render_locality_postcode(city, postcode), country, locale, license_note)
+    push_locale_parts(
+        push,
+        collect_ryhti_pairs(Path(args.ryhti_file), args.per_locale_cap),
+        "FI",
+        "fi-FI",
+        True,
+        "Synthetic — fragment-assay; street/number/city from Ryhti (Finnish Environment Institute, CC BY 4.0)",
+        "fi (ryhti)",
+    )
 
-        for unit, number, street in units:
-            push(render_unit(unit, number, street), country, locale, license_note)
 
-        # Fragment recipe v4: comma-free context rows (the census headline class — 71/143 street misses were
-        # unpunctuated street<->admin boundaries). Alternate rows include the English country name.
-        for index, (street, number, city) in enumerate(triples):
+def push_locale_parts(
+    push: Push,
+    parts: LocaleParts,
+    country: str,
+    locale: str,
+    trailing: bool,
+    license_note: str,
+    label: str,
+) -> None:
+    """Push one locale's sampled pools: bare street, street with number, bare locality, locality with postcode, unit,
+    comma-free context, then the country counterweight."""
+    pairs, cities, city_postcodes, units, triples = parts
+
+    for street, number in pairs:
+        push(render(street, None), country, locale, license_note)
+
+        if trailing and number and len(number) <= 8:
+            push(render(street, number), country, locale, license_note)
+
+    # Bare-locality polarity twins (see collect_oa_pairs docstring).
+    for city in cities:
+        push(render(city, None, tag="locality"), country, locale, license_note)
+
+    for city, postcode in city_postcodes:
+        push(render_locality_postcode(city, postcode), country, locale, license_note)
+
+    for unit, number, street in units:
+        push(render_unit(unit, number, street), country, locale, license_note)
+
+    # Fragment recipe v4: comma-free context rows (the census headline class — 71/143 street misses were
+    # unpunctuated street<->admin boundaries). Alternate rows include the English country name.
+    for index, (street, number, city) in enumerate(triples):
+        push(
+            render_context(street, number, city, country, trailing, with_country=index % 2 == 0),
+            country,
+            locale,
+            license_note,
+        )
+
+    # Fragment recipe v6 (#1104): country counterweight — recipe-v5 mass was country-sparse.
+    # Country recall fell from 88.6% to 82.0% on the fragment lineage. Emit a full address ending in the country
+    # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
+    # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
+    surfaces = COUNTRY_SURFACES.get(country, [])
+
+    if surfaces:
+        for si, (street, number, city) in enumerate(triples):
+            if not number or len(number) > 8:
+                continue
+            surface = surfaces[si % len(surfaces)]
             push(
-                render_context(street, number, city, country, trailing, with_country=index % 2 == 0),
+                render_country_context(street, number, city, surface, trailing, comma=True),
+                country,
+                locale,
+                license_note,
+            )
+            push(
+                render_country_context(street, number, city, surface, trailing, comma=False),
                 country,
                 locale,
                 license_note,
             )
 
-        # Fragment recipe v6 (#1104): country counterweight — recipe-v5 mass was country-sparse.
-        # Country recall fell from 88.6% to 82.0% on the fragment lineage. Emit a full address ending in the country
-        # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
-        # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
-        surfaces = COUNTRY_SURFACES.get(country, [])
-
-        if surfaces:
-            for si, (street, number, city) in enumerate(triples):
-                if not number or len(number) > 8:
-                    continue
-                surface = surfaces[si % len(surfaces)]
-                push(
-                    render_country_context(street, number, city, surface, trailing, comma=True),
-                    country,
-                    locale,
-                    license_note,
-                )
-                push(
-                    render_country_context(street, number, city, surface, trailing, comma=False),
-                    country,
-                    locale,
-                    license_note,
-                )
-
-        print(
-            f"{locale_dir}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, "
-            f"{len(units)} units, {len(triples)} context"
-        )
+    print(
+        f"{label}: {len(pairs)} pairs, {len(cities)} localities, {len(city_postcodes)} loc+pc, "
+        f"{len(units)} units, {len(triples)} context"
+    )
 
 
 def push_corpus_harvest_rows(
@@ -357,6 +409,15 @@ def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: rand
 
 def main() -> None:
     args = parse_args()
+
+    # Each flag's data-root default is read here rather than in `default=`, so a build that passes both never reads
+    # the environment. An empty value is kept: it selects the main glob, or a build without Finnish rows.
+    if args.locality_parquet_glob is None:
+        args.locality_parquet_glob = resolve_data_root_default(None, LOCALITY_PARQUET_GLOB)
+
+    if args.ryhti_file is None:
+        args.ryhti_file = resolve_data_root_default(None, RYHTI_FILE)
+
     rights = admit_sources([SOURCE], context="fragment-assay build", unshippable_reason=args.unshippable_reason)
     write_rights_record(rights, args.out_parquet.parent)
     rng = random.Random(SEED)
@@ -395,6 +456,10 @@ def main() -> None:
     push_oa_locale_rows(
         args,
         lambda base, country, locale, note: push(base, country, locale, note, "openaddresses", "composed"),
+    )
+    push_ryhti_rows(
+        args,
+        lambda base, country, locale, note: push(base, country, locale, note, "ryhti", "composed"),
     )
     admin_pairs, corpus_localities = push_corpus_harvest_rows(
         args,
