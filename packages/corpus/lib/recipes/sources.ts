@@ -294,6 +294,33 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"osm-vn",
 	"osm-pk",
 	"osm-bd",
+	// The 2026-10-16 and 2026-10-17 extracts for the countries the corpus held under 1,000 street rows of,
+	// where no national address register with an electable grant was downloadable (country-gap-v1).
+	"osm-eg",
+	"osm-rs",
+	"osm-ar",
+	"osm-ua",
+	"osm-kz",
+	"osm-by",
+	"osm-md",
+	"osm-cl",
+	"osm-uz",
+	"osm-pe",
+	"osm-my",
+	"osm-bn",
+	"osm-ba",
+	"osm-ae",
+	"osm-kw",
+	"osm-ge",
+	"osm-am",
+	"osm-pr",
+	"osm-kg",
+	"osm-ph",
+	"osm-ci",
+	// One id per dependency a national register covers beside its state, written by
+	// `corpus run <adapter> --country <cc> --source-name`, so the dependency's rows hold their own weight.
+	"ryhti-ax",
+	"matrikkelen-sj",
 	// One id per French overseas jurisdiction for the BAN department files,
 	// written by `corpus run ban --source-name`.
 	// Metropolitan rows keep `ban`, so its weight does not decide the rate at which a territory is drawn.

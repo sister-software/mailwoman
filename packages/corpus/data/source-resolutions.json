@@ -845,6 +845,21 @@
 				"because": "The publication names natural persons and carries addresses for them. Measured on the 2022 release: 149 of 17,373 distinct supplier names take the `Surname, Firstname` form over 179 rows, 43 of those rows carrying a street line, and `Upton, David Gregory` is published at `3 Sloan Rd, Hawthorndene SA 5051`. A sole trader's reported address can be their home, and the record does not distinguish the two. The analysis that would move this to `assessed` is a decision rather than a measurement, and the measurement it would rest on is in the retained receipt.",
 				"record": "internal/strategy/rights-receipts/au-2026-09-30/README.md"
 			}
+		},
+		"uy-property-building-1": {
+			"adapterID": "ide-uy",
+			"addressRoles": {
+				"nombre_via": "premise"
+			},
+			"coverage": "Direcciones Geográficas del Uruguay, nineteen CSVs, one per department, from the CKAN dataset `ide-direcciones-geograficas-del-uruguay` of the organization `ide` on catalogodatos.gub.uy, metadata modified 2026-10-01 and retrieved 2026-10-17. **Measured 1,059,247 address points** by parsing every file: Montevideo 386,986, Canelones 171,140, Maldonado 57,656, Colonia 49,161 and the other fifteen departments between 10,102 (Flores) and 37,708 (Paysandú). Every row carries `codigo_postal`, `nombre_via` and `departamento`; `num_puerta` is present on 1,057,744, `localidad` on 1,059,164, `letra_puerta` on 30,103, `km` on 1,361, `manzana` on 524,558 and `nombre_inmueble` on 904. 47,486 rows of the adapter's output name a census locality `<DEPARTAMENTO> RURAL`, the department's rural remainder, and 25,504 name a generated code (`UYARMQA_SN_012`) where the street is unnamed. **The files are Windows-1252, not UTF-8**, and a street holding a nickname is quoted with doubled quotes (`\"AVENIDA JOSE \"\"PEPE\"\" D' ELIA\"`), so a reader that splits on `,` misaligns nine Montevideo lines.",
+			"upstreamLineage": [
+				"https://catalogodatos.gub.uy/api/3/action/package_show?id=ide-direcciones-geograficas-del-uruguay"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The fifteen columns were read in full, and fourteen are address structure: a position, a postcode, a street code and name, a door number and letter, a route kilometre, a block and lot, a census locality and its code, and the department. `nombre_inmueble`, the building name, is free text on 904 rows. Read by its leading words, it names post offices (`AG OFICIAL CORREO` 128, `SUC CORREO` 103), police stations (`SECCIONAL`), municipal and ministry buildings, and holiday houses (`CHALET LA`, `CHALET MARIA`). Three rows name a mail distribution agent by the agent's own name (`Agente Distribucion` followed by a person's given and family names), which is a natural person's name at an address. The `ide-uy` adapter refuses those values (`component:venue:names-a-person`) and every value without a three-letter word, so no person's name reaches a row; a holiday house's given name (`CHALET MARIA`) names the property rather than identifying anyone.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/README.md"
+			}
 		}
 	}
 }

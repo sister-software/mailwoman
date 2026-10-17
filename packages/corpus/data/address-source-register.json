@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "b7eed52c9d485dae80d864f27b21826d472e0bfa820caddda823408e4bd1b95e",
+	"contentDigest": "39c4d91452586599cbaf099d0e50892662c6559e542680acff56f12a9b8f3d8b",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -9635,6 +9635,50 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-yuba-county-ca-california"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Licencia de Datos Abiertos - Uruguay Versión 0.1",
+			"termsVersion": "0.1",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher's own catalogue record is the grant. On catalogodatos.gub.uy the dataset `Direcciones Geográficas del Uruguay` sits in the organization `ide`, the Infraestructura de Datos Espaciales, with `license_id: odc-uy` and a `license_url` that is the licence PDF on gub.uy (`uy-ckan-direcciones.json`, `uy-licencia-datos-abiertos.pdf`). The record's resources are the nineteen department CSVs the `ide-uy` adapter reads, matched by URL in `/mnt/mw/corpus/sources/ide-uy/package_show.json` and each file's receipt. The licence names no SPDX identifier, which is why none is recorded. Its Autorización clause grants, `para uso comercial y no comercial`, that the data `podrán ser: enajenados, reproducidos, distribuidos, publicados, traducidos, adaptados, transformados, comunicados o puestos a disposición del público mediante cualquier forma o procedimiento; fusionados con datos propios y de terceros, pudiendo combinarse para formar conjuntos de datos nuevos e independientes; integrados en los procesos de negocio, productos y aplicaciones internas y externas`. The Nota de Origen clause conditions all of it: cite `el nombre del proveedor`, `la referencia a la \"Licencia de Datos Abiertos – Uruguay\"` and `la referencia al conjunto de datos que está siendo utilizado`, and `Los cambios, las ediciones, los nuevos diseños o modificaciones deben ser mencionados en la nota de origen`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Autorización clause grants that the data may be `reproducidos`, which is what copying the published CSVs performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `adaptados, transformados` and `combinarse para formar conjuntos de datos nuevos e independientes`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants adaptation and transformation, and the Nota de Origen requires that changes `deben ser mencionados`, so the obligation is a disclosure rather than a restriction. The adapter re-renders each point as an address line, drops unnamed streets and route-kilometre points, and omits the rural-remainder census locality, which the note of origin states."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `integrados en los procesos de negocio, productos y aplicaciones internas y externas`, for commercial use, which is the act a model fitted on the rows performs."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `distribuidos, publicados` and `puestos a disposición del público mediante cualquier forma o procedimiento`, conditioned on the Nota de Origen naming the provider, the licence and the dataset."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The text grants both acts a weight release could be read as, integration into a product and distribution of a new data set, the second under the Nota de Origen. No release has yet been checked against that note's three citations and its disclosure of changes, so the operation is left for the release that ships these rows."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward, so the text settles neither."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-uy-infraestructura-de-datos-espaciales-ide-urugu"
 		},
 		{
 			"state": "refused",
@@ -24484,6 +24528,35 @@
 			"publisher": "Bundesamt für Statistik BFS",
 			"sourceURL": "https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/CSV/CH/CH.zip",
 			"note": "The on-disk openaddresses/extracted/ch/countrywide.csv is dated 2021-10-17. OpenAddresses switched ch/countrywide to swisstopo's official building address directory only on 2024-11-22 (520f9ebf45a6), so the file the rendered-ch and fragment-assay recipes read is this BFS publication rather than ch-property-building-1."
+		},
+		{
+			"sourceID": "uy-property-building-1",
+			"iso2": "UY",
+			"sector": "property-building",
+			"name": "Direcciones Geográficas del Uruguay",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The IDE, the national spatial data infrastructure under Presidencia de la República, publishes the national geographic address points",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-uy-infraestructura-de-datos-espaciales-ide-urugu",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "One CSV per department on catalogodatos.gub.uy, CKAN dataset `ide-direcciones-geograficas-del-uruguay` in the organization `ide`",
+			"publisher": "Infraestructura de Datos Espaciales (IDE Uruguay)",
+			"sourceURL": "https://catalogodatos.gub.uy/dataset/ide-direcciones-geograficas-del-uruguay",
+			"note": "Read by the ide-uy adapter. 1,059,247 address points across 19 department files retrieved 2026-10-17, each with postcode, street, door number and census locality.",
+			"adapterID": "ide-uy",
+			"addressRoles": {
+				"nombre_via": "premise"
+			},
+			"coverage": "Direcciones Geográficas del Uruguay, nineteen CSVs, one per department, from the CKAN dataset `ide-direcciones-geograficas-del-uruguay` of the organization `ide` on catalogodatos.gub.uy, metadata modified 2026-10-01 and retrieved 2026-10-17. **Measured 1,059,247 address points** by parsing every file: Montevideo 386,986, Canelones 171,140, Maldonado 57,656, Colonia 49,161 and the other fifteen departments between 10,102 (Flores) and 37,708 (Paysandú). Every row carries `codigo_postal`, `nombre_via` and `departamento`; `num_puerta` is present on 1,057,744, `localidad` on 1,059,164, `letra_puerta` on 30,103, `km` on 1,361, `manzana` on 524,558 and `nombre_inmueble` on 904. 47,486 rows of the adapter's output name a census locality `<DEPARTAMENTO> RURAL`, the department's rural remainder, and 25,504 name a generated code (`UYARMQA_SN_012`) where the street is unnamed. **The files are Windows-1252, not UTF-8**, and a street holding a nickname is quoted with doubled quotes (`\"AVENIDA JOSE \"\"PEPE\"\" D' ELIA\"`), so a reader that splits on `,` misaligns nine Montevideo lines.",
+			"upstreamLineage": [
+				"https://catalogodatos.gub.uy/api/3/action/package_show?id=ide-direcciones-geograficas-del-uruguay"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The fifteen columns were read in full, and fourteen are address structure: a position, a postcode, a street code and name, a door number and letter, a route kilometre, a block and lot, a census locality and its code, and the department. `nombre_inmueble`, the building name, is free text on 904 rows. Read by its leading words, it names post offices (`AG OFICIAL CORREO` 128, `SUC CORREO` 103), police stations (`SECCIONAL`), municipal and ministry buildings, and holiday houses (`CHALET LA`, `CHALET MARIA`). Three rows name a mail distribution agent by the agent's own name (`Agente Distribucion` followed by a person's given and family names), which is a natural person's name at an address. The `ide-uy` adapter refuses those values (`component:venue:names-a-person`) and every value without a three-letter word, so no person's name reaches a row; a holiday house's given name (`CHALET MARIA`) names the property rather than identifying anyone.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/README.md"
+			}
 		}
 	]
 }

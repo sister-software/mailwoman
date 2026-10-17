@@ -85,6 +85,7 @@ import { usgovImlsPlsAdapter } from "#us/adapters/usgov/imls-pls/adapter"
 import { USGovIRSBMFAdapter } from "#us/adapters/usgov/irs-bmf/adapter"
 import { usgovNADAdapter } from "#us/adapters/usgov/nad/adapter"
 import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
+import { ideUruguayAdapter } from "#uy/adapters/ide/adapter"
 
 /**
  * Built-in adapters.
@@ -107,6 +108,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	banAdapter,
 	matrikkelenAdapter,
 	ryhtiAdapter,
+	ideUruguayAdapter,
 	czCuzkAdapter,
 	dkInspireAdapter,
 	adsAdapter,

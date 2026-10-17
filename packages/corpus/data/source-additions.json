@@ -2355,6 +2355,21 @@
 			"source_url": "https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/CSV/CH/CH.zip",
 			"notes": "The on-disk openaddresses/extracted/ch/countrywide.csv is dated 2021-10-17. OpenAddresses switched ch/countrywide to swisstopo's official building address directory only on 2024-11-22 (520f9ebf45a6), so the file the rendered-ch and fragment-assay recipes read is this BFS publication rather than ch-property-building-1.",
 			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "UY",
+			"sector": "property_building",
+			"source": "Direcciones Geográficas del Uruguay",
+			"owner": "Infraestructura de Datos Espaciales (IDE Uruguay)",
+			"role": "OBSERVATION",
+			"authority_basis": "The IDE, the national spatial data infrastructure under Presidencia de la República, publishes the national geographic address points",
+			"access": "One CSV per department on catalogodatos.gub.uy, CKAN dataset `ide-direcciones-geograficas-del-uruguay` in the organization `ide`",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://catalogodatos.gub.uy/dataset/ide-direcciones-geograficas-del-uruguay",
+			"notes": "Read by the ide-uy adapter. 1,059,247 address points across 19 department files retrieved 2026-10-17, each with postcode, street, door number and census locality.",
+			"origin": "2026-10-17_corpus_input_mapping"
 		}
 	]
 }

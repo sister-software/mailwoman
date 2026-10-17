@@ -55,6 +55,11 @@ export const SourceRegister = {
 	 */
 	MatrikkelenAdresse: "no-matrikkelen-adresse",
 	/**
+	 * `Direcciones Geográficas del Uruguay`, the national address points the Infraestructura
+	 * de Datos Espaciales publishes as one CSV per department on catalogodatos.gub.uy.
+	 */
+	UruguayIDEDirecciones: "uy-ide-direcciones",
+	/**
 	 * The INSPIRE Addresses theme of the Czech Office for Surveying, Mapping and Cadastre.
 	 *
 	 * ČÚZK publishes one zipped GML per municipality, 6,258 of them, through an ATOM service.

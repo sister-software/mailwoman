@@ -50,6 +50,7 @@ import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { JSONSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
@@ -68,6 +69,19 @@ export const ADS_ADAPTER_ID = "ads"
  * matches `EE` or asks for a jurisdiction the dataset does not publish.
  */
 export const ADS_COUNTRIES: readonly string[] = ["EE"]
+
+const ESTONIAN_STREET_TYPES = await loadLibpostalDictionary("et", "street_types.txt")
+
+/**
+ * Whether a locator name ends in an Estonian street type (`tänav`, `tee`, `maantee`, `pst`).
+ *
+ * Such a locator name is the street's own name, where any other is a farm or building name.
+ */
+export function locatorNamesStreet(locatorName: string): boolean {
+	const last = locatorName.trim().split(/\s+/u).at(-1)?.toLowerCase().replace(/\.$/u, "") ?? ""
+
+	return ESTONIAN_STREET_TYPES.has(last)
+}
 
 /**
  * The license the address-source register elected for this publisher.
@@ -184,6 +198,10 @@ export function createADSAdapter(): CorpusAdapter {
 					}
 
 					components.street = street
+				} else if (locatorName && locatorNamesStreet(locatorName)) {
+					// ADS addresses a road's own parcel by the road's name (`Paju tänav`), with no
+					// thoroughfare element and no number, so that name is the street rather than a site.
+					components.street = locatorName
 				} else if (locatorName) {
 					// With no thoroughfare the locator name is the site or building name
 					// that designates the addressable unit.
