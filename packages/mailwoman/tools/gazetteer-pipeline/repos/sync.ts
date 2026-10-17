@@ -16,8 +16,9 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { runFileSync } from "@mailwoman/core/process"
-import type { PathBuilderLike } from "path-ts"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { GitClient } from "@mailwoman/core/git"
+import { dirname, type PathBuilderLike } from "path-ts"
 
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "#gazetteer/wof/repo-origin"
 
@@ -171,10 +172,6 @@ export function planRepoSync(origin: RepoOrigin, directory: string, state: Clone
 	return plan(SyncAction.UpToDate, `at the ${origin.source} tip`)
 }
 
-function git(cwd: string, args: string[]): string {
-	return runFileSync("git", args, { cwd, encoding: "utf8", stdio: "pipe" }).trim()
-}
-
 /**
  * Read one checkout's state.
  *
@@ -194,43 +191,41 @@ const UNINSPECTED = {
 export async function inspectClone(directory: string): Promise<CloneState> {
 	if (!(await pathExists(directory))) return { exists: false, isRepository: false, ...UNINSPECTED }
 
+	const client = new GitClient({ cwd: directory })
+
 	try {
-		git(directory, ["rev-parse", "--git-dir"])
+		await client.read(["rev-parse", "--git-dir"])
 	} catch {
 		return { exists: true, isRepository: false, ...UNINSPECTED }
 	}
 
-	const read = (args: string[]): string | null => {
-		try {
-			return git(directory, args)
-		} catch {
-			return null
-		}
-	}
+	const read = (args: string[]): Promise<string | null> => client.read(args).catch(() => null)
 
 	// Compared against origin's branch rather than `@{u}`: `git remote rename origin upstream`
 	// rewrites `branch.<name>.remote`.
 	// After a re-point, the tracked upstream is the remote we moved away from.
 	// A clone level with its fork would then report unpushed commits.
-	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
+	const branch = await read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
-		(branch && branch !== "HEAD" ? read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`]) : null) ??
-		read(["rev-list", "--left-right", "--count", "HEAD...origin/HEAD"]) ??
-		read(["rev-list", "--left-right", "--count", "HEAD...@{u}"])
+		(branch && branch !== "HEAD"
+			? await read(["rev-list", "--left-right", "--count", `HEAD...origin/${branch}`])
+			: null) ??
+		(await read(["rev-list", "--left-right", "--count", "HEAD...origin/HEAD"])) ??
+		(await read(["rev-list", "--left-right", "--count", "HEAD...@{u}"]))
 
 	const [ahead, behind] = counts ? counts.split(/\s+/).map(Number) : [null, null]
 
 	return {
 		exists: true,
 		isRepository: true,
-		originURL: read(["remote", "get-url", "origin"]),
-		dirty: read(["status", "--porcelain"]) !== "",
+		originURL: await read(["remote", "get-url", "origin"]),
+		dirty: (await read(["status", "--porcelain"])) !== "",
 		ahead: ahead ?? null,
 		behind: behind ?? null,
-		shallow: read(["rev-parse", "--is-shallow-repository"]) === "true",
-		head: read(["rev-parse", "--short", "HEAD"]),
-		headDate: read(["log", "-1", "--format=%cI"]),
+		shallow: (await read(["rev-parse", "--is-shallow-repository"])) === "true",
+		head: await read(["rev-parse", "--short", "HEAD"]),
+		headDate: await read(["log", "-1", "--format=%cI"]),
 	}
 }
 
@@ -246,6 +241,11 @@ export async function planReposSync(options: {
 	probe: ForkProbe
 	directoryFor: (repo: string) => PathBuilderLike
 	fetchFirst?: boolean
+	/**
+	 * Receives each git client the planner fetches through, so a caller can render its progress.
+	 */
+	watch?: (client: GitClient) => void
+	signal?: AbortSignal
 }): Promise<RepoSyncPlan[]> {
 	const plans: RepoSyncPlan[] = []
 
@@ -254,21 +254,68 @@ export async function planReposSync(options: {
 		const directory = options.directoryFor(repo).toString()
 
 		if (options.fetchFirst !== false && (await pathExists(directory))) {
-			try {
-				// Preserve clone depth.
-				// A shallow clone keeps its depth.
-				// A full clone keeps complete history.
-				git(directory, ["fetch", "--quiet", "origin"])
-			} catch {
-				// An unreachable remote is reported through `behind: null` rather than aborting the whole sweep.
-				// One dead remote must not hide the other repos' verdicts.
-			}
+			await using client = new GitClient({ cwd: directory, signal: options.signal })
+
+			options.watch?.(client)
+
+			// Preserve clone depth.
+			// A shallow clone keeps its depth.
+			// A full clone keeps complete history.
+			// An unreachable remote is reported through `behind: null` rather than aborting the whole sweep.
+			// One dead remote must not hide the other repos' verdicts.
+			await client.fetch("origin", { reject: false })
 		}
 
 		plans.push(planRepoSync(origin, directory, await inspectClone(directory)))
 	}
 
 	return plans
+}
+
+/**
+ * Execute one plan: clone a missing repo, fast-forward a stale one, or, with `repoint`,
+ * move a clone's `origin` onto the resolved fork.
+ *
+ * Answers the sentence a caller reports, or `null` for a plan that leaves the checkout as it is.
+ * Disposal of `client` stops a clone or fetch in progress.
+ */
+export async function applyRepoSyncPlan(
+	plan: RepoSyncPlan,
+	options: { client: GitClient; repoint?: boolean }
+): Promise<string | null> {
+	const { client } = options
+
+	if (plan.action === SyncAction.Clone) {
+		await makeDirectories(dirname(plan.directory))
+		await client.clone(plan.origin.url, plan.directory, { depth: 1 })
+
+		return `cloned ${plan.repo} from ${plan.origin.source}`
+	}
+
+	if (plan.action === SyncAction.FastForward) {
+		await client.read(["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
+
+		return `fast-forwarded ${plan.repo}`
+	}
+
+	if (plan.action === SyncAction.RepointRequired && options.repoint) {
+		// The next upstream sync would need a guess without the fork's address.
+		await client.read(["-C", plan.directory, "remote", "rename", "origin", "upstream"])
+		await client.read(["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
+		await client.start(["-C", plan.directory, "fetch", "--progress", "origin"]).result
+
+		// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the
+		// next `git pull` here pulls upstream over the corrections this command preserves.
+		const branch = await client.read(["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
+
+		if (branch && branch !== "HEAD") {
+			await client.read(["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
+		}
+
+		return `re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`
+	}
+
+	return null
 }
 
 /**

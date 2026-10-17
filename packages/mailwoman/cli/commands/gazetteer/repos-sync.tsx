@@ -9,12 +9,19 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { git } from "@mailwoman/core/git"
+import { GitClient } from "@mailwoman/core/git"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
-import { dirname, PathBuilder } from "path-ts"
+import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	ProgressLines,
+	useCommandTask,
+	useProgressFeed,
+} from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer/repos/sync"
 
 /**
@@ -43,11 +50,13 @@ const ACTION_MARK: Record<string, string> = {
 }
 
 const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
+	const progress = useProgressFeed()
+
 	const state = useCommandTask(async () => {
 		const { wofReposPath } = await import("@mailwoman/core/data-root")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { auditReposRoot } = await import("#gazetteer/repos/audit")
-		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer/repos/sync")
+		const { applyRepoSyncPlan, planReposSync, syncSentence } = await import("#gazetteer/repos/sync")
 		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer/wof/repo-origin")
 
 		const root = PathBuilder.from(options.root ?? wofReposPath())
@@ -79,39 +88,33 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 			probe: githubForkProbe,
 			directoryFor: (repo) => directories.get(repo)!,
 			fetchFirst: !options.offline,
+			watch: (client) => progress.watch(client, PathBuilder.from(client.cwd).basename()),
 		})
+
+		for (const repo of repos) {
+			progress.clear(repo)
+		}
 
 		const performed: string[] = []
 
 		if (options.apply) {
 			for (const plan of plans) {
+				await using client = new GitClient({ cwd: root })
+
+				const unwatch = progress.watch(client, plan.repo)
+
 				try {
-					if (plan.action === SyncAction.Clone) {
-						await makeDirectories(dirname(plan.directory))
-						await git(["clone", "--depth", "1", plan.origin.url, plan.directory])
-						performed.push(`cloned ${plan.repo} from ${plan.origin.source}`)
-					} else if (plan.action === SyncAction.FastForward) {
-						await git(["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
-						performed.push(`fast-forwarded ${plan.repo}`)
-					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
-						// The next upstream sync would need a guess without the fork's address.
-						await git(["-C", plan.directory, "remote", "rename", "origin", "upstream"])
-						await git(["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
-						await git(["-C", plan.directory, "fetch", "--quiet", "origin"])
+					const sentence = await applyRepoSyncPlan(plan, { client, repoint: options.repoint })
 
-						// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the
-						// next `git pull` here pulls upstream over the corrections this command preserves.
-						const branch = await git(["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
-
-						if (branch && branch !== "HEAD") {
-							await git(["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
-						}
-
-						performed.push(`re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`)
+					if (sentence) {
+						performed.push(sentence)
 					}
 				} catch (error) {
 					// oxlint-disable-next-line mailwoman/prefer-spliterator -- one git error message, read for its first line only
 					performed.push(`FAILED ${plan.repo}: ${(error as Error).message.split("\n")[0]}`)
+				} finally {
+					unwatch()
+					progress.clear(plan.repo)
 				}
 			}
 		}
@@ -140,7 +143,16 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		return { plans, sentence: syncSentence(plans), performed, vintagePath, applied: options.apply }
 	})
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running="Resolving WOF repo origins…" />
+	if (state.status === "running") {
+		return (
+			<Box flexDirection="column">
+				<Text color="gray">Resolving WOF repo origins…</Text>
+				<ProgressLines entries={progress.entries} />
+			</Box>
+		)
+	}
+
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	const { plans, sentence, performed, vintagePath, applied } = state.result
 
