@@ -138,10 +138,13 @@ test("remembers an opened hit, newest first, five at most", async () => {
 
 	localStorage.setItem(key, stringifyJSON(stored))
 
-	const { input, onNavigate } = mount(async (q) => response(q, ["/x"]), key)
+	const { container, input, onNavigate } = mount(async (q) => response(q, ["/x"]), key)
 
 	await userEvent.type(input, "six")
-	await vi.waitFor(() => expect(input.getAttribute("aria-expanded")).toBe("true"))
+	// The stored hits already expand the listbox while the field is empty,
+	// so `aria-expanded` is true before the search answers.
+	// Enter must wait for the search hit itself to render.
+	await vi.waitFor(() => expect(container.querySelector('[role="option"][href^="/x"]')).not.toBeNull())
 	await userEvent.keyboard("{Enter}")
 
 	expect(onNavigate).toHaveBeenCalledWith("/x")
