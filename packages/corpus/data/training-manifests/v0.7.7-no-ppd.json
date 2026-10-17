@@ -2,7 +2,7 @@
 	"manifestID": "corpus-training-manifest",
 	"schemaVersion": 1,
 	"corpusVersion": "v0.7.7-no-ppd",
-	"builtAt": "2026-10-17T19:37:56.564Z",
+	"builtAt": "2026-10-17T20:00:54.968Z",
 	"profile": "exploratory",
 	"sources": [
 		{
@@ -546,5 +546,5 @@
 	],
 	"refused": {},
 	"totalRows": 708995131,
-	"contentDigest": "f08fa9d8bf84a8f4790a68f85a97c2ed3633d6136fb23df06050b4a037464700"
+	"contentDigest": "5bad38748cfb035150e0ede469d5d17a6674e4f353adf6541d3b0824e73126ff"
 }
