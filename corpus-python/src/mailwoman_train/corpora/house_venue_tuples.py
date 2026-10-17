@@ -30,11 +30,11 @@ from ..paths import data_root_path
 
 #: v3 took its GB rows from HM Land Registry Price Paid Data, which is refused (#2635). v4 takes them from
 #: OS OpenData and stamps each GB tuple with `source: gb-os-open`, which the sub-venue recipe requires.
-#: v4's US rows mixed NAD with county and state bodies that OpenAddresses collects, whose register row is
-#: refused. v5 keeps only NAD rows (`countries/us/tuples.py`) and was written with
-#: `--carry gb --carry-from <v4>`: the GB sampler reads the shared generator after the US one, so
-#: resampling GB would have changed every GB tuple as well.
-OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v5.jsonl")
+#: v4's US rows mixed NAD with county and state bodies that OpenAddresses collects, whose collection row is
+#: refused. v5 kept only NAD rows. v6 keeps NAD rows and the rows of each body whose own register decision
+#: permits training (`countries/us/tuples.py`), and was written with `--carry gb --carry-from <v4>`: the GB
+#: sampler reads the shared generator after the US one, so resampling GB would have changed every GB tuple.
+OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v6.jsonl")
 
 #: Street surfaces held out for the FR eval fixture. The training tuples must exclude them or the
 #: put the board's own surfaces in the corpus.

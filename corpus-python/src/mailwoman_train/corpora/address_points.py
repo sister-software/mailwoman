@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import random
 import sqlite3
+from collections.abc import Collection
 from pathlib import Path
 
 #: A row as the table stores it: street, number, postcode, locality.
@@ -23,7 +24,7 @@ def sample_address_points(
     count: int,
     rng: random.Random,
     *,
-    source: str | None = None,
+    sources: Collection[str] | None = None,
     probe_budget: int = PROBE_BUDGET,
 ) -> list[AddressPoint]:
     """Sample by random rowid probe.
@@ -32,7 +33,7 @@ def sample_address_points(
     more time than drawing the sample by rowid probe. A row missing any of the four fields is skipped rather than
     emitted partially filled.
 
-    `source` keeps only rows whose `source` column equals it. A probe that lands on another source's row
+    `sources` keeps only rows whose `source` column is one of its values. A probe that lands on another source's row
     counts against `probe_budget`, so a caller filtering to a minority source raises the budget.
     """
     db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
@@ -56,7 +57,7 @@ def sample_address_points(
             if row is None:
                 continue
             street, number, postcode, locality, row_source = row
-            if source is not None and row_source != source:
+            if sources is not None and row_source not in sources:
                 continue
             if street and number and postcode and locality:
                 rows.append((street, number, postcode, locality))

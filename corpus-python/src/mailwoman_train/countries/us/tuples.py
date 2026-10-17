@@ -1,14 +1,16 @@
-"""The United States: house-venue tuples from the NAD rows of the per-state national-situs databases."""
+"""The United States: house-venue tuples from the admitted rows of the per-state national-situs databases."""
 
 from __future__ import annotations
 
+import json
 import random
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 from ...corpora.address_points import sample_address_points
-from ...paths import data_root_path
+from ...paths import data_root_path, repo_root_path
+from ...source_rights import SourceRights, committed_source_rights
 
 #: One database per state, with path pattern `address-points-us-<state>.db`. The state code comes off the
 #: filename. The row stores the state code nowhere else.
@@ -18,16 +20,29 @@ SITUS_DIR_PARTS = (
 )
 SITUS_GLOB = "address-points-us-*.db"
 
-#: The only `source` value whose rows these tuples may carry. The databases also hold
-#: `overture:OpenAddresses/<state>/<body>` and `openaddresses` rows: OpenAddresses does not relicense the
-#: county and state bodies it collects, and the register holds no per-body decision for them
-#: (`us-geodata-aggregate-3` is refused). Every non-NAD row in the databases is one of those, so no
-#: Overture row carries a license of its own to admit.
-SITUS_SOURCE = "overture:NAD"
+#: Maps each `source` value of the situs databases to the register rows its data comes from: `overture:NAD`
+#: to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to that body's own row and Overture.
+#: OpenAddresses does not relicense what it collects, so a body's rows are admitted on the body's decision.
+SITUS_SOURCES_PARTS = ("packages", "corpus", "data", "us-situs-sources.json")
 
-#: Probes per requested row. A state whose NAD rows are a few percent of its table (Minnesota holds 52,165
-#: NAD rows beside 2.2 million from its Department of Public Safety) needs dozens of probes per kept row.
+#: Probes per requested row. A state whose admitted rows are a few percent of its table needs dozens of probes
+#: per kept row.
 SITUS_PROBE_BUDGET = 512
+
+
+def admitted_situs_sources(rights: SourceRights | None = None, path: Path | None = None) -> frozenset[str]:
+    """The `source` values whose every register row holds an elected decision permitting transform and train.
+
+    A value the table does not map, such as the bare `openaddresses` of the Hawaii database, which names no body,
+    is not admitted.
+    """
+    table = json.loads((path or repo_root_path(*SITUS_SOURCES_PARTS)).read_text(encoding="utf-8"))
+    rights = rights or committed_source_rights()
+    return frozenset(
+        source
+        for source, register_sources in table["sources"].items()
+        if register_sources and all(rights.permits_training(row) for row in register_sources)
+    )
 
 
 def titlecase(text: str) -> str:
@@ -45,11 +60,12 @@ def iter_tuples(count: int, rng: random.Random) -> Iterator[dict[str, Any]]:
     The per-state databases differ by orders of magnitude in size, so an even draw would be
     California with a garnish. The budget is split evenly and the state order is shuffled, so a
     short run is a random subset of states rather than the alphabetical head. A state holding fewer
-    NAD rows than its share passes the shortfall to the states after it.
+    admitted rows than its share passes the shortfall to the states after it.
     """
     state_dbs = sorted(data_root_path(*SITUS_DIR_PARTS).glob(SITUS_GLOB))
     if not state_dbs:
         return
+    admitted = admitted_situs_sources()
     rng.shuffle(state_dbs)
     emitted = 0
     for index, db_path in enumerate(state_dbs):
@@ -57,7 +73,7 @@ def iter_tuples(count: int, rng: random.Random) -> Iterator[dict[str, Any]]:
             return
         per_state = max(1, -(-(count - emitted) // (len(state_dbs) - index)))
         state = state_code(db_path)
-        sampled = sample_address_points(db_path, per_state, rng, source=SITUS_SOURCE, probe_budget=SITUS_PROBE_BUDGET)
+        sampled = sample_address_points(db_path, per_state, rng, sources=admitted, probe_budget=SITUS_PROBE_BUDGET)
         for street, number, postcode, locality in sampled:
             if emitted >= count:
                 return
