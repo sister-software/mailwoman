@@ -196,8 +196,8 @@ inference.
 ## Attribution
 
 This model trained on address rows derived from OpenStreetMap: the `osm-ru`, `osm-in`, `osm-id`,
-`osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` extracts and two registers rendered from them, 103,322 of
-the 1,000,000 rows in one audited training epoch.
+`osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` extracts and two registers rendered from them. One audited
+training epoch emitted 103,322 of its 1,000,000 rows from those extracts and 15,609 from the registers.
 
 > © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
@@ -205,7 +205,8 @@ the 1,000,000 rows in one audited training epoch.
 `LICENSE.md` in this package lists every source whose rows reached the trainer and the attribution
 each one requires, and `PROVENANCE.json` records the effective training sources with their row counts.
 The training extracts are Derivative Databases under the ODbL, and they are separate artifacts from
-these weights. See https://mailwoman.ai/resources/osm/attribution for how Mailwoman reads the license,
+these weights. They are published under ODbL 1.0, with row counts and sha256 digests per file, at
+https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. See https://mailwoman.ai/resources/osm/attribution for how Mailwoman reads the license,
 including the versions published before this notice was added.
 
 ## License & links

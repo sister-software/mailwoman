@@ -83,8 +83,8 @@ Model rights files and model cards are separate from the retrieval-layer manifes
 
 The `@mailwoman/neural-weights-en-us` model version 10.1.0 (model `v7.2.0-address-systems`) trained on
 corpus `v0.7.2-address-systems`, whose `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and
-`osm-bd` sources derive from the 2026-10-02 Geofabrik extracts. One audited training epoch drew 103,322
-of its 1,000,000 rows from those sources and from two registers rendered from OSM tuples. Every locale
+`osm-bd` sources derive from the 2026-10-02 Geofabrik extracts. One audited training epoch emitted 103,322
+of its 1,000,000 rows from those sources and 15,609 from two registers rendered from OSM tuples. Every locale
 overlay that decodes through that graph (`en-gb`, `en-au`, `en-nz`, `en-in`, `de-de`, `es-es`, `it-it`,
 `fr-fr`) inherits this lineage.
 
@@ -97,6 +97,22 @@ OpenStreetMap statement over the sources that reached the trainer, `PROVENANCE.j
 effective training sources with their row counts, and the `en-us` README and model card carry the
 notice in prose. The frozen training record and the effective training manifest are committed in the
 repository under `packages/corpus/data/training-manifests/`.
+
+## The training extract
+
+The OpenStreetMap-derived training extract of corpus `v0.7.2-address-systems` is published under ODbL 1.0
+at [huggingface.co/datasets/sister-software/mailwoman-osm-training-extract](https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract).
+It is the offer that ODbL section 4.6(a) requires for the weights above: the derivative database in
+machine-readable form, as the 29 parquet files the trainer read. The files hold 2,572,934 rows from the
+eight `osm-*` sources, the earlier `osm` source and the two registers rendered from OSM tuples. The
+dataset's `MANIFEST.json` lists each file with its row count and sha256 digest, and its README states the
+Geofabrik extract dates and the repository revision that produced the files. The `en-us` package's
+`PROVENANCE.json` links the dataset under `data_access_offers`.
+
+One source that also reached the trainer is outside the extract. `spliced-sub-venue` splices venue names,
+drawn from merged OpenStreetMap and Overture Places name pools, onto OpenAddresses and HM Land Registry
+address skeletons. Its rows hold data under other licenses and record no per-row origin for the name. The
+dataset README records this.
 
 ## References and our interpretation
 
