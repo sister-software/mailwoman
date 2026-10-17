@@ -9,6 +9,7 @@
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -16,9 +17,10 @@ import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import { openConstituentCountryReader } from "#gb/constituent-country"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
@@ -28,12 +30,26 @@ import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
- * One source file: either a CSV member of a ZIP (`zip` and `csv`) or an extracted CSV (`path`).
+ * One source file: a CSV member of a ZIP (`zip` and `csv`), an extracted CSV (`path`),
+ * or an adapter's canonical rows (`canonicalRows`).
  */
 export interface LocalePart {
 	zip?: PathBuilderLike
 	csv?: string
 	path?: PathBuilderLike
+	/**
+	 * An adapter's `canonical.jsonl`, read in place of a CSV.
+	 *
+	 * Each row's `components` supplies the house number, street, locality and postcode.
+	 * Every row must carry {@linkcode LocalePart.canonicalSource} as its `source`.
+	 */
+	canonicalRows?: PathBuilderLike
+	/**
+	 * The `source` every row of {@linkcode LocalePart.canonicalRows} must carry.
+	 *
+	 * A row from any other source throws, so a file another adapter wrote is never read as this one.
+	 */
+	canonicalSource?: string
 	region?: string
 	/**
 	 * Maps the district column to locality and the city column to dependent locality.
@@ -70,6 +86,12 @@ export interface LocaleCountrySource {
 	 * The corpus version written to each row.
 	 */
 	corpusVersion: string
+	/**
+	 * The dataset and terms the row's `license` names, before the rendering order.
+	 *
+	 * @defaultValue `OpenAddresses <CC> tuples`
+	 */
+	license?: string
 	/**
 	 * Replacement parts used when `--district-as-locality` is passed as true.
 	 */
@@ -161,15 +183,19 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
-		// Price Paid Data stores the postal town in `district` and an optional dependent locality in `city`.
-		source: defaultRecipeSource("synth-gb"),
-		register: SourceRegister.LandRegistryPricePaid,
+		// The `gb-os-open` adapter's rows: Code-Point Open postcodes joined to OS Open Roads and OS Open Names.
+		// `rendered-gb` read HM Land Registry Price Paid Data, whose address fields
+		// Royal Mail and Ordnance Survey license for non-commercial use only (#2635),
+		// so GB rows carry a source name of their own.
+		source: defaultRecipeSource("synth-gb-os-open"),
+		register: SourceRegister.OrdnanceSurveyOpenData,
 		corpusVersion: "0.9.9",
-		// The `REGION` column holds a county, so the constituent country is read from NSUL by postcode instead.
+		license: "OS OpenData GB tuples (OGL-UK-3.0)",
+		// The constituent country is read from NSUL by postcode, because the adapter's rows carry no region.
 		parts: [
 			{
-				path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"),
-				districtAsLocality: true,
+				canonicalRows: gbOSOpenCanonicalRowsPath(),
+				canonicalSource: GB_OS_OPEN_ADAPTER_ID,
 				regionOfPostcode: () => {
 					const countryOf = openConstituentCountryReader()
 
@@ -225,12 +251,101 @@ interface ColumnIndex {
 }
 
 /**
+ * One row of an adapter's `canonical.jsonl`, as far as the locale recipe reads it.
+ */
+interface CanonicalTupleRow {
+	source?: unknown
+	components?: Partial<Record<"house_number" | "street" | "locality" | "postcode", unknown>>
+}
+
+/**
+ * Reservoir-samples an adapter's canonical rows with Algorithm R, using `rng` for reproducibility.
+ *
+ * A row without a street or locality is skipped.
+ * A missing file throws rather than reading as an empty part.
+ *
+ * @throws When a row's `source` differs from `part.canonicalSource`.
+ */
+async function readCanonicalTuples(
+	part: LocalePart,
+	rows: PathBuilderLike,
+	rng: () => number
+): Promise<LocaleBaseTuple[]> {
+	if (!(await pathExists(rows))) {
+		throw new Error(
+			`${rows.toString()} is absent. Write it with \`mailwoman corpus run ${part.canonicalSource ?? "<adapter>"}\`.`
+		)
+	}
+
+	const reservoir: LocaleBaseTuple[] = []
+	const regionOf = part.regionOfPostcode?.()
+	let seen = 0
+	let regionUnknown = 0
+
+	for await (const row of JSONSpliterator.fromAsync<CanonicalTupleRow>(rows)) {
+		if (part.canonicalSource && row.source !== part.canonicalSource) {
+			throw new Error(
+				`${rows.toString()} holds a row from source ${stringifyJSON(row.source)}; this part reads ${part.canonicalSource} rows only.`
+			)
+		}
+
+		const components = row.components ?? {}
+		const text = (value: unknown): string => (typeof value === "string" ? value.trim() : "")
+		const street = text(components.street)
+		const locality = text(components.locality)
+
+		if (!street || !locality) continue
+
+		const postcode = text(components.postcode)
+		let region = part.region ?? ""
+
+		if (regionOf) {
+			region = (postcode && regionOf(postcode)) || ""
+
+			if (!region) {
+				regionUnknown++
+			}
+		}
+
+		const tuple: LocaleBaseTuple = {
+			house_number: text(components.house_number),
+			street,
+			locality,
+			region,
+			postcode,
+		}
+
+		seen++
+
+		if (reservoir.length < RESERVOIR_CAP) {
+			reservoir.push(tuple)
+		} else {
+			const j = Math.floor(rng() * seen)
+
+			if (j < RESERVOIR_CAP) {
+				reservoir[j] = tuple
+			}
+		}
+	}
+
+	console.error(`  ${rows.toString()}: ${reservoir.length} sampled of ${seen} rows`)
+
+	if (regionOf) {
+		console.error(`  ${rows.toString()}: ${regionUnknown} rows have no region for their postcode`)
+	}
+
+	return reservoir
+}
+
+/**
  * Streams tuples from one part and reservoir-samples them with Algorithm R,
  * using `rng` for reproducibility.
  *
  * A read failure logs a warning and returns an empty list.
  */
 export async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
+	if (part.canonicalRows) return readCanonicalTuples(part, part.canonicalRows, rng)
+
 	// The stream stays as bytes because CSVSpliterator decodes UTF-8 itself.
 	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
 		? openReadStream(part.path)
@@ -421,7 +536,8 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
  */
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
-	description: "Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples, both orders → renderLocaleRow",
+	description:
+		"Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples (OS OpenData for GB), both orders → renderLocaleRow",
 	mode: "generate",
 	options: [
 		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
@@ -562,7 +678,7 @@ export const localeRecipe: CorpusRecipe = {
 				source,
 				source_id: sourceID,
 				corpus_version: countrySource.corpusVersion,
-				license: `OpenAddresses ${country} tuples, rendered ${order}-order — see ingest SOURCES`,
+				license: `${countrySource.license ?? `OpenAddresses ${country} tuples`}, rendered ${order}-order — see ingest SOURCES`,
 			}
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])

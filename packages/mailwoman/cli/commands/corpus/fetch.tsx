@@ -40,6 +40,7 @@ const sources = [
 	"es-navarra",
 	"fr-annuaire-education-overseas",
 	"fr-finess-overseas",
+	"gb-os-open",
 	"gcis-tw",
 	"gleif",
 	"houjin-jp",
