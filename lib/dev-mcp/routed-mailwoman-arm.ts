@@ -229,7 +229,7 @@ export async function buildRoutedMailwomanArm(
 	)
 
 	const locales = ["en-US", ...Object.values(routes)].filter((locale, index, all) => all.indexOf(locale) === index)
-	// One memo per arm, so an artifact several locales share is digested once.
+	// One memo serves every arm, so an artifact several locales share is digested once.
 	const digests = new Map<string, Promise<string>>()
 	const artifacts = await Promise.all(locales.map(async (locale) => resolveLocale(locale, cacheRoot, deps, digests)))
 	const baseModelPath = artifacts[0]!.model_path

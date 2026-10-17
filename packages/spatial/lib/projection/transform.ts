@@ -34,7 +34,7 @@ import { TextSpliterator } from "spliterator"
  */
 export interface DatumTransformationVerdict {
 	/**
-	 * The candidate operation string returned by PROJ, verbatim.
+	 * PROJ returned this candidate operation string, verbatim.
 	 *
 	 * Null when PROJ returned no candidate operation.
 	 */

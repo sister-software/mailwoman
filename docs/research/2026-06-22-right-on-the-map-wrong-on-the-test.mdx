@@ -48,7 +48,7 @@ So that's the good half, and we'll take it. The direct half is the left column, 
 
 Look down the `resolves` rate and a pattern falls out that is unrelated to accuracy and is entirely about us. France and Italy — the two locales we've poured training data into — resolve about 80% of the time. Everywhere we haven't, the rate drops by a third or more: Portugal, Poland, and Austria resolve around half the time, and Czechia resolves at 43. Australia resolves at 28 and misplaces what little it does resolve. We've barely touched Australia, and its own town names collide across states. The model isn't worse at _understanding_ those addresses. It's worse at producing an answer for them at all, and the cliff lines up exactly with where our corpus stops.
 
-That's the uncomfortable, useful shape of it. The wall isn't precision — when the model commits to an answer abroad, the answer is good. One asterisk, and it's a candid one: those are the answers the model _chose_ to give, and the addresses it drops skew toward the harder ones, so read the resolved distances as a ceiling rather than an average. The wall is recall, and recall is a map of our own training data drawn in someone else's country.
+That's the uncomfortable, useful shape of it. The wall isn't precision — when the model commits to an answer abroad, the answer is good. One asterisk applies, and it's a candid one: those are the answers the model _chose_ to give, and the addresses it drops skew toward the harder ones, so read the resolved distances as a ceiling rather than an average. The wall is recall, and recall is a map of our own training data drawn in someone else's country.
 
 ## Not the gazetteer's fault
 

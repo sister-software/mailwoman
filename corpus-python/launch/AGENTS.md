@@ -81,9 +81,39 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    ~7M. Killed at step 2000, disabled the mask, relaunched (loss 5.0→1.6)._ Don't bundle a per-locale
    label/transition mask with a recipe that teaches a label that locale's convention forbids — reconcile
    the convention table with the actual training labels first.
+
+   `modal app logs` is a best-effort tail. It stalls after `Heartbeat attempt failed` lines while the
+   training continues, so a silent log is no evidence of progress. Read a run's progress from the
+   volume: `modal volume ls mailwoman-training output-<run>/` lists the latest `step-<N>` checkpoint,
+   and the `[eval]` lines of `train_log.csv` on the volume carry the eval trajectory.
+
 9. **Watch the check:** the recipe's pre-registered check is canonical — targets move up, non-regression
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
    never a quiet pass. A bar restated from memory drifts.
+
+## A config derived from a control
+
+When a training config is derived from a control's config, load both with `load_config` and assert
+that the parsed key sets match, naming any key that is present in only one. A text pattern over
+the YAML misses a quoted key: YAML 1.1 resolves bare `NO` to `false`, so Norway's `country_weights`
+entry is written `"NO": 1.0`, and a regex over unquoted keys drops it. `ConfigSchema` refuses the
+unquoted spelling. The omission is visible only from the parse.
+
+## Trackio
+
+Trackio (`src/mailwoman_train/observability/trackio.py`) logs training progress to the private HF
+Space `sister-software/mailwoman-trackio`. It is off by default and a no-op when disabled. The
+durable store is the HF bucket `sister-software/mailwoman-trackio-bucket` at `trackio/mailwoman.db`
+rather than an HF dataset. The Space's `TRACKIO_DIR` is ephemeral and is restored from the bucket on
+boot, so a legend that lists runs beside empty charts means a stale running Space: restart it with
+`POST /api/spaces/<id>/restart`, and the metrics survive in the bucket. The Space needs an `HF_TOKEN`
+secret with bucket read-write access.
+
+Inspect the store directly with
+`hf buckets cp hf://buckets/sister-software/mailwoman-trackio-bucket/trackio/mailwoman.db <local>`
+and read the sqlite `metrics` and `configs` tables, keyed by `run_name` and `step`. The run name is
+derived from `output_dir` and `resume` is `"allow"`, so a restarted run continues the same dashboard
+run.
 
 ## Stale `__pycache__`
 

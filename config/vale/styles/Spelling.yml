@@ -1,10 +1,10 @@
 ## Mailwoman house style: US English spelling.
 ##
 ## The site's base register is US English (docs/engineering/writing-system.md
-## §Canonical terms), but nothing enforced it until this rule: an en-GB spelling
-## sailed through every gate, and Task 17's review found ten of them sitting in
-## the glossary — including `locality`, whose tooltip is injected into every
-## page on the site.
+## §Canonical terms), and this rule is what enforces it: before it, an en-GB
+## spelling passed every lint, and the docs-reorg review found ten of them
+## sitting in the glossary — including `locality`, whose tooltip is injected
+## into every page on the site.
 ##
 ## SCOPE IS PROSE ONLY, and that falls out of the parser rather than out of this
 ## file. Measured on @vvago/vale 3.17.0 with a two-entry probe rule: a hit in
@@ -22,7 +22,7 @@
 ## replacement — `metres?` would tell a writer that "metre" should be "meters".
 ## Sharing a stem across entries is safe: the combined pattern carries word
 ## boundaries, so "normalisation" cannot be reported as "normalise" (measured
-## against scripts/vale-fixtures/dirty.md, which carries both).
+## against config/vale/fixtures/dirty.md, which carries both).
 ##
 ## `licence` is listed and the Nominatim response field of the same name is not
 ## affected: the drop-in pages carry it as `licence` in a JSON fence and as

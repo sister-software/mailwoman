@@ -1,8 +1,8 @@
 # Dirty chat fixture
 
-This file exists to trip every MailwomanChat Vale rule on purpose, using the
+This file exists to trip every chat-only Vale rule on purpose, using the
 sentence shapes that shipped in agent replies. It is linted with
-`.vale-chat.ini`, which layers MailwomanChat on the shared Mailwoman style.
+`.vale-chat.ini`, which loads the whole `styles/` directory.
 One line per rule token, so a token that stops firing is visible per line.
 
 The loader reads each row, which validates the fields and records the result, so the report can compare runs.

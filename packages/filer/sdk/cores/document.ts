@@ -15,7 +15,7 @@ const CORES_BASE_URL = "https://apps.fcc.gov"
 /**
  * The subset of {@linkcode CORESClient} a caller needs to fetch one registration.
  *
- * One method, so a test can substitute a trivial stub instead of building an axios harness.
+ * One method suffices, so a test can substitute a trivial stub instead of building an axios harness.
  *
  * Mirrors `exhibit21.ts`'s `SECDocumentClient` precedent.
  * A real `createCORESClient()` instance satisfies it structurally.

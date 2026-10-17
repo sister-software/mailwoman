@@ -15,7 +15,7 @@ import { type CommandSpec, renderInkCommand, runNativeCommand } from "mailwoman/
 import { type ComponentType, createElement } from "react"
 
 /**
- * The spec and component exported by a command module.
+ * A command module exports this spec and component.
  */
 interface CommandModule {
 	spec: CommandSpec

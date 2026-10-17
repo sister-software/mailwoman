@@ -31,7 +31,7 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	// Two separate groups so each fog reading gets its own checkbox.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
-	// One group per jurisdiction measure, and one for the jurisdiction borders.
+	// Each jurisdiction measure gets its own group, and the jurisdiction borders get one.
 	{ name: "Jurisdictions · training draws", match: /^jurisdictions-draws/ },
 	{ name: "Jurisdictions · eligible sources", match: /^jurisdictions-sources/ },
 	{ name: "Jurisdictions · address system", match: /^jurisdictions-address-system/ },

@@ -79,7 +79,7 @@ export interface GLEIFPublishedFile {
 }
 
 /**
- * The receipt written beside the archive.
+ * The receipt that sits beside the archive.
  */
 export interface GLEIFGoldenCopyReceipt {
 	source: string

@@ -111,7 +111,7 @@ def write_fixture(root: Path) -> tuple[Path, Path]:
 
 
 def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Namespace:
-    """Every fraction non-zero, so every optional draw is taken off the shared RNG stream."""
+    """Every fraction is non-zero, so every optional draw is taken off the shared RNG stream."""
     return argparse.Namespace(
         parquet=str(parquet),
         kenall=str(kenall),
@@ -135,7 +135,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
 
 
 def run_build(root: Path) -> dict[str, Any]:
-    """One build, returned as the pinned payload."""
+    """Runs one build and returns it as the pinned payload."""
     parquet, kenall = write_fixture(root)
     out_dir = root / "corpus"
     report = build(reference_args(parquet, kenall, out_dir))

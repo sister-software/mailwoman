@@ -14,6 +14,15 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 - WOF admin SQLite at `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
 - Compiled workspace: `yarn compile`
 
+## The canonical gazetteer
+
+The canonical gazetteer is the WOF SQLite database that `mailwoman gazetteer build admin` assembles
+from the repositories pinned in `data/gazetteer/wof-build-manifest.json`. Never download or use a
+prebuilt geocode.earth `whosonfirst-data-*-latest.db` dump in its place. The two assign different WOF
+ids to the same place, so eval ground truth sampled from one and resolved against the other never
+matches. When the custom schema lacks a field, extend the build. US postcodes are a separate
+`postalcode-us.db`, built with `--placetypes postalcode`, and the resolver attaches both databases.
+
 ## Pipeline steps
 
 ### 1. Build unified SQLite from GeoJSON repos (optional, ~45s)
@@ -107,6 +116,35 @@ has no `place_importance` table, and no admin DB has ever contained one (#1142) 
 `importance` field is population-scaled rather than Wikipedia importance, and the provenance field counts
 population rows rather than importance matches. Step 2 exists to fix that. Until it runs against the
 live DB, that is what the number means.
+
+## The candidate database rebuild
+
+The candidate build folds GeoNames aliases into the admin DB and then builds the byte-range
+candidate database from the fold:
+
+```bash
+NODE_OPTIONS=--max-old-space-size=16384 \
+node packages/mailwoman/out/cli/main.js gazetteer build candidate --fold \
+  --admin admin-global-priority.db \
+  --fold-out admin-global-priority-geonames-<date>.db \
+  --out <candidate db>
+```
+
+The `--fold` step exhausts the default heap, so the `NODE_OPTIONS` setting is required. The fold is
+remade from the current admin DB after every admin swap. `admin/fold/staleness.ts` refuses a fold
+older than its admin DB unless `--allow-stale-fold` names the exception.
+
+## The admin DB augment
+
+An augment copies the frozen live admin DB, backfills a country list from Overture divisions through
+`ingestOvertureDivisions`, re-freezes the copy, and runs `VACUUM`. Three rules govern the augment:
+
+- An alias reaches the candidate table only through `place_search.alt_names`. Rebuild the FTS with
+  `buildPlaceSearchFts(db, {drop: true})`, and write each Latin common name into `names`.
+- An Overture division carries no population. Apply the GeoNames population to each ingested row, or
+  a small namesake outranks the real city.
+- `ingestOvertureDivisions` numbers ids from `OVERTURE_ID_BASE + 0` on every run. An incremental
+  augment passes `idBase = max(spr.id) + 1`, or the run replaces the rows a prior run inserted.
 
 ## Expected output
 

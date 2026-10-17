@@ -117,6 +117,13 @@ A row with no population and a row with population 0 both score 0. That score ad
 ranking key and applies a penalty of 0. WOF records population for only about 15% of localities, so
 most rows have a score of 0.
 
+On `candidate.db`'s primary rows, `population > 0` holds on 29% and `importance > 0` on 38%, and a
+present value can be wrong: Croydon's GB locality row carries a population of 206, and Grimsby
+carries neither value. A filter, threshold or ranking that treats a missing value as small turns a
+partial read into a valid-looking zero. A venue-head exclusion keyed on a population above 1,000
+admitted Croydon, Grimsby, Southend and Fremantle as venue heads. Treat the absence as unknown, and
+prefer a membership test (whether the name is an admin name at all) over a magnitude cutoff.
+
 The candidate backend's `score` is `−neg_rank`, a log-population rank that measured 5–7 on the 40
 gold rows in [Resolver backends](./resolver-backends.mdx). `minWinningScore` checks this value, so
 the floor it sets is a minimum population rank and holds no information about confidence.

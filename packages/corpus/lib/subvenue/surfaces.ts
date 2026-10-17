@@ -42,7 +42,7 @@ export function normalizeSurface(text: string): string {
 }
 
 /**
- * A phrase-to-record index keyed by the normalized phrase.
+ * The normalized phrase keys this phrase-to-record index.
  * It attributes a matched phrase to its record.
  */
 export type SurfaceIndex = ReadonlyMap<string, { recordID: string; recordKind: "designator" | "modifier" }>

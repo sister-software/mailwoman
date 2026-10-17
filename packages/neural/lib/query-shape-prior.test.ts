@@ -258,7 +258,7 @@ describe("format coverage", () => {
 			expect(shape.knownFormats.length).toBeGreaterThan(0)
 
 			for (const hit of shape.knownFormats) {
-				// One hit per call, so a mapped sibling cannot supply the bias an unmapped format did not.
+				// Each call passes one hit, so a mapped sibling cannot supply the bias an unmapped format did not.
 				const matrix = buildEmissionPriors(
 					{ knownFormats: [hit] },
 					[{ start: hit.span.start, end: hit.span.end }],

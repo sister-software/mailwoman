@@ -155,6 +155,13 @@ yarn mwops release fetch-hf-weights --into <scratch dir>
 Check that the fetched `packages/neural-weights-en-us/model.onnx` under the scratch dir has the
 Step-1 md5 before dispatching.
 
+**An additive file into an existing `en-us/v<card>/` goes by hand.** `mailwoman release hf`
+re-uploads the whole set and replaces the version's `releases.json` entry, so adding one artifact to
+a staged version is three steps. Upload the file with `hf buckets cp`, whose destination takes the
+`hf://buckets/sister-software/mailwoman/...` form. Download `releases.json`. Patch the entry and
+re-upload it from a scratch script. Run `yarn mwops release fetch-hf-weights --into <scratch>`
+afterwards, as above.
+
 **Upload the previous release's data files rather than the data root's.** `copy-weights` materializes the
 FSTs and pair indexes from `$MAILWOMAN_DATA_ROOT`, which may hold a rebuild no release has published:
 at 10.1.0 the en-us, fr-fr and en-gb FSTs and every pair index there differed from 9.1.0's. A model
@@ -178,7 +185,9 @@ surfaces name the new model version. Commit all three on main before dispatching
    artifact sizes in `docs/articles/developers/status.mdx`. Change only figures you measured or can
    compute exactly, and say which in the box.
 
-Run `yarn mwops release verify-metadata` locally before dispatching.
+Run `yarn mwops release verify-metadata` locally before dispatching. The check keys on the card
+version, so a code-only release passes it with no ledger edit. Update the release matrix for a
+code-only release afterwards, from the published tarball.
 
 ## Step 3 — dispatch the CI publish (two-phase, PR-based, dry-run first)
 
@@ -284,7 +293,8 @@ The npm publish leaves the browser demo (mailwoman.ai/demo) on the old model.
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
 model to R2 (`public.mailwoman.ai/mailwoman/en-us/v<target>/`), and bump the demo version constant
 in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the
-R2 side is incomplete). This is its own task — surface it, don't assume it.
+R2 side is incomplete). This is its own task — surface it, don't assume it. The demo reads R2's
+`en-us/releases.json`, whose `defaultVersion` differs from HF's, so a repoint patches the R2 copy.
 
 ## failure mode index (each cost real time on a prior release)
 

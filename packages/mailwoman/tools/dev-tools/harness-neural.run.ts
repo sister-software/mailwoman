@@ -789,8 +789,8 @@ async function main(): Promise<void> {
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	// The assembled runtime pipeline (reuses the neural classifier + admin FST).
-	// No resolver, so the arena grades component parses (Stage 3 / grouper / reconcile)
-	// rather than coordinates.
+	// No resolver is attached, so the arena grades component parses
+	// (Stage 3 / grouper / reconcile) rather than coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined

@@ -258,7 +258,7 @@ async function* sourceRows(): AsyncIterable<CSVRecord> {
 
 const buckets = await collectBuckets(sourceRows(), {
 	perBucket: Number(values["per-bucket"]),
-	// Twice the target, so the shuffle has slack to draw a spread from.
+	// The target is doubled, so the shuffle has slack to draw a spread from.
 	target: n * 2,
 	reservoir: values.reservoir,
 	rng,

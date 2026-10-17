@@ -98,6 +98,13 @@ output, `third-party-notices` holds the three notice copies equal, and `rights-c
 naming the licensor. This operation composes their inputs into one report. It does not replace them, and a release
 still runs `yarn lint`.
 
+A corpus's frozen `TRAINING_SOURCES.json` states what the corpus holds rather than what trained a model: overlays
+merge after `freezeTrainingManifest`, so the effective manifest
+(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can carry sources the
+frozen manifest never names. `PROVENANCE.json`'s `effective_training_sources` reads `null` when a card names no
+`training.corpus_version`, and `provenanceRefusals` reports that gap rather than inventing a join. Read the effective
+manifest before quoting a model's training sources.
+
 ## Partial-release recovery
 
 The runbook is in [`RELEASING.md`](../../RELEASING.md#recovering-from-a-partial-release).

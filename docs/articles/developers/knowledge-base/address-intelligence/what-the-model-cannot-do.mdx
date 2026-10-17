@@ -142,7 +142,7 @@ montreal qc     →  locality = "Montreal",   region = "QC"
 montréal qc     →  locality = "montréal"
 ```
 
-One accent, and the region is gone. The restoration did not run, so `qc` reached the model in a form
+One accent is enough, and the region is gone. The restoration did not run, so `qc` reached the model in a form
 it has little training signal for, and there was no comma to supply the structure instead. Add the
 comma back and `montréal, qc` recovers the region, in the lowercase form it arrived in.
 

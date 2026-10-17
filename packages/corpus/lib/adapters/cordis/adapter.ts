@@ -402,7 +402,7 @@ const TITLE_WORD = /^\p{Lu}\p{Ll}+(?:[-'’]\p{Lu}?\p{Ll}+)*$/u
 const MAX_PERSONAL_NAME_WORDS = 4
 
 /**
- * The shortest word read as a country name.
+ * The shortest word that reads as a country name.
  *
  * `matchCountry` resolves two- and three-letter codes as well as names, and a two-letter
  * word such as `AS` is a Norwegian legal form rather than a market.

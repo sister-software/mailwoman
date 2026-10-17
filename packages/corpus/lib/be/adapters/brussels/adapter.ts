@@ -163,7 +163,7 @@ export const BRUSSELS_SOURCE_REGISTER = SourceRegister.BrusselsInspireAddresses
 export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
 
 /**
- * The license label recorded on every row.
+ * Every emitted row records this license label.
  *
  * The register's source `be-property-building-3` elects `CC-BY-4.0` for Paradigm, read from
  * the `gmd:useConstraints` of ISO 19139 record `260abd6f-c5b4-4a79-aa80-d6c265002d65`.

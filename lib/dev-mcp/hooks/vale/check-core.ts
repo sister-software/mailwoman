@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   This module runs finished agent replies through the Mailwoman Vale rules and renders one verdict.
- *   `vale-response-check.ts` adapts Claude Code. `vale-response-check-codex.ts` adapts Codex.
+ *   `response/check.ts` adapts Claude Code. `response/check/codex.ts` adapts Codex.
  *   Both parse payloads and guard against loops. They format output JSON through the shared policy in this module.
  *   This module defines the config and blocking severities. It also defines the finding text.
  *
- *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
- *   additions, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
+ *   The rule set is `config/vale/.vale-chat.ini`: every rule under `config/vale/styles/`, the chat-only
+ *   rules included, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
  *   relative to this module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict. The tier is

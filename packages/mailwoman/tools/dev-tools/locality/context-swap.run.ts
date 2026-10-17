@@ -63,7 +63,8 @@ const subjectCount = Number(values.subjects)
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
 
 /**
- * One real postcode per region, so a crossed row uses a code that exists even though its pairing does not.
+ * Each region keeps one real postcode, so a crossed row uses a code that exists even
+ * though its pairing does not.
  */
 const postcodeOf = new Map<string, string>()
 

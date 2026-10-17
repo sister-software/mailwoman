@@ -84,7 +84,7 @@ export interface HillshadeBuildOptions {
 	demPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * The deepest zoom level stored in the archive.
+	 * The deepest zoom level the archive stores.
 	 * Overviews run from it down to zoom 0.
 	 */
 	maxZoom: number

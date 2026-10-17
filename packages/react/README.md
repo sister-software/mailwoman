@@ -39,6 +39,10 @@ component imports CSS, so the bare package import stays safe to load in Node.
 - `yarn workspace @mailwoman/react test:browser` runs the Vitest browser-mode component and hook tests
   (Playwright / headless Chromium).
 
+New React code uses hooks and current idioms: derive values during render, and use refs and reducers
+where they are idiomatic. Legacy context is out. A lint finding is answered by restructuring the
+component, never by a disable comment.
+
 ## License
 
 AGPL-3.0-only OR LicenseRef-Commercial. See the [mailwoman repository](https://github.com/sister-software/mailwoman).

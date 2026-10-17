@@ -91,7 +91,7 @@ export interface ResolvedInput {
 	input: string
 	country: string | null
 	/**
-	 * The country overlay used for runtime routing.
+	 * Runtime routing uses this country overlay.
 	 */
 	routeCountry: string | null
 	/**

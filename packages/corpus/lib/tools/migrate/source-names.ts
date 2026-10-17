@@ -36,7 +36,7 @@ export interface SourceNameRewrite {
 	parquet: string
 	rows: number
 	/**
-	 * The mapping applied, keyed by the retired spelling.
+	 * The migration applied this mapping, keyed by the retired spelling.
 	 *
 	 * A file whose rows already use current spellings is reported with an empty map and left untouched.
 	 */

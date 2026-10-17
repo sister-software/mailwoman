@@ -143,7 +143,7 @@ class ModelConfig:
 
     address_system_loss_weight: float = 0.0
 
-    # An optional address-system id given at inference. The trainer drops it at ``locale_hint_drop_prob``
+    # An address-system id may be given at inference. The trainer drops it at ``locale_hint_drop_prob``
     # and swaps in a wrong system at ``locale_hint_noise_prob``, so the model parses without one and can
     # overrule a wrong one.
     use_locale_hint: bool = False

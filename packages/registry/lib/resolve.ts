@@ -367,7 +367,7 @@ export interface ResolveConfig {
 	 */
 	usePhone?: boolean
 	/**
-	 * The linkage method used for clustering.
+	 * The clustering step uses this linkage method.
 	 *
 	 * `"single"` (default) is connected components, while `"average"` is an average-linkage
 	 * refinement that splits a component whose sub-clusters are joined only by a weak bridge.

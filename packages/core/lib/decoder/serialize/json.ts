@@ -34,7 +34,7 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
  */
 export const DroppedSpanSchema = z.object({
 	/**
-	 * The tag stored on the span.
+	 * The tag the span holds.
 	 *
 	 * It is always one already present in the output, because a drop happens only when the slot was taken.
 	 */
