@@ -470,7 +470,42 @@ describe("buildCorpus resume", () => {
 	})
 })
 
+// Who's On First's committed decision is elected, so these tests refuse its
+// register row in a copy of the register.
+// They measure how a build treats a refused row, whatever the committed decision says.
+vi.mock("#source-register/register", async (importOriginal) => {
+	const original = await importOriginal<typeof import("#source-register/register")>()
+
+	return {
+		...original,
+		readAddressSourceRegister: async () => {
+			const register = await original.readAddressSourceRegister()
+
+			if (!refuseWhosOnFirst.active) return register
+
+			const license = register.sources.find((row) => row.sourceID === "us-geodata-aggregate-2")?.license
+
+			return {
+				...register,
+				licenses: register.licenses.map((decision) =>
+					decision.licenseID === license ? { ...decision, state: "refused" as const } : decision
+				),
+			}
+		},
+	}
+})
+
+const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
+
 describe("buildCorpus source rights", () => {
+	beforeEach(() => {
+		refuseWhosOnFirst.active = true
+	})
+
+	afterEach(() => {
+		refuseWhosOnFirst.active = false
+	})
+
 	it("refuses a source whose register row lacks a transform and train permission before any adapter runs", async () => {
 		const outDir = scratch.path("refused")
 
@@ -482,7 +517,7 @@ describe("buildCorpus source rights", () => {
 				adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			})
 		).rejects.toThrow(
-			/corpus source wof-admin reads register source us-geodata-aggregate-2 .*unchecked.*transform and train/s
+			/corpus source wof-admin reads register source us-geodata-aggregate-2 .*refused.*transform and train/s
 		)
 
 		expect(await pathExists(outDir("intermediate", "labeled-train.jsonl"))).toBe(false)

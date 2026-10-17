@@ -288,7 +288,7 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		expect(written.source_rights.shippable).toBe(false)
 
 		expect(written.source_rights.gaps.map((gap) => `${gap.source}:${gap.registerSource}`)).toEqual(
-			expect.arrayContaining(["rendered-gb:gb-property-building-1", "wof-admin:us-geodata-aggregate-2"])
+			expect.arrayContaining(["rendered-gb:gb-property-building-1"])
 		)
 	})
 })
