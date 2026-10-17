@@ -17,7 +17,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import type { EffectiveTrainingManifest } from "@mailwoman/corpus/source-register"
+import type { EffectiveTrainingManifest, RequiredAttribution } from "@mailwoman/corpus/source-register"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#release-kit/pack/verify-tarball"
@@ -189,6 +189,14 @@ interface InheritedLineage {
 	packageVersion: string
 	modelCardVersion: string | null
 	attribution: AttributionRecord[]
+	/**
+	 * The attributions the base's effective training manifest records as owed, repeated here
+	 * because a consumer of the overlay alone receives rows decoded through that graph.
+	 *
+	 * Empty when the base has no effective training manifest, which is a statement
+	 * about the checkout rather than about the graph's inputs.
+	 */
+	requiredAttributions: RequiredAttribution[]
 	/**
 	 * The package names from this package to the graph package, in walk order.
 	 */
@@ -461,6 +469,7 @@ function resolveInherited(
 				packageVersion: "",
 				modelCardVersion: null,
 				attribution: [],
+				requiredAttributions: [],
 				chain: [...chain, current],
 				unresolved: `the base chain returns to ${current}, so no package in it owns a model graph`,
 			}
@@ -474,6 +483,7 @@ function resolveInherited(
 				packageVersion: "",
 				modelCardVersion: null,
 				attribution: [],
+				requiredAttributions: [],
 				chain: [...chain, current],
 				unresolved: `${current} is not among the packages read, so its lineage could not be resolved here`,
 			}
@@ -488,6 +498,7 @@ function resolveInherited(
 				packageVersion: base.packageVersion,
 				modelCardVersion: base.modelCardVersion,
 				attribution: base.attribution,
+				requiredAttributions: base.effectiveTraining?.requiredAttributions ?? [],
 				chain,
 				unresolved: null,
 			}

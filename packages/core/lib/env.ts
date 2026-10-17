@@ -6,6 +6,7 @@
 
 import type z from "zod"
 
+import { resolveEnvFile } from "#env/env-file"
 import { PrivateEnvSchema, PublicEnvSchema } from "#env/schema"
 
 export { DefaultMailwomanPaths } from "#env/paths"
@@ -14,20 +15,25 @@ export { DefaultMailwomanPaths } from "#env/paths"
  * The `.env` layer, folded into `process.env` when this module is evaluated — process-startup semantics.
  *
  * `process.loadEnvFile` is the runtime's own reader: synchronous, so the views below can expose
- * synchronous getters without a top-level `await` (which the Docusaurus config loader cannot evaluate),
- * and not a filesystem call made by repository code.
+ * synchronous getters without a top-level `await` (which the Docusaurus config loader cannot evaluate).
+ * `resolveEnvFile` picks the working directory's `.env`, or the main checkout's
+ * when the working directory is a git worktree, which carries no `.env` of its own.
+ *
  * A variable already in `process.env` wins over the file.
  * The views have always used this precedence.
  *
  * An absent `.env` is the common case and is not an error.
  */
-try {
-	// Without an argument, the runtime reads `.env` in the working directory.
-	// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-	process.loadEnvFile()
-} catch {
-	// No `.env` beside the working directory.
-	// The process environment comes from `process.env` only.
+const envFile = resolveEnvFile()
+
+if (envFile) {
+	try {
+		// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
+		process.loadEnvFile(envFile)
+	} catch {
+		// The file exists and the runtime could not read it.
+		// The process environment comes from `process.env` only.
+	}
 }
 
 /**

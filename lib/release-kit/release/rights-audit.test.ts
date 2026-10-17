@@ -17,7 +17,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { readAddressSourceRegister, type AddressSourceRegister } from "@mailwoman/corpus/source-register"
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { auditRights, renderRightsAudit } from "#release-kit/release/rights-audit"
+import { auditRights, packagesWithoutFrozenManifest, renderRightsAudit } from "#release-kit/release/rights-audit"
 
 let audit: Awaited<ReturnType<typeof auditRights>>
 let register: AddressSourceRegister
@@ -68,14 +68,52 @@ describe("auditRights", () => {
 		expect(audit.packages.filter((entry) => !entry.shipsRightsFiles)).toEqual([])
 	})
 
-	it("records a missing training manifest as unresolved rather than as an empty one", () => {
-		expect(audit.training.filter((row) => row.manifest)).toEqual([])
+	it("reads en-us's frozen and effective training manifests, and records every other package's absence as unresolved", () => {
+		const recorded = audit.training.filter((row) => row.manifest)
 
-		for (const row of audit.training) {
+		expect(recorded.map((row) => row.package)).toEqual(["@mailwoman/neural-weights-en-us"])
+		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.2-address-systems")
+		expect(recorded[0]?.manifest?.problems).toEqual([])
+		// Every source the audited epoch emitted is in the frozen record, so the effective
+		// manifest covers the whole epoch rather than part of it.
+		expect(recorded[0]?.effective?.emittedButUnrecorded).toBe(0)
+		expect(recorded[0]?.unresolved).toBeNull()
+
+		for (const row of audit.training.filter((entry) => !entry.manifest)) {
 			expect(row.unresolved).toBeTruthy()
 		}
 
-		expect(audit.unresolved.join("\n")).toMatch(/12 of 12 packages have no frozen training manifest/u)
+		expect(audit.unresolved.join("\n")).toMatch(/11 of 12 packages have no frozen training manifest/u)
+	})
+
+	it("stops a release only for a graph package whose card records a corpus with no frozen manifest", () => {
+		// en-us records v0.7.2-address-systems and the repository holds its record.
+		// cjk's card records no corpus, so it makes no claim to check and stays an open
+		// question. fr-fr's card records a corpus as prose, and fr-fr is an overlay
+		// that ships no graph, so that claim is the base's row.
+		expect(packagesWithoutFrozenManifest(audit)).toEqual([])
+
+		const withoutClaim = audit.training.find((row) => row.package === "@mailwoman/neural-weights-cjk")
+
+		expect(withoutClaim?.corpusNamed).toBeNull()
+		expect(withoutClaim?.unresolved).toMatch(/names no corpus/u)
+
+		const overlay = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-fr-fr")
+		const overlayRow = audit.training.find((row) => row.package === "@mailwoman/neural-weights-fr-fr")
+
+		expect(overlay?.versionSeries).toBe("overlay")
+		expect(overlayRow?.corpusNamed).toBeTruthy()
+		expect(overlayRow?.manifest).toBeNull()
+
+		// A graph package with the same claim and no record is what the release refuses.
+		const altered = {
+			...audit,
+			packages: audit.packages.map((entry) =>
+				entry.package === "@mailwoman/neural-weights-fr-fr" ? { ...entry, versionSeries: "model" } : entry
+			),
+		}
+
+		expect(packagesWithoutFrozenManifest(altered)).toEqual(["@mailwoman/neural-weights-fr-fr"])
 	})
 
 	it("counts every register source and names each of the four blockers", () => {

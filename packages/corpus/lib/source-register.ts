@@ -41,6 +41,7 @@ export {
 export {
 	auditTrainingManifest,
 	freezeTrainingManifest,
+	NO_LICENSE_RECORDED,
 	sourcesNotPermitting,
 	trainingManifestDigest,
 } from "#source-register/training-manifest"
