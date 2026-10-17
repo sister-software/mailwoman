@@ -11,6 +11,7 @@
  */
 
 import { isIdentical } from "@mailwoman/core/identical"
+import type { RequiredAttribution } from "@mailwoman/corpus/source-register"
 
 import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
 import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"
@@ -52,6 +53,12 @@ export interface ProvenanceDocument {
 		chain: string[]
 		note: string
 		attribution: Array<{ text: string; license_named: string | null }>
+		/**
+		 * The attributions the base's effective training manifest records as owed,
+		 * repeated for a consumer who installs this overlay alone.
+		 * Empty when the base has no such manifest.
+		 */
+		required_attributions: RequiredAttributionEntry[]
 		unresolved: string | null
 	} | null
 	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
@@ -129,8 +136,38 @@ export interface ProvenanceDocument {
 		}>
 		total_emitted_rows: number
 	} | null
+	/**
+	 * The attributions the audited epoch's sources owe, grouped by the license label their rows carry.
+	 *
+	 * A recorded `statement` is the text to reproduce.
+	 * A `null` statement means the label requires attribution and the text is written
+	 * from each source's register entry or the card's own attribution entries.
+	 *
+	 * A label this repository does not recognize is listed too, because an unrecognized
+	 * license's obligations are unknown rather than absent.
+	 *
+	 * `null` when no effective training manifest is committed for the corpus the card records.
+	 */
+	required_attributions: RequiredAttributionEntry[] | null
 	tokenizer_version: string | null
 	unresolved: string[]
+}
+
+/**
+ * One attribution entry as the provenance document prints it.
+ */
+interface RequiredAttributionEntry {
+	license: string
+	sources: string[]
+	statement: string | null
+}
+
+function requiredAttributionEntries(attributions: readonly RequiredAttribution[]): RequiredAttributionEntry[] {
+	return attributions.map((entry) => ({
+		license: entry.license,
+		sources: [...entry.sources],
+		statement: entry.statement,
+	}))
 }
 
 const GENERATED_BY =
@@ -273,6 +310,7 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 						text: entry.text,
 						license_named: entry.licenseNamed,
 					})),
+					required_attributions: requiredAttributionEntries(record.inherited.requiredAttributions),
 					unresolved: record.inherited.unresolved,
 				}
 			: null,
@@ -334,9 +372,89 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 					total_emitted_rows: record.effectiveTraining.totalEmittedRows,
 				}
 			: null,
+		required_attributions: record.effectiveTraining
+			? requiredAttributionEntries(record.effectiveTraining.requiredAttributions)
+			: null,
 		tokenizer_version: record.tokenizerVersion,
 		unresolved: unresolvedQuestions(record),
 	}
+}
+
+/**
+ * The attribution section of a package's license file.
+ *
+ * A graph package reads its own effective training manifest.
+ * An overlay reads its base's, because the rows a consumer decodes through
+ * the overlay pass through that graph.
+ *
+ * A package with neither says so, so the absence of a statement reads as an
+ * absence of a record rather than of an obligation.
+ */
+function renderAttributionSection(record: WeightsRightsRecord): string {
+	const own = record.effectiveTraining
+	const inherited = record.inherited
+
+	const heading = "## Attribution the training data requires"
+
+	if (own) {
+		return [
+			heading,
+			"",
+			`The effective training manifest for corpus \`${own.corpusVersion}\` records the sources one audited epoch of`,
+			`\`${own.config}\` drew rows from. ${renderAttributionLists(own.requiredAttributions)}`,
+		].join("\n")
+	}
+
+	if (inherited?.requiredAttributions.length) {
+		return [
+			heading,
+			"",
+			`This package decodes through the model graph \`${inherited.package}\` ships, so a consumer of this package`,
+			`alone receives rows that graph was trained to read. ${renderAttributionLists(inherited.requiredAttributions)}`,
+		].join("\n")
+	}
+
+	return [
+		heading,
+		"",
+		"No effective training manifest is committed for the corpus this package's model card records, so the",
+		"attributions its training data requires are not derived here. `PROVENANCE.json` lists what the card states.",
+	].join("\n")
+}
+
+/**
+ * The two lists an attribution section prints: statements to reproduce,
+ * then labels with no recorded statement.
+ */
+function renderAttributionLists(attributions: readonly RequiredAttribution[]): string {
+	const stated = attributions.filter((entry) => entry.statement)
+	const unstated = attributions.filter((entry) => !entry.statement)
+	const parts: string[] = []
+
+	if (stated.length) {
+		parts.push(
+			"Rows under these terms require the statement that follows, reproduced in any redistribution:",
+			"",
+			...stated.map((entry) => `- ${entry.statement} (\`${entry.license}\`: ${entry.sources.join(", ")})`)
+		)
+	}
+
+	if (unstated.length) {
+		parts.push(
+			"",
+			"Rows under these labels require attribution, and the statement is written from each source's register",
+			"entry or the model card's attribution entries. A label this repository does not recognize is listed because",
+			"its obligations are unknown rather than absent:",
+			"",
+			...unstated.map((entry) => `- \`${entry.license}\`: ${entry.sources.join(", ")}`)
+		)
+	}
+
+	if (!parts.length) {
+		parts.push("None of the sources that reached the trainer carries terms that require attribution.")
+	}
+
+	return parts.join("\n")
 }
 
 /**
@@ -378,6 +496,8 @@ Section 2 of the commercial agreement limits the grant to the code and model art
 Software authors. It does not extend to third-party components distributed with Mailwoman, which
 stay under their own licenses. Any attribution or share-alike obligation attaching to those
 components continues to apply and is not waived or relicensed by a commercial agreement.
+
+${renderAttributionSection(record)}
 
 ## Where the sources are recorded
 

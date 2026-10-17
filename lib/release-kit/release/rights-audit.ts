@@ -30,7 +30,7 @@ import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#release-kit/weights/rights/files"
-import { SourceUse, type WeightsRightsRecord } from "#release-kit/weights/rights/record"
+import { SourceUse, VersionSeries, type WeightsRightsRecord } from "#release-kit/weights/rights/record"
 import { weightsRightsRecords } from "#release-kit/weights/rights/write"
 
 /**
@@ -498,6 +498,28 @@ async function auditTraining(
 	}
 
 	return rows
+}
+
+/**
+ * The graph packages whose model card records a corpus that has no frozen
+ * training manifest in the repository.
+ *
+ * A card that records a corpus makes a claim about what trained the model, and the frozen record
+ * is what lets a release check that claim, so a release refuses to proceed while one is missing.
+ * A card that records no corpus makes no claim and stays in the unresolved list instead,
+ * because failing on it would stop every release until that card is rewritten.
+ *
+ * An overlay ships no graph, so a corpus its card records describes the base's graph
+ * and is reported under the base's row.
+ */
+export function packagesWithoutFrozenManifest(audit: RightsAudit): string[] {
+	const graphPackages = new Set(
+		audit.packages.filter((entry) => entry.versionSeries === VersionSeries.Model).map((entry) => entry.package)
+	)
+
+	return audit.training
+		.filter((row) => graphPackages.has(row.package) && row.corpusNamed && !row.manifest)
+		.map((row) => row.package)
 }
 
 /**

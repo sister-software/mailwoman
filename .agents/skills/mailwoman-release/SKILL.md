@@ -246,6 +246,19 @@ npm view @mailwoman/neural-weights-en-us@<target> --json | jq '.dist.attestation
 
 Then fast-forward local main: `git merge --ff-only origin/main`.
 
+The publish job attaches `mailwoman-<version>.spdx.json`, `mailwoman-<version>.cdx.json` and
+`mailwoman-data-<version>.cdx.json` to the GitHub release after the publish loop. The post-release docs
+PR (the matrix row and the status page) also commits those three files under `docs/static/sbom/`, because
+the job cannot commit to main.
+
+Both jobs run `yarn mwops release rights-audit`, which fails when a graph package's model card records a
+corpus that has no frozen training manifest under `packages/corpus/data/training-manifests/`. A model
+release on a new corpus therefore commits two records before the prepare dispatch: the frozen record
+(`freeze-overlay-manifest.run.ts` for an overlay corpus, or the build's own `TRAINING_SOURCES.json`) and
+the effective manifest (`effective-manifest.run.ts`, which needs the config's `audit_epoch_mixture` output
+under the data root's `corpus/epoch-mixture/`). Then set the card's `training.corpus_version` to the
+record's key and run `write-rights-files`.
+
 ## Step 4a — the npm validation hold and the dist-tag repoint (needs the operator's OTP)
 
 npm scans every publish before it lists the version. A held version shows `validating` on the

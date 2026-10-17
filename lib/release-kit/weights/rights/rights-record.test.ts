@@ -16,7 +16,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { renderProvenance } from "#release-kit/weights/rights/files"
+import { renderLicenseFile, renderProvenance } from "#release-kit/weights/rights/files"
 import {
 	readWeightsRightsRecords,
 	roleForArtifact,
@@ -154,6 +154,127 @@ describe("readWeightsRightsRecords", () => {
 
 			expect(document.training_attribution.status).toBe("none-recorded-in-this-package")
 			expect(document.unresolved.some((line) => line.includes("records no training attribution"))).toBe(true)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("derives the required attributions from the committed effective training manifest and repeats them for an overlay", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "9.1.0", training: { corpus_version: "v0.0.0-fixture" } },
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0" },
+			},
+		])
+
+		const statement = "© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0."
+
+		await makeDirectories(tree.root("packages", "corpus", "data", "training-manifests"))
+
+		await writeLocalJSONFile(
+			{
+				manifestID: "corpus-effective-training-manifest",
+				schemaVersion: 2,
+				drawEvidence: "replayed-epoch-audit",
+				labelSet: null,
+				requiredAttributions: [
+					{ license: "CC-BY-4.0", sources: ["gnaf"], statement: null },
+					{ license: "ODbL-1.0", sources: ["osm-in", "osm-ru"], statement },
+				],
+				corpusVersion: "v0.0.0-fixture",
+				corpusManifestDigest: "digest",
+				config: "configs/fixture.yaml",
+				seed: 43,
+				drawsRequested: 10,
+				drawsRealized: 10,
+				admittedCountries: 2,
+				countriesDrawingRows: 2,
+				admittedCountriesDrawingZero: [],
+				sources: [],
+				trainingSources: ["gnaf", "osm-in", "osm-ru"],
+				excludedSources: {},
+				emittedButUnrecorded: {},
+				unrecordedSourceStages: {},
+				totalEmittedRows: 10,
+				contentDigest: "",
+			},
+			tree.root("packages", "corpus", "data", "training-manifests", "v0.0.0-fixture.effective.json")
+		)
+
+		try {
+			const [graph, overlay] = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			const document = renderProvenance(graph!)
+
+			expect(document.required_attributions).toEqual([
+				{ license: "CC-BY-4.0", sources: ["gnaf"], statement: null },
+				{ license: "ODbL-1.0", sources: ["osm-in", "osm-ru"], statement },
+			])
+
+			// The overlay has no manifest of its own, so its own field stays null while the
+			// base's attributions reach a consumer who installs the overlay alone.
+			const overlayDocument = renderProvenance(overlay!)
+
+			expect(overlayDocument.required_attributions).toBeNull()
+
+			expect(overlayDocument.inherited_lineage?.required_attributions.map((entry) => entry.license)).toEqual([
+				"CC-BY-4.0",
+				"ODbL-1.0",
+			])
+
+			const license = renderLicenseFile(graph!)
+
+			expect(license).toContain("## Attribution the training data requires")
+			expect(license).toContain(`- ${statement} (\`ODbL-1.0\`: osm-in, osm-ru)`)
+			expect(license).toContain("- `CC-BY-4.0`: gnaf")
+
+			expect(renderLicenseFile(overlay!)).toContain(
+				"decodes through the model graph `@mailwoman/neural-weights-graph` ships"
+			)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
+	it("says that no effective training manifest is committed rather than that no attribution is owed", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-fixture",
+				manifest: {
+					name: "@mailwoman/neural-weights-fixture",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["model.onnx"],
+				},
+				card: { version: "1.2.3", training: { corpus_version: "v0.0.0-unrecorded" } },
+			},
+		])
+
+		try {
+			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-fixture"])
+
+			expect(renderProvenance(record!).required_attributions).toBeNull()
+			expect(renderLicenseFile(record!)).toContain("No effective training manifest is committed for the corpus")
 		} finally {
 			await tree.dispose()
 		}

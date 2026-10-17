@@ -225,7 +225,8 @@
 		}
 	},
 	"training": {
-		"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+		"corpus_version": "v0.7.2-address-systems",
+		"$corpus_version_comment": "The key of the frozen record under packages/corpus/data/training-manifests/, which the rights files and the release audit read. The 6.7.0-era value this replaced described the v385 fine-tune feed (v0.13.0-latam with the probe passengers removed) and had not moved since.",
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"best_step": 4000,
