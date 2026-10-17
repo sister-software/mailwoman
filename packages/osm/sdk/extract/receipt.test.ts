@@ -3,7 +3,7 @@ import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/write
 import { sha256Hex } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
-import { extractReceiptPath, readExtractProvenance } from "#sdk/extract-receipt"
+import { extractReceiptPath, readExtractProvenance } from "#sdk/extract/receipt"
 import type { GeofabrikExtractReceipt } from "#sdk/fetch"
 
 const URL = "https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf"
