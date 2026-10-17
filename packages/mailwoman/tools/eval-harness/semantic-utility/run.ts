@@ -97,7 +97,7 @@ export interface ProbeReceipt {
 
 export interface SemanticProbeOptions extends POIBoardOptions {
 	/**
-	 * The arm label written into the receipt.
+	 * The receipt records this arm label.
 	 */
 	arm?: ProbeArm
 	/**

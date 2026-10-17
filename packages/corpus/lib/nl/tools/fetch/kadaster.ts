@@ -59,7 +59,7 @@ export const NL_KADASTER_FEED_URL = "https://service.pdok.nl/kadaster/ad/atom/ad
 export const NL_KADASTER_DOWNLOAD_FILENAME = "addresses.gml.gz"
 
 /**
- * The attribution recorded in the manifest.
+ * The manifest records this attribution.
  *
  * CC0 1.0 reserves no act and owes no attribution clause.
  * This attribution is a credit the repository chooses, rather than a condition of the grant.

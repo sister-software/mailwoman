@@ -39,7 +39,7 @@ export const PAYMENT_LINK_YEARLY = SHOP_IDS.live.paymentLinks["commercial-yearly
 export const BILLING_PORTAL_URL = SHOP_IDS.live.portalURL
 
 /**
- * One formatter, so every printed figure on the site comes from the same
+ * One formatter serves the site, so every printed figure comes from the same
  * `SHOP_PLANS` entry the provisioner sends to Stripe.
  */
 function formatAmount(cents: number, currency: string): string {

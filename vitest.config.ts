@@ -94,6 +94,9 @@ export default defineConfig({
 		],
 	},
 	test: {
+		// On CI, emit a JUnit report beside the console output so the run's per-test durations
+		// and flake-on-retry results are uploadable as an artifact.
+		reporters: process.env["CI"] ? ["default", ["junit", { outputFile: "test-results/junit.xml" }]] : ["default"], // oxlint-disable-line sister-software/no-process-globals -- Vitest loads this config outside the module graph
 		// Share each worker's module graph to avoid reloading the workspace for every test file.
 		// The former isolation issue with libpostal no longer reproduces.
 		// The tests it affected import core first.

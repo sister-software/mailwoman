@@ -64,8 +64,9 @@ jobs:
         working-directory: packages/earth
         run: yarn test:browser --grep @smoke
 
-      - name: Upload report on failure
-        if: failure()
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: earth-smoke-report

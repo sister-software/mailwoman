@@ -100,7 +100,7 @@ matrix. The decoder has a slot for one and every published bundle leaves it empt
 each piece's label on its own — cross-entropy per position, with no sequence-level term — which is
 what the model card records as training without a conditional random field and decoding with one.
 
-One qualification, so the claim is not read wider than it is. A prior can contribute a bonus at a
+One qualification keeps the claim from being read wider than it is. A prior can contribute a bonus at a
 specific transition at a specific position — evidence about one candidate span, supplied by a
 gazetteer lookup and scoped to where it matched. What does not exist is a general preference between
 two labels, learned from data and applied everywhere the pair occurs. That is the thing a learned

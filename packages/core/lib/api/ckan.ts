@@ -33,7 +33,7 @@ export interface CKANPackageRecord {
 	publicationDate: string | null
 	creationDate: string | null
 	/**
-	 * The license listed by the catalogue.
+	 * The license the catalogue lists.
 	 */
 	licence: string
 	/**

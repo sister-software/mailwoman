@@ -289,6 +289,23 @@ gh run list --workflow=docs-build.yml --limit 1
 
 Don't let a workspace change cause silent CI failures for hours.
 
+## Merge policy
+
+The auto-mode permission classifier refuses three actions during a shift even when `/goal`
+authorizes self-merge: a merge to `main`, a self-granted permission rule, and a swap of a canonical
+database. Do not retry a refusal and do not route around it. The default posture follows from that
+wall:
+
+- Leave a test-green PR open.
+- Place a validated artifact beside the canonical one rather than over it, and document the
+  one-command promotion.
+- List the merge wall first in the morning summary.
+
+A per-shift merge grant in `/goal` allows self-merge of a mechanical, data or refactor PR once its
+`test` check has run green. A change to shipped behavior is still flagged for the operator under the
+grant. A refusal that lands despite the grant is flagged in the summary, and work continues on the
+next item.
+
 ## Shift artifact
 
 End every autonomous shift with a structured handoff committed to a known path:
@@ -350,5 +367,12 @@ At the very end of an autonomous shift, send the operator a chat-friendly summar
 2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine. State that it is empty.
 3. **The numbers (1–2 sentences)** — headline result + the cost (Modal $, GPU hours).
 4. **Where the detailed report lives** — link to the committed postmortem.
+
+A decision left open for the operator (a default-on promotion, an artifact swap, a design review)
+ships with three things. The first is a per-row table: the input address verbatim, the expected
+answer, and each arm's answer with its coordinates and distance. The second is the five-whys chain
+from symptom to cause for the mechanism being decided. The third is a set of caveat rows at the same
+grain as the wins, including a row whose entry reads "unknown which side is wrong". The summary may
+compress the executed work. It never compresses an open decision.
 
 This summary is _additional to_ the committed shift artifact. The operator reads the chat summary first thing in the morning, and the artifact holds the full detail. The morning-shift skill consumes this summary. Write it the way you'd want to read it half-awake.

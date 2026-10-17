@@ -62,7 +62,7 @@ export const CZ_CUZK_ADAPTER_ID = "cz-cuzk"
 export const CZ_CUZK_COUNTRIES: readonly string[] = ["CZ"]
 
 /**
- * The license recorded on every row.
+ * Every emitted row records this license.
  *
  * INSPIRE's controlled value, in the English the register renders it to, because ČÚZK
  * names no license instrument and the register therefore writes no SPDX identifier.

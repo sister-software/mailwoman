@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The default artifact and dataset locations the coarse-placer tools share. One spelling each, so
- *   a relocated artifact is a one-line change rather than a sweep of every tool's option default.
+ *   The default artifact and dataset locations the coarse-placer tools share. Each location has one
+ *   spelling, so a relocated artifact is a one-line change rather than a sweep of every tool's option default.
  */
 
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"

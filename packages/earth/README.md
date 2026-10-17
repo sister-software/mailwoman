@@ -19,6 +19,15 @@ The preview serves on port 7771, and the public data bucket's CORS rule must adm
 the rule does not admit, the browser refuses every model, gazetteer and sprite fetch and the geocoder never becomes
 ready. The docs dev server holds port 7770.
 
+### What the build reads
+
+The Earth and planetary Vite builds consume the compiled `out/` rather than `lib/`, so an edit under
+`lib/` reaches the bundle only after `tsc -b`. The shared Playwright config at `lib/site-kit/playwright.ts`
+(repository root) sets `reuseExistingServer: !CI`, so a preview server already listening is reused and
+`yarn build` never runs. `vite preview` serves `dist/` from disk on each request, so a rebuilt `dist/` is
+served without restarting the server. Falsify a browser test as `tsc -b`, then `yarn build`, then the run,
+and confirm that the hash of `dist/assets/index-*.js` changed before trusting a pass or a fail.
+
 ## Routes
 
 `/` is the geocoder, `/debug` the same page with the decode-path drawer open, `/trace` the live model visualizer.
@@ -28,7 +37,13 @@ with no model download. Cloudflare's SPA fallback serves `index.html` for each, 
 ## Layout
 
 - `lib/runtime/`: the runtime assembly over `mailwoman/browser-runtime` (`useGeocoderRuntime`), the geolocation hook,
-  the polygon opener, and the range-cache protocol the service worker speaks.
+  the polygon opener, and the range-cache protocol the service worker speaks. `lib/runtime/use/geocoder-runtime.ts`
+  builds the classify deps object field by field from the browser loader's output rather than spreading it, and every
+  classify dep is optional. A new field returned by `packages/mailwoman/lib/browser-runtime/load-assets.ts` therefore
+  reaches the app only when this file forwards it. TypeScript does not report the omission, and no Node test exercises
+  the file. After adding a browser-runtime asset, grep for a sibling field such as `selectPairIndex:` across
+  `packages/earth` and `docs/src`, add the new field at each site, and run a headless parse that depends on the asset
+  before declaring a repoint done.
 - `lib/panels/`: the host chrome around `@mailwoman/react/map`'s geocoder (the compare panel, the controls, the
   drawer, the map controls, the layer toggle, the feature inspector, the version compare).
 - `lib/explorers/`: the model visualizer and its live wrapper for `/trace`.

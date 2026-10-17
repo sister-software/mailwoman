@@ -12,7 +12,7 @@ describe("Vale reply verdict", () => {
 	it("requests replacements only for flagged sentences", () => {
 		const alerts: ValeAlert[] = [
 			{
-				Check: "MailwomanChat.AssertiveFiller",
+				Check: "styles.AssertiveFiller",
 				Message: "Remove 'plainly' or replace it with the concrete reason for the confidence.",
 				Severity: "error",
 				Match: "plainly",

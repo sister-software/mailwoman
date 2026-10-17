@@ -82,10 +82,12 @@ export class GeocoderFixture {
 	 */
 	async readSuggestions(text: string): Promise<string[]> {
 		await this.setAddress(text)
-		const list = this.page.locator("#mw-demo-suggest-list")
-		await list.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
+		// Wait for at least one option rather than a visible list.
+		// A slow FST walk used to fall through the swallowed timeout and fail on a misleading empty-list diff.
+		const options = this.page.locator("#mw-demo-suggest-list [role='option']")
+		await options.first().waitFor({ state: "attached", timeout: 5000 })
 
-		return this.page.locator("#mw-demo-suggest-list [role='option']").allTextContents()
+		return options.allTextContents()
 	}
 
 	async pickSuggestion(name: string): Promise<void> {
@@ -112,8 +114,24 @@ export class GeocoderFixture {
 			polling: 500,
 		})
 
-		// Map needs a beat to finish fitBounds + (re-)wire terrain.
-		await this.page.waitForTimeout(2000)
+		await this.waitForMapIdle()
+	}
+
+	/**
+	 * Wait out the map's response to a result or theme change (fitBounds, terrain re-wire)
+	 * by polling maplibre's own moving/loading flags instead of sleeping a fixed interval.
+	 */
+	async waitForMapIdle(timeout = 15_000): Promise<void> {
+		await this.page.waitForFunction(
+			() => {
+				const map = (globalThis as { __mailwomanMapCanvas?: { isMoving: () => boolean; loaded: () => boolean } })
+					.__mailwomanMapCanvas
+
+				return !map || (!map.isMoving() && map.loaded())
+			},
+			undefined,
+			{ timeout, polling: 100 }
+		)
 	}
 
 	async readResult(): Promise<ResolvedResult> {
@@ -167,8 +185,8 @@ export class GeocoderFixture {
 			document.documentElement.setAttribute("data-theme", t)
 		}, theme)
 
-		// Allow the MutationObserver-driven setStyle + terrain re-wire to settle.
-		await this.page.waitForTimeout(2000)
+		// Wait out the MutationObserver-driven setStyle + terrain re-wire.
+		await this.waitForMapIdle()
 	}
 
 	async expectMarkerVisible(): Promise<void> {

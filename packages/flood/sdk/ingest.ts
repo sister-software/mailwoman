@@ -185,7 +185,7 @@ function toSourceFeature(
  */
 export interface FloodFeatureSource {
 	/**
-	 * The feature count declared by the source.
+	 * The feature count the source declares.
 	 * The build checks it against the streamed total.
 	 */
 	declaredFeatureCount: number

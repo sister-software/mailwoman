@@ -407,7 +407,7 @@ export interface HarvestCzCuzkOptions {
 /**
  * Whether the archive recorded for one municipality is still the one the feed now describes.
  *
- * Three conditions, and the first is what saves 6,258 requests: the service
+ * Three conditions must hold, and the first is what saves 6,258 requests: the service
  * document states the same modification time it stated when the file was fetched,
  * the file is still there, and it is still the length that was recorded for it.
  */
@@ -451,7 +451,7 @@ export async function harvestCzCuzk(
 
 	// MARK: Read the service document
 	//
-	// One request, and it states the modification time of every archive the service offers.
+	// One request states the modification time of every archive the service offers.
 
 	report?.(`=== ${SLUG}: reading ${CZ_CUZK_SERVICE_FEED_URL}`)
 

@@ -117,6 +117,20 @@ Of the four artifacts in this directory, the register is the one with a digest. 
 lexicon, the reviewed VE postcode tuples and the license decisions do not. The license decisions are
 hand-written by design. That file is an input to this build rather than an output of one.
 
+### How a `sourceID` is numbered, and why a CSV row is appended
+
+A `sourceID` is `<iso2>-<sector>-<ordinal>`, and the ordinal is the row's position among the research
+CSV's rows of the same `iso2` and sector. Row order therefore decides the suffix: inserting a row before
+an existing one of the same `iso2` and sector renumbers the later row and reattaches its entry in
+`source-resolutions.json` to the wrong source, with no error. Append within an `iso2` and sector. Never
+insert.
+
+`ASSERTS_BY_ROLE`, `SOURCE_STATUS_BY_NAME`, `GEOMETRY_BY_NAME` and `RESEARCH_PASS_BY_ORIGIN` in
+`packages/corpus/lib/tools/source-register/build.ts` are closed tables, and a CSV spelling outside one
+fails the build. The sector column is the one mapped spelling: the research CSV writes
+`property_building`, the register declares `property-building`, and the build replaces the underscore.
+`ingestEligibilityProblems(source, register)` takes the whole register rather than the license record.
+
 ### What the register stores
 
 The register holds two tables rather than one nested list. The jurisdiction table is a complete

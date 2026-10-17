@@ -20,7 +20,7 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * The adapter id stamped on every emitted row.
+ * The adapter stamps this id on every emitted row.
  */
 export const USGOV_NPPES_ADAPTER_ID = "usgov-nppes"
 /**

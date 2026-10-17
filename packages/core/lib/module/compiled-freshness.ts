@@ -124,6 +124,7 @@ export async function checkCompiledFreshness(
 	workspaces: readonly string[]
 ): Promise<CompiledFreshness> {
 	let newestSource: TimestampedFile | null = null
+	let newestSourceWorkspace: string | null = null
 	let newestCompiled: TimestampedFile | null = null
 
 	const root = PathBuilder.from(repoRoot)
@@ -142,6 +143,7 @@ export async function checkCompiledFreshness(
 
 		if (source && (!newestSource || source.mtimeMs > newestSource.mtimeMs)) {
 			newestSource = source
+			newestSourceWorkspace = workspace
 		}
 
 		if (compiled && (!newestCompiled || compiled.mtimeMs > newestCompiled.mtimeMs)) {
@@ -167,7 +169,9 @@ export async function checkCompiledFreshness(
 			newestCompiled,
 			reason:
 				`Compiled output is ${driftSeconds}s older than source: ${newestSource.path} was modified after ` +
-				`${newestCompiled.path}. Run \`yarn compile\` and re-run.`,
+				`${newestCompiled.path}. Run \`yarn compile\` and re-run. When the source reverted to content ` +
+				`that is already compiled, \`tsc -b\` skips the emit and the output stays stale, so run ` +
+				`\`yarn tsc -b ${newestSourceWorkspace} --force\` instead.`,
 		}
 	}
 

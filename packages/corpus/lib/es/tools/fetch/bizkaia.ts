@@ -487,7 +487,7 @@ export async function harvestESBizkaia(
 
 	// MARK: Read the service document
 	//
-	// One request, and it states the version of every archive the service offers.
+	// One request states the version of every archive the service offers.
 
 	report?.(`=== ${ES_BIZKAIA_ADAPTER_ID}: reading ${ES_BIZKAIA_SERVICE_URL}`)
 

@@ -74,7 +74,7 @@ const SYNTHETIC_ADMIN_LON = -0.1
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * The normalized-query substring used as the provider key.
+	 * The normalized-query substring that serves as the provider key.
 	 *
 	 * Unique per case, because the fixture answers with the first rule that hits,
 	 * so an overlapping key silently reassigns another case's answer.

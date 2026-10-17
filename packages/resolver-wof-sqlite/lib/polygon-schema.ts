@@ -14,7 +14,7 @@
 import type { Kysely } from "kysely"
 
 /**
- * One admin polygon, keyed by WOF id.
+ * Each row holds one admin polygon, keyed by WOF id.
  */
 export interface PolygonsTable {
 	id: number

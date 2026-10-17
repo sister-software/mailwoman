@@ -36,7 +36,7 @@ export type Section = Span
 export type ClassificationProposalSource = "neural" | "merged"
 
 /**
- * A typed classification candidate produced by a classifier.
+ * A classifier produces this typed classification candidate.
  *
  * `source` and `source_id` identify the origin of each proposal without external state.
  */

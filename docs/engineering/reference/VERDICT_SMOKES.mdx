@@ -90,10 +90,10 @@ A smoke answers **only** whether the recipe survives sustained peak LR for the s
 
 Run these three v0.4.0 diagnostic tools against every v0.5.0 smoke / full-run pair. Each is in the tree as of 2026-05-23.
 
-- **`corpus-audit`** ([`corpus/scripts/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/corpus/scripts/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run it before training to verify that the sampled mix matches intent. It catches misconfigurations like the v0.3.0 "NAD = 35% effective sample" case before they cost a training cycle.
+- **`mailwoman corpus audit`** ([`packages/corpus/lib/tools/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/packages/corpus/lib/tools/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run it before training to verify that the sampled mix matches intent. It catches misconfigurations like the v0.3.0 "NAD = 35% effective sample" case before they cost a training cycle.
 
   ```bash
-  npx tsx corpus/scripts/audit.ts /data/corpus/versioned/<rev>/corpus-<rev> \
+  mailwoman corpus audit /data/corpus/versioned/<rev>/corpus-<rev> \
       --config corpus-python/src/mailwoman_train/configs/<recipe>.yaml
   ```
 

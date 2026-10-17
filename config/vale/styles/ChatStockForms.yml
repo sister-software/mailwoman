@@ -6,7 +6,7 @@
 ## than in StockPhrases.yml. "The real question is…" is covered by
 ## JudgmentJargon's rhetorical-noun pattern, not repeated here.
 extends: existence
-message: "Remove the stock form '%s' — agreement must carry information, and an opener or closer carries none."
+message: "Remove the stock form '%s' — agreement must add evidence or a concrete consequence, and an opener or closer adds neither."
 level: error
 ignorecase: true
 tokens:
@@ -33,10 +33,7 @@ tokens:
   ## Quoted: a token opening with a comma and carrying an apostrophe is not a YAML scalar, and Vale
   ## answers `did not find expected node content` with no report at all.
   - ",\\s+and that(?:'s| is)\\b"
-  ## Moved from StockPhrases.yml: in a REPLY this is filler, but in published prose and in
-  ## a code comment it is the plain verb — and banning it there contradicted AmbiguousShorthand,
-  ## whose own message asks the writer to name the concrete thing.
-  - \snames the\s
+  ## `names the` is refused on every surface by NamesVerb.yml.
   - keep in mind
   - deep dive
   - for completeness

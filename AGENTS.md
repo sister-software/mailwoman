@@ -125,7 +125,14 @@ dependency graphs. That count covers runtime imports. A declaration several pack
 home and is imported with `import type`,
 which adds no runtime dependency. The `duplicate-exported-shape` repository check reports an exported
 interface or type alias whose body another workspace also exports. When two platforms must
-agree on behavior, share the function rather than copying its constants.
+agree on behavior, share the function rather than copying its constants. Search for the concept
+rather than a name already chosen: `mwdev_symbol` with `describes` matches a sentence against every
+exported declaration's docstring, and with `query` returns the declaration site, signature and export
+status in one call. Fall back to LSP `workspaceSymbol` anchored on the file being edited and on the
+package where such a helper would live, then to a repository-wide grep for the type or artifact rather
+than the verb. A `@see {@linkcode name}` tag that does not resolve means route reads to the existing
+helper. At the end of a sprint whose lanes ran as separate subagents, triage the sprint's commits for
+re-typed helpers below jscpd's 80-token floor.
 
 A rule about one country lives in per-country data or under a per-country directory, never as a
 hard-coded branch in a shared module. The codex holds per-country tables, and an adapter or recipe for
@@ -134,15 +141,37 @@ writes `// country-branch: <reason>` on the line above, stating why the rule is 
 planetary source would replace it. The `country-branches` repository check reports every other
 comparison against a country literal. Before writing a branch for US, GB or another well-covered locale,
 look for the source that covers every country: Who's On First admin names and abbreviations, the
-Overture places file, the codex country tables.
+Overture places file, the codex country tables. A finding about a few countries is a hypothesis about
+a global distribution. Before adding a row to a per-country table such as
+`COUNTRY_PLACETYPE_OVERRIDES` in `packages/codex/lib/placetype-map.ts`, compute the same statistic for
+every country and print the distribution. When the countries that looked anomalous sit inside a
+populated mode, the rule is wrong rather than the countries. A census drawn from where the data is
+densest encodes that region's structure as the norm.
 
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,
 `parseJSON`, `readID`, and `modelURL`. Preserve external names, snake-case wire fields, and documented
 CLI adapter keys. `sister-software/no-title-case-acronym` enforces the convention.
 
+A `*.run.ts` tool or a `tools/` script parses its flags with `parseArgs` from `node:util`, declaring
+each switch as a `{ type: "boolean" }` option. A tri-state pin takes `--x` and `--no-x`. A `cli/`
+command declares its options through Pastel's option schema. The `restrictProcessGlobals` lint rule
+refuses a scan of `process.argv`.
+
+Test for the presence of what the code needs, such as `typeof id === "number"` or `x != null`,
+rather than `!== undefined`, which encodes how a value happens to be absent and fails silently when
+`null` enters the channel. Apply the rule to the code being touched rather than as a sweep over
+existing sites.
+
 Run `yarn lint` for lint, formatting, prose, dependency, and repository-health checks. Run
 `yarn typecheck` for build and test type checking. Run the narrow package tests during iteration and
 the affected workspace's complete tests before handoff. Do not claim a command passed unless it ran.
+Run `yarn compile` before `yarn lint`: two `#` imports in `packages/mailwoman` map the `node`
+condition to `out/`, so knip and the bundle-graph check fail on an uncompiled tree. Run
+`mwops release copy-weights` after `yarn compile`, or the FST, postcode and pair-index files are left
+out. A pipeline's exit status is its last command's, so `audit | grep … && launch` launches on a
+failed audit and `tsc | tail` reports green on nine errors. Run a command whose exit code decides the
+next step alone, redirect its output to a log, chain the next step on its exit code, then read the
+log.
 
 ## Vocabulary rules across the tree
 
@@ -198,6 +227,14 @@ Before adding a fitted threshold, fix the cheapest plausible cause and measure a
 that cause produces the separating quantity. Inspect the rows the threshold would newly refuse. A
 threshold fitted only to current failures may measure the defect that produced those failures.
 
+A test asserts an invariant rather than a count that ordinary work moves. Read an expected count from
+the input the build reads instead of typing it. A loose bound is still a pin. A pinned count is right
+only when its movement is the signal, such as a dataset refresh dropping a country.
+
+To check a tool's number, call the reader the tool calls rather than a fresh parser of the same
+format, because a hand-written parser is a second implementation. A spot-check that disagrees with the
+tool is a finding about one of them and never a number to publish.
+
 ## Code review rules
 
 ### Default-on model behavior
@@ -238,6 +275,10 @@ belongs to a teardown that itself awaits, such as `TemporaryDirectory` removing 
 There is no root `scripts/` directory. Executables enter through a package registry, a `mailwoman`
 command, or `packages/mailwoman/tools/dev-tools/*.run.ts`. The `no-root-scripts` repository check enforces
 this structure.
+
+Code that must live outside the monorepo, such as a starter template, a generated artifact or
+satellite tooling, is created under the `mailwoman` GitHub organization at `github.com/mailwoman/...`.
+The monorepo itself stays `sister-software/mailwoman`.
 
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing

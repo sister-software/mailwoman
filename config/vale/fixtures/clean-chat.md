@@ -1,8 +1,8 @@
 # Clean chat fixture
 
 This file is a realistic agent status reply that must pass `.vale-chat.ini`
-with zero alerts of any severity — the Mailwoman style and the MailwomanChat
-additions together. It models the register the output style asks for:
+with zero alerts of any severity — the shared rules and the chat-only rules
+together. It models the register the output style asks for:
 result first, the address in view, the denominator beside the score, the
 entity named beside its ID.
 

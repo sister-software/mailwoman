@@ -168,7 +168,7 @@ function majorityLabel(distribution: Map<string, number> | Record<string, number
 }
 
 /**
- * One lint flag emitted by a check.
+ * A check emits this lint flag.
  */
 export interface LintFlag {
 	check: string

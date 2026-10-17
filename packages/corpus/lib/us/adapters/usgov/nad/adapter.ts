@@ -18,7 +18,7 @@ import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * The adapter id stamped on every emitted row.
+ * The adapter stamps this id on every emitted row.
  */
 export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
 /**

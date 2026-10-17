@@ -1,31 +1,28 @@
 ## Mailwoman chat style: banned project shorthand.
 ##
 ## Vale existence rule. Each token is a name an agent minted for something that
-## already has a plain name, and the reader has to decode it. `the null` /
-## `the cure` were invented for two fine-tune runs — say "the control run
-## (v5.0.1)" / "the treatment run (v5.0.2)". `three-leg` names a
-## comparison protocol — say which systems or runs the legs are.
-## The word for a tunable change moved to AmbiguousShorthand.yml
+## already has a plain name, and the reader has to decode it. `the null` was
+## invented for a control fine-tune run — say "the control run (v5.0.1)".
+## `three-leg` stands for a comparison protocol — say which systems or runs
+## the legs are. The word for a tunable change moved to AmbiguousShorthand.yml
 ## so both surfaces refuse it.
 ##
-## This file holds the CHAT-ONLY shorthand: words that appear in replies and
-## never in published prose. The four words banned on BOTH surfaces —
-## seam, shard, cut, gate — live in AmbiguousShorthand.yml, which
-## .vale-chat.ini loads through the shared Mailwoman style, so chat coverage
-## of `shard` is unchanged by its move out of this file.
+## This file holds the chat-only shorthand: words that appear in replies and
+## never in published prose. The five words banned on both surfaces live in
+## AmbiguousShorthand.yml, which .vale-chat.ini loads with the rest of the
+## style directory. The medical vocabulary that once sat here (`dose`, `the
+## cure`) is refused on every surface by MedicalMetaphor.yml.
 ##
-## `slice` and `dose` are the training-side pair, and they read as one thing to
-## someone who works in addresses rather than in mixtures:
+## `slice` is the training-side word, and it reads as one thing to someone who
+## works in addresses rather than in mixtures:
 ##
 ##   slice -> the named artifact: the parquet by its filename, the corpus
 ##            source by its `source` string, the recipe by its name, or plainly
 ##            "the training rows for Czechia".
-##   dose  -> the measured quantity with its unit: reps per row, rows per pass,
-##            the `source_doses` value, the weight.
 ##
-## They belong in AmbiguousShorthand.yml beside the other five, and
-## the move costs 346 rewrites across AGENTS.md, two skills and ten engineering
-## pages. Chat first; the published-prose migration is its own change.
+## It belongs in AmbiguousShorthand.yml beside the other five, and the move
+## means rewriting every published page and skill that carries the word. Chat
+## first; the published-prose migration is its own change.
 ##
 ## A backticked artifact name (`synth-suffix-boundary`,
 ## `packages/corpus/lib/shard-recipes/`) survives, because inline code is
@@ -44,7 +41,5 @@ exceptions:
   - corpus split-slice
 tokens:
   - the null
-  - the cure
   - three-leg
   - (?:corpus (?:align-|split-)?)?slice(?:s|d)?
-  - dos(?:e|es|ed|ing)

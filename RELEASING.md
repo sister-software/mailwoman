@@ -352,6 +352,12 @@ node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
 
+The map's place outline is a two-database split. The resolver database carries points and bboxes only, and
+`wof-polygons.db` (`polygons(id INTEGER PRIMARY KEY, geom TEXT)`, Douglas-Peucker-simplified admin rings
+keyed by the same WOF id) loads lazily when `ReleaseInfo.hasPolygons` is set. An id absent from it falls
+back to the bbox. Build it with `mailwoman gazetteer polygons` from the same resolver database so that the
+ids stay in lockstep, then publish both with `--polygons`.
+
 `hasWofDB: true` stays in `releases.json`. The demo enables the admin tier only when it is true, and it now means
 "this version has admin resolution", which the version-independent candidate gazetteer always provides.
 Validate with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
@@ -412,6 +418,7 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **`release.config.json` drifts silently from the card, and copy-weights trusts the config.** The card decides _which_ model ships, but `release.config.json#weights.model` is the path that copy-weights.ts materializes from. The config must change in the same commit as the card (Step 1 items 2+3). When it does not, copy-weights materializes the superseded model and the Gauntlet grades it without warning. In #1024 the config lagged at v220 `a64ad2e6` while the v5.4.0 promotion shipped v230 `ea785a70`, which cost a bisect. **Guardrail (#1024):** the Gauntlet harness now asserts that the materialized `neural-weights-en-us/model.onnx` md5 equals the card's `files_md5["model.onnx"]` for the shipped default, and fails on a mismatch. The Gauntlet is the release `before:release` step, so a drifted config can no longer ship. #1005 fixed the dev-weights-symlink form of the same problem, and #1024 fixed the release-config form.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0), so you do not need to set it lower or re-run to check. A promotion eval that needs a lower floor gets a **new eval file** with a stated `$revision_*` reason, so floors never drift silently. The full promotion eval takes ~12–15 min, so set the floors correctly the first time.
 - **The R2 demo repoint copies the prior files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-demo-assets-to-r2.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `nexus-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
+- **The browser release set serves `encoder.onnx` plus `embeddings-hot.bin`.** From 10.1.0 the browser reads the embedding table by range from `embeddings-hot.bin` (`splitEmbeddings: true` in `releases.json`) in place of the table inside `model.onnx`, and the runner imports `onnxruntime-web/wasm`, because the asyncify wasm exceeds the Workers 25 MiB asset cap. The `.bin` objects are stored gzip on R2, and the edge cache holds identity copies until a purge or a `max-age` expiry.
 - **The npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version, but `npm pack` returns 404 and a raw tarball `curl` returns a small error JSON. That behavior comes from CDN propagation, and the publish succeeded. In the meantime, verify through `npm view … dist.unpackedSize` (a code-only package is <1 MB, and a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Run `npm pack` again once the CDN catches up.
 - **Canonical artifact paths:** model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`. Tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`. FST → `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`). Postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`. Gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json`. The promotion eval ran against this repo copy, so use it instead of the prior bucket's copy.
 
@@ -766,6 +773,9 @@ neither trust nor the workflow. That error held `neural-weights-{en-in,it-it,es-
 file this repo has never had. A package that already has a config answers `409 Conflict` to a second
 `npm trust github`, whatever that config contains. Read the existing config with `npm trust list <pkg>` and
 replace a stale one with `npm trust revoke <pkg> --id <id>`, because retrying returns 409 forever.
+
+A Trusted Publisher that `bless-package` configures lapses unless the package's first CI publish completes
+within two days. Bless, then dispatch the publish inside that window, or bless again.
 
 Two traps wasted time during 4.0.0:
 

@@ -103,3 +103,72 @@ spelling, because the loader reads the corpus rather than the table.
 
 `lib/adapter.ts` owns `HOUSE_NUMBER_PREFIX` and `splitStreetLine(line)`, the house-number and street
 split every US CSV adapter uses. Call it rather than splitting the line again in a new adapter.
+
+## Country-implicit sources
+
+Overture address rows carry no country token, so training on them at real weight dilutes country
+emission on rows that do name one (measured at −1.6 pp with 456k CA/MX rows, and −5.3 pp with 666k BR
+rows added). A country-implicit source needs a fraction of its rows rendered with a trailing country
+surface (`components.country` set and aligned), using surfaces of three or more characters because a
+bare alpha-2 code collides with US state abbreviations. `renderCountry()` in `country-balanced.ts` is
+the precedent.
+
+## Base corpus build cost
+
+A base corpus build,
+`mailwoman corpus build --inputs "$(cat $MAILWOMAN_DATA_ROOT/corpus/build-logs/v0.5.0-inputs.json)"`,
+takes about 11.5 hours for roughly 680 M rows, and that inputs file is the only record of the 11
+adapters and their input paths. Budget a day, run the build in the background with
+`--max-old-space-size=12288`, and smoke-build two small adapters first to prove a schema change end to
+end. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
+`rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
+
+## License election
+
+A grant that enumerates its rights grants those rights and no others. An omission is neither a
+permission nor a prohibition. Two of the four `INGEST_OPERATIONS`, `transform` and `train`, need
+adaptation, so before electing a license grep the terms document for the verb the operation needs
+(`adapt`, `modify`, `derivative`, `alter`, `translate`) rather than for the word `licence`. CC BY and
+Licence Ouverte name adaptation explicitly. A bespoke government terms page may omit it, and the
+omission decides the election. Record the gap in `$notElected`, which is a different record from an
+absent statement and from a reservation of rights.
+
+When a state's register is elected, read the publisher's own per-area download list (BAN's department
+directory, Geonorge's area codelist, Finland's `municipality_number` column) before closing the row,
+because a dependency with its own ISO 3166-1 code may already be covered under the license held. A
+geocoder's merged index cannot settle it. `scopedLicenseID` scopes a decision to one publisher in one
+jurisdiction, so one grant over several jurisdictions uses `sharedReadings` plus
+`{"sameAs": "<body>"}` per id. A `personalDataReview` has no `sameAs`, so `source-resolutions.json`
+repeats the body and documents the repetition in a `$`-prefixed key.
+
+An empty owner column on a research-CSV row silently widens a license election to every publisher the
+row lists, because `scopedLicenseID` falls back to the source id. Split the row per publisher first.
+A national aggregator's license label for another publisher's feed is a third party's claim. Read the
+publisher's own metadata (Bizkaia states no CC license, and Gipuzkoa states CC BY-SA 4.0 where the
+national feed states CC BY).
+
+Before recording a publisher as unreachable, probe `https://<host>/` and `https://www.<host>/`
+separately and record which answered. When a site answers, also try `/terms-of-use/`,
+`/privacy-policy/`, `/copyright/` and `/downloads/`; identical body lengths across them mean a
+catch-all 404. A keyword match for a license on a rendered page can hit the page's own dependencies,
+such as Bootstrap's MIT notice, and a publisher's terms may sit in a linked PDF rather than on the
+page.
+
+When a publisher's own download page states no license, query the national open-data portal's CKAN
+API and match on `organization` rather than `title`; a third party's copy may carry the matching title
+with `license_id: notspecified` while the publisher's entry carries the grant under another name.
+Compare the entry's `resources` against the file to be fetched to prove the two records describe one
+artifact. A portal also returns third parties' datasets about a country, and a third party's license
+is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
+`electedTerms` carry the publisher's words, because `electedLicenseLabel` feeds the share-alike
+filter.
+
+For an INSPIRE download service, `<Fees>` and `<AccessConstraints>` in the WFS capabilities describe
+calling the service rather than the data. Member states fill them with their own word for absent
+(`puudub`, `NONE`). The grant over the data is in the ISO 19139 dataset record reached from
+`inspire_dls:ExtendedCapabilities` through `SpatialDataSetIdentifier` to `metadataURL`; read
+`otherConstraints`, `useLimitation`, `accessConstraints` and `useConstraints` there, and tie the
+record to the service by `fileIdentifier` and theme before electing. A named instrument whose text
+cannot be retrieved stays `unchecked` and is never a refusal. In an ISO 19139 record the first
+`<gmd:title>` is commonly a thesaurus citation (`GEMET - INSPIRE themes`); the resource title sits
+under `identificationInfo` before the first `descriptiveKeywords`.

@@ -2,9 +2,9 @@
 ##
 ## Vale existence rule, sentence scope so `^` anchors at each sentence start.
 ## "Perfect." / "Excellent!" / "Got it." open a reply with a grade instead of
-## the result. The output style's rule is that agreement must carry
-## information; these sentences carry none, and the result-first opening the
-## style asks for replaces them at no cost. Sentence-anchored on purpose: "a
+## the result. The output style's rule is that agreement must add evidence or
+## a concrete consequence; these sentences add neither, and the result-first
+## opening the style asks for replaces them. Sentence-anchored on purpose: "a
 ## perfect hash" mid-sentence is legitimate vocabulary.
 ##
 ## `nonword: true` is REQUIRED here (measured on @vvago/vale 3.17.0): the

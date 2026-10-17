@@ -156,7 +156,7 @@ export interface ExplanationProbability {
 }
 
 /**
- * The result an operator recorded for an investigation.
+ * An operator records this result for an investigation.
  */
 export interface OperatorResult {
 	/**

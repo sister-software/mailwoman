@@ -331,6 +331,16 @@ jobs:
           execFileSync('yarn', ['ci:test:fast', ...JSON.parse(process.env.TEST_FILES)], { stdio: 'inherit' });
           JS
 
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-unit-fast
+          path: test-results/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
   # unit-slow runs the database-dependent half of the Vitest sweep. Its suites use
   # `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a hosted runner
   # they would skip and pass.
@@ -392,6 +402,15 @@ jobs:
           import { execFileSync } from 'node:child_process';
           execFileSync('yarn', ['ci:test:slow', ...JSON.parse(process.env.TEST_FILES)], { stdio: 'inherit' });
           JS
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-unit-slow
+          path: test-results/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
 
   # This job runs the full-scale locality-surface build (`evidence-lexicons.full.test.ts`) over the
   # whole admin database when scope selects mailwoman or codex.
@@ -510,6 +529,19 @@ jobs:
         if: needs.scope.outputs.worker == 'true'
         run: yarn test:license-worker
 
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-react-leg
+          path: |
+            packages/react/test-results/junit.xml
+            packages/planetary/playwright-report/results.json
+            packages/opportunity-app/playwright-report/results.json
+          if-no-files-found: warn
+          retention-days: 30
+
   # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
   # configuration runs one worker, so the suite runs serially inside this job.
   earth:
@@ -555,6 +587,18 @@ jobs:
 
       - name: Earth shell smoke
         run: yarn workspace @mailwoman/earth test:browser
+
+      # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-earth
+          path: |
+            packages/earth/playwright-report/results.json
+            packages/earth/playwright-report/
+          if-no-files-found: warn
+          retention-days: 30
 
   # The smoke test packs every published workspace, installs the tarballs into a fresh project and
   # runs the compiled CLI. It catches undeclared dependencies, unshipped files and eager top-level

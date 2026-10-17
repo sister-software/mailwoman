@@ -27,7 +27,7 @@ pattern at cell grain.
 Both come from one acquisition, one aggregation, and one set of provenance rows, so the two consumers
 cannot disagree about the ground.
 
-## Four absences, and the one positive negative
+## Four absences are recorded, and one positive negative
 
 The layer never represents an absence with a small number. A consumer can tell apart five readings:
 
@@ -130,7 +130,7 @@ contain it, the license has changed, and a build that accepted the change would 
 that no reviewer checked. The acknowledgement that the same metadata requests is stored in
 `layer_manifest.attribution`: _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
-## Two dates, and they are not the same fact
+## Two dates are stored, and they are not the same fact
 
 `sacatalog.saverest` is the refresh date. NRCS runs one coordinated Annual Soils Refresh each October 1.
 The catalogue grouped by year returns 2016: 1, 2025: 3,323, 2026: 56, so a region's areas share a

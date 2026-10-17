@@ -67,6 +67,16 @@ Supported countries are a deliberately small set (currently DE, FR, GB, NL, and 
 branch in the locale street normalizer, so adding one is two edits in lockstep, never a silent fold with
 the wrong rules.
 
+### Clip the extract to its own country
+
+A Geofabrik country extract carries a margin past the border, so its address records include every land
+neighbor's border towns, and the `osm` adapter stamps every row with the `--country` value.
+`addr:country` is set on too few records to filter on. Fetch ADM0 outlines from geoBoundaries with
+`node packages/osm/tools/fetch/country-outline.ts --iso3 <code>`, which writes a receipt beside each
+outline, and emit the corpus with `emit-corpus-jsonl --within <own outline> --without <each land neighbor's outline>`.
+A detailed neighbor outline excludes the border towns that a coarse own outline misplaces.
+geoBoundaries has no HKG or MAC entry. The CHN outline already excludes both.
+
 For the address scope key, an observed `addr:suburb` outranks `addr:city`. This matters in NZ and GB,
 where queries commonly name the suburb while `addr:city` names the wider metropolitan authority. City-only
 queries still reach the same row through the resolved locality bbox fallback.

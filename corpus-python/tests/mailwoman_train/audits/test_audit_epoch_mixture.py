@@ -149,7 +149,7 @@ AUGMENTED_REFERENCE = Path(__file__).parent / "epoch-mixture-reference.json"
 
 
 def _pinned_report(corpus: Path) -> dict:
-    """One audit with augmentation on, so both passes and their divergence are in the report."""
+    """One audit runs with augmentation on, so both passes and their divergence are in the report."""
     report = _audit(corpus, augment={"upper_case": 1.0, "case": 0.5})
     report["meta"].pop("corpus_dir")  # the test's own scratch path, different every run
     return report
