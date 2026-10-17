@@ -36,7 +36,11 @@ export function previewConfig(options: PreviewConfigOptions): PlaywrightTestConf
 		forbidOnly: CI,
 		retries: CI ? 1 : 0,
 		maxFailures: CI ? 5 : 2,
-		reporter: CI ? [["github"], ["html", { open: "never" }]] : [["list"], ["html", { open: "never" }]],
+		// The JSON report carries per-test duration and retry count.
+		// CI uploads it on every run, passing runs included, as the flake/slowness record.
+		reporter: CI
+			? [["github"], ["html", { open: "never" }], ["json", { outputFile: "playwright-report/results.json" }]]
+			: [["list"], ["html", { open: "never" }]],
 		use: {
 			baseURL,
 			...devices["Desktop Chrome"],

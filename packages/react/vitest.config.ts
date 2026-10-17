@@ -24,6 +24,8 @@ import { configDefaults, defineConfig } from "vitest/config"
 export default defineConfig({
 	plugins: [react()],
 	test: {
+		// On CI, emit a JUnit report so per-test durations and retries are uploadable as an artifact.
+		reporters: process.env["CI"] ? ["default", ["junit", { outputFile: "test-results/junit.xml" }]] : ["default"], // oxlint-disable-line sister-software/no-process-globals -- Vitest loads this config outside the module graph
 		include: ["**/*.test.ts", "**/*.test.tsx"],
 		// Pure `*.node.test.ts` run under bare node via `vitest.node.config.ts`
 		// (see `test:node`), not in the browser.
