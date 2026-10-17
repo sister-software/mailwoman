@@ -7,8 +7,11 @@
  *   OpenStreetMap. OSM attests a minority of live NI postcodes.
  *   An absent code abstains from fuzzy matching, so the database is strictly additive.
  *
- *   ODbL 1.0 is share-alike on a Derived Database, so this artifact is build-local and never enters
- *   an npm tarball, an R2 publish, or the demo.
+ *   The database is ODbL 1.0. No npm tarball ships it. The candidate gazetteer folds its rows in
+ *   as an independent part of a collective database: they keep their own id range, and no other
+ *   row is matched against them. The published fold carries the ODbL offer at
+ *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold, and a
+ *   gazetteer that folds in a new build must publish that build's rows beside it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
