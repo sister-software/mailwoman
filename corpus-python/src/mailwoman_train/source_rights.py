@@ -120,6 +120,12 @@ class SourceRights:
             spellings=spellings,
         )
 
+    def permits_training(self, register_source: str) -> bool:
+        """Whether one register row holds an elected decision permitting transform and train."""
+        row = self.register_sources.get(register_source)
+        decision = self.decisions.get(row["license"]) if row else None
+        return decision is not None and not _missing_permissions(decision)[0]
+
     def gaps(self, source: str, corpus_version: str | None = None) -> list[SourceRightsGap]:
         """Every reason ``source`` may not be built into a corpus or trained on. Empty means permitted.
 

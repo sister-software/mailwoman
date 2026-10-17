@@ -42,11 +42,20 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 38 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 156 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
-OpenStreetMap, Who's On First, TIGER/Line and the OpenAddresses files the recipes read. Each reads
+OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, and the 118 county and
+state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`). Each reads
 `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision. They sit in this repository because
 `corpus-source-inputs.json`, the table that names them, sits here (#2643).
+
+## `us-situs-sources.json` — which register rows each US situs `source` value comes from (#2650)
+
+Hand-maintained. Maps each `source` value of the `address-points-us-*.db` databases to the register rows its data
+comes from: `overture:NAD` to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to that body's
+own row and Overture. The house-venue tuple reader keeps a row only when every row its value maps to holds an
+elected decision permitting transform and train. The bodies were read on 2026-10-17 under the US factual-data
+reading. The bare `openaddresses` value of the Hawaii database names no body and has no entry.
 
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 
@@ -86,7 +95,7 @@ concluding the publisher renamed itself.
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
 | `global-functional-authority-corpora-v2.csv`   | 2,426 | the 426 rows naming a national source. 2,000 are dropped               |
-| `source-additions.json`                        |    38 | all 38 rows, after the CSV's                                           |
+| `source-additions.json`                        |   156 | all 156 rows, after the CSV's                                          |
 
 The 2,000 dropped rows have `origin = global_research_rail`. They are eight global discovery lookups the
 pass repeated once per jurisdiction. With the `iso2` and `jurisdiction` columns ignored, they collapse
