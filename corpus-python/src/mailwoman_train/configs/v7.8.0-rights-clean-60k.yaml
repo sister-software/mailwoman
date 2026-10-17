@@ -21,15 +21,23 @@
 #      invented-po-box-cedex     49,887 / 55 / 58             49,648 / 177 / 175           pobox-train
 #      spliced-country           47,684 / 1,143 / 1,173       47,683 / 1,159 / 1,158       country-train
 #      invented-intersection     40,000 / 0 / 0               40,000 / 0 / 0               intersection-train
-#      fragment-assay            200,348 / 0 / 0              181,013 / 0 / 0              fragment-assay-elected-oa
+#      fragment-assay            200,348 / 0 / 0              221,335 / 0 / 0              fragment-assay-v078-countries,
+#                                                                                          and v0.7.2's ZZ rows
 #      codex-bare-postcode       20,460 / 0 / 0               17,398 / 0 / 0               v0.30.0-bare-postcode-elected-oa
 #      reviewed-postcode-tail    22 / 0 / 0                   dropped, since no reviewed fact survives
 #
 #    The seven recipe outputs from unit-train to intersection-train read the US skeleton list without OpenAddresses
 #    us/il/cook, with National Address Database samples added (7516f6557). house-venue-v6-no-oa and
 #    spliced-sub-venue-v6-no-oa read house-venue-tuples-v6. That tuple file keeps NAD rows and the bodies whose own
-#    decisions permit training. fragment-assay reads the twelve locales OA_FILES lists, and codex-bare-postcode drops Sweden's
-#    sixteen municipal files (4e4f7d577).
+#    decisions permit training. codex-bare-postcode drops Sweden's sixteen municipal files (4e4f7d577).
+#
+#    fragment-assay reads the thirteen locales OA_FILES lists, Finland from Ryhti (fi-property-building-1), and the
+#    locality spans of v0.5.0's wof-admin train parts 0000 to 0011 (LOCALITY_PARQUET_GLOB). Switzerland's file,
+#    openaddresses/extracted/ch/countrywide.csv, is the 2021 extract of the BFS building and dwelling register
+#    (ch-property-building-2), whose level A data the BFS states may be used without restriction. rendered-ch reads
+#    the same file, and its input row now names that publisher instead of swisstopo's directory. v0.7.2's 4,765 ZZ rows,
+#    famous localities from the Who's On First candidate gazetteer, are carried as part-fragment-zz-v072.parquet.
+#    Austria and Sweden stay out: no Austrian address row is elected, and Sweden's rows are refused or unchecked.
 #
 #    invented-house-venue keeps v0.7.2's 18,000 IN, PT and MX rows, the file part-house-venue-intl-v27.train.parquet,
 #    all in train as in v0.7.2. Each row's postcode, locality and region is the postcode, admin name2 and admin name1
@@ -39,8 +47,8 @@
 #    keeps the comparison against v7.2.0 to the rights change. Its train rows by country: FR 59,325, US 56,542, IN 6,000,
 #    MX 6,000, PT 6,000.
 #
-#    Two sources hold fewer kinds of row than in v0.7.2. fragment-assay holds 17 countries against v0.7.2's 26.
-#    codex-bare-postcode loses Sweden's 3,058 rows.
+#    Two sources hold fewer kinds of row than in v0.7.2. fragment-assay holds 24 countries against v0.7.2's 26,
+#    without Austria's 9,587 rows or Sweden's 9,120. codex-bare-postcode loses Sweden's 3,058 rows.
 #
 # 2. `state-tx-notaries` returns to v7.2.0's 1.5. Its register row, us-professional-licensing-3, is elected under the
 #    US factual-data reading (688181587).
@@ -61,9 +69,14 @@
 #   copy v0.7.7-no-ppd's three rendered-gb-os-open.<split>.parquet files
 #   copy v0.7.0-de-holdout's train/part-house-venue-intl-v27.train.parquet into train as
 #     invented-house-venue-intl-v27.parquet
-#   rewrite fragment-assay-elected-oa/part-fragment.parquet to the schema and 50,000-row groups of v0.7.2's
-#     part-fragment.train.parquet (int32 spans, a string base_source_id), as part-fragment-elected-oa.parquet in train.
-#     fragment-assay is train-only, as in v0.7.2, because the builder's held-out rows go to fragment-dev.jsonl
+#   uv run python -m mailwoman_train.corpora.fragment --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted \
+#     --corpus-parquet-glob '$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**/train/part-000*.parquet' \
+#     --out-parquet <dir>/part-fragment.parquet --out-dev <dir>/fragment-dev.jsonl, whose --locality-parquet-glob and
+#     --ryhti-file defaults name LOCALITY_PARQUET_GLOB and RYHTI_FILE
+#   rewrite that part-fragment.parquet to the schema and 50,000-row groups of v0.7.2's part-fragment.train.parquet
+#     (int32 spans, a string base_source_id), as part-fragment-v078.parquet in train, and write v0.7.2's ZZ rows of that
+#     file as part-fragment-zz-v072.parquet. fragment-assay is train-only, as in v0.7.2, because the builder's held-out
+#     rows go to fragment-dev.jsonl
 #   copy v0.30.0-bare-postcode-elected-oa's codex-bare-postcode-00000.parquet into train as
 #     codex-bare-postcode-elected-oa.parquet, train-only as in v0.7.2
 #   register the files with `mailwoman corpus overlay-manifest --base <v0.7.2-address-systems MANIFEST.json>

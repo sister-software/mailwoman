@@ -584,6 +584,11 @@
 					"reads": "streets, numbers, localities and postcodes from OpenAddresses au/countrywide.csv (G-NAF)"
 				},
 				{
+					"registerSource": "ch-property-building-2",
+					"license": "unchecked-corpus-input-ch-bundesamt-f-r-statistik-bfs",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses ch/countrywide.csv as extracted on 2021-10-17 (the BFS GWR building addresses)"
+				},
+				{
 					"registerSource": "cz-property-building-2",
 					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
 					"reads": "streets, numbers, localities and postcodes from OpenAddresses cz/countrywide.csv (RÚIAN)"
@@ -597,6 +602,11 @@
 					"registerSource": "es-property-building-1",
 					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
 					"reads": "streets, numbers, localities and postcodes from OpenAddresses es/countrywide.csv (CartoCiudad)"
+				},
+				{
+					"registerSource": "fi-property-building-1",
+					"license": "unchecked-access-free-fi-suomen-ymp-rist-keskus",
+					"reads": "Finnish street names, numbers, postal office names and postcodes from Ryhti's open_address.csv (RYHTI_FILE in corpora/fragment/sources.py)"
 				},
 				{
 					"registerSource": "hr-property-building-1",
@@ -651,7 +661,7 @@
 				{
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
-					"reads": "locality spans from the v0.5.0 corpus and the candidate-gazetteer famous localities"
+					"reads": "locality spans of the wof-admin rows in v0.5.0's train/part-0000 to part-0011 (LOCALITY_PARQUET_GLOB in corpora/fragment/sources.py), and the candidate-gazetteer famous localities of the ZZ rows carried from v0.7.2"
 				},
 				{
 					"registerSource": "fr-property-building-1",
@@ -1957,9 +1967,9 @@
 			"aliases": ["synth-ch"],
 			"inputs": [
 				{
-					"registerSource": "ch-property-building-1",
-					"license": "unchecked-access-free-ch-bundesamt-f-r-landestopografie-swisstopo",
-					"reads": "OpenAddresses ch/countrywide, swisstopo's building address directory"
+					"registerSource": "ch-property-building-2",
+					"license": "unchecked-corpus-input-ch-bundesamt-f-r-statistik-bfs",
+					"reads": "OpenAddresses ch/countrywide as extracted on 2021-10-17, the BFS GWR building addresses (the source moved to swisstopo's directory only in 2024-11)"
 				}
 			],
 			"authored": [

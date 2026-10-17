@@ -2225,6 +2225,48 @@
 				}
 			}
 		},
+		"unchecked-corpus-input-ch-bundesamt-f-r-statistik-bfs": {
+			"state": "elected",
+			"electedTerms": "The BFS statement on its GWR data, `Daten der Stufe A sind öffentlich und können ohne Einschränkung verwendet werden`, with the opendata.swiss terms of use `Open use` (terms_open) on the BFS GWR dataset",
+			"termsVersion": "read 2026-10-18",
+			"retrievedCopy": "internal/strategy/rights-receipts/ch-bfs-gwr-2026-10-18/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The file this row covers is the 2021 BFS publication, not swisstopo's directory. OpenAddresses' source `sources/ch/countrywide.json` at e880e070c5f1 (2021-07-26), sha256 `66796dde7f5ca6a205c78dbe7ca367c80b6988fef609f5710ace84e58c3e85f3`, downloads `https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/CSV/CH/CH.zip`, and its licence note quotes VGWR Art. 16: the BFS publishes the GWR's access level A data on the internet, and streets and building addresses are both level A. The source moved to swisstopo's `amtliches-gebaeudeadressverzeichnis` only at 520f9ebf45a6 (2024-11-22), and the extracted `ch/countrywide.csv` is dated 2021-10-17. The BFS states the terms on its own layer. The geo.admin.ch legend for `ch.bfs.gebaeude_wohnungs_register`, 2,194 bytes, sha256 `c1b5a529503cb86d5e950d7c23d392905bc472cd04533b5509ada700bfd3d6e5`, and the BFS dataset on opendata.swiss, `eidg-gebaude-und-wohnungsregister-gebaudestatus` (package record 22,189 bytes, sha256 `bc9f5d9413fb1dd06005a1872cea2cd01467077c6ccc0da7c8386d897522f309`), both read `Daten der Stufe A sind öffentlich und können ohne Einschränkung verwendet werden` (level A data are public and may be used without restriction). Every resource of that dataset, the `__publicdata` download among them, carries the rights value `https://opendata.swiss/terms-of-use#terms_open`. The opendata.swiss terms page, 24,706 bytes, sha256 `366069a9a04619eaba2667579a8b8f8b97de67a556edde2beb8ba607ffb62ef5` (German 24,932 bytes, sha256 `d2c7a6f28096ed93e209432b720c0f340b155005acc65b3d16956f256a65d811`), defines Open use as `You may use this dataset for non-commercial purposes. You may use this dataset for commercial purposes. You are recommended to provide the source`. That definition enumerates uses and names no adaptation, so it alone would not elect `transform`. The publisher's own sentence is not an enumeration: it places no restriction on use, which reaches reading, transforming and training on the rows. The election rests on that sentence. The source is cited as `Bundesamt für Statistik BFS, Eidg. Gebäude- und Wohnungsregister`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The BFS publishes level A data on the internet under VGWR Art. 16 and states they may be used without restriction."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Use without restriction covers reading the street, house number, postcode and locality out of a row."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The BFS sentence places no restriction on use. opendata.swiss's Open use definition names no adaptation, and the election does not rest on it."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Fitting a model on the rows is a use, and the BFS states use without restriction, commercial use included under the opendata.swiss terms on the same dataset."
+				},
+				"redistribute-data": {
+					"permission": "unreviewed",
+					"because": "Use without restriction does not say whether a third party may republish the rows. opendata.swiss names use only, and the question is not needed for training."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The statements name no condition on a model trained from the rows, and this reading did not decide whether shipping weights is a use the sentence covers."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The statements grant use to the user and name no sublicensing right."
+				}
+			}
+		},
 		"unchecked-corpus-input-ch-geonames": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Attribution 4.0 International, crediting GeoNames (a link to www.geonames.org); the GB postal export also carries `Contains Royal Mail data Royal Mail copyright and database right 2022.`",

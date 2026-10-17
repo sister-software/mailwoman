@@ -2340,6 +2340,21 @@
 			"source_url": "https://results.openaddresses.io/",
 			"notes": "Its 1,708 rows in the US situs databases may reach the house-venue tuples behind invented-house-venue and spliced-sub-venue.",
 			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "CH",
+			"sector": "property_building",
+			"source": "Federal Register of Buildings and Dwellings (GWR) building addresses, through OpenAddresses ch/countrywide",
+			"owner": "Bundesamt für Statistik BFS",
+			"role": "OBSERVATION",
+			"authority_basis": "The BFS keeps the GWR under the VGWR (SR 431.841) and publishes its access level A data, which include streets and building addresses",
+			"access": "OpenAddresses ch/countrywide as run in 2021, whose source at openaddresses/openaddresses e880e070c5f1 downloaded https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/CSV/CH/CH.zip",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/CSV/CH/CH.zip",
+			"notes": "The on-disk openaddresses/extracted/ch/countrywide.csv is dated 2021-10-17. OpenAddresses switched ch/countrywide to swisstopo's official building address directory only on 2024-11-22 (520f9ebf45a6), so the file the rendered-ch and fragment-assay recipes read is this BFS publication rather than ch-property-building-1.",
+			"origin": "2026-10-17_corpus_input_mapping"
 		}
 	]
 }
