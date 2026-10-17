@@ -30,11 +30,12 @@
 ## reason — "the overlay manifest", "the overlay base", "an overlay ADD" all survive,
 ## and they are the established spellings in `MANIFEST.json` and the sync functions.
 ##
-## Published prose is NOT covered. AGENTS.md and the package READMEs use "data-only
-## overlay" correctly and at length; extending this to the shared Mailwoman style is
-## its own change with its own sweep. Chat first, as `ProjectShorthand.yml` did.
+## `.vale-vocab.ini` switches this rule off for the root markdown and the package
+## READMEs, which use "data-only overlay" at length; extending the nudge to them is
+## its own sweep. `.vale-chat.ini` and `.vale.ini` load it, so replies and the docs
+## pages get the warning.
 extends: existence
-message: "'%s' leaves the sense unstated — a CORPUS overlay reuses data files through a manifest, a WEIGHTS overlay reuses a model graph through `mailwoman.baseWeights`, and a run either starts from scratch (no `train.init_from`) or fine-tunes from a checkpoint. Name which: 'the corpus overlay', 'the en-GB weights overlay', 'the from-scratch run'."
+message: "'%s' leaves the sense unstated — a corpus overlay reuses data files through a manifest, a weights overlay reuses a model graph through `mailwoman.baseWeights`, and a run either starts from scratch (no `train.init_from`) or fine-tunes from a checkpoint. Name which: 'the corpus overlay', 'the en-GB weights overlay', 'the from-scratch run'."
 level: warning
 ignorecase: true
 tokens:

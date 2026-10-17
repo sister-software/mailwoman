@@ -90,13 +90,25 @@ leaves open. It reads repository records and takes no input.
 
 Read it before a release and read the `Unresolved` section first. An empty `Unresolved`
 list would mean the pass read every requested value. Artifact clearance requires a separate decision.
-The current list identifies unresolved records. Twenty-nine register sources of 426 are eligible for ingest. No package has a
-frozen training manifest, and five attribution entries name no license this reader could find.
+The operation exits non-zero when a graph package's card records a corpus with no frozen training manifest
+under `packages/corpus/data/training-manifests/`, and both `publish.yml` jobs run it. An overlay corpus gets
+its record from `freeze-overlay-manifest.run.ts`, which reads every parquet file the corpus manifest lists,
+because `freezeTrainingManifest` runs only inside `buildCorpus` and counts the adapter rows the build
+aligned rather than the rows its files hold. The effective manifest derived from that record carries the
+attributions the audited epoch's sources owe, and `write-rights-files` prints them in each `LICENSE.md`;
+an overlay repeats its base's.
 
 The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
 naming the licensor. This operation composes their inputs into one report. It does not replace them, and a release
 still runs `yarn lint`.
+
+A corpus's frozen `TRAINING_SOURCES.json` states what the corpus holds rather than what trained a model: overlays
+merge after `freezeTrainingManifest`, so the effective manifest
+(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can carry sources the
+frozen manifest never names. `PROVENANCE.json`'s `effective_training_sources` reads `null` when a card names no
+`training.corpus_version`, and `provenanceRefusals` reports that gap rather than inventing a join. Read the effective
+manifest before quoting a model's training sources.
 
 ## Partial-release recovery
 

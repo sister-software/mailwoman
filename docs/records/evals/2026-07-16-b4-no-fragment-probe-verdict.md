@@ -62,7 +62,7 @@ dilution**: `synth-no-fragment` @ 12.0 crowds fr-fragment's relative share over 
 model drifts back toward its pre-fr-fragment reading. So B4b is two knobs rather than one — the bare-street
 ratio _and_ the no-fragment weight relative to fr-fragment — and they must be probed one at a time.
 
-## Two reasons not to escalate, and one caveat
+## There are two reasons not to escalate, and one caveat applies
 
 1. The target did not clear its pre-registered bar.
 2. The French guard drifted the wrong way across every cell.

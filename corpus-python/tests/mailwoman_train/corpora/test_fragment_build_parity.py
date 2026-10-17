@@ -127,7 +127,7 @@ def reference_args(root: Path) -> argparse.Namespace:
 
 
 def run_build(root: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """One build, returned as the pinned payload. `main` parses its own arguments, so they are
+    """Runs one build and returns it as the pinned payload. `main` parses its own arguments, so they are
     supplied by standing in for the parse rather than by assembling a command line."""
     args = reference_args(root)
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda self, *a, **k: args)

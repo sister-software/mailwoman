@@ -1,10 +1,33 @@
 ## Reject a fragment joined to a complete proposition.
 ##
 ## "Exactly one per row, and the two never merge." compresses two facts into
-## one sentence. State each fact with its own finite predicate.
+## one sentence: the first half has no finite verb and borrows the second
+## half's. The shape this rule catches is the quantifier-led fragment — a
+## sentence that opens with a capitalized count or quantity word, runs at
+## most four more words with no comma, and then joins `, and` / `, but` /
+## `, so` to a determiner-led clause. State each fact with its own finite
+## predicate.
+##
+## Three guards keep a proposition out. The rule is case-sensitive and the
+## opener is capitalized, so a sentence Vale split at a decimal or an
+## abbreviation ("v1.0, but the …") cannot enter. The lookahead refuses a
+## finite verb in the opening clause ("Two requirements follow, and the …").
+## Every word after the first may not end in `s` or `ed`, which refuses a
+## third-person or past-tense verb ("One model serves every locale, and each",
+## "Two things happened there, and they") while admitting the plural noun that
+## follows the count ("Two deploys, and the …"). An Oxford-comma list stops at
+## its first comma and never reaches the conjunction.
 extends: existence
 message: "'%s' coordinates a fragment with a complete proposition — state both propositions explicitly."
 level: error
-ignorecase: true
+ignorecase: false
+scope: sentence
+nonword: true
 tokens:
-  - '\bexactly one per row,\s+and the two never merge\b'
+  # A count opener: the next word may be a plural noun ("Two deploys"), so it
+  # may end in `s`; every later word may not.
+  - '^(?:Exactly|Only|At most|At least|About|Roughly|Just|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Zero|Once|Twice|Half|Several)\b(?:\s+(?!(?:is|are|was|were|has|have|had|does|do|did|can|could|will|would|should|must|may|might|became|becomes|become|came|remains?|needs?|reads?|returns?|holds?|carries|carry|keeps?|gives?|takes?|means?|stays?|sits?|runs?|fails?|passes|pass|lives?|moves?|lands?|exists?|wins?|loses?|answers?|refuses?|counts?|covers?|points?|comes?|goes?|falls?|merges?|follows?|happens?|share|make|use|take|give|get|put|run|set|show|need|hold|keep|explain|represent|serve|emit|ship|fill|settle|survive|produce|require|govern|move|read|write|follow|block|cost|of)\b)[\w''`%/-]+(?<!ed))(?:\s+(?!(?:is|are|was|were|has|have|had|does|do|did|can|could|will|would|should|must|may|might|became|become|came|share|make|use|take|give|get|put|run|set|show|need|hold|keep|explain|represent|serve|emit|ship|fill|settle|survive|produce|require|govern|move|read|write|follow|block|cost|of)\b)[\w''`%/-]+(?<!s)(?<!ed)){0,3},\s+(?:and|but|so)\s+(?:the|a|an|it|they|we|this|that|these|those|each|every|both|neither|no|one|two|its|their)\b'
+  # A pronoun-like opener ("None", "Each", "Every page"): the next word is a
+  # verb when it ends in `s` ("None blocks release", "Each costs a round-trip"),
+  # so no word may end in `s` here.
+  - '^(?:None|Nothing|All|Every|Each|No)\b(?:\s+(?!(?:is|are|was|were|has|have|had|does|do|did|can|could|will|would|should|must|may|might|became|become|came|share|make|use|take|give|get|put|run|set|show|need|hold|keep|explain|represent|serve|emit|ship|fill|settle|survive|produce|require|govern|move|read|write|follow|block|cost|of)\b)[\w''`%/-]+(?<!s)(?<!ed)){1,4},\s+(?:and|but|so)\s+(?:the|a|an|it|they|we|this|that|these|those|each|every|both|neither|no|one|two|its|their)\b'

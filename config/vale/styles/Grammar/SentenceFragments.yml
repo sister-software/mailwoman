@@ -1,11 +1,38 @@
 ## Reject a noun phrase presented as a complete sentence.
 ##
-## This targets the sentence-shaped reduced-relative form that hides the
-## predicate in a participle: "The provenance grade stored on a zoning row."
-## It does not ban dependent clauses attached to a complete proposition.
+## The output style asks for a finite verb in every sentence. The shape this
+## rule catches is the reduced relative clause standing alone: a determiner,
+## a short noun phrase, a past participle, a preposition, and then a full stop
+## with no finite verb anywhere after the preposition. "The provenance grade
+## stored on a zoning row." is the canonical example; "The value stored in the
+## card is 3." carries `is` after the preposition and passes.
+##
+## Sentence scope so `^` anchors at each sentence; `nonword` because the token
+## carries its own boundaries and ends on the terminal punctuation. The
+## sentence must END within three words of the preposition: that is what
+## separates a fragment ("The provenance grade stored on a zoning row.") from a
+## proposition whose verb follows the prepositional object ("The index built
+## from the data root serves the demo."). A longer fragment escapes the rule;
+## a short proposition cannot enter it, because the words after the
+## preposition would have to hold both the object and a verb.
 extends: existence
 message: "'%s' is a noun phrase presented as a sentence — state the proposition with an explicit finite verb."
 level: error
-ignorecase: true
+# Case-sensitive with a capitalized determiner: a span that Vale's splitter
+# starts mid-sentence (a wrapped markdown line, "… rows: the tag stored on the
+# span.") opens lowercase and stays out.
+ignorecase: false
+scope: sentence
+nonword: true
 tokens:
-  - '\bthe provenance grade stored on a zoning row\b'
+  # Three guards keep a proposition out. The lookahead refuses an auxiliary
+  # anywhere in the head ("This is X keyed on Y", "Every variable is read by
+  # Z"). Head words and tail words may not end in `s`, which refuses a
+  # third-person verb beside the participle ("the tokenizer records the text
+  # used for fitting", "a model trained on data generalizes") at the cost of a
+  # plural noun ("stored on zoning rows" escapes). The lookbehind refuses a
+  # participle after an auxiliary, a determiner or an adverb ("pays the read",
+  # "is therefore graded"). The participle list holds transitive verbs only:
+  # "shipped" or "resolved" after a subject is a finite past tense ("the
+  # answer shipped in v385") and stays out.
+  - '^(?:The|This|That|A|An|Each|Every|Its|Their|One)\s+(?!(?:[\w''-]+\s+){0,3}(?:is|are|was|were|has|have|had|does|do|did|can|could|will|would|should|must|may|might|be|been|being|gets?|got)\b)(?:[\w''-]*[^s\s''-]\s+){0,3}(?<!\b(?:the|a|an|this|that|its|their|is|are|was|were|be|been|being|has|have|had|get|gets|got|must|should|will|would|can|could|may|might|to|never|always|still|also|then|now|therefore|thus|hence|already|only|first|later|simply|mostly|once)\s)(?:stored|used|read|written|kept|held|built|found|measured|defined|returned|emitted|given|passed|named|listed|produced|recorded|added|removed|sealed|loaded|served|published|drawn|graded|pinned|declared|parsed|trained|exported|staged|promoted|mapped|keyed|stamped|derived|computed|folded)\s+(?:on|in|by|for|at|from|under|with|as|into|across|over|through|beside|against)\s+(?:(?:the|a|an|its|their|each|every|one|this|that)\s+)?[\w''`-]*[^s\s''`-](?:\s+[\w''`-]*[^s\s''`-])?[.!?]$'

@@ -22,6 +22,14 @@ multi-gigabyte archives, including `packages/osm/sdk/fetch.ts` and
 `packages/tiger/sdk/download.ts`; buffering or caching those responses would change their memory and
 disk behavior.
 
+`TypeError: fetch failed` names no layer. Read `error.cause.code` first and confirm with a raw
+`node:net` socket. A socket that connects while HTTPS fails is TLS, and the first suspect is the
+certificate: a wildcard certificate covers one label below the domain and leaves the apex uncovered,
+so try `www.` and `api.`.
+`ECONNREFUSED` is a host with no listener, a timeout with no response is a filtered port, and
+`ENOTFOUND` is name resolution. Before writing that a host is unreachable, print the cause, probe the
+socket, and resolve the name.
+
 ## Filesystem and paths
 
 Executable repository code accesses the filesystem through `@mailwoman/core/fs`. Only core imports
@@ -75,6 +83,15 @@ interfaces:
 Use `createRequire(import.meta.url).resolve` only where the loader cannot provide `import.meta`, as
 documented in `docs/plugins/demo-assets/resolve.ts`.
 
+Docusaurus evaluates every `docs/plugins/` module and everything it imports through jiti's CommonJS
+transform. That transform rewrites `import.meta.url` but refuses a bare `import.meta` (including
+`import.meta.resolve`), an `import(…, { with: { type: "json" } })`, and a `using` or `await using`
+declaration. `tsc`, oxlint and vitest all pass over them, and the error points at a file's `:0:0`
+rather than at the construct. A helper a docs plugin may import lives in `@mailwoman/core/module/resolve-from`
+and never in `module/resolvers`. Before pushing a change to a plugin's import graph, load the touched
+files through `@docusaurus/utils/node_modules/jiti` with a short `.cjs` probe or run
+`yarn workspace @mailwoman/docs build`.
+
 Static and dynamic sibling imports use the workspace `#` imports map. Do not use a relative dynamic
 import. A literal `#` alias may be resolved with `import.meta.resolve` when a child process needs the
 module's file path. Convert its `file:` URL with `fileURLToPath`.
@@ -120,6 +137,15 @@ function. A justified local implementation uses
 When a shared helper does not fit a caller, determine whether its performance, asynchronous interface,
 or dependency graph caused the local implementation. Fix the shared interface when appropriate. Keep a
 documented local implementation when the dependency cost is larger than the duplication.
+
+## Platform conditions
+
+A subpath that must run in workerd or a browser carries `workerd` and `browser` export conditions
+beside `node` in the owning package rather than moving to a leaf package. A platform-neutral
+implementation such as WebCrypto needs no condition. Prove worker safety with an esbuild bundle test
+under `--conditions=workerd,worker,browser`, in the shape of
+`packages/neural/lib/web/browser-slo.integration.test.ts`. When a name moves, every caller is
+repointed in the same change, and no forwarding export stays.
 
 ## Core tests and Vite
 

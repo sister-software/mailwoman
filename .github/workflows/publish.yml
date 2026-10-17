@@ -90,6 +90,12 @@ jobs:
       - name: Verify release metadata is propagated
         run: yarn mwops release verify-metadata
 
+      # The audit fails when a weights package's model card records a training corpus that has no
+      # frozen training manifest committed under packages/corpus/data/training-manifests/, because
+      # the generated rights files derive the package's attribution from that record.
+      - name: Audit the rights chain
+        run: yarn mwops release rights-audit
+
       - name: Resolve + bump versions
         id: bump
         run: | # shell
@@ -109,10 +115,14 @@ jobs:
 
       # The man page and CLI reference embed the version, so every bump regenerates them.
       # The generators spawn the compiled CLI, so the step compiles first.
+      # Each weights package's PROVENANCE.json records the package version, so the bump regenerates the
+      # rights files too. Without this step the committed record describes the previous release.
       - name: Compile + regenerate version-stamped surfaces
         run: | # shell
           yarn compile
           yarn mwops release generated-surfaces
+          yarn mwops release write-rights-files
+          yarn oxfmt 'packages/neural-weights-*/PROVENANCE.json'
 
       - name: "Dry run: show the bump and stop"
         if: ${{ inputs.dry_run }}
@@ -140,7 +150,8 @@ jobs:
           # surfaces the bump stales. Anything else dirty is a fault to surface, never to ship —
           # a release commit that silently includes an unexpected file is how drift hides.
           git add package.json '*/package.json' release.config.json \
-            packages/mailwoman/man/mailwoman.1 docs/articles/developers/reference/cli.mdx
+            packages/mailwoman/man/mailwoman.1 docs/articles/developers/reference/cli.mdx \
+            'packages/neural-weights-*/PROVENANCE.json' 'packages/neural-weights-*/LICENSE.md'
           UNEXPECTED=$(git status --porcelain --untracked-files=no | grep -v '^[AMDR]' || true)
           if [ -n "${UNEXPECTED}" ]; then
             echo "::error::changed files outside the release allowlist — refusing to commit them silently:"
@@ -209,6 +220,10 @@ jobs:
           set -euo pipefail
           yarn mwops health version-sync
           echo "version=$(node -p "require('./package.json').version")" >> "${GITHUB_OUTPUT}"
+
+      # The same audit the prepare job ran, against the merged release commit.
+      - name: Audit the rights chain
+        run: yarn mwops release rights-audit
 
       # The fetch reads the public Hugging Face bucket without credentials. It downloads each weights
       # package's declared `files` that git does not track, and checks them against the model card
@@ -293,6 +308,31 @@ jobs:
             exit 1
           fi
           echo "All workspaces published at v${{ steps.version.outputs.version }}."
+
+      # The SBOM generator reads the published tarball from the registry, so it runs after the publish
+      # loop, and this job cannot commit to main, so both documents attach to the GitHub release. The
+      # docs copy under docs/static/sbom/ is committed by the post-release docs PR (RELEASING.md).
+      # npm can hold a fresh version in validation for some minutes, so the step waits for the
+      # registry to serve it before packing.
+      - name: Attach the SBOM and the data bill of materials to the GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: | # shell
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1; then break; fi
+            if [ "${attempt}" = "40" ]; then
+              echo "::error::mailwoman@${VERSION} is not served by the registry after 20 minutes, so no SBOM was written"; exit 1
+            fi
+            sleep 30
+          done
+          BOM="${RUNNER_TEMP}/bom"
+          mkdir -p "${BOM}"
+          yarn mwops release sbom --version "${VERSION}" --out "${BOM}"
+          node packages/mailwoman/out/cli/main.js data bom --skip-inventory --out "${BOM}/mailwoman-data-${VERSION}.cdx.json"
+          gh release upload "v${VERSION}" "${BOM}"/* --clobber
 
       - name: Report completed dry run
         if: ${{ inputs.dry_run }}

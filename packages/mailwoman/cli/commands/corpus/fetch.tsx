@@ -131,6 +131,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	const { fetchCORDIS } = await import("@mailwoman/corpus/tools/fetch/cordis")
 	const { fetchAnnuaireEducationOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/annuaire-education")
 	const { fetchFinessOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/finess")
+	const { fetchGBOSOpen } = await import("@mailwoman/corpus/gb/tools/fetch/os-open")
 	const { fetchGLEIF } = await import("@mailwoman/corpus/tools/fetch/gleif")
 	const { fetchVaris } = await import("@mailwoman/corpus/lv/tools/fetch/varis")
 	const { fetchVlaanderenAD } = await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")
@@ -184,6 +185,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchAnnuaireEducationOverseas(base, reportToStderr)
 		case "fr-finess-overseas":
 			return fetchFinessOverseas(base, reportToStderr)
+		case "gb-os-open":
+			return fetchGBOSOpen(base, reportToStderr)
 		case "gleif":
 			return fetchGLEIF(base, reportToStderr)
 		case "ro-retea-scolara":

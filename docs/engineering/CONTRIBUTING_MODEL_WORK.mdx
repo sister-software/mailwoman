@@ -126,6 +126,25 @@ relabel pass that makes the mix agree. A bigger weight does not fix it. A relate
 v4.3.0: relabeling one boundary loosens its neighbors, so pre-register watches on the adjacent
 classes (#513).
 
+## Locale specialization: the four mechanisms
+
+Four mechanisms specialize a locale, from least to most parameter isolation:
+
+1. **`locale_head` and `locale_film`.** The encoder's mean-pooled vector feeds two independent
+   projections, a locale posterior and the FiLM `(gamma, beta)` pair. FiLM reads the pooled vector
+   and never the posterior, so the graph holds no in-graph delegate and zero parameters per locale.
+2. **A data-only weights overlay** that declares `mailwoman.baseWeights` and ships no `model.onnx`.
+3. **The script-routed second graph**, the `cjk` family in
+   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate, which
+   is what keeps every Latin request on `en-us`.
+4. **A second Latin graph.** This rung is empty: `base-latn` is a parked deduplication package
+   that symlinks the `en-us` card rather than a trained base.
+
+Exactly three packages ship a model: `en-us`, `cjk` and `base-latn`. FR, US, DE and GB therefore
+share one weight matrix, and every default-on change must be a Pareto improvement across the four
+D-rule locales. Before proposing a per-locale graph, measure that locale's labeled supply (a
+per-script CN model was refused on 126 rows) and fix #2313 and #2318, which any split inherits.
+
 ## The standard eval battery
 
 :::danger[Grade against `v9.0.0-base` rather than an earlier spec]
@@ -185,6 +204,11 @@ The eval spec declares these channels (`requires_gazetteer_lexicon`, `requires_c
 runner passes them to every scorer. A scorer invoked without the declared channels grades the model
 without inputs it was trained to use, and it produces numbers that look real. This zero-fill error
 has already affected the country leg and the first affix audit.
+
+A channel that never trained leaves a trace in the exported graph. Each evidence channel's token
+embedding starts at zero and any gradient moves it, so an exactly zero tensor for a channel means the
+trainer never fed it. Assert that the collate keys and the tensor-batch keys are equal with every
+channel populated. Without that assertion a new channel drops out of the batch without an error.
 
 The candidate must also meet your tag's pre-registered real-OOD acceptance bar. If it passes, append
 the run to `evals/scores-by-version.json` with `mailwoman eval ledger-append`, and write the dated
@@ -292,6 +316,57 @@ The reason: the v5.1.0 splice shipped on the claim that it was "byte-identical b
 which turned out to hold only for ASCII. FR/DE/ES shared é/ü/ö with the spliced pieces, and 52 of
 15,000 EU rows were re-tokenized. This was measured only after shipping. The net effect was positive
 that time, and the check makes the outcome deliberate instead of lucky.
+
+A digit-run vocabulary splice (single pieces for 100–999 or 10–9999) is a trade at every range
+rather than a fix. It lifts bare-street house-number reads and moves the cost onto every
+numeric-context tag: postcode absorption at 4–5 digits, `fr.house_number` and `cedex` at 3 digits.
+Bare-fragment digits and contextful digits share one vocabulary manifold, and a mean-initialized
+fine-tune perturbs it whole. The corpus-side alternative, oversampling long-number street-plus-number
+rows across every digit length, is additive and plateaus around +7–8 pp on bare-street house numbers
+at zero golden cost. Do not re-propose a post-hoc number-piece splice. Size digit handling at
+tokenizer-training time.
+
+### Eval design rules
+
+The battery grades a candidate. The rules below govern the design of a probe or an eval that is
+meant to attribute an effect.
+
+1. **A withheld-gold stratum is complete only under the identity relation the data has.** A
+   negative-control stratum removes the gold candidate so that a correct answer is graded as an
+   invention. `candidate.db` carries about a tenth of its populated localities twice, as a
+   `locality` and a `localadmin` of the same folded name within 5 km, so removing the
+   concordance-linked ids leaves the twin answerable, and the join's identity relation is narrower
+   than the data's. Before trusting a stratum that claims no correct candidate exists, check three
+   rows it grades wrong against the gold distance. A cluster near zero means the control leaked.
+   Re-grade under the data's identity relation and publish both rates.
+2. **A crossed design that swaps a component's value between rows ranks values and cannot detect
+   that the component's presence is the carrier**, because every cell, the control included,
+   contains one. Run the absence arm (present against removed) before attributing an effect to the
+   varied axis, and compare graded row counts between arms so that a degenerate arm is not read as
+   a result.
+3. **A crossed probe with one donor value per axis cannot separate "changing the value releases
+   the span" from "this donor value is special".** Use at least three donors per axis drawn across
+   the outcome range, including one from the failing set as the control. Read the effect at the
+   logit level rather than through a thresholded outcome. Before naming a conjunction, state what a
+   single alternative donor would have to show to falsify it.
+4. **The regression board is curated against known failure modes, so its incidence rate for a
+   defect it was written for differs from production's.** Before a retrain, sweep the same
+   predicate over the production-shaped panels (`panel-v2`, `panel-v3`). When the panels have no
+   coverage for the countries in question, building that panel is the cheaper first move.
+   Coordinate truth is enough for a structural sweep.
+5. **An eval harness runs the backend and configuration a user gets by default**, pinned
+   explicitly and deterministically rather than read from the environment, and never the path that
+   preserves historical numbers. When the production default changes, repoint the harness,
+   re-baseline, and record the deltas. A case that moves is a signal to surface. A per-country
+   breakdown of a score is no evidence that the per-country path ran. Verify the route, the
+   resolved artifacts per row, rather than the grouping key.
+6. **An eval that grades a resolver tier grades the population production sends to that tier.**
+   Without the cascade every row lands at the admin tier, which is right for studying a mechanism
+   and wrong for sizing its effect. The US ladder reads postcode-first over 10,000 panel rows but
+   decides only the roughly 577 rows the rooftop cascade cannot place, and on that population
+   locality-first wins. Before promoting a per-country tier, split the population on whatever the
+   address system itself encodes (a `0` in position 2 of a Canadian postcode marks a rural route)
+   and check the halves. A pooled number hides a mixture.
 
 ## Add a corpus recipe
 

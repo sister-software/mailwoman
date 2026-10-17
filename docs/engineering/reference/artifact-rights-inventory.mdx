@@ -592,3 +592,12 @@ attribution reads `none-recorded-in-this-package`. An artifact with no recorded 
 No package is recorded as cleared. An evidence gap is recorded as missing, and it is neither evidence
 of compliance nor evidence of infringement. Which license a given upstream value implies, and which
 obligations follow from it, are readings this document does not make.
+
+One question is open on the shipped default. `@mailwoman/neural-weights-en-us` 10.1.0
+(`v7.2.0-address-systems`) trained on the v0.7.1 OSM exposure overlay (RU, CN, IN, PK, ID, VN, BD and
+NG, the `osm-*` weights in `v7.2.0-address-systems-60k.yaml`), and its `README.md`, `LICENSE.md`,
+`PROVENANCE.json` and `model-card.json` name neither OpenStreetMap nor ODbL. OSMF's Attribution
+Guideline asks for attribution in the documentation of a model trained on an extract, and the current
+reading treats the weights as a Produced Work with the training extract owed under ODbL. Whether to add
+the attribution and the extract offer is the operator's decision, and it is pending before any further
+release.

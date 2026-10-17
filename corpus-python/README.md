@@ -83,6 +83,10 @@ runs ruff lint and format, the `verify_toolchain.py` pin check, `mypy --strict` 
 step goes through `uv run`, which syncs the root venv on demand. The sync includes the
 `[train]` extras that mypy needs to resolve torch.
 
+Root `yarn test` runs only the vitest suite. A branch that touches `corpus-python/` also runs
+`yarn python:test` before push. A new row in `launch/corpora.py` needs its entry in
+`tests/launch/sync-census.json`; `tests/launch/test_sync_table_parity.py` checks the two agree.
+
 ### Lab GPU (Radeon 780M / gfx1103) recipe
 
 The lab's iGPU requires the ROCm 6.2 wheel and an override environment variable:
@@ -155,6 +159,23 @@ python -m mailwoman_train smoke \
 
 The smoke command runs the entire pipeline at tiny scale on CPU (~20 seconds wall) and writes
 weights packages tagged as smoke builds in their README.
+
+## A question about the corpus
+
+The base train parquet files are source-homogeneous and ordered. A base-consistency question about
+one locale's tokens is answered by scanning the parquet block that holds that locale's source. The
+corpus manifest gives the current block layout. A spread of samples across every file undersamples
+the minority sources and mixes cross-locale contexts, and the distribution it reports is a false
+signal. A bigram histogram over the full corpus exceeds a 4 GB heap, so use a targeted per-token
+`Counter` scan.
+
+A corpus count explains a model's behavior only at the unit the loss was computed over. The model
+sees SentencePiece pieces and emits one label per piece, so a per-token count such as
+`P(postcode | 2-digit token)` and a per-piece count such as `P(postcode | digit-run continuation)`
+disagree by construction, and both are correct. Reach that unit by calling the real loader,
+`iter_rows` or `iter_encoded`, which applies the weighted file sampling and the augmentations.
+Never reimplement the sampler or the tokenizer for a count. Split the population by success and
+failure before drawing a conclusion from it.
 
 ## Why a separate Python package at all?
 

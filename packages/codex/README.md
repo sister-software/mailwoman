@@ -257,6 +257,23 @@ mask before Viterbi. A wrong row therefore breaks parses that currently work. Ea
 the measurement that justified it. An absent row means "no constraints known" and never "no
 constraints exist". Contributors can add a country to the layouts directly. A conventions row requires a measured receipt.
 
+### Where a convention's provenance comes from
+
+A UPU S42 template is a country-approved crosswalk of national addressing semantics into shared
+international elements. It is stronger than a recommendation, because the country approved it, and
+weaker than the native authority, because USPS Pub 28, Royal Mail and NF Z 10-011 exist
+independently and can drift after the approval. Provenance for a convention is therefore a claim
+with one observation per source kind: `national-postal-authority` (authoritative), `upu-pas`
+(description), `upu-s42` (approved crosswalk), `libaddressinput` (implementation),
+`opencage-address-formatting` (rendering) and `mailwoman-board` (observed). A disagreement between
+sources is kept as it stands rather than reconciled into one basis field, and `ObservationStance`
+distinguishes `silent`, `unread`, `contradicts` and the absence of an observation.
+
+S42 templates are restricted to registered users, so every `upu-s42` observation reads `unread`
+until someone with a UPU account reads the template. The eight jurisdictions with a template and no
+layout (BW, DJ, KM, LC, QA, TT, UG and ZW) have a null libaddressinput `fmt`, so the template is their
+only source of order.
+
 ### Postal regimes the country code does not name
 
 Three families of addresses need a unit that is finer than, or different from, the ISO country

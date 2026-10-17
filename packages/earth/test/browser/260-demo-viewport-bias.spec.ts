@@ -44,7 +44,17 @@ test.describe("Demo — viewport bias (#938)", () => {
 			w.__mailwomanMapCanvas?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
 		})
 
-		await page.waitForTimeout(500)
+		// Wait until the jump has taken (zoom past the global-view threshold), as in the sibling test above.
+		await page.waitForFunction(
+			() => {
+				const m = (globalThis as { __mailwomanMapCanvas?: { getZoom: () => number } }).__mailwomanMapCanvas
+
+				return !!m && m.getZoom() >= 7
+			},
+			undefined,
+			{ timeout: 15_000, polling: 500 }
+		)
+
 		await demo.setAddress("Paris")
 		await demo.submit()
 

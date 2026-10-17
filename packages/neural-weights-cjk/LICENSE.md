@@ -23,6 +23,11 @@ Software authors. It does not extend to third-party components distributed with 
 stay under their own licenses. Any attribution or share-alike obligation attaching to those
 components continues to apply and is not waived or relicensed by a commercial agreement.
 
+## Attribution the training data requires
+
+No effective training manifest is committed for the corpus this package's model card records, so the
+attributions its training data requires are not derived here. `PROVENANCE.json` lists what the card states.
+
 ## Where the sources are recorded
 
 `PROVENANCE.json` in this package records, per artifact, what the repository holds about its

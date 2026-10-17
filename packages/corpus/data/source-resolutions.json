@@ -8,7 +8,42 @@
 	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
 	"$sireneSecondAddress": "SIRENE's establishment file carries a second address family, the `2`-suffixed columns, which INSEE labels only `adresse secondaire` — `complementAdresse2Etablissement` reads `Complément d'adresse secondaire`. What role that address plays is unstated, so it takes no entry in `addressRoles` rather than a guessed one, and the coverage text names it so a reader knows the column exists.",
 	"$ocdsPartyRoles": "An OCDS release keys its addresses by party role, so `addressRoles` names roles rather than columns for those sources. A role is assigned only where OCDS's own codelist defines it, retrieved from `https://standard.open-contracting.org/1.1/en/codelists/partyRole.csv`: `buyer`, `procuringEntity`, `payer`, `funder` and `reviewBody` are bodies acting in the process, so their address is an office they operate and reads `facility`; `supplier` and `tenderer` are the transacting party, so theirs reads `counterparty`. Germany's release also uses eight roles from an extension whose codelist neither the 1.1 nor the latest list defines — `processContactPoint`, `reviewContactPoint`, `submissionReceiptBody`, `mediationBody`, `evaluationBody`, `procurementServiceProvider`, `leadTenderer`, `subcontractor` — and those take no role here rather than a guessed one.",
+	"$osOpenData": "Three rows below, Code-Point Open, OS Open Names and OS Open Roads, publish address components rather than addresses: a postcode with its point, and a street name with its geometry and its postcode district. A training row is assembled by joining a postcode to the nearest named street and adding a synthesized house number. `other` is their role because `AddressRole` describes an address column's relation to a party or premise, and these columns describe neither. OS Open USRN takes no entry because its download was not read.",
 	"resolutions": {
+		"gb-public-administration-1": {
+			"adapterID": "gb-os-open",
+			"addressRoles": {
+				"Postcode": "other"
+			},
+			"coverage": "OS Code-Point Open, 2026-08 release, `codepo_gb.zip` sha256 `fc266d063e4d8c27bd23ea8a65c6855162942cf6b9fc73c91d0930d442a0eefb`, read 2026-10-14: 120 postcode-area CSV files, 1,749,109 rows, 10 columns (`Postcode,Positional_quality_indicator,Eastings,Northings,Country_code,NHS_regional_HA_code,NHS_HA_code,Admin_county_code,Admin_district_code,Admin_ward_code`), no header row. Great Britain only: 0 rows begin `BT`. The file carries no post town, locality or street. In the LS area, 22,197 of 22,198 postcodes carry coordinates, and 21,648 of those 22,197 (97.53%) lie within 100 m of a named OS Open Roads link; 903 share a coordinate with another postcode. The `gb-os-open` adapter also reads `gb-public-administration-2` (OS Open Names) and `gb-transport-1` (OS Open Roads), which share the license decision `ogl-uk-3.0-gb-ordnance-survey-opendata` and each record `absent` personal data.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/CodePointOpen"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Each row is a postcode unit with a point and administrative codes. No column records a person, an organization or a property."
+			}
+		},
+		"gb-public-administration-2": {
+			"addressRoles": {
+				"NAME1": "other"
+			},
+			"coverage": "OS Open Names, 2026-07 release, `opname_csv_gb.zip` sha256 `6175912f1a3be7fffe556b4621a8d0686f1ea145e20ca61ce2b115a75a9bd69f`, read 2026-10-14: 819 CSV files, 3,047,173 rows, of which 983,356 have `LOCAL_TYPE` `Named Road` or `Section Of Named Road`. A road row carries `NAME1`, `NAME2` (the Welsh or Gaelic form where one exists), `POSTCODE_DISTRICT`, `POPULATED_PLACE`, `DISTRICT_BOROUGH` and `COUNTY_UNITARY`. In the LS area, 14,939 road rows carry an LS postcode district, and 20,677 of 21,648 postcode-to-street joins (95.51%) found a non-empty `POPULATED_PLACE`.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/OpenNames"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Rows are place and road names with their geometry and administrative parents. No column records a person, an organization or a property."
+			}
+		},
+		"gb-transport-1": {
+			"addressRoles": {
+				"road:name1": "other"
+			},
+			"coverage": "OS Open Roads, 2026-04 release, read 2026-10-14 for one 100 km tile only, `OSOpenRoads_SE.gml`: 177,637 `road:name1` elements. Each named link carries a `roadNameTOID`, and all 21,648 LS joins found that TOID in OS Open Names. The other tiles were not read.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/OpenRoads"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Rows are road centreline links with names and classifications. No column records a person, an organization or a property."
+			}
+		},
 		"gb-mixed-regulatory-2": {
 			"addressRoles": {
 				"Address1,Address2,Address3,Town,Postcode": "facility"

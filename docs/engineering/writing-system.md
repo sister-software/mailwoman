@@ -161,6 +161,17 @@ has to assemble.
 plural is permitted. Caveats state their mechanism. Circularity caveats are mandatory: if the eval set and
 the training set share a source, say so in the same section as the number.
 
+**Blog posts and retrospectives.** Write to one developer in second person around their goal. Reason
+aloud with a sustained metaphor rather than a run of staccato fragments. State the cost of a tradeoff.
+Prefer concrete and funny over abstract. Front-load the questions. Title with a question when the answer
+is no and with a statement when it is yes. Em dashes cluster at pivots, about one per 300–500 words, and
+emoji belong to the polished register only. Four forms are banned in every post. The first is the
+antithesis template (`It's not X, it's Y` and `X doesn't mean A, it means B`) as an opening or as a
+strawman structure. The second is a reveal label such as `The smoking gun:`. The third is engagement
+bait such as `So what do you think?`. The fourth is a signpost label such as `Why it matters` or
+`The takeaway:`. Fix an antithesis by rewriting the passage to flow
+rather than by reordering the negation.
+
 ## House rules
 
 1. **One term per concept, registry-anchored.** `API key` is the term for a credential; `data layer` is two
@@ -178,6 +189,13 @@ the training set share a source, say so in the same section as the number.
 7. **Keep marketing and legal content outside the technical tree**, as siblings rather than nodes inside it.
 8. **Do not anthropomorphize the system.** A parser assigns scores, returns spans, or emits components. Say
    which.
+9. **Public prose names no individual and no community call-out.** An organization appears only in a
+   neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
+   benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
+   never at a named project.
+10. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
+    recipe header, a config comment or a model card cites the paper rather than the product's source
+    (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.
 
 ## Terminology policy
 
@@ -252,47 +270,60 @@ Two habits sit under the checklist. Rewrite the thought rather than swapping the
 synonym leaves the structure that produced the tell. And prefer removal to rewording: a sentence that adds
 rhythm and no information should go.
 
+## Delete or move rather than banner
+
+A stale page is deleted or moved, never bannered. A `docs/superpowers/` plan or spec is removable once
+its filename date is older than two months. Repoint its citations in every tree. A historical
+engineering page goes to `docs/records/`. Generated data, such as a receipt, a model card or
+`evals/scores-by-version.json`, is reproduced from its inputs rather than edited.
+
+When a path or a convention changes, rewrite every prose mention of the old one, in `docs/records/`,
+`CHANGELOG.md`, code comments and test inputs, so that it states the current convention as if it had
+always held: no `formerly`, no `reversed`, no migration dates. A file is cited at its current path, and a
+file that no longer exists is cited at the path the current layout would give it. An agent reading two
+truths cannot tell which is current. Run `yarn lint:structure` in `docs/` after any move.
+
 ## How Vale enforces the mechanical subset
 
-Vale checks the token-level subset of these rules. The structural rules cover role, section order, example
-discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts` rather than by
-Vale.
+Vale checks the token-level subset of these rules. Review and `docs/scripts/check/docs-structure.ts` enforce
+the structural rules: role, section order, example discipline, and the audit above.
 
-| Rule file                     | Enforces                                                                    | Severity |
-| ----------------------------- | --------------------------------------------------------------------------- | -------- |
-| `styles/Terms.yml`            | Canonical terms table above                                                 | error    |
-| `styles/BannedWords.yml`      | Filler intensifiers, audit item 4                                           | error    |
-| `styles/StockPhrases.yml`     | Contrastive negation and consultant-deck constructions, audit items 1 and 5 | error    |
-| `styles/Anthropomorphism.yml` | House rule 8                                                                | warning  |
-| `styles/Weasel.yml`           | Unmeasured hedge quantities, per Numbers and measurement                    | warning  |
+`config/vale/styles/` holds one file per rule, and each file opens with a comment that states what the rule
+refuses and the repair it asks for. The table above maps the canonical terms to `styles/Terms.yml`; the
+filler intensifiers of audit item 4 to `styles/BannedWords.yml`; the consultant-deck constructions of audit
+items 1 and 5 to `styles/StockPhrases.yml`; house rule 8 to `styles/Anthropomorphism.yml`; and the hedge
+quantities under Numbers and measurement to `styles/Weasel.yml`. The chat-only rules, such as
+`AgreementOpeners`, `ChatStockForms` and `WindDown`, reach agent replies through `.vale-chat.ini`, and
+`.vale-vocab.ini` switches them off for published prose.
 
-Run it two ways:
+Run it three ways:
 
 ```bash
-# Lint the published pages.
+# Lint every tracked Markdown and MDX file with .vale.ini.
 yarn workspace @mailwoman/docs lint:prose
 
-# Lint the ambiguous-shorthand ban over the root markdown, docs/engineering and every package README.
+# Lint the same files with .vale-vocab.ini, the shared style without the chat-only rules.
 yarn workspace @mailwoman/docs lint:prose:vocab
 
 # Lint the rules themselves against their fixtures.
 yarn workspace @mailwoman/docs lint:prose:fixtures
 ```
 
-`lint:prose:vocab` reads `.vale-vocab.ini`, which switches every rule off except
-`Mailwoman.AmbiguousShorthand` — the ban on the four ambiguous nouns the rule file lists. Those four surfaces have
-never been under the rest of the house style, and turning it all on at once would fail on 175 unrelated
-alerts. `yarn lint` runs this one, so it reports in the required `test` CI context rather than only in the
-docs job. Dated point-in-time records are out of its path list.
-
-The full-corpus run is not green and is not expected to be: as of 2026-08-03 it reports 1355 errors and 237
-warnings across 458 files, because those pages predate these rules and are what the rewrite replaces. CI
-therefore lints only the pages a pull request touches under `docs/articles/` and `docs/src/pages/`; the
-fixture check runs unconditionally. The full-corpus run becomes the blocking CI check once the rewrite lands.
+Both prose commands read the same file list: every tracked Markdown and MDX file outside
+`config/vale/docs.valeignore`, which exempts the fixtures, the license texts and the dated commercial terms.
+`yarn lint` runs `lint:prose:vocab`, so it reports in the required `test` CI context. The docs CI job
+(`.github/workflows/docs-build.yml`) runs `lint:prose` and the fixture check over the whole tree whenever a
+pull request touches `docs/`.
 
 Inline code spans and fenced code blocks are excluded from linting, so a banned token can appear in
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
 stripped before linting, so a `source-of-truth:` key is not read as prose.
+
+The exemption applies to Markdown only. Inside a `.ts` or `.py` file, Vale reads a code comment as plain
+text: there is no inline-code exemption, and a `vale off` marker has no effect there, so a code-sense hit
+in a comment (`BE`, `ON`, a SQL keyword) is written around rather than excused. The capitals rule's word
+list is finite. Its two-letter words match only before a lowercase word, and `FROM` is absent from the
+list. Each is a measured false-positive class.
 
 Every rule needs a fixture. `config/vale/fixtures/dirty.md` holds one hit per token, and
 `clean.md` must stay at zero alerts. `config/vale/check-rules.ts` asserts both, plus a minimum error

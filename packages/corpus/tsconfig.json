@@ -17,6 +17,7 @@
 		{ "path": "../codex" },
 		{ "path": "../evidence" },
 		{ "path": "../poi-taxonomy" },
-		{ "path": "../query-shape" }
+		{ "path": "../query-shape" },
+		{ "path": "../spatial" }
 	]
 }

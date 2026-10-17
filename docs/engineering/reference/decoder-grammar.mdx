@@ -176,6 +176,16 @@ The proposed instrument is a constraint-violation census over the board, built a
 `mwdev_diagnose`'s mechanism accounts. Every board failure would then record the predicate(s) it
 violates, and the taxonomy would come from evaluation instead of from arguments over examples.
 
+**How the convention mask is selected.** The address system that selects a mask is resolved from
+data, either the admin FST parent chain or the exported locale and address-system head, and the
+per-system table in `packages/codex/lib/address/system-conventions.ts` supplies the mask. Four
+alternatives are rejected. A multi-hot locale flag is too coarse, because one country holds urban,
+rural and PO-only grammars. Speculative parsing, which tries JP then US and compares, multiplies
+latency by the candidate count. Hierarchy data in `PlaceEntry` makes the FST carry two ontologies. A
+WOF role attribute is viable only under the schema-emulation strategy that
+[`SCHEMA.mdx`](./SCHEMA.mdx#typescript-representation) rejects. Within-country variation, such as
+the US urban form beside the rural route, is the known gap.
+
 ## 6. The board rows, mapped
 
 | address                                                                             | failure under the v5.0.0 line                                                                            | predicate                              |

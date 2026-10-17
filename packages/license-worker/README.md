@@ -8,6 +8,22 @@ page polls. The routes an installation calls afterwards, refresh and status, rea
 Spec: `docs/superpowers/specs/2026-09-05-self-service-commercial-license-design.md`. Plan:
 `docs/superpowers/plans/2026-09-05-license-worker.md`.
 
+## Settled decisions
+
+The operator decided the following, and each stands until the operator revisits it.
+
+- A license is a yearly or monthly subscription.
+- The mint trigger is `invoice.paid`, on the first payment and on every renewal.
+- A token follows the billing period: `expires` is the period end plus fourteen days of grace. Each
+  renewal mints a new token, which `mailwoman license refresh` fetches.
+- The Stripe Customer Portal handles billing. The first version has no Mailwoman login, uses a
+  Payment Link rather than a checkout endpoint, and has no queue, because Stripe's three-day webhook
+  retry is the queue.
+- The well-known register stays a static Pages file.
+- Versioned clickwrap terms precede any sale.
+- A key changes only what the doctor reports, never runtime behavior.
+- The notice text is public. Its reasoning is private.
+
 ## Two environments
 
 `wrangler.toml` is the flat production configuration. `wrangler.sandbox.toml` is the sandbox configuration and is

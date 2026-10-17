@@ -6,6 +6,7 @@
 
 import { test as base } from "@playwright/test"
 
+import { installDataRouteCache } from "./fixtures/CachedDataRoutes.ts"
 import { ConsoleFixture } from "./fixtures/ConsoleFixture.ts"
 import { GeocoderFixture } from "./fixtures/GeocoderFixture.ts"
 
@@ -25,6 +26,13 @@ interface E2EFixtures {
 /* eslint-disable react-hooks/rules-of-hooks -- Playwright fixtures bind via destructured
    `use` callback. eslint's react-hooks plugin misreads this as a React Hook violation. */
 export const test = base.extend<E2EFixtures>({
+	// Every page gets the data-origin route cache: a fresh browser context per test would
+	// otherwise re-download the ~39 MB model and the gazetteer on every real-runtime spec.
+	page: async ({ page }, use) => {
+		await installDataRouteCache(page)
+		await use(page)
+	},
+
 	// `console` fixture is set up first so it captures messages emitted during
 	// the geocoder fixture's own page.goto().
 	// Playwright resolves the dependency graph by the order arguments are destructured.

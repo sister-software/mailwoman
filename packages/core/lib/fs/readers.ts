@@ -8,6 +8,7 @@
  *   makes no blocking filesystem calls. The `debt` check in `lib/repo-health` counts any violations.
  */
 
+import { readFileSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -88,6 +89,20 @@ function readTarget(pathSegments: Array<PathBuilderLike | URL>): URL | string {
 	}
 
 	return resolvePath(...(pathSegments as PathBuilderLike[]))
+}
+
+/**
+ * Read a local text file synchronously.
+ *
+ * The env module folds `.env` into `process.env` when it is imported, ahead of any `await`,
+ * so it cannot use {@linkcode readLocalTextFile}.
+ * Every other caller can, and should.
+ *
+ * @category Files
+ * @runtime node
+ */
+export function readLocalTextFileSync(...pathSegments: PathBuilderLike[]): string {
+	return readFileSync(resolvePath(...pathSegments), "utf8")
 }
 
 /**

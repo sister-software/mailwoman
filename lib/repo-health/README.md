@@ -11,6 +11,10 @@ the registry and are never registered in it: `lib/baseline.ts` writes the debt b
 `lib/registry.ts` is the package's only executable entry point. A check file that is not registered is dead code, and
 knip reports it.
 
+Every check enumerates `RepoContext.trackedFiles` from git, so an untracked file is invisible: `git add` a new file
+before running a check on it, or a green local run says only that git has not been told about the file. The
+tracked-only walk is deliberate, so a scratchpad or an agent worktree never fails a run.
+
 ## Source-comment triage
 
 `yarn comments:triage [database-path]` scans every tracked `.ts` and `.tsx` source file (excluding declarations and
@@ -24,24 +28,24 @@ changing code.
 
 ## Checks
 
-| id                            | what it reads                                                                                                                                                                                                              | spawns  |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `version-sync`                | every `.release-it.json` workspace's manifest version against the root's                                                                                                                                                   | —       |
-| `test-layout`                 | every tracked `*.test.ts` shares its directory with the module it covers. A Playwright `*.spec.ts` sits under `test/{browser,build,e2e}/` of a workspace with a `playwright.config.ts`                                     | —       |
-| `node-modules-reacharound`    | no `join`/`resolve` argument spells a `node_modules` layout outside the reasoned allowlist                                                                                                                                 | —       |
-| `runtime-flags`               | every flag in `docs/engineering/reference/runtime-flags.mdx` is touched by a test                                                                                                                                          | —       |
-| `no-root-scripts`             | the absence of a root `scripts/` directory, of any path built into one, and of any CI target running one or a bare `lib/*.ts`                                                                                              | —       |
-| `manifest-targets`            | every `exports`/`imports` target resolves to a tracked source or data file (`out/` mapped to `lib/`)                                                                                                                       | —       |
-| `prefix-directories`          | three or more siblings sharing a hyphen prefix live under a directory whose name is that prefix (`usgov/nppes/` rather than `usgov-nppes/`). A workspace directory and a directory holding no TypeScript are never members | —       |
-| `private-name-shadows-export` | a module-private function in `packages/*/lib` that shares its name with a function another module exports, reported per site as a copy or a collision. The `debt` counter pins the count                                   | —       |
-| `module-surface`              | a module's count of top-level interfaces, constants, functions, and divider comments against per-metric limits. The check is advisory and claims no decomposition on the author's behalf                                   | —       |
-| `module-reexports`            | an internal re-export in a module that also declares its own exports. Only a directory barrel (`index.ts`, a source-root `<dir>.ts`, `<dir>/<dir>.ts`) or a pure barrel re-exports, and `yarn health` runs it              | —       |
-| `module-cohesion`             | a module's top-level declarations partitioned by which reference which, reported when two communities share no imported dependency. The check is advisory, and the warning lists both groups                               | —       |
-| `debt`                        | the monotonic debt counters against `baseline.json`                                                                                                                                                                        | —       |
-| `bundle-graph`                | every browser- and Worker-bundled subpath under its platform conditions: no Node builtin on the static graph, dynamic builtin imports only where a row lists them                                                          | esbuild |
-| `vocab-census`                | every ambiguous-shorthand hit in tracked source, classified by action                                                                                                                                                      | Vale    |
-| `exports`                     | every export is used, apart from the reviewed compatibility aliases                                                                                                                                                        | knip    |
-| `typecheck-tests`             | every workspace's `tsconfig.test.json` under `tsc --noEmit`                                                                                                                                                                | tsc     |
+| id                            | what it reads                                                                                                                                                                                                            | spawns  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `version-sync`                | every `.release-it.json` workspace's manifest version against the root's                                                                                                                                                 | —       |
+| `test-layout`                 | every tracked `*.test.ts` shares its directory with the module it covers. A Playwright `*.spec.ts` sits under `test/{browser,build,e2e}/` of a workspace with a `playwright.config.ts`                                   | —       |
+| `node-modules-reacharound`    | no `join`/`resolve` argument spells a `node_modules` layout outside the reasoned allowlist                                                                                                                               | —       |
+| `runtime-flags`               | every flag in `docs/engineering/reference/runtime-flags.mdx` is touched by a test                                                                                                                                        | —       |
+| `no-root-scripts`             | the absence of a root `scripts/` directory, of any path built into one, and of any CI target running one or a bare `lib/*.ts`                                                                                            | —       |
+| `manifest-targets`            | every `exports`/`imports` target resolves to a tracked source or data file (`out/` mapped to `lib/`)                                                                                                                     | —       |
+| `prefix-directories`          | two or more siblings sharing a hyphen prefix live under a directory whose name is that prefix (`usgov/nppes/` rather than `usgov-nppes/`). A workspace directory and a directory holding no TypeScript are never members | —       |
+| `private-name-shadows-export` | a module-private function in `packages/*/lib` that shares its name with a function another module exports, reported per site as a copy or a collision. The `debt` counter pins the count                                 | —       |
+| `module-surface`              | a module's count of top-level interfaces, constants, functions, and divider comments against per-metric limits. The check is advisory and claims no decomposition on the author's behalf                                 | —       |
+| `module-reexports`            | an internal re-export in a module that also declares its own exports. Only a directory barrel (`index.ts`, a source-root `<dir>.ts`, `<dir>/<dir>.ts`) or a pure barrel re-exports, and `yarn health` runs it            | —       |
+| `module-cohesion`             | a module's top-level declarations partitioned by which reference which, reported when two communities share no imported dependency. The check is advisory, and the warning lists both groups                             | —       |
+| `debt`                        | the monotonic debt counters against `baseline.json`                                                                                                                                                                      | —       |
+| `bundle-graph`                | every browser- and Worker-bundled subpath under its platform conditions: no Node builtin on the static graph, dynamic builtin imports only where a row lists them                                                        | esbuild |
+| `vocab-census`                | every ambiguous-shorthand hit in tracked source, classified by action                                                                                                                                                    | Vale    |
+| `exports`                     | every export is used, apart from the reviewed compatibility aliases                                                                                                                                                      | knip    |
+| `typecheck-tests`             | every workspace's `tsconfig.test.json` under `tsc --noEmit`                                                                                                                                                              | tsc     |
 
 `debt` reports a counter that grew as an error and a counter that fell as a warning. The new reading is a
 mutation, so no check does it. `mwops health baseline debt` rewrites `baseline.json` through `lib/baseline.ts`, which
@@ -51,7 +55,8 @@ the registry does not list.
 
 A check gets a fix when the repair follows mechanically from its diagnostic. `lib/fixes.ts` is that second, much
 shorter registry, and `mwops health fix <check> [--dry-run]` runs it. A fix plans module moves and never writes,
-because `lib/move/` owns writing.
+because `lib/move/` owns writing. A file that gains one sibling sharing its hyphen prefix trips
+`prefix-directories`, and `mwops health fix prefix-directories` performs the move.
 
 | id                   | what it moves                                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |

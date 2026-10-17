@@ -63,6 +63,7 @@ import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
 import { annuaireEducationAdapter } from "#fr/adapters/annuaire-education/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
 import { finessAdapter } from "#fr/adapters/finess/adapter"
+import { gbOSOpenAdapter } from "#gb/adapters/os-open/adapter"
 import { itANACAdapter } from "#it/adapters/anac/adapter"
 import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
 import { varisAdapter } from "#lv/adapters/varis/adapter"
@@ -119,6 +120,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	esBizkaiaAdapter,
 	esGipuzkoaAdapter,
 	esNavarraAdapter,
+	gbOSOpenAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,

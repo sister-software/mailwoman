@@ -16,7 +16,7 @@ from ..state import TrainState
 
 
 def checkpoint_extras(state: TrainState, step: int) -> dict[str, Any]:
-    """The config stamped into a checkpoint. The resume-drift audit reads it back."""
+    """Returns the config stamped into a checkpoint. The resume-drift audit reads it back."""
     return {
         "step": step,
         "config": {

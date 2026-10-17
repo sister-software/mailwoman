@@ -31,3 +31,15 @@ node scripts/link-dev-weights.ts
 
 Links the country lexicon and street-morphology FST into the package dir. No derived artifacts
 need building. At this stage the package ships only the two lexicon files.
+
+## Attribution
+
+This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on
+address rows derived from OpenStreetMap. A consumer of this package alone receives rows that graph was
+trained to read, so the notice applies here too:
+
+> © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0
+> (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
+
+`LICENSE.md` in this package repeats the base graph's required attributions, and
+https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.

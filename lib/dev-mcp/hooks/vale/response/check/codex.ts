@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Codex Stop hook: the Codex twin of `vale-response-check.ts`. The lint policy — rule set,
- *   severity split, finding format — lives in `vale-check-core.ts`; this file owns the Codex
+ *   Codex Stop hook: the Codex twin of `response/check.ts`. The lint policy — rule set,
+ *   severity split, finding format — lives in `check-core.ts`; this file owns the Codex
  *   payload shape, loop guard and output JSON. Codex's hook interface
  *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses.
  *   `Stop` fires when a turn completes. The payload includes `last_assistant_message`.

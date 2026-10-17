@@ -11,6 +11,7 @@ import {
 	ExclusionReason,
 	provenanceDisagreement,
 	provenanceRefusals,
+	readConfigView,
 	type EpochMixtureAudit,
 	type TrainingManifest,
 } from "#source-register"
@@ -49,6 +50,28 @@ const config = {
 
 const derive = () =>
 	deriveEffectiveTrainingManifest({ corpusManifest, audit, config, configPath: "configs/arm-a.yaml" })
+
+describe("readConfigView", () => {
+	it("reads a source from source_reps as weighted beside the source_weights entries", () => {
+		const view = readConfigView(
+			[
+				"data:",
+				"  source_weights:",
+				"    ban: 3.0",
+				"    osm: 0.0 # retired",
+				"  source_reps:",
+				"    osm-ru: 0.2",
+				"    osm-in: 2.0",
+				"  augment_exclude_sources:",
+				"    - ban",
+				"",
+			].join("\n")
+		)
+
+		expect(view.sourceWeights).toEqual({ ban: 3, osm: 0, "osm-ru": 0.2, "osm-in": 2 })
+		expect(view.augmentExcludeSources).toEqual(["ban"])
+	})
+})
 
 describe("deriveEffectiveTrainingManifest", () => {
 	it("owes an attribution only for a source that reached the trainer, and names its evidence stage", () => {

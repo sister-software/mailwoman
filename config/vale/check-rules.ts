@@ -123,7 +123,7 @@ const LEGS: StyleLeg[] = [
 		config: ".vale.ini",
 		dirtyFixture: "fixtures/dirty.md",
 		cleanFixture: "fixtures/clean.md",
-		minDirtyErrors: 67,
+		minDirtyErrors: 127,
 		ruleChecks: [
 			"styles.IngOpeners",
 			"styles.AmbiguousShorthand",
@@ -154,7 +154,7 @@ const LEGS: StyleLeg[] = [
 		config: ".vale-code.ini",
 		dirtyFixture: "fixtures/dirty.ts",
 		cleanFixture: "fixtures/clean.ts",
-		minDirtyErrors: 8,
+		minDirtyErrors: 47,
 		ruleChecks: [
 			"styles.AmbiguousShorthandCode",
 			"styles.EmphasisCapitals",
@@ -180,7 +180,7 @@ const LEGS: StyleLeg[] = [
 		config: ".vale-chat.ini",
 		dirtyFixture: "fixtures/dirty-chat.md",
 		cleanFixture: "fixtures/clean-chat.md",
-		minDirtyErrors: 100,
+		minDirtyErrors: 136,
 		ruleChecks: [
 			"styles.IngOpeners",
 			"styles.AmbiguousShorthand",

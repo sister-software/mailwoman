@@ -87,6 +87,18 @@ synthetic board, because no real NZ venue-name source exists on disk yet (issue
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
   and quality there is unmeasured.
 
+## Attribution
+
+This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on
+address rows derived from OpenStreetMap. A consumer of this package alone receives rows that graph was
+trained to read, so the notice applies here too:
+
+> © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0
+> (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
+
+`LICENSE.md` in this package repeats the base graph's required attributions, and
+https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).

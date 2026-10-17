@@ -18,6 +18,7 @@ import { fetchRyhti } from "#fi/tools/fetch/ryhti"
 import { fetchAnnuaireEducationOverseas } from "#fr/tools/fetch/annuaire-education"
 import { fetchBan } from "#fr/tools/fetch/ban"
 import { fetchFinessOverseas } from "#fr/tools/fetch/finess"
+import { fetchGBOSOpen } from "#gb/tools/fetch/os-open"
 import { fetchITANAC } from "#it/tools/fetch/anac"
 import { fetchHoujinJP } from "#jp/tools/fetch/houjin"
 import { fetchJusoKR } from "#kr/tools/fetch/juso"
@@ -66,6 +67,7 @@ export const FETCH_SOURCES = {
 	"es-navarra": fetchESNavarra,
 	"fr-annuaire-education-overseas": fetchAnnuaireEducationOverseas,
 	"fr-finess-overseas": fetchFinessOverseas,
+	"gb-os-open": fetchGBOSOpen,
 	"gcis-tw": fetchGCISTW,
 	gleif: fetchGLEIF,
 	"houjin-jp": fetchHoujinJP,

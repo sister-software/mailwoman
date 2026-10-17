@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "3fa1de0a2980baed2173b5144d9a284911e6ccf4c98482d410f03dcb77f073b2",
+	"contentDigest": "39a609822e026395275ca1b80fd3054b14aa4ca74645ba581f77e34d1e42805e",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -14692,7 +14692,17 @@
 			"researchPass": "2026-09-30-rights-review",
 			"access": "quarterly CSV zip from the OS Data Hub downloads API",
 			"sourceURL": "https://api.os.uk/downloads/v1/products/CodePointOpen",
-			"note": "Release 2026-08 holds 1,749,109 postcode units in 120 area files with no BT area, so it carries no Northern Ireland postcode. Columns are postcode, positional quality, easting, northing and GSS codes; there is no street, post town or locality name. The licence file adds Royal Mail and National Statistics acknowledgements."
+			"note": "Release 2026-08 holds 1,749,109 postcode units in 120 area files with no BT area, so it carries no Northern Ireland postcode. Columns are postcode, positional quality, easting, northing and GSS codes; there is no street, post town or locality name. The licence file adds Royal Mail and National Statistics acknowledgements.",
+			"adapterID": "gb-os-open",
+			"addressRoles": {
+				"Postcode": "other"
+			},
+			"coverage": "OS Code-Point Open, 2026-08 release, `codepo_gb.zip` sha256 `fc266d063e4d8c27bd23ea8a65c6855162942cf6b9fc73c91d0930d442a0eefb`, read 2026-10-14: 120 postcode-area CSV files, 1,749,109 rows, 10 columns (`Postcode,Positional_quality_indicator,Eastings,Northings,Country_code,NHS_regional_HA_code,NHS_HA_code,Admin_county_code,Admin_district_code,Admin_ward_code`), no header row. Great Britain only: 0 rows begin `BT`. The file carries no post town, locality or street. In the LS area, 22,197 of 22,198 postcodes carry coordinates, and 21,648 of those 22,197 (97.53%) lie within 100 m of a named OS Open Roads link; 903 share a coordinate with another postcode. The `gb-os-open` adapter also reads `gb-public-administration-2` (OS Open Names) and `gb-transport-1` (OS Open Roads), which share the license decision `ogl-uk-3.0-gb-ordnance-survey-opendata` and each record `absent` personal data.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/CodePointOpen"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Each row is a postcode unit with a point and administrative codes. No column records a person, an organization or a property."
+			}
 		},
 		{
 			"sourceID": "gb-public-administration-2",
@@ -14707,7 +14717,16 @@
 			"researchPass": "2026-09-30-rights-review",
 			"access": "CSV zip from the OS Data Hub downloads API",
 			"sourceURL": "https://api.os.uk/downloads/v1/products/OpenNames",
-			"note": "Release 2026-07 holds 983,356 Named Road and Section Of Named Road features, each with a postcode district, populated place, district and county. Its feature ID equals the roadNameTOID on OS Open Roads links."
+			"note": "Release 2026-07 holds 983,356 Named Road and Section Of Named Road features, each with a postcode district, populated place, district and county. Its feature ID equals the roadNameTOID on OS Open Roads links.",
+			"addressRoles": {
+				"NAME1": "other"
+			},
+			"coverage": "OS Open Names, 2026-07 release, `opname_csv_gb.zip` sha256 `6175912f1a3be7fffe556b4621a8d0686f1ea145e20ca61ce2b115a75a9bd69f`, read 2026-10-14: 819 CSV files, 3,047,173 rows, of which 983,356 have `LOCAL_TYPE` `Named Road` or `Section Of Named Road`. A road row carries `NAME1`, `NAME2` (the Welsh or Gaelic form where one exists), `POSTCODE_DISTRICT`, `POPULATED_PLACE`, `DISTRICT_BOROUGH` and `COUNTY_UNITARY`. In the LS area, 14,939 road rows carry an LS postcode district, and 20,677 of 21,648 postcode-to-street joins (95.51%) found a non-empty `POPULATED_PLACE`.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/OpenNames"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Rows are place and road names with their geometry and administrative parents. No column records a person, an organization or a property."
+			}
 		},
 		{
 			"sourceID": "gb-transport-1",
@@ -14722,7 +14741,16 @@
 			"researchPass": "2026-09-30-rights-review",
 			"access": "GML or GeoPackage zip from the OS Data Hub downloads API",
 			"sourceURL": "https://api.os.uk/downloads/v1/products/OpenRoads",
-			"note": "Release 2026-04. Joining LS postcode points to the nearest named centreline within 100 m assigns 21,648 of 22,197 located postcodes, 97.53%, to a street."
+			"note": "Release 2026-04. Joining LS postcode points to the nearest named centreline within 100 m assigns 21,648 of 22,197 located postcodes, 97.53%, to a street.",
+			"addressRoles": {
+				"road:name1": "other"
+			},
+			"coverage": "OS Open Roads, 2026-04 release, read 2026-10-14 for one 100 km tile only, `OSOpenRoads_SE.gml`: 177,637 `road:name1` elements. Each named link carries a `roadNameTOID`, and all 21,648 LS joins found that TOID in OS Open Names. The other tiles were not read.",
+			"upstreamLineage": ["https://osdatahub.os.uk/downloads/open/OpenRoads"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "Rows are road centreline links with names and classifications. No column records a person, an organization or a property."
+			}
 		},
 		{
 			"sourceID": "gb-transport-2",

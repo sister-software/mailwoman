@@ -3,9 +3,12 @@
 ## A model change, a diagnostic result, or a release decision is not a patient.
 ## Name the observed behavior, the changed constraint, or the next operation.
 ##
+## The dose family covers the training-mixture shorthand that ProjectShorthand.yml
+## once listed for chat: say the measured quantity with its unit (reps per row,
+## rows per pass, the `source_doses` value, the weight).
 extends: existence
 message: "'%s' is a medical metaphor — name the concrete operation, observation, or result."
 level: error
 ignorecase: true
 tokens:
-  - '\b(?:dose|doses|dosage|remedy|remedies|cure|cures)\b'
+  - '\b(?:dose|doses|dosed|dosing|dosage|remedy|remedies|cure|cures)\b'

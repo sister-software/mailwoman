@@ -147,7 +147,7 @@ OR       B-region
 ### TypeScript representation
 
 ```ts
-// packages/core/src/types/component.ts
+// packages/codex/lib/component.ts
 
 export const COMPONENT_TAGS = [
 	// Universal
@@ -191,6 +191,16 @@ export type BioLabel = (typeof BIO_LABELS)[number]
 
 The `as const` and derived types are deliberate. They let TypeScript report schema errors at compile time wherever a tag is referenced.
 
+The `ComponentTag` union in `packages/codex/lib/component.ts` and the containment map in
+`packages/core/lib/decoder/containment.ts` are the single definition. A new tag joins both. The schema
+is never loaded from runtime JSON and never stored in the WOF placetype format, for four reasons. WOF
+answers what kind of feature a record is, while a tag answers what role a span plays in an address:
+`street` has no WOF identity, and `house_number` is no place. A reserved private placetype range
+collides with a future WOF allocation, and WOF has explored `lane`, `block` and `parish`. A
+discriminated union gives compile-time exhaustiveness that a JSON file cannot. WOF encodes
+child-to-parent only, so a list of valid children would be computed from the map anyway. A WOF-format
+projection, if external tooling ever needs one, is a serialization shim over these.
+
 ### Validation rule
 
 A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`. Profile registration checks this at runtime and throws if the check fails.
@@ -204,5 +214,15 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 **Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). An explicit `subregion` field is better than forcing the value into `region` or `locality`.
 
 **Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction rather than a postcode. FR postcode statistics become inaccurate if a model classifies it as a postcode.
+
+**Why does `street` have no hierarchy level of its own?** WOF's placetype DAG has no `street` node:
+`neighbourhood` parents `address` directly, because streets are linear, recur per locality and belong to
+highway and postal authorities rather than administrative ones. Mailwoman's `street_prefix`, `street` and
+`street_suffix` are therefore flat siblings of `locality` and `region`, with no gazetteer level between
+locality and address. That gap is why a street-decomposition corpus pushes the model onto
+`dependent_locality` as the only labeled slot below locality. A proposal for a new tag states which
+hierarchy level the tag inhabits and which gazetteer layer the model sees for it at inference.
+Non-Western systems (JP chōme, banchi and gō, Mannheim's grid blocks, landmark-relative addresses) deepen
+the gap.
 
 **Why were the JP tags listed years-of-phases before activation?** The declarations forced the Phase-0 type design to handle them. As a result, activation at CJK Phase 2 required no changes to core types, as the schema-first principle intended.

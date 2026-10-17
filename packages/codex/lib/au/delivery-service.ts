@@ -21,7 +21,7 @@ export interface AuDeliveryServiceDesignator {
 	 */
 	name: string
 	/**
-	 * The abbreviation used on mail.
+	 * The abbreviation that appears on mail.
 	 */
 	abbreviation: string
 	/**

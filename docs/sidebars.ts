@@ -157,6 +157,11 @@ const sidebars: SidebarsConfig = {
 				"resources/compare/pelias-and-libpostal",
 			],
 		},
+		{
+			type: "category",
+			label: "OpenStreetMap",
+			items: ["resources/osm/attribution"],
+		},
 		{ type: "link", label: "Field notes", href: "/research" },
 	],
 }

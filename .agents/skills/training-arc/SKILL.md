@@ -106,6 +106,20 @@ and a candidate that flips them changed a low-confidence answer rather than brok
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
 A tier fall-through graded against a model wastes a run.
 
+### The row delta of a from-scratch arm sits below the seed noise floor
+
+On the regression layer, a seed pair trained on one fixed corpus moves more rows across the blocking
+line than a corpus change does, so the gauntlet row-count delta of a from-scratch arm cannot
+attribute a regression on its own. Attribute a regression with one of two instruments:
+
+- a held-out capability sweep: dozens of inputs of one shape, none on the board, on which the seed
+  pair agrees;
+- per-token margins read from the `NeuralParseTrace` that `buildGauntletDeps(...).diagnoseParse()`
+  returns, compared against the seed-pair distribution.
+
+Run the checkpoint trajectory before proposing a salvage. A treatment effect can be complete early
+in the run, and a salvage aimed at the final checkpoint then targets the wrong step.
+
 ## Step 5 — the comparison is against the shipped model, and it is not the attribution
 
 The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:

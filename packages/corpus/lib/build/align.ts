@@ -90,7 +90,7 @@ export interface AlignPhaseResult {
 	ineligibleSources: Map<string, readonly string[]>
 
 	/**
-	 * The license cache used by this phase.
+	 * The license cache this phase uses.
 	 *
 	 * Its `refusedValues()` method returns every value it refused.
 	 */
