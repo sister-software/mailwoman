@@ -316,15 +316,30 @@ jobs:
       # registry to serve it before packing.
       - name: Attach the SBOM and the data bill of materials to the GitHub release
         if: ${{ !inputs.dry_run }}
+        # Every package is on npm by this step, so a failure here leaves a release without its
+        # attached documents rather than an unpublished release.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
         run: | # shell
           set -euo pipefail
-          for attempt in $(seq 1 40); do
-            if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1; then break; fi
-            if [ "${attempt}" = "40" ]; then
-              echo "::error::mailwoman@${VERSION} is not served by the registry after 20 minutes, so no SBOM was written"; exit 1
+          # `npm install` of the mailwoman tarball resolves every workspace it depends on, and npm can
+          # hold a fresh version in validation for an hour, so the step waits until the registry serves
+          # each release workspace at this version rather than mailwoman alone.
+          for attempt in $(seq 1 30); do
+            MISSING=$(node --input-type=module -e "
+              import { readFileSync } from 'node:fs'
+              const read = (path) => JSON.parse(readFileSync(path, 'utf8'))
+              const workspaces = read('.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces
+              const names = ['mailwoman', ...workspaces.map((ws) => read(ws + '/package.json').name)]
+              const served = await Promise.all(names.map((n) => fetch('https://registry.npmjs.org/' + n.replace('/', '%2f') + '/${VERSION}').then((res) => res.ok)))
+              console.log(names.filter((n, i) => !served[i]).join(' '))
+            " 2>/dev/null || echo "registry-unreadable")
+            if [ -z "${MISSING}" ]; then break; fi
+            if [ "${attempt}" = "30" ]; then
+              echo "::warning::npm still holds ${MISSING} after 15 minutes. The publish succeeded. Write and attach the SBOM by hand once the registry serves them (RELEASING.md)."
+              exit 1
             fi
             sleep 30
           done
