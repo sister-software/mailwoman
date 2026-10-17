@@ -2,7 +2,7 @@
 	"manifestID": "corpus-training-manifest",
 	"schemaVersion": 1,
 	"corpusVersion": "v0.7.8-rights-clean",
-	"builtAt": "2026-10-17T22:50:20.915Z",
+	"builtAt": "2026-10-17T23:04:56.319Z",
 	"profile": "exploratory",
 	"sources": [
 		{
@@ -231,7 +231,7 @@
 		},
 		{
 			"source": "invented-house-venue",
-			"rows": 120000,
+			"rows": 138000,
 			"license": "Synthetic — derived from CC-BY / public-domain input tuples",
 			"decision": null
 		},
@@ -530,6 +530,6 @@
 		}
 	],
 	"refused": {},
-	"totalRows": 708958468,
-	"contentDigest": "77cfc320b89797071d9d9f808aed4b71bf2f8c628b1546e2ebffafff2b416960"
+	"totalRows": 708976468,
+	"contentDigest": "fa98fec38eeca360a88f2be46d827846a7a0ff63100adbc13f62abad0c8cfbc3"
 }

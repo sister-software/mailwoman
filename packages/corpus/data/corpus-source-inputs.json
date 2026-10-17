@@ -1419,7 +1419,7 @@
 				{
 					"registerSource": "ch-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-ch-geonames",
-					"reads": "IN, PT and MX tuples of house-venue-intl-v27, likely from GeoNames"
+					"reads": "IN, PT and MX (postcode, locality, region) tuples of house-venue-intl-v27, each the postal code, admin name2 and admin name1 of one row of the GeoNames postal export IN.zip, PT.zip or MX.zip"
 				}
 			],
 			"authored": [

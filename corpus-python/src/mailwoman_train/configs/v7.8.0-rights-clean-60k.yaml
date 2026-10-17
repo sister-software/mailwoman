@@ -11,7 +11,8 @@
 #      source                    v0.7.2-address-systems       v0.7.8-rights-clean          rebuilt from
 #      rendered-gb               788,972 / 5,508 / 5,520      replaced by rendered-gb-os-open (v0.7.7-no-ppd's files)
 #      rendered-gb-os-open       absent                       786,847 / 6,599 / 6,554
-#      invented-house-venue      130,174 / 2,081 / 1,989      115,867 / 1,910 / 2,223      house-venue-v6-no-oa
+#      invented-house-venue      130,174 / 2,081 / 1,989      133,867 / 1,910 / 2,223      house-venue-v6-no-oa, and
+#                                                                                          v0.7.2's IN, PT and MX rows
 #      spliced-sub-venue         116,519 / 1,766 / 1,715      116,118 / 1,946 / 1,936      spliced-sub-venue-v6-no-oa
 #      spliced-unit              50,000 / 0 / 0               50,000 / 0 / 0               unit-train
 #      spliced-unit-v30          50,000 / 0 / 0               50,000 / 0 / 0               unit-v30
@@ -30,9 +31,16 @@
 #    decisions permit training. fragment-assay reads the twelve locales OA_FILES lists, and codex-bare-postcode drops Sweden's
 #    sixteen municipal files (4e4f7d577).
 #
-#    Three sources hold fewer kinds of row than in v0.7.2. invented-house-venue loses the 18,000 IN, PT and MX rows of
-#    v0.7.2's part-house-venue-intl-v27 file, because house-venue-v6-no-oa holds FR and US rows only. fragment-assay
-#    holds 17 countries against v0.7.2's 26. codex-bare-postcode loses Sweden's 3,058 rows.
+#    invented-house-venue keeps v0.7.2's 18,000 IN, PT and MX rows, the file part-house-venue-intl-v27.train.parquet,
+#    all in train as in v0.7.2. Each row's postcode, locality and region is the postcode, admin name2 and admin name1
+#    of one row of the GeoNames postcode export for its country (ch-geodata-aggregate-1, CC BY 4.0, elected). Each
+#    venue and street is a literal in packages/corpus/lib/synthesizers/house-venue.ts. The current recipe lays out
+#    those three countries' tails natively, where v0.7.2's rows use `locality, region postcode`. Carrying v0.7.2's rows
+#    keeps the comparison against v7.2.0 to the rights change. Its train rows by country: FR 59,325, US 56,542, IN 6,000,
+#    MX 6,000, PT 6,000.
+#
+#    Two sources hold fewer kinds of row than in v0.7.2. fragment-assay holds 17 countries against v0.7.2's 26.
+#    codex-bare-postcode loses Sweden's 3,058 rows.
 #
 # 2. `state-tx-notaries` returns to v7.2.0's 1.5. Its register row, us-professional-licensing-3, is elected under the
 #    US factual-data reading (688181587).
@@ -51,6 +59,8 @@
 #   for each of the nine recipe outputs: `mailwoman corpus align-slice --corpus-version 0.7.8-rights-clean`, then
 #     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`
 #   copy v0.7.7-no-ppd's three rendered-gb-os-open.<split>.parquet files
+#   copy v0.7.0-de-holdout's train/part-house-venue-intl-v27.train.parquet into train as
+#     invented-house-venue-intl-v27.parquet
 #   rewrite fragment-assay-elected-oa/part-fragment.parquet to the schema and 50,000-row groups of v0.7.2's
 #     part-fragment.train.parquet (int32 spans, a string base_source_id), as part-fragment-elected-oa.parquet in train.
 #     fragment-assay is train-only, as in v0.7.2, because the builder's held-out rows go to fragment-dev.jsonl
