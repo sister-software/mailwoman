@@ -12,8 +12,8 @@
  */
 
 import { z } from "zod"
-import { $ } from "zx"
 
+import { runHostCommand } from "#storage-kit/command"
 import { defineOperation, StorageEffect } from "#storage-kit/operation"
 import { volumeSpec } from "#storage-kit/volume"
 
@@ -48,18 +48,15 @@ export const statusOperation = defineOperation({
 	async run(input, context) {
 		const mountPoint = input["mount-point"]
 
-		const df = await $({ nothrow: true, quiet: true })`df --block-size=1G --output=size,used,avail ${mountPoint}`
+		const df = await runHostCommand("df", ["--block-size=1G", "--output=size,used,avail", mountPoint])
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `df` for one mount point is a header and one row.
 		const [size = "?", used = "?", available = "?"] = (df.stdout.split("\n")[1] ?? "").trim().split(/\s+/)
 
-		const usage = await $({ nothrow: true, quiet: true })`btrfs filesystem usage --raw ${mountPoint}`
+		const usage = await runHostCommand("btrfs", ["filesystem", "usage", "--raw", mountPoint])
 		const dataUsedGiB = usage.exitCode === 0 ? parseDataUsed(usage.stdout) : null
 
 		// `du --apparent-size` gives the logical total. btrfs's allocated figure gives what it cost.
-		const logical = await $({
-			nothrow: true,
-			quiet: true,
-		})`du --summarize --block-size=1G --apparent-size ${mountPoint}`
+		const logical = await runHostCommand("du", ["--summarize", "--block-size=1G", "--apparent-size", mountPoint])
 
 		const logicalGiB = logical.exitCode === 0 ? Number(logical.stdout.trim().split(/\s+/)[0]) : null
 

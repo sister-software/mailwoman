@@ -20,7 +20,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname, type PathBuilderLike } from "path-ts"
-import { $ } from "zx"
+import { runProcess } from "@mailwoman/core/process"
 
 import { readAdmittedCountries, readBoardCoverage } from "#tools/coverage/census"
 import {
@@ -328,7 +328,7 @@ export async function buildJurisdictionTiles(options: JurisdictionTileOptions): 
 	await makeDirectories(dirname(options.out))
 	await writeLocalJSONFile({ type: "FeatureCollection", features: joined.features }, geojsonPath)
 
-	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${[
+	const tipArgs = [
 		"-o",
 		String(options.out),
 		"-l",
@@ -346,7 +346,9 @@ export async function buildJurisdictionTiles(options: JurisdictionTileOptions): 
 		"--no-progress-indicator",
 		"--force",
 		geojsonPath,
-	]}`
+	]
+
+	const tip = await runProcess("tippecanoe", tipArgs, { reject: false })
 
 	if (tip.exitCode !== 0) {
 		throw new Error(`tippecanoe exited ${tip.exitCode}: ${tip.stderr.slice(-400)}`)

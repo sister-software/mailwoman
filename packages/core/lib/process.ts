@@ -312,6 +312,13 @@ export interface ProcessTaskOptions extends Omit<SpawnOptions, "cwd" | "stdio" |
 	stdout?: "ignore" | "inherit" | "pipe"
 	stderr?: "ignore" | "inherit" | "pipe"
 	/**
+	 * Leave a piped stdout unread, so the caller consumes `child.stdout` as bytes,
+	 * such as an archive piped into another process.
+	 *
+	 * The task then dispatches no stdout lines, and `result.stdout` is empty.
+	 */
+	rawStdout?: boolean
+	/**
 	 * Reads each stderr line for progress and dispatches a `progress` event for each match.
 	 */
 	progress?: ProgressParser
@@ -366,6 +373,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 			stdout = "pipe",
 			stderr = "pipe",
 			progress,
+			rawStdout = false,
 			killGraceMs = DEFAULT_KILL_GRACE_MS,
 			...spawnOptions
 		} = options
@@ -427,7 +435,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 			})
 		}
 
-		readLines(OutputStream.Stdout, this.child.stdout)
+		readLines(OutputStream.Stdout, rawStdout ? null : this.child.stdout)
 		readLines(OutputStream.Stderr, this.child.stderr)
 
 		this.#exited = new Promise<void>((resolve) => {
@@ -515,6 +523,20 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 	public override toString(): string {
 		return this.command
 	}
+}
+
+/**
+ * Run a command to completion as a {@linkcode ProcessTask} and answer its {@linkcode ProcessResult}.
+ *
+ * With `reject: false` a non-zero exit resolves, and the caller reads `exitCode`.
+ * Reach for the task itself when the caller renders its lines or progress while it runs.
+ */
+export function runProcess(
+	file: PathBuilderLike,
+	args: readonly PathBuilderLike[] = [],
+	options: ProcessTaskOptions = {}
+): Promise<ProcessResult> {
+	return new ProcessTask(file, args, options).result
 }
 
 /**

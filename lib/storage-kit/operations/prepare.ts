@@ -16,8 +16,8 @@
 import { readFile, writeFile } from "node:fs/promises"
 
 import { z } from "zod"
-import { $ } from "zx"
 
+import { runHostCommand } from "#storage-kit/command"
 import { claimFailures, inspectDevice, rootDeviceName } from "#storage-kit/device"
 import { enableUnmap, inspectDiscard } from "#storage-kit/discard"
 import { spliceFstab } from "#storage-kit/fstab"
@@ -99,56 +99,40 @@ export const prepareOperation = defineOperation({
 
 		if (refreshed.maxBytes) {
 			context.log(`  discarding the whole device`)
-			await step(context, "blkdiscard", () => $({ nothrow: true, quiet: true })`blkdiscard -f ${input.device}`)
+			await step(context, "blkdiscard", () => runHostCommand("blkdiscard", ["-f", input.device]))
 			steps.push("discard")
 		} else {
 			context.log(`  WARNING: this device exposes no discard support — expect degraded write throughput`)
 		}
 
-		await step(context, `wipefs ${input.device}`, () => $({ nothrow: true, quiet: true })`wipefs --all ${input.device}`)
+		await step(context, `wipefs ${input.device}`, () => runHostCommand("wipefs", ["--all", input.device]))
 		steps.push("wipefs")
 
-		await step(
-			context,
-			`zap partition table`,
-			() => $({ nothrow: true, quiet: true })`sgdisk --zap-all ${input.device}`
-		)
+		await step(context, `zap partition table`, () => runHostCommand("sgdisk", ["--zap-all", input.device]))
 
 		steps.push("zap")
 
-		await step(
-			context,
-			`create partition`,
-			() =>
-				$({
-					nothrow: true,
-					quiet: true,
-				})`sgdisk --new=1:0:0 --typecode=1:8300 --change-name=1:${input.label} ${input.device}`
+		await step(context, `create partition`, () =>
+			runHostCommand("sgdisk", ["--new=1:0:0", "--typecode=1:8300", `--change-name=1:${input.label}`, input.device])
 		)
 
 		steps.push("partition")
 
-		await $({ nothrow: true, quiet: true })`partprobe ${input.device}`
-		await $({ nothrow: true, quiet: true })`udevadm settle`
+		await runHostCommand("partprobe", [input.device])
+		await runHostCommand("udevadm", ["settle"])
 
-		await step(
-			context,
-			`mkfs.btrfs ${partition}`,
-			() => $({ nothrow: true, quiet: true })`mkfs.btrfs --label ${input.label} --metadata dup --force ${partition}`
+		await step(context, `mkfs.btrfs ${partition}`, () =>
+			runHostCommand("mkfs.btrfs", ["--label", input.label, "--metadata", "dup", "--force", partition])
 		)
 
 		steps.push("mkfs")
 
-		const uuidProbe = await $({ nothrow: true, quiet: true })`blkid --match-tag UUID --output value ${partition}`
+		const uuidProbe = await runHostCommand("blkid", ["--match-tag", "UUID", "--output", "value", partition])
 		const uuid = uuidProbe.stdout.trim()
 
 		if (!uuid) throw new Error(`could not read a UUID from ${partition}`)
 
-		await step(
-			context,
-			`mkdir ${input["mount-point"]}`,
-			() => $({ nothrow: true, quiet: true })`mkdir -p ${input["mount-point"]}`
-		)
+		await step(context, `mkdir ${input["mount-point"]}`, () => runHostCommand("mkdir", ["-p", input["mount-point"]]))
 
 		const fstab = await readFile("/etc/fstab", "utf8")
 
@@ -163,21 +147,15 @@ export const prepareOperation = defineOperation({
 		steps.push("fstab")
 		context.log(`  fstab updated (previous saved as /etc/fstab.mwops.bak)`)
 
-		await $({ nothrow: true, quiet: true })`systemctl daemon-reload`
+		await runHostCommand("systemctl", ["daemon-reload"])
 
-		await step(
-			context,
-			`mount ${input["mount-point"]}`,
-			() => $({ nothrow: true, quiet: true })`mount ${input["mount-point"]}`
-		)
+		await step(context, `mount ${input["mount-point"]}`, () => runHostCommand("mount", [input["mount-point"]]))
 
 		steps.push("mount")
 
 		if (input.owner) {
-			await step(
-				context,
-				`chown ${input.owner}`,
-				() => $({ nothrow: true, quiet: true })`chown ${input.owner}:${input.owner} ${input["mount-point"]}`
+			await step(context, `chown ${input.owner}`, () =>
+				runHostCommand("chown", [`${input.owner}:${input.owner}`, input["mount-point"]])
 			)
 
 			steps.push("chown")
@@ -186,22 +164,20 @@ export const prepareOperation = defineOperation({
 		for (const subtree of input.uncompressed) {
 			const path = `${input["mount-point"]}/${subtree}`
 
-			await $({ nothrow: true, quiet: true })`mkdir -p ${path}`
+			await runHostCommand("mkdir", ["-p", path])
 
-			await step(
-				context,
-				`compression=none on ${subtree}`,
-				() => $({ nothrow: true, quiet: true })`btrfs property set ${path} compression none`
+			await step(context, `compression=none on ${subtree}`, () =>
+				runHostCommand("btrfs", ["property", "set", path, "compression", "none"])
 			)
 
 			if (input.owner) {
-				await $({ nothrow: true, quiet: true })`chown ${input.owner}:${input.owner} ${path}`
+				await runHostCommand("chown", [`${input.owner}:${input.owner}`, path])
 			}
 		}
 
 		steps.push("compression-properties")
 
-		await $({ nothrow: true, quiet: true })`systemctl enable --now fstrim.timer`
+		await runHostCommand("systemctl", ["enable", "--now", "fstrim.timer"])
 		steps.push("fstrim-timer")
 
 		return { device: input.device, partition, uuid, mountPoint: input["mount-point"], dryRun: false, steps }

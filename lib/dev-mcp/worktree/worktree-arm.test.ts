@@ -14,8 +14,8 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { runFileSync } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
@@ -74,11 +74,11 @@ async function fakeRepo(marker: string): Promise<PathBuilder> {
 	// a clean status to a clean status rather than to one this helper dirtied.
 	await writeLocalTextFile("node_modules\n", root(".gitignore"))
 
-	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
-	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
-	runFileSync("git", ["config", "user.name", "T"], { cwd: root })
-	runFileSync("git", ["add", "-A"], { cwd: root })
-	runFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
+	gitSync(["init", "-q", "-b", "main"], { cwd: root })
+	gitSync(["config", "user.email", "t@example.com"], { cwd: root })
+	gitSync(["config", "user.name", "T"], { cwd: root })
+	gitSync(["add", "-A"], { cwd: root })
+	gitSync(["commit", "-qm", "initial"], { cwd: root })
 
 	return root
 }
@@ -160,7 +160,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		const listed = runFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
+		const listed = gitSync(["worktree", "list"], { cwd: root })
 
 		// The main checkout is always listed. a leaked worktree would be a second line.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
@@ -169,13 +169,13 @@ describe("runWorktreeArm — cleanup", () => {
 
 	it("does not touch the caller's HEAD or working tree", async () => {
 		const root = await fakeRepo("committed")
-		const before = runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })
-		const head = runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
+		const before = gitSync(["status", "--porcelain"], { cwd: root })
+		const head = gitSync(["rev-parse", "HEAD"], { cwd: root })
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
-		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
+		expect(gitSync(["status", "--porcelain"], { cwd: root })).toBe(before)
+		expect(gitSync(["rev-parse", "HEAD"], { cwd: root })).toBe(head)
 		// A stash-based arm would have moved these.
 		// Worktree creation leaves these entries unchanged.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")

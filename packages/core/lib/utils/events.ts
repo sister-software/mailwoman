@@ -11,7 +11,7 @@
 export { once } from "node:events"
 
 /**
- * An `EventTarget` whose events carry a typed `detail`, keyed by type in `EventMap`.
+ * An `EventTarget` whose events hold a typed `detail`, keyed by type in `EventMap`.
  *
  * Subclasses dispatch with `emit`, and listeners subscribe with `on`.
  * The base `addEventListener` still works for a caller that wants the `CustomEvent` itself.

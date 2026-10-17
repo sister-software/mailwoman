@@ -9,6 +9,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { runProcess } from "@mailwoman/core/process"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
@@ -235,8 +236,6 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([])
 
 	const state = useCommandTask(async () => {
-		const { $ } = await import("zx")
-
 		const corpusRoot = PathBuilder.from(options.corpusDir ?? dataRootPath("corpus", "versioned"))
 
 		const directories = extractDelimited(options.corpusDirectory)
@@ -350,9 +349,11 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			update(index, { status: "running" })
 
 			try {
-				await $({
-					env,
-				})`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} ${R2_RETRIES} --stats-one-line`.quiet()
+				await runProcess(
+					"rclone",
+					["sync", job.source.toString(), job.dest, ...job.extra, ...dry, ...R2_RETRIES, "--stats-one-line"],
+					{ env }
+				)
 
 				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
 			} catch (error: unknown) {

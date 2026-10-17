@@ -9,8 +9,8 @@
  *   The script shallow-clones {@link https://github.com/openvenues/libpostal openvenues/libpostal}.
  *   It sorts each dictionary file in place and copies the `dictionaries/` tree beside this script.
  *
- *   Replaces the bash `resources-download.sh`. `git clone` runs through zx's `$` (no clean native
- *   equivalent); everything else is `node:fs` / `node:os`. The script sorts in-process with a plain
+ *   Replaces the bash `resources-download.sh`. `git clone` runs through `GitClient`.
+ *   Everything else is `@mailwoman/core/fs`. The script sorts in-process with a plain
  *   code-point `Array.sort()`, which matches `LC_ALL=C sort` byte order — deterministic and free of
  *   the shell `sort`'s locale dependency (the original relied on the ambient locale).
  *
@@ -32,6 +32,7 @@ import { readLocalTextFile } from "#fs/readers"
 import { isDirectory } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
+import { GitClient } from "#git"
 import { resourceDictionaryPath } from "#paths"
 import { CommandError } from "#scripting/command"
 
@@ -81,11 +82,10 @@ export async function downloadLibpostalResources(
 		}
 	}
 
-	const { $ } = await import("zx")
 	await using tempDir = await temporaryDirectory("libpostal-")
 
 	const cloneDir = tempDir.path("libpostal")
-	await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
+	await new GitClient({ cwd: tempDir.path }).clone(REPO_URL, cloneDir, { depth: 1 })
 
 	const sourceDicts = cloneDir("resources", "dictionaries")
 

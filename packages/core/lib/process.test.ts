@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isProcessError, type ProcessProgress, ProcessTask } from "#process"
+import { isProcessError, type ProcessProgress, ProcessTask, runProcess } from "#process"
 
 function node(source: string): [string, string[]] {
 	return [process.execPath, ["--eval", source]]
@@ -56,9 +56,10 @@ describe("ProcessTask", () => {
 	})
 
 	it("resolves a non-zero exit when reject is false", async () => {
-		const result = await new ProcessTask(...node(`process.exit(3)`), { reject: false }).result
+		const result = await runProcess(...node(`console.log("out"); process.exit(3)`), { reject: false })
 
 		expect(result.exitCode).toBe(3)
+		expect(result.stdout).toBe("out")
 	})
 
 	it("rejects with the spawn error when the command cannot start", async () => {

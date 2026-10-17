@@ -20,9 +20,11 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { liveEnv } from "@mailwoman/core/env"
 import { open } from "@mailwoman/core/fs/readers/stat"
+import { spawnProcess } from "@mailwoman/core/process"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/arguments"
+import { once } from "@mailwoman/core/utils/events"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { z } from "zod"
-import { $, sleep } from "zx"
 
 const $public = liveEnv(
 	z.object({
@@ -45,10 +47,6 @@ const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 // Every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
 const logFd = await open(LOG, "a")
 
-// zx prints the command to stderr by default.
-// The bash wrapper kept python output in $LOG only, so stay quiet.
-$.verbose = false
-
 // Match the bash trap: on sigint/sigterm, log a line and exit 130.
 function onSignal(): void {
 	console.log("[wrapper] received signal, exiting")
@@ -66,13 +64,24 @@ process.on("SIGTERM", onSignal)
  * @param resume - Whether to pass `--resume auto` (the resume loop) or start fresh.
  */
 async function runTraining(resume: boolean): Promise<number> {
-	const shell = $({ stdio: ["ignore", logFd.fd, logFd.fd], nothrow: true })
+	const child = spawnProcess(
+		"python",
+		[
+			"-u",
+			"-m",
+			"mailwoman_train",
+			"train",
+			"--config",
+			CONFIG,
+			...(resume ? ["--resume", "auto"] : []),
+			...ADDITIONAL_COMMAND_LINE_ARGS,
+		],
+		{ stdio: ["ignore", logFd.fd, logFd.fd] }
+	)
 
-	const output = resume
-		? await shell`python -u -m mailwoman_train train --config ${CONFIG} --resume auto ${ADDITIONAL_COMMAND_LINE_ARGS}`
-		: await shell`python -u -m mailwoman_train train --config ${CONFIG} ${ADDITIONAL_COMMAND_LINE_ARGS}`
+	const [exitCode] = (await once(child, "close")) as [number | null]
 
-	return output.exitCode ?? 1
+	return exitCode ?? 1
 }
 
 let attempt = 0
@@ -108,7 +117,7 @@ while (attempt < MAX_ATTEMPTS) {
 
 	console.log(`[wrapper] attempt ${attempt} exited with ${exit}; sleeping 15s then resuming`)
 
-	await sleep("15s")
+	await sleep(15_000)
 }
 
 console.log(`[wrapper] MAX_ATTEMPTS=${MAX_ATTEMPTS} reached, giving up`)

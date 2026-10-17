@@ -11,8 +11,8 @@
  */
 
 import { z } from "zod"
-import { $ } from "zx"
 
+import { runHostCommand } from "#storage-kit/command"
 import { defineOperation, StorageEffect } from "#storage-kit/operation"
 import { volumeSpec } from "#storage-kit/volume"
 
@@ -29,7 +29,7 @@ const verifyOutput = z.object({
  * The mount options currently in effect, as reported by the kernel rather than by fstab.
  */
 async function activeOptions(mountPoint: string): Promise<string | null> {
-	const probe = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output OPTIONS --target ${mountPoint}`
+	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "OPTIONS", "--target", mountPoint])
 
 	return probe.exitCode === 0 ? probe.stdout.trim() : null
 }
@@ -47,7 +47,7 @@ export const verifyOperation = defineOperation({
 		const mountPoint = input["mount-point"]
 		const checks: Array<z.infer<typeof check>> = []
 
-		const fstype = await $({ nothrow: true, quiet: true })`findmnt --noheadings --output FSTYPE --target ${mountPoint}`
+		const fstype = await runHostCommand("findmnt", ["--noheadings", "--output", "FSTYPE", "--target", mountPoint])
 		const mounted = fstype.exitCode === 0 && fstype.stdout.trim() === "btrfs"
 
 		checks.push({
@@ -83,7 +83,7 @@ export const verifyOperation = defineOperation({
 			})
 		}
 
-		const fstab = await $({ nothrow: true, quiet: true })`grep -c ${mountPoint} /etc/fstab`
+		const fstab = await runHostCommand("grep", ["-c", mountPoint, "/etc/fstab"])
 		const inFstab = fstab.exitCode === 0 && Number(fstab.stdout.trim()) > 0
 
 		checks.push({
@@ -94,7 +94,7 @@ export const verifyOperation = defineOperation({
 
 		for (const subtree of input.uncompressed) {
 			const path = `${mountPoint}/${subtree}`
-			const property = await $({ nothrow: true, quiet: true })`btrfs property get ${path} compression`
+			const property = await runHostCommand("btrfs", ["property", "get", path, "compression"])
 			const none = property.exitCode === 0 && property.stdout.includes("compression=none")
 
 			checks.push({

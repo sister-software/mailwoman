@@ -4,7 +4,20 @@
  * @author Teffen Ellis, et al.
  */
 
-import { $ } from "zx"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+
+import { runHostCommand } from "#storage-kit/command"
+
+/**
+ * A sysfs attribute's trimmed value, or `null` when it cannot be read.
+ */
+async function readAttribute(path: string): Promise<string | null> {
+	try {
+		return (await readLocalTextFile(path)).trim()
+	} catch {
+		return null
+	}
+}
 
 export interface DiscardSupport {
 	/**
@@ -36,27 +49,22 @@ function deviceName(device: string): string {
 export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 	const name = deviceName(device)
 
-	const max = await $({ nothrow: true, quiet: true })`cat /sys/block/${name}/queue/discard_max_bytes`
-	const maxBytes = max.exitCode === 0 ? Number(max.stdout.trim()) || 0 : 0
+	const max = await readAttribute(`/sys/block/${name}/queue/discard_max_bytes`)
+	const maxBytes = max === null ? 0 : Number(max) || 0
 
 	// `sg_vpd` reads the device's own claim.
 	// That lets us correct a zero kernel limit.
-	const vpd = await $({ nothrow: true, quiet: true })`sg_vpd -p lbpv ${device}`
+	const vpd = await runHostCommand("sg_vpd", ["-p", "lbpv", device])
 	const unmapSupported = vpd.exitCode === 0 && /LBPU\)?:\s*1/.test(vpd.stdout)
 
-	const modePath = await $({
-		nothrow: true,
-		quiet: true,
-	})`sh -c ${`ls /sys/block/${name}/device/scsi_disk/*/provisioning_mode 2>/dev/null | head -1`}`
+	const modePath = await runHostCommand("sh", [
+		"-c",
+		`ls /sys/block/${name}/device/scsi_disk/*/provisioning_mode 2>/dev/null | head -1`,
+	])
 
 	const provisioningModePath = modePath.exitCode === 0 ? modePath.stdout.trim() || null : null
 
-	let provisioningMode: string | null = null
-
-	if (provisioningModePath) {
-		const mode = await $({ nothrow: true, quiet: true })`cat ${provisioningModePath}`
-		provisioningMode = mode.exitCode === 0 ? mode.stdout.trim() : null
-	}
+	const provisioningMode = provisioningModePath ? await readAttribute(provisioningModePath) : null
 
 	return { maxBytes, unmapSupported, provisioningMode, provisioningModePath }
 }
@@ -73,10 +81,7 @@ export async function enableUnmap(support: DiscardSupport): Promise<boolean> {
 
 	if (!support.unmapSupported) return false
 
-	const written = await $({
-		nothrow: true,
-		quiet: true,
-	})`sh -c ${`echo unmap > ${support.provisioningModePath}`}`
+	const written = await runHostCommand("sh", ["-c", `echo unmap > ${support.provisioningModePath}`])
 
 	return written.exitCode === 0
 }

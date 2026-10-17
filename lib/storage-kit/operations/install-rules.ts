@@ -11,8 +11,8 @@
 import { writeFile } from "node:fs/promises"
 
 import { z } from "zod"
-import { $ } from "zx"
 
+import { runHostCommand } from "#storage-kit/command"
 import { renderSudoersRule, renderUdevRule } from "#storage-kit/host-rules"
 import { assertRoot, defineOperation, StorageEffect } from "#storage-kit/operation"
 
@@ -47,12 +47,9 @@ export const installUdevRuleOperation = defineOperation({
 		await writeFile(input.path, body, "utf8")
 		context.log(`  wrote ${input.path}`)
 
-		const reload = await $({ nothrow: true, quiet: true })`udevadm control --reload-rules`
+		const reload = await runHostCommand("udevadm", ["control", "--reload-rules"])
 
-		const trigger = await $({
-			nothrow: true,
-			quiet: true,
-		})`udevadm trigger --subsystem-match=scsi_disk --action=change`
+		const trigger = await runHostCommand("udevadm", ["trigger", "--subsystem-match=scsi_disk", "--action=change"])
 
 		const reloaded = reload.exitCode === 0 && trigger.exitCode === 0
 
@@ -112,16 +109,16 @@ export const installSudoersOperation = defineOperation({
 
 		await writeFile(staged, body, "utf8")
 
-		const check = await $({ nothrow: true, quiet: true })`visudo -cf ${staged}`
+		const check = await runHostCommand("visudo", ["-cf", staged])
 
 		if (check.exitCode !== 0) {
-			await $({ nothrow: true, quiet: true })`rm -f ${staged}`
+			await runHostCommand("rm", ["-f", staged])
 
 			throw new Error(`generated sudoers file failed visudo validation:\n${check.stderr || check.stdout}`)
 		}
 
-		await $({ nothrow: true, quiet: true })`install -m 0440 -o root -g root ${staged} ${input.path}`
-		await $({ nothrow: true, quiet: true })`rm -f ${staged}`
+		await runHostCommand("install", ["-m", "0440", "-o", "root", "-g", "root", staged, input.path])
+		await runHostCommand("rm", ["-f", staged])
 		context.log(`  wrote ${input.path} (validated by visudo)`)
 
 		return { path: input.path, bytes: body.length, reloaded: false }

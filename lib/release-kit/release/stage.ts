@@ -16,9 +16,10 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { GitClient } from "@mailwoman/core/git"
+import { ProcessTask } from "@mailwoman/core/process"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
-import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
 import { verifyTarball } from "#release-kit/pack/verify-tarball"
@@ -127,7 +128,13 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 	await removePathIfPresent(staging)
 	await makeDirectories(staging)
 
-	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${staging.toString()}`)
+	// The archive is binary, so git's stdout stays raw and undecoded.
+	const archive = new GitClient({ cwd: repoRoot }).start(["archive", "HEAD"], { rawStdout: true })
+	const extract = new ProcessTask("tar", ["-x", "-C", staging], { stdin: "pipe", stdout: "inherit", stderr: "inherit" })
+
+	archive.child.stdout!.pipe(extract.child.stdin!)
+
+	await Promise.all([archive.result, extract.result])
 
 	for (const workspace of await releaseWorkspaces(repoRoot)) {
 		const compiled = root(workspace, "out")

@@ -17,7 +17,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { runFileSync } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/git"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -67,7 +67,7 @@ export interface LintMDXAnglesSummary {
 }
 
 function stagedDocsMarkdown(): string[] {
-	const out = runFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
+	const out = gitSync(["diff", "--cached", "--name-only", "--diff-filter=ACM"])
 
 	return TextSpliterator.from(out)
 		.filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))

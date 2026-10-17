@@ -68,6 +68,20 @@ describe("GitClient", () => {
 		expect(await new GitClient({ cwd: scratch.path("copy") }).head()).toBe(await originRepo.head())
 	})
 
+	it("keeps the leading status column of the first porcelain line", async () => {
+		await using scratch = await temporaryDirectory("git-status-")
+
+		const client = new GitClient({ cwd: scratch.path })
+
+		await client.read(["init", "--quiet"])
+		await writeLocalTextFile("a\n", scratch.path("tracked"))
+		await client.read(["add", "tracked"])
+		await client.read([...IDENTITY, "commit", "--quiet", "-m", "seed"])
+		await writeLocalTextFile("b\n", scratch.path("tracked"))
+
+		expect(await client.status([], { untracked: false })).toEqual([" M tracked"])
+	})
+
 	it("rejects a read after disposal", async () => {
 		const client = new GitClient()
 

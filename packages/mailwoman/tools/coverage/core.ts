@@ -14,7 +14,7 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, PathBuilder } from "path-ts"
-import { $ } from "zx"
+import { runProcess } from "@mailwoman/core/process"
 import { Globerator } from "spliterator/node/fs"
 import { stringifyJSON } from "@mailwoman/core/json";
 import { TextSpliterator } from "spliterator"
@@ -484,7 +484,7 @@ export async function buildCoverageTiles(
 
 	// quiet: tippecanoe's stderr must not leak into the Ink render.
 	// We surface it only on failure.
-	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
+	const tip = await runProcess("tippecanoe", tipArgs, { reject: false })
 
 	if (tip.exitCode !== 0) {
 		throw new Error(`tippecanoe exited ${tip.exitCode}: ${tip.stderr.slice(-400)}`)

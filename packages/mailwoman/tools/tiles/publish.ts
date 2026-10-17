@@ -20,6 +20,7 @@
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
+import { runProcess } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**
@@ -77,7 +78,6 @@ const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S
  */
 export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) => {
 	const { $private } = await import("#env")
-	const { $ } = await import("zx")
 
 	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
@@ -87,7 +87,7 @@ export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) =
 
 	const remote = `:s3:${bucket}/${key}`
 	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
-	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${file} ${remote} ${flags}`
+	const result = await runProcess("rclone", ["copyto", file, remote, ...flags], { reject: false })
 
 	if (result.exitCode !== 0) {
 		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)

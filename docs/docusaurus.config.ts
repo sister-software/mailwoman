@@ -1,6 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
-import { runShellSync } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/git"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
@@ -18,8 +18,7 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
-		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous. `@mailwoman/core/git` answers a promise.
-		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+		return gitSync(["rev-parse", "--short", "HEAD"])
 	} catch {
 		return "unknown"
 	}

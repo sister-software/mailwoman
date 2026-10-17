@@ -7,6 +7,7 @@
  *   sealed database is read-only.
  */
 
+import { gitSync } from "@mailwoman/core/git"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertTierMatchesLicense,
@@ -20,7 +21,6 @@ import {
 } from "@mailwoman/core/layers"
 import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
 import { LicenseResolution, readLicenseRecord } from "@mailwoman/core/license/record"
-import { runFileSync } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -155,11 +155,7 @@ export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerM
  */
 export function buildSHA(repoRoot: PathBuilderLike): string {
 	try {
-		return runFileSync("git", ["rev-parse", "--short", "HEAD"], {
-			cwd: repoRoot,
-			encoding: "utf8",
-			stdio: "pipe",
-		}).trim()
+		return gitSync(["rev-parse", "--short", "HEAD"], { cwd: repoRoot })
 	} catch {
 		return "unknown"
 	}

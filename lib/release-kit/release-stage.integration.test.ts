@@ -8,13 +8,12 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { trackedFiles } from "@mailwoman/core/git"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { runProcess } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
-import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
-import { $ } from "zx"
 
 import { literalFilesEntries, verifyTarball } from "#release-kit/pack/verify-tarball"
 import {
@@ -112,7 +111,7 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 
 		const tarball = dir("fixture.tgz")
 
-		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
+		const packed = await runProcess("tar", ["czf", tarball, "-C", dir, "package"], { reject: false })
 
 		if (packed.exitCode !== 0) {
 			throw new Error(`tar czf failed: ${packed.stderr}`)
@@ -178,10 +177,8 @@ describe("the Hugging Face materialization plan", () => {
 		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
 	}
 
-	function trackedPaths(): Set<string> {
-		const listing = $.sync({ cwd: repoRoot })`git ls-files -- packages`
-
-		return TextSpliterator.from(listing.stdout).filter(isPresent).toSet()
+	async function trackedPaths(): Promise<Set<string>> {
+		return new Set(await trackedFiles(repoRoot, ["--", "packages"]))
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
@@ -195,7 +192,7 @@ describe("the Hugging Face materialization plan", () => {
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
 		// The manifests and the git listing are read here independently of the recipe, so a planner
 		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
-		const tracked = trackedPaths()
+		const tracked = await trackedPaths()
 
 		const planned = new Set(
 			(await planWeightsMaterialization(repoRoot)).map((plan) => `${plan.workspace}/${plan.filename}`)
@@ -222,7 +219,7 @@ describe("the Hugging Face materialization plan", () => {
 		// The other direction: a recipe that materialized `model-card.json`
 		// or `calibration.json` would overwrite committed content in the checkout on the
 		// publish path, where the destination root is the checkout.
-		const tracked = trackedPaths()
+		const tracked = await trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))
 			.map((plan) => `${plan.workspace}/${plan.filename}`)
@@ -244,12 +241,8 @@ describe("the pair-index parity selector", () => {
 		expect(script).toBeDefined()
 
 		const filter = script!.split(/\s+/).at(-1)!
-		const listing = $.sync({ cwd: repoRoot })`git ls-files`
 
-		const matches = TextSpliterator.from(listing.stdout)
-			.filter(isPresent)
-			.filter((path) => path.endsWith(".test.ts") && path.includes(filter))
-			.toArray()
+		const matches = (await trackedFiles(repoRoot)).filter((path) => path.endsWith(".test.ts") && path.includes(filter))
 
 		expect(matches.length).toBeGreaterThan(0)
 	})

@@ -18,7 +18,14 @@ import { TextSpliterator } from "spliterator"
 
 import type { IRuntimeLogger } from "#logging"
 import { repoRootPathBuilder } from "#paths"
-import { type ProcessProgress, type ProcessResult, ProcessTask, runFile } from "#process"
+import {
+	type ProcessProgress,
+	type ProcessResult,
+	ProcessTask,
+	type ProcessTaskOptions,
+	runFile,
+	runFileSync,
+} from "#process"
 import { TypedEventTarget } from "#utils/events"
 
 /**
@@ -90,12 +97,20 @@ export interface GitReadOptions {
 	 * A read past it rejects rather than answering a truncated listing.
 	 */
 	maxBuffer?: number
+	/**
+	 * Whether to remove surrounding whitespace from stdout.
+	 *
+	 * Porcelain output starts with a status column that may be a space, so a porcelain read passes `false`.
+	 *
+	 * @defaultValue `true`
+	 */
+	trim?: boolean
 }
 
 /**
  * Options for a git transfer.
  */
-export interface GitTransferOptions {
+export interface GitTransferOptions extends Pick<ProcessTaskOptions, "stdin" | "stdout" | "rawStdout"> {
 	/**
 	 * Whether a non-zero exit rejects the transfer.
 	 *
@@ -167,7 +182,7 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 			signal: this.#shutdown.signal,
 		})
 
-		return stdout.trim()
+		return options.trim === false ? stdout : stdout.trim()
 	}
 
 	/**
@@ -180,6 +195,9 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 		this.#shutdown.signal.throwIfAborted()
 
 		const task = new ProcessTask("git", args, {
+			stdin: options.stdin,
+			stdout: options.stdout,
+			rawStdout: options.rawStdout,
 			cwd: this.cwd,
 			logger: this.logger,
 			reject: options.reject,
@@ -244,9 +262,10 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 	public async status(pathspecs: readonly string[] = [], options: { untracked?: boolean } = {}): Promise<string[]> {
 		const scope = pathspecs.length ? ["--", ...pathspecs] : []
 		const untracked = options.untracked === false ? ["--untracked-files=no"] : []
-		const output = await this.read(["status", "--porcelain", ...untracked, ...scope])
+		const output = await this.read(["status", "--porcelain", ...untracked, ...scope], { trim: false })
 
-		return TextSpliterator.from(output)
+		// `trim: false` keeps the status column, whose first character is a space for an unstaged change.
+		return TextSpliterator.from(output, { trim: false })
 			.map((line) => line.trimEnd())
 			.filter((line) => line.length)
 			.toArray()
@@ -288,6 +307,37 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 
 		return this.#disposePromise
 	}
+}
+
+/**
+ * Options for {@linkcode gitSync}.
+ */
+export interface GitSyncOptions {
+	cwd?: PathBuilderLike
+	env?: NodeJS.ProcessEnv
+	/**
+	 * Whether to remove surrounding whitespace from stdout.
+	 *
+	 * @defaultValue `true`
+	 */
+	trim?: boolean
+}
+
+/**
+ * Run git synchronously and answer stdout, for a slot whose caller is synchronous.
+ *
+ * Git's stderr is captured rather than written to the terminal.
+ * A non-zero exit throws the builtin's error, which carries that stderr.
+ */
+export function gitSync(args: readonly string[], options: GitSyncOptions = {}): string {
+	const stdout = runFileSync("git", args, {
+		cwd: options.cwd ?? repoRootPathBuilder,
+		env: options.env,
+		stdio: "pipe",
+		maxBuffer: LISTING_MAX_BUFFER,
+	})
+
+	return options.trim === false ? stdout : stdout.trim()
 }
 
 /**
