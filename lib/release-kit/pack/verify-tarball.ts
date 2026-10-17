@@ -47,8 +47,8 @@ interface TarballContents {
 		 *
 		 * `codeOnly: true` declares that the package distributes code and no data rows.
 		 * A package whose builders produce databases under a share-alike license declares it,
-		 * so the license of the data it builds stays with the operator who builds it
-		 * rather than travelling in the tarball.
+		 * so the data it builds, and that data's license, stay with the operator who builds it.
+		 * The tarball holds only code.
 		 */
 		mailwoman?: { codeOnly?: boolean }
 	}
