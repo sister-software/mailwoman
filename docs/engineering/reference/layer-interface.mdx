@@ -251,8 +251,8 @@ or with two, fails immediately instead of causing errors downstream.
 | `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (re-issued under the same name)                             |
 | `spine_keys`                                         | which spine columns this layer stores, and the H3 resolution (JSON-encoded)                                |
 | `created_at`                                         | ISO-8601, supplied by the build script — never generated in-library                                        |
-| `source_records`                                     | JSON object of input record counts per publisher; NULL when the build recorded none                        |
-| `source_url`, `source_sha256`                        | the input file's download URL and SHA-256; NULL when the build recorded neither                            |
+| `source_records`                                     | JSON object of input record counts per publisher, or NULL when the build recorded none                     |
+| `source_url`, `source_sha256`                        | the input file's download URL and SHA-256, or NULL when the build recorded neither                         |
 
 `created_at` is deliberately supplied by the caller. The library never stamps a timestamp, so a
 rebuild from the same inputs is reproducible instead of recording a new "now" on every run.
