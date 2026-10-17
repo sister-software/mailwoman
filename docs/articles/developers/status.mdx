@@ -1,16 +1,16 @@
 ---
 title: What ships today
-description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.5.0.
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.6.0.
 role: reference
 source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
 ---
 
 # What ships today
 
-:::info[Verified as of release 10.5.0, model 10.1.0]
+:::info[Verified as of release 10.6.0, model 10.1.0]
 
 The model figures were measured on 2026-10-03 against the 10.1.0 release artifact. The package file
-count, the total and the per-file sizes were read from the published 10.5.0 tarball on 2026-10-17. The release process refuses
+count, the total and the per-file sizes were read from the published 10.6.0 tarball on 2026-10-17. The release process refuses
 to publish if the model version in this box is older than the model the release ships.
 
 :::
@@ -34,7 +34,7 @@ weights package version therefore follows the release instead of the model's own
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| Release             | `10.5.0`                                                              |
+| Release             | `10.6.0`                                                              |
 | Model version       | `10.1.0` — the Latin base, v7.2.0-address-systems step 60,000         |
 | Node floor          | `>=24.18.0` (the `engines` field on the `mailwoman` entry package)    |
 | Module format       | ESM only                                                              |
@@ -63,10 +63,10 @@ and build tooling. They are installed as dependencies of these packages.
 
 ## Model artifacts
 
-`@mailwoman/neural-weights-en-us` publishes 18 files totaling 75,220,589 bytes (75.2 MB): 10.4.0's
-published 75,195,039 bytes, plus 25,550 across the license and provenance records, the README and the
-model card, which now carry the training data's attribution, including OpenStreetMap's. Reproduce the figure from the published tarball instead of the
-working tree:
+`@mailwoman/neural-weights-en-us` publishes 18 files totaling 75,223,341 bytes (75.2 MB): 10.5.0's
+published 75,220,589 bytes, plus 2,752 across the license and provenance records and the model card,
+which now link the published OpenStreetMap training extract. Reproduce the figure from the published
+tarball instead of the working tree:
 
 ```bash
 npm view @mailwoman/neural-weights-en-us dist.unpackedSize dist.fileCount
@@ -86,7 +86,7 @@ Seven files account for most of the size:
 
 The remaining eleven files (the model card, the README, the manifest, the license and provenance
 records, three soft-feed lexicons, two calibration tables and the 25,773-byte `postcode-prefix-us.bin`
-index that the anchor-region prior reads) total 171,972 bytes.
+index that the anchor-region prior reads) total 174,724 bytes.
 
 The model card describes the model's structure:
 
