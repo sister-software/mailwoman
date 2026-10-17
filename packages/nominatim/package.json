@@ -72,6 +72,7 @@
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/nuts-lookup": "workspace:*",
@@ -86,8 +87,5 @@
 		"path-ts": "^2.5.0",
 		"spliterator": "^9.2.1",
 		"zod": "^4.6.5"
-	},
-	"devDependencies": {
-		"@mailwoman/core": "workspace:*"
 	}
 }

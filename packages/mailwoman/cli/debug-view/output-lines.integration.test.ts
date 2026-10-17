@@ -61,6 +61,7 @@ const RESULT = {
 		{ name: "Portland", tag: "locality", lat: 43.66, lon: -70.25, countryCode: "US", placeID: "wof:101715745" },
 	],
 	rooftop: null,
+	coordinate_source: null,
 	capital_promotion: null,
 	dropped_components: null,
 	unfollowed_components: null,

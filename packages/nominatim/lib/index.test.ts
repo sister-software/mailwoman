@@ -5,6 +5,7 @@
  */
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
+import { OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { expect, test } from "vitest"
 
@@ -365,4 +366,34 @@ test("no engine option: results and headers are unchanged", async () => {
 	for (const r of (await res.json()) as object[]) {
 		expect(r).not.toHaveProperty("engine")
 	}
+})
+
+test("route: an OpenStreetMap row's stamp and credit reach /search in jsonv2 and geojson, and a non-OSM row gains neither", async () => {
+	const rows = [
+		toNominatimResult({ ...dc, coordinateSource: { source: "openstreetmap:nz", release: "2026-08-06" } }),
+		toNominatimResult({ ...dc, lon: -77.03, coordinateSource: { source: "overture:NAD", release: "2026-05-20.0" } }),
+	]
+
+	const app = createNominatimApp({ search: async () => rows })
+
+	const jsonv2 = (await (await app.request("/search?q=x&format=jsonv2")).json()) as Array<{
+		licence: string
+		mailwoman?: { coordinate_source: { source: string } }
+	}>
+
+	expect(jsonv2[0]?.mailwoman?.coordinate_source.source).toBe("openstreetmap:nz")
+	expect(jsonv2[0]?.licence).toContain(OPENSTREETMAP_CREDIT)
+	expect(jsonv2[1]?.mailwoman?.coordinate_source.source).toBe("overture:NAD")
+	expect(jsonv2[1]?.licence).toBe(MAILWOMAN_LICENCE)
+
+	const geojson = (await (await app.request("/search?q=x&format=geojson")).json()) as {
+		features: Array<{ properties: { licence: string; mailwoman?: { coordinate_source: { source: string } } } }>
+	}
+
+	expect(geojson.features.map((f) => f.properties.mailwoman?.coordinate_source.source)).toEqual([
+		"openstreetmap:nz",
+		"overture:NAD",
+	])
+
+	expect(geojson.features[1]?.properties.licence).not.toContain("OpenStreetMap")
 })

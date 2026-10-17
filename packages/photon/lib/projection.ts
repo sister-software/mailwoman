@@ -9,6 +9,7 @@
  */
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
+import { type CoordinateSource, isOpenStreetMapSource, OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
 
 import {
 	type PhotonFeature,
@@ -57,6 +58,12 @@ export interface PhotonForwardInput {
 	 * `house` wins when both are set, since a numbered query never street-tiers.
 	 */
 	street?: { name?: string | null } | null
+	/**
+	 * The register row that supplied the coordinate, from the geocode result's `coordinate_source`.
+	 *
+	 * Set only on the primary feature, because an alternative is a gazetteer place.
+	 */
+	coordinateSource?: CoordinateSource | null
 }
 
 /**
@@ -167,6 +174,13 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 
 		if (street) {
 			props.street = street
+		}
+	}
+
+	if (input.coordinateSource) {
+		props.mailwoman = {
+			coordinate_source: input.coordinateSource,
+			...(isOpenStreetMapSource(input.coordinateSource.source) ? { attribution: OPENSTREETMAP_CREDIT } : {}),
 		}
 	}
 

@@ -17,6 +17,7 @@ import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { NamedPath } from "@mailwoman/core/paths"
+import type { RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -123,6 +124,26 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Pr
 	}
 
 	return { adminDBPath: wofPaths[0], candidateDB, wofPaths }
+}
+
+/**
+ * Open the OpenStreetMap address-point layers an operator built under the data root,
+ * as `mailwoman geocode` does, or `null` when `@mailwoman/osm` is not installed.
+ *
+ * A country with no built layer answers no rooftop, so a deployment without
+ * one serves no OpenStreetMap data.
+ * A row from a built layer carries its `openstreetmap:<cc>` stamp into the result's `coordinate_source`.
+ */
+export async function openOSMRegionDatabases(): Promise<RegionDatabaseProvider | null> {
+	const imported = await import("@mailwoman/osm/region-database-provider").catch((error: unknown) => {
+		// Only an absent package means "no OSM layer".
+		// Any other failure is a fault to report.
+		if ((error as { code?: unknown } | null)?.code === "ERR_MODULE_NOT_FOUND") return null
+
+		throw error
+	})
+
+	return imported ? imported.OSMRegionDatabaseProvider.create(dataRootPath()) : null
 }
 
 /**

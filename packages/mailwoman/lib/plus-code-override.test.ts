@@ -53,4 +53,27 @@ describe("applyPlusCodeOverride", () => {
 		expect(result.components.postcode).toBe("IM2 4RE")
 		expect(result.venue).toBe("Simpson's Field")
 	})
+
+	it("clears the register row's stamp once the plus code replaces its coordinate", () => {
+		const tree = buildAddressTree(RAW, [
+			tok("Simpson's Field", 0, 15, "B-venue"),
+			tok("5G8H+8F5", 17, 25, "B-postcode"),
+			tok("Douglas", 27, 34, "B-locality"),
+		])
+
+		const result = {
+			components: { venue: "Simpson's Field", postcode: "5G8H+8F5", locality: "Douglas" },
+			lat: 54.15,
+			lon: -4.48,
+			resolution_tier: "address_point",
+			epistemic_status: "observed",
+			coordinate_source: { source: "openstreetmap:im", release: "2026-08-06" },
+			uncertainty_m: 1,
+		} as GeocodeResult
+
+		applyPlusCodeOverride(result, RAW, tree)
+
+		expect(result.resolution_tier).toBe("plus_code")
+		expect(result.coordinate_source).toBeNull()
+	})
 })

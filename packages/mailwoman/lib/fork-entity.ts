@@ -223,6 +223,10 @@ export interface ForkEntityAnswerTarget {
 	lon: number | null
 	resolution_tier: string | null
 	epistemic_status?: string
+	/**
+	 * The register row behind the coordinate, cleared when an entity's coordinate replaces it.
+	 */
+	coordinate_source?: unknown
 	countryCode: string | null
 	venue: string | null
 	entity: { name: string; categoryID: string | null; confidence: number; country: string } | null
@@ -294,6 +298,7 @@ function applyForkEntityAnswer(
 	result.lon = entity.longitude
 	result.resolution_tier = "venue"
 	result.epistemic_status = epistemicStatusFor("venue", result.lat)
+	result.coordinate_source = null
 	result.countryCode = entity.country
 	result.venue = entity.name
 
@@ -474,6 +479,7 @@ export function applyEntityTiers(
 			result.lon = hit.longitude
 			result.resolution_tier = "venue"
 			result.epistemic_status = epistemicStatusFor("venue", result.lat)
+			result.coordinate_source = null
 			result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
 		}
 	}

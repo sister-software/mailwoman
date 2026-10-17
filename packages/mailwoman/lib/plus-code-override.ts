@@ -86,6 +86,7 @@ export function applyPlusCodeOverride(result: GeocodeResult, input: string, reso
 	result.lon = cell.lon
 	result.resolution_tier = "plus_code"
 	result.epistemic_status = epistemicStatusFor("plus_code", result.lat)
+	result.coordinate_source = null
 	result.uncertainty_m = Math.max(1, Math.round(Math.hypot(latHalfM, lonHalfM)))
 }
 
