@@ -20,7 +20,7 @@
  *   Junction-format variety includes padded and tight `&` and `/`, `and`, `at`, `@`, and the
  *   leading phrases `corner of` and `intersection of`, crossed with tails (bare / `, ST` / `, ST ZIP` /
  *   `, City, ST [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real). The
- *   locality tail comes from the OA Cook-county ZIP→city majority map.
+ *   locality tail comes from the NAD ZIP→city majority tables for Cook and Morris counties.
  *
  *   Audit: every emitted row is label-checked on the RAW surface via the char-offset span triple. Any
  *   violation fails the build (throws). A JSON audit report lands next to the output.
@@ -29,7 +29,8 @@
  *
  *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped tiger 2023 edges. default
  *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
- *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
+ *   - `$MAILWOMAN_DATA_ROOT/nad-skeletons/us__{il__cook,nj__morris}__zip-city.csv` (ZIP→city tails, written by
+ *       `packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`)
  */
 
 import type { DuckDBConnection } from "@duckdb/node-api"
@@ -46,10 +47,11 @@ import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
 import { openDuckDB } from "#parquet/duckdb"
-import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { readCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
+import { NAD_ZIP_CITY_COUNTIES, nadZipCityPath } from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
 interface County {
@@ -74,8 +76,6 @@ const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-re
  * `--edges-dir` overrides it.
  */
 const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
-
-const OA_COOK = { zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv" }
 
 /**
  * One real crossing extracted from a county's tiger edges shapefile.
@@ -257,37 +257,28 @@ async function extractCrossings(
 }
 
 /**
- * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
+ * ZIP → majority city in the training counties, from the NAD ZIP-to-city tables (real ZIP/city pairings).
+ *
+ * A missing table throws: an empty map would silently downgrade every city tail to the region tail.
  */
 async function buildZipCityMap(): Promise<Map<string, string>> {
-	const counts = new Map<string, Map<string, number>>()
-
-	for await (const row of readZippedCSVRecords(OA_COOK.zip, OA_COOK.csv)) {
-		const city = row.city ?? ""
-		const zip = row.postcode ?? ""
-
-		if (!city || !/^\d{5}$/.test(zip) || BAD_NAME.test(city)) continue
-		let byCity = counts.get(zip)
-
-		if (!byCity) {
-			counts.set(zip, (byCity = new Map()))
-		}
-
-		byCity.set(city, (byCity.get(city) ?? 0) + 1)
-	}
-
 	const map = new Map<string, string>()
 
-	for (const [zip, byCity] of counts) {
-		let best: { city: string; n: number } | null = null
+	for (const county of NAD_ZIP_CITY_COUNTIES) {
+		const path = nadZipCityPath(county)
 
-		for (const [city, n] of byCity)
-			if (!best || n > best.n) {
-				best = { city, n }
-			}
+		if (!(await pathExists(path))) {
+			throw new Error(
+				`${path} is missing; write it with packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`
+			)
+		}
 
-		if (best) {
-			map.set(zip, best.city)
+		for await (const row of readCSVRecords(path)) {
+			const city = row.city ?? ""
+			const zip = row.zip ?? ""
+
+			if (!city || !/^\d{5}$/.test(zip) || BAD_NAME.test(city)) continue
+			map.set(zip, city)
 		}
 	}
 
@@ -571,7 +562,8 @@ export const intersectionRecipe: CorpusRecipe = {
 				source,
 				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
-				license: "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
+				license:
+					"TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
 			}
 
 			// Verbatim-only alignment: raw is built from the component values, so a fuzzy fallback

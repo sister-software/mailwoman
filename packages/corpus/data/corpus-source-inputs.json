@@ -1507,12 +1507,40 @@
 					"reads": "TIGER/Line 2023 EDGES street pairs for Cook IL and Morris NJ"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook ZIP-to-city tails"
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database ZIP-to-city majority tables for Cook IL and Morris NJ"
 				}
 			],
-			"authored": ["junction forms and connectors in packages/corpus/lib/recipes/intersection.ts"]
+			"authored": ["junction forms and connectors in packages/corpus/lib/recipes/intersection.ts"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-public-administration-1",
+							"license": "unchecked-corpus-input-us-u-s-census-bureau",
+							"reads": "TIGER/Line 2023 EDGES street pairs for Cook IL and Morris NJ"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook ZIP-to-city tails"
+						}
+					]
+				}
+			]
 		},
 		"invented-no-street": {
 			"aliases": ["synth-no-street"],
@@ -1575,11 +1603,6 @@
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
-				},
-				{
 					"registerSource": "us-property-building-7",
 					"license": "unchecked-corpus-input-us-montana-state-library",
 					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
@@ -1588,6 +1611,11 @@
 					"registerSource": "us-property-building-8",
 					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
 				},
 				{
 					"registerSource": "fr-property-building-1",
@@ -1602,6 +1630,69 @@
 			],
 			"authored": [
 				"@mailwoman/codex tables that follow USPS Publication 28 §29, with the Canada Post FSA, Australia Post delivery type, NZ Post ADV358 and CEDEX tables"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide localities and postcodes"
+						},
+						{
+							"registerSource": "ch-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-ch-geonames",
+							"reads": "the CA gazetteer dump and the AU and NZ postal exports"
+						}
+					]
+				}
 			]
 		},
 		"invented-po-box-military": {
@@ -2277,11 +2368,6 @@
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
-				},
-				{
 					"registerSource": "us-property-building-7",
 					"license": "unchecked-corpus-input-us-montana-state-library",
 					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
@@ -2290,6 +2376,11 @@
 					"registerSource": "us-property-building-8",
 					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
 				},
 				{
 					"registerSource": "de-property-building-2",
@@ -2315,20 +2406,103 @@
 			"authored": [
 				"@mailwoman/codex tables that follow USPS Publication 28 appendices C1 and C2",
 				"VENUES in packages/corpus/lib/recipes/street/affix.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide, with --multilocale-count"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide, with --multilocale-count"
+						},
+						{
+							"registerSource": "it-property-building-1",
+							"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+							"reads": "OpenAddresses it/countrywide, with --multilocale-count"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "OpenAddresses nl/countrywide, with --multilocale-count"
+						}
+					]
+				}
 			]
 		},
 		"spliced-country": {
 			"aliases": ["synth-country"],
 			"inputs": [
 				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons"
+				},
+				{
 					"registerSource": "us-property-building-5",
 					"license": "unchecked-corpus-input-us-us-property-building-5",
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons"
-				},
-				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) skeletons"
 				},
 				{
 					"registerSource": "us-property-building-7",
@@ -2339,6 +2513,11 @@
 					"registerSource": "us-property-building-8",
 					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, skeletons"
 				},
 				{
 					"registerSource": "de-property-building-2",
@@ -2364,6 +2543,64 @@
 			"authored": [
 				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries",
 				"the homograph table and US contrast cities in packages/corpus/lib/recipes/country-balanced.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide skeletons"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide skeletons"
+						},
+						{
+							"registerSource": "it-property-building-1",
+							"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+							"reads": "OpenAddresses it/countrywide skeletons"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "OpenAddresses nl/countrywide skeletons"
+						}
+					]
+				}
 			]
 		},
 		"spliced-sub-venue": {
@@ -3095,11 +3332,6 @@
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
-				},
-				{
 					"registerSource": "us-property-building-7",
 					"license": "unchecked-corpus-input-us-montana-state-library",
 					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
@@ -3110,12 +3342,75 @@
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
 				},
 				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
+				},
+				{
 					"registerSource": "us-health-2",
 					"license": "unchecked-access-free-us-us-health-2",
 					"reads": "HRSA site names as the venue shell"
 				}
 			],
-			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C1"]
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C1"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "us-health-2",
+							"license": "unchecked-access-free-us-us-health-2",
+							"reads": "HRSA site names as the venue shell"
+						}
+					]
+				}
+			]
 		},
 		"spliced-trailing-region": {
 			"aliases": ["synth-trailing-region"],
@@ -3223,11 +3518,6 @@
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
-				},
-				{
 					"registerSource": "us-property-building-7",
 					"license": "unchecked-corpus-input-us-montana-state-library",
 					"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
@@ -3236,9 +3526,67 @@
 					"registerSource": "us-property-building-8",
 					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, including the unit field"
 				}
 			],
-			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"]
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+						}
+					]
+				}
+			]
 		},
 		"spliced-unit-v30": {
 			"aliases": ["synth-unit-v30"],
@@ -3264,11 +3612,6 @@
 					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
 				},
 				{
-					"registerSource": "us-property-building-6",
-					"license": "unchecked-corpus-input-us-cook-county",
-					"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
-				},
-				{
 					"registerSource": "us-property-building-7",
 					"license": "unchecked-corpus-input-us-montana-state-library",
 					"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
@@ -3277,9 +3620,67 @@
 					"registerSource": "us-property-building-8",
 					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
 					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, including the unit field"
 				}
 			],
-			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"]
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+						}
+					]
+				}
+			]
 		},
 		"spliced-venue-locality": {
 			"aliases": ["synth-venue-locality"],

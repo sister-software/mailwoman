@@ -12,28 +12,7 @@ import { TextSpliterator, TSVSpliterator } from "spliterator"
 
 import type { AUTuple, FRTuple, NZTuple, USTuple } from "#recipes/po/box/cedex/types"
 import { readCSVRecords, readZippedCSVRecords } from "#recipes/scaffold"
-
-/**
- * Non-Vermont OpenAddresses files used for training rows.
- */
-export const US_TRAIN_SOURCES = [
-	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
-	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
-]
-
-/**
- * Vermont OpenAddresses file reserved for golden rows.
- */
-export const US_EVAL_SOURCE = {
-	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
-	csv: "us/vt/statewide.csv",
-	region: "VT",
-}
+import type { USSkeletonSource } from "#us/recipes/skeleton-sources"
 
 /**
  * Countrywide French OpenAddresses source.
@@ -72,7 +51,7 @@ export const isHoldoutLocality = (name: string): boolean => localityHash(name) %
 const cleanLocality = (locality: string) =>
 	locality && locality.length <= MAX_LOCALITY_LENGTH && !/\d|,/.test(locality) && !/cedex/i.test(locality)
 
-export async function readUsTuples(source: { zip: PathBuilderLike; csv: string; region: string }): Promise<USTuple[]> {
+export async function readUsTuples(source: USSkeletonSource): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 

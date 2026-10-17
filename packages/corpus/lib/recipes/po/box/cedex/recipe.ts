@@ -20,8 +20,6 @@ import {
 	readFrTuples,
 	readPostalTuples,
 	readUsTuples,
-	US_EVAL_SOURCE,
-	US_TRAIN_SOURCES,
 } from "#recipes/po/box/cedex/sources"
 import type { Rendered, USTuple } from "#recipes/po/box/cedex/types"
 import { renderPmbUs, renderPoBoxUs } from "#recipes/po/box/cedex/us"
@@ -30,6 +28,11 @@ import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#rec
 import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeMilitaryPoBoxRow } from "#synthesizers/po-box"
 import { SurfaceOrigin } from "#types"
+import {
+	NAD_SKELETON_DIRECTORY,
+	US_SKELETON_EVAL_SOURCE,
+	US_SKELETON_TRAIN_SOURCES,
+} from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
 const COMPONENT_ORDER = ["house_number", "street", "po_box", "venue", "locality", "postcode", "region", "cedex"]
@@ -63,7 +66,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 		const source = opts.sourceName ?? defaultRecipeSource("synth-po-box-cedex")
 		const usPool: USTuple[] = []
 
-		for (const sourceEntry of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
+		for (const sourceEntry of opts.golden ? [US_SKELETON_EVAL_SOURCE] : US_SKELETON_TRAIN_SOURCES) {
 			const tuples = await readUsTuples(sourceEntry)
 
 			console.error(`  ${sourceEntry.csv}: ${tuples.length} tuples`)
@@ -96,7 +99,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 
 		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length)
 			throw new Error(
-				`A base pool is empty — check ${dataRootPath("oa-cache")}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
+				`A base pool is empty — check ${dataRootPath("oa-cache")}, ${dataRootPath(NAD_SKELETON_DIRECTORY)}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
 			)
 
 		let emitted = 0,
@@ -185,7 +188,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 								? "GeoNames AU postal dump (CC-BY 4.0) locality/state/postcode tails + Australia Post Postal Delivery Type designators (@mailwoman/codex/au)"
 								: country === "NZ"
 									? "GeoNames NZ postal dump (CC-BY 4.0) locality/postcode tails + NZ Post ADV358 Delivery Service Types (@mailwoman/codex/nz)"
-									: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
+									: "OpenAddresses and National Address Database US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
 			}
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])

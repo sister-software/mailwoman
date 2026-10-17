@@ -26,7 +26,10 @@ export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
  */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 
-interface NADRecord {
+/**
+ * One NAD address point as the FeatureServer pages publish it, limited to the fields a reader here uses.
+ */
+export interface NADRecord {
 	OBJECTID?: number
 	UUID?: string | null
 	AddNum_Pre?: string | null
@@ -94,7 +97,7 @@ function nonEmpty(...values: Array<string | null | undefined>): string | null {
  * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
  * one separator, so it fits a publisher that splits the number in two rather than in four.
  */
-function nadHouseNumber(r: NADRecord): string | null {
+export function nadHouseNumber(r: NADRecord): string | null {
 	const full = (r.AddNo_Full ?? "").toString().trim()
 
 	if (full) return full
@@ -107,16 +110,24 @@ function nadHouseNumber(r: NADRecord): string | null {
 	return [pre, num, suf].filter(isPresent).join(" ").trim() || null
 }
 
-interface DecomposedNADStreet {
+/**
+ * A NAD street split into the prefix, name and suffix its structured columns state,
+ * with the whole street beside them.
+ */
+export interface DecomposedNADStreet {
 	prefix?: string
 	street?: string
 	suffix?: string
 	full: string
 }
 
-// Structured street fields take precedence.
-// If they are empty, `StNam_Full` supplies the whole street.
-function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
+/**
+ * The street a NAD record states.
+ *
+ * Structured street fields take precedence.
+ * If they are empty, `StNam_Full` supplies the whole street.
+ */
+export function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 	const name = (r.St_Name ?? "").toString().trim()
 
 	if (name) {
@@ -139,9 +150,27 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 	return null
 }
 
-// The postal city comes first because it is the name that people write on mail.
-function composeLocality(r: NADRecord): string | null {
-	return nonEmpty(r.Post_City, r.Inc_Muni, r.Census_Plc, r.Uninc_Comm)
+/**
+ * The NAD domain values that fill a place-name column without naming a place, lower-cased.
+ */
+const NAD_PLACEHOLDER_PLACE_NAMES: ReadonlySet<string> = new Set(["not stated", "unincorporated", "0"])
+
+/**
+ * The locality a NAD record states.
+ *
+ * The postal city comes first because it is the name that people write on mail.
+ * NAD fills an unknown `Post_City` with the domain value `Not stated`
+ * (99,998 rows of a 100,000-row Massachusetts sample and 11,713 of a Texas one), and an address
+ * outside any municipality has `Inc_Muni` `Unincorporated` (the same 11,713 Texas rows).
+ *
+ * Another 23 rows of that Texas sample read `0`.
+ * Each of these values counts as absent, and the next column supplies the place name.
+ */
+export function composeNADLocality(r: NADRecord): string | null {
+	const stated = (value: string | null | undefined) =>
+		NAD_PLACEHOLDER_PLACE_NAMES.has(value?.trim().toLowerCase() ?? "") ? null : value
+
+	return nonEmpty(stated(r.Post_City), stated(r.Inc_Muni), stated(r.Census_Plc), stated(r.Uninc_Comm))
 }
 
 function composePostcode(r: NADRecord): string | null {
@@ -202,7 +231,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					if (!US_STATES_SET.has(state)) continue
 
-					const locality = composeLocality(record)
+					const locality = composeNADLocality(record)
 
 					if (!locality) continue
 

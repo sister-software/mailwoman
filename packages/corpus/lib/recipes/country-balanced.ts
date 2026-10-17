@@ -21,6 +21,7 @@ import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaff
 import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
+import { US_SKELETON_EVAL_SOURCE, US_SKELETON_TRAIN_SOURCES } from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
 // Country names are drawn without regard to the address's own country.
@@ -39,7 +40,7 @@ const COUNTRY_FORM_POOL = (() => {
 const COUNTRY_ABSENT_PROB = 0.3
 
 /**
- * One OpenAddresses archive and how to render its rows.
+ * One OA-layout archive and how to render its rows.
  */
 interface CountrySource {
 	zip: PathBuilderLike
@@ -47,76 +48,75 @@ interface CountrySource {
 	iso2: string
 	region: string
 	order: string
+	/**
+	 * The register the archive's rows come from, when it differs from the invocation's `--register`.
+	 */
+	register?: string
 }
 
 /**
- * The training sources.
+ * The training sources, in two groups that {@linkcode readSourcePool} gives equal halves of the read budget.
+ *
+ * The first group is the shared US skeletons.
+ * They take the half that the four OpenAddresses US state files held before `us/il/cook` was withdrawn.
+ *
+ * The number of US files therefore leaves the pool's country mix unchanged.
  */
-const SOURCES: readonly CountrySource[] = [
-	{
-		zip: dataRootPath("oa-cache", "us__ia__statewide.zip"),
-		csv: "us/ia/statewide.csv",
+const SOURCE_GROUPS: readonly (readonly CountrySource[])[] = [
+	US_SKELETON_TRAIN_SOURCES.map(({ zip, csv, region, register }) => ({
+		zip,
+		csv,
 		iso2: "US",
-		region: "IA",
+		region,
 		order: "us",
-	},
-	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
-	{
-		zip: dataRootPath("oa-cache", "us__mt__statewide.zip"),
-		csv: "us/mt/statewide.csv",
-		iso2: "US",
-		region: "MT",
-		order: "us",
-	},
-	{
-		zip: dataRootPath("oa-cache", "us__sd__statewide.zip"),
-		csv: "us/sd/statewide.csv",
-		iso2: "US",
-		region: "SD",
-		order: "us",
-	},
-	{
-		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
-		csv: "de/sn/statewide.csv",
-		iso2: "DE",
-		region: "",
-		order: "eu",
-	},
-	{
-		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
-		csv: "fr/countrywide.csv",
-		iso2: "FR",
-		region: "",
-		order: "fr",
-	},
-	{
-		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
-		csv: "it/countrywide.csv",
-		iso2: "IT",
-		region: "",
-		order: "eu",
-	},
-	{
-		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
-		csv: "nl/countrywide.csv",
-		iso2: "NL",
-		region: "",
-		order: "eu",
-	},
+		register,
+	})),
+	[
+		{
+			zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+			csv: "de/sn/statewide.csv",
+			iso2: "DE",
+			region: "",
+			order: "eu",
+		},
+		{
+			zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+			csv: "fr/countrywide.csv",
+			iso2: "FR",
+			region: "",
+			order: "fr",
+		},
+		{
+			zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+			csv: "it/countrywide.csv",
+			iso2: "IT",
+			region: "",
+			order: "eu",
+		},
+		{
+			zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+			csv: "nl/countrywide.csv",
+			iso2: "NL",
+			region: "",
+			order: "eu",
+		},
+	],
 ]
 
 /**
- * The held-out sources that `--golden` reads.
+ * The held-out sources that `--golden` reads, one per group.
  */
-const EVAL_SOURCES: readonly CountrySource[] = [
-	{
-		zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
-		csv: "us/vt/statewide.csv",
-		iso2: "US",
-		region: "VT",
-		order: "us",
-	},
-	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+const EVAL_SOURCE_GROUPS: readonly (readonly CountrySource[])[] = [
+	[
+		{
+			zip: US_SKELETON_EVAL_SOURCE.zip,
+			csv: US_SKELETON_EVAL_SOURCE.csv,
+			iso2: "US",
+			region: US_SKELETON_EVAL_SOURCE.region,
+			order: "us",
+		},
+	],
+	[{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" }],
 ]
 
 /**
@@ -130,6 +130,7 @@ interface CountryTuple {
 	postcode: string
 	iso2: string
 	order: string
+	register?: string
 }
 
 /**
@@ -143,8 +144,35 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 			region: row.region || source.region,
 			iso2: source.iso2,
 			order: source.order,
+			...(source.register ? { register: source.register } : {}),
 		}),
 	})
+}
+
+/**
+ * Reads the tuple pool for `count` rows: a threefold read of the target,
+ * which leaves room for skipped rows.
+ *
+ * Each group takes an equal share of that read, split evenly between its sources.
+ */
+async function readSourcePool(groups: readonly (readonly CountrySource[])[], count: number): Promise<CountryTuple[]> {
+	const pool: CountryTuple[] = []
+
+	for (const group of groups) {
+		const perSource = Math.ceil((count * 3) / groups.length / group.length)
+
+		for (const s of group) {
+			const t = await readTuples(s, perSource)
+
+			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
+
+			for (const x of t) {
+				pool.push(x)
+			}
+		}
+	}
+
+	return pool
 }
 
 // The share of country draws taken from the curated surface forms instead of canonical names.
@@ -391,21 +419,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-country")
-		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		// A threefold read of the target leaves room for skipped rows.
-		const perSource = Math.ceil((count * 3) / sources.length)
-
-		const pool: CountryTuple[] = []
-
-		for (const s of sources) {
-			const t = await readTuples(s, perSource)
-
-			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
-
-			for (const x of t) {
-				pool.push(x)
-			}
-		}
+		const pool = await readSourcePool(opts.golden ? EVAL_SOURCE_GROUPS : SOURCE_GROUPS, count)
 
 		if (!pool.length) {
 			throw new Error(`No tuples — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
@@ -420,6 +434,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			const roll = random()
 			let rendered: { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> }
 			let rowISO2: string
+			let rowRegister: string | undefined
 
 			if (roll < HOMOGRAPH_FRAC) {
 				const h = renderHomograph(random)
@@ -434,6 +449,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				const country = pickCountry(random)
 				rendered = renderCountry(random, t, country)
 				rowISO2 = t.iso2
+				rowRegister = t.register
 
 				if (country && !rendered.raw.includes(country)) {
 					skipped++
@@ -461,7 +477,8 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				source,
 				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
-				license: "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
+				license:
+					"OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
 			}
 
 			const aligned = alignRow(canonical)
@@ -477,7 +494,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 					...aligned.row,
 					recipe: "country",
 					base_source_id: null,
-					register: requireRegister(opts, "country-balanced"),
+					register: rowRegister ?? requireRegister(opts, "country-balanced"),
 					surface: SurfaceOrigin.Composed,
 				})
 			)

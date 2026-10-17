@@ -20,9 +20,14 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
-import { EVAL_SOURCE, TRAIN_SOURCES, type UnitSource } from "#recipes/unit/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
+import {
+	NAD_SKELETON_DIRECTORY,
+	US_SKELETON_EVAL_SOURCE,
+	US_SKELETON_TRAIN_SOURCES,
+	type USSkeletonSource,
+} from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
 /**
@@ -75,11 +80,15 @@ export interface UnitTuple {
 	region: string
 	postcode: string
 	oaUnit: string
+	/**
+	 * The register the skeleton came from, stamped on the row in place of the invocation's `--register`.
+	 */
+	register?: string
 }
 
-async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
+async function readTuples(source: USSkeletonSource): Promise<UnitTuple[]> {
 	return readOATuples(source, {
-		extra: (fields, row) => ({ ...fields, region: source.region, oaUnit: row.unit ?? "" }),
+		extra: (fields, row) => ({ ...fields, region: source.region, oaUnit: row.unit ?? "", register: source.register }),
 	})
 }
 
@@ -232,7 +241,7 @@ export const unitRecipe: CorpusRecipe = {
 		const count = opts.count
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-unit")
-		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
+		const sources = opts.golden ? [US_SKELETON_EVAL_SOURCE] : US_SKELETON_TRAIN_SOURCES
 
 		const pool: UnitTuple[] = []
 
@@ -247,7 +256,10 @@ export const unitRecipe: CorpusRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error(`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
+			throw new Error(
+				`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")} and the NAD ` +
+					`skeletons in ${dataRootPath(NAD_SKELETON_DIRECTORY)}?`
+			)
 		}
 
 		let emitted = 0
@@ -287,7 +299,8 @@ export const unitRecipe: CorpusRecipe = {
 				source,
 				source_id: stableSourceID(source, components),
 				corpus_version: "0.4.0",
-				license: "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+				license:
+					"OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}
 
 			const aligned = alignRow(canonical)
@@ -303,7 +316,7 @@ export const unitRecipe: CorpusRecipe = {
 					...aligned.row,
 					recipe: "unit",
 					base_source_id: null,
-					register: requireRegister(opts, "unit"),
+					register: base.register ?? requireRegister(opts, "unit"),
 					surface: SurfaceOrigin.Composed,
 				})
 			)
