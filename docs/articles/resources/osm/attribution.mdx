@@ -63,6 +63,8 @@ If your service exposes OSM-backed lookups, include a visible or conventionally 
 
 This may appear in the application, API documentation, service credits or another location users would ordinarily expect. Preserve provenance in your application where practical. **A source field inside an individual API response should not be your only attribution mechanism** for a public OSM-backed service.
 
+Each Mailwoman HTTP surface keeps a result's `openstreetmap:<cc>` source stamp when an OSM layer you attached supplied its coordinate, and the Nominatim and Photon surfaces add the credit "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to that result. A result from any other source never carries the stamp or the credit, and a deployment without an OSM layer serves no OSM data. [HTTP APIs](../../developers/reference/http-apis.mdx#coordinate-provenance-and-the-openstreetmap-credit) lists the field each surface uses.
+
 ## Sharing an OSM-derived database
 
 The [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) permits commercial use. It also contains conditions for publicly using or distributing modified OSM databases.

@@ -9,6 +9,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it, vi } from "vitest"
 
 import { attributionReport, renderAttributionReport } from "#cli/native/commands/license/attribution"
@@ -33,7 +34,11 @@ describe("attributionReport", () => {
 		// en-au contributed none of these rows.
 		// These rows belong to its base package.
 		// The field records that source.
-		expect(overlay.own).toEqual([])
+		// Its own card carries only the OpenStreetMap credit it owes through that base graph.
+		expect(overlay.own.map((entry) => stringifyJSON(entry))).toEqual([
+			expect.stringContaining("OpenStreetMap contributors (ODbL-1.0)"),
+		])
+
 		expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-en-us")
 		expect(overlay.inherited?.entries.length).toBeGreaterThan(0)
 	})

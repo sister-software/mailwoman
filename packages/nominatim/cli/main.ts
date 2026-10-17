@@ -37,6 +37,7 @@ import {
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { openOSMRegionDatabases } from "mailwoman/geocode/osm-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
@@ -110,6 +111,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// A no-op when the extract is not on disk, so the endpoint falls back to the OSM tier without an error.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
+	const osmExtracts = await openOSMRegionDatabases(dataRootPath())
 	// The annotation fallback adds no country constraint to the geocode.
 	// The default-on placer already routes the query's country.
 	// `defaultCountry` is a hard override that beats it, so forcing "US" would
@@ -163,6 +165,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolver,
 				databases: extracts.for,
 				nationalDatabases: banExtracts.for,
+				...(osmExtracts ? { osmDatabases: osmExtracts.for } : {}),
 				...(userCountry ? { defaultCountry: { country: userCountry, source: "caller" } } : {}),
 			})
 

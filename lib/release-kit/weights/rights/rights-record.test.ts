@@ -415,6 +415,49 @@ describe("readWeightsRightsRecords", () => {
 		}
 	})
 
+	it("keeps an overlay's own inputs unattributed when its card credits only the base graph's OpenStreetMap data", async () => {
+		const tree = await treeWith([
+			{
+				workspace: "packages/neural-weights-graph",
+				manifest: {
+					name: "@mailwoman/neural-weights-graph",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: [],
+				},
+				card: { version: "9.1.0", training: { data_attribution: ["OpenStreetMap contributors (ODbL-1.0): rows."] } },
+			},
+			{
+				workspace: "packages/neural-weights-overlay",
+				manifest: {
+					name: "@mailwoman/neural-weights-overlay",
+					version: "10.0.0",
+					license: "AGPL-3.0-only OR LicenseRef-Commercial",
+					files: ["pair-index.bin"],
+					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
+				},
+				card: { version: "6.5.0", attribution: ["OpenStreetMap contributors (ODbL-1.0): through the base graph."] },
+			},
+		])
+
+		try {
+			const records = await readWeightsRightsRecords(tree.root, [
+				"packages/neural-weights-graph",
+				"packages/neural-weights-overlay",
+			])
+
+			const document = renderProvenance(records[1]!)
+
+			expect(document.training_attribution.status).toBe("recorded")
+
+			expect(document.unresolved).toContain(
+				"This package's model card attributes only the OpenStreetMap data behind @mailwoman/neural-weights-graph's graph. It ships 1 artifacts and no model graph, so its own inputs are unattributed here."
+			)
+		} finally {
+			await tree.dispose()
+		}
+	})
+
 	it("reports a base outside the set as unresolved rather than as an empty lineage", async () => {
 		const tree = await treeWith([
 			{
@@ -581,7 +624,8 @@ describe("the records this repository holds today", () => {
 		// installs only the overlay receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
-		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])
+		// The second entry is the OpenStreetMap credit the overlay owes through the base graph it decodes through.
+		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0", "ODbL-1.0"])
 		expect(gb?.attribution[0]?.text).toContain("pair-index-gb.bin")
 	})
 

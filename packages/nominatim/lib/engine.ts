@@ -9,6 +9,7 @@
  */
 
 import type { OpenCageAnnotations } from "@mailwoman/annotations"
+import type { CoordinateSource } from "@mailwoman/core/geocode"
 
 /**
  * Output serialization formats Nominatim supports.
@@ -54,6 +55,24 @@ export interface NominatimResult {
 	 * OpenCage-style enrichment block (timezone, coordinate formats, …), attached by the engine.
 	 */
 	annotations?: OpenCageAnnotations
+	/**
+	 * Mailwoman's extension to the upstream result, present when a register row supplied the coordinate.
+	 *
+	 * The key matches the `/status` extension block, and a Nominatim client ignores an unknown key.
+	 */
+	mailwoman?: NominatimResultExtension
+}
+
+/**
+ * The per-result `mailwoman` block.
+ */
+export interface NominatimResultExtension {
+	/**
+	 * The register row behind the coordinate, its provenance stamp verbatim.
+	 *
+	 * `openstreetmap:<cc>` names a row from an OpenStreetMap layer the operator built and attached.
+	 */
+	coordinate_source: CoordinateSource
 }
 
 /**

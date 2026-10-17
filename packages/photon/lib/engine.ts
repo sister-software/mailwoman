@@ -9,6 +9,8 @@
  *   `projection.ts`.
  */
 
+import type { CoordinateSource } from "@mailwoman/core/geocode"
+
 /**
  * Photon feature properties.
  *
@@ -33,7 +35,28 @@ export interface PhotonProperties {
 	country?: string
 	countrycode?: string
 	extent?: [number, number, number, number]
+	/**
+	 * Mailwoman's extension to upstream Photon, present when a register row supplied the coordinate.
+	 *
+	 * A Photon client reads named properties and passes over an unknown one.
+	 */
+	mailwoman?: PhotonPropertiesExtension
 	[key: string]: unknown
+}
+
+/**
+ * The per-feature `mailwoman` block.
+ */
+export interface PhotonPropertiesExtension {
+	/**
+	 * The register row behind the coordinate, its provenance stamp verbatim.
+	 */
+	coordinate_source: CoordinateSource
+	/**
+	 * The OpenStreetMap credit, present only when the row came from an OpenStreetMap layer
+	 * the operator attached, so a client that draws an attribution control can show it.
+	 */
+	attribution?: string
 }
 
 /**

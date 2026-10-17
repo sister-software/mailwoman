@@ -17,7 +17,6 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import {
-	type RegionDatabaseProvider,
 	type RegionDatabases,
 	type ResolveNodeTrace,
 	type Resolver,
@@ -33,8 +32,6 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
-import { assertLayerObligationsAccepted, parseObligationRefusals } from "#data/obligations"
-import { $public } from "#env"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -44,6 +41,7 @@ import {
 } from "#geocode/core"
 import { layerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
+import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
@@ -543,21 +541,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
 	}
 
-	let osmProvider: RegionDatabaseProvider | null = null
-
-	// `@mailwoman/osm` is an optional peer an operator installs to opt in to OpenStreetMap
-	// layers, so a missing package means no OSM layer.
-	// A refusal from `admit` is not caught: an extract on disk that the installation's
-	// refusal covers stops the session instead of making its country read as uncovered.
-	const osmModule = await import("@mailwoman/osm/region-database-provider").catch(() => null)
-
-	if (osmModule) {
-		const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
-
-		osmProvider = await osmModule.OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot), {
-			admit: refuse.length ? (manifest, path) => assertLayerObligationsAccepted(manifest, path, refuse) : undefined,
-		})
-	}
+	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
+	const osmProvider = await openOSMRegionDatabases(options.dataRoot)
 
 	const optionalProvidersLoadedAt = performance.now()
 

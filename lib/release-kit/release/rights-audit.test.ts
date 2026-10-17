@@ -17,7 +17,12 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { readAddressSourceRegister, type AddressSourceRegister } from "@mailwoman/corpus/source-register"
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { auditRights, packagesWithoutFrozenManifest, renderRightsAudit } from "#release-kit/release/rights-audit"
+import {
+	auditRights,
+	packagesMissingOpenStreetMapAttribution,
+	packagesWithoutFrozenManifest,
+	renderRightsAudit,
+} from "#release-kit/release/rights-audit"
 
 let audit: Awaited<ReturnType<typeof auditRights>>
 let register: AddressSourceRegister
@@ -114,6 +119,27 @@ describe("auditRights", () => {
 		}
 
 		expect(packagesWithoutFrozenManifest(altered)).toEqual(["@mailwoman/neural-weights-fr-fr"])
+	})
+
+	it("stops a release for a package with OpenStreetMap ancestry whose card omits the OpenStreetMap entry", () => {
+		// en-us trained on OpenStreetMap extracts and says so, and every overlay over it repeats the entry.
+		expect(packagesMissingOpenStreetMapAttribution(audit)).toEqual([])
+		expect(audit.unresolved.join("\n")).toMatch(/No model card records the checkpoint its model was initialized from/u)
+
+		const altered = {
+			...audit,
+			openStreetMap: audit.openStreetMap.map((row) =>
+				row.package === "@mailwoman/neural-weights-fr-fr" ? { ...row, declaresAttribution: false } : row
+			),
+		}
+
+		const refusals = packagesMissingOpenStreetMapAttribution(altered)
+
+		expect(refusals).toHaveLength(1)
+
+		expect(refusals[0]).toMatch(
+			/^@mailwoman\/neural-weights-fr-fr: it decodes through @mailwoman\/neural-weights-en-us, and its effective training manifest records .*osm-ru/u
+		)
 	})
 
 	it("counts every register source and names each of the four blockers", () => {

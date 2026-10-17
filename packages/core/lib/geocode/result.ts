@@ -166,6 +166,43 @@ export const RooftopSchema = z.object({ localityNorm: z.string().nullable(), pos
 export type Rooftop = z.infer<typeof RooftopSchema>
 
 /**
+ * The register row that supplied an `address_point` or `interpolated` coordinate,
+ * as the row itself records it.
+ */
+export const CoordinateSourceSchema = z
+	.object({
+		/**
+		 * The row's provenance stamp, verbatim: `openstreetmap:nz` for a row an operator built
+		 * from an OpenStreetMap extract, `overture:NAD` for an Overture row, and so on.
+		 */
+		source: z.string(),
+		/**
+		 * The data release the row came from, as the row records it, or null when the resolved
+		 * tree carries none, as a tree a client sent to `/v1/resolve` may not.
+		 */
+		release: z.string().nullable(),
+	})
+	.meta({ id: "CoordinateSource", description: "The register row that supplied the coordinate." })
+
+export type CoordinateSource = z.infer<typeof CoordinateSourceSchema>
+
+/**
+ * The service-level credit the OpenStreetMap Foundation's Geocoding Guideline asks
+ * of a public geocoder that serves OpenStreetMap data.
+ */
+export const OPENSTREETMAP_CREDIT = "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright"
+
+/**
+ * Whether a row's provenance stamp names an OpenStreetMap-derived row.
+ *
+ * `@mailwoman/osm` stamps every row it builds `openstreetmap:<cc>`, and a row the
+ * street-recovery pass placed `openstreetmap:<cc>#recovered`, so the prefix decides.
+ */
+export function isOpenStreetMapSource(source: string | null | undefined): boolean {
+	return typeof source === "string" && source.startsWith("openstreetmap:")
+}
+
+/**
  * The poi.db entity that supplied a `venue`-tier coordinate.
  */
 export const GeocodeEntitySchema = z.object({
@@ -235,6 +272,15 @@ export const GeocodeResultSchema = z
 		 * Consumers may display them but must not filter on them.
 		 */
 		rooftop: RooftopSchema.nullable(),
+
+		/**
+		 * The register row that supplied the coordinate, with its provenance stamp and release.
+		 *
+		 * Set on the `address_point` and `interpolated` tiers, whose coordinate comes from one register row.
+		 * It is null on every other tier, including a coordinate a later pass moved to a venue
+		 * or a plus code, because that coordinate no longer comes from the row.
+		 */
+		coordinate_source: CoordinateSourceSchema.nullable(),
 
 		/**
 		 * The uncertainty radius in meters, or null when the tier reports none.
