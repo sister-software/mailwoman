@@ -93,6 +93,16 @@ export interface LayerManifestTable {
 	 * See `LayerManifest.sourceRecords` in `manifest.ts`.
 	 */
 	source_records?: string | null
+	/**
+	 * The URL the build's input file was downloaded from, or NULL when the build did not record it.
+	 * See `LayerManifest.sourceURL` in `manifest.ts`.
+	 */
+	source_url?: string | null
+	/**
+	 * The SHA-256 of the build's input file as lowercase hex, or NULL when the build did not record it.
+	 * See `LayerManifest.sourceSHA256` in `manifest.ts`.
+	 */
+	source_sha256?: string | null
 }
 
 /**
@@ -201,6 +211,10 @@ export async function createLayerManifestTable(db: layerschemahandle): Promise<v
 		// Those artifacts read NULL, and `readLayerManifest` returns `sourceRecords: null`.
 		// A build that counted records and found no publishers writes `{}`.
 		.addColumn("source_records", "text")
+		// Nullable for the same reason: artifacts built before these columns read NULL, which states
+		// that the input file was not recorded rather than that it had no URL or digest.
+		.addColumn("source_url", "text")
+		.addColumn("source_sha256", "text")
 		.execute()
 }
 

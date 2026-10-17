@@ -491,7 +491,7 @@ across versions of that license.
 
 ### The one workspace held for a rights reason had no enforced hold
 
-`packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
+`packages/osm` was held out of the release for its ODbL question. It is not `private`, and it
 declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
 `lib/release-kit/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
 missing workspace fails with its name. No step on the publish path read it. A run of
@@ -508,6 +508,13 @@ classification of rights-held entries that could drift out of date.
 **What this control does not do.** It refuses a workspace by name. It does not decide whether an
 artifact's inputs permit publication, and it does not read a provenance record, because no frozen
 training manifest exists to read.
+
+**Released as code.** `packages/osm` joined the release list once the operator decided, on 2026-10-17,
+that the builder publishes as code and each operator builds the ODbL database locally. Its
+`package.json` declares `mailwoman.codeOnly`, and `verifyTarball` refuses any tarball that declares it
+and ships a file with a data extension (`.pbf`, `.osm`, `.db`, `.sqlite`, `.geojson`, `.parquet`,
+`.jsonl`, `.csv` and the others `DATA_FILE_EXTENSIONS` lists). Both publish paths run that audit
+before they publish.
 
 ### A model upload states its training sources or it does not go out
 

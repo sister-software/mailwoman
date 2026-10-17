@@ -10,32 +10,47 @@ polygon's centroid). Interpolation is a separate tier conditioned on confidence,
 `addr:interpolation` ways — we never synthesize a house-number line from scattered points, because that
 produces confident wrong answers worse than the admin centroid.
 
-## The licensing boundary — read this first
+## The licensing boundary
 
-OpenStreetMap data is licensed under the **ODbL**. The ODbL is share-alike on a Derived Database. Mailwoman's
-core gazetteer is built from permissive sources (Who's On First, Overture, OpenAddresses, GeoNames) and we
-keep it that way. So the OSM precision tier is quarantined:
+OpenStreetMap data is published under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
+(ODbL). This package keeps the code and the data apart.
 
-- **This package is code, and code only.** It contains no OSM bytes. You can depend on it, read it, and
-  ship it under the same terms as the rest of Mailwoman.
-- **The ODbL obligation attaches to the built database.** Each `address-points-<cc>-<slug>.db` this package
-  produces is an OSM Derived Database. It is a separately-distributed, opt-in data artifact — you download
-  the countries you want, and you take the share-alike obligation only on those.
-- **The permissive core never touches an OSM byte.** OSM points are not folded into the WOF-keyed
-  gazetteer. They live in their own per-country databases beside it. The `source` on every OSM point is
-  `openstreetmap:<cc>`, so attribution and license are attributable per-row, and the resolver surfaces
-  "© OpenStreetMap contributors (ODbL)" on any result that resolved through one.
+- **The npm package is code.** It contains no OpenStreetMap data: no extract, database, GeoJSON or test
+  fixture. Its `package.json` declares `mailwoman.codeOnly`, and the release audit refuses to publish a
+  tarball that ships a data file. ODbL section 2.3(a) excludes the programs used to make or operate a
+  database from the license, so the code is under Mailwoman's terms (`AGPL-3.0-only OR LicenseRef-Commercial`).
+- **You build the database, and the ODbL applies to it.** Each `address-points-<cc>-<slug>.db` is an
+  OpenStreetMap Derivative Database built on your machine from a Geofabrik extract you download.
+  Mailwoman publishes no prebuilt OpenStreetMap database.
+- **Mailwoman's own gazetteer contains no OpenStreetMap data.** The OpenStreetMap points stay in their own
+  per-country databases beside the gazetteer. Every row records `source = openstreetmap:<cc>`, so a result
+  that resolved through one carries that source.
 
-### ⚠ Lawyer sign-off required
+### What a built database records and what it asks of you
 
-No OSM database ships to npm, R2, or the public demo until counsel has reviewed how ODbL share-alike applies
-to our distribution model (the opt-in-per-country database, the attribution surface, and whether serving a
-resolved coordinate from one constitutes a Produced Work or a Derived Database hand-off). The build and the
-local benchmark below are fine to run now. **Publication is blocked on that review.**
+The builder prints the license notice when it starts and when it finishes. The database's `layer_manifest`
+records `ODbL-1.0`, the credit `© OpenStreetMap contributors`, the Geofabrik URL and SHA-256 of the extract
+it read, the snapshot date, and the repository commit that built it.
 
-The full boundary doc (the per-source license matrix, the attribution requirements, and the counsel sign-off
-requirement) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
-section is the package-local summary.
+Using the database for your own lookups is internal use. When you publicly use it, or a database derived
+from it, the ODbL's terms apply to you as the party using it:
+
+- credit "© OpenStreetMap contributors" with a link to <https://www.openstreetmap.org/copyright> where the
+  data is shown, including on a public geocoding service built on it;
+- offer the derived database under ODbL (section 4.4), and offer recipients the database or a file that
+  reproduces your changes (section 4.6).
+
+The OpenStreetMap Foundation's [Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline)
+treats an individual geocoding result as an insubstantial extract, so storing a result beside your own
+records does not by itself place those records under ODbL. Systematically copying OpenStreetMap data into
+another database can.
+
+`mailwoman doctor` lists every `address-points-*.db` under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and
+credit its manifest records, and `mailwoman data bom` reports each one as its own component. To decline
+share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: the geocode session then refuses to start
+while an OpenStreetMap database is on disk, and its error repeats the database's recorded provenance.
+
+The customer-facing explanation is the [OpenStreetMap attribution page](https://mailwoman.ai/resources/osm/attribution).
 
 ## Build a per-country database
 
@@ -43,18 +58,29 @@ You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger`
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)
 aren't lost.
 
-```bash
-# 1. Pull a Geofabrik extract (per-country, or a sub-region to smoke a build):
-#    https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
-#    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/
+Install the package beside `mailwoman`, which loads it as an optional peer when it is present:
 
-# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-idf.db):
-node packages/osm/out/tools/build-rooftop-database.js \
-  --country fr --slug idf --release 260627 \
-  --created-at 2026-06-27T00:00:00.000Z \
-  --build-sha "$(git rev-parse HEAD)" \
-  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
+```bash
+npm install mailwoman @mailwoman/osm
+OSM="$(npm root)/@mailwoman/osm/out/tools"
+
+# 1. Download a Geofabrik extract. The tool dates the file name from the server's Last-Modified header and
+#    writes <file>.receipt.json beside it with the URL, the date and the SHA-256:
+node "$OSM/fetch/extract.js" --region australia-oceania/new-zealand
+#    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/new-zealand-260806.osm.pbf (+ .receipt.json)
+
+# 2. Build the database. The default slug is the country code, which is the file name the geocode
+#    session attaches (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-nz-nz.db):
+node "$OSM/build-rooftop-database.js" \
+  --country nz --release 260806 \
+  --created-at "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+  --build-sha "@mailwoman/osm@$(node -p 'require(process.argv[1]).version' "$(npm root)/@mailwoman/osm/package.json")" \
+  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/new-zealand-260806.osm.pbf
 ```
+
+From a checkout of this repository, run the same tools from `packages/osm/out/tools/` and pass
+`--build-sha "$(git rev-parse HEAD)"`. An extract downloaded by hand has no receipt, and the builder then
+requires `--source-url` with the address it came from.
 
 The build reports an **association gap**: the share of `addr:housenumber` points it had to skip because
 they have no `addr:street`. A point with no street is unqueryable, so we count it rather than guess. When

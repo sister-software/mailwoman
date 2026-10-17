@@ -14,6 +14,27 @@ import { collectExportTargets } from "#release-kit/pack/publish/exports"
 
 const GLOB_PATTERN = /[*?[\]{}]/
 
+/**
+ * File extensions that hold data rows rather than code: OpenStreetMap extracts
+ * and change files, the SQLite and GeoPackage databases the layer builders write,
+ * and the GeoJSON, Parquet, JSONL and CSV interchange formats.
+ */
+const DATA_FILE_EXTENSIONS = [
+	".pbf",
+	".osm",
+	".o5m",
+	".osc",
+	".db",
+	".sqlite",
+	".sqlite3",
+	".gpkg",
+	".geojson",
+	".geojsonl",
+	".parquet",
+	".jsonl",
+	".csv",
+] as const
+
 interface TarballContents {
 	manifest: {
 		name?: string
@@ -21,9 +42,27 @@ interface TarballContents {
 		exports?: unknown
 		imports?: unknown
 		bin?: unknown
+		/**
+		 * Repository-specific package metadata.
+		 *
+		 * `codeOnly: true` declares that the package distributes code and no data rows.
+		 * A package whose builders produce databases under a share-alike license declares it,
+		 * so the license of the data it builds stays with the operator who builds it
+		 * rather than travelling in the tarball.
+		 */
+		mailwoman?: { codeOnly?: boolean }
 	}
 
 	shipped: Set<string>
+}
+
+/**
+ * Returns the shipped entries whose extension marks them as data rows.
+ */
+export function collectDataFileEntries(shipped: Iterable<string>): string[] {
+	return [...shipped].filter((entry) =>
+		DATA_FILE_EXTENSIONS.some((extension) => entry.toLowerCase().endsWith(extension))
+	)
 }
 
 function normalizeEntry(entry: string): string {
@@ -191,6 +230,16 @@ export function verifyTarball(tarballPath: PathBuilderLike): TarballAudit {
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
 	const missingImports = collectMissingImportTargets(manifest.imports, shipped)
 	const missingBins = collectMissingBinTargets(manifest.bin, shipped)
+	const dataFiles = manifest.mailwoman?.codeOnly ? collectDataFileEntries(shipped) : []
+
+	if (dataFiles.length) {
+		throw new Error(
+			[
+				`verify-tarball: ${name} declares mailwoman.codeOnly and ships data files — refusing to publish:`,
+				...dataFiles.map((entry) => `  - ${entry}`),
+			].join("\n")
+		)
+	}
 
 	if (missingFiles.length || missingExports.length || missingImports.length || missingBins.length) {
 		const lines = [`verify-tarball: ${name} does not contain what its manifest promises — refusing to publish:`]

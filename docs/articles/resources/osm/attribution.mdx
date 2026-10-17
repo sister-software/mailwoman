@@ -75,7 +75,7 @@ Choosing to use OpenStreetMap data does not remove its license requirements, and
 
 ## How to inspect your sources
 
-For a generated OSM layer, look for its **data layer manifest**, which records source provenance and license information. Where supported by your installed release, `mailwoman data bom` reports the licenses of enabled data layers; `MAILWOMAN_DATA_LICENSES` can be used as an operator policy to restrict which data licenses are permitted.
+For a generated OSM layer, look for its **data layer manifest**, which records the license, the credit, the Geofabrik URL and SHA-256 of the extract it was built from, and the code revision that built it. `mailwoman doctor` lists each address-point database under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and credit its manifest records, and `mailwoman data bom` reports each one as its own component. To decline share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: `mailwoman data pull` then refuses share-alike bundles, and the geocode session refuses to start while an OpenStreetMap database is on disk, naming the database and its recorded provenance.
 
 Model rights files and model cards are separate from the retrieval-layer manifest. They report the training lineage and notices associated with that model's weights.
 

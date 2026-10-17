@@ -65,6 +65,22 @@ export interface LayerManifest {
 	 * A reader distinguishes that from a recorded zero and never reports the two the same way.
 	 */
 	sourceRecords: Readonly<Record<string, number>> | null
+	/**
+	 * The URL the build downloaded its input file from, such as a Geofabrik extract's address.
+	 *
+	 * `null` or absent means the build did not record it.
+	 * A build whose input has a share-alike license records it, because the license's database-access
+	 * terms are met by pointing a recipient at the exact input that produced the artifact.
+	 */
+	sourceURL?: string | null
+	/**
+	 * The SHA-256 of the build's input file as lowercase hex.
+	 *
+	 * `null` or absent means the build did not record it.
+	 * With {@link LayerManifest.sourceURL} it identifies the bytes the artifact was built from,
+	 * which the URL alone does not when the publisher replaces the file at the same address.
+	 */
+	sourceSHA256?: string | null
 }
 
 export interface CoverageCell {
@@ -195,6 +211,8 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 		createdAt: String(row.created_at),
 		sourceRecords:
 			row.source_records == null ? null : parseJSONStrict<Record<string, number>>(String(row.source_records)),
+		sourceURL: row.source_url == null ? null : String(row.source_url),
+		sourceSHA256: row.source_sha256 == null ? null : String(row.source_sha256),
 	}
 
 	assertManifestInvariants(manifest)
@@ -316,9 +334,18 @@ export function polygonLayerManifest(
 
 /**
  * Insert one validated manifest row.
+ *
+ * The input-file columns are written only when the manifest carries them.
+ * A row stamped into a `layer_manifest` table created before those columns existed then still inserts.
  */
 export async function writeLayerManifest(db: layerschemahandle, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
+
+	if (manifest.sourceSHA256 && !/^[0-9a-f]{64}$/.test(manifest.sourceSHA256)) {
+		throw new Error(
+			`layer manifest: sourceSHA256 must be 64 lowercase hex characters, got ${stringifyJSON(manifest.sourceSHA256)}`
+		)
+	}
 
 	await db
 		.insertInto("layer_manifest")
@@ -337,6 +364,8 @@ export async function writeLayerManifest(db: layerschemahandle, manifest: LayerM
 			spine_keys: stringifyJSON(manifest.spineKeys),
 			created_at: manifest.createdAt,
 			source_records: manifest.sourceRecords ? stringifyJSON(manifest.sourceRecords) : null,
+			...(manifest.sourceURL ? { source_url: manifest.sourceURL } : {}),
+			...(manifest.sourceSHA256 ? { source_sha256: manifest.sourceSHA256 } : {}),
 		})
 		.execute()
 }
@@ -370,6 +399,8 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		// NULL and a missing column both mean the build recorded no count.
 		// An empty object would make the build appear to have counted its publishers and found none.
 		sourceRecords: row.source_records ? parseJSONStrict<Record<string, number>>(row.source_records) : null,
+		sourceURL: row.source_url ?? null,
+		sourceSHA256: row.source_sha256 ?? null,
 	}
 
 	assertManifestInvariants(manifest)

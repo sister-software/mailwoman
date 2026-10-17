@@ -33,6 +33,8 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
+import { assertLayerObligationsAccepted, parseObligationRefusals } from "#data/obligations"
+import { $public } from "#env"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -543,11 +545,18 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	let osmProvider: RegionDatabaseProvider | null = null
 
-	try {
-		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
-		osmProvider = await OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))
-	} catch {
-		osmProvider = null
+	// `@mailwoman/osm` is an optional peer an operator installs to opt in to OpenStreetMap
+	// layers, so a missing package means no OSM layer.
+	// A refusal from `admit` is not caught: an extract on disk that the installation's
+	// refusal covers stops the session instead of making its country read as uncovered.
+	const osmModule = await import("@mailwoman/osm/region-database-provider").catch(() => null)
+
+	if (osmModule) {
+		const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
+
+		osmProvider = await osmModule.OSMRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot), {
+			admit: refuse.length ? (manifest, path) => assertLayerObligationsAccepted(manifest, path, refuse) : undefined,
+		})
 	}
 
 	const optionalProvidersLoadedAt = performance.now()

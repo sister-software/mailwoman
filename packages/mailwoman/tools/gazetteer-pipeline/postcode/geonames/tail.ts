@@ -313,7 +313,7 @@ const GB_LICENSE_NOTE =
 	'Licensed under the Open Government Licence v3.0 (nationalarchives.gov.uk/doc/open-government-licence/version/3/)." ' +
 	"UNRESOLVED: ~48,990 BT (Northern Ireland) rows plus IM/GY/JE lie outside Code-Point Open coverage with no " +
 	"documented provenance; ONS's OGL grant for postcode products excludes Northern Ireland data and commercial NI " +
-	"use requires a separate Land & Property Services license. Counsel sign-off pending, as with @mailwoman/osm."
+	"use requires a separate Land & Property Services license. Whether these rows may be published is undecided."
 
 interface DatabaseMetaInput {
 	now: Date

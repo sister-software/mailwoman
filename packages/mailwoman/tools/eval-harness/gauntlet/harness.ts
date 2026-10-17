@@ -556,8 +556,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// Load this module lazily, like the resolver module above.
-	// `@mailwoman/osm` is unpublished.
-	// A static import would break the published `mailwoman` CLI as well as this maintainer-run check.
+	// `@mailwoman/osm` is an optional peer of `mailwoman`.
+	// A static import would break the published CLI on an install without it.
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
 	const osmProvider = await OSMRegionDatabaseProvider.create(dataRootPath)
 	// The BAN national-register tier sits ahead of OSM in production, so without it the

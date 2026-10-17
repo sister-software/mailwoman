@@ -132,7 +132,9 @@ export async function generateSBOM(options: GenerateSBOMOptions): Promise<Genera
 	const pkgDir = tmp.path("mailwoman")
 	await movePath(tmp.path("package"), pkgDir)
 
-	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`), never part of the consumer closure.
+	// Strip devDependencies, which are never part of the consumer closure.
+	// `@mailwoman/osm` is also an optional peer. npm leaves an optional peer out of a default install.
+	// The SBOM therefore describes the install without it.
 	const manifestPath = pkgDir("package.json")
 	const manifest = await readPackageJSON(manifestPath)
 	delete manifest.devDependencies
