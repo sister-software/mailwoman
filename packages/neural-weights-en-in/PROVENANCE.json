@@ -15,6 +15,10 @@
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
+				"text": "OpenStreetMap contributors (ODbL-1.0): the `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` training extracts taken from the 2026-10-02 Geofabrik extracts (2,487,302 rows in corpus v0.7.1-osm-exposure), plus the `rendered-pk-register` and `rendered-bd-register` training extracts rendered from OSM tuples. The v7.2.0 epoch audit draws 103,322 of 1,000,000 rows from these sources. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0 and the effective training manifest packages/corpus/data/training-manifests/v0.7.2-address-systems.effective.json records what reached the trainer.",
+				"license_named": "ODbL-1.0"
+			},
+			{
 				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
 				"license_named": "OGL v3.0"
 			},
@@ -313,7 +317,7 @@
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 6 of 6 declared artifacts: pair-index-in.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
-		"This package's model card records no training attribution of its own. It ships 6 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
+		"This package's model card records no training attribution of its own. It ships 6 artifacts and no model graph, so its own inputs are unattributed here while the 11 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
 		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

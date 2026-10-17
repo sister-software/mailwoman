@@ -36,7 +36,7 @@ describe("auditRights", () => {
 	it("counts an entry stating no use apart from one stating a use that is not training", () => {
 		const enUS = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-en-us")
 
-		expect(enUS?.attributionEntries).toBe(10)
+		expect(enUS?.attributionEntries).toBe(11)
 		expect(enUS?.entriesNotTraining).toBe(4)
 		expect(enUS?.entriesStatingNoUse).toBe(1)
 

@@ -92,12 +92,17 @@
 		"format": "ONNX",
 		"outputs": [],
 		"text_emitting_output": false,
-		"summary": "Model graph unread: no file at /home/lab/Projects/actions-runner-3/_work/mailwoman/mailwoman/packages/neural-weights-en-us/model.onnx",
-		"unreadable": "no file at /home/lab/Projects/actions-runner-3/_work/mailwoman/mailwoman/packages/neural-weights-en-us/model.onnx"
+		"summary": "Model graph unread: no file at /home/lab/Projects/mailwoman/.claude/worktrees/osm-attribution/packages/neural-weights-en-us/model.onnx",
+		"unreadable": "no file at /home/lab/Projects/mailwoman/.claude/worktrees/osm-attribution/packages/neural-weights-en-us/model.onnx"
 	},
 	"training_attribution": {
 		"status": "recorded",
 		"entries": [
+			{
+				"text": "OpenStreetMap contributors (ODbL-1.0): the `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` training extracts taken from the 2026-10-02 Geofabrik extracts (2,487,302 rows in corpus v0.7.1-osm-exposure), plus the `rendered-pk-register` and `rendered-bd-register` training extracts rendered from OSM tuples. The v7.2.0 epoch audit draws 103,322 of 1,000,000 rows from these sources. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0 and the effective training manifest packages/corpus/data/training-manifests/v0.7.2-address-systems.effective.json records what reached the trainer.",
+				"license_named": "ODbL-1.0",
+				"uses": ["training"]
+			},
 			{
 				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
 				"license_named": "OGL v3.0",
@@ -152,7 +157,7 @@
 		"by_use": {
 			"evaluation": 4,
 			"tokenizer": 2,
-			"training": 5,
+			"training": 6,
 			"unstated": 1
 		}
 	},
@@ -831,8 +836,8 @@
 		"No digest is recorded for 9 of 13 declared artifacts: calibration.json, calibration-per-locale.json, postcode-us.bin, postcode-prefix-us.bin, pair-index-us.bin, fst-en-us.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
 		"One attribution entry names no license: OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
 		"One attribution entry names no license: See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
-		"4 of 10 attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0); OpenAddresses PL — GUGiK / PRG (public, BDOT-derived); OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source); OpenAddresses SI — GURS (CC-BY per OA source).",
-		"1 of 10 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
+		"4 of 11 attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0); OpenAddresses PL — GUGiK / PRG (public, BDOT-derived); OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source); OpenAddresses SI — GURS (CC-BY per OA source).",
+		"1 of 11 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
 		"effective_training_sources reads one epoch of corpus-python/src/mailwoman_train/configs/v7.2.0-address-systems-60k.yaml at seed 43. A training run draws a different sample per epoch, so the source set it names is what one audited epoch drew rather than the union over every epoch the model saw."
 	]
 }
