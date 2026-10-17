@@ -135,7 +135,18 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		["es", LOCALE_RECIPE],
 		["es-pedania", LOCALE_RECIPE, "The ES source run with `--district-as-locality`, under `--source-name`."],
 		["nz", LOCALE_RECIPE],
-		["gb", LOCALE_RECIPE],
+		[
+			"gb",
+			LOCALE_RECIPE,
+			"Rendered from HM Land Registry Price Paid Data address fields, which Royal Mail and Ordnance Survey " +
+				"license for non-commercial use only. No recipe writes it now; `rendered-gb-os-open` replaces it (#2635).",
+		],
+		[
+			"gb-os-open",
+			LOCALE_RECIPE,
+			"The GB part reads the `gb-os-open` adapter's canonical rows (OS OpenData, OGL v3.0). " +
+				"No corpus stores the retired spelling.",
+		],
 		["fr-order", "fr/recipes/order.ts"],
 		["fr-admin-split", "fr/recipes/admin-split.ts", "The département is derived from the record's own postcode."],
 		["fr-lieudit", "fr/recipes/lieudit.ts"],

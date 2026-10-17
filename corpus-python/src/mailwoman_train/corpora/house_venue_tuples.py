@@ -1,7 +1,7 @@
 """Assemble the house-venue tuples input from each country's own register.
 
 Every country reads a different source with a different schema — France a BAN extract, the United
-States one situs database per state, Great Britain a CSV derived from the Price Paid Data — and
+States one situs database per state, Great Britain the `gb-os-open` adapter's OS OpenData rows — and
 each renders its own surface conventions. Those live in `countries/<code>/tuples.py`. This module
 knows only the budget per country and the output file, so adding a country adds a module and a row
 in `SOURCES` without changing the existing sampler.
@@ -27,7 +27,9 @@ from ..countries.gb import tuples as gb_tuples
 from ..countries.us import tuples as us_tuples
 from ..paths import data_root_path
 
-OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
+#: v3 took its GB rows from HM Land Registry Price Paid Data, which is refused (#2635). v4 takes them from
+#: OS OpenData and stamps each GB tuple with `source: gb-os-open`, which the sub-venue recipe requires.
+OUT_PARTS = ("corpus", "intermediate", "house-venue-tuples-v4.jsonl")
 
 #: Street surfaces held out for the FR eval fixture. The training tuples must exclude them or the
 #: put the board's own surfaces in the corpus.

@@ -478,8 +478,8 @@ export interface RecipeOptions {
 	/**
 	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
 	 *
-	 * @defaultValue the house-venue v3 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`);
-	 * DE and ES read OpenAddresses directly.
+	 * @defaultValue the house-venue v4 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v4.jsonl`),
+	 * whose GB rows come from OS OpenData. DE and ES read OpenAddresses directly.
 	 */
 	subVenueTuples?: string
 	/**

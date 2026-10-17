@@ -33,6 +33,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { titleCaseGB } from "@mailwoman/codex/gb/place-name"
 import { outwardCode } from "@mailwoman/codex/gb/postcode"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
@@ -86,6 +87,17 @@ export const GB_OS_OPEN_PRODUCT_DIRECTORIES = {
 	openNames: "open-names",
 	openRoads: "open-roads",
 } as const
+
+/**
+ * The rows `mailwoman corpus run gb-os-open --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open` writes.
+ *
+ * The `locale` recipe's GB part and corpus-python's `countries/gb/tuples.py` read
+ * their Great Britain address skeletons from this file.
+ * The Python reader spells the same path parts.
+ */
+export function gbOSOpenCanonicalRowsPath(): PathBuilder {
+	return dataRootPath("corpus", "staging", GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_ADAPTER_ID, "canonical.jsonl")
+}
 
 /**
  * The bands the drawn house number comes from.

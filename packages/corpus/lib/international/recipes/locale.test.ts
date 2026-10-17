@@ -10,6 +10,7 @@
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
@@ -241,6 +242,55 @@ describe("readTuples (OA CSV parse)", () => {
 		expect(tuples).toEqual([
 			{ house_number: "13", street: "Keep St", locality: "Keepville", region: "R", postcode: "00000" },
 		])
+	})
+})
+
+describe("readTuples (adapter canonical rows)", () => {
+	const canonicalRow = (source: string, postcode: string, street = "Wellington Street"): string =>
+		stringifyJSON({
+			raw: `56 ${street}, Leeds ${postcode}`,
+			components: { house_number: "56", street, locality: "Leeds", postcode },
+			country: "GB",
+			source,
+			source_id: `${source}-${postcode}`,
+			license: "OGL-UK-3.0",
+		})
+
+	const write = async (lines: string[]): Promise<PathBuilder> => {
+		const file = fixtures.use(await temporaryDirectory("mw-locale-canonical-")).path("canonical.jsonl")
+
+		await writeLocalTextFile(lines.join("\n") + "\n", file)
+
+		return file
+	}
+
+	it("reads components and answers the region from the postcode", async () => {
+		const file = await write([canonicalRow("gb-os-open", "LS1 1BA"), canonicalRow("gb-os-open", "LS2 7HZ", "")])
+
+		const tuples = await readTuples(
+			{ canonicalRows: file, canonicalSource: "gb-os-open", regionOfPostcode: () => () => "England" },
+			() => 0
+		)
+
+		expect(tuples).toEqual([
+			{ house_number: "56", street: "Wellington Street", locality: "Leeds", region: "England", postcode: "LS1 1BA" },
+		])
+	})
+
+	it("refuses a row from another source, such as the Price Paid Data rows `rendered-gb` rendered", async () => {
+		const file = await write([canonicalRow("gb-os-open", "LS1 1BA"), canonicalRow("synth-gb", "LS2 7HZ")])
+
+		await expect(readTuples({ canonicalRows: file, canonicalSource: "gb-os-open" }, () => 0)).rejects.toThrow(
+			/source "synth-gb"/
+		)
+	})
+
+	it("throws on a missing file rather than reading an empty part", async () => {
+		const missing = fixtures.use(await temporaryDirectory("mw-locale-canonical-")).path("canonical.jsonl")
+
+		await expect(readTuples({ canonicalRows: missing, canonicalSource: "gb-os-open" }, () => 0)).rejects.toThrow(
+			/is absent/
+		)
 	})
 })
 

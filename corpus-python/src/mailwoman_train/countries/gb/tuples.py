@@ -1,46 +1,80 @@
-"""Great Britain: house-venue tuples derived from the Price Paid Data."""
+"""Great Britain: house-venue tuples from the `gb-os-open` adapter's OS OpenData rows.
+
+The adapter joins each Code-Point Open postcode to its nearest named OS Open Roads link and takes the
+street and locality from OS Open Names. All three products are under the Open Government Licence v3.0.
+The house number is one the adapter drew, because no open GB product publishes one.
+
+The tuples used to come from HM Land Registry Price Paid Data. Its address fields are Royal Mail and
+Ordnance Survey data licensed for personal or non-commercial use only (#2635), so this reader refuses
+any row whose source id and license are not the adapter's, and refuses any input that is not JSONL.
+"""
 
 from __future__ import annotations
 
-import csv
+import json
 import random
-import re
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 from ...paths import data_root_path
 
-TUPLES_CSV_PARTS = ("ppd", "2026-07-22", "gb-tuples.csv")
+#: The rows `mailwoman corpus run gb-os-open --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open` writes.
+#: `gbOSOpenCanonicalRowsPath` in `packages/corpus/lib/gb/adapters/os-open/adapter.ts` spells the same parts.
+CANONICAL_ROWS_PARTS = ("corpus", "staging", "gb-os-open", "gb-os-open", "canonical.jsonl")
 
-#: Plain or letter-suffixed house numbers (`9`, `45A`). Range generation belongs to the
-#: synthesizer, so a range in the source is skipped rather than passed through.
-NUMBER_PATTERN = re.compile(r"^\d+[A-Za-z]?$")
+#: The `source` and `license` every row must carry: the adapter's id and its OGL v3.0 SPDX id.
+SOURCE = "gb-os-open"
+LICENSE = "OGL-UK-3.0"
 
 
-def iter_tuples(count: int, rng: random.Random) -> Iterator[dict[str, Any]]:
-    """Reservoir-sample the derived CSV in one streaming pass.
+class RefusedGBTupleSource(ValueError):
+    """The input is not the `gb-os-open` adapter's rows, so it may carry Price Paid Data address fields."""
 
-    The file is 25.7M rows, so it is read once and never held in memory. The recipe copies `region`
-    because the recipe guard requires the field. The GB address tail omits it and uses
-    `locality postcode`.
+
+def iter_tuples(count: int, rng: random.Random, path: Path | None = None) -> Iterator[dict[str, Any]]:
+    """Reservoir-sample the adapter's rows in one streaming pass.
+
+    The GB layout prints no region, and the adapter writes none, so `region` is empty.
+
+    Raises:
+        RefusedGBTupleSource: when `path` is not a JSONL file, or a row's `source` or `license` is not the
+            adapter's. A missing file raises `FileNotFoundError` rather than yielding an empty sample.
     """
+    rows_path = path or data_root_path(*CANONICAL_ROWS_PARTS)
+    if rows_path.suffix != ".jsonl":
+        raise RefusedGBTupleSource(
+            f"{rows_path} is not a canonical.jsonl. GB tuples come only from the {SOURCE} adapter's rows; "
+            "the Price Paid Data CSV is refused (#2635)."
+        )
     reservoir: list[dict[str, Any]] = []
     seen = 0
-    with data_root_path(*TUPLES_CSV_PARTS).open(newline="", encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            number = (row.get("NUMBER") or "").strip()
-            street = (row.get("STREET") or "").strip()
-            locality = (row.get("CITY") or "").strip() or (row.get("DISTRICT") or "").strip()
-            postcode = (row.get("POSTCODE") or "").strip()
-            if not (number and street and locality and postcode) or not NUMBER_PATTERN.match(number):
+    with rows_path.open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("source") != SOURCE or row.get("license") != LICENSE:
+                raise RefusedGBTupleSource(
+                    f"{rows_path}:{line_number} has source {row.get('source')!r} and license "
+                    f"{row.get('license')!r}; GB tuples accept {SOURCE} rows under {LICENSE} only."
+                )
+            components = row.get("components") or {}
+            number = (components.get("house_number") or "").strip()
+            street = (components.get("street") or "").strip()
+            locality = (components.get("locality") or "").strip()
+            postcode = (components.get("postcode") or "").strip()
+            if not (number and street and locality and postcode):
                 continue
             tup = {
                 "locality": locality,
-                "region": (row.get("REGION") or "").strip(),
+                "region": "",
                 "postcode": postcode,
                 "country": "GB",
                 "street": street,
                 "houseNumber": number,
+                "source": SOURCE,
+                "sourceID": row.get("source_id"),
             }
             seen += 1
             if len(reservoir) < count:

@@ -405,7 +405,7 @@ export interface SubVenueLegStats {
 
 const LICENSE =
 	"Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names " +
-	"(CDLA-Permissive-2.0) over OpenAddresses / HM Land Registry Price Paid Data address skeletons"
+	"(CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons"
 
 const CORPUS_VERSION = "0.16.0"
 
@@ -766,7 +766,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
 		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
-		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
+		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v4.jsonl")
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
 		const context: EmitContext = {
