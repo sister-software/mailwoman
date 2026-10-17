@@ -61,5 +61,6 @@ reaches a corpus row through those bundles.
 
 The text does not say which of the 102 sources contributed to a given record. The page lists the
 sources for the dataset as a whole, and the per-record `src:geom` property records a geometry source
-and not a name source. This file elects none of these terms, and every license decision in `address-source-register.json`
-still reads `unchecked`.
+and not a name source. This file elects none of these terms. The decision for the Great Britain records the
+en-gb pair index reads is `unchecked-access-free-gb-who-s-on-first` in `license-decisions.json`, recorded on
+2026-10-17 from copies retrieved that day.

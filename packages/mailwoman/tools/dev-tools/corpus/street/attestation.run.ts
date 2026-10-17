@@ -11,9 +11,12 @@
  *   measures whether such an index would have answered the question before one is built: a street the
  *   register attests is separable from a venue name the register does not.
  *
- *   The registers read here are the ones the corpus adapters already read. GB comes from HM Land
- *   Registry Price Paid (`ppd/<date>/gb-tuples.csv`, columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`).
- *   Every other country comes from its Overture addresses extract. That extract keeps the locality in
+ *   The registers read here are the ones the corpus adapters already read. GB comes from the `gb-os-open`
+ *   adapter's canonical rows (Code-Point Open, OS Open Names and OS Open Roads, OGL v3.0). It read HM Land
+ *   Registry Price Paid Data until 2026-10-17, whose address fields Royal Mail and Ordnance Survey license
+ *   only for personal or non-commercial use (#2635). The OS rows' locality is OS Open Names' populated
+ *   place rather than a post town: every Great Portland Street row reads `City of Westminster`, so a London
+ *   row's with-locality count reads zero. Every other country comes from its Overture addresses extract. That extract keeps the locality in
  *   `address_levels` rather than in `postal_city`.
  *
  *   A row whose country has no register on disk is reported as unmeasured rather than as absent. The two
@@ -28,6 +31,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { gbOSOpenCanonicalRowsPath } from "@mailwoman/corpus/gb/adapters/os-open/adapter"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { Globerator } from "spliterator/node/fs"
@@ -108,14 +112,8 @@ if (!release) throw new Error(`No Overture address extract under ${overtureRoot}
 
 // The register path reaches SQL text, a log line and the JSON verdict.
 // Each of those three takes a string.
-// No caller derives a further path from it, so the walk yields it as a string.
-const gbRegisters: string[] = []
-
-for await (const entry of Globerator.from("*/gb-tuples.csv", { cwd: dataRootPath("ppd"), absolute: true })) {
-	gbRegisters.push(entry.toString())
-}
-
-const gbRegister = gbRegisters.toSorted().at(-1) ?? null
+const gbCanonicalRows = gbOSOpenCanonicalRowsPath()
+const gbRegister = (await pathExists(gbCanonicalRows)) ? gbCanonicalRows.toString() : null
 
 interface Verdict {
 	id: string
@@ -183,19 +181,19 @@ for (const seed of rows) {
 	const localityLiteral = locality ? `'${escapeSQLString(locality)}'` : null
 	let register: string | null = null
 	let source: string | null = null
-	let streetColumn = "street"
 	let localityExpression: string | null = null
 
-	// country-branch: GB streets are attested against a CSV register with its own columns,
+	// country-branch: GB streets are attested against the gb-os-open adapter's JSONL rows,
 	// every other country against the parquet corpus.
 	// A register table keyed by country would replace this.
 	if (country === "GB" && gbRegister) {
 		register = gbRegister
-		source = `read_csv('${escapeSQLString(gbRegister)}', header = true)`
-		streetColumn = "STREET"
-		// `CITY` is null on every row of this register.
-		// The locality sits in `DISTRICT`.
-		localityExpression = "DISTRICT"
+
+		source =
+			`(SELECT components.street AS street, components.locality AS locality ` +
+			`FROM read_json('${escapeSQLString(gbRegister)}', format = 'newline_delimited'))`
+
+		localityExpression = "locality"
 	} else {
 		const parquet = overtureRoot(release, `addresses-${country.toLowerCase()}.parquet`)
 
@@ -252,11 +250,11 @@ for (const seed of rows) {
 
 	const candidates = (
 		await db.runAndReadAll(
-			`SELECT "${streetColumn}" AS street, count(*) AS n,
+			`SELECT "street" AS street, count(*) AS n,
 			        ${localityClause ? `count(*) FILTER (WHERE ${localityClause})` : "0"} AS n_locality
 			 FROM ${source}
-			 WHERE "${streetColumn}" IS NOT NULL
-			   AND lower("${streetColumn}") LIKE '%${escapeSQLString(probe.toLowerCase())}%'
+			 WHERE "street" IS NOT NULL
+			   AND lower("street") LIKE '%${escapeSQLString(probe.toLowerCase())}%'
 			 GROUP BY 1`
 		)
 	).getRowObjectsJS() as Array<{ street: string; n: bigint | number; n_locality: bigint | number }>

@@ -232,7 +232,7 @@ describe("loadConformanceFixtures", () => {
 		const fixtures = await loadConformanceFixtures(EXAMPLE_SUITE)
 		const identity = fixtures.find((fixture) => fixture.id === "cnf-identity-01") as ConformanceFixture
 
-		expect(identity.rowRef).toBe("gb-golden.jsonl#1")
+		expect(identity.rowRef).toBe("gb-os-open-golden.jsonl#1")
 		expect(identity.context).toEqual({ caseCountry: "GB" })
 	})
 

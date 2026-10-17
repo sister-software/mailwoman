@@ -1,10 +1,17 @@
 // invariance mini-suite (#886 five-whys follow-up) — a standing, seconds-cheap metamorphic-invariance
 // fixture meant to run in every probe grade, not just the release Gauntlet. 23 base addresses (19
 // original + 4 Task-9 paired-punctuation rows, see below) across US/FR/DE/GB, drawn from the golden
-// boards (data/eval/golden/v0.1.2/dev/us.jsonl, gb-golden.jsonl, parity-corpus.jsonl deu-*/fra-*) and
+// boards (data/eval/golden/v0.1.2/dev/us.jsonl, parity-corpus.jsonl deu-*/fra-*) and
 // the Gauntlet's own metamorphic bases (mailwoman/eval-harness/gauntlet/cases/metamorphic.ts) for
 // realism, plus the two gauntlet-famous landmark cases named in the original task: the White House and
 // the Empire State Building. 23 rows × their applicable transforms = 156 pairs total (0 skipped).
+//
+// GB ROWS REPLACED 2026-10-17 (#2635): the GB rows had been drawn from gb-golden.jsonl, whose rows were
+// HM Land Registry Price Paid Data address fields, licensed by Royal Mail and Ordnance Survey only for
+// personal or non-commercial use. gb-macclesfield, gb-leicester, gb-milltimber, gb-swindon-no-postcode,
+// gb-aboyne-saint-prefix, gb-quoted-venue and gb-bracketed-designator now carry streets, localities and
+// postcodes from the gb-os-open adapter's rows (OS OpenData, OGL v3.0). The profiles below were measured
+// on the earlier GB rows and do not describe these.
 //
 // `transforms` lists the perturbation classes (mailwoman/eval-harness/invariance/transforms.ts) that
 // APPLY to that row. Six of the seven classes (comma-drop [when a comma is present], case-fold,
@@ -15,7 +22,7 @@
 // from `abbreviation-swap` for the same reason: Rue/Boulevard/Straße/Route are simply not in that table
 // — this is a scope decision (the swap table mirrors the spec's literal wording), not a coverage gap in
 // the invariance runner itself. GB rows carrying Drive/Close (not Ave/St/Rd) are excluded the same way.
-// Row 19 ("St Bedes Avenue…") is a deliberate edge case: "St" is the LEADING token there (a Saint-prefix,
+// Row 19 ("St Machar Avenue…") is a deliberate edge case: "St" is the LEADING token there (a Saint-prefix,
 // not a Street suffix) — transforms.ts's guard skips swapping it, but "Avenue" later in the string still
 // qualifies the row for the class.
 //
@@ -67,11 +74,11 @@
 {"id":"de-falkplatz","raw":"Am Falkpl. 5, 10437 Berlin","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"de-genter-strasse","raw":"Genter Straße 16a, Munich, Germany","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 {"id":"de-kaschk-bar","raw":"Kaschk Bar, Linienstraße 40 10119 Berlin","country":"DE","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
-{"id":"gb-macclesfield","raw":"41 Hightree Drive, Henbury, Macclesfield, SK11 9PD","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
-{"id":"gb-leicester","raw":"7 Carpenters Close, Glenfield, Leicester, LE3 8RS","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
-{"id":"gb-banbury","raw":"10 Station Road, Cropredy, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
-{"id":"gb-swindon-no-postcode","raw":"Masefield, Royal Wootton Bassett, Swindon","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
-{"id":"gb-stockton-saint-prefix","raw":"St Bedes Avenue, Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-macclesfield","raw":"44 Cornish Drive, Macclesfield, SK10 1HX","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-leicester","raw":"162 Lethbridge Close, Leicester, LE1 2EA","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-milltimber","raw":"48 Station Road, Milltimber, AB13 0DP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-swindon-no-postcode","raw":"Fairview, Swindon","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
+{"id":"gb-aboyne-saint-prefix","raw":"St Machar Avenue, Aboyne","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence"]}
 // ---------------------------------------------------------------------------------------------------------------
 // PAIRED-PUNCTUATION rows (Task 9 audit, `.superpowers/sdd/task-9-audit-report.md`) — quoted venue, parenthetical
 // aside, bracketed designator, and braces (the vocab byte-fallback class the audit's tokenizer fix targets). Every
@@ -79,7 +86,7 @@
 // six universal ones; `abbreviation-swap` is included wherever the row carries a bare street-suffix token per the
 // same narrow EN table (all four rows do — "St"/"Road" — none trip the Saint-prefix guard, verified directly
 // against `abbreviationSwap`).
-{"id":"gb-quoted-venue","raw":"\"The Grange\", Fishburn, Stockton-on-Tees","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-quoted-venue","raw":"\"The Grange\", Cornish Drive, Macclesfield","country":"GB","transforms":["comma-drop","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
 {"id":"gb-parenthetical-aside","raw":"12 High St (rear entrance), Leeds","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
-{"id":"gb-bracketed-designator","raw":"Unit 4 [Block B], 10 Station Road, Banbury, OX17 1PP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
+{"id":"gb-bracketed-designator","raw":"Unit 4 [Block B], 48 Station Road, Milltimber, AB13 0DP","country":"GB","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}
 {"id":"us-brace-suite","raw":"Suite {12B}, 200 Main St, Austin, TX 78701","country":"US","transforms":["comma-drop","abbreviation-swap","case-fold","lowercase","whitespace-jitter","trailing-punct","idempotence","wrap-in-quotes","add-parenthetical"]}

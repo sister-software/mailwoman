@@ -65,7 +65,8 @@ to uppercase with whitespace stripped.
 Per register, anchor off: postcode 106/106 · 106/106 · 106/106; `dependent_locality` 69/69 · 69/69 ·
 69/69. The outcome is uniform across registers. It is not a casing artifact.
 
-**The comma-stripped row is the cost, and it is one row.** `Goulbourne Road St Georges Telford TF2 9LE`
+**The comma-stripped row is the cost, and it is one row.** A Telford row (its street, quoted here until
+2026-10-17, was a Price Paid Data address field and was removed, #2635)
 loses `St Georges` to a clipped `St`, in all three registers. The other two misses (`Sonning Common`,
 `Woodlesford`) miss in both arms. Twenty-four exact postcodes for one comma-free dependent locality is
 the trade, taken deliberately. It is also the one number that contradicts the 2026-07-24 re-anchor note

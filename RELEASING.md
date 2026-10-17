@@ -556,7 +556,7 @@ curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, bot
 curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the conditional md5
 ```
 
-#### Pair-index binaries are VERSIONED (2026-08-05); the un-versioned path is FROZEN
+#### Pair-index binaries are VERSIONED; each rebuild gets a new generation
 
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies that the browser demo reads require a
 separate push. They reach the bucket only through `publish-demo-assets-to-r2.run.ts`, from a `--src` tree you
@@ -566,10 +566,10 @@ for the npm tarballs, and the docs runtime-assets plugin copies them into the Pa
 Stage them under a generation segment:
 
 ```
-<src>/pair-index/<generation>/pair-index-{gb,nz}.bin      # e.g. pair-index/2026-08-05/
+<src>/pair-index/<generation>/pair-index-{gb,nz,us}.bin      # e.g. pair-index/2026-10-17/
 ```
 
-- The generation is `PAIR_INDEX_VERSION` in `docs/src/shared/resources.tsx`. **Bump it in the same commit in
+- The generation is `PAIR_INDEX_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`. **Bump it in the same commit in
   which you stage a new generation**, the same way `ADMIN_GAZETTEER_VERSION` / `POI_LAYER_VERSION` /
   `NATIONAL_STREET_DATABASE_VERSION` work. The demo bundle holds the mutable pointer, and the binaries are
   immutable at a fresh URL.
@@ -579,9 +579,12 @@ Stage them under a generation segment:
   purge.
 - `publish-demo-assets-to-r2.run.ts` refuses a `--src` that puts a pair-index binary at the flat key, so the
   script enforces this rule.
-- The flat keys stay in place, frozen, and no new key is written to them. The demo HEAD-probes the versioned
-  path and falls back to the flat keys with a `console.warn` until the first release train stages a
-  generation. After that, delete `resolvePairIndexBaseURL`'s legacy branch (and `LEGACY_PAIR_INDEX_BASE_URL`).
+- Never upload over an existing generation either. On 2026-10-08 new bytes went to the `2026-08-05` keys, and
+  Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation carries the Great Britain
+  index built without HM Land Registry Price Paid Data (#2635). On 2026-10-17 the `2026-08-05` GB object and the
+  flat `mailwoman/pair-index/pair-index-gb.bin` key, both built from Price Paid Data, were deleted from the
+  bucket. Deleting an object does not evict the cached copy, so a removal also needs a Cloudflare cache purge of
+  each URL, which requires an API token with the Cache Purge permission.
 
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
 

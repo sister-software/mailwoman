@@ -126,8 +126,9 @@ multi-locale resurrection, the actual reason these extracts were fed into this t
 | fr-lieudit-golden (checkpoint only)        |  80 | 0/80, 0/80                              | 2/80, **1/80 (1.25%)**                  |
 
 **GB recall is tied between checkpoints (67/69 both)** — the same two rows miss under both
-(`"Goulbourne Road, St Georges, Telford, TF2 9LE"` — word-boundary, wrong-value, and `"101
-Coniston Avenue, Knott End on Sea, Poulton-le-Fylde"` — pre-existing model-level miss). This is
+(a St Georges, Telford row — word-boundary, wrong-value, and a Knott End on Sea, Poulton-le-Fylde
+row — pre-existing model-level miss; the two addresses quoted here were Price Paid Data address fields
+and were removed on 2026-10-17, #2635). This is
 the arc's central structural finding: **the pair-index prior rather than the checkpoint's own
 resurrected classifier row, produces nearly all of GB's dependent_locality recall** — see the
 ablation table below. NZ shows **zero** decode-layer recovery at either checkpoint, despite being

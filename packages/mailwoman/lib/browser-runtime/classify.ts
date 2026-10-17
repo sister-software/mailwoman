@@ -75,11 +75,12 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
 	// GB dependent_locality.
-	// "Henbury" flips to dependent_locality via the en-gb pair-index prior.
+	// "East Acton" is a (child, London) pair in the en-gb pair index.
+	// The street and postcode come from OS OpenData under the Open Government Licence.
 	// The `country: "gb"` pin selects it even if the user edits away the postcode.
 	{
-		label: "Macclesfield (GB dependent_locality)",
-		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
+		label: "East Acton (GB dependent_locality)",
+		address: "55 Old Oak Common Lane, East Acton, London, W3 7BA",
 		country: "gb",
 	},
 	// NZ dependent_locality.

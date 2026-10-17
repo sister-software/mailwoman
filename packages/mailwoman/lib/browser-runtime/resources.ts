@@ -347,8 +347,9 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * Update it with each rebuild.
  *
  * The site pins this version because its bundled reader accepts only one schema version.
+ * The `2026-10-17` generation holds the Great Britain index built without HM Land Registry Price Paid Data.
  */
-export const PAIR_INDEX_VERSION = "2026-08-05"
+export const PAIR_INDEX_VERSION = "2026-10-17"
 
 /**
  * Returns the base URL of one pair-index version.
