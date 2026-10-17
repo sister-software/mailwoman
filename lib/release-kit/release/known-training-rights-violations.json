@@ -1,0 +1,433 @@
+{
+	"$comment": "Training-rights violations a release accepts. `mwops release rights-audit` measures every source a published graph package's effective training manifest drew rows from against `packages/corpus/data/corpus-source-inputs.json` and the address-source register, and fails on a violation this list does not record and on an entry here that no longer matches a measured violation. An entry is keyed by package, corpus version, source and the register sources lacking the permission, so a decision recorded later, a changed mapping or a retrained model each move the measurement and require the entry to be removed or rewritten. Removing an entry is how a retrained model clears it.",
+	"violations": [
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-ru",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-sub-venue",
+			"registerSources": [
+				"gb-geodata-aggregate-1",
+				"gb-property-building-1",
+				"us-geodata-aggregate-1",
+				"us-geodata-aggregate-3",
+				"us-geodata-aggregate-4",
+				"us-property-building-1"
+			],
+			"reason": "Rows built from HM Land Registry Price Paid Data address fields (gb-property-building-1), whose decision is refused; the model trained on them before the refusal was recorded. Every other register row listed reads unchecked. A model retrained on a corpus without the Price Paid Data rows clears this entry.",
+			"issue": 2635
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-si-bare-village",
+			"registerSources": ["si-property-building-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-cz-pcfirst-preposition-v21",
+			"registerSources": ["cz-property-building-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "invented-anchor-absorption",
+			"registerSources": ["us-geodata-aggregate-2", "us-public-administration-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "gnaf",
+			"registerSources": ["au-property-building-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-de",
+			"registerSources": ["us-geodata-aggregate-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "overture-latam",
+			"registerSources": ["us-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-gb",
+			"registerSources": ["gb-property-building-1", "gb-public-administration-3"],
+			"reason": "Rows built from HM Land Registry Price Paid Data address fields (gb-property-building-1), whose decision is refused; the model trained on them before the refusal was recorded. Every other register row listed reads unchecked. A model retrained on a corpus without the Price Paid Data rows clears this entry.",
+			"issue": 2635
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-pt",
+			"registerSources": ["pt-property-building-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-nl-postcode",
+			"registerSources": ["nl-property-building-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-hr",
+			"registerSources": ["hr-property-building-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "tiger",
+			"registerSources": ["us-public-administration-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "fragment-assay",
+			"registerSources": [
+				"us-geodata-aggregate-2",
+				"us-geodata-aggregate-3",
+				"us-property-building-1",
+				"us-public-administration-1"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "deepseek-kryptonite",
+			"registerSources": ["cn-generated-text-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-sg-register",
+			"registerSources": ["sg-property-building-1", "us-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-in",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-id",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "overture",
+			"registerSources": ["us-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "usgov-hrsa-fqhc",
+			"registerSources": ["us-health-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "usgov-nppes",
+			"registerSources": ["us-health-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-pk-register",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-pk",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "state-ny-notaries",
+			"registerSources": ["us-professional-licensing-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-country",
+			"registerSources": [
+				"it-property-building-1",
+				"nl-property-building-2",
+				"us-property-building-5",
+				"us-property-building-6",
+				"us-property-building-7",
+				"us-property-building-8"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "invented-house-venue",
+			"registerSources": [
+				"ch-geodata-aggregate-1",
+				"us-geodata-aggregate-1",
+				"us-geodata-aggregate-3",
+				"us-property-building-1"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-affix",
+			"registerSources": [
+				"it-property-building-1",
+				"nl-property-building-2",
+				"us-property-building-2",
+				"us-property-building-3",
+				"us-property-building-4",
+				"us-property-building-5",
+				"us-property-building-6",
+				"us-property-building-7",
+				"us-property-building-8"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "state-tx-notaries",
+			"registerSources": ["us-professional-licensing-3"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-vn",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-suffix-boundary",
+			"registerSources": [
+				"us-health-2",
+				"us-property-building-2",
+				"us-property-building-3",
+				"us-property-building-4",
+				"us-property-building-5",
+				"us-property-building-6",
+				"us-property-building-7",
+				"us-property-building-8"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-unit-v30",
+			"registerSources": [
+				"us-property-building-2",
+				"us-property-building-3",
+				"us-property-building-4",
+				"us-property-building-5",
+				"us-property-building-6",
+				"us-property-building-7",
+				"us-property-building-8"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "wof-admin",
+			"registerSources": ["us-geodata-aggregate-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-trailing-region-ca-bare",
+			"registerSources": ["us-geodata-aggregate-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "invented-po-box-cedex",
+			"registerSources": [
+				"ch-geodata-aggregate-1",
+				"us-property-building-2",
+				"us-property-building-3",
+				"us-property-building-4",
+				"us-property-building-5",
+				"us-property-building-6",
+				"us-property-building-7",
+				"us-property-building-8"
+			],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "wof-postalcode",
+			"registerSources": ["us-geodata-aggregate-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "usgov-nad",
+			"registerSources": ["us-property-building-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-trailing-region-es-v28",
+			"registerSources": ["us-geodata-aggregate-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "rendered-bd-register",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "invented-intersection",
+			"registerSources": ["us-property-building-6", "us-public-administration-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-ng",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "spliced-trailing-region-us",
+			"registerSources": ["ch-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "osm-bd",
+			"registerSources": ["gb-geodata-aggregate-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "codex-bare-postcode",
+			"registerSources": ["cz-property-building-2", "nl-property-building-2", "se-property-building-2"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "fr-annuaire-education-overseas",
+			"registerSources": ["fr-health-3"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "fr-finess-overseas",
+			"registerSources": ["fr-health-3"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		},
+		{
+			"package": "@mailwoman/neural-weights-en-us",
+			"corpusVersion": "v0.7.2-address-systems",
+			"source": "reviewed-postcode-tail",
+			"registerSources": ["ch-postal-1", "ve-public-administration-1"],
+			"reason": "Every register row listed reads unchecked: no reviewer has recorded a reading of its terms. The model trained on this source before the register was joined to corpus sources.",
+			"issue": 2643
+		}
+	]
+}

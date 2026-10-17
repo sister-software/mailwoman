@@ -13,6 +13,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { ParquetManifest } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
+import type { SourceRightsRecord } from "#source-register/corpus-inputs"
 import type { AdapterOptions, CorpusAdapter } from "#types"
 import type { LicensePolicy, LicenseRefusalKind } from "#utils/license"
 import type { SplitManifest } from "#utils/split"
@@ -142,6 +143,16 @@ export interface BuildCorpusOptions {
 	 * @defaultValue {@linkcode BuildProfile.Exploratory}
 	 */
 	profile?: BuildProfile
+
+	/**
+	 * Why a local experiment admits sources whose register rows lack an elected
+	 * decision permitting `transform` and `train`.
+	 *
+	 * Without it the build refuses such a source before any adapter runs.
+	 * With it the build logs every gap and records the corpus as not shippable
+	 * in {@linkcode BuildCorpusManifest.source_rights}.
+	 */
+	unshippableReason?: string
 }
 
 /**
@@ -231,4 +242,9 @@ export interface BuildCorpusManifest {
 	 * That file is the frozen record of which sources contributed and under which terms.
 	 */
 	training_manifest_digest: string
+	/**
+	 * Whether every source this build emitted reads only register sources whose decisions permit
+	 * `transform` and `train`, and the gaps an `unshippableReason` admitted when they do not.
+	 */
+	source_rights: SourceRightsRecord
 }

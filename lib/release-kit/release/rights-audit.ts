@@ -26,6 +26,12 @@ import {
 	type EffectiveTrainingManifest,
 	type TrainingManifest,
 } from "@mailwoman/corpus/source-register"
+import {
+	describeSourceRightsGap,
+	readCorpusSourceInputs,
+	sourceRightsGaps,
+	type SourceRightsGap,
+} from "@mailwoman/corpus/source-register/corpus-inputs"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -244,8 +250,74 @@ interface DataBOMAudit {
 	expressions: Array<{ expression: string; components: number }>
 }
 
+/**
+ * One source a graph package's effective training manifest drew rows from while a register
+ * row it reads lacks an elected decision permitting `transform` and `train`.
+ */
+interface TrainingRightsViolation {
+	package: string
+	corpusVersion: string
+	source: string
+	/**
+	 * The register sources lacking the permission, sorted, or `["unmapped"]` for
+	 * a source the table does not map.
+	 */
+	registerSources: string[]
+	gaps: SourceRightsGap[]
+}
+
+/**
+ * A violation a release accepts because it is recorded, with why and the issue tracking its removal.
+ */
+export interface KnownTrainingRightsViolation {
+	package: string
+	corpusVersion: string
+	source: string
+	registerSources: string[]
+	reason: string
+	issue: number
+}
+
+/**
+ * The committed list of accepted violations.
+ */
+interface KnownTrainingRightsViolationsFile {
+	violations: KnownTrainingRightsViolation[]
+}
+
+/**
+ * Where the accepted violations are recorded, relative to the repository root.
+ */
+export const KNOWN_TRAINING_RIGHTS_VIOLATIONS = "lib/release-kit/release/known-training-rights-violations.json"
+
+/**
+ * What the published models trained on that a register row does not permit.
+ */
+export interface TrainingRightsAudit {
+	/**
+	 * Every violation measured, recorded or not.
+	 */
+	violations: TrainingRightsViolation[]
+	/**
+	 * Violations the committed list does not record.
+	 * Each one stops a release.
+	 */
+	unrecorded: TrainingRightsViolation[]
+	/**
+	 * Recorded entries that match no measured violation.
+	 *
+	 * Each one stops a release until it is removed, which is how a retrained model clears an entry.
+	 */
+	stale: KnownTrainingRightsViolation[]
+	/**
+	 * Graph packages whose training sources could not be read, so no violation was measured for them.
+	 */
+	unread: string[]
+}
+
 export interface RightsAudit {
 	register: SourceRegisterAudit
+	trainingRights: TrainingRightsAudit
 	packages: PackageRightsAudit[]
 	training: TrainingRecordAudit[]
 	data: DataBOMAudit
@@ -511,6 +583,115 @@ async function auditTraining(
 }
 
 /**
+ * The key a measured violation and a recorded one share.
+ */
+function violationKey(entry: {
+	package: string
+	corpusVersion: string
+	source: string
+	registerSources: string[]
+}): string {
+	return [entry.package, entry.corpusVersion, entry.source, [...entry.registerSources].toSorted().join(",")].join("|")
+}
+
+/**
+ * Measures every graph package's effective training sources against the register and the
+ * corpus-source table, and compares the result with the committed list of accepted violations.
+ *
+ * A source is read against the inputs the table records for the corpus the package trained on, so a
+ * source whose producer changed inputs under the same id is judged by the rows that trained the model.
+ */
+export async function auditTrainingRights(
+	repoRoot: PathBuilderLike,
+	packages: readonly PackageRightsAudit[],
+	training: readonly TrainingRecordAudit[],
+	known: readonly KnownTrainingRightsViolation[]
+): Promise<TrainingRightsAudit> {
+	const register = await readAddressSourceRegister()
+	const inputs = await readCorpusSourceInputs(register)
+
+	const graphPackages = new Set(
+		packages.filter((entry) => entry.versionSeries === VersionSeries.Model).map((entry) => entry.package)
+	)
+
+	const violations: TrainingRightsViolation[] = []
+	const unread: string[] = []
+
+	for (const row of training) {
+		if (!graphPackages.has(row.package) || !row.corpusNamed) continue
+
+		const effective = await readEffectiveManifest(repoRoot, row.corpusNamed)
+
+		if (!effective) {
+			unread.push(row.package)
+
+			continue
+		}
+
+		for (const source of effective.trainingSources) {
+			const gaps = sourceRightsGaps(source, inputs, register, row.corpusNamed)
+
+			if (!gaps.length) continue
+
+			violations.push({
+				package: row.package,
+				corpusVersion: row.corpusNamed,
+				source,
+				registerSources: [...new Set(gaps.map((gap) => gap.registerSource ?? "unmapped"))].toSorted(),
+				gaps,
+			})
+		}
+	}
+
+	const recorded = new Set(known.map(violationKey))
+	const measured = new Set(violations.map(violationKey))
+
+	return {
+		violations,
+		unrecorded: violations.filter((violation) => !recorded.has(violationKey(violation))),
+		stale: known.filter((entry) => !measured.has(violationKey(entry))),
+		unread,
+	}
+}
+
+/**
+ * Reads the committed list of accepted violations.
+ *
+ * @throws When the file is missing or does not parse, because reading it as empty would
+ * turn every accepted violation into a release failure reporting the wrong cause.
+ */
+export async function readKnownTrainingRightsViolations(
+	repoRoot: PathBuilderLike
+): Promise<KnownTrainingRightsViolation[]> {
+	const file = await readLocalJSONFile<KnownTrainingRightsViolationsFile>(
+		resolvePath(repoRoot, KNOWN_TRAINING_RIGHTS_VIOLATIONS)
+	)
+
+	return file.violations
+}
+
+/**
+ * One sentence per violation that stops a release: each unrecorded violation and each stale entry.
+ */
+export function trainingRightsRefusals(audit: RightsAudit): string[] {
+	return [
+		...audit.trainingRights.unrecorded.map(
+			(violation) =>
+				`${violation.package} trained under ${violation.corpusVersion} on ${violation.source}, which reads ` +
+				`${violation.registerSources.join(", ")} without an elected decision permitting transform and train, ` +
+				`and ${KNOWN_TRAINING_RIGHTS_VIOLATIONS} does not record it: ` +
+				violation.gaps.map(describeSourceRightsGap).join("; ")
+		),
+		...audit.trainingRights.stale.map(
+			(entry) =>
+				`${KNOWN_TRAINING_RIGHTS_VIOLATIONS} records ${entry.package} ${entry.corpusVersion} ${entry.source} ` +
+				`(${entry.registerSources.join(", ")}), and no published model's training sources hold that violation now. ` +
+				"Remove the entry."
+		),
+	]
+}
+
+/**
  * The graph packages whose model card records a corpus that has no frozen
  * training manifest in the repository.
  *
@@ -561,6 +742,14 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 	}
 
 	const training = await auditTraining(repoRoot, records)
+
+	const trainingRights = await auditTrainingRights(
+		repoRoot,
+		packages,
+		training,
+		await readKnownTrainingRightsViolations(repoRoot)
+	)
+
 	const data = await auditDataBOM(repoRoot)
 	const openStreetMap = await readOpenStreetMapAncestry(repoRoot, records)
 	const established: string[] = []
@@ -688,7 +877,22 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		}
 	}
 
-	return { register, packages, training, data, openStreetMap, established, unresolved }
+	const accepted = trainingRights.violations.length - trainingRights.unrecorded.length
+
+	established.push(
+		`${trainingRights.violations.length} training sources of published graph packages read a register row lacking an ` +
+			`elected decision permitting transform and train; ${accepted} of them are recorded in ` +
+			`${KNOWN_TRAINING_RIGHTS_VIOLATIONS}.`
+	)
+
+	for (const pkg of trainingRights.unread) {
+		unresolved.push(
+			`${pkg}'s card names a corpus with no effective training manifest, so its training sources were not checked ` +
+				"against the register."
+		)
+	}
+
+	return { register, trainingRights, packages, training, data, openStreetMap, established, unresolved }
 }
 
 /**
@@ -815,6 +1019,25 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 					`(${row.effective.emittedButUnrecordedRows} of ${row.effective.totalEmittedRows} rows)`
 			)
 		}
+	}
+
+	lines.push("", "Training sources lacking a transform and train permission:")
+
+	if (!audit.trainingRights.violations.length) {
+		lines.push("  none measured")
+	}
+
+	const unrecorded = new Set(audit.trainingRights.unrecorded)
+
+	for (const violation of audit.trainingRights.violations) {
+		lines.push(
+			`  ${unrecorded.has(violation) ? "UNRECORDED" : "recorded  "} ${violation.package} ${violation.corpusVersion} ` +
+				`${violation.source}: ${violation.gaps.map((gap) => `${gap.registerSource ?? "unmapped"} (${gap.state ?? "no decision"})`).join(", ")}`
+		)
+	}
+
+	for (const entry of audit.trainingRights.stale) {
+		lines.push(`  STALE      ${entry.package} ${entry.corpusVersion} ${entry.source}: remove the recorded entry`)
 	}
 
 	lines.push("", "OpenStreetMap ancestry:")

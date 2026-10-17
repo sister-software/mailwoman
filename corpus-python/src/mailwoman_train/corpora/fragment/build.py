@@ -31,6 +31,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from .rows import (
     COUNTRY_SURFACES,
     render,
@@ -77,6 +78,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--out-parquet", type=Path, required=True)
     ap.add_argument("--out-dev", type=Path, required=True)
     ap.add_argument("--per-locale-cap", type=int, default=PER_LOCALE_CAP)
+    add_unshippable_flag(ap)
     return ap.parse_args(argv)
 
 
@@ -355,6 +357,8 @@ def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: rand
 
 def main() -> None:
     args = parse_args()
+    rights = admit_sources([SOURCE], context="fragment-assay build", unshippable_reason=args.unshippable_reason)
+    write_rights_record(rights, args.out_parquet.parent)
     rng = random.Random(SEED)
     rows: list[dict[str, Any]] = []
 

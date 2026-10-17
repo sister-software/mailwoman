@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from ..source_rights import SourceRights, SourceRightsError, SourceRightsRecord, admit_sources
 from .schema import Config, CorpusReceiptConfig, DataConfig, LabelSupportConfig, ValidationCoverageConfig
 
 
@@ -194,6 +196,50 @@ def load_config(path: str | Path | None, *, strict: bool = True) -> Config:
         raise ValueError(f"expected top-level mapping in {p}")
     merge_into(cfg, data, strict=strict, _source=str(p))
     return cfg
+
+
+def admitted_sources(cfg: Config) -> list[str]:
+    """The corpus sources a training config admits: every positive `source_weights` or `source_reps` key.
+
+    A config without `source_weights` admits every source its corpus holds, and the config lists none of them.
+    It answers an empty list here. :func:`load_training_config` refuses such a config unless the run is marked
+    not shippable.
+    """
+    weighted = {source for source, weight in (cfg.data.source_weights or {}).items() if weight > 0}
+    reps = {source for source, value in (cfg.data.source_reps or {}).items() if value > 0}
+    return sorted(weighted | reps)
+
+
+def load_training_config(
+    path: str | Path | None, *, rights: SourceRights | None = None
+) -> tuple[Config, SourceRightsRecord]:
+    """Load a config a training run will use, refusing a source that lacks a transform and train permission.
+
+    Every admitted source must read only register rows whose decisions are elected and permit both operations
+    (`source_rights.py`). `data.unshippable_reason` in the config admits the rest for a local experiment and
+    the returned record reads not shippable. Tooling that reads a config without training on it keeps
+    :func:`load_config`.
+
+    :raises SourceRightsError: naming each source, register row and missing permission.
+    """
+    cfg = load_config(path)
+    reason = cfg.data.unshippable_reason
+    context = f"training config {Path(path).name if path else '<defaults>'}"
+    if cfg.data.source_weights is None:
+        if reason is None:
+            raise SourceRightsError.unenumerable(context)
+        print(
+            f"UNSHIPPABLE {context}: no source_weights, so the admitted sources were not checked (override: {reason})",
+            file=sys.stderr,
+        )
+        return cfg, SourceRightsRecord(
+            shippable=False,
+            unshippable_reason=reason,
+            sources_checked=[],
+            gaps=[],
+            unverified=["the corpus sources a config without source_weights admits"],
+        )
+    return cfg, admit_sources(admitted_sources(cfg), context=context, unshippable_reason=reason, rights=rights)
 
 
 def csv_log_path(cfg: Config) -> Path:

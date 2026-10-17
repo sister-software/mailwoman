@@ -99,6 +99,26 @@ refuses a config key that no adapter, recipe or retained overlay emits under eit
 assembled before 2026-09-26 stores the retired spelling, and the config that targets it keeps that
 spelling, because the loader reads the corpus rather than the table.
 
+## A new source joins the input table and the register before any build reads it
+
+`data/corpus-source-inputs.json` maps every corpus source id to the register sources whose text reaches its
+rows, with the `licenseID` each one points at. A derived or synthetic source lists every input, and a
+publication with no register row gets one in `data/source-additions.json` under an `unchecked` decision, so
+the gap shows in the register rather than hiding as an absence. Add both entries in the change that adds the
+adapter, recipe, carried overlay or Python builder, before any build reads the source. The
+`corpus-source-inputs` repository check reports an emitted source the table does not map.
+
+`buildCorpus`, `corpus overlay-manifest`, `corpus slice`, every Python corpus builder, the `train` command
+and the Modal launcher's local entry point refuse a source unless each register source it reads carries an
+elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
+source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,
+`data.unshippable_reason`) admits the source for a local experiment and records the output as not shippable
+in its `source_rights` or `SOURCE_RIGHTS.json` record; it never makes an output shippable. A source that keeps
+its id while its producer changes inputs records the earlier inputs under `history` with the corpora built
+from them, as `spliced-sub-venue` does for its Price Paid Data skeletons (#2635, #2643).
+
+Regenerating the register now also reads `data/source-additions.json`; see `data/PROVENANCE.md`.
+
 ## Shared implementations
 
 `lib/adapter.ts` owns `HOUSE_NUMBER_PREFIX` and `splitStreetLine(line)`, the house-number and street

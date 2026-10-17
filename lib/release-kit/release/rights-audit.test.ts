@@ -19,9 +19,12 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import {
 	auditRights,
+	auditTrainingRights,
 	packagesMissingOpenStreetMapAttribution,
 	packagesWithoutFrozenManifest,
+	readKnownTrainingRightsViolations,
 	renderRightsAudit,
+	trainingRightsRefusals,
 } from "#release-kit/release/rights-audit"
 
 let audit: Awaited<ReturnType<typeof auditRights>>
@@ -166,6 +169,46 @@ describe("auditRights", () => {
 		// the full count would mean a recorded resolution stopped being read.
 		// The assertions above leave each blocker's own count free, because every review moves it.
 		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(audit.register.sources)
+	})
+
+	it("passes the training-rights comparison only because every measured violation is recorded", () => {
+		expect(audit.trainingRights.unrecorded).toEqual([])
+		expect(audit.trainingRights.stale).toEqual([])
+		expect(trainingRightsRefusals(audit)).toEqual([])
+
+		// The published model trained on both Price Paid Data sources.
+		// Each is a recorded violation naming the refused register row, read against
+		// the corpus it trained on rather than today's inputs.
+		for (const source of ["rendered-gb", "spliced-sub-venue"]) {
+			const violation = audit.trainingRights.violations.find((entry) => entry.source === source)
+
+			expect(violation?.package).toBe("@mailwoman/neural-weights-en-us")
+			expect(violation?.registerSources, source).toContain("gb-property-building-1")
+		}
+	})
+
+	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {
+		const known = await readKnownTrainingRightsViolations(repoRootPath())
+		const withoutGB = known.filter((entry) => entry.source !== "rendered-gb")
+
+		const missing = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, withoutGB)
+
+		expect(missing.unrecorded.map((entry) => entry.source)).toEqual(["rendered-gb"])
+
+		expect(trainingRightsRefusals({ ...audit, trainingRights: missing })[0]).toMatch(
+			/neural-weights-en-us trained under v0\.7\.2-address-systems on rendered-gb, which reads gb-property-building-1/u
+		)
+
+		// A retrained model no longer holds a violation.
+		// Its entry is then stale and must be removed.
+		const retrained = { ...known[0]!, corpusVersion: "v0.7.7-no-ppd" }
+		const stale = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, [...known, retrained])
+
+		expect(stale.stale).toEqual([retrained])
+
+		expect(trainingRightsRefusals({ ...audit, trainingRights: stale })).toEqual([
+			expect.stringMatching(/no published model's training sources hold that violation now\. Remove the entry\./u),
+		])
 	})
 
 	it("renders a report that ends on what it leaves open", () => {

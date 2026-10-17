@@ -124,8 +124,21 @@ export const REGISTER_SECTORS = [
 	"environment-industry",
 	"finance",
 	"food-pharma",
+	/**
+	 * Text a language model generated, which a corpus source reads as rows.
+	 */
+	"generated-text",
+	/**
+	 * A gazetteer, map or address collection that compiles many publishers' data under its own
+	 * terms, such as OpenStreetMap, Overture Maps, Who's On First, GeoNames or OpenAddresses.
+	 */
+	"geodata-aggregate",
 	"health",
 	"mixed-regulatory",
+	/**
+	 * A postal operator's or postal union's publication, such as a postcode file or an addressing standard.
+	 */
+	"postal",
 	"procurement-grants",
 	"professional-licensing",
 	"property-building",
@@ -184,6 +197,13 @@ export const ResearchPass = {
 	 * It located each authority and did not read its terms.
 	 */
 	DecoderExposureSurvey: "2026-10-03-decoder-exposure",
+	/**
+	 * The mapping of each corpus source to the publications its rows are built from.
+	 *
+	 * It added a row for every publication a corpus source reads that no earlier pass recorded,
+	 * and it read no terms, so each such row's decision stays `unchecked`.
+	 */
+	CorpusInputMapping: "2026-10-17-corpus-input-mapping",
 } as const
 
 /**

@@ -112,6 +112,12 @@ export const spec = {
 			type: "string",
 			description: "Comma-separated license prefixes to refuse, e.g. ODbL,CC-BY-SA",
 		},
+		"unshippable-reason": {
+			type: "string",
+			description:
+				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
+				"local experiment. States why; the corpus manifest records it as not shippable",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -201,6 +207,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			profile: options.profile as BuildProfile,
 			licensePolicy: options.licensePolicy as LicensePolicy,
 			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
+			unshippableReason: options.unshippableReason,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
@@ -214,6 +221,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			unresolvedLicenseRows: m.admitted_unresolved_license_rows,
 			refusedByEligibility: m.excluded_by_eligibility,
 			ineligibleSources: Object.keys(m.ineligible_sources),
+			unshippableSources: [...new Set(m.source_rights.gaps.map((gap) => gap.source))],
 		}
 	})
 
@@ -241,6 +249,12 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 					<Text color="yellow">
 						profile {options.profile}: {done.refusedByEligibility} rows refused from {done.ineligibleSources.join(", ")}
 						. MANIFEST.json records each reason under `ineligible_sources`.
+					</Text>
+				) : null}
+				{done.unshippableSources.length ? (
+					<Text color="red">
+						NOT SHIPPABLE: --unshippable-reason admitted {done.unshippableSources.join(", ")}, whose register rows lack
+						a permission for transform and train. MANIFEST.json records each gap under `source_rights`.
 					</Text>
 				) : null}
 				<Text dimColor>{options.out}</Text>

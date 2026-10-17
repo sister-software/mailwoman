@@ -8,7 +8,7 @@ import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RecipeOptions } from "@mailwoman/corpus"
-import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
+import { createRecipeLineWriter, admittingRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
 import { Box, Text } from "ink"
 
 import {
@@ -65,6 +65,9 @@ export const spec = {
 		"negative-fraction": stringOption("confound-negative fraction"),
 		"venue-names": stringOption("venue, sub-venue: Overture place-names parquet"),
 		"venue-region-fraction": stringOption("venue: share of locality rows that also carry the region"),
+		"unshippable-reason": stringOption(
+			"Admit a source whose register rows lack a permission for transform and train, for a local experiment; the invocation record marks the output not shippable"
+		),
 	},
 } as const satisfies CommandSpec
 
@@ -141,7 +144,18 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 		const stagedPath = `${options.out}.partial`
 		const stream = openWriteStream(stagedPath, { encoding: "utf8" })
 
-		const write = createRecipeLineWriter(stream)
+		const { openSourceRightsAdmission } = await import("@mailwoman/corpus/source-register/corpus-inputs")
+
+		const rights = await openSourceRightsAdmission({
+			context: `recipe ${name}`,
+			unshippableReason: options.unshippableReason ?? null,
+		}).catch((error: unknown) => {
+			stream.destroy()
+
+			throw error
+		})
+
+		const write = admittingRecipeLineWriter(createRecipeLineWriter(stream), rights)
 
 		let stats: Awaited<ReturnType<typeof recipe.run>>
 
@@ -173,6 +187,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 				read: stats.read ?? null,
 				ranAt: new Date().toISOString(),
 				options: Object.fromEntries(Object.entries(opts).filter(([, value]) => value !== undefined)),
+				source_rights: rights.record(),
 			},
 			`${options.out}.invocation.json`
 		)

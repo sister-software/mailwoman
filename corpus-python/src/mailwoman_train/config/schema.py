@@ -41,6 +41,10 @@ class DataConfig:
 
     source_reps: dict[str, float] | None = None
 
+    # Why a local experiment trains on a source whose register rows lack an elected decision permitting
+    # transform and train. Setting it admits the source and marks the run not shippable (`source_rights.py`).
+    unshippable_reason: str | None = None
+
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
 
     required_validation_coverage: list[ValidationCoverageConfig] = field(default_factory=list)

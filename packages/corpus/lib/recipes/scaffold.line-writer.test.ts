@@ -13,7 +13,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import { createRecipeLineWriter } from "#recipes/scaffold"
+import { createRecipeLineWriter, admittingRecipeLineWriter } from "#recipes/scaffold"
+import { readAddressSourceRegister } from "#source-register"
+import { createSourceRightsAdmission, readCorpusSourceInputs } from "#source-register/corpus-inputs"
 
 /**
  * Records every chunk separately, so the test can tell one write of `"a\n"`
@@ -51,5 +53,38 @@ describe("createRecipeLineWriter", () => {
 		createRecipeLineWriter(sink)("")
 
 		expect(sink.chunks.join("")).toBe("\n")
+	})
+})
+
+describe("admittingRecipeLineWriter", () => {
+	it("writes a row whose source is permitted and refuses rendered-gb before its row reaches the sink", async () => {
+		const register = await readAddressSourceRegister()
+
+		const rights = createSourceRightsAdmission(register, await readCorpusSourceInputs(register), {
+			context: "recipe locale",
+		})
+
+		const sink = recordingSink()
+		const write = admittingRecipeLineWriter(createRecipeLineWriter(sink), rights)
+
+		write('{"source":"rendered-fr","raw":"1 rue de la Paix"}')
+
+		expect(() => write('{"source":"rendered-gb","raw":"1 High Street"}')).toThrow(
+			/rendered-gb reads register source gb-property-building-1/
+		)
+
+		expect(sink.chunks.join("")).toBe('{"source":"rendered-fr","raw":"1 rue de la Paix"}\n')
+	})
+
+	it("refuses a row carrying no source, since its rights cannot be read", async () => {
+		const register = await readAddressSourceRegister()
+
+		const rights = createSourceRightsAdmission(register, await readCorpusSourceInputs(register), {
+			context: "recipe x",
+		})
+
+		expect(() => admittingRecipeLineWriter(createRecipeLineWriter(recordingSink()), rights)('{"raw":"x"}')).toThrow(
+			/no string `source`/
+		)
 	})
 })
