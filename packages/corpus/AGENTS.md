@@ -113,11 +113,11 @@ and the Modal launcher's local entry point refuse a source unless each register 
 elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
 source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,
 `data.unshippable_reason`) admits the source for a local experiment and records the output as not shippable
-in its `source_rights` or `SOURCE_RIGHTS.json` record; it never makes an output shippable. A source that keeps
+in its `source_rights` or `SOURCE_RIGHTS.json` record. An output it admits is always marked not shippable. A source that keeps
 its id while its producer changes inputs records the earlier inputs under `history` with the corpora built
 from them, as `spliced-sub-venue` does for its Price Paid Data skeletons (#2635, #2643).
 
-Regenerating the register now also reads `data/source-additions.json`; see `data/PROVENANCE.md`.
+The register build also reads `data/source-additions.json`, as `data/PROVENANCE.md` records.
 
 ## Shared implementations
 
