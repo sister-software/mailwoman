@@ -233,14 +233,51 @@
 					"registerSource": "nl-property-building-2",
 					"license": "unchecked-corpus-input-nl-kadaster",
 					"reads": "postcodes from OpenAddresses nl/countrywide"
-				},
-				{
-					"registerSource": "se-property-building-2",
-					"license": "unchecked-corpus-input-se-se-property-building-2",
-					"reads": "postcodes from sixteen OpenAddresses se/municipality_of_* files"
 				}
 			],
-			"note": "The recipe stamps `register: codex`, and its postcodes are read from OpenAddresses files."
+			"note": "The recipe stamps `register: codex`, and its postcodes are read from OpenAddresses files.",
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape"
+					],
+					"because": "Built while the recipe also read Sweden's sixteen OpenAddresses se/municipality_of_* files, before they were dropped under the same source id because se-property-building-2 records no decision permitting training.",
+					"inputs": [
+						{
+							"registerSource": "cz-property-building-2",
+							"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+							"reads": "postcodes from OpenAddresses cz/countrywide"
+						},
+						{
+							"registerSource": "sk-property-building-1",
+							"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+							"reads": "postcodes from OpenAddresses sk/countrywide"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "postcodes from OpenAddresses nl/countrywide"
+						},
+						{
+							"registerSource": "se-property-building-2",
+							"license": "unchecked-corpus-input-se-se-property-building-2",
+							"reads": "postcodes from sixteen OpenAddresses se/municipality_of_* files"
+						}
+					]
+				}
+			]
 		},
 		"cordis": {
 			"inputs": [
@@ -542,9 +579,64 @@
 			"aliases": ["synth-fragment"],
 			"inputs": [
 				{
-					"registerSource": "us-geodata-aggregate-3",
-					"license": "unchecked-corpus-input-us-openaddresses",
-					"reads": "OpenAddresses CSVs for sixteen locales, files not recorded per row"
+					"registerSource": "au-property-building-1",
+					"license": "unchecked-corpus-input-au-geoscape-australia",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses au/countrywide.csv (G-NAF)"
+				},
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses cz/countrywide.csv (RÚIAN)"
+				},
+				{
+					"registerSource": "dk-property-building-1",
+					"license": "unchecked-access-free-dk-klimadatastyrelsen",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses dk/countrywide.csv (DAWA, served by the agency Klimadatastyrelsen succeeded)"
+				},
+				{
+					"registerSource": "es-property-building-1",
+					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses es/countrywide.csv (CartoCiudad)"
+				},
+				{
+					"registerSource": "hr-property-building-1",
+					"license": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses hr/countrywide.csv"
+				},
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses nl/countrywide.csv (BAG)"
+				},
+				{
+					"registerSource": "no-property-building-1",
+					"license": "unchecked-access-free-no-kartverket",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses no/countrywide.csv (Kartverket)"
+				},
+				{
+					"registerSource": "nz-property-building-1",
+					"license": "unchecked-corpus-input-nz-land-information-new-zealand",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses nz/countrywide.csv (LINZ)"
+				},
+				{
+					"registerSource": "pl-property-building-1",
+					"license": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii",
+					"reads": "streets, numbers, localities and postcodes from the sixteen OpenAddresses pl/<voivodeship>.csv files (PRG address points)"
+				},
+				{
+					"registerSource": "pt-property-building-1",
+					"license": "unchecked-corpus-input-pt-instituto-nacional-de-estat-stica",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses pt/countrywide.csv"
+				},
+				{
+					"registerSource": "si-property-building-1",
+					"license": "unchecked-corpus-input-si-geodetska-uprava-republike-slovenije",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses si/countrywide.csv"
+				},
+				{
+					"registerSource": "sk-property-building-1",
+					"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses sk/countrywide.csv"
 				},
 				{
 					"registerSource": "us-public-administration-1",
@@ -569,6 +661,51 @@
 			],
 			"authored": [
 				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
+			],
+			"note": "OA_FILES in corpus-python/src/mailwoman_train/corpora/fragment/sources.py lists each file the build reads with its publisher's register row.",
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built when the builder globbed every CSV under each of sixteen OpenAddresses locale directories, Austria, Switzerland, Finland and Sweden included, and recorded no file per row, before OA_FILES named each file and its publisher's register row under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "OpenAddresses CSVs for sixteen locales, files not recorded per row"
+						},
+						{
+							"registerSource": "us-public-administration-1",
+							"license": "unchecked-corpus-input-us-u-s-census-bureau",
+							"reads": "US street spans from the v0.5.0 corpus"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US street spans and NAD admin pairs from the v0.5.0 corpus"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-2",
+							"license": "unchecked-corpus-input-us-who-s-on-first",
+							"reads": "locality spans from the v0.5.0 corpus and the candidate-gazetteer famous localities"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French locality spans from the v0.5.0 corpus"
+						}
+					]
+				}
 			]
 		},
 		"fragment-fr": {
@@ -1485,19 +1622,43 @@
 		},
 		"reviewed-postcode-tail": {
 			"aliases": ["synth-reviewed-postcode-tail"],
-			"inputs": [
+			"inputs": [],
+			"authored": ["packages/corpus/data/reviewed-ve-postcode-tuples.json, the reviewed facts"],
+			"note": "The data file keeps a fact only when its citation reaches a register row permitting transform and train. It holds none, and the recipe refuses to run over an empty file.",
+			"history": [
 				{
-					"registerSource": "ch-postal-1",
-					"license": "unchecked-corpus-input-ch-universal-postal-union",
-					"reads": "three postal facts cited to the UPU addressing guide for Venezuela"
-				},
-				{
-					"registerSource": "ve-public-administration-1",
-					"license": "unchecked-corpus-input-ve-gobierno-del-estado-anzo-tegui",
-					"reads": "one postal fact cited to the Anzoátegui state government's contact page"
+					"corpora": [
+						"v0.28.0-reviewed-postcode-tail",
+						"v0.29.0-target-families",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape",
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built from four reviewed facts cited to the UPU addressing guide and the Anzoátegui state government's contact page, before the data file dropped every fact whose citation reaches no register row permitting training.",
+					"inputs": [
+						{
+							"registerSource": "ch-postal-1",
+							"license": "unchecked-corpus-input-ch-universal-postal-union",
+							"reads": "three postal facts cited to the UPU addressing guide for Venezuela"
+						},
+						{
+							"registerSource": "ve-public-administration-1",
+							"license": "unchecked-corpus-input-ve-gobierno-del-estado-anzo-tegui",
+							"reads": "one postal fact cited to the Anzoátegui state government's contact page"
+						}
+					]
 				}
-			],
-			"authored": ["packages/corpus/data/reviewed-ve-postcode-tuples.json, the reviewed facts"]
+			]
 		},
 		"ro-retea-scolara": {
 			"inputs": [

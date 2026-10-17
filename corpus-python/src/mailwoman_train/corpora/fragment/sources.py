@@ -16,22 +16,59 @@ import pyarrow.parquet as pq
 
 # locale dir -> (ISO country, BCP locale, trailing-number?)
 OA_LOCALES: dict[str, tuple[str, str, bool]] = {
-    "at": ("AT", "de-AT", True),
-    "ch": ("CH", "de-CH", True),
     "cz": ("CZ", "cs-CZ", True),
     "dk": ("DK", "da-DK", True),
     "es": ("ES", "es-ES", True),
-    "fi": ("FI", "fi-FI", True),
     "hr": ("HR", "hr-HR", True),
     "nl": ("NL", "nl-NL", True),
     "no": ("NO", "nb-NO", True),
     "pl": ("PL", "pl-PL", True),
     "pt": ("PT", "pt-PT", True),
-    "se": ("SE", "sv-SE", True),
     "si": ("SI", "sl-SI", True),
     "sk": ("SK", "sk-SK", True),
     "au": ("AU", "en-AU", False),
     "nz": ("NZ", "en-NZ", False),
+}
+
+#: The OpenAddresses files each locale reads, relative to `--oa-root`, in read order, each with the register row of
+#: the body that publishes it. `corpus-source-inputs.json` lists every one of these rows under `fragment-assay`, and
+#: each carries an elected decision permitting transform and train. A file whose publisher has no such row is left
+#: out rather than read: Austria's BEV files, Switzerland's BFS building register, Finland's 2021 DVV extract and
+#: Sweden's municipal files, the Australian state and council files, the New Zealand council files, and the two
+#: `countrywide-cityfilled.csv` files under `dk/` and `fi/`, whose CITY column was filled from an unrecorded source.
+OA_FILES: dict[str, tuple[tuple[str, str], ...]] = {
+    "au": (("au/countrywide.csv", "au-property-building-1"),),
+    "cz": (("cz/countrywide.csv", "cz-property-building-2"),),
+    "dk": (("dk/countrywide.csv", "dk-property-building-1"),),
+    "es": (("es/countrywide.csv", "es-property-building-1"),),
+    "hr": (("hr/countrywide.csv", "hr-property-building-1"),),
+    "nl": (("nl/countrywide.csv", "nl-property-building-2"),),
+    "no": (("no/countrywide.csv", "no-property-building-1"),),
+    "nz": (("nz/countrywide.csv", "nz-property-building-1"),),
+    "pl": tuple(
+        (f"pl/{voivodeship}.csv", "pl-property-building-1")
+        for voivodeship in (
+            "dolnoslaskie",
+            "kujawsko-pomorskie",
+            "lodzkie",
+            "lubelskie",
+            "lubuskie",
+            "malopolskie",
+            "mazowieckie",
+            "opolskie",
+            "podkarpackie",
+            "podlaskie",
+            "pomorskie",
+            "slaskie",
+            "swietokrzyskie",
+            "warminsko-mazurskie",
+            "wielkopolskie",
+            "zachodniopomorskie",
+        )
+    ),
+    "pt": (("pt/countrywide.csv", "pt-property-building-1"),),
+    "si": (("si/countrywide.csv", "si-property-building-1"),),
+    "sk": (("sk/countrywide.csv", "sk-property-building-1"),),
 }
 
 PER_LOCALE_CAP = 4000
@@ -64,10 +101,12 @@ def collect_oa_pairs(
     list[tuple[str, str, str]],
     list[tuple[str, str, str]],
 ]:
-    """Distinct (street, number) pairs and distinct CITY names from a locale's OA CSVs.
+    """Distinct (street, number) pairs and distinct CITY names from the OA CSVs `OA_FILES` lists for a locale.
 
     The city names feed bare-locality polarity rows, so a street-only fragment recipe does not teach
     "context-free name = street".
+
+    :raises FileNotFoundError: when a listed file is absent, so a missing file cannot read as a locale with no rows.
     """
     rng = random.Random(f"{SEED}:{locale_dir}")
     pairs: dict[str, str] = {}
@@ -76,7 +115,13 @@ def collect_oa_pairs(
     units: set[tuple[str, str, str]] = set()
     triples: set[tuple[str, str, str]] = set()
 
-    for csv_path in sorted(globlib.glob(str(oa_root / locale_dir / "**" / "*.csv"), recursive=True)):
+    csv_paths = [oa_root / relative for relative, _ in OA_FILES[locale_dir]]
+    absent = [str(path) for path in csv_paths if not path.is_file()]
+
+    if absent:
+        raise FileNotFoundError(f"OpenAddresses files listed for {locale_dir} are absent: {', '.join(absent)}")
+
+    for csv_path in csv_paths:
         with open(csv_path, newline="", encoding="utf-8", errors="replace") as fh:
             reader = csv.DictReader(fh)
             cols = {c.upper(): c for c in reader.fieldnames or []}

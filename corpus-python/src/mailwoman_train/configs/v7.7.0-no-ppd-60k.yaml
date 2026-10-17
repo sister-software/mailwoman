@@ -27,7 +27,14 @@
 #
 # 3. `train.output_dir` and `train.trackio_run_name` name the v770 run.
 #
-# Every other key is v7.2.0's, so the comparison against the published model isolates the source replacement.
+# 4. Two sources are declined at 0.0, because the loader refuses a corpus source the weights do not name.
+#    `state-tx-notaries` (v7.2.0's 1.5) reads us-professional-licensing-3, whose decision is unchecked: no Texas
+#    Secretary of State terms were found. `reviewed-postcode-tail` (v7.2.0's 0.05) reads four facts cited to the UPU
+#    addressing guide for Venezuela, whose grant names no adaptation, and to the Anzoátegui state government, whose
+#    decision is refused. The `ve-locality-postcode-region` receipt that required its rows is removed with it.
+#
+# Every other key is v7.2.0's, so the comparison against the published model measures the source replacement and
+# the two declined sources of point 4.
 #
 # Building the corpus, in order, from the repository root:
 #
@@ -96,7 +103,8 @@ data:
     }
   source_weights:
     invented-house-venue: 2.0
-    reviewed-postcode-tail: 0.05
+    # Declined: no reviewed fact's citation reaches a register row permitting training (header, point 4).
+    reviewed-postcode-tail: 0.0
     overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
@@ -105,7 +113,8 @@ data:
     usgov-nppes: 2.0
     usgov-hrsa-fqhc: 2.0
     usgov-nad: 1.0
-    state-tx-notaries: 1.5
+    # Declined: us-professional-licensing-3 reads unchecked because no terms were found (header, point 4).
+    state-tx-notaries: 0.0
     state-ny-notaries: 2.0
     state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
@@ -206,14 +215,6 @@ data:
       min_draws: 1000
       source: fragment-fr-bare-street-v22
       country: FR
-    - name: ve-locality-postcode-region
-      min_draws: 200
-      source: reviewed-postcode-tail
-      country: VE
-      component_sequence:
-        - locality
-        - postcode
-        - region
     - name: sg-registers
       min_draws: 1000
       source: rendered-sg-register
