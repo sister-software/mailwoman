@@ -15,7 +15,7 @@ import { assertTierMatchesLicense, LayerFreshnessPolicy, LayerTier, type LayerMa
 
 import { OSM_ADDRESS_H3_RESOLUTION } from "#address-point-schema"
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
-import type { ExtractProvenance } from "#sdk/extract-receipt"
+import type { ExtractProvenance } from "#sdk/extract/receipt"
 
 /**
  * The build facts {@link osmAddressPointLayerManifest} records.

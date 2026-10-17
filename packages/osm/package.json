@@ -33,7 +33,8 @@
 		"lib/**/*.ts",
 		"sdk/**/*.ts",
 		"tools/**/*.ts",
-		"!**/*.test.ts"
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"imports": {
