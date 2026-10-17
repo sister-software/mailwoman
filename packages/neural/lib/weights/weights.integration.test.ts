@@ -42,17 +42,20 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 const CLI_PATH = workspacePath("mailwoman", "out", "cli", "main.js")
 const haveCLI = await pathExists(CLI_PATH)
 
-const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
-const havePPDSource = await pathExists(PPD_SOURCE_CSV_PATH)
+/**
+ * The Who's On First admin database the en-gb linker reads for the GB pair index's borough pairs.
+ */
+const GB_PAIR_ADMIN_DB_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
+const haveGBPairSources = await pathExists(GB_PAIR_ADMIN_DB_PATH)
 
 const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 const haveNZSource = await pathExists(NZ_SOURCE_CSV_PATH)
 
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
-const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, TS21 3AB"
+const GB_DEPENDENT_LOCALITY_ADDRESS = "Wilmslow Road, Didsbury, Manchester, M20 2QZ"
 
-const GB_WIDE_MARGIN_ADDRESS = "Holland Fen Lincoln"
+const GB_WIDE_MARGIN_ADDRESS = "Headingley Leeds"
 
 function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: string): number {
 	const needle = word.slice(0, 4).toLowerCase()
@@ -204,7 +207,7 @@ describe("resolveWeights — package auto-resolve", () => {
 })
 
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (check)", () => {
-	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !haveGBPairSources)(
 		"en-gb: pairIndexPath resolves and the country-restricted default fires (WIRING — margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -214,7 +217,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("gb")
-			expect(resolver.probe("fishburn", "stocktonontees")?.tag).toBe("dependent_locality")
+			expect(resolver.probe("didsbury", "manchester")?.tag).toBe("dependent_locality")
 
 			const cls = await enGBClassifier()
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
@@ -225,7 +228,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !haveGBPairSources)(
 		"en-gb: the placetype-pair bias at the child token equals the artifact's calibrated delta (margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -246,7 +249,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			const bDepLocCol = biasedTrace.labels.indexOf("B-dependent_locality")
 			expect(bDepLocCol).toBeGreaterThanOrEqual(0)
 
-			const pieceIdx = findChildPieceIndex(biasedTrace.pieces, "Fish")
+			const pieceIdx = findChildPieceIndex(biasedTrace.pieces, "Di")
 			expect(pieceIdx).toBeGreaterThanOrEqual(0)
 
 			const delta = biasedTrace.emissions[pieceIdx]![bDepLocCol]! - unbiasedTrace.emissions[pieceIdx]![bDepLocCol]!
@@ -255,7 +258,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !haveGBPairSources)(
 		"en-gb: explicit `placetypePair: off` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -276,21 +279,21 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			})
 
 			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")
-			const pieceIdx = findChildPieceIndex(disabledTrace.pieces, "Fish")
+			const pieceIdx = findChildPieceIndex(disabledTrace.pieces, "Di")
 			expect(disabledTrace.emissions[pieceIdx]![bDepLocCol]).toBe(disabledTrace.logits[pieceIdx]![bDepLocCol])
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
+	test.skipIf(!haveModel || !haveCLI || !haveGBPairSources)(
+		"en-gb: a wide-margin real pair flips the decode — Headingley decodes as dependent_locality (the arc's ONE flip assertion)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
-			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
+			expect(resolver.probe("headingley", "leeds")?.tag).toBe("dependent_locality")
 
 			const cls = await enGBClassifier()
 
@@ -298,12 +301,12 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 				placetypePair: { index: resolver, probeMode: "window" },
 			})
 
-			expect(json.dependent_locality).toBe("Holland Fen")
+			expect(json.dependent_locality).toBe("Headingley")
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !haveGBPairSources)(
 		"en-gb: the transitionBeta=5 artifact carries its header interface; the comma-free fused-path row recovers in both legs (TRANSITION-BETA)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -313,20 +316,20 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)
-			expect(resolver.probe("upton", "bude")?.tag).toBe("dependent_locality")
+			expect(resolver.probe("roath", "cardiff")?.tag).toBe("dependent_locality")
 
 			const cls = await enGBClassifier()
-			const row = "12 Church Road Glenfield Leicester LE3 8DP"
+			const row = "12 Church Road Roath Cardiff CF24 3AA"
 
 			const betaLessView: PairIndexLike = { probe: (c, p) => resolver.probe(c, p), delta: resolver.delta }
 
 			const betaLessTrace = await cls.traceParse(row, { placetypePair: { index: betaLessView } })
 			expect(betaLessTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 			const betaLessJSON = await cls.parseJSON(row, { placetypePair: { index: betaLessView } })
-			expect(betaLessJSON.dependent_locality).toBe("Glenfield")
+			expect(betaLessJSON.dependent_locality).toBe("Roath")
 
 			const json = await cls.parseJSON(row)
-			expect(json.dependent_locality).toBe("Glenfield")
+			expect(json.dependent_locality).toBe("Roath")
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)

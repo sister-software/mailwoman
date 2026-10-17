@@ -38,10 +38,12 @@ from it).
 
 National address registers publish data in this form. So do census street files, open gazetteers, and
 collaborative address projects. Mailwoman's published attribution list includes several of them:
-France's Base Adresse Nationale, Great Britain's Price Paid Data, New Zealand data derived from LINZ,
-OpenAddresses extracts for several European countries, Overture's addresses theme, and Who's On First
-for administrative names. Every row records the license of its source, so the list serves as an
-attribution list and not only an inventory.
+France's Base Adresse Nationale, New Zealand data derived from LINZ, OpenAddresses extracts for
+several European countries, Overture's addresses theme, and Who's On First for administrative names.
+Every row records the license of its source, so the list serves as an attribution list and not only an
+inventory. One row records the absence of one: the published model trained on rows built from the
+address fields of Great Britain's Price Paid Data, which that dataset's open license excludes. Those
+rows are being removed from the corpus, and the next model trains without them.
 
 The **alignment** step turns a structured record into a training row, and it fails in several common
 cases. It takes the record's components, finds each one in the text line, and marks the

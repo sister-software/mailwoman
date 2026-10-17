@@ -9,21 +9,20 @@
  *
  *   One multilingual model serves en-us and en-gb. The en-gb overlay adds its own retrieval data.
  *   This overlay links the same pair as the base and checks it against en-us's
- *   `model-card.json` `files_md5`, since en-gb's own card has no `files_md5` block.
+ *   `model-card.json` `files_md5`, since en-gb's own `files_md5` names only its pair index.
  *
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation this
  *   overlay's card records under `requires.<channel>.lexicon`. The card claims its `requires`
  *   block matches the base card verbatim. The base model is trained with both channels.
  *   An overlay without them would run a GB parse with expected channels disabled.
  *
- *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV and WOF admin DB.
- *   The shared `buildPairIndexOverlay` also reads three checked-in pairs JSONL files. Its freshness guard
- *   compares artifact format and calibrated magnitudes. It also compares every source MD5. The build is sidecar-cached
- *   because the PPD CSV has about 25.6 million rows. `weights.test.ts` invokes this script
- *   on every `yarn test`. The shipped bundle's delta is 10.
+ *   `pair-index-gb.bin` is derived from the WOF admin DB's borough pairs and three checked-in pairs
+ *   JSONL files. It reads no tuple CSV: the HM Land Registry Price Paid Data it read until 2026-10-17
+ *   is refused by the license register, and `gazetteer pair-index` refuses a GB `--source`. The shared
+ *   `buildPairIndexOverlay` freshness guard compares artifact format, calibrated magnitudes and every
+ *   source MD5. `weights.test.ts` invokes this script on every `yarn test`. The shipped bundle's delta is 10.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
@@ -43,7 +42,6 @@ import {
  * Declared here rather than inline at the call site, because the freshness guard md5s the same
  * files the build reads and two lists that drift apart let the guard bless a stale artifact.
  */
-const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
 const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
@@ -59,8 +57,8 @@ const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jso
  */
 const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
 
-// The `sources` list is what the shared freshness guard md5s, in the order the build
-// records the entries (CSV, borough DB, pairs JSONLs).
+// The `sources` list is what the shared freshness guard md5s, in the order the
+// build records the entries (borough DB, pairs JSONLs).
 // A dev rebuild whose list drifts from the build's lets the guard bless a stale artifact.
 const softFeed = await committedSoftFeedLinks()
 
@@ -74,11 +72,8 @@ const overlay = await materializeDevOverlay({
 		delta: PAIR_INDEX_DELTA,
 		transitionBeta: PAIR_INDEX_TRANSITION_BETA,
 		parentDelta: PAIR_INDEX_PARENT_DELTA,
-		sources: [PPD_SOURCE_CSV, BOROUGH_DB, LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL],
-		inputs: [PPD_SOURCE_CSV],
+		sources: [BOROUGH_DB, LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL],
 		extraArgs: [
-			"--source",
-			PPD_SOURCE_CSV,
 			"--borough-db",
 			BOROUGH_DB,
 			"--pairs-jsonl",
