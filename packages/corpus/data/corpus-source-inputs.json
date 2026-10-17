@@ -899,22 +899,17 @@
 				{
 					"registerSource": "fr-property-building-1",
 					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
-					"reads": "French tuples of house-venue-v2"
+					"reads": "French tuples of house-venue-tuples-v5"
 				},
 				{
 					"registerSource": "us-property-building-1",
 					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
-					"reads": "US situs tuples of house-venue-v2, 68.2% NAD"
+					"reads": "US situs tuples of house-venue-tuples-v5, NAD rows only"
 				},
 				{
 					"registerSource": "us-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-us-overture-maps-foundation",
-					"reads": "US situs tuples of house-venue-v2, read through the Overture Addresses theme"
-				},
-				{
-					"registerSource": "us-geodata-aggregate-3",
-					"license": "unchecked-corpus-input-us-openaddresses",
-					"reads": "US situs tuples of house-venue-v2, 31.5% from county and state bodies through OpenAddresses"
+					"reads": "US situs tuples of house-venue-tuples-v5, NAD rows read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "ch-geodata-aggregate-1",
@@ -924,6 +919,67 @@
 			],
 			"authored": [
 				"PLAIN_VENUES, GB_VENUES, FALLBACK_STREETS and COUNTRY_SURFACES in packages/corpus/lib/synthesizers/house-venue.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd",
+						"v0.18.0-suffix-boundary-a",
+						"v0.18.1-suffix-boundary-b",
+						"v0.19.0-suffix-boundary-v2",
+						"v0.19.1-osm-exposure",
+						"v0.20.0-psc-frsurfaces",
+						"v0.21.0-psc-frsurfaces-v2",
+						"v0.22.0-psc-frsurfaces-v3",
+						"v0.23.0-admin-surfaces",
+						"v0.24.0-trailing-region-structured",
+						"v0.25.0-trailing-region-placement",
+						"v0.26.0-trailing-region-leftcontext",
+						"v0.27.0-house-venue-intl",
+						"v0.28.0-reviewed-postcode-tail",
+						"v0.29.0-target-families",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape"
+					],
+					"because": "Built over house-venue-v2, whose US situs tuples mixed NAD with county and state bodies collected by OpenAddresses, before house-venue-tuples-v5 kept only the NAD rows under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French tuples of house-venue-v2"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US situs tuples of house-venue-v2, 68.2% NAD"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "US situs tuples of house-venue-v2, read through the Overture Addresses theme"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "US situs tuples of house-venue-v2, 31.5% from county and state bodies through OpenAddresses"
+						},
+						{
+							"registerSource": "ch-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-ch-geonames",
+							"reads": "IN, PT and MX tuples of house-venue-intl-v27, likely from GeoNames"
+						}
+					]
+				}
 			]
 		},
 		"invented-house-venue-v063": {
@@ -1826,37 +1882,32 @@
 				{
 					"registerSource": "fr-property-building-1",
 					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
-					"reads": "French address skeletons of house-venue-tuples-v4"
+					"reads": "French address skeletons of house-venue-tuples-v5"
 				},
 				{
 					"registerSource": "us-property-building-1",
 					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
-					"reads": "US address skeletons of house-venue-tuples-v4, through the US situs databases"
+					"reads": "US address skeletons of house-venue-tuples-v5, the NAD rows of the US situs databases"
 				},
 				{
 					"registerSource": "us-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-us-overture-maps-foundation",
-					"reads": "US address skeletons of house-venue-tuples-v4, read through the Overture Addresses theme"
-				},
-				{
-					"registerSource": "us-geodata-aggregate-3",
-					"license": "unchecked-corpus-input-us-openaddresses",
-					"reads": "US address skeletons of house-venue-tuples-v4, through the county and state bodies OpenAddresses carries"
+					"reads": "US address skeletons of house-venue-tuples-v5, NAD rows read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "gb-public-administration-1",
 					"license": "unchecked-access-free-gb-gb-public-administration-1",
-					"reads": "GB postcodes of house-venue-tuples-v4, through the gb-os-open adapter"
+					"reads": "GB postcodes of house-venue-tuples-v5, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "gb-transport-1",
 					"license": "unchecked-access-free-gb-gb-transport-1",
-					"reads": "GB road joins of house-venue-tuples-v4, through the gb-os-open adapter"
+					"reads": "GB road joins of house-venue-tuples-v5, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "gb-public-administration-2",
 					"license": "unchecked-access-free-gb-gb-public-administration-2",
-					"reads": "GB streets and localities of house-venue-tuples-v4, through the gb-os-open adapter"
+					"reads": "GB streets and localities of house-venue-tuples-v5, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "de-property-building-1",
@@ -1876,6 +1927,77 @@
 			],
 			"authored": ["BOARD_RESERVED_SURFACES and the lexicon's modifier and seed entries"],
 			"history": [
+				{
+					"corpora": ["v0.7.7-no-ppd"],
+					"because": "Holds v0.7.2's non-GB rows, whose US skeletons mixed NAD with county and state bodies collected by OpenAddresses, beside GB rows rendered over house-venue-tuples-v4, before house-venue-tuples-v5 kept only the NAD rows under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "gb-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+							"reads": "venue and sub-venue names from Geofabrik GB, FR, DE and ES extracts, and lexicon entries"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "venue names from place-names/names.parquet and lexicon entries from poi.db"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-4",
+							"license": "unchecked-corpus-input-us-wikimedia-foundation",
+							"reads": "lexicon entries in packages/corpus/data/sub-venue-lexicon.json"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French address skeletons of house-venue-tuples-v3, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the US situs databases, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "US address skeletons of house-venue-tuples-v3, read through the Overture Addresses theme"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the county and state bodies OpenAddresses carries"
+						},
+						{
+							"registerSource": "gb-public-administration-1",
+							"license": "unchecked-access-free-gb-gb-public-administration-1",
+							"reads": "GB postcodes of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "gb-transport-1",
+							"license": "unchecked-access-free-gb-gb-transport-1",
+							"reads": "GB road joins of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "gb-public-administration-2",
+							"license": "unchecked-access-free-gb-gb-public-administration-2",
+							"reads": "GB streets and localities of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "de-property-building-1",
+							"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
+							"reads": "OpenAddresses de/berlin context, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide context, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "es-property-building-1",
+							"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+							"reads": "OpenAddresses es/countrywide context, in the rows kept from v0.7.2"
+						}
+					]
+				},
 				{
 					"corpora": ["v0.7.2-address-systems"],
 					"because": "Built over house-venue-tuples-v3, whose GB skeletons were Price Paid Data tuples, before #2637 moved them to OS OpenData under the same source id.",

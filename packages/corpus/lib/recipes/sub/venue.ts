@@ -766,7 +766,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
 		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
-		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v4.jsonl")
+		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v5.jsonl")
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
 		const context: EmitContext = {
