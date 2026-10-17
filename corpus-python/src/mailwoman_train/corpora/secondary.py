@@ -37,6 +37,8 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ..source_rights import add_unshippable_flag, admit_sources, write_rights_record
+
 SEED = 20260714
 
 # endregion
@@ -193,7 +195,13 @@ def main() -> None:
     ap.add_argument("--out-parquet", type=Path, required=True)
     ap.add_argument("--out-dev", type=Path, required=True)
     ap.add_argument("--cap", type=int, default=400, help="base-repeat factor (rows ≈ cap × 24)")
+    add_unshippable_flag(ap)
     args = ap.parse_args()
+
+    rights = admit_sources(
+        ["synthetic-secondary"], context="synthetic-secondary build", unshippable_reason=args.unshippable_reason
+    )
+    write_rights_record(rights, args.out_parquet.parent)
 
     rows = generate(args.cap)
     _self_check(rows)

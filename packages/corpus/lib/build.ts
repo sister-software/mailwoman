@@ -23,6 +23,7 @@ import { $public } from "#env"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
+import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
 import { freezeTrainingManifest } from "#source-register/training-manifest"
 import type { LabeledRow } from "#types"
 import { LicensePolicy } from "#utils/license"
@@ -53,6 +54,21 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		"adapter-run",
 		`heap limit ${(heapLimit / 1024 / 1024 / 1024).toFixed(1)} GiB, ${configured.length} adapters configured`
 	)
+
+	// An adapter stamps its own id into each row's `source`, so the configured
+	// adapters are the sources this build will emit.
+	// Checking them here refuses before hours of adapter work rather than after.
+	const rights = await openSourceRightsAdmission({
+		context: `corpus build ${opts.corpusVersion}`,
+		unshippableReason: opts.unshippableReason ?? null,
+		log: (line) => {
+			console.error(line)
+
+			opts.onProgress?.("adapter-run", line)
+		},
+	})
+
+	rights.admitAll(configured)
 
 	const outputDir = PathBuilder.from(opts.outputDir)
 	const intermediateDir = outputDir("intermediate")
@@ -90,6 +106,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		checkpointPath: intermediateDir("align-checkpoint.json"),
 		onProgress: opts.onProgress,
 	})
+
+	// A row's `source` can differ from its adapter's id, so every source the align phase
+	// admitted is checked again before any of its rows reach a split or a parquet file.
+	rights.admitAll(align.rowsBySource.keys())
 
 	opts.onProgress?.("split", `splitting ${align.aligned} aligned rows`)
 
@@ -182,6 +202,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		excluded_by_eligibility: align.excludedByEligibility,
 		ineligible_sources: Object.fromEntries(align.ineligibleSources),
 		training_manifest_digest: trainingManifest.contentDigest,
+		source_rights: rights.record(),
 	}
 
 	await writeLocalJSONFile(manifest, outputDir("MANIFEST.json"))

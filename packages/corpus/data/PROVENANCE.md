@@ -13,6 +13,7 @@ mailwoman corpus source-register \
   --sources        internal/research/global-functional-authority-corpora-v2.csv \
   --decisions      packages/corpus/data/license-decisions.json \
   --resolutions    packages/corpus/data/source-resolutions.json \
+  --additions      packages/corpus/data/source-additions.json \
   --register-version 0.1.0 \
   --authored-at    2026-09-18 \
   --source-version global-address-corpus-spec-v3
@@ -40,6 +41,19 @@ access labels and applies the recorded ones over that, so a decision survives a 
 first three as the placeholders `varies`, `country-specific` and the empty string on all 426 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
+
+`--additions` defaults to `source-additions.json` and holds 38 source rows in the research CSV's own columns,
+read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
+OpenStreetMap, Who's On First, TIGER/Line and the OpenAddresses files the recipes read. Each reads
+`CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision. They sit in this repository because
+`corpus-source-inputs.json`, the table that names them, sits here (#2643).
+
+## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
+
+Hand-maintained. Each corpus source id maps to the register `sourceID`s whose text reaches its rows and the
+`licenseID` each points at; `readCorpusSourceInputs` refuses an entry whose license disagrees with the
+register. It was first written on 2026-10-17 from a reading of each producer's code, with the OpenAddresses
+upstream publishers read from each OpenAddresses source record.
 
 The `oxfmt` pass is required. Committed JSON is oxfmt-clean, and `JSON.stringify` cannot
 reproduce that formatting. The generator is deterministic, so the artifact is reproducible from the same inputs.
@@ -72,6 +86,7 @@ concluding the publisher renamed itself.
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
 | `global-functional-authority-corpora-v2.csv`   | 2,426 | the 426 rows naming a national source. 2,000 are dropped               |
+| `source-additions.json`                        |    38 | all 38 rows, after the CSV's                                           |
 
 The 2,000 dropped rows have `origin = global_research_rail`. They are eight global discovery lookups the
 pass repeated once per jurisdiction. With the `iso2` and `jurisdiction` columns ignored, they collapse

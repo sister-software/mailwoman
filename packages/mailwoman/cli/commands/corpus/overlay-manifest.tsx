@@ -46,6 +46,12 @@ export const spec = {
 				"Split per parquet, comma-separated. Unset puts every file in train. val or test is accepted only for a file `corpus split-slice` wrote, whose name ends .val.parquet or .test.parquet.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
+		"unshippable-reason": {
+			type: "string",
+			description:
+				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
+				"local experiment. States why; the manifest records the corpus as not shippable",
+		},
 		"replace-source": {
 			type: "string",
 			description:
@@ -92,6 +98,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			})),
 			note: options.note,
 			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
+			unshippableReason: options.unshippableReason,
 		})
 
 		return "done"

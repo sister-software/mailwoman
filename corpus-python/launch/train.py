@@ -31,6 +31,23 @@ def _required_train_seconds(max_steps: int) -> int:
     return int(max_steps / MEASURED_STEPS_PER_SECOND * TIMEOUT_HEADROOM) + STARTUP_SHUTDOWN_OVERHEAD_SECONDS
 
 
+def check_source_rights(config_name: str) -> None:
+    """Refuse a config admitting a source whose register rows lack a transform and train permission.
+
+    This runs in the local entry point, before anything is billed, because the register and the corpus-source
+    table live in the repository checkout and the Modal volume holds only `corpus-python/src`. A config that
+    sets `data.unshippable_reason` passes, and the run writes `SOURCE_RIGHTS.json` marking it not shippable.
+    """
+    from mailwoman_train.config import load_training_config
+    from mailwoman_train.paths import package_path
+
+    _cfg, rights = load_training_config(package_path("configs", config_name))
+    if rights.shippable:
+        print(f"Source rights: {len(rights.sources_checked)} admitted sources permit transform and train")
+    else:
+        print(f"Source rights: NOT SHIPPABLE ({rights.unshippable_reason}); {len(rights.gaps)} gap(s) logged above")
+
+
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
@@ -251,6 +268,7 @@ def main(
     --trackio        Mirror metrics to a Hugging Face Space dashboard (Trackio)
     --trackio-space  HF Space id for the dashboard, e.g. sister-software/mailwoman-trackio
     """
+    check_source_rights(config)
     print(f"Preflighting corpus receipts for config={config}...")
     corpus_receipt_token = preflight_corpus_receipts.remote(config_name=config)
     print(f"Training with config={config}, resume={resume}, trackio={trackio}...")

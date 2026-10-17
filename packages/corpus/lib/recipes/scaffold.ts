@@ -11,12 +11,13 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
 import { stableSourceIDFromParts } from "#adapters/source-id"
+import type { SourceRightsAdmission } from "#source-register/corpus-inputs"
 import type { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
@@ -281,6 +282,29 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 	return (line) => {
 		sink.write(line)
 		sink.write("\n")
+	}
+}
+
+/**
+ * Wraps a recipe's writer so every line's `source` passes the source-rights check
+ * before the line is written.
+ *
+ * A recipe's `source` is its table default or whatever `--source-name` supplied,
+ * so the line itself is the only place the value is certain.
+ * The check caches each answer, so the cost after the first line of a source is one parse.
+ *
+ * @throws From the returned writer, when a line carries no string `source` or its source is refused.
+ */
+export function admittingRecipeLineWriter(write: WriteRecipeLine, rights: SourceRightsAdmission): WriteRecipeLine {
+	return (line) => {
+		const { source } = parseJSONStrict(line) as { source?: unknown }
+
+		if (typeof source !== "string") {
+			throw new TypeError(`a recipe wrote a row with no string \`source\`, so its rights cannot be checked: ${line}`)
+		}
+
+		rights.admit(source)
+		write(line)
 	}
 }
 

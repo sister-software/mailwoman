@@ -11,6 +11,7 @@
 import type { RepoCheck } from "#repo-health/check"
 import { bundleGraphCheck } from "#repo-health/checks/bundle-graph"
 import { cliFlagPropertiesCheck } from "#repo-health/checks/cli-flag-properties"
+import { corpusSourceInputsCheck } from "#repo-health/checks/corpus-source-inputs"
 import { countryBranchesCheck } from "#repo-health/checks/country-branches"
 import { dataProvenanceCheck } from "#repo-health/checks/data-provenance"
 import { debtCheck } from "#repo-health/checks/debt"
@@ -85,6 +86,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	stylesheetCheck,
 	runtimeFlagsCheck,
 	wireIdentifiersCheck,
+	corpusSourceInputsCheck,
 	stalePathLiteralsCheck,
 	countryBranchesCheck,
 	debtCheck,

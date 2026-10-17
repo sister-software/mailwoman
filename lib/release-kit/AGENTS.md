@@ -98,6 +98,17 @@ aligned rather than the rows its files hold. The effective manifest derived from
 attributions the audited epoch's sources owe, and `write-rights-files` prints them in each `LICENSE.md`;
 an overlay repeats its base's.
 
+The operation also reads every source a graph package's effective training manifest drew rows from against
+`packages/corpus/data/corpus-source-inputs.json` and the register, and fails on a source whose register rows
+lack an elected decision permitting `transform` and `train` unless
+`lib/release-kit/release/known-training-rights-violations.json` records it with its reason and issue. The
+published 10.1.0 model's 46 such sources are recorded there, `rendered-gb` and `spliced-sub-venue` under #2635
+for Price Paid Data and the rest under #2643 for unread terms. An entry no measured violation matches also
+fails, so a retrained model clears its entries by their removal, and a new violation needs a new entry
+stating why a release accepts it. A new corpus source joins the input table and the register before any build
+reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped source in a model trained after
+this rule.
+
 The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
 naming the licensor. This operation composes their inputs into one report. It does not replace them, and a release

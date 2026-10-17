@@ -91,6 +91,7 @@ const RESEARCH_PASS_BY_ORIGIN: Readonly<Record<string, ResearchPass>> = {
 	"2026-10-02_rights_review": ResearchPass.RightsReview,
 	"2026-10-17_rights_review": ResearchPass.RightsReview,
 	"2026-10-03_decoder_exposure": ResearchPass.DecoderExposureSurvey,
+	"2026-10-17_corpus_input_mapping": ResearchPass.CorpusInputMapping,
 }
 
 const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
@@ -169,6 +170,12 @@ const LICENSE_DECISIONS: ReadonlyArray<readonly [statement: string, licenseID: s
 		"Licensed/query",
 		"unchecked-access-licensed-or-query",
 		"An access label: licensed, or answerable per query. It states no terms.",
+	],
+	[
+		"CORPUS INPUT, TERMS UNREAD",
+		"unchecked-corpus-input",
+		"A corpus source reads this publication, and the row exists so that its terms show as unread rather than absent. " +
+			"No reviewer has recorded a reading of them.",
 	],
 ]
 
@@ -253,6 +260,15 @@ export interface BuildSourceRegisterOptions {
 	 * A path that does not exist is read as no resolutions recorded.
 	 */
 	resolutionsPath?: PathBuilderLike
+	/**
+	 * Source rows a later pass added in the research CSV's own columns, read after the CSV's rows.
+	 *
+	 * `source-additions.json` holds the publications a corpus source reads that no research pass recorded.
+	 * They sit in this repository because the corpus-source table that names them does,
+	 * and they are read as CSV rows so their ids and license scopes come from the same derivation.
+	 * A path that does not exist is read as no additions.
+	 */
+	additionsPath?: PathBuilderLike
 	version: string
 	/**
 	 * ISO 8601 calendar date the research pass was taken, `yyyy-MM-DD`.
@@ -436,8 +452,36 @@ function scopedLicenseID(
 	return licenseID
 }
 
+/**
+ * The shape of `source-additions.json`: rows in the research CSV's column names.
+ */
+interface SourceAdditionsFile {
+	rows?: ReadonlyArray<Readonly<Record<string, string>>>
+}
+
+/**
+ * The research CSV's rows followed by the recorded additions.
+ *
+ * An absent additions file contributes zero rows.
+ * A file that exists and cannot be parsed raises, because reading it as empty
+ * would drop rows without saying so.
+ */
+async function* researchRows(
+	sourcesPath: PathBuilderLike,
+	additionsPath: PathBuilderLike | undefined
+): AsyncGenerator<Readonly<Record<string, string | undefined>>> {
+	yield* readCSVRecords(sourcesPath)
+
+	if (!additionsPath || !(await pathExists(additionsPath))) return
+
+	const file = await readLocalJSONFile<SourceAdditionsFile>(additionsPath)
+
+	yield* file.rows ?? []
+}
+
 async function readSources(
 	sourcesPath: PathBuilderLike,
+	additionsPath: PathBuilderLike | undefined,
 	licenseByStatement: ReadonlyMap<string, string>,
 	fired: Set<string>,
 	scopes: Map<string, LicenseScope>
@@ -447,7 +491,7 @@ async function readSources(
 	let discoveryRailRowsDropped = 0
 	let row = 1
 
-	for await (const record of readCSVRecords(sourcesPath)) {
+	for await (const record of researchRows(sourcesPath, additionsPath)) {
 		row++
 
 		const origin = required(record["origin"], "origin", row)
@@ -734,6 +778,7 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 
 	const { sources: derived, discoveryRailRowsDropped } = await readSources(
 		options.sourcesPath,
+		options.additionsPath,
 		licenseByStatement,
 		fired,
 		scopes

@@ -129,7 +129,7 @@ const PYTHON_SOURCE = /^[A-Z_]*SOURCE\s*=\s*"([a-z0-9-]+)"/gm
  * This includes adapter ids and Python builders' `SOURCE` constants.
  * It also includes spellings from `RECIPE_SOURCES` and `CARRIED_SOURCES`.
  */
-async function declaredSourceNames(context: Parameters<RepoCheck["run"]>[0]): Promise<Set<string>> {
+export async function declaredSourceNames(context: Parameters<RepoCheck["run"]>[0]): Promise<Set<string>> {
 	const declared = new Set(knownOverlaySourceNames())
 	const adapters = await trackedSourcePaths(context, { globs: [ADAPTERS], existingOnly: true })
 	const builders = await trackedSourcePaths(context, { globs: [PYTHON_BUILDERS], existingOnly: true })

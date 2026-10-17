@@ -123,6 +123,9 @@ def reference_args(root: Path) -> argparse.Namespace:
         out_parquet=out / "part-fragment.parquet",
         out_dev=out / "fragment-dev.jsonl",
         per_locale_cap=4,
+        # fragment-assay reads register rows no decision permits. This test pins the build's rows and leaves rights to
+        # test_source_rights.py.
+        unshippable_reason="test fixture: fragment build parity",
     )
 
 
