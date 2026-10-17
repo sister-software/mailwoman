@@ -29,6 +29,16 @@ describe("summarizeLicense", () => {
 		expect(summary.obligations).toEqual([])
 	})
 
+	it("separates the two Datenlizenz Deutschland grants by their attribution term", () => {
+		const zero = summarizeLicense("DL-DE-ZERO-2.0")
+		const by = summarizeLicense("DL-DE-BY-2.0")
+
+		expect(zero.recognized).toBe(true)
+		expect(zero.obligations).toEqual([])
+		expect(by.recognized).toBe(true)
+		expect(by.obligations).toEqual([LicenseObligation.Attribution])
+	})
+
 	it("refuses to guess at NOASSERTION or a vendor-suffixed identifier", () => {
 		for (const expression of ["NOASSERTION", "PDDL-1.0-USGov-NRCS"]) {
 			const summary = summarizeLicense(expression)

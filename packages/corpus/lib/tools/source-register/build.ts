@@ -89,6 +89,7 @@ const RESEARCH_PASS_BY_ORIGIN: Readonly<Record<string, ResearchPass>> = {
 	"2026-09-30_rights_review": ResearchPass.RightsReview,
 	"2026-10-01_rights_review": ResearchPass.RightsReview,
 	"2026-10-02_rights_review": ResearchPass.RightsReview,
+	"2026-10-17_rights_review": ResearchPass.RightsReview,
 	"2026-10-03_decoder_exposure": ResearchPass.DecoderExposureSurvey,
 }
 
