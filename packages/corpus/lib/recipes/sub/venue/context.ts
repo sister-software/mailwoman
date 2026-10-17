@@ -23,16 +23,17 @@ import type { LocaleBaseTuple } from "#surfaces/locale"
  * so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback)
  * has exactly one implementation.
  *
- * The DE adapter reads two members from `europe.zip` instead of `oa-cache/de__*.zip`.
- * The cached per-state zips used by the `locale` recipe are absent on this host.
+ * The DE parts read the extracted `de/berlin.csv` and `de/sn/statewide.csv`.
+ * They are the `europe.zip` members the recipe read before that archive left the data root,
+ * with the md5s `9903d438…` and `623b099b…` that the note "a file's mtime is not
+ * its data's vintage" in `corpus/agents.md` records.
  *
- * The archive members match OA's current run byte for byte.
- * The note "a file's mtime is not its data's vintage" in `corpus/agents.md` records this comparison.
+ * A missing part throws in {@link readLocaleTuples}, so the DE leg cannot emit zero rows silently.
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
-		{ zip: dataRootPath("openaddresses", "europe.zip"), csv: "de/berlin.csv", region: "Berlin" },
-		{ zip: dataRootPath("openaddresses", "europe.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
+		{ path: dataRootPath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
+		{ path: dataRootPath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
 	],
 	ES: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 }

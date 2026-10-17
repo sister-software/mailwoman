@@ -341,7 +341,7 @@ async function readCanonicalTuples(
  * Streams tuples from one part and reservoir-samples them with Algorithm R,
  * using `rng` for reproducibility.
  *
- * A read failure logs a warning and returns an empty list.
+ * @throws When the part cannot be read, naming the file.
  */
 export async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
 	if (part.canonicalRows) return readCanonicalTuples(part, part.canonicalRows, rng)
@@ -473,9 +473,12 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			}
 		}
 	} catch (error) {
-		console.error(`  WARN: read failed for ${part.path ?? part.zip}: ${(error as Error).message}`)
-
-		return []
+		// An unreadable part throws rather than reading as an empty one.
+		// The sub-venue recipe's DE leg once emitted zero rows behind a warning
+		// when `europe.zip` left the data root.
+		throw new Error(`${(part.path ?? part.zip)?.toString()} could not be read: ${(error as Error).message}`, {
+			cause: error,
+		})
 	}
 
 	console.error(`  ${part.path ?? part.csv}: ${reservoir.length} sampled of ${seen} rows (${dropped} city-noise drops)`)
