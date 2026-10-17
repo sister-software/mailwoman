@@ -29,8 +29,7 @@
 #
 # Building the corpus, in order, from the repository root:
 #
-#   mailwoman corpus fetch gb-os-open      # OS Open Roads' archive names members `/data/`; unzip it by hand until the
-#                                          # extractor accepts a leading slash
+#   mailwoman corpus fetch gb-os-open
 #   mailwoman corpus run gb-os-open --input $MAILWOMAN_DATA_ROOT/corpus/sources/gb-os-open \
 #     --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open
 #   mailwoman corpus slice locale --country GB --count 800000 --seed 42 --out <dir>/rendered-gb-os-open.jsonl

@@ -10,8 +10,10 @@ import ADMZip from "adm-zip"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
+import { readLocalBuffer, readLocalTextFile } from "#fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
-import { listZipEntries, readZipEntry } from "#fs/zip"
+import { writeLocalFile } from "#fs/writers"
+import { extractZipEntries, listZipEntries, memberPath, readZipEntry } from "#fs/zip"
 import { mulberry32 } from "#random"
 
 /**
@@ -94,6 +96,78 @@ describe("readZipEntry", () => {
 		}
 
 		await expect(read()).rejects.toThrow(/absent\.txt/u)
+	})
+})
+
+/**
+ * Writes an archive whose member names begin with `/`, the shape of OS Open Roads' GML archive.
+ *
+ * adm-zip strips a leading slash when it writes.
+ * Each name is therefore written with a placeholder first byte, and the placeholder is
+ * then replaced in the local and central headers.
+ *
+ * The name length is unchanged, so every offset in the archive still holds.
+ */
+async function writeArchiveWithNames(path: PathBuilder, members: Record<string, string>): Promise<void> {
+	const zip = new ADMZip()
+
+	for (const [name, content] of Object.entries(members)) {
+		zip.addFile(name.replace(/^[/.]/u, "X"), Buffer.from(content))
+	}
+
+	let bytes = zip.toBuffer().toString("latin1")
+
+	for (const name of Object.keys(members)) {
+		bytes = bytes.replaceAll(name.replace(/^[/.]/u, "X"), name)
+	}
+
+	await writeLocalFile(Buffer.from(bytes, "latin1"), path)
+}
+
+describe("memberPath", () => {
+	it("removes leading slashes and turns backslashes into slashes", () => {
+		expect(memberPath("/data/OSOpenRoads_HP.gml")).toBe("data/OSOpenRoads_HP.gml")
+		expect(memberPath("//readme.txt")).toBe("readme.txt")
+		expect(memberPath("doc\\licence.txt")).toBe("doc/licence.txt")
+	})
+
+	it("refuses a name that would leave the extraction directory", () => {
+		expect(() => memberPath("../evil.txt")).toThrow(/\.\. segment/u)
+		expect(() => memberPath("/data/../../evil.txt")).toThrow(/\.\. segment/u)
+		expect(() => memberPath("C:/evil.txt")).toThrow(/names a drive/u)
+	})
+})
+
+describe("extractZipEntries", () => {
+	it("extracts members named from the archive root, as OS Open Roads names them", async () => {
+		const archive = directory.path("rooted.zip")
+		const destination = directory.path("rooted")
+
+		await writeArchiveWithNames(archive, {
+			"/readme.txt": "readme",
+			"/doc/licence.txt": "ogl",
+			"data/OSOpenRoads_HP.gml": "<gml/>",
+		})
+
+		const written = await extractZipEntries(archive, destination)
+
+		expect(written.toSorted()).toEqual(["data/OSOpenRoads_HP.gml", "doc/licence.txt", "readme.txt"])
+		expect(await readLocalTextFile(destination("readme.txt"))).toBe("readme")
+		expect(await readLocalTextFile(destination("doc", "licence.txt"))).toBe("ogl")
+		expect(await readLocalTextFile(destination("data", "OSOpenRoads_HP.gml"))).toBe("<gml/>")
+	})
+
+	it("refuses a member with a .. segment and writes nothing outside the destination", async () => {
+		const archive = directory.path("escape.zip")
+		const destination = directory.path("escape", "inner")
+
+		await writeArchiveWithNames(archive, { "../evil.txt": "evil" })
+
+		const bytes = await readLocalBuffer(archive)
+
+		expect(bytes.indexOf("../evil.txt")).toBeGreaterThanOrEqual(0)
+		await expect(extractZipEntries(archive, destination)).rejects.toThrow(/\.\. segment/u)
+		await expect(readLocalTextFile(directory.path("escape", "evil.txt"))).rejects.toThrow(/ENOENT/u)
 	})
 })
 
