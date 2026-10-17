@@ -14,6 +14,7 @@ import { isIdentical } from "@mailwoman/core/identical"
 import type { RequiredAttribution } from "@mailwoman/corpus/source-register"
 
 import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
+import { declaresOpenStreetMapAttribution } from "#release-kit/weights/rights/osm-ancestry"
 import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"
 
 /**
@@ -203,6 +204,12 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 			record.inherited?.attribution.length
 				? `This package's model card records no training attribution of its own. It ships ${record.artifacts.length} artifacts and no model graph, so its own inputs are unattributed here while the ${record.inherited.attribution.length} entries under inherited_lineage describe ${record.inherited.package}'s graph.`
 				: "This package's model card records no training attribution. That states what the card holds, not that the artifacts have no attributable inputs."
+		)
+	} else if (record.inherited && record.attribution.every((entry) => declaresOpenStreetMapAttribution([entry]))) {
+		// An overlay ships no graph, so its OpenStreetMap entry credits the base graph it decodes
+		// through, and the card still attributes none of the artifacts the overlay itself ships.
+		questions.push(
+			`This package's model card attributes only the OpenStreetMap data behind ${record.inherited.package}'s graph. It ships ${record.artifacts.length} artifacts and no model graph, so its own inputs are unattributed here.`
 		)
 	}
 

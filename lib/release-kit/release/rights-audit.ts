@@ -30,6 +30,12 @@ import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#release-kit/weights/rights/files"
+import {
+	INITIALIZATION_ANCESTRY_UNREAD,
+	type OpenStreetMapAncestry,
+	openStreetMapAttributionRefusals,
+	readOpenStreetMapAncestry,
+} from "#release-kit/weights/rights/osm-ancestry"
 import { SourceUse, VersionSeries, type WeightsRightsRecord } from "#release-kit/weights/rights/record"
 import { weightsRightsRecords } from "#release-kit/weights/rights/write"
 
@@ -243,6 +249,10 @@ export interface RightsAudit {
 	packages: PackageRightsAudit[]
 	training: TrainingRecordAudit[]
 	data: DataBOMAudit
+	/**
+	 * Each package's OpenStreetMap ancestry and whether its card and README say so.
+	 */
+	openStreetMap: OpenStreetMapAncestry[]
 	/**
 	 * What the pass established, as sentences naming the measurement.
 	 */
@@ -523,6 +533,20 @@ export function packagesWithoutFrozenManifest(audit: RightsAudit): string[] {
 }
 
 /**
+ * Why a package whose model descends from OpenStreetMap data fails to say so,
+ * one sentence per missing notice.
+ *
+ * A package has that ancestry when its own effective training manifest records an OpenStreetMap-derived
+ * source, or when its `mailwoman.baseWeights` chain reaches a package that has it.
+ * Such a package must carry the OpenStreetMap entry in its own card's attribution
+ * and the statement in its README, so a card declaring no OpenStreetMap entry
+ * over an OpenStreetMap-trained base is refused.
+ */
+export function packagesMissingOpenStreetMapAttribution(audit: RightsAudit): string[] {
+	return openStreetMapAttributionRefusals(audit.openStreetMap)
+}
+
+/**
  * The whole pass.
  *
  * Reads the checkout and makes no change.
@@ -538,8 +562,20 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 
 	const training = await auditTraining(repoRoot, records)
 	const data = await auditDataBOM(repoRoot)
+	const openStreetMap = await readOpenStreetMapAncestry(repoRoot, records)
 	const established: string[] = []
 	const unresolved: string[] = []
+
+	const withAncestry = openStreetMap.filter((row) => row.ownSources.length || row.inheritedFrom)
+
+	established.push(
+		`${withAncestry.length} of ${openStreetMap.length} packages have OpenStreetMap ancestry through their own ` +
+			`effective training manifest or their base chain, and ` +
+			`${withAncestry.filter((row) => row.declaresAttribution && row.readmeCarriesNotice === true).length} of them ` +
+			`carry the OpenStreetMap entry in their card and the statement in their README.`
+	)
+
+	unresolved.push(INITIALIZATION_ANCESTRY_UNREAD)
 
 	established.push(
 		`${packages.length} published weights packages carry a generated ${LICENSE_FILE} and ${PROVENANCE_FILE}, and ${packages.filter((entry) => entry.shipsRightsFiles).length} of them list both in the manifest files array that decides what npm ships.`
@@ -652,7 +688,7 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		}
 	}
 
-	return { register, packages, training, data, established, unresolved }
+	return { register, packages, training, data, openStreetMap, established, unresolved }
 }
 
 /**
@@ -779,6 +815,23 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 					`(${row.effective.emittedButUnrecordedRows} of ${row.effective.totalEmittedRows} rows)`
 			)
 		}
+	}
+
+	lines.push("", "OpenStreetMap ancestry:")
+
+	for (const row of audit.openStreetMap) {
+		const ancestry = row.ownSources.length
+			? `trained on ${row.ownSources.join(", ")}`
+			: row.inheritedFrom
+				? `inherits through ${row.inheritedFrom}`
+				: "none recorded"
+
+		const notices =
+			row.ownSources.length || row.inheritedFrom
+				? `; card entry ${row.declaresAttribution ? "present" : "MISSING"}, README statement ${row.readmeCarriesNotice === true ? "present" : "MISSING"}`
+				: ""
+
+		lines.push(`  ${row.package}: ${ancestry}${notices}`)
 	}
 
 	lines.push("", `Data artifacts (mailwoman ${audit.data.version}):`)

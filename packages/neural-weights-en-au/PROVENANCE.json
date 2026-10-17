@@ -300,9 +300,17 @@
 	],
 	"model_graph": null,
 	"training_attribution": {
-		"status": "none-recorded-in-this-package",
-		"entries": [],
-		"by_use": {}
+		"status": "recorded",
+		"entries": [
+			{
+				"text": "OpenStreetMap contributors (ODbL-1.0): this overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on OpenStreetMap-derived training extracts that package's card and effective training manifest record. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright.",
+				"license_named": "ODbL-1.0",
+				"uses": ["training"]
+			}
+		],
+		"by_use": {
+			"training": 1
+		}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
@@ -311,7 +319,7 @@
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 5 of 5 declared artifacts: fst-street-morphology.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
-		"This package's model card records no training attribution of its own. It ships 5 artifacts and no model graph, so its own inputs are unattributed here while the 11 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
+		"This package's model card attributes only the OpenStreetMap data behind @mailwoman/neural-weights-en-us's graph. It ships 5 artifacts and no model graph, so its own inputs are unattributed here.",
 		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }
