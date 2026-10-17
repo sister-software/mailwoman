@@ -9,7 +9,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -266,12 +266,49 @@ export interface OverlayManifestOptions {
 }
 
 /**
+ * Reads the distinct `source` values of base files whose manifest entries name no source.
+ *
+ * Every file must be present under the local data root.
+ * When one is absent, or a row's `source` is null, `sources` is null and `unreadable` names the cause.
+ *
+ * The caller therefore cannot mistake a partial read for the whole base.
+ */
+async function readBaseFileSources(
+	files: readonly ManifestFile[]
+): Promise<{ sources: string[]; unreadable: null } | { sources: null; unreadable: string }> {
+	const paths = files.map((file) => localManifestFilePath(file.path))
+	const absent: string[] = []
+
+	for (const path of paths) {
+		if (!(await pathExists(path))) {
+			absent.push(path)
+		}
+	}
+
+	if (absent.length) {
+		return { sources: null, unreadable: `${absent.length} of them are absent locally (first: ${absent[0]})` }
+	}
+
+	using db = await openDuckDB()
+
+	const list = paths.map((path) => `'${escapeSQLString(path)}'`).join(", ")
+	const result = await db.runAndReadAll(`SELECT DISTINCT source FROM read_parquet([${list}])`)
+	const values = result.getRowObjects().map((row) => row.source as string | null)
+
+	if (values.some((value) => value == null)) {
+		return { sources: null, unreadable: "a row among them carries a null source" }
+	}
+
+	return { sources: values as string[], unreadable: null }
+}
+
+/**
  * Checks every corpus source the assembled manifest will hold, before the manifest or plan is written.
  *
  * The base manifest's own record covers a base file that records no source, when the base has a record.
- * A base without a record holds sources no check read.
+ * A base without a record is checked by reading its files' `source` column.
  *
- * This check refuses it rather than reading the absence as clear.
+ * When a file cannot be read, the check refuses the base rather than reading the absence as clear.
  */
 async function checkOverlaySources(
 	args: OverlayManifestOptions,
@@ -298,12 +335,19 @@ async function checkOverlaySources(
 		}
 	}
 
+	// A base without a record is read instead: its files' own `source` column is what the loader groups rows by.
+	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed) : null
+
+	for (const source of read?.sources ?? []) {
+		named.add(source)
+	}
+
 	rights.admitAll(named)
 
-	if (unnamed.length && !base.source_rights) {
+	if (unnamed.length && !base.source_rights && read?.unreadable) {
 		rights.admitUnverified(
 			`${unnamed.length} file(s) of base ${args.base}, which name no source while the base manifest carries no ` +
-				"`source_rights` record"
+				`\`source_rights\` record, and ${read.unreadable}`
 		)
 	}
 
