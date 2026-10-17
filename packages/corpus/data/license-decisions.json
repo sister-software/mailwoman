@@ -1909,6 +1909,52 @@
 				}
 			}
 		},
+		"unchecked-corpus-input-gb-office-for-national-statistics": {
+			"state": "elected",
+			"electedTerms": "Open Government Licence v3.0 (the lookup covers Great Britain only)",
+			"spdx": "OGL-UK-3.0",
+			"termsVersion": "3.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/nsul-2026-10-17/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "ONS states one grant for the National Statistics UPRN Lookup in two places that agree. Section 3 of the user guide shipped in `NSUL_E127_JUN_2026.zip` (514,786,231 bytes, sha256 `8e5cffe5f101b13edc3756c729586b65f7e32f8f0758621080aca8c7bf928138`; `User Guide/NSUL User Guide June 2026.pdf`, 361,376 bytes, sha256 `32ac2c3a367db794b0d918f157b9b2d42a5387fc91d29d6da06d9ba2aa85d898`) and the `UPRN products (including UPRN lookups)` section of `https://www.ons.gov.uk/methodology/geography/licences` (35,242 bytes, sha256 `2511de6d8f683d169a0c89c767ed7759c9093f53ce1570a30f97d41265b397b1`) read: `Our UPRN products (derived from AddressBase®) are subject to the Open Government Licence.` and `You may re-use this information (not including logos) free of charge in any format or medium, under the terms of the relevant data owners' licence. In addition, the following attribution statements must be acknowledged or displayed whenever the owners' data is used: Contains OS data © Crown copyright and database right [year]; Contains Royal Mail data © Royal Mail copyright and Database right [year]; Contains GeoPlace data © Local Government Information House Limited copyright and database right [year]; Source: Office for National Statistics licensed under the Open Government Licence v.3.0`. Unlike HM Land Registry's Price Paid Data page, which licenses its address fields to Royal Mail and Ordnance Survey's own personal or non-commercial terms, this grant names no restriction on the OS, Royal Mail or GeoPlace data beyond the four statements. The page's only commercial-use restriction sits in its separate `Postcode products` section and concerns Northern Ireland (`BT`) postcode data, and section 4 of the guide states the lookup `does not contain data for Northern Ireland, the Channel Islands or the Isle of Man`. What this repository reads: the `gb-os-open` recipe joins each Great Britain postcode to the lookup's country code (`ctry25cd`) to assign England, Scotland or Wales.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `copy, publish, distribute and transmit the Information`, which covers downloading the lookup archive from the ONS Open Geography Portal."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `adapt the Information`, which covers reading the postcode and country-code (`ctry25cd`) columns out of the regional files."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants adaptation, which covers joining each Great Britain postcode to its country code and writing that country onto corpus rows built from OS OpenData."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants the right to `exploit the Information commercially and non-commercially for example, by combining it with other Information, or by including it in your own product or application`, which covers training a model on rows whose country was assigned from the lookup."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 grants publication and distribution, conditioned on the four statements ONS requires for its UPRN products: `Contains OS data © Crown copyright and database right [year]`, `Contains Royal Mail data © Royal Mail copyright and Database right [year]`, `Contains GeoPlace data © Local Government Information House Limited copyright and database right [year]` and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 names inclusion `in your own product or application` among the permitted commercial uses, so shipping weights trained on rows whose country the lookup assigned is permitted with the four statements in the model's attribution."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "OGL v3.0 is a licence the Licensor grants to every user of the Information, worldwide and royalty-free, so a commercial recipient holds the same grant from ONS directly and needs no sublicence from this repository."
+				}
+			}
+		},
 		"unchecked-access-free-gb-who-s-on-first": {
 			"state": "elected",
 			"electedTerms": "Who's On First data licence statement (link to https://whosonfirst.org/docs/licenses/ required; contributing sources credited)",
