@@ -48,8 +48,8 @@ import {
 	type OpenNamesRoad,
 	populatedPlaceName1,
 	readOpenNamesRoads,
-} from "#gb/os-open/open-names"
-import { createOpenRoadsReadStats, readOpenRoadsLinks } from "#gb/os-open/open-roads"
+} from "#gb/os-open/open/names"
+import { createOpenRoadsReadStats, readOpenRoadsLinks } from "#gb/os-open/open/roads"
 import { SourceRegister } from "#registers"
 import { tieredNumber, type TieredNumberBand } from "#synthesizers/utils"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"

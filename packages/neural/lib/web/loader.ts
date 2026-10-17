@@ -27,7 +27,7 @@ import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inferen
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import type { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
-import { createAnchorRegionLookup } from "#postcode/anchor-regions"
+import { createAnchorRegionLookup } from "#postcode/anchor/regions"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 import { PostcodePrefixIndexResolver } from "#postcode/prefix-index"
 import { MailwomanTokenizer } from "#tokenizer"
