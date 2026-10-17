@@ -7,7 +7,7 @@
 import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#release-kit/operation"
-import { auditRights, renderRightsAudit } from "#release-kit/release/rights-audit"
+import { auditRights, packagesWithoutFrozenManifest, renderRightsAudit } from "#release-kit/release/rights-audit"
 
 const registerAudit = z.object({
 	sources: z.number(),
@@ -53,11 +53,16 @@ const trainingAudit = z.object({
  *
  * An empty `unresolved` list means this pass could read every item it examined.
  * Whether any artifact is cleared for use is a separate question.
+ *
+ * @throws After printing the report, when a package's model card records a corpus
+ * and the repository holds no frozen training manifest for it.
+ * The release workflow runs this operation, so that package stops the release
+ * until the record is committed.
  */
 export const rightsAudit = defineOperation({
 	id: "release.rights-audit",
 	description:
-		"Read the source register, every published weights package's provenance record, and any frozen training manifest, and report what the chain from a source's terms to a published tarball establishes and what it leaves open.",
+		"Read the source register, every published weights package's provenance record, and any frozen training manifest, and report what the chain from a source's terms to a published tarball establishes and what it leaves open. Fails when a model card records a corpus that has no frozen training manifest.",
 	effect: OperationEffect.Read,
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({
@@ -72,6 +77,17 @@ export const rightsAudit = defineOperation({
 
 		for (const line of renderRightsAudit(audit)) {
 			context.log(line)
+		}
+
+		const missing = packagesWithoutFrozenManifest(audit)
+
+		if (missing.length) {
+			throw new Error(
+				`${missing.length} package(s) record a training corpus that has no frozen training manifest under ` +
+					`packages/corpus/data/training-manifests/, so which records trained the model is unrecorded: ` +
+					`${missing.join(", ")}. Write the record with freeze-overlay-manifest.run.ts or commit the build's ` +
+					`TRAINING_SOURCES.json under the corpus version the card records.`
+			)
 		}
 
 		return audit

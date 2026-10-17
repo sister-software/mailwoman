@@ -23,6 +23,53 @@ Software authors. It does not extend to third-party components distributed with 
 stay under their own licenses. Any attribution or share-alike obligation attaching to those
 components continues to apply and is not waived or relicensed by a commercial agreement.
 
+## Attribution the training data requires
+
+The effective training manifest for corpus `v0.7.2-address-systems` records the sources one audited epoch of
+`corpus-python/src/mailwoman_train/configs/v7.2.0-address-systems-60k.yaml` drew rows from. Rows under these terms require the statement that follows, reproduced in any redistribution:
+
+- © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright. (`ODbL-1.0`: osm-bd, osm-id, osm-in, osm-ng, osm-pk, osm-ru, osm-vn, rendered-bd-register, rendered-pk-register)
+
+Rows under these labels require attribution, and the statement is written from each source's register
+entry or the model card's attribution entries. A label this repository does not recognize is listed because
+its obligations are unknown rather than absent:
+
+- `BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE`: rendered-fr-admin-split
+- `CC-BY-4.0`: cordis, gnaf, lv-varis, ro-retea-scolara
+- `CDLA-Permissive-2.0`: overture, overture-latam
+- `CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)`: rendered-sg-register
+- `Licence Ouverte 1.0`: fr-finess-overseas
+- `Licence Ouverte 2.0`: ban, ban-bl, ban-gf, ban-gp, ban-mf, ban-mq, ban-nc, ban-pf, ban-pm, ban-re, ban-yt, fr-annuaire-education-overseas
+- `none-recorded-on-rows`: invented-anchor-absorption
+- `OpenAddresses CH tuples, rendered native-order — see ingest SOURCES`: rendered-ch
+- `OpenAddresses DE tuples, rendered native-order — see ingest SOURCES`: rendered-de
+- `OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE`: rendered-fr-order
+- `OpenAddresses GB tuples, rendered native-order — see ingest SOURCES`: rendered-gb
+- `OpenAddresses HR tuples, rendered native-order — see ingest SOURCES`: rendered-hr
+- `OpenAddresses LU tuples, rendered native-order — see ingest SOURCES`: rendered-lu
+- `OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)`: spliced-country
+- `OpenAddresses PT tuples, rendered native-order — see ingest SOURCES`: rendered-pt
+- `OpenAddresses SK tuples, rendered native-order — see ingest SOURCES`: rendered-sk
+- `OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators`: spliced-unit-v30
+- `OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)`: invented-po-box-cedex
+- `OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)`: spliced-affix
+- `OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)`: spliced-suffix-boundary
+- `Public Domain`: state-ny-notaries, state-tx-notaries, tiger, usgov-hrsa-fqhc, usgov-nad, usgov-nppes
+- `Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)`: codex-bare-postcode
+- `Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)`: rendered-cz-pcfirst-preposition-v21
+- `Synthetic — derived from CC-BY / public-domain input tuples`: invented-house-venue, invented-po-box-military
+- `Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)`: fragment-fr-bare-street-v22
+- `Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)`: fragment-fr
+- `Synthetic — fragment-assay; street/number/city from OpenAddresses dk`: fragment-assay
+- `Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)`: rendered-nl-postcode
+- `Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket`: fragment-no
+- `Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / HM Land Registry Price Paid Data address skeletons`: spliced-sub-venue
+- `Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)`: rendered-si-bare-village
+- `Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)`: spliced-trailing-region-ca-bare, spliced-trailing-region-es-v28, spliced-trailing-region-us
+- `Synthetic (DeepSeek-v4-flash, AGPL-compatible)`: deepseek-kryptonite
+- `Synthetic rendering of reviewed postal facts — Universal Postal Union; source terms recorded in reviewed-ve-postcode-tuples.json`: reviewed-postcode-tail
+- `TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails`: invented-intersection
+
 ## Where the sources are recorded
 
 `PROVENANCE.json` in this package records, per artifact, what the repository holds about its

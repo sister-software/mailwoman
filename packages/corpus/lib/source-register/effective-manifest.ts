@@ -54,7 +54,8 @@ export function epochMixtureAuditPath(configPath: string): PathBuilder {
  */
 export const ExclusionReason = {
 	/**
-	 * The config's `source_weights` map does not name the source, so the sampler never considers it.
+	 * Neither the config's `source_weights` map nor its `source_reps` map lists the source,
+	 * so the sampler never considers it.
 	 */
 	UnweightedSource: "unweighted-source",
 
@@ -87,7 +88,8 @@ export interface EffectiveSourceRecord {
 	license: string
 
 	/**
-	 * The weight `source_weights` gives it, or `null` where the map omits it.
+	 * The weight `source_weights` gives it, the repetition count `source_reps` gives it,
+	 * or `null` where both maps omit it.
 	 */
 	weight: number | null
 
@@ -348,7 +350,11 @@ export interface EffectiveConfigView {
 }
 
 /**
- * Read `data.source_weights` and `data.augment_exclude_sources` from a training config.
+ * Read `data.source_weights`, `data.source_reps` and `data.augment_exclude_sources` from a training config.
+ *
+ * `source_weights` and `source_reps` both admit a source to the sampler, one as a share
+ * and one as a repetition count, so an entry in either block counts as the source's weight here.
+ * A source in neither block is one the sampler never considers.
  *
  * A line scanner instead of a YAML parse.
  * `corpus audit` already reads these blocks this way.
@@ -368,7 +374,7 @@ export function readConfigView(text: string): EffectiveConfigView {
 	const sourceWeights: Record<string, number> = {}
 	const augmentExcludeSources: string[] = []
 
-	type ConfigField = "source_weights" | "augment_exclude_sources"
+	type ConfigField = "source_weights" | "source_reps" | "augment_exclude_sources"
 
 	let field: ConfigField | null = null
 	let fieldIndent = -1
@@ -385,7 +391,7 @@ export function readConfigView(text: string): EffectiveConfigView {
 		}
 
 		if (!field) {
-			const opener = /^([\t ]*)(source_weights|augment_exclude_sources):\s*(#.*)?$/.exec(raw)
+			const opener = /^([\t ]*)(source_weights|source_reps|augment_exclude_sources):\s*(#.*)?$/.exec(raw)
 
 			if (opener) {
 				field = opener[2] as ConfigField
@@ -399,7 +405,7 @@ export function readConfigView(text: string): EffectiveConfigView {
 			continue
 		}
 
-		if (field === "source_weights") {
+		if (field === "source_weights" || field === "source_reps") {
 			const entry = /^[\t ]+([\w-]+):\s*([\d.]+)/.exec(raw)
 
 			if (entry) {

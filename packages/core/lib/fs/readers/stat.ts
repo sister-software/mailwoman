@@ -5,7 +5,7 @@
  */
 
 import { AssertionError } from "node:assert"
-import type { Dirent, Mode, Stats } from "node:fs"
+import { type Dirent, type Mode, type Stats, statSync } from "node:fs"
 import {
 	open as openNative,
 	access,
@@ -199,6 +199,21 @@ export function assertIsFile(path: PathBuilderLike | URL, message?: string | nul
  */
 export function isFile(path: PathBuilderLike | URL): Promise<boolean> {
 	return tryStat(path).then((stats) => stats?.isFile() ?? false)
+}
+
+/**
+ * Whether a path exists and is a file, read synchronously.
+ *
+ * The env module folds `.env` into `process.env` when it is imported,
+ * ahead of any `await`, so it cannot use {@linkcode isFile}.
+ * Every other caller can, and should.
+ */
+export function isFileSync(path: PathBuilderLike): boolean {
+	try {
+		return statSync(resolvePath(path)).isFile()
+	} catch {
+		return false
+	}
 }
 
 /**

@@ -16,6 +16,18 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
 
 /**
+ * The license label recorded for a source whose rows carry no label.
+ *
+ * A recipe can write rows with an empty `license` column.
+ * An empty string in the record would read as a source that carries no terms,
+ * and `summarizeLicense` would find no identifier in it and report no obligation.
+ *
+ * This label is unrecognized by design, so every reader reports the source's
+ * terms as unknown rather than as none.
+ */
+export const NO_LICENSE_RECORDED = "none-recorded-on-rows"
+
+/**
  * What one source contributed to a build.
  *
  * Also records what the build had established about its terms.
@@ -30,7 +42,22 @@ export interface TrainingSourceRecord {
 	 * A synthetic row counts under the source it was fanned from.
 	 */
 	rows: number
+	/**
+	 * The license label the source's rows carry.
+	 *
+	 * When the rows carry more than one label, this is the label on most of them
+	 * and {@linkcode licenseValues} lists every label with its rows.
+	 */
 	license: string
+	/**
+	 * Every license label the source's rows carry, with the rows under each, when there is more than one.
+	 *
+	 * A recipe stamps a description of its own output into the column, and one recipe can stamp
+	 * several, so a synthetic source reads several labels where an adapter's source reads one.
+	 * The record keeps the whole set because a reader that saw only {@linkcode license}
+	 * would take the majority label for the terms of every row.
+	 */
+	licenseValues?: Record<string, number>
 	/**
 	 * The register's decision for that license when the build ran, or `null`
 	 * when the register contains no decision for it.
@@ -97,18 +124,19 @@ export function freezeTrainingManifest(input: {
 	corpusVersion: string
 	builtAt: string
 	profile: string
-	rowsBySource: ReadonlyMap<string, { rows: number; license: string }>
+	rowsBySource: ReadonlyMap<string, { rows: number; license: string; licenseValues?: Record<string, number> }>
 	decisionsByLicense: ReadonlyMap<string, LicenseDecision>
 	refused: ReadonlyMap<string, readonly string[]>
 }): TrainingManifest {
 	const sources: TrainingSourceRecord[] = [...input.rowsBySource.entries()]
-		.map(([source, { rows, license }]): TrainingSourceRecord => {
+		.map(([source, { rows, license, licenseValues }]): TrainingSourceRecord => {
 			const decision = input.decisionsByLicense.get(license)
 
 			return {
 				source,
 				rows,
 				license,
+				...(licenseValues ? { licenseValues } : {}),
 				decision: decision
 					? {
 							licenseID: decision.licenseID,
