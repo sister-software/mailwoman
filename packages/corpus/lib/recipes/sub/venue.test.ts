@@ -15,9 +15,12 @@ import {
 	buildIdentifierModel,
 	containsPhrase,
 	defaultLexiconPath,
+	EMPTY_NAME_POOLS,
 	hasPromotedShape,
 	isSignIdentifier,
 	matchesPromotedShape,
+	mergeNamePools,
+	NameSource,
 	promotedSurfacesFor,
 	readSubVenueLexicon,
 	sampleIdentifier,
@@ -333,6 +336,30 @@ describe("buildStreetNegatives", () => {
 		expect(negatives.designator.map((t) => t.street)).toEqual(["Pier Road"])
 		expect(negatives.modifierDesignator.map((t) => t.street)).toEqual(["North Gate"])
 		expect(negatives.gateSuffix.map((t) => t.street)).toEqual(["Stonegate"])
+	})
+})
+
+describe("mergeNamePools", () => {
+	const osm = { ...EMPTY_NAME_POOLS, venues: ["Heathrow Airport", "Gare du Nord"], attested: ["Pier 1"] }
+	const overture = { ...EMPTY_NAME_POOLS, venues: ["Gare du Nord"], longerNames: ["Lochaline Ferry Terminal"] }
+
+	it("tags each merged name with its source and keeps a name both sources hold once per source", () => {
+		const merged = mergeNamePools(osm, overture)
+
+		expect(merged.venues).toEqual([
+			{ name: "Heathrow Airport", source: NameSource.OpenStreetMap },
+			{ name: "Gare du Nord", source: NameSource.OpenStreetMap },
+			{ name: "Gare du Nord", source: NameSource.OverturePlaces },
+		])
+
+		expect(merged.longerNames).toEqual([{ name: "Lochaline Ferry Terminal", source: NameSource.OverturePlaces }])
+		expect(merged.attested).toEqual(["Pier 1"])
+	})
+
+	it("keeps the order and length of a plain concatenation, so a seeded draw picks the same name", () => {
+		const merged = mergeNamePools(osm, overture)
+
+		expect(merged.venues.map((entry) => entry.name)).toEqual([...osm.venues, ...overture.venues])
 	})
 })
 

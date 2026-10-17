@@ -12,6 +12,7 @@ import { upperFirst } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { SourceRegister } from "#registers"
 import { classifyIdentifier, readSubVenueJSONL } from "#subvenue/harvest"
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#subvenue/promotions"
 import type { SubVenueLexiconTable } from "#subvenue/table"
@@ -378,11 +379,34 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 }
 
 /**
- * The address context and name pools for one recipe leg.
+ * The publication a pooled name was read from.
+ *
+ * Each row records the sources of the names it carries, because the two publications are
+ * licensed differently: OpenStreetMap under ODbL 1.0, Overture Places under CDLA-Permissive-2.0.
  */
-export interface LegPools {
-	context: LocaleBaseTuple[]
+export const NameSource = {
+	OpenStreetMap: SourceRegister.OpenStreetMap,
+	OverturePlaces: "overture-places",
+} as const
 
+export type NameSource = (typeof NameSource)[keyof typeof NameSource]
+
+/**
+ * A pooled name with the publication it was read from.
+ *
+ * A name both sources hold appears once per source, so its draw still records the pool it came from.
+ */
+export interface SourcedName {
+	name: string
+	source: NameSource
+}
+
+/**
+ * The name pools that one source contributes to a recipe leg.
+ *
+ * Only OSM extracts fill `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
+ */
+export interface NamePools {
 	/**
 	 * Real venue-tier names that fit the venue slot, such as stations, airports, campuses and hospitals.
 	 */
@@ -410,11 +434,19 @@ export interface LegPools {
 }
 
 /**
- * The name pools that one source contributes to a recipe leg.
+ * The address context and name pools for one recipe leg.
  *
- * Only OSM extracts fill `attested` and `unpromotedShapes`, because POI data has no tier or localized names.
+ * `attested` and `unpromotedShapes` hold OpenStreetMap names only, as {@linkcode NamePools} states.
+ * The other three pools merge both sources and keep each name's source.
  */
-export type NamePools = Pick<LegPools, "venues" | "attested" | "rejectedVenues" | "longerNames" | "unpromotedShapes">
+export interface LegPools {
+	context: LocaleBaseTuple[]
+	venues: SourcedName[]
+	attested: string[]
+	rejectedVenues: SourcedName[]
+	longerNames: SourcedName[]
+	unpromotedShapes: string[]
+}
 
 /**
  * Empty name pools for a source that a leg lacks.
@@ -571,14 +603,23 @@ export async function readOvertureNamePools(
 }
 
 /**
- * Concatenates two sources' name pools.
+ * Concatenates an OpenStreetMap extract's pools and the Overture Places pools,
+ * OpenStreetMap first, and tags each merged name with its source.
+ *
+ * The order and length of every pool match a plain concatenation, so a seeded run
+ * draws the same names as one that recorded no source.
  */
-export function mergeNamePools(a: NamePools, b: NamePools): NamePools {
+export function mergeNamePools(osm: NamePools, overture: NamePools): Omit<LegPools, "context"> {
+	const tag = (a: readonly string[], b: readonly string[]): SourcedName[] => [
+		...a.map((name) => ({ name, source: NameSource.OpenStreetMap })),
+		...b.map((name) => ({ name, source: NameSource.OverturePlaces })),
+	]
+
 	return {
-		venues: [...a.venues, ...b.venues],
-		attested: [...a.attested, ...b.attested],
-		rejectedVenues: [...a.rejectedVenues, ...b.rejectedVenues],
-		longerNames: [...a.longerNames, ...b.longerNames],
-		unpromotedShapes: [...a.unpromotedShapes, ...b.unpromotedShapes],
+		venues: tag(osm.venues, overture.venues),
+		attested: [...osm.attested, ...overture.attested],
+		rejectedVenues: tag(osm.rejectedVenues, overture.rejectedVenues),
+		longerNames: tag(osm.longerNames, overture.longerNames),
+		unpromotedShapes: [...osm.unpromotedShapes, ...overture.unpromotedShapes],
 	}
 }

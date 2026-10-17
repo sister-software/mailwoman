@@ -28,6 +28,7 @@ import { LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obl
 import type { PathBuilder } from "path-ts"
 
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/adapter"
+import { currentSourceName } from "#recipes/sources"
 import type { TrainingManifest } from "#source-register/training-manifest"
 
 /**
@@ -179,11 +180,44 @@ const ATTRIBUTION_STATEMENTS: Readonly<Record<string, string>> = {
 }
 
 /**
+ * Recognized licenses carried by contents of a source whose rows state one free-text
+ * license, keyed by the source's current spelling.
+ *
+ * The derivation groups sources by the license their rows state.
+ * The `sub-venue` recipe states one license over three publications.
+ *
+ * That license is free text, and the OpenStreetMap venue names it carries are under ODbL 1.0.
+ * Grouping by that text alone leaves the source out of the ODbL group,
+ * the group that carries the recorded OpenStreetMap statement.
+ *
+ * The source keeps its own group as well, because that text also credits the
+ * publishers of the address skeletons.
+ */
+const CONTENT_LICENSES: Readonly<Record<string, readonly string[]>> = {
+	"spliced-sub-venue": [OSM_LICENSE],
+}
+
+/**
+ * The licenses a source owes attribution under: the one its rows state and those its contents carry.
+ */
+function attributedLicenses(record: EffectiveSourceRecord): string[] {
+	const current = currentSourceName(record.source) ?? record.source
+
+	return [record.license, ...(CONTENT_LICENSES[current] ?? [])].filter((license) => {
+		const summary = summarizeLicense(license)
+
+		return !summary.recognized || summary.obligations.includes(LicenseObligation.Attribution)
+	})
+}
+
+/**
  * The attributions owed by the sources that reached the trainer, grouped by license.
  *
  * Only `trainingSources` are read, so a source the corpus holds and the run never drew owes no attribution.
  * A license is included when `summarizeLicense` records an attribution obligation for it, or
  * when it is unrecognized, since an unrecognized license's obligations are unknown rather than absent.
+ *
+ * A source joins the group of every license in {@linkcode CONTENT_LICENSES} beside its own.
  */
 export function requiredAttributions(sources: readonly EffectiveSourceRecord[]): RequiredAttribution[] {
 	const byLicense = new Map<string, string[]>()
@@ -191,11 +225,9 @@ export function requiredAttributions(sources: readonly EffectiveSourceRecord[]):
 	for (const record of sources) {
 		if (record.emittedRows <= 0) continue
 
-		const summary = summarizeLicense(record.license)
-
-		if (summary.recognized && !summary.obligations.includes(LicenseObligation.Attribution)) continue
-
-		byLicense.set(record.license, [...(byLicense.get(record.license) ?? []), record.source])
+		for (const license of attributedLicenses(record)) {
+			byLicense.set(license, [...(byLicense.get(license) ?? []), record.source])
+		}
 	}
 
 	return [...byLicense]
