@@ -63,7 +63,7 @@ mailwoman corpus run osm \
 | `number`                                                            | `house_number`, when designator-shaped (`12`, `14/E`, `188a`, `B-77`) |
 | `street`                                                            | `street`, when a name (no comma, at most eight words)                 |
 | `unit`                                                              | `unit`                                                                |
-| `postcode`                                                          | `postcode`, when four to six digits                                   |
+| `postcode`                                                          | `postcode`, when it has the country's format (`matchCountryPostcode`) |
 | `city` (the part after the last comma)                              | `locality`                                                            |
 | `suburb` ?? `subdistrict` ?? `district` ?? `place` ?? the city head | `dependent_locality`                                                  |
 | `province`                                                          | `region`, unless it repeats the locality                              |

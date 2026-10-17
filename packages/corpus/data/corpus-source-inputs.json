@@ -877,6 +877,15 @@
 				}
 			]
 		},
+		"ide-uy": {
+			"inputs": [
+				{
+					"registerSource": "uy-property-building-1",
+					"license": "unchecked-corpus-input-uy-infraestructura-de-datos-espaciales-ide-urugu",
+					"reads": "Direcciones Geográficas del Uruguay, the 19 department CSVs retrieved 2026-10-17"
+				}
+			]
+		},
 		"invented-anchor-absorption": {
 			"aliases": ["synth-anchor-absorption"],
 			"inputs": [
@@ -1795,6 +1804,15 @@
 				}
 			]
 		},
+		"matrikkelen-sj": {
+			"inputs": [
+				{
+					"registerSource": "sj-property-building-1",
+					"license": "unchecked-access-free-sj-kartverket",
+					"reads": "Matrikkelen - Adresse for Svalbard, area 2100, written by `corpus run matrikkelen --country SJ --source-name matrikkelen-sj`"
+				}
+			]
+		},
 		"nl-kadaster": {
 			"inputs": [
 				{
@@ -1832,6 +1850,42 @@
 				}
 			]
 		},
+		"osm-ae": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to AE"
+				}
+			]
+		},
+		"osm-am": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for AM"
+				}
+			]
+		},
+		"osm-ar": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for AR"
+				}
+			]
+		},
+		"osm-ba": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for BA"
+				}
+			]
+		},
 		"osm-bd": {
 			"inputs": [
 				{
@@ -1841,12 +1895,66 @@
 				}
 			]
 		},
+		"osm-bn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik malaysia-singapore-brunei extract, clipped to BN"
+				}
+			]
+		},
+		"osm-by": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for BY"
+				}
+			]
+		},
+		"osm-ci": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for CI"
+				}
+			]
+		},
+		"osm-cl": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for CL"
+				}
+			]
+		},
 		"osm-cn": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-02 Geofabrik extract for CN"
+				}
+			]
+		},
+		"osm-eg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for EG"
+				}
+			]
+		},
+		"osm-ge": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for GE"
 				}
 			]
 		},
@@ -1868,12 +1976,75 @@
 				}
 			]
 		},
+		"osm-kg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for KG"
+				}
+			]
+		},
+		"osm-kw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to KW"
+				}
+			]
+		},
+		"osm-kz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for KZ"
+				}
+			]
+		},
+		"osm-md": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MD"
+				}
+			]
+		},
+		"osm-my": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik malaysia-singapore-brunei extract, clipped to MY"
+				}
+			]
+		},
 		"osm-ng": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-02 Geofabrik extract for NG"
+				}
+			]
+		},
+		"osm-pe": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for PE"
+				}
+			]
+		},
+		"osm-ph": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for PH"
 				}
 			]
 		},
@@ -1886,12 +2057,48 @@
 				}
 			]
 		},
+		"osm-pr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PR"
+				}
+			]
+		},
+		"osm-rs": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for RS"
+				}
+			]
+		},
 		"osm-ru": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-02 Geofabrik extract for RU"
+				}
+			]
+		},
+		"osm-ua": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for UA"
+				}
+			]
+		},
+		"osm-uz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for UZ"
 				}
 			]
 		},
@@ -2342,6 +2549,15 @@
 					"registerSource": "ax-property-building-1",
 					"license": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke",
 					"reads": "Ryhti open_address.csv.gz for Åland"
+				}
+			]
+		},
+		"ryhti-ax": {
+			"inputs": [
+				{
+					"registerSource": "ax-property-building-1",
+					"license": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke",
+					"reads": "Ryhti open_address.csv.gz for Åland's municipalities, written by `corpus run ryhti --country AX --source-name ryhti-ax`"
 				}
 			]
 		},

@@ -726,6 +726,49 @@
 				}
 			}
 		},
+		"unchecked-corpus-input-uy-infraestructura-de-datos-espaciales-ide-urugu": {
+			"state": "elected",
+			"electedTerms": "Licencia de Datos Abiertos - Uruguay Versión 0.1",
+			"termsVersion": "0.1",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/",
+			"retrievedAt": "2026-10-17",
+			"electedBecause": "The publisher's own catalogue record is the grant. On catalogodatos.gub.uy the dataset `Direcciones Geográficas del Uruguay` sits in the organization `ide`, the Infraestructura de Datos Espaciales, with `license_id: odc-uy` and a `license_url` that is the licence PDF on gub.uy (`uy-ckan-direcciones.json`, `uy-licencia-datos-abiertos.pdf`). The record's resources are the nineteen department CSVs the `ide-uy` adapter reads, matched by URL in `/mnt/mw/corpus/sources/ide-uy/package_show.json` and each file's receipt. The licence names no SPDX identifier, which is why none is recorded. Its Autorización clause grants, `para uso comercial y no comercial`, that the data `podrán ser: enajenados, reproducidos, distribuidos, publicados, traducidos, adaptados, transformados, comunicados o puestos a disposición del público mediante cualquier forma o procedimiento; fusionados con datos propios y de terceros, pudiendo combinarse para formar conjuntos de datos nuevos e independientes; integrados en los procesos de negocio, productos y aplicaciones internas y externas`. The Nota de Origen clause conditions all of it: cite `el nombre del proveedor`, `la referencia a la \"Licencia de Datos Abiertos – Uruguay\"` and `la referencia al conjunto de datos que está siendo utilizado`, and `Los cambios, las ediciones, los nuevos diseños o modificaciones deben ser mencionados en la nota de origen`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Autorización clause grants that the data may be `reproducidos`, which is what copying the published CSVs performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `adaptados, transformados` and `combinarse para formar conjuntos de datos nuevos e independientes`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants adaptation and transformation, and the Nota de Origen requires that changes `deben ser mencionados`, so the obligation is a disclosure rather than a restriction. The adapter re-renders each point as an address line, drops unnamed streets and route-kilometre points, and omits the rural-remainder census locality, which the note of origin states."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `integrados en los procesos de negocio, productos y aplicaciones internas y externas`, for commercial use, which is the act a model fitted on the rows performs."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The clause grants that the data may be `distribuidos, publicados` and `puestos a disposición del público mediante cualquier forma o procedimiento`, conditioned on the Nota de Origen naming the provider, the licence and the dataset."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "The text grants both acts a weight release could be read as, integration into a product and distribution of a new data set, the second under the Nota de Origen. No release has yet been checked against that note's three citations and its disclosure of changes, so the operation is left for the release that ships these rows."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward, so the text settles neither."
+				}
+			}
+		},
 		"unchecked-access-free-ax-suomen-ymp-rist-keskus-syke": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",

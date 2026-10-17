@@ -8,7 +8,13 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { ADS_ADAPTER_ID, ADS_DEFAULT_LICENSE, createADSAdapter, thoroughfareOf } from "#ee/adapters/ads/adapter"
+import {
+	ADS_ADAPTER_ID,
+	ADS_DEFAULT_LICENSE,
+	createADSAdapter,
+	locatorNamesStreet,
+	thoroughfareOf,
+} from "#ee/adapters/ads/adapter"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
@@ -111,6 +117,13 @@ describe("ads adapter against fixture sample.jsonl", () => {
 
 		expect(streetless.every((r) => r.components.house_number === undefined)).toBe(true)
 		expect(streetless.every((r) => typeof r.components.venue === "string")).toBe(true)
+	})
+
+	it("reads a locator name ending in a street type as the street, not a site name", () => {
+		expect(locatorNamesStreet("Paju tänav")).toBe(true)
+		expect(locatorNamesStreet("Tallinna mnt")).toBe(true)
+		expect(locatorNamesStreet("Jüri")).toBe(false)
+		expect(locatorNamesStreet("Väike-Lepa")).toBe(false)
 	})
 
 	it("reads an address area as the thoroughfare it stands in for", async () => {

@@ -11,6 +11,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { countryPostcodeFormat, matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
@@ -150,10 +151,13 @@ function parseLine(line: string): OSMCorpusRow | null {
  * A row whose `addr:street` holds a line rather than a name stays refused:
  * the mapper supplied a street, and the value is a line.
  *
+ * A postcode is kept when the whole value has `country`'s postcode format.
+ *
  * Each refusal and each discarded component increments its reason in `dropped`.
  */
 export function componentsForOSMRow(
 	row: OSMCorpusRow,
+	country: string,
 	dropped?: Pick<AdapterOptions, "dropped">
 ): CanonicalRow["components"] | null {
 	const tally = dropped ?? {}
@@ -189,10 +193,19 @@ export function componentsForOSMRow(
 
 	const postcode = clean(row.postcode)
 
-	if (postcode && /^\d{4,6}$/u.test(postcode)) {
-		components.postcode = postcode
-	} else if (postcode) {
-		countDropped(tally, "component:postcode:not-4-to-6-digits")
+	if (postcode) {
+		// The country's own format decides, so Argentina's `C1425ABC`, Brunei's `BS8811` and Chile's
+		// seven digits stay postcodes, and a value outside the country's form is dropped by name.
+		const matched = matchCountryPostcode(postcode, country)
+
+		if (matched) {
+			components.postcode = matched
+		} else {
+			countDropped(
+				tally,
+				countryPostcodeFormat(country) ? "component:postcode:not-country-format" : "component:postcode:country-has-none"
+			)
+		}
 	}
 
 	const city = clean(row.city)
@@ -317,7 +330,7 @@ export function createOSMAdapter(): CorpusAdapter {
 					countDropped(opts, "kept:country-untagged")
 				}
 
-				const components = componentsForOSMRow(row, opts)
+				const components = componentsForOSMRow(row, country, opts)
 
 				if (!components) continue
 

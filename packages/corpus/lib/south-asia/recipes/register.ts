@@ -151,7 +151,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 
 				if (opts.count !== undefined && emitted >= opts.count) break
 
-				const components = componentsForOSMRow(tuple as Parameters<typeof componentsForOSMRow>[0])
+				const components = componentsForOSMRow(tuple as Parameters<typeof componentsForOSMRow>[0], country)
 				const rendering = components ? renderSouthAsiaRegister(components, random) : null
 
 				if (!rendering) {

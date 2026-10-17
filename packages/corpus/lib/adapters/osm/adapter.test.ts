@@ -91,21 +91,21 @@ describe("componentsForOSMRow", () => {
 			place: "New Karachi Sector 5C3",
 		}
 
-		expect(componentsForOSMRow(repeatedProvince)).toEqual({
+		expect(componentsForOSMRow(repeatedProvince, "VN")).toEqual({
 			street: "Hàng Giấy",
 			house_number: "34",
 			locality: "Hà Nội",
 			dependent_locality: "Phường Hoàn Kiếm",
 		})
 
-		expect(componentsForOSMRow(commaWard)).toEqual({
+		expect(componentsForOSMRow(commaWard, "VN")).toEqual({
 			street: "Đường Thiên Nga 2",
 			house_number: "82",
 			locality: "Hà Nội",
 			dependent_locality: "Khu đô thị Tây Nam Linh Đàm",
 		})
 
-		expect(componentsForOSMRow(schemeIsStreet)).toEqual({
+		expect(componentsForOSMRow(schemeIsStreet, "PK")).toEqual({
 			street: "New Karachi Sector 5C3",
 			house_number: "L 271",
 			locality: "Karachi",
@@ -114,7 +114,7 @@ describe("componentsForOSMRow", () => {
 
 	it("keeps a row with a district and no city", () => {
 		expect(
-			componentsForOSMRow({ street: "Đường Nguyễn Văn Cừ", number: "359", district: "Thành phố Bắc Ninh" })
+			componentsForOSMRow({ street: "Đường Nguyễn Văn Cừ", number: "359", district: "Thành phố Bắc Ninh" }, "VN")
 		).toEqual({
 			street: "Đường Nguyễn Văn Cừ",
 			house_number: "359",
@@ -124,15 +124,18 @@ describe("componentsForOSMRow", () => {
 
 	it("maps the Vietnamese ward and province, and drops a province that repeats the city", () => {
 		expect(
-			componentsForOSMRow({
-				street: "Đường Nguyễn Khánh Toàn",
-				number: "118",
-				postcode: "10000",
-				city: "Hà Nội",
-				district: "Cau Giay",
-				province: "Hà Nội",
-				subdistrict: "Cầu Giấy",
-			})
+			componentsForOSMRow(
+				{
+					street: "Đường Nguyễn Khánh Toàn",
+					number: "118",
+					postcode: "10000",
+					city: "Hà Nội",
+					district: "Cau Giay",
+					province: "Hà Nội",
+					subdistrict: "Cầu Giấy",
+				},
+				"VN"
+			)
 		).toEqual({
 			street: "Đường Nguyễn Khánh Toàn",
 			house_number: "118",
@@ -144,7 +147,10 @@ describe("componentsForOSMRow", () => {
 
 	it("maps the Pakistani scheme as the dependent locality and keeps a block-lettered plot", () => {
 		expect(
-			componentsForOSMRow({ street: "North Nazimabad Block H", number: "A 90", city: "Karachi", place: "Nazimabad 4" })
+			componentsForOSMRow(
+				{ street: "North Nazimabad Block H", number: "A 90", city: "Karachi", place: "Nazimabad 4" },
+				"PK"
+			)
 		).toEqual({
 			street: "North Nazimabad Block H",
 			house_number: "A 90",
@@ -155,13 +161,16 @@ describe("componentsForOSMRow", () => {
 
 	it("drops a free-text house number, an N/A suburb, and a row that is a street alone", () => {
 		expect(
-			componentsForOSMRow({
-				street: "Sonargaon Janapath",
-				number: "House 34, Road 4, Sector 9",
-				postcode: "1230",
-				city: "Uttara, Dhaka",
-				suburb: "N/A",
-			})
+			componentsForOSMRow(
+				{
+					street: "Sonargaon Janapath",
+					number: "House 34, Road 4, Sector 9",
+					postcode: "1230",
+					city: "Uttara, Dhaka",
+					suburb: "N/A",
+				},
+				"BD"
+			)
 		).toEqual({
 			street: "Sonargaon Janapath",
 			postcode: "1230",
@@ -173,38 +182,59 @@ describe("componentsForOSMRow", () => {
 		const floorOnly = { street: "Đường Điện Biên Phủ", number: "Tầng 8" }
 		const lineAsStreet = { street: "UN Compound, Diplomatic Enclave-II", number: "5", city: "Islamabad" }
 
-		expect(componentsForOSMRow(bare)).toEqual({ street: "Đường Điện Biên Phủ", house_number: "568" })
-		expect(componentsForOSMRow(floorOnly)).toBeNull()
-		expect(componentsForOSMRow(lineAsStreet)).toBeNull()
+		expect(componentsForOSMRow(bare, "VN")).toEqual({ street: "Đường Điện Biên Phủ", house_number: "568" })
+		expect(componentsForOSMRow(floorOnly, "VN")).toBeNull()
+		expect(componentsForOSMRow(lineAsStreet, "PK")).toBeNull()
 	})
 
 	it("admits a streetless premise numbered within a named place, and counts every refusal by reason", () => {
 		const dropped = new Map<string, number>()
 
-		expect(componentsForOSMRow({ number: "12", place: "Ивановка", city: "Тула" }, { dropped })).toEqual({
+		expect(componentsForOSMRow({ number: "12", place: "Ивановка", city: "Тула" }, "RU", { dropped })).toEqual({
 			house_number: "12",
 			locality: "Тула",
 			dependent_locality: "Ивановка",
 		})
 
 		// A suburb maps to `dependent_locality`, so it keeps the identity as `addr:place` does.
-		expect(componentsForOSMRow({ number: "21", suburb: "Rajajinagar" }, { dropped })).toEqual({
+		expect(componentsForOSMRow({ number: "21", suburb: "Rajajinagar" }, "IN", { dropped })).toEqual({
 			house_number: "21",
 			dependent_locality: "Rajajinagar",
 		})
 
-		expect(componentsForOSMRow({ number: "Plot 4", place: "Rampur" }, { dropped })).toBeNull()
-		expect(componentsForOSMRow({ number: "7", postcode: "226001" }, { dropped })).toBeNull()
-		expect(componentsForOSMRow({ street: "UN Compound, Diplomatic Enclave-II", number: "5" }, { dropped })).toBeNull()
-		expect(componentsForOSMRow({ street: "Road 6", number: "House 34", postcode: "12" }, { dropped })).toBeNull()
+		expect(componentsForOSMRow({ number: "Plot 4", place: "Rampur" }, "IN", { dropped })).toBeNull()
+		expect(componentsForOSMRow({ number: "7", postcode: "226001" }, "IN", { dropped })).toBeNull()
+
+		expect(
+			componentsForOSMRow({ street: "UN Compound, Diplomatic Enclave-II", number: "5" }, "PK", { dropped })
+		).toBeNull()
+
+		expect(componentsForOSMRow({ street: "Road 6", number: "House 34", postcode: "12" }, "BD", { dropped })).toBeNull()
 
 		expect(Object.fromEntries(dropped)).toEqual({
 			"row:streetless-house-number-not-designator": 1,
 			"row:streetless-no-locality": 1,
 			"row:street-not-a-name": 1,
 			"component:house_number:not-designator": 1,
-			"component:postcode:not-4-to-6-digits": 1,
+			"component:postcode:not-country-format": 1,
 			"row:street-only": 1,
+		})
+	})
+
+	it("keeps a postcode in the country's own format and drops one outside it", () => {
+		const dropped = new Map<string, number>()
+		const row = (postcode: string) => ({ street: "Calle Falsa", number: "123", city: "Ciudad", postcode })
+
+		expect(componentsForOSMRow(row("C1425ABC"), "AR", { dropped })?.postcode).toBe("C1425ABC")
+		expect(componentsForOSMRow(row("8320000"), "CL", { dropped })?.postcode).toBe("8320000")
+		expect(componentsForOSMRow(row("BS8811"), "BN", { dropped })?.postcode).toBe("BS8811")
+		expect(componentsForOSMRow(row("MD-2001"), "MD", { dropped })?.postcode).toBe("2001")
+		expect(componentsForOSMRow(row("1234"), "KZ", { dropped })?.postcode).toBeUndefined()
+		expect(componentsForOSMRow(row("00000"), "AE", { dropped })?.postcode).toBeUndefined()
+
+		expect(Object.fromEntries(dropped)).toEqual({
+			"component:postcode:not-country-format": 1,
+			"component:postcode:country-has-none": 1,
 		})
 	})
 })
