@@ -1,17 +1,18 @@
 ---
 title: What ships today
-description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.6.0.
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.7.0.
 role: reference
 source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
 ---
 
 # What ships today
 
-:::info[Verified as of release 10.6.0, model 10.1.0]
+:::info[Verified as of release 10.7.0, model 10.7.0]
 
-The model figures were measured on 2026-10-03 against the 10.1.0 release artifact. The package file
-count, the total and the per-file sizes were read from the published 10.6.0 tarball on 2026-10-17. The release process refuses
-to publish if the model version in this box is older than the model the release ships.
+The `model.onnx` size was measured on 2026-10-18 against the 10.7.0 model artifact. The package file count, the total
+and the other per-file sizes were read from the published 10.6.0 tarball on 2026-10-17, and 10.7.0 ships the same
+FSTs, pair indexes, postcode tables and lexicons. The release process refuses to publish if the model version in this
+box is older than the model the release ships.
 
 :::
 
@@ -34,8 +35,8 @@ weights package version therefore follows the release instead of the model's own
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| Release             | `10.6.0`                                                              |
-| Model version       | `10.1.0` — the Latin base, v7.2.0-address-systems step 60,000         |
+| Release             | `10.7.0`                                                              |
+| Model version       | `10.7.0` — the Latin base, v7.10.0-gb-county seed 42 step 60,000      |
 | Node floor          | `>=24.18.0` (the `engines` field on the `mailwoman` entry package)    |
 | Module format       | ESM only                                                              |
 | License             | `AGPL-3.0-only OR LicenseRef-Commercial`                              |
@@ -76,7 +77,7 @@ Seven files account for most of the size:
 
 | File                               | Bytes      | Size    | What it is                           |
 | ---------------------------------- | ---------- | ------- | ------------------------------------ |
-| `model.onnx`                       | 39,452,103 | 39.5 MB | The int8-quantized model, opset 17   |
+| `model.onnx`                       | 39,452,876 | 39.5 MB | The int8-quantized model, opset 17   |
 | `fst-en-us.bin`                    | 21,757,160 | 21.8 MB | The gazetteer prior index            |
 | `locality-surface-lexicon-v7.json` | 8,633,963  | 8.6 MB  | Locality surface forms               |
 | `postcode-us.bin`                  | 1,904,322  | 1.9 MB  | The US postcode anchor table         |

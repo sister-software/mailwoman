@@ -20,7 +20,7 @@
 {"raw": "The Wing, Bletchley Park, Milton Keynes, MK3 6EB", "class": "wing-name", "must_not": "unit"}
 {"raw": "Campus Drive, Irvine, CA 92612", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "200 Arcade Avenue, Elkhart, IN 46516", "class": "designator-as-street", "must_not": "unit"}
-{"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit", "xfail": "The 10.1.0 model (v7.2.0) emits unit='Concourse', reading the street name's first word as a designator. Tracked in #2439."}
+{"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "1 Building Society Place, Leeds, LS1 4AR", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "Enclosure Road, Southampton, SO14 0AA", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "12 East Gate, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
