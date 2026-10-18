@@ -53,7 +53,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(verdict.excluded).toEqual([])
 		expect(verdict.abstained).toEqual([])
 		// 94103's codex shape is [us, de, fr]; the US country signal narrows it to exactly ["US"].
-		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
+		expect(roots[0]!.metadata?.["postcode_shape_countries"]).toEqual(["US"])
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(verdict.narrowing).toEqual(["US"])
 	})
@@ -77,7 +77,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(onNode.placeID).toBe(offNode.placeID)
 		expect(onNode.lat).toBe(offNode.lat)
 		expect(onNode.source).toBe(offNode.source)
-		expect(onNode.metadata?.["postcode_shape_systems"]).toEqual(["US"])
+		expect(onNode.metadata?.["postcode_shape_countries"]).toEqual(["US"])
 	})
 
 	it("confirms a DE/FR shape-native 5-digit span — M-1 finding #1, the documented limit", () => {
@@ -98,7 +98,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 
 		// PR is a USPS state-or-territory abbreviation, so the Puerto Rico token is a US-system signal.
 		expect(verdict.confirmed).toEqual(["00716"])
-		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
+		expect(roots[0]!.metadata?.["postcode_shape_countries"]).toEqual(["US"])
 	})
 })
 
@@ -194,13 +194,23 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 		expect(roots[0]!.tag).toBe("postcode")
 	})
 
-	it("abstains on a shape no codex system recognizes", () => {
-		// An empty candidate set is no evidence either way.
+	it("excludes a span the named country's postcode syntax refuses", () => {
+		// libaddressinput states a syntax for the United States, and `1200 02` does not have it.
 		const roots = [postcodeNode("1200 02"), node({ tag: "country", value: "United States" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
-		expect(verdict.abstained).toEqual(["1200 02"])
+		expect(verdict.excluded).toEqual(["1200 02"])
+		expect(roots[0]!.metadata?.["postcode_shape_excluded"]).toBe(true)
+	})
+
+	it("confirms a country outside the ten address systems by its libaddressinput syntax", () => {
+		const roots = [postcodeNode("8320000"), node({ tag: "country", value: "Chile" })]
+
+		const verdict = applyPostcodeShapeCoherence(roots)
+
+		expect(verdict.confirmed).toEqual(["8320000"])
+		expect(verdict.narrowing).toEqual(["CL"])
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
