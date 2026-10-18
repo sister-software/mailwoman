@@ -282,7 +282,7 @@ describe("readTuples (adapter canonical rows)", () => {
 		const file = await write([canonicalRow("gb-os-open", "LS1 1BA"), canonicalRow("gb-os-open", "LS2 7HZ", "")])
 
 		const tuples = await readTuples(
-			{ canonicalRows: file, canonicalSource: "gb-os-open", regionOfPostcode: () => () => "England" },
+			{ canonicalRows: file, canonicalSource: "gb-os-open", regionOfPostcode: async () => () => "England" },
 			() => 0
 		)
 

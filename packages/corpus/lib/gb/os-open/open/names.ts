@@ -171,6 +171,47 @@ export async function* readOpenNamesRoads(
 }
 
 /**
+ * The `LOCAL_TYPE` of the one Open Names entry OS publishes for each unit postcode.
+ */
+const OPEN_NAMES_POSTCODE_TYPE = "Postcode"
+
+/**
+ * One unit postcode of OS Open Names with the county or unitary authority holding it.
+ */
+export interface OpenNamesPostcodeCounty {
+	/**
+	 * The postcode as OS writes it in `NAME1`, such as `ME14 1JH`.
+	 */
+	postcode: string
+	/**
+	 * The `COUNTY_UNITARY` name, such as `Kent`, or an empty string where OS records none.
+	 */
+	countyUnitary: string
+}
+
+/**
+ * Streams the unit-postcode rows of one Open Names CSV with their county or unitary authority.
+ */
+export async function* readOpenNamesPostcodeCounties(
+	csvPath: string,
+	stats: OpenNamesReadStats
+): AsyncGenerator<OpenNamesPostcodeCounty> {
+	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, { header: false })) {
+		stats.read++
+
+		if (row.length !== OPEN_NAMES_COLUMNS.length) {
+			stats.malformed++
+
+			continue
+		}
+
+		if (row[column.LOCAL_TYPE] !== OPEN_NAMES_POSTCODE_TYPE) continue
+
+		yield { postcode: row[column.NAME1]!.trim(), countyUnitary: row[column.COUNTY_UNITARY]!.trim() }
+	}
+}
+
+/**
  * The settlement's first-listed name from a `POPULATED_PLACE` value.
  *
  * OS writes a bilingual settlement as `<NAME1> / <NAME2>`, and NAME1 is the form the adapter emits.
