@@ -17,7 +17,7 @@ import {
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
-import { PostcodePrefixIndexResolver } from "@mailwoman/neural/postcode/prefix-index"
+import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix-index"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 

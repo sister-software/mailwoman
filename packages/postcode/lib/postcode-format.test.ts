@@ -6,16 +6,21 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#resolver/postcode-format"
+import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#postcode-format"
 
 describe("countryFromPostcodeFormat", () => {
 	it.each([
 		["E4 9AZ", "GB"],
+		["SW1A 1AA", "GB"],
+		["IG5 0NA", "GB"],
 		["E49AZ", "GB"],
+		["  CH43 0TR  ", "GB"],
 		["BT1 5GS", "GB"],
 		["K2P 1L4", "CA"],
+		["M5J 2J2", "CA"],
 		["V6C0C3", "CA"],
 		["D02 AF30", "IE"],
+		["T12 X70A", "IE"],
 		["V94T2XR", "IE"],
 		["D6W XY00", "IE"],
 	])("reads %s as %s", (postcode, country) => {
@@ -29,7 +34,7 @@ describe("countryFromPostcodeFormat", () => {
 		}
 	)
 
-	it.each([undefined, "", "   "])("declines %s", (postcode) => {
+	it.each([undefined, null, "", "   "])("declines %s", (postcode) => {
 		expect(countryFromPostcodeFormat(postcode)).toBeNull()
 	})
 })

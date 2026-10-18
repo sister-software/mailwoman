@@ -12,6 +12,7 @@
 	"references": [
 		{ "path": "../ancestrie" },
 		{ "path": "../core" },
+		{ "path": "../postcode" },
 		{ "path": "../codex" },
 		{ "path": "../locale-hint" },
 		{ "path": "../normalize" },

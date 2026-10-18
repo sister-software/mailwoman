@@ -44,12 +44,9 @@ import type {
 	Resolver,
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
-import {
-	countriesFromPostcodeFormat,
-	countryFromPostcodeFormat,
-	RESOLVE_SWITCH_DEFAULTS,
-} from "@mailwoman/core/resolver"
+import { RESOLVE_SWITCH_DEFAULTS } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
+import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"

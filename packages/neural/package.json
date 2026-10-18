@@ -102,6 +102,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.5.0",

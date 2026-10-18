@@ -6,9 +6,9 @@
  *   Resolves declared forks and venue names against the POI database.
  */
 
-import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
+import { isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
 

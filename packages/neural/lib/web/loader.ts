@@ -7,9 +7,11 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
 import { startEarly } from "@mailwoman/core/promises"
+import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix-index"
 
 import { parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
+import { type AnchorLookup, anchorLookupFromPostcodes, mergeAnchorLookups } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier"
 import {
@@ -28,8 +30,6 @@ import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import type { PairIndexResolver } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { createAnchorRegionLookup } from "#postcode/anchor/regions"
-import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
-import { PostcodePrefixIndexResolver } from "#postcode/prefix-index"
 import { MailwomanTokenizer } from "#tokenizer"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
@@ -290,7 +290,7 @@ async function loadPostcodeAnchorLookup(
 	const settled = await Promise.all(
 		urls.map(async (url): Promise<AnchorLookup | null> => {
 			try {
-				return new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
+				return anchorLookupFromPostcodes(new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).groups())
 			} catch (error) {
 				console.warn(
 					`[@mailwoman/neural/web/loader] optional postcode anchor binary skipped: ${url} — ` +

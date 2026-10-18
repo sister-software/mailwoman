@@ -22,10 +22,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
+import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -158,7 +158,7 @@ export function componentsForIDERecord(
 	}
 
 	const postcode = present(record.codigo_postal)
-	const matched = postcode ? matchCountryPostcode(postcode, "UY") : null
+	const matched = postcode ? acceptPostcode(postcode, "UY") : null
 
 	if (matched) {
 		components.postcode = matched

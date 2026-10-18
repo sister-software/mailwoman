@@ -17,10 +17,10 @@
  *   undetected system parses exactly as before.
  */
 
+import type { SystemCode } from "#address/system-code"
 import type { ComponentTag } from "#component"
 import { CODE_POSTAL_PATTERN } from "#fr/code-postal"
 import { UK_POSTCODE_PATTERN } from "#gb/postcode"
-import type { SystemCode } from "#postcode/systems"
 
 export interface AddressSystemConventions {
 	readonly forbiddenTags?: readonly ComponentTag[]

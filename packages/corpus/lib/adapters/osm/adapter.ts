@@ -11,10 +11,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { countryPostcodeFormat, matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
+import { postcodeSyntax, acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
@@ -205,14 +205,14 @@ export function componentsForOSMRow(
 	if (postcode) {
 		// The country's own format decides, so Argentina's `C1425ABC`, Brunei's `BS8811` and Chile's
 		// seven digits stay postcodes, and a value outside the country's form is dropped by name.
-		const matched = matchCountryPostcode(postcode, country)
+		const matched = acceptPostcode(postcode, country)
 
 		if (matched) {
 			components.postcode = matched
 		} else {
 			countDropped(
 				tally,
-				countryPostcodeFormat(country) ? "component:postcode:not-country-format" : "component:postcode:country-has-none"
+				postcodeSyntax(country) ? "component:postcode:not-country-format" : "component:postcode:country-has-none"
 			)
 		}
 	}

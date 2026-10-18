@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix-index"
 import { describe, expect, it } from "vitest"
 
 import { createAnchorRegionLookup, prefixForLevel } from "#postcode/anchor/regions"
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } from "#postcode/prefix-index"
 
 const US = { placetype: "country", wofID: 85_633_793, name: "United States" }
 const VERMONT = { placetype: "region", wofID: 85_688_763, name: "Vermont" }

@@ -4,20 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Round-trip tests for the browser flat-binary postcode resolver: serialize entries, load the
- *   bytes. Assert exact-match, multi-country runs, coordinate-less membership and quantization
+ *   bytes. Assert exact-match, multi-country runs, coordinate-less membership, grouping and quantization
  *   fidelity.
- *   The suite also confirms `extractPostcodeAnchors` works through the `PostcodeResolver` interface,
- *   so the wasm resolver is a drop-in for the SQLite one.
  */
 
 import { describe, expect, it } from "vitest"
 
-import {
-	extractPostcodeAnchors,
-	PostcodeBinaryResolver,
-	serializePostcodeBinary,
-	type PostcodeBinaryEntry,
-} from "#postcode"
+import { PostcodeBinaryResolver, serializePostcodeBinary, type PostcodeBinaryEntry } from "#binary-resolver"
 
 const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "94105", country: "US", lat: 37.789, lon: -122.396 },
@@ -72,11 +65,11 @@ describe("PostcodeBinaryResolver", () => {
 		expect(resolver().lookup("THISISWAYTOOLONG")).toEqual([])
 	})
 
-	it("is a drop-in PostcodeResolver: extractPostcodeAnchors works through it", () => {
-		const [a] = extractPostcodeAnchors("Damrak 70, 1012 LM Amsterdam", resolver())
-		expect(a!.normalized).toBe("1012LM")
-		expect(a!.posterior).toEqual({ NL: 1 })
-		expect(a!.confidence).toBe(1)
-		expect(a!.candidates[0]!.country).toBe("NL")
+	it("groups every place under its postcode, in key order", () => {
+		const groups = [...resolver().groups()]
+
+		expect(groups.map((g) => g.postcode)).toEqual(["1012LM", "75008", "80144", "94105"])
+		expect(groups.find((g) => g.postcode === "75008")!.places.map((p) => p.country)).toEqual(["FR", "US"])
+		expect(groups.find((g) => g.postcode === "80144")!.places).toEqual([{ country: "IT", lat: 0, lon: 0 }])
 	})
 })

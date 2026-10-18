@@ -1,4 +1,5 @@
 import type { PostcodePlace } from "@mailwoman/core/resolver"
+import { PostcodeBinaryResolver, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -77,6 +78,19 @@ describe("extractPostcodeAnchors", () => {
 		expect(a!.posterior).toEqual({ IT: 1 })
 		expect(a!.confidence).toBe(1)
 		expect(a!.candidates).toEqual([])
+	})
+
+	it("reads a PCB1 binary through the same PostcodeResolver interface", () => {
+		const binary = new PostcodeBinaryResolver(
+			serializePostcodeBinary([{ postcode: "1012LM", country: "NL", lat: 52.375, lon: 4.9 }])
+		)
+
+		const [a] = extractPostcodeAnchors("Damrak 70, 1012 LM Amsterdam", binary)
+
+		expect(a!.normalized).toBe("1012LM")
+		expect(a!.posterior).toEqual({ NL: 1 })
+		expect(a!.confidence).toBe(1)
+		expect(a!.candidates[0]!.country).toBe("NL")
 	})
 
 	it("normalizes the German D- prefix before resolving", () => {

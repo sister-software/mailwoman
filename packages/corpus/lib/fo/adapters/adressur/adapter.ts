@@ -26,10 +26,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -118,7 +118,7 @@ export function componentsForAdressurRecord(
 	}
 
 	const postcode = present(record.zip)
-	const matched = postcode ? matchCountryPostcode(postcode, "FO") : null
+	const matched = postcode ? acceptPostcode(postcode, "FO") : null
 
 	if (matched) {
 		components.postcode = matched

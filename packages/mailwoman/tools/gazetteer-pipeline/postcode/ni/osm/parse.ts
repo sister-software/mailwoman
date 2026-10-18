@@ -16,7 +16,7 @@
  *      mean.
  */
 
-import { normalizePostcodeDisplay } from "@mailwoman/codex/postcode/display-form"
+import { normalizePostcodeDisplay } from "@mailwoman/postcode/display-form"
 import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
 
 import type { OverpassElement, OverpassResponse } from "#gazetteer/postcode/ni/osm/fetch"

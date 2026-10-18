@@ -16,16 +16,12 @@ import {
 	type PipelineTiming,
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
-import {
-	type RegionDatabases,
-	type ResolveNodeTrace,
-	type Resolver,
-	countriesFromPostcodeFormat,
-} from "@mailwoman/core/resolver"
+import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"

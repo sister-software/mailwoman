@@ -25,6 +25,7 @@
 				"packages/kind-classifier",
 				"packages/libpostal",
 				"packages/locale-hint",
+				"packages/postcode",
 				"packages/mailwoman",
 				"packages/map-tui",
 				"packages/match",

@@ -14,6 +14,7 @@ import {
 	anchoredPostcodeSpans,
 	anchoredRegionIDs,
 	anchorFeatureVector,
+	anchorLookupFromPostcodes,
 	buildAnchorFeatures,
 	countShapedOnlyKeys,
 	shapedKeyerObligationViolation,
@@ -22,6 +23,29 @@ import {
 } from "#anchor-inference"
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import type { TokenizedPiece } from "#tokenizer"
+
+describe("anchorLookupFromPostcodes", () => {
+	it("weights each member country 1 and averages only the non-zero places", () => {
+		const lookup = anchorLookupFromPostcodes([
+			{
+				postcode: "75008",
+				places: [
+					{ country: "FR", lat: 48.873, lon: 2.313 },
+					{ country: "US", lat: 33.02, lon: -96.83 },
+					{ country: "IT", lat: 0, lon: 0 },
+				],
+			},
+			{ postcode: "80144", places: [{ country: "IT", lat: 0, lon: 0 }] },
+		])
+
+		const shared = lookup.get("75008")!
+
+		expect(shared.posterior).toEqual({ FR: 1, US: 1, IT: 1 })
+		expect(shared.lat).toBeCloseTo((48.873 + 33.02) / 2, 6)
+		expect(shared.lon).toBeCloseTo((2.313 - 96.83) / 2, 6)
+		expect(lookup.get("80144")).toEqual({ posterior: { IT: 1 }, lat: 0, lon: 0 })
+	})
+})
 
 describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () => {
 	it("locale order matches Python LOCALE_COUNTRIES", () => {

@@ -10,6 +10,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
+import type { PostcodeBinaryGroup } from "@mailwoman/postcode/binary-resolver"
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
@@ -72,6 +73,43 @@ export function parseAnchorLookup(
 
 	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) {
 		out.set(pc, { posterior, lat, lon })
+	}
+
+	return out
+}
+
+/**
+ * Builds an anchor lookup from postcode groups, such as `PostcodeBinaryResolver.groups()` yields.
+ *
+ * Each member country gets weight 1.
+ * The centroid is the mean of the group's non-zero places.
+ * A postcode with no non-zero place gets `0, 0`.
+ */
+export function anchorLookupFromPostcodes(groups: Iterable<PostcodeBinaryGroup>): AnchorLookup {
+	const out: AnchorLookup = new Map()
+
+	for (const { postcode, places } of groups) {
+		const posterior: Record<string, number> = {}
+		let latSum = 0
+		let lonSum = 0
+		let centroidCount = 0
+
+		for (const place of places) {
+			posterior[place.country] = 1
+
+			if (place.lat !== 0 || place.lon !== 0) {
+				latSum += place.lat
+				lonSum += place.lon
+
+				centroidCount++
+			}
+		}
+
+		out.set(postcode, {
+			posterior,
+			lat: centroidCount ? latSum / centroidCount : 0,
+			lon: centroidCount ? lonSum / centroidCount : 0,
+		})
 	}
 
 	return out

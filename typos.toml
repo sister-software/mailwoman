@@ -47,7 +47,7 @@ extend-exclude = [
 	# These modules are generated from models or language registries.
 	"packages/registry/lib/models/*-gbt-en-us.ts",
 	"packages/codex/lib/country/official-languages.ts",
-	"packages/codex/lib/postcode/country-formats/data.ts",
+	"packages/postcode/lib/country-formats/data.ts",
 	"packages/core/lib/resources/languages/types.gen.ts",
 ]
 

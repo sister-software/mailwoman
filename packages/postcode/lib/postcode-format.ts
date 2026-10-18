@@ -5,7 +5,7 @@
  *
  *   Which countries a postcode's format is consistent with.
  *
- * `@mailwoman/codex/postcode/shapes` owns the character patterns, including the anchored forms this
+ * `@mailwoman/postcode/shapes` owns the character patterns, including the anchored forms this
  * module tests. What belongs here is the policy on top of them: which shapes are distinctive enough
  * across all jurisdictions to stand as country evidence, and in which calling context.
  *
@@ -19,7 +19,7 @@
  * no platform dependency. `geocode-core` re-exports these functions for its consumers and tests.
  */
 
-import { wholePostcodeShape } from "@mailwoman/codex/postcode/shapes"
+import { wholePostcodeShape } from "#shapes"
 
 /**
  * Shapes that identify a country unambiguously, by their codex label.

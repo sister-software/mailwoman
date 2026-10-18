@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate `@mailwoman/codex`'s per-country postcode formats from libaddressinput's `zip` pattern and the
+ *   Generate `@mailwoman/postcode`'s per-country postcode formats from libaddressinput's `zip` pattern and the
  *   literal its `fmt` prints ahead of `%Z` (`MD-%Z`, `AX-%Z`), so the table is derived rather than transcribed.
  *
- *   Usage: `node packages/mailwoman/tools/dev-tools/codex/postcode-formats.ts`
+ *   Usage: `node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts`
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -84,7 +84,7 @@ const emitted = `/**
  * @author Teffen Ellis, et al.
  * @generated
  *
- *   generated — run \`node packages/mailwoman/tools/dev-tools/codex/postcode-formats.ts\` to refresh. Do not edit by hand.
+ *   generated — run \`node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts\` to refresh. Do not edit by hand.
  *
  *   One postcode format per country that libaddressinput states one for: its \`zip\` pattern, and the country-code
  *   prefix its \`fmt\` prints ahead of the postcode. A country absent here states no postcode.
@@ -112,7 +112,7 @@ ${entries.join("\n")}
 }
 `
 
-const outPath = resolvePackageDirectory("@mailwoman/codex")("lib", "postcode", "country-formats", "data.ts")
+const outPath = resolvePackageDirectory("@mailwoman/postcode")("lib", "country-formats", "data.ts")
 
 await writeLocalTextFile(emitted, outPath)
 

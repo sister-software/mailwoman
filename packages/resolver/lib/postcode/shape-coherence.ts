@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/codex"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/postcode/systems"
 
 const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
 

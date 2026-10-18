@@ -13,11 +13,13 @@ import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseGazetteerLexicon } from "@mailwoman/neural"
+import { anchorLookupFromPostcodes } from "@mailwoman/neural/anchor-inference"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/address-point-schema"
+import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -208,9 +210,11 @@ export async function frParseRecall(
 
 		const card = await readLocalJSONFile<{ labels: string[] }>(args.modelCard)
 
-		const anchor = new PostcodeBinaryResolver(
-			await readLocalBuffer(await resolveWeightsSibling("postcode-us.bin", options.weightsCache))
-		).toAnchorLookup()
+		const anchor = anchorLookupFromPostcodes(
+			new PostcodeBinaryResolver(
+				await readLocalBuffer(await resolveWeightsSibling("postcode-us.bin", options.weightsCache))
+			).groups()
+		)
 
 		const lexiconPath = await resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
 		const lexicon = parseGazetteerLexicon(await readLocalJSONFile(lexiconPath))

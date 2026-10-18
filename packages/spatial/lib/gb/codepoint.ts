@@ -7,7 +7,7 @@
  *   coordinates to WGS84.
  */
 
-import { normalizePostcodeDisplay } from "@mailwoman/codex/postcode/display-form"
+import { normalizePostcodeDisplay } from "@mailwoman/postcode/display-form"
 import { CSVSpliterator } from "spliterator"
 
 import { osgb36ToWGS84 } from "#osgb36"

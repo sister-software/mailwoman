@@ -22,8 +22,6 @@ export {
 
 export type { ReferentiallyRankable } from "#resolver/referential"
 
-export { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#resolver/postcode-format"
-
 export { AuthoritativeMatchStatus, AuthoritativeResponseStatus } from "#resolver/authoritative-provider"
 
 export type {

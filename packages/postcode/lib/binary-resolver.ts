@@ -6,7 +6,13 @@
 
 import type { PostcodePlace } from "@mailwoman/core/resolver"
 
-import type { AnchorLookup } from "#anchor-inference"
+/**
+ * One postcode in a PCB1 binary with every place recorded for it.
+ */
+export interface PostcodeBinaryGroup {
+	readonly postcode: string
+	readonly places: readonly PostcodePlace[]
+}
 
 const MAGIC = 0x31_42_43_50
 
@@ -193,14 +199,9 @@ export class PostcodeBinaryResolver {
 	}
 
 	/**
-	 * Decodes the whole binary into an anchor lookup that maps each postcode to its
-	 * member countries and the mean of its non-zero centroids.
-	 *
-	 * Each member country gets weight 1.
-	 * A postcode with no non-zero centroid gets `0, 0`.
+	 * Yields every postcode in key order with the places recorded for it, one group per postcode.
 	 */
-	toAnchorLookup(): AnchorLookup {
-		const out: AnchorLookup = new Map()
+	*groups(): Generator<PostcodeBinaryGroup> {
 		let i = 0
 
 		while (i < this.#count) {
@@ -214,10 +215,7 @@ export class PostcodeBinaryResolver {
 				postcode += String.fromCharCode(c)
 			}
 
-			const posterior: Record<string, number> = {}
-			let latSum = 0
-			let lonSum = 0
-			let centroidCount = 0
+			const places: PostcodePlace[] = []
 			let k = i
 
 			for (; k < this.#count; k++) {
@@ -234,27 +232,17 @@ export class PostcodeBinaryResolver {
 
 				if (!same) break
 				const tail = base + this.#keyWidth
-				posterior[this.#countries[this.#buf[tail]!]!] = 1
-				const lat = dequantizeCoordinate(this.#view.getInt16(tail + 1, true), LAT_Q)
-				const lon = dequantizeCoordinate(this.#view.getInt16(tail + 3, true), LON_Q)
 
-				if (lat !== 0 || lon !== 0) {
-					latSum += lat
-					lonSum += lon
-
-					centroidCount++
-				}
+				places.push({
+					country: this.#countries[this.#buf[tail]!]!,
+					lat: dequantizeCoordinate(this.#view.getInt16(tail + 1, true), LAT_Q),
+					lon: dequantizeCoordinate(this.#view.getInt16(tail + 3, true), LON_Q),
+				})
 			}
 
-			out.set(postcode, {
-				posterior,
-				lat: centroidCount ? latSum / centroidCount : 0,
-				lon: centroidCount ? lonSum / centroidCount : 0,
-			})
+			yield { postcode, places }
 
 			i = k
 		}
-
-		return out
 	}
 }

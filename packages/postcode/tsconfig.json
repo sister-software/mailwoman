@@ -1,0 +1,21 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
+	},
+	"include": ["./lib/**/*", "./lib/shapes.json"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{
+			"path": "../codex"
+		},
+		{
+			"path": "../core"
+		}
+	]
+}

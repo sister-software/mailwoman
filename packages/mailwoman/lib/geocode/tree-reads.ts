@@ -8,7 +8,7 @@
 
 import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
+import { countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 
 /**
  * Returns the uppercased first `resolver_country` stamp in the tree, or null when no node has one.

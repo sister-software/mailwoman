@@ -22,6 +22,7 @@
 		{ "path": "../coastal" },
 		{ "path": "../coastal/sdk" },
 		{ "path": "../core" },
+		{ "path": "../postcode" },
 		{ "path": "../core/tools" },
 		{ "path": "../filer" },
 		{ "path": "../filer/sdk" },

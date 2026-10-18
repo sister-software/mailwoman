@@ -11,12 +11,12 @@
  *   four-digit value in a six-digit country is not.
  */
 
-import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#postcode/country-formats/data"
+import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 
 /**
  * One country's postcode format, compiled.
  */
-export interface CountryPostcodeFormat {
+export interface PostcodeSyntax {
 	/**
 	 * The anchored, case-insensitive pattern a whole postcode matches.
 	 */
@@ -27,7 +27,7 @@ export interface CountryPostcodeFormat {
 	readonly prefix: string | null
 }
 
-const compiled = new Map<string, CountryPostcodeFormat | null>()
+const compiled = new Map<string, PostcodeSyntax | null>()
 
 /**
  * The postcode format libaddressinput states for `countryCode`, or null when it states none.
@@ -35,7 +35,7 @@ const compiled = new Map<string, CountryPostcodeFormat | null>()
  * A null answer means the dataset records no postcode system for the country,
  * as for the United Arab Emirates.
  */
-export function countryPostcodeFormat(countryCode: string): CountryPostcodeFormat | null {
+export function postcodeSyntax(countryCode: string): PostcodeSyntax | null {
 	const code = countryCode.toUpperCase()
 
 	if (compiled.has(code)) return compiled.get(code) ?? null
@@ -57,8 +57,8 @@ export function countryPostcodeFormat(countryCode: string): CountryPostcodeForma
  *
  * For a country with no stated format the answer is always null.
  */
-export function matchCountryPostcode(value: string, countryCode: string): string | null {
-	const format = countryPostcodeFormat(countryCode)
+export function acceptPostcode(value: string, countryCode: string): string | null {
+	const format = postcodeSyntax(countryCode)
 
 	if (!format) return null
 

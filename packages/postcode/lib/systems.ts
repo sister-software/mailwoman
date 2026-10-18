@@ -18,21 +18,17 @@
  *   membership for the finer call.
  */
 
-import { normalizeAuPostcode } from "#au"
-import { normalizeCaPostalCode } from "#ca"
-import { normalizePLZ } from "#de"
-import { normalizeCodigoPostal } from "#es"
-import { normalizeCodePostal } from "#fr"
-import { normalizeUkPostcode } from "#gb"
-import { normalizeCAP } from "#it"
-import { normalizeJpPostalCode } from "#jp"
-import { normalizeNZPostcode } from "#nz"
-import { isZipCode } from "#us"
-
-/**
- * A codex address-system code — the subpath under `@mailwoman/codex/<system>`.
- */
-export type SystemCode = "us" | "de" | "fr" | "es" | "it" | "ca" | "gb" | "jp" | "au" | "nz"
+import type { SystemCode } from "@mailwoman/codex/address/system-code"
+import { normalizeAuPostcode } from "@mailwoman/codex/au"
+import { normalizeCaPostalCode } from "@mailwoman/codex/ca"
+import { normalizePLZ } from "@mailwoman/codex/de"
+import { normalizeCodigoPostal } from "@mailwoman/codex/es"
+import { normalizeCodePostal } from "@mailwoman/codex/fr"
+import { normalizeUkPostcode } from "@mailwoman/codex/gb"
+import { normalizeCAP } from "@mailwoman/codex/it"
+import { normalizeJpPostalCode } from "@mailwoman/codex/jp"
+import { normalizeNZPostcode } from "@mailwoman/codex/nz"
+import { isZipCode } from "@mailwoman/codex/us"
 
 /**
  * Per-system membership test: each entry returns true when the string is accepted by that

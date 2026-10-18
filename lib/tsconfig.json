@@ -14,6 +14,7 @@
 		{ "path": "../packages/browser" },
 		// { "path": "../packages/license-worker" },
 		{ "path": "../packages/core" },
+		{ "path": "../packages/postcode" },
 		{ "path": "../packages/corpus" },
 		{ "path": "../packages/neural" },
 		{ "path": "../packages/sqlite" },

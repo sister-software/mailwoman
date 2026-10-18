@@ -30,14 +30,6 @@ export * as jp from "#jp"
 export * as levels from "#level-semantics"
 export * as nz from "#nz"
 
-export {
-	AREA_POSTCODE_FINER_THAN_LOCALITY,
-	areaPostcodeLeadsLocality,
-	candidateSystemsForPostcode,
-	isUnitGradePostcodeHit,
-	SYSTEM_CODES,
-	type SystemCode,
-	UNIT_GRADE_POSTCODE,
-} from "#postcode/systems"
+export type { SystemCode } from "#address/system-code"
 
 export * as us from "#us"
