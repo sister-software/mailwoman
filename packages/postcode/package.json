@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/postcode",
-	"version": "10.6.0",
+	"version": "10.7.0",
 	"description": "Postcode evidence: each country's postcode syntax, the spans in a line that have a postcode's shape, and the address systems a postcode's form admits.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
