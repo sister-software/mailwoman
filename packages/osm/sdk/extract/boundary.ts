@@ -102,6 +102,76 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 }
 
 /**
+ * One named administrative area at one `admin_level`, with its geometry.
+ */
+export interface OSMAdminArea {
+	name: string
+	adminLevel: string
+	osmID: string
+	/**
+	 * GeoJSON `Polygon` or `MultiPolygon`, lon/lat, holes included.
+	 */
+	geometry: ParsedGeometry
+}
+
+/**
+ * Build the ogrsql select+where for every named boundary at the given admin levels.
+ *
+ * Exported for unit testing — no `ogr2ogr` involved.
+ *
+ * @throws if a level falls outside {@link SAFE_ADMIN_LEVEL}, before any string concatenation happens.
+ */
+export function adminAreasQuery(adminLevels: readonly string[]): string {
+	if (!adminLevels.length) throw new Error("adminAreasQuery: no admin level given")
+
+	for (const level of adminLevels) {
+		if (!SAFE_ADMIN_LEVEL.test(level)) {
+			throw new Error(
+				`adminAreasQuery: adminLevel ${stringifyJSON(level)} must be 1-2 digits, got a value outside ${SAFE_ADMIN_LEVEL}`
+			)
+		}
+	}
+
+	return (
+		`SELECT osm_id, name, admin_level FROM ${BOUNDARY_LAYER} ` +
+		`WHERE boundary='administrative' AND admin_level IN (${adminLevels.map((level) => `'${level}'`).join(", ")}) ` +
+		`AND name IS NOT NULL`
+	)
+}
+
+/**
+ * Read every named administrative area at `adminLevels` out of `pbfPath`.
+ *
+ * A boundary the driver returns without an areal geometry (an unclosed relation in the extract) is skipped.
+ */
+export async function extractOSMAdminAreas(pbfPath: string, adminLevels: readonly string[]): Promise<OSMAdminArea[]> {
+	const sql = adminAreasQuery(adminLevels)
+	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
+	const areas: OSMAdminArea[] = []
+
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: Record<string, unknown>
+		geometry?: ParsedGeometry
+	}>(args, "osm admin areas")) {
+		const name = feature.properties?.["name"]
+		const geometry = feature.geometry
+
+		if (typeof name !== "string" || !name.trim()) continue
+
+		if (geometry?.type !== "Polygon" && geometry?.type !== "MultiPolygon") continue
+
+		areas.push({
+			name: name.trim(),
+			adminLevel: String(feature.properties?.["admin_level"] ?? ""),
+			osmID: String(feature.properties?.["osm_id"] ?? ""),
+			geometry,
+		})
+	}
+
+	return areas
+}
+
+/**
  * Read the one boundary matching `query` out of `pbfPath`.
  *
  * @throws when the extract holds no match or more than one.

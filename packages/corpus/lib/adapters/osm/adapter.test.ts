@@ -237,6 +237,47 @@ describe("componentsForOSMRow", () => {
 			"component:postcode:country-has-none": 1,
 		})
 	})
+
+	it("takes the containing boundary's name only where the mapper tagged no city or suburb", () => {
+		const dropped = new Map<string, number>()
+
+		expect(
+			componentsForOSMRow(
+				{
+					street: "Улица Николе Тесле",
+					number: "12",
+					boundary_locality: "Бечеј",
+					boundary_dependent_locality: "Центар",
+				},
+				"RS",
+				{ dropped }
+			)
+		).toEqual({ street: "Улица Николе Тесле", house_number: "12", locality: "Бечеј", dependent_locality: "Центар" })
+
+		// A tagged city wins over the boundary, and a boundary area that repeats the locality is no district.
+		expect(
+			componentsForOSMRow(
+				{
+					street: "Jalan Kiulap",
+					number: "5",
+					city: "Bandar Seri Begawan",
+					boundary_locality: "Mukim Gadong B",
+					boundary_dependent_locality: "Bandar Seri Begawan",
+				},
+				"BN",
+				{ dropped }
+			)
+		).toEqual({ street: "Jalan Kiulap", house_number: "5", locality: "Bandar Seri Begawan" })
+
+		expect(Object.fromEntries(dropped)).toEqual({ "kept:locality-from-boundary": 1 })
+	})
+
+	it("admits a streetless premise whose only locality is the containing boundary", () => {
+		expect(componentsForOSMRow({ number: "14", boundary_locality: "Kampong Kiulap" }, "BN")).toEqual({
+			house_number: "14",
+			locality: "Kampong Kiulap",
+		})
+	})
 })
 
 describe("osm adapter", () => {

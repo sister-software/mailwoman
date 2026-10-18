@@ -67,7 +67,7 @@
  *
  * A country whose codex `layoutForCountry` is `null` has no rendering to write the row in.
  * The row is refused with {@linkcode CORDISRefusal.CountryNoLayout} rather than rendered in another
- * country's order: 353 records over 37 countries, Ghana's 77 the most.
+ * country's order.
  *
  * ## The street line
  *

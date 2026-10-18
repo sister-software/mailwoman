@@ -4,6 +4,15 @@
 	"$aliases": "`aliases` holds the retired `synth-*` spelling from `RECIPE_SOURCES`, which archived corpora and the configs that target them store.",
 	"$history": "`history` records what a source read in corpora built before its producer changed inputs under the same id. The build and training checks read `inputs`; the release audit reads the entry naming the corpus a published model trained on.",
 	"sources": {
+		"adressur-fo": {
+			"inputs": [
+				{
+					"registerSource": "fo-property-building-1",
+					"license": "unchecked-access-free-fo-umhv-rvisstovan",
+					"reads": "Adressur í Føroyum, layer 0 `us_adr_husanr` of gis.us.fo, read whole on 2026-10-18"
+				}
+			]
+		},
 		"ads": {
 			"inputs": [
 				{
@@ -170,6 +179,15 @@
 					"registerSource": "lu-property-building-1",
 					"license": "unchecked-access-free-lu-administration-du-cadastre-et-de-la-topograph",
 					"reads": "BD-Adresses addresses.csv"
+				}
+			]
+		},
+		"bsp-gu": {
+			"inputs": [
+				{
+					"registerSource": "gu-property-building-1",
+					"license": "unchecked-corpus-input-gu-government-of-guam-bureau-of-statistics-and-p",
+					"reads": "the Government of Guam GISWEB Portal `Address_Point_(Public_View)` layer, read whole on 2026-10-18"
 				}
 			]
 		},
@@ -812,6 +830,15 @@
 				}
 			],
 			"authored": ["house numbers drawn from seeded bands in packages/corpus/lib/gb/adapters/os-open/adapter.ts"]
+		},
+		"gbpa-bs": {
+			"inputs": [
+				{
+					"registerSource": "bs-property-building-1",
+					"license": "unchecked-corpus-input-bs-grand-bahama-port-authority",
+					"reads": "the Grand Bahama Port Authority's `CSV/addresses.csv` from `GBPA/gis-datafiles`, retrieved 2026-10-18"
+				}
+			]
 		},
 		"gcis-tw": {
 			"inputs": [
@@ -1767,6 +1794,24 @@
 				}
 			]
 		},
+		"landregistry-im": {
+			"inputs": [
+				{
+					"registerSource": "im-property-building-1",
+					"license": "unchecked-corpus-input-im-isle-of-man-land-registry",
+					"reads": "the address columns of the Land Registry's `landtransactionsjan2025.csv`, from the Internet Archive's 2025-02-23 capture"
+				}
+			]
+		},
+		"llv-li": {
+			"inputs": [
+				{
+					"registerSource": "li-property-building-1",
+					"license": "unchecked-corpus-input-li-liechtensteinische-landesverwaltung",
+					"reads": "the Verzeichnis der Gebäudeadressen ZIP from service.geo.llv.li, retrieved 2026-10-18"
+				}
+			]
+		},
 		"localdata-kr": {
 			"inputs": [
 				{
@@ -1841,6 +1886,15 @@
 				}
 			]
 		},
+		"opendata-az": {
+			"inputs": [
+				{
+					"registerSource": "az-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-az-az-rbaycan-respublikas-n-n-ekologiya-v-t-bii",
+					"reads": "the objects-and-places GeoJSON of opendata.az dataset `azerbaycanda-obyektler-ve-mekanlar`, retrieved 2026-10-18"
+				}
+			]
+		},
 		"osm": {
 			"inputs": [
 				{
@@ -1859,12 +1913,30 @@
 				}
 			]
 		},
+		"osm-al": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AL"
+				}
+			]
+		},
 		"osm-am": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for AM"
+				}
+			]
+		},
+		"osm-ao": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AO"
 				}
 			]
 		},
@@ -1877,12 +1949,39 @@
 				}
 			]
 		},
+		"osm-aw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to AW"
+				}
+			]
+		},
+		"osm-az": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AZ"
+				}
+			]
+		},
 		"osm-ba": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for BA"
+				}
+			]
+		},
+		"osm-bb": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to BB"
 				}
 			]
 		},
@@ -1895,6 +1994,24 @@
 				}
 			]
 		},
+		"osm-bh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to BH"
+				}
+			]
+		},
+		"osm-bm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BM"
+				}
+			]
+		},
 		"osm-bn": {
 			"inputs": [
 				{
@@ -1904,12 +2021,57 @@
 				}
 			]
 		},
+		"osm-bs": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BS"
+				}
+			]
+		},
+		"osm-bt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BT"
+				}
+			]
+		},
+		"osm-bw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BW"
+				}
+			]
+		},
 		"osm-by": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for BY"
+				}
+			]
+		},
+		"osm-bz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BZ"
+				}
+			]
+		},
+		"osm-cd": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CD"
 				}
 			]
 		},
@@ -1940,6 +2102,69 @@
 				}
 			]
 		},
+		"osm-co": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CO"
+				}
+			]
+		},
+		"osm-cr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CR"
+				}
+			]
+		},
+		"osm-cu": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CU"
+				}
+			]
+		},
+		"osm-cw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to CW"
+				}
+			]
+		},
+		"osm-do": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik haiti-and-domrep extract, clipped to DO"
+				}
+			]
+		},
+		"osm-dz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for DZ"
+				}
+			]
+		},
+		"osm-ec": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for EC"
+				}
+			]
+		},
 		"osm-eg": {
 			"inputs": [
 				{
@@ -1955,6 +2180,60 @@
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for GE"
+				}
+			]
+		},
+		"osm-gg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik guernsey-jersey extract, clipped to GG"
+				}
+			]
+		},
+		"osm-gh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GH"
+				}
+			]
+		},
+		"osm-gl": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GL"
+				}
+			]
+		},
+		"osm-gt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GT"
+				}
+			]
+		},
+		"osm-hk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for HK"
+				}
+			]
+		},
+		"osm-ht": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik haiti-and-domrep extract, clipped to HT"
 				}
 			]
 		},
@@ -1976,12 +2255,75 @@
 				}
 			]
 		},
+		"osm-iq": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for IQ"
+				}
+			]
+		},
+		"osm-ir": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for IR"
+				}
+			]
+		},
+		"osm-je": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik guernsey-jersey extract, clipped to JE"
+				}
+			]
+		},
+		"osm-jm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for JM"
+				}
+			]
+		},
+		"osm-jo": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for JO"
+				}
+			]
+		},
+		"osm-ke": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for KE"
+				}
+			]
+		},
 		"osm-kg": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for KG"
+				}
+			]
+		},
+		"osm-kh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for KH"
 				}
 			]
 		},
@@ -2003,12 +2345,120 @@
 				}
 			]
 		},
+		"osm-lb": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LB"
+				}
+			]
+		},
+		"osm-lk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LK"
+				}
+			]
+		},
+		"osm-lr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LR"
+				}
+			]
+		},
+		"osm-ma": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MA"
+				}
+			]
+		},
 		"osm-md": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-17 Geofabrik extract for MD"
+				}
+			]
+		},
+		"osm-me": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ME"
+				}
+			]
+		},
+		"osm-mg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MG"
+				}
+			]
+		},
+		"osm-mk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MK"
+				}
+			]
+		},
+		"osm-mm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MM"
+				}
+			]
+		},
+		"osm-mn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MN"
+				}
+			]
+		},
+		"osm-mo": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MO"
+				}
+			]
+		},
+		"osm-mt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MT"
+				}
+			]
+		},
+		"osm-mv": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MV"
 				}
 			]
 		},
@@ -2021,6 +2471,24 @@
 				}
 			]
 		},
+		"osm-mz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MZ"
+				}
+			]
+		},
+		"osm-na": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for NA"
+				}
+			]
+		},
 		"osm-ng": {
 			"inputs": [
 				{
@@ -2030,12 +2498,48 @@
 				}
 			]
 		},
+		"osm-np": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for NP"
+				}
+			]
+		},
+		"osm-om": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to OM"
+				}
+			]
+		},
+		"osm-pa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PA"
+				}
+			]
+		},
 		"osm-pe": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-16 Geofabrik extract for PE"
+				}
+			]
+		},
+		"osm-pf": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PF"
 				}
 			]
 		},
@@ -2066,6 +2570,24 @@
 				}
 			]
 		},
+		"osm-py": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PY"
+				}
+			]
+		},
+		"osm-qa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to QA"
+				}
+			]
+		},
 		"osm-rs": {
 			"inputs": [
 				{
@@ -2084,12 +2606,129 @@
 				}
 			]
 		},
+		"osm-rw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for RW"
+				}
+			]
+		},
+		"osm-sa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to SA"
+				}
+			]
+		},
+		"osm-sm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-18 Geofabrik italy extract, clipped to SM"
+				}
+			]
+		},
+		"osm-sn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik senegal-and-gambia extract, clipped to SN"
+				}
+			]
+		},
+		"osm-sr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for SR"
+				}
+			]
+		},
+		"osm-sv": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for SV"
+				}
+			]
+		},
+		"osm-th": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TH"
+				}
+			]
+		},
+		"osm-tj": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TJ"
+				}
+			]
+		},
+		"osm-tm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TM"
+				}
+			]
+		},
+		"osm-tn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TN"
+				}
+			]
+		},
+		"osm-tt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to TT"
+				}
+			]
+		},
+		"osm-tz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TZ"
+				}
+			]
+		},
 		"osm-ua": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-17 Geofabrik extract for UA"
+				}
+			]
+		},
+		"osm-ug": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for UG"
 				}
 			]
 		},
@@ -2102,12 +2741,48 @@
 				}
 			]
 		},
+		"osm-ve": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for VE"
+				}
+			]
+		},
+		"osm-vi": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for VI"
+				}
+			]
+		},
 		"osm-vn": {
 			"inputs": [
 				{
 					"registerSource": "gb-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
 					"reads": "the 2026-10-02 Geofabrik extract for VN"
+				}
+			]
+		},
+		"osm-zm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ZM"
+				}
+			]
+		},
+		"osm-zw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ZW"
 				}
 			]
 		},

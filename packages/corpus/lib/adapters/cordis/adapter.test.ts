@@ -129,13 +129,17 @@ async function runOverCSV(options: { country?: string; limit?: number } = {}) {
 }
 
 describe("cordis adapter over published participation rows", () => {
-	it("writes the three organizations whose address it can place, under the license and register", async () => {
+	it("writes the four organizations whose address it can place, under the license and register", async () => {
 		const { manifest, rows } = await runOverCSV()
 
-		expect(manifest.yielded).toBe(3)
+		expect(manifest.yielded).toBe(4)
 
 		expect(rows.map((row) => row.raw).toSorted()).toEqual([
 			"EREVNITIKO PANEPISTIMIAKO INSTITOUTO SYSTIMATON EPIKOINONION KAI YPOLOGISTON, PATISION 42, 106 82 ATHINA",
+			// Ghana's layout is read from UPU's description.
+			// The participant typed its private mail bag into the postcode column,
+			// which this adapter keeps because the value holds a digit.
+			"FORUM FOR AGRICULTURAL RESEARCH IN AFRICA, GHANA, 12 ANMEDA STREET, ROMAN RIDGE, Accra PMB CT173",
 			// Switzerland's layout prints the `CH-` prefix itself.
 			"LUDWIG INSTITUT FUR KREBSFORSCHUNG AG, STADELHOFERSTRASSE 22, CH-8001 Zurich",
 			"THE UNIVERSITY OF HONG KONG, Pokfulam Road, Pokfulam",
@@ -163,7 +167,6 @@ describe("cordis adapter over published participation rows", () => {
 			[`row:${CORDISRefusal.StreetNumberUnplaced}`]: 2,
 			[`row:${CORDISRefusal.StreetDigitInRemainder}`]: 2,
 			[`row:${CORDISRefusal.CountryNotISO}`]: 1,
-			[`row:${CORDISRefusal.CountryNoLayout}`]: 1,
 			[`row:${CORDISRefusal.LocalityAbsent}`]: 1,
 		})
 	})
@@ -318,6 +321,15 @@ describe("readCORDISRecord", () => {
 			admitted: expect.objectContaining({ raw: "UNIVERSITY COLLEGE CORK, WESTERN ROAD, Cork" }),
 			discarded: ["component:postcode:no-digit"],
 		})
+	})
+
+	it("refuses a record in a country codex holds no layout for", () => {
+		const reading = readCORDISRecord(
+			{ name: "UNIVERSITE D'ABOMEY-CALAVI", street: "01 BP 526", postCode: "", city: "Cotonou", country: "BJ" },
+			lexicon
+		)
+
+		expect(reading).toEqual({ refused: CORDISRefusal.CountryNoLayout, country: "BJ" })
 	})
 
 	it("refuses a record whose only postcode the country's layout does not print", () => {

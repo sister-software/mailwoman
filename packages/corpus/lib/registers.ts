@@ -60,6 +60,34 @@ export const SourceRegister = {
 	 */
 	UruguayIDEDirecciones: "uy-ide-direcciones",
 	/**
+	 * The `Verzeichnis der Gebäudeadressen`, Liechtenstein's official building-address index,
+	 * which the Landesverwaltung publishes on service.geo.llv.li under its ABI/OGD license.
+	 */
+	LiechtensteinGebaeudeadressen: "li-llv-gebaeudeadressen",
+	/**
+	 * `Adressur í Føroyum`, the Faroese national address register Umhvørvisstovan serves from gis.us.fo.
+	 */
+	FaroeAdressur: "fo-us-adressur",
+	/**
+	 * The Isle of Man Land Registry's `Land transactions` file, one row per registered sale,
+	 * published under the Isle of Man Open Government Licence.
+	 */
+	IsleOfManLandTransactions: "im-land-registry-transactions",
+	/**
+	 * The Grand Bahama Port Authority's Freeport address points, published on GitHub under CC BY 4.0.
+	 */
+	GrandBahamaPortAuthorityAddresses: "bs-gbpa-addresses",
+	/**
+	 * `Azərbaycanda obyektlər və məkanlar`, the objects-and-places points the Ministry
+	 * of Ecology and Natural Resources publishes on opendata.az under CC BY.
+	 */
+	AzerbaijanObjectsAndPlaces: "az-opendata-obyektler",
+	/**
+	 * The Government of Guam GISWEB Portal's `Address_Point_(Public_View)` layer,
+	 * from the Bureau of Statistics & Plans GIS.
+	 */
+	GuamAddressPoints: "gu-bsp-address-points",
+	/**
 	 * The INSPIRE Addresses theme of the Czech Office for Surveying, Mapping and Cadastre.
 	 *
 	 * ČÚZK publishes one zipped GML per municipality, 6,258 of them, through an ATOM service.

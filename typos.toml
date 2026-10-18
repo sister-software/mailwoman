@@ -133,6 +133,8 @@ extend-ignore-re = [
 	'''further investigations and modelling may be required''',
 	'''Myplan\.ie uses a \*\*generalised, homogenised version\*\*''',
 	'''Territory characterised according to its''',
+	# A place name as Azerbaijan's objects-and-places file spells it.
+	'''Busniss centre''',
 	# Building Digital UK's UPRN-level release names this column with its British spelling.
 	'''\bbduk_recognised_premises\b''',
 ]
@@ -179,6 +181,11 @@ alikes = "alikes"
 contextful = "contextful"
 # The accessibility audit tool.
 axe = "axe"
+# The Faroe Islands' ISO code inside source ids and locales (`adressur-fo`, `fo-FO`), Liechtenstein's
+# download theme `officialAdress`, and a Beninese university's name in a CORDIS fixture.
+fo = "fo"
+adress = "adress"
+universite = "universite"
 
 [default.extend-identifiers]
 # Standard codes, dependency names, and existing API identifiers retain their spelling.

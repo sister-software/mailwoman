@@ -42,7 +42,23 @@ export interface OSMCorpusRow {
 	country: string | null
 	lat: number
 	lon: number
+	/**
+	 * The name of the administrative area containing the point, at the levels
+	 * `--locality-level` names, written only where the record carries no `addr:city`.
+	 * Absent when no level was named.
+	 */
+	boundary_locality?: string | null
+	/**
+	 * The same, at the levels `--dependent-locality-level` names, written only
+	 * where the record carries no `addr:suburb`.
+	 */
+	boundary_dependent_locality?: string | null
 }
+
+/**
+ * Returns the name of the administrative area containing a point, or `null` when none does.
+ */
+export type AreaNamer = (lon: number, lat: number) => string | null
 
 export interface OSMCorpusJSONLStats {
 	/**
@@ -62,6 +78,14 @@ export interface OSMCorpusJSONLStats {
 	 * They are a subset of `written`.
 	 */
 	noStreet: number
+	/**
+	 * Rows written with a `boundary_locality`, or `null` when no locality level was named.
+	 */
+	localityFromBoundary: number | null
+	/**
+	 * Rows written with a `boundary_dependent_locality`, or `null` when no level was named.
+	 */
+	dependentLocalityFromBoundary: number | null
 	/**
 	 * Per-layer counts of the features the driver matched and the extract discarded before yielding.
 	 */
@@ -95,7 +119,17 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow {
 export async function writeOSMCorpusJSONL(
 	pbfPath: string,
 	outPath: PathBuilderLike,
-	opts: { within?: (lon: number, lat: number) => boolean } = {}
+	opts: {
+		within?: (lon: number, lat: number) => boolean
+		/**
+		 * Supplies the locality for a record without `addr:city`.
+		 */
+		localityOf?: AreaNamer
+		/**
+		 * Supplies the dependent locality for a record without `addr:suburb`.
+		 */
+		dependentLocalityOf?: AreaNamer
+	} = {}
 ): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))
 
@@ -106,6 +140,8 @@ export async function writeOSMCorpusJSONL(
 		written: 0,
 		noStreet: 0,
 		outsideOutline: opts.within ? 0 : null,
+		localityFromBoundary: opts.localityOf ? 0 : null,
+		dependentLocalityFromBoundary: opts.dependentLocalityOf ? 0 : null,
 		extract: {},
 	}
 
@@ -122,7 +158,25 @@ export async function writeOSMCorpusJSONL(
 			stats.noStreet++
 		}
 
-		await out.write(stringifyJSON(toCorpusRow(record)))
+		const row = toCorpusRow(record)
+
+		if (opts.localityOf) {
+			row.boundary_locality = record.city ? null : opts.localityOf(record.lon, record.lat)
+
+			if (row.boundary_locality) {
+				stats.localityFromBoundary!++
+			}
+		}
+
+		if (opts.dependentLocalityOf) {
+			row.boundary_dependent_locality = record.suburb ? null : opts.dependentLocalityOf(record.lon, record.lat)
+
+			if (row.boundary_dependent_locality) {
+				stats.dependentLocalityFromBoundary!++
+			}
+		}
+
+		await out.write(stringifyJSON(row))
 
 		stats.written++
 	}

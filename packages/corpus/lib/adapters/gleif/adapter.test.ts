@@ -303,12 +303,12 @@ describe("readGLEIFAddress", () => {
 	})
 
 	it("refuses a country codex has no layout for", () => {
-		const ghana = record({
-			name: "ACCRA LIMITED",
-			legal: { FirstAddressLine: "25A Castle Road", City: "Accra", Country: "GH", PostalCode: "GA-233" },
+		const benin = record({
+			name: "COTONOU SARL",
+			legal: { FirstAddressLine: "25 Rue du Commerce", City: "Cotonou", Country: "BJ" },
 		})
 
-		expect(readGLEIFAddress(ghana, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.CountryWithoutLayout })
+		expect(readGLEIFAddress(benin, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.CountryWithoutLayout })
 	})
 
 	it("refuses a region code naming another country", () => {
@@ -433,6 +433,6 @@ describe("gleif-lei adapter", () => {
 	})
 
 	it("refuses a country codex holds no layout for", async () => {
-		await expect(run([SLADOVNA], { country: "GH" })).rejects.toThrow(/gleif-lei/)
+		await expect(run([SLADOVNA], { country: "BJ" })).rejects.toThrow(/gleif-lei/)
 	})
 })

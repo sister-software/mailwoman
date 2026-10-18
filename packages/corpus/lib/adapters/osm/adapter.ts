@@ -72,6 +72,15 @@ interface OSMCorpusRow {
 	district?: string | null
 	province?: string | null
 	country?: string | null
+	/**
+	 * The containing administrative area's name, which `emit-corpus-jsonl --locality-level`
+	 * writes for a record without `addr:city`.
+	 */
+	boundary_locality?: string | null
+	/**
+	 * The same for a record without `addr:suburb`, from `--dependent-locality-level`.
+	 */
+	boundary_dependent_locality?: string | null
 }
 
 const MAX_STREET_WORDS = 8
@@ -213,19 +222,28 @@ export function componentsForOSMRow(
 
 	if (split) {
 		components.locality = split.locality
+	} else {
+		// The containing boundary's name stands in only where the mapper tagged no city,
+		// so a tagged value is never replaced by a position.
+		const boundary = clean(row.boundary_locality)
+
+		if (boundary) {
+			components.locality = boundary
+			countDropped(tally, "kept:locality-from-boundary")
+		}
 	}
 
-	// Dependent-locality candidates in priority order (suburb, subdistrict, district, place, city head);
-	// `district` never becomes `region`, because Vietnam's country template
-	// renders it only when no city is present.
-	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
+	// Dependent-locality candidates in priority order (suburb, subdistrict, district, place,
+	// city head, then the containing boundary's name); `district` never becomes `region`,
+	// because Vietnam's country template renders it only when no city is present.
+	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head, row.boundary_dependent_locality]
 		.map((value) => clean(value))
 		.find(
 			(value) =>
 				value !== null &&
 				!value.includes(",") &&
 				(street === null || !sameName(value, street)) &&
-				(split === null || !sameName(value, split.locality))
+				(!components.locality || !sameName(value, components.locality))
 		)
 
 	if (dependent) {
@@ -234,7 +252,7 @@ export function componentsForOSMRow(
 
 	const province = clean(row.province)
 
-	if (province && (!split || !sameName(province, split.locality))) {
+	if (province && (!components.locality || !sameName(province, components.locality))) {
 		components.region = province
 	}
 

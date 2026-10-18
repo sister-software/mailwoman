@@ -58,15 +58,22 @@ mailwoman corpus run osm \
 
 ## Field map
 
-| field                                                               | ComponentTag                                                          |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `number`                                                            | `house_number`, when designator-shaped (`12`, `14/E`, `188a`, `B-77`) |
-| `street`                                                            | `street`, when a name (no comma, at most eight words)                 |
-| `unit`                                                              | `unit`                                                                |
-| `postcode`                                                          | `postcode`, when it has the country's format (`matchCountryPostcode`) |
-| `city` (the part after the last comma)                              | `locality`                                                            |
-| `suburb` ?? `subdistrict` ?? `district` ?? `place` ?? the city head | `dependent_locality`                                                  |
-| `province`                                                          | `region`, unless it repeats the locality                              |
+| field                                                                                                | ComponentTag                                                          |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `number`                                                                                             | `house_number`, when designator-shaped (`12`, `14/E`, `188a`, `B-77`) |
+| `street`                                                                                             | `street`, when a name (no comma, at most eight words)                 |
+| `unit`                                                                                               | `unit`                                                                |
+| `postcode`                                                                                           | `postcode`, when it has the country's format (`matchCountryPostcode`) |
+| `city` (the part after the last comma) ?? `boundary_locality`                                        | `locality`                                                            |
+| `suburb` ?? `subdistrict` ?? `district` ?? `place` ?? the city head ?? `boundary_dependent_locality` | `dependent_locality`                                                  |
+| `province`                                                                                           | `region`, unless it repeats the locality                              |
+
+`boundary_locality` and `boundary_dependent_locality` are present only when `emit-corpus-jsonl` ran with
+`--locality-level` or `--dependent-locality-level`: the name of the `boundary=administrative` area at that
+level which contains the point, written only where the mapper tagged no `addr:city` (or `addr:suburb`).
+A tagged value always wins, and a row that took its locality from a boundary counts
+`kept:locality-from-boundary`. Serbia's settlements are level 9 and its city quarters level 10; Brunei's
+municipality is level 7, its mukims level 6 and its kampongs levels 10 and 8.
 
 A record with no `addr:street` is a streetless premise when its house number is designator-shaped and
 an `addr:place` or `addr:city` is present: `12, Ивановка, Тула` keeps `house_number`,

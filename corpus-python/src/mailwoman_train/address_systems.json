@@ -156,6 +156,10 @@
 		{
 			"id": 38,
 			"key": "po_box (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix unit) postcode locality"
+		},
+		{
+			"id": 39,
+			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality locality"
 		}
 	],
 	"members": [
@@ -172,7 +176,7 @@
 		{
 			"country": "AE",
 			"script": "local",
-			"system": 2
+			"system": 20
 		},
 		{
 			"country": "AF",
@@ -195,6 +199,11 @@
 			"system": 5
 		},
 		{
+			"country": "AO",
+			"script": "local",
+			"system": 39
+		},
+		{
 			"country": "AR",
 			"script": "local",
 			"system": 6
@@ -213,6 +222,11 @@
 			"country": "AU",
 			"script": "local",
 			"system": 7
+		},
+		{
+			"country": "AW",
+			"script": "local",
+			"system": 39
 		},
 		{
 			"country": "AX",
@@ -282,7 +296,7 @@
 		{
 			"country": "BS",
 			"script": "local",
-			"system": 12
+			"system": 20
 		},
 		{
 			"country": "BT",
@@ -300,6 +314,11 @@
 			"system": 6
 		},
 		{
+			"country": "BZ",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "CA",
 			"script": "local",
 			"system": 14
@@ -308,6 +327,11 @@
 			"country": "CC",
 			"script": "local",
 			"system": 7
+		},
+		{
+			"country": "CD",
+			"script": "local",
+			"system": 22
 		},
 		{
 			"country": "CH",
@@ -353,6 +377,11 @@
 			"country": "CV",
 			"script": "local",
 			"system": 6
+		},
+		{
+			"country": "CW",
+			"script": "local",
+			"system": 39
 		},
 		{
 			"country": "CX",
@@ -468,6 +497,11 @@
 			"country": "GG",
 			"script": "local",
 			"system": 0
+		},
+		{
+			"country": "GH",
+			"script": "local",
+			"system": 22
 		},
 		{
 			"country": "GI",
@@ -993,6 +1027,11 @@
 			"country": "RU",
 			"script": "local",
 			"system": 11
+		},
+		{
+			"country": "RW",
+			"script": "local",
+			"system": 13
 		},
 		{
 			"country": "SA",

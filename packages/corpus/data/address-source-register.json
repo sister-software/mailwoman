@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "39c4d91452586599cbaf099d0e50892662c6559e542680acff56f12a9b8f3d8b",
+	"contentDigest": "1692528a2e4a455b46589a13a0adea23f006ba393532e09d6cce69d99a287e9e",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -917,10 +917,48 @@
 			"licenseID": "unchecked-access-free-fi-suomen-ymp-rist-keskus"
 		},
 		{
-			"licenseID": "unchecked-access-free-fo-umhv-rvisstovan",
-			"state": "unchecked",
-			"publisherStatement": "Free",
-			"note": "An access label from the original memo: the download costs nothing. It states no grant. Scoped to Umhvørvisstovan in FO, so electing it grants that publisher's sources in that jurisdiction alone."
+			"state": "elected",
+			"electedTerms": "Umhvørvisstovan, Brúksrættur og treytir (June 2019)",
+			"termsVersion": "June 2019",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own terms are the grant. `https://www.foroyakort.fo/vevtænastur/` lists the address service under `Adressur` and links `Galdandi brúkstreytir`, `https://www.foroyakort.fo/um-foeroyakort/bruksraettur-og-treytir`, which reads `Umhvørvisstovan gevur øllum ókeypis og óavmarkaðan brúksrætt til dáturnar, sum m.a. frítt kunnu: avritast, deilast, almannakunngerast; broytast og samansetast við øðrum dátum; nýtast bæði vinnuligt og ikki-vinnuligt`. The English page, `https://www.foroyakort.fo/um-foeroyakort/terms-and-conditions-in-english`, reads `modifying and combining with othe data; commercial and non-commercial use`. `broytast` grants modification and `nýtast bæði vinnuligt` grants commercial use. The conditions are the credit `Data from the Faroese Environment Agency, Umhvørvisstovan: Adressur, <date>`, that the data not be used to imply the agency endorses the user, and that third parties receive the terms or a link to them. The site's note asking commercial users of cadastral maps (`matrikulkort`) to contact the cadastre department concerns the cadastre, not the address layer. The layer `us_adr_husanr` carries `copyrightText` `©Umhvørvisstovan`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `avritast` (copied), which is what reading the published layer performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `broytast og samansetast við øðrum dátum`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant modification (`broytast`). The adapter re-renders each address point as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant use `bæði vinnuligt og ikki-vinnuligt`, commercial and non-commercial, of data that may be modified."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `deilast, almannakunngerast`, conditioned on the credit and on passing the terms on."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the credit, the no-endorsement condition and the terms-link condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The terms grant commercial use and state no term about granting these rights onward."
+				}
+			},
+			"licenseID": "unchecked-access-free-fo-umhv-rvisstovan"
 		},
 		{
 			"licenseID": "unchecked-access-free-fr-fr-business-legal-1",
@@ -3045,6 +3083,94 @@
 		},
 		{
 			"state": "elected",
+			"electedTerms": "Creative Commons Attribution (version not stated)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own catalogue record is the grant. On opendata.az the dataset `azerbaycanda-obyektler-ve-mekanlar` sits in the organization `azerbaycan-respublikasinin-ekologiya-ve-tebii-servetler-nazirliyi` (the Ministry of Ecology and Natural Resources), with maintainer `Geodeziya və Kartoqrafiya Agentliyi`, and carries `license_id: cc-by`, `license_title: Creative Commons Attribution` and `license_url: http://www.opendefinition.org/licenses/cc-by`. The record's one resource is the GeoJSON the `opendata-az` adapter reads (5,083,497 bytes, matching the record's stated size). Every Creative Commons Attribution version grants adaptation and use for any purpose on the attribution condition. The record states no version, so no SPDX identifier is recorded.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants reproduction of the work."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants adaptation in every version."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants adaptation. The adapter re-renders each named place as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution places no restriction on the purpose of use in any version."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants distribution of the work and of adaptations, conditioned on attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition, whose wording differs between versions."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The record states no version, and the versions differ on how a recipient's licence arises."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-az-az-rbaycan-respublikas-n-n-ekologiya-v-t-bii"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own repository states the grant. The readme of `GBPA/gis-datafiles`, saved as `bs-gbpa-github-readme.md`, reads `The data supplied in the repo is provided by the Grand Bahama Port Authority (GBPA) for third parties to use or modify under a Creative Commons Attribution 4.0 International (CC BY 4.0) license` and `Our data is made freely available to vendors, developers, designers, planners, or analysts to use in applications, without restrictions`, with the attribution `Data Provided by The Grand Bahama Port Authority`. GBPA's own ArcGIS item `0249ebefed134a4793560a0782669d45`, the OpenAddresses `bs/fp` source, gives this repository as its source, which ties the repository to the publisher. The repository's GitHub `license` field is null, so the grant exists only in the readme. CC BY 4.0 grants reproduction and the production of Adapted Material for any purpose.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants reproduction of the Licensed Material."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants producing Adapted Material, and the readme grants that the data may be used or modified."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants producing Adapted Material. The adapter re-renders each point as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 places no restriction on the purpose of use, and the readme states the data may be used in applications without restrictions."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants sharing the Licensed and Adapted Material, conditioned on attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 states that a recipient receives its licence from the licensor directly, which no release has yet been read against."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-bs-grand-bahama-port-authority"
+		},
+		{
+			"state": "elected",
 			"electedTerms": "The BFS statement on its GWR data, `Daten der Stufe A sind öffentlich und können ohne Einschränkung verwendet werden`, with the opendata.swiss terms of use `Open use` (terms_open) on the BFS GWR dataset",
 			"termsVersion": "read 2026-10-18",
 			"retrievedCopy": "internal/strategy/rights-receipts/ch-bfs-gwr-2026-10-18/",
@@ -3407,6 +3533,51 @@
 		},
 		{
 			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-18",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17, which `packages/corpus/lib/gu/AGENTS.md` extends to Guam because the Copyright Act's geographic definition of the United States includes the organized territories (17 U.S.C. § 101). Street addresses, house numbers, place names and postcodes are facts, which US copyright excludes (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. What the publisher states, as read on 2026-10-18: the Government of Guam GISWEB Portal item `Address_Point_(Public_View)` and its FeatureServer layer carry no licence text and no use constraint, and the Bureau of Statistics and Plans GIS page lists `Address Points` under its public links. A Government of Guam body's file published without terms restricting its use therefore carries no restriction this repository can infer.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-gu-government-of-guam-bureau-of-statistics-and-p"
+		},
+		{
+			"state": "elected",
 			"electedTerms": "Otvorena dozvola (Open Licence of the Republic of Croatia)",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/C/",
 			"retrievedAt": "2026-10-17",
@@ -3448,6 +3619,49 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Isle of Man Open Government Licence",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own licence is the grant, read from the Internet Archive because www.gov.im, gov.im and data.gov.im answer 403 (`Request Rejected`) to this host. The Isle of Man Government's Open Data page (capture of 2024-06-23) states that its datasets are `available for reuse under our Open Government Licence`, and the Land Registry's `Land transactions` page (capture of 2025-02-23) is one of them and links the CSV `https://www.gov.im/media/1387366/landtransactionsjan2025.csv`. The licence page `https://www.gov.im/about-this-site/open-government-licence/` (capture of 2025-02-06) reads `You are free to: copy, publish, distribute and transmit the Information; adapt the Information; exploit the Information commercially and non-commercially`, on the condition of the attribution `Contains public sector information licensed under the Isle of Man Open Government Licence`, and it excludes `personal data in the Information` and third-party rights. Unlike HM Land Registry's Price Paid Data page, which licenses its address fields to Royal Mail and Ordnance Survey's own terms, neither page names a third party's rights over the address columns. The licence states no version, so none is recorded. The dataset page states that the purchaser's name `has not been included`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the Information may be copied."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the Information may be adapted, which covers reading the address columns out of the transactions."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `adapt the Information`. The adapter keeps only the address columns, drops prices and dates, and emits each distinct address once."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `exploit the Information commercially and non-commercially`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `copy, publish, distribute and transmit the Information`, conditioned on the attribution statement."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial exploitation and states no term about granting these rights onward."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-im-isle-of-man-land-registry"
 		},
 		{
 			"state": "elected",
@@ -3587,6 +3801,50 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-kr-ministry-of-the-interior-and-safety"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Nutzungsbedingungen für Open Government Data der Liechtensteinischen Landesverwaltung (ABI/OGD-Version 2, 5.2.2021)",
+			"termsVersion": "ABI/OGD-Version 2, 5.2.2021",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own download page is the grant. `https://service.geo.llv.li/download/` lists the `Verzeichnis der Gebäudeadressen` row and links its licence, `https://service.geo.llv.li/download//officialAdress/AbiOGDLizenz.pdf`, and the ZIP the row serves ships the same PDF (both copies sha256 `d74448db…e0e8bd`). The licence reads `Die Daten dürfen vervielfältigt und kostenfrei weitergegeben, angereichert, bearbeitet, kombiniert sowie kommerziell genutzt werden`, and its summary table reads `Kommerzielle Nutzung: erlaubt`. `bearbeitet` grants adaptation and `kommerziell genutzt` grants commercial use. The conditions are the credit `Liechtensteinische Landesverwaltung` and that the terms be enclosed or linked whenever the data is passed on. The licence names no SPDX identifier, so none is recorded.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `vervielfältigt`, which is what copying the published ZIP performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `bearbeitet` and `kombiniert`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `angereichert, bearbeitet, kombiniert`. The adapter re-renders each address as a line and refuses planned addresses."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `kommerziell genutzt`, and fitting a model on adapted rows is a use of the adapted data."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `kostenfrei weitergegeben`, conditioned on the credit and on enclosing or linking the terms."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the credit and the terms-link condition, so the operation is left for the release that ships these rows."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-li-liechtensteinische-landesverwaltung"
 		},
 		{
 			"state": "elected",
@@ -21134,6 +21392,7 @@
 				"https://data.us.fo/adrfinder/js/config.js",
 				"https://gis.us.fo/arcgis/rest/services/adressur/us_adr_husanr_litir/MapServer?f=json"
 			],
+			"adapterID": "adressur-fo",
 			"addressRoles": {
 				"address": "premise",
 				"address_complete": "premise"
@@ -24556,6 +24815,147 @@
 				"reading": "assessed",
 				"because": "The fifteen columns were read in full, and fourteen are address structure: a position, a postcode, a street code and name, a door number and letter, a route kilometre, a block and lot, a census locality and its code, and the department. `nombre_inmueble`, the building name, is free text on 904 rows. Read by its leading words, it names post offices (`AG OFICIAL CORREO` 128, `SUC CORREO` 103), police stations (`SECCIONAL`), municipal and ministry buildings, and holiday houses (`CHALET LA`, `CHALET MARIA`). Three rows name a mail distribution agent by the agent's own name (`Agente Distribucion` followed by a person's given and family names), which is a natural person's name at an address. The `ide-uy` adapter refuses those values (`component:venue:names-a-person`) and every value without a three-letter word, so no person's name reaches a row; a holiday house's given name (`CHALET MARIA`) names the property rather than identifying anyone.",
 				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/README.md"
+			}
+		},
+		{
+			"sourceID": "li-property-building-1",
+			"iso2": "LI",
+			"sector": "property-building",
+			"name": "Verzeichnis der Gebäudeadressen",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Landesverwaltung keeps the official index of building addresses (amtliches Gebäudeadressverzeichnis) and publishes it on its geodata download service",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-li-liechtensteinische-landesverwaltung",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "One ZIP (`dataset.csv` and a shapefile) from `https://service.geo.llv.li/download//getfile.php?theme=officialAdress`, listed on `https://service.geo.llv.li/download/`",
+			"publisher": "Liechtensteinische Landesverwaltung",
+			"sourceURL": "https://service.geo.llv.li/download/",
+			"note": "Read by the llv-li adapter. 12,966 address rows in `dataset.csv` retrieved 2026-10-18, each with street, number, postcode, postal locality and coordinates.",
+			"adapterID": "llv-li",
+			"addressRoles": {
+				"STN_NAME": "premise"
+			},
+			"coverage": "Verzeichnis der Gebäudeadressen, one ZIP from service.geo.llv.li (`officialAdress.zip`, 1,306,445 bytes, sha256 `ea8592ccc2ef85a7db73473e5a21ac62be5a3b39bba6f16dcea597636983bcea`) retrieved 2026-10-18, holding `dataset.csv` (2,049,756 bytes) and a shapefile. **Measured 12,966 address rows** by parsing the whole CSV, which is Windows-1252, `;`-separated and unquoted. `STATUS` reads `real` on 12,733 and `planned` on 233, and `OFFICIAL` reads `FALSE` on 4. Every row carries `STN_NAME`, `ADR_NUMBER`, `ZIP_ZIP4` and `ZIP_NAME`; no two rows share street, number and postcode. The 13 postal localities and 13 postcodes cover all eleven municipalities. No column names the municipality, only its number (`COM_FOSNR`). The `llv-li` adapter writes 12,729 rows and refuses the planned and unofficial ones.",
+			"upstreamLineage": ["https://service.geo.llv.li/download/"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The twenty columns were read in full: identifiers of the address, street, building and entrance (`ADR_EGAID`, `STR_ESID`, `BDG_EGID`, `ADR_EDID`, `FL_GEID`, `AV_STRNR`), the street name and number, the municipality number, the postcode and postal locality, status flags, coordinates in two systems and a modification date. None is a free-text name column, and none identifies an owner, occupant or contact."
+			}
+		},
+		{
+			"sourceID": "im-property-building-1",
+			"iso2": "IM",
+			"sector": "property-building",
+			"name": "Land transactions",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Land Registry records every registered transfer of land on the Isle of Man and publishes the transactions as open data",
+			"geometry": "absent",
+			"license": "unchecked-corpus-input-im-isle-of-man-land-registry",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "A monthly CSV on www.gov.im; the host answers 403 from the lab host, and the January 2025 file is read from the Internet Archive's capture",
+			"publisher": "Isle of Man Land Registry",
+			"sourceURL": "https://www.gov.im/about-the-government/government/open-data/economy/land-transactions/",
+			"note": "Read by the landregistry-im adapter, which keeps only the address columns and emits each distinct address once. 40,847 transactions and 26,748 distinct addresses in `landtransactionsjan2025.csv`.",
+			"adapterID": "landregistry-im",
+			"addressRoles": {
+				"Street_Name": "premise",
+				"House_Name": "premise"
+			},
+			"coverage": "Land transactions, the Isle of Man Land Registry's CSV `landtransactionsjan2025.csv` (4,128,696 bytes, sha256 `9b6ec3801347e48ed1b53d95db7331b0c1e30a5786c4ee364d29d8500d9cc760`), read from the Internet Archive's 2025-02-23 capture because www.gov.im answered 403 to the live file on 2026-10-18. **Measured 40,847 transactions** with completion dates from 2000-11-06 to 2025-01-31, all twelve fields wide, no line breaks inside fields. Street_Name is present on 40,842, House_Number on 22,692, House_Name on 18,948, SubUnit_Name on 6,585, Locality on 10,033 and Postcode on 37,386. Each row is a sale, so an address repeats once per sale: 26,742 distinct addresses by the raw address fields, case-folded. Land without a building appears as a description (`Field North Of Ballawhannel Farm`). The `landregistry-im` adapter keeps only the address columns, emits each address once and refuses land parcels and non-premises (garages, plots, substations), writing 21,655 rows.",
+			"upstreamLineage": [
+				"https://www.gov.im/about-the-government/government/open-data/economy/land-transactions/",
+				"https://web.archive.org/web/20250223165312id_/https://www.gov.im/media/1387366/landtransactionsjan2025.csv"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The twelve columns were read in full. Seven are address structure (`SubUnit_Name`, `House_Number`, `House_Name`, `Street_Name`, `Locality`, `Town`, `Postcode`, plus `Parish_`), and four describe the sale (`Market_Value`, `Consideration`, `Acquisition_Date`, `CompletionDate`). The dataset page states that the purchaser's name `has not been included`, and no column names a buyer, seller or occupant. A sale price at a dated address is information about a transaction rather than a person, and the adapter does not read the price or date columns, so no row carries them. `House_Name` holds a house's given name (`Starvold`, `The Rhullick`, `El Pozo`), which names the property; the adapter refuses values that hold a number or describe land rather than name a building.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
+			}
+		},
+		{
+			"sourceID": "bs-property-building-1",
+			"iso2": "BS",
+			"sector": "property-building",
+			"name": "Freeport address points",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Grand Bahama Port Authority administers the City of Freeport under the Hawksbill Creek Agreement and assigns its street addresses",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-bs-grand-bahama-port-authority",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "CSV, GeoJSON, SQL and shapefile copies in the GitHub repository `GBPA/gis-datafiles`",
+			"publisher": "Grand Bahama Port Authority",
+			"sourceURL": "https://github.com/GBPA/gis-datafiles",
+			"note": "Read by the gbpa-bs adapter. 61,722 Freeport address points in `CSV/addresses.csv`, each with block-and-parcel number, street, city and island. Covers the City of Freeport only.",
+			"adapterID": "gbpa-bs",
+			"addressRoles": {
+				"Address": "premise",
+				"FullStName": "premise"
+			},
+			"coverage": "Freeport address points, `CSV/addresses.csv` of the GitHub repository `GBPA/gis-datafiles` (8,213,284 bytes, sha256 `201658bd153382c1403d9639851b8ef2613573b4a8b9d58436043656cc80a067`, last commit 2018-01-16), retrieved 2026-10-18 with the repository's GeoJSON copy. **Measured 61,722 records**, four with a quoted line break inside `FullStName` (`Santa Maria \\r\\nSanta Maria Avenue`). Every record names City `Freeport` (15,896 after the adapter) or `Lucaya` (45,789) and Island `Grand Bahama`; the file covers the City of Freeport only. `AddressNum` holds the block-and-parcel number (`8-29`, `UU-3`) and `Address` writes it before the street in all 61,722 records. The `gbpa-bs` adapter writes 61,685 rows.",
+			"upstreamLineage": ["https://github.com/GBPA/gis-datafiles"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The fifteen columns were read in full: coordinates, object and address identifiers, parcel and block numbers, the street's prefix, name and suffix, the full address, the house number, city and island. `AltName` is the only free-text name column, populated on 141 rows that the adapter keeps as venues; they name schools, businesses and buildings (`Lucayan International School`). Two hold initials and a surname (`J.S. Johnson`, `G.B. Millwork`), which the adapter refuses (`component:venue:names-a-person`), so no person's name reaches a row.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
+			}
+		},
+		{
+			"sourceID": "az-geodata-aggregate-1",
+			"iso2": "AZ",
+			"sector": "geodata-aggregate",
+			"name": "Azərbaycanda obyektlər və məkanlar",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The ministry's Digital Ecology Information System publishes the objects-and-places points the Geodesy and Cartography Agency maintains",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-az-az-rbaycan-respublikas-n-n-ekologiya-v-t-bii",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "One GeoJSON on opendata.az, CKAN dataset `azerbaycanda-obyektler-ve-mekanlar`",
+			"publisher": "Azərbaycan Respublikasının Ekologiya və Təbii Sərvətlər Nazirliyi",
+			"sourceURL": "https://opendata.az/dataset/azerbaycanda-obyektler-ve-mekanlar",
+			"note": "Read by the opendata-az adapter. 11,807 named places in Baku, Sumgayit and Absheron, 10,035 with a house number and 10,555 with a street.",
+			"adapterID": "opendata-az",
+			"addressRoles": {
+				"STRT_NAME": "premise"
+			},
+			"coverage": "`Azərbaycanda obyektlər və məkanlar`, one GeoJSON from opendata.az (5,083,497 bytes, sha256 `d140c7e8b56a250e6c6bc0a3edd1fc2474b56cb7abb2e928d066ecc8b3848bfc`, Last-Modified 2025-08-05), retrieved 2026-10-18. **Measured 11,807 point features**: Baku 9,774, Sumgayit 1,639 and Absheron 394. `STRT_NAME` (an English transliteration) is present on 10,555 and `STRT_ADDR` on 10,035, of which 5,695 read `0` for no number; 92 rows carry the Azerbaijani street spelling `STRT_N_AZ`. `NEW_ADDR` and `Code_OSM` are empty on every row. The `opendata-az` adapter writes 10,300 rows, 87 of them in Azerbaijani spelling.",
+			"upstreamLineage": ["https://admin.opendata.az/api/3/action/package_show?id=azerbaycanda-obyektler-ve-mekanlar"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The sixteen columns were read in full. Apart from the address and place-type columns, `NAME` and `NAME_AZ` hold the place's name: shops, cafes, pharmacies, ATMs, schools, police stations and monuments (`Store`, `Pharmacy`, `Cafe Beyzade`, `Monument Rahimov`). A surname-ending pattern matched three names in the whole file, each a category word beside a name rather than a person. Single given names used as shop names (`Nicat`, `Aynur`) name the business. The adapter refuses names without a three-letter run as codes. No column names an owner, occupant or contact.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
+			}
+		},
+		{
+			"sourceID": "gu-property-building-1",
+			"iso2": "GU",
+			"sector": "property-building",
+			"name": "Address_Point_(Public_View)",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The Bureau of Statistics and Plans GIS publishes Guam's address points on the Government of Guam GISWEB Portal",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-gu-government-of-guam-bureau-of-statistics-and-p",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "ArcGIS FeatureServer `Address_Point_(Public_View)` layer 0 on services2.arcgis.com, no key",
+			"publisher": "Government of Guam Bureau of Statistics and Plans",
+			"sourceURL": "https://services2.arcgis.com/FPJlJZYRsD8OhCWA/arcgis/rest/services/Address_Point_(Public_View)/FeatureServer/0",
+			"note": "Read by the bsp-gu adapter. 34,323 address points with house number, street, unit and village.",
+			"adapterID": "bsp-gu",
+			"addressRoles": {
+				"STREETNAME": "premise",
+				"FullAddres": "premise"
+			},
+			"coverage": "Government of Guam GISWEB Portal `Address_Point_(Public_View)`, FeatureServer layer 0 (item `77d4bfb0fff04c868fe528a1890b4eb0`, modified 2026-05-02), read whole on 2026-10-18 as 18 GeoJSON pages of the layer's 2,000-record maximum (49,746,194 bytes). **Measured 34,323 features** with 34,323 distinct `FID`, matching the layer's own count. Columns include `HOUSE_NUM`, `PRE_DIR`, `STREETNAME`, `STR_TYPE`, `UNIT`, `FullRdNm`, `CITY`, `FullAddres` (`452 RT 10 BARRIGADA GU`) and NG911 fields that are mostly blank; `Post_Code` is blank on every feature. `CITY` names one of Guam's 19 villages, in 47 spellings, and is blank on 4,024. The `bsp-gu` adapter writes 29,889 rows and refuses rows with no street (3,094) or no recognised village (730).",
+			"upstreamLineage": [
+				"https://services2.arcgis.com/FPJlJZYRsD8OhCWA/arcgis/rest/services/Address_Point_(Public_View)/FeatureServer/0"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The layer's columns were read in full: an address-point identifier, the house number, directional prefix, street name and type, unit, full road name, village and full address, coordinates, and NG911 fields (postcode, place type, elevation, discrepancy agency) that are blank or coded. No column names an owner, occupant or contact."
 			}
 		}
 	]

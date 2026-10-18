@@ -138,7 +138,7 @@ export function streetTypeOf(street: string, lexicon: StreetTypeLexicon): string
 		.toLowerCase()
 		.split(/\s+/u)
 		.map((word) => word.replaceAll(/^[\p{P}\p{S}]+|[,;:]+$/gu, ""))
-		.filter(Boolean)
+		.filter((word) => word.length > 0)
 
 	if (!words.length) return null
 

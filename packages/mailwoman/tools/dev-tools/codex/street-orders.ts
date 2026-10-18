@@ -134,13 +134,16 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	// Ten numbered addresses agreed and none put the number first.
 	// Sint Eustatius writes a `#` before the number.
 	// That `#` is a prefix rather than an order.
-	// This entry is correct and currently inert: libaddressinput states no `fmt` for `BQ`,
-	// so the generator emits no layout and `formatAddressRow` answers `null` for it,
-	// as it does for `AW`, `CW` and `SX`.
-	// No source in those four jurisdictions is ingest-eligible, so no row depends on it yet.
+	// This entry is correct and currently inert: libaddressinput states no `fmt` for `BQ`, so the
+	// generator emits no layout and `formatAddressRow` answers `null` for it, as it does for `SX`.
+	// `AW` and `CW` take their layouts from UPU's descriptions (`#address/layouts/upu-pas`),
+	// which print the number last as this table does.
 	BQ: "number-last",
 	BR: "number-last",
-	BS: "number-last",
+	// Measured on the Grand Bahama Port Authority's Freeport address points, the one Bahamian
+	// register with a published grant: all 61,722 records write the number first in their
+	// own `Address` column (`8-29 Seagull Drive`, `101 Coral Reef Boulevard`).
+	BS: "number-first",
 	BT: "number-last",
 	BW: "number-last",
 	BY: "number-last",
