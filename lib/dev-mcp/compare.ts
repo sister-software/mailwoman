@@ -719,6 +719,15 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		b: errors.filter((error) => error.arm === "b").length,
 	}
 
+	// A failed query scores as a miss, so a test over errored rows compares exceptions rather than answers.
+	const erroredReason =
+		errored.a + errored.b
+			? `${errored.a} (arm a) and ${errored.b} (arm b) rows failed rather than answering, so the significance ` +
+				`and equivalence tests are withheld. First failure: ${errors[0]!.message}`
+			: null
+
+	const verdictMode = mode === "truth" && !erroredReason
+
 	const warnings = [
 		...confounds.warnings,
 		...runnerA.warnings.map((warning) => `arm a (${runnerA.label}): ${warning}`),
@@ -731,7 +740,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			? `${runnerA.label} vs ${runnerB.label} over ${graded.length} of ${rows.length} rows carrying a truth ` +
 				`coordinate. At ${gradeKey}: ${gradedHits.a} (${formatPercent(gradedHits.a, graded.length)}) for ` +
 				`${runnerA.label}, ${gradedHits.b} (${formatPercent(gradedHits.b, graded.length)}) for ${runnerB.label}. ` +
-				`${test.sentence} ${equivalence.sentence}`
+				(erroredReason ?? `${test.sentence} ${equivalence.sentence}`)
 			: // Keep separate messages for "no truth" vs "oracle present".
 				hasOracle
 				? `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows. ${ORACLE_VERDICT_NOTE}`
@@ -847,14 +856,12 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		},
 		thresholds,
 		// Emit verdict stats only for truth-graded runs.
-		significance: mode === "truth" ? test : null,
-		equivalence: mode === "truth" ? equivalence : null,
-		significance_withheld_reason:
-			mode === "truth"
-				? undefined
-				: hasOracle
-					? ORACLE_VERDICT_NOTE
-					: "nothing in this set is graded, so there are no two proportions to test.",
+		significance: verdictMode ? test : null,
+		equivalence: verdictMode ? equivalence : null,
+		significance_withheld_reason: verdictMode
+			? undefined
+			: (erroredReason ??
+				(hasOracle ? ORACLE_VERDICT_NOTE : "nothing in this set is graded, so there are no two proportions to test.")),
 		power: changeReading,
 		truth_precision_m: truthPrecision(graded),
 		...(identities["a"] ? { arm_a_identity: identities["a"] } : {}),

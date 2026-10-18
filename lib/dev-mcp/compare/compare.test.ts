@@ -189,6 +189,19 @@ describe("mwdev_compare — external arm", () => {
 		expect(rows.some((row) => row.b.noResultReason?.includes("no features"))).toBe(true)
 	})
 
+	it("withholds the significance and equivalence tests when an arm's query failed", async () => {
+		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
+			{ body: peliasBody(ANDORRA_LA_VELLA) },
+			{ status: 500, body: { error: "boom" } },
+		])
+
+		expect(result["n_errored_b"]).toBe(1)
+		expect(result["equivalence"]).toBeNull()
+		expect(result["significance"]).toBeNull()
+		expect(String(result["significance_withheld_reason"])).toContain("rows failed rather than answering")
+		expect(String(result["summary"])).not.toContain("±5pp")
+	})
+
 	it("reports the truth's own precision, so a sub-kilometer column is not read as a rooftop claim", async () => {
 		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
 			{ body: peliasBody(ANDORRA_LA_VELLA) },

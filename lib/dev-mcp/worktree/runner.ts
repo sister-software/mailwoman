@@ -37,7 +37,8 @@ export async function worktreeArmRunner(
 	})
 
 	const byInput = new Map(result.answers.map((answer) => [answer.input, answer]))
-	const errored = result.answers.filter((answer) => answer.error).length
+	const erroredAnswers = result.answers.filter((answer) => answer.error)
+	const errored = erroredAnswers.length
 
 	const warnings = [
 		`This arm ran tree ${result.commit} in a separate process. EVERYTHING that differs between the two trees is ` +
@@ -49,7 +50,12 @@ export async function worktreeArmRunner(
 						"before recording a result you intend to cite.",
 				]
 			: []),
-		...(errored ? [`${errored} of ${result.answers.length} rows threw in the child and score as no-results.`] : []),
+		...(errored
+			? [
+					`${errored} of ${result.answers.length} rows threw in the child and count as errored rows. ` +
+						`The first, on "${erroredAnswers[0]!.input}": ${erroredAnswers[0]!.error}`,
+				]
+			: []),
 	]
 
 	return {
@@ -78,12 +84,16 @@ export async function worktreeArmRunner(
 				}
 			}
 
+			// A row the child threw on is a failed query, which the scorer counts in `n_errored`.
+			// Returning it as an empty answer would grade an exception as the pipeline declining to answer.
+			if (answer.error) throw new Error(answer.error)
+
 			return {
 				lat: answer.lat,
 				lon: answer.lon,
 				label: answer.components["locality"] ?? answer.components["region"] ?? null,
 				resultType: answer.tier,
-				noResultReason: answer.error ?? (answer.lat === null ? "the pipeline resolved no coordinate" : null),
+				noResultReason: answer.lat === null ? "the pipeline resolved no coordinate" : null,
 			}
 		},
 	}
