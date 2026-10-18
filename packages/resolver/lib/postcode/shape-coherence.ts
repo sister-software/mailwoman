@@ -5,42 +5,48 @@
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/postcode/systems"
+import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
-const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
+/**
+ * Whether libaddressinput states a postcode syntax for `country`, so a span can be checked against it.
+ */
+function statesSyntax(country: string): boolean {
+	return postcodeSyntax(country) != null
+}
 
 /**
  * Records which postcode spans {@link applyPostcodeShapeCoherence} confirmed, excluded, or abstained on.
  *
- * It also records the postcode systems of the first confirmed span.
+ * It also records the countries whose syntax the first confirmed span has.
  */
 export interface PostcodeShapeVerdict {
 	/**
-	 * The upper-case postcode systems of the first confirmed span, passed to
-	 * `findPostcodeCountryScope` as its candidate systems; `null` when no span was confirmed.
+	 * The upper-case countries whose postcode syntax the first confirmed span has.
+	 *
+	 * `findPostcodeCountryScope` takes them as its candidates.
+	 * The value is `null` when no span was confirmed.
 	 */
 	narrowing: string[] | null
 
 	/**
-	 * Postcode values whose shape fits a system used by a sibling country or region span.
+	 * Postcode values that have the postcode syntax of a country a sibling country or region span names.
 	 */
 	confirmed: string[]
 
 	/**
-	 * Postcode values whose shape fits none of the systems the siblings name.
+	 * Postcode values that have the postcode syntax of no country the siblings name.
 	 */
 	excluded: string[]
 
 	/**
-	 * Postcode values left undecided because they match no known postcode shape
-	 * or the tree names no country or region.
+	 * Postcode values left undecided because the tree names no country
+	 * or region with a stated postcode syntax.
 	 */
 	abstained: string[]
 }
 
-function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
+function collectSiblingCountries(roots: readonly AddressNode[]): Set<string> {
 	const out = new Set<string>()
 
 	for (const n of walkNodes(roots)) {
@@ -51,17 +57,18 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 				// A constituent country such as `England` tagged `country` still fixes its sovereign state.
 				const sub = matchSubdivision(n.value)
 
-				if (sub && SYSTEM_UNIVERSE.has(sub.country.toUpperCase())) {
+				if (sub && statesSyntax(sub.country)) {
 					out.add(sub.country.toUpperCase())
 				}
 
 				continue
 			}
 
-			const system = isUSStateAbbreviation(matched.iso2) ? "US" : matched.iso2.toUpperCase()
+			// The match's ISO code is the country, even where it spells a US state abbreviation (`IN`, `DE`, `CA`).
+			const country = matched.iso2.toUpperCase()
 
-			if (SYSTEM_UNIVERSE.has(system)) {
-				out.add(system)
+			if (statesSyntax(country)) {
+				out.add(country)
 			}
 
 			continue
@@ -70,13 +77,13 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 		if (n.tag === "region") {
 			const sub = matchSubdivision(n.value)
 
-			if (sub && SYSTEM_UNIVERSE.has(sub.country.toUpperCase())) {
+			if (sub && statesSyntax(sub.country)) {
 				out.add(sub.country.toUpperCase())
 			}
 
 			const hint = n.metadata?.["country_hint"]
 
-			if (typeof hint === "string" && SYSTEM_UNIVERSE.has(hint.toUpperCase())) {
+			if (typeof hint === "string" && statesSyntax(hint)) {
 				out.add(hint.toUpperCase())
 			}
 		}
@@ -86,10 +93,10 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 }
 
 /**
- * Checks each postcode span's shape against the postcode systems of the countries
+ * Checks each postcode span against the libaddressinput postcode syntax of the countries
  * and regions listed in the same tree, without querying a backend.
  *
- * A span that fits none of those systems is excluded: an all-digit span is retagged
+ * A span that has none of those syntaxes is excluded: an all-digit span is retagged
  * `house_number`, and any other span is stamped `postcode_shape_excluded`.
  */
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
@@ -99,24 +106,16 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 
 	if (!postcodes.length) return verdict
 
-	const siblingSystems = collectSiblingSystems(roots)
+	const siblingCountries = collectSiblingCountries(roots)
 
 	for (const node of postcodes) {
 		const code = node.value.trim()
-		const systems = candidateSystemsForPostcode(code)
-
-		if (!systems.length) {
-			verdict.abstained.push(code)
-
-			continue
-		}
-
-		const intersection = systems.map((system) => system.toUpperCase()).filter((system) => siblingSystems.has(system))
+		const intersection = [...siblingCountries].filter((country) => acceptPostcode(code, country) != null)
 
 		if (intersection.length) {
 			verdict.confirmed.push(code)
 
-			node.metadata = { ...node.metadata, postcode_shape_systems: intersection }
+			node.metadata = { ...node.metadata, postcode_shape_countries: intersection }
 
 			if (!verdict.narrowing) {
 				verdict.narrowing = intersection
@@ -125,7 +124,7 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 			continue
 		}
 
-		if (siblingSystems.size) {
+		if (siblingCountries.size) {
 			verdict.excluded.push(code)
 
 			if (/^\d+$/.test(code)) {
