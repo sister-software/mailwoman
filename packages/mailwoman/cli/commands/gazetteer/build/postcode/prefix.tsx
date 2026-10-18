@@ -18,7 +18,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode"
+import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix-index"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -115,7 +115,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { md5File, median } = await import("@mailwoman/core/utils")
 
-		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } = await import("@mailwoman/neural/postcode")
+		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
+			await import("@mailwoman/postcode/prefix-index")
 
 		const { buildPostcodePrefixIndex } = await import("#gazetteer/postcode/prefix")
 

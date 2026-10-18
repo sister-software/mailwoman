@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "#json"
 
 /**
  * Reads little-endian values sequentially from a byte buffer, advancing `offset` after each read.

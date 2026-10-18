@@ -13,7 +13,7 @@
  *   means from placed unit centroids.
  */
 
-import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
+import type { PostcodeBinaryEntry } from "@mailwoman/postcode/binary-resolver"
 import type { NamedLatLon } from "@mailwoman/spatial"
 
 /**

@@ -41,11 +41,12 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runPipeline } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
-import { mergeAnchorLookups } from "@mailwoman/neural/anchor-inference"
+import { NeuralAddressClassifier, parseGazetteerLexicon } from "@mailwoman/neural"
+import { anchorLookupFromPostcodes, mergeAnchorLookups } from "@mailwoman/neural/anchor-inference"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
+import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -211,7 +212,9 @@ export async function demoCascadeSmoke(
 	const anchorLookup = postcodeBinaries.length
 		? mergeAnchorLookups(
 				await Promise.all(
-					postcodeBinaries.map(async (p) => new PostcodeBinaryResolver(await readLocalBuffer(p)).toAnchorLookup())
+					postcodeBinaries.map(async (p) =>
+						anchorLookupFromPostcodes(new PostcodeBinaryResolver(await readLocalBuffer(p)).groups())
+					)
 				)
 			)
 		: undefined

@@ -597,6 +597,11 @@
 			"node": "./lib/json.ts",
 			"default": "./out/json.js"
 		},
+		"./binary-frame": {
+			"types": "./out/binary-frame.d.ts",
+			"node": "./lib/binary-frame.ts",
+			"default": "./out/binary-frame.js"
+		},
 		"./hash": {
 			"types": "./out/hash.d.ts",
 			"node": "./lib/hash.ts",

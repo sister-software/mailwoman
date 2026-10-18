@@ -78,7 +78,7 @@ afterAll(() => vi.resetModules())
 
 // Import after the mock declarations + reset.
 // `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
-const { serializePostcodeBinary } = await import("#postcode")
+const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
 const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 
 const SEQ = 128

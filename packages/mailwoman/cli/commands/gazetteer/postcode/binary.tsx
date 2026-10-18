@@ -73,7 +73,7 @@ export const spec = {
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
+		const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
 			await import("#gazetteer/postcode/binary")

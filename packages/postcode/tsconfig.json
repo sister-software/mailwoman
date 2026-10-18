@@ -13,6 +13,9 @@
 	"references": [
 		{
 			"path": "../codex"
+		},
+		{
+			"path": "../core"
 		}
 	]
 }

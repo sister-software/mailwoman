@@ -46,6 +46,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/codex": "workspace:*"
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*"
 	}
 }

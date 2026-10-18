@@ -7126,6 +7126,7 @@ __metadata:
   resolution: "@mailwoman/postcode@workspace:packages/postcode"
   dependencies:
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 

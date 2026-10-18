@@ -19,8 +19,10 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { PostcodeBinaryResolver, collectMatches } from "@mailwoman/neural/postcode"
+import { anchorLookupFromPostcodes } from "@mailwoman/neural/anchor-inference"
+import { collectMatches } from "@mailwoman/neural/postcode"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
+import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -38,7 +40,9 @@ const { values } = parseArguments({
 
 if (!values.bin) throw new Error("--bin <postcode-gb.bin> is required")
 
-const lookup = new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(values.bin))).toAnchorLookup()
+const lookup = anchorLookupFromPostcodes(
+	new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(values.bin))).groups()
+)
 
 console.log(`anchorLookupPath ${values.bin}`)
 console.log(`anchor lookup keys: ${lookup.size.toLocaleString()}`)

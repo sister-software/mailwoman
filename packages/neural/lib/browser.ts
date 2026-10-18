@@ -25,7 +25,6 @@ export * from "#labels"
 // whose every entry point throws, so the value exports below are safe to name from a bundle.
 export * from "#onnx-runner"
 export * from "#pair/index/resolver"
-export * from "#postcode/binary-resolver"
 export * from "#soft-features"
 export * from "#tokenizer"
 // `./placetype-pair-prior.ts` is reached only through the classifier's decode,
