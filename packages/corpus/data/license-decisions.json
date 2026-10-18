@@ -769,6 +769,264 @@
 				}
 			}
 		},
+		"unchecked-corpus-input-li-liechtensteinische-landesverwaltung": {
+			"state": "elected",
+			"electedTerms": "Nutzungsbedingungen für Open Government Data der Liechtensteinischen Landesverwaltung (ABI/OGD-Version 2, 5.2.2021)",
+			"termsVersion": "ABI/OGD-Version 2, 5.2.2021",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own download page is the grant. `https://service.geo.llv.li/download/` lists the `Verzeichnis der Gebäudeadressen` row and links its licence, `https://service.geo.llv.li/download//officialAdress/AbiOGDLizenz.pdf`, and the ZIP the row serves ships the same PDF (both copies sha256 `d74448db…e0e8bd`). The licence reads `Die Daten dürfen vervielfältigt und kostenfrei weitergegeben, angereichert, bearbeitet, kombiniert sowie kommerziell genutzt werden`, and its summary table reads `Kommerzielle Nutzung: erlaubt`. `bearbeitet` grants adaptation and `kommerziell genutzt` grants commercial use. The conditions are the credit `Liechtensteinische Landesverwaltung` and that the terms be enclosed or linked whenever the data is passed on. The licence names no SPDX identifier, so none is recorded.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `vervielfältigt`, which is what copying the published ZIP performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `bearbeitet` and `kombiniert`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `angereichert, bearbeitet, kombiniert`. The adapter re-renders each address as a line and refuses planned addresses."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `kommerziell genutzt`, and fitting a model on adapted rows is a use of the adapted data."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the data may be `kostenfrei weitergegeben`, conditioned on the credit and on enclosing or linking the terms."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the credit and the terms-link condition, so the operation is left for the release that ships these rows."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial use and states no term about granting these rights onward."
+				}
+			}
+		},
+		"unchecked-access-free-fo-umhv-rvisstovan": {
+			"state": "elected",
+			"electedTerms": "Umhvørvisstovan, Brúksrættur og treytir (June 2019)",
+			"termsVersion": "June 2019",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own terms are the grant. `https://www.foroyakort.fo/vevtænastur/` lists the address service under `Adressur` and links `Galdandi brúkstreytir`, `https://www.foroyakort.fo/um-foeroyakort/bruksraettur-og-treytir`, which reads `Umhvørvisstovan gevur øllum ókeypis og óavmarkaðan brúksrætt til dáturnar, sum m.a. frítt kunnu: avritast, deilast, almannakunngerast; broytast og samansetast við øðrum dátum; nýtast bæði vinnuligt og ikki-vinnuligt`. The English page, `https://www.foroyakort.fo/um-foeroyakort/terms-and-conditions-in-english`, reads `modifying and combining with othe data; commercial and non-commercial use`. `broytast` grants modification and `nýtast bæði vinnuligt` grants commercial use. The conditions are the credit `Data from the Faroese Environment Agency, Umhvørvisstovan: Adressur, <date>`, that the data not be used to imply the agency endorses the user, and that third parties receive the terms or a link to them. The site's note asking commercial users of cadastral maps (`matrikulkort`) to contact the cadastre department concerns the cadastre, not the address layer. The layer `us_adr_husanr` carries `copyrightText` `©Umhvørvisstovan`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `avritast` (copied), which is what reading the published layer performs."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `broytast og samansetast við øðrum dátum`, which covers reading the address fields out of it."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant modification (`broytast`). The adapter re-renders each address point as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant use `bæði vinnuligt og ikki-vinnuligt`, commercial and non-commercial, of data that may be modified."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms grant that the data may be `deilast, almannakunngerast`, conditioned on the credit and on passing the terms on."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the credit, the no-endorsement condition and the terms-link condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The terms grant commercial use and state no term about granting these rights onward."
+				}
+			}
+		},
+		"unchecked-corpus-input-im-isle-of-man-land-registry": {
+			"state": "elected",
+			"electedTerms": "Isle of Man Open Government Licence",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own licence is the grant, read from the Internet Archive because www.gov.im, gov.im and data.gov.im answer 403 (`Request Rejected`) to this host. The Isle of Man Government's Open Data page (capture of 2024-06-23) states that its datasets are `available for reuse under our Open Government Licence`, and the Land Registry's `Land transactions` page (capture of 2025-02-23) is one of them and links the CSV `https://www.gov.im/media/1387366/landtransactionsjan2025.csv`. The licence page `https://www.gov.im/about-this-site/open-government-licence/` (capture of 2025-02-06) reads `You are free to: copy, publish, distribute and transmit the Information; adapt the Information; exploit the Information commercially and non-commercially`, on the condition of the attribution `Contains public sector information licensed under the Isle of Man Open Government Licence`, and it excludes `personal data in the Information` and third-party rights. Unlike HM Land Registry's Price Paid Data page, which licenses its address fields to Royal Mail and Ordnance Survey's own terms, neither page names a third party's rights over the address columns. The licence states no version, so none is recorded. The dataset page states that the purchaser's name `has not been included`.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the Information may be copied."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants that the Information may be adapted, which covers reading the address columns out of the transactions."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `adapt the Information`. The adapter keeps only the address columns, drops prices and dates, and emits each distinct address once."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `exploit the Information commercially and non-commercially`."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence grants `copy, publish, distribute and transmit the Information`, conditioned on the attribution statement."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The licence grants commercial exploitation and states no term about granting these rights onward."
+				}
+			}
+		},
+		"unchecked-corpus-input-bs-grand-bahama-port-authority": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution 4.0 International",
+			"spdx": "CC-BY-4.0",
+			"termsVersion": "4.0",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own repository states the grant. The readme of `GBPA/gis-datafiles`, saved as `bs-gbpa-github-readme.md`, reads `The data supplied in the repo is provided by the Grand Bahama Port Authority (GBPA) for third parties to use or modify under a Creative Commons Attribution 4.0 International (CC BY 4.0) license` and `Our data is made freely available to vendors, developers, designers, planners, or analysts to use in applications, without restrictions`, with the attribution `Data Provided by The Grand Bahama Port Authority`. GBPA's own ArcGIS item `0249ebefed134a4793560a0782669d45`, the OpenAddresses `bs/fp` source, gives this repository as its source, which ties the repository to the publisher. The repository's GitHub `license` field is null, so the grant exists only in the readme. CC BY 4.0 grants reproduction and the production of Adapted Material for any purpose.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants reproduction of the Licensed Material."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants producing Adapted Material, and the readme grants that the data may be used or modified."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants producing Adapted Material. The adapter re-renders each point as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 places no restriction on the purpose of use, and the readme states the data may be used in applications without restrictions."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "CC BY 4.0 grants sharing the Licensed and Adapted Material, conditioned on attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "CC BY 4.0 states that a recipient receives its licence from the licensor directly, which no release has yet been read against."
+				}
+			}
+		},
+		"unchecked-corpus-input-az-az-rbaycan-respublikas-n-n-ekologiya-v-t-bii": {
+			"state": "elected",
+			"electedTerms": "Creative Commons Attribution (version not stated)",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "The publisher's own catalogue record is the grant. On opendata.az the dataset `azerbaycanda-obyektler-ve-mekanlar` sits in the organization `azerbaycan-respublikasinin-ekologiya-ve-tebii-servetler-nazirliyi` (the Ministry of Ecology and Natural Resources), with maintainer `Geodeziya və Kartoqrafiya Agentliyi`, and carries `license_id: cc-by`, `license_title: Creative Commons Attribution` and `license_url: http://www.opendefinition.org/licenses/cc-by`. The record's one resource is the GeoJSON the `opendata-az` adapter reads (5,083,497 bytes, matching the record's stated size). Every Creative Commons Attribution version grants adaptation and use for any purpose on the attribution condition. The record states no version, so no SPDX identifier is recorded.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants reproduction of the work."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants adaptation in every version."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants adaptation. The adapter re-renders each named place as an address line."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution places no restriction on the purpose of use in any version."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Creative Commons Attribution grants distribution of the work and of adaptations, conditioned on attribution."
+				},
+				"redistribute-model": {
+					"permission": "unreviewed",
+					"because": "No release has yet been checked against the attribution condition, whose wording differs between versions."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "The record states no version, and the versions differ on how a recipient's licence arises."
+				}
+			}
+		},
+		"unchecked-corpus-input-gu-government-of-guam-bureau-of-statistics-and-p": {
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-10-18",
+			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
+			"retrievedAt": "2026-10-18",
+			"electedBecause": "US factual-data reading, decided by the operator on 2026-10-17, which `packages/corpus/lib/gu/AGENTS.md` extends to Guam because the Copyright Act's geographic definition of the United States includes the organized territories (17 U.S.C. § 101). Street addresses, house numbers, place names and postcodes are facts, which US copyright excludes (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. What the publisher states, as read on 2026-10-18: the Government of Guam GISWEB Portal item `Address_Point_(Public_View)` and its FeatureServer layer carry no licence text and no use constraint, and the Bureau of Statistics and Plans GIS page lists `Address Points` under its public links. A Government of Guam body's file published without terms restricting its use therefore carries no restriction this repository can infer.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist), extended to Guam by 17 U.S.C. § 101. The layer states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			}
+		},
 		"unchecked-access-free-ax-suomen-ymp-rist-keskus-syke": {
 			"state": "elected",
 			"electedTerms": "Creative Commons Nimeä 4.0 Kansainvälinen",

@@ -9,7 +9,23 @@
 
 import { expect, test } from "vitest"
 
-import { buildBoundarySQL, extractOSMBoundary } from "#sdk/extract/boundary"
+import { adminAreasQuery, buildBoundarySQL, extractOSMAdminAreas, extractOSMBoundary } from "#sdk/extract/boundary"
+
+test("adminAreasQuery: selects every named boundary at the listed levels", () => {
+	expect(adminAreasQuery(["9", "10"])).toBe(
+		"SELECT osm_id, name, admin_level FROM multipolygons " +
+			"WHERE boundary='administrative' AND admin_level IN ('9', '10') AND name IS NOT NULL"
+	)
+})
+
+test("adminAreasQuery: rejects a non-numeric level and an empty list", () => {
+	expect(() => adminAreasQuery(["9') OR ('1'='1"])).toThrow(/1-2 digits/)
+	expect(() => adminAreasQuery([])).toThrow(/no admin level/)
+})
+
+test("extractOSMAdminAreas: refuses a hostile level before ever spawning ogr2ogr", async () => {
+	await expect(extractOSMAdminAreas("/nonexistent.pbf", ["x"])).rejects.toThrow(/1-2 digits/)
+})
 
 test("buildBoundarySQL: pins boundary, admin_level and name", () => {
 	expect(buildBoundarySQL({ name: "Berlin", adminLevel: "4" })).toBe(

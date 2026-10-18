@@ -291,6 +291,7 @@
 			}
 		},
 		"fo-property-building-1": {
+			"adapterID": "adressur-fo",
 			"addressRoles": {
 				"address": "premise",
 				"address_complete": "premise"
@@ -859,6 +860,77 @@
 				"reading": "assessed",
 				"because": "The fifteen columns were read in full, and fourteen are address structure: a position, a postcode, a street code and name, a door number and letter, a route kilometre, a block and lot, a census locality and its code, and the department. `nombre_inmueble`, the building name, is free text on 904 rows. Read by its leading words, it names post offices (`AG OFICIAL CORREO` 128, `SUC CORREO` 103), police stations (`SECCIONAL`), municipal and ministry buildings, and holiday houses (`CHALET LA`, `CHALET MARIA`). Three rows name a mail distribution agent by the agent's own name (`Agente Distribucion` followed by a person's given and family names), which is a natural person's name at an address. The `ide-uy` adapter refuses those values (`component:venue:names-a-person`) and every value without a three-letter word, so no person's name reaches a row; a holiday house's given name (`CHALET MARIA`) names the property rather than identifying anyone.",
 				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/G/README.md"
+			}
+		},
+		"li-property-building-1": {
+			"adapterID": "llv-li",
+			"addressRoles": {
+				"STN_NAME": "premise"
+			},
+			"coverage": "Verzeichnis der Gebäudeadressen, one ZIP from service.geo.llv.li (`officialAdress.zip`, 1,306,445 bytes, sha256 `ea8592ccc2ef85a7db73473e5a21ac62be5a3b39bba6f16dcea597636983bcea`) retrieved 2026-10-18, holding `dataset.csv` (2,049,756 bytes) and a shapefile. **Measured 12,966 address rows** by parsing the whole CSV, which is Windows-1252, `;`-separated and unquoted. `STATUS` reads `real` on 12,733 and `planned` on 233, and `OFFICIAL` reads `FALSE` on 4. Every row carries `STN_NAME`, `ADR_NUMBER`, `ZIP_ZIP4` and `ZIP_NAME`; no two rows share street, number and postcode. The 13 postal localities and 13 postcodes cover all eleven municipalities. No column names the municipality, only its number (`COM_FOSNR`). The `llv-li` adapter writes 12,729 rows and refuses the planned and unofficial ones.",
+			"upstreamLineage": ["https://service.geo.llv.li/download/"],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The twenty columns were read in full: identifiers of the address, street, building and entrance (`ADR_EGAID`, `STR_ESID`, `BDG_EGID`, `ADR_EDID`, `FL_GEID`, `AV_STRNR`), the street name and number, the municipality number, the postcode and postal locality, status flags, coordinates in two systems and a modification date. None is a free-text name column, and none identifies an owner, occupant or contact."
+			}
+		},
+		"im-property-building-1": {
+			"adapterID": "landregistry-im",
+			"addressRoles": {
+				"Street_Name": "premise",
+				"House_Name": "premise"
+			},
+			"coverage": "Land transactions, the Isle of Man Land Registry's CSV `landtransactionsjan2025.csv` (4,128,696 bytes, sha256 `9b6ec3801347e48ed1b53d95db7331b0c1e30a5786c4ee364d29d8500d9cc760`), read from the Internet Archive's 2025-02-23 capture because www.gov.im answered 403 to the live file on 2026-10-18. **Measured 40,847 transactions** with completion dates from 2000-11-06 to 2025-01-31, all twelve fields wide, no line breaks inside fields. Street_Name is present on 40,842, House_Number on 22,692, House_Name on 18,948, SubUnit_Name on 6,585, Locality on 10,033 and Postcode on 37,386. Each row is a sale, so an address repeats once per sale: 26,742 distinct addresses by the raw address fields, case-folded. Land without a building appears as a description (`Field North Of Ballawhannel Farm`). The `landregistry-im` adapter keeps only the address columns, emits each address once and refuses land parcels and non-premises (garages, plots, substations), writing 21,655 rows.",
+			"upstreamLineage": [
+				"https://www.gov.im/about-the-government/government/open-data/economy/land-transactions/",
+				"https://web.archive.org/web/20250223165312id_/https://www.gov.im/media/1387366/landtransactionsjan2025.csv"
+			],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The twelve columns were read in full. Seven are address structure (`SubUnit_Name`, `House_Number`, `House_Name`, `Street_Name`, `Locality`, `Town`, `Postcode`, plus `Parish_`), and four describe the sale (`Market_Value`, `Consideration`, `Acquisition_Date`, `CompletionDate`). The dataset page states that the purchaser's name `has not been included`, and no column names a buyer, seller or occupant. A sale price at a dated address is information about a transaction rather than a person, and the adapter does not read the price or date columns, so no row carries them. `House_Name` holds a house's given name (`Starvold`, `The Rhullick`, `El Pozo`), which names the property; the adapter refuses values that hold a number or describe land rather than name a building.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
+			}
+		},
+		"bs-property-building-1": {
+			"adapterID": "gbpa-bs",
+			"addressRoles": {
+				"Address": "premise",
+				"FullStName": "premise"
+			},
+			"coverage": "Freeport address points, `CSV/addresses.csv` of the GitHub repository `GBPA/gis-datafiles` (8,213,284 bytes, sha256 `201658bd153382c1403d9639851b8ef2613573b4a8b9d58436043656cc80a067`, last commit 2018-01-16), retrieved 2026-10-18 with the repository's GeoJSON copy. **Measured 61,722 records**, four with a quoted line break inside `FullStName` (`Santa Maria \\r\\nSanta Maria Avenue`). Every record names City `Freeport` (15,896 after the adapter) or `Lucaya` (45,789) and Island `Grand Bahama`; the file covers the City of Freeport only. `AddressNum` holds the block-and-parcel number (`8-29`, `UU-3`) and `Address` writes it before the street in all 61,722 records. The `gbpa-bs` adapter writes 61,685 rows.",
+			"upstreamLineage": ["https://github.com/GBPA/gis-datafiles"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The fifteen columns were read in full: coordinates, object and address identifiers, parcel and block numbers, the street's prefix, name and suffix, the full address, the house number, city and island. `AltName` is the only free-text name column, populated on 141 rows that the adapter keeps as venues; they name schools, businesses and buildings (`Lucayan International School`). Two hold initials and a surname (`J.S. Johnson`, `G.B. Millwork`), which the adapter refuses (`component:venue:names-a-person`), so no person's name reaches a row.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
+			}
+		},
+		"gu-property-building-1": {
+			"adapterID": "bsp-gu",
+			"addressRoles": {
+				"STREETNAME": "premise",
+				"FullAddres": "premise"
+			},
+			"coverage": "Government of Guam GISWEB Portal `Address_Point_(Public_View)`, FeatureServer layer 0 (item `77d4bfb0fff04c868fe528a1890b4eb0`, modified 2026-05-02), read whole on 2026-10-18 as 18 GeoJSON pages of the layer's 2,000-record maximum (49,746,194 bytes). **Measured 34,323 features** with 34,323 distinct `FID`, matching the layer's own count. Columns include `HOUSE_NUM`, `PRE_DIR`, `STREETNAME`, `STR_TYPE`, `UNIT`, `FullRdNm`, `CITY`, `FullAddres` (`452 RT 10 BARRIGADA GU`) and NG911 fields that are mostly blank; `Post_Code` is blank on every feature. `CITY` names one of Guam's 19 villages, in 47 spellings, and is blank on 4,024. The `bsp-gu` adapter writes 29,889 rows and refuses rows with no street (3,094) or no recognised village (730).",
+			"upstreamLineage": [
+				"https://services2.arcgis.com/FPJlJZYRsD8OhCWA/arcgis/rest/services/Address_Point_(Public_View)/FeatureServer/0"
+			],
+			"personalDataReview": {
+				"reading": "absent",
+				"because": "The layer's columns were read in full: an address-point identifier, the house number, directional prefix, street name and type, unit, full road name, village and full address, coordinates, and NG911 fields (postcode, place type, elevation, discrepancy agency) that are blank or coded. No column names an owner, occupant or contact."
+			}
+		},
+		"az-geodata-aggregate-1": {
+			"adapterID": "opendata-az",
+			"addressRoles": {
+				"STRT_NAME": "premise"
+			},
+			"coverage": "`Azərbaycanda obyektlər və məkanlar`, one GeoJSON from opendata.az (5,083,497 bytes, sha256 `d140c7e8b56a250e6c6bc0a3edd1fc2474b56cb7abb2e928d066ecc8b3848bfc`, Last-Modified 2025-08-05), retrieved 2026-10-18. **Measured 11,807 point features**: Baku 9,774, Sumgayit 1,639 and Absheron 394. `STRT_NAME` (an English transliteration) is present on 10,555 and `STRT_ADDR` on 10,035, of which 5,695 read `0` for no number; 92 rows carry the Azerbaijani street spelling `STRT_N_AZ`. `NEW_ADDR` and `Code_OSM` are empty on every row. The `opendata-az` adapter writes 10,300 rows, 87 of them in Azerbaijani spelling.",
+			"upstreamLineage": ["https://admin.opendata.az/api/3/action/package_show?id=azerbaycanda-obyektler-ve-mekanlar"],
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "The sixteen columns were read in full. Apart from the address and place-type columns, `NAME` and `NAME_AZ` hold the place's name: shops, cafes, pharmacies, ATMs, schools, police stations and monuments (`Store`, `Pharmacy`, `Cafe Beyzade`, `Monument Rahimov`). A surname-ending pattern matched three names in the whole file, each a category word beside a name rather than a person. Single given names used as shop names (`Nicat`, `Aynur`) name the business. The adapter refuses names without a three-letter run as codes. No column names an owner, occupant or contact.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
 			}
 		}
 	}

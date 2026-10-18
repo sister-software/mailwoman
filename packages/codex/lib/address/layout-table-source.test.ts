@@ -28,6 +28,7 @@ import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout }
 import { ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
+import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 
 /**
  * Libaddressinput's placeholder vocabulary in this project's tag names; `%A` is the one opaque
@@ -172,11 +173,18 @@ describe("the generated layout table matches libaddressinput", () => {
 		// A country the dataset leaves unusable may still have an approved S42 template.
 		// Its Standardized Address Format Description states an order this repository read.
 		// That is a second source rather than a second reading of the same one.
+		// A UPU Postal Addressing Systems description is a third: the postal operator's printed examples.
 		for (const country of unusable) {
 			const layout = layoutForCountry(country)
 
 			if (S42_ADDRESS_LAYOUTS[country]) {
 				expect(layout, `${country} reads its order from a SAFD`).toBe(S42_ADDRESS_LAYOUTS[country])
+
+				continue
+			}
+
+			if (UPU_PAS_ADDRESS_LAYOUTS[country]) {
+				expect(layout, `${country} reads its order from a UPU description`).toBe(UPU_PAS_ADDRESS_LAYOUTS[country])
 
 				continue
 			}

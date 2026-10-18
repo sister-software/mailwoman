@@ -43,6 +43,7 @@ import {
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
+import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
@@ -329,7 +330,11 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * Returns the layout for `country`, or `null` when neither table has an entry.
  *
  * Hand-authored entries take precedence because tests check them against real addresses.
- * `null` is the result for 55 of the 252 shipped records with no usable `fmt`.
+ * A UPU Postal Addressing Systems reading comes next: that table holds a country only where
+ * libaddressinput states no `fmt` or omits the locality line the postal operator's own examples print.
+ *
+ * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 7
+ * read from a UPU description have a layout, and the rest answer `null`.
  */
 export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
@@ -354,7 +359,9 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
 
 	// A SAFD entry is last because it exists only where libaddressinput states `fmt: null`.
 	// A SAFD entry read ahead of a generated skeleton would replace a stated order with a second reading.
-	return hand ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
+	// A UPU description is read ahead of the skeleton because it is admitted only where the skeleton
+	// leaves out a line the postal operator prints, so the skeleton has no order for that line to keep.
+	return hand ?? UPU_PAS_ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
 }
 
 /**
@@ -374,7 +381,9 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
  *
  * That states that no crosswalk exists, rather than that one went unread.
  *
- * `national-postal-authority` and `upu-pas` contribute no observation for any jurisdiction yet.
+ * A jurisdiction whose UPU Postal Addressing Systems description was retrieved
+ * contributes an `upu-pas` observation read from its examples.
+ * `national-postal-authority` contributes none yet.
  *
  * An absent observation reads as unexamined rather than as agreement.
  * {@linkcode ObservationStance.Silent} exists to separate the two.
@@ -395,8 +404,9 @@ export function conventionClaimForCountry(
 	// A jurisdiction whose libaddressinput record states `fmt: null` is in no rendering table.
 	// Its SAFD is the one source that speaks for it.
 	const s42 = S42_READ_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code]
+	const pas = UPU_PAS_ADDRESS_LAYOUTS[code]
 
-	if (!generated && !latin && !local && !hand && !s42) return null
+	if (!generated && !latin && !local && !hand && !s42 && !pas) return null
 
 	const observations: ConventionObservation[] = []
 
@@ -465,6 +475,19 @@ export function conventionClaimForCountry(
 				)
 			)
 		}
+	}
+
+	// A retrieved UPU description states the order its examples print.
+	if (pas) {
+		const record = UPU_PAS_LAYOUT_RECORDS[code]!
+
+		observations.push(
+			conventionObservation(
+				ConventionSource.PostalAddressingSystems,
+				stanceFromLayout(claim, pas, printedTags(pas)),
+				`UPU Postal Addressing Systems description for ${code}, dated ${record.documentDate}, retrieved 2026-10-18`
+			)
+		)
 	}
 
 	if (hand) {
@@ -573,6 +596,7 @@ export function addressSystemMembers(): AddressSystemMember[] {
 		...Object.keys(ADDRESS_LAYOUTS),
 		...Object.keys(GENERATED_ADDRESS_LAYOUTS),
 		...Object.keys(S42_ADDRESS_LAYOUTS),
+		...Object.keys(UPU_PAS_ADDRESS_LAYOUTS),
 	])
 
 	const members: AddressSystemMember[] = []
