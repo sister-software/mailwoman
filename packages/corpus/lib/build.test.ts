@@ -13,7 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import {
@@ -498,6 +498,16 @@ vi.mock("#source-register/register", async (importOriginal) => {
 const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
 
 describe("buildCorpus source rights", () => {
+	// The suite runs with `isolate: false`, so a file earlier in the worker may
+	// already have loaded `#build` over the real register.
+	// Reloading it here makes it read the register through the mock above.
+	let buildWithMockedRegister: typeof buildCorpus
+
+	beforeAll(async () => {
+		vi.resetModules()
+		buildWithMockedRegister = (await import("#build")).buildCorpus
+	})
+
 	beforeEach(() => {
 		refuseWhosOnFirst.active = true
 	})
@@ -510,7 +520,7 @@ describe("buildCorpus source rights", () => {
 		const outDir = scratch.path("refused")
 
 		await expect(
-			buildCorpus({
+			buildWithMockedRegister({
 				outputDir: outDir,
 				corpusVersion: "0.1.0",
 				adapters: [wofAdminAdapter],
@@ -527,7 +537,7 @@ describe("buildCorpus source rights", () => {
 	it("records the corpus as not shippable when the override admits the source", async () => {
 		const outDir = scratch.path("override")
 
-		const manifest = await buildCorpus({
+		const manifest = await buildWithMockedRegister({
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
