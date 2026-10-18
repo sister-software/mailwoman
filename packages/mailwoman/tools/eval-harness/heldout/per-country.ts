@@ -14,6 +14,7 @@
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -59,6 +60,7 @@ export async function sampleHeldoutRows(
 	pathRoot: string
 ): Promise<HeldoutRow[]> {
 	const manifest = await readLocalJSONFile<{ slices: Array<{ path: string; split: string }> }>(manifestPath)
+
 	const files = manifest.slices
 		.filter((slice) => slice.split === "test")
 		.map((slice) => slice.path.replace(/^\/data/u, pathRoot))
@@ -75,14 +77,27 @@ export async function sampleHeldoutRows(
 			Math.trunc(perCountry).toString()
 	)
 
-	return reader
-		.getRowObjects()
-		.map(
-			(row) =>
-				Object.fromEntries(
-					Object.entries(row).map(([key, value]) => [key, normalizeDuckDBValue(value)])
-				) as unknown as HeldoutRow
-		)
+	const spanList = (value: unknown): unknown[] => {
+		const normalized = normalizeDuckDBValue(value)
+
+		if (!Array.isArray(normalized))
+			throw new Error(`a held-out row holds a non-list span column: ${String(normalized)}`)
+
+		return normalized
+	}
+
+	return reader.getRowObjects().map((row): HeldoutRow => ({
+		raw: String(row.raw),
+		span_starts: spanList(row.span_starts).map(Number),
+		span_ends: spanList(row.span_ends).map(Number),
+		span_tags: spanList(row.span_tags).map((tag) => {
+			if (typeof tag !== "string") throw new Error(`a held-out row holds a non-string span tag: ${stringifyJSON(tag)}`)
+
+			return tag
+		}),
+		country: row.country == null ? null : String(row.country),
+		source: String(row.source),
+	}))
 }
 
 /**
