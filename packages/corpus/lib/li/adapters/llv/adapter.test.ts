@@ -39,7 +39,17 @@ const parse = (line: string): LLVLiechtensteinRecord => {
 	const keys = HEADER.split(";")
 	const values = line.split(";")
 
-	return Object.fromEntries(keys.map((key, index) => [key, values[index] ?? ""])) as unknown as LLVLiechtensteinRecord
+	const row: Record<string, string> = Object.fromEntries(keys.map((key, index) => [key, values[index] ?? ""]))
+
+	return {
+		ADR_EGAID: row.ADR_EGAID ?? "",
+		STN_NAME: row.STN_NAME ?? "",
+		ADR_NUMBER: row.ADR_NUMBER ?? "",
+		ZIP_ZIP4: row.ZIP_ZIP4 ?? "",
+		ZIP_NAME: row.ZIP_NAME ?? "",
+		STATUS: row.STATUS ?? "",
+		OFFICIAL: row.OFFICIAL ?? "",
+	}
 }
 
 describe("componentsForLLVRecord", () => {

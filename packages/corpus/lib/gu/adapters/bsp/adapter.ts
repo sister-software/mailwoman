@@ -155,7 +155,7 @@ export function isGuamPlaceName(value: string): boolean {
 	const parts = upperFold(value)
 		.split(/[,/()-]/u)
 		.map((part) => part.trim())
-		.filter(Boolean)
+		.filter((part) => part.length > 0)
 
 	return parts.length > 0 && parts.every((part) => GUAM_PLACE_NAMES.has(part))
 }
@@ -181,7 +181,7 @@ export function guamHouseNumber(value: string): string | null {
 	const parts = value
 		.split("/")
 		.map((part) => part.trim())
-		.filter(Boolean)
+		.filter((part) => part.length > 0)
 
 	const numbers = parts.filter((part) => HOUSE_NUMBER.test(part))
 

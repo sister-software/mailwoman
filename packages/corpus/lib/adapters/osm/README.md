@@ -72,7 +72,7 @@ mailwoman corpus run osm \
 `--locality-level` or `--dependent-locality-level`: the name of the `boundary=administrative` area at that
 level which contains the point, written only where the mapper tagged no `addr:city` (or `addr:suburb`).
 A tagged value always wins, and a row that took its locality from a boundary counts
-`kept:locality-from-boundary`. Serbia's settlements are level 9 and its city quarters level 10; Brunei's
+`kept:locality-from-boundary`. Serbia's settlements are level 9 and its city quarters level 10. Brunei's
 municipality is level 7, its mukims level 6 and its kampongs levels 10 and 8.
 
 A record with no `addr:street` is a streetless premise when its house number is designator-shaped and
