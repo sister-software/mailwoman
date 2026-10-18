@@ -4,10 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { createOpenNamesReadStats, populatedPlaceName1, readOpenNamesRoads } from "#gb/os-open/open/names"
+import {
+	createOpenNamesReadStats,
+	OPEN_NAMES_COLUMNS,
+	populatedPlaceName1,
+	readOpenNamesPostcodeCounties,
+	readOpenNamesRoads,
+} from "#gb/os-open/open/names"
 
 const fixtureCSV = workspacePath("corpus", "fixtures", "gb-os-open", "open-names", "Data", "SE23.csv").toString()
 
@@ -40,6 +48,41 @@ describe("readOpenNamesRoads", () => {
 
 		expect(roads.map((road) => road.name1)).toEqual(["CHURCH LANE"])
 		expect(stats.unrequested).toBe(3)
+	})
+})
+
+describe("readOpenNamesPostcodeCounties", () => {
+	it("yields each unit postcode with its county or unitary authority and skips other rows", async () => {
+		await using scratch = await temporaryDirectory("open-names-postcodes")
+		const csv = scratch.path("TQ75.csv")
+
+		const row = (name1: string, localType: string, county: string) => {
+			const cells: string[] = OPEN_NAMES_COLUMNS.map(() => "")
+
+			cells[OPEN_NAMES_COLUMNS.indexOf("NAME1")] = name1
+			cells[OPEN_NAMES_COLUMNS.indexOf("LOCAL_TYPE")] = localType
+			cells[OPEN_NAMES_COLUMNS.indexOf("COUNTY_UNITARY")] = county
+
+			return cells.join(",")
+		}
+
+		await writeLocalTextFile(
+			[
+				row("ME14 1JH", "Postcode", "Kent"),
+				row("Week Street", "Named Road", "Kent"),
+				row("ME1 1AA", "Postcode", "Medway"),
+			].join("\n") + "\n",
+			csv
+		)
+
+		const stats = createOpenNamesReadStats()
+
+		expect(await Array.fromAsync(readOpenNamesPostcodeCounties(csv.toString(), stats))).toEqual([
+			{ postcode: "ME14 1JH", countyUnitary: "Kent" },
+			{ postcode: "ME1 1AA", countyUnitary: "Medway" },
+		])
+
+		expect(stats.read).toBe(3)
 	})
 })
 

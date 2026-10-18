@@ -22,6 +22,7 @@ import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/source-id"
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import { openConstituentCountryReader } from "#gb/constituent-country"
+import { readCountyOfPostcode } from "#gb/county"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
@@ -67,9 +68,32 @@ export interface LocalePart {
 	/**
 	 * Opens a reader that answers the row's region from its postcode, replacing the region column.
 	 *
-	 * A GB part answers the constituent country this way, and its county column is not read.
+	 * A GB part answers the county or the constituent country this way.
 	 */
-	regionOfPostcode?: () => (postcode: string) => string | null
+	regionOfPostcode?: () => Promise<(postcode: string) => string | null>
+}
+
+/**
+ * The share of GB postcodes whose rows label the county `region`, out of five.
+ *
+ * The other postcodes' rows label the constituent country, which Who's On First
+ * records as a `macroregion` under the United Kingdom.
+ */
+const GB_COUNTY_REGION_FIFTHS = 4
+
+/**
+ * Whether a GB postcode's rows label the county rather than the constituent country.
+ *
+ * The choice is a function of the postcode alone, so a rebuild makes the same choice for every row.
+ */
+function gbPostcodeTakesCounty(postcode: string): boolean {
+	let sum = 0
+
+	for (const char of postcode) {
+		sum += char.codePointAt(0)!
+	}
+
+	return sum % 5 < GB_COUNTY_REGION_FIFTHS
 }
 
 /**
@@ -191,15 +215,17 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		register: SourceRegister.OrdnanceSurveyOpenData,
 		corpusVersion: "0.9.9",
 		license: "OS OpenData GB tuples (OGL-UK-3.0)",
-		// The constituent country is read from NSUL by postcode, because the adapter's rows carry no region.
+		// The adapter's rows carry no region.
+		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
 			{
 				canonicalRows: gbOSOpenCanonicalRowsPath(),
 				canonicalSource: GB_OS_OPEN_ADAPTER_ID,
-				regionOfPostcode: () => {
+				regionOfPostcode: async () => {
 					const countryOf = openConstituentCountryReader()
+					const countyOf = await readCountyOfPostcode()
 
-					return (postcode) => countryOf(postcode).name
+					return (postcode) => (gbPostcodeTakesCounty(postcode) && countyOf.get(postcode)) || countryOf(postcode).name
 				},
 			},
 		],
@@ -278,7 +304,7 @@ async function readCanonicalTuples(
 	}
 
 	const reservoir: LocaleBaseTuple[] = []
-	const regionOf = part.regionOfPostcode?.()
+	const regionOf = await part.regionOfPostcode?.()
 	let seen = 0
 	let regionUnknown = 0
 
@@ -357,7 +383,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	let header: string[] | null = null
 	let seen = 0
 	let dropped = 0
-	const regionOf = part.regionOfPostcode?.()
+	const regionOf = await part.regionOfPostcode?.()
 	let regionUnknown = 0
 
 	try {
