@@ -144,6 +144,8 @@ extend-ignore-re = [
 # register and the ANS terminology `TRE-R35`, the education ministry's directorate `DNE`, Wallis and Futuna's
 # `Alo` and `Mata Utu`, Latvia's `DAT_BEIG` column, CORDIS's `SME` column, and the German sole-trader marker `Inh.`.
 finess = "finess"
+# Portuguese for "individual", in the Brasília sector name `Setor de Habitações Individuais Sul`.
+individuais = "individuais"
 tre = "tre"
 dne = "dne"
 alo = "alo"
