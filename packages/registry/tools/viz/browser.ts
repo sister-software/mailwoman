@@ -3,16 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shared headless-Chromium harness behind the `registry viz` renderers (an internal helper rather than a command). The WebGL consumers (Plotly 3D, MapLibre) get no GPU in headless Chromium, so
- *   the browser launches on angle's SwiftShader software rasterizer (`--use-gl=angle
- *   --use-angle=swiftshader --enable-unsafe-swiftshader`); each caller owns its own navigation +
- *   wait strategy and screenshots inside the callback.
- *
- *   Playwright (headless Chromium) is a heavy dev-only dependency — lazy-imported at call time (the
- *   corpus-tools lazy-import convention), so importing `@mailwoman/registry/tools` never pays for
- *   it.
+ * This module configures the shared browser for Plotly and MapLibre rendering.
+ * SwiftShader supplies WebGL without a hardware GPU.
+ * Each caller owns navigation, readiness checks, and screenshots.
+ * The browser package loads Playwright and stealth plugins when a session starts.
  */
 
+import { withBrowserPage } from "@mailwoman/browser"
 import type { Page } from "playwright"
 
 /**
@@ -32,20 +29,13 @@ export async function withChromiumPage<T>(
 	options: ChromiumPageOptions,
 	fn: (page: Page) => Promise<T>
 ): Promise<{ result: T; consoleErrors: string[] }> {
-	const { chromium } = await import("playwright")
-
-	const browser = await chromium.launch({
-		args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
-	})
-
-	const page = await browser.newPage({ viewport: options.viewport, deviceScaleFactor: 2 })
-
-	const errors: string[] = []
-	page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
-	page.on("pageerror", (e) => errors.push(String(e)))
-
-	const result = await fn(page)
-	await browser[Symbol.asyncDispose]()
-
-	return { result, consoleErrors: errors }
+	return withBrowserPage(
+		{
+			launchOptions: {
+				args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+			},
+			contextOptions: { viewport: options.viewport, deviceScaleFactor: 2 },
+		},
+		fn
+	)
 }

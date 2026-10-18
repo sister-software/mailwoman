@@ -110,6 +110,7 @@
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
+		"@mailwoman/browser": "workspace:*",
 		"@playwright/test": "^1.63.0",
 		"@storybook/addon-docs": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
@@ -119,6 +120,7 @@
 		"@types/react-map-gl": "^6.1.10",
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitejs/plugin-react": "^6.1.2",
+		"playwright": "^1.63.0",
 		"spliterator": "^9.2.1",
 		"storybook": "^10.6.1",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",

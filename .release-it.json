@@ -94,6 +94,7 @@
 		"after:release": "echo 'Released v${version}'"
 	},
 	"absences": {
+		"packages/browser": "private browser automation for acquisition and agent tools — never publishes",
 		"docs": "private Docusaurus site — never publishes",
 		"packages/tile-worker": "private demo-map tile worker — never publishes",
 		"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",

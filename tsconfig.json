@@ -19,6 +19,8 @@
 	},
 	"include": [],
 	"references": [
+		{ "path": "./packages/browser" },
+		{ "path": "./packages/browser/tsconfig.test.json" },
 		{ "path": "./packages/core" },
 		{ "path": "./packages/core/tools" },
 		{ "path": "./packages/resolver" },
