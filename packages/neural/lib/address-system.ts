@@ -23,6 +23,11 @@ import { softmax } from "#viterbi"
  */
 export interface AddressSystemTable {
 	noHint: number
+	/**
+	 * The number of systems the model trained with, which is the width of its `address_system_logits` output.
+	 * A card written before the field existed omits it.
+	 */
+	count?: number
 	members: Readonly<Record<string, number>>
 }
 
@@ -52,7 +57,33 @@ export function parseAddressSystemTable(value: unknown, source: string): Address
 		)
 	}
 
-	return { noHint: table.no_hint, members: members as Record<string, number> }
+	const count = (value as { count?: unknown }).count
+
+	return {
+		noHint: table.no_hint,
+		...(typeof count === "number" ? { count } : {}),
+		members: members as Record<string, number>,
+	}
+}
+
+/**
+ * Throws when a graph's address-system head width disagrees with its card's `address_systems.count`.
+ *
+ * A stale `model.onnx` beside a newer card feeds `noHint` past the graph's hint embedding,
+ * and every unhinted parse then fails inside ONNX Runtime with an out-of-bounds `Gather`.
+ * A graph without the head, or a card without `count`, passes.
+ */
+export function assertAddressSystemWidth(table: AddressSystemTable, graphWidth: number | null, source: string): void {
+	if (graphWidth == null || typeof table.count !== "number") return
+
+	if (graphWidth !== table.count) {
+		throw new Error(
+			`model card ${source} declares ${table.count} address systems, but the graph's ` +
+				`\`address_system_logits\` output is ${graphWidth} wide. The model file and its card come ` +
+				`from different releases. Run \`yarn mwops release copy-weights\` or stage the card that ` +
+				`was exported with this model.`
+		)
+	}
 }
 
 /**
