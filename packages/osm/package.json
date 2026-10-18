@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/osm",
-	"version": "10.6.0",
+	"version": "10.7.0",
 	"description": "OpenStreetMap address-point ingestion code. It contains no OpenStreetMap data; it builds per-country ODbL address-point databases locally from a Geofabrik extract the operator downloads.",
 	"keywords": [
 		"address-point",
