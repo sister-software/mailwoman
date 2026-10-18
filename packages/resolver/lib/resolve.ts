@@ -19,9 +19,9 @@ import {
 	type ResolveOpts,
 	type Resolver,
 	type ResolverBackend,
-	countriesFromPostcodeFormat,
 	resolveSwitches,
 } from "@mailwoman/core/resolver"
+import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 
 import {
 	applyAdminCoherence,

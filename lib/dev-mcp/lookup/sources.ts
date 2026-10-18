@@ -8,10 +8,11 @@
  *   Each probe reports the normalized key it used, so a reader can tell a true miss from a key mismatch.
  */
 
-import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
+import { us } from "@mailwoman/codex"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
+import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"

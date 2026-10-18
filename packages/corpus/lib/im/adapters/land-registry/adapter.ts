@@ -25,8 +25,8 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -230,7 +230,7 @@ export function componentsForIsleOfManLandTransactionRecord(
 	}
 
 	const postcode = present(record.Postcode)?.toUpperCase()
-	const matched = postcode ? matchCountryPostcode(postcode, "IM") : null
+	const matched = postcode ? acceptPostcode(postcode, "IM") : null
 
 	if (matched) {
 		components.postcode = matched

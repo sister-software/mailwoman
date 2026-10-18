@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { POSTCODE_SHAPES, WHOLE_POSTCODE_SHAPES, wholePostcodeShape } from "#postcode/shapes"
+import { POSTCODE_SHAPES, WHOLE_POSTCODE_SHAPES, wholePostcodeShape } from "#shapes"
 
 /**
  * One spaced postcode per label that states an anchored form, written as a person writes it.

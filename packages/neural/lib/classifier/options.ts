@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { SYSTEM_CODES, type SystemCode } from "@mailwoman/codex"
+import type { SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
 	AnchorRegionLookupLike,
@@ -16,6 +16,7 @@ import type {
 	VenueHeadPriorOpts,
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
+import { SYSTEM_CODES } from "@mailwoman/postcode/systems"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"
 

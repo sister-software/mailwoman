@@ -14,7 +14,7 @@
 	"references": [
 		// ---
 		{ "path": "../annotations" },
-		{ "path": "../codex" },
+		{ "path": "../postcode" },
 		{ "path": "../core" }
 	]
 }

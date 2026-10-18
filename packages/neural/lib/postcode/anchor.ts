@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 import type { PostcodePlace } from "@mailwoman/core/resolver"
+import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 
 import { collectMatches } from "#postcode/repair"
 

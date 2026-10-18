@@ -6,9 +6,9 @@
  *   Tree resolution over a browser-side place lookup, with the lookup kept structural (`MailwomanLookupLike`).
  */
 
-import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
+import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**

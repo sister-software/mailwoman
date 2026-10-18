@@ -6462,6 +6462,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -6914,6 +6915,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/locale-hint": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     esbuild: "npm:0.28.2"
@@ -7119,6 +7121,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/postcode@workspace:*, @mailwoman/postcode@workspace:packages/postcode":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/postcode@workspace:packages/postcode"
+  dependencies:
+    "@mailwoman/codex": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/query-shape@workspace:*, @mailwoman/query-shape@workspace:packages/query-shape":
   version: 0.0.0-use.local
   resolution: "@mailwoman/query-shape@workspace:packages/query-shape"
@@ -7231,6 +7241,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -7249,6 +7260,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     path-ts: "npm:^2.5.0"
@@ -7291,8 +7303,8 @@ __metadata:
   dependencies:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
     "@mailwoman/annotations": "workspace:*"
-    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@types/google.maps": "npm:^3.66.5"
     geo-coordinates-parser: "npm:^1.7.4"
     h3-js: "npm:^4.5.0"
@@ -7388,6 +7400,7 @@ __metadata:
     "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -21173,6 +21186,7 @@ __metadata:
     "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"

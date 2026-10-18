@@ -27,10 +27,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { matchCountryPostcode } from "@mailwoman/codex/postcode/country-formats"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -131,7 +131,7 @@ export function componentsForLLVRecord(
 	}
 
 	const postcode = present(record.ZIP_ZIP4)
-	const matched = postcode ? matchCountryPostcode(postcode, "LI") : null
+	const matched = postcode ? acceptPostcode(postcode, "LI") : null
 
 	if (matched) {
 		components.postcode = matched

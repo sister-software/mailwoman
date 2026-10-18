@@ -8,10 +8,10 @@
  *   a postcode the same way. The binding assertions below are the ones a constant cannot satisfy.
  */
 
-import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/codex"
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/postcode/systems"
 import { describe, expect, it } from "vitest"
 
 import {

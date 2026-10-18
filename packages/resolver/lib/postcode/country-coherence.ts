@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**

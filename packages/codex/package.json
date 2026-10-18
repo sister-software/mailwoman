@@ -18,9 +18,7 @@
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"lib/us/street-suffix.json",
-		"out/us/street-suffix.json",
-		"lib/postcode/shapes.json",
-		"out/postcode/shapes.json"
+		"out/us/street-suffix.json"
 	],
 	"type": "module",
 	"imports": {

@@ -7,7 +7,13 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"references": [{ "path": "../core" }, { "path": "../spatial" }, { "path": "../codex" }, { "path": "../evidence" }],
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../postcode" },
+		{ "path": "../spatial" },
+		{ "path": "../codex" },
+		{ "path": "../evidence" }
+	],
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
 }

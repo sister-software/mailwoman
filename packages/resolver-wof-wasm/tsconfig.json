@@ -14,6 +14,7 @@
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{ "path": "../core" },
+		{ "path": "../postcode" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../spatial" }
