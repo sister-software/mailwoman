@@ -240,6 +240,13 @@ export function formatAddressRow(
 		}
 	}
 
+	// A postcode printed with its layout's prefix (`FO600`, `CH-8001`) is labeled as written.
+	const writtenPostcode = rendering.pieces.find((piece) => piece.tag === "postcode")?.text
+
+	if (writtenPostcode && placed.postcode && writtenPostcode !== placed.postcode.trim()) {
+		placed.postcode = writtenPostcode
+	}
+
 	return { raw, components: placed, unplaced: rendering.unplaced, script }
 }
 
