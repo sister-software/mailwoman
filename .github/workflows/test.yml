@@ -394,9 +394,6 @@ jobs:
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 
-      - name: Install Chromium for browser integration tests
-        run: yarn playwright install chromium
-
       - name: Test (slow)
         env:
           TEST_FILES: ${{ needs.scope.outputs.slow_files }}

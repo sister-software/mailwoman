@@ -77,7 +77,7 @@ Acquire storage state programmatically with `session.context.storageState({ path
 The MCP session and a programmatic session share configuration, but they have separate
 cookies and tabs unless the caller explicitly transfers storage state.
 
-## Dependencies and verification
+## Dependencies
 
 The implementation uses `playwright-extra` with `puppeteer-extra-plugin-stealth`.
 Each session creates its own launcher and plugin instance. It does not mutate Playwright's
@@ -86,17 +86,6 @@ shared Chromium export or add plugins to the E2E runner.
 The Python `playwright_stealth` project was inspected as a reference. Its browser evasions
 are JavaScript, and its Python code coordinates initialization scripts, launch flags, and
 headers. This workspace uses the existing Node implementation and requires no Python runtime.
-Access to sites using bot detection remains dependent on their detection methods; the local
-tests measure the listed browser behaviors rather than access to those sites.
-
 The MCP wrapper is pinned to `0.0.83`. Root Yarn resolutions keep its `playwright` and
 `playwright-core` dependencies at the repository's `1.63.0`, replacing the wrapper's alpha
-dependency. Update these together and run the integration tests when changing either.
-
-```sh
-yarn vitest run --config vitest.slow.config.ts packages/browser
-```
-
-The tests compare browser properties with standard Playwright, check initialization in pages
-and frames, verify cleanup after success and rejection, save a download, inspect a PNG,
-and exercise MCP navigation, evaluation, image responses, reopening, and the stdio command.
+dependency. Update these together and check both the programmatic API and MCP when changing either.
