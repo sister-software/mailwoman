@@ -78,6 +78,7 @@ storybook-static
 /coverage/
 playwright-report
 playwright-traces
+.playwright-mcp/
 test-results
 *.lcov
 .vitest-attachments
