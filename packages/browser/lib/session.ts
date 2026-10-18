@@ -42,6 +42,20 @@ export async function createBrowserSession(options: BrowserSessionOptions = {}):
 
 	const launcher = addExtra(chromium)
 	launcher.use(StealthPlugin())
+	const { locale, userAgent } = options.contextOptions ?? {}
+
+	// The plugin applies its own locale and user agent after Playwright creates the context.
+	// Pass caller settings to both implementations so the plugin does not replace them with defaults.
+	if (locale || userAgent) {
+		launcher.plugins.setDependencyDefaults("stealth/evasions/user-agent-override", {
+			...(locale ? { locale } : {}),
+			...(userAgent ? { userAgent } : {}),
+		})
+	}
+
+	if (locale) {
+		launcher.plugins.setDependencyDefaults("stealth/evasions/navigator.languages", { languages: [locale] })
+	}
 
 	const browser = options.cdpEndpoint
 		? await launcher.connectOverCDP(options.cdpEndpoint)
