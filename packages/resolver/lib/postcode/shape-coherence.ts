@@ -5,7 +5,6 @@
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
@@ -65,7 +64,8 @@ function collectSiblingCountries(roots: readonly AddressNode[]): Set<string> {
 				continue
 			}
 
-			const country = isUSStateAbbreviation(matched.iso2) ? "US" : matched.iso2.toUpperCase()
+			// The match's ISO code is the country, even where it spells a US state abbreviation (`IN`, `DE`, `CA`).
+			const country = matched.iso2.toUpperCase()
 
 			if (statesSyntax(country)) {
 				out.add(country)
