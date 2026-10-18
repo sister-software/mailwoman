@@ -8,6 +8,5 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts"],
-	"references": [{ "path": "../core" }]
+	"exclude": ["./out/**/*", "./**/*.test.ts"]
 }

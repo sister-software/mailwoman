@@ -38,16 +38,15 @@ await download.saveAs(destination)
 `{ result, consoleErrors }`. It awaits the callback before closing the context and browser,
 including when the callback rejects. `createBrowserSession` also accepts `launchOptions`
 and a `cdpEndpoint` for connecting to an existing Chromium instance. A CDP connection creates
-a separate context; it does not use the existing browser's logged-in tabs.
+a separate context. It does not use the existing browser's logged-in tabs.
 
 Use a browser to discover portal requests, inspect rendered metadata, establish sessions,
 or perform interactions required for downloads. When an endpoint can be called directly,
 use the existing HTTP client and streaming downloader. Record source URLs, retrieval dates,
 licenses, and file hashes through the acquisition package's manifest writer.
 
-Wait for the element or response the acquisition needs. A navigation event alone does not
-establish that a page has finished rendering, and continuous background requests can prevent
-`networkidle` from completing.
+Wait for the element or response the acquisition needs. Navigation can finish before the
+required element appears. Continuous background requests can prevent `networkidle` from completing.
 
 ## Agent access through MCP
 
@@ -60,18 +59,18 @@ node lib/browser-mcp/cli.ts
 The command serves Microsoft's Playwright MCP tools over stdio. It starts the shared browser
 on the first browser tool call. Navigation, snapshots, clicks, evaluation, console messages,
 network inspection, and screenshots use the upstream tools. Screenshot responses retain
-their MCP image content. `browser_close` releases the session; a later navigation opens a
+their MCP image content. `browser_close` releases the session. A later navigation opens a
 new session with stealth enabled. The process also releases its browser when the MCP
 transport closes or it receives SIGINT or SIGTERM.
 
 The command accepts these options:
 
-| Option                   | Behavior                                                                |
-| ------------------------ | ----------------------------------------------------------------------- |
-| `--headed`               | Display the browser window. The default is headless.                    |
-| `--storage-state <path>` | Load Playwright cookies and local storage into each new context.        |
-| `--output-dir <path>`    | Set the directory for automatically named MCP artifacts.                |
-| `--cdp-endpoint <url>`   | Connect to an existing Chromium instance and create a separate context. |
+| Option                   | Behavior                                                                  |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `--headed`               | Display the browser window. The default is headless.                      |
+| `--storage-state <path>` | Load Playwright cookies and local storage into each new context.          |
+| `--output-dir <path>`    | Set the directory for MCP artifacts created without an explicit filename. |
+| `--cdp-endpoint <url>`   | Connect to an existing Chromium instance and create a separate context.   |
 
 Acquire storage state programmatically with `session.context.storageState({ path })`.
 The MCP session and a programmatic session share configuration, but they have separate
@@ -86,6 +85,7 @@ shared Chromium export or add plugins to the E2E runner.
 The Python `playwright_stealth` project was inspected as a reference. Its browser evasions
 are JavaScript, and its Python code coordinates initialization scripts, launch flags, and
 headers. This workspace uses the existing Node implementation and requires no Python runtime.
+
 The MCP wrapper is pinned to `0.0.83`. Root Yarn resolutions keep its `playwright` and
 `playwright-core` dependencies at the repository's `1.63.0`, replacing the wrapper's alpha
 dependency. Update these together and check both the programmatic API and MCP when changing either.

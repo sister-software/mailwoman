@@ -6360,7 +6360,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/browser@workspace:packages/browser"
   dependencies:
-    "@mailwoman/core": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.32.1"
     "@playwright/mcp": "npm:0.0.83"
     "@types/node": "npm:^26.6.4"
