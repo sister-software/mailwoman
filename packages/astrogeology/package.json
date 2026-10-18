@@ -35,10 +35,10 @@
 		"ink": "^8.0.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
-		"react": "^19.3.0",
+		"react": "^19.3.1",
 		"spliterator": "^9.2.1",
-		"wrangler": "^4.148.0",
-		"zod": "^4.6.5"
+		"wrangler": "^4.151.0",
+		"zod": "^4.6.7"
 	},
 	"engines": {
 		"node": ">=24.18.0"
