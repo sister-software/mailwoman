@@ -54,6 +54,28 @@ export interface PostcodeBinaryEntry {
 	lon: number
 }
 
+/**
+ * The value of an empty hash slot.
+ * A PCB1 binary holds fewer records than this.
+ */
+const EMPTY_SLOT = 0xff_ff_ff_ff
+
+const FNV_OFFSET = 0x81_1c_9d_c5
+const FNV_PRIME = 0x01_00_01_93
+
+/**
+ * FNV-1a over a postcode's characters as PCB1 encodes them (7-bit).
+ */
+function hashKey(postcode: string): number {
+	let h = FNV_OFFSET
+
+	for (let j = 0; j < postcode.length; j++) {
+		h = Math.imul(h ^ (postcode.charCodeAt(j) & 0x7f), FNV_PRIME)
+	}
+
+	return h >>> 0
+}
+
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
 	for (let i = 0; i < width; i++) {
 		out[offset + i] = i < s.length ? s.charCodeAt(i) & 0x7f : 0
@@ -132,6 +154,18 @@ export class PostcodeBinaryResolver {
 	readonly #keyWidth: number
 	readonly #recSize: number
 	readonly #recBase: number
+	/**
+	 * An open-addressing hash table over the records: each occupied slot holds the number
+	 * of the first record of one postcode, and an empty slot holds {@link EMPTY_SLOT}.
+	 *
+	 * Records arrive in arbitrary order in a server, so a binary search pays a
+	 * cache miss at most of its steps.
+	 * One probe here reads one slot and one record.
+	 *
+	 * The table costs 4 bytes per slot at no more than half occupancy.
+	 */
+	readonly #slots: Uint32Array
+	readonly #mask: number
 
 	constructor(bytes: Uint8Array) {
 		this.#buf = bytes
@@ -151,41 +185,99 @@ export class PostcodeBinaryResolver {
 		this.#keyWidth = bytes[o++]!
 		this.#recSize = this.#keyWidth + REC_TAIL
 		this.#recBase = o
+
+		let groups = 0
+
+		for (let i = 0; i < this.#count; i++) {
+			if (i === 0 || !this.#sameRecordKeys(i - 1, i)) {
+				groups++
+			}
+		}
+
+		let size = 1
+
+		while (size < groups * 2) {
+			size <<= 1
+		}
+
+		this.#mask = size - 1
+		this.#slots = new Uint32Array(size).fill(EMPTY_SLOT)
+
+		for (let i = 0; i < this.#count; i++) {
+			if (i > 0 && this.#sameRecordKeys(i - 1, i)) continue
+			let slot = this.#hashRecord(i) & this.#mask
+
+			while (this.#slots[slot] !== EMPTY_SLOT) {
+				slot = (slot + 1) & this.#mask
+			}
+
+			this.#slots[slot] = i
+		}
 	}
 
-	#cmpKey(i: number, key: Uint8Array): number {
+	#sameRecordKeys(a: number, b: number): boolean {
+		const x = this.#recBase + a * this.#recSize
+		const y = this.#recBase + b * this.#recSize
+
+		for (let j = 0; j < this.#keyWidth; j++) {
+			if (this.#buf[x + j] !== this.#buf[y + j]) return false
+		}
+
+		return true
+	}
+
+	/**
+	 * FNV-1a over a record's key bytes up to its zero padding, equal to {@link hashKey} of the same postcode.
+	 */
+	#hashRecord(i: number): number {
+		const base = this.#recBase + i * this.#recSize
+		let h = FNV_OFFSET
+
+		for (let j = 0; j < this.#keyWidth; j++) {
+			const c = this.#buf[base + j]!
+
+			if (c === 0) break
+			h = Math.imul(h ^ c, FNV_PRIME)
+		}
+
+		return h >>> 0
+	}
+
+	#recordKeyIs(i: number, postcode: string): boolean {
 		const base = this.#recBase + i * this.#recSize
 
 		for (let j = 0; j < this.#keyWidth; j++) {
-			const d = this.#buf[base + j]! - key[j]!
+			const expected = j < postcode.length ? postcode.charCodeAt(j) & 0x7f : 0
 
-			if (d !== 0) return d
+			if (this.#buf[base + j] !== expected) return false
 		}
 
-		return 0
+		return true
 	}
 
 	lookup(postcode: string): PostcodePlace[] {
 		if (postcode.length > this.#keyWidth) return []
-		const key = new Uint8Array(this.#keyWidth)
-		encodeKey(postcode, this.#keyWidth, key, 0)
 
-		let lo = 0
-		let hi = this.#count
+		let slot = hashKey(postcode) & this.#mask
+		let first = EMPTY_SLOT
 
-		while (lo < hi) {
-			const mid = (lo + hi) >>> 1
+		for (;;) {
+			const record = this.#slots[slot]!
 
-			if (this.#cmpKey(mid, key) < 0) {
-				lo = mid + 1
-			} else {
-				hi = mid
+			if (record === EMPTY_SLOT) return []
+
+			if (this.#recordKeyIs(record, postcode)) {
+				first = record
+
+				break
 			}
+
+			slot = (slot + 1) & this.#mask
 		}
 
 		const out: PostcodePlace[] = []
 
-		for (let i = lo; i < this.#count && this.#cmpKey(i, key) === 0; i++) {
+		for (let i = first; i < this.#count && (i === first || this.#sameRecordKeys(first, i)); i++) {
 			const base = this.#recBase + i * this.#recSize + this.#keyWidth
 
 			out.push({
