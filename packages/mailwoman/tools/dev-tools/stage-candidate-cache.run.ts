@@ -14,26 +14,43 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const { values } = parseArguments({
 	options: {
 		model: { type: "string" },
+		card: { type: "string" },
 		out: { type: "string" },
 		locales: { type: "string", default: "" },
 		"dry-run": { type: "boolean", default: false },
 	},
 })
 
-const modelPath = values.model
 const outRoot = values.out
 
-if (!modelPath) throw new Error("--model <int8.onnx> is required: the candidate graph the base package serves")
+if (!values.model) throw new Error("--model <int8.onnx> is required: the candidate graph the base package serves")
+
+const modelPath = PathBuilder.from(values.model)
 
 if (!outRoot) throw new Error("--out <dir> is required: the cache root to stage into")
 
 if (!(await pathExists(modelPath))) {
 	throw new Error(`--model names nothing at ${modelPath}`)
+}
+
+/**
+ * The card exported with the candidate graph, which carries the address-system table the graph trained with.
+ *
+ * The installed card describes the shipped graph instead, and its table can be a different width.
+ * `--card` names it, and otherwise the export's own `model-card.json` beside `--model` is used.
+ */
+const cardPath = values.card ? PathBuilder.from(values.card) : modelPath.dirname()("model-card.json")
+
+if (!(await pathExists(cardPath))) {
+	throw new Error(
+		`no candidate card at ${cardPath}: pass --card <model-card.json> written by the export with this model`
+	)
 }
 
 /**
@@ -92,7 +109,12 @@ for (const locale of locales) {
 	}
 
 	for (const name of declared) {
-		const source = locale === BASE_LOCALE && name === "model.onnx" ? modelPath : dataRootPath("weights", locale, name)
+		const candidateSources: Record<string, PathBuilder> = { "model.onnx": modelPath, "model-card.json": cardPath }
+
+		const source =
+			locale === BASE_LOCALE && name in candidateSources
+				? candidateSources[name]!
+				: dataRootPath("weights", locale, name)
 
 		if (!(await pathExists(source))) {
 			missing.push(name)
@@ -114,6 +136,7 @@ for (const locale of locales) {
 
 console.log(`${values["dry-run"] ? "would link" : "linked"} ${linked} file(s) across ${locales.length} package(s)`)
 console.log(`  base model: ${modelPath}`)
+console.log(`  base card:  ${cardPath}`)
 console.log(`  cache root: ${outRoot}`)
 
 if (missingByPackage.size) {
