@@ -7,6 +7,7 @@
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
+import { assertAddressSystemWidth } from "#address-system"
 import type { AnchorLookup } from "#anchor-inference"
 import { parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier"
@@ -268,6 +269,14 @@ export async function loadClassifierFromWeights(
 	const addressSystems =
 		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
 		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath ?? null))
+
+	if (addressSystems) {
+		assertAddressSystemWidth(
+			addressSystems,
+			await runner.outputWidth("address_system_logits"),
+			String(resolved.modelCardPath ?? resolved.baseModelCardPath)
+		)
+	}
 
 	return new NeuralAddressClassifier({
 		...(tokenizer ? { tokenizer } : {}),

@@ -292,4 +292,20 @@ export class ONNXRunner {
 
 		return session.inputNames
 	}
+
+	/**
+	 * Returns the last dimension of a graph output, loading the session if needed.
+	 *
+	 * It returns `null` when the graph has no such output or declares that dimension symbolically.
+	 */
+	async outputWidth(name: string): Promise<number | null> {
+		const session = await this.ensureSession()
+		const meta = session.outputMetadata.find((m) => m.name === name)
+
+		if (!meta?.isTensor) return null
+
+		const last = meta.shape.at(-1)
+
+		return typeof last === "number" ? last : null
+	}
 }

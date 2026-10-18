@@ -11,7 +11,7 @@
 import { conventionsForSystem } from "@mailwoman/codex"
 import { describe, expect, it } from "vitest"
 
-import { detectAddressSystem, localeHintID, parseAddressSystemTable } from "#address-system"
+import { assertAddressSystemWidth, detectAddressSystem, localeHintID, parseAddressSystemTable } from "#address-system"
 import { LOCALE_COUNTRIES } from "#labels"
 import { packLocaleHintFeed } from "#ort-feeds"
 
@@ -66,6 +66,29 @@ describe("conventions table", () => {
 	it("absent rows mean no constraints, never defaults", () => {
 		expect(conventionsForSystem("us")).toBeNull()
 		expect(conventionsForSystem(null)).toBeNull()
+	})
+})
+
+describe("assertAddressSystemWidth", () => {
+	const table = parseAddressSystemTable({ count: 40, no_hint: 40, members: { "US/local": 0 } }, "card")!
+
+	it("reads count from the card", () => {
+		expect(table.count).toBe(40)
+	})
+
+	it("passes when the graph width equals the card count", () => {
+		expect(() => assertAddressSystemWidth(table, 40, "card")).not.toThrow()
+	})
+
+	it("refuses a graph whose head width differs from the card count", () => {
+		expect(() => assertAddressSystemWidth(table, 39, "card")).toThrow(/declares 40 address systems.*39 wide/)
+	})
+
+	it("passes a graph without the head and a card without count", () => {
+		expect(() => assertAddressSystemWidth(table, null, "card")).not.toThrow()
+		const legacy = parseAddressSystemTable({ no_hint: 39, members: {} }, "card")!
+
+		expect(() => assertAddressSystemWidth(legacy, 40, "card")).not.toThrow()
 	})
 })
 
