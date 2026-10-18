@@ -21,6 +21,8 @@ export {
 	type PostcodeShapeKind,
 } from "#shapes"
 
+export { statesSubregionPrefixes, subregionsForPostcode, type PostcodeSubregion } from "#subregions"
+
 export {
 	AREA_POSTCODE_FINER_THAN_LOCALITY,
 	areaPostcodeLeadsLocality,

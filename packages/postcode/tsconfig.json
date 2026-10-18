@@ -8,7 +8,7 @@
 		"erasableSyntaxOnly": true,
 		"resolveJsonModule": true
 	},
-	"include": ["./lib/**/*", "./lib/shapes.json"],
+	"include": ["./lib/**/*", "./lib/shapes.json", "./lib/subregions.json"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{

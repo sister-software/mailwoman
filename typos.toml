@@ -48,6 +48,7 @@ extend-exclude = [
 	"packages/registry/lib/models/*-gbt-en-us.ts",
 	"packages/codex/lib/country/official-languages.ts",
 	"packages/postcode/lib/country-formats/data.ts",
+	"packages/postcode/lib/subregions.json",
 	"packages/core/lib/resources/languages/types.gen.ts",
 ]
 
