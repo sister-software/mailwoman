@@ -34,6 +34,7 @@ export const preflight = defineOperation({
 		stagingRoot: z.string(),
 		publishCount: z.number(),
 		releaseListProblems: z.array(z.string()),
+		addressSystemWidthProblems: z.array(z.string()),
 		audited: z.number(),
 		failed: z.array(z.string()),
 		elapsedSeconds: z.number(),
@@ -56,7 +57,10 @@ export const preflight = defineOperation({
 		if (report.verdict === "FAIL") {
 			throw new Error(
 				`release preflight FAILED (--source ${report.source}): ${report.failed.length} of ${report.audited} workspaces did not pack to a tarball honoring their manifest` +
-					(report.releaseListProblems.length ? `, ${report.releaseListProblems.length} release-list problem(s)` : "")
+					(report.releaseListProblems.length ? `, ${report.releaseListProblems.length} release-list problem(s)` : "") +
+					(report.addressSystemWidthProblems.length
+						? `, ${report.addressSystemWidthProblems.length} graph/card address-system width mismatch(es)`
+						: "")
 			)
 		}
 
