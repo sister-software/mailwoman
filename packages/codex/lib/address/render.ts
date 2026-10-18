@@ -153,10 +153,40 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
 }
 
 /**
+ * Folds a line-leading connector written against the postcode, such as `FO` in `FO600`
+ * or `CH-` in `CH-8001`, into the postcode piece.
+ *
+ * The prefix belongs to the written code, so a label that stops at `600` marks
+ * a span the reader never wrote alone.
+ * A connector that holds whitespace separates two values and stays a connector.
+ */
+function absorbPostcodePrefixes(pieces: readonly AddressPiece[]): readonly AddressPiece[] {
+	const out: AddressPiece[] = []
+
+	for (let index = 0; index < pieces.length; index++) {
+		const piece = pieces[index]!
+		const next = pieces[index + 1]
+		const lineLeading = index === 0 || pieces[index - 1]!.text === "\n"
+
+		if (piece.tag === null && next?.tag === "postcode" && lineLeading && /^\S+$/u.test(piece.text)) {
+			out.push({ tag: "postcode", text: piece.text + next.text, softBreak: false })
+
+			index++
+
+			continue
+		}
+
+		out.push(piece)
+	}
+
+	return out
+}
+
+/**
  * Renders `components` through `layout` into tagged pieces.
  */
 export function renderAddress(layout: AddressLayout, components: ComponentDict): AddressRendering {
-	const pieces = evaluateLines(layout, components)
+	const pieces = absorbPostcodePrefixes(evaluateLines(layout, components))
 	const placed = [...new Set(pieces.map((piece) => piece.tag).filter((tag): tag is ComponentTag => tag !== null))]
 	const placedSet = new Set<ComponentTag>(placed)
 

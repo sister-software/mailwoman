@@ -255,6 +255,28 @@ describe("formatAddressRow", () => {
 	})
 })
 
+describe("a postcode written with its layout's prefix", () => {
+	it.each([
+		["FO", { street: "Á Heygnum", house_number: "8B", postcode: "600", locality: "Saltangará" }, "FO600"],
+		["HT", { street: "Rue Alcius Charmant", house_number: "83", postcode: "9110", locality: "Jacmel" }, "HT9110"],
+		["CH", { street: "Bahnhofstrasse", house_number: "1", postcode: "8001", locality: "Zürich" }, "CH-8001"],
+	] as const)("labels the whole written code in %s", (country, components, written) => {
+		const row = formatAddressRow(components as ComponentDict, country, { singleLine: true })!
+
+		expect(row.raw).toContain(written)
+		expect(row.components.postcode).toBe(written)
+	})
+
+	it("leaves a postcode with no glued prefix as given", () => {
+		const row = formatAddressRow(
+			{ street: "Hauptstraße", house_number: "1", postcode: "10115", locality: "Berlin" },
+			"DE"
+		)!
+
+		expect(row.components.postcode).toBe("10115")
+	})
+})
+
 describe("the script a row renders in", () => {
 	/**
 	 * The same Hong Kong address in both registers.
