@@ -18,7 +18,9 @@
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"lib/shapes.json",
-		"out/shapes.json"
+		"out/shapes.json",
+		"lib/subregions.json",
+		"out/subregions.json"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -48,5 +50,8 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*"
+	},
+	"devDependencies": {
+		"spliterator": "^9.2.1"
 	}
 }

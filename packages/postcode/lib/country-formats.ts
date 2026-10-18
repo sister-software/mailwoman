@@ -39,7 +39,7 @@ const compiled = new Map<string, PostcodeSyntax | null>()
  * A space inside a character class, as in the ZIP+4 separator `[ \-]`, is left alone
  * because rewriting it would change the class.
  */
-function tolerateSpacing(pattern: string): string {
+export function tolerateSpacing(pattern: string): string {
 	let out = ""
 	let inClass = false
 

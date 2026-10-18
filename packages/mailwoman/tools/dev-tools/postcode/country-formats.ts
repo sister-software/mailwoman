@@ -11,13 +11,25 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { Globerator } from "spliterator/node/fs"
 
 interface AddressMetadata {
 	readonly fmt?: string
 	readonly zip?: string
+	readonly sub_keys?: string
+	readonly sub_isoids?: string
+	readonly sub_zips?: string
+}
+
+/**
+ * One subregion's postcode prefix pattern, as `subregions.json` records it.
+ */
+interface SubregionPostcodeSource {
+	readonly key: string
+	readonly isoid: string | null
+	readonly prefix: string
 }
 
 /**
@@ -39,6 +51,7 @@ const PRINT_WIDTH = 120
 
 const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
 const entries: string[] = []
+const subregions: Record<string, SubregionPostcodeSource[]> = {}
 let withoutPattern = 0
 
 for (const file of await Globerator.files("json", {
@@ -57,6 +70,29 @@ for (const file of await Globerator.files("json", {
 
 	// Refuse a pattern JavaScript cannot compile, rather than emitting a table that throws at module load.
 	new RegExp(`^(?:${metadata.zip})$`, "iu")
+
+	if (metadata.sub_zips) {
+		const keys = metadata.sub_keys?.split("~") ?? []
+		const isoids = metadata.sub_isoids?.split("~") ?? []
+		const zips = metadata.sub_zips.split("~")
+
+		if (zips.length !== keys.length) {
+			throw new Error(`${code}: ${zips.length} sub_zips against ${keys.length} sub_keys`)
+		}
+
+		const rows = zips.flatMap((zip, i) => {
+			if (!zip) return []
+
+			// The same refusal as above, for a prefix pattern.
+			new RegExp(`^(?:${zip})`, "iu")
+
+			return [{ key: keys[i]!, isoid: isoids[i] || null, prefix: zip }]
+		})
+
+		if (rows.length) {
+			subregions[code] = rows
+		}
+	}
 
 	const prefix = postcodePrefix(metadata.fmt)
 	const pattern = stringifyJSON(metadata.zip)
@@ -117,3 +153,11 @@ const outPath = resolvePackageDirectory("@mailwoman/postcode")("lib", "country-f
 await writeLocalTextFile(emitted, outPath)
 
 console.log(`wrote ${entries.length} postcode formats to ${outPath}. ${withoutPattern} countries state no zip pattern`)
+
+const subregionsPath = resolvePackageDirectory("@mailwoman/postcode")("lib", "subregions.json")
+
+await writeLocalTextFile(prettyJSON(subregions), subregionsPath)
+
+console.log(
+	`wrote ${Object.values(subregions).flat().length} subregion prefixes for ${Object.keys(subregions).length} countries to ${subregionsPath}`
+)

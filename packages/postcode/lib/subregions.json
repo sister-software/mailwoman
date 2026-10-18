@@ -1,0 +1,4595 @@
+{
+	"AD": [
+		{
+			"key": "Parròquia d'Andorra la Vella",
+			"isoid": "07",
+			"prefix": "AD50[01]"
+		},
+		{
+			"key": "Canillo",
+			"isoid": "02",
+			"prefix": "AD10[01]"
+		},
+		{
+			"key": "Encamp",
+			"isoid": "03",
+			"prefix": "AD20[01]"
+		},
+		{
+			"key": "Escaldes-Engordany",
+			"isoid": "08",
+			"prefix": "AD70[01]"
+		},
+		{
+			"key": "La Massana",
+			"isoid": "04",
+			"prefix": "AD40[01]"
+		},
+		{
+			"key": "Ordino",
+			"isoid": "05",
+			"prefix": "AD30[01]"
+		},
+		{
+			"key": "Sant Julià de Lòria",
+			"isoid": "06",
+			"prefix": "AD60[01]"
+		}
+	],
+	"AM": [
+		{
+			"key": "Արագածոտն",
+			"isoid": "AG",
+			"prefix": "0[2-5]"
+		},
+		{
+			"key": "Արարատ",
+			"isoid": "AR",
+			"prefix": "0[6-8]"
+		},
+		{
+			"key": "Արմավիր",
+			"isoid": "AV",
+			"prefix": "09|1[01]"
+		},
+		{
+			"key": "Գեղարքունիք",
+			"isoid": "GR",
+			"prefix": "1[2-6]"
+		},
+		{
+			"key": "Երևան",
+			"isoid": "ER",
+			"prefix": "00"
+		},
+		{
+			"key": "Լոռի",
+			"isoid": "LO",
+			"prefix": "1[7-9]|2[01]"
+		},
+		{
+			"key": "Կոտայք",
+			"isoid": "KT",
+			"prefix": "2[2-5]"
+		},
+		{
+			"key": "Շիրակ",
+			"isoid": "SH",
+			"prefix": "2[6-9]|3[01]"
+		},
+		{
+			"key": "Սյունիք",
+			"isoid": "SU",
+			"prefix": "3[2-5]"
+		},
+		{
+			"key": "Վայոց ձոր",
+			"isoid": "VD",
+			"prefix": "3[6-8]"
+		},
+		{
+			"key": "Տավուշ",
+			"isoid": "TV",
+			"prefix": "39|4[0-2]"
+		}
+	],
+	"AR": [
+		{
+			"key": "Buenos Aires",
+			"isoid": "B",
+			"prefix": "B?[1-36-8]"
+		},
+		{
+			"key": "Catamarca",
+			"isoid": "K",
+			"prefix": "K?[45]"
+		},
+		{
+			"key": "Chaco",
+			"isoid": "H",
+			"prefix": "H?3"
+		},
+		{
+			"key": "Chubut",
+			"isoid": "U",
+			"prefix": "U?[89]"
+		},
+		{
+			"key": "Ciudad Autónoma de Buenos Aires",
+			"isoid": "C",
+			"prefix": "C?1"
+		},
+		{
+			"key": "Córdoba",
+			"isoid": "X",
+			"prefix": "X?[235-8]"
+		},
+		{
+			"key": "Corrientes",
+			"isoid": "W",
+			"prefix": "W?3"
+		},
+		{
+			"key": "Entre Ríos",
+			"isoid": "E",
+			"prefix": "E?[1-3]"
+		},
+		{
+			"key": "Formosa",
+			"isoid": "P",
+			"prefix": "P?[37]"
+		},
+		{
+			"key": "Jujuy",
+			"isoid": "Y",
+			"prefix": "Y?4"
+		},
+		{
+			"key": "La Pampa",
+			"isoid": "L",
+			"prefix": "L?[3568]"
+		},
+		{
+			"key": "La Rioja",
+			"isoid": "F",
+			"prefix": "F?5"
+		},
+		{
+			"key": "Mendoza",
+			"isoid": "M",
+			"prefix": "M?[56]"
+		},
+		{
+			"key": "Misiones",
+			"isoid": "N",
+			"prefix": "N?3"
+		},
+		{
+			"key": "Neuquén",
+			"isoid": "Q",
+			"prefix": "Q?[38]"
+		},
+		{
+			"key": "Río Negro",
+			"isoid": "R",
+			"prefix": "R?[89]"
+		},
+		{
+			"key": "Salta",
+			"isoid": "A",
+			"prefix": "A?[34]"
+		},
+		{
+			"key": "San Juan",
+			"isoid": "J",
+			"prefix": "J?5"
+		},
+		{
+			"key": "San Luis",
+			"isoid": "D",
+			"prefix": "D?[4-6]"
+		},
+		{
+			"key": "Santa Cruz",
+			"isoid": "Z",
+			"prefix": "Z?[89]"
+		},
+		{
+			"key": "Santa Fe",
+			"isoid": "S",
+			"prefix": "S?[2368]"
+		},
+		{
+			"key": "Santiago del Estero",
+			"isoid": "G",
+			"prefix": "G?[2-5]"
+		},
+		{
+			"key": "Tierra del Fuego",
+			"isoid": "V",
+			"prefix": "V?9"
+		},
+		{
+			"key": "Tucumán",
+			"isoid": "T",
+			"prefix": "T?[45]"
+		}
+	],
+	"AU": [
+		{
+			"key": "ACT",
+			"isoid": "ACT",
+			"prefix": "29|2540|260|261[0-8]|02|2620"
+		},
+		{
+			"key": "JBT",
+			"isoid": null,
+			"prefix": "2540"
+		},
+		{
+			"key": "NSW",
+			"isoid": "NSW",
+			"prefix": "1|2[0-57-8]|26[2-9]|261[189]|3500|358[56]|3644|3707"
+		},
+		{
+			"key": "NT",
+			"isoid": "NT",
+			"prefix": "0[89]"
+		},
+		{
+			"key": "QLD",
+			"isoid": "QLD",
+			"prefix": "[49]"
+		},
+		{
+			"key": "SA",
+			"isoid": "SA",
+			"prefix": "5|0872"
+		},
+		{
+			"key": "TAS",
+			"isoid": "TAS",
+			"prefix": "7"
+		},
+		{
+			"key": "VIC",
+			"isoid": "VIC",
+			"prefix": "[38]"
+		},
+		{
+			"key": "WA",
+			"isoid": "WA",
+			"prefix": "6|0872"
+		}
+	],
+	"BR": [
+		{
+			"key": "AC",
+			"isoid": "AC",
+			"prefix": "699"
+		},
+		{
+			"key": "AL",
+			"isoid": "AL",
+			"prefix": "57"
+		},
+		{
+			"key": "AP",
+			"isoid": "AP",
+			"prefix": "689"
+		},
+		{
+			"key": "AM",
+			"isoid": "AM",
+			"prefix": "69[0-24-8]"
+		},
+		{
+			"key": "BA",
+			"isoid": "BA",
+			"prefix": "4[0-8]"
+		},
+		{
+			"key": "CE",
+			"isoid": "CE",
+			"prefix": "6[0-3]"
+		},
+		{
+			"key": "DF",
+			"isoid": "DF",
+			"prefix": "7[0-1]|72[0-7]|73[0-6]"
+		},
+		{
+			"key": "ES",
+			"isoid": "ES",
+			"prefix": "29"
+		},
+		{
+			"key": "GO",
+			"isoid": "GO",
+			"prefix": "72[89]|73[7-9]|7[4-6]"
+		},
+		{
+			"key": "MA",
+			"isoid": "MA",
+			"prefix": "65"
+		},
+		{
+			"key": "MT",
+			"isoid": "MT",
+			"prefix": "78[0-8]"
+		},
+		{
+			"key": "MS",
+			"isoid": "MS",
+			"prefix": "79"
+		},
+		{
+			"key": "MG",
+			"isoid": "MG",
+			"prefix": "3"
+		},
+		{
+			"key": "PA",
+			"isoid": "PA",
+			"prefix": "6[6-7]|68[0-8]"
+		},
+		{
+			"key": "PB",
+			"isoid": "PB",
+			"prefix": "58"
+		},
+		{
+			"key": "PR",
+			"isoid": "PR",
+			"prefix": "8[0-7]"
+		},
+		{
+			"key": "PE",
+			"isoid": "PE",
+			"prefix": "5[0-6]"
+		},
+		{
+			"key": "PI",
+			"isoid": "PI",
+			"prefix": "64"
+		},
+		{
+			"key": "RJ",
+			"isoid": "RJ",
+			"prefix": "2[0-8]"
+		},
+		{
+			"key": "RN",
+			"isoid": "RN",
+			"prefix": "59"
+		},
+		{
+			"key": "RS",
+			"isoid": "RS",
+			"prefix": "9"
+		},
+		{
+			"key": "RO",
+			"isoid": "RO",
+			"prefix": "76[89]|789"
+		},
+		{
+			"key": "RR",
+			"isoid": "RR",
+			"prefix": "693"
+		},
+		{
+			"key": "SC",
+			"isoid": "SC",
+			"prefix": "8[89]"
+		},
+		{
+			"key": "SP",
+			"isoid": "SP",
+			"prefix": "[01][1-9]"
+		},
+		{
+			"key": "SE",
+			"isoid": "SE",
+			"prefix": "49"
+		},
+		{
+			"key": "TO",
+			"isoid": "TO",
+			"prefix": "77"
+		}
+	],
+	"CA": [
+		{
+			"key": "AB",
+			"isoid": "AB",
+			"prefix": "T"
+		},
+		{
+			"key": "BC",
+			"isoid": "BC",
+			"prefix": "V"
+		},
+		{
+			"key": "MB",
+			"isoid": "MB",
+			"prefix": "R"
+		},
+		{
+			"key": "NB",
+			"isoid": "NB",
+			"prefix": "E"
+		},
+		{
+			"key": "NL",
+			"isoid": "NL",
+			"prefix": "A"
+		},
+		{
+			"key": "NT",
+			"isoid": "NT",
+			"prefix": "X0E|X0G|X1A"
+		},
+		{
+			"key": "NS",
+			"isoid": "NS",
+			"prefix": "B"
+		},
+		{
+			"key": "NU",
+			"isoid": "NU",
+			"prefix": "X0A|X0B|X0C"
+		},
+		{
+			"key": "ON",
+			"isoid": "ON",
+			"prefix": "K|L|M|N|P"
+		},
+		{
+			"key": "PE",
+			"isoid": "PE",
+			"prefix": "C"
+		},
+		{
+			"key": "QC",
+			"isoid": "QC",
+			"prefix": "G|H|J|K1A"
+		},
+		{
+			"key": "SK",
+			"isoid": "SK",
+			"prefix": "S|R8A"
+		},
+		{
+			"key": "YT",
+			"isoid": "YT",
+			"prefix": "Y"
+		}
+	],
+	"EG": [
+		{
+			"key": "أسوان",
+			"isoid": "ASN",
+			"prefix": "81"
+		},
+		{
+			"key": "أسيوط",
+			"isoid": "AST",
+			"prefix": "71"
+		},
+		{
+			"key": "الإسكندرية",
+			"isoid": "ALX",
+			"prefix": "2[13]"
+		},
+		{
+			"key": "الإسماعيلية",
+			"isoid": "IS",
+			"prefix": "41"
+		},
+		{
+			"key": "الأقصر",
+			"isoid": "LX",
+			"prefix": "85"
+		},
+		{
+			"key": "البحر الأحمر",
+			"isoid": "BA",
+			"prefix": "84"
+		},
+		{
+			"key": "البحيرة",
+			"isoid": "BH",
+			"prefix": "22"
+		},
+		{
+			"key": "الجيزة",
+			"isoid": "GZ",
+			"prefix": "12"
+		},
+		{
+			"key": "الدقهلية",
+			"isoid": "DK",
+			"prefix": "35"
+		},
+		{
+			"key": "السويس",
+			"isoid": "SUZ",
+			"prefix": "43"
+		},
+		{
+			"key": "الشرقية",
+			"isoid": "SHR",
+			"prefix": "44"
+		},
+		{
+			"key": "الغربية",
+			"isoid": "GH",
+			"prefix": "31"
+		},
+		{
+			"key": "الفيوم",
+			"isoid": "FYM",
+			"prefix": "63"
+		},
+		{
+			"key": "القاهرة",
+			"isoid": "C",
+			"prefix": "11"
+		},
+		{
+			"key": "القليوبية",
+			"isoid": "KB",
+			"prefix": "13"
+		},
+		{
+			"key": "المنوفية",
+			"isoid": "MNF",
+			"prefix": "32"
+		},
+		{
+			"key": "المنيا",
+			"isoid": "MN",
+			"prefix": "61"
+		},
+		{
+			"key": "الوادي الجديد",
+			"isoid": "WAD",
+			"prefix": "72"
+		},
+		{
+			"key": "بني سويف",
+			"isoid": "BNS",
+			"prefix": "62"
+		},
+		{
+			"key": "بورسعيد",
+			"isoid": "PTS",
+			"prefix": "42"
+		},
+		{
+			"key": "جنوب سيناء",
+			"isoid": "JS",
+			"prefix": "46"
+		},
+		{
+			"key": "دمياط",
+			"isoid": "DT",
+			"prefix": "34"
+		},
+		{
+			"key": "سوهاج",
+			"isoid": "SHG",
+			"prefix": "82"
+		},
+		{
+			"key": "شمال سيناء",
+			"isoid": "SIN",
+			"prefix": "45"
+		},
+		{
+			"key": "قنا",
+			"isoid": "KN",
+			"prefix": "83"
+		},
+		{
+			"key": "كفر الشيخ",
+			"isoid": "KFS",
+			"prefix": "33"
+		},
+		{
+			"key": "مطروح",
+			"isoid": "MT",
+			"prefix": "51"
+		}
+	],
+	"ES": [
+		{
+			"key": "VI",
+			"isoid": null,
+			"prefix": "01"
+		},
+		{
+			"key": "AB",
+			"isoid": null,
+			"prefix": "02"
+		},
+		{
+			"key": "A",
+			"isoid": null,
+			"prefix": "03"
+		},
+		{
+			"key": "AL",
+			"isoid": null,
+			"prefix": "04"
+		},
+		{
+			"key": "O",
+			"isoid": null,
+			"prefix": "33"
+		},
+		{
+			"key": "AV",
+			"isoid": null,
+			"prefix": "05"
+		},
+		{
+			"key": "BA",
+			"isoid": null,
+			"prefix": "06"
+		},
+		{
+			"key": "B",
+			"isoid": null,
+			"prefix": "08"
+		},
+		{
+			"key": "BU",
+			"isoid": null,
+			"prefix": "09"
+		},
+		{
+			"key": "CC",
+			"isoid": null,
+			"prefix": "10"
+		},
+		{
+			"key": "CA",
+			"isoid": null,
+			"prefix": "11"
+		},
+		{
+			"key": "S",
+			"isoid": null,
+			"prefix": "39"
+		},
+		{
+			"key": "CS",
+			"isoid": null,
+			"prefix": "12"
+		},
+		{
+			"key": "CE",
+			"isoid": null,
+			"prefix": "51"
+		},
+		{
+			"key": "CR",
+			"isoid": null,
+			"prefix": "13"
+		},
+		{
+			"key": "CO",
+			"isoid": null,
+			"prefix": "14"
+		},
+		{
+			"key": "CU",
+			"isoid": null,
+			"prefix": "16"
+		},
+		{
+			"key": "GI",
+			"isoid": null,
+			"prefix": "17"
+		},
+		{
+			"key": "GR",
+			"isoid": null,
+			"prefix": "18"
+		},
+		{
+			"key": "GU",
+			"isoid": null,
+			"prefix": "19"
+		},
+		{
+			"key": "SS",
+			"isoid": null,
+			"prefix": "20"
+		},
+		{
+			"key": "H",
+			"isoid": null,
+			"prefix": "21"
+		},
+		{
+			"key": "HU",
+			"isoid": null,
+			"prefix": "22"
+		},
+		{
+			"key": "PM",
+			"isoid": null,
+			"prefix": "07"
+		},
+		{
+			"key": "J",
+			"isoid": null,
+			"prefix": "23"
+		},
+		{
+			"key": "C",
+			"isoid": null,
+			"prefix": "15"
+		},
+		{
+			"key": "LO",
+			"isoid": null,
+			"prefix": "26"
+		},
+		{
+			"key": "GC",
+			"isoid": null,
+			"prefix": "35"
+		},
+		{
+			"key": "LE",
+			"isoid": null,
+			"prefix": "24"
+		},
+		{
+			"key": "L",
+			"isoid": null,
+			"prefix": "25"
+		},
+		{
+			"key": "LU",
+			"isoid": null,
+			"prefix": "27"
+		},
+		{
+			"key": "M",
+			"isoid": null,
+			"prefix": "28"
+		},
+		{
+			"key": "MA",
+			"isoid": null,
+			"prefix": "29"
+		},
+		{
+			"key": "ML",
+			"isoid": null,
+			"prefix": "52"
+		},
+		{
+			"key": "MU",
+			"isoid": null,
+			"prefix": "30"
+		},
+		{
+			"key": "NA",
+			"isoid": null,
+			"prefix": "31"
+		},
+		{
+			"key": "OR",
+			"isoid": null,
+			"prefix": "32"
+		},
+		{
+			"key": "P",
+			"isoid": null,
+			"prefix": "34"
+		},
+		{
+			"key": "PO",
+			"isoid": null,
+			"prefix": "36"
+		},
+		{
+			"key": "SA",
+			"isoid": null,
+			"prefix": "37"
+		},
+		{
+			"key": "TF",
+			"isoid": null,
+			"prefix": "38"
+		},
+		{
+			"key": "SG",
+			"isoid": null,
+			"prefix": "40"
+		},
+		{
+			"key": "SE",
+			"isoid": null,
+			"prefix": "41"
+		},
+		{
+			"key": "SO",
+			"isoid": null,
+			"prefix": "26127|42"
+		},
+		{
+			"key": "T",
+			"isoid": null,
+			"prefix": "43"
+		},
+		{
+			"key": "TE",
+			"isoid": null,
+			"prefix": "44"
+		},
+		{
+			"key": "TO",
+			"isoid": null,
+			"prefix": "45"
+		},
+		{
+			"key": "V",
+			"isoid": null,
+			"prefix": "46"
+		},
+		{
+			"key": "VA",
+			"isoid": null,
+			"prefix": "47"
+		},
+		{
+			"key": "BI",
+			"isoid": null,
+			"prefix": "48"
+		},
+		{
+			"key": "ZA",
+			"isoid": null,
+			"prefix": "49"
+		},
+		{
+			"key": "Z",
+			"isoid": null,
+			"prefix": "50"
+		}
+	],
+	"IN": [
+		{
+			"key": "Andaman and Nicobar Islands",
+			"isoid": "AN",
+			"prefix": "744"
+		},
+		{
+			"key": "Andhra Pradesh",
+			"isoid": "AP",
+			"prefix": "5[0-3]"
+		},
+		{
+			"key": "Arunachal Pradesh",
+			"isoid": "AR",
+			"prefix": "79[0-2]"
+		},
+		{
+			"key": "Assam",
+			"isoid": "AS",
+			"prefix": "78"
+		},
+		{
+			"key": "Bihar",
+			"isoid": "BR",
+			"prefix": "8[0-5]"
+		},
+		{
+			"key": "Chandigarh",
+			"isoid": "CH",
+			"prefix": "16|1440[3-9]"
+		},
+		{
+			"key": "Chhattisgarh",
+			"isoid": "CT",
+			"prefix": "49"
+		},
+		{
+			"key": "Dadra and Nagar Haveli and Daman and Diu",
+			"isoid": "DH",
+			"prefix": "396|362"
+		},
+		{
+			"key": "Delhi",
+			"isoid": "DL",
+			"prefix": "11"
+		},
+		{
+			"key": "Goa",
+			"isoid": "GA",
+			"prefix": "403"
+		},
+		{
+			"key": "Gujarat",
+			"isoid": "GJ",
+			"prefix": "3[6-9]"
+		},
+		{
+			"key": "Haryana",
+			"isoid": "HR",
+			"prefix": "1[23]"
+		},
+		{
+			"key": "Himachal Pradesh",
+			"isoid": "HP",
+			"prefix": "17"
+		},
+		{
+			"key": "Jammu and Kashmir",
+			"isoid": "JK",
+			"prefix": "1[89]"
+		},
+		{
+			"key": "Jharkhand",
+			"isoid": "JH",
+			"prefix": "81[4-9]|82|83[0-5]"
+		},
+		{
+			"key": "Karnataka",
+			"isoid": "KA",
+			"prefix": "5[4-9]|53[7-9]"
+		},
+		{
+			"key": "Kerala",
+			"isoid": "KL",
+			"prefix": "6[7-9]|6010|607008|777"
+		},
+		{
+			"key": "Ladakh",
+			"isoid": "LA",
+			"prefix": "194"
+		},
+		{
+			"key": "Lakshadweep",
+			"isoid": "LD",
+			"prefix": "682"
+		},
+		{
+			"key": "Madhya Pradesh",
+			"isoid": "MP",
+			"prefix": "4[5-8]|490"
+		},
+		{
+			"key": "Maharashtra",
+			"isoid": "MH",
+			"prefix": "4[0-4]"
+		},
+		{
+			"key": "Manipur",
+			"isoid": "MN",
+			"prefix": "79[56]"
+		},
+		{
+			"key": "Meghalaya",
+			"isoid": "ML",
+			"prefix": "79[34]"
+		},
+		{
+			"key": "Mizoram",
+			"isoid": "MZ",
+			"prefix": "796"
+		},
+		{
+			"key": "Nagaland",
+			"isoid": "NL",
+			"prefix": "79[78]"
+		},
+		{
+			"key": "Odisha",
+			"isoid": "OR",
+			"prefix": "7[5-7]"
+		},
+		{
+			"key": "Puducherry",
+			"isoid": "PY",
+			"prefix": "60[579]"
+		},
+		{
+			"key": "Punjab",
+			"isoid": "PB",
+			"prefix": "1[456]"
+		},
+		{
+			"key": "Rajasthan",
+			"isoid": "RJ",
+			"prefix": "3[0-4]"
+		},
+		{
+			"key": "Sikkim",
+			"isoid": "SK",
+			"prefix": "737|750"
+		},
+		{
+			"key": "Tamil Nadu",
+			"isoid": "TN",
+			"prefix": "6[0-6]|536"
+		},
+		{
+			"key": "Telangana",
+			"isoid": "TG",
+			"prefix": "5[0-3]"
+		},
+		{
+			"key": "Tripura",
+			"isoid": "TR",
+			"prefix": "799"
+		},
+		{
+			"key": "Uttar Pradesh",
+			"isoid": "UP",
+			"prefix": "2[0-35-8]|24[0-7]|26[12]"
+		},
+		{
+			"key": "Uttarakhand",
+			"isoid": "UT",
+			"prefix": "24[46-9]|254|26[23]"
+		},
+		{
+			"key": "West Bengal",
+			"isoid": "WB",
+			"prefix": "7[0-4]"
+		}
+	],
+	"IT": [
+		{
+			"key": "AG",
+			"isoid": "AG",
+			"prefix": "92"
+		},
+		{
+			"key": "AL",
+			"isoid": "AL",
+			"prefix": "15"
+		},
+		{
+			"key": "AN",
+			"isoid": "AN",
+			"prefix": "60"
+		},
+		{
+			"key": "AO",
+			"isoid": "AO",
+			"prefix": "11"
+		},
+		{
+			"key": "AR",
+			"isoid": "AR",
+			"prefix": "52"
+		},
+		{
+			"key": "AP",
+			"isoid": "AP",
+			"prefix": "63"
+		},
+		{
+			"key": "AT",
+			"isoid": "AT",
+			"prefix": "14"
+		},
+		{
+			"key": "AV",
+			"isoid": "AV",
+			"prefix": "83"
+		},
+		{
+			"key": "BA",
+			"isoid": "BA",
+			"prefix": "70"
+		},
+		{
+			"key": "BT",
+			"isoid": "BT",
+			"prefix": "76[01]"
+		},
+		{
+			"key": "BL",
+			"isoid": "BL",
+			"prefix": "32"
+		},
+		{
+			"key": "BN",
+			"isoid": "BN",
+			"prefix": "82"
+		},
+		{
+			"key": "BG",
+			"isoid": "BG",
+			"prefix": "24"
+		},
+		{
+			"key": "BI",
+			"isoid": "BI",
+			"prefix": "13[89]"
+		},
+		{
+			"key": "BO",
+			"isoid": "BO",
+			"prefix": "40"
+		},
+		{
+			"key": "BZ",
+			"isoid": "BZ",
+			"prefix": "39"
+		},
+		{
+			"key": "BS",
+			"isoid": "BS",
+			"prefix": "25"
+		},
+		{
+			"key": "BR",
+			"isoid": "BR",
+			"prefix": "72"
+		},
+		{
+			"key": "CA",
+			"isoid": "CA",
+			"prefix": "0912[1-9]|0913[0-4]|0901[0289]|0902[03468]|0903[0234]|0904|0803[035]|08043"
+		},
+		{
+			"key": "CL",
+			"isoid": "CL",
+			"prefix": "93"
+		},
+		{
+			"key": "CB",
+			"isoid": "CB",
+			"prefix": "860[1-4]|86100"
+		},
+		{
+			"key": "CE",
+			"isoid": "CE",
+			"prefix": "81"
+		},
+		{
+			"key": "CT",
+			"isoid": "CT",
+			"prefix": "95"
+		},
+		{
+			"key": "CZ",
+			"isoid": "CZ",
+			"prefix": "88[01]"
+		},
+		{
+			"key": "CH",
+			"isoid": "CH",
+			"prefix": "66"
+		},
+		{
+			"key": "CO",
+			"isoid": "CO",
+			"prefix": "22"
+		},
+		{
+			"key": "CS",
+			"isoid": "CS",
+			"prefix": "87"
+		},
+		{
+			"key": "CR",
+			"isoid": "CR",
+			"prefix": "26[01]"
+		},
+		{
+			"key": "KR",
+			"isoid": "KR",
+			"prefix": "88[89]"
+		},
+		{
+			"key": "CN",
+			"isoid": "CN",
+			"prefix": "12|18025"
+		},
+		{
+			"key": "EN",
+			"isoid": "EN",
+			"prefix": "94"
+		},
+		{
+			"key": "FM",
+			"isoid": "FM",
+			"prefix": "638|63900"
+		},
+		{
+			"key": "FE",
+			"isoid": "FE",
+			"prefix": "44"
+		},
+		{
+			"key": "FI",
+			"isoid": "FI",
+			"prefix": "50"
+		},
+		{
+			"key": "FG",
+			"isoid": "FG",
+			"prefix": "71"
+		},
+		{
+			"key": "FC",
+			"isoid": "FC",
+			"prefix": "47[015]"
+		},
+		{
+			"key": "FR",
+			"isoid": "FR",
+			"prefix": "03"
+		},
+		{
+			"key": "GE",
+			"isoid": "GE",
+			"prefix": "16"
+		},
+		{
+			"key": "GO",
+			"isoid": "GO",
+			"prefix": "34[01]7"
+		},
+		{
+			"key": "GR",
+			"isoid": "GR",
+			"prefix": "58"
+		},
+		{
+			"key": "IM",
+			"isoid": "IM",
+			"prefix": "18"
+		},
+		{
+			"key": "IS",
+			"isoid": "IS",
+			"prefix": "860[7-9]|86170"
+		},
+		{
+			"key": "AQ",
+			"isoid": "AQ",
+			"prefix": "67"
+		},
+		{
+			"key": "SP",
+			"isoid": "SP",
+			"prefix": "19"
+		},
+		{
+			"key": "LT",
+			"isoid": "LT",
+			"prefix": "04"
+		},
+		{
+			"key": "LE",
+			"isoid": "LE",
+			"prefix": "73"
+		},
+		{
+			"key": "LC",
+			"isoid": "LC",
+			"prefix": "23[89]"
+		},
+		{
+			"key": "LI",
+			"isoid": "LI",
+			"prefix": "57"
+		},
+		{
+			"key": "LO",
+			"isoid": "LO",
+			"prefix": "26[89]"
+		},
+		{
+			"key": "LU",
+			"isoid": "LU",
+			"prefix": "55"
+		},
+		{
+			"key": "MC",
+			"isoid": "MC",
+			"prefix": "62"
+		},
+		{
+			"key": "MN",
+			"isoid": "MN",
+			"prefix": "46"
+		},
+		{
+			"key": "MS",
+			"isoid": "MS",
+			"prefix": "54"
+		},
+		{
+			"key": "MT",
+			"isoid": "MT",
+			"prefix": "75"
+		},
+		{
+			"key": "ME",
+			"isoid": "ME",
+			"prefix": "98"
+		},
+		{
+			"key": "MI",
+			"isoid": "MI",
+			"prefix": "20"
+		},
+		{
+			"key": "MO",
+			"isoid": "MO",
+			"prefix": "41"
+		},
+		{
+			"key": "MB",
+			"isoid": "MB",
+			"prefix": "208|20900"
+		},
+		{
+			"key": "NA",
+			"isoid": "NA",
+			"prefix": "80"
+		},
+		{
+			"key": "NO",
+			"isoid": "NO",
+			"prefix": "28[01]"
+		},
+		{
+			"key": "NU",
+			"isoid": "NU",
+			"prefix": "080[1-4]|08100"
+		},
+		{
+			"key": "OR",
+			"isoid": "OR",
+			"prefix": "090[7-9]|09170|0801[039]|0803[04]"
+		},
+		{
+			"key": "PD",
+			"isoid": "PD",
+			"prefix": "35"
+		},
+		{
+			"key": "PA",
+			"isoid": "PA",
+			"prefix": "90"
+		},
+		{
+			"key": "PR",
+			"isoid": "PR",
+			"prefix": "43"
+		},
+		{
+			"key": "PV",
+			"isoid": "PV",
+			"prefix": "27"
+		},
+		{
+			"key": "PG",
+			"isoid": "PG",
+			"prefix": "06"
+		},
+		{
+			"key": "PU",
+			"isoid": "PU",
+			"prefix": "61"
+		},
+		{
+			"key": "PE",
+			"isoid": "PE",
+			"prefix": "65"
+		},
+		{
+			"key": "PC",
+			"isoid": "PC",
+			"prefix": "29"
+		},
+		{
+			"key": "PI",
+			"isoid": "PI",
+			"prefix": "56"
+		},
+		{
+			"key": "PT",
+			"isoid": "PT",
+			"prefix": "51"
+		},
+		{
+			"key": "PN",
+			"isoid": "PN",
+			"prefix": "330[7-9]|33170"
+		},
+		{
+			"key": "PZ",
+			"isoid": "PZ",
+			"prefix": "85"
+		},
+		{
+			"key": "PO",
+			"isoid": "PO",
+			"prefix": "59"
+		},
+		{
+			"key": "RG",
+			"isoid": "RG",
+			"prefix": "97"
+		},
+		{
+			"key": "RA",
+			"isoid": "RA",
+			"prefix": "48"
+		},
+		{
+			"key": "RC",
+			"isoid": "RC",
+			"prefix": "89[01]"
+		},
+		{
+			"key": "RE",
+			"isoid": "RE",
+			"prefix": "42"
+		},
+		{
+			"key": "RI",
+			"isoid": "RI",
+			"prefix": "02"
+		},
+		{
+			"key": "RN",
+			"isoid": "RN",
+			"prefix": "47[89]"
+		},
+		{
+			"key": "RM",
+			"isoid": "RM",
+			"prefix": "00"
+		},
+		{
+			"key": "RO",
+			"isoid": "RO",
+			"prefix": "45"
+		},
+		{
+			"key": "SA",
+			"isoid": "SA",
+			"prefix": "84"
+		},
+		{
+			"key": "SS",
+			"isoid": "SS",
+			"prefix": "07[01]|08020"
+		},
+		{
+			"key": "SV",
+			"isoid": "SV",
+			"prefix": "17|12071"
+		},
+		{
+			"key": "SI",
+			"isoid": "SI",
+			"prefix": "53"
+		},
+		{
+			"key": "SR",
+			"isoid": "SR",
+			"prefix": "96"
+		},
+		{
+			"key": "SO",
+			"isoid": "SO",
+			"prefix": "23[01]"
+		},
+		{
+			"key": "SU",
+			"isoid": "SU",
+			"prefix": "090[1-5][0-9]|0906[0-6]|080[1-4]"
+		},
+		{
+			"key": "TA",
+			"isoid": "TA",
+			"prefix": "74"
+		},
+		{
+			"key": "TE",
+			"isoid": "TE",
+			"prefix": "64"
+		},
+		{
+			"key": "TR",
+			"isoid": "TR",
+			"prefix": "05"
+		},
+		{
+			"key": "TO",
+			"isoid": "TO",
+			"prefix": "10"
+		},
+		{
+			"key": "TP",
+			"isoid": "TP",
+			"prefix": "91"
+		},
+		{
+			"key": "TN",
+			"isoid": "TN",
+			"prefix": "38"
+		},
+		{
+			"key": "TV",
+			"isoid": "TV",
+			"prefix": "31"
+		},
+		{
+			"key": "TS",
+			"isoid": "TS",
+			"prefix": "3401|341[0-689]|34062"
+		},
+		{
+			"key": "UD",
+			"isoid": "UD",
+			"prefix": "330[1-5]|33100"
+		},
+		{
+			"key": "VA",
+			"isoid": "VA",
+			"prefix": "21"
+		},
+		{
+			"key": "VE",
+			"isoid": "VE",
+			"prefix": "30"
+		},
+		{
+			"key": "VB",
+			"isoid": "VB",
+			"prefix": "28[89]"
+		},
+		{
+			"key": "VC",
+			"isoid": "VC",
+			"prefix": "13[01]"
+		},
+		{
+			"key": "VR",
+			"isoid": "VR",
+			"prefix": "37"
+		},
+		{
+			"key": "VV",
+			"isoid": "VV",
+			"prefix": "89[89]"
+		},
+		{
+			"key": "VI",
+			"isoid": "VI",
+			"prefix": "36"
+		},
+		{
+			"key": "VT",
+			"isoid": "VT",
+			"prefix": "01"
+		}
+	],
+	"JP": [
+		{
+			"key": "北海道",
+			"isoid": "01",
+			"prefix": "0[4-9]|00[1-7]"
+		},
+		{
+			"key": "青森県",
+			"isoid": "02",
+			"prefix": "03|018"
+		},
+		{
+			"key": "岩手県",
+			"isoid": "03",
+			"prefix": "02"
+		},
+		{
+			"key": "宮城県",
+			"isoid": "04",
+			"prefix": "98"
+		},
+		{
+			"key": "秋田県",
+			"isoid": "05",
+			"prefix": "01"
+		},
+		{
+			"key": "山形県",
+			"isoid": "06",
+			"prefix": "99"
+		},
+		{
+			"key": "福島県",
+			"isoid": "07",
+			"prefix": "9[67]"
+		},
+		{
+			"key": "茨城県",
+			"isoid": "08",
+			"prefix": "3[01]"
+		},
+		{
+			"key": "栃木県",
+			"isoid": "09",
+			"prefix": "32|311|349"
+		},
+		{
+			"key": "群馬県",
+			"isoid": "10",
+			"prefix": "37|38[49]"
+		},
+		{
+			"key": "埼玉県",
+			"isoid": "11",
+			"prefix": "3[3-6]"
+		},
+		{
+			"key": "千葉県",
+			"isoid": "12",
+			"prefix": "2[6-9]"
+		},
+		{
+			"key": "東京都",
+			"isoid": "13",
+			"prefix": "1[0-8]|19[0-8]|20"
+		},
+		{
+			"key": "神奈川県",
+			"isoid": "14",
+			"prefix": "2[1-5]|199"
+		},
+		{
+			"key": "新潟県",
+			"isoid": "15",
+			"prefix": "9[45]|389"
+		},
+		{
+			"key": "富山県",
+			"isoid": "16",
+			"prefix": "93"
+		},
+		{
+			"key": "石川県",
+			"isoid": "17",
+			"prefix": "92|939"
+		},
+		{
+			"key": "福井県",
+			"isoid": "18",
+			"prefix": "91|922"
+		},
+		{
+			"key": "山梨県",
+			"isoid": "19",
+			"prefix": "40"
+		},
+		{
+			"key": "長野県",
+			"isoid": "20",
+			"prefix": "3[89]|949"
+		},
+		{
+			"key": "岐阜県",
+			"isoid": "21",
+			"prefix": "50"
+		},
+		{
+			"key": "静岡県",
+			"isoid": "22",
+			"prefix": "4[1-9]"
+		},
+		{
+			"key": "愛知県",
+			"isoid": "23",
+			"prefix": "4[4-9]|431"
+		},
+		{
+			"key": "三重県",
+			"isoid": "24",
+			"prefix": "51|498|647"
+		},
+		{
+			"key": "滋賀県",
+			"isoid": "25",
+			"prefix": "52"
+		},
+		{
+			"key": "京都府",
+			"isoid": "26",
+			"prefix": "6[0-2]|520"
+		},
+		{
+			"key": "大阪府",
+			"isoid": "27",
+			"prefix": "5[3-9]|618|630"
+		},
+		{
+			"key": "兵庫県",
+			"isoid": "28",
+			"prefix": "6[5-7]|563"
+		},
+		{
+			"key": "奈良県",
+			"isoid": "29",
+			"prefix": "63|64[78]"
+		},
+		{
+			"key": "和歌山県",
+			"isoid": "30",
+			"prefix": "64|519"
+		},
+		{
+			"key": "鳥取県",
+			"isoid": "31",
+			"prefix": "68"
+		},
+		{
+			"key": "島根県",
+			"isoid": "32",
+			"prefix": "69|68[45]"
+		},
+		{
+			"key": "岡山県",
+			"isoid": "33",
+			"prefix": "7[01]"
+		},
+		{
+			"key": "広島県",
+			"isoid": "34",
+			"prefix": "7[23]"
+		},
+		{
+			"key": "山口県",
+			"isoid": "35",
+			"prefix": "7[45]"
+		},
+		{
+			"key": "徳島県",
+			"isoid": "36",
+			"prefix": "77"
+		},
+		{
+			"key": "香川県",
+			"isoid": "37",
+			"prefix": "76"
+		},
+		{
+			"key": "愛媛県",
+			"isoid": "38",
+			"prefix": "79"
+		},
+		{
+			"key": "高知県",
+			"isoid": "39",
+			"prefix": "78"
+		},
+		{
+			"key": "福岡県",
+			"isoid": "40",
+			"prefix": "8[0-3]|871"
+		},
+		{
+			"key": "佐賀県",
+			"isoid": "41",
+			"prefix": "84"
+		},
+		{
+			"key": "長崎県",
+			"isoid": "42",
+			"prefix": "85|81[17]|848"
+		},
+		{
+			"key": "熊本県",
+			"isoid": "43",
+			"prefix": "86"
+		},
+		{
+			"key": "大分県",
+			"isoid": "44",
+			"prefix": "87|839"
+		},
+		{
+			"key": "宮崎県",
+			"isoid": "45",
+			"prefix": "88"
+		},
+		{
+			"key": "鹿児島県",
+			"isoid": "46",
+			"prefix": "89"
+		},
+		{
+			"key": "沖縄県",
+			"isoid": "47",
+			"prefix": "90"
+		}
+	],
+	"KR": [
+		{
+			"key": "강원도",
+			"isoid": "42",
+			"prefix": "2[456]\\d{2}"
+		},
+		{
+			"key": "경기도",
+			"isoid": "41",
+			"prefix": "1[0-8]\\d{2}"
+		},
+		{
+			"key": "경상남도",
+			"isoid": "48",
+			"prefix": "5[0-3]\\d{2}"
+		},
+		{
+			"key": "경상북도",
+			"isoid": "47",
+			"prefix": "(?:3[6-9]|40)\\d{2}"
+		},
+		{
+			"key": "광주광역시",
+			"isoid": "29",
+			"prefix": "6[12]\\d{2}"
+		},
+		{
+			"key": "대구광역시",
+			"isoid": "27",
+			"prefix": "4[123]\\d{2}"
+		},
+		{
+			"key": "대전광역시",
+			"isoid": "30",
+			"prefix": "3[45]\\d{2}"
+		},
+		{
+			"key": "부산광역시",
+			"isoid": "26",
+			"prefix": "4[6-9]\\d{2}"
+		},
+		{
+			"key": "서울특별시",
+			"isoid": "11",
+			"prefix": "0[1-8]\\d{2}"
+		},
+		{
+			"key": "세종특별자치시",
+			"isoid": "50",
+			"prefix": "30[01]\\d"
+		},
+		{
+			"key": "울산광역시",
+			"isoid": "31",
+			"prefix": "4[45]\\d{2}"
+		},
+		{
+			"key": "인천광역시",
+			"isoid": "28",
+			"prefix": "2[1-3]\\d{2}"
+		},
+		{
+			"key": "전라남도",
+			"isoid": "46",
+			"prefix": "5[7-9]\\d{2}"
+		},
+		{
+			"key": "전라북도",
+			"isoid": "45",
+			"prefix": "5[4-6]\\d{2}"
+		},
+		{
+			"key": "제주특별자치도",
+			"isoid": "49",
+			"prefix": "63[0-356]\\d"
+		},
+		{
+			"key": "충청남도",
+			"isoid": "44",
+			"prefix": "3[1-3]\\d{2}"
+		},
+		{
+			"key": "충청북도",
+			"isoid": "43",
+			"prefix": "2[789]\\d{2}"
+		}
+	],
+	"MX": [
+		{
+			"key": "Ags.",
+			"isoid": "AGU",
+			"prefix": "20"
+		},
+		{
+			"key": "B.C.",
+			"isoid": "BCN",
+			"prefix": "2[12]"
+		},
+		{
+			"key": "B.C.S.",
+			"isoid": "BCS",
+			"prefix": "23"
+		},
+		{
+			"key": "Camp.",
+			"isoid": "CAM",
+			"prefix": "24"
+		},
+		{
+			"key": "Chis.",
+			"isoid": "CHP",
+			"prefix": "29|30"
+		},
+		{
+			"key": "Chih.",
+			"isoid": "CHH",
+			"prefix": "3[1-3]"
+		},
+		{
+			"key": "CDMX",
+			"isoid": "CMX",
+			"prefix": "0|1[0-6]"
+		},
+		{
+			"key": "Coah.",
+			"isoid": "COA",
+			"prefix": "2[5-7]"
+		},
+		{
+			"key": "Col.",
+			"isoid": "COL",
+			"prefix": "28"
+		},
+		{
+			"key": "Dgo.",
+			"isoid": "DUR",
+			"prefix": "3[45]"
+		},
+		{
+			"key": "Méx.",
+			"isoid": "MEX",
+			"prefix": "5[0-7]"
+		},
+		{
+			"key": "Gto.",
+			"isoid": "GUA",
+			"prefix": "3[6-8]"
+		},
+		{
+			"key": "Gro.",
+			"isoid": "GRO",
+			"prefix": "39|4[01]"
+		},
+		{
+			"key": "Hgo.",
+			"isoid": "HID",
+			"prefix": "4[23]"
+		},
+		{
+			"key": "Jal.",
+			"isoid": "JAL",
+			"prefix": "4[4-9]"
+		},
+		{
+			"key": "Mich.",
+			"isoid": "MIC",
+			"prefix": "5[89]|6[01]"
+		},
+		{
+			"key": "Mor.",
+			"isoid": "MOR",
+			"prefix": "62"
+		},
+		{
+			"key": "Nay.",
+			"isoid": "NAY",
+			"prefix": "63"
+		},
+		{
+			"key": "N.L.",
+			"isoid": "NLE",
+			"prefix": "6[4-7]"
+		},
+		{
+			"key": "Oax.",
+			"isoid": "OAX",
+			"prefix": "6[89]|7[01]"
+		},
+		{
+			"key": "Pue.",
+			"isoid": "PUE",
+			"prefix": "7[2-5]"
+		},
+		{
+			"key": "Qro.",
+			"isoid": "QUE",
+			"prefix": "76"
+		},
+		{
+			"key": "Q.R.",
+			"isoid": "ROO",
+			"prefix": "77"
+		},
+		{
+			"key": "S.L.P.",
+			"isoid": "SLP",
+			"prefix": "7[89]"
+		},
+		{
+			"key": "Sin.",
+			"isoid": "SIN",
+			"prefix": "8[0-2]"
+		},
+		{
+			"key": "Son.",
+			"isoid": "SON",
+			"prefix": "8[3-5]"
+		},
+		{
+			"key": "Tab.",
+			"isoid": "TAB",
+			"prefix": "86"
+		},
+		{
+			"key": "Tamps.",
+			"isoid": "TAM",
+			"prefix": "8[7-9]"
+		},
+		{
+			"key": "Tlax.",
+			"isoid": "TLA",
+			"prefix": "90"
+		},
+		{
+			"key": "Ver.",
+			"isoid": "VER",
+			"prefix": "9[1-6]"
+		},
+		{
+			"key": "Yuc.",
+			"isoid": "YUC",
+			"prefix": "97"
+		},
+		{
+			"key": "Zac.",
+			"isoid": "ZAC",
+			"prefix": "9[89]"
+		}
+	],
+	"MY": [
+		{
+			"key": "Johor",
+			"isoid": "01",
+			"prefix": "79|8[0-6]"
+		},
+		{
+			"key": "Kedah",
+			"isoid": "02",
+			"prefix": "0[5-9]|34950"
+		},
+		{
+			"key": "Kelantan",
+			"isoid": "03",
+			"prefix": "1[5-9]"
+		},
+		{
+			"key": "Kuala Lumpur",
+			"isoid": "14",
+			"prefix": "5|60"
+		},
+		{
+			"key": "Labuan",
+			"isoid": "15",
+			"prefix": "87"
+		},
+		{
+			"key": "Melaka",
+			"isoid": "04",
+			"prefix": "7[5-8]"
+		},
+		{
+			"key": "Negeri Sembilan",
+			"isoid": "05",
+			"prefix": "7[0-4]"
+		},
+		{
+			"key": "Pahang",
+			"isoid": "06",
+			"prefix": "2[5-8]|[346]9"
+		},
+		{
+			"key": "Perak",
+			"isoid": "08",
+			"prefix": "3[0-6]|39000"
+		},
+		{
+			"key": "Perlis",
+			"isoid": "09",
+			"prefix": "0[12]"
+		},
+		{
+			"key": "Pulau Pinang",
+			"isoid": "07",
+			"prefix": "1[0-4]"
+		},
+		{
+			"key": "Putrajaya",
+			"isoid": "16",
+			"prefix": "62"
+		},
+		{
+			"key": "Sabah",
+			"isoid": "12",
+			"prefix": "8[89]|9[01]"
+		},
+		{
+			"key": "Sarawak",
+			"isoid": "13",
+			"prefix": "9[3-8]"
+		},
+		{
+			"key": "Selangor",
+			"isoid": "10",
+			"prefix": "4[0-8]|6[3-8]"
+		},
+		{
+			"key": "Terengganu",
+			"isoid": "11",
+			"prefix": "2[0-4]"
+		}
+	],
+	"NI": [
+		{
+			"key": "Boaco",
+			"isoid": "BO",
+			"prefix": "5[12]"
+		},
+		{
+			"key": "Carazo",
+			"isoid": "CA",
+			"prefix": "4[56]"
+		},
+		{
+			"key": "Chinandega",
+			"isoid": "CI",
+			"prefix": "2[5-7]"
+		},
+		{
+			"key": "Chontales",
+			"isoid": "CO",
+			"prefix": "5[56]"
+		},
+		{
+			"key": "Estelí",
+			"isoid": "ES",
+			"prefix": "3[12]"
+		},
+		{
+			"key": "Granada",
+			"isoid": "GR",
+			"prefix": "4[34]"
+		},
+		{
+			"key": "Jinotega",
+			"isoid": "JI",
+			"prefix": "6[56]"
+		},
+		{
+			"key": "León",
+			"isoid": "LE",
+			"prefix": "2[12]"
+		},
+		{
+			"key": "Madriz",
+			"isoid": "MD",
+			"prefix": "3[45]"
+		},
+		{
+			"key": "Managua",
+			"isoid": "MN",
+			"prefix": "1[0-6]"
+		},
+		{
+			"key": "Masaya",
+			"isoid": "MS",
+			"prefix": "4[12]"
+		},
+		{
+			"key": "Matagalpa",
+			"isoid": "MT",
+			"prefix": "6[1-3]"
+		},
+		{
+			"key": "Nueva Segovia",
+			"isoid": "NS",
+			"prefix": "3[7-9]"
+		},
+		{
+			"key": "Región Autónoma de la Costa Caribe Norte",
+			"isoid": "AN",
+			"prefix": "7[12]"
+		},
+		{
+			"key": "Región Autónoma de la Costa Caribe Sur",
+			"isoid": "AS",
+			"prefix": "8[1-3]"
+		},
+		{
+			"key": "Río San Juan",
+			"isoid": "SJ",
+			"prefix": "9[12]"
+		},
+		{
+			"key": "Rivas",
+			"isoid": "RI",
+			"prefix": "4[78]"
+		}
+	],
+	"PH": [
+		{
+			"key": "Abra",
+			"isoid": "ABR",
+			"prefix": "28[0-2]"
+		},
+		{
+			"key": "Agusan del Norte",
+			"isoid": "AGN",
+			"prefix": "86[01]"
+		},
+		{
+			"key": "Agusan del Sur",
+			"isoid": "AGS",
+			"prefix": "85[01]"
+		},
+		{
+			"key": "Aklan",
+			"isoid": "AKL",
+			"prefix": "56[01]"
+		},
+		{
+			"key": "Albay",
+			"isoid": "ALB",
+			"prefix": "45[01]"
+		},
+		{
+			"key": "Antique",
+			"isoid": "ANT",
+			"prefix": "57[01]"
+		},
+		{
+			"key": "Apayao",
+			"isoid": "APA",
+			"prefix": "380[0-68]"
+		},
+		{
+			"key": "Aurora",
+			"isoid": "AUR",
+			"prefix": "320"
+		},
+		{
+			"key": "Basilan",
+			"isoid": "BAS",
+			"prefix": "730"
+		},
+		{
+			"key": "Bataan",
+			"isoid": "BAN",
+			"prefix": "21[01]"
+		},
+		{
+			"key": "Batanes",
+			"isoid": "BTN",
+			"prefix": "390"
+		},
+		{
+			"key": "Batangas",
+			"isoid": "BTG",
+			"prefix": "42[0-3]"
+		},
+		{
+			"key": "Benguet",
+			"isoid": "BEN",
+			"prefix": "26(0|1[0-5])"
+		},
+		{
+			"key": "Biliran",
+			"isoid": "BIL",
+			"prefix": "65(4[3-9]|5)"
+		},
+		{
+			"key": "Bohol",
+			"isoid": "BOH",
+			"prefix": "63[0-3]"
+		},
+		{
+			"key": "Bukidnon",
+			"isoid": "BUK",
+			"prefix": "87[0-2]"
+		},
+		{
+			"key": "Bulacan",
+			"isoid": "BUL",
+			"prefix": "30[0-2]"
+		},
+		{
+			"key": "Cagayan",
+			"isoid": "CAG",
+			"prefix": "35[0-2]"
+		},
+		{
+			"key": "Camarines Norte",
+			"isoid": "CAN",
+			"prefix": "46[01]"
+		},
+		{
+			"key": "Camarines Sur",
+			"isoid": "CAS",
+			"prefix": "44[0-3]"
+		},
+		{
+			"key": "Camiguin",
+			"isoid": "CAM",
+			"prefix": "910"
+		},
+		{
+			"key": "Capiz",
+			"isoid": "CAP",
+			"prefix": "58[01]"
+		},
+		{
+			"key": "Catanduanes",
+			"isoid": "CAT",
+			"prefix": "48[01]"
+		},
+		{
+			"key": "Cavite",
+			"isoid": "CAV",
+			"prefix": "41[0-2]"
+		},
+		{
+			"key": "Cebu",
+			"isoid": "CEB",
+			"prefix": "60[0-5]"
+		},
+		{
+			"key": "Compostela Valley",
+			"isoid": "COM",
+			"prefix": "88[01]"
+		},
+		{
+			"key": "Cotabato",
+			"isoid": "NCO",
+			"prefix": "94[01]"
+		},
+		{
+			"key": "Davao del Norte",
+			"isoid": "DAV",
+			"prefix": "81[0-2]"
+		},
+		{
+			"key": "Davao del Sur",
+			"isoid": "DAS",
+			"prefix": "80[01]"
+		},
+		{
+			"key": "Davao Occidental",
+			"isoid": "DVO",
+			"prefix": "801[1-5]"
+		},
+		{
+			"key": "Davao Oriental",
+			"isoid": "DAO",
+			"prefix": "82[01]"
+		},
+		{
+			"key": "Dinagat Islands",
+			"isoid": "DIN",
+			"prefix": "84[12]"
+		},
+		{
+			"key": "Eastern Samar",
+			"isoid": "EAS",
+			"prefix": "68[0-2]"
+		},
+		{
+			"key": "Guimaras",
+			"isoid": "GUI",
+			"prefix": "504[4-6]"
+		},
+		{
+			"key": "Ifugao",
+			"isoid": "IFU",
+			"prefix": "36[01]"
+		},
+		{
+			"key": "Ilocos Norte",
+			"isoid": "ILN",
+			"prefix": "29[0-2]"
+		},
+		{
+			"key": "Ilocos Sur",
+			"isoid": "ILS",
+			"prefix": "27[0-3]"
+		},
+		{
+			"key": "Iloilo",
+			"isoid": "ILI",
+			"prefix": "50([0-3]|4[0-3])"
+		},
+		{
+			"key": "Isabela",
+			"isoid": "ISA",
+			"prefix": "33[0-3]"
+		},
+		{
+			"key": "Kalinga",
+			"isoid": "KAL",
+			"prefix": "38(0[79]|1[0-4])"
+		},
+		{
+			"key": "La Union",
+			"isoid": "LUN",
+			"prefix": "25[0-2]"
+		},
+		{
+			"key": "Laguna",
+			"isoid": "LAG",
+			"prefix": "40[0-3]"
+		},
+		{
+			"key": "Lanao del Norte",
+			"isoid": "LAN",
+			"prefix": "92[0-2]"
+		},
+		{
+			"key": "Lanao del Sur",
+			"isoid": "LAS",
+			"prefix": "9(3[0-2]|7[01])"
+		},
+		{
+			"key": "Leyte",
+			"isoid": "LEY",
+			"prefix": "65([0-3]|4[0-2])"
+		},
+		{
+			"key": "Maguindanao",
+			"isoid": "MAG",
+			"prefix": "96[01]"
+		},
+		{
+			"key": "Marinduque",
+			"isoid": "MAD",
+			"prefix": "490"
+		},
+		{
+			"key": "Masbate",
+			"isoid": "MAS",
+			"prefix": "54[0-2]"
+		},
+		{
+			"key": "Mindoro Occidental",
+			"isoid": "MDC",
+			"prefix": "51[01]"
+		},
+		{
+			"key": "Mindoro Oriental",
+			"isoid": "MDR",
+			"prefix": "52[01]"
+		},
+		{
+			"key": "Misamis Occidental",
+			"isoid": "MSC",
+			"prefix": "72[01]"
+		},
+		{
+			"key": "Misamis Oriental",
+			"isoid": "MSR",
+			"prefix": "90[0-2]"
+		},
+		{
+			"key": "Mountain Province",
+			"isoid": "MOU",
+			"prefix": "26(1[6-9]|2[0-5])"
+		},
+		{
+			"key": "Negros Occidental",
+			"isoid": "NEC",
+			"prefix": "61[0-3]"
+		},
+		{
+			"key": "Negros Oriental",
+			"isoid": "NER",
+			"prefix": "62[0-2]"
+		},
+		{
+			"key": "Northern Samar",
+			"isoid": "NSA",
+			"prefix": "64[0-2]"
+		},
+		{
+			"key": "Nueva Ecija",
+			"isoid": "NUE",
+			"prefix": "31[0-3]"
+		},
+		{
+			"key": "Nueva Vizcaya",
+			"isoid": "NUV",
+			"prefix": "37[01]"
+		},
+		{
+			"key": "Palawan",
+			"isoid": "PLW",
+			"prefix": "53[0-2]"
+		},
+		{
+			"key": "Pampanga",
+			"isoid": "PAM",
+			"prefix": "20[0-2]"
+		},
+		{
+			"key": "Pangasinan",
+			"isoid": "PAN",
+			"prefix": "24[0-4]"
+		},
+		{
+			"key": "Quezon Province",
+			"isoid": "QUE",
+			"prefix": "43[0-4]"
+		},
+		{
+			"key": "Quirino",
+			"isoid": "QUI",
+			"prefix": "340"
+		},
+		{
+			"key": "Rizal",
+			"isoid": "RIZ",
+			"prefix": "1[89]"
+		},
+		{
+			"key": "Romblon",
+			"isoid": "ROM",
+			"prefix": "55[01]"
+		},
+		{
+			"key": "Samar",
+			"isoid": "WSA",
+			"prefix": "67[0-2]"
+		},
+		{
+			"key": "Sarangani",
+			"isoid": "SAR",
+			"prefix": "8015"
+		},
+		{
+			"key": "Siquijor",
+			"isoid": "SIG",
+			"prefix": "62(2[5-9]|30)"
+		},
+		{
+			"key": "Sorsogon",
+			"isoid": "SOR",
+			"prefix": "47[01]"
+		},
+		{
+			"key": "South Cotabato",
+			"isoid": "SCO",
+			"prefix": "95[01]"
+		},
+		{
+			"key": "Southern Leyte",
+			"isoid": "SLE",
+			"prefix": "66[10]"
+		},
+		{
+			"key": "Sultan Kudarat",
+			"isoid": "SUK",
+			"prefix": "98[01]"
+		},
+		{
+			"key": "Sulu",
+			"isoid": "SLU",
+			"prefix": "74[01]"
+		},
+		{
+			"key": "Surigao del Norte",
+			"isoid": "SUN",
+			"prefix": "84[0-2]"
+		},
+		{
+			"key": "Surigao del Sur",
+			"isoid": "SUR",
+			"prefix": "83[01]"
+		},
+		{
+			"key": "Tarlac",
+			"isoid": "TAR",
+			"prefix": "23[01]"
+		},
+		{
+			"key": "Tawi-Tawi",
+			"isoid": "TAW",
+			"prefix": "750"
+		},
+		{
+			"key": "Zambales",
+			"isoid": "ZMB",
+			"prefix": "22[01]"
+		},
+		{
+			"key": "Zamboanga del Norte",
+			"isoid": "ZAN",
+			"prefix": "71[0-2]"
+		},
+		{
+			"key": "Zamboanga del Sur",
+			"isoid": "ZAS",
+			"prefix": "70[0-4]"
+		},
+		{
+			"key": "Zamboanga Sibuguey",
+			"isoid": "ZSI",
+			"prefix": "70[0-4]"
+		}
+	],
+	"RU": [
+		{
+			"key": "Алтайский край",
+			"isoid": "ALT",
+			"prefix": "65[6-9]"
+		},
+		{
+			"key": "Амурская область",
+			"isoid": "AMU",
+			"prefix": "67[56]"
+		},
+		{
+			"key": "Архангельская область",
+			"isoid": "ARK",
+			"prefix": "16[3-5]"
+		},
+		{
+			"key": "Астраханская область",
+			"isoid": "AST",
+			"prefix": "41[4-6]"
+		},
+		{
+			"key": "Белгородская область",
+			"isoid": "BEL",
+			"prefix": "30[89]"
+		},
+		{
+			"key": "Брянская область",
+			"isoid": "BRY",
+			"prefix": "24[1-3]"
+		},
+		{
+			"key": "Владимирская область",
+			"isoid": "VLA",
+			"prefix": "60[0-2]"
+		},
+		{
+			"key": "Волгоградская область",
+			"isoid": "VGG",
+			"prefix": "40[0-4]"
+		},
+		{
+			"key": "Вологодская область",
+			"isoid": "VLG",
+			"prefix": "16[0-2]"
+		},
+		{
+			"key": "Воронежская область",
+			"isoid": "VOR",
+			"prefix": "39[4-7]"
+		},
+		{
+			"key": "Еврейская автономная область",
+			"isoid": "YEV",
+			"prefix": "679"
+		},
+		{
+			"key": "Забайкальский край",
+			"isoid": "ZAB",
+			"prefix": "6(?:7[2-4]|87)"
+		},
+		{
+			"key": "Ивановская область",
+			"isoid": "IVA",
+			"prefix": "15[3-5]"
+		},
+		{
+			"key": "Иркутская область",
+			"isoid": "IRK",
+			"prefix": "66[4-9]"
+		},
+		{
+			"key": "Кабардино-Балкарская Республика",
+			"isoid": "KB",
+			"prefix": "36[01]"
+		},
+		{
+			"key": "Калининградская область",
+			"isoid": "KGD",
+			"prefix": "23[6-8]"
+		},
+		{
+			"key": "Калужская область",
+			"isoid": "KLU",
+			"prefix": "24[89]"
+		},
+		{
+			"key": "Камчатский край",
+			"isoid": "KAM",
+			"prefix": "68[348]"
+		},
+		{
+			"key": "Карачаево-Черкесская Республика",
+			"isoid": "KC",
+			"prefix": "369"
+		},
+		{
+			"key": "Кемеровская область",
+			"isoid": "KEM",
+			"prefix": "65[0-4]"
+		},
+		{
+			"key": "Кировская область",
+			"isoid": "KIR",
+			"prefix": "61[0-3]"
+		},
+		{
+			"key": "Костромская область",
+			"isoid": "KOS",
+			"prefix": "15[67]"
+		},
+		{
+			"key": "Краснодарский край",
+			"isoid": "KDA",
+			"prefix": "35[0-4]"
+		},
+		{
+			"key": "Красноярский край",
+			"isoid": "KYA",
+			"prefix": "6(?:6[0-3]|4[78])"
+		},
+		{
+			"key": "Курганская область",
+			"isoid": "KGN",
+			"prefix": "64[01]"
+		},
+		{
+			"key": "Курская область",
+			"isoid": "KRS",
+			"prefix": "30[5-7]"
+		},
+		{
+			"key": "Ленинградская область",
+			"isoid": "LEN",
+			"prefix": "18[78]"
+		},
+		{
+			"key": "Липецкая область",
+			"isoid": "LIP",
+			"prefix": "39[89]"
+		},
+		{
+			"key": "Магаданская область",
+			"isoid": "MAG",
+			"prefix": "68[56]"
+		},
+		{
+			"key": "Москва",
+			"isoid": "MOW",
+			"prefix": "1(?:0[1-9]|1|2|3[0-5]|4[0-4])"
+		},
+		{
+			"key": "Московская область",
+			"isoid": "MOS",
+			"prefix": "14[0-4]"
+		},
+		{
+			"key": "Мурманская область",
+			"isoid": "MUR",
+			"prefix": "18[34]"
+		},
+		{
+			"key": "Ненецкий автономный округ",
+			"isoid": "NEN",
+			"prefix": "166"
+		},
+		{
+			"key": "Нижегородская область",
+			"isoid": "NIZ",
+			"prefix": "60[3-7]"
+		},
+		{
+			"key": "Новгородская область",
+			"isoid": "NGR",
+			"prefix": "17[3-5]"
+		},
+		{
+			"key": "Новосибирская область",
+			"isoid": "NVS",
+			"prefix": "63[0-3]"
+		},
+		{
+			"key": "Омская область",
+			"isoid": "OMS",
+			"prefix": "64[4-6]"
+		},
+		{
+			"key": "Оренбургская область",
+			"isoid": "ORE",
+			"prefix": "46[0-2]"
+		},
+		{
+			"key": "Орловская область",
+			"isoid": "ORL",
+			"prefix": "30[23]"
+		},
+		{
+			"key": "Пензенская область",
+			"isoid": "PNZ",
+			"prefix": "44[0-2]"
+		},
+		{
+			"key": "Пермский край",
+			"isoid": "PER",
+			"prefix": "61[4-9]"
+		},
+		{
+			"key": "Приморский край",
+			"isoid": "PRI",
+			"prefix": "69[0-2]"
+		},
+		{
+			"key": "Псковская область",
+			"isoid": "PSK",
+			"prefix": "18[0-2]"
+		},
+		{
+			"key": "Республика Адыгея",
+			"isoid": "AD",
+			"prefix": "385"
+		},
+		{
+			"key": "Республика Алтай",
+			"isoid": "AL",
+			"prefix": "649"
+		},
+		{
+			"key": "Республика Башкортостан",
+			"isoid": "BA",
+			"prefix": "45[0-3]"
+		},
+		{
+			"key": "Республика Бурятия",
+			"isoid": "BU",
+			"prefix": "67[01]"
+		},
+		{
+			"key": "Республика Дагестан",
+			"isoid": "DA",
+			"prefix": "36[78]"
+		},
+		{
+			"key": "Республика Ингушетия",
+			"isoid": "IN",
+			"prefix": "386"
+		},
+		{
+			"key": "Республика Калмыкия",
+			"isoid": "KL",
+			"prefix": "35[89]"
+		},
+		{
+			"key": "Республика Карелия",
+			"isoid": "KR",
+			"prefix": "18[56]"
+		},
+		{
+			"key": "Республика Коми",
+			"isoid": "KO",
+			"prefix": "16[7-9]"
+		},
+		{
+			"key": "Автономна Республіка Крим",
+			"isoid": null,
+			"prefix": "29[5-8]"
+		},
+		{
+			"key": "Республика Марий Эл",
+			"isoid": "ME",
+			"prefix": "42[45]"
+		},
+		{
+			"key": "Республика Мордовия",
+			"isoid": "MO",
+			"prefix": "43[01]"
+		},
+		{
+			"key": "Республика Саха (Якутия)",
+			"isoid": "SA",
+			"prefix": "67[78]"
+		},
+		{
+			"key": "Республика Северная Осетия-Алания",
+			"isoid": "SE",
+			"prefix": "36[23]"
+		},
+		{
+			"key": "Республика Татарстан",
+			"isoid": "TA",
+			"prefix": "42[0-3]"
+		},
+		{
+			"key": "Республика Тыва",
+			"isoid": "TY",
+			"prefix": "66[78]"
+		},
+		{
+			"key": "Республика Удмуртия",
+			"isoid": "UD",
+			"prefix": "42[67]"
+		},
+		{
+			"key": "Республика Хакасия",
+			"isoid": "KK",
+			"prefix": "655"
+		},
+		{
+			"key": "Ростовская область",
+			"isoid": "ROS",
+			"prefix": "34[4-7]"
+		},
+		{
+			"key": "Рязанская область",
+			"isoid": "RYA",
+			"prefix": "39[01]"
+		},
+		{
+			"key": "Самарская область",
+			"isoid": "SAM",
+			"prefix": "44[3-6]"
+		},
+		{
+			"key": "Санкт-Петербург",
+			"isoid": "SPE",
+			"prefix": "19"
+		},
+		{
+			"key": "Саратовская область",
+			"isoid": "SAR",
+			"prefix": "41[0-3]"
+		},
+		{
+			"key": "Сахалинская область",
+			"isoid": "SAK",
+			"prefix": "69[34]"
+		},
+		{
+			"key": "Свердловская область",
+			"isoid": "SVE",
+			"prefix": "62[0-4]"
+		},
+		{
+			"key": "Севастополь",
+			"isoid": null,
+			"prefix": "299"
+		},
+		{
+			"key": "Смоленская область",
+			"isoid": "SMO",
+			"prefix": "21[4-6]"
+		},
+		{
+			"key": "Ставропольский край",
+			"isoid": "STA",
+			"prefix": "35[5-7]"
+		},
+		{
+			"key": "Тамбовская область",
+			"isoid": "TAM",
+			"prefix": "39[23]"
+		},
+		{
+			"key": "Тверская область",
+			"isoid": "TVE",
+			"prefix": "17[0-2]"
+		},
+		{
+			"key": "Томская область",
+			"isoid": "TOM",
+			"prefix": "63[4-6]"
+		},
+		{
+			"key": "Тульская область",
+			"isoid": "TUL",
+			"prefix": "30[01]"
+		},
+		{
+			"key": "Тюменская область",
+			"isoid": "TYU",
+			"prefix": "62[5-7]"
+		},
+		{
+			"key": "Ульяновская область",
+			"isoid": "ULY",
+			"prefix": "43[23]"
+		},
+		{
+			"key": "Хабаровский край",
+			"isoid": "KHA",
+			"prefix": "68[0-2]"
+		},
+		{
+			"key": "Ханты-Мансийский автономный округ",
+			"isoid": "KHM",
+			"prefix": "628"
+		},
+		{
+			"key": "Челябинская область",
+			"isoid": "CHE",
+			"prefix": "45[4-7]"
+		},
+		{
+			"key": "Чеченская Республика",
+			"isoid": "CE",
+			"prefix": "36[4-6]"
+		},
+		{
+			"key": "Чувашская Республика",
+			"isoid": "CU",
+			"prefix": "42[89]"
+		},
+		{
+			"key": "Чукотский автономный округ",
+			"isoid": "CHU",
+			"prefix": "689"
+		},
+		{
+			"key": "Ямало-Ненецкий автономный округ",
+			"isoid": "YAN",
+			"prefix": "629"
+		},
+		{
+			"key": "Ярославская область",
+			"isoid": "YAR",
+			"prefix": "15[0-2]"
+		}
+	],
+	"SV": [
+		{
+			"key": "Ahuachapan",
+			"isoid": "AH",
+			"prefix": "CP 21"
+		},
+		{
+			"key": "Cabanas",
+			"isoid": "CA",
+			"prefix": "CP 12"
+		},
+		{
+			"key": "Calatenango",
+			"isoid": "CH",
+			"prefix": "CP 13"
+		},
+		{
+			"key": "Cuscatlan",
+			"isoid": "CU",
+			"prefix": "CP 14"
+		},
+		{
+			"key": "La Libertad",
+			"isoid": "LI",
+			"prefix": "CP 15"
+		},
+		{
+			"key": "La Paz",
+			"isoid": "PA",
+			"prefix": "CP 16"
+		},
+		{
+			"key": "La Union",
+			"isoid": "UN",
+			"prefix": "CP 31"
+		},
+		{
+			"key": "Morazan",
+			"isoid": "MO",
+			"prefix": "CP 32"
+		},
+		{
+			"key": "San Miguel",
+			"isoid": "SM",
+			"prefix": "CP 33"
+		},
+		{
+			"key": "San Salvador",
+			"isoid": "SS",
+			"prefix": "CP 11"
+		},
+		{
+			"key": "San Vicente",
+			"isoid": "SV",
+			"prefix": "CP 17"
+		},
+		{
+			"key": "Santa Ana",
+			"isoid": "SA",
+			"prefix": "CP 22"
+		},
+		{
+			"key": "Sonsonate",
+			"isoid": "SO",
+			"prefix": "CP 23"
+		},
+		{
+			"key": "Usulutan",
+			"isoid": "US",
+			"prefix": "CP 34"
+		}
+	],
+	"TH": [
+		{
+			"key": "กระบี่",
+			"isoid": "81",
+			"prefix": "81"
+		},
+		{
+			"key": "กรุงเทพมหานคร",
+			"isoid": "10",
+			"prefix": "10"
+		},
+		{
+			"key": "กาญจนบุรี",
+			"isoid": "71",
+			"prefix": "71"
+		},
+		{
+			"key": "กาฬสินธุ์",
+			"isoid": "46",
+			"prefix": "46"
+		},
+		{
+			"key": "กำแพงเพชร",
+			"isoid": "62",
+			"prefix": "62"
+		},
+		{
+			"key": "ขอนแก่น",
+			"isoid": "40",
+			"prefix": "40"
+		},
+		{
+			"key": "จันทบุรี",
+			"isoid": "22",
+			"prefix": "22"
+		},
+		{
+			"key": "ฉะเชิงเทรา",
+			"isoid": "24",
+			"prefix": "24"
+		},
+		{
+			"key": "ชลบุรี",
+			"isoid": "20",
+			"prefix": "20"
+		},
+		{
+			"key": "ชัยนาท",
+			"isoid": "18",
+			"prefix": "17"
+		},
+		{
+			"key": "ชัยภูมิ",
+			"isoid": "36",
+			"prefix": "36"
+		},
+		{
+			"key": "ชุมพร",
+			"isoid": "86",
+			"prefix": "86"
+		},
+		{
+			"key": "เชียงราย",
+			"isoid": "57",
+			"prefix": "57"
+		},
+		{
+			"key": "เชียงใหม่",
+			"isoid": "50",
+			"prefix": "50"
+		},
+		{
+			"key": "ตรัง",
+			"isoid": "92",
+			"prefix": "92"
+		},
+		{
+			"key": "ตราด",
+			"isoid": "23",
+			"prefix": "23"
+		},
+		{
+			"key": "ตาก",
+			"isoid": "63",
+			"prefix": "63"
+		},
+		{
+			"key": "นครนายก",
+			"isoid": "26",
+			"prefix": "26"
+		},
+		{
+			"key": "นครปฐม",
+			"isoid": "73",
+			"prefix": "73"
+		},
+		{
+			"key": "นครพนม",
+			"isoid": "48",
+			"prefix": "48"
+		},
+		{
+			"key": "นครราชสีมา",
+			"isoid": "30",
+			"prefix": "30"
+		},
+		{
+			"key": "นครศรีธรรมราช",
+			"isoid": "80",
+			"prefix": "80"
+		},
+		{
+			"key": "นครสวรรค์",
+			"isoid": "60",
+			"prefix": "60"
+		},
+		{
+			"key": "นนทบุรี",
+			"isoid": "12",
+			"prefix": "11"
+		},
+		{
+			"key": "นราธิวาส",
+			"isoid": "96",
+			"prefix": "96"
+		},
+		{
+			"key": "น่าน",
+			"isoid": "55",
+			"prefix": "55"
+		},
+		{
+			"key": "บุรีรัมย์",
+			"isoid": "31",
+			"prefix": "31"
+		},
+		{
+			"key": "ปทุมธานี",
+			"isoid": "13",
+			"prefix": "12"
+		},
+		{
+			"key": "ประจวบคีรีขันธ์",
+			"isoid": "77",
+			"prefix": "77"
+		},
+		{
+			"key": "ปราจีนบุรี",
+			"isoid": "25",
+			"prefix": "25"
+		},
+		{
+			"key": "ปัตตานี",
+			"isoid": "94",
+			"prefix": "94"
+		},
+		{
+			"key": "พระนครศรีอยุธยา",
+			"isoid": "14",
+			"prefix": "13"
+		},
+		{
+			"key": "พะเยา",
+			"isoid": "56",
+			"prefix": "56"
+		},
+		{
+			"key": "พังงา",
+			"isoid": "82",
+			"prefix": "82"
+		},
+		{
+			"key": "พัทลุง",
+			"isoid": "93",
+			"prefix": "93"
+		},
+		{
+			"key": "พิจิตร",
+			"isoid": "66",
+			"prefix": "66"
+		},
+		{
+			"key": "พิษณุโลก",
+			"isoid": "65",
+			"prefix": "65"
+		},
+		{
+			"key": "เพชรบุรี",
+			"isoid": "76",
+			"prefix": "76"
+		},
+		{
+			"key": "เพชรบูรณ์",
+			"isoid": "67",
+			"prefix": "67"
+		},
+		{
+			"key": "แพร่",
+			"isoid": "54",
+			"prefix": "54"
+		},
+		{
+			"key": "ภูเก็ต",
+			"isoid": "83",
+			"prefix": "83"
+		},
+		{
+			"key": "มหาสารคาม",
+			"isoid": "44",
+			"prefix": "44"
+		},
+		{
+			"key": "มุกดาหาร",
+			"isoid": "49",
+			"prefix": "49"
+		},
+		{
+			"key": "แม่ฮ่องสอน",
+			"isoid": "58",
+			"prefix": "58"
+		},
+		{
+			"key": "ยโสธร",
+			"isoid": "35",
+			"prefix": "35"
+		},
+		{
+			"key": "ยะลา",
+			"isoid": "95",
+			"prefix": "95"
+		},
+		{
+			"key": "ร้อยเอ็ด",
+			"isoid": "45",
+			"prefix": "45"
+		},
+		{
+			"key": "ระนอง",
+			"isoid": "85",
+			"prefix": "85"
+		},
+		{
+			"key": "ระยอง",
+			"isoid": "21",
+			"prefix": "21"
+		},
+		{
+			"key": "ราชบุรี",
+			"isoid": "70",
+			"prefix": "70"
+		},
+		{
+			"key": "ลพบุรี",
+			"isoid": "16",
+			"prefix": "15"
+		},
+		{
+			"key": "ลำปาง",
+			"isoid": "52",
+			"prefix": "52"
+		},
+		{
+			"key": "ลำพูน",
+			"isoid": "51",
+			"prefix": "51"
+		},
+		{
+			"key": "เลย",
+			"isoid": "42",
+			"prefix": "42"
+		},
+		{
+			"key": "ศรีสะเกษ",
+			"isoid": "33",
+			"prefix": "33"
+		},
+		{
+			"key": "สกลนคร",
+			"isoid": "47",
+			"prefix": "47"
+		},
+		{
+			"key": "สงขลา",
+			"isoid": "90",
+			"prefix": "90"
+		},
+		{
+			"key": "สตูล",
+			"isoid": "91",
+			"prefix": "91"
+		},
+		{
+			"key": "สมุทรปราการ",
+			"isoid": "11",
+			"prefix": "10"
+		},
+		{
+			"key": "สมุทรสงคราม",
+			"isoid": "75",
+			"prefix": "75"
+		},
+		{
+			"key": "สมุทรสาคร",
+			"isoid": "74",
+			"prefix": "74"
+		},
+		{
+			"key": "สระแก้ว",
+			"isoid": "27",
+			"prefix": "27"
+		},
+		{
+			"key": "สระบุรี",
+			"isoid": "19",
+			"prefix": "18"
+		},
+		{
+			"key": "สิงห์บุรี",
+			"isoid": "17",
+			"prefix": "16"
+		},
+		{
+			"key": "สุโขทัย",
+			"isoid": "64",
+			"prefix": "64"
+		},
+		{
+			"key": "สุพรรณบุรี",
+			"isoid": "72",
+			"prefix": "72"
+		},
+		{
+			"key": "สุราษฎร์ธานี",
+			"isoid": "84",
+			"prefix": "84"
+		},
+		{
+			"key": "สุรินทร์",
+			"isoid": "32",
+			"prefix": "32"
+		},
+		{
+			"key": "หนองคาย",
+			"isoid": "43",
+			"prefix": "43"
+		},
+		{
+			"key": "หนองบัวลำภู",
+			"isoid": "39",
+			"prefix": "39"
+		},
+		{
+			"key": "อ่างทอง",
+			"isoid": "15",
+			"prefix": "14"
+		},
+		{
+			"key": "อำนาจเจริญ",
+			"isoid": "37",
+			"prefix": "37"
+		},
+		{
+			"key": "อุดรธานี",
+			"isoid": "41",
+			"prefix": "41"
+		},
+		{
+			"key": "อุตรดิตถ์",
+			"isoid": "53",
+			"prefix": "53"
+		},
+		{
+			"key": "อุทัยธานี",
+			"isoid": "61",
+			"prefix": "61"
+		},
+		{
+			"key": "อุบลราชธานี",
+			"isoid": "34",
+			"prefix": "34"
+		}
+	],
+	"TR": [
+		{
+			"key": "Adana",
+			"isoid": "01",
+			"prefix": "01"
+		},
+		{
+			"key": "Adıyaman",
+			"isoid": "02",
+			"prefix": "02"
+		},
+		{
+			"key": "Afyon",
+			"isoid": "03",
+			"prefix": "03"
+		},
+		{
+			"key": "Ağrı",
+			"isoid": "04",
+			"prefix": "04"
+		},
+		{
+			"key": "Aksaray",
+			"isoid": "68",
+			"prefix": "68"
+		},
+		{
+			"key": "Amasya",
+			"isoid": "05",
+			"prefix": "05"
+		},
+		{
+			"key": "Ankara",
+			"isoid": "06",
+			"prefix": "06"
+		},
+		{
+			"key": "Antalya",
+			"isoid": "07",
+			"prefix": "07"
+		},
+		{
+			"key": "Ardahan",
+			"isoid": "75",
+			"prefix": "75"
+		},
+		{
+			"key": "Artvin",
+			"isoid": "08",
+			"prefix": "08"
+		},
+		{
+			"key": "Aydın",
+			"isoid": "09",
+			"prefix": "09"
+		},
+		{
+			"key": "Balıkesir",
+			"isoid": "10",
+			"prefix": "10"
+		},
+		{
+			"key": "Bartın",
+			"isoid": "74",
+			"prefix": "74"
+		},
+		{
+			"key": "Batman",
+			"isoid": "72",
+			"prefix": "72"
+		},
+		{
+			"key": "Bayburt",
+			"isoid": "69",
+			"prefix": "69"
+		},
+		{
+			"key": "Bilecik",
+			"isoid": "11",
+			"prefix": "11"
+		},
+		{
+			"key": "Bingöl",
+			"isoid": "12",
+			"prefix": "12"
+		},
+		{
+			"key": "Bitlis",
+			"isoid": "13",
+			"prefix": "13"
+		},
+		{
+			"key": "Bolu",
+			"isoid": "14",
+			"prefix": "14"
+		},
+		{
+			"key": "Burdur",
+			"isoid": "15",
+			"prefix": "15"
+		},
+		{
+			"key": "Bursa",
+			"isoid": "16",
+			"prefix": "16"
+		},
+		{
+			"key": "Çanakkale",
+			"isoid": "17",
+			"prefix": "17"
+		},
+		{
+			"key": "Çankırı",
+			"isoid": "18",
+			"prefix": "18"
+		},
+		{
+			"key": "Çorum",
+			"isoid": "19",
+			"prefix": "19"
+		},
+		{
+			"key": "Denizli",
+			"isoid": "20",
+			"prefix": "20"
+		},
+		{
+			"key": "Diyarbakır",
+			"isoid": "21",
+			"prefix": "21"
+		},
+		{
+			"key": "Düzce",
+			"isoid": "81",
+			"prefix": "81"
+		},
+		{
+			"key": "Edirne",
+			"isoid": "22",
+			"prefix": "22"
+		},
+		{
+			"key": "Elazığ",
+			"isoid": "23",
+			"prefix": "23"
+		},
+		{
+			"key": "Erzincan",
+			"isoid": "24",
+			"prefix": "24"
+		},
+		{
+			"key": "Erzurum",
+			"isoid": "25",
+			"prefix": "25"
+		},
+		{
+			"key": "Eskişehir",
+			"isoid": "26",
+			"prefix": "26"
+		},
+		{
+			"key": "Gaziantep",
+			"isoid": "27",
+			"prefix": "27"
+		},
+		{
+			"key": "Giresun",
+			"isoid": "28",
+			"prefix": "28"
+		},
+		{
+			"key": "Gümüşhane",
+			"isoid": "29",
+			"prefix": "29"
+		},
+		{
+			"key": "Hakkari",
+			"isoid": "30",
+			"prefix": "30"
+		},
+		{
+			"key": "Hatay",
+			"isoid": "31",
+			"prefix": "31"
+		},
+		{
+			"key": "Iğdır",
+			"isoid": "76",
+			"prefix": "76"
+		},
+		{
+			"key": "Isparta",
+			"isoid": "32",
+			"prefix": "32"
+		},
+		{
+			"key": "İstanbul",
+			"isoid": "34",
+			"prefix": "34"
+		},
+		{
+			"key": "İzmir",
+			"isoid": "35",
+			"prefix": "35"
+		},
+		{
+			"key": "Kahramanmaraş",
+			"isoid": "46",
+			"prefix": "46"
+		},
+		{
+			"key": "Karabük",
+			"isoid": "78",
+			"prefix": "78"
+		},
+		{
+			"key": "Karaman",
+			"isoid": "70",
+			"prefix": "70"
+		},
+		{
+			"key": "Kars",
+			"isoid": "36",
+			"prefix": "36"
+		},
+		{
+			"key": "Kastamonu",
+			"isoid": "37",
+			"prefix": "37"
+		},
+		{
+			"key": "Kayseri",
+			"isoid": "38",
+			"prefix": "38"
+		},
+		{
+			"key": "Kırıkkale",
+			"isoid": "71",
+			"prefix": "71"
+		},
+		{
+			"key": "Kırklareli",
+			"isoid": "39",
+			"prefix": "39"
+		},
+		{
+			"key": "Kırşehir",
+			"isoid": "40",
+			"prefix": "40"
+		},
+		{
+			"key": "Kilis",
+			"isoid": "79",
+			"prefix": "79"
+		},
+		{
+			"key": "Kocaeli",
+			"isoid": "41",
+			"prefix": "41"
+		},
+		{
+			"key": "Konya",
+			"isoid": "42",
+			"prefix": "42"
+		},
+		{
+			"key": "Kütahya",
+			"isoid": "43",
+			"prefix": "43"
+		},
+		{
+			"key": "Malatya",
+			"isoid": "44",
+			"prefix": "44"
+		},
+		{
+			"key": "Manisa",
+			"isoid": "45",
+			"prefix": "45"
+		},
+		{
+			"key": "Mardin",
+			"isoid": "47",
+			"prefix": "47"
+		},
+		{
+			"key": "Mersin",
+			"isoid": "33",
+			"prefix": "33"
+		},
+		{
+			"key": "Muğla",
+			"isoid": "48",
+			"prefix": "48"
+		},
+		{
+			"key": "Muş",
+			"isoid": "49",
+			"prefix": "49"
+		},
+		{
+			"key": "Nevşehir",
+			"isoid": "50",
+			"prefix": "50"
+		},
+		{
+			"key": "Niğde",
+			"isoid": "51",
+			"prefix": "51"
+		},
+		{
+			"key": "Ordu",
+			"isoid": "52",
+			"prefix": "52"
+		},
+		{
+			"key": "Osmaniye",
+			"isoid": "80",
+			"prefix": "80"
+		},
+		{
+			"key": "Rize",
+			"isoid": "53",
+			"prefix": "53"
+		},
+		{
+			"key": "Sakarya",
+			"isoid": "54",
+			"prefix": "54"
+		},
+		{
+			"key": "Samsun",
+			"isoid": "55",
+			"prefix": "55"
+		},
+		{
+			"key": "Siirt",
+			"isoid": "56",
+			"prefix": "56"
+		},
+		{
+			"key": "Sinop",
+			"isoid": "57",
+			"prefix": "57"
+		},
+		{
+			"key": "Sivas",
+			"isoid": "58",
+			"prefix": "58"
+		},
+		{
+			"key": "Şanlıurfa",
+			"isoid": "63",
+			"prefix": "63"
+		},
+		{
+			"key": "Şırnak",
+			"isoid": "73",
+			"prefix": "73"
+		},
+		{
+			"key": "Tekirdağ",
+			"isoid": "59",
+			"prefix": "59"
+		},
+		{
+			"key": "Tokat",
+			"isoid": "60",
+			"prefix": "60"
+		},
+		{
+			"key": "Trabzon",
+			"isoid": "61",
+			"prefix": "61"
+		},
+		{
+			"key": "Tunceli",
+			"isoid": "62",
+			"prefix": "62"
+		},
+		{
+			"key": "Uşak",
+			"isoid": "64",
+			"prefix": "64"
+		},
+		{
+			"key": "Van",
+			"isoid": "65",
+			"prefix": "65"
+		},
+		{
+			"key": "Yalova",
+			"isoid": "77",
+			"prefix": "77"
+		},
+		{
+			"key": "Yozgat",
+			"isoid": "66",
+			"prefix": "66"
+		},
+		{
+			"key": "Zonguldak",
+			"isoid": "67",
+			"prefix": "67"
+		}
+	],
+	"TW": [
+		{
+			"key": "台中市",
+			"isoid": "TXG",
+			"prefix": "4[0-3]"
+		},
+		{
+			"key": "台北市",
+			"isoid": "TPE",
+			"prefix": "1[01]"
+		},
+		{
+			"key": "台東縣",
+			"isoid": "TTT",
+			"prefix": "9[56]"
+		},
+		{
+			"key": "台南市",
+			"isoid": "TNN",
+			"prefix": "7[0-4]"
+		},
+		{
+			"key": "宜蘭縣",
+			"isoid": "ILA",
+			"prefix": "2[67]"
+		},
+		{
+			"key": "花蓮縣",
+			"isoid": "HUA",
+			"prefix": "9[78]"
+		},
+		{
+			"key": "金門縣",
+			"isoid": null,
+			"prefix": "89"
+		},
+		{
+			"key": "南投縣",
+			"isoid": "NAN",
+			"prefix": "5[45]"
+		},
+		{
+			"key": "屏東縣",
+			"isoid": "PIF",
+			"prefix": "9[0-4]"
+		},
+		{
+			"key": "苗栗縣",
+			"isoid": "MIA",
+			"prefix": "3[56]"
+		},
+		{
+			"key": "桃園市",
+			"isoid": "TAO",
+			"prefix": "3[23]"
+		},
+		{
+			"key": "高雄市",
+			"isoid": "KHH",
+			"prefix": "8[02-5]|81[1-579]"
+		},
+		{
+			"key": "基隆市",
+			"isoid": "KEE",
+			"prefix": "20[0-6]"
+		},
+		{
+			"key": "連江縣",
+			"isoid": null,
+			"prefix": "209|21[012]"
+		},
+		{
+			"key": "雲林縣",
+			"isoid": "YUN",
+			"prefix": "6[3-5]"
+		},
+		{
+			"key": "新北市",
+			"isoid": "NWT",
+			"prefix": "20[78]|2[2345]"
+		},
+		{
+			"key": "新竹市",
+			"isoid": "HSZ",
+			"prefix": "300"
+		},
+		{
+			"key": "新竹縣",
+			"isoid": "HSQ",
+			"prefix": "30[2-8]|31"
+		},
+		{
+			"key": "嘉義市",
+			"isoid": "CYI",
+			"prefix": "600"
+		},
+		{
+			"key": "嘉義縣",
+			"isoid": "CYQ",
+			"prefix": "60[1-9]|6[12]"
+		},
+		{
+			"key": "彰化縣",
+			"isoid": "CHA",
+			"prefix": "5[0123]"
+		},
+		{
+			"key": "澎湖縣",
+			"isoid": "PEN",
+			"prefix": "88"
+		}
+	],
+	"UA": [
+		{
+			"key": "Автономна Республіка Крим",
+			"isoid": "43",
+			"prefix": "9[5-8]"
+		},
+		{
+			"key": "Вінницька область",
+			"isoid": "05",
+			"prefix": "2[1-4]"
+		},
+		{
+			"key": "Волинська область",
+			"isoid": "07",
+			"prefix": "4[3-5]"
+		},
+		{
+			"key": "Дніпропетровська область",
+			"isoid": "12",
+			"prefix": "49|5[0-3]"
+		},
+		{
+			"key": "Донецька область",
+			"isoid": "14",
+			"prefix": "8[3-7]"
+		},
+		{
+			"key": "Житомирська область",
+			"isoid": "18",
+			"prefix": "1[0-3]"
+		},
+		{
+			"key": "Закарпатська область",
+			"isoid": "21",
+			"prefix": "8[89]|90"
+		},
+		{
+			"key": "Запорізька область",
+			"isoid": "23",
+			"prefix": "69|7[0-2]"
+		},
+		{
+			"key": "Івано-Франківська область",
+			"isoid": "26",
+			"prefix": "7[6-8]"
+		},
+		{
+			"key": "місто Київ",
+			"isoid": "30",
+			"prefix": "0[1-6]"
+		},
+		{
+			"key": "Київська область",
+			"isoid": "32",
+			"prefix": "0[7-9]"
+		},
+		{
+			"key": "Кіровоградська область",
+			"isoid": "35",
+			"prefix": "2[5-8]"
+		},
+		{
+			"key": "Луганська область",
+			"isoid": "09",
+			"prefix": "9[1-4]"
+		},
+		{
+			"key": "Львівська область",
+			"isoid": "46",
+			"prefix": "79|8[0-2]"
+		},
+		{
+			"key": "Миколаївська область",
+			"isoid": "48",
+			"prefix": "5[4-7]"
+		},
+		{
+			"key": "Одеська область",
+			"isoid": "51",
+			"prefix": "6[5-8]"
+		},
+		{
+			"key": "Полтавська область",
+			"isoid": "53",
+			"prefix": "3[6-9]"
+		},
+		{
+			"key": "Рівненська область",
+			"isoid": "56",
+			"prefix": "3[3-5]"
+		},
+		{
+			"key": "місто Севастополь",
+			"isoid": "40",
+			"prefix": "99"
+		},
+		{
+			"key": "Сумська область",
+			"isoid": "59",
+			"prefix": "4[0-2]"
+		},
+		{
+			"key": "Тернопільська область",
+			"isoid": "61",
+			"prefix": "4[6-8]"
+		},
+		{
+			"key": "Харківська область",
+			"isoid": "63",
+			"prefix": "6[1-4]"
+		},
+		{
+			"key": "Херсонська область",
+			"isoid": "65",
+			"prefix": "7[3-5]"
+		},
+		{
+			"key": "Хмельницька область",
+			"isoid": "68",
+			"prefix": "29|3[0-2]"
+		},
+		{
+			"key": "Черкаська область",
+			"isoid": "71",
+			"prefix": "1[89]|20"
+		},
+		{
+			"key": "Чернівецька область",
+			"isoid": "77",
+			"prefix": "5[89]|60"
+		},
+		{
+			"key": "Чернігівська область",
+			"isoid": "74",
+			"prefix": "1[4-7]"
+		}
+	],
+	"US": [
+		{
+			"key": "AL",
+			"isoid": "AL",
+			"prefix": "3[56]"
+		},
+		{
+			"key": "AK",
+			"isoid": "AK",
+			"prefix": "99[5-9]"
+		},
+		{
+			"key": "AS",
+			"isoid": null,
+			"prefix": "96799"
+		},
+		{
+			"key": "AZ",
+			"isoid": "AZ",
+			"prefix": "8[56]"
+		},
+		{
+			"key": "AR",
+			"isoid": "AR",
+			"prefix": "71[6-9]|72"
+		},
+		{
+			"key": "AA",
+			"isoid": null,
+			"prefix": "340"
+		},
+		{
+			"key": "AE",
+			"isoid": null,
+			"prefix": "09"
+		},
+		{
+			"key": "AP",
+			"isoid": null,
+			"prefix": "96[2-6]"
+		},
+		{
+			"key": "CA",
+			"isoid": "CA",
+			"prefix": "9[0-5]|96[01]"
+		},
+		{
+			"key": "CO",
+			"isoid": "CO",
+			"prefix": "8[01]"
+		},
+		{
+			"key": "CT",
+			"isoid": "CT",
+			"prefix": "06"
+		},
+		{
+			"key": "DE",
+			"isoid": "DE",
+			"prefix": "19[7-9]"
+		},
+		{
+			"key": "DC",
+			"isoid": "DC",
+			"prefix": "20[02-5]|569"
+		},
+		{
+			"key": "FL",
+			"isoid": "FL",
+			"prefix": "3[23]|34[1-9]"
+		},
+		{
+			"key": "GA",
+			"isoid": "GA",
+			"prefix": "3[01]|398|39901"
+		},
+		{
+			"key": "GU",
+			"isoid": null,
+			"prefix": "969([1-2]\\d|3[12])"
+		},
+		{
+			"key": "HI",
+			"isoid": "HI",
+			"prefix": "967[0-8]|9679[0-8]|968"
+		},
+		{
+			"key": "ID",
+			"isoid": "ID",
+			"prefix": "83[2-9]"
+		},
+		{
+			"key": "IL",
+			"isoid": "IL",
+			"prefix": "6[0-2]"
+		},
+		{
+			"key": "IN",
+			"isoid": "IN",
+			"prefix": "4[67]"
+		},
+		{
+			"key": "IA",
+			"isoid": "IA",
+			"prefix": "5[0-2]"
+		},
+		{
+			"key": "KS",
+			"isoid": "KS",
+			"prefix": "6[67]"
+		},
+		{
+			"key": "KY",
+			"isoid": "KY",
+			"prefix": "4[01]|42[0-7]"
+		},
+		{
+			"key": "LA",
+			"isoid": "LA",
+			"prefix": "70|71[0-5]"
+		},
+		{
+			"key": "ME",
+			"isoid": "ME",
+			"prefix": "039|04"
+		},
+		{
+			"key": "MH",
+			"isoid": null,
+			"prefix": "969[67]"
+		},
+		{
+			"key": "MD",
+			"isoid": "MD",
+			"prefix": "20[6-9]|21"
+		},
+		{
+			"key": "MA",
+			"isoid": "MA",
+			"prefix": "01|02[0-7]|05501|05544"
+		},
+		{
+			"key": "MI",
+			"isoid": "MI",
+			"prefix": "4[89]"
+		},
+		{
+			"key": "FM",
+			"isoid": null,
+			"prefix": "9694[1-4]"
+		},
+		{
+			"key": "MN",
+			"isoid": "MN",
+			"prefix": "55|56[0-7]"
+		},
+		{
+			"key": "MS",
+			"isoid": "MS",
+			"prefix": "38[6-9]|39[0-7]"
+		},
+		{
+			"key": "MO",
+			"isoid": "MO",
+			"prefix": "6[3-5]"
+		},
+		{
+			"key": "MT",
+			"isoid": "MT",
+			"prefix": "59"
+		},
+		{
+			"key": "NE",
+			"isoid": "NE",
+			"prefix": "6[89]"
+		},
+		{
+			"key": "NV",
+			"isoid": "NV",
+			"prefix": "889|89"
+		},
+		{
+			"key": "NH",
+			"isoid": "NH",
+			"prefix": "03[0-8]"
+		},
+		{
+			"key": "NJ",
+			"isoid": "NJ",
+			"prefix": "0[78]"
+		},
+		{
+			"key": "NM",
+			"isoid": "NM",
+			"prefix": "87|88[0-4]"
+		},
+		{
+			"key": "NY",
+			"isoid": "NY",
+			"prefix": "1[0-4]|06390|00501|00544"
+		},
+		{
+			"key": "NC",
+			"isoid": "NC",
+			"prefix": "2[78]"
+		},
+		{
+			"key": "ND",
+			"isoid": "ND",
+			"prefix": "58"
+		},
+		{
+			"key": "MP",
+			"isoid": null,
+			"prefix": "9695[0-2]"
+		},
+		{
+			"key": "OH",
+			"isoid": "OH",
+			"prefix": "4[3-5]"
+		},
+		{
+			"key": "OK",
+			"isoid": "OK",
+			"prefix": "7[34]"
+		},
+		{
+			"key": "OR",
+			"isoid": "OR",
+			"prefix": "97"
+		},
+		{
+			"key": "PW",
+			"isoid": null,
+			"prefix": "969(39|40)"
+		},
+		{
+			"key": "PA",
+			"isoid": "PA",
+			"prefix": "1[5-8]|19[0-6]"
+		},
+		{
+			"key": "PR",
+			"isoid": null,
+			"prefix": "00[679]"
+		},
+		{
+			"key": "RI",
+			"isoid": "RI",
+			"prefix": "02[89]"
+		},
+		{
+			"key": "SC",
+			"isoid": "SC",
+			"prefix": "29"
+		},
+		{
+			"key": "SD",
+			"isoid": "SD",
+			"prefix": "57"
+		},
+		{
+			"key": "TN",
+			"isoid": "TN",
+			"prefix": "37|38[0-5]"
+		},
+		{
+			"key": "TX",
+			"isoid": "TX",
+			"prefix": "7[5-9]|885|73301|73344"
+		},
+		{
+			"key": "UT",
+			"isoid": "UT",
+			"prefix": "84"
+		},
+		{
+			"key": "VT",
+			"isoid": "VT",
+			"prefix": "05"
+		},
+		{
+			"key": "VI",
+			"isoid": null,
+			"prefix": "008"
+		},
+		{
+			"key": "VA",
+			"isoid": "VA",
+			"prefix": "201|2[23]|24[0-6]"
+		},
+		{
+			"key": "WA",
+			"isoid": "WA",
+			"prefix": "98|99[0-4]"
+		},
+		{
+			"key": "WV",
+			"isoid": "WV",
+			"prefix": "24[7-9]|2[56]"
+		},
+		{
+			"key": "WI",
+			"isoid": "WI",
+			"prefix": "5[34]"
+		},
+		{
+			"key": "WY",
+			"isoid": "WY",
+			"prefix": "82|83[01]|83414"
+		}
+	],
+	"UY": [
+		{
+			"key": "Artigas",
+			"isoid": "AR",
+			"prefix": "55"
+		},
+		{
+			"key": "Canelones",
+			"isoid": "CA",
+			"prefix": "9[01]|1[456]"
+		},
+		{
+			"key": "Cerro Largo",
+			"isoid": "CL",
+			"prefix": "37"
+		},
+		{
+			"key": "Colonia",
+			"isoid": "CO",
+			"prefix": "70|75204"
+		},
+		{
+			"key": "Durazno",
+			"isoid": "DU",
+			"prefix": "97"
+		},
+		{
+			"key": "Flores",
+			"isoid": "FS",
+			"prefix": "85"
+		},
+		{
+			"key": "Florida",
+			"isoid": "FD",
+			"prefix": "94|9060|97005"
+		},
+		{
+			"key": "Lavalleja",
+			"isoid": "LA",
+			"prefix": "30"
+		},
+		{
+			"key": "Maldonado",
+			"isoid": "MA",
+			"prefix": "20"
+		},
+		{
+			"key": "Montevideo",
+			"isoid": "MO",
+			"prefix": "1|91600"
+		},
+		{
+			"key": "Paysandú",
+			"isoid": "PA",
+			"prefix": "60"
+		},
+		{
+			"key": "Río Negro",
+			"isoid": "RN",
+			"prefix": "65|60002"
+		},
+		{
+			"key": "Rivera",
+			"isoid": "RV",
+			"prefix": "40"
+		},
+		{
+			"key": "Rocha",
+			"isoid": "RO",
+			"prefix": "27"
+		},
+		{
+			"key": "Salto",
+			"isoid": "SA",
+			"prefix": "50"
+		},
+		{
+			"key": "San José",
+			"isoid": "SJ",
+			"prefix": "80"
+		},
+		{
+			"key": "Soriano",
+			"isoid": "SO",
+			"prefix": "75|70003"
+		},
+		{
+			"key": "Tacuarembó",
+			"isoid": "TA",
+			"prefix": "45"
+		},
+		{
+			"key": "Treinta y Tres",
+			"isoid": "TT",
+			"prefix": "33|30203|30204|30302|37007"
+		}
+	]
+}
