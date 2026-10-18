@@ -9,6 +9,7 @@ model.
 
 from __future__ import annotations
 
+import json
 import random
 import time
 from pathlib import Path
@@ -138,6 +139,14 @@ def train(
         print(format_derivation(derived_reps), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    if cfg.data.unshippable_reason is not None:
+        # The launcher checked the config's sources where the register is readable. A run admitted under the
+        # override says so beside its checkpoints, where a packaging step reads it.
+        (output_dir / "SOURCE_RIGHTS.json").write_text(
+            json.dumps({"shippable": False, "unshippable_reason": cfg.data.unshippable_reason}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(f"UNSHIPPABLE run: {cfg.data.unshippable_reason}", flush=True)
 
     if resume_from == "auto":
         resume_from = find_latest_checkpoint(output_dir)

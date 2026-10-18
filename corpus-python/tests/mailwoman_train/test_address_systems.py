@@ -36,7 +36,7 @@ def test_countries_with_the_same_component_order_share_a_system() -> None:
 
 
 def test_a_country_without_a_layout_has_no_system() -> None:
-    assert address_system_id("GH", "Plot 12, Spintex Road, Accra") == IGNORE_INDEX
+    assert address_system_id("BJ", "Lot 12, Rue 1234, Cotonou") == IGNORE_INDEX
     assert address_system_id(None, "anything") == IGNORE_INDEX
 
 

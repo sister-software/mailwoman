@@ -1,0 +1,4756 @@
+{
+	"$comment": "Which register sources each corpus source's rows are built from. A corpus source id is the `source` value on every corpus row, the key of a training config's `source_weights`, and an entry of a training manifest. Each input names a register `sourceID` and the `licenseID` that row points at, and `readCorpusSourceInputs` in `@mailwoman/corpus/source-register` refuses an entry whose license disagrees with the register. The corpus build, the overlay assembly, the recipe runner, the Python corpus builders and the training launch refuse a source unless every register source it reads carries an elected decision permitting `transform` and `train` (#2635).",
+	"$rule": "A new source joins this table, and each publication it reads joins the register, before any build reads it. An input is a publication whose text reaches a row's `raw` string or a component value. A list consulted only to filter rows, to order fields or to decide which label a span already in the row receives is not one. A table written in this repository, including `@mailwoman/codex`'s tables and the runtime's `Intl` data, is listed under `authored` with the publication it follows. A publication with no register row gets one in `source-additions.json` under an unchecked decision, so the gap shows rather than hides.",
+	"$aliases": "`aliases` holds the retired `synth-*` spelling from `RECIPE_SOURCES`, which archived corpora and the configs that target them store.",
+	"$history": "`history` records what a source read in corpora built before its producer changed inputs under the same id. The build and training checks read `inputs`; the release audit reads the entry naming the corpus a published model trained on.",
+	"sources": {
+		"adressur-fo": {
+			"inputs": [
+				{
+					"registerSource": "fo-property-building-1",
+					"license": "unchecked-access-free-fo-umhv-rvisstovan",
+					"reads": "Adressur í Føroyum, layer 0 `us_adr_husanr` of gis.us.fo, read whole on 2026-10-18"
+				}
+			]
+		},
+		"ads": {
+			"inputs": [
+				{
+					"registerSource": "ee-property-building-1",
+					"license": "unchecked-access-free-ee-maa-ja-ruumiamet",
+					"reads": "the INSPIRE Addresses theme from the Aadressiandmete süsteem"
+				}
+			]
+		},
+		"ban": {
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale address points, every field the row carries"
+				},
+				{
+					"registerSource": "gp-property-building-1",
+					"license": "unchecked-access-free-gp-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale GP file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "mq-property-building-1",
+					"license": "unchecked-access-free-mq-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale MQ file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "gf-property-building-1",
+					"license": "unchecked-access-free-gf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale GF file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "re-property-building-1",
+					"license": "unchecked-access-free-re-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale RE file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "pm-property-building-1",
+					"license": "unchecked-access-free-pm-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale PM file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "yt-property-building-1",
+					"license": "unchecked-access-free-yt-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale YT file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "bl-property-building-1",
+					"license": "unchecked-access-free-bl-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale BL file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "mf-property-building-1",
+					"license": "unchecked-access-free-mf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale MF file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "pf-property-building-1",
+					"license": "unchecked-access-free-pf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale PF file, when a build feeds it under this id"
+				},
+				{
+					"registerSource": "nc-property-building-1",
+					"license": "unchecked-access-free-nc-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale NC file, when a build feeds it under this id"
+				}
+			],
+			"authored": ["packages/corpus/lib/fr/insee-country.ts INSEE department to ISO 3166-1 table"],
+			"note": "Metropolitan rows keep `ban`; each overseas file is normally run under its own `ban-<cc>` id, and this entry maps every file the adapter can read."
+		},
+		"ban-bl": {
+			"inputs": [
+				{
+					"registerSource": "bl-property-building-1",
+					"license": "unchecked-access-free-bl-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale BL department file, every field the row carries"
+				}
+			]
+		},
+		"ban-gf": {
+			"inputs": [
+				{
+					"registerSource": "gf-property-building-1",
+					"license": "unchecked-access-free-gf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale GF department file, every field the row carries"
+				}
+			]
+		},
+		"ban-gp": {
+			"inputs": [
+				{
+					"registerSource": "gp-property-building-1",
+					"license": "unchecked-access-free-gp-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale GP department file, every field the row carries"
+				}
+			]
+		},
+		"ban-mf": {
+			"inputs": [
+				{
+					"registerSource": "mf-property-building-1",
+					"license": "unchecked-access-free-mf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale MF department file, every field the row carries"
+				}
+			]
+		},
+		"ban-mq": {
+			"inputs": [
+				{
+					"registerSource": "mq-property-building-1",
+					"license": "unchecked-access-free-mq-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale MQ department file, every field the row carries"
+				}
+			]
+		},
+		"ban-nc": {
+			"inputs": [
+				{
+					"registerSource": "nc-property-building-1",
+					"license": "unchecked-access-free-nc-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale NC department file, every field the row carries"
+				}
+			]
+		},
+		"ban-pf": {
+			"inputs": [
+				{
+					"registerSource": "pf-property-building-1",
+					"license": "unchecked-access-free-pf-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale PF department file, every field the row carries"
+				}
+			]
+		},
+		"ban-pm": {
+			"inputs": [
+				{
+					"registerSource": "pm-property-building-1",
+					"license": "unchecked-access-free-pm-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale PM department file, every field the row carries"
+				}
+			]
+		},
+		"ban-re": {
+			"inputs": [
+				{
+					"registerSource": "re-property-building-1",
+					"license": "unchecked-access-free-re-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale RE department file, every field the row carries"
+				}
+			]
+		},
+		"ban-yt": {
+			"inputs": [
+				{
+					"registerSource": "yt-property-building-1",
+					"license": "unchecked-access-free-yt-institut-national-de-l-information-g-ographiq",
+					"reads": "Base Adresse Nationale YT department file, every field the row carries"
+				}
+			]
+		},
+		"bd-adresses": {
+			"inputs": [
+				{
+					"registerSource": "lu-property-building-1",
+					"license": "unchecked-access-free-lu-administration-du-cadastre-et-de-la-topograph",
+					"reads": "BD-Adresses addresses.csv"
+				}
+			]
+		},
+		"bsp-gu": {
+			"inputs": [
+				{
+					"registerSource": "gu-property-building-1",
+					"license": "unchecked-corpus-input-gu-government-of-guam-bureau-of-statistics-and-p",
+					"reads": "the Government of Guam GISWEB Portal `Address_Point_(Public_View)` layer, read whole on 2026-10-18"
+				}
+			]
+		},
+		"brussels": {
+			"inputs": [
+				{
+					"registerSource": "be-property-building-3",
+					"license": "unchecked-access-free-be-paradigm",
+					"reads": "URBIS INSPIRE Addresses for Brussels-Capital"
+				}
+			]
+		},
+		"coarse-placer-cn-units": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "CN rows of the coarse-placer sample, most from wof-admin in the v0.5.0 corpus"
+				},
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "CN rows of the coarse-placer sample that came from osm-cn"
+				},
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the populated places the recipe infers from the row shape"
+				}
+			],
+			"note": "data/coarse-placer carries no per-row source, so every candidate upstream is listed."
+		},
+		"codex-bare-country": {
+			"aliases": ["synth-bare-country"],
+			"inputs": [],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
+			]
+		},
+		"codex-bare-country-v23": {
+			"aliases": ["synth-bare-country-v23"],
+			"inputs": [],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
+			]
+		},
+		"codex-bare-postcode": {
+			"aliases": ["synth-bare-postcode"],
+			"inputs": [
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "postcodes from OpenAddresses cz/countrywide"
+				},
+				{
+					"registerSource": "sk-property-building-1",
+					"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+					"reads": "postcodes from OpenAddresses sk/countrywide"
+				},
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "postcodes from OpenAddresses nl/countrywide"
+				}
+			],
+			"note": "The recipe stamps `register: codex`, and its postcodes are read from OpenAddresses files.",
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape"
+					],
+					"because": "Built while the recipe also read Sweden's sixteen OpenAddresses se/municipality_of_* files, before they were dropped under the same source id because se-property-building-2 records no decision permitting training.",
+					"inputs": [
+						{
+							"registerSource": "cz-property-building-2",
+							"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+							"reads": "postcodes from OpenAddresses cz/countrywide"
+						},
+						{
+							"registerSource": "sk-property-building-1",
+							"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+							"reads": "postcodes from OpenAddresses sk/countrywide"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "postcodes from OpenAddresses nl/countrywide"
+						},
+						{
+							"registerSource": "se-property-building-2",
+							"license": "unchecked-corpus-input-se-se-property-building-2",
+							"reads": "postcodes from sixteen OpenAddresses se/municipality_of_* files"
+						}
+					]
+				}
+			]
+		},
+		"cordis": {
+			"inputs": [
+				{
+					"registerSource": "lu-procurement-grants-1",
+					"license": "unchecked-national-terms-lu-publications-office-of-the-european-union",
+					"reads": "CORDIS organization.csv for FP7, H2020 and Horizon Europe"
+				}
+			]
+		},
+		"cz-cuzk": {
+			"inputs": [
+				{
+					"registerSource": "cz-property-building-1",
+					"license": "unchecked-access-free-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "ČÚZK INSPIRE Addresses per-municipality GML"
+				}
+			]
+		},
+		"deepseek-kryptonite": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's output for each kryptonite category"
+				}
+			],
+			"authored": [
+				"KRYPTONITE_CATEGORIES seed examples in corpus-python/src/mailwoman_train/corpora/deepseek/prompts.py"
+			]
+		},
+		"deepseek-translit-armn": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's transliteration of each seed row"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "seed rows sampled from the corpus-v0.3.0 FR train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				}
+			],
+			"note": "Which v0.3.0 sources the seeds were drawn from is not recorded, so every candidate is listed. Each row's synth.base_source_id names its seed."
+		},
+		"deepseek-translit-cyrl": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's transliteration of each seed row"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "seed rows sampled from the corpus-v0.3.0 FR train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				}
+			],
+			"note": "Which v0.3.0 sources the seeds were drawn from is not recorded, so every candidate is listed. Each row's synth.base_source_id names its seed."
+		},
+		"deepseek-translit-hang": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's transliteration of each seed row"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "seed rows sampled from the corpus-v0.3.0 FR train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				}
+			],
+			"note": "Which v0.3.0 sources the seeds were drawn from is not recorded, so every candidate is listed. Each row's synth.base_source_id names its seed."
+		},
+		"deepseek-translit-hans": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's transliteration of each seed row"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "seed rows sampled from the corpus-v0.3.0 FR train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				}
+			],
+			"note": "Which v0.3.0 sources the seeds were drawn from is not recorded, so every candidate is listed. Each row's synth.base_source_id names its seed."
+		},
+		"deepseek-translit-jpan": {
+			"inputs": [
+				{
+					"registerSource": "cn-generated-text-1",
+					"license": "unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+					"reads": "the model's transliteration of each seed row"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "seed rows sampled from the corpus-v0.3.0 US train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "seed rows sampled from the corpus-v0.3.0 FR train split"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "seed rows sampled from the corpus-v0.3.0 train split"
+				}
+			],
+			"note": "Which v0.3.0 sources the seeds were drawn from is not recorded, so every candidate is listed. Each row's synth.base_source_id names its seed."
+		},
+		"dk-inspire": {
+			"inputs": [
+				{
+					"registerSource": "dk-property-building-1",
+					"license": "unchecked-access-free-dk-klimadatastyrelsen",
+					"reads": "DK INSPIRE Addresses ad_inspire.gpkg"
+				}
+			]
+		},
+		"emuia": {
+			"inputs": [
+				{
+					"registerSource": "pl-property-building-1",
+					"license": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii",
+					"reads": "Polish INSPIRE Addresses WFS"
+				}
+			]
+		},
+		"es-bizkaia": {
+			"inputs": [
+				{
+					"registerSource": "es-mixed-regulatory-3",
+					"license": "unchecked-access-free-es-diputaci-n-foral-de-bizkaia",
+					"reads": "Bizkaia INSPIRE Addresses GML and WFS pages"
+				}
+			]
+		},
+		"es-catastro": {
+			"inputs": [
+				{
+					"registerSource": "es-mixed-regulatory-1",
+					"license": "unchecked-access-free-es-direcci-n-general-del-catastro",
+					"reads": "Catastro INSPIRE Addresses for 52 provinces"
+				}
+			]
+		},
+		"es-gipuzkoa": {
+			"inputs": [
+				{
+					"registerSource": "es-mixed-regulatory-4",
+					"license": "unchecked-access-free-es-diputaci-n-foral-de-gipuzkoa",
+					"reads": "Gipuzkoa INSPIRE Addresses"
+				}
+			]
+		},
+		"es-navarra": {
+			"inputs": [
+				{
+					"registerSource": "es-mixed-regulatory-5",
+					"license": "unchecked-access-free-es-gobierno-de-navarra",
+					"reads": "Navarra INSPIRE Addresses"
+				}
+			]
+		},
+		"fcc-bdc": {
+			"inputs": [
+				{
+					"registerSource": "us-telecom-3",
+					"license": "unchecked-corpus-input-us-federal-communications-commission",
+					"reads": "serviceable location address_primary, city, state and zip"
+				}
+			]
+		},
+		"fr-annuaire-education-overseas": {
+			"inputs": [
+				{
+					"registerSource": "fr-education-1",
+					"license": "unchecked-access-free-fr-fr-education-1",
+					"reads": "Annuaire de l'éducation establishment addresses"
+				},
+				{
+					"registerSource": "fr-health-3",
+					"license": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant",
+					"reads": "TRE-R35 street-type words through splitFrenchStreetType"
+				}
+			]
+		},
+		"fr-finess-overseas": {
+			"inputs": [
+				{
+					"registerSource": "fr-health-1",
+					"license": "unchecked-access-free-fr-fr-health-1",
+					"reads": "FINESS establishment extract addresses"
+				},
+				{
+					"registerSource": "fr-health-3",
+					"license": "unchecked-corpus-input-fr-agence-du-num-rique-en-sant",
+					"reads": "TRE-R35 street-type words expanding the typvoie code"
+				}
+			]
+		},
+		"fragment-assay": {
+			"aliases": ["synth-fragment"],
+			"inputs": [
+				{
+					"registerSource": "au-property-building-1",
+					"license": "unchecked-corpus-input-au-geoscape-australia",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses au/countrywide.csv (G-NAF)"
+				},
+				{
+					"registerSource": "ch-property-building-2",
+					"license": "unchecked-corpus-input-ch-bundesamt-f-r-statistik-bfs",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses ch/countrywide.csv as extracted on 2021-10-17 (the BFS GWR building addresses)"
+				},
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses cz/countrywide.csv (RÚIAN)"
+				},
+				{
+					"registerSource": "dk-property-building-1",
+					"license": "unchecked-access-free-dk-klimadatastyrelsen",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses dk/countrywide.csv (DAWA, served by the agency Klimadatastyrelsen succeeded)"
+				},
+				{
+					"registerSource": "es-property-building-1",
+					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses es/countrywide.csv (CartoCiudad)"
+				},
+				{
+					"registerSource": "fi-property-building-1",
+					"license": "unchecked-access-free-fi-suomen-ymp-rist-keskus",
+					"reads": "Finnish street names, numbers, postal office names and postcodes from Ryhti's open_address.csv (RYHTI_FILE in corpora/fragment/sources.py)"
+				},
+				{
+					"registerSource": "hr-property-building-1",
+					"license": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses hr/countrywide.csv"
+				},
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses nl/countrywide.csv (BAG)"
+				},
+				{
+					"registerSource": "no-property-building-1",
+					"license": "unchecked-access-free-no-kartverket",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses no/countrywide.csv (Kartverket)"
+				},
+				{
+					"registerSource": "nz-property-building-1",
+					"license": "unchecked-corpus-input-nz-land-information-new-zealand",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses nz/countrywide.csv (LINZ)"
+				},
+				{
+					"registerSource": "pl-property-building-1",
+					"license": "unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii",
+					"reads": "streets, numbers, localities and postcodes from the sixteen OpenAddresses pl/<voivodeship>.csv files (PRG address points)"
+				},
+				{
+					"registerSource": "pt-property-building-1",
+					"license": "unchecked-corpus-input-pt-instituto-nacional-de-estat-stica",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses pt/countrywide.csv"
+				},
+				{
+					"registerSource": "si-property-building-1",
+					"license": "unchecked-corpus-input-si-geodetska-uprava-republike-slovenije",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses si/countrywide.csv"
+				},
+				{
+					"registerSource": "sk-property-building-1",
+					"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+					"reads": "streets, numbers, localities and postcodes from OpenAddresses sk/countrywide.csv"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "US street spans from the v0.5.0 corpus"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "US street spans and NAD admin pairs from the v0.5.0 corpus"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "locality spans of the wof-admin rows in v0.5.0's train/part-0000 to part-0011 (LOCALITY_PARQUET_GLOB in corpora/fragment/sources.py), and the candidate-gazetteer famous localities of the ZZ rows carried from v0.7.2"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "French locality spans from the v0.5.0 corpus"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
+			],
+			"note": "OA_FILES in corpus-python/src/mailwoman_train/corpora/fragment/sources.py lists each file the build reads with its publisher's register row.",
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built when the builder globbed every CSV under each of sixteen OpenAddresses locale directories, Austria, Switzerland, Finland and Sweden included, and recorded no file per row, before OA_FILES named each file and its publisher's register row under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "OpenAddresses CSVs for sixteen locales, files not recorded per row"
+						},
+						{
+							"registerSource": "us-public-administration-1",
+							"license": "unchecked-corpus-input-us-u-s-census-bureau",
+							"reads": "US street spans from the v0.5.0 corpus"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US street spans and NAD admin pairs from the v0.5.0 corpus"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-2",
+							"license": "unchecked-corpus-input-us-who-s-on-first",
+							"reads": "locality spans from the v0.5.0 corpus and the candidate-gazetteer famous localities"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French locality spans from the v0.5.0 corpus"
+						}
+					]
+				}
+			]
+		},
+		"fragment-fr": {
+			"aliases": ["synth-fr-fragment"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN street and commune tuples"
+				}
+			],
+			"authored": ["HOUSE_NUMBERS and ALNUM_SUFFIXES in packages/corpus/lib/fr/recipes/fragment.ts"]
+		},
+		"fragment-fr-bare-street": {
+			"aliases": ["synth-fr-bare-street"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN street, number and city tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex FR_VOIE_TYPES"]
+		},
+		"fragment-fr-bare-street-v20": {
+			"aliases": ["synth-fr-bare-street-v20"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN street, number and city tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex FR_VOIE_TYPES"]
+		},
+		"fragment-fr-bare-street-v21": {
+			"aliases": ["synth-fr-bare-street-v21"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN street, number and city tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex FR_VOIE_TYPES"]
+		},
+		"fragment-fr-bare-street-v22": {
+			"aliases": ["synth-fr-bare-street-v22"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN street, number and city tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex FR_VOIE_TYPES"]
+		},
+		"fragment-no": {
+			"aliases": ["synth-no-fragment"],
+			"inputs": [
+				{
+					"registerSource": "no-property-building-1",
+					"license": "unchecked-access-free-no-kartverket",
+					"reads": "tuples from OpenAddresses NO, Kartverket's address file"
+				}
+			]
+		},
+		"fragment-venue-bare": {
+			"aliases": ["synth-venue-bare"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "place names from overture place-names/names.parquet"
+				}
+			]
+		},
+		"gb-os-open": {
+			"inputs": [
+				{
+					"registerSource": "gb-public-administration-1",
+					"license": "unchecked-access-free-gb-gb-public-administration-1",
+					"reads": "Code-Point Open postcodes and their points"
+				},
+				{
+					"registerSource": "gb-transport-1",
+					"license": "unchecked-access-free-gb-gb-transport-1",
+					"reads": "OS Open Roads links joining a postcode to its nearest named road"
+				},
+				{
+					"registerSource": "gb-public-administration-2",
+					"license": "unchecked-access-free-gb-gb-public-administration-2",
+					"reads": "OS Open Names road names, populated places and postcode districts"
+				}
+			],
+			"authored": ["house numbers drawn from seeded bands in packages/corpus/lib/gb/adapters/os-open/adapter.ts"]
+		},
+		"gbpa-bs": {
+			"inputs": [
+				{
+					"registerSource": "bs-property-building-1",
+					"license": "unchecked-corpus-input-bs-grand-bahama-port-authority",
+					"reads": "the Grand Bahama Port Authority's `CSV/addresses.csv` from `GBPA/gis-datafiles`, retrieved 2026-10-18"
+				}
+			]
+		},
+		"gcis-tw": {
+			"inputs": [
+				{
+					"registerSource": "tw-business-register-1",
+					"license": "unchecked-national-terms-tw-ministry-of-economic-affairs-gcis",
+					"reads": "GCIS company and business register addresses"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "the Overture TW address index the register strings are aligned against"
+				}
+			]
+		},
+		"geonames": {
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "country dumps, admin1CodesASCII.txt and countryInfo.txt"
+				}
+			]
+		},
+		"geonames-postal": {
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the postal code export"
+				}
+			]
+		},
+		"gleif-lei": {
+			"inputs": [
+				{
+					"registerSource": "ch-business-legal-2",
+					"license": "unchecked-national-terms-ch-global-legal-entity-identifier-foundation-gle",
+					"reads": "GLEIF Level 1 LEI-CDF golden copy addresses"
+				}
+			]
+		},
+		"gnaf": {
+			"inputs": [
+				{
+					"registerSource": "au-property-building-1",
+					"license": "unchecked-corpus-input-au-geoscape-australia",
+					"reads": "ADDRESS_DETAIL, STREET_LOCALITY and LOCALITY PSV files"
+				}
+			]
+		},
+		"houjin-jp": {
+			"inputs": [
+				{
+					"registerSource": "jp-business-register-1",
+					"license": "unchecked-national-terms-jp-national-tax-agency",
+					"reads": "the National Tax Agency corporate-number register"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "the Overture JP address index the register rows are aligned against"
+				}
+			]
+		},
+		"ide-uy": {
+			"inputs": [
+				{
+					"registerSource": "uy-property-building-1",
+					"license": "unchecked-corpus-input-uy-infraestructura-de-datos-espaciales-ide-urugu",
+					"reads": "Direcciones Geográficas del Uruguay, the 19 department CSVs retrieved 2026-10-17"
+				}
+			]
+		},
+		"invented-anchor-absorption": {
+			"aliases": ["synth-anchor-absorption"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "real US ZIPs from anchor/pilot-anchor-lookup.json, built from WOF postalcode-us.db"
+				},
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "ZCTA 2024 centroid fill in the same lookup"
+				}
+			],
+			"authored": [
+				"STREET_NAMES, STREET_TYPES, US_TUPLES, DE_TUPLES and FAKE_ZIPS in packages/corpus/lib/synthesizers/anchor-absorption.ts"
+			]
+		},
+		"invented-boundary-stress": {
+			"aliases": ["synth-boundary-stress"],
+			"inputs": [],
+			"authored": [
+				"street, suffix, venue and tuple lists in packages/corpus/lib/synthesizers/boundary-stress.ts",
+				"country names from the runtime's Intl.DisplayNames, which carries Unicode CLDR data"
+			]
+		},
+		"invented-house-venue": {
+			"aliases": ["synth-house-venue"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "French tuples of house-venue-tuples-v6"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "US situs tuples of house-venue-tuples-v6, NAD rows"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "US situs tuples of house-venue-tuples-v6, NAD rows read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-9",
+					"license": "unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-10",
+					"license": "unchecked-corpus-input-us-county-of-los-angeles-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-11",
+					"license": "unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-12",
+					"license": "unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-13",
+					"license": "unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-14",
+					"license": "unchecked-corpus-input-us-miami-dade-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-15",
+					"license": "unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-16",
+					"license": "unchecked-corpus-input-us-mississippi-automated-resource-information-sy",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-18",
+					"license": "unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-19",
+					"license": "unchecked-corpus-input-us-san-bernardino-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-20",
+					"license": "unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-21",
+					"license": "unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-22",
+					"license": "unchecked-corpus-input-us-hillsborough-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-23",
+					"license": "unchecked-corpus-input-us-orange-county-fl-orange-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-25",
+					"license": "unchecked-corpus-input-us-sacramento-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-26",
+					"license": "unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-27",
+					"license": "unchecked-corpus-input-us-county-of-alameda-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-28",
+					"license": "unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-29",
+					"license": "unchecked-corpus-input-us-oakland-county-michigan",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-30",
+					"license": "unchecked-corpus-input-us-county-of-santa-clara-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-31",
+					"license": "unchecked-corpus-input-us-broward-county-gis-bcgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-32",
+					"license": "unchecked-corpus-input-us-florida-department-of-revenue",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-33",
+					"license": "unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-34",
+					"license": "unchecked-corpus-input-us-dekalb-county-gis-georgia",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-35",
+					"license": "unchecked-corpus-input-us-contra-costa-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-36",
+					"license": "unchecked-corpus-input-us-city-and-county-of-san-francisco-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-37",
+					"license": "unchecked-corpus-input-us-county-of-fresno-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-38",
+					"license": "unchecked-corpus-input-us-pasco-county-pascogisonline-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-39",
+					"license": "unchecked-corpus-input-us-sarasota-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-41",
+					"license": "unchecked-corpus-input-us-charlotte-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-42",
+					"license": "unchecked-corpus-input-us-manatee-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-43",
+					"license": "unchecked-corpus-input-us-collier-county-growth-management-department-g",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-44",
+					"license": "unchecked-corpus-input-us-volusia-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-46",
+					"license": "unchecked-corpus-input-us-county-of-kern-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-47",
+					"license": "unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-48",
+					"license": "unchecked-corpus-input-us-county-of-san-joaquin-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-49",
+					"license": "unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-50",
+					"license": "unchecked-corpus-input-us-county-of-sonoma-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-51",
+					"license": "unchecked-corpus-input-us-seminole-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-53",
+					"license": "unchecked-corpus-input-us-st-lucie-county-slcgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-55",
+					"license": "unchecked-corpus-input-us-osceolagis-osceola-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-56",
+					"license": "unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-57",
+					"license": "unchecked-corpus-input-us-st-johns-county-gis-division-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-58",
+					"license": "unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-60",
+					"license": "unchecked-corpus-input-us-tulare-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-61",
+					"license": "unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-62",
+					"license": "unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-63",
+					"license": "unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-64",
+					"license": "unchecked-corpus-input-us-highlands-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-65",
+					"license": "unchecked-corpus-input-us-bay-county-gis-division-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-67",
+					"license": "unchecked-corpus-input-us-county-of-monterey-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-68",
+					"license": "unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-70",
+					"license": "unchecked-corpus-input-us-okaloosa-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-71",
+					"license": "unchecked-corpus-input-us-butte-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-72",
+					"license": "unchecked-corpus-input-us-jackson-county-oregon-gis",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-74",
+					"license": "unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-76",
+					"license": "unchecked-corpus-input-us-merced-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-77",
+					"license": "unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-79",
+					"license": "unchecked-corpus-input-us-martin-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-80",
+					"license": "unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-81",
+					"license": "unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-82",
+					"license": "unchecked-corpus-input-us-flagler-county-board-of-county-commissioners",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-83",
+					"license": "unchecked-corpus-input-us-clay-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-84",
+					"license": "unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-85",
+					"license": "unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-86",
+					"license": "unchecked-corpus-input-us-county-of-shasta-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-87",
+					"license": "unchecked-corpus-input-us-athens-clarke-county-gis-georgia",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-89",
+					"license": "unchecked-corpus-input-us-walton-county-gis-department-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-90",
+					"license": "unchecked-corpus-input-us-imperial-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-91",
+					"license": "unchecked-corpus-input-us-napa-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-92",
+					"license": "unchecked-corpus-input-us-county-of-nevada-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-93",
+					"license": "unchecked-corpus-input-us-lake-county-i-t-dept-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-96",
+					"license": "unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-97",
+					"license": "unchecked-corpus-input-us-humboldt-county-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-98",
+					"license": "unchecked-corpus-input-us-kings-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-99",
+					"license": "unchecked-corpus-input-us-mendocino-county-information-services-departm",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-100",
+					"license": "unchecked-corpus-input-us-sutter-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-101",
+					"license": "unchecked-corpus-input-us-county-of-calaveras-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-102",
+					"license": "unchecked-corpus-input-us-columbia-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-103",
+					"license": "unchecked-corpus-input-us-yuba-county-ca-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-104",
+					"license": "unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-105",
+					"license": "unchecked-corpus-input-us-tuolumne-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-107",
+					"license": "unchecked-corpus-input-us-waupaca-county-land-information-wisconsin",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-108",
+					"license": "unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-109",
+					"license": "unchecked-corpus-input-us-plumas-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-110",
+					"license": "unchecked-corpus-input-us-county-of-san-benito-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-111",
+					"license": "unchecked-corpus-input-us-siskiyou-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-112",
+					"license": "unchecked-corpus-input-us-amador-county-information-technology-departme",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-114",
+					"license": "unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-115",
+					"license": "unchecked-corpus-input-us-hardee-county-gis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-116",
+					"license": "unchecked-corpus-input-us-baker-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-117",
+					"license": "unchecked-corpus-input-us-trinity-county-planning-department-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-118",
+					"license": "unchecked-corpus-input-us-del-norte-county-assessor-s-office-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-119",
+					"license": "unchecked-corpus-input-us-inyo-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-121",
+					"license": "unchecked-corpus-input-us-glenn-county-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-122",
+					"license": "unchecked-corpus-input-us-county-of-colusa-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-123",
+					"license": "unchecked-corpus-input-us-modoc-county-reach-parcels-service-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-124",
+					"license": "unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-125",
+					"license": "unchecked-corpus-input-us-sierra-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-126",
+					"license": "unchecked-corpus-input-us-alpine-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "IN, PT and MX (postcode, locality, region) tuples of house-venue-intl-v27, each the postal code, admin name2 and admin name1 of one row of the GeoNames postal export IN.zip, PT.zip or MX.zip"
+				}
+			],
+			"authored": [
+				"PLAIN_VENUES, GB_VENUES, FALLBACK_STREETS and COUNTRY_SURFACES in packages/corpus/lib/synthesizers/house-venue.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd",
+						"v0.18.0-suffix-boundary-a",
+						"v0.18.1-suffix-boundary-b",
+						"v0.19.0-suffix-boundary-v2",
+						"v0.19.1-osm-exposure",
+						"v0.20.0-psc-frsurfaces",
+						"v0.21.0-psc-frsurfaces-v2",
+						"v0.22.0-psc-frsurfaces-v3",
+						"v0.23.0-admin-surfaces",
+						"v0.24.0-trailing-region-structured",
+						"v0.25.0-trailing-region-placement",
+						"v0.26.0-trailing-region-leftcontext",
+						"v0.27.0-house-venue-intl",
+						"v0.28.0-reviewed-postcode-tail",
+						"v0.29.0-target-families",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape"
+					],
+					"because": "Built over house-venue-v2, whose US situs tuples mixed NAD with county and state bodies collected by OpenAddresses, before house-venue-tuples-v6 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French tuples of house-venue-v2"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US situs tuples of house-venue-v2, 68.2% NAD"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "US situs tuples of house-venue-v2, read through the Overture Addresses theme"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "US situs tuples of house-venue-v2, 31.5% from county and state bodies through OpenAddresses"
+						},
+						{
+							"registerSource": "ch-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-ch-geonames",
+							"reads": "IN, PT and MX tuples of house-venue-intl-v27, likely from GeoNames"
+						}
+					]
+				}
+			]
+		},
+		"invented-house-venue-v063": {
+			"aliases": ["synth-house-venue-v063"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "locality, county and region tuples joined from WOF SQLite"
+				}
+			],
+			"authored": ["venue lists in packages/corpus/lib/synthesizers/house-venue.ts"]
+		},
+		"invented-intersection": {
+			"aliases": ["synth-intersection"],
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "TIGER/Line 2023 EDGES street pairs for Cook IL and Morris NJ"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database ZIP-to-city majority tables for Cook IL and Morris NJ"
+				}
+			],
+			"authored": ["junction forms and connectors in packages/corpus/lib/recipes/intersection.ts"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-public-administration-1",
+							"license": "unchecked-corpus-input-us-u-s-census-bureau",
+							"reads": "TIGER/Line 2023 EDGES street pairs for Cook IL and Morris NJ"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook ZIP-to-city tails"
+						}
+					]
+				}
+			]
+		},
+		"invented-no-street": {
+			"aliases": ["synth-no-street"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "locality and region tuples"
+				}
+			],
+			"authored": [
+				"PLAIN_VENUES, ADVERSARIAL_VENUES and COUNTRY_NAMES in packages/corpus/lib/synthesizers/no-street.ts"
+			]
+		},
+		"invented-no-street-v063": {
+			"aliases": ["synth-no-street-v063"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "locality and region tuples joined from WOF SQLite"
+				}
+			],
+			"authored": ["venue lists in packages/corpus/lib/synthesizers/no-street.ts"]
+		},
+		"invented-po-box": {
+			"aliases": ["synth-po-box"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "place tuples for seven countries"
+				}
+			],
+			"authored": [
+				"PO_BOX_LOCALE_TEMPLATES in packages/corpus/lib/synthesizers/po-box.ts, following USPS Publication 28 and DMM 508"
+			]
+		},
+		"invented-po-box-cedex": {
+			"aliases": ["synth-po-box-cedex"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "OpenAddresses fr/countrywide localities and postcodes"
+				},
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the CA gazetteer dump and the AU and NZ postal exports"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex tables that follow USPS Publication 28 §29, with the Canada Post FSA, Australia Post delivery type, NZ Post ADV358 and CEDEX tables"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide localities and postcodes"
+						},
+						{
+							"registerSource": "ch-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-ch-geonames",
+							"reads": "the CA gazetteer dump and the AU and NZ postal exports"
+						}
+					]
+				}
+			]
+		},
+		"invented-po-box-military": {
+			"aliases": ["synth-po-box-military"],
+			"inputs": [],
+			"authored": [
+				"MIL_UNITS, MIL_PO_CODES and MIL_REGION_ZIP in packages/corpus/lib/synthesizers/po-box.ts, following USPS Publication 28 chapter 7"
+			],
+			"note": "The input file sets only the row count; no text from it reaches a row."
+		},
+		"invented-street": {
+			"aliases": ["synth-street"],
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "STREET_NAMES sampled from TIGER 2024's top 1,000"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "city and region tuples"
+				}
+			],
+			"authored": ["suffix and directional lists in packages/corpus/lib/us/synthesizers/street.ts"]
+		},
+		"invented-street-bare": {
+			"aliases": ["synth-street-bare"],
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "STREET_NAMES sampled from TIGER 2024's top 1,000"
+				}
+			],
+			"authored": ["DEFAULT_US_BASES in packages/corpus/lib/us/synthesizers/intersection.ts"]
+		},
+		"it-anac": {
+			"inputs": [
+				{
+					"registerSource": "it-procurement-grants-1",
+					"license": "unchecked-national-terms-it-autorit-nazionale-anticorruzione-anac",
+					"reads": "the OCDS release of the National Database of Public Contracts"
+				}
+			]
+		},
+		"juso-kr": {
+			"inputs": [
+				{
+					"registerSource": "kr-property-building-1",
+					"license": "unchecked-corpus-input-kr-ministry-of-the-interior-and-safety",
+					"reads": "the road-name address database"
+				}
+			]
+		},
+		"landregistry-im": {
+			"inputs": [
+				{
+					"registerSource": "im-property-building-1",
+					"license": "unchecked-corpus-input-im-isle-of-man-land-registry",
+					"reads": "the address columns of the Land Registry's `landtransactionsjan2025.csv`, from the Internet Archive's 2025-02-23 capture"
+				}
+			]
+		},
+		"llv-li": {
+			"inputs": [
+				{
+					"registerSource": "li-property-building-1",
+					"license": "unchecked-corpus-input-li-liechtensteinische-landesverwaltung",
+					"reads": "the Verzeichnis der Gebäudeadressen ZIP from service.geo.llv.li, retrieved 2026-10-18"
+				}
+			]
+		},
+		"localdata-kr": {
+			"inputs": [
+				{
+					"registerSource": "kr-professional-licensing-1",
+					"license": "unchecked-access-free-kr-kr-professional-licensing-1",
+					"reads": "localdata.go.kr permit addresses"
+				},
+				{
+					"registerSource": "kr-property-building-1",
+					"license": "unchecked-corpus-input-kr-ministry-of-the-interior-and-safety",
+					"reads": "the road-name address database as the alignment key"
+				}
+			]
+		},
+		"lv-varis": {
+			"inputs": [
+				{
+					"registerSource": "lv-property-building-1",
+					"license": "unchecked-national-terms-lv-valsts-zemes-dienests",
+					"reads": "aw_eka.csv and its five parent tables"
+				}
+			]
+		},
+		"matrikkelen": {
+			"inputs": [
+				{
+					"registerSource": "no-property-building-1",
+					"license": "unchecked-access-free-no-kartverket",
+					"reads": "Matrikkelen - Adresse for Norway"
+				},
+				{
+					"registerSource": "sj-property-building-1",
+					"license": "unchecked-access-free-sj-kartverket",
+					"reads": "Matrikkelen - Adresse for Svalbard"
+				}
+			]
+		},
+		"matrikkelen-sj": {
+			"inputs": [
+				{
+					"registerSource": "sj-property-building-1",
+					"license": "unchecked-access-free-sj-kartverket",
+					"reads": "Matrikkelen - Adresse for Svalbard, area 2100, written by `corpus run matrikkelen --country SJ --source-name matrikkelen-sj`"
+				}
+			]
+		},
+		"nl-kadaster": {
+			"inputs": [
+				{
+					"registerSource": "nl-property-building-1",
+					"license": "unchecked-access-free-nl-kadaster",
+					"reads": "Kadaster INSPIRE Addresses national GML"
+				}
+			]
+		},
+		"oa-slavic": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "street-level rows with diacritics from CZ, PL, SK and SI, files not recorded"
+				}
+			],
+			"note": "The producer is absent from the tree; the two configs that weight it describe its rows."
+		},
+		"openaddresses": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-3",
+					"license": "unchecked-corpus-input-us-openaddresses",
+					"reads": "batch collections, whose per-row upstream the adapter does not record"
+				}
+			]
+		},
+		"opendata-az": {
+			"inputs": [
+				{
+					"registerSource": "az-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-az-az-rbaycan-respublikas-n-n-ekologiya-v-t-bii",
+					"reads": "the objects-and-places GeoJSON of opendata.az dataset `azerbaycanda-obyektler-ve-mekanlar`, retrieved 2026-10-18"
+				}
+			]
+		},
+		"osm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "Geofabrik extracts, address and name tags"
+				}
+			]
+		},
+		"osm-ae": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to AE"
+				}
+			]
+		},
+		"osm-al": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AL"
+				}
+			]
+		},
+		"osm-am": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for AM"
+				}
+			]
+		},
+		"osm-ao": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AO"
+				}
+			]
+		},
+		"osm-ar": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for AR"
+				}
+			]
+		},
+		"osm-aw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to AW"
+				}
+			]
+		},
+		"osm-az": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for AZ"
+				}
+			]
+		},
+		"osm-ba": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for BA"
+				}
+			]
+		},
+		"osm-bb": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to BB"
+				}
+			]
+		},
+		"osm-bd": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for BD"
+				}
+			]
+		},
+		"osm-bh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to BH"
+				}
+			]
+		},
+		"osm-bm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BM"
+				}
+			]
+		},
+		"osm-bn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik malaysia-singapore-brunei extract, clipped to BN"
+				}
+			]
+		},
+		"osm-bs": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BS"
+				}
+			]
+		},
+		"osm-bt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BT"
+				}
+			]
+		},
+		"osm-bw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BW"
+				}
+			]
+		},
+		"osm-by": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for BY"
+				}
+			]
+		},
+		"osm-bz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for BZ"
+				}
+			]
+		},
+		"osm-cd": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CD"
+				}
+			]
+		},
+		"osm-ci": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for CI"
+				}
+			]
+		},
+		"osm-cl": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for CL"
+				}
+			]
+		},
+		"osm-cn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for CN"
+				}
+			]
+		},
+		"osm-co": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CO"
+				}
+			]
+		},
+		"osm-cr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CR"
+				}
+			]
+		},
+		"osm-cu": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for CU"
+				}
+			]
+		},
+		"osm-cw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to CW"
+				}
+			]
+		},
+		"osm-do": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik haiti-and-domrep extract, clipped to DO"
+				}
+			]
+		},
+		"osm-dz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for DZ"
+				}
+			]
+		},
+		"osm-ec": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for EC"
+				}
+			]
+		},
+		"osm-eg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for EG"
+				}
+			]
+		},
+		"osm-ge": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for GE"
+				}
+			]
+		},
+		"osm-gg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik guernsey-jersey extract, clipped to GG"
+				}
+			]
+		},
+		"osm-gh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GH"
+				}
+			]
+		},
+		"osm-gl": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GL"
+				}
+			]
+		},
+		"osm-gt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for GT"
+				}
+			]
+		},
+		"osm-hk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for HK"
+				}
+			]
+		},
+		"osm-ht": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik haiti-and-domrep extract, clipped to HT"
+				}
+			]
+		},
+		"osm-id": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for ID"
+				}
+			]
+		},
+		"osm-in": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for IN"
+				}
+			]
+		},
+		"osm-iq": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for IQ"
+				}
+			]
+		},
+		"osm-ir": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for IR"
+				}
+			]
+		},
+		"osm-je": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik guernsey-jersey extract, clipped to JE"
+				}
+			]
+		},
+		"osm-jm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for JM"
+				}
+			]
+		},
+		"osm-jo": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for JO"
+				}
+			]
+		},
+		"osm-ke": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for KE"
+				}
+			]
+		},
+		"osm-kg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for KG"
+				}
+			]
+		},
+		"osm-kh": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for KH"
+				}
+			]
+		},
+		"osm-kw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to KW"
+				}
+			]
+		},
+		"osm-kz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for KZ"
+				}
+			]
+		},
+		"osm-lb": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LB"
+				}
+			]
+		},
+		"osm-lk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LK"
+				}
+			]
+		},
+		"osm-lr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for LR"
+				}
+			]
+		},
+		"osm-ma": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MA"
+				}
+			]
+		},
+		"osm-md": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MD"
+				}
+			]
+		},
+		"osm-me": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ME"
+				}
+			]
+		},
+		"osm-mg": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MG"
+				}
+			]
+		},
+		"osm-mk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MK"
+				}
+			]
+		},
+		"osm-mm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MM"
+				}
+			]
+		},
+		"osm-mn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MN"
+				}
+			]
+		},
+		"osm-mo": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MO"
+				}
+			]
+		},
+		"osm-mt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MT"
+				}
+			]
+		},
+		"osm-mv": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MV"
+				}
+			]
+		},
+		"osm-my": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik malaysia-singapore-brunei extract, clipped to MY"
+				}
+			]
+		},
+		"osm-mz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for MZ"
+				}
+			]
+		},
+		"osm-na": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for NA"
+				}
+			]
+		},
+		"osm-ng": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for NG"
+				}
+			]
+		},
+		"osm-np": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for NP"
+				}
+			]
+		},
+		"osm-om": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to OM"
+				}
+			]
+		},
+		"osm-pa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PA"
+				}
+			]
+		},
+		"osm-pe": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for PE"
+				}
+			]
+		},
+		"osm-pf": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PF"
+				}
+			]
+		},
+		"osm-ph": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for PH"
+				}
+			]
+		},
+		"osm-pk": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for PK"
+				}
+			]
+		},
+		"osm-pr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PR"
+				}
+			]
+		},
+		"osm-py": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for PY"
+				}
+			]
+		},
+		"osm-qa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to QA"
+				}
+			]
+		},
+		"osm-rs": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for RS"
+				}
+			]
+		},
+		"osm-ru": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for RU"
+				}
+			]
+		},
+		"osm-rw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for RW"
+				}
+			]
+		},
+		"osm-sa": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik gcc-states extract, clipped to SA"
+				}
+			]
+		},
+		"osm-sm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-18 Geofabrik italy extract, clipped to SM"
+				}
+			]
+		},
+		"osm-sn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik senegal-and-gambia extract, clipped to SN"
+				}
+			]
+		},
+		"osm-sr": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for SR"
+				}
+			]
+		},
+		"osm-sv": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for SV"
+				}
+			]
+		},
+		"osm-th": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TH"
+				}
+			]
+		},
+		"osm-tj": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TJ"
+				}
+			]
+		},
+		"osm-tm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TM"
+				}
+			]
+		},
+		"osm-tn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TN"
+				}
+			]
+		},
+		"osm-tt": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik central-america extract, clipped to TT"
+				}
+			]
+		},
+		"osm-tz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for TZ"
+				}
+			]
+		},
+		"osm-ua": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for UA"
+				}
+			]
+		},
+		"osm-ug": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for UG"
+				}
+			]
+		},
+		"osm-uz": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-16 Geofabrik extract for UZ"
+				}
+			]
+		},
+		"osm-ve": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for VE"
+				}
+			]
+		},
+		"osm-vi": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for VI"
+				}
+			]
+		},
+		"osm-vn": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-02 Geofabrik extract for VN"
+				}
+			]
+		},
+		"osm-zm": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ZM"
+				}
+			]
+		},
+		"osm-zw": {
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the 2026-10-17 Geofabrik extract for ZW"
+				}
+			]
+		},
+		"overture": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Addresses theme rows"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries, when --country-fraction is set"
+			]
+		},
+		"overture-jp": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "addresses-jp.parquet"
+				},
+				{
+					"registerSource": "jp-postal-1",
+					"license": "unchecked-corpus-input-jp-japan-post",
+					"reads": "KEN_ALL_ROME.CSV postcodes"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "municipality kana readings from admin-global-priority.db"
+				}
+			]
+		},
+		"overture-latam": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Addresses theme rows for CA and MX"
+				}
+			]
+		},
+		"overture-tw": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "addresses-tw.parquet"
+				}
+			]
+		},
+		"rendered-bd-register": {
+			"aliases": ["synth-bd-register"],
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the osm adapter's BD rows"
+				}
+			]
+		},
+		"rendered-ch": {
+			"aliases": ["synth-ch"],
+			"inputs": [
+				{
+					"registerSource": "ch-property-building-2",
+					"license": "unchecked-corpus-input-ch-bundesamt-f-r-statistik-bfs",
+					"reads": "OpenAddresses ch/countrywide as extracted on 2021-10-17, the BFS GWR building addresses (the source moved to swisstopo's directory only in 2024-11)"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries, when --country-fraction is set"
+			]
+		},
+		"rendered-cz-pcfirst-preposition": {
+			"aliases": ["synth-cz-pcfirst-preposition"],
+			"inputs": [
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "tuples from OpenAddresses CZ"
+				}
+			]
+		},
+		"rendered-cz-pcfirst-preposition-v20": {
+			"aliases": ["synth-cz-pcfirst-preposition-v20"],
+			"inputs": [
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "tuples from OpenAddresses CZ"
+				}
+			]
+		},
+		"rendered-cz-pcfirst-preposition-v21": {
+			"aliases": ["synth-cz-pcfirst-preposition-v21"],
+			"inputs": [
+				{
+					"registerSource": "cz-property-building-2",
+					"license": "unchecked-corpus-input-cz-czech-office-for-surveying-mapping-and-cadast",
+					"reads": "tuples from OpenAddresses CZ"
+				}
+			]
+		},
+		"rendered-de": {
+			"aliases": ["synth-german"],
+			"inputs": [
+				{
+					"registerSource": "de-property-building-1",
+					"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
+					"reads": "OpenAddresses de/berlin house coordinates"
+				},
+				{
+					"registerSource": "de-property-building-2",
+					"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+					"reads": "OpenAddresses de/sn/statewide house coordinates"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "Ortsteil names as dependent_locality on about 0.3 of rows"
+				}
+			]
+		},
+		"rendered-es": {
+			"aliases": ["synth-es"],
+			"inputs": [
+				{
+					"registerSource": "es-property-building-1",
+					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+					"reads": "OpenAddresses es/countrywide, CNIG CartoCiudad"
+				}
+			]
+		},
+		"rendered-es-pedania": {
+			"aliases": ["synth-es-pedania"],
+			"inputs": [
+				{
+					"registerSource": "es-property-building-1",
+					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+					"reads": "es_addresses.csv inside OpenAddresses' es__countrywide.zip"
+				}
+			]
+		},
+		"rendered-fr": {
+			"aliases": ["synth-fr"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "OpenAddresses fr/countrywide, the BAN national file"
+				}
+			]
+		},
+		"rendered-fr-admin-split": {
+			"aliases": ["synth-fr-admin-split"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN commune, postcode and coordinate tuples"
+				}
+			]
+		},
+		"rendered-fr-lieudit": {
+			"aliases": ["synth-fr-lieudit"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN adresses-<dept>.csv files"
+				},
+				{
+					"registerSource": "gp-property-building-1",
+					"license": "unchecked-access-free-gp-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN department file for GP"
+				},
+				{
+					"registerSource": "mq-property-building-1",
+					"license": "unchecked-access-free-mq-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN department file for MQ"
+				},
+				{
+					"registerSource": "gf-property-building-1",
+					"license": "unchecked-access-free-gf-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN department file for GF"
+				},
+				{
+					"registerSource": "re-property-building-1",
+					"license": "unchecked-access-free-re-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN department file for RE"
+				},
+				{
+					"registerSource": "yt-property-building-1",
+					"license": "unchecked-access-free-yt-institut-national-de-l-information-g-ographiq",
+					"reads": "BAN department file for YT"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
+			]
+		},
+		"rendered-fr-order": {
+			"aliases": ["synth-fr-order"],
+			"inputs": [
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "OpenAddresses fr/countrywide, the BAN national file"
+				}
+			]
+		},
+		"rendered-gb": {
+			"aliases": ["synth-gb"],
+			"inputs": [
+				{
+					"registerSource": "gb-property-building-1",
+					"license": "unchecked-access-free-gb-gb-property-building-1",
+					"reads": "Price Paid Data postcode, PAON, street, locality, town and county through ppd/2026-07-22/gb-tuples.csv"
+				},
+				{
+					"registerSource": "gb-public-administration-5",
+					"license": "unchecked-corpus-input-gb-office-for-national-statistics",
+					"reads": "the constituent country by postcode, in builds after #2563"
+				}
+			],
+			"note": "No recipe writes this source now; rendered-gb-os-open replaces it (#2635, #2637)."
+		},
+		"rendered-gb-os-open": {
+			"aliases": ["synth-gb-os-open"],
+			"inputs": [
+				{
+					"registerSource": "gb-public-administration-1",
+					"license": "unchecked-access-free-gb-gb-public-administration-1",
+					"reads": "Code-Point Open postcodes, through the gb-os-open adapter's rows"
+				},
+				{
+					"registerSource": "gb-transport-1",
+					"license": "unchecked-access-free-gb-gb-transport-1",
+					"reads": "OS Open Roads links, through the gb-os-open adapter's rows"
+				},
+				{
+					"registerSource": "gb-public-administration-2",
+					"license": "unchecked-access-free-gb-gb-public-administration-2",
+					"reads": "OS Open Names streets and localities, through the gb-os-open adapter's rows"
+				},
+				{
+					"registerSource": "gb-public-administration-5",
+					"license": "unchecked-corpus-input-gb-office-for-national-statistics",
+					"reads": "the constituent country by postcode"
+				}
+			]
+		},
+		"rendered-hr": {
+			"aliases": ["synth-hr"],
+			"inputs": [
+				{
+					"registerSource": "hr-property-building-1",
+					"license": "unchecked-corpus-input-hr-dr-avna-geodetska-uprava",
+					"reads": "OpenAddresses hr/countrywide"
+				}
+			]
+		},
+		"rendered-it": {
+			"aliases": ["synth-it"],
+			"inputs": [
+				{
+					"registerSource": "it-property-building-1",
+					"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+					"reads": "OpenAddresses it/countrywide"
+				}
+			]
+		},
+		"rendered-lu": {
+			"aliases": ["synth-lu"],
+			"inputs": [
+				{
+					"registerSource": "lu-property-building-1",
+					"license": "unchecked-access-free-lu-administration-du-cadastre-et-de-la-topograph",
+					"reads": "OpenAddresses lu/countrywide, the BD-Adresses file"
+				}
+			]
+		},
+		"rendered-nl": {
+			"aliases": ["synth-nl"],
+			"inputs": [
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "OpenAddresses nl/countrywide"
+				}
+			]
+		},
+		"rendered-nl-postcode": {
+			"aliases": ["synth-nl-postcode"],
+			"inputs": [
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "tuples from OpenAddresses NL"
+				}
+			]
+		},
+		"rendered-no-street-led": {
+			"aliases": ["synth-no-street-led"],
+			"inputs": [
+				{
+					"registerSource": "no-property-building-1",
+					"license": "unchecked-access-free-no-kartverket",
+					"reads": "tuples from OpenAddresses NO, Kartverket's address file"
+				}
+			]
+		},
+		"rendered-nz": {
+			"aliases": ["synth-nz"],
+			"inputs": [
+				{
+					"registerSource": "nz-property-building-1",
+					"license": "unchecked-corpus-input-nz-land-information-new-zealand",
+					"reads": "OpenAddresses nz/countrywide"
+				}
+			]
+		},
+		"rendered-pk-register": {
+			"aliases": ["synth-pk-register"],
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "the osm adapter's PK rows"
+				}
+			],
+			"authored": ["the Islamabad sector grid in packages/corpus/lib/south-asia/recipes/register.ts"]
+		},
+		"rendered-pt": {
+			"aliases": ["synth-pt"],
+			"inputs": [
+				{
+					"registerSource": "pt-property-building-1",
+					"license": "unchecked-corpus-input-pt-instituto-nacional-de-estat-stica",
+					"reads": "OpenAddresses pt/countrywide"
+				}
+			]
+		},
+		"rendered-sg-register": {
+			"aliases": ["synth-sg-register"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Overture Singapore address rows"
+				},
+				{
+					"registerSource": "sg-property-building-1",
+					"license": "unchecked-corpus-input-sg-singapore-land-authority",
+					"reads": "OneMap addresses beneath the Overture rows"
+				}
+			],
+			"authored": ["GENERIC_ABBREVIATIONS and ESTATE_TAILS in packages/corpus/lib/sg/recipes/register.ts"]
+		},
+		"rendered-si-bare-village": {
+			"aliases": ["synth-si-bare-village"],
+			"inputs": [
+				{
+					"registerSource": "si-property-building-1",
+					"license": "unchecked-corpus-input-si-geodetska-uprava-republike-slovenije",
+					"reads": "tuples from OpenAddresses SI"
+				}
+			]
+		},
+		"rendered-sk": {
+			"aliases": ["synth-sk"],
+			"inputs": [
+				{
+					"registerSource": "sk-property-building-1",
+					"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+					"reads": "OpenAddresses sk/countrywide, the Ministry of the Interior's register"
+				}
+			]
+		},
+		"reviewed-postcode-tail": {
+			"aliases": ["synth-reviewed-postcode-tail"],
+			"inputs": [],
+			"authored": ["packages/corpus/data/reviewed-ve-postcode-tuples.json, the reviewed facts"],
+			"note": "The data file keeps a fact only when its citation reaches a register row permitting transform and train. It holds none, and the recipe refuses to run over an empty file.",
+			"history": [
+				{
+					"corpora": [
+						"v0.28.0-reviewed-postcode-tail",
+						"v0.29.0-target-families",
+						"v0.30.0-bare-postcode",
+						"v0.31.0-region-code-and-unit",
+						"v0.32.0-locality-shape",
+						"v0.6.0-register-surface",
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built from four reviewed facts cited to the UPU addressing guide and the Anzoátegui state government's contact page, before the data file dropped every fact whose citation reaches no register row permitting training.",
+					"inputs": [
+						{
+							"registerSource": "ch-postal-1",
+							"license": "unchecked-corpus-input-ch-universal-postal-union",
+							"reads": "three postal facts cited to the UPU addressing guide for Venezuela"
+						},
+						{
+							"registerSource": "ve-public-administration-1",
+							"license": "unchecked-corpus-input-ve-gobierno-del-estado-anzo-tegui",
+							"reads": "one postal fact cited to the Anzoátegui state government's contact page"
+						}
+					]
+				}
+			]
+		},
+		"ro-retea-scolara": {
+			"inputs": [
+				{
+					"registerSource": "ro-education-1",
+					"license": "unchecked-national-terms-ro-ministerul-educa-iei",
+					"reads": "the Rețea școlară workbook"
+				}
+			]
+		},
+		"ryhti": {
+			"inputs": [
+				{
+					"registerSource": "fi-property-building-1",
+					"license": "unchecked-access-free-fi-suomen-ymp-rist-keskus",
+					"reads": "Ryhti open_address.csv.gz for Finland"
+				},
+				{
+					"registerSource": "ax-property-building-1",
+					"license": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke",
+					"reads": "Ryhti open_address.csv.gz for Åland"
+				}
+			]
+		},
+		"ryhti-ax": {
+			"inputs": [
+				{
+					"registerSource": "ax-property-building-1",
+					"license": "unchecked-access-free-ax-suomen-ymp-rist-keskus-syke",
+					"reads": "Ryhti open_address.csv.gz for Åland's municipalities, written by `corpus run ryhti --country AX --source-name ryhti-ax`"
+				}
+			]
+		},
+		"sk-inspire": {
+			"inputs": [
+				{
+					"registerSource": "sk-property-building-1",
+					"license": "unchecked-access-free-sk-ministerstvo-vn-tra-slovenskej-republiky",
+					"reads": "INSPIRE Adresy WFS"
+				}
+			]
+		},
+		"spliced-affix": {
+			"aliases": ["synth-affix"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
+				},
+				{
+					"registerSource": "de-property-building-2",
+					"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+					"reads": "OpenAddresses de/sn/statewide, with --multilocale-count"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "OpenAddresses fr/countrywide, with --multilocale-count"
+				},
+				{
+					"registerSource": "it-property-building-1",
+					"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+					"reads": "OpenAddresses it/countrywide, with --multilocale-count"
+				},
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "OpenAddresses nl/countrywide, with --multilocale-count"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex tables that follow USPS Publication 28 appendices C1 and C2",
+				"VENUES in packages/corpus/lib/recipes/street/affix.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide, with --multilocale-count"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide, with --multilocale-count"
+						},
+						{
+							"registerSource": "it-property-building-1",
+							"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+							"reads": "OpenAddresses it/countrywide, with --multilocale-count"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "OpenAddresses nl/countrywide, with --multilocale-count"
+						}
+					]
+				}
+			]
+		},
+		"spliced-country": {
+			"aliases": ["synth-country"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, skeletons"
+				},
+				{
+					"registerSource": "de-property-building-2",
+					"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+					"reads": "OpenAddresses de/sn/statewide skeletons"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "OpenAddresses fr/countrywide skeletons"
+				},
+				{
+					"registerSource": "it-property-building-1",
+					"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+					"reads": "OpenAddresses it/countrywide skeletons"
+				},
+				{
+					"registerSource": "nl-property-building-2",
+					"license": "unchecked-corpus-input-nl-kadaster",
+					"reads": "OpenAddresses nl/countrywide skeletons"
+				}
+			],
+			"authored": [
+				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries",
+				"the homograph table and US contrast cities in packages/corpus/lib/recipes/country-balanced.ts"
+			],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide skeletons"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "OpenAddresses fr/countrywide skeletons"
+						},
+						{
+							"registerSource": "it-property-building-1",
+							"license": "unchecked-corpus-input-it-istat-and-agenzia-delle-entrate",
+							"reads": "OpenAddresses it/countrywide skeletons"
+						},
+						{
+							"registerSource": "nl-property-building-2",
+							"license": "unchecked-corpus-input-nl-kadaster",
+							"reads": "OpenAddresses nl/countrywide skeletons"
+						}
+					]
+				}
+			]
+		},
+		"spliced-sub-venue": {
+			"aliases": ["synth-sub-venue"],
+			"inputs": [
+				{
+					"registerSource": "gb-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+					"reads": "venue and sub-venue names from Geofabrik GB, FR, DE and ES extracts, and lexicon entries"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "venue names from place-names/names.parquet and lexicon entries from poi.db"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-4",
+					"license": "unchecked-corpus-input-us-wikimedia-foundation",
+					"reads": "lexicon entries in packages/corpus/data/sub-venue-lexicon.json"
+				},
+				{
+					"registerSource": "fr-property-building-1",
+					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+					"reads": "French address skeletons of house-venue-tuples-v6"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "US address skeletons of house-venue-tuples-v6, the NAD rows of the US situs databases"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "US address skeletons of house-venue-tuples-v6, NAD rows read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-9",
+					"license": "unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-10",
+					"license": "unchecked-corpus-input-us-county-of-los-angeles-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-11",
+					"license": "unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-12",
+					"license": "unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-13",
+					"license": "unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-14",
+					"license": "unchecked-corpus-input-us-miami-dade-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-15",
+					"license": "unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-16",
+					"license": "unchecked-corpus-input-us-mississippi-automated-resource-information-sy",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-18",
+					"license": "unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-19",
+					"license": "unchecked-corpus-input-us-san-bernardino-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-20",
+					"license": "unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-21",
+					"license": "unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-22",
+					"license": "unchecked-corpus-input-us-hillsborough-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-23",
+					"license": "unchecked-corpus-input-us-orange-county-fl-orange-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-25",
+					"license": "unchecked-corpus-input-us-sacramento-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-26",
+					"license": "unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-27",
+					"license": "unchecked-corpus-input-us-county-of-alameda-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-28",
+					"license": "unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-29",
+					"license": "unchecked-corpus-input-us-oakland-county-michigan",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-30",
+					"license": "unchecked-corpus-input-us-county-of-santa-clara-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-31",
+					"license": "unchecked-corpus-input-us-broward-county-gis-bcgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-32",
+					"license": "unchecked-corpus-input-us-florida-department-of-revenue",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-33",
+					"license": "unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-34",
+					"license": "unchecked-corpus-input-us-dekalb-county-gis-georgia",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-35",
+					"license": "unchecked-corpus-input-us-contra-costa-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-36",
+					"license": "unchecked-corpus-input-us-city-and-county-of-san-francisco-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-37",
+					"license": "unchecked-corpus-input-us-county-of-fresno-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-38",
+					"license": "unchecked-corpus-input-us-pasco-county-pascogisonline-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-39",
+					"license": "unchecked-corpus-input-us-sarasota-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-41",
+					"license": "unchecked-corpus-input-us-charlotte-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-42",
+					"license": "unchecked-corpus-input-us-manatee-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-43",
+					"license": "unchecked-corpus-input-us-collier-county-growth-management-department-g",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-44",
+					"license": "unchecked-corpus-input-us-volusia-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-46",
+					"license": "unchecked-corpus-input-us-county-of-kern-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-47",
+					"license": "unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-48",
+					"license": "unchecked-corpus-input-us-county-of-san-joaquin-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-49",
+					"license": "unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-50",
+					"license": "unchecked-corpus-input-us-county-of-sonoma-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-51",
+					"license": "unchecked-corpus-input-us-seminole-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-53",
+					"license": "unchecked-corpus-input-us-st-lucie-county-slcgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-55",
+					"license": "unchecked-corpus-input-us-osceolagis-osceola-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-56",
+					"license": "unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-57",
+					"license": "unchecked-corpus-input-us-st-johns-county-gis-division-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-58",
+					"license": "unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-60",
+					"license": "unchecked-corpus-input-us-tulare-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-61",
+					"license": "unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-62",
+					"license": "unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-63",
+					"license": "unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-64",
+					"license": "unchecked-corpus-input-us-highlands-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-65",
+					"license": "unchecked-corpus-input-us-bay-county-gis-division-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-67",
+					"license": "unchecked-corpus-input-us-county-of-monterey-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-68",
+					"license": "unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-70",
+					"license": "unchecked-corpus-input-us-okaloosa-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-71",
+					"license": "unchecked-corpus-input-us-butte-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-72",
+					"license": "unchecked-corpus-input-us-jackson-county-oregon-gis",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-74",
+					"license": "unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-76",
+					"license": "unchecked-corpus-input-us-merced-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-77",
+					"license": "unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-79",
+					"license": "unchecked-corpus-input-us-martin-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-80",
+					"license": "unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-81",
+					"license": "unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-82",
+					"license": "unchecked-corpus-input-us-flagler-county-board-of-county-commissioners",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-83",
+					"license": "unchecked-corpus-input-us-clay-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-84",
+					"license": "unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-85",
+					"license": "unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-86",
+					"license": "unchecked-corpus-input-us-county-of-shasta-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-87",
+					"license": "unchecked-corpus-input-us-athens-clarke-county-gis-georgia",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-89",
+					"license": "unchecked-corpus-input-us-walton-county-gis-department-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-90",
+					"license": "unchecked-corpus-input-us-imperial-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-91",
+					"license": "unchecked-corpus-input-us-napa-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-92",
+					"license": "unchecked-corpus-input-us-county-of-nevada-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-93",
+					"license": "unchecked-corpus-input-us-lake-county-i-t-dept-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-96",
+					"license": "unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-97",
+					"license": "unchecked-corpus-input-us-humboldt-county-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-98",
+					"license": "unchecked-corpus-input-us-kings-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-99",
+					"license": "unchecked-corpus-input-us-mendocino-county-information-services-departm",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-100",
+					"license": "unchecked-corpus-input-us-sutter-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-101",
+					"license": "unchecked-corpus-input-us-county-of-calaveras-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-102",
+					"license": "unchecked-corpus-input-us-columbia-county-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-103",
+					"license": "unchecked-corpus-input-us-yuba-county-ca-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-104",
+					"license": "unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-105",
+					"license": "unchecked-corpus-input-us-tuolumne-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-107",
+					"license": "unchecked-corpus-input-us-waupaca-county-land-information-wisconsin",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-108",
+					"license": "unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-109",
+					"license": "unchecked-corpus-input-us-plumas-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-110",
+					"license": "unchecked-corpus-input-us-county-of-san-benito-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-111",
+					"license": "unchecked-corpus-input-us-siskiyou-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-112",
+					"license": "unchecked-corpus-input-us-amador-county-information-technology-departme",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-114",
+					"license": "unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-115",
+					"license": "unchecked-corpus-input-us-hardee-county-gis-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-116",
+					"license": "unchecked-corpus-input-us-baker-county-fl-florida",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-117",
+					"license": "unchecked-corpus-input-us-trinity-county-planning-department-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-118",
+					"license": "unchecked-corpus-input-us-del-norte-county-assessor-s-office-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-119",
+					"license": "unchecked-corpus-input-us-inyo-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-121",
+					"license": "unchecked-corpus-input-us-glenn-county-gis-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-122",
+					"license": "unchecked-corpus-input-us-county-of-colusa-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-123",
+					"license": "unchecked-corpus-input-us-modoc-county-reach-parcels-service-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-124",
+					"license": "unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-125",
+					"license": "unchecked-corpus-input-us-sierra-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "us-property-building-126",
+					"license": "unchecked-corpus-input-us-alpine-county-california",
+					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
+				},
+				{
+					"registerSource": "gb-public-administration-1",
+					"license": "unchecked-access-free-gb-gb-public-administration-1",
+					"reads": "GB postcodes of house-venue-tuples-v6, through the gb-os-open adapter"
+				},
+				{
+					"registerSource": "gb-transport-1",
+					"license": "unchecked-access-free-gb-gb-transport-1",
+					"reads": "GB road joins of house-venue-tuples-v6, through the gb-os-open adapter"
+				},
+				{
+					"registerSource": "gb-public-administration-2",
+					"license": "unchecked-access-free-gb-gb-public-administration-2",
+					"reads": "GB streets and localities of house-venue-tuples-v6, through the gb-os-open adapter"
+				},
+				{
+					"registerSource": "de-property-building-1",
+					"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
+					"reads": "German address context from the extracted OpenAddresses de/berlin.csv"
+				},
+				{
+					"registerSource": "de-property-building-2",
+					"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+					"reads": "German address context from the extracted OpenAddresses de/sn/statewide.csv"
+				},
+				{
+					"registerSource": "es-property-building-1",
+					"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+					"reads": "Spanish address context from the extracted OpenAddresses es/countrywide.csv"
+				}
+			],
+			"authored": ["BOARD_RESERVED_SURFACES and the lexicon's modifier and seed entries"],
+			"history": [
+				{
+					"corpora": ["v0.7.7-no-ppd"],
+					"because": "Holds v0.7.2's non-GB rows, whose US skeletons mixed NAD with county and state bodies collected by OpenAddresses, beside GB rows rendered over house-venue-tuples-v4, before house-venue-tuples-v6 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "gb-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+							"reads": "venue and sub-venue names from Geofabrik GB, FR, DE and ES extracts, and lexicon entries"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "venue names from place-names/names.parquet and lexicon entries from poi.db"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-4",
+							"license": "unchecked-corpus-input-us-wikimedia-foundation",
+							"reads": "lexicon entries in packages/corpus/data/sub-venue-lexicon.json"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French address skeletons of house-venue-tuples-v3, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the US situs databases, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "US address skeletons of house-venue-tuples-v3, read through the Overture Addresses theme"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the county and state bodies OpenAddresses carries"
+						},
+						{
+							"registerSource": "gb-public-administration-1",
+							"license": "unchecked-access-free-gb-gb-public-administration-1",
+							"reads": "GB postcodes of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "gb-transport-1",
+							"license": "unchecked-access-free-gb-gb-transport-1",
+							"reads": "GB road joins of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "gb-public-administration-2",
+							"license": "unchecked-access-free-gb-gb-public-administration-2",
+							"reads": "GB streets and localities of house-venue-tuples-v4, through the gb-os-open adapter"
+						},
+						{
+							"registerSource": "de-property-building-1",
+							"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
+							"reads": "OpenAddresses de/berlin context, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide context, in the rows kept from v0.7.2"
+						},
+						{
+							"registerSource": "es-property-building-1",
+							"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+							"reads": "OpenAddresses es/countrywide context, in the rows kept from v0.7.2"
+						}
+					]
+				},
+				{
+					"corpora": ["v0.7.2-address-systems"],
+					"because": "Built over house-venue-tuples-v3, whose GB skeletons were Price Paid Data tuples, before #2637 moved them to OS OpenData under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "gb-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-gb-openstreetmap-foundation",
+							"reads": "venue and sub-venue names from Geofabrik GB, FR, DE and ES extracts, and lexicon entries"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "venue names from place-names/names.parquet and lexicon entries from poi.db"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-4",
+							"license": "unchecked-corpus-input-us-wikimedia-foundation",
+							"reads": "lexicon entries in packages/corpus/data/sub-venue-lexicon.json"
+						},
+						{
+							"registerSource": "fr-property-building-1",
+							"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
+							"reads": "French address skeletons of house-venue-tuples-v3"
+						},
+						{
+							"registerSource": "us-property-building-1",
+							"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the US situs databases"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-1",
+							"license": "unchecked-corpus-input-us-overture-maps-foundation",
+							"reads": "US address skeletons of house-venue-tuples-v3, read through the Overture Addresses theme"
+						},
+						{
+							"registerSource": "us-geodata-aggregate-3",
+							"license": "unchecked-corpus-input-us-openaddresses",
+							"reads": "US address skeletons of house-venue-tuples-v3, through the county and state bodies OpenAddresses carries"
+						},
+						{
+							"registerSource": "gb-property-building-1",
+							"license": "unchecked-access-free-gb-gb-property-building-1",
+							"reads": "GB address skeletons of house-venue-tuples-v3: Price Paid Data postcode, PAON, street and town for 31,440 train rows"
+						},
+						{
+							"registerSource": "de-property-building-1",
+							"license": "unchecked-access-free-de-senatsverwaltung-f-r-stadtentwicklung-bauen-u",
+							"reads": "OpenAddresses de/berlin context"
+						},
+						{
+							"registerSource": "de-property-building-2",
+							"license": "unchecked-access-free-de-landesamt-f-r-geobasisinformation-sachsen-geo",
+							"reads": "OpenAddresses de/sn/statewide context"
+						},
+						{
+							"registerSource": "es-property-building-1",
+							"license": "unchecked-access-free-es-instituto-geogr-fico-nacional",
+							"reads": "OpenAddresses es/countrywide context"
+						}
+					]
+				}
+			]
+		},
+		"spliced-suffix-boundary": {
+			"aliases": ["synth-suffix-boundary"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, street skeletons"
+				},
+				{
+					"registerSource": "us-health-2",
+					"license": "unchecked-access-free-us-us-health-2",
+					"reads": "HRSA site names as the venue shell"
+				}
+			],
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C1"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) street skeletons"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) street skeletons"
+						},
+						{
+							"registerSource": "us-health-2",
+							"license": "unchecked-access-free-us-us-health-2",
+							"reads": "HRSA site names as the venue shell"
+						}
+					]
+				}
+			]
+		},
+		"spliced-trailing-region": {
+			"aliases": ["synth-trailing-region"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "postcode, locality and region ancestor tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex CA and US region codes"]
+		},
+		"spliced-trailing-region-ca-bare": {
+			"aliases": ["synth-trailing-region-ca-bare"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "postcode, locality and region ancestor tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex CA and US region codes"]
+		},
+		"spliced-trailing-region-es-v23": {
+			"aliases": ["synth-trailing-region-es-v23"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "postcode, locality and region ancestor tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex CA and US region codes"]
+		},
+		"spliced-trailing-region-es-v28": {
+			"aliases": ["synth-trailing-region-es-v28"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "admin names, rebuilt with official and co-official language names"
+				}
+			],
+			"authored": ["@mailwoman/codex official-language table"]
+		},
+		"spliced-trailing-region-gb-v23": {
+			"aliases": ["synth-trailing-region-gb-v23"],
+			"inputs": [
+				{
+					"registerSource": "gb-public-administration-4",
+					"license": "unchecked-access-free-gb-who-s-on-first",
+					"reads": "Great Britain locality and region names from the Who's On First admin records"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "Great Britain postcodes from the Who's On First postalcode records, which the GB decision does not read"
+				}
+			],
+			"authored": ["@mailwoman/codex CA and US region codes"]
+		},
+		"spliced-trailing-region-structured": {
+			"aliases": ["synth-trailing-region-structured"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "postcode, locality and region ancestor tuples"
+				}
+			],
+			"authored": ["@mailwoman/codex CA and US region codes"]
+		},
+		"spliced-trailing-region-us": {
+			"aliases": ["synth-trailing-region-us"],
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the US postal export's place column"
+				}
+			],
+			"authored": ["@mailwoman/codex US region codes"]
+		},
+		"spliced-unit": {
+			"aliases": ["synth-unit"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, including the unit field"
+				}
+			],
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+						}
+					]
+				}
+			]
+		},
+		"spliced-unit-v30": {
+			"aliases": ["synth-unit-v30"],
+			"inputs": [
+				{
+					"registerSource": "us-property-building-2",
+					"license": "unchecked-corpus-input-us-city-of-berkeley",
+					"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-3",
+					"license": "unchecked-corpus-input-us-marin-county",
+					"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-4",
+					"license": "unchecked-corpus-input-us-district-of-columbia",
+					"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-5",
+					"license": "unchecked-corpus-input-us-us-property-building-5",
+					"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-7",
+					"license": "unchecked-corpus-input-us-montana-state-library",
+					"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-8",
+					"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+					"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+				},
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database samples for IL, MA, UT, WI, NY and TX, in OpenAddresses layout, including the unit field"
+				}
+			],
+			"authored": ["@mailwoman/codex tables that follow USPS Publication 28 appendix C2"],
+			"history": [
+				{
+					"corpora": [
+						"v0.7.0-de-holdout",
+						"v0.7.1-osm-exposure",
+						"v0.7.2-address-systems",
+						"v0.7.3-venue",
+						"v0.7.3.1-venue-nr",
+						"v0.7.3.2-venue-planet",
+						"v0.7.5-gb-region",
+						"v0.7.6-venue-gb-region",
+						"v0.7.7-no-ppd"
+					],
+					"because": "Built while the US skeleton list read OpenAddresses us/il/cook, before Cook County's redistribution restriction withdrew it and National Address Database samples joined the list under the same source id.",
+					"inputs": [
+						{
+							"registerSource": "us-property-building-2",
+							"license": "unchecked-corpus-input-us-city-of-berkeley",
+							"reads": "OpenAddresses us/ca/berkeley (City of Berkeley) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-3",
+							"license": "unchecked-corpus-input-us-marin-county",
+							"reads": "OpenAddresses us/ca/marin (Marin County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-4",
+							"license": "unchecked-corpus-input-us-district-of-columbia",
+							"reads": "OpenAddresses us/dc/statewide (District of Columbia) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-5",
+							"license": "unchecked-corpus-input-us-us-property-building-5",
+							"reads": "OpenAddresses us/ia/statewide (Iowa 911 address points) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-6",
+							"license": "unchecked-corpus-input-us-cook-county",
+							"reads": "OpenAddresses us/il/cook (Cook County) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-7",
+							"license": "unchecked-corpus-input-us-montana-state-library",
+							"reads": "OpenAddresses us/mt/statewide (Montana State Library) skeletons, including the unit field"
+						},
+						{
+							"registerSource": "us-property-building-8",
+							"license": "unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco",
+							"reads": "OpenAddresses us/sd/statewide (South Dakota BIT) skeletons, including the unit field"
+						}
+					]
+				}
+			]
+		},
+		"spliced-venue-locality": {
+			"aliases": ["synth-venue-locality"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "venue names"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "localities from admin pairs in 147 countries"
+				}
+			]
+		},
+		"state-hi-schools": {
+			"inputs": [
+				{
+					"registerSource": "us-education-2",
+					"license": "unchecked-corpus-input-us-hawaii-state-department-of-education",
+					"reads": "SchoolList.xlsx school addresses"
+				}
+			]
+		},
+		"state-ia-contractors": {
+			"inputs": [
+				{
+					"registerSource": "us-professional-licensing-4",
+					"license": "unchecked-corpus-input-us-iowa-workforce-development",
+					"reads": "registration addresses"
+				}
+			]
+		},
+		"state-ny-notaries": {
+			"inputs": [
+				{
+					"registerSource": "us-professional-licensing-2",
+					"license": "unchecked-corpus-input-us-new-york-department-of-state",
+					"reads": "commission addresses"
+				}
+			]
+		},
+		"state-tx-notaries": {
+			"inputs": [
+				{
+					"registerSource": "us-professional-licensing-3",
+					"license": "unchecked-corpus-input-us-texas-secretary-of-state",
+					"reads": "commission addresses and names"
+				}
+			]
+		},
+		"synthetic-secondary": {
+			"inputs": [],
+			"authored": [
+				"designator lists and thirteen base addresses in corpus-python/src/mailwoman_train/corpora/secondary.py",
+				"@mailwoman/codex tables that follow USPS Publication 28 appendix C2"
+			]
+		},
+		"tiger": {
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-1",
+					"license": "unchecked-corpus-input-us-u-s-census-bureau",
+					"reads": "ADDRFEAT street names and ZIPs, and PLACE names"
+				}
+			],
+			"authored": ["packages/corpus/lib/us/fips-state.ts FIPS to USPS state table, which writes the region"]
+		},
+		"usgov-hrsa-fqhc": {
+			"inputs": [
+				{
+					"registerSource": "us-health-2",
+					"license": "unchecked-access-free-us-us-health-2",
+					"reads": "Health Center Service Delivery Site Locations"
+				}
+			]
+		},
+		"usgov-imls-pls": {
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-2",
+					"license": "unchecked-corpus-input-us-institute-of-museum-and-library-services",
+					"reads": "the Public Libraries Survey outlet file"
+				}
+			]
+		},
+		"usgov-irs-bmf": {
+			"inputs": [
+				{
+					"registerSource": "us-charity-nonprofit-1",
+					"license": "unchecked-access-free-us-us-charity-nonprofit-1",
+					"reads": "the Exempt Organizations Business Master File extract"
+				}
+			]
+		},
+		"usgov-nad": {
+			"inputs": [
+				{
+					"registerSource": "us-property-building-1",
+					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
+					"reads": "National Address Database address points"
+				}
+			]
+		},
+		"usgov-nppes": {
+			"inputs": [
+				{
+					"registerSource": "us-health-1",
+					"license": "unchecked-access-free-us-us-health-1",
+					"reads": "the NPPES full replacement monthly NPI file"
+				}
+			]
+		},
+		"usgov-samhsa-treatment-locator": {
+			"inputs": [
+				{
+					"registerSource": "us-health-5",
+					"license": "unchecked-access-free-us-us-health-5",
+					"reads": "the treatment locator CSV"
+				}
+			]
+		},
+		"vlaanderen": {
+			"inputs": [
+				{
+					"registerSource": "be-property-building-1",
+					"license": "unchecked-access-free-be-agentschap-digitaal-vlaanderen",
+					"reads": "Flanders INSPIRE Addresses WFS"
+				}
+			]
+		},
+		"wallonie": {
+			"inputs": [
+				{
+					"registerSource": "be-property-building-2",
+					"license": "unchecked-access-free-be-service-public-de-wallonie-spw",
+					"reads": "ICAR INSPIRE address points"
+				}
+			]
+		},
+		"wof-admin": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "admin record names and ancestor names"
+				}
+			],
+			"authored": ["COUNTRY_DISPLAY_NAME in packages/corpus/lib/adapters/wof/json-rows.ts"]
+		},
+		"wof-admin-jp": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "the unified SQLite's JP regions, localities, neighbourhoods and Japanese names"
+				}
+			]
+		},
+		"wof-postalcode": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "postalcode records and their admin ancestors"
+				}
+			],
+			"authored": ["packages/corpus/lib/us/fips-state.ts US state name to USPS code table"]
+		}
+	}
+}

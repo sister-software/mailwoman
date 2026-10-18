@@ -52,6 +52,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...paths import data_root_path
+from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ...tokenizer.char import build_char_vocab, save_char_vocab
 
 #: Resolved when a default is needed rather than at import, so `--help` runs with no data root configured.
@@ -196,6 +197,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--board-rows", type=int, default=2_000)
     ap.add_argument("--postcode-fraction", type=float, default=0.30)
     ap.add_argument("--seed", type=int, default=42)
+    add_unshippable_flag(ap)
     args = ap.parse_args(argv)
     args.parquet = args.parquet or str(data_root_path(*PARQUET_PARTS))
     args.kenall = args.kenall or str(data_root_path(*KENALL_PARTS))
@@ -410,6 +412,7 @@ def seal_char_vocab(out_dir: Path) -> dict[str, int]:
 
 def main() -> None:
     args = parse_args()
+    rights = admit_sources(["overture-jp"], context="JP probe corpus", unshippable_reason=args.unshippable_reason)
     rng = random.Random(args.seed)
     kenall = load_kenall_postcodes(Path(args.kenall))
     print(f"KEN_ALL municipalities: {len(kenall):,}")
@@ -445,6 +448,7 @@ def main() -> None:
         "source_parquet": str(args.parquet),
     }
     (out_dir / "build-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    write_rights_record(rights, out_dir)
     print(json.dumps(report, indent=2))
     print(f"corpus: {out_dir}")
 

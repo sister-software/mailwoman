@@ -24,6 +24,7 @@ import {
 	type IdentifierModel,
 	type LegPools,
 	mergeNamePools,
+	NameSource,
 	type PoolQuery,
 	type PromotedSurface,
 	promotedSurfacesFor,
@@ -403,7 +404,7 @@ export interface SubVenueLegStats {
 
 const LICENSE =
 	"Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names " +
-	"(CDLA-Permissive-2.0) over OpenAddresses / HM Land Registry Price Paid Data address skeletons"
+	"(CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons"
 
 const CORPUS_VERSION = "0.16.0"
 
@@ -424,8 +425,21 @@ interface EmitContext {
 }
 
 /**
+ * The distinct sources of a row's pooled names, sorted, or an empty list for a row that carries none.
+ */
+function rowNameSources(...sources: Array<NameSource | null>): NameSource[] {
+	return [...new Set(sources.filter((source) => source != null))].toSorted()
+}
+
+/**
  * Renders and aligns one row.
  * Writes the row and returns whether the write succeeded.
+ *
+ * The row's `name_sources` field lists the publications its pooled names were read from.
+ * The corpus schema has no such column.
+ *
+ * `jsonlToParquet` projects a row onto that schema, so the field reaches the
+ * recipe output and not a corpus parquet file.
  *
  * The function drops rows that contain an eval-board surface or fail alignment.
  */
@@ -436,7 +450,8 @@ function emitRow(
 	groups: Group[],
 	register: Register,
 	synthMethod: string,
-	disambiguator: Record<string, string>
+	disambiguator: Record<string, string>,
+	nameSources: NameSource[]
 ): boolean {
 	const { raw, components } = renderGroups(groups, register)
 
@@ -463,7 +478,9 @@ function emitRow(
 		return false
 	}
 
-	context.write(stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: null }))
+	context.write(
+		stringifyJSON({ ...aligned.row, synth_method: synthMethod, synth_base_id: null, name_sources: nameSources })
+	)
 
 	context.counters.emitted++
 	bump(stats.byRegister, register)
@@ -502,7 +519,7 @@ function emitPositives(
 		}
 
 		const tuple = sample(pools.context, random)
-		const venue = sample(pools.venues, random)
+		const { name: venue, source: venueSource } = sample(pools.venues, random)
 
 		// Alignment cannot place two spans when one contains the other, so the loop redraws.
 		const lowVenue = venue.toLowerCase()
@@ -522,11 +539,23 @@ function emitPositives(
 		// Real mail uses both "Terminal 5, Heathrow" and "Heathrow, Terminal 5".
 		const groups = r < SUBVENUE_FIRST_CUTOFF ? [subGroup, venueGroup, ...body] : [venueGroup, subGroup, ...body]
 
-		const ok = emitRow(context, leg, stats, groups, register, `sub-venue:${form.form}`, {
-			leg: leg.locale,
-			form: form.form,
-			v: String(produced),
-		})
+		// An attested sub-venue string is an OpenStreetMap name, as `LegPools.attested` states.
+		const nameSources = rowNameSources(venueSource, form.form === "attested" ? NameSource.OpenStreetMap : null)
+
+		const ok = emitRow(
+			context,
+			leg,
+			stats,
+			groups,
+			register,
+			`sub-venue:${form.form}`,
+			{
+				leg: leg.locale,
+				form: form.form,
+				v: String(produced),
+			},
+			nameSources
+		)
 
 		if (!ok) continue
 
@@ -562,6 +591,8 @@ function emitNegatives(
 		const negativeClass = sample(available, random)
 		const register = sampleRegister(random)
 		let groups: Group[]
+		// A street negative carries no pooled name.
+		let nameSource: NameSource | null = null
 
 		if (negativeClass === NegativeClass.DesignatorStreet) {
 			groups = addressGroups(leg.country, pickTuple(streets.designator, random), true)
@@ -570,14 +601,19 @@ function emitNegatives(
 		} else if (negativeClass === NegativeClass.GateSuffixStreet) {
 			groups = addressGroups(leg.country, pickTuple(streets.gateSuffix, random), true)
 		} else {
-			const pool =
-				negativeClass === NegativeClass.RejectedVenue
-					? pools.rejectedVenues
-					: negativeClass === NegativeClass.LongerName
-						? pools.longerNames
-						: pools.unpromotedShapes
+			let name: string
 
-			const name = sample(pool, random)
+			if (negativeClass === NegativeClass.UnpromotedShape) {
+				name = sample(pools.unpromotedShapes, random)
+				nameSource = NameSource.OpenStreetMap
+			} else {
+				const pool = negativeClass === NegativeClass.RejectedVenue ? pools.rejectedVenues : pools.longerNames
+				const drawn = sample(pool, random)
+
+				name = drawn.name
+				nameSource = drawn.source
+			}
+
 			const tuple = sample(pools.context, random)
 
 			groups = [
@@ -590,11 +626,20 @@ function emitNegatives(
 		// This happens when no layout covers the country.
 		if (!groups.length || groups.every((group) => group.every((piece) => piece.tag === "venue"))) continue
 
-		const ok = emitRow(context, leg, stats, groups, register, `sub-venue-negative:${negativeClass}`, {
-			leg: leg.locale,
-			negative: negativeClass,
-			v: String(produced),
-		})
+		const ok = emitRow(
+			context,
+			leg,
+			stats,
+			groups,
+			register,
+			`sub-venue-negative:${negativeClass}`,
+			{
+				leg: leg.locale,
+				negative: negativeClass,
+				v: String(produced),
+			},
+			rowNameSources(nameSource)
+		)
 
 		if (!ok) continue
 
@@ -720,7 +765,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
 		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
-		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
+		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v6.jsonl")
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
 		const context: EmitContext = {

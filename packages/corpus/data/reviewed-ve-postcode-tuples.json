@@ -1,74 +1,7 @@
 {
-	"version": "1.0.0",
-	"reviewedAt": "2026-08-24",
-	"tuples": [
-		{
-			"id": "ve-barcelona-6001-anzoategui",
-			"locality": "Barcelona",
-			"postcode": "6001",
-			"region": "Anzoátegui",
-			"country": "Venezuela",
-			"cc": "VE",
-			"locale": "es-VE",
-			"postcodePlacement": "after_locality",
-			"provenance": {
-				"publisher": "Gobierno del Estado Anzoátegui",
-				"url": "https://anzoategui.gob.ve/contacto/",
-				"retrievedAt": "2026-08-24",
-				"reviewStatus": "reviewed",
-				"sourceLicenseNote": "Factual address fields only; the source page does not state a reusable data license."
-			}
-		},
-		{
-			"id": "ve-caracas-1010-distrito-capital",
-			"locality": "Caracas",
-			"postcode": "1010",
-			"region": "Distrito Capital",
-			"country": "Venezuela",
-			"cc": "VE",
-			"locale": "es-VE",
-			"postcodePlacement": "after_locality",
-			"provenance": {
-				"publisher": "Universal Postal Union",
-				"url": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/venEn.pdf",
-				"retrievedAt": "2026-08-24",
-				"reviewStatus": "reviewed",
-				"sourceLicenseNote": "Factual postal fields only; no source prose is reproduced."
-			}
-		},
-		{
-			"id": "ve-sanare-3028-lara",
-			"locality": "Sanare",
-			"postcode": "3028",
-			"region": "Lara",
-			"country": "Venezuela",
-			"cc": "VE",
-			"locale": "es-VE",
-			"postcodePlacement": "after_locality",
-			"provenance": {
-				"publisher": "Universal Postal Union",
-				"url": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/venEn.pdf",
-				"retrievedAt": "2026-08-24",
-				"reviewStatus": "reviewed",
-				"sourceLicenseNote": "Factual postal fields only; no source prose is reproduced."
-			}
-		},
-		{
-			"id": "ve-santa-elena-8011-bolivar",
-			"locality": "Santa Elena de Guairén",
-			"postcode": "8011",
-			"region": "Bolívar",
-			"country": "Venezuela",
-			"cc": "VE",
-			"locale": "es-VE",
-			"postcodePlacement": "after_locality",
-			"provenance": {
-				"publisher": "Universal Postal Union",
-				"url": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/venEn.pdf",
-				"retrievedAt": "2026-08-24",
-				"reviewStatus": "reviewed",
-				"sourceLicenseNote": "Factual postal fields only; no source prose is reproduced."
-			}
-		}
-	]
+	"$comment": "A tuple is kept only when its citation reaches a register row whose elected decision permits transform and train. The four reviewed on 2026-08-24 cited the Universal Postal Union's addressing guide for Venezuela (ch-postal-1, whose grant names no adaptation) and the Anzoátegui state government's contact page (ve-public-administration-1, refused), so none remains. Git history holds them.",
+	"version": "2.0.0",
+	"reviewedAt": "2026-10-17",
+	"tupleCount": 0,
+	"tuples": []
 }

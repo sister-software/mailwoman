@@ -28,6 +28,7 @@ import pyarrow.parquet as pq
 from ....corpora.builder import MAX_FIELD_CHARS, SCHEMA, coverage_stats, muni_bucket, select_exact, water_fill
 from ....labels import resolve_label_set
 from ....paths import resolve_data_root_default
+from ....source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ....text.normalize import normalize_text
 from ....tokenizer.char import build_char_vocab, save_char_vocab
 from ..kana import municipality_kana_from_admin_db, municipality_kana_lookup
@@ -396,6 +397,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty --out-dir")
+    add_unshippable_flag(parser)
     args = parser.parse_args(argv)
     args.parquet = resolve_data_root_default(args.parquet, *PARQUET_PARTS)
     args.kenall = resolve_data_root_default(args.kenall, *KENALL_PARTS)
@@ -406,4 +408,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    build(parse_args(argv))
+    args = parse_args(argv)
+    rights = admit_sources([SOURCE], context="JP corpus assembly", unshippable_reason=args.unshippable_reason)
+    build(args)
+    write_rights_record(rights, args.out_dir)

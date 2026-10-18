@@ -6,6 +6,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -22,24 +23,37 @@ import type { LocaleBaseTuple } from "#surfaces/locale"
  * so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback)
  * has exactly one implementation.
  *
- * The DE adapter reads two members from `europe.zip` instead of `oa-cache/de__*.zip`.
- * The cached per-state zips used by the `locale` recipe are absent on this host.
+ * The DE parts read the extracted `de/berlin.csv` and `de/sn/statewide.csv`.
+ * They are the `europe.zip` members the recipe read before that archive left the data root,
+ * with the md5s `9903d438…` and `623b099b…` that the note "a file's mtime is not
+ * its data's vintage" in `corpus/agents.md` records.
  *
- * The archive members match OA's current run byte for byte.
- * The note "a file's mtime is not its data's vintage" in `corpus/agents.md` records this comparison.
+ * A missing part throws in {@link readLocaleTuples}, so the DE leg cannot emit zero rows silently.
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
-		{ zip: dataRootPath("openaddresses", "europe.zip"), csv: "de/berlin.csv", region: "Berlin" },
-		{ zip: dataRootPath("openaddresses", "europe.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
+		{ path: dataRootPath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
+		{ path: dataRootPath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
 	],
 	ES: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 }
 
 /**
- * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples
- * (the same 176,519 real rows the `invented-house-venue` recipe output is built from, so the two
- * recipes' address halves are drawn from one pool), DE and ES streamed out of OpenAddresses.
+ * The `source` a Great Britain house-venue tuple must carry.
+ *
+ * The v3 tuples took their GB rows from HM Land Registry Price Paid Data, whose address
+ * fields Royal Mail and Ordnance Survey license for non-commercial use only (#2635).
+ * Their GB rows carry no `source`.
+ */
+export const GB_CONTEXT_TUPLE_SOURCE = "gb-os-open"
+
+/**
+ * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue tuples
+ * (`corpora/house_venue_tuples.py`, whose GB rows come from the `gb-os-open` adapter's OS OpenData rows),
+ * DE and ES streamed out of OpenAddresses.
+ *
+ * @throws When a GB tuple does not carry {@linkcode GB_CONTEXT_TUPLE_SOURCE},
+ * so a tuples file built from Price Paid Data is refused rather than rendered.
  */
 export async function loadContextTuples(
 	tuplesPath: PathBuilderLike,
@@ -49,6 +63,16 @@ export async function loadContextTuples(
 
 	for await (const tuple of readRecipeTuples(tuplesPath)) {
 		const country = String(tuple.country ?? "")
+
+		// country-branch: GB is the one country whose earlier tuples came from a refused source (#2635).
+		// The tuples file records provenance for GB rows only, so the check reads GB rows only.
+		if (country === "GB" && tuple.source !== GB_CONTEXT_TUPLE_SOURCE) {
+			throw new Error(
+				`${tuplesPath.toString()} holds a GB tuple from source ${stringifyJSON(tuple.source ?? null)}; ` +
+					`GB address skeletons must come from ${GB_CONTEXT_TUPLE_SOURCE}. Rebuild the tuples with ` +
+					"`python -m mailwoman_train.corpora.house_venue_tuples`."
+			)
+		}
 
 		if (!country || !tuple.locality || !tuple.street) continue
 

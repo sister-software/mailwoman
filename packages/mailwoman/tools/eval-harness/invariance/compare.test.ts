@@ -76,15 +76,21 @@ describe("compareComponents", () => {
 	})
 
 	it("Is DEGRADED when only a non-critical tag drifts", () => {
-		const a = { house_number: "41", street: "Hightree Drive", locality: "Macclesfield", dependent_locality: "Henbury" }
-		const b = { house_number: "41", street: "Hightree Drive", locality: "Macclesfield", dependent_locality: "" }
+		const a = {
+			house_number: "55",
+			street: "Old Oak Common Lane",
+			locality: "London",
+			dependent_locality: "East Acton",
+		}
+
+		const b = { house_number: "55", street: "Old Oak Common Lane", locality: "London", dependent_locality: "" }
 
 		expect(compareComponents(a, b).verdict).toBe("DEGRADED")
 	})
 
 	it("Is DEGRADED when a new non-critical tag appears", () => {
-		const a = { house_number: "41", street: "Hightree Drive" }
-		const b = { house_number: "41", street: "Hightree Drive", unit: "Flat 2" }
+		const a = { house_number: "55", street: "Old Oak Common Lane" }
+		const b = { house_number: "55", street: "Old Oak Common Lane", unit: "Flat 2" }
 
 		expect(compareComponents(a, b).verdict).toBe("DEGRADED")
 	})

@@ -32,10 +32,10 @@ def add_parser(subparsers: Any) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    from ...config import load_config
+    from ...config import load_training_config
     from ...train.trainer import train
 
-    cfg = load_config(args.config)
+    cfg, _rights = load_training_config(args.config)
     if args.output_dir:
         cfg.train.output_dir = args.output_dir
     if args.max_steps is not None:

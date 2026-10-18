@@ -10,7 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import {
@@ -27,6 +27,13 @@ import type { ParquetManifest } from "#parquet/writers"
 import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
+
+/**
+ * The fixture is Who's On First data, whose register row reads unchecked,
+ * so every build here passes the override.
+ * The rights tests below drive the refusal itself.
+ */
+const FIXTURE_RIGHTS = "test fixture: Who's On First rows read for build mechanics"
 
 let scratch: TemporaryDirectory
 
@@ -62,6 +69,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 			onProgress: (stage) => stages.push(stage),
@@ -112,6 +120,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot, country: "US" } },
 			synthesize: false,
 		})
@@ -143,6 +152,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("no-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: false,
 		})
@@ -151,6 +161,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("with-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 		})
@@ -163,6 +174,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("exploratory"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 		})
 
@@ -177,6 +189,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("release-eligible"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 			profile: BuildProfile.ReleaseEligible,
@@ -205,6 +218,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("release-eligible-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 			profile: BuildProfile.ReleaseEligible,
@@ -214,6 +228,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("release-eligible-nosynth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: false,
 			profile: BuildProfile.ReleaseEligible,
@@ -229,6 +244,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: {},
 		})
 
@@ -242,6 +258,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 		})
 
@@ -257,6 +274,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("all"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 		})
 
@@ -264,6 +282,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("free"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			licensePolicy: LicensePolicy.ShareAlikeFree,
 		})
@@ -278,6 +297,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			outputDir: scratch.path("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			excludeLicenses: compileLicenseExcludes("CC0"),
 		})
@@ -315,6 +335,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		const options = {
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 		} as const
@@ -337,6 +358,7 @@ describe("buildCorpus resume", () => {
 	const options = {
 		corpusVersion: "0.1.0",
 		adapters: [wofAdminAdapter],
+		unshippableReason: FIXTURE_RIGHTS,
 		adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 		synthesize: true,
 	} as const
@@ -442,5 +464,88 @@ describe("buildCorpus resume", () => {
 		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
 			/resume refused.*no file sits at that path/s
 		)
+	})
+})
+
+// Who's On First's committed decision is elected, so these tests refuse its
+// register row in a copy of the register.
+// They measure how a build treats a refused row, whatever the committed decision says.
+vi.mock("#source-register/register", async (importOriginal) => {
+	const original = await importOriginal<typeof import("#source-register/register")>()
+
+	return {
+		...original,
+		readAddressSourceRegister: async () => {
+			const register = await original.readAddressSourceRegister()
+
+			if (!refuseWhosOnFirst.active) return register
+
+			const license = register.sources.find((row) => row.sourceID === "us-geodata-aggregate-2")?.license
+
+			return {
+				...register,
+				licenses: register.licenses.map((decision) =>
+					decision.licenseID === license ? { ...decision, state: "refused" as const } : decision
+				),
+			}
+		},
+	}
+})
+
+const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
+
+describe("buildCorpus source rights", () => {
+	// The suite runs with `isolate: false`, so a file earlier in the worker may
+	// already have loaded `#build` over the real register.
+	// Reloading it here makes it read the register through the mock above.
+	let buildWithMockedRegister: typeof buildCorpus
+
+	beforeAll(async () => {
+		vi.resetModules()
+		buildWithMockedRegister = (await import("#build")).buildCorpus
+	})
+
+	beforeEach(() => {
+		refuseWhosOnFirst.active = true
+	})
+
+	afterEach(() => {
+		refuseWhosOnFirst.active = false
+	})
+
+	it("refuses a source whose register row lacks a transform and train permission before any adapter runs", async () => {
+		const outDir = scratch.path("refused")
+
+		await expect(
+			buildWithMockedRegister({
+				outputDir: outDir,
+				corpusVersion: "0.1.0",
+				adapters: [wofAdminAdapter],
+				adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+			})
+		).rejects.toThrow(
+			/corpus source wof-admin reads register source us-geodata-aggregate-2 .*refused.*transform and train/s
+		)
+
+		expect(await pathExists(outDir("intermediate", "labeled-train.jsonl"))).toBe(false)
+		expect(await pathExists(outDir("MANIFEST.json"))).toBe(false)
+	})
+
+	it("records the corpus as not shippable when the override admits the source", async () => {
+		const outDir = scratch.path("override")
+
+		const manifest = await buildWithMockedRegister({
+			outputDir: outDir,
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			unshippableReason: FIXTURE_RIGHTS,
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+			synthesize: false,
+		})
+
+		expect(manifest.source_rights.shippable).toBe(false)
+		expect(manifest.source_rights.unshippable_reason).toBe(FIXTURE_RIGHTS)
+		expect(manifest.source_rights.gaps.map((gap) => gap.registerSource)).toContain("us-geodata-aggregate-2")
+		expect((await readLocalJSONFile<typeof manifest>(outDir("MANIFEST.json"))).source_rights.shippable).toBe(false)
 	})
 })

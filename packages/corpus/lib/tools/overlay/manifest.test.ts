@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { describe, expect, it } from "vitest"
 
 import { openDuckDB } from "#parquet/duckdb"
+import type { SourceRightsRecord } from "#source-register/corpus-inputs"
 import { useScratchDir } from "#test-kit"
 import {
 	assembleOverlayManifest,
 	baseManifestFiles,
+	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
 	splitFromFilename,
 } from "#tools/overlay/manifest"
@@ -82,6 +85,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		version: "0.2.0",
 		files: [{ parquet, source: "syn-de", split }],
 		note: "",
+		// These fixtures use sources no register row permits.
+		// The source-rights tests below run without the override.
+		unshippableReason: "test fixture: overlay mechanics",
 	})
 
 	it("refuses a val split asserted for a file split-slice did not write", async () => {
@@ -229,6 +235,91 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 				replaceSources: ["rendered-de"],
 			})
 		).rejects.toThrow(/holds no file with source 'rendered-de'/)
+	})
+
+	it("refuses to add rendered-gb, which reads the refused Price Paid Data row, without the override", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-gb-v3.train.parquet", "rendered-gb")
+
+		await expect(
+			assembleOverlayManifest({
+				...overlay(parquet, "train"),
+				base,
+				files: [{ parquet, source: "rendered-gb", split: "train" }],
+				unshippableReason: null,
+			})
+		).rejects.toThrow(/corpus source rendered-gb reads register source gb-property-building-1 .*refused/s)
+
+		expect(await pathExists(scratch.path(OVERLAY_PLAN_FILE))).toBe(false)
+	})
+
+	it("refuses a base whose files name no source when its manifest carries no rights record", async () => {
+		const base = await writeBase()
+		const parquet = await writeOverlayParquet("part-fr.train.parquet", "ban")
+
+		await expect(
+			assembleOverlayManifest({
+				...overlay(parquet, "train"),
+				base,
+				files: [{ parquet, source: "ban", split: "train" }],
+				unshippableReason: null,
+			})
+		).rejects.toThrow(/cannot check the corpus sources of 1 file\(s\) of base.*absent locally/s)
+	})
+
+	it("reads the source column of a base file that names no source when the base carries no rights record", async () => {
+		const parquet = await writeOverlayParquet("part-fr.train.parquet", "ban")
+		const baseFile = await writeOverlayParquet("part-0000.parquet", "wof-admin")
+		const base = scratch.path("MANIFEST.json").toString()
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.1.0",
+				schema: {},
+				row_group_size: 50_000,
+				rows_per_slice: 1_000_000,
+				counts: { train: 1, val: 0, test: 0 },
+				total_rows: 1,
+				slices: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
+			},
+			base
+		)
+
+		await assembleOverlayManifest({
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "ban", split: "train" }],
+			unshippableReason: null,
+		})
+
+		const written = await readLocalJSONFile<{ source_rights: SourceRightsRecord }>(
+			scratch.path("MANIFEST.json").toString()
+		)
+
+		expect(written.source_rights.shippable).toBe(true)
+		expect(written.source_rights.sources_checked).toEqual(expect.arrayContaining(["ban", "wof-admin"]))
+	})
+
+	it("records the overlay as not shippable when the override admits an unpermitted source", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-gb-v4.train.parquet", "rendered-gb")
+
+		await assembleOverlayManifest({
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			replaceSources: ["rendered-gb"],
+		})
+
+		const written = await readLocalJSONFile<{ source_rights: SourceRightsRecord }>(
+			scratch.path("MANIFEST.json").toString()
+		)
+
+		expect(written.source_rights.shippable).toBe(false)
+
+		expect(written.source_rights.gaps.map((gap) => `${gap.source}:${gap.registerSource}`)).toEqual(
+			expect.arrayContaining(["rendered-gb:gb-property-building-1"])
+		)
 	})
 })
 

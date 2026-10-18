@@ -99,6 +99,26 @@ refuses a config key that no adapter, recipe or retained overlay emits under eit
 assembled before 2026-09-26 stores the retired spelling, and the config that targets it keeps that
 spelling, because the loader reads the corpus rather than the table.
 
+## A new source joins the input table and the register before any build reads it
+
+`data/corpus-source-inputs.json` maps every corpus source id to the register sources whose text reaches its
+rows, with the `licenseID` each one points at. A derived or synthetic source lists every input, and a
+publication with no register row gets one in `data/source-additions.json` under an `unchecked` decision, so
+the gap shows in the register rather than hiding as an absence. Add both entries in the change that adds the
+adapter, recipe, carried overlay or Python builder, before any build reads the source. The
+`corpus-source-inputs` repository check reports an emitted source the table does not map.
+
+`buildCorpus`, `corpus overlay-manifest`, `corpus slice`, every Python corpus builder, the `train` command
+and the Modal launcher's local entry point refuse a source unless each register source it reads carries an
+elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
+source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,
+`data.unshippable_reason`) admits the source for a local experiment and records the output as not shippable
+in its `source_rights` or `SOURCE_RIGHTS.json` record. An output it admits is always marked not shippable. A source that keeps
+its id while its producer changes inputs records the earlier inputs under `history` with the corpora built
+from them, as `spliced-sub-venue` does for its Price Paid Data skeletons (#2635, #2643).
+
+The register build also reads `data/source-additions.json`, as `data/PROVENANCE.md` records.
+
 ## Shared implementations
 
 `lib/adapter.ts` owns `HOUSE_NUMBER_PREFIX` and `splitStreetLine(line)`, the house-number and street
@@ -162,6 +182,15 @@ artifact. A portal also returns third parties' datasets about a country, and a t
 is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
 `electedTerms` carry the publisher's words, because `electedLicenseLabel` feeds the share-alike
 filter.
+
+Whether address data can be elected without a publisher's grant depends on the country's law, so each
+country states its position in `lib/<cc>/AGENTS.md`. The United States elects a public body's file
+published without terms restricting its use, because US copyright excludes facts and US law has no
+database right (`lib/us/AGENTS.md`). EU and EEA members and the United Kingdom give a database's maker
+rights over its contents, so their rows need the publisher's grant. Under every position, terms that
+spell out a restricted use are a refusal. A country without a `lib/<cc>/AGENTS.md` has adopted no
+reading, and its rows need the publisher's grant. Write that file before electing a row under any basis
+other than the publisher's grant.
 
 For an INSPIRE download service, `<Fees>` and `<AccessConstraints>` in the WFS capabilities describe
 calling the service rather than the data. Member states fill them with their own word for absent

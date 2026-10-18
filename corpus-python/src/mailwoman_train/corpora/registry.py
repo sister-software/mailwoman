@@ -34,6 +34,7 @@ from ..countries.jp import registers as jp_registry
 from ..countries.tw import registers as tw_registry
 from ..labels import resolve_label_set
 from ..paths import data_root_path
+from ..source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ..text.normalize import normalize_text
 from ..tokenizer.char import build_char_vocab, save_char_vocab
 from .builder import SCHEMA, coverage_stats, muni_bucket, select_exact, verify_cjk_record
@@ -217,11 +218,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true")
+    add_unshippable_flag(parser)
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    build(parse_args(argv))
+    args = parse_args(argv)
+    source = LOCALES[args.locale]["source"]
+    rights = admit_sources(
+        [source], context=f"{args.locale} registry build", unshippable_reason=args.unshippable_reason
+    )
+    build(args)
+    write_rights_record(rights, args.out_dir)
 
 
 if __name__ == "__main__":

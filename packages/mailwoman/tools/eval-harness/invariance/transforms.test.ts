@@ -64,7 +64,7 @@ describe("abbreviation-swap", () => {
 	})
 
 	it("swaps Road <-> Rd", () => {
-		expect(swap("10 Station Road, Cropredy")).toBe("10 Station Rd, Cropredy")
+		expect(swap("48 Station Road, Milltimber")).toBe("48 Station Rd, Milltimber")
 	})
 
 	it("returns null when no swappable token is present", () => {
@@ -72,7 +72,7 @@ describe("abbreviation-swap", () => {
 	})
 
 	it("skips a LEADING 'St' (Saint-prefix), but still swaps a later Avenue", () => {
-		expect(swap("St Bedes Avenue, Fishburn, Stockton-on-Tees")).toBe("St Bedes Ave, Fishburn, Stockton-on-Tees")
+		expect(swap("St Machar Avenue, Aboyne")).toBe("St Machar Ave, Aboyne")
 	})
 
 	it("returns null for a bare leading 'St' with no other swappable token", () => {

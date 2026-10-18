@@ -45,6 +45,7 @@ import pyarrow.parquet as pq
 
 from ...corpora.builder import SCHEMA, verify_cjk_record
 from ...labels import resolve_label_set
+from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ...tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
 
 LABEL_SET_NAME = "stage3-cjk"
@@ -218,6 +219,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         metavar="DIR:SOURCE",
         help="another versioned corpus on the same schema, referenced by volume path under SOURCE (repeatable)",
     )
+    add_unshippable_flag(parser)
     args = parser.parse_args(argv)
     extra_corpora = []
     for entry in args.extra_corpus:
@@ -225,6 +227,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         if not directory or not source:
             raise SystemExit(f"--extra-corpus takes DIR:SOURCE, got {entry!r}")
         extra_corpora.append((Path(directory), source))
+    # The overlay's manifest lists the JP corpus, the CN units and every extra corpus by source.
+    rights = admit_sources(
+        ["overture-jp", CN_SOURCE, *(source for _, source in extra_corpora)],
+        context="CJK overlay assembly",
+        unshippable_reason=args.unshippable_reason,
+    )
     report = build(
         jp_corpus=Path(args.jp_corpus),
         cn_train=Path(args.cn_train),
@@ -236,6 +244,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         force=args.force,
         extra_corpora=extra_corpora,
     )
+    write_rights_record(rights, args.out_dir)
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
 

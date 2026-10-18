@@ -49,9 +49,11 @@ import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
 import { gnafAdapter } from "#au/adapters/gnaf/adapter"
+import { azerbaijanPlacesAdapter } from "#az/adapters/opendata/adapter"
 import { brusselsAdapter } from "#be/adapters/brussels/adapter"
 import { vlaanderenAdapter } from "#be/adapters/vlaanderen/adapter"
 import { wallonieAdapter } from "#be/adapters/wallonie/adapter"
+import { gbpaAdapter } from "#bs/adapters/gbpa/adapter"
 import { czCuzkAdapter } from "#cz/adapters/cuzk/adapter"
 import { dkInspireAdapter } from "#dk/adapters/inspire/adapter"
 import { adsAdapter } from "#ee/adapters/ads/adapter"
@@ -60,11 +62,15 @@ import { esCatastroAdapter } from "#es/adapters/catastro/adapter"
 import { esGipuzkoaAdapter } from "#es/adapters/gipuzkoa/adapter"
 import { esNavarraAdapter } from "#es/adapters/navarra/adapter"
 import { ryhtiAdapter } from "#fi/adapters/ryhti/adapter"
+import { adressurFaroeAdapter } from "#fo/adapters/adressur/adapter"
 import { annuaireEducationAdapter } from "#fr/adapters/annuaire-education/adapter"
 import { banAdapter } from "#fr/adapters/ban/adapter"
 import { finessAdapter } from "#fr/adapters/finess/adapter"
 import { gbOSOpenAdapter } from "#gb/adapters/os-open/adapter"
+import { guamAddressPointsAdapter } from "#gu/adapters/bsp/adapter"
+import { isleOfManLandRegistryAdapter } from "#im/adapters/land-registry/adapter"
 import { itANACAdapter } from "#it/adapters/anac/adapter"
+import { llvLiechtensteinAdapter } from "#li/adapters/llv/adapter"
 import { bdAdressesAdapter } from "#lu/adapters/bd-adresses/adapter"
 import { varisAdapter } from "#lv/adapters/varis/adapter"
 import { nlKadasterAdapter } from "#nl/adapters/kadaster/adapter"
@@ -84,6 +90,7 @@ import { usgovImlsPlsAdapter } from "#us/adapters/usgov/imls-pls/adapter"
 import { USGovIRSBMFAdapter } from "#us/adapters/usgov/irs-bmf/adapter"
 import { usgovNADAdapter } from "#us/adapters/usgov/nad/adapter"
 import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
+import { ideUruguayAdapter } from "#uy/adapters/ide/adapter"
 
 /**
  * Built-in adapters.
@@ -106,6 +113,13 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	banAdapter,
 	matrikkelenAdapter,
 	ryhtiAdapter,
+	ideUruguayAdapter,
+	llvLiechtensteinAdapter,
+	adressurFaroeAdapter,
+	isleOfManLandRegistryAdapter,
+	gbpaAdapter,
+	azerbaijanPlacesAdapter,
+	guamAddressPointsAdapter,
 	czCuzkAdapter,
 	dkInspireAdapter,
 	adsAdapter,

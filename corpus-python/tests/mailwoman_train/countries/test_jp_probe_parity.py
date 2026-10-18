@@ -126,6 +126,10 @@ def run_build(scratch: Path, patch: pytest.MonkeyPatch) -> dict[str, Any]:
             str(VAL_ROWS),
             "--board-rows",
             str(BOARD_ROWS),
+            # overture-jp reads register rows no decision permits. This test pins the build's rows and leaves rights
+            # to test_source_rights.py.
+            "--unshippable-reason",
+            "test fixture: probe build parity",
         ],
     )
     main()

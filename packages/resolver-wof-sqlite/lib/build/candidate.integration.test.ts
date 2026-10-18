@@ -368,6 +368,60 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
 	})
 
+	// The Collective Database reading of an ODbL postcode fold (issue #2618) rests on this invariant.
+	// The fold appends its own rows and reads or changes no other row.
+	test("a postcode extract adds only its own rows and leaves every other row and sidecar unchanged", async () => {
+		const { output: baselinePath } = await adminOnlyCandidate()
+		const input = scratch.path("admin.db")
+		const pc = scratch.path("postcodes.db")
+		const output = scratch.path("candidate.db")
+		buildFixtureAdmin(input)
+		buildFixturePostcodes(pc)
+
+		await buildCandidateTable({ input, output, postcodes: [pc] })
+
+		using baseline = new DatabaseClient<WOFDatabase>(baselinePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+
+		const extractIDs = [60_601, 11_201]
+		const inExtract = `spr_id IN (${extractIDs.join(", ")})`
+
+		const otherRows = (handle: DatabaseClient<WOFDatabase>) =>
+			allRows<Record<string, unknown>>(
+				handle.prepare(
+					`SELECT c.*, cc.code, pt.placetype FROM candidate c
+					 JOIN country_codes cc ON cc.id = c.country_id JOIN placetype_codes pt ON pt.id = c.placetype_id
+					 WHERE NOT c.${inExtract} ORDER BY c.spr_id, c.name_key`
+				)
+			).map(({ country_id: _country, placetype_id: _placetype, ...row }) => row)
+
+		expect(otherRows(db)).toEqual(otherRows(baseline))
+
+		for (const table of ["candidate_ancestor", "candidate_interval"]) {
+			const all = `SELECT * FROM ${table} ORDER BY 1, 2`
+			expect(allRows(db.prepare(all))).toEqual(allRows(baseline.prepare(all)))
+		}
+
+		const folded = allRows<{
+			spr_id: number
+			region_id: number
+			neg_rank: number
+			population: number
+			importance: number | null
+			name_role: string | null
+		}>(
+			db.prepare(
+				`SELECT spr_id, region_id, neg_rank, population, importance, name_role FROM candidate WHERE ${inExtract}`
+			)
+		)
+
+		expect(new Set(folded.map((row) => row.spr_id))).toEqual(new Set(extractIDs))
+
+		for (const row of folded) {
+			expect(row).toMatchObject({ region_id: 0, neg_rank: 0, population: 0, importance: null, name_role: null })
+		}
+	})
+
 	test("a region's alias that is another same-country region's official name is refused, not staged", async () => {
 		const input = scratch.path("admin.db")
 		const output = scratch.path("candidate.db")

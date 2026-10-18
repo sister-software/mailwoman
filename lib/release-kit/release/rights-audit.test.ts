@@ -19,9 +19,12 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import {
 	auditRights,
+	auditTrainingRights,
 	packagesMissingOpenStreetMapAttribution,
 	packagesWithoutFrozenManifest,
+	readKnownTrainingRightsViolations,
 	renderRightsAudit,
+	trainingRightsRefusals,
 } from "#release-kit/release/rights-audit"
 
 let audit: Awaited<ReturnType<typeof auditRights>>
@@ -41,7 +44,7 @@ describe("auditRights", () => {
 	it("counts an entry stating no use apart from one stating a use that is not training", () => {
 		const enUS = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-en-us")
 
-		expect(enUS?.attributionEntries).toBe(11)
+		expect(enUS?.attributionEntries).toBe(10)
 		expect(enUS?.entriesNotTraining).toBe(4)
 		expect(enUS?.entriesStatingNoUse).toBe(1)
 
@@ -77,7 +80,7 @@ describe("auditRights", () => {
 		const recorded = audit.training.filter((row) => row.manifest)
 
 		expect(recorded.map((row) => row.package)).toEqual(["@mailwoman/neural-weights-en-us"])
-		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.2-address-systems")
+		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.10-gb-county")
 		expect(recorded[0]?.manifest?.problems).toEqual([])
 		// Every source the audited epoch emitted is in the frozen record, so the effective
 		// manifest covers the whole epoch rather than part of it.
@@ -166,6 +169,48 @@ describe("auditRights", () => {
 		// the full count would mean a recorded resolution stopped being read.
 		// The assertions above leave each blocker's own count free, because every review moves it.
 		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(audit.register.sources)
+	})
+
+	it("passes the training-rights comparison because no published model's training source lacks a permitting decision", async () => {
+		expect(audit.trainingRights.violations).toEqual([])
+		expect(audit.trainingRights.unrecorded).toEqual([])
+		expect(audit.trainingRights.stale).toEqual([])
+		expect(trainingRightsRefusals(audit)).toEqual([])
+		expect(await readKnownTrainingRightsViolations(repoRootPath())).toEqual([])
+	})
+
+	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {
+		// Model 10.1.0 trained on corpus v0.7.2-address-systems, whose effective manifest stays committed.
+		// Replaying en-us against that corpus measures its Price Paid Data violations again.
+		const as101 = audit.training.map((row) =>
+			row.package === "@mailwoman/neural-weights-en-us" ? { ...row, corpusNamed: "v0.7.2-address-systems" } : row
+		)
+
+		const missing = await auditTrainingRights(repoRootPath(), audit.packages, as101, [])
+
+		expect(missing.unrecorded.map((entry) => entry.source)).toContain("rendered-gb")
+
+		expect(trainingRightsRefusals({ ...audit, trainingRights: missing }).join("\n")).toMatch(
+			/neural-weights-en-us trained under v0\.7\.2-address-systems on rendered-gb, which reads gb-property-building-1/u
+		)
+
+		// An entry for a model that no longer holds the violation is stale and must be removed.
+		const retired = {
+			package: "@mailwoman/neural-weights-en-us",
+			corpusVersion: "v0.7.2-address-systems",
+			source: "rendered-gb",
+			registerSources: ["gb-property-building-1"],
+			reason: "Rows built from HM Land Registry Price Paid Data address fields.",
+			issue: 2635,
+		}
+
+		const stale = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, [retired])
+
+		expect(stale.stale).toEqual([retired])
+
+		expect(trainingRightsRefusals({ ...audit, trainingRights: stale })).toEqual([
+			expect.stringMatching(/no published model's training sources hold that violation now\. Remove the entry\./u),
+		])
 	})
 
 	it("renders a report that ends on what it leaves open", () => {

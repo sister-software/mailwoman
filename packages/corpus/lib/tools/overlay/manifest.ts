@@ -8,13 +8,14 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { openSourceRightsAdmission, type SourceRightsRecord } from "#source-register/corpus-inputs"
 import type { SplitName } from "#utils/split"
 
 interface ParquetFileDescriptor {
@@ -52,6 +53,10 @@ interface BaseManifest {
 	total_rows: number
 	[PRE_RENAME_FILES_KEY]?: ManifestFile[]
 	[PRE_RENAME_ROWS_PER_FILE_KEY]?: unknown
+	/**
+	 * The source-rights record a build or assembly wrote when it checked its sources.
+	 */
+	source_rights?: SourceRightsRecord
 }
 
 /**
@@ -250,6 +255,106 @@ export interface OverlayManifestOptions {
 	 * Each source in this list must appear in the base, and its rows leave the split counts.
 	 */
 	replaceSources?: readonly string[]
+	/**
+	 * Why a local experiment admits sources whose register rows lack an elected
+	 * decision permitting `transform` and `train`.
+	 *
+	 * Without it the assembly refuses them, and with it the manifest records the corpus as not shippable.
+	 */
+	unshippableReason?: string | null
+}
+
+/**
+ * Reads the distinct `source` values of base files whose manifest entries name no source.
+ *
+ * Every file must be present under the local data root.
+ * When one is absent, or a row's `source` is null, `sources` is null and `unreadable` names the cause.
+ *
+ * The caller therefore cannot mistake a partial read for the whole base.
+ */
+async function readBaseFileSources(
+	files: readonly ManifestFile[]
+): Promise<{ sources: string[]; unreadable: null } | { sources: null; unreadable: string }> {
+	const paths = files.map((file) => localManifestFilePath(file.path))
+	const absent: string[] = []
+
+	for (const path of paths) {
+		if (!(await pathExists(path))) {
+			absent.push(path)
+		}
+	}
+
+	if (absent.length) {
+		return { sources: null, unreadable: `${absent.length} of them are absent locally (first: ${absent[0]})` }
+	}
+
+	using db = await openDuckDB()
+
+	const list = paths.map((path) => `'${escapeSQLString(path)}'`).join(", ")
+	const result = await db.runAndReadAll(`SELECT DISTINCT source FROM read_parquet([${list}])`)
+	const values = result.getRowObjects().map((row) => row.source as string | null)
+
+	if (values.some((value) => value == null)) {
+		return { sources: null, unreadable: "a row among them carries a null source" }
+	}
+
+	return { sources: values as string[], unreadable: null }
+}
+
+/**
+ * Checks every corpus source the assembled manifest will hold, before the manifest or plan is written.
+ *
+ * The base manifest's own record covers a base file that records no source, when the base has a record.
+ * A base without a record is checked by reading its files' `source` column.
+ *
+ * When a file cannot be read, the check refuses the base rather than reading the absence as clear.
+ */
+async function checkOverlaySources(
+	args: OverlayManifestOptions,
+	base: BaseManifest,
+	kept: readonly ManifestFile[]
+): Promise<SourceRightsRecord> {
+	const rights = await openSourceRightsAdmission({
+		context: `overlay assembly ${args.version}`,
+		unshippableReason: args.unshippableReason ?? null,
+	})
+
+	const named = new Set<string>(args.files.map((file) => file.source))
+	const unnamed = kept.filter((file) => file.source === undefined)
+
+	for (const file of kept) {
+		if (file.source !== undefined) {
+			named.add(file.source)
+		}
+	}
+
+	if (unnamed.length && base.source_rights) {
+		for (const source of base.source_rights.sources_checked) {
+			named.add(source)
+		}
+	}
+
+	// A base without a record is read instead: its files' own `source` column is what the loader groups rows by.
+	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed) : null
+
+	for (const source of read?.sources ?? []) {
+		named.add(source)
+	}
+
+	rights.admitAll(named)
+
+	if (unnamed.length && !base.source_rights && read?.unreadable) {
+		rights.admitUnverified(
+			`${unnamed.length} file(s) of base ${args.base}, which name no source while the base manifest carries no ` +
+				`\`source_rights\` record, and ${read.unreadable}`
+		)
+	}
+
+	if (base.source_rights && !base.source_rights.shippable) {
+		rights.admitUnverified(`base ${args.base}, whose own record reads not shippable`)
+	}
+
+	return rights.record()
 }
 
 /**
@@ -356,6 +461,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		.filter((s) => !dropped.includes(s))
 		.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 
+	const sourceRights = await checkOverlaySources(args, base, kept)
+
 	const added: ParquetFileDescriptor[] = []
 
 	const newDir = PathBuilder.from(args.newDir)
@@ -415,6 +522,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		licenses_cover:
 			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +
 			`these ${added.length} added file(s) carry their own: ${[...new Set(args.files.map((file) => file.source))].toSorted().join(", ")}.`,
+		source_rights: sourceRights,
 	}
 
 	const out = newDir("MANIFEST.json")

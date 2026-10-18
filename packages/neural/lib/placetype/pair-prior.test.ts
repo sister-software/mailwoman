@@ -393,7 +393,7 @@ describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥
 describe("BuildPlacetypePairPriors — segment-parent same-field postcode strip", () => {
 	it('GB: "Macclesfield SK11 9PD" parent segment folds to "macclesfield" — the pair fires (the fix)', () => {
 		const index = mockPairIndex({ "henbury|macclesfield": "dependent_locality" }, 6, undefined, "gb")
-		const text = "41 Hightree Drive, Henbury, Macclesfield SK11 9PD"
+		const text = "41 Cornish Drive, Henbury, Macclesfield SK11 9PD"
 
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
@@ -569,7 +569,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 	it("comma-free adjacent pair + postcode: child biased, parent (and postcode) untouched — anchor sits left of the WHOLE postcode span", () => {
 		const index = mockPairIndex({ "fishburn|stockton on tees": "dependent_locality" }, 6)
 
-		const text = "St Bedes Avenue Fishburn Stockton on Tees TS21 3AB"
+		const text = "St Machar Avenue Fishburn Stockton on Tees TS21 3AB"
 		const pieces = makePieces(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
@@ -584,7 +584,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 
 	it("Comma-free without postcode: the string-final window is the parent anchor; explicit probeMode 'anchored' matches the auto default", () => {
 		const index = mockPairIndex({ "fishburn|stockton on tees": "dependent_locality" }, 6)
-		const text = "St Bedes Avenue Fishburn Stockton on Tees"
+		const text = "St Machar Avenue Fishburn Stockton on Tees"
 		const pieces = makePieces(text)
 		const { matrix: autoMatrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
@@ -970,7 +970,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 
 	it('normal predecessor ("Close" — ordinary address syntax): adjustment present, unchanged', () => {
 		const index = mockPairIndex({ "glenfield|leicester": "dependent_locality" }, 10, 5)
-		const text = "Carpenters Close Glenfield Leicester"
+		const text = "Lethbridge Close Glenfield Leicester"
 		const pieces = makePieces(text)
 		const { transitionAdjustments } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 

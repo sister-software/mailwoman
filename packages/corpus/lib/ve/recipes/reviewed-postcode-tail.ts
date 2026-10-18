@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Renders four hand-reviewed Venezuelan postcode facts in the `locality postcode, region` order.
+ *   Renders hand-reviewed Venezuelan postcode facts in the `locality postcode, region` order.
+ *
+ *   A fact is kept in the data file only when its citation reaches a register row whose elected decision permits
+ *   transform and train. None does today, so the file holds no tuple and the recipe refuses to run.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -21,8 +24,6 @@ import { SurfaceOrigin } from "#types"
  * The rows get their own sampler bucket so an eval can measure them apart from other postcode placements.
  */
 export const REVIEWED_POSTCODE_TAIL_SOURCE = defaultRecipeSource("synth-reviewed-postcode-tail")
-
-const REVIEWED_TUPLE_COUNT = 4
 
 interface ReviewedTupleProvenance {
 	publisher: string
@@ -50,6 +51,11 @@ export interface ReviewedPostcodeTuple {
 interface ReviewedPostcodeTupleFile {
 	version: string
 	reviewedAt: string
+	/**
+	 * How many tuples the file declares, so a tuple lost in an edit fails the read
+	 * rather than shrinking the output.
+	 */
+	tupleCount: number
 	tuples: ReviewedPostcodeTuple[]
 }
 
@@ -79,15 +85,24 @@ export function defaultReviewedPostcodeTuplePath(): string {
 /**
  * Reads and validates the reviewed tuples.
  *
- * @throws When the file does not hold exactly four complete, unique, reviewed tuples.
+ * @throws When the file does not hold as many complete, unique, reviewed
+ * tuples as its `tupleCount` declares.
  */
 export async function readReviewedPostcodeTuples(
 	path: PathBuilderLike = defaultReviewedPostcodeTuplePath()
 ): Promise<ReviewedPostcodeTuple[]> {
 	const document = await readLocalJSONFile<ReviewedPostcodeTupleFile>(path)
 
-	if (!document.version || !ISO_DATE.test(document.reviewedAt) || document.tuples.length !== REVIEWED_TUPLE_COUNT) {
-		throw new Error("reviewed postcode tuple file must declare a version, review date, and exactly four tuples")
+	if (
+		!document.version ||
+		!ISO_DATE.test(document.reviewedAt) ||
+		!Number.isInteger(document.tupleCount) ||
+		document.tuples.length !== document.tupleCount
+	) {
+		throw new Error(
+			`reviewed postcode tuple file must declare a version, a review date, and a tupleCount matching its ` +
+				`${document.tuples?.length ?? 0} tuples`
+		)
 	}
 
 	const ids = new Set<string>()
@@ -176,6 +191,14 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 	mode: "generate",
 	async run(opts, write) {
 		const tuples = await readReviewedPostcodeTuples(opts.input)
+
+		if (!tuples.length) {
+			throw new Error(
+				"reviewed-postcode-tail has no tuple to render: no reviewed fact's citation reaches a register row " +
+					"permitting transform and train"
+			)
+		}
+
 		let emitted = 0
 		let skipped = 0
 

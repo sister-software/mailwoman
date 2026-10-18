@@ -22,6 +22,8 @@
  * During a retry, the client reuses its request id.
  * Versioning follows the package release.
  * Hugging Face publishes the model artifacts.
+ * Training ran for 60,000 steps.
+ * Retraining used the same seed.
  * Birling Gap is a place name.
  * Wyoming is a state name.
  * Nursing is a source category.

@@ -22,8 +22,10 @@ time, on the **untouched shipped model**, with no retrain. It synthesizes the GB
 
 The two worked cases this page distills:
 
-- **GB** — 19,209 `(child, parent)` pairs from HM Land Registry PPD, shipped in bundle 6.6.1 /
-  `@mailwoman/neural` 7.7.0 (δ=10, transition-β=5).
+- **GB** — 19,209 `(child, parent)` pairs from HM Land Registry Price Paid Data, shipped in bundle
+  6.6.1 / `@mailwoman/neural` 7.7.0 (δ=10, transition-β=5). Price Paid Data's address fields are
+  outside its Open Government Licence grant, so on 2026-10-17 the GB index was rebuilt from Who's On
+  First and ONS ward pairs alone, 13,380 pairs (#2635). Do not copy the GB register row below.
 - **NZ** — 3,134 pairs from LINZ-derived OpenAddresses, shipped in bundle 6.6.2 / npm 7.8.0 (δ=10,
   no β), including the repeated-name identity-pair convention.
 
@@ -80,13 +82,15 @@ class — see the Calibrate section.
 
 Pick one authoritative **open** register per country and extract `(child, parent)` tuples.
 
-| Country | Register             | License   | Tuple source                             |
-| ------- | -------------------- | --------- | ---------------------------------------- |
-| GB      | HM Land Registry PPD | OGL v3.0  | `CITY` (child) under `DISTRICT` (parent) |
-| NZ      | LINZ → OpenAddresses | CC-BY 4.0 | suburb (child) under post town (parent)  |
+| Country | Register              | License   | Tuple source                                         |
+| ------- | --------------------- | --------- | ---------------------------------------------------- |
+| GB      | none since 2026-10-17 | —         | Who's On First and ONS ward pairs without a register |
+| NZ      | LINZ → OpenAddresses  | CC-BY 4.0 | suburb (child) under post town (parent)              |
 
-The extraction lives in a `corpus/src/tools/fetch/*` fetcher (GB: `ppd.ts` emits `gb-tuples.csv`
-with `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). The register catalogue is
+Check the register's license decision before extracting. The GB row used to read HM Land Registry
+Price Paid Data's `CITY` under `DISTRICT`. Those are Royal Mail address fields that the download page
+excludes from the Open Government Licence, and `packages/corpus/data/license-decisions.json` refuses
+them, so `gazetteer pair-index` now refuses a GB `--source`. The register catalogue is
 [address data sources](./address-data-sources.mdx). A new country adds a row there.
 
 **Fold rules.** Child and parent are folded through `normalizeFSTToken` (NFKC-lower,
@@ -301,7 +305,7 @@ all of them, and a missed one ships a broken or inert overlay:
 
 `link-dev-weights.ts` builds `pair-index-<cc>.bin` in place (no committed binary source) via the
 compiled `gazetteer pair-index` CLI, and **`weights.test.ts` re-invokes it on every `yarn test`**.
-A cold PPD build is ~4–5 minutes, so the script skips a rebuild only when the existing artifact is
+A cold build from a large register CSV takes minutes, so the script skips a rebuild only when the existing artifact is
 **verifiably fresh** — it peeks the PIX1 header and rebuilds loud on any of: `header.delta` ≠ the
 script's `PAIR_INDEX_DELTA` const, `header.transitionBeta` ≠ `PAIR_INDEX_TRANSITION_BETA` (an absent
 field reads `undefined` and forces the rebuild that stamps it in), or `header.sourceMD5s[0]` ≠ a

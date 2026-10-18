@@ -26,6 +26,7 @@ from ....corpora.builder import MAX_FIELD_CHARS, SCHEMA, coverage_stats, muni_bu
 from ....corpora.builder import verify_cjk_record as verify_record
 from ....labels import resolve_label_set
 from ....paths import resolve_data_root_default
+from ....source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ....tokenizer.char import build_char_vocab, save_char_vocab
 from .. import registers
 from ..juso import LabelRow, iter_label_rows
@@ -380,6 +381,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--force", action="store_true", help="overwrite a non-empty output directory")
+    add_unshippable_flag(parser)
     args = parser.parse_args(argv)
     args.juso_zip = resolve_data_root_default(args.juso_zip, *JUSO_ZIP_PARTS)
     args.permit_dir = resolve_data_root_default(args.permit_dir, *PERMIT_DIR_PARTS)
@@ -387,4 +389,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    build(parse_args(argv))
+    args = parse_args(argv)
+    corpus = admit_sources([SOURCE], context="KR corpus assembly", unshippable_reason=args.unshippable_reason)
+    registry = admit_sources(
+        [REGISTRY_SOURCE], context="KR registry assembly", unshippable_reason=args.unshippable_reason
+    )
+    build(args)
+    write_rights_record(corpus, args.out_dir)
+    write_rights_record(registry, args.registry_out_dir)

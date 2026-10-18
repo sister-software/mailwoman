@@ -47,6 +47,7 @@ extend-exclude = [
 	# These modules are generated from models or language registries.
 	"packages/registry/lib/models/*-gbt-en-us.ts",
 	"packages/codex/lib/country/official-languages.ts",
+	"packages/codex/lib/postcode/country-formats/data.ts",
 	"packages/core/lib/resources/languages/types.gen.ts",
 ]
 
@@ -132,6 +133,8 @@ extend-ignore-re = [
 	'''further investigations and modelling may be required''',
 	'''Myplan\.ie uses a \*\*generalised, homogenised version\*\*''',
 	'''Territory characterised according to its''',
+	# A place name as Azerbaijan's objects-and-places file spells it.
+	'''Busniss centre''',
 	# Building Digital UK's UPRN-level release names this column with its British spelling.
 	'''\bbduk_recognised_premises\b''',
 ]
@@ -141,6 +144,8 @@ extend-ignore-re = [
 # register and the ANS terminology `TRE-R35`, the education ministry's directorate `DNE`, Wallis and Futuna's
 # `Alo` and `Mata Utu`, Latvia's `DAT_BEIG` column, CORDIS's `SME` column, and the German sole-trader marker `Inh.`.
 finess = "finess"
+# Portuguese for "individual", in the Brasília sector name `Setor de Habitações Individuais Sul`.
+individuais = "individuais"
 tre = "tre"
 dne = "dne"
 alo = "alo"
@@ -178,6 +183,11 @@ alikes = "alikes"
 contextful = "contextful"
 # The accessibility audit tool.
 axe = "axe"
+# The Faroe Islands' ISO code inside source ids and locales (`adressur-fo`, `fo-FO`), Liechtenstein's
+# download theme `officialAdress`, and a Beninese university's name in a CORDIS fixture.
+fo = "fo"
+adress = "adress"
+universite = "universite"
 
 [default.extend-identifiers]
 # Standard codes, dependency names, and existing API identifiers retain their spelling.

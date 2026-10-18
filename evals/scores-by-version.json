@@ -1441,6 +1441,47 @@
 				}
 			},
 			"notes": "v7.2.0-address-systems step 60000. us.region 88.9 against the 89.4 floor, accepted by the operator with the D-rule rows in #2439. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): us.region. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/cb44fdf4-0f2d-41d1-a357-67226673a2d5/scratchpad/promotion-v720-b]"
+		},
+		{
+			"run_id": "v7100-gb-county-s42-20261018",
+			"model_version": "10.7.0",
+			"model_path": "@mailwoman/neural-weights-en-us@10.7.0",
+			"corpus_version": "v0.7.10-gb-county",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-10-18",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 60000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 92.1,
+					"country_homograph": 92,
+					"micro": 85.9,
+					"locality": 84.5,
+					"region": 89.5,
+					"street": 78.1,
+					"street_prefix": 95.8,
+					"street_suffix": 100,
+					"unit": 100,
+					"po_box_real": 97.3,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.6,
+					"house_number": 96.5,
+					"region": 52,
+					"cedex_real": 99.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 62
+				}
+			},
+			"notes": "Rights-clean model (v7.10.0 seed 42). Operator accepted us.postcode 92.1, fr.postcode 98.6 and fr.house_number 96.5 below their floors to retire 10.1.0's training-rights violations (#2682). OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): us.postcode, fr.postcode, fr.house_number. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fa269c16-8422-42f8-b944-7d4b32b5974f/scratchpad/promo-v7100-s42-fixed]"
 		}
 	]
 }

@@ -34,6 +34,7 @@ import {
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
+import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 
 const CLAIMS = Object.values(ConventionClaimID)
@@ -154,17 +155,15 @@ describe("conventionClaimForCountry", () => {
 		}
 	})
 
-	it("reads no statement from a national postal authority or from the UPU compendium yet", () => {
+	it("reads no statement from a national postal authority yet", () => {
 		const codes = new Set([...Object.keys(GENERATED_ADDRESS_LAYOUTS), ...Object.keys(ADDRESS_LAYOUTS)])
-
-		const unread = new Set<string>([ConventionSource.NationalPostalAuthority, ConventionSource.PostalAddressingSystems])
 
 		const cited: string[] = []
 
 		for (const claim of CLAIMS) {
 			for (const code of codes) {
 				for (const entry of conventionClaimForCountry(claim, code)!.observations) {
-					if (unread.has(entry.source)) {
+					if (entry.source === ConventionSource.NationalPostalAuthority) {
 						cited.push(`${code}/${claim}/${entry.source}`)
 					}
 				}
@@ -172,6 +171,29 @@ describe("conventionClaimForCountry", () => {
 		}
 
 		expect(cited).toEqual([])
+	})
+
+	it("cites the UPU compendium exactly for the countries whose description was retrieved", () => {
+		const codes = new Set([
+			...Object.keys(GENERATED_ADDRESS_LAYOUTS),
+			...Object.keys(ADDRESS_LAYOUTS),
+			...Object.keys(UPU_PAS_ADDRESS_LAYOUTS),
+		])
+
+		const citing = new Set<string>()
+
+		for (const code of codes) {
+			const observations = conventionClaimForCountry(ConventionClaimID.PostcodePrecedesLocality, code)!.observations
+			const pas = observations.find((entry) => entry.source === ConventionSource.PostalAddressingSystems)
+
+			if (!pas) continue
+
+			citing.add(code)
+			expect(pas.kind, code).toBe(ObservationKind.Description)
+			expect(pas.readFrom, code).toMatch(/retrieved/u)
+		}
+
+		expect([...citing].toSorted()).toEqual(Object.keys(UPU_PAS_ADDRESS_LAYOUTS).toSorted())
 	})
 
 	it("keeps both sides where the dataset and the Latin order disagree", () => {

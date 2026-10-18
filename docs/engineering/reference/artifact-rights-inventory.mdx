@@ -211,6 +211,14 @@ require, so both readings are wrong and the record stores the split instead.
 
 Entry 10 states no use at all. It is recorded as `unstated` rather than assumed to be training.
 
+**Entry 1's license was wrong (#2635).** HM Land Registry's download page grants OGL v3.0 for Price
+Paid Data and excludes its address fields, which Royal Mail and Ordnance Survey
+permit only for personal or non-commercial use and for displaying residential property price
+information. The `synth-gb-v1` rows the base model trained on are built from those fields. The en-us
+card now states that the model was trained on them under no license that permits the use, and the GB
+pair index was rebuilt on 2026-10-17 without them. Its entry now sits in `neural-weights-en-gb`'s own
+card.
+
 Entry 5 reads the per-country register license because Overture's attribution page, read 2026-09-25 at
 `https://docs.overturemaps.org/attribution/` (sha256
 `0074f0dc0d9bbe582174f7efe0581863622a8c3b40897230def5e37ab0a6c383`), declares an SPDX identifier for five

@@ -78,9 +78,9 @@ with a new record, or a separately documented notice.
 The record makes three distinctions on purpose. A package whose card records no attribution reads
 `none-recorded-in-this-package`, which states what the card holds rather than that the artifacts have no attributable
 inputs. An artifact with no digest reads `unrecorded` rather than verified. And
-`attribution_recorded_in_another_package` names the case the single-card layout produced: `pair-index-gb.bin` ships in
-`@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0 sits
-in `@mailwoman/neural-weights-en-us`'s card.
+`attribution_recorded_in_another_package` names the case the single-card layout produced, where an artifact ships in one
+package and the entry attributing it sits in another package's card. `pair-index-gb.bin` was that case until its entry
+moved into `@mailwoman/neural-weights-en-gb`'s own card.
 
 ## One pass over the whole rights chain
 
@@ -97,6 +97,17 @@ because `freezeTrainingManifest` runs only inside `buildCorpus` and counts the a
 aligned rather than the rows its files hold. The effective manifest derived from that record carries the
 attributions the audited epoch's sources owe, and `write-rights-files` prints them in each `LICENSE.md`;
 an overlay repeats its base's.
+
+The operation also reads every source a graph package's effective training manifest drew rows from against
+`packages/corpus/data/corpus-source-inputs.json` and the register, and fails on a source whose register rows
+lack an elected decision permitting `transform` and `train` unless
+`lib/release-kit/release/known-training-rights-violations.json` records it with its reason and issue. The
+published 10.1.0 model's 12 such sources are recorded there, `rendered-gb` and `spliced-sub-venue` under #2635
+for Price Paid Data and the rest under #2643 for refused or unfound terms. An entry no measured violation matches also
+fails, so a retrained model clears its entries by their removal, and a new violation needs a new entry
+stating why a release accepts it. A new corpus source joins the input table and the register before any build
+reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped source in a model trained after
+this rule.
 
 The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to

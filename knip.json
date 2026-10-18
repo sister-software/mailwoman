@@ -4,7 +4,6 @@
 		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
 		"docs/**/*.mdx",
-		"docs/.agents/**",
 		"docs/build/**",
 		"config/vale/fixtures/**",
 		"packages/mailwoman/cli/commands/**/*.tsx",
@@ -110,6 +109,7 @@
 		},
 		"docs": {
 			"entry": [
+				".agents/skills/run-docs/driver.mts",
 				"docusaurus.config.ts",
 				"sidebars.ts",
 				"plugins/**/*.ts",

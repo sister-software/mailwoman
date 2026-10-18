@@ -24,22 +24,26 @@ from .rows import (
     render_unit,
 )
 from .sources import (
+    OA_FILES,
     OA_LOCALES,
     PER_LOCALE_CAP,
     SEED,
     admin_pairs_from_corpus,
     collect_oa_pairs,
+    collect_ryhti_pairs,
     span_rows_from_corpus,
 )
 
 __all__ = [
     "COUNTRY_NAMES",
     "COUNTRY_SURFACES",
+    "OA_FILES",
     "OA_LOCALES",
     "PER_LOCALE_CAP",
     "SEED",
     "admin_pairs_from_corpus",
     "collect_oa_pairs",
+    "collect_ryhti_pairs",
     "main",
     "render",
     "render_admin_pair",

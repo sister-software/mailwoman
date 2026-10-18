@@ -129,7 +129,9 @@ tail that a batch-by-batch board process would never finish.
 ## Why en-us has no pair index today (and why that's sequencing rather than doctrine)
 
 The GB/NZ indexes exist because those postal formats include a dependent-locality or suburb line,
-and national registers (HM Land Registry PPD, LINZ) provide millions of pair rows. The US format has
+and national registers such as LINZ provide millions of pair rows. GB's register, HM Land Registry
+Price Paid Data, was removed from the index on 2026-10-17 because its address fields are outside its
+open license. The US format has
 no such line, because USPS routes by city/state/ZIP. The US therefore has no postal register to
 harvest, and mail delivery does not depend on the line. The schema's umbrella term still means that
 US dependent localities exist (NYC's five boroughs), and WOF supplies the pairs directly (211
@@ -182,6 +184,17 @@ from open data:
 Every increment after the baseline passed a venue-confound board before shipping, and no board has
 recorded a false positive.
 
+**The baseline rung was removed on 2026-10-17 (#2635).** Price Paid Data's address fields are Royal
+Mail data that HM Land Registry's download page excludes from the Open Government Licence, so
+"entirely from open data" did not hold for that rung. The GB index is now the R2–R8 rungs alone,
+13,380 pairs after a Who's On First snapshot refresh. On the 190-row GB board, against the index
+staged for 10.1.0, one row improved and one regressed:
+`Mischicks Day Spa - St Andrews Lakes - Rochester, Kent, Quarry Grv, Halling, Rochester ME2 1FW`
+no longer reads `Halling` as a dependent locality. The cost the board does not show is the
+village-under-post-town class the baseline covered, because no open source states the Royal Mail
+post town. OS Open Names settlements inside a town's bounding rectangle were measured as a
+replacement and regressed more rows.
+
 **Northern Ireland's blocker turned out not to exist.** Its pairs were deferred for months on the premise
 that "the pair parent needs post towns", which requires a licensed Royal Mail table. That premise
 came from the shape of GB's source (PPD's parent column happens to be the post town), not from what
@@ -207,7 +220,7 @@ remaining work was routine.
 
 | locale |   pairs | source       | note                                                  |
 | ------ | ------: | ------------ | ----------------------------------------------------- |
-| GB     |  30,825 | PPD + WOF    | England, Scotland, Wales, NI, London                  |
+| GB     |  13,380 | WOF + ONSPD  | England, Scotland, Wales, NI, London                  |
 | US     |  47,878 | WOF          | no postal register records the line                   |
 | DE     |  85,603 | WOF          | Deutsche Post has no Ortsteil field                   |
 | FR     | 199,282 | BAN `nom_ld` | the lieu-dit is the postal line                       |

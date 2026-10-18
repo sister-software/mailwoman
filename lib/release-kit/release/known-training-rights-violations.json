@@ -1,0 +1,4 @@
+{
+	"$comment": "Training-rights violations a release accepts. `mwops release rights-audit` measures every source a published graph package's effective training manifest drew rows from against `packages/corpus/data/corpus-source-inputs.json` and the address-source register, and fails on a violation this list does not record and on an entry here that no longer matches a measured violation. An entry is keyed by package, corpus version, source and the register sources lacking the permission, so a decision recorded later, a changed mapping or a retrained model each move the measurement and require the entry to be removed or rewritten. Removing an entry is how a retrained model clears it.",
+	"violations": []
+}

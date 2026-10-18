@@ -620,12 +620,12 @@ describe("the records this repository holds today", () => {
 
 		expect(records).toHaveLength(12)
 
-		// `pair-index-gb.bin` ships here with its OGL v3.0 attribution, so a consumer who
-		// installs only the overlay receives the attribution with the artifact.
+		// `pair-index-gb.bin` ships here with its Who's On First and ONS attribution,
+		// so a consumer who installs only the overlay receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
 		// The second entry is the OpenStreetMap credit the overlay owes through the base graph it decodes through.
-		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0", "ODbL-1.0"])
+		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0, CC BY 4.0, CC BY 2.0", "ODbL-1.0"])
 		expect(gb?.attribution[0]?.text).toContain("pair-index-gb.bin")
 	})
 

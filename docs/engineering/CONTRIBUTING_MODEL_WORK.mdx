@@ -36,6 +36,19 @@ steps to follow.
    with a −6.8pp FR admin-street-homonym regression behind a bar revision. That change is recorded as
    a documented violation with a standing obligation to fix it, and it does not set a precedent.)
 
+   **For a model promotion, the D-rule is measured on held-out address rows (adopted 2026-10-18).**
+   `packages/mailwoman/tools/eval-harness/heldout/per-country.run.ts` samples the candidate corpus's
+   test split per country and per row kind, and scores the shipped model and each candidate on the
+   same rows. A tier-1 locale regresses when its address-row span recall falls below the shipped
+   model's by more than the gap between two seeds of the candidate trained on one corpus. The
+   regression board's row count is a smoke check for a model promotion. On the board, a
+   from-scratch candidate moves more rows than the seed pair agrees on: v7.10.0's seeds 42 and 43
+   each regressed 9 GB board rows, 6 of them in common, while their GB address-row recall differed
+   by 0.9 points. The board also holds rows only for locales it was written for, so the gains a
+   corpus change brings to new countries reach it only where a row happens to exist. Gazetteer rows,
+   the Who's On First place names with their admin parents, are reported beside the address rows
+   for information only, because they include name variants in scripts a country does not write.
+
    **The precondition: each locale the D-rule covers needs a validation split that can show a
    regression.** The rule blocks on a regression against the shipped model, and `evaluate()` reports
    `val_loss`, `val_rows` and `macro_f1` over the whole split. A locale without rows in that split

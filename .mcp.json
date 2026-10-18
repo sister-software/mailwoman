@@ -1,5 +1,9 @@
 {
 	"mcpServers": {
+		"mailwoman-browser": {
+			"command": "node",
+			"args": ["lib/browser-mcp/cli.ts"]
+		},
 		"mailwoman-dev": {
 			"command": "node",
 			"args": ["lib/dev-mcp/cli.ts"]

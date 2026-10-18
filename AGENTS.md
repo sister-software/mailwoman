@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The repository also contains 73 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-75 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The `packages/` directory also contains 74 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+76 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-two workspaces publish to npm. `.release-it.json` defines that set, and the thirteen others are
+Sixty-two workspaces publish to npm. `.release-it.json` defines that set, and the fourteen others are
 private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
 audit refuse a tarball that ships a data file. Run the workspace check described in
 `lib/release-kit/AGENTS.md` after adding or moving a workspace.
@@ -30,7 +30,8 @@ repository root must read the applicable file explicitly.
 - `packages/mailwoman/AGENTS.md` covers CLI helpers, parser test helpers, ANSI output assertions, and
   interactive Ink tests.
 - `packages/corpus/AGENTS.md` covers OpenAddresses acquisition, source timestamps, CSV structure, and
-  corpus recipe outputs.
+  corpus recipe outputs. Each `packages/corpus/lib/<cc>/AGENTS.md` states that country's legal
+  position on electing address data.
 - `corpus-python/launch/AGENTS.md` covers Modal training launches and artifact recovery.
 - `lib/release-kit/AGENTS.md` covers publish artifacts, workspace registration, CI releases, and
   partial-release recovery.
