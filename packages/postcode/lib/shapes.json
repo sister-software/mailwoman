@@ -1,5 +1,5 @@
 {
-	"version": "postcode-shapes-v1",
+	"version": "postcode-shapes-v2",
 	"note": "Postcode SHAPE patterns for detecting postcode-like spans in free text, ordered most-specific to least. Priority IS the array index: a lower index wins an overlap. This is a SHAPE test, not gazetteer membership — see postcode-systems.ts for the per-system membership question. Alphanumeric patterns require UPPERCASE letters, which keeps them off lowercase prose. The regex bodies are written in the subset both JavaScript RegExp and Python re accept, because two runtimes read this file; a row that needs different source text in the two dialects needs a second field and a stated reason, not a loosened comparison.",
 	"shapes": [
 		{
@@ -9,6 +9,12 @@
 			"unicode": true,
 			"javascriptOnly": "Python's `re` refuses a variable-width lookbehind, and `\\s?` makes this one variable-width. Nothing on the Python side compiles this row.",
 			"note": "The digits behind 〒, optionally spaced (〒506-0025, 〒 100-0001). The character path keeps the mark in the text, and on a venue-led line the model has read the digits as a house number. A designated match may overwrite any existing label."
+		},
+		{
+			"label": "SG-marked",
+			"kind": "designated",
+			"pattern": "(?<=\\bS\\()\\d{6}(?=\\))",
+			"note": "Singapore's six digits inside the S( ) mark: 77A Neil Road S(088903). On 60 board rows written this way the model labeled no postcode at all. A fixed-width lookbehind, so Python's `re` compiles it too."
 		},
 		{
 			"label": "GB",

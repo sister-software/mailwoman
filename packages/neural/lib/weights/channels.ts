@@ -8,12 +8,12 @@
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
+import { type AnchorLookup, type AnchorSpanMode, anchorLookupFromPostcodes, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
-import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 
 /**
  * The `requires` block of a `model-card.json`, which declares the channel
@@ -178,7 +178,7 @@ async function readModelCardObject(
  */
 export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
-		? new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).toAnchorLookup()
+		? anchorLookupFromPostcodes(new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).groups())
 		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 

@@ -8,9 +8,9 @@
  *   `PLACETYPE_SPECIFICITY` cannot express that split.
  */
 
-import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 
 /**
  * The admin fallback order when the postcode leads, with the JP rungs beside their

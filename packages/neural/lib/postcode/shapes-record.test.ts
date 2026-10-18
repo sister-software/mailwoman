@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postcode-shape record is data authored once in `@mailwoman/codex`; the Python trainer cannot
+ *   The postcode-shape record is data authored once in `@mailwoman/postcode`. The Python trainer cannot
  *   import that package, so it includes a byte-identical copy that this test checks against the
  *   authored one.
  *
- *   It lives in this package rather than codex because codex is deliberately zero-dependency and the
- *   check needs a repo-root resolver.
+ *   The test lives in this package because `@mailwoman/postcode` depends only on codex, and the check
+ *   needs core's repo-root resolver.
  */
 
-import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode/shapes"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/postcode/shapes"
 import { describe, expect, it } from "vitest"
 
-const AUTHORED = repoRootPath("packages", "codex", "lib", "postcode", "shapes.json")
+const AUTHORED = repoRootPath("packages", "postcode", "lib", "shapes.json")
 const VENDORED = repoRootPath("corpus-python", "src", "mailwoman_train", "features", "postcode-shapes.json")
 
 describe("the postcode shape record", () => {
@@ -31,7 +31,7 @@ describe("the postcode shape record", () => {
 
 	it("compiles every shape, in the order the record declares", () => {
 		expect(POSTCODE_SHAPES.length).toBeGreaterThanOrEqual(12)
-		expect(POSTCODE_SHAPES_VERSION).toBe("postcode-shapes-v1")
+		expect(POSTCODE_SHAPES_VERSION).toBe("postcode-shapes-v2")
 
 		// Priority is the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
 		expect(POSTCODE_SHAPES.at(-1)?.label).toBe("NUM5")

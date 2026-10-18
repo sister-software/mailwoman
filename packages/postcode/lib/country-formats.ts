@@ -10,12 +10,12 @@
  *   four-digit value in a six-digit country is not.
  */
 
-import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#postcode/country-formats/data"
+import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 
 /**
  * One country's postcode format, compiled.
  */
-export interface CountryPostcodeFormat {
+export interface PostcodeSyntax {
 	/**
 	 * The anchored, case-insensitive pattern a whole postcode matches.
 	 */
@@ -26,21 +26,73 @@ export interface CountryPostcodeFormat {
 	readonly prefix: string | null
 }
 
-const compiled = new Map<string, CountryPostcodeFormat | null>()
+const compiled = new Map<string, PostcodeSyntax | null>()
+
+/**
+ * Rewrites each literal space in a libaddressinput pattern, and an optional `?` after it, as `\s*`.
+ *
+ * libaddressinput states the form a postal form prints, with one space where the canonical code has one.
+ * People type `m113aa`, `BN1  1AA` and `GX111AA`, and spacing is an observation
+ * rather than an admission test.
+ *
+ * A space inside a character class, as in the ZIP+4 separator `[ \-]`, is left alone
+ * because rewriting it would change the class.
+ */
+export function tolerateSpacing(pattern: string): string {
+	let out = ""
+	let inClass = false
+
+	for (let i = 0; i < pattern.length; i++) {
+		const c = pattern[i]!
+
+		if (c === "\\") {
+			out += c + (pattern[i + 1] ?? "")
+
+			i++
+
+			continue
+		}
+
+		if (c === "[") {
+			inClass = true
+		} else if (c === "]") {
+			inClass = false
+		}
+
+		if (c === " " && !inClass) {
+			out += "\\s*"
+
+			if (pattern[i + 1] === "?") {
+				i++
+			}
+
+			continue
+		}
+
+		out += c
+	}
+
+	return out
+}
 
 /**
  * The postcode format libaddressinput states for `countryCode`, or null when it states none.
  *
+ * The compiled pattern accepts any case and any run of whitespace, including none,
+ * where the stated form has a space.
  * A null answer means the dataset records no postcode system for the country,
  * as for the United Arab Emirates.
  */
-export function countryPostcodeFormat(countryCode: string): CountryPostcodeFormat | null {
+export function postcodeSyntax(countryCode: string): PostcodeSyntax | null {
 	const code = countryCode.toUpperCase()
 
 	if (compiled.has(code)) return compiled.get(code) ?? null
 
 	const source = COUNTRY_POSTCODE_FORMAT_SOURCES[code]
-	const format = source ? { pattern: new RegExp(`^(?:${source.pattern})$`, "iu"), prefix: source.prefix ?? null } : null
+
+	const format = source
+		? { pattern: new RegExp(`^(?:${tolerateSpacing(source.pattern)})$`, "iu"), prefix: source.prefix ?? null }
+		: null
 
 	compiled.set(code, format)
 
@@ -56,8 +108,8 @@ export function countryPostcodeFormat(countryCode: string): CountryPostcodeForma
  *
  * For a country with no stated format the answer is always null.
  */
-export function matchCountryPostcode(value: string, countryCode: string): string | null {
-	const format = countryPostcodeFormat(countryCode)
+export function acceptPostcode(value: string, countryCode: string): string | null {
+	const format = postcodeSyntax(countryCode)
 
 	if (!format) return null
 

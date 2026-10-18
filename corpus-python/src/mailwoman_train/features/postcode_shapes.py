@@ -5,7 +5,7 @@ repair runs its shape table over the raw text, because it has no gold. This modu
 table the inference side reads, so ``anchor_paint_mode="shaped"`` paints at train time on the same
 spans, congruent by construction.
 
-THE TABLE IS DATA rather than CODE. It lives at ``packages/codex/lib/postcode/shapes.json``, and
+THE TABLE IS DATA rather than CODE. It lives at ``packages/postcode/lib/shapes.json``, and
 ``postcode-shapes.json`` beside this file is a byte-identical copy of it. Two copies, because a Modal
 container receives only ``corpus-python/src`` and cannot read the repository's packages. One AUTHORED
 copy, because ``test_postcode_shapes`` fails on any byte of difference.

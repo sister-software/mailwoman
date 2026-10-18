@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**

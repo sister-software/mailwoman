@@ -4,7 +4,6 @@ import {
 	type ResolvedPlace,
 	type Resolver,
 	type ResolveOpts,
-	countryFromPostcodeFormat,
 	RESOLVE_SWITCH_DEFAULTS,
 } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -21,49 +20,6 @@ import {
 	extractGeocodeResult,
 	recognizeBarePostcode,
 } from "#geocode"
-
-describe("CountryFromPostcodeFormat", () => {
-	it("matches GB postcodes (spaced and unspaced)", () => {
-		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
-		expect(countryFromPostcodeFormat("SW1A 1AA")).toBe("GB")
-		expect(countryFromPostcodeFormat("IG5 0NA")).toBe("GB")
-		expect(countryFromPostcodeFormat("E49AZ")).toBe("GB")
-		expect(countryFromPostcodeFormat("  CH43 0TR  ")).toBe("GB")
-	})
-
-	it("matches CA postcodes (A#A #A#), distinct from GB", () => {
-		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
-		expect(countryFromPostcodeFormat("M5J 2J2")).toBe("CA")
-		expect(countryFromPostcodeFormat("V6C0C3")).toBe("CA")
-	})
-
-	it("Does NOT match a US ZIP, NL, or FR postcode (unforgeable → no mis-route)", () => {
-		expect(countryFromPostcodeFormat("90210")).toBeNull()
-		expect(countryFromPostcodeFormat("1012 LG")).toBeNull()
-		expect(countryFromPostcodeFormat("75013")).toBeNull()
-	})
-
-	it("matches IE Eircodes (routing key + 4-alnum unique part), incl. the D6W special", () => {
-		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
-		expect(countryFromPostcodeFormat("T12 X70A")).toBe("IE")
-		expect(countryFromPostcodeFormat("V94T2XR")).toBe("IE")
-		expect(countryFromPostcodeFormat("D6W XY00")).toBe("IE")
-	})
-
-	it("GB / CA / IE formats never collide", () => {
-		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
-		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
-		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
-
-		expect(countryFromPostcodeFormat("BT1 5GS")).toBe("GB")
-	})
-
-	it("is null on empty / missing input", () => {
-		expect(countryFromPostcodeFormat(null)).toBeNull()
-		expect(countryFromPostcodeFormat("")).toBeNull()
-		expect(countryFromPostcodeFormat("   ")).toBeNull()
-	})
-})
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }

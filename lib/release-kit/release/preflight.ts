@@ -14,6 +14,7 @@ import {
 	releaseWorkspaces,
 	stageReleaseTree,
 } from "#release-kit/release/stage"
+import { auditAddressSystemWidths } from "#release-kit/weights/address-system-width"
 import { copyWeights } from "#release-kit/weights/copy-weights"
 import { fetchHFWeights, reportHFMaterialization } from "#release-kit/weights/fetch-hf-weights"
 
@@ -49,6 +50,10 @@ export interface ReleasePreflightReport {
 	stagingRoot: string
 	publishCount: number
 	releaseListProblems: string[]
+	/**
+	 * Staged weights packages whose graph's `address_system_logits` width differs from the card's count.
+	 */
+	addressSystemWidthProblems: string[]
 	audited: number
 	failed: string[]
 	elapsedSeconds: number
@@ -125,7 +130,14 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 		reportHFMaterialization(materialization, log)
 	}
 
-	const results = await auditStagedWorkspaces(stagingRoot, await releaseWorkspaces(repoRoot))
+	const workspaces = await releaseWorkspaces(repoRoot)
+	const addressSystemWidthProblems = await auditAddressSystemWidths(stagingRoot, workspaces)
+
+	for (const problem of addressSystemWidthProblems) {
+		log(`✗ ${problem}`)
+	}
+
+	const results = await auditStagedWorkspaces(stagingRoot, workspaces)
 	const failed = results.filter((result) => !result.ok)
 
 	for (const result of results) {
@@ -143,7 +155,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	}
 
 	const elapsedSeconds = Number(((performance.now() - startedAt) / 1000).toFixed(1))
-	const verdict = !releaseListProblems.length && !failed.length ? "PASS" : "FAIL"
+
+	const verdict = !releaseListProblems.length && !addressSystemWidthProblems.length && !failed.length ? "PASS" : "FAIL"
 
 	log(
 		`${verdict} (--source ${source}): ${results.length - failed.length}/${results.length} workspaces ` +
@@ -156,6 +169,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 		stagingRoot,
 		publishCount: identity.publishCount,
 		releaseListProblems,
+		addressSystemWidthProblems,
 		audited: results.length,
 		failed: failed.map((result) => result.workspace),
 		elapsedSeconds,

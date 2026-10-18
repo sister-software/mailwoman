@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "#postcode/systems"
+import { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "#systems"
 
 const shapeAccepts = (code: string): boolean => UNIT_GRADE_POSTCODE.some((re) => re.test(code))
 

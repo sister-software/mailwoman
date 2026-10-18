@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
-
-import { type ByteCursor, readFramedHeader, writeFramedHeader } from "#binary-frame"
+import { type ByteCursor, readFramedHeader, writeFramedHeader } from "@mailwoman/core/binary-frame"
 
 const MAX_TAGS_PER_BYTE = 256
 

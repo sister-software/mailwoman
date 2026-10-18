@@ -242,6 +242,7 @@
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
+		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",

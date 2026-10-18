@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { POSTCODE_SHAPES } from "@mailwoman/codex/postcode/shapes"
 import type { DecoderToken } from "@mailwoman/core/decoder"
+import { POSTCODE_SHAPES } from "@mailwoman/postcode/shapes"
 
 import {
 	collectMatchesFor,
@@ -33,7 +33,7 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/codex/postcode/shapes` because the Python trainer reads the same data.
+ * The table lives in `@mailwoman/postcode/shapes` because the Python trainer reads the same data.
  * The copies must stay aligned.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{

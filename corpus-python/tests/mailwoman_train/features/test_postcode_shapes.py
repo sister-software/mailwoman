@@ -17,17 +17,17 @@ from mailwoman_train.features.postcode_shapes import (
 )
 from tests import paths
 
-CODEX_RECORD = paths.REPO_ROOT / "packages" / "codex" / "lib" / "postcode" / "shapes.json"
+AUTHORED_RECORD = paths.REPO_ROOT / "packages" / "postcode" / "lib" / "shapes.json"
 
 
 def test_the_vendored_record_is_byte_identical_to_the_authored_one() -> None:
     """A byte compare cannot be defeated by a formatting change that a source-text parser silently stops matching."""
-    assert CODEX_RECORD.is_file(), (
-        f"the authored record is not at {CODEX_RECORD}; this test reads a path no compiler checks, "
+    assert AUTHORED_RECORD.is_file(), (
+        f"the authored record is not at {AUTHORED_RECORD}; this test reads a path no compiler checks, "
         "so a workspace move breaks it silently"
     )
-    assert SHAPES_PATH.read_bytes() == CODEX_RECORD.read_bytes(), (
-        f"{SHAPES_PATH} has drifted from {CODEX_RECORD}. The codex copy is the authored one — copy it "
+    assert SHAPES_PATH.read_bytes() == AUTHORED_RECORD.read_bytes(), (
+        f"{SHAPES_PATH} has drifted from {AUTHORED_RECORD}. The @mailwoman/postcode copy is the authored one — copy it "
         "here rather than editing this side."
     )
 
@@ -64,7 +64,7 @@ def test_priority_order_survives_the_filter() -> None:
 
 def test_the_table_is_the_size_the_record_declares() -> None:
     """Guards the guard: a loader that silently returned [] would pass every comparison above."""
-    record = json.loads(CODEX_RECORD.read_text(encoding="utf-8"))
+    record = json.loads(AUTHORED_RECORD.read_text(encoding="utf-8"))
     assert POSTCODE_SHAPES_VERSION == record["version"]
     assert len(ALL_POSTCODE_SHAPES) == len(record["shapes"]) >= 12
     assert len(POSTCODE_PATTERNS) == len(ALL_POSTCODE_SHAPES) - len(UNREADABLE_HERE)

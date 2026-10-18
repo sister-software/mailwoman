@@ -20,6 +20,7 @@
 		{ "path": "../../ban" },
 		{ "path": "../../ban/sdk" },
 		{ "path": "../../codex" },
+		{ "path": "../../postcode" },
 		{ "path": "../../core" },
 		{ "path": "../../corpus" },
 		{ "path": "../../evidence" },
