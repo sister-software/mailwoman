@@ -7,5 +7,5 @@ message: "'%s' opens with an -ing construction. Start with the subject and state
 level: warning
 scope: sentence & ~blockquote
 tokens:
-  - pattern: '^(?!(?:Anything|Everything|Nothing|Something|String|Sibling|Meaning|During|Versioning|Hugging|Birling|Wyoming|Nursing|Senzing|Peking|Beijing|Ongoing|Zoning|Training|Retraining|Building(?= Digital UK))\b)[A-Z]\w+ing\b'
+  - pattern: '^(?!(?:Anything|Everything|Nothing|Something|String|Sibling|Meaning|During|Versioning|Hugging|Birling|Wyoming|Nursing|Senzing|Peking|Beijing|Ongoing|Zoning|Training|Retraining|Comparing|Building)\b)[A-Z]\w+ing\b'
     target: true
