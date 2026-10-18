@@ -15,6 +15,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
 	"bin": {
+		"mwbrowser-mcp": "./lib/browser-mcp/cli.ts",
 		"mwdev-mcp": "./lib/dev-mcp/cli.ts",
 		"mwrelease-mcp": "./lib/release-mcp/cli.ts"
 	},
@@ -110,6 +111,7 @@
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.6-r.1",
+		"@mailwoman/browser": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
@@ -161,6 +163,8 @@
 		"zod": "^4.6.5"
 	},
 	"resolutions": {
+		"@playwright/mcp/playwright": "1.63.0",
+		"@playwright/mcp/playwright-core": "1.63.0",
 		"http-proxy-middleware@^2.0.9": "2.0.10",
 		"serialize-javascript": "^7.0.5",
 		"sockjs/uuid": "^11.1.1",

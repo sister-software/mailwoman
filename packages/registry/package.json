@@ -73,6 +73,7 @@
 		"spliterator": "^9.2.1"
 	},
 	"devDependencies": {
+		"@mailwoman/browser": "workspace:*",
 		"@types/node": "^26.6.4",
 		"path-ts": "^2.5.0",
 		"playwright": "^1.63.0"

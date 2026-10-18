@@ -12,6 +12,7 @@
 	"include": ["./**/*"],
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../../browser" },
 		{ "path": ".." },
 		// ---
 		{ "path": "../../core" },

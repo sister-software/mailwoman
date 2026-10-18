@@ -22,9 +22,10 @@
 import { dirname, resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { withBrowserPage } from "@mailwoman/browser"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
-import { chromium, type Page } from "@playwright/test"
+import type { Page } from "playwright"
 
 // oxlint-disable-next-line sister-software/no-process-globals
 /**
@@ -40,24 +41,9 @@ const SCREENSHOT_DIR = "/tmp/mailwoman-docs"
 type PageCallback<T> = (page: Page, consoleErrors: string[]) => Promise<T>
 
 async function withPage<T>(fn: PageCallback<T>): Promise<T> {
-	const browser = await chromium.launch()
-	const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
-	const page = await ctx.newPage()
-	const consoleErrors: string[] = []
+	const { result } = await withBrowserPage({ contextOptions: { viewport: { width: 1280, height: 800 } } }, fn)
 
-	page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`))
-
-	page.on("console", (m) => {
-		if (m.type() === "error") {
-			consoleErrors.push(`console.error: ${m.text()}`)
-		}
-	})
-
-	try {
-		return fn(page, consoleErrors)
-	} finally {
-		await browser.close()
-	}
+	return result
 }
 
 function url(path: string | URL) {
