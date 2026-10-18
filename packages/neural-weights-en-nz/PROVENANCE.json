@@ -10,17 +10,13 @@
 	"inherited_lineage": {
 		"package": "@mailwoman/neural-weights-en-us",
 		"package_version": "10.6.0",
-		"model_card_version": "10.1.0",
+		"model_card_version": "10.7.0",
 		"chain": ["@mailwoman/neural-weights-en-nz", "@mailwoman/neural-weights-en-us"],
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "OpenStreetMap contributors (ODbL-1.0): the `osm-ru`, `osm-in`, `osm-id`, `osm-ng`, `osm-pk`, `osm-vn` and `osm-bd` training extracts taken from the 2026-10-02 Geofabrik extracts (2,282,782 rows in corpus v0.7.1-osm-exposure), plus the `rendered-pk-register` and `rendered-bd-register` training extracts rendered from OSM tuples. The v7.2.0 epoch audit emits 103,322 of 1,000,000 rows from the seven `osm-*` sources and 15,609 from the two registers. The `spliced-sub-venue` training extract also carries OpenStreetMap venue and sub-venue names, taken from the 2026-08 Geofabrik extracts of Great Britain, France, Germany and Spain, in 73,039 of its 120,000 rows; the epoch audit emits 52,806 rows from that source. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0 and the effective training manifest packages/corpus/data/training-manifests/v0.7.2-address-systems.effective.json records what reached the trainer. The extracts are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
+				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.7.10-gb-county.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
 				"license_named": "ODbL-1.0"
-			},
-			{
-				"text": "HM Land Registry — Price Paid Data address fields, held under no license that permits this use: this model was trained on the `synth-gb-v1` training extract, recorded as `rendered-gb` with 800,000 rows in corpus v0.7.2-address-systems, which the GB locale recipe renders from the Postcode, PAON, Street, Locality, Town/City and District fields of Price Paid Data. HM Land Registry's download page grants the Open Government Licence v3.0 for Price Paid Data but excludes those address fields, which Royal Mail and Ordnance Survey permit only for personal or non-commercial use and for displaying residential property price information. `packages/corpus/data/license-decisions.json` records the source as refused under `unchecked-access-free-gb-gb-property-building-1`. Earlier versions of this card credited these rows under OGL v3.0, and that credit was wrong. Removing the rows from the corpus and retraining is tracked in sister-software/mailwoman#2635. The GB placetype-pair index no longer reads this source.",
-				"license_named": null
 			},
 			{
 				"text": "LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training extract (800,000 rows) NEW in 6.7.0.",
@@ -67,7 +63,7 @@
 			},
 			{
 				"license": "CC-BY-4.0",
-				"sources": ["cordis", "gnaf", "lv-varis", "ro-retea-scolara"],
+				"sources": ["cordis", "gbpa-bs", "gnaf", "lv-varis", "ro-retea-scolara", "ryhti-ax"],
 				"statement": null
 			},
 			{
@@ -104,6 +100,31 @@
 				"statement": null
 			},
 			{
+				"license": "LicenseRef-CC-BY-unstated-version",
+				"sources": ["opendata-az"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
+				"sources": ["adressur-fo"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-IM-OGL",
+				"sources": ["landregistry-im"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-LI-ABI-OGD-2",
+				"sources": ["llv-li"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1",
+				"sources": ["ide-uy"],
+				"statement": null
+			},
+			{
 				"license": "none-recorded-on-rows",
 				"sources": ["invented-anchor-absorption"],
 				"statement": null
@@ -111,18 +132,128 @@
 			{
 				"license": "ODbL-1.0",
 				"sources": [
+					"osm-ae",
+					"osm-al",
+					"osm-am",
+					"osm-ao",
+					"osm-ar",
+					"osm-aw",
+					"osm-az",
+					"osm-ba",
+					"osm-bb",
 					"osm-bd",
+					"osm-bh",
+					"osm-bm",
+					"osm-bn",
+					"osm-bs",
+					"osm-bt",
+					"osm-bw",
+					"osm-by",
+					"osm-bz",
+					"osm-cd",
+					"osm-ci",
+					"osm-cl",
+					"osm-co",
+					"osm-cr",
+					"osm-cu",
+					"osm-cw",
+					"osm-do",
+					"osm-dz",
+					"osm-ec",
+					"osm-eg",
+					"osm-ge",
+					"osm-gg",
+					"osm-gh",
+					"osm-gl",
+					"osm-gt",
+					"osm-hk",
+					"osm-ht",
 					"osm-id",
 					"osm-in",
+					"osm-iq",
+					"osm-ir",
+					"osm-je",
+					"osm-jm",
+					"osm-jo",
+					"osm-ke",
+					"osm-kg",
+					"osm-kh",
+					"osm-kw",
+					"osm-kz",
+					"osm-lb",
+					"osm-lk",
+					"osm-lr",
+					"osm-ma",
+					"osm-md",
+					"osm-me",
+					"osm-mg",
+					"osm-mk",
+					"osm-mm",
+					"osm-mn",
+					"osm-mo",
+					"osm-mt",
+					"osm-mv",
+					"osm-my",
+					"osm-mz",
+					"osm-na",
 					"osm-ng",
+					"osm-np",
+					"osm-om",
+					"osm-pa",
+					"osm-pe",
+					"osm-pf",
+					"osm-ph",
 					"osm-pk",
+					"osm-pr",
+					"osm-py",
+					"osm-qa",
+					"osm-rs",
 					"osm-ru",
+					"osm-rw",
+					"osm-sa",
+					"osm-sm",
+					"osm-sn",
+					"osm-sr",
+					"osm-sv",
+					"osm-th",
+					"osm-tj",
+					"osm-tm",
+					"osm-tn",
+					"osm-tt",
+					"osm-tz",
+					"osm-ua",
+					"osm-ug",
+					"osm-uz",
+					"osm-ve",
+					"osm-vi",
 					"osm-vn",
+					"osm-zm",
+					"osm-zw",
 					"rendered-bd-register",
 					"rendered-pk-register",
 					"spliced-sub-venue"
 				],
 				"statement": "© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
+			},
+			{
+				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+				"sources": ["spliced-unit-v30"],
+				"statement": null
+			},
+			{
+				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
+				"sources": ["invented-po-box-cedex"],
+				"statement": null
+			},
+			{
+				"license": "OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
+				"sources": ["spliced-affix"],
+				"statement": null
+			},
+			{
+				"license": "OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+				"sources": ["spliced-suffix-boundary"],
+				"statement": null
 			},
 			{
 				"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
@@ -140,11 +271,6 @@
 				"statement": null
 			},
 			{
-				"license": "OpenAddresses GB tuples, rendered native-order — see ingest SOURCES",
-				"sources": ["rendered-gb"],
-				"statement": null
-			},
-			{
 				"license": "OpenAddresses HR tuples, rendered native-order — see ingest SOURCES",
 				"sources": ["rendered-hr"],
 				"statement": null
@@ -155,7 +281,7 @@
 				"statement": null
 			},
 			{
-				"license": "OpenAddresses multi-locale skeletons + injected ISO-3166 country surface forms (codex)",
+				"license": "OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
 				"sources": ["spliced-country"],
 				"statement": null
 			},
@@ -170,28 +296,21 @@
 				"statement": null
 			},
 			{
-				"license": "OpenAddresses US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
-				"sources": ["spliced-unit-v30"],
-				"statement": null
-			},
-			{
-				"license": "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
-				"sources": ["invented-po-box-cedex"],
-				"statement": null
-			},
-			{
-				"license": "OpenAddresses US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
-				"sources": ["spliced-affix"],
-				"statement": null
-			},
-			{
-				"license": "OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
-				"sources": ["spliced-suffix-boundary"],
+				"license": "OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES",
+				"sources": ["rendered-gb-os-open"],
 				"statement": null
 			},
 			{
 				"license": "Public Domain",
-				"sources": ["state-ny-notaries", "state-tx-notaries", "tiger", "usgov-hrsa-fqhc", "usgov-nad", "usgov-nppes"],
+				"sources": [
+					"bsp-gu",
+					"state-ny-notaries",
+					"state-tx-notaries",
+					"tiger",
+					"usgov-hrsa-fqhc",
+					"usgov-nad",
+					"usgov-nppes"
+				],
 				"statement": null
 			},
 			{
@@ -220,7 +339,7 @@
 				"statement": null
 			},
 			{
-				"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses dk",
+				"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
 				"sources": ["fragment-assay"],
 				"statement": null
 			},
@@ -235,7 +354,7 @@
 				"statement": null
 			},
 			{
-				"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / HM Land Registry Price Paid Data address skeletons",
+				"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons",
 				"sources": ["spliced-sub-venue"],
 				"statement": null
 			},
@@ -255,12 +374,7 @@
 				"statement": null
 			},
 			{
-				"license": "Synthetic rendering of reviewed postal facts — Universal Postal Union; source terms recorded in reviewed-ve-postcode-tuples.json",
-				"sources": ["reviewed-postcode-tail"],
-				"statement": null
-			},
-			{
-				"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; OA Cook IL zip-to-city tails",
+				"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
 				"sources": ["invented-intersection"],
 				"statement": null
 			}
@@ -270,22 +384,110 @@
 				"license": "ODbL-1.0",
 				"provision": "ODbL 1.0 section 4.6(a)",
 				"sources": [
-					"osm-ru",
-					"osm-cn",
-					"osm-in",
-					"osm-id",
-					"osm-ng",
-					"osm-vn",
-					"osm-pk",
+					"osm-ae",
+					"osm-al",
+					"osm-am",
+					"osm-ao",
+					"osm-ar",
+					"osm-aw",
+					"osm-az",
+					"osm-ba",
+					"osm-bb",
 					"osm-bd",
-					"osm",
-					"rendered-pk-register",
+					"osm-bh",
+					"osm-bm",
+					"osm-bn",
+					"osm-bs",
+					"osm-bt",
+					"osm-bw",
+					"osm-by",
+					"osm-bz",
+					"osm-cd",
+					"osm-ci",
+					"osm-cl",
+					"osm-co",
+					"osm-cr",
+					"osm-cu",
+					"osm-cw",
+					"osm-do",
+					"osm-dz",
+					"osm-ec",
+					"osm-eg",
+					"osm-ge",
+					"osm-gg",
+					"osm-gh",
+					"osm-gl",
+					"osm-gt",
+					"osm-hk",
+					"osm-ht",
+					"osm-id",
+					"osm-in",
+					"osm-iq",
+					"osm-ir",
+					"osm-je",
+					"osm-jm",
+					"osm-jo",
+					"osm-ke",
+					"osm-kg",
+					"osm-kh",
+					"osm-kw",
+					"osm-kz",
+					"osm-lb",
+					"osm-lk",
+					"osm-lr",
+					"osm-ma",
+					"osm-md",
+					"osm-me",
+					"osm-mg",
+					"osm-mk",
+					"osm-mm",
+					"osm-mn",
+					"osm-mo",
+					"osm-mt",
+					"osm-mv",
+					"osm-my",
+					"osm-mz",
+					"osm-na",
+					"osm-ng",
+					"osm-np",
+					"osm-om",
+					"osm-pa",
+					"osm-pe",
+					"osm-pf",
+					"osm-ph",
+					"osm-pk",
+					"osm-pr",
+					"osm-py",
+					"osm-qa",
+					"osm-rs",
+					"osm-ru",
+					"osm-rw",
+					"osm-sa",
+					"osm-sm",
+					"osm-sn",
+					"osm-sr",
+					"osm-sv",
+					"osm-th",
+					"osm-tj",
+					"osm-tm",
+					"osm-tn",
+					"osm-tt",
+					"osm-tz",
+					"osm-ua",
+					"osm-ug",
+					"osm-uz",
+					"osm-ve",
+					"osm-vi",
+					"osm-vn",
+					"osm-zm",
+					"osm-zw",
 					"rendered-bd-register",
+					"rendered-pk-register",
 					"spliced-sub-venue"
 				],
 				"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract",
-				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/86ec903ec7a92d42cf33f4203f618738248321bc/MANIFEST.json",
-				"statement": "The OpenStreetMap-derived training extracts of corpus v0.7.2-address-systems, as the 29 parquet files the trainer read (2,572,934 rows), plus the 73,039 of 120,000 spliced-sub-venue rows that carry an OpenStreetMap venue or sub-venue name and the four OpenStreetMap extracts that recipe drew names from, © OpenStreetMap contributors"
+				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/767406aa5a731e61a37058f9323bfe2cf5838217/MANIFEST.json",
+				"statement": "The OpenStreetMap-derived training extracts of corpus v0.7.10-gb-county, as the 242 parquet files of the 100 ODbL sources the trainer read (2,860,227 rows, including the 49,219 of 120,000 spliced-sub-venue rows that carry an OpenStreetMap venue or sub-venue name), plus the four OpenStreetMap extracts that recipe drew names from, © OpenStreetMap contributors"
 			}
 		],
 		"unresolved": null

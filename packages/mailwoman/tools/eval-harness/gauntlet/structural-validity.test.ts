@@ -34,40 +34,36 @@ async function weightsPresent(): Promise<boolean> {
 const NEW_YORK_AS_REGION =
 	"`Brooklyn, New York`: `New York` reads as the state, so the borough is a dependent_locality with no locality anchor. The city and the state share the name; the #1914 family board row is `improvement_target`."
 
-const AUCKLAND_POSTCODE_AS_HOUSE_NUMBER =
-	"`Auckland 1010`: the postcode `1010` reads as a house number, which has no street anchor."
-
-const ROCKEFELLER_PLAZA_AS_VENUE =
-	"`Rockefeller Plaza` reads as a venue from the classifier alone, so the house number has no street anchor. The geocode path reads it as a street through the street-morphology prior on a trailing affix, which this sweep does not wire; the #2562 board rows pass there."
-
 const KNOWN_INVALID: Record<string, string> = {
-	"us-venue-as-street-1-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
-	"us-venue-as-street-10-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
-	"us-venue-as-street-30-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
-	"us-venue-as-street-45-rockefeller": ROCKEFELLER_PLAZA_AS_VENUE,
 	"us-f3-brooklyn-new-york": NEW_YORK_AS_REGION,
 	"us-f3-brooklyn-new-york-lower": NEW_YORK_AS_REGION,
 	"us-f7-hell-s-kitchen-new-york": NEW_YORK_AS_REGION,
 	"al-thin-system-07":
 		"`AUTOSTRADA TR-DR KM 8, KASHAR, TIRANE, Albania`: the road reads as a locality, so the house number `8` has no street anchor.",
-	"ec-thin-system-04":
-		"`OE11 N61-96, QUITO, Ecuador`: the Quito block code `OE11` reads as a house number with no street, and `QUITO` as a dependent_locality with no locality.",
-	"gb-street-name-elephant-and-castle-road":
-		"`Elephant and Castle Road`: the conjunction splits the name into intersection streets, and `Road` is left as a street_suffix with no street.",
-	"gh-ws-digital-address-ga-183-8164-accra":
-		"`GA-183-8164, Accra, Ghana`: the GhanaPost digital address splits into a house number `GA` with no street and a postcode `183-8164`.",
-	"im-op2-simpsons-field":
-		"`Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man`: the plus code reads as a house number with no street anchor.",
 	"mw-thin-system-02":
 		"`SUITE B21, GOLDEN PEACOCK SHOPPING COMPLEX, LILONGWE, Malawi`: the shopping complex reads as a second locality beside `LILONGWE`.",
-	"nz-f5-auckland-1010": AUCKLAND_POSTCODE_AS_HOUSE_NUMBER,
-	"nz-f5-auckland-1010-lower": AUCKLAND_POSTCODE_AS_HOUSE_NUMBER,
-	"qa-thin-system-11":
-		"Doha's numbered street `STREET 52` and `INDUSTRIAL AREA` each read as a locality beside `DOHA`, three localities in all.",
-	"qa-thin-system-14":
-		"Doha's numbered street `STREET 44` reads as a locality, so the numbered entrance after it is a unit with no street anchor.",
-	"ug-thin-system-14":
-		"`PLOT 14-16 KYAMBOGO ROAD NTINDA, KAMPALA, Uganda`: the road and suburb read as one locality, so the plot range `14-16` has no street anchor.",
+	// The rows below decode to an invalid tree under the 10.7.0 model (v7.10.0 seed 42), accepted in #2682.
+	"ae-thin-system-11":
+		"`OFFICE 1809, JBC 2, JLT, DUBAI, United Arab Emirates`: the district `JLT` and `DUBAI` both read as localities.",
+	"ae-thin-system-12":
+		"`OFFICE 1406 FIFTY-ONE TOWER, DUBAI, United Arab Emirates`: `OFFICE` and the tower both read as localities, so the number `1406` has no street anchor.",
+	"ae-thin-system-13":
+		"`PLOT NO. 26/M, INDUSTRIAL AREA NO. 13, SHARJAH, United Arab Emirates`: `PLOT NO.` and `SHARJAH` both read as localities, and `AREA NO. 13` as a dependent_locality.",
+	"ae-thin-system-14":
+		"`OFFICE 2003 A, SWISS TOWER, CLUSTER Y JUMEIRAH LAKES TOWERS, DUBAI, United Arab Emirates`: `CLUSTER Y JUMEIRAH` and `DUBAI` both read as localities, and `LAKES TOWERS` as a street.",
+	"ae-thin-system-15":
+		"`SHOP S07, BUILDING V04, INTERNATIONAL CITY, DUBAI, United Arab Emirates`: `SHOP S07`, `INTERNATIONAL CITY` and `DUBAI` all read as localities.",
+	"br-brasilia-shis-eql-6-8-modulo-c":
+		"`SHIS EQL 6/8 Módulo C, Setor de Habitações Individuais Sul, Brasília`: the sector reads as a dependent_locality under a region, with no locality.",
+	"bw-thin-system-01":
+		"`PLOT 75783, SETLHOA OFFICE PARK, UNIT 5, BLOCK 10, GABORONE, Botswana`: the plot reads as a PO box, and `SETLHOA`, `BLOCK 10` and `GABORONE` all as localities.",
+	"bw-thin-system-09":
+		"`PLOT 70667 FAIRSCAPE PRECINCT, GABORONE, Botswana`: `PLOT` reads as a house number and the plot number `70667` as a postcode.",
+	"cn-contrast-script-omitted-level":
+		"`上海市人民路100号`: the whole string reads as one house number under the Latin model, which this sweep runs for every row.",
+	"gb-vob-2-veneti": "`2 Veneti`: the venue name splits into a house number `2` and a street `Veneti`.",
+	"mx-op3-plaza-las-americas-villahermosa":
+		"`Plaza Las Américas, Cerrada de Emilio Carranza 202 Atasta 86100 Villahermosa, Tab. Mexico`: `Cerrada` reads as a dependent_locality, and `Atasta` and `Villahermosa` both as localities.",
 }
 
 interface Row {

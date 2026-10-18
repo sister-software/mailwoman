@@ -44,7 +44,7 @@ describe("auditRights", () => {
 	it("counts an entry stating no use apart from one stating a use that is not training", () => {
 		const enUS = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-en-us")
 
-		expect(enUS?.attributionEntries).toBe(11)
+		expect(enUS?.attributionEntries).toBe(10)
 		expect(enUS?.entriesNotTraining).toBe(4)
 		expect(enUS?.entriesStatingNoUse).toBe(1)
 
@@ -80,7 +80,7 @@ describe("auditRights", () => {
 		const recorded = audit.training.filter((row) => row.manifest)
 
 		expect(recorded.map((row) => row.package)).toEqual(["@mailwoman/neural-weights-en-us"])
-		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.2-address-systems")
+		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.10-gb-county")
 		expect(recorded[0]?.manifest?.problems).toEqual([])
 		// Every source the audited epoch emitted is in the frozen record, so the effective
 		// manifest covers the whole epoch rather than part of it.
@@ -171,40 +171,42 @@ describe("auditRights", () => {
 		expect(Math.max(...audit.register.refusals.map((refusal) => refusal.sources))).toBeLessThan(audit.register.sources)
 	})
 
-	it("passes the training-rights comparison only because every measured violation is recorded", () => {
+	it("passes the training-rights comparison because no published model's training source lacks a permitting decision", async () => {
+		expect(audit.trainingRights.violations).toEqual([])
 		expect(audit.trainingRights.unrecorded).toEqual([])
 		expect(audit.trainingRights.stale).toEqual([])
 		expect(trainingRightsRefusals(audit)).toEqual([])
-
-		// The published model trained on both Price Paid Data sources.
-		// Each is a recorded violation naming the refused register row, read against
-		// the corpus it trained on rather than today's inputs.
-		for (const source of ["rendered-gb", "spliced-sub-venue"]) {
-			const violation = audit.trainingRights.violations.find((entry) => entry.source === source)
-
-			expect(violation?.package).toBe("@mailwoman/neural-weights-en-us")
-			expect(violation?.registerSources, source).toContain("gb-property-building-1")
-		}
+		expect(await readKnownTrainingRightsViolations(repoRootPath())).toEqual([])
 	})
 
 	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {
-		const known = await readKnownTrainingRightsViolations(repoRootPath())
-		const withoutGB = known.filter((entry) => entry.source !== "rendered-gb")
+		// Model 10.1.0 trained on corpus v0.7.2-address-systems, whose effective manifest stays committed.
+		// Replaying en-us against that corpus measures its Price Paid Data violations again.
+		const as101 = audit.training.map((row) =>
+			row.package === "@mailwoman/neural-weights-en-us" ? { ...row, corpusNamed: "v0.7.2-address-systems" } : row
+		)
 
-		const missing = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, withoutGB)
+		const missing = await auditTrainingRights(repoRootPath(), audit.packages, as101, [])
 
-		expect(missing.unrecorded.map((entry) => entry.source)).toEqual(["rendered-gb"])
+		expect(missing.unrecorded.map((entry) => entry.source)).toContain("rendered-gb")
 
-		expect(trainingRightsRefusals({ ...audit, trainingRights: missing })[0]).toMatch(
+		expect(trainingRightsRefusals({ ...audit, trainingRights: missing }).join("\n")).toMatch(
 			/neural-weights-en-us trained under v0\.7\.2-address-systems on rendered-gb, which reads gb-property-building-1/u
 		)
 
-		// A retrained model no longer holds a violation.
-		// Its entry is then stale and must be removed.
-		const retrained = { ...known[0]!, corpusVersion: "v0.7.7-no-ppd" }
-		const stale = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, [...known, retrained])
+		// An entry for a model that no longer holds the violation is stale and must be removed.
+		const retired = {
+			package: "@mailwoman/neural-weights-en-us",
+			corpusVersion: "v0.7.2-address-systems",
+			source: "rendered-gb",
+			registerSources: ["gb-property-building-1"],
+			reason: "Rows built from HM Land Registry Price Paid Data address fields.",
+			issue: 2635,
+		}
 
-		expect(stale.stale).toEqual([retrained])
+		const stale = await auditTrainingRights(repoRootPath(), audit.packages, audit.training, [retired])
+
+		expect(stale.stale).toEqual([retired])
 
 		expect(trainingRightsRefusals({ ...audit, trainingRights: stale })).toEqual([
 			expect.stringMatching(/no published model's training sources hold that violation now\. Remove the entry\./u),
