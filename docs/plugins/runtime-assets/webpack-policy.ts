@@ -10,11 +10,22 @@
  *   health check rejects Node builtins on the client's static path.
  */
 
+import type { Plugin } from "@docusaurus/types"
 import { md5Hex } from "@mailwoman/core/hash"
-import type { Configuration } from "webpack"
 
 import { buildWorkspaceAliases } from "./workspace/aliases.ts"
 import { resolvePackageFile } from "./workspace/resolution.ts"
+
+/**
+ * The webpack configuration Docusaurus passes to a plugin's `configureWebpack` hook.
+ *
+ * Docusaurus pins its own webpack.
+ * The hook's signature types the docs against that copy.
+ *
+ * A direct webpack dependency resolves to a second copy as soon as the two versions differ,
+ * and the plugin's hook then fails to typecheck against the Docusaurus signature.
+ */
+type Configuration = Parameters<NonNullable<Plugin["configureWebpack"]>>[0]
 
 function hashAliases(alias: Record<string, string>): string {
 	const entries = Object.keys(alias)
