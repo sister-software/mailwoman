@@ -31,6 +31,7 @@ import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
@@ -77,15 +78,7 @@ export interface IDEUruguayRecord {
 }
 
 const ABSENT = "N/A"
-
-/**
- * A value, or null when the IDE writes it as absent.
- */
-function present(value: string | undefined): string | null {
-	const trimmed = value?.trim() ?? ""
-
-	return trimmed && trimmed !== ABSENT ? trimmed : null
-}
+const PRESENT_OPTIONS = { absentValues: [ABSENT] } as const
 
 /**
  * The house-number suffixes `letra_puerta` holds that a door number is written with:
@@ -111,7 +104,7 @@ export function componentsForIDERecord(
 	dropped?: Pick<AdapterOptions, "dropped">
 ): CanonicalRow["components"] | null {
 	const tally = dropped ?? {}
-	const street = present(record.nombre_via)
+	const street = present(record.nombre_via, PRESENT_OPTIONS)
 
 	if (!street) {
 		countDropped(tally, "row:no-street")
@@ -125,15 +118,18 @@ export function componentsForIDERecord(
 		return null
 	}
 
-	const number = present(record.num_puerta)
+	const number = present(record.num_puerta, PRESENT_OPTIONS)
 
 	if (!number) {
-		countDropped(tally, present(record.km) ? "row:route-kilometer-without-door-number" : "row:no-door-number")
+		countDropped(
+			tally,
+			present(record.km, PRESENT_OPTIONS) ? "row:route-kilometer-without-door-number" : "row:no-door-number"
+		)
 
 		return null
 	}
 
-	const letter = present(record.letra_puerta)
+	const letter = present(record.letra_puerta, PRESENT_OPTIONS)
 	const suffix = letter && LETTER_SUFFIX.test(letter) ? letter : ""
 
 	if (letter && !suffix) {
@@ -145,7 +141,7 @@ export function componentsForIDERecord(
 		street,
 	}
 
-	const venue = present(record.nombre_inmueble)
+	const venue = present(record.nombre_inmueble, PRESENT_OPTIONS)
 
 	// A post office's distribution agent is listed under the agent's own name (`Agente` and a person's names),
 	// and a code such as `CH109` names no place, so neither becomes a venue.
@@ -157,7 +153,7 @@ export function componentsForIDERecord(
 		components.venue = venue
 	}
 
-	const postcode = present(record.codigo_postal)
+	const postcode = present(record.codigo_postal, PRESENT_OPTIONS)
 	const matched = postcode ? acceptPostcode(postcode, "UY") : null
 
 	if (matched) {
@@ -166,8 +162,8 @@ export function componentsForIDERecord(
 		countDropped(tally, "component:postcode:not-country-format")
 	}
 
-	const locality = present(record.localidad)
-	const region = present(record.departamento)
+	const locality = present(record.localidad, PRESENT_OPTIONS)
+	const region = present(record.departamento, PRESENT_OPTIONS)
 
 	if (locality && !locality.endsWith(" RURAL")) {
 		components.locality = locality

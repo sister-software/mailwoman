@@ -36,6 +36,7 @@ import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { presentCollapsed as present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -82,16 +83,6 @@ interface GuamFeatureCollection {
 		properties?: GuamAddressPointRecord | null
 		geometry?: { coordinates?: readonly number[] } | null
 	}>
-}
-
-/**
- * A value with its whitespace collapsed, or null when the layer leaves it blank.
- * The layer writes an absent string as a single space.
- */
-function present(value: string | number | null | undefined): string | null {
-	const collapsed = value == null ? "" : String(value).replaceAll(/\s+/gu, " ").trim()
-
-	return collapsed || null
 }
 
 /**

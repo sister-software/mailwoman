@@ -35,6 +35,7 @@ import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -78,12 +79,6 @@ export interface LLVLiechtensteinRecord {
 	ZIP_NAME: string
 	STATUS: string
 	OFFICIAL: string
-}
-
-function present(value: string | undefined): string | null {
-	const trimmed = value?.trim() ?? ""
-
-	return trimmed || null
 }
 
 /**

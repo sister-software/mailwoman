@@ -26,6 +26,7 @@ import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { presentCollapsed as present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -75,12 +76,6 @@ export interface GBPAAddressRecord {
 /**
  * A value with its whitespace, including the export's embedded line breaks, collapsed, or null when empty.
  */
-function present(value: string | undefined): string | null {
-	const trimmed = value?.replaceAll(/\s+/gu, " ").trim() ?? ""
-
-	return trimmed || null
-}
-
 /**
  * A block and parcel number: alphanumeric parts joined by hyphens (`8-29`, `UU-3`, `W-A-10`, `G-3B10`, `L`).
  */

@@ -31,6 +31,7 @@ import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { presentCollapsed as present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -76,12 +77,6 @@ export interface IsleOfManLandTransactionRecord {
 	Locality: string
 	Town: string
 	Postcode: string
-}
-
-function present(value: string | undefined): string | null {
-	const trimmed = value?.replaceAll(/\s+/gu, " ").trim() ?? ""
-
-	return trimmed || null
 }
 
 /**

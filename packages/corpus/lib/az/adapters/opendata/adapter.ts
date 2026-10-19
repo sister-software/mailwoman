@@ -38,6 +38,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { presentCollapsed as present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -102,15 +103,6 @@ export const AzerbaijanSpelling = {
 } as const
 
 export type AzerbaijanSpelling = (typeof AzerbaijanSpelling)[keyof typeof AzerbaijanSpelling]
-
-/**
- * A value with its whitespace collapsed, or null when the file leaves it blank (a single space).
- */
-function present(value: string | number | null | undefined): string | null {
-	const collapsed = value == null ? "" : String(value).replaceAll(/\s+/gu, " ").trim()
-
-	return collapsed || null
-}
 
 /**
  * A house number: digits with an optional letter, and an optional second number

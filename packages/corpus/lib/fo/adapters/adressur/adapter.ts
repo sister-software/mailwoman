@@ -34,6 +34,7 @@ import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
@@ -76,14 +77,6 @@ export interface AdressurRecord {
 
 interface AdressurFeatureCollection {
 	features?: Array<{ properties?: AdressurRecord | null }>
-}
-
-function present(value: string | number | null | undefined): string | null {
-	if (value == null) return null
-
-	const trimmed = String(value).trim()
-
-	return trimmed || null
 }
 
 /**
