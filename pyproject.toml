@@ -33,7 +33,7 @@ dev = [
 	# - verify_toolchain fails if another `uvx ruff@<version>` pin appears.
 	# - `mypy` and `bandit` use floor pins (exacts come from uv.lock).
 	"pytest>=9.1.1",
-	"ruff==0.17.0",
+	"ruff==0.17.1",
 	"mypy>=1.15",
 	"bandit>=1.8",
 	# PyYAML is untyped upstream; the stub package keeps `mypy --strict` honest about our code.
