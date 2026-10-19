@@ -10,7 +10,7 @@
  */
 
 import type { POISpatialRelation } from "@mailwoman/core/pipeline"
-import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
+import type { QueryShapeSegmentsView as QueryShapeLike, TextSpan } from "@mailwoman/query-shape"
 /**
  * Comma-segment ceiling for a POI-led query.
  *
@@ -245,33 +245,29 @@ export function matchPOISubject(text: string, locale: string | null, lookup: POI
 }
 
 /**
- * `poi_query` scorer over an injected lexicon, with confidence bands: a whole-input lexicon hit
+ * `poi_query` confidence for a subject match, with confidence bands: a whole-input lexicon hit
  * scores 0.92 (above venue-landmark's 0.88 ceiling, because an exact phrase beats a shape heuristic)
  * and a subject plus anchor 0.9.
  *
  * The guards keep venue-led full addresses (class 2) on the structured-address path:
  * a remainder leading with a house number, or a 4+-segment input, scores 0.
+ *
+ * The caller runs {@link matchPOISubject} once and hands the result to this scorer,
+ * {@link scorePOICategory} and {@link poiCategoryOf}, so one lexicon scan serves all three.
  */
-export function createScorePOIQuery(
-	lookup: POIPhraseLookup,
-	locale?: string
-): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
-	return (input, shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
+export function scorePOIQuery(matched: POISubjectMatch | null, shape: QueryShapeLike): number {
+	if (!matched) return 0
 
-		if (!matched) return 0
+	if (matched.remainder === "") return 0.92 * matched.match.confidence
 
-		if (matched.remainder === "") return 0.92 * matched.match.confidence
+	// Venue-led full address: "X, 350 5th Ave, …" stays a structured_address parse.
+	if (/^\d+\s/.test(matched.remainder)) return 0
 
-		// Venue-led full address: "X, 350 5th Ave, …" stays a structured_address parse.
-		if (/^\d+\s/.test(matched.remainder)) return 0
+	const segCount = shape.segments?.length ?? 1
 
-		const segCount = shape.segments?.length ?? 1
+	if (segCount > MAX_POI_SEGMENTS) return 0
 
-		if (segCount > MAX_POI_SEGMENTS) return 0
-
-		return 0.9 * matched.match.confidence
-	}
+	return 0.9 * matched.match.confidence
 }
 
 /**
@@ -285,8 +281,8 @@ export function createScorePOIQuery(
 const POI_CATEGORY_CONFIDENCE = 0.93
 
 /**
- * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere
- * to search: "tacos", "grocery store", "drinking fountain".
+ * `poi_category` confidence (ROAD_TO_V9 §4.4) for a subject match: a bare taxonomy category
+ * with nowhere to search, such as "tacos", "grocery store" or "drinking fountain".
  *
  * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category.
  * A brand (`kind: "brand"`) is excluded because `POIPhraseMatch.categoryID`
@@ -294,29 +290,20 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  *
  * That value would misrepresent the marker's `categoryID` evidence.
  */
-export function createScorePOICategory(
-	lookup: POIPhraseLookup,
-	locale?: string
-): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
-	return (input, _shape) => {
-		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale ?? null, lookup)
+export function scorePOICategory(matched: POISubjectMatch | null): number {
+	const category = poiCategoryOf(matched)
 
-		if (!matched || matched.remainder !== "") return 0
-
-		if (matched.match.kind !== "category") return 0
-
-		return POI_CATEGORY_CONFIDENCE * matched.match.confidence
-	}
+	return category ? POI_CATEGORY_CONFIDENCE * category.confidence : 0
 }
 
 /**
- * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence;
- * `null` when the input is not a bare category, under the same conditions as
- * {@link createScorePOICategory} so the two cannot disagree.
+ * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence.
+ *
+ * `null` when the subject match is not a bare category, under the same conditions
+ * as {@link scorePOICategory}.
+ * The shared conditions keep the score and the evidence from disagreeing.
  */
-export function matchPOICategory(text: string, locale: string | null, lookup: POIPhraseLookup): POIPhraseMatch | null {
-	const matched = matchPOISubject(text, locale, lookup)
-
+export function poiCategoryOf(matched: POISubjectMatch | null): POIPhraseMatch | null {
 	if (!matched || matched.remainder !== "") return null
 
 	if (matched.match.kind !== "category") return null

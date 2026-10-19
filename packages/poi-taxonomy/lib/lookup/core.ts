@@ -50,6 +50,13 @@ interface PhraseEntry {
 }
 
 /**
+ * A phrase entry that a locale-restricted synonym produced.
+ */
+interface LocaleRestrictedPhraseEntry extends PhraseEntry {
+	locales: string[]
+}
+
+/**
  * Below five characters, one edit changes too much of the signal to infer a category safely.
  */
 const MIN_TYPO_LENGTH = 5
@@ -96,6 +103,28 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 				phraseSource: "synonym",
 				...(synonym.locales ? { locales: synonym.locales } : {}),
 			})
+		}
+	})
+
+	/**
+	 * Locale-restricted entries keyed by the diacritic-folded phrase, in `byPhrase` order.
+	 *
+	 * Diacritic-insensitive matching admits only locale-restricted synonyms,
+	 * so an unrestricted phrase has no entry here.
+	 * One bucket read replaces folding every phrase in the index per lookup.
+	 */
+	const byFoldedPhrase: ReadonlyMap<
+		string,
+		ReadonlyArray<LocaleRestrictedPhraseEntry>
+	> = createPhraseIndex<LocaleRestrictedPhraseEntry>((add) => {
+		for (const [phrase, entries] of byPhrase) {
+			const folded = foldDiacritics(phrase)
+
+			for (const entry of entries) {
+				if (entry.locales) {
+					add(folded, { ...entry, locales: entry.locales })
+				}
+			}
 		}
 	})
 
@@ -163,34 +192,34 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	function lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[] {
 		if (!locale) return []
 
-		const norm = foldDiacritics(text.trim().toLowerCase())
+		const lowered = text.trim().toLowerCase()
+		const norm = foldDiacritics(lowered)
 
-		if (!norm || byPhrase.has(text.trim().toLowerCase())) return []
+		if (!norm || byPhrase.has(lowered)) return []
+
+		const entries = byFoldedPhrase.get(norm)
+
+		if (!entries) return []
 
 		const language = locale.split(/[-_]/)[0]!
 		const best = new Map<string, CategoryMatch>()
 
-		for (const [phrase, entries] of byPhrase) {
-			if (foldDiacritics(phrase) !== norm) continue
+		for (const entry of entries) {
+			const exact = entry.locales.includes(locale)
+			const languageMatch = entry.locales.some((candidate) => candidate.split(/[-_]/)[0] === language)
 
-			for (const entry of entries) {
-				if (!entry.locales) continue
-				const exact = entry.locales.includes(locale)
-				const languageMatch = entry.locales.some((candidate) => candidate.split(/[-_]/)[0] === language)
+			if (!exact && !languageMatch) continue
 
-				if (!exact && !languageMatch) continue
+			const confidence = exact ? 0.94 : 0.78
+			const existing = best.get(entry.category.id)
 
-				const confidence = exact ? 0.94 : 0.78
-				const existing = best.get(entry.category.id)
-
-				if (!existing || existing.confidence < confidence) {
-					best.set(entry.category.id, {
-						category: entry.category,
-						matchedPhrase: entry.phrase,
-						confidence,
-						phraseSource: entry.phraseSource,
-					})
-				}
+			if (!existing || existing.confidence < confidence) {
+				best.set(entry.category.id, {
+					category: entry.category,
+					matchedPhrase: entry.phrase,
+					confidence,
+					phraseSource: entry.phraseSource,
+				})
 			}
 		}
 

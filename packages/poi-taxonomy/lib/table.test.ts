@@ -208,3 +208,46 @@ describe("createPOIBrandLookup", () => {
 		expect(injected).toEqual(node)
 	})
 })
+
+describe("lookupPOICategoryLocaleNormalized", () => {
+	const FOLDED_TABLE: POITaxonomyTable = {
+		version: "test-0.0.1",
+		overtureRelease: null,
+		categories: [hospital, telecomCabinet],
+		synonyms: [
+			// Two spellings that fold to the same phrase, one language-wide and one exact-locale.
+			{ phrase: "hôpital", categoryID: hospital.id, locales: ["fr"] },
+			{ phrase: "hõpital", categoryID: hospital.id, locales: ["fr-FR"] },
+			// A second category behind the same folded phrase.
+			{ phrase: "hópital", categoryID: telecomCabinet.id, locales: ["fr"] },
+			// An unrestricted phrase stays out of the folded index: diacritic folding admits locale-restricted synonyms only.
+			{ phrase: "crèche", categoryID: hospital.id },
+		],
+	}
+
+	it("keeps the best confidence per category and orders by confidence", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "fr-FR")).toEqual([
+			expect.objectContaining({ category: hospital, matchedPhrase: "hõpital", confidence: 0.94 }),
+			expect.objectContaining({ category: telecomCabinet, matchedPhrase: "hópital", confidence: 0.78 }),
+		])
+	})
+
+	it("keeps the first synonym in table order at equal confidence", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "fr-CA")).toEqual([
+			expect.objectContaining({ category: hospital, matchedPhrase: "hôpital", confidence: 0.78 }),
+			expect.objectContaining({ category: telecomCabinet, matchedPhrase: "hópital", confidence: 0.78 }),
+		])
+	})
+
+	it("folds no unrestricted phrase and answers an exact phrase through the exact table", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("creche", "fr-FR")).toEqual([])
+		expect(lookup.lookupPOICategoryLocaleNormalized("hôpital", "fr-FR")).toEqual([])
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital")).toEqual([])
+	})
+})

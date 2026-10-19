@@ -13,10 +13,13 @@ import {
 	getAllCategories,
 	getPOICategory,
 	lookupPOICategory,
+	lookupPOICategoryLocaleNormalized,
 	requiresBuildLocalLayer,
 	resolveOvertureCategories,
 } from "#lookup"
+import { readPackagedTable } from "#packaged-data"
 import { generateTaxonomyTable } from "#tools/generate-taxonomy"
+import type { POITaxonomyTable } from "#types"
 
 describe("lookupPOICategory", () => {
 	it("matches a category by its own id-phrase and label", () => {
@@ -62,6 +65,30 @@ describe("lookupPOICategory", () => {
 
 	it("returns [] for unknown phrases", () => {
 		expect(lookupPOICategory("flux capacitor depot")).toEqual([])
+	})
+})
+
+describe("lookupPOICategoryLocaleNormalized over the shipped table", () => {
+	it("recovers every locale-restricted synonym from its diacritic-folded spelling", async () => {
+		const table = await readPackagedTable<POITaxonomyTable>("taxonomy.json")
+
+		const folded = table.synonyms.filter((s): s is typeof s & { locales: string[] } => {
+			const stripped = s.phrase.normalize("NFD").replaceAll(/\p{M}/gu, "")
+
+			return Array.isArray(s.locales) && s.locales.length > 0 && stripped !== s.phrase.toLowerCase()
+		})
+
+		expect(folded.length, "the shipped table holds locale-restricted synonyms with diacritics").toBeGreaterThan(0)
+
+		for (const synonym of folded) {
+			const stripped = synonym.phrase.normalize("NFD").replaceAll(/\p{M}/gu, "")
+			const matches = lookupPOICategoryLocaleNormalized(stripped, synonym.locales[0])
+
+			expect(
+				matches.map((m) => m.category.id),
+				`${synonym.phrase} (${synonym.locales[0]}) via ${stripped}`
+			).toContain(synonym.categoryID)
+		}
 	})
 })
 
