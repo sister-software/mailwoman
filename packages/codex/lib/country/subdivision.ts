@@ -185,3 +185,18 @@ export function matchSubdivisionIn(countryAlpha2: string, token: string | null):
 
 	return SCOPED_SUBDIVISION_LOOKUP.get(countryAlpha2.toUpperCase())?.get(foldName(token)) ?? null
 }
+
+/**
+ * Every subdivision a surface form names, one per country whose table holds it.
+ *
+ * `WA` returns Washington and Western Australia.
+ * A caller that has no country yet reads each candidate instead of the single
+ * winner {@link matchSubdivision} picks.
+ */
+export function matchSubdivisionsAnywhere(token: string | null): SubdivisionMatch[] {
+	if (!token || typeof token !== "string") return []
+
+	const folded = foldName(token)
+
+	return [...SCOPED_SUBDIVISION_LOOKUP.values()].flatMap((scoped) => scoped.get(folded) ?? [])
+}

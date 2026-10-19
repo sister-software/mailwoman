@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
+import { matchCountry, matchSubdivision, matchSubdivisionsAnywhere } from "@mailwoman/codex/country"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
@@ -75,10 +75,11 @@ function collectSiblingCountries(roots: readonly AddressNode[]): Set<string> {
 		}
 
 		if (n.tag === "region") {
-			const sub = matchSubdivision(n.value)
-
-			if (sub && statesSyntax(sub.country)) {
-				out.add(sub.country.toUpperCase())
+			// An abbreviation such as `WA` names a subdivision in more than one country, and each is a candidate.
+			for (const sub of matchSubdivisionsAnywhere(n.value)) {
+				if (statesSyntax(sub.country)) {
+					out.add(sub.country.toUpperCase())
+				}
 			}
 
 			const hint = n.metadata?.["country_hint"]
