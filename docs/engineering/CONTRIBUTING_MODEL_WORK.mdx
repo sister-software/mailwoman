@@ -125,7 +125,7 @@ steps to follow.
   structurally enough that routing works better than tagging.
 - **Cross-locale grammar leakage** (a convention from one address system firing in another, such as
   USPS suffix logic on French streets): use **a conventions row and the decode-time mask** rather
-  than a corpus recipe. `packages/codex/lib/address/system-conventions.ts` is keyed by the model's own locale
+  than a corpus recipe. `packages/codex/lib/address/system/conventions.ts` is keyed by the model's own locale
   head. It needs no GPU and applies without retraining. Shipped in v4.3.0 (#478 increment 1).
 
 **The base-consistency check (from #511. Run it before weighting any corpus source.):** a coverage

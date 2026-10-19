@@ -141,7 +141,7 @@ The detected system selects a row in the codex conventions,
 that row's forbidden tags are removed from the Viterbi vocabulary,
 and the system's postcode shape enables the snap-only repair pass.
 Like the gazetteer anchor, this layer keeps its knowledge outside the weights.
-A new `de` or `gb` row in `codex/address-system-conventions.ts` applies the constraint without a retrain.
+A new `de` or `gb` row in `codex/address/system/conventions.ts` applies the constraint without a retrain.
 Detection is threshold-conditional (0.8), so the mask never fires on a guess, and an undetected system parses exactly as before.
 The planned next steps ([#478](https://github.com/sister-software/mailwoman/issues/478)) are per-system _transition_ masks
 and, eventually, conventions as a second candidate emitter into Stage 5.
