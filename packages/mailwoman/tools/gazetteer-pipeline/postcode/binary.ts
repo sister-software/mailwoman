@@ -13,15 +13,9 @@
  *   means from placed unit centroids.
  */
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import type { PostcodeBinaryEntry } from "@mailwoman/postcode/binary-resolver"
 import type { NamedLatLon } from "@mailwoman/spatial"
-
-/**
- * GB unit postcode shape in stripped form (`SW1A2AA`).
- *
- * Keep this in sync with `anchor-lookup.ts` and `neural/anchor-inference.ts`.
- */
-const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
  * GB inward code length (`\d[A-Z]{2}`).
@@ -119,7 +113,7 @@ export function postcodeBinaryKey(country: string, name: string): string {
 export function gbOutwardFromKey(name: string): string | null {
 	const key = postcodeBinaryKey("GB", name)
 
-	if (!GB_UNIT_KEY.test(key)) return null
+	if (!UK_POSTCODE_PATTERN.test(key)) return null
 
 	return key.slice(0, -GB_INWARD_LENGTH)
 }

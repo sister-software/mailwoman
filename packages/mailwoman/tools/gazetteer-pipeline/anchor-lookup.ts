@@ -6,6 +6,7 @@
  *   Builds the postcode anchor lookup that maps each postcode to its countries and a centroid.
  */
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -80,8 +81,6 @@ function loadUs(): Map<string, Centroid> {
 	return out
 }
 
-const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
-
 const GB_INWARD_LENGTH = 3
 
 const HAS_LETTERS = /[A-Z]/
@@ -101,7 +100,7 @@ function loadGBCodePoint(): Map<string, Centroid> {
 	for (const row of rows) {
 		const pc = (row.name || "").trim().toUpperCase()
 
-		if (!GB_UNIT_KEY.test(pc)) continue
+		if (!UK_POSTCODE_PATTERN.test(pc)) continue
 		const lat = Number(row.latitude)
 		const lon = Number(row.longitude)
 
