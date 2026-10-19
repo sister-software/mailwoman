@@ -4,6 +4,7 @@
 
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
+import { isPrefixDirectoryFor } from "mailwoman/cli/native/command/names"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -120,12 +121,18 @@ export async function readCommands(
 
 		// A prefix directory is layout rather than a command path: every command under it
 		// declares the directory's own name as its prefix, so `build/postcode/codepoint.js` is
-		// `build postcode-codepoint` and the directory itself is not something a user types.
+		// `build postcode-codepoint` and the directory itself is a path segment the user never types.
 		// A namespace directory looks identical from outside.
-		// The declared names decide.
+		// The declared names decide, by the same rule the native router applies.
 		const nested = [...children.values()]
 
-		if (nested.every((child) => !child.commands && child.name.startsWith(`${entry}-`))) {
+		if (
+			nested.every((child) => !child.commands) &&
+			isPrefixDirectoryFor(
+				entry,
+				nested.map((child) => child.name)
+			)
+		) {
 			for (const child of nested) {
 				commands.set(child.name, child)
 			}

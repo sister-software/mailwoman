@@ -46,6 +46,16 @@ export function isPrefixDirectory(directory: string, name: string): boolean {
 	return name.startsWith(`${directory}-`)
 }
 
+/**
+ * Whether a directory is layout for every command it holds: it offers no command of its own
+ * and each declared name under it starts with the directory's name.
+ *
+ * A directory with no commands is neither a prefix nor a namespace, so it answers false.
+ */
+export function isPrefixDirectoryFor(directory: string, declaredNames: readonly string[]): boolean {
+	return declaredNames.length > 0 && declaredNames.every((name) => isPrefixDirectory(directory, name))
+}
+
 const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
 
 /**
