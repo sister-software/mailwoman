@@ -262,8 +262,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			foldVersion: 1,
 			sourceMD5s,
 			buildDate: new Date().toISOString(),
-			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
-			...(options.parentDelta !== undefined ? { parentDelta: options.parentDelta } : {}),
+			...(options.transitionBeta ? { transitionBeta: options.transitionBeta } : {}),
+			...(options.parentDelta ? { parentDelta: options.parentDelta } : {}),
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
@@ -320,8 +320,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
 			`header: delta=${options.delta}` +
-				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
-				(options.parentDelta !== undefined ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
+				(options.transitionBeta ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
+				(options.parentDelta ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),

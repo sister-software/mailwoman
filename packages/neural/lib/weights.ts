@@ -447,7 +447,7 @@ async function resolveFromPackageDir(
 	let modelPath = opts.modelPath ?? resolvePath(packageDir, "model.onnx")
 	let tokenizerPath = opts.tokenizerPath ?? resolvePath(packageDir, "tokenizer.model")
 
-	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot !== undefined)
+	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot)
 
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolvePath(baseDir, "model.onnx") : null

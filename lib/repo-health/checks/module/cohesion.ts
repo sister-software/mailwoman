@@ -244,7 +244,7 @@ function moduleCohesion(source: ts.SourceFile): ModuleCohesion {
 			if (ts.isIdentifier(node)) {
 				const referenced = position.get(node.text)
 
-				if (referenced !== undefined && referenced !== at) {
+				if (referenced && referenced !== at) {
 					adjacency[at]!.add(referenced)
 					adjacency[referenced]!.add(at)
 				}

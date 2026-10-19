@@ -219,7 +219,7 @@ export async function rerankByStreetEvidence(
 	}))
 
 	const pick = pickByStreetEvidence(candidates, evidence, {
-		...(opts.marginCap !== undefined ? { marginCap: opts.marginCap } : {}),
+		...(opts.marginCap ? { marginCap: opts.marginCap } : {}),
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 

@@ -228,7 +228,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		// Zero rejects every fall.
 		// This arm separates the pass's re-pick behavior from its coordinate fallback.
 		...switchPinEntry("postcodeConsistency", options.postcodeConsistency ?? "production"),
-		...(options.postcodeConsistencyMaxMoveKm !== undefined
+		...(options.postcodeConsistencyMaxMoveKm
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),
 		// Default-off in the library, so an unset pin leaves this eval byte-identical.

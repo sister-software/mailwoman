@@ -643,7 +643,7 @@ export async function readCurrentHarvest(options: {
 		return (await sha256File(dataPath)) === manifest.sha256 ? manifest : null
 	}
 
-	if (options.maxPages === undefined || manifest.pages.length < options.maxPages) return null
+	if (!options.maxPages || manifest.pages.length < options.maxPages) return null
 
 	const last = manifest.pages.at(-1)
 
@@ -717,7 +717,7 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 		manifest = { ...manifest, complete: false, sha256: null }
 	}
 
-	const atPageCap = (): boolean => options.maxPages !== undefined && manifest.pages.length >= options.maxPages
+	const atPageCap = (): boolean => options.maxPages && manifest.pages.length >= options.maxPages
 
 	if (atPageCap()) {
 		options.report?.(`  ✓ The manifest already holds ${manifest.pages.length} pages — no request made.`)
@@ -946,7 +946,7 @@ export async function runWFSHarvest(
 		`  ${manifest.complete ? "✓" : "partial:"} ${manifest.features_written} features over ${manifest.pages.length} pages, ${manifest.bytes} bytes`
 	)
 
-	const bounded = options.maxPages !== undefined && manifest.pages.length >= options.maxPages
+	const bounded = options.maxPages && manifest.pages.length >= options.maxPages
 
 	return manifest.complete || bounded
 		? { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }

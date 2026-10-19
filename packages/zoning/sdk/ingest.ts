@@ -175,11 +175,11 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 function whereClause(options: ZoningIngestOptions): string[] {
 	const bounds: string[] = []
 
-	if (options.objectIDFrom !== undefined) {
+	if (options.objectIDFrom) {
 		bounds.push(`OBJECTID >= ${options.objectIDFrom}`)
 	}
 
-	if (options.objectIDTo !== undefined) {
+	if (options.objectIDTo) {
 		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
 	}
 
@@ -226,7 +226,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 		"-select",
 		ZONING_SOURCE_FIELDS.join(","),
 		...whereClause(options),
-		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),
+		...(!options.limit ? [] : ["-limit", String(options.limit)]),
 		options.exportPath,
 	]
 

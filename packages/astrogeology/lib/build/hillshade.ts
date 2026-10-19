@@ -65,7 +65,7 @@ async function readDEMGrid(demPath: PathBuilderLike, body: BuildableBodyID): Pro
 	const [west] = info.cornerCoordinates?.upperLeft ?? []
 	const [east] = info.cornerCoordinates?.lowerRight ?? []
 
-	if (west === undefined || east === undefined) throw new Error(`${demPath}: gdalinfo reports no corner coordinates`)
+	if (!west || !east) throw new Error(`${demPath}: gdalinfo reports no corner coordinates`)
 
 	const width = east - west
 	const expected = projectedMetres ? 2 * Math.PI * BODIES[body].meanRadiusKm * 1000 : 360
@@ -118,7 +118,7 @@ async function assertWithinTerrariumEnvelope(rasterPath: string): Promise<void> 
 	const info = parseJSONStrict<{ bands?: Array<{ minimum?: number; maximum?: number }> }>(stdout)
 	const [band] = info.bands ?? []
 
-	if (band?.minimum === undefined || band.maximum === undefined) {
+	if (!band?.minimum || !band.maximum) {
 		throw new Error(`${rasterPath}: gdalinfo reports no band statistics, so the elevation range cannot be checked`)
 	}
 

@@ -80,7 +80,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<IaContractorRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				const businessName = record["Business Name"] ?? ""
 				const address1 = record["Address 1"] ?? ""

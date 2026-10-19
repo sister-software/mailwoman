@@ -112,7 +112,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 			for await (const record of readSchoolRows(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				const name = schoolCellText(record.name)
 				const address = schoolCellText(record.address)

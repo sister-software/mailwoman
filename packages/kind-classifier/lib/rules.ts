@@ -129,7 +129,7 @@ export function wordsOf(text: string): string[] {
 export function isDisqualifyingStreetSuffix(word: string): boolean {
 	const canonical = US_STREET_SUFFIX_LOOKUP.get(word.trim().toLowerCase())
 
-	return canonical !== undefined && !NAME_PRONE_US_SUFFIXES.has(canonical)
+	return canonical && !NAME_PRONE_US_SUFFIXES.has(canonical)
 }
 
 /**

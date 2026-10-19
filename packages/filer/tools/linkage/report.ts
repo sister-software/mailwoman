@@ -59,7 +59,7 @@ const PROVIDER_FIELD_NOTES: Record<keyof ProviderListRow, string> = {
 }
 
 function isPopulated(value: unknown): boolean {
-	return value !== null && value !== undefined && value !== "" && value !== false
+	return value !== null && value && value !== "" && value !== false
 }
 
 function describeFieldCoverage<Row>(rows: readonly Row[], field: keyof Row, withheld: boolean): string {

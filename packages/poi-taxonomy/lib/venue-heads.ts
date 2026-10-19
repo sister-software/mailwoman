@@ -161,7 +161,7 @@ function headBias(layers: readonly VenueHeadEntries[], position: VenueHeadPositi
 	for (const layer of layers) {
 		const bias = layer[position][key]
 
-		if (bias !== undefined) return bias
+		if (bias) return bias
 	}
 
 	// A key written in a script without spaces between words identifies its language
@@ -173,7 +173,7 @@ function headBias(layers: readonly VenueHeadEntries[], position: VenueHeadPositi
 	for (const language of ALL_LANGUAGES) {
 		const bias = language[position][key]
 
-		if (bias !== undefined && (best === null || bias > best)) {
+		if (bias && (best === null || bias > best)) {
 			best = bias
 		}
 	}

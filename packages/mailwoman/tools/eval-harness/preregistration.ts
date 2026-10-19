@@ -39,7 +39,7 @@ export function canonicalJSON(value: unknown): string {
 	if (Array.isArray(value)) return `[${value.map((entry) => canonicalJSON(entry)).join(",")}]`
 
 	const entries = Object.entries(value as Record<string, unknown>)
-		.filter(([, entryValue]) => entryValue !== undefined)
+		.filter(([, entryValue]) => entryValue)
 		.toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
 
 	return `{${entries.map(([key, entryValue]) => `${stringifyJSON(key)}:${canonicalJSON(entryValue)}`).join(",")}}`

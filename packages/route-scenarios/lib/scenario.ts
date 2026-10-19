@@ -534,7 +534,7 @@ function requireWholeNumber(
 		fail(input, path, `${value} is below ${minimum}`)
 	}
 
-	if (maximum !== undefined && value > maximum) {
+	if (maximum && value > maximum) {
 		fail(input, path, `${value} is above ${maximum}`)
 	}
 
@@ -907,7 +907,7 @@ export function validateScenario(scenario: Scenario): void {
 		}
 	}
 
-	if (scenario.costAdjustment === undefined) {
+	if (!scenario.costAdjustment) {
 		fail(ScenarioInput.Field, "costAdjustment", "the cost adjustment is missing. State null for no adjustment")
 	}
 

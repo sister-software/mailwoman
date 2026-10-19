@@ -67,7 +67,7 @@ export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 
  * WOF records population for roughly 15% of localities, so absence is the common case and must stay cheap.
  */
 export function referentialFromPopulation(population: number | null | undefined): number {
-	if (population === null || population === undefined || population <= 0) return 0
+	if (population === null || !population || population <= 0) return 0
 
 	return Math.min(1, Math.log2(1 + population / REFERENTIAL_POPULATION_DIVISOR) / REFERENTIAL_LOG2_SCALE)
 }

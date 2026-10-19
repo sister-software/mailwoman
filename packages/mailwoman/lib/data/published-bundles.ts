@@ -278,7 +278,7 @@ function assertRightsComponent(value: unknown, path: string, where: string): Rig
 		component[key] = value[key]
 	}
 
-	if (value.attribution !== undefined) {
+	if (value.attribution) {
 		if (!Array.isArray(value.attribution) || !value.attribution.every((line) => typeof line === "string")) {
 			fail(path, `${where}.attribution`, "is not an array of strings")
 		}

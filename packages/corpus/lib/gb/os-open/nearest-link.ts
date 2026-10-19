@@ -164,6 +164,6 @@ export class NearestLinkJoin<T> {
 	match(index: number): NearestLinkMatch<T> | null {
 		const link = this.#best[index]
 
-		return link === undefined ? null : { link, distance: Math.sqrt(this.#bestSquared[index]!) }
+		return !link ? null : { link, distance: Math.sqrt(this.#bestSquared[index]!) }
 	}
 }

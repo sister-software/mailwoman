@@ -206,7 +206,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 
 		const cached = this.#placeCache.get(id)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 
 		const row = getRow<SprRow>(this.#placeStatement, id)
 

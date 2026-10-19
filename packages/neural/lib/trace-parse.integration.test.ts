@@ -358,7 +358,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			const alnum = /[\p{L}\p{N}]/u.test(p.piece)
 			const prev = pieces[idx - 1]
-			const continues = alnum && prev !== undefined && /[\p{L}\p{N}]/u.test(prev.piece) && prev.end === p.start
+			const continues = alnum && prev && /[\p{L}\p{N}]/u.test(prev.piece) && prev.end === p.start
 
 			row[alnum ? (continues ? iIdx : bIdx) : oIdx] = 4
 

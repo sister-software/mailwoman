@@ -83,7 +83,7 @@ export async function buildStreetMorphologyArtifact(
 	const result = await buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
-		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),
+		...(opts.minVariantLength ? { minVariantLength: opts.minVariantLength } : {}),
 		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 	})
 

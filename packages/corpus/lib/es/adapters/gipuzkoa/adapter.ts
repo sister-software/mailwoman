@@ -154,14 +154,14 @@ export function createESGipuzkoaAdapter(): CorpusAdapter {
 			for (const archivePath of await archivePaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				for await (const row of streamIndexedInspireRows<MarkupElement>({
 					chunks: () => inspireGMLChunks(archivePath, GML_MEMBER),
 					componentElements: COMPONENT_ELEMENTS,
 					index: (feature) => feature,
 					compose: composeRow,
-					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					limit: !opts.limit ? undefined : opts.limit - emitted,
 					signal: opts.signal,
 				})) {
 					yield row

@@ -87,7 +87,7 @@ function canonicalize(value: unknown): unknown {
 	for (const key of Object.keys(value).toSorted(compareByCodePoint)) {
 		const entry = value[key]
 
-		if (entry === undefined) continue
+		if (!entry) continue
 
 		canonical[key] = canonicalize(entry)
 	}

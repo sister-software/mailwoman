@@ -67,7 +67,7 @@ export const streetBareRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const isBare = synth.components.region === undefined
+			const isBare = !synth.components.region
 
 			const canonical: CanonicalRecipeRow = {
 				raw: synth.raw,

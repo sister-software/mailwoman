@@ -349,7 +349,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 							? last
 							: null
 
-		if (next !== undefined) {
+		if (next) {
 			event.preventDefault()
 			setSelected(next)
 			document.getElementById(optionID(next))?.scrollIntoView({ block: "nearest" })
@@ -401,7 +401,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		)
 	}
 
-	const noResults = response !== undefined && response.hits.length === 0
+	const noResults = response && response.hits.length === 0
 
 	return (
 		<dialog

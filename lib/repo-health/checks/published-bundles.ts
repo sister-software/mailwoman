@@ -92,7 +92,7 @@ export function compareRegistryToSnapshot(
 
 			const contentLength = measured.get(artifact.remotePath)
 
-			if (contentLength === null || contentLength === undefined) {
+			if (contentLength === null || !contentLength) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					file,

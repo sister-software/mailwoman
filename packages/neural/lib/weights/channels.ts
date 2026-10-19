@@ -261,7 +261,7 @@ export async function readRequiredChannels(
 	if (!card) return null
 	const requires = card.requires
 
-	if (requires === undefined) return null
+	if (!requires) return null
 
 	if (typeof requires !== "object" || !requires || Array.isArray(requires)) {
 		throw new Error(
@@ -284,7 +284,7 @@ export async function readRequiredChannels(
 	] as const) {
 		const entry = obj[channel]
 
-		if (entry === undefined) continue
+		if (!entry) continue
 
 		if (typeof entry !== "object" || !entry || typeof (entry as { required?: unknown }).required !== "boolean") {
 			throw new Error(
@@ -298,7 +298,7 @@ export async function readRequiredChannels(
 	for (const channel of ["street_type", "locality_surface"] as const) {
 		const lexicon = (obj[channel] as { lexicon?: unknown } | undefined)?.lexicon
 
-		if (lexicon !== undefined && typeof lexicon !== "string") {
+		if (lexicon && typeof lexicon !== "string") {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}.lexicon\` — ` +
 					`expected a filename string, got ${stringifyJSON(lexicon)}.`
@@ -309,14 +309,14 @@ export async function readRequiredChannels(
 	// An unrecognized span mode would anchor the wrong spans without any error, so it throws.
 	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
 
-	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
 				`expected "alnum-run" or "shaped", got ${stringifyJSON(anchorSpanMode)}.`
 		)
 	}
 
-	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
+	if (obj.suppress_gazetteer_near_postcode && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.suppress_gazetteer_near_postcode\` ` +
 				`field — expected a boolean, got ${stringifyJSON(obj.suppress_gazetteer_near_postcode)}.`
@@ -371,7 +371,7 @@ export async function readCapabilityManifest(
 	if (!card) return null
 	const capabilities = card.capabilities
 
-	if (capabilities === undefined) return null
+	if (!capabilities) return null
 
 	if (typeof capabilities !== "object" || !capabilities || Array.isArray(capabilities)) {
 		throw new Error(
@@ -467,7 +467,7 @@ export async function readLabelsFromModelCard(
 	if (!card) return null
 	const labels = card.labels
 
-	if (labels === undefined) return null
+	if (!labels) return null
 
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(

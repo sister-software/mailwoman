@@ -25,7 +25,7 @@ export interface BarePostcodeCapabilityResult {
 function headTag(trace: NeuralParseTrace): string {
 	const index = trace.path[0]
 
-	return index === undefined ? "(none)" : bareBIOTag(trace.labels[index] ?? "(none)")
+	return !index ? "(none)" : bareBIOTag(trace.labels[index] ?? "(none)")
 }
 
 /**

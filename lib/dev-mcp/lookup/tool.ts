@@ -139,9 +139,7 @@ export async function runLookup(
 
 					const entries = rows.flatMap((row) => (row.entries ?? []) as Array<{ importance_split?: unknown }>)
 
-					const joined = entries.filter(
-						(entry) => entry.importance_split !== undefined && entry.importance_split !== null
-					).length
+					const joined = entries.filter((entry) => entry.importance_split && entry.importance_split !== null).length
 
 					const splitNote = importanceDB
 						? `importance_split joined for ${joined} of ${entries.length} returned row(s) by spr_id from ` +

@@ -489,7 +489,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 				if (cached) {
 					place.geometry = cached
-				} else if (cached === undefined && !polygonInflightRef.current.has(candidate.id)) {
+				} else if (!cached && !polygonInflightRef.current.has(candidate.id)) {
 					polygonInflightRef.current.add(candidate.id)
 					const placeID = candidate.id
 

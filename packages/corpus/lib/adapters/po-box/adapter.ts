@@ -171,7 +171,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 				if (
 					militaryRatio > 0 &&
 					militaryAllowed &&
-					(options.limit === undefined || emitted < options.limit) &&
+					(!options.limit || emitted < options.limit) &&
 					random() < militaryRatio
 				) {
 					const mil = synthesizeMilitaryPoBoxRow({ random })

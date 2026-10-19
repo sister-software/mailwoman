@@ -549,7 +549,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	#countryWOFId(code: string): number | null {
 		const cached = this.#countryWOFIdCache.get(code)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 		let id: number | null
 
 		try {

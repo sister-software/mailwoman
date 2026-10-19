@@ -78,7 +78,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 
 	const gold = parityCase.expected[0]
 
-	if (gold === undefined) {
+	if (!gold) {
 		fixtures.push({ ...fixture, dropped: "rules-era no-solution assertion (nothing to expect)" })
 
 		continue

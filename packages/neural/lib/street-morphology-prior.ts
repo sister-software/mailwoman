@@ -93,7 +93,7 @@ export function buildStreetMorphologyEmissionPriors(
 	const iDepLoc = labelToCol.get("I-dependent_locality")
 
 	// A vocabulary without street tags leaves no label to bias, so the zero matrix no-ops the pipeline.
-	if (bStreet === undefined || bStreetPrefix === undefined || bStreetSuffix === undefined) {
+	if (!bStreet || !bStreetPrefix || !bStreetSuffix) {
 		return matrix
 	}
 
@@ -219,7 +219,7 @@ export function buildStreetMorphologyEmissionPriors(
 				const streetCol = k === 0 ? bStreet : (iStreet ?? bStreet)
 				matrix[pi]![streetCol] = Math.max(matrix[pi]![streetCol]!, neighbourStreetBias)
 
-				if (bDepLoc !== undefined) {
+				if (bDepLoc) {
 					const depLocCol = k === 0 ? bDepLoc : (iDepLoc ?? bDepLoc)
 					matrix[pi]![depLocCol] = Math.min(matrix[pi]![depLocCol]!, -dependentLocalityPenalty)
 				}

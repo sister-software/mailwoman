@@ -67,7 +67,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 	const visit = (n: AddressNode): void => {
 		const meta = n.metadata as Record<string, unknown> | undefined
 
-		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
+		if (n.placeID?.startsWith("wof:") && n.lat && n.lon) {
 			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
 
@@ -94,7 +94,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			lon?: number
 			metadata?: Record<string, unknown>
 		}>) {
-			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
+			if (interp.placeID?.startsWith("wof:") && interp.lat && interp.lon) {
 				const placetype = String(interp.sourceID ?? interp.tag).split(":")[0] ?? ""
 				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
 

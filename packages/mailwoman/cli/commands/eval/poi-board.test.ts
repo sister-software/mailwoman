@@ -436,15 +436,15 @@ describe("the committed poi-board fixture set", () => {
 	it("every results-kind expect carries EXACTLY ONE of categoryID / brandWikidata", () => {
 		for (const f of fixtures) {
 			if (f.expect.kind !== "results") continue
-			const hasCategory = f.expect.categoryID !== undefined
-			const hasBrand = f.expect.brandWikidata !== undefined
+			const hasCategory = f.expect.categoryID
+			const hasBrand = f.expect.brandWikidata
 
 			expect(hasCategory !== hasBrand, f.id).toBe(true)
 		}
 	})
 
 	it("carries at least 4 brand cases: brand+anchor results, locale-restricted slang, and a bare-brand abstain", () => {
-		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
+		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata)
 
 		expect(brandResults.length).toBeGreaterThanOrEqual(4)
 

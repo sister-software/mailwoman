@@ -350,7 +350,7 @@ function writeSpanBias(
 	const bCol = labelToCol.get(`B-${tag}`)
 	const iCol = labelToCol.get(`I-${tag}`)
 
-	if (bCol === undefined) return false
+	if (!bCol) return false
 
 	for (let k = 0; k < pieceIndices.length; k++) {
 		const pi = pieceIndices[k]!
@@ -506,7 +506,7 @@ export function buildPlacetypePairPriors(
 
 		// Segment identity-repeat rule: repeated adjacent equal segments skip identity partners.
 		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : null
-		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
+		const isIdentityRepeat = previous && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
 
 		let matchedEdge: PairEdge | null = null
 		// Keep parent window from hit for optional parent bias.

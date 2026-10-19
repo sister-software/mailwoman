@@ -36,7 +36,7 @@ function makeAdapter(opts: {
 			let i = 0
 
 			for (const row of opts.rows) {
-				if (opts.throwAfter !== undefined && i >= opts.throwAfter) {
+				if (opts.throwAfter && i >= opts.throwAfter) {
 					throw new Error("adapter exploded")
 				}
 

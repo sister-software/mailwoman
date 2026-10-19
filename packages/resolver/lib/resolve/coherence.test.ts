@@ -64,7 +64,7 @@ async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 				.filter((p) => p.name.toLowerCase() === text || (p.placetype === "region" && text.length === 2))
 				.filter((p) => !types || types.includes(p.placetype))
 				.filter((p) => !query.country || p.country === query.country)
-				.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
+				.filter((p) => !query.parentID || p.parent_id === query.parentID)
 				.slice(0, query.limit ?? 5)
 		},
 	}
@@ -437,10 +437,10 @@ describe("resolveTree + applyParentFallbackContradiction", () => {
 				const text = query.text.toLowerCase()
 
 				const under = [TAINAN, HSINCHU, HSINCHU_BEI_QU].filter(
-					(p) => p.name.toLowerCase() === text && (query.parentID === undefined || p.parent_id === query.parentID)
+					(p) => p.name.toLowerCase() === text && (!query.parentID || p.parent_id === query.parentID)
 				)
 
-				if (under.length || query.parentID === undefined) return under
+				if (under.length || !query.parentID) return under
 
 				return [TAINAN, HSINCHU, HSINCHU_BEI_QU]
 					.filter((p) => p.name.toLowerCase() === text)

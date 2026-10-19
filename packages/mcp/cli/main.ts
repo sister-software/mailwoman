@@ -183,7 +183,7 @@ const deps: MCPToolDeps = {
 
 		const osmTags =
 			subject.kind === "category"
-				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag !== undefined)
+				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag)
 				: []
 
 		return emitOverpassQL(

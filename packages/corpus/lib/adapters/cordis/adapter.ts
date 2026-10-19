@@ -324,7 +324,7 @@ const streetOrderMemo = new Map<string, StreetOrder | null>()
 export function streetOrderForCountry(country: string): StreetOrder | null {
 	const memo = streetOrderMemo.get(country)
 
-	if (memo !== undefined) return memo
+	if (memo) return memo
 
 	const claim = conventionClaimForCountry(ConventionClaimID.HouseNumberPrecedesStreet, country)
 	const stances = claim?.observations.map((observation) => observation.stance) ?? []
@@ -749,7 +749,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			for await (const { reading } of readings) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				if ("refused" in reading) {
 					if (!requested || reading.country === requested) {

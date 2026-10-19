@@ -139,7 +139,7 @@ export function GeocoderControls({
 
 	// Drag gestures apply only in the drawer layout.
 	// The desktop column is sized by its content.
-	const isDrawerLayout = () => globalThis.window !== undefined && globalThis.matchMedia(DRAWER_LAYOUT).matches
+	const isDrawerLayout = () => globalThis.window && globalThis.matchMedia(DRAWER_LAYOUT).matches
 
 	const beginSheetDrag = useCallback((clientY: number, pointerId: number) => {
 		const sheet = sheetRef.current
@@ -387,8 +387,7 @@ export function GeocoderControls({
 
 	// The control rail hides while the drawer is raised above its collapsed height.
 	const drawerRaised =
-		showSheet &&
-		(sheetHeight === null || (globalThis.window !== undefined && sheetHeight > sheetDetents().collapsedBelow))
+		showSheet && (sheetHeight === null || (globalThis.window && sheetHeight > sheetDetents().collapsedBelow))
 
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0

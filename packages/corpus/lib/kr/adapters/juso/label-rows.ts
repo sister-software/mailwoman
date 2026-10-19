@@ -233,7 +233,7 @@ export async function* readJusoLabelRows(
 
 			emitted += 1
 
-			if (options.maxRowsPerRegion !== undefined && emitted >= options.maxRowsPerRegion) break
+			if (options.maxRowsPerRegion && emitted >= options.maxRowsPerRegion) break
 		}
 	}
 }

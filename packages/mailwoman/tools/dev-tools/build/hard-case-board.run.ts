@@ -116,7 +116,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	// Report on the tag the row is about — locality unless the curator selected another,
 	// with an unaccepted surface reading as a declared zero on that tag.
 	const tag = c.probeTag ?? "locality"
-	const point = c.expectID === undefined ? undefined : pointOf(c.expectID)
+	const point = !c.expectID ? undefined : pointOf(c.expectID)
 
 	out.push({
 		id: c.id,
@@ -129,7 +129,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 		popBias: round4(popTags.get(tag) ?? 0),
 		impBias: round4(impTags.get(tag) ?? 0),
 		probeTag: tag,
-		...(c.expectID === undefined ? {} : { expectPlaceID: `wof:${c.expectID}` }),
+		...(!c.expectID ? {} : { expectPlaceID: `wof:${c.expectID}` }),
 		...(point ? { expectPlaceName: point.name } : {}),
 		...(point && c.toleranceM
 			? {
@@ -151,7 +151,7 @@ for (const s of SWEEP_ROWS) {
 	const lat = row["expectLat"] as number | undefined
 	const lon = row["expectLon"] as number | undefined
 	const tol = row["expectToleranceM"] as number | undefined
-	const hasCoord = lat !== undefined && lon !== undefined && tol !== undefined
+	const hasCoord = lat && lon && tol
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
 	// Measured, never declared: the arm loads the FST by locale rather than by answer-country,

@@ -571,7 +571,7 @@ export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactS
 		return local.md5 !== remote.md5
 	}
 
-	if (remote.contentLength !== undefined && local.sizeBytes !== undefined) {
+	if (remote.contentLength && local.sizeBytes) {
 		return local.sizeBytes !== remote.contentLength
 	}
 

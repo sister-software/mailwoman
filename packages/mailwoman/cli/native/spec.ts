@@ -231,7 +231,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			type: option.type === "boolean" ? "boolean" : "string",
 			...(option.short ? { short: option.short } : {}),
 			...(option.multiple ? { multiple: true } : {}),
-			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
+			...(option.default && option.type !== "number" ? { default: option.default } : {}),
 		}
 
 		// The retired spelling parses and sets no default.
@@ -279,7 +279,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			// for the old one keeps working past the removal it was warned about.
 			values[option.deprecatedName] = undefined
 
-			if (retired !== undefined) {
+			if (retired) {
 				// Both spellings is a usage error rather than a precedence rule.
 				if (values[name] !== undefined && values[name] !== option.default) {
 					throw new CLIUsageError(`--${option.deprecatedName} is the old name for --${name}; pass one of them.`)
@@ -293,19 +293,19 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 
 		const raw = values[name]
 
-		if (values.help !== true && raw === undefined && option.required) {
+		if (values.help !== true && !raw && option.required) {
 			throw new CLIUsageError(`Missing required option: --${name}.`)
 		}
 
 		if (option.type === "number") {
-			if (raw === undefined) {
+			if (!raw) {
 				values[name] = option.default
 			} else if (option.multiple) {
 				values[name] = (Array.isArray(raw) ? raw : [raw]).map((value) => parseNumber(String(value), name, option))
 			} else {
 				values[name] = parseNumber(String(raw), name, option)
 			}
-		} else if (option.type === "string" && raw !== undefined) {
+		} else if (option.type === "string" && raw) {
 			for (const value of Array.isArray(raw) ? raw : [raw]) {
 				// parseArgs yields strings for a string option, so a non-string here came from the spec's default.
 				if (typeof value !== "string") {
@@ -392,7 +392,7 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	ui.div({ text: "-h, --help", width: 34, padding: [0, 2, 0, 2] }, { text: "Show command help." })
 
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
-		const suffix = option.default === undefined ? "" : ` (default: ${String(option.default)})`
+		const suffix = !option.default ? "" : ` (default: ${String(option.default)})`
 
 		ui.div(
 			{ text: optionLabel(name, option), width: 46, padding: [0, 2, 0, 2] },
@@ -480,7 +480,7 @@ export const booleanOption = (description: string) => ({ type: "boolean", defaul
 export const positiveIntegerOption = (description: string, defaultValue?: number) =>
 	({
 		type: "number",
-		...(defaultValue === undefined ? {} : { default: defaultValue }),
+		...(!defaultValue ? {} : { default: defaultValue }),
 		validate: positiveInteger,
 		validationMessage: `${description} must be a positive integer.`,
 		description,

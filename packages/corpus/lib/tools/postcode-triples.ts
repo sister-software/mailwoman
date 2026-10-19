@@ -135,7 +135,7 @@ export function applyCountryBudget<T extends { cc: string; region?: string }>(
 	for (const triple of triples) {
 		const cap = typeof budget === "number" ? budget : budget.get(triple.cc)
 
-		if (cap === undefined) continue
+		if (!cap) continue
 
 		const key = `${triple.cc} ${triple.region ?? ""}${subKey ? ` ${subKey(triple)}` : ""}`
 		const bucket = byRegion.get(key)

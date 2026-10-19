@@ -140,7 +140,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-catastro rows against the OVC Consulta_
 
 				const postcodeOK = answer.postcodes.size
 					? answer.postcodes.has(row.components.postcode ?? "")
-					: row.components.postcode === undefined
+					: !row.components.postcode
 
 				const localityOK = answer.municipalities.has(row.components.locality ?? "")
 

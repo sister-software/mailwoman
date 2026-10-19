@@ -23,7 +23,7 @@ export interface PruneMessage {
  * Ask the service worker to drop cached DB range chunks from releases other than `keepVersion`.
  */
 export function pruneDBRangeCache(keepVersion: string): void {
-	if (globalThis.window === undefined || !("serviceWorker" in navigator)) return
+	if (!globalThis.window || !("serviceWorker" in navigator)) return
 
 	const message: PruneMessage = { type: PRUNE_MESSAGE_TYPE, keepVersion }
 

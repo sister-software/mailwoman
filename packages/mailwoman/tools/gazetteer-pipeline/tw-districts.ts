@@ -143,7 +143,7 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 
 	const exact = byName(wanted)
 
-	if (exact !== undefined) return exact
+	if (exact) return exact
 
 	const stem = wanted.replace(/[縣市]$/u, "")
 

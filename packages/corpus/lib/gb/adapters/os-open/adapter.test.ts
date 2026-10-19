@@ -71,7 +71,7 @@ describe("gb-os-open adapter against the fixture products", () => {
 		expect(church.components.locality).toBeUndefined()
 		expect(kenneth.components.locality).toBe("Stornoway")
 		expect(summary).toMatchObject({ titleCasedStreets: 1, noLocality: 1, bilingualLocality: 1 })
-		expect(rows.every((row) => row.components.region === undefined)).toBe(true)
+		expect(rows.every((row) => !row.components.region)).toBe(true)
 	})
 
 	it("stamps OGL provenance and a source id seeded by postcode and TOID", async () => {

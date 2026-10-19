@@ -114,15 +114,9 @@ const norm = (s: string): string =>
 function score(c: HardCase, resolved: Resolved[]): CaseScore {
 	const best = mostSpecific(resolved)
 
-	const errKm =
-		best && c.expectLat !== undefined && c.expectLon !== undefined
-			? haversineKm(best.lat, best.lon, c.expectLat, c.expectLon)
-			: null
+	const errKm = best && c.expectLat && c.expectLon ? haversineKm(best.lat, best.lon, c.expectLat, c.expectLon) : null
 
-	const coordOK =
-		c.expectLat === undefined || c.expectToleranceM === undefined
-			? null
-			: errKm !== null && errKm <= c.expectToleranceM / 1000
+	const coordOK = !c.expectLat || !c.expectToleranceM ? null : errKm !== null && errKm <= c.expectToleranceM / 1000
 
 	// The expected place can be an ancestor of the most specific result, so every resolved node is checked.
 	let placeOK: boolean | null = null

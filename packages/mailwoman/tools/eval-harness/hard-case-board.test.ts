@@ -59,7 +59,7 @@ describe("hard-case board fixture", () => {
 		const board = await loadHardCaseBoard()
 
 		const partial = board.filter(
-			(c) => [c.expectLat, c.expectLon, c.expectToleranceM].filter((v) => v !== undefined).length % 3 !== 0
+			(c) => [c.expectLat, c.expectLon, c.expectToleranceM].filter((v) => v).length % 3 !== 0
 		)
 
 		expect(partial.map((c) => c.id)).toEqual([])

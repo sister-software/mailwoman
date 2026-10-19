@@ -166,7 +166,7 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 	if (!span_starts || !span_ends || !span_tags) {
 		throw new Error(
 			`rowToParquet: row is missing the char-offset span triple (#519) — ` +
-				`span_starts=${span_starts !== undefined} span_ends=${span_ends !== undefined} span_tags=${span_tags !== undefined} ` +
+				`span_starts=${span_starts} span_ends=${span_ends} span_tags=${span_tags} ` +
 				`(source=${row.source}, source_id=${row.source_id}). ` +
 				`Every parquet-bound row must carry span_starts/span_ends/span_tags; ` +
 				`producers that emit tokens/labels only have not migrated to the v0.5.0 format.`

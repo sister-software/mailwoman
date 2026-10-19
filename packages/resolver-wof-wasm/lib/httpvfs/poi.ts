@@ -100,7 +100,7 @@ export async function searchPOICategory(database: RangeDatabase, opts: POISearch
 	const maxRings = Math.max(1, opts.maxRings ?? DEFAULT_MAX_RINGS)
 	const codes = await loadPOICategoryCodes(database)
 
-	const categoryIDs = opts.categoryIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
+	const categoryIDs = opts.categoryIDs.map((id) => codes.get(id)).filter((id): id is number => id)
 
 	if (!categoryIDs.length) return []
 

@@ -66,7 +66,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 
 		const parsed = parseJSONStrict<{ Table?: unknown }>(data)
 
-		if (parsed.Table === undefined) return []
+		if (!parsed.Table) return []
 
 		if (!Array.isArray(parsed.Table)) {
 			throw new TypeError(

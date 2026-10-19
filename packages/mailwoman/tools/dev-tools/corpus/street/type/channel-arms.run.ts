@@ -134,7 +134,7 @@ interface LexiconFile {
 const shipped = await readLocalJSONFile<LexiconFile>(shippedLexiconPath)
 const streetTypeBit = shipped.bits["street_type"]
 
-if (streetTypeBit === undefined) {
+if (!streetTypeBit) {
 	throw new Error(`${shippedLexiconPath} declares no street_type bit, so the probe cannot set one.`)
 }
 

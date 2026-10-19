@@ -233,7 +233,7 @@ async function geonamesNameFill(
 			.flatMap(([postcode, entry]) => {
 				const id = byPostcode.get(postcode)
 
-				return id === undefined ? [] : [...entry.names].map((name) => ({ id, name }))
+				return !id ? [] : [...entry.names].map((name) => ({ id, name }))
 			})
 			.map(({ id, name }) => ({
 				id,
@@ -321,7 +321,7 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: PathB
 	const dataDirFor = async (country: string): Promise<string | null> => {
 		let dataDir = dataDirByCountry.get(country)
 
-		if (dataDir === undefined) {
+		if (!dataDir) {
 			dataDir = await resolveWOFDataDir(reposDir, "postalcode", country)
 			dataDirByCountry.set(country, dataDir)
 		}

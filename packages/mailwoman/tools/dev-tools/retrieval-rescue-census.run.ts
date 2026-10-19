@@ -65,7 +65,7 @@ for (const c of cases) {
 		expectToleranceM: c.expectToleranceM ?? null,
 		lat: result.lat,
 		lon: result.lon,
-		entityFired: result.entity !== undefined,
+		entityFired: result.entity,
 		unconditionalEntityHit: hit ? { lat: hit.latitude, lon: hit.longitude } : null,
 		alternateCandidates: result.candidates.slice(1).map((cand) => ({ lat: cand.lat, lon: cand.lon })),
 	})

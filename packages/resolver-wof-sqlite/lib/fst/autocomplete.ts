@@ -135,7 +135,7 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 
 	entriesAt(stateID: number, limit?: number): AncestrieRecord<PlaceEntry>[] {
 		const places = this.#fst.accepting(stateID)
-		const selected = limit === undefined ? places : topByReferential(places, limit)
+		const selected = !limit ? places : topByReferential(places, limit)
 
 		return selected.map((entry) => {
 			this.#chains.set(entry.wofID, entry.parentChain)
@@ -163,8 +163,8 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 	const normalizedTokens = normalizeTokens(query)
 
 	const result = ancestrieAutocomplete<PlaceEntry>(new FSTReader(fst), normalizedTokens, {
-		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
-		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
+		...(!opts.maxSuggestions ? {} : { maxSuggestions: opts.maxSuggestions }),
+		...(!opts.maxExpansionDepth ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
 		// The dedupe key is the display name, so two surfaces of one name still collapse.
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),

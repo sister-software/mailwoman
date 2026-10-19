@@ -53,6 +53,6 @@ export function harnessCommand<Spec extends CommandSpec, T>(
 
 		const payload = options.json?.(state.result, parsed)
 
-		return payload === undefined ? null : h(Text, null, prettyJSON(payload))
+		return !payload ? null : h(Text, null, prettyJSON(payload))
 	}
 }

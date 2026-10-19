@@ -442,7 +442,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		for (const row of stageStmt.iterate() as IterableIterator<BDCStageRow>) {
 			let resolved = centroidCache.get(row.geoid)
 
-			if (resolved === undefined) {
+			if (!resolved) {
 				const centroid = options.blockCentroids(row.geoid)
 
 				resolved = centroid ? blockCentroidCells(centroid) : null

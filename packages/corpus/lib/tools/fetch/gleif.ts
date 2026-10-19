@@ -139,7 +139,7 @@ export async function readGLEIFLatestPublish(client: Pick<APIClient, "fetch">): 
 	}
 
 	const missing = Object.entries(fields)
-		.filter(([, value]) => value === undefined || value === null || value === "")
+		.filter(([, value]) => !value || value === null || value === "")
 		.map(([name]) => name)
 
 	if (missing.length) {

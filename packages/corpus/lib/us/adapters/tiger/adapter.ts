@@ -165,7 +165,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					if (opts.signal?.aborted) return
 
 					for (const variant of streetVariants(row)) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
+						if (opts.limit && emitted >= opts.limit) return
 						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
 						if (!rendered) continue
@@ -191,7 +191,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					if (opts.signal?.aborted) return
 
 					for (const variant of placeVariants(row)) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
+						if (opts.limit && emitted >= opts.limit) return
 						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
 						if (!rendered) continue

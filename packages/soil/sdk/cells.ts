@@ -185,7 +185,7 @@ export function formatSoilResolutionRows(
 				`${m.partialCells.toLocaleString()} | ${(m.partialShare * 100).toFixed(1)}% | ` +
 				`${m.compactedWholeCells.toLocaleString()} | ${m.cellDelineationPairs.toLocaleString()} | ` +
 				`${m.meanDelineationsPerCell.toFixed(2)} | ` +
-				`${m.mixedCellShare === undefined ? "—" : `${(m.mixedCellShare * 100).toFixed(1)}%`} |`
+				`${!m.mixedCellShare ? "—" : `${(m.mixedCellShare * 100).toFixed(1)}%`} |`
 		),
 	]
 }

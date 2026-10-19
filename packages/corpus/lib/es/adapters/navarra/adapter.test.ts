@@ -148,7 +148,7 @@ describe("es-navarra adapter against the fixture partitions", () => {
 
 		// The fifth-order title remains and is read as the place, so one row survives per address.
 		// The municipality reference is the one this edit removed.
-		expect(rows.every((row) => row.components.dependent_locality === undefined)).toBe(true)
+		expect(rows.every((row) => !row.components.dependent_locality)).toBe(true)
 		expect(rows.every((row) => row.components.locality === "Abáigar")).toBe(true)
 	})
 

@@ -195,7 +195,7 @@ export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions)
 		areaOfUse: options.areaOfUse ?? null,
 	})
 
-	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name !== undefined))
+	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name))
 
 	if (options.requireFields && !fields.size) {
 		throw new TypeError(

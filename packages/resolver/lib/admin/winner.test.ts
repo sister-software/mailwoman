@@ -118,7 +118,7 @@ describe("adminLadderForNodes", () => {
 		confidence: 1,
 		children: [],
 		metadata: { resolver_name: resolverName, ...(over.country ? { resolver_country: over.country } : {}) },
-		...(over.lat === undefined ? {} : { lat: over.lat, lon: over.lon }),
+		...(!over.lat ? {} : { lat: over.lat, lon: over.lon }),
 	})
 
 	it("finds the postcode node and reads both routes off it", () => {

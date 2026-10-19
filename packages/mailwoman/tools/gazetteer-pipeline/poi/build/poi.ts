@@ -303,7 +303,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			if (!category) return 0
 			let id = categoryCodes.get(category)
 
-			if (id === undefined) {
+			if (!id) {
 				id = categoryCodes.size + 1
 				categoryCodes.set(category, id)
 			}

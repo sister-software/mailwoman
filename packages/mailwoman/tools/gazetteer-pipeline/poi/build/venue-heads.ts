@@ -320,11 +320,11 @@ export function pruneSuffixes(suffixes: VenueHeadBiases): VenueHeadBiases {
 		const characters = [...suffix]
 		let shorter: number | undefined
 
-		for (let start = 1; start < characters.length && shorter === undefined; start++) {
+		for (let start = 1; start < characters.length && !shorter; start++) {
 			shorter = kept[characters.slice(start).join("")]
 		}
 
-		if (shorter === undefined || Math.abs(suffixes[suffix]! - shorter) >= SUFFIX_PRUNE_DELTA) {
+		if (!shorter || Math.abs(suffixes[suffix]! - shorter) >= SUFFIX_PRUNE_DELTA) {
 			kept[suffix] = suffixes[suffix]!
 		}
 	}

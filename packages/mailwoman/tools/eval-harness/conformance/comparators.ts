@@ -267,7 +267,7 @@ function containsAll(inner: Record<string, string>, outer: Record<string, string
 	return Object.entries(inner).every(([tag, value]) => {
 		const found = outer[tag]
 
-		return found !== undefined && componentMatches(found, value)
+		return found && componentMatches(found, value)
 	})
 }
 

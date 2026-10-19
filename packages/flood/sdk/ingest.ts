@@ -100,11 +100,11 @@ function floodSelectSQL(layer: string, options: FloodIngestOptions): string {
 	const select = `SELECT OBJECTID AS area_id, origin, flood_zone, flood_source, OGR_GEOM_AREA AS source_area_m2 FROM ${layer}`
 	const bounds: string[] = []
 
-	if (options.objectIDFrom !== undefined) {
+	if (options.objectIDFrom) {
 		bounds.push(`OBJECTID >= ${options.objectIDFrom}`)
 	}
 
-	if (options.objectIDTo !== undefined) {
+	if (options.objectIDTo) {
 		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
 	}
 
@@ -140,7 +140,7 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
-		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),
+		...(!options.limit ? [] : ["-limit", String(options.limit)]),
 		"-sql",
 		floodSelectSQL(layer, options),
 		options.geodatabasePath,

@@ -64,7 +64,7 @@ function candidates(probes: ReadonlyArray<string>): CensusVenue[] {
 
 	return statement.all(...probes.map((probe) => `%${probe}%`)).map((row): CensusVenue => ({
 		name: String(row.name ?? ""),
-		categoryID: row.category === null || row.category === undefined ? null : String(row.category),
+		categoryID: row.category === null || !row.category ? null : String(row.category),
 		country: String(row.country ?? ""),
 	}))
 }

@@ -306,7 +306,7 @@ async function decide(answer: POIQueryResult | null, context: DecisionContext): 
 	if (intent.subject.kind !== "category") return { fired: false, refusal: "subject_not_a_category" }
 
 	const { categoryIDs } = intent.subject
-	const afforded = categoryIDs.map((id) => context.affording.get(id)).find((entry) => entry !== undefined)
+	const afforded = categoryIDs.map((id) => context.affording.get(id)).find((entry) => entry)
 
 	if (!afforded) return { fired: false, refusal: "no_affordance_assertion" }
 

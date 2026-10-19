@@ -471,15 +471,15 @@ export function createITANACAdapter(): CorpusAdapter {
 			for (const editionPath of await anacEditionPaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				for await (const release of JSONSpliterator.fromAsync<ANACRelease>(editionPath)) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (opts.limit && emitted >= opts.limit) break
 
 					for (const party of release.parties ?? []) {
-						if (opts.limit !== undefined && emitted >= opts.limit) break
+						if (opts.limit && emitted >= opts.limit) break
 
 						const reading = readANACParty(party)
 

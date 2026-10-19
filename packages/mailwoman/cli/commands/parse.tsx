@@ -189,7 +189,7 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 	// The weights guard covers only the default pipeline path.
 	// The benchmark, policy, neural and explicit model paths load weights themselves.
 	const guardEligible =
-		options.benchmark === undefined &&
+		!options.benchmark &&
 		!(options.policy && options.policy.length) &&
 		!options.neural &&
 		!options.model &&
@@ -221,7 +221,7 @@ function ParseTask({
 	const state = useCommandTask(async () => {
 		const input = args[0]!
 
-		if (options.benchmark !== undefined) {
+		if (options.benchmark) {
 			if ((options.policy && options.policy.length) || options.neural) {
 				throw new CommandError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --policy / --neural)"
@@ -289,7 +289,7 @@ async function resolveWithCandidates(
 ): Promise<AddressTree> {
 	const opts: ResolveOpts = cliResolveSwitches(options)
 
-	if (options.candidates !== undefined) {
+	if (options.candidates) {
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
@@ -420,7 +420,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		return runStructuralPipeline(input, options)
 	}
 
-	const wantAlternatives = options.candidates !== undefined
+	const wantAlternatives = options.candidates
 
 	const resolveOpts: ResolveOpts = cliResolveSwitches(options)
 

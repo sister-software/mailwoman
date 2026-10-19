@@ -98,7 +98,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 
 		let kept = tools.applyLocalityQuota(triples, options.quota)
 
-		if (options.budget !== undefined) {
+		if (options.budget) {
 			kept = tools.applyCountryBudget(kept, options.budget, options.stratifyShape ? localityShape : null)
 		}
 

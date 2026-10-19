@@ -396,7 +396,7 @@ function assertScenarioCounts(
 		const key = layer.replace(/^NCERM_/u, "")
 		const built = streamed[key]
 
-		if (built === undefined) continue
+		if (!built) continue
 
 		if (built !== count) {
 			throw new Error(

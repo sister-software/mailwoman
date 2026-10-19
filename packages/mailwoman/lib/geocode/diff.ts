@@ -168,13 +168,12 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 		})
 	}
 
-	const bothPlaced = before.lat !== null && before.lat !== undefined && after.lat !== null && after.lat !== undefined
+	const bothPlaced = before.lat !== null && before.lat && after.lat !== null && after.lat
 	const movedKm = bothPlaced ? haversineKm(before.lat!, before.lon!, after.lat!, after.lon!) : null
 	const tierChanged = before.tier !== after.tier
 	const anyRepoint = spanGeo.some((s) => s.kind !== "unchanged")
 
-	const placedChanged =
-		(before.lat === null || before.lat === undefined) !== (after.lat === null || after.lat === undefined)
+	const placedChanged = (before.lat === null || !before.lat) !== (after.lat === null || !after.lat)
 
 	const attribution: GeocodeDiff["attribution"] = placedChanged
 		? "coordinate-appeared-or-vanished"

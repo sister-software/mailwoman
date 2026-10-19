@@ -124,7 +124,7 @@ export function buildSoftFeatures(
 
 	const streetType = sources.streetTypeLexicon ? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon) : null
 
-	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
+	const streetContext = streetType && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =
 		sources.localitySurfaceLexicon && (streetContext || !sources.streetTypeLexicon)

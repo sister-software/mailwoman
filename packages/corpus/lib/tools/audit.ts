@@ -249,7 +249,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	for (const src of allSources) {
 		const files = stats[src] ?? 0
 		const weight = weights[src]
-		const effective = weight !== undefined ? files * weight : 0
+		const effective = weight ? files * weight : 0
 		sampleWeights.push([src, effective])
 	}
 
@@ -349,7 +349,7 @@ function printReport(
 
 		console.log("")
 
-		const dominator = rows.find((r) => r.overweightFactor !== undefined)
+		const dominator = rows.find((r) => r.overweightFactor)
 
 		if (dominator) {
 			const factor = dominator.overweightFactor

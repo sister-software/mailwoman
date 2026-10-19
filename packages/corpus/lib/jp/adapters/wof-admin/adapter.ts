@@ -190,7 +190,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 			for (const seed of seeds) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				const chain = chainOf(byID, resolveOutside, seed.id)
 				const synth = synthesizeJpAddress(chain, jpnNames)

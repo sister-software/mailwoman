@@ -176,7 +176,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			tier,
 			attribution,
 			coverageNote,
-			...(options.delta !== undefined ? { delta: options.delta } : {}),
+			...(options.delta ? { delta: options.delta } : {}),
 		}
 
 		const bytes = serializePostcodePrefixIndex(header, built.nodes)
@@ -233,7 +233,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			`postcode-prefix-${recipe.scope}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes, sealed 0444)`,
 			`database: ${sourcePath}`,
 			`header: country=${recipe.country} scope=${recipe.scope} levels=[${recipe.level}] tier=${tier}` +
-				` ${options.delta !== undefined ? `delta=${options.delta}` : "(no delta — un-wired index)"}`,
+				` ${options.delta ? `delta=${options.delta}` : "(no delta — un-wired index)"}`,
 			`source (numbering register): ${source}`,
 			`coordinate tier: ${built.coordinateTier} — ${built.coordinateTierReason}`,
 			`ancestry withheld (the prefix spans more than one of them): ${built.borderStraddlingPrefixes.length} prefixes` +

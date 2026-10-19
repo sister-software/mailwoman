@@ -156,14 +156,13 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 		)
 	)
 
-	const summary =
-		verdict === undefined
-			? null
-			: h(
-					Text,
-					{ color: verdict ? "green" : "red" },
-					`${verdict ? "PASS" : "FAIL"} (${checks.filter((c) => c.ok).length}/${checks.length} checks)`
-				)
+	const summary = !verdict
+		? null
+		: h(
+				Text,
+				{ color: verdict ? "green" : "red" },
+				`${verdict ? "PASS" : "FAIL"} (${checks.filter((c) => c.ok).length}/${checks.length} checks)`
+			)
 
 	return h(Box, { flexDirection: "column" }, ...lines, summary)
 }
@@ -217,7 +216,7 @@ export interface CommandTaskResultProps<T> {
  */
 export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
 	if (state.status === "running") {
-		if (running === undefined || running === null) return null
+		if (!running || running === null) return null
 
 		return typeof running === "string" ? h(Text, null, running) : h(Fragment, null, running)
 	}

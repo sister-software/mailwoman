@@ -318,7 +318,7 @@ export function createAzerbaijanPlacesAdapter(): CorpusAdapter {
 				for (const spelling of spellings) {
 					if (opts.signal?.aborted) return
 
-					if (opts.limit !== undefined && emitted >= opts.limit) return
+					if (opts.limit && emitted >= opts.limit) return
 
 					// The Azerbaijani row is counted under its own prefix, so its refusals
 					// do not read as refusals of records.

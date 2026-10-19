@@ -25,7 +25,7 @@ function mockFST(entries: ReadonlyMap<string, FSTPlaceEntryLike[]>): FSTMatcherL
 			const path = tokens.join(" ")
 			const stateID = states.get(path)
 
-			return stateID === undefined ? null : { stateID, accepted: entries.has(path), depth: tokens.length }
+			return !stateID ? null : { stateID, accepted: entries.has(path), depth: tokens.length }
 		},
 		walkFrom(previous, token): AncestrieMatch | null {
 			const previousPath = pathByState.get(previous.stateID)

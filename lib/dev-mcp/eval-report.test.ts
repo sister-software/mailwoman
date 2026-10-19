@@ -19,7 +19,7 @@ afterAll(() => fixtures.disposeAsync())
 async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("mwdev-eval-report-")).path
 
-	if (verdict !== undefined) {
+	if (verdict) {
 		await writeLocalJSONFile(verdict, dir("verdict.json"))
 	}
 

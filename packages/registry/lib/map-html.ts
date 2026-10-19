@@ -231,7 +231,7 @@ var STYLE = ${safeJSONForScript(style)};
 var BBOX = ${safeJSONForScript(bbox)};
 
 function esc(v) {
-	if (v === null || v === undefined) return "";
+	if (v === null || !v) return "";
 	return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
@@ -249,8 +249,8 @@ function popupHTML(p) {
 		rows.push('<div><dt>sources:</dt> <span' + cls + '>' + esc(srcs.join(", ")) + '</span>'
 			+ (srcs.length >= 2 ? ' (cross-dataset link)' : '') + '</div>');
 	}
-	if (p.bucket !== null && p.bucket !== undefined) rows.push('<div><dt>bucket:</dt> ' + esc(p.bucket) + '</div>');
-	if (p.cohesion !== null && p.cohesion !== undefined) rows.push('<div><dt>cohesion:</dt> ' + esc(p.cohesion) + ' bits</div>');
+	if (p.bucket !== null && p.bucket) rows.push('<div><dt>bucket:</dt> ' + esc(p.bucket) + '</div>');
+	if (p.cohesion !== null && p.cohesion) rows.push('<div><dt>cohesion:</dt> ' + esc(p.cohesion) + ' bits</div>');
 	if (p.geocodeTier) rows.push('<div><dt>geocode tier:</dt> ' + esc(p.geocodeTier) + '</div>');
 	return '<div class="mw-popup">' + rows.join("") + '</div>';
 }

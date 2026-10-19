@@ -98,7 +98,7 @@ function JurisdictionCard({ hover }: { hover: Hover }): ReactNode {
 				</dd>
 				<dt>Address system</dt>
 				<dd>
-					{system === undefined ? (
+					{!system ? (
 						"no layout recorded"
 					) : (
 						<>

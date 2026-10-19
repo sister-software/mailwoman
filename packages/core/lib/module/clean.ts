@@ -62,7 +62,7 @@ export async function cleanDirectory(directoryPath: PathBuilderLike, options: Cl
 
 	assertDirectoryIsUntracked(target, options.allowedRoots)
 
-	const stats = options.cachedStats === undefined ? await tryStat(target) : options.cachedStats
+	const stats = !options.cachedStats ? await tryStat(target) : options.cachedStats
 
 	if (!stats) {
 		if (!options.dryRun) {
@@ -90,7 +90,7 @@ export async function cleanFile(filePath: PathBuilderLike, options: CleanOptions
 
 	assertDirectoryIsUntracked(target, options.allowedRoots)
 
-	const stats = options.cachedStats === undefined ? await tryStat(target) : options.cachedStats
+	const stats = !options.cachedStats ? await tryStat(target) : options.cachedStats
 
 	if (!stats) {
 		return

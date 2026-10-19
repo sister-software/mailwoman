@@ -197,7 +197,7 @@ export function createLLVLiechtensteinAdapter(): CorpusAdapter {
 			for (const record of records) {
 				if (opts.signal?.aborted) return
 
-				if (opts.limit !== undefined && emitted >= opts.limit) return
+				if (opts.limit && emitted >= opts.limit) return
 
 				const components = componentsForLLVRecord(record, opts)
 

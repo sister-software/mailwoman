@@ -672,7 +672,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 
 			let parent = parentOf.get(point.h3_cell)
 
-			if (parent === undefined) {
+			if (!parent) {
 				parent = parentCell(point.h3_cell)
 				parentOf.set(point.h3_cell, parent)
 			}

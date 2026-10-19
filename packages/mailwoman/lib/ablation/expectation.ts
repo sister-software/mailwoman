@@ -217,11 +217,11 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
 	const measured = bboxRadiusKm(place)
 	const floor = RUNG_RADIUS_FLOOR_KM[place.placetype]
 
-	if (measured != null && (floor === undefined || measured >= floor)) {
+	if (measured != null && (!floor || measured >= floor)) {
 		return { radiusKM: measured, radiusSource: "bbox" }
 	}
 
-	if (floor === undefined) return null
+	if (!floor) return null
 
 	return { radiusKM: floor, radiusSource: "placetype-floor" }
 }

@@ -103,7 +103,7 @@ describe("ads adapter against fixture sample.jsonl", () => {
 		await run()
 
 		const rows = await readCanonicalRows(scratch.path, ADS_ADAPTER_ID)
-		const streetless = rows.filter((r) => r.components.street === undefined)
+		const streetless = rows.filter((r) => !r.components.street)
 
 		expect(streetless).toHaveLength(3)
 
@@ -115,7 +115,7 @@ describe("ads adapter against fixture sample.jsonl", () => {
 			"Põllu, Rootsivere küla, 94732 Muhu vald Saare maakond",
 		])
 
-		expect(streetless.every((r) => r.components.house_number === undefined)).toBe(true)
+		expect(streetless.every((r) => !r.components.house_number)).toBe(true)
 		expect(streetless.every((r) => typeof r.components.venue === "string")).toBe(true)
 	})
 

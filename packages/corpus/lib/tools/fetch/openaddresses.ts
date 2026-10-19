@@ -111,7 +111,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	let collectionID = OA_COLLECTION_IDS[country]
 
-	if (collectionID === undefined) {
+	if (!collectionID) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
 		// The archive streams multi-gigabyte bodies to disk, where axios would buffer them in memory.
@@ -136,7 +136,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		const collections = res.data
 		const match = collections.find((item) => item.name === country)
 
-		if (match?.id === undefined) {
+		if (!match?.id) {
 			report?.(`ERROR: Could not find a collection named '${country}' in GET /api/collections.`)
 			report?.(`Available collections:`)
 

@@ -101,7 +101,7 @@ async function parseFeature(
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
-		const anchor = gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : null
+		const anchor = gnID && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : null
 
 		const chosen = choosePoint(
 			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },

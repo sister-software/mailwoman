@@ -387,7 +387,7 @@ function readStreet(
 
 	const word = code ? expandFinessVoieType(code) : null
 
-	if (word === undefined) return { refused: FinessRefusal.VoieTypeUnknown }
+	if (!word) return { refused: FinessRefusal.VoieTypeUnknown }
 
 	// With no code, or a code that adds no word, the name holds whatever type word it has.
 	if (!word) {
@@ -555,7 +555,7 @@ export function createFinessAdapter(): CorpusAdapter {
 			for await (const cells of records) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				const reading = readFinessRecord(cells)
 

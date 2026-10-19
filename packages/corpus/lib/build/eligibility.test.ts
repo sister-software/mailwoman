@@ -45,7 +45,7 @@ describe("readSourceEligibility over the committed register", () => {
 	})
 
 	it("keys a source only when it declares the adapter that emits its rows", () => {
-		const declaring = register.sources.filter((source) => source.adapterID !== undefined)
+		const declaring = register.sources.filter((source) => source.adapterID)
 
 		expect(eligibility.size).toBe(declaring.length)
 
@@ -55,7 +55,7 @@ describe("readSourceEligibility over the committed register", () => {
 	})
 
 	it("leaves a source that declares no adapter out of the map rather than keying it by sourceID", () => {
-		const undeclared = register.sources.find((source) => source.adapterID === undefined)
+		const undeclared = register.sources.find((source) => !source.adapterID)
 
 		expect(undeclared).toBeDefined()
 		expect([...eligibility.keys()]).not.toContain(undeclared!.sourceID)

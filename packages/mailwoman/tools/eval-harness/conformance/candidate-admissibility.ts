@@ -210,7 +210,7 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	const parts: string[] = []
 
-	if (variant.parentID !== undefined && variant.parentID !== base.parentID) {
+	if (variant.parentID && variant.parentID !== base.parentID) {
 		parts.push(`parent ${variant.parentID}`)
 	}
 
@@ -275,7 +275,7 @@ function describeScope(scope: LookupScope): string {
 		parts.push(`country=${scope.country}`)
 	}
 
-	if (scope.parentID !== undefined) {
+	if (scope.parentID) {
 		parts.push(`parent=${scope.parentID}`)
 	}
 

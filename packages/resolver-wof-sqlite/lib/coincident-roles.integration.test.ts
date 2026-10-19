@@ -140,7 +140,7 @@ beforeEach(() => {
 	for (const r of FIXTURE) {
 		insSpr.run(r.id, r.name, r.placetype, r.country, r.lat, r.lon, r.lat - r.d, r.lon - r.d, r.lat + r.d, r.lon + r.d)
 
-		if (r.population !== undefined) {
+		if (r.population) {
 			insPop.run(r.id, r.population)
 		}
 	}

@@ -48,7 +48,7 @@ export async function eventRecorded(ledger: Ledger, eventID: string): Promise<bo
 		.where("event_id", "=", eventID)
 		.executeTakeFirst()
 
-	return row !== undefined
+	return row
 }
 
 export async function findLicenseBySubscription(ledger: Ledger, subscriptionID: string): Promise<LicenseRow | null> {

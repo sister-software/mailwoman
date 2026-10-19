@@ -247,7 +247,7 @@ export async function filingLandscape(
 	for (const unit of requestedUnits) {
 		const candidateCell = candidateCellByUnit.get(unit)
 
-		if (candidateCell === undefined) {
+		if (!candidateCell) {
 			unknownBlockCount++
 
 			continue

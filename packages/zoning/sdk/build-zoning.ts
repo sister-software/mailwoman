@@ -285,7 +285,7 @@ async function buildZoningResult(
 		)
 	}
 
-	if (options.expectedFeatureCount !== undefined && ingested.features !== options.expectedFeatureCount) {
+	if (options.expectedFeatureCount && ingested.features !== options.expectedFeatureCount) {
 		throw new Error(
 			`zoning build: streamed ${ingested.features} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
 		)

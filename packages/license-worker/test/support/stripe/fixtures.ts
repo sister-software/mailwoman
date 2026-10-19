@@ -108,7 +108,7 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 		subscription: init.subscriptionID,
 		customer: init.customerID ?? `cus_${init.subscriptionID}`,
 		customer_details: { email: init.email, name: init.licensee },
-		consent: { terms_of_service: init.consent === undefined ? "accepted" : init.consent },
+		consent: { terms_of_service: init.consent || "accepted" },
 		metadata:
 			init.agreementVersion === null ? {} : { agreement_version: init.agreementVersion ?? "commercial-2026-10" },
 		custom_fields: [{ key: "licensee_legal_name", type: "text", text: { value: init.licensee } }],

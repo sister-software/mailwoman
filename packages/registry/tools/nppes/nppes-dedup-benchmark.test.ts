@@ -36,7 +36,7 @@ function record(id: string, latitude?: number, longitude?: number): SourceRecord
 		attributes: null,
 		raw: null,
 		address:
-			latitude === undefined || longitude === undefined
+			!latitude || !longitude
 				? { components: {}, canonicalKey: `k-${id}`, formatted: null, geocode: null, raw: null }
 				: {
 						components: {},

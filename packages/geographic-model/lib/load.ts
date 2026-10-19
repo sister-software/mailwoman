@@ -323,7 +323,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
 	for (const file of ordered) {
 		const value = readSourceJSON(file, state.issues)
 
-		if (value === undefined) continue
+		if (!value) continue
 
 		if (file === manifest) {
 			readManifestFile(state, file, value)

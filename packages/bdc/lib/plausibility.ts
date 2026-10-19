@@ -198,7 +198,7 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 
 	const filingRank = SPEED_BUCKET_RANK[filing.speed_bucket]
 
-	if (filingRank === undefined) return false
+	if (!filingRank) return false
 
 	const claimedRank = SPEED_BUCKET_RANK[speedBucketForDownloadSpeed(claim.claimedDownloadMbps)]!
 
@@ -251,7 +251,7 @@ async function assertLayerSpineResolution(
 	const manifest = await readLayerManifest(schemadb)
 	const resolution = manifest.spineKeys.h3?.resolution
 
-	if (resolution === undefined || resolution !== expectedResolution) {
+	if (!resolution || resolution !== expectedResolution) {
 		throw new Error(
 			`plausibilityCheck: ${layer}.db's recorded h3 spine resolution (${String(resolution)}) does not match ` +
 				`BDC_H3_RESOLUTION (${expectedResolution}) — the res-9→res-6 coverage-cell reconstruction this scorer ` +

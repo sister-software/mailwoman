@@ -166,13 +166,13 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 
 		const tagIdx = tagIndex.get(e.tag)
 
-		if (tagIdx === undefined) {
+		if (!tagIdx) {
 			throw new Error(`pair index: unrecognized ComponentTag "${e.tag}"`)
 		}
 
 		const parentTagIdx = tagIndex.get(e.parentTag)
 
-		if (parentTagIdx === undefined) {
+		if (!parentTagIdx) {
 			throw new Error(
 				`pair index: entry "${e.child}" / "${e.parent}" has an unrecognized parentTag "${e.parentTag}" — ` +
 					`every schema-3 record states BOTH ends of the edge; the builder must read the parent's tag from its ` +

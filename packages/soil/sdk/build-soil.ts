@@ -390,7 +390,7 @@ function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed
 	for (const area of areas) {
 		const declared = area.declaredFeatureCount ?? area.source?.declaredFeatureCount
 
-		if (declared === undefined) continue
+		if (!declared) continue
 
 		const actual = streamed.byArea.get(area.attributes.areasymbol) ?? 0
 

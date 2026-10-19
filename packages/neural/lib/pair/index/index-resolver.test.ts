@@ -38,7 +38,7 @@ function buildRawIndex(
 	let size = 12 + headerBytes.length
 
 	for (const r of encoded) {
-		size += 2 + r.child.length + 2 + r.parent.length + 1 + (r.parentTagIdx === undefined ? 0 : 1)
+		size += 2 + r.child.length + 2 + r.parent.length + 1 + (!r.parentTagIdx ? 0 : 1)
 	}
 
 	const out = new Uint8Array(size)
@@ -65,7 +65,7 @@ function buildRawIndex(
 		o += r.parent.length
 		out[o++] = r.tagIdx
 
-		if (r.parentTagIdx !== undefined) {
+		if (r.parentTagIdx) {
 			out[o++] = r.parentTagIdx
 		}
 	}
@@ -199,7 +199,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(r.probe("shoreditch", "london")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
-	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
+	it("old-binary compat: a header WITHOUT the field reads back !transitionBeta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
@@ -222,7 +222,7 @@ describe("ParentDelta header field (whole-edge default-on,)", () => {
 		expect(peekPairIndexHeader(bytes).parentDelta).toBe(5)
 	})
 
-	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
+	it("absence-tolerant: a header WITHOUT the field reads back !parentDelta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 

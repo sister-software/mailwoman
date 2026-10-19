@@ -699,7 +699,7 @@ function siteClaims(site: LondonSite): Claim[] {
 		]
 
 		for (const [premisesSet, gigabitPercent] of percents) {
-			if (gigabitPercent === undefined) continue
+			if (!gigabitPercent) continue
 
 			const extent = `postcode:${figure.postcode}`
 

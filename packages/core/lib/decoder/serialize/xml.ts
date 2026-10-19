@@ -138,7 +138,7 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 	// Emit lat + lon together.
 	// A centroid is meaningless with only one coordinate, so a resolver that produces
 	// one coordinate leaves both off the node.
-	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
+	if (opts.includeGeo && node.lat && node.lon) {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
 

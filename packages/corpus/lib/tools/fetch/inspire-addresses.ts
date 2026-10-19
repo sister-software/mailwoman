@@ -383,7 +383,7 @@ const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
 	const properties = feature.properties ?? {}
 	const component = properties["component"]
-	const entries = Array.isArray(component) ? component : component === undefined ? [] : [component]
+	const entries = Array.isArray(component) ? component : !component ? [] : [component]
 
 	const fromArray = entries.map((entry) =>
 		typeof entry === "object" && entry !== null ? String((entry as Record<string, unknown>)["@href"] ?? "") : ""

@@ -385,7 +385,7 @@ async function pairIndexIsFresh(
 			return false
 		}
 
-		if (minimumPlausibleBytes !== undefined && (await statPath(dest)).size < minimumPlausibleBytes) {
+		if (minimumPlausibleBytes && (await statPath(dest)).size < minimumPlausibleBytes) {
 			console.log(
 				`rebuilding ${artifact} — ${(await statPath(dest)).size.toLocaleString()} bytes is implausibly small ` +
 					`for this recipe (wrong-source clobber)`
@@ -508,8 +508,8 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 			country,
 			"--delta",
 			String(delta),
-			...(transitionBeta === undefined ? [] : ["--transition-beta", String(transitionBeta)]),
-			...(parentDelta === undefined ? [] : ["--parent-delta", String(parentDelta)]),
+			...(!transitionBeta ? [] : ["--transition-beta", String(transitionBeta)]),
+			...(!parentDelta ? [] : ["--parent-delta", String(parentDelta)]),
 			...extraArgs,
 		],
 		{ stdio: "inherit" }

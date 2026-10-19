@@ -203,7 +203,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const calibration = {
 			radius_multiplier: measuredMultiplier ?? INTERP_RADIUS_CALIBRATION.default,
 			method: CALIBRATION_METHOD,
-			region: measuredMultiplier === undefined ? "default" : STATE,
+			region: !measuredMultiplier ? "default" : STATE,
 		}
 
 		let stats: Record<string, number>

@@ -159,7 +159,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	if (!ancestry || !ancestry.length) return ""
 	const byPlacetype = new Map(ancestry.map((a) => [a.placetype, a.name]))
-	const parts = ["locality", "region", "country"].map((t) => byPlacetype.get(t)).filter((name) => name !== undefined)
+	const parts = ["locality", "region", "country"].map((t) => byPlacetype.get(t)).filter((name) => name)
 
 	return parts.length ? ` · ${parts.join(", ")}` : ""
 }

@@ -186,7 +186,7 @@ export async function readTable(
 	for (const column of wanted) {
 		const position = positions.get(column)
 
-		if (position === undefined) {
+		if (!position) {
 			throw new Error(
 				`soil tabular: table ${table} declares no column ${stringifyJSON(column)} — the shipped dictionary names ${positions.size} columns, and projecting away a column a caller asked for would read downstream as an absence`
 			)

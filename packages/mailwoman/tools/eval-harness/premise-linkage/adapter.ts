@@ -312,7 +312,7 @@ export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
  * A harness must see a transport failure before it can show that failures and refusals remain distinct.
  */
 export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] } = {}): AuthoritativeProvider {
-	const rules = SYNTHETIC_CASES.filter((entry) => entry.response !== undefined).map((entry) => ({
+	const rules = SYNTHETIC_CASES.filter((entry) => entry.response).map((entry) => ({
 		matchOn: entry.matchOn,
 		response: entry.response!,
 	}))

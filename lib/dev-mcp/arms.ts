@@ -216,7 +216,7 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 	const record = raw as Record<string, unknown>
 	const kind = record["kind"]
 
-	if (kind === undefined) return { kind: "mailwoman", config: ENGINE_CONFIG_SCHEMA.parse(record) }
+	if (!kind) return { kind: "mailwoman", config: ENGINE_CONFIG_SCHEMA.parse(record) }
 
 	if (kind === "mailwoman") {
 		return { kind: "mailwoman", config: ENGINE_CONFIG_SCHEMA.parse(record["config"] ?? {}) }

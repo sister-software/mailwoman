@@ -186,12 +186,10 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 			const firstArgument = node.arguments[0]
 
 			const descendsIntoNodeModules =
-				ts.isIdentifier(node.expression) &&
-				firstArgument !== undefined &&
-				argumentText(firstArgument) === "node_modules"
+				ts.isIdentifier(node.expression) && firstArgument && argumentText(firstArgument) === "node_modules"
 
-			const buildsPath = (callee !== undefined && PATH_BUILDERS.has(callee)) || descendsIntoNodeModules
-			const consumesPath = callee !== undefined && DIRECT_PATH_USERS.has(callee)
+			const buildsPath = (callee && PATH_BUILDERS.has(callee)) || descendsIntoNodeModules
+			const consumesPath = callee && DIRECT_PATH_USERS.has(callee)
 
 			if (buildsPath) {
 				for (const argument of node.arguments) {

@@ -52,7 +52,7 @@ function unfollowedComponents(allNodes: readonly AddressNode[]): UnfollowedCompo
 
 	const postcode = allNodes.find((node) => node.tag === "postcode")
 
-	if (refusedKm !== undefined && postcode) {
+	if (refusedKm && postcode) {
 		unfollowed.push({ tag: "postcode", value: postcode.value, reason: "postcode_move_refused", distance_km: refusedKm })
 	}
 

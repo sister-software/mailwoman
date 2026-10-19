@@ -81,8 +81,8 @@ try {
 			id: row.id,
 			input: row.input,
 			decodedText,
-			registryFSTAvailable: registryMatches !== undefined,
-			streetAffixAvailable: streetAffixMatches !== undefined,
+			registryFSTAvailable: registryMatches,
+			streetAffixAvailable: streetAffixMatches,
 			boundaries,
 		})
 	}

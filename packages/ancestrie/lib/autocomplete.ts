@@ -72,7 +72,7 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	const partial = normalized.at(-1)!
 	const prefixState = !complete.length ? 0 : (trie.walk(complete)?.stateID ?? undefined)
 
-	if (!match && prefixState === undefined) {
+	if (!match && !prefixState) {
 		return { tokens: normalized, depth: 0, suggestions: [] }
 	}
 
@@ -88,7 +88,7 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 		}
 	}
 
-	if (prefixState !== undefined) {
+	if (prefixState) {
 		// The exact edge is skipped because the complete-token seeding above already covered that state.
 		for (const cont of trie.continuations(prefixState)) {
 			if (cont.token === partial || !cont.token.startsWith(partial)) continue
@@ -162,7 +162,7 @@ function addSuggestion<TPayload>(
 		matchDepth,
 		chain: trie.ancestorsOf(record.id),
 		parentIDs: record.parentIDs,
-		...(record.payload === undefined ? {} : { payload: record.payload }),
+		...(!record.payload ? {} : { payload: record.payload }),
 	})
 }
 

@@ -47,7 +47,7 @@ export function candidateFromSearchRow(
 		score += weights.countryMatchBoost
 	}
 
-	if (query.parentID !== undefined) {
+	if (query.parentID) {
 		score += row.parent_id === query.parentID ? weights.directChildBoost : weights.descendantBoost
 	}
 

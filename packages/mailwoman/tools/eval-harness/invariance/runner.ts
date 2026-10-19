@@ -167,7 +167,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		await originalFor(row)
 
 		const gainedCapabilityRow =
-			options.baselineParse !== undefined &&
+			options.baselineParse &&
 			!hasCriticalComponent(await baselineOriginalFor(row)) &&
 			hasCriticalComponent(await originalFor(row))
 

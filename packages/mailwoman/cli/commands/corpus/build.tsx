@@ -133,16 +133,16 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if (!("inputPath" in value) || typeof value.inputPath !== "string") return false
 
-		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
+		if ("outputDir" in value && value.outputDir && typeof value.outputDir !== "string") return false
 
 		// Check the shape because a lower-case `nl` is still a string.
 		// The four adapters that filter per row compare it with the row's upper-case code.
 		// A lower-case value selects zero rows and reports no matches.
-		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
+		if ("country" in value && value.country && !isAlpha2CodeShape(value.country)) return false
 
 		return (
 			!("limit" in value) ||
-			value.limit === undefined ||
+			!value.limit ||
 			(typeof value.limit === "number" && Number.isInteger(value.limit) && value.limit > 0)
 		)
 	})

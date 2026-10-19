@@ -164,7 +164,7 @@ export function pluckPlacetypeSpec({
 	const population =
 		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : null
 
-	const isCurrent = mzIsCurrent === undefined ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
+	const isCurrent = !mzIsCurrent ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
 
 	return {
 		id,

@@ -115,7 +115,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			sourceMD5s: [sourceMD5],
 			buildDate: new Date().toISOString(),
 			baseRates,
-			...(options.delta !== undefined ? { delta: options.delta } : {}),
+			...(options.delta ? { delta: options.delta } : {}),
 		}
 
 		const bytes = serializePlacetypeCensus(header, nodes)
@@ -156,7 +156,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 
 		return [
 			`placetype-census-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
-			`header: ${options.delta !== undefined ? `delta=${options.delta}` : "(no delta — un-wired census)"}`,
+			`header: ${options.delta ? `delta=${options.delta}` : "(no delta — un-wired census)"}`,
 			`nodes: ${nodes.length.toLocaleString()} (${built.nodes.length.toLocaleString()} pre-fold, ${collisions.toLocaleString()} fold collisions merged)`,
 			`child links counted: ${built.links.toLocaleString()}`,
 			"country base rates:",

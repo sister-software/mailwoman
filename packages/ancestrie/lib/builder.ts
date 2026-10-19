@@ -91,7 +91,7 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 function encodePayload(payload: Uint8Array | JSONValue | undefined): EntryMeta["payload"] {
-	if (payload === undefined) return undefined
+	if (!payload) return undefined
 
 	if (payload instanceof Uint8Array) {
 		// Copied so a caller mutating its buffer after `add` cannot change what seals.
@@ -151,7 +151,7 @@ function labelForest(entriesByID: ReadonlyMap<number, EntryMeta>): IntervalFores
 	for (const [id, meta] of entriesByID) {
 		const primary = meta.parentIDs[0]
 
-		if (primary === undefined || !entriesByID.has(primary)) {
+		if (!primary || !entriesByID.has(primary)) {
 			// No parents, or a declared parent absent from this build: a forest root.
 			// The declared id is still stored in the parent table.
 			rootIDs.push(id)
@@ -355,8 +355,7 @@ export class AncestrieBuilder {
 
 		const sections = computeSections(header)
 
-		const metadataJSON =
-			options.metadata === undefined ? undefined : UTF8_ENCODER.encode(JSON.stringify(options.metadata))
+		const metadataJSON = !options.metadata ? undefined : UTF8_ENCODER.encode(JSON.stringify(options.metadata))
 
 		if (metadataJSON) {
 			header.metadataOffset = sections.end
@@ -501,10 +500,8 @@ export class AncestrieBuilder {
 			existing.parentIDs.every((p, i) => p === entry.parentIDs[i])
 
 		const samePayload = existing.payload
-			? payload !== undefined &&
-				existing.payload.isJSON === payload.isJSON &&
-				bytesEqual(existing.payload.bytes, payload.bytes)
-			: payload === undefined
+			? payload && existing.payload.isJSON === payload.isJSON && bytesEqual(existing.payload.bytes, payload.bytes)
+			: !payload
 
 		// Math.fround: the artifact stores rank as f32, so two adds that agree at f32 precision agree.
 		if (Math.fround(existing.rank) !== Math.fround(entry.rank) || !sameParents || !samePayload) {

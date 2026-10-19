@@ -77,7 +77,7 @@ function serialize(value: unknown, ensureASCII: boolean): string {
 		const parts: string[] = []
 
 		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-			if (v === undefined) continue // a key Python would never have produced
+			if (!v) continue // a key Python would never have produced
 			parts.push(serializeString(k, ensureASCII) + ": " + serialize(v, ensureASCII))
 		}
 

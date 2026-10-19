@@ -162,7 +162,7 @@ describe("agreement with PLACETYPE_DEPTH", () => {
 		}))
 
 		expect(
-			ranked.filter((r) => r.rank === undefined).map((r) => r.placetype),
+			ranked.filter((r) => !r.rank).map((r) => r.placetype),
 			"a placetype the ancestry ladder ranks and this scale does not"
 		).toEqual([])
 

@@ -361,7 +361,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		for (const row of anc.iterate(...countries) as Iterable<{ id: number; ancestor_id: number }>) {
 			const parentImp = importanceByID.get(row.ancestor_id)
 
-			if (parentImp !== undefined) {
+			if (parentImp) {
 				parentImportanceByID.set(row.id, Math.max(parentImportanceByID.get(row.id) ?? 0, parentImp))
 			}
 		}

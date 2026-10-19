@@ -251,14 +251,14 @@ export function createSKInspireAdapter(): CorpusAdapter {
 			for (const documentPath of documents) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				for await (const address of streamMarkupElements(documentChunks(documentPath), "ad:Address", {
 					xml: true,
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (opts.limit && emitted >= opts.limit) break
 
 					const row = composeRow(address, referenced)
 

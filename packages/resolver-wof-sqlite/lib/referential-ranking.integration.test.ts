@@ -133,7 +133,7 @@ function buildFixtureDB(
 	for (const p of places) {
 		insertSpr.run(p.id, p.name, p.country, p.lat, p.lon, p.lat - 0.05, p.lat + 0.05, p.lon - 0.05, p.lon + 0.05)
 
-		if (p.population !== undefined) {
+		if (p.population) {
 			insertPop.run(p.id, p.population)
 		}
 

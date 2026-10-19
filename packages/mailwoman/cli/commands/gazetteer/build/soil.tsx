@@ -77,7 +77,7 @@ async function runVerification(
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk/verify")
 	const databasePath = database.toString()
 
-	const points = sampleAgreementPoints(databasePath, count === undefined ? {} : { count })
+	const points = sampleAgreementPoints(databasePath, !count ? {} : { count })
 
 	const verified = await verifySoilDatabase({
 		databasePath,

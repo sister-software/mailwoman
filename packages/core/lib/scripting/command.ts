@@ -36,7 +36,7 @@ export function formatCommandError(error: unknown): string {
 export function reportError(error: unknown): void {
 	console.error(formatCommandError(error))
 
-	if (error instanceof CommandError && error.cause !== undefined) {
+	if (error instanceof CommandError && error.cause) {
 		console.error(`Caused by: ${formatCommandError(error.cause)}`)
 	}
 }

@@ -227,7 +227,7 @@ function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
 	const url = new URL(`${BDC_API_BASE_URL}${path}`)
 
 	for (const [key, value] of Object.entries(params)) {
-		if (value !== undefined) {
+		if (value) {
 			url.searchParams.set(key, String(value))
 		}
 	}

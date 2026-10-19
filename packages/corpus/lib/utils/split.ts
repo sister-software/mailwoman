@@ -275,9 +275,9 @@ export function splitForRow(
 		const policy = holdoutPolicyFor(declared)
 
 		isHeldOut =
-			(region !== undefined && (policy.regions?.includes(region) ?? false)) ||
-			(postcode !== undefined && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
-			(locality !== undefined && (policy.localities?.includes(locality) ?? false))
+			(region && (policy.regions?.includes(region) ?? false)) ||
+			(postcode && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
+			(locality && (policy.localities?.includes(locality) ?? false))
 	} else {
 		// A country without a declared holdout holds out whole places chosen by hash,
 		// so every country in the corpus reaches val and test.

@@ -219,7 +219,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break outer
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break outer
+					if (opts.limit && emitted >= opts.limit) break outer
 
 					if (!line) continue
 

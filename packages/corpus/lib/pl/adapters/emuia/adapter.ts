@@ -132,7 +132,7 @@ export function createEMUiAAdapter(): CorpusAdapter {
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (opts.limit && emitted >= opts.limit) break
 
 					const street = column(feature, "ulica")
 					const house = column(feature, "numer")

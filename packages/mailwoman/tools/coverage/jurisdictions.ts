@@ -214,7 +214,7 @@ export function jurisdictionProperties(inputs: JurisdictionInputs): Map<string, 
 
 		const system = localSystem.get(code)
 
-		if (system !== undefined) {
+		if (system) {
 			properties["address_system"] = system
 			properties["address_system_key"] = systemKeys.get(system) ?? ""
 			properties["address_system_draws"] = systemDraws.get(system) ?? 0

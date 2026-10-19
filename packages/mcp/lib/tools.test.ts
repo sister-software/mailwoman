@@ -87,8 +87,7 @@ function stubDeps(): MCPToolDeps {
 				bdcProviderID?: number
 				asOf?: string
 			}) => {
-				const suppliedCount =
-					(query.frn ? 1 : 0) + (query.form499ID ? 1 : 0) + (query.bdcProviderID !== undefined ? 1 : 0)
+				const suppliedCount = (query.frn ? 1 : 0) + (query.form499ID ? 1 : 0) + (query.bdcProviderID ? 1 : 0)
 
 				if (suppliedCount !== 1) {
 					throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")

@@ -74,7 +74,7 @@ export const TITLE_PREPOSITION_PREDECESSORS: ReadonlySet<string> = new Set(["at"
 export function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], window: CandidateWindow): boolean {
 	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : null
 
-	return predecessor !== undefined && TITLE_PREPOSITION_PREDECESSORS.has(predecessor.fstToken)
+	return predecessor && TITLE_PREPOSITION_PREDECESSORS.has(predecessor.fstToken)
 }
 
 /**

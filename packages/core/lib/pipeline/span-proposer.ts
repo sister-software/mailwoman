@@ -208,7 +208,7 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 		} else if (ch === close) {
 			const o = stack.pop()
 
-			if (o === undefined) return null
+			if (!o) return null
 			out.push({ open: o, close: i })
 		}
 	}
@@ -479,7 +479,7 @@ function proposeNumericReadings(
 			// that could be an unlisted designator.
 			const leadingShape =
 				!prevIsDesignator &&
-				prev !== undefined &&
+				prev &&
 				i === 1 &&
 				/^\p{Lu}[\p{L}]{1,7}$/u.test(prev.stripped) &&
 				!ROAD_LEADERS.has(prevLead) &&

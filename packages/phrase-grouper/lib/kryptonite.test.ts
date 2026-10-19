@@ -47,11 +47,11 @@ function expectProposal(proposals: PhraseProposal[], assertion: Assertion): Phra
 		throw new Error(`Expected proposal ${assertion.kind} "${assertion.body}" not found.\nProposals:\n${dump}`)
 	}
 
-	if (assertion.minConfidence !== undefined) {
+	if (assertion.minConfidence) {
 		expect(match.confidence).toBeGreaterThanOrEqual(assertion.minConfidence)
 	}
 
-	if (assertion.maxConfidence !== undefined) {
+	if (assertion.maxConfidence) {
 		expect(match.confidence).toBeLessThanOrEqual(assertion.maxConfidence)
 	}
 

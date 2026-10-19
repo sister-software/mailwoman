@@ -142,7 +142,7 @@ export function fetchSearchRows<DB>(options: {
 		params.push(query.country)
 	}
 
-	if (query.parentID !== undefined) {
+	if (query.parentID) {
 		where.push(`(spr.parent_id = ? OR spr.id IN (SELECT id FROM ${sch}.ancestors WHERE ancestor_id = ?))`)
 		params.push(query.parentID, query.parentID)
 	}
@@ -152,7 +152,7 @@ export function fetchSearchRows<DB>(options: {
 	// A requested filter on a legacy extract is silently treated as no bbox filter
 	// so the query does not crash.
 	const extractHasBbox = hasBboxIndex.get(sch) === true
-	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && extractHasBbox
+	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm) && extractHasBbox
 	let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
 
 	if (useBboxJoin) {

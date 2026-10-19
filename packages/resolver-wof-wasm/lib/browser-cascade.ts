@@ -147,7 +147,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 		let bbox: BBox | null = null
 		let country = query.country
 
-		if (query.parentID !== undefined) {
+		if (query.parentID) {
 			const parent = this.#meta.get(Number(query.parentID))
 
 			// A parent the table cannot scope by answers "no descendants" so the resolver's parentFallback retries unscoped.

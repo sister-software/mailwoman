@@ -145,7 +145,7 @@ function tokenPresent(raw: string, value: string): boolean {
 	const i = raw.indexOf(value)
 	const before = raw[i - 1]
 	const after = raw[i + value.length]
-	const isDigit = (c: string | undefined) => c !== undefined && c >= "0" && c <= "9"
+	const isDigit = (c: string | undefined) => c && c >= "0" && c <= "9"
 
 	if (/^\d+$/.test(value) && (isDigit(before) || isDigit(after))) return false
 

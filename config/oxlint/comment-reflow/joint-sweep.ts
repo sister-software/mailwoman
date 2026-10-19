@@ -391,7 +391,7 @@ function rewrite(raw: string, lines: readonly string[]): string {
 	for (const edit of [...edits].toSorted((a, b) => b.dash - a.dash)) {
 		const at = positions[edit.dash]
 
-		if (at === undefined) continue
+		if (!at) continue
 
 		out = applyEdit(out, at, edit.punct, edit.capitalize)
 	}

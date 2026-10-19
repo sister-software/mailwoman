@@ -268,7 +268,7 @@ export function buildDataBOM(options: DataBOMOptions): DataBOM {
 				...property("mailwoman:dataRootManifested", options.inventory ? manifested.length : null),
 				...property(
 					"mailwoman:dataRootUnprovenanced",
-					unprovenanced === undefined
+					!unprovenanced
 						? undefined
 						: `${unprovenanced} databases under the data root carry no layer_manifest row and are not components here`
 				),

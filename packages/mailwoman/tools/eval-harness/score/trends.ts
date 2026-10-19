@@ -252,7 +252,7 @@ export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promis
 			const cells = rows.map(([, scores]) => {
 				const value = (scores[locale] || {})[tag]
 
-				return value === undefined ? "—" : pyG(value)
+				return !value ? "—" : pyG(value)
 			})
 
 			lines.push(`| ${tag} | ` + cells.join(" | ") + " |")

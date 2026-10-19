@@ -160,7 +160,7 @@ async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 				})
 				.filter((p) => !types || types.includes(p.placetype))
 				.filter((p) => !query.country || p.country === query.country)
-				.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
+				.filter((p) => !query.parentID || p.parent_id === query.parentID)
 				.slice(0, query.limit ?? 5)
 		},
 	}

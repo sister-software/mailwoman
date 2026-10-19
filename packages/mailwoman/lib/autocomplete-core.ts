@@ -90,7 +90,7 @@ export function formatAutocomplete(entries: readonly AutocompleteEntry[]): strin
 	return entries
 		.map((entry, index) => {
 			const completion = entry.completionTokens.length ? ` [+${entry.completionTokens.join(" ")}]` : ""
-			const encyclopedic = entry.encyclopedic === undefined ? "" : `, enc:${entry.encyclopedic.toFixed(4)}`
+			const encyclopedic = !entry.encyclopedic ? "" : `, enc:${entry.encyclopedic.toFixed(4)}`
 
 			return `${String(index + 1).padStart(2)}. ${entry.name}${completion}  (${entry.placetype}, wof:${entry.wofID}, ref:${entry.referential.toFixed(4)}${encyclopedic})`
 		})

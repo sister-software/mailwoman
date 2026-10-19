@@ -232,7 +232,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 			for (const documentPath of await documentPaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				// The published document writes 300,318 referenced features ahead of its first address
 				// and held 0 of 345,309 measured, so the driver's holding list stays empty here.
@@ -244,7 +244,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 					// One string per feature rather than its subtree.
 					index: referencedValue,
 					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
-					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					limit: !opts.limit ? undefined : opts.limit - emitted,
 					signal: opts.signal,
 				})) {
 					yield row

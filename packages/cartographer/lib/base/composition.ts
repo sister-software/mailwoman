@@ -109,7 +109,7 @@ export class StyleSpecificationComposer {
 	constructor(spec: StyleSpecificationComposition) {
 		this.light = createLightSpec(spec.light)
 		this.sky = createSkySpec(spec.sky)
-		this.sprite = spec.sprite === undefined ? PROTOMAPS_SPRITE_URL : spec.sprite
+		this.sprite = !spec.sprite ? PROTOMAPS_SPRITE_URL : spec.sprite
 		this.glyphs = spec.glyphs ?? PROTOMAPS_GLYPHS_URL
 
 		// this.terrain = {
@@ -117,7 +117,7 @@ export class StyleSpecificationComposer {
 		// 	...spec.terrain,
 		// }
 
-		const hillshadeSource = spec.hillshadeSource === undefined ? createTerrainDEMSource() : spec.hillshadeSource
+		const hillshadeSource = !spec.hillshadeSource ? createTerrainDEMSource() : spec.hillshadeSource
 
 		this.sources = {
 			...spec.sources,

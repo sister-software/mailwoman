@@ -263,7 +263,7 @@ export function parseOfcomCoverage<const F extends OfcomCoverageField>(
 	const keyColumn = source.level === OfcomCoverageLevel.Postcode ? POSTCODE_KEY : OUTPUT_AREA_KEY
 	const keyIndex = columns.get(keyColumn)
 
-	if (keyIndex === undefined) {
+	if (!keyIndex) {
 		throw new Error(`${file} names a ${source.level} file, and its header has no "${keyColumn}" column.`)
 	}
 
@@ -291,11 +291,11 @@ export function parseOfcomCoverage<const F extends OfcomCoverageField>(
 		if (rows.has(area)) throw new Error(`${file} line ${line} repeats the area ${area}.`)
 
 		if (source.level === OfcomCoverageLevel.Postcode) {
-			if (compactIndex !== undefined && record[compactIndex] !== area.replaceAll(" ", "")) {
+			if (compactIndex && record[compactIndex] !== area.replaceAll(" ", "")) {
 				throw new Error(`${file} line ${line}: "${POSTCODE_COMPACT}" ${record[compactIndex]} disagrees with ${area}.`)
 			}
 
-			if (areaIndex !== undefined && record[areaIndex] !== source.postcodeArea) {
+			if (areaIndex && record[areaIndex] !== source.postcodeArea) {
 				throw new Error(
 					`${file} line ${line}: postcode area ${record[areaIndex]} differs from the file's ${source.postcodeArea}.`
 				)

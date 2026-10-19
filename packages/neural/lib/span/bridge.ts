@@ -97,7 +97,7 @@ export function bridgePunctuationGaps(
 			const tag = bareBIOTag(token.label)
 			const prevTag = prev ? bareBIOTag(prev.label) : null
 			const skipped = out.slice(back + 1)
-			const skippedInsideGap = prev !== undefined && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
+			const skippedInsideGap = prev && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
 
 			if (
 				prev &&

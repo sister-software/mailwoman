@@ -101,7 +101,7 @@ export function localeHintID(table: AddressSystemTable, country: string | null, 
 	if (isLatinScriptText(text)) {
 		const latin = table.members[`${code}/latin`]
 
-		if (latin !== undefined) return latin
+		if (latin) return latin
 	}
 
 	return table.members[`${code}/local`] ?? table.noHint

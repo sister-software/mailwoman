@@ -494,7 +494,7 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	if (deps.localeCountryPrior && !opts.defaultCountry) {
 		opts.localeCountryPrior = deps.localeCountryPrior
 
-		if (deps.localeCountryPriorWeight !== undefined) {
+		if (deps.localeCountryPriorWeight) {
 			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
 		}
 	}
@@ -603,7 +603,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
 					: null
 
-			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
+			const dominantBearer = dominant?.country && dominant.exactMatch !== false ? dominant.country : null
 
 			const dominantDisagreesWithPlacer =
 				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
@@ -693,7 +693,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		const calibration = explicit ?? fallback
 
 		// Skip no-op calibration unless explicitly overriding artifact calibration.
-		if (calibration && (calibration !== 1 || (explicit !== undefined && interpolation.radiusCalibration != null))) {
+		if (calibration && (calibration !== 1 || (explicit && interpolation.radiusCalibration != null))) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}

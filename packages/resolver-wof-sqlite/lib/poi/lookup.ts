@@ -235,7 +235,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		for (const id of query.categoryIDs ?? []) {
 			const resolved = this.#categoryToID.get(id)
 
-			if (resolved !== undefined) {
+			if (resolved) {
 				categoryIDs.push(resolved)
 			}
 		}

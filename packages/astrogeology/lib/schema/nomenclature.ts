@@ -14,7 +14,7 @@ import { z } from "zod"
  * Read the shapefile's `""`, or a missing key, as null.
  */
 const blankAsNull = <T extends z.ZodType>(inner: T) =>
-	z.preprocess((value) => (value === "" || value === undefined ? null : value), inner)
+	z.preprocess((value) => (value === "" || !value ? null : value), inner)
 
 /**
  * The feature record in every artifact.

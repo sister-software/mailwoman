@@ -666,7 +666,7 @@ async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise
 function labelsFromModelCard(card: Record<string, unknown>, url: string): readonly string[] | null {
 	const labels = card.labels
 
-	if (labels === undefined) return null
+	if (!labels) return null
 
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(

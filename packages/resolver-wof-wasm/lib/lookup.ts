@@ -64,7 +64,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * Lazily probe (once) whether the slim DB contains the `place_population` aux table.
 	 */
 	#hasPopulation(): boolean {
-		if (this.#hasPopulationCache === undefined) {
+		if (this.#!hasPopulationCache) {
 			this.#hasPopulationCache = tableExists(this.#db, "place_population")
 		}
 
@@ -75,7 +75,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * Lazily probe (once) whether the slim DB contains the `place_abbr` aux table that build-slim adds.
 	 */
 	#hasPlaceAbbr(): boolean {
-		if (this.#hasPlaceAbbrCache === undefined) {
+		if (this.#!hasPlaceAbbrCache) {
 			this.#hasPlaceAbbrCache = tableExists(this.#db, "place_abbr")
 		}
 

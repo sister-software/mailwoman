@@ -262,7 +262,7 @@ export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: Buil
 	sortByStart(roots)
 	const tree: AddressTree = { raw, roots }
 
-	if (opts.system !== undefined) {
+	if (opts.system) {
 		tree.system = opts.system
 	}
 

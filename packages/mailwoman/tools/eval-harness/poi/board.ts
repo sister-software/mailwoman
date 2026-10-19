@@ -104,7 +104,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 
 		const rawStatus: unknown = fixture.status
 
-		if (rawStatus !== undefined && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
+		if (rawStatus && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
 			problems.push(`${label}: unknown status ${stringifyJSON(rawStatus)} — known: ${POI_BOARD_STATUSES.join(", ")}`)
 
 			continue

@@ -275,12 +275,12 @@ export function createESBizkaiaAdapter(): CorpusAdapter {
 			for (const path of inputs) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit && emitted >= opts.limit) break
 
 				for await (const address of streamMarkupElements(memberChunks(path), "ad:Address", { xml: true })) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (opts.limit && emitted >= opts.limit) break
 
 					const row = composeRow(address, referenced)
 

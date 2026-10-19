@@ -650,7 +650,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
 
-	if (bareStreetFloor !== undefined) {
+	if (bareStreetFloor) {
 		const bareOut: string[] = []
 		const bareErr: string[] = []
 		let barePassed: boolean

@@ -186,7 +186,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 				skipped: stats.skipped,
 				read: stats.read ?? null,
 				ranAt: new Date().toISOString(),
-				options: Object.fromEntries(Object.entries(opts).filter(([, value]) => value !== undefined)),
+				options: Object.fromEntries(Object.entries(opts).filter(([, value]) => value)),
 				source_rights: rights.record(),
 			},
 			`${options.out}.invocation.json`

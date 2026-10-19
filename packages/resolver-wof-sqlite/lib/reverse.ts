@@ -494,7 +494,7 @@ export class WOFReverseGeocoder implements Disposable {
 		if (!this.#polygons) return null
 		const cached = this.#geometryCache.get(id)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 
 		if (this.#geometryCache.size >= WOFReverseGeocoder.#GEOMETRY_CACHE_CAP) {
 			this.#geometryCache.clear()

@@ -155,7 +155,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 				for await (const line of lines) {
 					if (adapterOpts.signal?.aborted) break
 
-					if (adapterOpts.limit !== undefined && emitted >= adapterOpts.limit) break
+					if (adapterOpts.limit && emitted >= adapterOpts.limit) break
 
 					const props = parseFeatureLine(line)
 
