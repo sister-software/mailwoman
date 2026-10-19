@@ -51,7 +51,7 @@ Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regressi
 
 240 rows · `cases/sg/register.jsonl`
 
-> The Singapore register board, written by `packages/mailwoman/tools/dev-tools/sg-register-board.run.ts` (seed 7):
+> The Singapore register board, written by `packages/mailwoman/tools/dev-tools/sg/register-board.run.ts` (seed 7):
 > a seeded draw of Overture-SG rooftop rows, 60 in each of the four typed forms the `sg-register` corpus recipe
 > renders — the HDB block line with a `#NN-NN` unit (`Blk 533A Upper Cross St #27-40 Singapore 051533`), the
 > bracketed postcode (`17 Tanglin Rise S(247998)`), the building-led line (`Oue Downtown, 6A Shenton Way,

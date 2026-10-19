@@ -33,7 +33,7 @@ export const spec = {
 
 // The builder narrates row counts on stderr, so no `json`.
 const EvalESPostcodeCentroids = harnessCommand(spec, async (options) => {
-	const { buildESPostcodeCentroids } = await import("#tools/eval-harness/es-postcode-centroids")
+	const { buildESPostcodeCentroids } = await import("#tools/eval-harness/es/postcode-centroids")
 
 	return buildESPostcodeCentroids(options)
 })

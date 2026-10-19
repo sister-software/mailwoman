@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Standalone entry for the FR bare-street parse-recall leg. The measurement lives in
- *   `#eval-harness/fr-parse-recall` and `promotion-eval.ts` calls it IN-process. this file exists so
+ *   `#tools/eval-harness/fr/parse-recall` and `promotion-eval.ts` calls it IN-process. this file exists so
  *   the leg can be run on its own — the `fr.bare_street_intact` floor's provenance in the promotion
  *   specs (`v2.3.0-nl-postcode.json`, `v5.3.0-family.json`) names it.
  *
@@ -17,7 +17,7 @@
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { frParseRecall } from "#tools/eval-harness/fr-parse-recall"
+import { frParseRecall } from "#tools/eval-harness/fr/parse-recall"
 
 async function main(): Promise<void> {
 	const { values: args } = parseArguments({
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 			tokenizer: { type: "string" },
 			"model-card": { type: "string", default: "packages/neural-weights-en-us/model-card.json" },
 			label: { type: "string", default: "" },
-			fixture: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/fr-bare-street-40.jsonl" },
+			fixture: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/fr/bare-street-40.jsonl" },
 			"from-db": { type: "boolean", default: false },
 			json: { type: "string" },
 			floor: { type: "string" },

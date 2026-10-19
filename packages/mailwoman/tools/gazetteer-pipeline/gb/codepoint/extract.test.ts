@@ -8,7 +8,7 @@
 
 import { expect, test } from "vitest"
 
-import { parseCodePointMetadata } from "#gazetteer/postcode/codepoint/extract"
+import { parseCodePointMetadata } from "#gazetteer/gb/codepoint/extract"
 
 test("parseCodePointMetadata reads the header fields and the per-area row manifest", () => {
 	// Verbatim head of the 2026-05 `Doc/metadata.txt`, including its leading whitespace on the count rows.

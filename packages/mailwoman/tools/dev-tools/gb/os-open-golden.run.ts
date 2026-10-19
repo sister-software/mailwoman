@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Writes the Great Britain golden board `tools/eval-harness/fixtures/gb-os-open-golden.jsonl` from the
+ *   Writes the Great Britain golden board `tools/eval-harness/fixtures/gb/os-open-golden.jsonl` from the
  *   `gb-os-open` adapter's canonical rows: Code-Point Open, OS Open Names and OS Open Roads, under the
  *   Open Government Licence v3.0.
  *
@@ -18,7 +18,7 @@
  *   tag reads zero rows for it.
  *
  *   Usage:
- *   node packages/mailwoman/tools/dev-tools/corpus/gb-os-open-golden.run.ts [--input <canonical.jsonl>] [--out <path>]
+ *   node packages/mailwoman/tools/dev-tools/gb/os-open-golden.run.ts [--input <canonical.jsonl>] [--out <path>]
  */
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
@@ -50,7 +50,7 @@ interface GoldenRow {
 }
 
 const input = values.input ?? gbOSOpenCanonicalRowsPath().toString()
-const out = values.out ?? workspacePath("mailwoman", "tools", "eval-harness", "fixtures", "gb-os-open-golden.jsonl")
+const out = values.out ?? workspacePath("mailwoman", "tools", "eval-harness", "fixtures", "gb", "os-open-golden.jsonl")
 
 /**
  * The letters that open a postcode, which name its postcode area.

@@ -198,7 +198,7 @@ Run the battery for _every_ candidate, regardless of what you changed. This is w
 | Check               | Command                                                                                                      | Bar                                                  |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
 | Per-locale floors   | `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts` (US/FR, `--tokenizer`)                             | within 1pp, fp32-to-fp32                             |
-| German native order | `packages/mailwoman/tools/dev-tools/de-order-eval.run.ts`                                                    | NO-REGRESSION                                        |
+| German native order | `packages/mailwoman/tools/dev-tools/de/order-eval.run.ts`                                                    | NO-REGRESSION                                        |
 | Unit retention      | unit-real designators eval                                                                                   | ≥ 88                                                 |
 | Affix split         | `packages/mailwoman/tools/dev-tools/score/affix.run.ts` (not `per-locale-f1` — its fold can't see the split) | hold the spec's floors                               |
 | Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                                                         | presets stable                                       |

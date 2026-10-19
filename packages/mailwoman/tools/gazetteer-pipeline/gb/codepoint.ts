@@ -8,5 +8,5 @@
  *   workspace. The CSV reader is `@mailwoman/spatial/gb/codepoint`, which the corpus adapters share.
  */
 
-export * from "#gazetteer/postcode/codepoint/extract"
-export * from "#gazetteer/postcode/codepoint/fetch"
+export * from "#gazetteer/gb/codepoint/extract"
+export * from "#gazetteer/gb/codepoint/fetch"
