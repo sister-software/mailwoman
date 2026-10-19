@@ -487,9 +487,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!place.tier && candidate.id && release?.hasPolygons && version) {
 				const cached = polygonCache.get(candidate.id)
 
-				if (cached) {
+				if (cached != null) {
 					place.geometry = cached
-				} else if (!cached && !polygonInflightRef.current.has(candidate.id)) {
+				} else if (!polygonCache.has(candidate.id) && !polygonInflightRef.current.has(candidate.id)) {
 					polygonInflightRef.current.add(candidate.id)
 					const placeID = candidate.id
 
