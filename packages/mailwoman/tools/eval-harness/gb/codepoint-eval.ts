@@ -8,7 +8,7 @@
  *
  *   Contains OS data © Crown copyright and database right 2026 (Code-Point Open, OGL v3).
  *
- *   Run: node packages/mailwoman/tools/eval-harness/gb-codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
+ *   Run: node packages/mailwoman/tools/eval-harness/gb/codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

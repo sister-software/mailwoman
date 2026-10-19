@@ -18,13 +18,13 @@
  *     The street-type channel's own register.
  *   - `place`: `dependent_locality, locality`. This is the locality-surface channel's register.
  *     The shipped bundle's homonym wins were measured in this register. The default board,
- *     `gb-os-open-golden.jsonl`, comes from OS OpenData. OS OpenData records no dependent locality.
+ *     `fixtures/gb/os-open-golden.jsonl`, comes from OS OpenData. OS OpenData records no dependent locality.
  *     This shape therefore needs a `--fixtures` board that carries one.
  *
  *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
  *   graded in the wrong register.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
+ *   Usage: node packages/mailwoman/tools/dev-tools/gb/fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
@@ -44,7 +44,7 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-gb" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "candidate" },
-		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb-os-open-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/tools/eval-harness/fixtures/gb/os-open-golden.jsonl" },
 		"dump-spans": { type: "string" },
 	},
 })

@@ -78,7 +78,7 @@ async function tagsFor(text: string): Promise<Map<string, string[]>> {
 
 if (board === "gb") {
 	const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
-		"packages/mailwoman/tools/eval-harness/fixtures/gb-os-open-golden.jsonl"
+		"packages/mailwoman/tools/eval-harness/fixtures/gb/os-open-golden.jsonl"
 	).toArray()
 
 	const postcode = emptyBoard()

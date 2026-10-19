@@ -32,7 +32,8 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 	"tools",
 	"eval-harness",
 	"fixtures",
-	"fr-bare-street-40.jsonl"
+	"fr",
+	"bare-street-40.jsonl"
 )
 
 const MAX_REPORTED_FAILURES = 12
@@ -93,7 +94,7 @@ export interface FRParseRecallOptions {
 	/**
 	 * JSONL fixture of French bare-street rows.
 	 *
-	 * @defaultValue the bundled `fr-bare-street-40.jsonl`.
+	 * @defaultValue the bundled `fixtures/fr/bare-street-40.jsonl`.
 	 */
 	fixture?: string
 

@@ -13,7 +13,7 @@
 import { LayerTier } from "@mailwoman/core/layers"
 import { describe, expect, it } from "vitest"
 
-import { codePointLayerManifest } from "#gazetteer/postcode/codepoint/database"
+import { codePointLayerManifest } from "#gazetteer/gb/codepoint/database"
 import { geonamesTailTerms } from "#gazetteer/postcode/geonames/tail"
 import { foldLayerManifest } from "#gazetteer/stamp-manifest"
 import { twDistrictsLayerManifest } from "#gazetteer/tw-districts"

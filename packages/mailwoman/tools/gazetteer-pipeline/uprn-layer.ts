@@ -40,7 +40,7 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer/database-lifecycle"
-import { createOSDownloadsClient } from "#gazetteer/postcode/codepoint/fetch"
+import { createOSDownloadsClient } from "#gazetteer/gb/codepoint/fetch"
 
 /**
  * The OS Data Hub product ID for Open UPRN.

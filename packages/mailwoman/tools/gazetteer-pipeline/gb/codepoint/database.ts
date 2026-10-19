@@ -39,7 +39,7 @@ import {
 	codePointAttribution,
 	downloadCodePointOpen,
 	extractCodePointOpen,
-} from "#gazetteer/postcode/codepoint"
+} from "#gazetteer/gb/codepoint"
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer/postcode/geonames/tail"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer/stamp-manifest"
 

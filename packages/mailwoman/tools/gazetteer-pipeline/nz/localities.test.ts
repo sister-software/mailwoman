@@ -15,7 +15,7 @@ import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwom
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { buildNZLocalitiesDatabase } from "#gazetteer/nz-localities"
+import { buildNZLocalitiesDatabase } from "#gazetteer/nz/localities"
 
 let root: TemporaryDirectory
 
