@@ -349,7 +349,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 							? last
 							: null
 
-		if (next) {
+		if (typeof next === "number") {
 			event.preventDefault()
 			setSelected(next)
 			document.getElementById(optionID(next))?.scrollIntoView({ block: "nearest" })
