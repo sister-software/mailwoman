@@ -100,6 +100,22 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(verdict.confirmed).toEqual(["00716"])
 		expect(roots[0]!.metadata?.["postcode_shape_countries"]).toEqual(["PR"])
 	})
+
+	it("confirms a postcode under any country whose subdivision table holds the region token", () => {
+		// `WA` is Washington and Western Australia.
+		// The AU syntax accepts `6001` where the US syntax refuses it.
+		const roots = [
+			node({ tag: "locality", value: "Perth" }),
+			node({ tag: "region", value: "WA" }),
+			postcodeNode("6001"),
+		]
+
+		const verdict = applyPostcodeShapeCoherence(roots)
+
+		expect(verdict.confirmed).toEqual(["6001"])
+		expect(tagged(roots, "postcode").map((n) => n.value)).toEqual(["6001"])
+		expect(roots[2]!.metadata?.["postcode_shape_countries"]).toEqual(["AU"])
+	})
 })
 
 describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
@@ -138,7 +154,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			["2001", "CA"],
 			["3003", "TX"],
 			["4004", "FL"],
-			["5005", "WA"],
+			// `WA` also names Western Australia, whose syntax accepts four digits, so this row uses a US-only code.
+			["5005", "NJ"],
 			["6006", "CO"],
 			["7007", "OR"],
 			["8008", "AZ"],
