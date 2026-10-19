@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `bsp-gu`: the address points of Guam, which the Bureau of Statistics & Plans GIS publishes on the
- * Government of Guam GISWEB Portal as the ArcGIS layer `Address_Point_(Public_View)`.
+ * `bsp-gu`: Guam address points published by the Bureau of Statistics & Plans GIS on the Government of
+ * Guam GISWEB Portal as the ArcGIS layer `Address_Point_(Public_View)`.
  *
  * The input is the layer's GeoJSON query pages, one file or a directory of them. The adapter reads
  * `HOUSE_NUM` as the house number, `PRE_DIR` as the street prefix, `STREETNAME` as the street (or the
@@ -12,7 +12,7 @@
  * and `CITY` (or `PLACENAME` when `CITY` is blank) as the locality. Route roads read `ROUTE 10` with the
  * type `HWY`, which is how the layer's own `FullRdNm` writes them.
  *
- * The layer carries no postcode: its NG911 `Post_Code` column is blank on every feature.
+ * The layer has no postcode: its NG911 `Post_Code` column is blank on every feature.
  *
  * `HOUSE_NUM` sometimes pairs the number with a building-permit number (`120 / B19000483`); the number is
  * kept and the permit dropped. `CITY` writes Guam's villages with Chamorro and English spellings
@@ -24,7 +24,7 @@
  *
  * The layer states no license. Under the United States position in `packages/corpus/lib/us/AGENTS.md`
  * (Feist), a US public body's address file published without terms restricting its use is elected,
- * and the rows carry the label the US public-body adapters use.
+ * and the rows use the same label as the US public-body adapters.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -54,7 +54,7 @@ import {
 export const BSP_GU_ADAPTER_ID = "bsp-gu"
 
 /**
- * The label every row carries, matching the US public-body adapters elected under the Feist reading.
+ * The label on every row, matching the US public-body adapters elected under the Feist reading.
  */
 export const BSP_GU_LICENSE = "Public Domain"
 

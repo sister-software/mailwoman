@@ -3,22 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `ide-uy`: the national address points of Uruguay, `Direcciones Geográficas del Uruguay`, which the
- * Infraestructura de Datos Espaciales (IDE) publishes on catalogodatos.gub.uy as one CSV per department.
+ * `ide-uy`: Uruguay's national address points, `Direcciones Geográficas del Uruguay`, published by the
+ * Infraestructura de Datos Espaciales (IDE) on catalogodatos.gub.uy as one CSV per department.
  *
  * The CSVs are Windows-1252 (`ORDOÑEZ` reads `ORDO\xd1EZ`), and quote a street name that holds a
  * nickname in doubled quotes (`"AVENIDA JOSE ""PEPE"" D' ELIA"`). Absent values read `N/A`.
  *
  * The adapter reads `nombre_via` as the street, `num_puerta` with `letra_puerta` as the house number,
  * `codigo_postal` as the postcode, `localidad` as the locality, `departamento` as the region and
- * `nombre_inmueble` as a venue. A census locality named `<DEPARTAMENTO> RURAL` names the department's rural
- * remainder rather than a place, so such a row keeps the department and no locality. A street the register
- * leaves unnamed carries a generated code (`UYARMQA_SN_012`) and is dropped, as is a point located only by a
- * route kilometer, which has no door number to render.
+ * `nombre_inmueble` as a venue. The census value `<DEPARTAMENTO> RURAL` represents the department's rural
+ * remainder rather than a place, so the row keeps the department and omits locality. The register assigns
+ * a generated code (`UYARMQA_SN_012`) to an unnamed street, and the adapter drops that row. It also drops a
+ * point located by a route kilometer because the record has no door number to render.
  *
- * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay, which grants adaptation and
- * commercial use and requires the note of origin to name the provider, the license and the dataset, and to
- * mention changes. Every row records that license.
+ * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay. The license grants adaptation
+ * and commercial use. Its note of origin must name the provider, the license and the dataset, and mention
+ * changes. Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -90,7 +90,7 @@ const PRESENT_OPTIONS = { absentValues: [ABSENT] } as const
 const LETTER_SUFFIX = /^(?:BIS|[A-Z])$/u
 
 /**
- * A street the register leaves unnamed carries a generated code, such as `UYARMQA_SN_012`.
+ * The register assigns a generated code, such as `UYARMQA_SN_012`, to a street it leaves unnamed.
  */
 const GENERATED_STREET = /_SN_|^[A-Z0-9]+_[A-Z0-9_]+$/u
 

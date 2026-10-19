@@ -167,13 +167,15 @@ existing sites.
 Run `yarn lint` for lint, formatting, prose, dependency, and repository-health checks. Run
 `yarn typecheck` for build and test type checking. Run the narrow package tests during iteration and
 the affected workspace's complete tests before handoff. Do not claim a command passed unless it ran.
+When reporting lint results, state the command's exit status and distinguish errors from warnings. A
+zero exit status does not mean the run had zero warnings. Read the per-file findings for changed files
+before saying they are clear. If output was truncated, inspect the saved log for those paths.
 Run `yarn compile` before `yarn lint`: two `#` imports in `packages/mailwoman` map the `node`
 condition to `out/`, so knip and the bundle-graph check fail on an uncompiled tree. Run
 `mwops release copy-weights` after `yarn compile`, or the FST, postcode and pair-index files are left
 out. A pipeline's exit status is its last command's, so `audit | grep … && launch` launches on a
-failed audit and `tsc | tail` reports green on nine errors. Run a command whose exit code decides the
-next step alone, redirect its output to a log, chain the next step on its exit code, then read the
-log.
+failed audit and `tsc | tail` reports green on nine errors. Run only a command whose exit code decides
+the next step. Redirect its output to a log, chain the next step on its exit code, then read the log.
 
 ## Vocabulary rules across the tree
 

@@ -10,13 +10,13 @@
  * Input is the layer queried whole as GeoJSON (`query?where=1=1&outFields=*&f=geojson&outSR=4326`), one
  * FeatureCollection, or a directory of such page files read in name order. Each feature's `properties`
  * hold the register's columns. The register states no absent value as a sentinel: `house_letter` is the
- * empty string when a number has no letter, and every row carries a street, since Faroese villages name
+ * empty string when a number has no letter, and every row has a street, since Faroese villages name
  * their lanes and paths too (`Heimi í Húsi`, `Suðuri á Bø`).
  *
  * The adapter reads `street_name` as the street, `house_digit` with `house_letter` as the house number
  * (their concatenation equals the register's own `house_no` on every row), `zip` as the postcode and
- * `city` as the postal locality. Two postal localities carry a comma that disambiguates them,
- * `Nes, Eysturoy` and `Syðradalur, Kalsoy`, and the adapter keeps them as the register spells them.
+ * `city` as the postal locality. The values `Nes, Eysturoy` and `Syðradalur, Kalsoy` include commas
+ * that disambiguate them. The adapter keeps both values as the register spells them.
  * `municipality` is left out, because the FO layout prints no region.
  *
  * Umhvørvisstovan grants anyone a free, worldwide right to copy, distribute, publish, modify and combine

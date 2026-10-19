@@ -11,8 +11,8 @@
  * Windows-1252 (`Äussere Wiesen` reads `\xc4ussere Wiesen`), CRLF-terminated and `;`-separated, with no
  * quoting. The adapter reads `dataset.csv` from the ZIP, or from a path to the extracted CSV.
  *
- * The adapter reads `STN_NAME` as the street, `ADR_NUMBER` as the house number (it carries its own
- * lower-case letter suffix, `12c`), `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
+ * The adapter reads `STN_NAME` as the street and `ADR_NUMBER` as the house number, including its
+ * lower-case letter suffix (`12c`). It reads `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
  * `COM_FOSNR` is the municipality's number and no column holds its name, so no region is emitted. The LI
  * layout prints no region in any case.
  *

@@ -14,22 +14,23 @@
  * locality and `CITY` as the locality. Absheron is a district rather than a city, so an Absheron row
  * takes its settlement (`Khirdalan`, `Masazir`) as the locality.
  *
- * `STRT_ADDR` writes `0` where the point has no number. Some street values carry the number after a
- * comma (`Zarifa Aliyeva,38`) or a building's name in parentheses (`Azadlig Avenue(Hilton Baku)`): the
- * number is read from the street when `STRT_ADDR` has none, and the parenthetical is removed. A block
+ * `STRT_ADDR` writes `0` where the point has no number. Some street values put the number after a
+ * comma (`Zarifa Aliyeva,38`) or a building's name in parentheses (`Azadlig Avenue(Hilton Baku)`). The
+ * adapter reads the number from the street when `STRT_ADDR` has none and removes the parenthetical. A block
  * code (`558-ci0mehelle030`) is not a house number. A row with neither a number nor a venue is refused.
  *
  * `NAME` names a point of interest of the type `TYPE` states (`Cafe Gorush`, `School 93`, `Library by
- * A. P. Chekhov`). No value in the 2025-08-05 file is a person's given name and surname alone: of the
- * three that read `<Word> <surname-ending>`, each is a category word and a name (`Cafe Beyzade`,
- * `Monument Rahimov`). A value with no run of three letters is a code and is dropped.
+ * A. P. Chekhov`). Of the three values shaped `<Word> <surname-ending>` in the 2025-08-05 file, each
+ * combines a category word and a name (`Cafe Beyzade`, `Monument Rahimov`). The file has no value
+ * consisting only of a person's given name and surname.
+ * A value with no run of three letters is a code and is dropped.
  *
- * Ninety-two points also carry their street in Azerbaijani spelling (`STRT_N_AZ`); each of those
+ * Ninety-two points also include their street in Azerbaijani spelling (`STRT_N_AZ`); each of those
  * emits a second row in that spelling, with `NAME_AZ`, `STATE_AZ` and `CITY_AZ` where present
  * (`Bakı` for `Baku`), when it renders differently from the first.
  *
- * The file holds no postcode. The CKAN record states `license_id: cc-by`, `Creative Commons Attribution`,
- * with no version, so the rows carry a LicenseRef rather than an SPDX id that would assert a version.
+ * The file holds no postcode. The CKAN record states `license_id: cc-by` and `Creative Commons Attribution`.
+ * The record gives no version, so rows use a LicenseRef rather than an SPDX id that would assert a version.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -56,7 +57,8 @@ import {
 export const OPENDATA_AZ_ADAPTER_ID = "opendata-az"
 
 /**
- * The publisher's license, Creative Commons Attribution, whose version the record leaves unstated.
+ * Creative Commons Attribution is the publisher's license.
+ * The record does not state its version.
  */
 export const OPENDATA_AZ_LICENSE = "LicenseRef-CC-BY-unstated-version"
 
@@ -111,7 +113,7 @@ export type AzerbaijanSpelling = (typeof AzerbaijanSpelling)[keyof typeof Azerba
 const HOUSE_NUMBER = /^\d+\p{L}?(?:[/\\-]\d+\p{L}?)?$/u
 
 /**
- * A street value that carries the house number after a comma, as `Zarifa Aliyeva,38`.
+ * A street value with the house number after a comma, as `Zarifa Aliyeva,38`.
  */
 const STREET_WITH_NUMBER = /^(.+?),\s*(\d+\p{L}?(?:\/\d+\p{L}?)?)$/u
 

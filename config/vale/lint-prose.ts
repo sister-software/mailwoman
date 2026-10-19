@@ -144,7 +144,7 @@ async function runVale(
  * The closing line Vale prints per process.
  * A chunked run would otherwise repeat it once per chunk.
  */
-const SUMMARY_LINE = /^[✔✖] (\d+) errors?, (\d+) warnings? and (\d+) suggestions? in (\d+) files?\.\n?$/mu
+const SUMMARY_LINE = /^[✔✖⚠] (\d+) errors?, (\d+) warnings? and (\d+) suggestions? in (\d+) files?\.\n?$/mu
 
 /**
  * A chunk's output with Vale's closing summary line removed and its counts returned.
@@ -199,7 +199,7 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 		}
 
 		const [errors, warnings, suggestions, files] = totals
-		const mark = errors || warnings ? "✖" : "✔"
+		const mark = errors ? "✖" : warnings || suggestions ? "⚠" : "✔"
 
 		console.log(`${mark} ${errors} errors, ${warnings} warnings and ${suggestions} suggestions in ${files} files.`)
 	}

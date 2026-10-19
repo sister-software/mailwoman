@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `landregistry-im`: the property addresses of the Isle of Man Land Registry's land transactions, which the
- * Isle of Man Government publishes on gov.im as one CSV of every registered sale since 2000.
+ * `landregistry-im`: property addresses from the Isle of Man Land Registry's land transactions. The Isle of
+ * Man Government publishes one CSV on gov.im with every registered sale since 2000.
  *
  * Each row is a sale, so one property appears once per sale. The adapter emits each distinct address
  * once, comparing the emitted components case-folded and keeping the first. It reads only the address
@@ -20,8 +20,8 @@
  * naming a property, and the adapter refuses it, as it refuses a garage, a parking space or a substation
  * sold on its own.
  *
- * The Isle of Man Government publishes the dataset under the Isle of Man Open Government Licence, which
- * requires the attribution statement below. Every row records that license.
+ * The Isle of Man Government publishes the dataset under the Isle of Man Open Government Licence.
+ * The license requires the attribution statement below. Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -49,7 +49,7 @@ import {
 export const LANDREGISTRY_IM_ADAPTER_ID = "landregistry-im"
 
 /**
- * The Isle of Man Open Government Licence, whose version the dataset page does not state.
+ * The Isle of Man Open Government Licence (the dataset page does not state its version).
  * It has no SPDX identifier.
  */
 export const LANDREGISTRY_IM_LICENSE = "LicenseRef-IM-OGL"
@@ -95,8 +95,8 @@ const LAND_DESCRIPTION =
 const LAND_WORD = /\b(?:lands?|fields?|plots?|acres?)\b/iu
 
 /**
- * A value that describes a structure or a share sold apart from any dwelling,
- * which has no postal address of its own.
+ * A value that describes a structure or share sold apart from a dwelling.
+ * Such a structure or share has no postal address of its own.
  */
 const NOT_A_PREMISE =
 	/^(?:(?:a|the)\s+)?(?:garages?|lock[- ]?ups?|stores?|car\s+park(?:ing)?|forecourt|roadway|access\s+roads?|lane)\b|\b(?:site|substation|reservoir|parking|driveway|pumping\s+station|private\s+(?:roadway|road|drive|lane|access)|(?:common|shared|landscaped)\s+areas?|share\s+(?:in|of))\b/iu
@@ -316,8 +316,8 @@ export function createIsleOfManLandRegistryAdapter(): CorpusAdapter {
 					country: "IM",
 					locale: "en-IM",
 					source: LANDREGISTRY_IM_ADAPTER_ID,
-					// The file carries no record id or coordinates, and the dedupe above leaves
-					// one row per distinct address, so the components identify the row.
+					// The file has no record id or coordinates.
+					// The dedupe above leaves one row per distinct address, so the components identify the row.
 					source_id: stableSourceIDFromParts(LANDREGISTRY_IM_ADAPTER_ID, aligned),
 					corpus_version: "",
 					license: LANDREGISTRY_IM_LICENSE,
