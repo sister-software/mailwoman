@@ -18,7 +18,7 @@ import type { QueryIntentMarker, QueryKind } from "@mailwoman/core/pipeline"
 import type { NormalizedInputLite } from "@mailwoman/query-shape"
 
 import { nearMeSubject } from "#intent/rules"
-import { matchPOICategory, type POIPhraseLookup } from "#poi"
+import { poiCategoryOf, type POISubjectMatch } from "#poi"
 
 /**
  * Context the marker builder needs beyond the scored kinds.
@@ -26,12 +26,12 @@ import { matchPOICategory, type POIPhraseLookup } from "#poi"
 export interface IntentMarkerContext {
 	input: NormalizedInputLite
 	/**
-	 * The injected POI lexicon when one was wired.
+	 * The subject match the classifier's one lexicon scan of `input` produced, when a POI lexicon was wired.
 	 *
-	 * Absent means no `poi_category` marker can be built, consistent with the
-	 * kind not firing without it either.
+	 * `null` or absent means no `poi_category` marker can be built, consistent
+	 * with the kind not firing without a lexicon.
 	 */
-	poiLexicon?: POIPhraseLookup
+	poiSubject?: POISubjectMatch | null
 	locale?: string
 }
 
@@ -95,8 +95,8 @@ export function deriveIntentMarkers(
 		})
 	}
 
-	if (fired.has("poi_category") && ctx.poiLexicon) {
-		const match = matchPOICategory(ctx.input.normalized, ctx.locale ?? ctx.input.appliedLocale ?? null, ctx.poiLexicon)
+	if (fired.has("poi_category")) {
+		const match = poiCategoryOf(ctx.poiSubject ?? null)
 
 		if (match) {
 			markers.push({

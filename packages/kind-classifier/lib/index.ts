@@ -11,7 +11,7 @@ export type { KindClassifierOpts } from "#classify"
 export { deriveIntentMarkers } from "#intent/markers"
 export type { IntentMarkerContext } from "#intent/markers"
 export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent/rules"
-export { matchPOICategory, matchPOISubject } from "#poi"
+export { matchPOISubject, poiCategoryOf } from "#poi"
 export type { POIPhraseMatch, POIPhraseReading, POIPhraseLookup, POIQuerySpan, POISubjectMatch } from "#poi"
 
 export {

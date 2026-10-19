@@ -17,7 +17,7 @@ import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } fr
 
 import { deriveIntentMarkers } from "#intent/markers"
 import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent/rules"
-import { createScorePOICategory, createScorePOIQuery, type POIPhraseLookup } from "#poi"
+import { matchPOISubject, type POIPhraseLookup, type POISubjectMatch, scorePOICategory, scorePOIQuery } from "#poi"
 import {
 	scoreIntersection,
 	scoreLandmark,
@@ -80,14 +80,14 @@ const MARKER_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["route_pair", "
 function withIntentMarkers(
 	verdict: QueryKindResult,
 	input: NormalizedInputLite,
-	poiLexicon?: POIPhraseLookup,
+	poiSubject: POISubjectMatch | null = null,
 	locale?: string
 ): QueryKindResult {
 	const kinds = [{ kind: verdict.kind, confidence: verdict.confidence }, ...verdict.alternatives]
 
 	if (!kinds.some((k) => MARKER_KINDS.has(k.kind))) return verdict
 
-	const intentMarkers: QueryIntentMarker[] = deriveIntentMarkers(kinds, { input, poiLexicon, locale })
+	const intentMarkers: QueryIntentMarker[] = deriveIntentMarkers(kinds, { input, poiSubject, locale })
 
 	if (!intentMarkers.length) return verdict
 
@@ -147,8 +147,12 @@ export function createKindClassifier(
 	return async (input, shape, locale): Promise<QueryKindResult> => {
 		const localeTag = locale?.locale
 		const base = classifyKindSync(input, shape)
-		const poiConfidence = createScorePOIQuery(poiLexicon, localeTag)(input, shape)
-		const categoryConfidence = createScorePOICategory(poiLexicon, localeTag)(input, shape)
+		// One lexicon scan serves both POI scorers and the marker builder.
+		// Each lexicon query that misses the exact table costs an index read,
+		// and the scan queries once per prefix.
+		const poiSubject = matchPOISubject(input.normalized, localeTag ?? input.appliedLocale ?? null, poiLexicon)
+		const poiConfidence = scorePOIQuery(poiSubject, shape)
+		const categoryConfidence = scorePOICategory(poiSubject)
 
 		if (poiConfidence <= 0 && categoryConfidence <= 0) return base
 
@@ -169,6 +173,6 @@ export function createKindClassifier(
 			merged.push({ kind: "poi_category", confidence: categoryConfidence })
 		}
 
-		return withIntentMarkers(rank(merged), input, poiLexicon, localeTag)
+		return withIntentMarkers(rank(merged), input, poiSubject, localeTag)
 	}
 }
