@@ -434,6 +434,14 @@ const CANONICAL_TYPE_WORDS: ReadonlySet<string> = new Set(
 	[...US_STREET_SUFFIX_LOOKUP.values()].map((v) => v.toLowerCase())
 )
 
+const ENGLISH_ORDINAL_RULES = new Intl.PluralRules("en-US", { type: "ordinal" })
+
+const ENGLISH_ORDINAL_SUFFIX: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" }
+
+function ordinalOf(n: number): string {
+	return `${n}${ENGLISH_ORDINAL_SUFFIX[ENGLISH_ORDINAL_RULES.select(n)] ?? "th"}`
+}
+
 /**
  * Lists the lookup keys to probe for a street span, most literal first, adding doubled-type
  * and Saint/St-swap recovery forms for `us` and `en`.
@@ -460,6 +468,29 @@ export function streetKeyVariants(street: string, locale: StreetLocale = "us"): 
 
 		if (collapsed && !variants.includes(collapsed)) {
 			variants.push(collapsed)
+		}
+	}
+
+	// NAD writes a numbered street with its ordinal suffix ("48th St")
+	// and NYC Open Data writes the bare number ("48 ST").
+	// The build keys each row as written, so the reader probes both forms.
+	for (const variant of variants.slice()) {
+		const parts = variant.split(" ")
+
+		const toggled = parts
+			.map((token, i) => {
+				// Only a number followed by a street type is an ordinal ("48 street"), not "us route 9".
+				if (!CANONICAL_TYPE_WORDS.has(parts[i + 1] ?? "")) return token
+				const bare = /^(\d+)(?:st|nd|rd|th)$/.exec(token)?.[1]
+
+				if (bare) return bare
+
+				return /^\d+$/.test(token) ? ordinalOf(Number(token)) : token
+			})
+			.join(" ") as StreetKey
+
+		if (toggled !== variant && !variants.includes(toggled)) {
+			variants.push(toggled)
 		}
 	}
 
