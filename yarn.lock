@@ -6538,7 +6538,6 @@ __metadata:
     unist: "npm:^0.0.1"
     unist-util-visit: "npm:^5.1.0"
     vite: "npm:^8.3.4"
-    webpack: "npm:^5.111.1"
   languageName: unknown
   linkType: soft
 
@@ -30373,7 +30372,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:^5.111.1, webpack@npm:^5.88.1, webpack@npm:^5.95.0":
+"webpack@npm:^5.88.1, webpack@npm:^5.95.0":
   version: 5.111.1
   resolution: "webpack@npm:5.111.1"
   dependencies:

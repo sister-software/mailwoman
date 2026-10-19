@@ -7,7 +7,7 @@ import { createElement } from "react"
 import type { ComponentType } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { commandPathCandidates, declaredCommandName, isPrefixDirectory } from "#cli/native/command/names"
+import { commandPathCandidates, declaredCommandName, isPrefixDirectoryFor } from "#cli/native/command/names"
 import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp, renderInkCommand } from "#cli/native/spec"
 
 interface CommandModule {
@@ -64,7 +64,7 @@ async function listCommandNames(directory: URL): Promise<string[]> {
 					)
 				)
 
-		if (declared.length && declared.every((name) => isPrefixDirectory(entry.name, name))) {
+		if (isPrefixDirectoryFor(entry.name, declared)) {
 			names.push(...declared)
 
 			continue
