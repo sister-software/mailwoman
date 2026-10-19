@@ -205,7 +205,7 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
 	const seen = new Set<string>()
 
 	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		if (options.limit !== undefined && tuples.length >= options.limit) break
+		if (typeof options.limit === "number" && tuples.length >= options.limit) break
 
 		const street = row.street ?? ""
 		const locality = row.city ?? ""

@@ -105,7 +105,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 			for await (const line of lines) {
 				if (options.signal?.aborted) break
 
-				if (options.limit !== undefined && emitted >= options.limit) break
+				if (typeof options.limit === "number" && emitted >= options.limit) break
 
 				const trimmed = line.trim()
 
@@ -158,7 +158,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 					emitted++
 
-					if (options.limit !== undefined && emitted >= options.limit) break
+					if (typeof options.limit === "number" && emitted >= options.limit) break
 				}
 
 				// US military/diplomatic rows are self-contained and off by default,

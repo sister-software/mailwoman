@@ -624,7 +624,7 @@ export async function harvestESCatastro(
 	for (const province of provinces.selected) {
 		if (signal?.aborted) break
 
-		if (options.limit !== undefined && fetched + skipped >= options.limit) break
+		if (typeof options.limit === "number" && fetched + skipped >= options.limit) break
 
 		report?.(`  province ${province.code} ${province.name}: reading ${province.provinceFeedURL}`)
 
@@ -644,7 +644,7 @@ export async function harvestESCatastro(
 		for (const dataset of municipalities) {
 			if (signal?.aborted) break
 
-			if (options.limit !== undefined && fetched + skipped >= options.limit) break
+			if (typeof options.limit === "number" && fetched + skipped >= options.limit) break
 
 			if (requested && !requested.has(dataset.code)) continue
 

@@ -159,7 +159,7 @@ export async function* streamInspireRows<Indexed>(
 			continue
 		}
 
-		if (options.limit !== undefined && emitted >= options.limit) break
+		if (typeof options.limit === "number" && emitted >= options.limit) break
 
 		const row = options.compose(element, referenced, false)
 
@@ -179,7 +179,7 @@ export async function* streamInspireRows<Indexed>(
 	for (const element of held) {
 		if (options.signal?.aborted) return
 
-		if (options.limit !== undefined && emitted >= options.limit) break
+		if (typeof options.limit === "number" && emitted >= options.limit) break
 
 		const row = options.compose(element, referenced, true)
 
@@ -252,7 +252,7 @@ export async function* streamIndexedInspireRows<Indexed>(
 	for await (const address of streamMarkupElements(options.chunks(), addressElement, { xml: true })) {
 		if (options.signal?.aborted) return
 
-		if (options.limit !== undefined && emitted >= options.limit) return
+		if (typeof options.limit === "number" && emitted >= options.limit) return
 
 		const row = options.compose(address, referenced)
 

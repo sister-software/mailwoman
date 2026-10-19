@@ -56,7 +56,7 @@ export async function measureZoningCellResolutions(
 	// A range or authority selector narrows the population on purpose,
 	// so the declared total is only checked on a whole pass.
 	const narrowed =
-		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
+		typeof options.limit === "number" || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 
 	if (!narrowed && features !== identity.featureCount) {
 		throw new Error(
