@@ -87,12 +87,17 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			}
 		}
 
-		const spatialExact = spatialI && pat[spatialI] === 0 ? 1 : 0
+		const spatialExact = typeof spatialI === "number" && pat[spatialI] === 0 ? 1 : 0
 
 		const nameDisagree =
-			givenI && familyI && pat[givenI] === lastLevel(givenI) && pat[familyI] === lastLevel(familyI) ? 1 : 0
+			typeof givenI === "number" &&
+			typeof familyI === "number" &&
+			pat[givenI] === lastLevel(givenI) &&
+			pat[familyI] === lastLevel(familyI)
+				? 1
+				: 0
 
-		const orgDisagree = orgI && pat[orgI] === lastLevel(orgI) ? 1 : 0
+		const orgDisagree = typeof orgI === "number" && pat[orgI] === lastLevel(orgI) ? 1 : 0
 		f.push(spatialExact * nameDisagree)
 		f.push(spatialExact * orgDisagree)
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0

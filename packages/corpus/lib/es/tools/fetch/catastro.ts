@@ -445,13 +445,13 @@ export interface HarvestESCatastroOptions {
 	 * A code the service document does not list is reported as a failure rather than ignored.
 	 * Without this every one of the 52 province feeds is read, at one request each.
 	 */
-	provinces?: readonly string[]
+	provinces?: readonly string[] | null
 	/**
 	 * Harvest only these five-digit municipality codes, among the provinces selected.
 	 *
 	 * A code none of the selected province feeds lists is reported as a failure.
 	 */
-	municipalities?: readonly string[]
+	municipalities?: readonly string[] | null
 	/**
 	 * Stop after this number of municipalities, counting the ones already on disk.
 	 */
@@ -523,7 +523,7 @@ async function readFeed(
  */
 function selectProvinces(
 	listed: readonly ESCatastroProvince[],
-	wanted: readonly string[] | undefined
+	wanted: readonly string[] | null | undefined
 ): { selected: readonly ESCatastroProvince[]; unknown: readonly string[] } {
 	if (!wanted) return { selected: listed, unknown: [] }
 

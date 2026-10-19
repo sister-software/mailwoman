@@ -231,7 +231,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 							})()
 
 				result.baselineVerdict = baselineResult.verdict
-				result.gainedCapability = gainedCapabilityRow
+				result.gainedCapability = gainedCapabilityRow ?? null
 
 				if (candidateResult.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
 					result.verdict = "GAINED"

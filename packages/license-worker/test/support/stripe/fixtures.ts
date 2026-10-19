@@ -59,7 +59,7 @@ export interface SubscriptionInit {
 	/**
 	 * The expanded `latest_invoice`, as the reconciliation pass asks for it.
 	 */
-	latestInvoice?: object
+	latestInvoice?: object | null
 }
 
 export function subscriptionObject(init: SubscriptionInit) {

@@ -244,7 +244,7 @@ export function CommandSummaryLines({ lines }: { lines: readonly string[] }): Re
 		Box,
 		{ flexDirection: "column" },
 		lines.map((line, index) =>
-			h(Text, { key: index, color: index === 0 ? "green" : null }, index === 0 ? "✓ " : "  ", line)
+			h(Text, { key: index, ...(index === 0 ? { color: "green" } : {}) }, index === 0 ? "✓ " : "  ", line)
 		)
 	)
 }

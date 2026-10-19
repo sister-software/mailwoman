@@ -81,7 +81,7 @@ export interface WOFSQLitePlaceLookupOpts {
 	 *
 	 * Absent, every alias code path is skipped and the resolver is byte-identical.
 	 */
-	postalCityAliases?: WOFPostalCityAliasLookup
+	postalCityAliases?: WOFPostalCityAliasLookup | null
 }
 
 /**
@@ -168,7 +168,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 */
 	readonly #postalCityAliases: WOFPostalCityAliasLookup | null
 
-	constructor(opts: WOFSQLitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
+	constructor(opts: WOFSQLitePlaceLookupOpts, weights?: Partial<RankingWeights> | null) {
 		if (opts.database && opts.databasePath) {
 			throw new Error("WOFSQLitePlaceLookup: pass either `database` or `databasePath`, not both")
 		}
@@ -594,7 +594,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		const limit = query.limit ?? 10
 		// Name-match candidates via the normal FTS path with the postcode cleared, so this cannot recurse.
-		const ftsCands = await this.findPlace({ ...query, postcode: null, limit: Math.max(limit, 10) })
+		const ftsCands = await this.findPlace({ ...query, postcode: undefined, limit: Math.max(limit, 10) })
 
 		const pcInfo = new Map<number, { dist: number; containing: boolean; aliases: string[] }>()
 

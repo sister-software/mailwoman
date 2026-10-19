@@ -226,7 +226,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
 
-		if (!id) {
+		if (typeof id !== "number") {
 			id = ccodes.size
 			ccodes.set(c, id)
 		}
@@ -238,7 +238,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const p = pt || ""
 		let id = ptcodes.get(p)
 
-		if (!id) {
+		if (typeof id !== "number") {
 			id = ptcodes.size
 			ptcodes.set(p, id)
 		}

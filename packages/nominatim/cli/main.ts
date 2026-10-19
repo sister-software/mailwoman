@@ -268,7 +268,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 							String(deepest.bbox.minLon),
 							String(deepest.bbox.maxLon),
 						]
-					: null,
+					: undefined,
 			}
 
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })

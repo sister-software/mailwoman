@@ -448,7 +448,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					// `designatorsByType` leaves out a designator the publisher marked void, so a void number
 					// and an absent one both read as null and `voidDesignatorTypes` separates them below.

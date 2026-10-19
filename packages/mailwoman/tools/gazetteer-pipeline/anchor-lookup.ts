@@ -277,7 +277,7 @@ export interface AnchorLookupOptions {
 	 * Every code must have a loader.
 	 * All of {@linkcode ANCHOR_V2_COUNTRIES} have one.
 	 */
-	include?: readonly string[]
+	include?: readonly string[] | null
 
 	/**
 	 * Whether to add GB outward-district keys beside the unit keys.

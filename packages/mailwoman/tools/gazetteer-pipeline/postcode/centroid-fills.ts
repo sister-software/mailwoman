@@ -233,7 +233,7 @@ async function geonamesNameFill(
 			.flatMap(([postcode, entry]) => {
 				const id = byPostcode.get(postcode)
 
-				return !id ? [] : [...entry.names].map((name) => ({ id, name }))
+				return typeof id !== "number" ? [] : [...entry.names].map((name) => ({ id, name }))
 			})
 			.map(({ id, name }) => ({
 				id,
@@ -363,7 +363,7 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: PathB
 		for (const key of ["county_id", "region_id"] as const) {
 			const ancestorID = hierarchy[key]
 
-			if (!ancestorID) continue
+			if (typeof ancestorID !== "number" || ancestorID === 0) continue
 			const c = adminCentroid.get(ancestorID) as { lat: number; lon: number } | undefined
 
 			if (c) {

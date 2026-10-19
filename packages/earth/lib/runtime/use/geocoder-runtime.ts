@@ -88,7 +88,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
-	interp: HTTPVFSInterpolator | undefined
+	interp: HTTPVFSInterpolator | null
 }
 
 interface CandidateExtras {
@@ -101,7 +101,7 @@ export interface GeocoderRuntimeHandle {
 	runtime: GeocoderRuntime
 	releases: ReleaseInfo[]
 	geoBias: GeoBiasControl
-	calibrator: ((raw: number) => number | null) | undefined
+	calibrator: ((raw: number) => number) | null
 	/**
 	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
 	 * Feature-detect via {@link supportsTrace}.
@@ -566,7 +566,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.selectedRelease]
 	)
 
-	const calibrator = useMemo<((raw: number) => number | null) | undefined>(() => {
+	const calibrator = useMemo<((raw: number) => number) | null>(() => {
 		const c = rt.assets?.calibrator
 
 		return c ? (raw: number) => c(raw) : null

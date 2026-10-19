@@ -108,8 +108,8 @@ export class SeedConventionSource implements ConventionSource {
  */
 export function mergeConventions(base: Convention, ...overrides: Array<Convention | null | undefined>): Convention {
 	const out: Convention = {
-		candidateStrategies: base.candidateStrategies ? [...base.candidateStrategies] : null,
-		scoringWeights: base.scoringWeights ? { ...base.scoringWeights } : null,
+		candidateStrategies: base.candidateStrategies ? [...base.candidateStrategies] : undefined,
+		scoringWeights: base.scoringWeights ? { ...base.scoringWeights } : undefined,
 	}
 
 	for (const o of overrides) {

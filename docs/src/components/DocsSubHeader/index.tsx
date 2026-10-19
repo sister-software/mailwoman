@@ -44,7 +44,7 @@ const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 				to={href}
 				className={clsx(styles.link, active && styles.linkActive)}
 				data-active={active}
-				aria-current={active ? "page" : null}
+				aria-current={active ? "page" : undefined}
 			>
 				{section.label}
 			</Link>

@@ -117,7 +117,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			for await (const rec of rows) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				if (rec[COL.featureClass] !== "P") continue
 
@@ -157,7 +157,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				}
 
 				for (const v of variants) {
-					if (opts.limit && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 					const aligned = componentsPresentIn(v.comp, v.raw)
 
 					if (!Object.keys(aligned).length) continue

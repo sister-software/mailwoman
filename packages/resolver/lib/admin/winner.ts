@@ -60,7 +60,7 @@ export interface ResolvedPostcodeHit {
 	 * It is absent when the postcode did not resolve to a country.
 	 * The ladder then defaults to locality-first.
 	 */
-	country?: string
+	country?: string | null
 }
 
 /**
@@ -108,7 +108,7 @@ export interface ResolvedSpecificityInput {
 	/**
 	 * ISO-3166 alpha-2 the resolver placed this candidate in, read only for a `postalcode`.
 	 */
-	country?: string
+	country?: string | null
 	/**
 	 * The parsed span.
 	 * Absent for a non-postcode candidate.

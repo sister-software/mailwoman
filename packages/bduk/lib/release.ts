@@ -202,7 +202,7 @@ function closedVocabulary<const V extends string>(values: Readonly<Record<string
 		expected: `one of ${Object.values(values)
 			.map((value) => stringifyJSON(value))
 			.join(", ")}`,
-		read: (cell) => (allowed.has(cell) ? (cell as V) : null),
+		read: (cell) => (allowed.has(cell) ? (cell as V) : undefined),
 	}
 }
 
@@ -212,19 +212,19 @@ function closedVocabulary<const V extends string>(values: Readonly<Record<string
  */
 const FLAG_FORM: CellForm<boolean> = {
 	expected: '"true" or "false"',
-	read: (cell) => (cell === "true" ? true : cell === "false" ? false : null),
+	read: (cell) => (cell === "true" ? true : cell === "false" ? false : undefined),
 }
 
 const TEXT_FORM: CellForm<string> = { expected: "text", read: (cell) => cell }
 
 const WHOLE_NUMBER_FORM: CellForm<number> = {
 	expected: "a whole number",
-	read: (cell) => (/^\d+$/u.test(cell) ? Number(cell) : null),
+	read: (cell) => (/^\d+$/u.test(cell) ? Number(cell) : undefined),
 }
 
 const DATE_FORM: CellForm<string> = {
 	expected: "a date written YYYY-MM-DD",
-	read: (cell) => (/^\d{4}-\d{2}-\d{2}$/u.test(cell) ? cell : null),
+	read: (cell) => (/^\d{4}-\d{2}-\d{2}$/u.test(cell) ? cell : undefined),
 }
 
 const COLUMN_FORMS: { readonly [C in BDUKColumn]: CellForm<NonNullable<BDUKColumnValues[C]>> } = {
@@ -474,7 +474,7 @@ export function parseBDUKRelease<const C extends BDUKColumn>(
 
 			const value = form.read(cell)
 
-			if (!value) {
+			if (value == null) {
 				throw new BDUKValueError({ file, line, uprn: uprnCell, column, value: cell, expected: form.expected })
 			}
 

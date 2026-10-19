@@ -80,7 +80,7 @@ export interface GauntletDepsOptions {
 	/**
 	 * Candidate model-card, paired with `tokenizerPath`.
 	 */
-	modelCardPath?: string
+	modelCardPath?: string | null
 	/**
 	 * Package-shaped candidate weights dir, resolved as production resolves it.
 	 */

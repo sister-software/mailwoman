@@ -99,7 +99,7 @@ export interface IngestPlacesOptions {
 	/**
 	 * Caps the rows copied per country, for debugging.
 	 */
-	limit?: number
+	limit?: number | null
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -163,7 +163,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 
 	for (const cc of opts.countries) {
 		const dest = outDir(`places-${cc.toLowerCase()}.parquet`).toString()
-		const limitClause = opts.limit ? `LIMIT ${opts.limit}` : ""
+		const limitClause = typeof opts.limit === "number" ? `LIMIT ${opts.limit}` : ""
 		const started = Date.now()
 
 		await db.run(`

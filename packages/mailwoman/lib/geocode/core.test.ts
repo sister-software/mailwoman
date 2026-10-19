@@ -772,7 +772,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 
 describe("epistemic_status — what the evidence permits, beside how the coordinate was made", () => {
 	const rooftopTree = (
-		metadata: Record<string, unknown> | undefined,
+		metadata: Record<string, unknown> | null | undefined,
 		locality: { lat: number; lon: number } | null = { lat: 48.8566, lon: 2.3522 }
 	): AddressTree => ({
 		raw: "123 east sheldon rd 75001 paris",

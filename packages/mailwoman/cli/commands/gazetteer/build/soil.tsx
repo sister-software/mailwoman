@@ -72,7 +72,7 @@ export const spec = {
 async function runVerification(
 	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk/verify").verifySoilDatabase>[0]["client"],
-	count?: number
+	count?: number | null
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk/verify")
 	const databasePath = database.toString()
@@ -133,7 +133,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
-				options.verifyPoints ? Number(options.verifyPoints) : null
+				typeof options.verifyPoints === "string" ? Number(options.verifyPoints) : null
 			)
 		}
 

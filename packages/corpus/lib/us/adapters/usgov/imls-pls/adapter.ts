@@ -72,7 +72,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<ImlsOutletRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const libName = record.LIBNAME ?? ""
 				const address = record.ADDRESS ?? ""

@@ -72,7 +72,7 @@ async function makeBackend(
 				prominence: 8 - spec.id,
 				exactMatch: spec.exactMatch ?? true,
 				importance: spec.importance ?? null,
-				containedByQualifier: !query.regionQualifier || !spec.contained ? null : spec.contained,
+				containedByQualifier: !query.regionQualifier || spec.contained == null ? null : spec.contained,
 			}))
 		},
 	}

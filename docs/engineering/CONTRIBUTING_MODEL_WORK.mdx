@@ -37,7 +37,7 @@ steps to follow.
    a documented violation with a standing obligation to fix it, and it does not set a precedent.)
 
    **For a model promotion, the D-rule is measured on held-out address rows (adopted 2026-10-18).**
-   `packages/mailwoman/tools/eval-harness/heldout/per-country.run.ts` samples the candidate corpus's
+   `packages/mailwoman/tools/eval-harness/heldout/per/country.run.ts` samples the candidate corpus's
    test split per country and per row kind, and scores the shipped model and each candidate on the
    same rows. A tier-1 locale regresses when its address-row span recall falls below the shipped
    model's by more than the gap between two seeds of the candidate trained on one corpus. The

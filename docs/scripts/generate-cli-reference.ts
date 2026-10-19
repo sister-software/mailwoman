@@ -126,7 +126,7 @@ function renderFlag(name: string, option: OptionSpec): string {
  * so the page publishes no host paths.
  */
 export function renderDefault(value: unknown): string {
-	if (!value) return "—"
+	if (value === undefined) return "—"
 
 	if (typeof value === "string") {
 		if (value.startsWith("/")) return "environment-dependent"

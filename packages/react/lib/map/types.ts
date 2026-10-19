@@ -116,7 +116,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	/**
 	 * Maps a raw model score to a calibrated one; `null` when no calibration table is loaded.
 	 */
-	calibrator?: (raw: number) => number | null
+	calibrator?: ((raw: number) => number | null) | null
 	/**
 	 * Enrich the selected candidate into the richer {@link ResolvedMapPlace} the declarative
 	 * map render consumes (bbox, street tier + uncertainty, a pre-fetched crisp polygon) —

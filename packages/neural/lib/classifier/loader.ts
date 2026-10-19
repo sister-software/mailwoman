@@ -44,7 +44,7 @@ export async function loadScriptRoutedClassifier(
 	return new ScriptRoutedClassifier({
 		primary,
 		loadFamily: (family) =>
-			loadClassifierFromWeights({ ...opts, locale: family, modelPath: null, tokenizerPath: null }),
+			loadClassifierFromWeights({ ...opts, locale: family, modelPath: undefined, tokenizerPath: undefined }),
 		onFamilyUnavailable: (family, error) => {
 			console.warn(
 				`[neural] the ${family} weights family is not installed ` +

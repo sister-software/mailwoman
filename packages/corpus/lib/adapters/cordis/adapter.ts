@@ -749,7 +749,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			for await (const { reading } of readings) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				if ("refused" in reading) {
 					if (!requested || reading.country === requested) {

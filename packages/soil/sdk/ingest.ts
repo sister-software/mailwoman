@@ -161,7 +161,7 @@ export async function* readSoilDelineations(
 		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
-		...(!options.limit ? [] : ["-limit", String(options.limit)]),
+		...(typeof options.limit !== "number" ? [] : ["-limit", String(options.limit)]),
 		"-sql",
 		delineationSelectSQL(layer, options),
 		options.shapefilePath,

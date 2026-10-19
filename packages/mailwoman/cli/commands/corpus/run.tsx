@@ -95,8 +95,9 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 				outputDir: options.out,
 				country: options.country,
 				limit: options.limit,
-				countryFraction: options.countryFraction ? Number.parseFloat(options.countryFraction) : null,
-				seed: options.seed ? Number.parseInt(options.seed, 10) : null,
+				countryFraction:
+					typeof options.countryFraction === "string" ? Number.parseFloat(options.countryFraction) : null,
+				seed: typeof options.seed === "string" ? Number.parseInt(options.seed, 10) : null,
 				signal: ac.signal,
 			},
 			outputDir: options.out,

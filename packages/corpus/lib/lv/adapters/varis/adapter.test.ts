@@ -197,7 +197,9 @@ describe("lv-varis adapter against records of the 2026-09-30 edition", () => {
 
 			if (aligned.kind !== "labeled") continue
 
-			const { span_tags: tags = [], span_starts: starts = [], span_ends: ends = [] } = aligned.row
+			const tags = aligned.row.span_tags ?? []
+			const starts = aligned.row.span_starts ?? []
+			const ends = aligned.row.span_ends ?? []
 
 			expect(tags).toHaveLength(Object.keys(row.components).length)
 

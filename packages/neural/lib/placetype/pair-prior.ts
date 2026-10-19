@@ -315,7 +315,7 @@ function probeAnchoredAdjacentPair(
 function isMarkerSuppressed(
 	nonEmptyGroups: readonly WordGroup[],
 	x: CandidateWindow,
-	groupSegments?: readonly number[]
+	groupSegments?: readonly number[] | null
 ): boolean {
 	const successor = nonEmptyGroups[x.endPos + 1]
 

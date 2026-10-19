@@ -113,6 +113,6 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	return async (raw: string, callOpts?: ParseCallOpts) => {
 		const runOpts = callOpts?.locale ? { locale: callOpts.locale } : null
 
-		return decodeAsJSON((await pipeline(raw, runOpts)).tree) as Record<string, string>
+		return decodeAsJSON((await pipeline(raw, runOpts ?? undefined)).tree) as Record<string, string>
 	}
 }

@@ -90,7 +90,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
  * without touching the tree builder or validator.
  * `undefined` (the common case — system not yet detected) uses the default.
  */
-export function containmentFor(_system?: AddressSystem): Partial<Record<ComponentTag, ComponentTag[]>> {
+export function containmentFor(_system?: AddressSystem | null): Partial<Record<ComponentTag, ComponentTag[]>> {
 	// Single system today.
 	// The parameter is intentionally consumed lazily — adding `case "japanese":`
 	// here is the entire surface area for a new system's hierarchy.

@@ -61,7 +61,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 	return (intent: POIIntent): POIQueryResult => {
 		const { subject } = intent
-		const limit = intent.limit !== null ? { limit: intent.limit } : {}
+		const limit = { limit: intent.limit }
 
 		const buildLocalCategory = subject.kind === "category" && subject.categoryIDs.every(requiresBuildLocal)
 
@@ -78,7 +78,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 			const results = lookup.search({
 				name: subject.text,
-				...(center ? { center } : {}),
+				center,
 				...limit,
 			})
 

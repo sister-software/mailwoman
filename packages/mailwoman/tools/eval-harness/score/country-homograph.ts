@@ -60,7 +60,7 @@ export interface ScoreCountryHomographOptions {
 	 *
 	 * @defaultValue `"off"`
 	 */
-	conventions?: AddressSystemConventions
+	conventions?: AddressSystemConventions | null
 	/**
 	 * Merge same-tag spans split at unlabeled punctuation.
 	 *

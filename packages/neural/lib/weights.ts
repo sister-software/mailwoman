@@ -184,7 +184,7 @@ export interface ResolvedWeights {
 	/**
 	 * The resolved `model-card.json`, which may come from the base package when the locale package has none.
 	 */
-	modelCardPath?: string
+	modelCardPath?: string | null
 
 	/**
 	 * The base package's `model-card.json`, present only when it exists and differs from `modelCardPath`.
@@ -192,9 +192,9 @@ export interface ResolvedWeights {
 	baseModelCardPath?: string
 
 	/**
-	 * The `crf-transitions.json` beside the model, or `undefined` for a bundle trained without a CRF.
+	 * The `crf-transitions.json` beside the model, or `null` for a bundle trained without a CRF.
 	 */
-	crfTransitionsPath?: string
+	crfTransitionsPath?: string | null
 
 	/**
 	 * The `semi-crf-transitions.json` beside the model, when present.
@@ -447,7 +447,7 @@ async function resolveFromPackageDir(
 	let modelPath = opts.modelPath ?? resolvePath(packageDir, "model.onnx")
 	let tokenizerPath = opts.tokenizerPath ?? resolvePath(packageDir, "tokenizer.model")
 
-	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot)
+	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot != null)
 
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolvePath(baseDir, "model.onnx") : null

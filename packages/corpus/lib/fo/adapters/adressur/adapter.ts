@@ -184,7 +184,7 @@ export function createAdressurFaroeAdapter(): CorpusAdapter {
 				for (const feature of collection.features) {
 					if (opts.signal?.aborted) return
 
-					if (opts.limit && emitted >= opts.limit) return
+					if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 					const record = feature.properties
 

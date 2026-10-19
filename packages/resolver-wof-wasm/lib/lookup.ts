@@ -48,8 +48,8 @@ function tableExists(db: Database, name: string): boolean {
 
 export class WOFWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
-	#hasPopulationCache?: boolean
-	#hasPlaceAbbrCache?: boolean
+	#hasPopulationCache: boolean | null = null
+	#hasPlaceAbbrCache: boolean | null = null
 	/**
 	 * Lazily-built `admin_id` to coincident-localities map from the `coincident_roles`
 	 * relation in the slim DB.
@@ -64,7 +64,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * Lazily probe (once) whether the slim DB contains the `place_population` aux table.
 	 */
 	#hasPopulation(): boolean {
-		if (this.#!hasPopulationCache) {
+		if (this.#hasPopulationCache === null) {
 			this.#hasPopulationCache = tableExists(this.#db, "place_population")
 		}
 
@@ -75,7 +75,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * Lazily probe (once) whether the slim DB contains the `place_abbr` aux table that build-slim adds.
 	 */
 	#hasPlaceAbbr(): boolean {
-		if (this.#!hasPlaceAbbrCache) {
+		if (this.#hasPlaceAbbrCache === null) {
 			this.#hasPlaceAbbrCache = tableExists(this.#db, "place_abbr")
 		}
 

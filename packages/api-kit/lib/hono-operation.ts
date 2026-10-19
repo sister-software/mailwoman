@@ -87,7 +87,7 @@ export function toHonoRoute<const O extends APIOperation>(operation: O): HonoRou
 		operationId: schema.operationId,
 		summary: schema.summary,
 		description: schema.description,
-		tags: schema.tags ? [...schema.tags] : null,
+		tags: schema.tags ? [...schema.tags] : undefined,
 		request: request as HonoRequest<O["schema"]>,
 		responses: responses as HonoResponses<O["schema"]["response"]>,
 	}

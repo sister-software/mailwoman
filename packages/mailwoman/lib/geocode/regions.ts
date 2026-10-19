@@ -128,8 +128,8 @@ export interface RegionDatabaseFactory {
  * One cached state's open lookups and the paths they were opened from.
  */
 export interface RegionDatabaseCacheEntry extends RegionDatabases {
-	_ap?: Disposable
-	_ip?: Disposable
+	_ap?: Disposable | null
+	_ip?: Disposable | null
 	/**
 	 * The resolved database path. {@link USStateDatabaseProvider.reload} compares it with the new path.
 	 */

@@ -202,7 +202,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	for (const entry of golden) {
 		total++
-		const tree = await classifier.parse(entry.raw, parseOpts)
+		const tree = await classifier.parse(entry.raw, parseOpts ?? undefined)
 		const predicted = decodeAsJSON(tree)
 		const expected = entry.components
 

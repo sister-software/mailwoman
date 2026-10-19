@@ -727,7 +727,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 			for await (const record of readGLEIFRecords(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && count >= opts.limit) break
+				if (typeof opts.limit === "number" && count >= opts.limit) break
 
 				if (!checkedHeader) {
 					checkedHeader = true
@@ -751,7 +751,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 				}
 
 				for (const block of blocks) {
-					if (opts.limit && count >= opts.limit) break
+					if (typeof opts.limit === "number" && count >= opts.limit) break
 
 					const reading = readGLEIFAddress(record, block)
 

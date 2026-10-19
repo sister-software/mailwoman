@@ -367,7 +367,7 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 				for (let i = 0; i < postcodes.length; i++) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit && summary.emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && summary.emitted >= opts.limit) break
 
 					const postcode = postcodes[i]!
 

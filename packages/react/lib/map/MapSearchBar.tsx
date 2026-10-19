@@ -68,7 +68,7 @@ export function MapSearchBar({ children, leading, trailing, busy, className, lab
 	return (
 		<div
 			className={cx("mw-map-searchbar", busy && "mw-map-searchbar--busy", className)}
-			role={label ? "search" : null}
+			role={label ? "search" : undefined}
 			aria-label={label}
 			aria-busy={busy}
 		>

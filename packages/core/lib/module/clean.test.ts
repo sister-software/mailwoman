@@ -58,6 +58,12 @@ describe("clean", () => {
 		expect(await pathExists(output)).toBe(true)
 		expect(await pathExists(artifact)).toBe(false)
 
+		const cachedAbsence = scratch.path("packages/core/out/cached-absence.js")
+
+		await writeLocalTextFile("stale", cachedAbsence)
+		await cleanFile(cachedAbsence, { allowedRoots: [output], cachedStats: null })
+		expect(await pathExists(cachedAbsence)).toBe(true)
+
 		const missing = scratch.path("packages/core/dist")
 
 		await cleanDirectory(missing, { allowedRoots: [missing] })

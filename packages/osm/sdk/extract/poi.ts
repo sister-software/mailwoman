@@ -259,12 +259,12 @@ function toPOISourceRow(
 	for (const key of tagKeys) {
 		const raw = p[tagAlias(key)]
 
-		tags[key] = raw != null && raw !== "" ? String(raw) : null
+		tags[key] = raw != null && raw !== "" ? String(raw) : undefined
 	}
 
 	const categoryID = matchOSMPOITagRule(tags, rules)
 
-	if (!categoryID) return null
+	if (typeof categoryID !== "number") return null
 
 	const pt = representativePoint(feature.geometry ?? null)
 

@@ -743,7 +743,7 @@ export function expectFor(input: {
 	ladder: AblationLadder | null
 	components: Record<string, string>
 	deleted: string
-	pin: string | undefined
+	pin: string | null | undefined
 	gz: AblationGazetteerProbe
 	/**
 	 * Variant input text, used only for residual word extraction.

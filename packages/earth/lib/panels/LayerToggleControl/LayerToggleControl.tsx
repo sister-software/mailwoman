@@ -78,7 +78,7 @@ function readGroups(map: MapInstance): LayerGroup[] {
 		buckets.set(name, bucket)
 	}
 
-	return ORDERED_NAMES.map((name) => buckets.get(name)).filter((bucket) => bucket)
+	return ORDERED_NAMES.map((name) => buckets.get(name)).filter((bucket) => bucket != null)
 }
 
 export interface LayerToggleControlProps {

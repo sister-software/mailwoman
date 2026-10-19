@@ -44,7 +44,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		process.stdout.write(
 			booleanValue(parsed.values, "json")
 				? prettyJSON(environment ? { ...report, environment } : report)
-				: `${renderDoctorReport(report, environment)}\n`
+				: `${renderDoctorReport(report, environment ?? undefined)}\n`
 		)
 
 		return report.exitCode

@@ -132,8 +132,8 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		const hasID = expect.id
-		const hasAnchor = expect.anchor_centroid
+		const hasID = Object.hasOwn(expect, "id")
+		const hasAnchor = Object.hasOwn(expect, "anchor_centroid")
 
 		if (hasID === hasAnchor) {
 			throw new SmokeRowError(

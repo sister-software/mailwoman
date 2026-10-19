@@ -231,7 +231,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			type: option.type === "boolean" ? "boolean" : "string",
 			...(option.short ? { short: option.short } : {}),
 			...(option.multiple ? { multiple: true } : {}),
-			...(option.default && option.type !== "number" ? { default: option.default } : {}),
+			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
 		// The retired spelling parses and sets no default.
@@ -293,12 +293,12 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 
 		const raw = values[name]
 
-		if (values.help !== true && !raw && option.required) {
+		if (values.help !== true && raw == null && option.required) {
 			throw new CLIUsageError(`Missing required option: --${name}.`)
 		}
 
 		if (option.type === "number") {
-			if (!raw) {
+			if (raw == null) {
 				values[name] = option.default
 			} else if (option.multiple) {
 				values[name] = (Array.isArray(raw) ? raw : [raw]).map((value) => parseNumber(String(value), name, option))
@@ -392,7 +392,7 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	ui.div({ text: "-h, --help", width: 34, padding: [0, 2, 0, 2] }, { text: "Show command help." })
 
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
-		const suffix = !option.default ? "" : ` (default: ${String(option.default)})`
+		const suffix = option.default === undefined ? "" : ` (default: ${String(option.default)})`
 
 		ui.div(
 			{ text: optionLabel(name, option), width: 46, padding: [0, 2, 0, 2] },

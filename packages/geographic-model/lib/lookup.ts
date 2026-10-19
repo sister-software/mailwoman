@@ -104,7 +104,7 @@ export function createGeographicModelIndex(model: CompiledGeographicModel): Geog
 		concept: (id) => concepts.get(String(id)),
 		relation: (id) => relations.get(String(id)),
 		ancestorsOf: (id) => ancestors.get(String(id)),
-		derivedFactsAbout: (id) => (concepts.has(String(id)) ? (facts.get(String(id)) ?? []) : null),
+		derivedFactsAbout: (id) => (concepts.has(String(id)) ? (facts.get(String(id)) ?? []) : undefined),
 		conceptsForExternalID: (vocabulary, externalID) => {
 			const matches = external.get(externalKey(vocabulary, String(externalID)))
 

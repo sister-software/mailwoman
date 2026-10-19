@@ -427,8 +427,8 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						aria-label="Search the documentation"
 						aria-autocomplete="list"
 						aria-expanded={ordered.length > 0}
-						aria-controls={ordered.length ? listboxID : null}
-						aria-activedescendant={ordered.length ? optionID(selected) : null}
+						aria-controls={ordered.length ? listboxID : undefined}
+						aria-activedescendant={ordered.length ? optionID(selected) : undefined}
 						autoComplete="off"
 						spellCheck={false}
 						maxLength={MAX_QUERY_LENGTH}

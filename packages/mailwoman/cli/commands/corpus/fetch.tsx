@@ -230,7 +230,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchMatrikkelen(
 				{
 					...base,
-					// Undefined takes both areas the address-source register holds rows for,
+					// Null takes both areas the address-source register holds rows for,
 					// `0000` for the mainland and `2100` for Svalbard.
 					areas: options.areas ? extractDelimited(options.areas) : null,
 				},
@@ -278,7 +278,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined means every country the source's own countryInfo.txt catalogs.
+					// Null means every country the source's own countryInfo.txt catalogs.
 					// Present dumps are skipped.
 					countries: options.countries ? extractDelimited(options.countries) : null,
 				},
@@ -288,7 +288,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Undefined rather than an empty list when the flag is absent:
+					// Null rather than an empty list when the flag is absent:
 					// the module's own default set is the answer for "fetch what the corpus wants",
 					// and an empty array would fetch no countries while looking deliberate.
 					countries: options.countries ? extractDelimited(options.countries) : null,

@@ -102,12 +102,15 @@ export interface ParsedWOFPlacetype {
 
 const langPattern = new RegExp(`:([a-z0-9\\-_]{2,3})_x_(${WOFNameKinds.join("|")})`)
 
-export function parsePlacetypeSource(key: string) {
-	const [, languageCode, nameKind] = (langPattern.exec(key as string) ?? []) as Partial<
+export function parsePlacetypeSource(key: string): {
+	languageCode: Alpha3bLanguageCode | null
+	nameKind: WOFNameKind | null
+} {
+	const [, languageCode, nameKind] = (langPattern.exec(key) ?? []) as Partial<
 		[string, Alpha3bLanguageCode, WOFNameKind]
 	>
 
-	return { languageCode, nameKind }
+	return { languageCode: languageCode ?? null, nameKind: nameKind ?? null }
 }
 
 export function pluckPlacetypeSpec({
@@ -164,7 +167,7 @@ export function pluckPlacetypeSpec({
 	const population =
 		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : null
 
-	const isCurrent = !mzIsCurrent ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
+	const isCurrent = mzIsCurrent == null ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
 
 	return {
 		id,

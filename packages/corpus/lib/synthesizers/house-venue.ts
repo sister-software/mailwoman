@@ -201,7 +201,7 @@ export function synthesizeHouseVenueRow(
 	}
 
 	const countrySurfaces = COUNTRY_SURFACES[base.country]
-	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : null
+	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : undefined
 
 	// The layout decides the tail's order and which parts it prints: FR prints no region,
 	// VE keeps the region after the postcode, GB puts the postcode after the locality.
@@ -240,7 +240,7 @@ export function synthesizeHouseVenueRow(
  * which every row from this synthesizer does.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
-	return components.house_number && components.venue
+	return Boolean(components.house_number && components.venue)
 }
 
 // #endregion

@@ -32,7 +32,7 @@ function run(country?: string, limit?: number) {
 		adapterOptions: {
 			inputPath: fixtureCSV,
 			...(country ? { country } : {}),
-			...(!limit ? {} : { limit }),
+			...(typeof limit !== "number" ? {} : { limit }),
 		},
 		outputDir: scratch.path,
 		corpusVersion: "0.1.0",

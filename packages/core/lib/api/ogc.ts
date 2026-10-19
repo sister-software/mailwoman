@@ -300,7 +300,7 @@ async function readReportedNumberMatched(
 			request: "GetFeature",
 			typeNames: options.typeNames,
 			resultType: "hits",
-			...(!options.startIndex ? {} : { startIndex: String(options.startIndex), count: "1" }),
+			...(typeof options.startIndex !== "number" ? {} : { startIndex: String(options.startIndex), count: "1" }),
 		},
 	})
 

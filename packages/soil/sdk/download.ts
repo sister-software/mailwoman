@@ -96,7 +96,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 				describeStatus: (status) =>
 					status === UNKNOWN_VERSION_STATUS
 						? " — this host answers 400 rather than 404 for a version date it does not hold, so check the date against sacatalog.saverest"
-						: null,
+						: undefined,
 
 				...(options.onProgress
 					? { onProgress: (message: string) => options.onProgress?.(`${options.areaSymbol}: ${message}`) }

@@ -71,7 +71,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	function intern(s: string): number {
 		let idx = stringMap.get(s)
 
-		if (!idx) {
+		if (typeof idx !== "number") {
 			idx = strings.length
 			strings.push(s)
 			stringMap.set(s, idx)

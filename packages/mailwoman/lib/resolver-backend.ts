@@ -240,7 +240,7 @@ export async function loadCapitalIndex(opts: {
 /**
  * Returns the paths from `explicit`, or the default WOF set, that exist on disk.
  */
-export async function existingWOFDatabasePaths(explicit?: readonly string[]): Promise<string[]> {
+export async function existingWOFDatabasePaths(explicit?: readonly string[] | null): Promise<string[]> {
 	const candidates = explicit ?? wofExtractPaths()
 	const existing: string[] = []
 

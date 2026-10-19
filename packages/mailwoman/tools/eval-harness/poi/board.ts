@@ -47,7 +47,7 @@ export interface POIBoardFixture {
 	/**
 	 * Issue reference that a tracked row requires and a counted row must omit.
 	 */
-	bugRef?: string
+	bugRef?: string | null
 	/**
 	 * Source fixture reference, relative to the eval-harness directory.
 	 */

@@ -262,7 +262,7 @@ export interface ResolutionState {
 	 * The callback that receives one trace record per lookup.
 	 * The walk records no events when it is absent.
 	 */
-	traceSink?: (record: ResolveNodeTrace) => void
+	traceSink?: ((record: ResolveNodeTrace) => void) | null
 
 	/**
 	 * Whether an empty lookup re-probes the other admin bands and traces which ones hold the value.
@@ -444,7 +444,7 @@ async function recoverPostcodeNode(
 	roots: AddressNode[],
 	backend: ResolverBackend,
 	country: string | null,
-	traceSink?: (record: ResolveNodeTrace) => void
+	traceSink?: ((record: ResolveNodeTrace) => void) | null
 ): Promise<void> {
 	for (const n of walkNodes(roots)) {
 		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {
@@ -592,7 +592,7 @@ export async function applyRooftopConsistency(
 					limit: ROOFTOP_NAMESAKE_LIMIT,
 				})
 			}
-		: null
+		: undefined
 
 	for (const { node, gapKm, repicked } of await reconcileLocalitiesToAnchor(roots, point, thresholdKm, findNear)) {
 		node.metadata = repicked

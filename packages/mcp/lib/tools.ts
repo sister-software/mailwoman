@@ -11,29 +11,38 @@ import { z } from "zod"
  * `cli.ts` implements those operations.
  */
 export interface MCPToolDeps {
-	parse: (text: string, opts?: { poi?: boolean }) => Promise<unknown>
+	parse: (text: string, opts?: { poi?: boolean | null }) => Promise<unknown>
 	geocode: (text: string) => Promise<unknown>
 	poiSearch: (q: { query: string; poiDatabasePath?: string }) => Promise<unknown>
 	overpassExport: (query: string) => Promise<string>
 	layerManifest: (databasePath: string) => Promise<unknown>
-	bdcFilingLandscape: (q: { databasePath: string; geoids?: string[]; h3Cells?: number[] }) => Promise<unknown>
+	bdcFilingLandscape: (q: {
+		databasePath: string
+		geoids?: string[] | null
+		h3Cells?: number[] | null
+	}) => Promise<unknown>
 	plausibilityCheck: (q: {
-		bdcDatabasePath?: string
-		poiDatabasePath?: string
-		address?: string
-		point?: { type: "Point"; coordinates: [number, number] }
-		geoid?: string
+		bdcDatabasePath?: string | null
+		poiDatabasePath?: string | null
+		address?: string | null
+		point?: { type: "Point"; coordinates: [number, number] } | null
+		geoid?: string | null
 		technologyCode: number
 		claimedDownloadMbps: number
 	}) => Promise<unknown>
 	filerLookup: (q: {
 		databasePath: string
-		frn?: string
-		form499ID?: string
-		bdcProviderID?: number
-		asOf?: string
+		frn?: string | null
+		form499ID?: string | null
+		bdcProviderID?: number | null
+		asOf?: string | null
 	}) => Promise<unknown>
-	filerFamily: (q: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => Promise<unknown>
+	filerFamily: (q: {
+		databasePath: string
+		familyID?: string | null
+		nodeID?: string | null
+		asOf?: string | null
+	}) => Promise<unknown>
 }
 
 /**
@@ -238,7 +247,7 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 			handler: async (args) => {
 				const { text, poi } = ParseInputSchema.parse(args)
 
-				return deps.parse(text, { poi })
+				return deps.parse(text, { poi: poi ?? null })
 			},
 		},
 		{
@@ -305,7 +314,11 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 			handler: async (args) => {
 				const { database_path, geoids, h3_cells } = BDCFilingLandscapeInputSchema.parse(args)
 
-				return deps.bdcFilingLandscape({ databasePath: database_path, geoids, h3Cells: h3_cells })
+				return deps.bdcFilingLandscape({
+					databasePath: database_path,
+					geoids: geoids ?? null,
+					h3Cells: h3_cells ?? null,
+				})
 			},
 		},
 		{
@@ -322,11 +335,11 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 					PlausibilityCheckInputSchema.parse(args)
 
 				return deps.plausibilityCheck({
-					bdcDatabasePath: bdc_database_path,
-					poiDatabasePath: poi_database_path,
-					address,
-					point,
-					geoid,
+					bdcDatabasePath: bdc_database_path ?? null,
+					poiDatabasePath: poi_database_path ?? null,
+					address: address ?? null,
+					point: point ?? null,
+					geoid: geoid ?? null,
 					technologyCode: technology_code,
 					claimedDownloadMbps: claimed_download_mbps,
 				})
@@ -347,10 +360,10 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 
 				return deps.filerLookup({
 					databasePath: database_path,
-					frn,
-					form499ID: form499_id,
-					bdcProviderID: bdc_provider_id,
-					asOf: as_of,
+					frn: frn ?? null,
+					form499ID: form499_id ?? null,
+					bdcProviderID: bdc_provider_id ?? null,
+					asOf: as_of ?? null,
 				})
 			},
 		},
@@ -371,9 +384,9 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 
 				return deps.filerFamily({
 					databasePath: database_path,
-					familyID: family_id,
-					nodeID: node_id,
-					asOf: as_of,
+					familyID: family_id ?? null,
+					nodeID: node_id ?? null,
+					asOf: as_of ?? null,
 				})
 			},
 		},

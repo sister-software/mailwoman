@@ -412,7 +412,7 @@ class WOFResolver implements Resolver {
 			if (band === probed) continue
 
 			try {
-				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: null })
+				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: undefined })
 
 				if (hits.length) {
 					found.push({ placetype: band, n: hits.length })
@@ -740,7 +740,7 @@ class WOFResolver implements Resolver {
 function promoteCapitalsWithReceipt<
 	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
 		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
->(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> }): T[] {
+>(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> | null }): T[] {
 	const promoted = promoteCapitals(ranked, level)
 
 	if (promoted[0] !== ranked[0]) {

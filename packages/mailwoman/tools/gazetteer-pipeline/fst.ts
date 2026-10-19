@@ -366,7 +366,7 @@ export interface BuildLocaleFSTsOpts {
 	 *
 	 * @defaultValue every {@linkcode FST_LOCALES} key
 	 */
-	locales?: string[]
+	locales?: string[] | null
 	/**
 	 * WOF admin DB.
 	 *

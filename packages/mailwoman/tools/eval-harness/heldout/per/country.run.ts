@@ -6,14 +6,14 @@
  *   Scores a baseline and one or more candidates on the same held-out rows and writes the per-country table.
  *
  *   Usage:
- *   node packages/mailwoman/tools/eval-harness/heldout/per-country.run.ts \
+ *   node packages/mailwoman/tools/eval-harness/heldout/per/country.run.ts \
  *     --manifest <corpus MANIFEST.json> --baseline <weights cache> --candidates <cache>,<cache> --out <report .json>
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { type CountryScore, sampleHeldoutRows, scoreHeldoutByCountry } from "#tools/eval-harness/heldout/per-country"
+import { type CountryScore, sampleHeldoutRows, scoreHeldoutByCountry } from "#tools/eval-harness/heldout/per/country"
 
 const { values } = parseArguments({
 	options: {

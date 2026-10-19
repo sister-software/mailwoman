@@ -167,7 +167,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (query.country) {
 			const countryID = countryToID.get(query.country.toUpperCase())
 
-			if (!countryID) return []
+			if (typeof countryID !== "number") return []
 			filters.sql.push("country_id = ?")
 			filters.parameters.push(countryID)
 		}
@@ -175,7 +175,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (requestedPlacetypes.length) {
 			const placetypeIDs = expandPlacetypeFilter(requestedPlacetypes)
 				.map((placetype) => placetypeToID.get(placetype))
-				.filter((id): id is number => id)
+				.filter((id) => typeof id === "number")
 
 			if (!placetypeIDs.length) return []
 			filters.sql.push(`placetype_id IN (${placetypeIDs.map(() => "?").join(", ")})`)

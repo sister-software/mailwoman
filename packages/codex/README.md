@@ -248,7 +248,7 @@ intentional and does not represent a backlog.
 | Table                                                         | Keyed by     | Coverage                                       |
 | ------------------------------------------------------------- | ------------ | ---------------------------------------------- |
 | `ADDRESS_LAYOUTS` (`./address-layouts`)                       | country code | 197 countries, 55 of 252 records lack a layout |
-| `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                           |
+| `ADDRESS_SYSTEM_CONVENTIONS` (`./address/system/conventions`) | `SystemCode` | two rows: `fr`, `gb`                           |
 | `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`           |
 
 A layout defines how to print an address, so a country needs one before it can be served. A

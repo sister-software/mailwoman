@@ -20,7 +20,7 @@
  */
 
 import { layoutForCountry } from "@mailwoman/codex/address/layouts"
-import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex/address/system-conventions"
+import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex/address/system/conventions"
 import { CountryISO2 } from "@mailwoman/codex/country"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"

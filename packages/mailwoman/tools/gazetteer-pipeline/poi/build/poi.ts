@@ -154,7 +154,7 @@ export interface BuildPOIOptions {
 	/**
 	 * A row source that replaces the Parquet read.
 	 */
-	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
+	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow> | null
 
 	/**
 	 * The output `poi.db` path.

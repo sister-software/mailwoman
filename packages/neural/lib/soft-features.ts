@@ -64,7 +64,7 @@ export interface SoftFeatures {
  * A missing source skips its channel.
  */
 export interface SoftFeatureSources {
-	postcodeAnchorLookup?: AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup | null
 
 	/**
 	 * The substrings the anchor channel looks up.
@@ -75,7 +75,7 @@ export interface SoftFeatureSources {
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 
-	gazetteerLexicon?: GazetteerLexicon
+	gazetteerLexicon?: GazetteerLexicon | null
 
 	countryLexicon?: CountryLexicon
 

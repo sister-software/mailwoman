@@ -113,10 +113,10 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		hit = lookup.find({
 			street: assembleStreetValue(pair.street, directionalUnit),
 			number: pair.houseNumber.value,
-			postcode,
-			locality,
-			region,
-			subregion,
+			postcode: postcode ?? null,
+			locality: locality ?? null,
+			region: region ?? null,
+			subregion: subregion ?? null,
 			bbox,
 		})
 

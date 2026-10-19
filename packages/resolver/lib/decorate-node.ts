@@ -16,7 +16,12 @@ import type { CoordinateOptionalPlace } from "#postcode/prefix"
  * A resolved node has a real coordinate (placeID set + non-zero lat/lon).
  */
 export function isResolvedWithCoord(n: AddressNode): boolean {
-	return !!(n.placeID && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0))
+	return (
+		typeof n.placeID === "string" &&
+		typeof n.lat === "number" &&
+		typeof n.lon === "number" &&
+		(n.lat !== 0 || n.lon !== 0)
+	)
 }
 
 /**

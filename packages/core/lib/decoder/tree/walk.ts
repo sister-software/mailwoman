@@ -59,7 +59,7 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
  * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
-	return (node.lat != null && node.lon != null) || node.placeID || node.metadata?.["resolution_tier"] !== undefined
+	return (node.lat != null && node.lon != null) || node.placeID != null || node.metadata?.["resolution_tier"] != null
 }
 
 /**

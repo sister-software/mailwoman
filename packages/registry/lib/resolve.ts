@@ -482,7 +482,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	let usingBundledModel = false
 
 	if (!scorer && config.learnedScorer !== false) {
-		const gbt = !config.learnedScorer || config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+		const gbt = config.learnedScorer == null || config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
 
 		usingBundledModel = gbt === DEDUP_GBT_MODEL
 
@@ -546,7 +546,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		if (link.weight < threshold) continue
 		const ci = clusterOf.get(link.a)
 
-		if (!ci || ci !== clusterOf.get(link.b)) continue
+		if (typeof ci !== "number" || ci !== clusterOf.get(link.b)) continue
 
 		if (link.weight < minIntraWeight[ci]!) {
 			minIntraWeight[ci] = link.weight

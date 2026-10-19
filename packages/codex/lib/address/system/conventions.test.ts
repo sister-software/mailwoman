@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "#address/system-conventions"
+import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "#address/system/conventions"
 import { UK_POSTCODE_PATTERN } from "#gb"
 
 describe("FR address-system conventions (#719)", () => {

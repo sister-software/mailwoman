@@ -30,7 +30,7 @@ export interface MailwomanLookupLike {
 		 * Requested placetype(s); arrays express the placetype-equivalence groups.
 		 */
 		placetype?: string | string[] | undefined
-		country?: string
+		country?: string | null
 		/**
 		 * Constrains candidates to a parsed region/state's bounds.
 		 */
@@ -50,7 +50,7 @@ export interface MailwomanLookupLike {
 			/**
 			 * ISO country code of the resolved place, used to country-restrict an ambiguous postcode.
 			 */
-			country?: string
+			country?: string | null
 			lat: number
 			lon: number
 			score: number
@@ -58,8 +58,8 @@ export interface MailwomanLookupLike {
 			 * True when the candidate's name, abbreviation, or an alias exactly matched
 			 * the query rather than partially.
 			 */
-			exactMatch?: boolean
-			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+			exactMatch?: boolean | null
+			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}>
 	>
 	/**
@@ -82,8 +82,8 @@ type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 type BBox = NonNullable<LookupHit["bbox"]>
 
 interface CandidateMeta {
-	bbox?: BBox
-	country?: string
+	bbox?: BBox | null
+	country?: string | null
 	placetype: string
 }
 
@@ -145,7 +145,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
 		let bbox: BBox | null = null
-		let country = query.country
+		let country: string | null | undefined = query.country
 
 		if (query.parentID) {
 			const parent = this.#meta.get(Number(query.parentID))
@@ -216,7 +216,12 @@ export async function runCascade(
 	const alternativesOf = new Map<number, CascadeHits>()
 
 	const visit = (node: ResolvedTreeNode): void => {
-		if (node.source === "resolver" && node.sourceID && typeof node.lat === "number" && typeof node.lon === "number") {
+		if (
+			node.source === "resolver" &&
+			node.sourceID != null &&
+			typeof node.lat === "number" &&
+			typeof node.lon === "number"
+		) {
 			const sep = node.sourceID.indexOf(":")
 			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
 			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))

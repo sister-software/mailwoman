@@ -131,19 +131,21 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
 	const wanted = fold(regionName)
 
-	const unique = (candidates: readonly TaiwanRegionName[]): number | undefined => {
+	const unique = (candidates: readonly TaiwanRegionName[]): number | null => {
 		const ids = new Set(candidates.map((r) => r.id))
 
-		return ids.size === 1 ? [...ids][0] : null
+		const [id] = ids
+
+		return ids.size === 1 && typeof id === "number" ? id : null
 	}
 
-	const byName = (key: string): number | undefined =>
+	const byName = (key: string): number | null =>
 		unique(regions.filter((r) => r.official && fold(r.name) === key)) ??
 		unique(regions.filter((r) => fold(r.name) === key))
 
 	const exact = byName(wanted)
 
-	if (exact) return exact
+	if (typeof exact === "number") return exact
 
 	const stem = wanted.replace(/[縣市]$/u, "")
 

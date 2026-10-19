@@ -55,7 +55,7 @@ export interface MixtureFiles {
 export async function readMixtureFiles(
 	corpusDirectory: PathBuilderLike,
 	split: string,
-	limit?: number
+	limit?: number | null
 ): Promise<MixtureFiles> {
 	const manifestPath = PathBuilder.from(corpusDirectory)("MANIFEST.json")
 	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
@@ -68,7 +68,7 @@ export async function readMixtureFiles(
 		)
 	}
 
-	const requested = limit ? entries.slice(0, limit) : entries
+	const requested = typeof limit === "number" ? entries.slice(0, limit) : entries
 	const files: PathBuilderLike[] = []
 
 	for (const entry of requested) {

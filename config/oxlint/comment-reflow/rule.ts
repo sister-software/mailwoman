@@ -303,7 +303,7 @@ export const reflowRule: CreateRule = {
 								indent,
 								options,
 								eol,
-								jsxBlock ? width(text.slice(start, lineEnd(text, comment.range[1])).replace(/\r$/, "")) : null
+								jsxBlock ? width(text.slice(start, lineEnd(text, comment.range[1])).replace(/\r$/, "")) : undefined
 							)
 						}
 					} else {

@@ -38,7 +38,7 @@ function buildRawIndex(
 	let size = 12 + headerBytes.length
 
 	for (const r of encoded) {
-		size += 2 + r.child.length + 2 + r.parent.length + 1 + (!r.parentTagIdx ? 0 : 1)
+		size += 2 + r.child.length + 2 + r.parent.length + 1 + (r.parentTagIdx === undefined ? 0 : 1)
 	}
 
 	const out = new Uint8Array(size)
@@ -65,7 +65,7 @@ function buildRawIndex(
 		o += r.parent.length
 		out[o++] = r.tagIdx
 
-		if (r.parentTagIdx) {
+		if (r.parentTagIdx !== undefined) {
 			out[o++] = r.parentTagIdx
 		}
 	}

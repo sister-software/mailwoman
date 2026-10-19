@@ -371,14 +371,14 @@ function measure(tokens: readonly string[], tabWidth: number): TokenFacts[] {
 		const clause =
 			/[,;:][)"'\]`]*$/.test(token) ||
 			DASH.test(token) ||
-			(next && CONJUNCTIONS.has(next.toLowerCase().replaceAll(/[^a-z]/g, "")))
+			(next != null && CONJUNCTIONS.has(next.toLowerCase().replaceAll(/[^a-z]/g, "")))
 
 		return {
 			width: columns(token, tabWidth),
 			depth,
 			clause,
-			danglingDash: next && /^[—–]/.test(next),
-			glued: next && isStructuralToken(next),
+			danglingDash: next != null && /^[—–]/.test(next),
+			glued: next != null && isStructuralToken(next),
 		}
 	})
 }

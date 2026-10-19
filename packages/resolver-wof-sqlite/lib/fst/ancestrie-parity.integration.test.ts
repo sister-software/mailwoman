@@ -50,7 +50,7 @@ function legacyAutocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOp
 	const partial = normalizedTokens.at(-1)!
 	const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
 
-	if (!match && !prefixState) {
+	if (!match && typeof prefixState !== "number") {
 		return { query, normalizedTokens, depth: 0, suggestions: [] }
 	}
 
@@ -66,7 +66,7 @@ function legacyAutocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOp
 		}
 	}
 
-	if (prefixState) {
+	if (typeof prefixState === "number") {
 		for (const cont of fst.continuations(prefixState)) {
 			if (cont.token === partial || !cont.token.startsWith(partial)) continue
 

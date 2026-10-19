@@ -106,7 +106,7 @@ function namerFor(wanted: readonly string[]): AreaNamer | undefined {
 }
 
 const stats = await writeOSMCorpusJSONL(values.pbf, values.out, {
-	within,
+	within: within ?? undefined,
 	localityOf: namerFor(localityLevels),
 	dependentLocalityOf: namerFor(dependentLevels),
 })

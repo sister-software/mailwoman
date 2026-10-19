@@ -177,7 +177,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			const bandIDs = [...REGION_CLASS_PLACETYPES, "country"]
 				.map((placetype) => this.#placetypeToID.get(placetype))
-				.filter((id): id is number => id)
+				.filter((id) => typeof id === "number")
 
 			if (bandIDs.length) {
 				this.#qualifierProbe = this.database.prepare(
@@ -326,7 +326,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		// Also inject contained neighborhood-band namesakes (primary-keyed only).
 		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
 			.map((placetype) => this.#placetypeToID.get(placetype))
-			.filter((id): id is number => id)
+			.filter((id) => typeof id === "number")
 
 		if (bandIDs.length) {
 			const bandSQL =
@@ -375,7 +375,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
 		const placetypeID = this.#placetypeToID.get("postalcode")
 
-		if (!placetypeID) return null
+		if (typeof placetypeID !== "number") return null
 
 		const conds = ["name_key = ?", "placetype_id = ?"]
 		const params: Array<string | number> = [postcode.replaceAll(/\s+/g, ""), placetypeID]
@@ -383,7 +383,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		if (country) {
 			const countryID = this.#countryToID.get(country.toUpperCase())
 
-			if (!countryID) return null // Unknown country in this artifact.
+			if (typeof countryID !== "number") return null // Unknown country in this artifact.
 			conds.push("country_id = ?")
 			params.push(countryID)
 		}
@@ -457,7 +457,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		if (query.country) {
 			const cid = this.#countryToID.get(query.country.toUpperCase())
 
-			if (!cid) return [] // Unknown country in this artifact.
+			if (typeof cid !== "number") return [] // Unknown country in this artifact.
 			filters.push("country_id = ?")
 			filterParams.push(cid)
 		}
@@ -468,7 +468,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			const ids = expandPlacetypeFilter(want as readonly string[])
 				.map((t) => this.#placetypeToID.get(t))
-				.filter((v): v is number => v)
+				.filter((v) => typeof v === "number")
 
 			if (!ids.length) return []
 			shapeFilters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
@@ -536,7 +536,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			// Typo-tolerant fallback for true name misses only, skipping postcodes and respecting the fuzzy-country scope.
 			const fuzzyCountryID =
-				!query.country && query.fuzzyCountry ? this.#countryToID.get(query.fuzzyCountry.toUpperCase()) : null
+				!query.country && query.fuzzyCountry ? this.#countryToID.get(query.fuzzyCountry.toUpperCase()) : undefined
 
 			const fuzzyScopedOut = !query.country && !!query.fuzzyCountry && typeof fuzzyCountryID !== "number"
 

@@ -372,7 +372,7 @@ export function createRuntimePipeline(
 			lookup: poiSubjectLookup,
 
 			parseAnchor: (text, runOpts) =>
-				runPipeline(text, { ...stages, classifyKind: defaultClassifyKind, poiIntent: null }, runOpts),
+				runPipeline(text, { ...stages, classifyKind: defaultClassifyKind, poiIntent: undefined }, runOpts),
 
 			execute: (intent) => poiExecute!(intent),
 		})

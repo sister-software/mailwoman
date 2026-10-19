@@ -102,7 +102,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
 			// Forward the client's viewport as a proximity bias, a soft re-rank the resolver
 			// folds into candidate scoring, only when both coords are present.
-			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : null
+			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
 			// No country constraint lets the placer route the query's own country.
 			// A hard-coded `US` value here would resolve every non-US query to its US namesake.

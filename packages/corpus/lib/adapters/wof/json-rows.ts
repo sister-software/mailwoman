@@ -184,7 +184,7 @@ export function* emitWOFJSONRows(options: EmitWOFJSONRowsOptions): Generator<Can
 
 		for (const slot of slotsForRecord(record)) {
 			for (const variant of variantsFor(record, ancestry.get(id) ?? NO_ANCESTORS, slot.value)) {
-				if (adaptertypeof options.limit === "number" && emitted >= adapterOptions.limit) return
+				if (typeof adapterOptions.limit === "number" && emitted >= adapterOptions.limit) return
 
 				const rendered = variant.hierarchy
 					? renderHierarchy(variant.components, record.country)

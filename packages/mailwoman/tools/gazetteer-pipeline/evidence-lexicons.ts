@@ -247,13 +247,13 @@ export interface BuildLocalitySurfaceLexiconOpts {
 	 *
 	 * @defaultValue US and FR.
 	 */
-	countries?: string[]
+	countries?: string[] | null
 	/**
 	 * The placetypes to read.
 	 *
 	 * @defaultValue `locality`, `localadmin`, and `neighbourhood`.
 	 */
-	placetypes?: string[]
+	placetypes?: string[] | null
 	/**
 	 * The WOF admin database.
 	 *

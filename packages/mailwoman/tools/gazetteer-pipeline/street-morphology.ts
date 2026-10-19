@@ -42,7 +42,7 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 *
 	 * @defaultValue every locale shipping a `street_types.txt`
 	 */
-	locales?: string[]
+	locales?: string[] | null
 	/**
 	 * Minimum post-normalization variant length.
 	 *

@@ -13,8 +13,8 @@ import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } fr
  * Any of them may be absent, in which case resolution falls back to admin records.
  */
 export interface RegionDatabases {
-	addressPoints?: AddressPointLookup
-	interpolation?: InterpolationLookup
+	addressPoints?: AddressPointLookup | null
+	interpolation?: InterpolationLookup | null
 	/**
 	 * Street centroids rolled up from a national register's rooftop points,
 	 * for queries without a house number.
@@ -22,7 +22,7 @@ export interface RegionDatabases {
 	 * Only `BANRegionDatabaseProvider` in `@mailwoman/ban` supplies this tier, for France.
 	 * The resolver consults it below the address-point and interpolation tiers and above admin.
 	 */
-	streetCentroids?: StreetCentroidLookup
+	streetCentroids?: StreetCentroidLookup | null
 }
 
 /**

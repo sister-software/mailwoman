@@ -209,7 +209,7 @@ export function createESNavarraAdapter(): CorpusAdapter {
 			for (const archivePath of await archivePaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				// The markup stream is read directly rather than through `#inspire/stream`,
 				// because this publisher writes no component feature for an address to reference.
@@ -219,7 +219,7 @@ export function createESNavarraAdapter(): CorpusAdapter {
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const row = composeRow(address)
 

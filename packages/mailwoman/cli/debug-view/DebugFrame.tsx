@@ -314,7 +314,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 
 	return (
 		<Text wrap="truncate">
-			<Text color={line.tag ? tagColor(line.tag) : null}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
+			<Text {...(line.tag ? { color: tagColor(line.tag) } : {})}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
 			{line.badge ? (
 				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child,
 				// These badges show machine values (`address_point`, `structured_address`) that a reader copies.

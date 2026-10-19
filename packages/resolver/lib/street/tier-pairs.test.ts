@@ -119,7 +119,7 @@ describe("applyAddressPoint", () => {
 			subregion: "中正區",
 		})
 
-		expect(queries[0]?.locality).toBeUndefined()
-		expect(queries[0]?.postcode).toBeUndefined()
+		expect(queries[0]?.locality).toBeNull()
+		expect(queries[0]?.postcode).toBeNull()
 	})
 })

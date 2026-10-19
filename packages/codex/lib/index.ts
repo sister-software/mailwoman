@@ -15,7 +15,7 @@ export {
 	ADDRESS_SYSTEM_CONVENTIONS,
 	conventionsForSystem,
 	type AddressSystemConventions,
-} from "#address/system-conventions"
+} from "#address/system/conventions"
 
 export * from "#abbreviations"
 export * from "#component"
@@ -30,6 +30,6 @@ export * as jp from "#jp"
 export * as levels from "#level-semantics"
 export * as nz from "#nz"
 
-export type { SystemCode } from "#address/system-code"
+export type { SystemCode } from "#address/system/code"
 
 export * as us from "#us"

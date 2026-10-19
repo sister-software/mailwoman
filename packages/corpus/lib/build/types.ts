@@ -126,7 +126,7 @@ export interface BuildCorpusOptions {
 	 * A row whose `license` starts with one is dropped at ingest.
 	 * The default excludes no prefix.
 	 */
-	excludeLicenses?: readonly RegExp[]
+	excludeLicenses?: readonly RegExp[] | null
 
 	/**
 	 * Which rows this build admits on the evidence of their license obligations.

@@ -140,7 +140,7 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
-		...(!options.limit ? [] : ["-limit", String(options.limit)]),
+		...(typeof options.limit !== "number" ? [] : ["-limit", String(options.limit)]),
 		"-sql",
 		floodSelectSQL(layer, options),
 		options.geodatabasePath,

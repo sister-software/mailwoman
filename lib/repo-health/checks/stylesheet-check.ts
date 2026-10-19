@@ -232,7 +232,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 			const standard = new RegExp(String.raw`(?:^|[;{])\s*${property}\s*:`, "u").exec(rule.body)?.index
 			const prefixed = new RegExp(String.raw`-webkit-${property}\s*:`, "u").exec(rule.body)?.index
 
-			if (standard && prefixed && standard < prefixed) {
+			if (standard !== undefined && prefixed !== undefined && standard < prefixed) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					file,

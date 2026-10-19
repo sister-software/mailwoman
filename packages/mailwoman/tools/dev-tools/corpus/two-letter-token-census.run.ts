@@ -147,7 +147,7 @@ const asked = values.codes
 const ranked = [...census.values()].toSorted((a, b) => b.total - a.total)
 const detail = Number(values.detail)
 
-const shown = asked ? asked.map((code) => census.get(code)).filter((entry) => entry) : ranked.slice(0, detail)
+const shown = asked ? asked.map((code) => census.get(code)).filter((entry) => entry != null) : ranked.slice(0, detail)
 
 if (asked) {
 	const missing = asked.filter((code) => !census.has(code))

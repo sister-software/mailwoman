@@ -173,7 +173,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 		const ia = index.get(link.a)
 		const ib = index.get(link.b)
 
-		if (!ia || !ib) continue
+		if (typeof ia !== "number" || typeof ib !== "number") continue
 		allLinks.push(link)
 
 		if (link.weight >= opts.threshold) {
@@ -251,7 +251,7 @@ export function representative<R extends object>(group: readonly R[]): R | null 
 		let filled = 0
 
 		for (const value of Object.values(record)) {
-			if (value !== null && value && value !== "") {
+			if (value !== null && value !== undefined && value !== "") {
 				filled++
 			}
 		}

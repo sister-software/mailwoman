@@ -11,7 +11,7 @@ interface FixturePlace {
 	country: string
 	lat: number
 	lon: number
-	population?: number
+	population?: number | null
 }
 
 const FIXTURE: FixturePlace[] = [

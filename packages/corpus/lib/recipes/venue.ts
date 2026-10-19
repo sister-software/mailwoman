@@ -333,7 +333,7 @@ export const venueRecipe: CorpusRecipe = {
 				emit(context, raw, components, country, VenueTemplate.Locality, {
 					name,
 					locality,
-					region: withRegion ? tuple.region : null,
+					region: withRegion ? tuple.region : undefined,
 				})
 
 				if (isBareVenueName(name, heads)) {

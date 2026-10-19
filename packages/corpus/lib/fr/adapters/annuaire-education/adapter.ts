@@ -561,7 +561,7 @@ export function createAnnuaireEducationAdapter(): CorpusAdapter {
 			for await (const record of JSONSpliterator.fromAsync<AnnuaireRecord>(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const reading = readAnnuaireRecord(record)
 

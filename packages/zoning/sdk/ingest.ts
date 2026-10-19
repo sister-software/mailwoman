@@ -226,7 +226,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 		"-select",
 		ZONING_SOURCE_FIELDS.join(","),
 		...whereClause(options),
-		...(!options.limit ? [] : ["-limit", String(options.limit)]),
+		...(typeof options.limit !== "number" ? [] : ["-limit", String(options.limit)]),
 		options.exportPath,
 	]
 

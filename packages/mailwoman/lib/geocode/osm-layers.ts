@@ -42,6 +42,6 @@ export async function openOSMRegionDatabases(dataRoot: PathBuilderLike): Promise
 	const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
 
 	return imported.OSMRegionDatabaseProvider.create(resolvePathBuilder(dataRoot), {
-		admit: refuse.length ? (manifest, path) => assertLayerObligationsAccepted(manifest, path, refuse) : null,
+		admit: refuse.length ? (manifest, path) => assertLayerObligationsAccepted(manifest, path, refuse) : undefined,
 	})
 }

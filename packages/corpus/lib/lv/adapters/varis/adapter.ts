@@ -476,7 +476,7 @@ export function createVarisAdapter(): CorpusAdapter {
 			for await (const record of readVarisTable(dir(VARIS_TABLES.Building))) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const reading = readVarisBuilding(record, places)
 

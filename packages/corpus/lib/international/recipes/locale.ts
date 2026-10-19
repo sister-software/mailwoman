@@ -646,7 +646,7 @@ export const localeRecipe: CorpusRecipe = {
 			// postcode are measured surface shares for those two sources.
 			// A per-country surface table in the codex address layouts would replace both branches.
 			const nativeHouseJoin =
-				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : null
+				country === "ES" ? (random() < ES_SPACE_JOIN_FRACTION ? ("space" as const) : ("template" as const)) : undefined
 
 			// country-branch: see the ES branch above.
 			const postcodeShape =
@@ -654,7 +654,7 @@ export const localeRecipe: CorpusRecipe = {
 					? random() < NL_GLUED_POSTCODE_FRACTION
 						? ("as-source" as const)
 						: ("conventional" as const)
-					: null
+					: undefined
 
 			const synth = renderLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
 

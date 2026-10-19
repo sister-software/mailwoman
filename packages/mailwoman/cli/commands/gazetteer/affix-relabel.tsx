@@ -86,7 +86,7 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 		return (
 			<Box flexDirection="column">
 				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : null}>
+					<Text key={i} {...(i === 0 ? { color: "green" } : {})}>
 						{i === 0 ? "✓ wrote " : "  "}
 						{line}
 					</Text>

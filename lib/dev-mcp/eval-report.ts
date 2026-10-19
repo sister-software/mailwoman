@@ -130,7 +130,7 @@ async function artifactCurrency(path: PathBuilderLike, startedAt: number | undef
 
 	if (!stat) return "absent"
 
-	return startedAt && stat.mtimeMs < startedAt ? "stale" : "current"
+	return typeof startedAt === "number" && stat.mtimeMs < startedAt ? "stale" : "current"
 }
 
 /**
@@ -185,7 +185,7 @@ export async function readEvalReport(
 	}
 
 	const floors: FloorReading[] = Object.entries(raw?.results ?? {}).map(([metric, result]) => {
-		const measured = result.actual && result.actual !== null
+		const measured = typeof result.actual === "number"
 
 		return {
 			metric,

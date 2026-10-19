@@ -355,7 +355,7 @@ export function collectParseFacts(
 			confidence: hit.confidence,
 			text: hit.span.body,
 			expects_component: expects,
-			matched: wanted.length > 0 && carried && foldForSpanMatch(carried).includes(wanted),
+			matched: wanted.length > 0 && carried != null && foldForSpanMatch(carried).includes(wanted),
 		}
 	})
 

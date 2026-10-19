@@ -25,8 +25,8 @@ function stubDeps(): MCPToolDeps {
 		// Mirrors the real `filingLandscape`'s own XOR throw (`bdc/sdk/filing-landscape.ts`)
 		// so the dispatch tests below can exercise "the handler propagates a deps-level
 		// rejection" without reaching for a real bdc.db.
-		bdcFilingLandscape: vi.fn(async (query: { geoids?: string[]; h3Cells?: number[] }) => {
-			if (!query.geoids && !query.h3Cells) {
+		bdcFilingLandscape: vi.fn(async (query: { geoids?: string[] | null; h3Cells?: number[] | null }) => {
+			if (query.geoids == null && query.h3Cells == null) {
 				throw new Error("bdcFilingLandscape: exactly one of `geoids` or `h3Cells` is required")
 			}
 
@@ -39,21 +39,21 @@ function stubDeps(): MCPToolDeps {
 		// rather than a throw" against a stub without reaching for a real bdc.db/poi.db.
 		plausibilityCheck: vi.fn(
 			async (query: {
-				bdcDatabasePath?: string
-				poiDatabasePath?: string
-				address?: string
-				point?: { type: "Point"; coordinates: [number, number] }
-				geoid?: string
+				bdcDatabasePath?: string | null
+				poiDatabasePath?: string | null
+				address?: string | null
+				point?: { type: "Point"; coordinates: [number, number] } | null
+				geoid?: string | null
 				technologyCode: number
 				claimedDownloadMbps: number
 			}) => {
 				const evidence_found: Array<Record<string, unknown>> = []
 
-				if (!query.bdcDatabasePath) {
+				if (query.bdcDatabasePath == null) {
 					evidence_found.push({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 				}
 
-				if (!query.poiDatabasePath) {
+				if (query.poiDatabasePath == null) {
 					evidence_found.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 				}
 
@@ -66,13 +66,14 @@ function stubDeps(): MCPToolDeps {
 						claimedDownloadMbps: query.claimedDownloadMbps,
 					},
 					evidence_found,
-					coverage_confidence: query.bdcDatabasePath && query.poiDatabasePath ? "high" : "insufficient_survey_data",
+					coverage_confidence:
+						query.bdcDatabasePath != null && query.poiDatabasePath != null ? "high" : "insufficient_survey_data",
 					coverage_detail: {
-						filing: query.bdcDatabasePath ? "covered" : "layer_missing",
-						physical: query.poiDatabasePath ? "covered" : "layer_missing",
+						filing: query.bdcDatabasePath != null ? "covered" : "layer_missing",
+						physical: query.poiDatabasePath != null ? "covered" : "layer_missing",
 					},
-					block_resolution: query.geoid ? "geoid" : "h3_cell_approximation",
-					vintage: query.bdcDatabasePath ? "2024-06" : null,
+					block_resolution: query.geoid != null ? "geoid" : "h3_cell_approximation",
+					vintage: query.bdcDatabasePath != null ? "2024-06" : null,
 				}
 			}
 		),
@@ -82,12 +83,13 @@ function stubDeps(): MCPToolDeps {
 		filerLookup: vi.fn(
 			async (query: {
 				databasePath: string
-				frn?: string
-				form499ID?: string
-				bdcProviderID?: number
-				asOf?: string
+				frn?: string | null
+				form499ID?: string | null
+				bdcProviderID?: number | null
+				asOf?: string | null
 			}) => {
-				const suppliedCount = (query.frn ? 1 : 0) + (query.form499ID ? 1 : 0) + (query.bdcProviderID ? 1 : 0)
+				const suppliedCount =
+					(query.frn ? 1 : 0) + (query.form499ID ? 1 : 0) + (typeof query.bdcProviderID === "number" ? 1 : 0)
 
 				if (suppliedCount !== 1) {
 					throw new Error("filerLookup: exactly one of `frn`, `form499ID`, `bdcProviderID` is required")
@@ -107,27 +109,34 @@ function stubDeps(): MCPToolDeps {
 		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw
 		// and its always-array return shape (never `null`, never a bare object) so the
 		// dispatch tests below can exercise both without reaching for a real filer.db.
-		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {
-			const suppliedCount = (query.familyID ? 1 : 0) + (query.nodeID ? 1 : 0)
+		filerFamily: vi.fn(
+			async (query: {
+				databasePath: string
+				familyID?: string | null
+				nodeID?: string | null
+				asOf?: string | null
+			}) => {
+				const suppliedCount = (query.familyID ? 1 : 0) + (query.nodeID ? 1 : 0)
 
-			if (suppliedCount !== 1) {
-				throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")
+				if (suppliedCount !== 1) {
+					throw new Error("familyRollup: exactly one of `familyID`, `nodeID` is required")
+				}
+
+				return [
+					{
+						family_id: query.familyID ?? "holding_company_name:acme-holdco",
+						members: [
+							{ node_id: "frn:0001753557", relationship: "holding_company", source: "form499" },
+							{ node_id: "frn:0002222222", relationship: "holding_company", source: "form499" },
+						],
+						distinct_member_count: 2,
+						display_names: ["Acme Holdco LLC"],
+						as_of: query.asOf ?? "2026-07-31",
+						vintage: "2026-Q1",
+					},
+				]
 			}
-
-			return [
-				{
-					family_id: query.familyID ?? "holding_company_name:acme-holdco",
-					members: [
-						{ node_id: "frn:0001753557", relationship: "holding_company", source: "form499" },
-						{ node_id: "frn:0002222222", relationship: "holding_company", source: "form499" },
-					],
-					distinct_member_count: 2,
-					display_names: ["Acme Holdco LLC"],
-					as_of: query.asOf ?? "2026-07-31",
-					vintage: "2026-Q1",
-				},
-			]
-		}),
+		),
 	}
 }
 
