@@ -147,6 +147,55 @@ describe("GitHub MCP tools", () => {
 		expect(run).not.toHaveBeenCalledWith(expect.arrayContaining(["edit"]), expect.anything())
 	})
 
+	it("comments on a pull request that closes no issue", async () => {
+		const cwd = fixtures.use(await temporaryDirectory("mw-pr-comment-")).path
+		const run: RunGitHub = vi.fn(async () => "https://github.com/sister-software/mailwoman/pull/2727#issuecomment-1\n")
+
+		const [, tool] = githubTools(
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
+			{ run, lint: async () => undefined }
+		)
+
+		const result = await tool.handler({
+			action: "append_comment",
+			pull_request_number: 2727,
+			body: "@dependabot rebase",
+		})
+
+		expect(run).toHaveBeenCalledWith(
+			["pr", "comment", "2727", "--repo", "sister-software/mailwoman", "--body", "@dependabot rebase"],
+			{ cwd: cwd.toString() }
+		)
+
+		expect(result).toEqual({
+			action: "append_comment",
+			pull_request_number: 2727,
+			comment_url: "https://github.com/sister-software/mailwoman/pull/2727#issuecomment-1",
+		})
+	})
+
+	it("still requires the closing issue to create a pull request", async () => {
+		const cwd = fixtures.use(await temporaryDirectory("mw-pr-create-")).path
+		const run: RunGitHub = vi.fn(async () => "")
+
+		const [, tool] = githubTools(
+			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
+			{ run }
+		)
+
+		await expect(
+			tool.handler({
+				action: "create",
+				title: "Title",
+				summary: "Summary.",
+				evidence: "Evidence.",
+				completion_assertions: [{ text: "CI passes.", completed: false }],
+			})
+		).rejects.toThrow(/issue_number/)
+
+		expect(run).not.toHaveBeenCalled()
+	})
+
 	it("completes the CI review task only after current-head checks pass", async () => {
 		const cwd = fixtures.use(await temporaryDirectory("mw-pr-complete-")).path
 		const task = "Review successful CI for PR #2400 on its current head."

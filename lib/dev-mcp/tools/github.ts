@@ -176,21 +176,20 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 		completion_assertions: z.array(TASK_SCHEMA).min(1),
 		base: z.string().min(1).default("main"),
 	}),
+	// A view, an edit and a comment read and write the pull request and never its issue,
+	// so a pull request that closes no issue, such as one Dependabot opened, takes them too.
 	z.object({
 		action: z.literal("view"),
-		issue_number: z.number().int().positive(),
 		pull_request_number: z.number().int().positive(),
 	}),
 	z.object({
 		action: z.literal("edit"),
-		issue_number: z.number().int().positive(),
 		pull_request_number: z.number().int().positive(),
 		title: z.string().min(1).optional(),
 		body: z.string().min(1).optional(),
 	}),
 	z.object({
 		action: z.literal("append_comment"),
-		issue_number: z.number().int().positive(),
 		pull_request_number: z.number().int().positive(),
 		body: z.string().min(1),
 	}),
@@ -198,7 +197,12 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
 	action: z.enum(["create", "view", "edit", "append_comment", "complete"]),
-	issue_number: z.number().int().positive().describe("The issue this pull request closes."),
+	issue_number: z
+		.number()
+		.int()
+		.positive()
+		.optional()
+		.describe("The issue this pull request closes. `create` and `complete` require it; the other actions ignore it."),
 	checkout: CHECKOUT_FIELD,
 	pull_request_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
@@ -329,7 +333,8 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
 			"(default: the server's checkout), and starts a " +
 			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`. " +
-			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff.",
+			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff. " +
+			"`view`, `edit` and `append_comment` take a pull request number alone, so they also serve a pull request that closes no issue.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
 			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
