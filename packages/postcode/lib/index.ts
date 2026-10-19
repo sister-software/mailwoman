@@ -9,7 +9,6 @@
 
 export { postcodeSyntax, acceptPostcode, type PostcodeSyntax } from "#country-formats"
 export { normalizePostcodeDisplay } from "#display-form"
-export { postcodeEvidence, PostcodeEvidenceKind, type PostcodeEvidence } from "#evidence"
 export { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#postcode-format"
 
 export {
