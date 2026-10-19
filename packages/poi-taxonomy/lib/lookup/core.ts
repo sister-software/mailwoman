@@ -57,6 +57,15 @@ interface LocaleRestrictedPhraseEntry extends PhraseEntry {
 }
 
 /**
+ * One phrase of the index with its entries and its insertion position in the index.
+ */
+interface PositionedPhrase {
+	phrase: string
+	entries: ReadonlyArray<PhraseEntry>
+	position: number
+}
+
+/**
  * Below five characters, one edit changes too much of the signal to infer a category safely.
  */
 const MIN_TYPO_LENGTH = 5
@@ -127,6 +136,30 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			}
 		}
 	})
+
+	/**
+	 * Every phrase grouped by its length, each carrying its position in `byPhrase`.
+	 *
+	 * One edit changes a phrase's length by at most one, so a typo lookup reads
+	 * three buckets instead of the whole index.
+	 * The position lets the lookup visit the merged buckets in `byPhrase` order,
+	 * so it reports the same phrase the full scan reported.
+	 */
+	const byLength: ReadonlyMap<number, ReadonlyArray<PositionedPhrase>> = (() => {
+		const buckets = new Map<number, PositionedPhrase[]>()
+		let position = 0
+
+		for (const [phrase, entries] of byPhrase) {
+			const bucket = buckets.get(phrase.length) ?? []
+
+			bucket.push({ phrase, entries, position })
+			buckets.set(phrase.length, bucket)
+
+			position++
+		}
+
+		return buckets
+	})()
 
 	/**
 	 * Exact-phrase category lookup.
@@ -242,9 +275,11 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 		let bestDistance = 2
 		const best = new Map<string, CategoryMatch>()
 
-		for (const [phrase, entries] of byPhrase) {
-			if (Math.abs(phrase.length - norm.length) > 1) continue
+		const candidates = [norm.length - 1, norm.length, norm.length + 1]
+			.flatMap((length) => byLength.get(length) ?? [])
+			.toSorted((a, b) => a.position - b.position)
 
+		for (const { phrase, entries } of candidates) {
 			const distance = oneEditDistance(norm, phrase)
 
 			if (distance > bestDistance) continue
