@@ -511,7 +511,7 @@ function sweepHashLanguages(source: string, fileName: string): string {
 		const raw = group.replace(/\n$/, "").split("\n")
 		const lines = raw.map((line) => /^[\t ]*#[\t ]?(.*)$/.exec(line)?.[1])
 
-		if (lines.some((line) => line === undefined)) return group
+		if (lines.some((line) => !line)) return group
 
 		const body = lines as string[]
 
@@ -573,7 +573,7 @@ function sweepTypeScript(source: string, fileName: string): string {
 		const raw = group.replace(/\n$/, "").split("\n")
 		const lines = raw.map((line) => /^[\t ]*\/\/[\t ]?(.*)$/.exec(line)?.[1])
 
-		if (lines.some((line) => line === undefined)) return group
+		if (lines.some((line) => !line)) return group
 
 		const body = lines as string[]
 

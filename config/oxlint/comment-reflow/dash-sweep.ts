@@ -343,7 +343,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		const indent = /^([\t ]*)/.exec(lines[0]!)![1]!
 		const stripped = lines.slice(1, -1).map((line) => /^[\t ]*\*[\t ]?(.*)$/.exec(line)?.[1])
 
-		if (stripped.some((line) => line === undefined)) return block
+		if (stripped.some((line) => !line)) return block
 
 		const body = stripped as string[]
 		const firstTag = body.findIndex((line) => /^@\w/.test(line.trim()))
@@ -374,7 +374,7 @@ export function sweepSource(source: string, fileName = "file.ts"): string {
 		const indent = /^([\t ]*)/.exec(lines[0]!)![1]!
 		const stripped = lines.map((line) => /^[\t ]*\/\/[\t ]?(.*)$/.exec(line)?.[1])
 
-		if (stripped.some((line) => line === undefined)) return group
+		if (stripped.some((line) => !line)) return group
 
 		const body = stripped as string[]
 
