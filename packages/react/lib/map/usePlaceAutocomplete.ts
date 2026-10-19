@@ -226,7 +226,7 @@ export function usePlaceAutocomplete({
 			"aria-expanded": suggestions.length > 0,
 			"aria-controls": LISTBOX_ID,
 			"aria-autocomplete": "list",
-			"aria-activedescendant": activeIndex >= 0 ? optionID(activeIndex) : undefined,
+			"aria-activedescendant": activeIndex >= 0 ? optionID(activeIndex) : null,
 			autoComplete: "off",
 		},
 		listboxID: LISTBOX_ID,

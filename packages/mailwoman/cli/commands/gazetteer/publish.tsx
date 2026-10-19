@@ -53,7 +53,7 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		const resourcesFile = options.bumpDemo
 			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
-			: undefined
+			: null
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 

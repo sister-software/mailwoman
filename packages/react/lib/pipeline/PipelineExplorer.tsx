@@ -88,7 +88,7 @@ function PipelineExplorerInner({ runtime, defaultAddress, presets, panels }: Pip
 			{loading && !runtime.ready ? (
 				<LoadingIndicator
 					mode="staged"
-					steps={loading.stepLabels.length ? loading.stepLabels : undefined}
+					steps={loading.stepLabels.length ? loading.stepLabels : null}
 					activeStep={loading.stepIndex}
 					label={loading.progress}
 				/>

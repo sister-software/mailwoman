@@ -17,7 +17,7 @@ const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } a
  */
 export function makePOIRuntime(): POIRuntime {
 	const lookup = {
-		getPOICategory: (id: string) => (id === "drinking_water" ? DRINKING_FOUNTAIN : undefined),
+		getPOICategory: (id: string) => (id === "drinking_water" ? DRINKING_FOUNTAIN : null),
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],

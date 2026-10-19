@@ -793,7 +793,7 @@ async function main(): Promise<void> {
 	// (Stage 3 / grouper / reconcile) rather than coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
-		: undefined
+		: null
 
 	if (pipeline) {
 		console.error("Assembled-pipeline arm ON (--assembled): grading runPipeline alongside raw neural.")

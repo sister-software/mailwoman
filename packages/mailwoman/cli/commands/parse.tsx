@@ -656,7 +656,7 @@ async function serializeResult(
 		input: result.input,
 		normalized: result.normalized,
 		// Token classes are omitted because they are verbose.
-		queryShape: { ...result.queryShape, tokenClasses: undefined },
+		queryShape: { ...result.queryShape, tokenClasses: null },
 		locale: result.locale,
 		kind: result.kind,
 		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),

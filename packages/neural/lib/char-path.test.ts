@@ -75,7 +75,7 @@ describe("readEncoderFromModelCard", () => {
 	})
 
 	it("refuses a char card missing part of the interface rather than guessing a window", async () => {
-		const dir = await charPackage({ char_ctx: undefined })
+		const dir = await charPackage({ char_ctx: null })
 
 		await expect(readEncoderFromModelCard(dir("model-card.json"))).rejects.toThrow(/char_ctx/)
 	})

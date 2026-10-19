@@ -183,7 +183,7 @@ export async function crossDatasetCorrelation(
 				distinct: addrCounts.size,
 				frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 			}
-		: undefined
+		: null
 
 	if (CORPUS_FREQ) {
 		report?.(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)

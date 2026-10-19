@@ -419,7 +419,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 
 	const capitals = (await pathExists(capitalsPath))
 		? (await readLocalJSONFile<{ entries?: CapitalPoint[] }>(capitalsPath)).entries
-		: undefined
+		: null
 
 	const postcodeDatabases = [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))]
 	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]

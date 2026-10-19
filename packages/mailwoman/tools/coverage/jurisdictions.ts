@@ -246,7 +246,7 @@ export function jurisdictionFeatures(
 
 	for (const unit of units) {
 		const code = mapUnitJurisdiction(unit.properties)
-		const entry = code ? properties.get(code) : undefined
+		const entry = code ? properties.get(code) : null
 
 		if (!code || !entry) {
 			unownedUnits.push(unit.properties.NAME)

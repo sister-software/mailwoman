@@ -27,11 +27,11 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 
 	for (const segment of path.split(".")) {
 		if (current === null || !current || typeof current !== "object" || Array.isArray(current)) {
-			return { present: false, value: undefined }
+			return { present: false, value: null }
 		}
 
 		if (!(segment in (current as Record<string, unknown>))) {
-			return { present: false, value: undefined }
+			return { present: false, value: null }
 		}
 
 		current = (current as Record<string, unknown>)[segment]

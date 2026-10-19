@@ -201,7 +201,7 @@ export function synthesizeHouseVenueRow(
 	}
 
 	const countrySurfaces = COUNTRY_SURFACES[base.country]
-	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : undefined
+	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : null
 
 	// The layout decides the tail's order and which parts it prints: FR prints no region,
 	// VE keeps the region after the postcode, GB puts the postcode after the locality.

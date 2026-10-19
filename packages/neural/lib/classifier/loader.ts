@@ -44,7 +44,7 @@ export async function loadScriptRoutedClassifier(
 	return new ScriptRoutedClassifier({
 		primary,
 		loadFamily: (family) =>
-			loadClassifierFromWeights({ ...opts, locale: family, modelPath: undefined, tokenizerPath: undefined }),
+			loadClassifierFromWeights({ ...opts, locale: family, modelPath: null, tokenizerPath: null }),
 		onFamilyUnavailable: (family, error) => {
 			console.warn(
 				`[neural] the ${family} weights family is not installed ` +
@@ -144,7 +144,7 @@ export async function loadClassifierFromWeights(
 						ctxChars: resolved.encoder.ctxChars,
 					},
 				}
-			: undefined
+			: null
 
 	const [tokenizer, runner] = await Promise.all([
 		charEncoder ? undefined : MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),

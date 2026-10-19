@@ -735,7 +735,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			"CORDIS organization files (FP7, Horizon 2020, Horizon Europe): the registered addresses of EU research-programme participants.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const requested = opts.country ? opts.country.trim().toUpperCase() : undefined
+			const requested = opts.country ? opts.country.trim().toUpperCase() : null
 			const lexicon = await loadPersonNameLexicon()
 			const written = new Set<string>()
 

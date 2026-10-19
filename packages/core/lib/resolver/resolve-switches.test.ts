@@ -53,6 +53,6 @@ describe("resolveSwitches", () => {
 	})
 
 	test("an explicit undefined falls back to the default", () => {
-		expect(resolveSwitches({ adminCoherence: undefined }).adminCoherence).toBe(true)
+		expect(resolveSwitches({ adminCoherence: null }).adminCoherence).toBe(true)
 	})
 })

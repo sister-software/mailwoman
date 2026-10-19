@@ -165,7 +165,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		)
 	}
 
-	const batched = "batched" in options ? options.batched : undefined
+	const batched = "batched" in options ? options.batched : null
 	const source = "batched" in options ? undefined : options.source
 	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 

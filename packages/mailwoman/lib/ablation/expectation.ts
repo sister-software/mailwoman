@@ -399,10 +399,10 @@ export function deriveExpectedRung(
 	const unevaluable = [
 		remaining["venue"]?.trim(),
 		remaining["street"]?.trim(),
-		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : undefined,
-		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : undefined,
+		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : null,
+		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : null,
 		// Untyped words still in input.
-		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : undefined,
+		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : null,
 	].filter((entry) => entry != null && entry.length)
 
 	const declineToConstrain = (why: string): ExpectedRung => ({

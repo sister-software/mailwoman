@@ -97,7 +97,7 @@ export function parseGoldenLine(line: string): GoldenEntry {
 		components: components as GoldenEntry["components"],
 		country: obj.country,
 		source: "golden",
-		notes: typeof obj.notes === "string" ? obj.notes : undefined,
+		notes: typeof obj.notes === "string" ? obj.notes : null,
 	}
 }
 

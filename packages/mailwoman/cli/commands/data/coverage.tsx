@@ -67,7 +67,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 			return { ok: true }
 		}
 
-		const wanted = options.countries ? splitCountryCodes(options.countries) : undefined
+		const wanted = options.countries ? splitCountryCodes(options.countries) : null
 
 		writeRawStdout(render(report, wanted))
 

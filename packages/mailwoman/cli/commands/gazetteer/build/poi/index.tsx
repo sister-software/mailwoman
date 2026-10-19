@@ -155,7 +155,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
-		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
+		const limit = options.limit ? Number.parseInt(options.limit, 10) : null
 		const out = options.out ?? poiDatabasePath("poi.db")
 
 		let parquetPaths: string[]

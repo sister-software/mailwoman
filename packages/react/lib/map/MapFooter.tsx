@@ -91,7 +91,7 @@ export function MapFooter({
 						type="button"
 						className="mw-map-footer__attribution-button"
 						aria-expanded={open}
-						aria-controls={open ? popoverID : undefined}
+						aria-controls={open ? popoverID : null}
 						onClick={() => setOpen((value) => !value)}
 					>
 						{attributionLabel}

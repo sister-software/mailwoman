@@ -111,7 +111,7 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const pipeline = createRuntimePipeline({ classifier })
 
 	return async (raw: string, callOpts?: ParseCallOpts) => {
-		const runOpts = callOpts?.locale ? { locale: callOpts.locale } : undefined
+		const runOpts = callOpts?.locale ? { locale: callOpts.locale } : null
 
 		return decodeAsJSON((await pipeline(raw, runOpts)).tree) as Record<string, string>
 	}

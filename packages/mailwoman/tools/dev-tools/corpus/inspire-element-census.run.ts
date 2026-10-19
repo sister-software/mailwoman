@@ -63,7 +63,7 @@ if (!values.input && !values.url) {
 	throw new Error("Pass --input for a local archive or GML document, or --url for a remote one.")
 }
 
-await using scratch = values.url ? await temporaryDirectory("mailwoman-inspire-census-") : undefined
+await using scratch = values.url ? await temporaryDirectory("mailwoman-inspire-census-") : null
 
 async function resolveInput(): Promise<string> {
 	if (values.input) return values.input

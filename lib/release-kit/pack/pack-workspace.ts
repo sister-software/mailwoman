@@ -78,8 +78,8 @@ export async function packWorkspaceForPublish(workspaceDir: PathBuilderLike, out
 		}>(originalManifest)
 
 		if (manifest.exports || manifest.imports) {
-			const exports = manifest.exports ? transformExportsForPublish(manifest.exports) : undefined
-			const imports = manifest.imports ? transformImportsForPublish(manifest.imports) : undefined
+			const exports = manifest.exports ? transformExportsForPublish(manifest.exports) : null
+			const imports = manifest.imports ? transformImportsForPublish(manifest.imports) : null
 
 			assertNoSourceTargets(`${workspaceDir} exports`, exports)
 			assertNoSourceTargets(`${workspaceDir} imports`, imports)

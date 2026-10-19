@@ -280,7 +280,7 @@ function composeRow(
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) {
 			if (!options.final) return "deferred"

@@ -227,7 +227,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
 
-						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: undefined }
+						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: null }
 					}
 
 					const [situsDB, interpDB] = await Promise.all([
@@ -569,7 +569,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const calibrator = useMemo<((raw: number) => number | null) | undefined>(() => {
 		const c = rt.assets?.calibrator
 
-		return c ? (raw: number) => c(raw) : undefined
+		return c ? (raw: number) => c(raw) : null
 	}, [rt.assets])
 
 	const runtime = useMemo<GeocoderRuntime>(() => {

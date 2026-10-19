@@ -84,7 +84,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 		const config = (args["config"] as EngineConfig | null) ?? {}
 		const limit = args["limit"] as number | undefined
 		const fields = args["fields"] as RunRowField[] | undefined
-		const keep = fields ? new Set<RunRowField>(fields) : undefined
+		const keep = fields ? new Set<RunRowField>(fields) : null
 
 		const set = await resolveInputSet(ref)
 		const engine = await registry.acquire(config)

@@ -613,7 +613,7 @@ describe("the tracked-row convention", () => {
 	})
 
 	it("refuses a tracked row that names no live issue", () => {
-		expect(auditFixtures([tracked({ bugRef: undefined })]).join("\n")).toMatch(/must name the live issue/u)
+		expect(auditFixtures([tracked({ bugRef: null })]).join("\n")).toMatch(/must name the live issue/u)
 		expect(auditFixtures([tracked({ bugRef: "  " })]).join("\n")).toMatch(/must name the live issue/u)
 	})
 

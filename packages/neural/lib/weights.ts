@@ -334,7 +334,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		}
 
 		const coLocatedCard = resolvePath(dirname(opts.modelPath), "model-card.json")
-		const modelCardPath = opts.modelCardPath ?? ((await pathExists(coLocatedCard)) ? coLocatedCard : undefined)
+		const modelCardPath = opts.modelCardPath ?? ((await pathExists(coLocatedCard)) ? coLocatedCard : null)
 		const encoder = await readEncoderFromModelCard(modelCardPath ?? null)
 
 		if (encoder.kind === "char" ? !opts.charVocabPath : !opts.tokenizerPath) {
@@ -450,7 +450,7 @@ async function resolveFromPackageDir(
 	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot !== undefined)
 
 	if (!opts.modelPath) {
-		const baseModel = baseDir ? resolvePath(baseDir, "model.onnx") : undefined
+		const baseModel = baseDir ? resolvePath(baseDir, "model.onnx") : null
 
 		if (baseDir && baseModel && (await pathExists(baseModel))) {
 			modelPath = baseModel
@@ -464,14 +464,13 @@ async function resolveFromPackageDir(
 	}
 
 	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
-	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
+	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : null
 
 	const encoder = await readEncoderFromModelCard(
 		(await pathExists(modelCardCandidate)) ? modelCardCandidate : (baseModelCardCandidate ?? null)
 	)
 
-	const charVocabPath =
-		encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir, encoder.charVocab) : undefined
+	const charVocabPath = encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir, encoder.charVocab) : null
 
 	tried.push(modelPath, charVocabPath ?? tokenizerPath)
 
@@ -488,7 +487,7 @@ async function resolveFromPackageDir(
 		? modelCardCandidate
 		: baseModelCardCandidate && (await pathExists(baseModelCardCandidate))
 			? baseModelCardCandidate
-			: undefined
+			: null
 
 	if (!(await pathExists(modelCardCandidate)) && modelCardPath && !source.endsWith("+base")) {
 		source = `${source}+base`
@@ -497,13 +496,13 @@ async function resolveFromPackageDir(
 	const resolvedBaseModelCardPath =
 		baseModelCardCandidate && (await pathExists(baseModelCardCandidate)) && baseModelCardCandidate !== modelCardPath
 			? baseModelCardCandidate
-			: undefined
+			: null
 
 	const crfCandidate = resolvePath(packageDir, "crf-transitions.json")
-	const crfTransitionsPath = (await pathExists(crfCandidate)) ? crfCandidate : undefined
+	const crfTransitionsPath = (await pathExists(crfCandidate)) ? crfCandidate : null
 
 	const semiCrfCandidate = resolvePath(packageDir, "semi-crf-transitions.json")
-	const semiCRFTransitionsPath = (await pathExists(semiCrfCandidate)) ? semiCrfCandidate : undefined
+	const semiCRFTransitionsPath = (await pathExists(semiCrfCandidate)) ? semiCrfCandidate : null
 
 	const country = locale.split("-")[1] ?? ""
 	const anchorLookupPath = await resolveAnchorLookupSibling(packageDir, country)
@@ -511,12 +510,12 @@ async function resolveFromPackageDir(
 	const gazetteerCandidate = resolvePath(packageDir, "anchor-lexicon-v1.json")
 
 	const gazetteerLexiconPath =
-		opts.tier === "pocket" ? undefined : (await pathExists(gazetteerCandidate)) ? gazetteerCandidate : undefined
+		opts.tier === "pocket" ? undefined : (await pathExists(gazetteerCandidate)) ? gazetteerCandidate : null
 
 	const countryCandidate = resolvePath(packageDir, "country-surface-lexicon-v1.json")
 
 	const countryLexiconPath =
-		opts.tier === "pocket" ? undefined : (await pathExists(countryCandidate)) ? countryCandidate : undefined
+		opts.tier === "pocket" ? undefined : (await pathExists(countryCandidate)) ? countryCandidate : null
 
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath ?? null)
@@ -530,16 +529,16 @@ async function resolveFromPackageDir(
 	const postcodePrefixPaths = await resolvePostcodePrefixSiblings(packageDir)
 
 	const fstCandidate = resolvePath(packageDir, `fst-${locale}.bin`)
-	const fstPath = (await pathExists(fstCandidate)) ? fstCandidate : undefined
+	const fstPath = (await pathExists(fstCandidate)) ? fstCandidate : null
 
 	const morphologyCandidate = resolvePath(packageDir, "fst-street-morphology.bin")
-	const baseMorphologyCandidate = baseDir ? resolvePath(baseDir, "fst-street-morphology.bin") : undefined
+	const baseMorphologyCandidate = baseDir ? resolvePath(baseDir, "fst-street-morphology.bin") : null
 
 	const streetMorphologyPath = (await pathExists(morphologyCandidate))
 		? morphologyCandidate
 		: baseMorphologyCandidate && (await pathExists(baseMorphologyCandidate))
 			? baseMorphologyCandidate
-			: undefined
+			: null
 
 	const rungOrigin: WeightsOrigin = source.startsWith("overlay")
 		? WeightsOrigin.Overlay
@@ -682,7 +681,7 @@ async function resolveBaseWeightsDir(
 			? packageDir
 			: locale
 				? tryResolvePackageDirectory(weightsPackageName(locale))
-				: undefined
+				: null
 
 		if (!declarationDir) return null
 

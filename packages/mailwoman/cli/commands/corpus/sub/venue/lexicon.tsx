@@ -65,15 +65,13 @@ const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 		const { readOvertureLayerVintage, readOvertureSubVenues } =
 			await import("@mailwoman/corpus/tools/overture-subvenue")
 
-		const overtureRows = options.overtureDB
-			? await readOvertureSubVenues({ databasePath: options.overtureDB })
-			: undefined
+		const overtureRows = options.overtureDB ? await readOvertureSubVenues({ databasePath: options.overtureDB }) : null
 
 		return generateSubVenueLexicon({
 			wikidataDir: options.wikidataDir,
 			extracts: parseExtracts(options.extracts),
 			overtureRows,
-			overtureVintage: options.overtureDB ? await readOvertureLayerVintage(options.overtureDB) : undefined,
+			overtureVintage: options.overtureDB ? await readOvertureLayerVintage(options.overtureDB) : null,
 			outPath: options.out,
 		})
 	})

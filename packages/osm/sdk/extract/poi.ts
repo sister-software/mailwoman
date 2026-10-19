@@ -259,7 +259,7 @@ function toPOISourceRow(
 	for (const key of tagKeys) {
 		const raw = p[tagAlias(key)]
 
-		tags[key] = raw != null && raw !== "" ? String(raw) : undefined
+		tags[key] = raw != null && raw !== "" ? String(raw) : null
 	}
 
 	const categoryID = matchOSMPOITagRule(tags, rules)

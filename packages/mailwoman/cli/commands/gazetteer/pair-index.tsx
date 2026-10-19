@@ -315,7 +315,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			options.holdoutFraction > 0
 				? `HOLDOUT: withheld ${heldOut.length.toLocaleString()}/${preHoldoutCount.toLocaleString()} pairs ` +
 					`(fraction=${options.holdoutFraction}, seed=${options.holdoutSeed}) — ${entries.length.toLocaleString()} pairs written`
-				: undefined
+				: null
 
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,

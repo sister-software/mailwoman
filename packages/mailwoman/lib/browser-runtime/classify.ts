@@ -219,7 +219,7 @@ export async function runClassifyStage(
 	// The moment the user edits, the pin drops and the code falls back to structural locale-check detection.
 	// No index or no match leaves the result byte-stable.
 	const pinnedCountry = pairCountryForInput(input)
-	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)
+	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : null)
 
 	const { tree } = await runPipeline(
 		input,

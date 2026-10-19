@@ -403,16 +403,16 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
+	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : null
 
-	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : undefined
+	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : null
 
 	const pairsJsonl = entry.pairsJsonl
 		?.split(",")
 		.map((path) => resolvePath(context.repoRoot, path.trim()))
 		.join(",")
 
-	const banDir = entry.banDir ? resolvePath(context.dataRoot, entry.banDir) : undefined
+	const banDir = entry.banDir ? resolvePath(context.dataRoot, entry.banDir) : null
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
 		if (!(await pathExists(path))) {

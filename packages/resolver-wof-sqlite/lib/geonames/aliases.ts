@@ -220,7 +220,7 @@ export async function ingestGeonamesAliases(
 		let refused = 0
 
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
-		const v2File = opts?.alternateDir ? resolvePathBuilder(opts.alternateDir, `${cc}.txt`) : undefined
+		const v2File = opts?.alternateDir ? resolvePathBuilder(opts.alternateDir, `${cc}.txt`) : null
 		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
 		const wanted = new Set<number>()
@@ -242,7 +242,7 @@ export async function ingestGeonamesAliases(
 			}
 		}
 
-		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
+		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : null
 
 		let countryID = -1
 		const adminMap = new Map<string, number>()

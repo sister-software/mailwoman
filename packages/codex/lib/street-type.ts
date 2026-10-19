@@ -43,7 +43,7 @@ const NO_STREET_TYPE_WORDS: StreetTypeWordTest = () => false
  * A country without a table in the codex returns a test that accepts no word.
  */
 export function streetTypeWordTestFor(countryCode: string | null): StreetTypeWordTest {
-	const tests = countryCode ? STREET_TYPE_WORD_TESTS[countryCode.toUpperCase()] : undefined
+	const tests = countryCode ? STREET_TYPE_WORD_TESTS[countryCode.toUpperCase()] : null
 
 	if (!tests) return NO_STREET_TYPE_WORDS
 

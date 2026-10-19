@@ -186,7 +186,7 @@ async function awsTransport(env: DemoAssetEnvironment): Promise<DemoAssetTranspo
 	})
 
 	return async (asset, bucket) => {
-		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : undefined
+		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : null
 
 		await new Upload({
 			client,

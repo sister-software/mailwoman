@@ -438,14 +438,14 @@ export async function perLocaleF1(
 		const postcodeAnchorLookup =
 			anchorLookupPath && (await pathExists(anchorLookupPath))
 				? parseAnchorLookup(await readLocalJSONFile(anchorLookupPath))
-				: undefined
+				: null
 
 		// Fed so a gazetteer-trained model gets its clues.
 		// Harmless for older models, since the runner skips inputs the ONNX lacks.
 		const gazetteerLexicon =
 			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
-				: undefined
+				: null
 
 		reportError(
 			`Anchor:     ${postcodeAnchorLookup ? `${anchorLookupPath} (${postcodeAnchorLookup.size} codes)` : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${anchorLookupPath})`}`

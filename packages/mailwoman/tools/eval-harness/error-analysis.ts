@@ -146,7 +146,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	const parseOpts = Object.keys(repairOpts).length
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
-		: undefined
+		: null
 
 	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer
 	// and conventions channels listed in the model-card `requires` block.

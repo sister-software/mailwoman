@@ -294,7 +294,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Refe
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) throw new UnresolvedComponentReferenceError(SK_INSPIRE_ADAPTER_ID, addressID, href)
 

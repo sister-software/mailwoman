@@ -271,8 +271,8 @@ function readTableFile(state: MergeState, file: GeographicModelSourceFile, value
 function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 	const match = RECORD_PATH_PATTERN.exec(issue.path)
 	const nested = match?.[3]
-	const key = match ? `${match[1]}[${match[2]}]${nested ? `.assertions[${nested}]` : ""}` : undefined
-	const origin = key ? state.origins.get(key) : undefined
+	const key = match ? `${match[1]}[${match[2]}]${nested ? `.assertions[${nested}]` : ""}` : null
+	const origin = key ? state.origins.get(key) : null
 
 	// Only the manifest contributes fields outside the tables, so it owns document-level issues.
 	const file = origin?.file ?? MODEL_MANIFEST_FILENAME

@@ -62,7 +62,7 @@ export async function handleStripeEvent(
 
 		case "invoice.payment_failed": {
 			const subscriptionID = invoiceSubscriptionID(event.data.object)
-			const license = subscriptionID ? await findLicenseBySubscription(deps.ledger, subscriptionID) : undefined
+			const license = subscriptionID ? await findLicenseBySubscription(deps.ledger, subscriptionID) : null
 
 			if (!license) return { handled: "no license for invoice" }
 
@@ -94,8 +94,8 @@ export async function handleStripeEvent(
 		case "charge.refunded":
 		case "charge.dispute.created": {
 			const chargeID = event.type === "charge.refunded" ? event.data.object.id : idOf(event.data.object.charge)
-			const charge = chargeID ? await deps.stripe.charges.retrieve(chargeID) : undefined
-			const invoiceID = charge ? await invoiceIDForCharge(deps.stripe, charge) : undefined
+			const charge = chargeID ? await deps.stripe.charges.retrieve(chargeID) : null
+			const invoiceID = charge ? await invoiceIDForCharge(deps.stripe, charge) : null
 
 			if (!charge || !invoiceID) return { handled: "no invoice on charge" }
 

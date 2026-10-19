@@ -196,7 +196,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
 
 		if (key && referenceStatesNoValue(key)) continue
 
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) throw new UnresolvedComponentReferenceError(ES_GIPUZKOA_ADAPTER_ID, addressID, href)
 

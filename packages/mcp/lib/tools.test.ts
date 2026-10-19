@@ -190,7 +190,7 @@ describe("buildToolTable", () => {
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_parse")
 
 			await tool.handler({ text: "350 5th Ave" })
-			expect(deps.parse).toHaveBeenCalledWith("350 5th Ave", { poi: undefined })
+			expect(deps.parse).toHaveBeenCalledWith("350 5th Ave", { poi: null })
 		})
 	})
 
@@ -311,7 +311,7 @@ describe("buildToolTable", () => {
 			expect(deps.bdcFilingLandscape).toHaveBeenCalledWith({
 				databasePath: "/data/bdc.db",
 				geoids: ["060750101001000"],
-				h3Cells: undefined,
+				h3Cells: null,
 			})
 		})
 
@@ -323,7 +323,7 @@ describe("buildToolTable", () => {
 
 			expect(deps.bdcFilingLandscape).toHaveBeenCalledWith({
 				databasePath: "/data/bdc.db",
-				geoids: undefined,
+				geoids: null,
 				h3Cells: [140_737_488_355_328],
 			})
 		})
@@ -416,8 +416,8 @@ describe("buildToolTable", () => {
 			expect(deps.plausibilityCheck).toHaveBeenCalledWith({
 				bdcDatabasePath: "/data/bdc.db",
 				poiDatabasePath: "/data/poi.db",
-				address: undefined,
-				point: undefined,
+				address: null,
+				point: null,
 				geoid: "170010001001001",
 				technologyCode: 50,
 				claimedDownloadMbps: 100,
@@ -456,8 +456,8 @@ describe("buildToolTable", () => {
 
 			expect(result).toEqual({
 				claim: {
-					address: undefined,
-					point: undefined,
+					address: null,
+					point: null,
 					geoid: "170010001001001",
 					technologyCode: 50,
 					claimedDownloadMbps: 100,
@@ -502,9 +502,9 @@ describe("buildToolTable", () => {
 
 			expect(deps.filerLookup).toHaveBeenCalledWith({
 				databasePath: "/data/filer.db",
-				frn: undefined,
+				frn: null,
 				form499ID: "899901",
-				bdcProviderID: undefined,
+				bdcProviderID: null,
 				asOf: "2026-06-01",
 			})
 		})
@@ -581,7 +581,7 @@ describe("buildToolTable", () => {
 
 			expect(deps.filerFamily).toHaveBeenCalledWith({
 				databasePath: "/data/filer.db",
-				familyID: undefined,
+				familyID: null,
 				nodeID: "frn:0001753557",
 				asOf: "2026-06-01",
 			})

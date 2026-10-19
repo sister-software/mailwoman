@@ -283,8 +283,8 @@ export function gradeCase(fixture: POIBoardFixture, boardResult: POIBoardResult)
 	const detail = pass
 		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, ${topSummary}`
 		: [
-				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
-				!topMatches ? mismatchDetail : undefined,
+				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : null,
+				!topMatches ? mismatchDetail : null,
 			]
 				.filter((reason) => reason != null)
 				.join("; ")

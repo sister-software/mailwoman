@@ -258,7 +258,7 @@ describe("ExtractGeocodeResult — parsed house-grade fields", () => {
 									interpolated_point: { lat: 48.8548, lon: 2.3451 },
 									uncertainty_m: 40,
 								}
-							: undefined,
+							: null,
 				children: [
 					node({ tag: "house_number", value: "123", start: 0, end: 3 }),
 					node({ tag: "street_prefix", value: "East", start: 4, end: 8 }),

@@ -150,7 +150,7 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 		const variants = new Set(group.map((fixture) => fixture.variant))
 		const roots = group.filter((fixture) => !variants.has(fixture.base))
 
-		let current = roots.length === 1 ? roots[0] : undefined
+		let current = roots.length === 1 ? roots[0] : null
 
 		while (current && links.length <= group.length) {
 			links.push(current.id)

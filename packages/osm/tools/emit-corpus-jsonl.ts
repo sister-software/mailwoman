@@ -78,7 +78,7 @@ const neighbors = await Promise.all((values.without ?? []).map(readOutline))
 const within =
 	own || neighbors.length
 		? (lon: number, lat: number) => (own?.(lon, lat) ?? true) && !neighbors.some((inside) => inside(lon, lat))
-		: undefined
+		: null
 
 const localityLevels = values["locality-level"] ?? []
 const dependentLevels = values["dependent-locality-level"] ?? []

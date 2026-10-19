@@ -202,7 +202,7 @@ async function main() {
 	const officialNameExact = args["official-name-exact"] === true
 
 	const resolver = createWOFResolver(
-		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
+		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : null)
 	)
 
 	const adminCoherencePin = pin("admin-coherence", "no-admin-coherence")
@@ -246,7 +246,7 @@ async function main() {
 		? TextSpliterator.from(args["hard-country-safelist"], { delimiter: "," })
 				.map((c) => c.toUpperCase())
 				.toArray()
-		: undefined
+		: null
 
 	const hardCountrySafelist = extraSafelist?.length ? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist]) : null
 

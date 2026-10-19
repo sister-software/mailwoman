@@ -252,7 +252,7 @@ export async function runCascade(
 							id: Number(a.id),
 							name: String(a.name ?? ""),
 							placetype: String(a.placetype ?? placetype),
-							country: typeof a.country === "string" && a.country ? a.country : undefined,
+							country: typeof a.country === "string" && a.country ? a.country : null,
 							lat: Number(a.lat),
 							lon: Number(a.lon),
 							score: typeof a.score === "number" ? a.score : 0,

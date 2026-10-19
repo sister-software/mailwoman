@@ -325,7 +325,7 @@ export interface ParsedGeoIDBlockGroupLevel {
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
 	[GeoIDPart.Tract]: FIPSTractCode
 	[GeoIDPart.BlockGroup]: FIPSBlockGroupCode
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -340,8 +340,8 @@ export interface ParsedGeoIDTractLevel {
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
 	[GeoIDPart.Tract]: FIPSTractCode
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -362,9 +362,9 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -377,10 +377,10 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 export interface ParsedGeoIDCountyLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
-	[GeoIDPart.CountySubDivision]: undefined
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.CountySubDivision]: null
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -392,11 +392,11 @@ export interface ParsedGeoIDCountyLevel {
  */
 export interface ParsedGeoIDStateLevel {
 	[GeoIDPart.State]: AdminLevel1Code
-	[GeoIDPart.County]: undefined
-	[GeoIDPart.CountySubDivision]: undefined
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.County]: null
+	[GeoIDPart.CountySubDivision]: null
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**

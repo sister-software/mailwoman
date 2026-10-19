@@ -133,7 +133,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
-				options.verifyPoints ? Number(options.verifyPoints) : undefined
+				options.verifyPoints ? Number(options.verifyPoints) : null
 			)
 		}
 
@@ -218,9 +218,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		if (options.verify) {
-			lines.push(
-				...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : undefined))
-			)
+			lines.push(...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : null)))
 		}
 
 		return lines

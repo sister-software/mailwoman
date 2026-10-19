@@ -153,7 +153,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 						lon: Number(hit.longitude),
 						score: 1,
 						exactMatch: true,
-						bbox: undefined,
+						bbox: null,
 					},
 				]
 			}
@@ -243,7 +243,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 							minLon: Number(row.min_lon),
 							maxLon: Number(row.max_lon),
 						}
-					: undefined,
+					: null,
 			}
 		})
 

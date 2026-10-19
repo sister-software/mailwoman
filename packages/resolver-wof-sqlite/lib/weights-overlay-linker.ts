@@ -727,7 +727,7 @@ async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
-	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : undefined
+	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : null
 
 	const pair = [
 		{ label: "model", name: "model.onnx", override: $public.MAILWOMAN_DEV_MODEL, recipe: recipe.weights.model },

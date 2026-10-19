@@ -434,8 +434,8 @@ export class NeuralAddressClassifier {
 					gazetteerLexicon: this.cfg.gazetteerLexicon,
 					countryLexicon: this.cfg.countryLexicon,
 					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
-					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
-					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
+					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : null,
+					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : null,
 				})
 
 		const { logits, localeLogits, spanScores } = encoded.charIDs
@@ -453,7 +453,7 @@ export class NeuralAddressClassifier {
 									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),
 							}
-						: undefined
+						: null
 				)
 
 		this.assertEmissionWidth(logits)
@@ -502,7 +502,7 @@ export class NeuralAddressClassifier {
 					biasScale: opts.queryShapeBiasScale ?? 1,
 					inputText: text,
 				})
-			: undefined
+			: null
 
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
@@ -536,7 +536,7 @@ export class NeuralAddressClassifier {
 							}
 						: {}),
 				})
-			: undefined
+			: null
 
 		if (fstPrior) {
 			emissions = addEmissionMatrix(emissions, fstPrior)
@@ -552,7 +552,7 @@ export class NeuralAddressClassifier {
 					this.labels,
 					opts.fstStreetMorphologyOpts ?? {}
 				)
-			: undefined
+			: null
 
 		if (morphologyPrior) {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
@@ -579,7 +579,7 @@ export class NeuralAddressClassifier {
 					...(morphologyFST ? { isStreetAffix: (word: string) => isStreetAffix(morphologyFST, word) } : {}),
 					...opts.venueHeadOpts,
 				})
-			: undefined
+			: null
 
 		if (venueHeadPrior) {
 			emissions = addEmissionMatrix(emissions, venueHeadPrior)
@@ -600,7 +600,7 @@ export class NeuralAddressClassifier {
 					: placetypePairSelection
 
 		// This record, allocated only when tracing, receives the probe path that fired.
-		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
+		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : null
 		// The census is probed only when tracing.
 		// Its observations enter the trace without changing a logit.
 		const censusSelection = opts?.placetypeCensus ?? "inherit"
@@ -608,7 +608,7 @@ export class NeuralAddressClassifier {
 		const placetypeCensusOpt: PlacetypeCensusLike | undefined =
 			censusSelection === "inherit" ? this.cfg.placetypeCensus : censusSelection === "off" ? undefined : censusSelection
 
-		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
+		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : null
 
 		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
@@ -621,7 +621,7 @@ export class NeuralAddressClassifier {
 					pieces,
 					this.labels
 				)
-			: undefined
+			: null
 
 		const placetypePairPrior = placetypePairResult?.matrix
 
@@ -637,7 +637,7 @@ export class NeuralAddressClassifier {
 
 					return toLabel !== -1 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
 				})
-			: undefined
+			: null
 
 		const placetypePairApplied = placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior)
 
@@ -789,7 +789,7 @@ export class NeuralAddressClassifier {
 		if (bridging === "on") {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
-			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : undefined)
+			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length ? { blockedSpans } : null)
 
 			if (traceRepairs) {
 				recordRepair("spanBridge", before, labelsPerPiece(tokens))

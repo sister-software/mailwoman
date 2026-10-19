@@ -540,7 +540,7 @@ export interface BuildNSULLayerResult {
  */
 async function readMD5Sidecar(archivePath: string): Promise<string | null> {
 	const text = await readLocalTextFile(`${archivePath}.md5`).catch(() => null)
-	const digest = text ? /^([0-9a-f]{32})\b/i.exec(text.trim())?.[1] : undefined
+	const digest = text ? /^([0-9a-f]{32})\b/i.exec(text.trim())?.[1] : null
 
 	return digest ? digest.toLowerCase() : null
 }

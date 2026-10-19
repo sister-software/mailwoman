@@ -281,7 +281,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 		// The harness leaves `wrong` unassigned.
 		response: fixtureExactMatch({
 			providerPlaceID: "synthetic-place-0008",
-			objectIDs: undefined,
+			objectIDs: null,
 			latitude: 51.508,
 			longitude: -0.108,
 		}),

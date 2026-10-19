@@ -79,7 +79,7 @@ export function buildEngineStamp(input: {
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | null {
 	if (!stamp.notice) return null
 
-	const expiredOn = key?.status === "expired" ? key.payload.expires : undefined
+	const expiredOn = key?.status === "expired" ? key.payload.expires : null
 
 	return [noticeSentence(stamp.license, expiredOn), `${NOTICE_REMEDY}: ${stamp.license_url}`]
 }

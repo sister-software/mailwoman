@@ -95,7 +95,7 @@ export class AdminLocator {
 
 			for (const row of rows) {
 				const geomRow = geomStmt.get(row.id) as { geom: string } | undefined
-				const geometry = geomRow ? tryParsingJSON<{ type: string; coordinates: unknown }>(geomRow.geom) : undefined
+				const geometry = geomRow ? tryParsingJSON<{ type: string; coordinates: unknown }>(geomRow.geom) : null
 
 				const polygons: Ring[][] =
 					geometry?.type === "MultiPolygon"

@@ -59,8 +59,8 @@ describe("publishDemoAssets", () => {
 		const encodings = Object.fromEntries(uploads.map((upload) => [upload.relativePath, upload.contentEncoding]))
 
 		expect(encodings).toEqual({
-			"en-us/v10.0.0/candidate.db": undefined,
-			"en-us/v10.0.0/embeddings.rows": undefined,
+			"en-us/v10.0.0/candidate.db": null,
+			"en-us/v10.0.0/embeddings.rows": null,
 			"en-us/v10.0.0/fst-en-US.bin": "gzip",
 			"en-us/v10.0.0/model.onnx": "gzip",
 		})

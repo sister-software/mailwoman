@@ -20,7 +20,7 @@ function node(tag: string, value: string, children: AddressNode[] = []): Address
 }
 
 function tree(roots: AddressNode[]): AddressTree {
-	return { raw: "", roots, system: undefined }
+	return { raw: "", roots, system: null }
 }
 
 function row(id: string, input: string, roots: AddressNode[]): InterfaceRow {

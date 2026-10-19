@@ -42,13 +42,13 @@ export function MapProgressBar({ active, fraction, label, className }: MapProgre
 			role="progressbar"
 			aria-label={label}
 			aria-hidden={!active}
-			aria-valuemin={determinate ? 0 : undefined}
-			aria-valuemax={determinate ? 100 : undefined}
-			aria-valuenow={determinate ? Math.round(clamped * 100) : undefined}
+			aria-valuemin={determinate ? 0 : null}
+			aria-valuemax={determinate ? 100 : null}
+			aria-valuenow={determinate ? Math.round(clamped * 100) : null}
 		>
 			<div
 				className={cx("mw-map-progress__fill", !determinate && "mw-map-progress__fill--indeterminate")}
-				style={determinate ? { transform: `scaleX(${clamped})` } : undefined}
+				style={determinate ? { transform: `scaleX(${clamped})` } : null}
 			/>
 		</div>
 	)

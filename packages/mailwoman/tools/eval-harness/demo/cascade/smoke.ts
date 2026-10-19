@@ -217,7 +217,7 @@ export async function demoCascadeSmoke(
 					)
 				)
 			)
-		: undefined
+		: null
 
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
 

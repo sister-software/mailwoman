@@ -291,7 +291,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 
 	const pointCell = point
 		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
-		: undefined
+		: null
 
 	if (deps.bdcDB) {
 		await assertLayerSpineResolution("bdc", deps.bdcDB, BDC_H3_RESOLUTION)

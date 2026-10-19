@@ -294,7 +294,7 @@ export const germanRecipe: CorpusRecipe = {
 			const ortsteil =
 				localOrtsteile && random() < ortsteilFraction
 					? localOrtsteile[Math.floor(random() * localOrtsteile.length)]
-					: undefined
+					: null
 
 			const base: LocaleBaseTuple = ortsteil ? { ...drawn, dependent_locality: ortsteil } : drawn
 			const separator = order === "native" && random() < commaFreeFraction ? " " : ", "

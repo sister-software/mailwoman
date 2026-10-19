@@ -397,7 +397,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// while a bare `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
-		: undefined
+		: null
 
 	// Stamp the model under test so a stale dev symlink is never silent.
 	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
@@ -463,7 +463,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const baseOnlyLocales = new Set<string>()
 
 	async function classifierFor(caseCountry?: string): Promise<typeof classifier> {
-		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : undefined
+		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : null
 
 		// Scorer/modelPath legacy modes have no package-shaped sibling resolution — base only.
 		if (!overlayLocale || opts.tokenizerPath || opts.modelPath) return classifier
@@ -552,7 +552,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
-		: undefined
+		: null
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// Load this module lazily, like the resolver module above.

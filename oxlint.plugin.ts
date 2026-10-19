@@ -110,7 +110,7 @@ const preferSpliteratorRule: Rule = {
 				if (callee.property?.type !== "Identifier" || callee.property.name !== "split") return
 
 				const delimiter = literalDelimiter(node.arguments?.[0])
-				const entry = delimiter ? DELIMITER_HINTS.get(delimiter) : undefined
+				const entry = delimiter ? DELIMITER_HINTS.get(delimiter) : null
 
 				if (!entry) return
 

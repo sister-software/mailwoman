@@ -206,7 +206,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			shuffleSeed: options.shuffleSeed,
 			profile: options.profile as BuildProfile,
 			licensePolicy: options.licensePolicy as LicensePolicy,
-			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
+			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : null,
 			unshippableReason: options.unshippableReason,
 			onProgress: (name, message) => setStage({ name, message }),
 		})

@@ -93,7 +93,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	const osmExtracts = await openOSMRegionDatabases(dataRootPath())
-	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
 
 	const engine: PhotonEngine = {
 		async search(params) {
@@ -102,7 +102,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
 			// Forward the client's viewport as a proximity bias, a soft re-rank the resolver
 			// folds into candidate scoring, only when both coords are present.
-			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
+			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : null
 
 			// No country constraint lets the placer route the query's own country.
 			// A hard-coded `US` value here would resolve every non-US query to its US namesake.
@@ -162,7 +162,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				lat: result.lat,
 				lon: result.lon,
 				postcode: result.postcode ?? result.rooftop?.postcode ?? enrichedPostcode,
-				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
+				country: country ? { name: country.canonical, code: country.iso2 } : null,
 				places,
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
@@ -177,7 +177,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				return {
 					lat: c.lat,
 					lon: c.lon,
-					country: cc ? { name: cc.canonical, code: cc.iso2 } : undefined,
+					country: cc ? { name: cc.canonical, code: cc.iso2 } : null,
 					places: [{ tag: c.tag, name: c.name }],
 				}
 			})

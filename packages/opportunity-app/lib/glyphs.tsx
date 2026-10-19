@@ -145,7 +145,7 @@ export function SegmentGlyph({ status, shared = false }: { status: SegmentStatus
 				d="M2 6 L30 6"
 				stroke="currentColor"
 				strokeWidth={shared ? 6 : 3}
-				strokeDasharray={status === SegmentStatus.Proposed ? "5 3" : undefined}
+				strokeDasharray={status === SegmentStatus.Proposed ? "5 3" : null}
 				strokeLinecap="butt"
 			/>
 		</svg>

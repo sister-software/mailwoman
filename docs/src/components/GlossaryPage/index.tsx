@@ -265,7 +265,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 																		key={key}
 																		type="button"
 																		className={styles.termTagChip}
-																		title={tag ? `Show only ${tag.label}` : undefined}
+																		title={tag ? `Show only ${tag.label}` : null}
 																		onClick={() => setEnabled(new Set([key]))}
 																	>
 																		{tag?.label ?? key}

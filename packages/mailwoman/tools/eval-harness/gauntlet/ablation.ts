@@ -375,7 +375,7 @@ export async function runAblationLayer(
 					(ABLATABLE_COMPONENTS as readonly string[]).includes(c)
 				)
 			)
-		: undefined
+		: null
 
 	if (options.components?.length && !only?.size) {
 		throw new Error(

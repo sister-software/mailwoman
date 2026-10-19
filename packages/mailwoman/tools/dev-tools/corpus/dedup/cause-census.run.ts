@@ -274,7 +274,7 @@ function planFromArguments(): CensusPlan {
 		inputPath: values.input,
 		canonicalPath,
 		country: values.country,
-		limit: values.limit ? Number(values.limit) : undefined,
+		limit: values.limit ? Number(values.limit) : null,
 		sourceCSVPath: values["source-csv"],
 		idColumn: values["id-column"],
 		idPrefix: values["id-prefix"] ?? (adapterID ? `${adapterID}-` : ""),

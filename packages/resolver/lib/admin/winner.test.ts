@@ -94,7 +94,7 @@ describe("adminLadderFor", () => {
 			expect(adminLadderFor({ ...DE_PLZ, country })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		}
 
-		expect(adminLadderFor({ ...DE_PLZ, country: undefined })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor({ ...DE_PLZ, country: null })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 

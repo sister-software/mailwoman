@@ -32,7 +32,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 vi.mock("#env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("#env")>()
 
-	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: undefined } }
+	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: null } }
 })
 
 // The root Vitest config sets `isolate: false`.

@@ -41,7 +41,7 @@ const { values } = parseArguments({
 	},
 })
 
-const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
+const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : null)
 
 using mix = await openMixture(mixture.files, {
 	memoryLimit: values["memory-limit"]!,
@@ -142,7 +142,7 @@ const asked = values.codes
 	? TextSpliterator.from(values.codes, { delimiter: "," })
 			.map((code) => code.toUpperCase())
 			.toArray()
-	: undefined
+	: null
 
 const ranked = [...census.values()].toSorted((a, b) => b.total - a.total)
 const detail = Number(values.detail)

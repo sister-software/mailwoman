@@ -1161,7 +1161,7 @@ describe("ResolveTree — interpolation tier", () => {
 		const locality = result.roots.find((n) => n.tag === "locality")
 
 		expect(calls).toHaveLength(2)
-		expect(calls[0]).toMatchObject({ street: "Pollen Street", number: "620B", locality: undefined })
+		expect(calls[0]).toMatchObject({ street: "Pollen Street", number: "620B", locality: null })
 		expect(calls[1]).toMatchObject({ street: "Pollen Street", number: "620B", locality: "Thames" })
 		expect(locality?.metadata?.["span_rescore"]).toBe(true)
 

@@ -38,7 +38,7 @@ const GazetteerBuildTWDistricts: CommandComponent<typeof spec> = ({ options }) =
 			parquetPath: options.parquet,
 			adminPath: options.admin,
 			out: options.out,
-			threads: options.threads && /^\d+$/.test(options.threads) ? Number(options.threads) : undefined,
+			threads: options.threads && /^\d+$/.test(options.threads) ? Number(options.threads) : null,
 		})
 
 		const lines = [

@@ -71,7 +71,7 @@ const { positionals } = parseArguments({
 
 const [panelName, backendName, limitArg] = positionals
 
-const panel = panelName ? PANELS[panelName] : undefined
+const panel = panelName ? PANELS[panelName] : null
 
 if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 	throw new Error("usage: postcode-coherence-scale.run.ts <us|fr|gb> <fts|candidate> [limit]")

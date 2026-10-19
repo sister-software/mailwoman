@@ -723,9 +723,7 @@ function reflowText(
 				// A tag's continuation sits flush with the star rather than indented under
 				// the tag, because that is where oxfmt puts it.
 				// An indent it strips is a line this rule would report again on the next run.
-				output.push(
-					...((completeMarkup ? wrapProse(text, limits, parts.prefix, "") : undefined) ?? lines.slice(i, end))
-				)
+				output.push(...((completeMarkup ? wrapProse(text, limits, parts.prefix, "") : null) ?? lines.slice(i, end)))
 
 				leadPending = false
 				i = end
@@ -761,9 +759,7 @@ function reflowText(
 			const text = [list[2]!, ...lines.slice(i + 1, end).map((value) => value.trim())].join(" ")
 			const completeMarkup = [list[2]!, ...lines.slice(i + 1, end)].every((value) => words(value) !== null)
 
-			output.push(
-				...((completeMarkup ? wrapProse(text, limits, prefix, continuation) : undefined) ?? lines.slice(i, end))
-			)
+			output.push(...((completeMarkup ? wrapProse(text, limits, prefix, continuation) : null) ?? lines.slice(i, end)))
 
 			leadPending = false
 			i = end
@@ -800,7 +796,7 @@ function reflowText(
 
 		const groups = completeInlineMarkup
 			? groupSentences(splitSentences(text), shape.perParagraph, shape.paragraphs && leadPending)
-			: undefined
+			: null
 
 		if (groups && shape.paragraphs) {
 			let written = false
@@ -830,9 +826,7 @@ function reflowText(
 			}
 		}
 
-		output.push(
-			...((completeInlineMarkup ? wrapProse(text, limits, indent, indent) : undefined) ?? lines.slice(i, end))
-		)
+		output.push(...((completeInlineMarkup ? wrapProse(text, limits, indent, indent) : null) ?? lines.slice(i, end)))
 
 		leadPending = false
 		i = end

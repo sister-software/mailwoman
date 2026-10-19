@@ -120,7 +120,7 @@ describe("against the real defaults.ts", () => {
 
 		expect(added.ok).toBe(true)
 
-		const removed = added.ok ? removeCountry(added.source, "DEFAULT_OVERTURE_COUNTRIES", "ZZ") : undefined
+		const removed = added.ok ? removeCountry(added.source, "DEFAULT_OVERTURE_COUNTRIES", "ZZ") : null
 
 		expect(removed?.ok && removed.source).toBe(source)
 	})

@@ -200,11 +200,11 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 
 	const privateKeyPEM = await readLocalTextFile(signingKeyPath)
 	const publicKeyPath = resolvePath(signingKeyPath.replace(/\.pem$/u, ""), "..", PUBLIC_KEY_FILE)
-	const publicKeyPEM = (await pathExists(publicKeyPath)) ? await readLocalTextFile(publicKeyPath) : undefined
+	const publicKeyPEM = (await pathExists(publicKeyPath)) ? await readLocalTextFile(publicKeyPath) : null
 
 	const trusted = publicKeyPEM
 		? Object.entries(trustedLicenseSigningKeys()).find(([, pem]) => pem.trim() === publicKeyPEM.trim())
-		: undefined
+		: null
 
 	if (!trusted) {
 		throw new CLIError(

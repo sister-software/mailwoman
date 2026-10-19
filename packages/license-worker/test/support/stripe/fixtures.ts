@@ -117,7 +117,7 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 					object: "list",
 					data: [{ id: "li_1", object: "item", quantity: 1, price: { id: init.priceID, object: "price" } }],
 				}
-			: undefined,
+			: null,
 	}
 }
 

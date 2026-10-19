@@ -340,8 +340,8 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 			})
 
 		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length))
-		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : undefined
-		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : undefined
+		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : null
+		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : null
 
 		if (!attestors) {
 			progress("triage", `${country}: no GeoNames dump — attestation reported unmeasured`)

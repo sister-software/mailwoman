@@ -386,7 +386,7 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 
 	const country = FR_ANNUAIRE_EDUCATION_DEPARTEMENTS.includes(departement)
 		? COUNTRY_BY_INSEE_DEPARTMENT[departement]
-		: undefined
+		: null
 
 	if (!country) return { refused: AnnuaireRefusal.NotOverseas }
 

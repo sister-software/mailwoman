@@ -196,8 +196,8 @@ function revertResolverDecoration(node: AddressNode): void {
 	const meta = { ...node.metadata }
 	const priorSource = meta["classifier_source"]
 	const priorSourceID = meta["classifier_source_id"]
-	node.source = typeof priorSource === "string" ? priorSource : undefined
-	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : undefined
+	node.source = typeof priorSource === "string" ? priorSource : null
+	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : null
 
 	for (const key of [
 		"classifier_source",

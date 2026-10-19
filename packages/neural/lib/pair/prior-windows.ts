@@ -72,7 +72,7 @@ export const TITLE_PREPOSITION_PREDECESSORS: ReadonlySet<string> = new Set(["at"
  * A window at position 0 has no predecessor and never suppresses.
  */
 export function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], window: CandidateWindow): boolean {
-	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : undefined
+	const predecessor = window.startPos > 0 ? nonEmptyGroups[window.startPos - 1] : null
 
 	return predecessor !== undefined && TITLE_PREPOSITION_PREDECESSORS.has(predecessor.fstToken)
 }

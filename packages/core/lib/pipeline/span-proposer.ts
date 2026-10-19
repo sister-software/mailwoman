@@ -451,7 +451,7 @@ function proposeNumericReadings(
 
 	for (let i = 0; i < tokens.length; i++) {
 		const t = tokens[i]!
-		const prev = i > 0 ? tokens[i - 1] : undefined
+		const prev = i > 0 ? tokens[i - 1] : null
 		const prevLead = prev?.stripped.toLowerCase() ?? ""
 		const prevIsDesignator = lexicon.unitDesignators.has(prevLead) || lexicon.levelDesignators.has(prevLead)
 
@@ -563,7 +563,7 @@ function proposeNumericReadings(
 		if (hyphen) {
 			// A five-digit left side is a ZIP+4 postcode.
 			if (hyphen[1]!.length === ZIP5_LENGTH) continue
-			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
+			const next = i + 1 < tokens.length ? tokens[i + 1] : null
 			const leftEnd = t.strippedStart + hyphen[1]!.length
 
 			if (prevIsDesignator) {

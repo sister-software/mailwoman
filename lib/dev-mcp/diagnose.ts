@@ -347,7 +347,7 @@ export function collectParseFacts(
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
 		const expects = (COMPONENT_FOR_KNOWN_FORMAT as Record<string, string | undefined>)[hit.format] ?? null
-		const carried = expects ? components[expects] : undefined
+		const carried = expects ? components[expects] : null
 		const wanted = foldForSpanMatch(hit.span.body)
 
 		return {
@@ -379,7 +379,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
-		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
+		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : null
 		// The rank vector's key order is the resolver's stage execution order,
 		// because the recorder writes one entry per stage as it runs: the first key is
 		// the backend's own order, the last the order the pick came from.

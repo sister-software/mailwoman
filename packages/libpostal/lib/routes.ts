@@ -177,7 +177,7 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
  * guarantees (only string-typed interface fields survive).
  * That is deliberate defense in depth rather than a redundancy to simplify away.
  */
-const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
+const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : null)
 
 /**
  * The zod-openapi auto body validator runs before the handlers

@@ -141,7 +141,7 @@ export function fetchWithProgress(onBytes: BytesReceived, shouldReport: (url: st
 	return (input, init) => {
 		const url = requestURL(input)
 
-		return fetchWithRetry(input, init, shouldReport(url) ? onBytes : undefined)
+		return fetchWithRetry(input, init, shouldReport(url) ? onBytes : null)
 	}
 }
 

@@ -165,7 +165,7 @@ export function readLicenseRecord(raw: string | null | undefined): LicenseRecord
 
 	const aliased = EXPRESSION_ALIASES.get(text.trim())
 	const candidate = aliased ?? text.trim()
-	const summary = candidate ? summarizeLicense(candidate) : undefined
+	const summary = candidate ? summarizeLicense(candidate) : null
 
 	if (summary && summary.identifiers.length && !summary.unrecognized.length) {
 		return {

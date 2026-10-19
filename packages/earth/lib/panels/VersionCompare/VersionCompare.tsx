@@ -268,7 +268,7 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare
 										? styles.rowCompareOnly
 										: row.diffKind === "tag-changed"
 											? styles.rowTagChanged
-											: undefined
+											: null
 							}
 						>
 							{/* Primary (left) side */}

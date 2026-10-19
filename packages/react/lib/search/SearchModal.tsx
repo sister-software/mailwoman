@@ -251,7 +251,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 
 	// An empty query shows no results, whatever the last settled response was.
 	const status: Status = debounced === "" ? { kind: "idle" } : settled
-	const response = status.kind === "results" ? status.response : undefined
+	const response = status.kind === "results" ? status.response : null
 	// The announcement reports a slow request while the last results stay on screen.
 	const announced: Status = loading && debounced !== "" ? { kind: "loading" } : status
 
@@ -347,7 +347,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						? 0
 						: event.key === "End"
 							? last
-							: undefined
+							: null
 
 		if (next !== undefined) {
 			event.preventDefault()
@@ -427,8 +427,8 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						aria-label="Search the documentation"
 						aria-autocomplete="list"
 						aria-expanded={ordered.length > 0}
-						aria-controls={ordered.length ? listboxID : undefined}
-						aria-activedescendant={ordered.length ? optionID(selected) : undefined}
+						aria-controls={ordered.length ? listboxID : null}
+						aria-activedescendant={ordered.length ? optionID(selected) : null}
 						autoComplete="off"
 						spellCheck={false}
 						maxLength={MAX_QUERY_LENGTH}

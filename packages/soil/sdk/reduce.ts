@@ -155,7 +155,7 @@ export function reduceCell(
 	let sampled = false
 	let mappedShare = 1
 
-	const whole = candidates.length === 1 ? candidates.find((candidate) => candidate.containment === "whole") : undefined
+	const whole = candidates.length === 1 ? candidates.find((candidate) => candidate.containment === "whole") : null
 
 	if (whole) {
 		// A single delineation covers the whole cell, so the lattice would give the same answer.

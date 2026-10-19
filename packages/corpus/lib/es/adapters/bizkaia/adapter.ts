@@ -312,7 +312,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) throw new UnresolvedComponentReferenceError(ES_BIZKAIA_ADAPTER_ID, addressID, href)
 

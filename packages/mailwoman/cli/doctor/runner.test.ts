@@ -317,7 +317,7 @@ describe("runDoctor (injected boundaries)", () => {
 			...healthyDeps(),
 			licenseKey: async () => ({
 				...selfService,
-				payload: { ...selfService.payload, lid: undefined, agreement: undefined },
+				payload: { ...selfService.payload, lid: null, agreement: null },
 			}),
 			confirmLicenseKeyPublished: async () => "listed",
 			checkLicenseStatus: async () => {

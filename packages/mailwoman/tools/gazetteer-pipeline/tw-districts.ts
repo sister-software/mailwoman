@@ -134,7 +134,7 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 	const unique = (candidates: readonly TaiwanRegionName[]): number | undefined => {
 		const ids = new Set(candidates.map((r) => r.id))
 
-		return ids.size === 1 ? [...ids][0] : undefined
+		return ids.size === 1 ? [...ids][0] : null
 	}
 
 	const byName = (key: string): number | undefined =>

@@ -61,7 +61,7 @@ const CARD_HEIGHT = 360
  */
 function JurisdictionCard({ hover }: { hover: Hover }): ReactNode {
 	const p = hover.properties
-	const system = typeof p["address_system"] === "number" ? p["address_system"] : undefined
+	const system = typeof p["address_system"] === "number" ? p["address_system"] : null
 
 	return (
 		<div

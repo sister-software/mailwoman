@@ -151,7 +151,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 				buildSHA,
 				includeLocationIDs: options.includeLocationIDs,
 				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
-				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
+				providers: options.providerListPath ? parseProviderList(options.providerListPath) : null,
 				filerDB: filerDB ?? undefined,
 				onProgress: (message) => console.error(`  [bdc] ${message}`),
 			})

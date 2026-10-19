@@ -81,7 +81,7 @@ describe("createPOIExecutor", () => {
 		])
 
 		expect(seenQueries).toEqual([
-			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
+			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: null },
 		])
 	})
 
@@ -115,7 +115,7 @@ describe("createPOIExecutor", () => {
 			{
 				categoryIDs: ["grocery_store", "organic_grocery_store"],
 				center: { latitude: 39.78, longitude: -89.65 },
-				limit: undefined,
+				limit: null,
 			},
 		])
 
@@ -147,7 +147,7 @@ describe("createPOIExecutor", () => {
 		if (poiResult.type !== "intent") throw new Error("unreachable")
 
 		expect(seenQueries).toEqual([
-			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: undefined },
+			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: null },
 		])
 
 		expect(poiResult.results![0]!.categoryID).toBe("hospital")
@@ -181,7 +181,7 @@ describe("createPOIExecutor", () => {
 			{
 				categoryIDs: ["drugstore", "pharmacy"],
 				center: { latitude: 39.78, longitude: -89.65 },
-				limit: undefined,
+				limit: null,
 			},
 		])
 	})
@@ -438,7 +438,7 @@ describe("createPOIExecutor", () => {
 			},
 		])
 
-		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: undefined, limit: undefined }])
+		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: null, limit: null }])
 	})
 
 	it("ancestry is null when no reverseGeocode fn is wired", () => {

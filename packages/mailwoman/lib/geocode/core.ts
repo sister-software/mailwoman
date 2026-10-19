@@ -601,7 +601,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			const dominant =
 				localityValue && deps.resolver.findPlace
 					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
-					: undefined
+					: null
 
 			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
 
@@ -683,12 +683,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.interpolation = interpolation
 		// An explicit calibration overrides the artifact's own value.
 		// Otherwise a legacy database falls back to the in-code table.
-		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : null
 
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
-				: undefined
+				: null
 
 		const calibration = explicit ?? fallback
 

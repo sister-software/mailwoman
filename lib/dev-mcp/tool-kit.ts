@@ -250,8 +250,8 @@ export const RENDERED_DIFF_LIMIT = 40
  * Two acquired engines, or the error that prevented the comparison.
  */
 export type TwoArms =
-	| { base: Engine; candidate: Engine; error?: undefined }
-	| { base?: undefined; candidate?: undefined; error: Record<string, unknown> }
+	| { base: Engine; candidate: Engine; error?: null }
+	| { base?: null; candidate?: null; error: Record<string, unknown> }
 
 /**
  * Acquires a baseline engine and a candidate engine.

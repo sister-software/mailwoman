@@ -100,9 +100,7 @@ export async function buildParseRig(
 	const { WOFSQLitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
 
-	const postalCityAliases = postalCityAliasDB
-		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
-		: undefined
+	const postalCityAliases = postalCityAliasDB ? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB }) : null
 
 	const backend = candidateDB
 		? new WOFCandidateTableLookup({ databasePath: candidateDB })

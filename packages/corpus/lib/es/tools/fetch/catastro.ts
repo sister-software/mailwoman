@@ -600,7 +600,7 @@ export async function harvestESCatastro(
 	let municipalitiesListed = 0
 	let provincesHarvested = 0
 	const failedCodes: string[] = [...provinces.unknown]
-	const requested = options.municipalities ? new Set(options.municipalities) : undefined
+	const requested = options.municipalities ? new Set(options.municipalities) : null
 	const found = new Set<string>()
 
 	const writeHarvestManifest = async (): Promise<void> => {

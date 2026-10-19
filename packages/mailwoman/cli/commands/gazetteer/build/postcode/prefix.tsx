@@ -125,7 +125,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const sourcePath = options.source ?? wofDatabasePath(recipe.sourceFile)
 		const adminPath = options.admin ?? wofDatabasePath("admin-global-priority.db")
 
-		const polygonPath = recipe.polygonFile ? (options.polygons ?? wofDatabasePath(recipe.polygonFile)) : undefined
+		const polygonPath = recipe.polygonFile ? (options.polygons ?? wofDatabasePath(recipe.polygonFile)) : null
 
 		for (const [label, path] of [
 			["database", sourcePath],

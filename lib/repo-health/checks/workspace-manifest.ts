@@ -182,7 +182,7 @@ async function readRootDirectory(repoRoot: string, workspace: string, tracked: R
 	const path = resolvePath(repoRoot, configFile)
 	const { config } = ts.parseConfigFileTextToJson(path.toString(), await readLocalTextFile(path))
 
-	return typeof config?.compilerOptions?.rootDir === "string" ? (config.compilerOptions.rootDir as string) : undefined
+	return typeof config?.compilerOptions?.rootDir === "string" ? (config.compilerOptions.rootDir as string) : null
 }
 
 interface CompilingWorkspace {

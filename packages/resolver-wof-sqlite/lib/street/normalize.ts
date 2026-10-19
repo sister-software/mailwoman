@@ -90,7 +90,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
 		AbbreviationToDirectional.get(raw.toUpperCase())?.toLowerCase().replace(" ", "")
 
 	const mergePair = (a?: string, b?: string) =>
-		a && b && /^(north|south)$/.test(a) && /^(east|west)$/.test(b) ? a + b : undefined
+		a && b && /^(north|south)$/.test(a) && /^(east|west)$/.test(b) ? a + b : null
 
 	const leadPair = mergePair(tokens[0], tokens[1])
 

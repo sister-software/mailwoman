@@ -27,7 +27,7 @@ const baseProps = (over: Partial<WOFProperties> = {}): WOFProperties =>
 test("parsePlacetypeSource: splits a `name:<lang>_x_<kind>` key; non-localized keys yield undefined", () => {
 	expect(parsePlacetypeSource("name:eng_x_preferred")).toEqual({ languageCode: "eng", nameKind: "preferred" })
 	expect(parsePlacetypeSource("name:fra_x_variant")).toEqual({ languageCode: "fra", nameKind: "variant" })
-	expect(parsePlacetypeSource("wof:name")).toEqual({ languageCode: undefined, nameKind: undefined })
+	expect(parsePlacetypeSource("wof:name")).toEqual({ languageCode: null, nameKind: null })
 })
 
 test("pluckPlacetypeSpec: passes through identity + resolves the wof→gn population fallback", () => {

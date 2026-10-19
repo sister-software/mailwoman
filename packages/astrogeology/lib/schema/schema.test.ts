@@ -125,7 +125,7 @@ describe("PlanetaryNomenclatureFeatureSchema", () => {
 		["another body", { ...TYCHO, body: "venus" }],
 		["a latitude of 91", { ...TYCHO, centerLat: 91 }],
 		["a longitude of 181", { ...TYCHO, centerLon: 181 }],
-		["a missing id", { ...TYCHO, id: undefined }],
+		["a missing id", { ...TYCHO, id: null }],
 	])("refuses %s", (_label, value) => {
 		expect(PlanetaryNomenclatureFeatureSchema.safeParse(value).success).toBe(false)
 	})

@@ -52,7 +52,7 @@ export function surfacesFromWikidata(
 
 	for (const binding of envelope.results?.bindings ?? []) {
 		const qid = binding.item?.value?.split("/").pop()
-		const recordID = qid ? byQID.get(qid) : undefined
+		const recordID = qid ? byQID.get(qid) : null
 		const lang = binding.lang?.value
 		const raw = binding.label?.value
 

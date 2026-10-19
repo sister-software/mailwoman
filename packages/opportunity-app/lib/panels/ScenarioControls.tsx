@@ -93,8 +93,8 @@ export function ScenarioControls({ defaults, currency, onApply }: ScenarioContro
 		const shared = {
 			id,
 			value: text[spec.field],
-			"aria-invalid": error ? true : undefined,
-			"aria-describedby": error ? `${id}-error` : undefined,
+			"aria-invalid": error ? true : null,
+			"aria-describedby": error ? `${id}-error` : null,
 		}
 
 		return (
@@ -113,7 +113,7 @@ export function ScenarioControls({ defaults, currency, onApply }: ScenarioContro
 						{...shared}
 						type={spec.type}
 						step={spec.step}
-						inputMode={spec.type === "number" ? "decimal" : undefined}
+						inputMode={spec.type === "number" ? "decimal" : null}
 						onChange={(event) => setText({ ...text, [spec.field]: event.target.value })}
 					/>
 				)}

@@ -177,7 +177,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				? node.expression.name.text
 				: ts.isIdentifier(node.expression)
 					? node.expression.text
-					: undefined
+					: null
 
 			// A `PathBuilder` is invoked as a bare function, so a descent through `node_modules`
 			// has no callee name to match and the leading segment is the tell.

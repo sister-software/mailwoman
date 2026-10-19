@@ -190,7 +190,7 @@ export function synthesizeIntersectionRow(
 		const tail = layoutAdminTail(base.country, {
 			locality: base.locality,
 			region: base.region,
-			postcode: includePostcode ? base.postcode : undefined,
+			postcode: includePostcode ? base.postcode : null,
 		})
 
 		if (!tail) return null

@@ -53,7 +53,7 @@ export const nativeCommandRoutes: Readonly<Record<string, NativeCommandRoute>> =
  */
 export function dispatchNativeCommand(userArguments: UnsafeCLIArguments): Promise<number | void> {
 	const [name, ...args] = userArguments
-	const route = name ? nativeCommandRoutes[name] : undefined
+	const route = name ? nativeCommandRoutes[name] : null
 
 	if (!route) return Promise.resolve()
 

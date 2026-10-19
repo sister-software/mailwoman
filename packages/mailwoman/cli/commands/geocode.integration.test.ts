@@ -150,7 +150,7 @@ describe("geocode argument validation", () => {
 					encoding: "utf8",
 					// Unset the env var and point the data root at an empty dir so the error interface
 					// is reached, since a default database set would otherwise be auto-attached.
-					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
+					env: childEnv({ MAILWOMAN_WOF_DB: null, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
 			)

@@ -116,7 +116,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			intent,
 
 			results: results.map((hit) => {
-				const canonical = hit.categoryID ? canonicalByLeaf.get(hit.categoryID) : undefined
+				const canonical = hit.categoryID ? canonicalByLeaf.get(hit.categoryID) : null
 
 				return canonical ? { ...toResult(hit), categoryID: canonical } : toResult(hit)
 			}),

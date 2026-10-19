@@ -353,8 +353,8 @@ export function synthesizeBoundaryStressRow(
 		const tail = layoutAdminTail(b.country, {
 			locality: b.locality,
 			region: b.region,
-			postcode: withZip ? b.postcode : undefined,
-			country: withCountry ? countryName : undefined,
+			postcode: withZip ? b.postcode : null,
+			country: withCountry ? countryName : null,
 		})
 
 		const core = tail ? (comma ? tail.raw : tail.raw.replaceAll(", ", " ")) : b.locality

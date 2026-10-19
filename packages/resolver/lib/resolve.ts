@@ -412,7 +412,7 @@ class WOFResolver implements Resolver {
 			if (band === probed) continue
 
 			try {
-				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: undefined })
+				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: null })
 
 				if (hits.length) {
 					found.push({ placetype: band, n: hits.length })
@@ -463,7 +463,7 @@ class WOFResolver implements Resolver {
 		const country =
 			parentResolved?.country ??
 			defaultCountryForLookup ??
-			(typeof countryHint === "string" ? countryHint : undefined) ??
+			(typeof countryHint === "string" ? countryHint : null) ??
 			state.hardCountry
 
 		if (country) {

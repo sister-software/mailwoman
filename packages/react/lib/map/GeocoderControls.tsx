@@ -545,7 +545,7 @@ export function GeocoderControls({
 
 			{/* Every floating control uses this rail to prevent overlap. The compass has its own group because it appears
 			    and disappears. The rail hides while the drawer is raised. */}
-			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
+			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : null}>
 				<MapControlGroup>
 					<MapControlButton
 						label="About this geocoder"

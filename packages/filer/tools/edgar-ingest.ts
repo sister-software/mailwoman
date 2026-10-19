@@ -59,7 +59,7 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 		? parseCIKLookupData(await readLocalTextFile(options.cikLookupPath))
 		: []
 
-	const pinnedSet = options.pinnedCIKs?.length ? new Set(options.pinnedCIKs) : undefined
+	const pinnedSet = options.pinnedCIKs?.length ? new Set(options.pinnedCIKs) : null
 
 	const { rows, report } = await collectEdgarSubsidiaryRows(client, options.queries, tickers, {
 		pinnedCIKs: pinnedSet,
@@ -73,7 +73,7 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 							result.skipReason ??
 							`${result.subsidiaries} subsidiaries, ${result.unparseable} unparseable, SIC ${result.sic ?? "?"}`,
 					})
-			: undefined,
+			: null,
 	})
 
 	const { join } = await import("path-ts")

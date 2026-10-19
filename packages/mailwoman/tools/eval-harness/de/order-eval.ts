@@ -140,7 +140,7 @@ export async function deOrderEval(
 		return { ok: false, out: out.toString() }
 	}
 
-	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : undefined
+	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : null
 
 	await makeDirectories(out)
 

@@ -44,7 +44,7 @@ describe("stableSourceIDFromParts", () => {
 	})
 
 	it("reads an omitted value and an empty one as the same key", () => {
-		expect(stableSourceIDFromParts("test", { slot: undefined })).toBe(stableSourceIDFromParts("test", { slot: "" }))
+		expect(stableSourceIDFromParts("test", { slot: null })).toBe(stableSourceIDFromParts("test", { slot: "" }))
 	})
 
 	it("distinguishes a variant index, which is not a component tag", () => {

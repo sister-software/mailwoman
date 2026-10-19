@@ -592,7 +592,7 @@ export async function applyRooftopConsistency(
 					limit: ROOFTOP_NAMESAKE_LIMIT,
 				})
 			}
-		: undefined
+		: null
 
 	for (const { node, gapKm, repicked } of await reconcileLocalitiesToAnchor(roots, point, thresholdKm, findNear)) {
 		node.metadata = repicked

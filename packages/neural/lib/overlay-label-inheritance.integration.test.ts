@@ -56,7 +56,7 @@ for (const locale of LOCALES) {
 
 const baseline = HAVE_WEIGHTS.get("en-US")
 	? await readLabelsFromModelCard((await resolveWeights({ locale: "en-US" })).modelCardPath)
-	: undefined
+	: null
 
 // Both tests of a locale read the same classifier: one reads its readonly `labels`,
 // the other parses, and neither changes the instance, so each locale's model loads once.

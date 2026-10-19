@@ -271,7 +271,7 @@ export async function assemblePromotionVerdict(
 	}
 
 	const fp32 = await collect("fp32")
-	const int8 = options.withInt8 ? await collect("int8") : undefined
+	const int8 = options.withInt8 ? await collect("int8") : null
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
 	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`).

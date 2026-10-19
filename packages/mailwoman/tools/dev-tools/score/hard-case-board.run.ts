@@ -73,7 +73,7 @@ for (const arm of arms) {
 	const dir = ARM_DIRS[arm]
 
 	for (const locale of locales) {
-		const binPath = dir ? dir(`fst-${locale}.bin`) : undefined
+		const binPath = dir ? dir(`fst-${locale}.bin`) : null
 		const fst = binPath && (await pathExists(binPath)) ? deserializeFST(await readLocalBuffer(binPath)) : false
 
 		if (dir && !fst) {

@@ -594,7 +594,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		const limit = query.limit ?? 10
 		// Name-match candidates via the normal FTS path with the postcode cleared, so this cannot recurse.
-		const ftsCands = await this.findPlace({ ...query, postcode: undefined, limit: Math.max(limit, 10) })
+		const ftsCands = await this.findPlace({ ...query, postcode: null, limit: Math.max(limit, 10) })
 
 		const pcInfo = new Map<number, { dist: number; containing: boolean; aliases: string[] }>()
 
@@ -666,7 +666,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 
-			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
+			const anchor = anchorRow ? merged.get(anchorRow.id) : null
 
 			if (
 				anchor &&
