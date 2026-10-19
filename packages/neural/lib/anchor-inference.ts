@@ -8,6 +8,7 @@
  *   model garbage.
  */
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { PostcodeBinaryGroup } from "@mailwoman/postcode/binary-resolver"
@@ -123,12 +124,6 @@ export function anchorLookupFromPostcodes(groups: Iterable<PostcodeBinaryGroup>)
 export type AnchorSpanMode = "alnum-run" | "shaped"
 
 /**
- * The GB unit-postcode key shape, space-stripped (`SW1A2AA`), used only to derive
- * the outward code for the fallback below.
- */
-const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
-
-/**
  * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index
  * into `text` and `String.prototype.toUpperCase` is not length-preserving (`ß` → `SS`),
  * which would shift every subsequent span and paint the anchor onto the wrong pieces.
@@ -183,7 +178,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 	let count = 0
 
 	for (const key of lookup.keys()) {
-		if (GB_UNIT_KEY.test(key)) {
+		if (UK_POSTCODE_PATTERN.test(key)) {
 			count++
 
 			if (count >= SHAPED_ONLY_KEY_SCAN_LIMIT) break
@@ -296,7 +291,7 @@ export function anchoredPostcodeSpans(
 
 			// An unknown GB unit still anchors from its outward district, painting the whole unit span
 			// so the painted extent matches what a known unit would have produced.
-			if (!entry && GB_UNIT_KEY.test(key)) {
+			if (!entry && UK_POSTCODE_PATTERN.test(key)) {
 				key = key.slice(0, -GB_INWARD_LENGTH)
 				entry = lookup.get(key)
 			}

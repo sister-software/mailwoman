@@ -8,9 +8,10 @@
  *   separately. It reports three failure modes: no shaped span, a span whose key the lookup
  *   does not include. The third is a hit through the GB outward fallback.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
+ *   Usage: node packages/mailwoman/tools/dev-tools/gb/anchor-fire.run.ts --bin <postcode-gb.bin>
  */
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 // `@mailwoman/neural` exports no `./postcode-repair` subpath.
 // `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode reads.
 // `normalizeInputCase` transforms the text before the anchor sees it.
@@ -25,10 +26,6 @@ import { normalizeInputCase } from "@mailwoman/normalize/case"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { JSONSpliterator } from "spliterator"
 
-/**
- * A GB unit key in the space-stripped form, mirroring `neural/anchor-inference.ts`'s outward fallback guard.
- */
-const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 const GB_INWARD_LENGTH = 3
 
 const { values } = parseArguments({
@@ -93,7 +90,7 @@ for (const register of ["asis", "lower", "upper"] as const) {
 				break
 			}
 
-			if (GB_UNIT_KEY.test(key) && lookup.get(key.slice(0, -GB_INWARD_LENGTH))) {
+			if (UK_POSTCODE_PATTERN.test(key) && lookup.get(key.slice(0, -GB_INWARD_LENGTH))) {
 				hit = true
 
 				viaOutward++
