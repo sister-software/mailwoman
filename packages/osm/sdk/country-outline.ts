@@ -102,7 +102,7 @@ export function createOutlineContainment(geometry: ParsedGeometry): (lon: number
 
 		let inside = decided.get(cell)
 
-		if (inside === undefined) {
+		if (!inside) {
 			inside = exact(lon, lat)
 			decided.set(cell, inside)
 		}

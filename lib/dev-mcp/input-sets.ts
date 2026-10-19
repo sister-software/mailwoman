@@ -331,11 +331,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		)
 	}
 
-	const { sample, drawnFrom } = await drawHoldoutSample(
-		definition,
-		n,
-		ref.seed === undefined ? undefined : mulberry32(ref.seed)
-	)
+	const { sample, drawnFrom } = await drawHoldoutSample(definition, n, !ref.seed ? undefined : mulberry32(ref.seed))
 
 	if (!sample.length) {
 		throw new Error(`input set: the ${definition.label} draw produced no rows from ${definition.file}.`)
@@ -354,7 +350,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 	)
 
 	return {
-		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
+		setID: `holdout:${source}/${n}${!ref.seed ? "" : `/seed-${ref.seed}`}`,
 		inputs,
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
@@ -369,7 +365,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		corpusHash: null,
 		notes: [
 			`${definition.label}, ${inputs.length} rows drawn from ${drawnFrom.toLocaleString("en-US")} parseable rows.`,
-			ref.seed === undefined
+			!ref.seed
 				? "UNSEEDED — a genuinely fresh draw. Re-running this reference produces different rows, which is what makes " +
 					"it the one set the model cannot have memorized. Two arms inside a single call still see the same rows."
 				: `Seeded with ${ref.seed}, so this exact set is reproducible. That also means it can be iterated against, ` +

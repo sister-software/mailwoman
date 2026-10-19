@@ -93,7 +93,7 @@ export function* enumerateCountryDisplayNames(
 				// The runtime does not support this locale.
 				return null
 			}
-		}).filter((f) => f !== null && f !== undefined)
+		}).filter((f) => f !== null)
 	)
 
 	for (let a = ASCII_A; a <= ASCII_Z; a++) {

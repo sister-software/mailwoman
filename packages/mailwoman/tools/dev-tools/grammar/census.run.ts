@@ -38,9 +38,7 @@ const deps = await buildGauntletDeps()
 const reports: C6RowReport[] = []
 const candidateDBPath = await resolveCandidateDBPath()
 
-const candidateDB = candidateDBPath
-	? new DatabaseClient<CandidateDatabase>(candidateDBPath, { readOnly: true })
-	: undefined
+const candidateDB = candidateDBPath ? new DatabaseClient<CandidateDatabase>(candidateDBPath, { readOnly: true }) : null
 
 interface CandidateLocalityRow {
 	spr_id: number
@@ -55,7 +53,7 @@ const candidateLocalities = candidateDB
 				"JOIN placetype_codes p ON p.id = c.placetype_id WHERE c.name_key = ? AND p.placetype = 'locality' " +
 				"ORDER BY c.neg_rank ASC LIMIT 20"
 		)
-	: undefined
+	: null
 
 function sourceGazetteerReceipt(input: string): C6RowReport["sourceGazetteer"] {
 	if (!candidateDBPath || !candidateLocalities) return null

@@ -67,7 +67,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 			return { ok: true }
 		}
 
-		const wanted = options.countries ? splitCountryCodes(options.countries) : undefined
+		const wanted = options.countries ? splitCountryCodes(options.countries) : null
 
 		writeRawStdout(render(report, wanted))
 
@@ -89,7 +89,7 @@ const EMPTY_CODES_SHOWN = 24
 /**
  * Renders the coverage checklist with mismatches listed before the per-country table.
  */
-function render(report: CoverageReport, wanted?: string[]): string {
+function render(report: CoverageReport, wanted?: string[] | null): string {
 	const shown = wanted
 		? report.countries.filter((c) => wanted.includes(c.country))
 		: report.countries.filter(trains).toSorted((a, b) => b.corpusRows - a.corpusRows)

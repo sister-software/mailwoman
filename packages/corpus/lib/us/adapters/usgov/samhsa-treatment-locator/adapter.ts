@@ -138,7 +138,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<SamhsaSiteRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = composeVenue(record.name1 ?? "", record.name2 ?? null)
 				const street = joinTwoLineStreet(record.street1 ?? "", record.street2 ?? null)

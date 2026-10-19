@@ -171,7 +171,7 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 			for (const archivePath of await archivePaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				for await (const row of streamInspireRows<MarkupElement>({
 					chunks: inspireGMLChunks(archivePath, GML_MEMBER),
@@ -180,7 +180,7 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 					// or a place name depending on which type it is.
 					index: (feature) => feature,
 					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
-					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					limit: typeof opts.limit !== "number" ? undefined : opts.limit - emitted,
 					signal: opts.signal,
 				})) {
 					yield row

@@ -93,7 +93,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	const osmExtracts = await openOSMRegionDatabases(dataRootPath())
-	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
 
 	const engine: PhotonEngine = {
 		async search(params) {
@@ -162,7 +162,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				lat: result.lat,
 				lon: result.lon,
 				postcode: result.postcode ?? result.rooftop?.postcode ?? enrichedPostcode,
-				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
+				country: country ? { name: country.canonical, code: country.iso2 } : null,
 				places,
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
@@ -177,7 +177,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				return {
 					lat: c.lat,
 					lon: c.lon,
-					country: cc ? { name: cc.canonical, code: cc.iso2 } : undefined,
+					country: cc ? { name: cc.canonical, code: cc.iso2 } : null,
 					places: [{ tag: c.tag, name: c.name }],
 				}
 			})

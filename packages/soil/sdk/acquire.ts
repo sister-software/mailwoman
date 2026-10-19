@@ -56,7 +56,7 @@ export interface AcquiredRegion {
  */
 export async function acquireRegion(options: AcquireRegionOptions): Promise<AcquiredRegion> {
 	const catalog = await options.client.readSurveyAreaCatalog(options.prefix)
-	const wanted = options.only ? new Set(options.only.map((symbol) => symbol.toUpperCase())) : undefined
+	const wanted = options.only ? new Set(options.only.map((symbol) => symbol.toUpperCase())) : null
 
 	const selected = wanted ? catalog.filter((entry) => wanted.has(entry.areasymbol.toUpperCase())) : catalog
 

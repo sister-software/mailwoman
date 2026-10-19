@@ -70,9 +70,8 @@ describe("weights_cache — the setting", () => {
 	})
 
 	it("is ABSENT from the effective config when unset", () => {
-		// Not `undefined`, absent: the effective config is hashed into the engine id
-		// and reported as provenance, so an explicit `weightsCacheRoot: undefined`
-		// would claim a choice the caller did not make.
+		// Not `undefined`, absent: the effective config is hashed into the engine id and reported as
+		// provenance, so an explicit `weightsCacheRoot: null` would claim a choice the caller did not make.
 		expect(resolveConfig({})).not.toHaveProperty("weightsCacheRoot")
 	})
 

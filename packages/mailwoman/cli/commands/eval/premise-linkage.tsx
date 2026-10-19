@@ -85,7 +85,7 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		if (controlled && options.minCellSize === undefined) {
+		if (controlled && !options.minCellSize) {
 			throw new Error(
 				"premise-linkage: a controlled run needs --min-cell-size set to the minimum agreed with the data provider."
 			)

@@ -104,7 +104,7 @@ export function buildEmissionPriors(
 		if (!targetLabel) continue
 		const col = labelToCol.get(targetLabel)
 
-		if (col === undefined) continue
+		if (!col) continue
 		const bias = hit.confidence * biasScale
 
 		for (let t = 0; t < T; t++) {
@@ -141,7 +141,7 @@ function applyScopedLocalityBias(
 	const bLocCol = labelToCol.get("B-locality")
 	const iLocCol = labelToCol.get("I-locality")
 
-	if (bLocCol === undefined) return
+	if (!bLocCol) return
 
 	for (const abbrev of abbrevs) {
 		if (tokens.some((tok) => tok.start > abbrev.start + abbrev.span.length)) continue
@@ -153,7 +153,7 @@ function applyScopedLocalityBias(
 		for (let i = 0; i < candidates.length; i++) {
 			const col = i === 0 ? bLocCol : iLocCol
 
-			if (col === undefined) continue
+			if (!col) continue
 			matrix[candidates[i]!.t]![col] = Math.max(matrix[candidates[i]!.t]![col]!, SCOPED_LOCALITY_BIAS)
 		}
 	}

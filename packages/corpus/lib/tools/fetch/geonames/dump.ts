@@ -47,7 +47,7 @@ export interface FetchGeonamesDumpOptions extends BaseFetchOptions {
 	 *
 	 * Absent → every country `countryInfo.txt` enumerates.
 	 */
-	countries?: readonly string[]
+	countries?: readonly string[] | null
 	/**
 	 * Dump directory to read from.
 	 *

@@ -262,7 +262,7 @@ export function loadImportanceSplit<DB>(db: DatabaseClient<DB>): ImportanceSplit
 		for (const row of rows) {
 			const split = splitLegacyImportance(row.importance, population.get(row.id))
 
-			if (split.encyclopedic === undefined) {
+			if (!split.encyclopedic) {
 				legacyFallbackRows++
 			} else {
 				encyclopedic.set(row.id, split.encyclopedic)

@@ -81,7 +81,7 @@ describe("rowToParquet", () => {
 	})
 
 	it("emits null for missing optional fields", () => {
-		const pq = rowToParquet(labeled({ locale: undefined, recipe: undefined }))
+		const pq = rowToParquet(labeled({ locale: null, recipe: null }))
 		expect(pq.locale).toBeNull()
 		expect(pq.recipe).toBeNull()
 		expect(pq.base_source_id).toBeNull()
@@ -111,14 +111,14 @@ describe("rowToParquet", () => {
 	})
 
 	it("throws loudly when the span triple is absent (un-migrated producer)", () => {
-		expect(() => rowToParquet(labeled({ span_starts: undefined, span_ends: undefined, span_tags: undefined }))).toThrow(
+		expect(() => rowToParquet(labeled({ span_starts: null, span_ends: null, span_tags: null }))).toThrow(
 			/missing the char-offset span triple/
 		)
 	})
 
 	it("throws loudly on a partial span triple (corrupt row, never a silent fallback)", () => {
-		expect(() => rowToParquet(labeled({ span_tags: undefined }))).toThrow(/missing the char-offset span triple/)
-		expect(() => rowToParquet(labeled({ span_starts: undefined }))).toThrow(/missing the char-offset span triple/)
+		expect(() => rowToParquet(labeled({ span_tags: null }))).toThrow(/missing the char-offset span triple/)
+		expect(() => rowToParquet(labeled({ span_starts: null }))).toThrow(/missing the char-offset span triple/)
 	})
 
 	it("throws loudly when the span arrays are not parallel", () => {
@@ -365,7 +365,7 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("refuses to write rows missing the span triple (the silent-loss hazard, loudly)", async () => {
-		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
+		const rows = [labeled({ source_id: "t-1", span_starts: null, span_ends: null, span_tags: null })]
 
 		await expect(
 			writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })

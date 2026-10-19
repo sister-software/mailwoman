@@ -325,7 +325,7 @@ export interface ParsedGeoIDBlockGroupLevel {
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
 	[GeoIDPart.Tract]: FIPSTractCode
 	[GeoIDPart.BlockGroup]: FIPSBlockGroupCode
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -340,8 +340,8 @@ export interface ParsedGeoIDTractLevel {
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
 	[GeoIDPart.Tract]: FIPSTractCode
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -349,7 +349,7 @@ export interface ParsedGeoIDTractLevel {
  *
  * @internal
  */
-export type ParsedGeoIDPartial = Partial<Record<GeoIDPart, string>>
+export type ParsedGeoIDPartial = Partial<Record<GeoIDPart, string | null>>
 
 /**
  * A GeoID parsed to the county-subdivision level.
@@ -362,9 +362,9 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
 	[GeoIDPart.CountySubDivision]: FIPSCountySubDivisionCode
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -377,10 +377,10 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 export interface ParsedGeoIDCountyLevel {
 	[GeoIDPart.State]: AdminLevel1Code
 	[GeoIDPart.County]: FIPSCountyCode
-	[GeoIDPart.CountySubDivision]: undefined
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.CountySubDivision]: null
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -392,11 +392,11 @@ export interface ParsedGeoIDCountyLevel {
  */
 export interface ParsedGeoIDStateLevel {
 	[GeoIDPart.State]: AdminLevel1Code
-	[GeoIDPart.County]: undefined
-	[GeoIDPart.CountySubDivision]: undefined
-	[GeoIDPart.Tract]: undefined
-	[GeoIDPart.BlockGroup]: undefined
-	[GeoIDPart.Block]: undefined
+	[GeoIDPart.County]: null
+	[GeoIDPart.CountySubDivision]: null
+	[GeoIDPart.Tract]: null
+	[GeoIDPart.BlockGroup]: null
+	[GeoIDPart.Block]: null
 }
 
 /**
@@ -560,9 +560,23 @@ const OrderedGeoIDInputMatchers = Object.values(GeoIDInputMatchers).toSorted((a,
  * @category FIPS
  */
 export function parseFIPSBlockGeoID(input: FIPSBlockGeoID): ParsedGeoIDBlockLevel {
-	const parsedBlock = GeoIDInputMatchers[GeoIDPart.Block].parse(input)!
-	const { congressional_district_code } = GeoIDInputMatchers[GeoIDPart.CongressionalDistrict].parse(input)!
-	const { county_sub_division_code } = GeoIDInputMatchers[GeoIDPart.CountySubDivision].parse(input)!
+	const parsedBlock =
+		GeoIDInputMatchers[GeoIDPart.Block].parse<
+			Pick<
+				ParsedGeoIDBlockLevel,
+				typeof GeoIDPart.State | typeof GeoIDPart.County | typeof GeoIDPart.Tract | typeof GeoIDPart.Block
+			>
+		>(input)!
+
+	const { congressional_district_code } =
+		GeoIDInputMatchers[GeoIDPart.CongressionalDistrict].parse<
+			Pick<ParsedGeoIDBlockLevel, typeof GeoIDPart.State | typeof GeoIDPart.CongressionalDistrict>
+		>(input)!
+
+	const { county_sub_division_code } =
+		GeoIDInputMatchers[GeoIDPart.CountySubDivision].parse<
+			Pick<ParsedGeoIDBlockLevel, typeof GeoIDPart.State | typeof GeoIDPart.County | typeof GeoIDPart.CountySubDivision>
+		>(input)!
 
 	const block_group_code = parsedBlock.block_code!.slice(0, 1) as FIPSBlockGroupCode
 
@@ -586,7 +600,7 @@ export function parseFIPSTractGeoID(input: FIPSTractGeoID): ParsedGeoIDTractLeve
 	const parsedTract = GeoIDInputMatchers[GeoIDPart.Tract].parse<ParsedGeoIDTractLevel>(input)!
 	const { county_sub_division_code } = GeoIDInputMatchers[GeoIDPart.CountySubDivision].parse(input)!
 
-	const parsed: { [P in keyof ParsedGeoIDTractLevel]?: string } = {
+	const parsed: { [P in keyof ParsedGeoIDTractLevel]?: string | null } = {
 		...parsedTract,
 		[GeoIDPart.CountySubDivision]: county_sub_division_code!,
 	}

@@ -115,7 +115,7 @@ describe("es-bizkaia adapter against the fixture archive and WFS pages", () => {
 
 		for await (const address of streamMarkupElements(openReadStream(addresses), "ad:Address", { xml: true })) {
 			const locator = inspireElementAt(address, "ad:locator", "ad:AddressLocator", "ad:name", "ad:LocatorName")
-			const stated = locator ? geographicalNameText(locator, "ad:name") : undefined
+			const stated = locator ? geographicalNameText(locator, "ad:name") : null
 			const byType = designatorsByType(address)
 			const fields = (designator(byType, "buildingIdentifier") ?? "").split(".")
 

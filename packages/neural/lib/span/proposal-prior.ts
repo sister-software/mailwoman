@@ -71,7 +71,7 @@ export function buildSpanProposalPriors(
 		if (proposal.kind === "QUOTED_SPAN") continue
 
 		if (proposal.kind === "ANNOTATION_SPAN") {
-			if (oCol === undefined || proposal.confidence < annotationFloor) continue
+			if (typeof oCol !== "number" || proposal.confidence < annotationFloor) continue
 			const bias = proposal.confidence * annotationBiasScale
 
 			for (let t = 0; t < T; t++) {
@@ -89,7 +89,7 @@ export function buildSpanProposalPriors(
 		const bCol = labelToCol.get(`B-${tag}`)
 		const iCol = labelToCol.get(`I-${tag}`)
 
-		if (bCol === undefined) continue
+		if (typeof bCol !== "number") continue
 		// Provenance decides the scale.
 		// See venueStructureBiasScale for the corpus measurement that forced the split.
 		const scale = proposal.source.startsWith("designator:venue-structure") ? venueStructureBiasScale : biasScale
@@ -101,7 +101,7 @@ export function buildSpanProposalPriors(
 			const col = first ? bCol : iCol
 			first = false
 
-			if (col === undefined) continue
+			if (typeof col !== "number") continue
 			matrix[t]![col] = Math.max(matrix[t]![col]!, bias)
 		}
 	}

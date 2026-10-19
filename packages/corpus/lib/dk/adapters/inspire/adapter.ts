@@ -251,7 +251,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 				for await (const record of stream) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					// The street is the one component every address needs and every row
 					// of the measured file resolves.

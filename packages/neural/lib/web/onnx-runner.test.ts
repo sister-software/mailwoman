@@ -13,7 +13,7 @@ import { installORTWasmBinary } from "../../test/ort-wasm-binary.ts"
 async function resolvePresentWeights(): Promise<{
 	modelPath: string
 	tokenizerPath: string
-	modelCardPath?: string
+	modelCardPath?: string | null
 } | null> {
 	try {
 		const r = await resolveWeights({})

@@ -70,7 +70,7 @@ export function buildVenueHeadEmissionPriors(
 	const bVenue = columns.get("B-venue")
 	const iVenue = columns.get("I-venue") ?? bVenue
 
-	if (bVenue === undefined || iVenue === undefined) return matrix
+	if (!bVenue || !iVenue) return matrix
 
 	const biasScale = opts.biasScale ?? DEFAULT_VENUE_HEAD_BIAS_SCALE
 	const maxBias = opts.maxBias ?? 6
@@ -151,7 +151,7 @@ export function buildVenueHeadEmissionPriors(
 		const previous = words[index - 1]
 
 		const opensSegment =
-			previous === undefined ||
+			!previous ||
 			previous.segment !== word.segment ||
 			followsDecorationSeparator(pieces, previous.group.pieceIndices.at(-1)!, word.group.pieceIndices[0]!)
 

@@ -170,7 +170,7 @@ export async function fulfilInvoice(
 	// invoice after a later renewal must mint the period it paid for, never the newer one.
 	const periodEnd = line.period?.end
 
-	if (periodEnd === undefined) return { result: "refused", reason: `invoice ${invoiceID} line carries no period end` }
+	if (!periodEnd) return { result: "refused", reason: `invoice ${invoiceID} line carries no period end` }
 
 	let license = await findLicenseBySubscription(deps.ledger, subscriptionID)
 

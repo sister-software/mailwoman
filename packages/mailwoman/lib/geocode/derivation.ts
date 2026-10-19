@@ -83,7 +83,7 @@ export function traceCollector(callerSink: ResolveOpts["traceSink"]): TraceColle
 				records.push(record)
 				callerSink(record)
 			}
-		: undefined
+		: null
 
 	return {
 		traceSink,

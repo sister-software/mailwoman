@@ -25,7 +25,7 @@ export const flag = z
 export const flagDefaultOn = z
 	.union([z.boolean(), z.string()])
 	.optional()
-	.transform((value) => value === undefined || value === true || value === "true" || value === "1")
+	.transform((value) => !value || value === true || value === "true" || value === "1")
 
 /**
  * An optional string.

@@ -51,12 +51,12 @@ try {
 		const decodedText = diagnostic.trace.text
 		const shape = computeQueryShape(decodedText)
 		const proposals = groupPhrasesSync({ raw: decodedText, normalized: decodedText }, shape)
-		const registryMatches = diagnostic.fst ? findFSTAcceptedMatches(diagnostic.fst, diagnostic.trace.pieces) : undefined
+		const registryMatches = diagnostic.fst ? findFSTAcceptedMatches(diagnostic.fst, diagnostic.trace.pieces) : null
 		const streetAffixMatches = streetMorphology
 			? findFSTAcceptedMatches(streetMorphology.matcher, diagnostic.trace.pieces).filter((match) =>
 					match.entries.some((entry) => entry.placetype === "street_affix")
 				)
-			: undefined
+			: null
 		const truth = locateUniqueComponentTruth(decodedText, row.expectComponents ?? {})
 		const boundaries = observeC4Boundaries(
 			spansFromBIO(diagnostic.trace.tokens),
@@ -81,8 +81,8 @@ try {
 			id: row.id,
 			input: row.input,
 			decodedText,
-			registryFSTAvailable: registryMatches !== undefined,
-			streetAffixAvailable: streetAffixMatches !== undefined,
+			registryFSTAvailable: registryMatches !== null,
+			streetAffixAvailable: streetAffixMatches !== null,
 			boundaries,
 		})
 	}

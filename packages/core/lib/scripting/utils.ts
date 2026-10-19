@@ -94,7 +94,13 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
  * Everything outside `core/env` + this module is forbidden from touching `process.env` directly
  * (enforced by `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
  */
-export function childEnv(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
+export function childEnv(overrides: Record<string, string | null | undefined> = {}): NodeJS.ProcessEnv {
 	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed child-process environment boundary
-	return { ...process.env, ...overrides }
+	const retainedEnvironment = Object.entries(process.env).filter(
+		([key]) => !Object.hasOwn(overrides, key) || overrides[key] != null
+	)
+
+	const explicitOverrides = Object.entries(overrides).filter((entry): entry is [string, string] => entry[1] != null)
+
+	return Object.fromEntries([...retainedEnvironment, ...explicitOverrides])
 }

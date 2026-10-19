@@ -113,10 +113,10 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		hit = lookup.find({
 			street: assembleStreetValue(pair.street, directionalUnit),
 			number: pair.houseNumber.value,
-			postcode,
-			locality,
-			region,
-			subregion,
+			postcode: postcode ?? null,
+			locality: locality ?? null,
+			region: region ?? null,
+			subregion: subregion ?? null,
 			bbox,
 		})
 
@@ -164,7 +164,7 @@ export function applyInterpolation(
 
 	const resolvedLocality = [...walkNodes(roots)].find((n) => n.tag === "locality" && n.lat != null && n.lon != null)
 
-	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : undefined
+	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : null
 
 	if (!pairs.length) return
 

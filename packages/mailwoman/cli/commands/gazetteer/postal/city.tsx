@@ -103,7 +103,7 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 		for (const e of edges) {
 			const localityID = pcToLocality.get(String(e.postcode))
 
-			if (localityID === undefined) {
+			if (typeof localityID !== "number") {
 				noLocality++
 
 				continue

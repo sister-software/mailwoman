@@ -46,7 +46,7 @@ const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) 
 		const stats = await buildAnchorLookup({
 			output: options.out,
 			zcta: options.zcta,
-			include: options.include ? extractDelimited(options.include) : undefined,
+			include: options.include ? extractDelimited(options.include) : null,
 			gbOutward: options.gbOutward,
 		})
 

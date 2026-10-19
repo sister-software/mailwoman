@@ -156,14 +156,14 @@ describe("matchLeadingDesignatorWithRange", () => {
 		expect(matchLeadingDesignatorWithRange("Basement")).toEqual({
 			canonical: "BASEMENT",
 			matched: "Basement",
-			range: undefined,
+			range: null,
 			requiresRange: false,
 		})
 
 		expect(matchLeadingDesignatorWithRange("Penthouse")).toEqual({
 			canonical: "PENTHOUSE",
 			matched: "Penthouse",
-			range: undefined,
+			range: null,
 			requiresRange: false,
 		})
 	})

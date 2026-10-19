@@ -240,7 +240,7 @@ export function synthesizeHouseVenueRow(
  * which every row from this synthesizer does.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
-	return components.house_number !== undefined && components.venue !== undefined
+	return Boolean(components.house_number && components.venue)
 }
 
 // #endregion

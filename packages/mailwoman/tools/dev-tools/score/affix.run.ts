@@ -32,7 +32,7 @@ async function main(): Promise<void> {
 	const values = rawValues as Record<string, string | boolean | undefined>
 
 	await scoreAffix({
-		conventions: values["conventions"] ? parseAddressSystemConventions(values["conventions"] as string) : undefined,
+		conventions: values["conventions"] ? parseAddressSystemConventions(values["conventions"] as string) : null,
 		file: values["file"] as string | undefined,
 		gazetteerLexicon: values["gazetteer-lexicon"] as string | undefined,
 		json: values["json"] as string | undefined,

@@ -170,7 +170,7 @@ export async function decodeReliabilitySample(
 
 			observations.push({
 				confidence,
-				correct: expected !== undefined && componentMatches(value, expected),
+				correct: expected != null && componentMatches(value, expected),
 				strata: {
 					tag,
 					...(item.country ? { country: item.country } : {}),

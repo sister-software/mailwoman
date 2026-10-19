@@ -52,7 +52,7 @@ export function directoryMoves(moves: readonly ModuleMove[], trackedFiles: reado
 		const key = `${from}\0${to}`
 		const known = checked.get(key)
 
-		if (known !== undefined) return known
+		if (known) return known
 
 		const whole = trackedFiles
 			.filter((file) => file.startsWith(`${from}/`))

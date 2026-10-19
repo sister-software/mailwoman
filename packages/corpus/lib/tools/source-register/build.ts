@@ -291,7 +291,7 @@ function required(value: string | null | undefined, field: string, row: number):
 function mapped<T>(table: Readonly<Record<string, T>>, key: string, field: string, row: number): T {
 	const value = table[key]
 
-	if (value === undefined) {
+	if (!value) {
 		throw new Error(`row ${row}: ${field} is ${stringifyJSON(key)}, which this build has no mapping for`)
 	}
 

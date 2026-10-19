@@ -221,7 +221,7 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 		directory: PathBuilderLike,
 		options: GitTransferOptions & { depth?: number } = {}
 	): Promise<ProcessResult> {
-		const depth = options.depth === undefined ? [] : ["--depth", String(options.depth)]
+		const depth = typeof options.depth !== "number" ? [] : ["--depth", String(options.depth)]
 
 		return this.start(["clone", "--progress", ...depth, url, directory.toString()], options).result
 	}

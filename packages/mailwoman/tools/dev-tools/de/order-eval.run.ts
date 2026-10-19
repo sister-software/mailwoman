@@ -35,7 +35,7 @@ async function main(): Promise<void> {
 		tokenizer: args.tokenizer,
 		anchorLookup: args["anchor-lookup"],
 		out: args.out,
-		limit: args.limit ? Number(args.limit) : undefined,
+		limit: typeof args.limit === "string" ? Number(args.limit) : null,
 		lookupMemo: args["lookup-memo"],
 		profileDirectory: args["profile-dir"],
 	})

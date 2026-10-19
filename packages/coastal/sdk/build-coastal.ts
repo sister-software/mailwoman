@@ -215,7 +215,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		)
 	}
 
-	const batched = "batched" in options ? options.batched : undefined
+	const batched = "batched" in options ? options.batched : null
 	const source = "batched" in options ? undefined : options.source
 	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
@@ -396,7 +396,7 @@ function assertScenarioCounts(
 		const key = layer.replace(/^NCERM_/u, "")
 		const built = streamed[key]
 
-		if (built === undefined) continue
+		if (!built) continue
 
 		if (built !== count) {
 			throw new Error(

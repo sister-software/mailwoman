@@ -216,7 +216,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	// A test also uses it to reach the capped behavior in three rows.
 	// Every other run takes the table.
 	// Its entry count is bounded by the array it sized rather than by V8's `Set` limit.
-	const capped = opts.dedupMaxSize !== undefined
+	const capped = opts.dedupMaxSize
 	const seen = capped ? new Set<string>() : null
 	const fingerprints = capped ? null : new FingerprintSet(opts.dedupSlotsLog2 ?? DEFAULT_DEDUP_SLOTS_LOG2)
 	const dedupMaxSize = opts.dedupMaxSize ?? DEFAULT_DEDUP_MAX_SIZE
@@ -254,7 +254,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				addressRole: row.addressRole ?? adapter.addressRole,
 				// `register` is nullable and null is a statement rather than an absence,
 				// so only an undefined field takes the adapter's declaration.
-				register: row.register === undefined ? adapter.register : row.register,
+				register: row.register || adapter.register,
 				surface: row.surface ?? adapter.surface,
 			}
 

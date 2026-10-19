@@ -154,7 +154,7 @@ export interface BuildPOIOptions {
 	/**
 	 * A row source that replaces the Parquet read.
 	 */
-	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
+	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow> | null
 
 	/**
 	 * The output `poi.db` path.
@@ -303,7 +303,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			if (!category) return 0
 			let id = categoryCodes.get(category)
 
-			if (id === undefined) {
+			if (!id) {
 				id = categoryCodes.size + 1
 				categoryCodes.set(category, id)
 			}

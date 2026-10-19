@@ -225,7 +225,7 @@ export function createIDEUruguayAdapter(): CorpusAdapter {
 				for (const record of records) {
 					if (opts.signal?.aborted) return
 
-					if (opts.limit !== undefined && emitted >= opts.limit) return
+					if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 					const components = componentsForIDERecord(record, opts)
 

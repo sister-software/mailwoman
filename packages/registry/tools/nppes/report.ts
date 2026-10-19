@@ -267,7 +267,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	const dualRow = (label: string, truth: string, s: Score, delta?: number) =>
 		lines.push(
-			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${delta === undefined ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
+			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${!delta ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
 		)
 
 	dualRow("FS full stack", "NPI", fsNPI)

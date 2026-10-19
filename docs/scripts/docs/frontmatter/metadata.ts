@@ -31,7 +31,7 @@ function isRoleValue(value: unknown): value is PageRole {
 function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean {
 	const value = frontmatter[key]
 
-	return value !== undefined && value !== null && value !== ""
+	return value != null && value !== ""
 }
 
 /**

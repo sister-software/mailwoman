@@ -104,7 +104,7 @@ export function createMatrikkelenAdapter(): CorpusAdapter {
 				for await (const record of rows as AsyncIterable<MatrikkelenRow>) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const country = countryOfMunicipality(record.kommunenummer ?? "")
 

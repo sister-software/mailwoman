@@ -141,7 +141,7 @@ export async function createResolverBackend(
 
 	const wp = opts.wofPaths
 	const aliasDB = await resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
-	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined
+	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : null
 
 	if (postalCityAliases) {
 		console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
@@ -240,7 +240,7 @@ export async function loadCapitalIndex(opts: {
 /**
  * Returns the paths from `explicit`, or the default WOF set, that exist on disk.
  */
-export async function existingWOFDatabasePaths(explicit?: readonly string[]): Promise<string[]> {
+export async function existingWOFDatabasePaths(explicit?: readonly string[] | null): Promise<string[]> {
 	const candidates = explicit ?? wofExtractPaths()
 	const existing: string[] = []
 
@@ -267,7 +267,7 @@ export async function resolvePOIResolverPaths(options: {
 
 	if (candidateDB) return { candidateDB, wofPaths: [] }
 
-	const explicit = options.resolveDB ? extractDelimited(options.resolveDB) : undefined
+	const explicit = options.resolveDB ? extractDelimited(options.resolveDB) : null
 
 	return { candidateDB, wofPaths: await existingWOFDatabasePaths(explicit) }
 }

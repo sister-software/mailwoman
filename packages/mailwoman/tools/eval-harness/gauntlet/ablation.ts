@@ -143,7 +143,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
 export function ablationVariants(
 	input: string,
 	components: Record<string, string>,
-	only?: ReadonlySet<AblatableComponent>
+	only?: ReadonlySet<AblatableComponent> | null
 ): { variants: AblationVariant[]; skips: AblationSkip[] } {
 	const variants: AblationVariant[] = []
 	const skips: AblationSkip[] = []
@@ -375,7 +375,7 @@ export async function runAblationLayer(
 					(ABLATABLE_COMPONENTS as readonly string[]).includes(c)
 				)
 			)
-		: undefined
+		: null
 
 	if (options.components?.length && !only?.size) {
 		throw new Error(

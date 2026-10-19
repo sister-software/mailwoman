@@ -319,7 +319,7 @@ export function createOSMAdapter(): CorpusAdapter {
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const row = parseLine(line)
 

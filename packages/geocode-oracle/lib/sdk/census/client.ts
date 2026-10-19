@@ -247,7 +247,7 @@ function buildQuery(
 
 	// The API treats an empty field as a filter, so blank fields are omitted.
 	for (const [name, value] of Object.entries(input)) {
-		if (value !== undefined && value !== null && String(value).trim()) {
+		if (value && value !== null && String(value).trim()) {
 			params[name] = String(value).trim()
 		}
 	}

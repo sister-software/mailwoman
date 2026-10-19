@@ -95,8 +95,8 @@ export function ProgressLines({ entries }: { entries: ProgressEntries }): React.
 			h(
 				Text,
 				{ key, color: "cyan" },
-				` ${key}: ${step.stage}${step.percent === undefined ? "" : ` ${step.percent}%`}` +
-					(step.total === undefined ? "" : ` (${step.processed ?? 0}/${step.total})`)
+				` ${key}: ${step.stage}${!step.percent ? "" : ` ${step.percent}%`}` +
+					(!step.total ? "" : ` (${step.processed ?? 0}/${step.total})`)
 			)
 		)
 	)

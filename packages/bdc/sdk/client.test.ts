@@ -42,7 +42,7 @@ vi.mock("#env", async (importOriginal) => {
 
 	return {
 		...actual,
-		$private: { ...actual.$private, FCC_MAP_USERNAME: undefined, FCC_MAP_API_KEY: undefined },
+		$private: { ...actual.$private, FCC_MAP_USERNAME: null, FCC_MAP_API_KEY: null },
 	}
 })
 
@@ -164,7 +164,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 
 		await clientFor(transport).get("/map/downloads/listAvailabilityData/2024-12-31", {
 			category: "State",
-			subcategory: undefined,
+			subcategory: null,
 			page: 2,
 		})
 

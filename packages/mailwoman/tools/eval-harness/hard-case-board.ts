@@ -188,7 +188,7 @@ export const HardCaseSchema = zod
 	})
 	.refine(
 		(c) => {
-			const present = [c.expectLat, c.expectLon, c.expectToleranceM].filter((v) => v !== undefined).length
+			const present = [c.expectLat, c.expectLon, c.expectToleranceM].filter((v) => v).length
 
 			return present === 0 || present === COORDINATE_ASSERTION_FIELDS
 		},
@@ -241,7 +241,7 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 		// Use `Object.assign` instead of `out[key] = value`.
 		// A dynamic key widens the write target to the intersection of every field type.
 		// No value satisfies that intersection.
-		if (value !== undefined) {
+		if (value) {
 			Object.assign(out, { [key]: value })
 		}
 	}

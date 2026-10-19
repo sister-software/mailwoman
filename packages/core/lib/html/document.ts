@@ -44,7 +44,7 @@ export interface DocumentNarrowingOptions {
 export function narrowDocument(html: string, options: DocumentNarrowingOptions = {}): string {
 	const document = parseDocument(html, { decodeEntities: true })
 
-	const envelope = options.within ? findAll((element) => element.name === options.within, document).at(0) : undefined
+	const envelope = options.within ? findAll((element) => element.name === options.within, document).at(0) : null
 
 	const roots: AnyNode[] = envelope ? envelope.children : document.children
 

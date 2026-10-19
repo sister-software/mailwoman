@@ -321,10 +321,10 @@ async function checkOverlaySources(
 	})
 
 	const named = new Set<string>(args.files.map((file) => file.source))
-	const unnamed = kept.filter((file) => file.source === undefined)
+	const unnamed = kept.filter((file) => !file.source)
 
 	for (const file of kept) {
-		if (file.source !== undefined) {
+		if (file.source) {
 			named.add(file.source)
 		}
 	}
@@ -444,7 +444,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		)
 	}
 
-	const dropped = baseFiles.filter((s) => s.source !== undefined && replaced.has(s.source))
+	const dropped = baseFiles.filter((s) => s.source && replaced.has(s.source))
 	const droppedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const file of dropped) {

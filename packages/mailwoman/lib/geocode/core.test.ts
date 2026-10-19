@@ -258,7 +258,7 @@ describe("ExtractGeocodeResult — parsed house-grade fields", () => {
 									interpolated_point: { lat: 48.8548, lon: 2.3451 },
 									uncertainty_m: 40,
 								}
-							: undefined,
+							: null,
 				children: [
 					node({ tag: "house_number", value: "123", start: 0, end: 3 }),
 					node({ tag: "street_prefix", value: "East", start: 4, end: 8 }),
@@ -772,7 +772,7 @@ describe(": a famous namesake the model reads as a `street` keeps its candidate 
 
 describe("epistemic_status — what the evidence permits, beside how the coordinate was made", () => {
 	const rooftopTree = (
-		metadata: Record<string, unknown> | undefined,
+		metadata: Record<string, unknown> | null | undefined,
 		locality: { lat: number; lon: number } | null = { lat: 48.8566, lon: 2.3522 }
 	): AddressTree => ({
 		raw: "123 east sheldon rd 75001 paris",

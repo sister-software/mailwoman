@@ -48,7 +48,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 	const state = useCommandTask(async () => {
 		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 
-		const countries = options.countries ? splitCountryCodes(options.countries) : undefined
+		const countries = options.countries ? splitCountryCodes(options.countries) : null
 
 		const result = await buildPostcodeGeonamesTail({
 			countries,

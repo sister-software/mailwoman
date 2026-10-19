@@ -110,7 +110,7 @@ export interface BuildPostcodeGeonamesTailOptions {
 	/**
 	 * ISO-2 countries to fold, in ingest order, defaulting to {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
 	 */
-	countries?: readonly string[]
+	countries?: readonly string[] | null
 	/**
 	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip),
 	 * defaulting to `<data-root>/geonames-postal`.

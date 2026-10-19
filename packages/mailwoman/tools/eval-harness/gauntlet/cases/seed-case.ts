@@ -163,7 +163,7 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 		const value = c[key]
 
 		// TypeScript types a dynamic `out[key]` write as the intersection of all field types, so `Object.assign` is used.
-		if (value !== undefined) {
+		if (value) {
 			Object.assign(out, { [key]: value })
 		}
 	}

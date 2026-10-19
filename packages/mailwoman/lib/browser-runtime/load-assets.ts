@@ -127,7 +127,7 @@ export async function loadReleaseAssets(
 	progress: AssetLoadProgress,
 	options: LoadReleaseAssetsOptions = {}
 ): Promise<ReleaseAssets> {
-	const gazetteer = release.hasWOFDB ? options.gazetteer : undefined
+	const gazetteer = release.hasWOFDB ? options.gazetteer : null
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
 

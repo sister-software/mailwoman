@@ -168,7 +168,7 @@ export function assessAdminCoherence(
 export interface AdminCoherenceSourceNode {
 	tag: string
 	value: string
-	metadata?: Record<string, unknown> | undefined
+	metadata?: Record<string, unknown> | null
 }
 
 /**

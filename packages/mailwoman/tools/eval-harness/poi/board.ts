@@ -47,7 +47,7 @@ export interface POIBoardFixture {
 	/**
 	 * Issue reference that a tracked row requires and a counted row must omit.
 	 */
-	bugRef?: string
+	bugRef?: string | null
 	/**
 	 * Source fixture reference, relative to the eval-harness directory.
 	 */
@@ -104,7 +104,7 @@ export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
 
 		const rawStatus: unknown = fixture.status
 
-		if (rawStatus !== undefined && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
+		if (rawStatus && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
 			problems.push(`${label}: unknown status ${stringifyJSON(rawStatus)} — known: ${POI_BOARD_STATUSES.join(", ")}`)
 
 			continue
@@ -283,8 +283,8 @@ export function gradeCase(fixture: POIBoardFixture, boardResult: POIBoardResult)
 	const detail = pass
 		? `${results.length} results, nearest ${nearestKm.toFixed(2)} km, ${topSummary}`
 		: [
-				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
-				!topMatches ? mismatchDetail : undefined,
+				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : null,
+				!topMatches ? mismatchDetail : null,
 			]
 				.filter((reason) => reason != null)
 				.join("; ")

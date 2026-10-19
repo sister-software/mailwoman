@@ -42,7 +42,7 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 *
 	 * @defaultValue every locale shipping a `street_types.txt`
 	 */
-	locales?: string[]
+	locales?: string[] | null
 	/**
 	 * Minimum post-normalization variant length.
 	 *
@@ -83,7 +83,7 @@ export async function buildStreetMorphologyArtifact(
 	const result = await buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
-		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),
+		...(opts.minVariantLength ? { minVariantLength: opts.minVariantLength } : {}),
 		onProgress: (phase, detail) => progress(`  [${phase}] ${detail ?? ""}`),
 	})
 

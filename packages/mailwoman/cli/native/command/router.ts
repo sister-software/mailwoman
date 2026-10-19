@@ -168,7 +168,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 	if (!commandParts.length) throw new CLIUsageError(`Unknown command: ${argv[0] ?? "(none)"}.`)
 	const direct = commandURL(filesystemParts)
 	const index = commandURL(filesystemParts, true)
-	const selected = (await tryStat(direct)) ? direct : (await tryStat(index)) ? index : undefined
+	const selected = (await tryStat(direct)) ? direct : (await tryStat(index)) ? index : null
 
 	if (!selected) return groupHelp(filesystemParts)
 

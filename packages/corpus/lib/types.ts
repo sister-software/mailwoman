@@ -241,7 +241,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * The BCP-47 locale.
 	 * The runner derives it from the country when absent.
 	 */
-	locale?: string
+	locale?: string | null
 
 	/**
 	 * The role of this address.
@@ -271,7 +271,7 @@ export interface CanonicalRow extends SourceProvenance {
 	/**
 	 * The recipe that produced the row, when a recipe did.
 	 */
-	recipe?: RecipeMarker
+	recipe?: RecipeMarker | null
 }
 
 /**
@@ -301,17 +301,17 @@ export interface LabeledRow extends CanonicalRow {
 	 * `alignRow` enforces both rules.
 	 * Older corpora and some synthesis paths omit the spans.
 	 */
-	span_starts?: readonly number[]
+	span_starts?: readonly number[] | null
 
 	/**
 	 * Exclusive end offsets, parallel to `span_starts`.
 	 */
-	span_ends?: readonly number[]
+	span_ends?: readonly number[] | null
 
 	/**
 	 * Component tags, parallel to `span_starts`.
 	 */
-	span_tags?: readonly ComponentTag[]
+	span_tags?: readonly ComponentTag[] | null
 }
 
 /**
@@ -348,7 +348,7 @@ export interface AdapterOptions {
 	/**
 	 * A soft cap on emitted rows.
 	 */
-	limit?: number
+	limit?: number | null
 
 	/**
 	 * The fraction of rows that include an explicit `country` component.
@@ -359,13 +359,13 @@ export interface AdapterOptions {
 	 * A value of `0` or no value adds no country and consumes no random draw,
 	 * so existing outputs stay identical.
 	 */
-	countryFraction?: number
+	countryFraction?: number | null
 
 	/**
 	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw.
 	 * The draw has a fixed default.
 	 */
-	seed?: number
+	seed?: number | null
 
 	/**
 	 * A cancellation signal that adapters should check at each iteration.

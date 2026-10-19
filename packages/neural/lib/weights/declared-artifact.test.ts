@@ -16,7 +16,7 @@ async function packageDir(card?: unknown, siblings: string[] = []): Promise<Path
 
 	await makeDirectories(dir)
 
-	if (card !== undefined) {
+	if (card) {
 		await writeLocalFile(typeof card === "string" ? card : stringifyJSON(card), dir("model-card.json"))
 	}
 

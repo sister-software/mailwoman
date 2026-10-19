@@ -135,7 +135,7 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 
 	entriesAt(stateID: number, limit?: number): AncestrieRecord<PlaceEntry>[] {
 		const places = this.#fst.accepting(stateID)
-		const selected = limit === undefined ? places : topByReferential(places, limit)
+		const selected = typeof limit !== "number" ? places : topByReferential(places, limit)
 
 		return selected.map((entry) => {
 			this.#chains.set(entry.wofID, entry.parentChain)

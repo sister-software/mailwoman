@@ -71,7 +71,7 @@ export async function runIngestChunkScript<
 	const { values: shared } = parseArguments({ options: INGEST_CHUNK_FLAGS, strict: false })
 
 	const sharedFlag = (name: keyof typeof INGEST_CHUNK_FLAGS): string =>
-		requiredArgument(config.context, name, typeof shared[name] === "string" ? shared[name] : undefined)
+		requiredArgument(config.context, name, typeof shared[name] === "string" ? shared[name] : null)
 
 	using database = new DatabaseClient<DB>(sharedFlag("database"))
 

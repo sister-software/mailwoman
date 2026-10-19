@@ -66,7 +66,7 @@ export interface DemoAssetUpload {
 	/**
 	 * The `Content-Encoding` recorded on the stored object, when the upload compresses it.
 	 */
-	contentEncoding?: "gzip"
+	contentEncoding: "gzip" | null
 }
 
 export type DemoAssetTransport = (upload: DemoAssetUpload, bucket: string) => Promise<void>
@@ -109,7 +109,7 @@ function metadataFor(relativePath: string): Pick<DemoAssetUpload, "contentType" 
 	return {
 		contentType: CONTENT_TYPES.get(ext) ?? "application/octet-stream",
 		cacheControl: MUTABLE_FILES.has(filename) ? MUTABLE_CACHE_CONTROL : IMMUTABLE_CACHE_CONTROL,
-		...(WHOLE_FETCH_ENCODED_EXTENSIONS.has(ext) ? { contentEncoding: "gzip" as const } : {}),
+		contentEncoding: WHOLE_FETCH_ENCODED_EXTENSIONS.has(ext) ? "gzip" : null,
 	}
 }
 
@@ -186,7 +186,7 @@ async function awsTransport(env: DemoAssetEnvironment): Promise<DemoAssetTranspo
 	})
 
 	return async (asset, bucket) => {
-		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : undefined
+		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : null
 
 		await new Upload({
 			client,
@@ -197,7 +197,7 @@ async function awsTransport(env: DemoAssetEnvironment): Promise<DemoAssetTranspo
 				ContentLength: encoded?.byteLength ?? asset.size,
 				ContentType: asset.contentType,
 				CacheControl: asset.cacheControl,
-				ContentEncoding: asset.contentEncoding,
+				ContentEncoding: asset.contentEncoding ?? undefined,
 			},
 		}).done()
 	}

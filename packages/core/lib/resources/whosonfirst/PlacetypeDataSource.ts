@@ -67,7 +67,7 @@ function sqlParameters(input: Partial<PlacetypeRecord>): Record<string, SQLInput
 	const parameters: Record<string, SQLInputValue> = {}
 
 	for (const [key, value] of Object.entries(input)) {
-		if (value !== undefined) {
+		if (value) {
 			parameters[key] = value
 		}
 	}

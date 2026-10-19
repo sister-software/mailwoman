@@ -105,7 +105,7 @@ export interface BuildBDCOptions {
 	/**
 	 * Provider-list rows that populate `bdc_provider`, one row per provider ID.
 	 */
-	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
+	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow> | null
 
 	/**
 	 * The filer database used to choose the primary FRN for a provider ID listed under several FRNs.
@@ -442,7 +442,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		for (const row of stageStmt.iterate() as IterableIterator<BDCStageRow>) {
 			let resolved = centroidCache.get(row.geoid)
 
-			if (resolved === undefined) {
+			if (!resolved) {
 				const centroid = options.blockCentroids(row.geoid)
 
 				resolved = centroid ? blockCentroidCells(centroid) : null

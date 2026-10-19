@@ -22,7 +22,7 @@ function line(row: SourceCensusRow, countries?: readonly string[]): string {
 	if (!row.readable) return `${row.artifact} (${mb}) — UNUSABLE: ${row.reason}`
 
 	const counts = Object.entries(row.countries ?? {})
-		.filter(([, n]) => n > 0 || countries !== undefined)
+		.filter(([, n]) => n > 0 || countries)
 		.toSorted((a, b) => b[1] - a[1])
 
 	const shown = countries ? counts : counts.slice(0, 8)

@@ -463,7 +463,7 @@ class WOFResolver implements Resolver {
 		const country =
 			parentResolved?.country ??
 			defaultCountryForLookup ??
-			(typeof countryHint === "string" ? countryHint : undefined) ??
+			(typeof countryHint === "string" ? countryHint : null) ??
 			state.hardCountry
 
 		if (country) {
@@ -740,7 +740,7 @@ class WOFResolver implements Resolver {
 function promoteCapitalsWithReceipt<
 	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
 		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
->(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> }): T[] {
+>(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> | null }): T[] {
 	const promoted = promoteCapitals(ranked, level)
 
 	if (promoted[0] !== ranked[0]) {

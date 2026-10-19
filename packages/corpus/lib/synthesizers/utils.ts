@@ -695,7 +695,7 @@ export function tieredNumber(random: () => number, bands: readonly TieredNumberB
 	let chosen = bands.at(-1)!
 
 	for (const band of bands) {
-		if (band.cutoff === undefined || r < band.cutoff) {
+		if (!band.cutoff || r < band.cutoff) {
 			chosen = band
 
 			break

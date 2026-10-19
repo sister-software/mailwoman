@@ -115,7 +115,7 @@ function run(overrides: Partial<AccountInput> = {}): AccountInput {
 			hierarchy: [],
 			...overrides.result,
 		},
-		...(overrides.trace === undefined ? {} : { trace: overrides.trace }),
+		...(!overrides.trace ? {} : { trace: overrides.trace }),
 	}
 }
 

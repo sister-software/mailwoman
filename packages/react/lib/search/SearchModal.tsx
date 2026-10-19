@@ -251,7 +251,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 
 	// An empty query shows no results, whatever the last settled response was.
 	const status: Status = debounced === "" ? { kind: "idle" } : settled
-	const response = status.kind === "results" ? status.response : undefined
+	const response = status.kind === "results" ? status.response : null
 	// The announcement reports a slow request while the last results stay on screen.
 	const announced: Status = loading && debounced !== "" ? { kind: "loading" } : status
 
@@ -347,9 +347,9 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						? 0
 						: event.key === "End"
 							? last
-							: undefined
+							: null
 
-		if (next !== undefined) {
+		if (typeof next === "number") {
 			event.preventDefault()
 			setSelected(next)
 			document.getElementById(optionID(next))?.scrollIntoView({ block: "nearest" })
@@ -401,7 +401,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		)
 	}
 
-	const noResults = response !== undefined && response.hits.length === 0
+	const noResults = response && response.hits.length === 0
 
 	return (
 		<dialog

@@ -64,7 +64,7 @@ export interface SoftFeatures {
  * A missing source skips its channel.
  */
 export interface SoftFeatureSources {
-	postcodeAnchorLookup?: AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup | null
 
 	/**
 	 * The substrings the anchor channel looks up.
@@ -75,7 +75,7 @@ export interface SoftFeatureSources {
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 
-	gazetteerLexicon?: GazetteerLexicon
+	gazetteerLexicon?: GazetteerLexicon | null
 
 	countryLexicon?: CountryLexicon
 
@@ -111,29 +111,25 @@ export function buildSoftFeatures(
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
 				spanMode: sources.postcodeAnchorSpanMode ?? "alnum-run",
 			})
-		: undefined
+		: null
 
-	const gazetteer = sources.gazetteerLexicon
-		? buildGazetteerFeatures(text, pieces, sources.gazetteerLexicon)
-		: undefined
+	const gazetteer = sources.gazetteerLexicon ? buildGazetteerFeatures(text, pieces, sources.gazetteerLexicon) : null
 
 	const gazFed =
 		gazetteer && anchor && sources.suppressGazetteerNearPostcode === "on"
 			? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 			: gazetteer
 
-	const country = sources.countryLexicon ? buildCountryFeatures(text, pieces, sources.countryLexicon) : undefined
+	const country = sources.countryLexicon ? buildCountryFeatures(text, pieces, sources.countryLexicon) : null
 
-	const streetType = sources.streetTypeLexicon
-		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
-		: undefined
+	const streetType = sources.streetTypeLexicon ? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon) : null
 
-	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
+	const streetContext = streetType && streetType.confidence.some((c) => c > 0)
 
 	const localitySurface =
 		sources.localitySurfaceLexicon && (streetContext || !sources.streetTypeLexicon)
 			? buildGazetteerFeatures(text, pieces, sources.localitySurfaceLexicon)
-			: undefined
+			: null
 
 	return {
 		anchor: anchor ?? null,

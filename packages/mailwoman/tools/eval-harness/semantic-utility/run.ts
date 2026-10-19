@@ -140,7 +140,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 	const controls = resolveControlRows(definition, committed)
 	const groupByID = new Map(definition.controlRows.map((row) => [row.id, row.group]))
 
-	const route = options.semanticObservation ? await createSemanticObservationRoute() : undefined
+	const route = options.semanticObservation ? await createSemanticObservationRoute() : null
 
 	using pipelineHandle = await createPOIBoardPipeline({
 		...options,

@@ -43,7 +43,7 @@ const OVERZOOM_ALLOWANCE = 1
 export function framingZoom(diameterKm: number | null, maxTerrainZoom?: number): number {
 	const unclamped = framingZoomForDiameter(diameterKm)
 
-	if (maxTerrainZoom === undefined) return unclamped
+	if (!maxTerrainZoom) return unclamped
 
 	return Math.min(unclamped, maxTerrainZoom + OVERZOOM_ALLOWANCE)
 }

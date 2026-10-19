@@ -327,7 +327,7 @@ export async function harvestVlaanderenAD(
 	for (let startIndex = 0; startIndex < addressCount; startIndex += pageSize) {
 		if (options.signal?.aborted) break
 
-		if (options.maxPages !== undefined && addressPages.length >= options.maxPages) break
+		if (options.maxPages && addressPages.length >= options.maxPages) break
 
 		const existing = onDisk.get(startIndex)
 

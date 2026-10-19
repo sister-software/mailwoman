@@ -244,7 +244,7 @@ interface CensusPlan {
 	inputPath?: string
 	canonicalPath?: string
 	country?: string
-	limit?: number
+	limit?: number | null
 	sourceCSVPath?: string
 	idColumn?: string
 	idPrefix: string
@@ -274,7 +274,7 @@ function planFromArguments(): CensusPlan {
 		inputPath: values.input,
 		canonicalPath,
 		country: values.country,
-		limit: values.limit ? Number(values.limit) : undefined,
+		limit: typeof values.limit === "string" ? Number(values.limit) : null,
 		sourceCSVPath: values["source-csv"],
 		idColumn: values["id-column"],
 		idPrefix: values["id-prefix"] ?? (adapterID ? `${adapterID}-` : ""),

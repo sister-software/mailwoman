@@ -74,7 +74,7 @@ export interface OSOpenFileManifest extends SourceManifest {
  */
 export function selectOSDownload(product: OSOpenProduct, downloads: readonly OSDownload[]): OSDownload {
 	const matches = downloads.filter((download) => download.format === product.format)
-	const chosen = matches.find((download) => download.area === "GB") ?? (matches.length === 1 ? matches[0] : undefined)
+	const chosen = matches.find((download) => download.area === "GB") ?? (matches.length === 1 ? matches[0] : null)
 
 	if (!chosen) {
 		throw new Error(

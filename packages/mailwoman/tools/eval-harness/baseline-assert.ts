@@ -147,7 +147,7 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 	for (const [metricKey, id] of Object.entries(profile.observe)) {
 		const observed = readings[metricKey]
 
-		if (observed === undefined) continue
+		if (!observed) continue
 		observations.push({ id, observed })
 	}
 
@@ -182,7 +182,7 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		// An absolute tolerance takes precedence when declared.
 		// A zero-valued row needs an absolute tolerance because relative deviation is undefined.
-		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
+		if (baseline.tolerance_abs || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)
 

@@ -32,9 +32,9 @@ const PANEL = [
 ] as const
 
 describe.skipIf(!present)("Node↔browser candidate parity over the real artifact", () => {
-	const raw = present ? new DatabaseClient<CandidateDatabase>(CANDIDATE_DB, { readOnly: true }) : undefined
-	const node = present ? new NodeCandidateLookup({ databasePath: CANDIDATE_DB }) : undefined
-	const browser = raw ? new BrowserCandidateLookup(stubRangeDatabase(raw)) : undefined
+	const raw = present ? new DatabaseClient<CandidateDatabase>(CANDIDATE_DB, { readOnly: true }) : null
+	const node = present ? new NodeCandidateLookup({ databasePath: CANDIDATE_DB }) : null
+	const browser = raw ? new BrowserCandidateLookup(stubRangeDatabase(raw)) : null
 
 	afterAll(() => {
 		raw?.destroy()

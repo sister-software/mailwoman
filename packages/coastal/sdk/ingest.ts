@@ -156,11 +156,11 @@ export async function readCoastalSourceIdentity(layer: string, options: CoastalI
 function idBounds(options: CoastalIngestOptions): string {
 	const bounds: string[] = []
 
-	if (options.objectIDFrom !== undefined) {
+	if (options.objectIDFrom) {
 		bounds.push(`OBJECTID >= ${options.objectIDFrom}`)
 	}
 
-	if (options.objectIDTo !== undefined) {
+	if (options.objectIDTo) {
 		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
 	}
 
@@ -282,7 +282,7 @@ async function* streamLayer(
 		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
-		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),
+		...(typeof options.limit !== "number" ? [] : ["-limit", String(options.limit)]),
 		"-sql",
 		sql,
 		options.geodatabasePath,
@@ -315,11 +315,11 @@ async function* streamLayer(
  * A single space is a real value in this product, so blank strings are kept.
  */
 function verbatimText(value: number | string | null | undefined): string | null {
-	return value === null || value === undefined ? null : String(value)
+	return value === null || !value ? null : String(value)
 }
 
 function numberOf(value: number | string | null | undefined): number | null {
-	return value === null || value === undefined ? null : Number(value)
+	return value === null || !value ? null : Number(value)
 }
 
 /**
@@ -372,7 +372,7 @@ function assertFiniteDistance(
 ): number {
 	const distance = Number(value)
 
-	if (value === null || value === undefined || !Number.isFinite(distance)) {
+	if (value === null || !value || !Number.isFinite(distance)) {
 		throw new TypeError(
 			`coastal ingest: ${scenario.layer} feature ${id} carries no ${scenario.distanceColumn} value — a missing distance defaulted to zero reads as "no erosion projected here"`
 		)

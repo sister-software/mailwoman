@@ -81,9 +81,9 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
  * would therefore round-trip into an entry that is expired the instant it is read.
  */
 function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
-	if (value.createdAt !== undefined && !Number.isFinite(value.createdAt)) return false
+	if (value.createdAt && !Number.isFinite(value.createdAt)) return false
 
-	return value.ttl === undefined || Number.isFinite(value.ttl)
+	return !value.ttl || Number.isFinite(value.ttl)
 }
 
 /**

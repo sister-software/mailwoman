@@ -495,7 +495,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const capitalLevel = capitals
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
-		: undefined
+		: null
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 
@@ -648,7 +648,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 					venueHead,
 					venueHeadOpts: {
 						...priors.venueHeadOptsFor(venueHeadCountry),
-						...(options.venueHeadBiasScale !== undefined ? { biasScale: options.venueHeadBiasScale } : {}),
+						...(options.venueHeadBiasScale ? { biasScale: options.venueHeadBiasScale } : {}),
 					},
 				}
 			: {}),

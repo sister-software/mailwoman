@@ -60,7 +60,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 			for await (const rec of rows) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const cc = (rec[GEONAMES_POSTAL_COLUMNS.country] ?? "").trim()
 
@@ -88,7 +88,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 				}
 
 				for (const v of variants) {
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 					const aligned = componentsPresentIn(v.comp, v.raw)
 
 					if (Object.keys(aligned).length < 2) continue

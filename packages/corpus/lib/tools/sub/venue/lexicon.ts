@@ -303,12 +303,12 @@ export interface GenerateSubVenueLexiconOptions {
 	 *
 	 * The caller opens `poi.db`, so this function does not depend on the database.
 	 */
-	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[]
+	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[] | null
 	/**
 	 * The `poi.db` layer vintage.
 	 * The builder uses it only when `overtureRows` is non-empty.
 	 */
-	overtureVintage?: string
+	overtureVintage?: string | null
 	/**
 	 * The path of the written table.
 	 */

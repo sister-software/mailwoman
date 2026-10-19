@@ -370,7 +370,7 @@ async function pullBundles(
 					}
 
 					verifyDetail = "md5 verified"
-				} else if (remote.contentLength !== undefined) {
+				} else if (remote.contentLength) {
 					if (bytesWritten !== remote.contentLength) {
 						await removePathIfPresent(tmpPath)
 						throw new Error(

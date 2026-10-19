@@ -118,7 +118,7 @@ if (!mixtureAuditPresent) {
 	)
 }
 
-const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, configPath) : undefined
+const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, configPath) : null
 
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,

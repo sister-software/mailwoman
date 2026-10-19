@@ -264,7 +264,7 @@ function toPOISourceRow(
 
 	const categoryID = matchOSMPOITagRule(tags, rules)
 
-	if (!categoryID) return null
+	if (typeof categoryID !== "number") return null
 
 	const pt = representativePoint(feature.geometry ?? null)
 

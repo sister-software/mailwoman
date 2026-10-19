@@ -18,7 +18,7 @@
  *   membership for the finer call.
  */
 
-import type { SystemCode } from "@mailwoman/codex/address/system-code"
+import type { SystemCode } from "@mailwoman/codex/address/system/code"
 import { normalizeAuPostcode } from "@mailwoman/codex/au"
 import { normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { normalizePLZ } from "@mailwoman/codex/de"

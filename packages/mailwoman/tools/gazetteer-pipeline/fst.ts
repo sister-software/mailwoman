@@ -152,7 +152,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
 	for (const relative of ADMIN_DERIVED_FST_ARTIFACTS) {
 		const path = wofDatabasePath(relative)
 		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
-		const buildable = locale !== undefined && FST_LOCALES.has(locale)
+		const buildable = locale && FST_LOCALES.has(locale)
 
 		const rebuildCommand = buildable
 			? `mailwoman gazetteer build fst --locales ${locale}`
@@ -366,7 +366,7 @@ export interface BuildLocaleFSTsOpts {
 	 *
 	 * @defaultValue every {@linkcode FST_LOCALES} key
 	 */
-	locales?: string[]
+	locales?: string[] | null
 	/**
 	 * WOF admin DB.
 	 *

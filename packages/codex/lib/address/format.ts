@@ -142,7 +142,7 @@ function scriptIsFreeToDerive(country: string): boolean {
 	const code = country.trim().toUpperCase()
 	const known = slotParity.get(code)
 
-	if (known !== undefined) return known
+	if (known) return known
 
 	const latin = layoutForCountry(code, "latin")
 	const local = layoutForCountry(code, "local")

@@ -219,7 +219,7 @@ function venueMarkerWeight(tokens: ReadonlyArray<SegmentToken>): number {
 	for (const t of tokens) {
 		const w = VENUE_MARKERS.get(t.body.toLowerCase())
 
-		if (w !== undefined && w > maxWeight) {
+		if (w && w > maxWeight) {
 			maxWeight = w
 		}
 	}

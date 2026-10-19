@@ -49,7 +49,7 @@ export function adoptCommand(message: LicenseEmail): string {
 
 export function licenseEmailSections(message: LicenseEmail, siteOrigin: string): EmailSection[] {
 	const origin = siteOrigin.replace(/\/$/u, "")
-	const first = message.refreshSecret !== undefined
+	const first = message.refreshSecret
 
 	const secret: EmailSection = first
 		? {

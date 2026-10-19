@@ -142,7 +142,7 @@ export function currencyMinorDigits(currency: string): number {
 
 	const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits
 
-	if (digits === undefined) throw new RangeError(`the runtime reports no minor-unit digits for ${currency}`)
+	if (typeof digits !== "number") throw new RangeError(`the runtime reports no minor-unit digits for ${currency}`)
 
 	return digits
 }

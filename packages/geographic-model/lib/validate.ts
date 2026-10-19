@@ -168,7 +168,7 @@ function readProvenance(issues: ValidationIssue[], path: string, container: Reco
 	const value = container.provenance
 	const fieldPath = `${path}.provenance`
 
-	if (value === undefined) {
+	if (value == null) {
 		add(issues, fieldPath, ValidationIssueCode.MissingField, "`provenance` is required")
 
 		return

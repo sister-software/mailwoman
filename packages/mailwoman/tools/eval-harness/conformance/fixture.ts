@@ -180,7 +180,7 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 }
 
 function readContext(raw: unknown, label: string): ConformanceContext | null {
-	if (raw === undefined) return null
+	if (raw == null) return null
 
 	if (!isPlainObject(raw)) {
 		throw new Error(`${label}: "context" must be an object (got ${stringifyJSON(raw)})`)
@@ -228,7 +228,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 
 	const comparator = record["resultComparator"]
 
-	if (comparator === undefined) {
+	if (comparator == null) {
 		throw new Error(
 			`${label}: "resultComparator" is required — a law states which observable interface it preserves. ` +
 				`Known: ${RESULT_COMPARATORS.join(", ")}`
@@ -244,7 +244,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 	const resultComparator = comparator
 	const expected = record["expect"]
 
-	if (expected === undefined) {
+	if (expected == null) {
 		throw new Error(`${label}: "expect" is required — known: ${CONFORMANCE_RELATIONS.join(", ")}`)
 	}
 
@@ -264,7 +264,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 
 	const rawStatus = record["status"]
 
-	if (rawStatus !== undefined && !isConformanceStatus(rawStatus)) {
+	if (rawStatus != null && !isConformanceStatus(rawStatus)) {
 		throw new Error(`${label}: unknown status ${stringifyJSON(rawStatus)} — known: ${CONFORMANCE_STATUSES.join(", ")}`)
 	}
 
@@ -272,7 +272,7 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 
 	const bugRef = record["bugRef"]
 
-	if (bugRef !== undefined && (typeof bugRef !== "string" || !bugRef.trim())) {
+	if (bugRef != null && (typeof bugRef !== "string" || !bugRef.trim())) {
 		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${stringifyJSON(bugRef)})`)
 	}
 
@@ -301,13 +301,13 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 
 	const rowRef = record["rowRef"]
 
-	if (rowRef !== undefined && (typeof rowRef !== "string" || !rowRef.trim())) {
+	if (rowRef != null && (typeof rowRef !== "string" || !rowRef.trim())) {
 		throw new Error(`${label}: "rowRef" must be a non-empty string when present (got ${stringifyJSON(rowRef)})`)
 	}
 
 	const note = record["note"]
 
-	if (note !== undefined && typeof note !== "string") {
+	if (note != null && typeof note !== "string") {
 		throw new Error(`${label}: "note" must be a string when present (got ${stringifyJSON(note)})`)
 	}
 

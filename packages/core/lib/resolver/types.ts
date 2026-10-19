@@ -280,7 +280,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 /**
  * Fills each unset switch from {@link RESOLVE_SWITCH_DEFAULTS}.
  */
-export function resolveSwitches(opts: Partial<ResolveSwitches>): ResolveSwitches {
+export function resolveSwitches(opts: { [K in keyof ResolveSwitches]?: ResolveSwitches[K] | null }): ResolveSwitches {
 	const switches = { ...RESOLVE_SWITCH_DEFAULTS }
 
 	for (const key of Object.keys(RESOLVE_SWITCH_DEFAULTS) as (keyof ResolveSwitches)[]) {
@@ -483,7 +483,7 @@ export interface ResolveOpts {
 	/**
 	 * Optional sink for resolver-internal trace records.
 	 */
-	traceSink?: (record: ResolveNodeTrace) => void
+	traceSink?: ((record: ResolveNodeTrace) => void) | null
 	/**
 	 * Diagnose unresolved value reachability across placetypes.
 	 *

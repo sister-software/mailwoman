@@ -132,7 +132,7 @@ export function caseApplicability(
 		}
 	}
 
-	const sensitive = country ? LOCALE_SENSITIVE_CASING[country.toUpperCase()] : undefined
+	const sensitive = country ? LOCALE_SENSITIVE_CASING[country.toUpperCase()] : null
 
 	if (sensitive && [...sensitive.characters].some((character) => text.includes(character))) {
 		return {

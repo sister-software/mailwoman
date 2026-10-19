@@ -44,7 +44,7 @@ export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	 *
 	 * @defaultValue {@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}
 	 */
-	countries?: readonly string[]
+	countries?: readonly string[] | null
 	/**
 	 * Export directory to read from.
 	 *

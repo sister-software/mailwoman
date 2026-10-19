@@ -167,7 +167,7 @@ describe("wallonie adapter against the fixture member", () => {
 
 		// `BE.WL.ICAR.AddressAreaName.231` is `Braine-l'Alleud`, the same name as its municipality,
 		// so nine rows state no dependent locality and the tenth states `Hamme-Mille`.
-		expect(rows.filter((row) => row.components.dependent_locality !== undefined)).toHaveLength(1)
+		expect(rows.filter((row) => row.components.dependent_locality)).toHaveLength(1)
 		expect(rows.some((row) => row.raw.includes("Braine-l'Alleud, 1420 Braine-l'Alleud"))).toBe(false)
 	})
 

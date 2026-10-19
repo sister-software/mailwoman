@@ -37,7 +37,6 @@ export function toFeature(
 
 	return {
 		type: "Feature",
-		id: undefined, // Consider using entity.id here.
 		geometry: {
 			type: "Point",
 			coordinates: [entity.coordinate!.longitude, entity.coordinate!.latitude],

@@ -236,7 +236,7 @@ export interface HarvestESNavarraOptions {
 	 *
 	 * A number the service document does not list is reported as a failure rather than ignored.
 	 */
-	partitions?: readonly string[]
+	partitions?: readonly string[] | null
 	/**
 	 * Stop after this number of partitions, counting the ones already on disk.
 	 */
@@ -310,7 +310,7 @@ function selectPartitions(
 		selected = found
 	}
 
-	if (options.limit !== undefined) {
+	if (typeof options.limit === "number") {
 		selected = selected.slice(0, options.limit)
 	}
 

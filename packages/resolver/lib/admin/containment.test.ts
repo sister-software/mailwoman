@@ -72,7 +72,7 @@ async function makeBackend(
 				prominence: 8 - spec.id,
 				exactMatch: spec.exactMatch ?? true,
 				importance: spec.importance ?? null,
-				containedByQualifier: !query.regionQualifier || spec.contained === undefined ? null : spec.contained,
+				containedByQualifier: !query.regionQualifier || spec.contained == null ? null : spec.contained,
 			}))
 		},
 	}
@@ -162,7 +162,7 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
 		const { locality } = await resolveWith([{ id: 1, country: "US" }], { adminContainmentRerank: false }, seen)
 
-		expect(seen.every((q) => q.regionQualifier === undefined)).toBe(true)
+		expect(seen.every((q) => !q.regionQualifier)).toBe(true)
 		expect(locality.metadata?.["admin_containment"]).toBeUndefined()
 	})
 
@@ -175,7 +175,7 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 			seen
 		)
 
-		expect(seen.every((q) => q.regionQualifier === undefined)).toBe(true)
+		expect(seen.every((q) => !q.regionQualifier)).toBe(true)
 	})
 
 	it("threads under a locale-INFERRED scope — the scope the setting exists to see past", async () => {

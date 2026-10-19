@@ -81,7 +81,7 @@ export interface WOFSQLitePlaceLookupOpts {
 	 *
 	 * Absent, every alias code path is skipped and the resolver is byte-identical.
 	 */
-	postalCityAliases?: WOFPostalCityAliasLookup
+	postalCityAliases?: WOFPostalCityAliasLookup | null
 }
 
 /**
@@ -168,7 +168,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 */
 	readonly #postalCityAliases: WOFPostalCityAliasLookup | null
 
-	constructor(opts: WOFSQLitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
+	constructor(opts: WOFSQLitePlaceLookupOpts, weights?: Partial<RankingWeights> | null) {
 		if (opts.database && opts.databasePath) {
 			throw new Error("WOFSQLitePlaceLookup: pass either `database` or `databasePath`, not both")
 		}
@@ -549,7 +549,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	#countryWOFId(code: string): number | null {
 		const cached = this.#countryWOFIdCache.get(code)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 		let id: number | null
 
 		try {
@@ -666,7 +666,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 
-			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
+			const anchor = anchorRow ? merged.get(anchorRow.id) : null
 
 			if (
 				anchor &&

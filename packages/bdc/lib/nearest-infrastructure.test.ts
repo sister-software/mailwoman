@@ -27,7 +27,7 @@
  *   `schemadb` fixtures are separate, minimal `layerschemadatabase`-only databases (no `poi` table at
  *   all) — proving the coverage join runs against whatever database the caller passes rather than poi.db's own
  *   coverage. One fixture's `layer_coverage` is left completely empty (every hit must report
- *   `coverage: undefined`, the meaning-of-zero rule); another has coverage written for exactly the res-6
+ *   `coverage: null`, the meaning-of-zero rule); another has coverage written for exactly the res-6
  *   cells the hits land in (computed via the same `res9ShortCellToRes6Parent`
  *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
@@ -260,7 +260,7 @@ describe("nearestInfrastructure", () => {
 		expect(nearHit.h3Cell).toBe(cellFor(TELECOM_EXCHANGE_NEAR.latitude, TELECOM_EXCHANGE_NEAR.longitude))
 	})
 
-	it("reports coverage: undefined for every hit when the layer has never surveyed anywhere (meaning-of-zero)", async () => {
+	it("reports coverage: null for every hit when the layer has never surveyed anywhere (meaning-of-zero)", async () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
 		using schemadb = await openemptyschemadb()
 

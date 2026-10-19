@@ -478,7 +478,7 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 		expect(options.limit).toBe(12)
 	})
 
-	// An `outDir: undefined` own property would defeat the `??` default and an empty
+	// An `outDir: null` own property would defeat the `??` default and an empty
 	// `components` array would filter every tag out.
 	it("omits each option entirely when its flag was never set", () => {
 		const options = runAblationOptions({})

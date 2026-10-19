@@ -526,7 +526,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 
 	for (const [prefix, group] of [...groups].toSorted(([a], [b]) => a.localeCompare(b))) {
 		const ancestors: PostcodePrefixAncestor[] = [countryAncestor]
-		const unanimous = group.regionsSeen.size === 1 ? [...group.regionsSeen.values()][0] : undefined
+		const unanimous = group.regionsSeen.size === 1 ? [...group.regionsSeen.values()][0] : null
 
 		if (unanimous) {
 			ancestors.push(unanimous)

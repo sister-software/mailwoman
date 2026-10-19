@@ -263,8 +263,8 @@ export function parseOfcomCoverage<const F extends OfcomCoverageField>(
 	const keyColumn = source.level === OfcomCoverageLevel.Postcode ? POSTCODE_KEY : OUTPUT_AREA_KEY
 	const keyIndex = columns.get(keyColumn)
 
-	if (keyIndex === undefined) {
-		throw new Error(`${file} names a ${source.level} file, and its header has no "${keyColumn}" column.`)
+	if (typeof keyIndex !== "number") {
+		throw new TypeError(`${file} names a ${source.level} file, and its header has no "${keyColumn}" column.`)
 	}
 
 	const missing = fields.filter((field) => !columns.has(field))

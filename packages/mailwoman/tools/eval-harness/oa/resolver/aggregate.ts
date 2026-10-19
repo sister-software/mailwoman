@@ -113,13 +113,13 @@ export function recordInto(pair: AggPair, state: string | null, result: ArmResul
  */
 export function dumpAggPair(g: AggPair): Record<string, unknown> {
 	return {
-		overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },
+		overall: { ...g.overall, errs: null, errN: g.overall.errs.length },
 		coord: {
 			p50: percentile(g.overall.errs, 50),
 			p90: percentile(g.overall.errs, 90),
 			p99: percentile(g.overall.errs, 99),
 		},
-		byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
+		byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: null }])),
 	}
 }
 

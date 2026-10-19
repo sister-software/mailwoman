@@ -27,7 +27,7 @@ export class ArcGISServiceError extends Error {
 		const details = envelope.details?.length ? ` (${envelope.details.join("; ")})` : ""
 
 		super(
-			`${context}: the ArcGIS service answered an error${envelope.code === undefined ? "" : ` ${envelope.code}`} — ${envelope.message}${details}`
+			`${context}: the ArcGIS service answered an error${!envelope.code ? "" : ` ${envelope.code}`} — ${envelope.message}${details}`
 		)
 
 		this.name = "ArcGISServiceError"

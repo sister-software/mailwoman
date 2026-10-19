@@ -60,7 +60,7 @@ function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
 			insertName.run(r.id, "abbr", a)
 		}
 
-		if (r.population !== undefined) {
+		if (r.population) {
 			insertPop.run(r.id, r.population)
 		}
 	}

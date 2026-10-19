@@ -144,7 +144,7 @@ export async function loadClassifierFromWeights(
 						ctxChars: resolved.encoder.ctxChars,
 					},
 				}
-			: undefined
+			: null
 
 	const [tokenizer, runner] = await Promise.all([
 		charEncoder ? undefined : MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
@@ -235,9 +235,7 @@ export async function loadClassifierFromWeights(
 			if (peekedHeader.country === localeCountry) {
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
-					...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
-						? {}
-						: { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
+					...(!$public.MAILWOMAN_PAIR_PARENT_DELTA ? {} : { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
 				}
 			} else {
 				console.warn(

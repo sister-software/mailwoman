@@ -249,10 +249,9 @@ export function transactionView(prepared: PreparedScenario, transaction: Transac
 			return {
 				...plan,
 				route: plan.route.filter((segment) => !leased.has(segment)),
-				existingSubscribers:
-					count === undefined
-						? plan.existingSubscribers
-						: [...plan.existingSubscribers, { month: transaction.integrationMonth, count, basis: transaction.basis }],
+				existingSubscribers: !count
+					? plan.existingSubscribers
+					: [...plan.existingSubscribers, { month: transaction.integrationMonth, count, basis: transaction.basis }],
 			}
 		}),
 	}

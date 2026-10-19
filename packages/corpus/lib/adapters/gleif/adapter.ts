@@ -465,7 +465,7 @@ export function houseNumberLeadsStreet(country: string, script: AddressScript | 
 	const key = `${country}:${script ?? ""}`
 	const cached = numberOrderCache.get(key)
 
-	if (cached !== undefined) return cached
+	if (cached) return cached
 
 	const probe = formatAddressRow({ house_number: "9", street: "Q" }, country, { singleLine: true, script })
 
@@ -727,7 +727,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 			for await (const record of readGLEIFRecords(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && count >= opts.limit) break
+				if (typeof opts.limit === "number" && count >= opts.limit) break
 
 				if (!checkedHeader) {
 					checkedHeader = true
@@ -751,7 +751,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 				}
 
 				for (const block of blocks) {
-					if (opts.limit !== undefined && count >= opts.limit) break
+					if (typeof opts.limit === "number" && count >= opts.limit) break
 
 					const reading = readGLEIFAddress(record, block)
 

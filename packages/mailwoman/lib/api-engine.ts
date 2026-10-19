@@ -53,7 +53,7 @@ async function wofPaths(): Promise<string[]> {
 
 	// The env override is comma-split and probed like the convention set: a listed database
 	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
-	const explicit = env ? extractDelimited(env) : undefined
+	const explicit = env ? extractDelimited(env) : null
 
 	return existingWOFDatabasePaths(explicit)
 }
@@ -137,7 +137,7 @@ async function buildHealthData(): Promise<HealthData> {
 					name: card["name"],
 					version: card["version"],
 					locale: card["locale"],
-					labels: Array.isArray(card["labels"]) ? card["labels"].length : undefined,
+					labels: Array.isArray(card["labels"]) ? card["labels"].length : null,
 					format: card["format"],
 				}
 			: null,

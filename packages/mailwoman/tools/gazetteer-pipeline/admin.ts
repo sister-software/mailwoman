@@ -57,8 +57,8 @@ export interface BuildAdminOptions {
 	 * @defaultValue `<data-root>/db/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: PathBuilderLike
-	overtureCountries?: readonly string[]
-	geonamesCountries?: readonly string[]
+	overtureCountries?: readonly string[] | null
+	geonamesCountries?: readonly string[] | null
 	overtureRelease?: string
 	/**
 	 * Skip the verify step (fixture/dev runs only — an unverified artifact must never be promoted).

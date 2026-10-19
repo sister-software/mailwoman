@@ -236,7 +236,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		)
 	}
 
-	const batched = "batched" in options ? options.batched : undefined
+	const batched = "batched" in options ? options.batched : null
 	const source = "batched" in options ? undefined : options.source
 	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
@@ -285,7 +285,7 @@ async function buildZoningResult(
 		)
 	}
 
-	if (options.expectedFeatureCount !== undefined && ingested.features !== options.expectedFeatureCount) {
+	if (options.expectedFeatureCount && ingested.features !== options.expectedFeatureCount) {
 		throw new Error(
 			`zoning build: streamed ${ingested.features} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
 		)

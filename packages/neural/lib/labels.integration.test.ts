@@ -87,7 +87,7 @@ describe("resolveWeights — modelCardPath surface", () => {
 		// The dev tokenizer fixture serves both paths, since explicit mode only
 		// checks that the model path exists.
 		const r = await resolveWeights({ modelPath: TOKENIZER_PATH, tokenizerPath: TOKENIZER_PATH })
-		expect(r.modelCardPath).toBeUndefined()
+		expect(r.modelCardPath).toBeNull()
 		expect(r.source).toBe("explicit")
 	})
 })

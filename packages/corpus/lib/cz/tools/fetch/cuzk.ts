@@ -585,7 +585,7 @@ function selectMunicipalities(
 		selected = found
 	}
 
-	if (options.limit !== undefined) {
+	if (typeof options.limit === "number") {
 		selected = selected.slice(0, options.limit)
 	}
 

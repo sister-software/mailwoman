@@ -88,7 +88,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
-	interp: HTTPVFSInterpolator | undefined
+	interp: HTTPVFSInterpolator | null
 }
 
 interface CandidateExtras {
@@ -101,7 +101,7 @@ export interface GeocoderRuntimeHandle {
 	runtime: GeocoderRuntime
 	releases: ReleaseInfo[]
 	geoBias: GeoBiasControl
-	calibrator: ((raw: number) => number | null) | undefined
+	calibrator: ((raw: number) => number) | null
 	/**
 	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
 	 * Feature-detect via {@link supportsTrace}.
@@ -227,7 +227,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
 
-						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: undefined }
+						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: null }
 					}
 
 					const [situsDB, interpDB] = await Promise.all([
@@ -487,9 +487,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!place.tier && candidate.id && release?.hasPolygons && version) {
 				const cached = polygonCache.get(candidate.id)
 
-				if (cached) {
+				if (cached != null) {
 					place.geometry = cached
-				} else if (cached === undefined && !polygonInflightRef.current.has(candidate.id)) {
+				} else if (!polygonCache.has(candidate.id) && !polygonInflightRef.current.has(candidate.id)) {
 					polygonInflightRef.current.add(candidate.id)
 					const placeID = candidate.id
 
@@ -566,10 +566,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.selectedRelease]
 	)
 
-	const calibrator = useMemo<((raw: number) => number | null) | undefined>(() => {
+	const calibrator = useMemo<((raw: number) => number) | null>(() => {
 		const c = rt.assets?.calibrator
 
-		return c ? (raw: number) => c(raw) : undefined
+		return c ? (raw: number) => c(raw) : null
 	}, [rt.assets])
 
 	const runtime = useMemo<GeocoderRuntime>(() => {

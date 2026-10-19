@@ -84,7 +84,7 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 			run(p.id, "swe", a, 1)
 		}
 
-		if (p.population !== undefined) {
+		if (p.population) {
 			insertPop.run(p.id, p.population)
 		}
 	}

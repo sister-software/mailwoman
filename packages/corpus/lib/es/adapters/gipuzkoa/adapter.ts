@@ -154,14 +154,14 @@ export function createESGipuzkoaAdapter(): CorpusAdapter {
 			for (const archivePath of await archivePaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				for await (const row of streamIndexedInspireRows<MarkupElement>({
 					chunks: () => inspireGMLChunks(archivePath, GML_MEMBER),
 					componentElements: COMPONENT_ELEMENTS,
 					index: (feature) => feature,
 					compose: composeRow,
-					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					limit: typeof opts.limit !== "number" ? undefined : opts.limit - emitted,
 					signal: opts.signal,
 				})) {
 					yield row
@@ -196,7 +196,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Mark
 
 		if (key && referenceStatesNoValue(key)) continue
 
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) throw new UnresolvedComponentReferenceError(ES_GIPUZKOA_ADAPTER_ID, addressID, href)
 

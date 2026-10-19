@@ -78,7 +78,7 @@ const neighbors = await Promise.all((values.without ?? []).map(readOutline))
 const within =
 	own || neighbors.length
 		? (lon: number, lat: number) => (own?.(lon, lat) ?? true) && !neighbors.some((inside) => inside(lon, lat))
-		: undefined
+		: null
 
 const localityLevels = values["locality-level"] ?? []
 const dependentLevels = values["dependent-locality-level"] ?? []
@@ -106,7 +106,7 @@ function namerFor(wanted: readonly string[]): AreaNamer | undefined {
 }
 
 const stats = await writeOSMCorpusJSONL(values.pbf, values.out, {
-	within,
+	within: within ?? undefined,
 	localityOf: namerFor(localityLevels),
 	dependentLocalityOf: namerFor(dependentLevels),
 })

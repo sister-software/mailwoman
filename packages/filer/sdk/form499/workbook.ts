@@ -179,7 +179,7 @@ type WorkbookRow = Record<string, XLSXCellValue | boolean>
 function cell(row: WorkbookRow, key: string): string {
 	const value = row[key]
 
-	if (value === null || value === undefined) return ""
+	if (value === null || !value) return ""
 
 	if (value instanceof Date) return isoDate(value)
 

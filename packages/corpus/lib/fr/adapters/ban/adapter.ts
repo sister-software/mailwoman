@@ -90,7 +90,7 @@ export function createBanAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<BanRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const country = countryOfInseeCode(record.code_insee ?? "")
 

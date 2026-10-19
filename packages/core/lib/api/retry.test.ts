@@ -84,7 +84,7 @@ describe("classifyAxiosFailure", () => {
 			statusText: "",
 			headers,
 			config: {} as InternalAxiosRequestConfig,
-			data: undefined,
+			data: null,
 		})
 	}
 

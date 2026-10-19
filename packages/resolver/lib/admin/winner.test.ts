@@ -94,7 +94,7 @@ describe("adminLadderFor", () => {
 			expect(adminLadderFor({ ...DE_PLZ, country })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		}
 
-		expect(adminLadderFor({ ...DE_PLZ, country: undefined })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor({ ...DE_PLZ, country: null })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
@@ -118,7 +118,7 @@ describe("adminLadderForNodes", () => {
 		confidence: 1,
 		children: [],
 		metadata: { resolver_name: resolverName, ...(over.country ? { resolver_country: over.country } : {}) },
-		...(over.lat === undefined ? {} : { lat: over.lat, lon: over.lon }),
+		...(over.lat == null ? {} : { lat: over.lat, lon: over.lon }),
 	})
 
 	it("finds the postcode node and reads both routes off it", () => {

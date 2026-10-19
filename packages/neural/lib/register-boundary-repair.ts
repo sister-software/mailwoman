@@ -67,7 +67,7 @@ export function repairRegisterBoundaryLabels(
 			const last = absorbed.at(-1)
 
 			// The absorbed tokens must end exactly at the remainder's end so no extra characters join the span.
-			if (last !== undefined && tokens[last]!.end === end + remainder.length) {
+			if (last && tokens[last]!.end === end + remainder.length) {
 				for (const k of absorbed) {
 					setLabel(k, inside)
 				}

@@ -24,15 +24,15 @@ describe("readPath", () => {
 	it("walks dotted paths and distinguishes absence from null", () => {
 		expect(readPath(ROWS[0], "admin_coherence.region")).toEqual({ present: true, value: "confirmed" })
 		expect(readPath(ROWS[3], "admin_coherence.region")).toEqual({ present: true, value: null })
-		expect(readPath(ROWS[4], "admin_coherence.region")).toEqual({ present: false, value: undefined })
+		expect(readPath(ROWS[4], "admin_coherence.region")).toEqual({ present: false, value: null })
 	})
 
 	it("does not traverse arrays — a per-member tally has a different denominator", () => {
-		expect(readPath({ list: [{ a: 1 }] }, "list.a")).toEqual({ present: false, value: undefined })
+		expect(readPath({ list: [{ a: 1 }] }, "list.a")).toEqual({ present: false, value: null })
 	})
 
 	it("reports absence past a scalar rather than throwing", () => {
-		expect(readPath({ tier: "address" }, "tier.deeper")).toEqual({ present: false, value: undefined })
+		expect(readPath({ tier: "address" }, "tier.deeper")).toEqual({ present: false, value: null })
 	})
 })
 

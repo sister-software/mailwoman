@@ -156,7 +156,7 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("registers a floor that rejects an entire band, which is the question it asks", () => {
 		const floors = frozen.arms
 			.map((arm) => arm.resolveOpts?.minWinningScore)
-			.filter((floor): floor is number => floor !== undefined)
+			.filter((floor) => typeof floor === "number")
 
 		expect(floors).toEqual([1, 2, 3, 4])
 

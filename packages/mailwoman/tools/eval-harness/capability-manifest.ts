@@ -239,7 +239,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		// Strict rather than tolerant: a corrupt model card must abort the splice
 		// rather than read as "no capabilities block" and append a second one.
-		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
+		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities) {
 			// Idempotency guard: a prior write left a block.
 			// A text-splice would duplicate the key, so refuse.
 			throw new Error(

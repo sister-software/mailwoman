@@ -209,8 +209,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchESCatastro(
 				{
 					...base,
-					provinces: options.provinces ? extractDelimited(options.provinces) : undefined,
-					municipalities: options.municipalities ? extractDelimited(options.municipalities) : undefined,
+					provinces: options.provinces ? extractDelimited(options.provinces) : null,
+					municipalities: options.municipalities ? extractDelimited(options.municipalities) : null,
 					limit: options.limit,
 				},
 				reportToStderr
@@ -221,7 +221,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchESNavarra(
 				{
 					...base,
-					partitions: options.partitions ? extractDelimited(options.partitions) : undefined,
+					partitions: options.partitions ? extractDelimited(options.partitions) : null,
 					limit: options.limit,
 				},
 				reportToStderr
@@ -230,9 +230,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchMatrikkelen(
 				{
 					...base,
-					// Undefined takes both areas the address-source register holds rows for,
+					// Null takes both areas the address-source register holds rows for,
 					// `0000` for the mainland and `2100` for Svalbard.
-					areas: options.areas ? extractDelimited(options.areas) : undefined,
+					areas: options.areas ? extractDelimited(options.areas) : null,
 				},
 				reportToStderr
 			)
@@ -248,14 +248,14 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchHoujinJP(base, reportToStderr)
 		case "it-anac":
 			return fetchITANAC(
-				{ ...base, editions: options.editions ? extractDelimited(options.editions) : undefined },
+				{ ...base, editions: options.editions ? extractDelimited(options.editions) : null },
 				reportToStderr
 			)
 		case "juso-kr":
 			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
 		case "localdata-kr":
 			return fetchLocaldataKR(
-				{ ...base, categories: options.categories ? extractDelimited(options.categories) : undefined },
+				{ ...base, categories: options.categories ? extractDelimited(options.categories) : null },
 				reportToStderr
 			)
 		case "ban":
@@ -278,9 +278,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined means every country the source's own countryInfo.txt catalogs.
+					// Null means every country the source's own countryInfo.txt catalogs.
 					// Present dumps are skipped.
-					countries: options.countries ? extractDelimited(options.countries) : undefined,
+					countries: options.countries ? extractDelimited(options.countries) : null,
 				},
 				reportToStderr
 			)
@@ -288,10 +288,10 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Undefined rather than an empty list when the flag is absent:
+					// Null rather than an empty list when the flag is absent:
 					// the module's own default set is the answer for "fetch what the corpus wants",
 					// and an empty array would fetch no countries while looking deliberate.
-					countries: options.countries ? extractDelimited(options.countries) : undefined,
+					countries: options.countries ? extractDelimited(options.countries) : null,
 				},
 				reportToStderr
 			)

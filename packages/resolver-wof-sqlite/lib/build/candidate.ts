@@ -226,7 +226,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
 
-		if (id === undefined) {
+		if (typeof id !== "number") {
 			id = ccodes.size
 			ccodes.set(c, id)
 		}
@@ -238,7 +238,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const p = pt || ""
 		let id = ptcodes.get(p)
 
-		if (id === undefined) {
+		if (typeof id !== "number") {
 			id = ptcodes.size
 			ptcodes.set(p, id)
 		}
@@ -306,7 +306,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const ptid = ptID(r.placetype as string | null)
 		const rid = regionOf.get(sid) ?? 0
 
-		const wofPop = r.pop === null || r.pop === undefined ? null : Number(r.pop)
+		const wofPop = r.pop === null || !r.pop ? null : Number(r.pop)
 
 		const pop =
 			POPULATION_CORRECTIONS[sid]?.population ??

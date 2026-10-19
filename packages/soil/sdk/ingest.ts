@@ -122,11 +122,11 @@ function delineationSelectSQL(layer: string, options: SoilIngestOptions): string
 	const select = `SELECT FID AS fid, MUKEY AS mukey, AREASYMBOL AS areasymbol FROM "${layer}"`
 	const bounds: string[] = []
 
-	if (options.fidFrom !== undefined) {
+	if (options.fidFrom) {
 		bounds.push(`FID >= ${options.fidFrom}`)
 	}
 
-	if (options.fidTo !== undefined) {
+	if (options.fidTo) {
 		bounds.push(`FID <= ${options.fidTo}`)
 	}
 
@@ -161,7 +161,7 @@ export async function* readSoilDelineations(
 		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
-		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),
+		...(typeof options.limit !== "number" ? [] : ["-limit", String(options.limit)]),
 		"-sql",
 		delineationSelectSQL(layer, options),
 		options.shapefilePath,

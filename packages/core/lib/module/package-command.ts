@@ -34,7 +34,7 @@ export async function resolvePackageCommand(
 	const defaultBinName = manifest.name?.split("/").at(-1)
 
 	const bin =
-		typeof manifest.bin === "string" ? (binName === defaultBinName ? manifest.bin : undefined) : manifest.bin?.[binName]
+		typeof manifest.bin === "string" ? (binName === defaultBinName ? manifest.bin : null) : manifest.bin?.[binName]
 
 	if (!bin) throw new TypeError(`${packageName}'s package.json has no bin entry for ${binName}`)
 

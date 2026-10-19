@@ -79,7 +79,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.source === "admin-pairs") {
 			triples = await tools.readPairsFromAdmin(countries, {
 				...(options.adminDB ? { adminDB: options.adminDB } : {}),
-				...(options.locale ? { locale: () => options.locale as string } : {}),
+				...(typeof options.locale === "string" ? { locale: () => options.locale as string } : {}),
 			})
 		} else if (options.source === "geonames") {
 			triples = []
@@ -96,9 +96,9 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 			})
 		}
 
-		let kept = tools.applyLocalityQuota(triples, options.quota)
+		let kept = tools.applyLocalityQuota(triples, options.quota ?? undefined)
 
-		if (options.budget !== undefined) {
+		if (options.budget) {
 			kept = tools.applyCountryBudget(kept, options.budget, options.stratifyShape ? localityShape : undefined)
 		}
 

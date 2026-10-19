@@ -24,7 +24,7 @@ const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line under --locale en-US (#2164 routing)", () => {
 	const sessionPromise = haveArtifacts
 		? createGeocodeSession(createGeocodeCommandOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
-		: undefined
+		: null
 
 	afterAll(async () => {
 		;(await sessionPromise)?.[Symbol.dispose]()

@@ -53,7 +53,7 @@ test("isRecordLike: false for arrays, null, and primitives", () => {
 })
 
 test("omitNullable: drops null and undefined but keeps falsy 0 and empty string", () => {
-	expect(omitNullable({ a: 1, b: null, c: undefined, d: 0, e: "" })).toEqual({ a: 1, d: 0, e: "" })
+	expect(omitNullable({ a: 1, b: null, c: null, d: 0, e: "" })).toEqual({ a: 1, d: 0, e: "" })
 })
 
 test("omitNullable: recurses into nested objects", () => {

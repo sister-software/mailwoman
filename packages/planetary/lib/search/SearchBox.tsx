@@ -77,7 +77,7 @@ export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 						if (event.key === "Enter" && autocomplete.activeIndex >= 0) {
 							const active = autocomplete.suggestions[autocomplete.activeIndex]
 
-							const hit = active ? lastHits.current.get(active.value) : undefined
+							const hit = active ? lastHits.current.get(active.value) : null
 
 							if (hit) {
 								onSelect(hit)

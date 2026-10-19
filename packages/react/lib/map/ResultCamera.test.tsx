@@ -61,9 +61,8 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 test("an animated fitBounds omits the duration KEY — passing it as undefined is what produced NaN", () => {
 	const animated = fitBoundsOptionsFor(40, true)
 
-	// The key must be absent rather than merely undefined: `duration: undefined`
-	// satisfies maplibre's `'duration' in options` test and coerces to `NaN`,
-	// and `toBeUndefined()` would pass against the bug.
+	// The key must be absent rather than merely undefined: `duration: null` satisfies maplibre's
+	// `'duration' in options` test and coerces to `NaN`, and `toBeUndefined()` would pass against the bug.
 	expect(Object.hasOwn(animated, "duration")).toBe(false)
 	expect(animated.padding).toBe(40)
 

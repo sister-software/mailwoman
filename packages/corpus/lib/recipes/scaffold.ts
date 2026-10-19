@@ -205,7 +205,7 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
 	const seen = new Set<string>()
 
 	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		if (options.limit !== undefined && tuples.length >= options.limit) break
+		if (typeof options.limit === "number" && tuples.length >= options.limit) break
 
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
@@ -402,7 +402,7 @@ export interface RecipeOptions {
 	seed: number
 	variants: number
 	input?: PathBuilderLike
-	count?: number
+	count?: number | null
 	golden?: boolean
 	sourceName?: string
 	/**
@@ -412,19 +412,19 @@ export interface RecipeOptions {
 	 * A recipe that generates its rows from this repository's own tables declares its register in code.
 	 */
 	register?: string
-	houseNumberProb?: number
-	pmbRatio?: number
-	militaryRatio?: number
-	reversedFraction?: number
+	houseNumberProb?: number | null
+	pmbRatio?: number | null
+	militaryRatio?: number | null
+	reversedFraction?: number | null
 	edgesDir?: string
 	country?: string
-	intlFraction?: number
+	intlFraction?: number | null
 	/**
 	 * `german`: fraction of native-order rows rendered with no commas at all.
 	 *
 	 * @defaultValue `0.3`
 	 */
-	commaFreeFraction?: number
+	commaFreeFraction?: number | null
 	/**
 	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
 	 *
@@ -432,7 +432,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.3`
 	 */
-	ortsteilFraction?: number
+	ortsteilFraction?: number | null
 	/**
 	 * `german`: the WOF admin database the Ortsteil pool is read from.
 	 *
@@ -444,7 +444,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0`
 	 */
-	countryFraction?: number
+	countryFraction?: number | null
 	/**
 	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping.
 	 *
@@ -452,8 +452,8 @@ export interface RecipeOptions {
 	 * `true` or `false` forces that value on every part read this run.
 	 */
 	districtAsLocality?: boolean
-	bareProb?: number
-	hnProb?: number
+	bareProb?: number | null
+	hnProb?: number | null
 	communes?: string
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
@@ -461,7 +461,7 @@ export interface RecipeOptions {
 	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
 	 */
 	banDir?: PathBuilderLike
-	multilocaleCount?: number
+	multilocaleCount?: number | null
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list.
 	 *
@@ -472,20 +472,20 @@ export interface RecipeOptions {
 	/**
 	 * `no-fragment`: share of rows that are counter-distribution (bare locality or bare postcode).
 	 */
-	counterProb?: number
+	counterProb?: number | null
 	/**
 	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >=
 	 * longNumberMinDigits digits (oversample the failing long-number class).
 	 *
 	 * @defaultValue `1` = no boost
 	 */
-	longNumberBoost?: number
+	longNumberBoost?: number | null
 	/**
 	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted.
 	 *
 	 * @defaultValue `3`
 	 */
-	longNumberMinDigits?: number
+	longNumberMinDigits?: number | null
 	/**
 	 * `sub-venue`: the sub-venue lexicon JSON.
 	 *
@@ -512,7 +512,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.3`
 	 */
-	negativeFraction?: number
+	negativeFraction?: number | null
 	/**
 	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
 	 * `category` and `country` columns.
@@ -525,7 +525,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.5`
 	 */
-	venueRegionFraction?: number
+	venueRegionFraction?: number | null
 }
 
 /**

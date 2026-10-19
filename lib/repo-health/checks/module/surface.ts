@@ -109,7 +109,7 @@ function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): Surface
 		if (ts.isVariableStatement(statement) && statement.declarationList.flags & ts.NodeFlags.Const) {
 			constants += statement.declarationList.declarations.length
 
-			if (constants >= MODULE_SURFACE_THRESHOLDS.constants && firstLine.constants === undefined) {
+			if (constants >= MODULE_SURFACE_THRESHOLDS.constants && !firstLine.constants) {
 				firstLine.constants = line
 			}
 		}
@@ -118,7 +118,7 @@ function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): Surface
 	SECTION_DIVIDER.lastIndex = 0
 	const divider = SECTION_DIVIDER.exec(sourceFile.text)
 
-	if (divider?.index !== undefined) {
+	if (divider?.index) {
 		firstLine.sectionDividers = sourceFile.getLineAndCharacterOfPosition(divider.index).line + 1
 	}
 

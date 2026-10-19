@@ -87,7 +87,7 @@ export function recordingStripeFetch(routes: Record<string, StripeRoute>): Recor
 		}
 
 		const body = typeof route.body === "function" ? route.body(form) : route.body
-		const status = isErrorBody(body) ? HTTP_BAD_REQUEST : undefined
+		const status = isErrorBody(body) ? HTTP_BAD_REQUEST : null
 
 		return Response.json(body, { ...(status ? { status } : {}), headers: { "request-id": "req_fixture" } })
 	}

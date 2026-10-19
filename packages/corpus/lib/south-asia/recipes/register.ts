@@ -149,7 +149,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 			for await (const tuple of readTuples(opts.input)) {
 				read++
 
-				if (opts.count !== undefined && emitted >= opts.count) break
+				if (opts.count && emitted >= opts.count) break
 
 				const components = componentsForOSMRow(tuple as Parameters<typeof componentsForOSMRow>[0], country)
 				const rendering = components ? renderSouthAsiaRegister(components, random) : null

@@ -121,7 +121,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// US-centric data without a candidate DB omits it for US results, where "US" is
 	// the right guess, while non-US results include the country tag.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
-	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
+	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = timezoneDatabasePath("timezone.db")
 

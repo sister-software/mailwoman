@@ -342,7 +342,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 
 		const conflictingKey = adminKeysByCountry.get(city.country)?.find((key) => key !== `${city.country}/${city.admin1}`)
 
-		const conflicting = conflictingKey ? postcodeByAdmin.get(conflictingKey) : undefined
+		const conflicting = conflictingKey ? postcodeByAdmin.get(conflictingKey) : null
 
 		if (!conflicting) return { result: "unbuildable" }
 

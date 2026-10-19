@@ -90,7 +90,7 @@ export interface GNAFRooftopOptions {
 	 *
 	 * @defaultValue every state present.
 	 */
-	states?: string[]
+	states?: string[] | null
 	/**
 	 * The G-NAF release tag written to `release` and the layer manifest.
 	 */

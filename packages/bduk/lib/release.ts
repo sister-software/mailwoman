@@ -457,7 +457,7 @@ export function parseBDUKRelease<const C extends BDUKColumn>(
 		const uprn = Number(uprnCell)
 		const earlier = lineOfUPRN.get(uprn)
 
-		if (earlier !== undefined) throw new Error(`${file} line ${line} repeats UPRN ${uprn} from line ${earlier}.`)
+		if (earlier) throw new Error(`${file} line ${line} repeats UPRN ${uprn} from line ${earlier}.`)
 
 		lineOfUPRN.set(uprn, line)
 
@@ -474,7 +474,7 @@ export function parseBDUKRelease<const C extends BDUKColumn>(
 
 			const value = form.read(cell)
 
-			if (value === undefined) {
+			if (value == null) {
 				throw new BDUKValueError({ file, line, uprn: uprnCell, column, value: cell, expected: form.expected })
 			}
 

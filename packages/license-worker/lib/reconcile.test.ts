@@ -105,7 +105,7 @@ async function fixture(
 				paidAt: NOV_1,
 				periodEnd: DEC_1,
 			})
-		: undefined
+		: null
 
 	const recording = recordingStripeFetch({
 		"GET /v1/invoices?": invoiceList(options.listInvoices === false ? [] : [...unreadable, invoice]),

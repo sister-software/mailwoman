@@ -75,7 +75,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 	const intern = (s: string): number => {
 		let idx = stringMap.get(s)
 
-		if (idx === undefined) {
+		if (typeof idx !== "number") {
 			idx = strings.length
 			strings.push(s)
 			stringMap.set(s, idx)

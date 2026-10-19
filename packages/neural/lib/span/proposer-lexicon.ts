@@ -152,7 +152,7 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 
 	const deliveryService = alternatives.length
 		? new RegExp(String.raw`\b(?:${alternatives.join("|")})\s*#?\s*([A-Za-z]?\d[\dA-Za-z-]*)\b`, "gi")
-		: undefined
+		: null
 
 	return {
 		systems: sys,

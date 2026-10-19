@@ -502,11 +502,11 @@ export class NeuralAddressClassifier {
 					biasScale: opts.queryShapeBiasScale ?? 1,
 					inputText: text,
 				})
-			: undefined
+			: null
 
 		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
 
-		tracePriors?.push(untracedPrior("queryShape", queryShapePrior !== undefined && matrixHasBias(queryShapePrior)))
+		tracePriors?.push(untracedPrior("queryShape", Boolean(queryShapePrior && matrixHasBias(queryShapePrior))))
 
 		// The anchor-region prior reads the postcodes the anchor channel fired on,
 		// so it is off on the character path, which feeds no channel.
@@ -529,20 +529,18 @@ export class NeuralAddressClassifier {
 						? {
 								streetContext: {
 									fst: opts.fstStreetMorphology,
-									...(opts.fstStreetContextPositiveScale !== undefined
-										? { positiveScale: opts.fstStreetContextPositiveScale }
-										: {}),
+									...(opts.fstStreetContextPositiveScale ? { positiveScale: opts.fstStreetContextPositiveScale } : {}),
 								},
 							}
 						: {}),
 				})
-			: undefined
+			: null
 
 		if (fstPrior) {
 			emissions = addEmissionMatrix(emissions, fstPrior)
 		}
 
-		tracePriors?.push(untracedPrior("fst", fstPrior !== undefined && matrixHasBias(fstPrior)))
+		tracePriors?.push(untracedPrior("fst", Boolean(fstPrior && matrixHasBias(fstPrior))))
 		tracePriors?.push(untracedPrior("anchorRegion", anchorRegionHits.size > 0))
 
 		const morphologyPrior = opts?.fstStreetMorphology
@@ -552,15 +550,13 @@ export class NeuralAddressClassifier {
 					this.labels,
 					opts.fstStreetMorphologyOpts ?? {}
 				)
-			: undefined
+			: null
 
 		if (morphologyPrior) {
 			emissions = addEmissionMatrix(emissions, morphologyPrior)
 		}
 
-		tracePriors?.push(
-			untracedPrior("streetMorphology", morphologyPrior !== undefined && matrixHasBias(morphologyPrior))
-		)
+		tracePriors?.push(untracedPrior("streetMorphology", Boolean(morphologyPrior && matrixHasBias(morphologyPrior))))
 
 		// The span proposer adds phrase priors and is on by default.
 		const proposerCfg = this.spanProposerFor(opts)
@@ -579,13 +575,13 @@ export class NeuralAddressClassifier {
 					...(morphologyFST ? { isStreetAffix: (word: string) => isStreetAffix(morphologyFST, word) } : {}),
 					...opts.venueHeadOpts,
 				})
-			: undefined
+			: null
 
 		if (venueHeadPrior) {
 			emissions = addEmissionMatrix(emissions, venueHeadPrior)
 		}
 
-		tracePriors?.push(untracedPrior("venueHead", venueHeadPrior !== undefined && matrixHasBias(venueHeadPrior)))
+		tracePriors?.push(untracedPrior("venueHead", Boolean(venueHeadPrior && matrixHasBias(venueHeadPrior))))
 
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any
@@ -621,7 +617,7 @@ export class NeuralAddressClassifier {
 					pieces,
 					this.labels
 				)
-			: undefined
+			: null
 
 		const placetypePairPrior = placetypePairResult?.matrix
 
@@ -637,9 +633,9 @@ export class NeuralAddressClassifier {
 
 					return toLabel !== -1 ? [{ timestep: adj.pieceIndex, toLabel, bonus: adj.bonus }] : []
 				})
-			: undefined
+			: null
 
-		const placetypePairApplied = placetypePairPrior !== undefined && matrixHasBias(placetypePairPrior)
+		const placetypePairApplied = Boolean(placetypePairPrior && matrixHasBias(placetypePairPrior))
 
 		tracePriors?.push({
 			kind: "placetypePair",
@@ -655,7 +651,7 @@ export class NeuralAddressClassifier {
 			kind: "placetypeCensus",
 			applied: false,
 			probePath: null,
-			census: pairProbeTrace?.censusProbedParents === undefined ? null : (pairProbeTrace.censusObservations ?? []),
+			census: !pairProbeTrace?.censusProbedParents ? null : (pairProbeTrace.censusObservations ?? []),
 			censusProbedParents: pairProbeTrace?.censusProbedParents ?? null,
 		})
 

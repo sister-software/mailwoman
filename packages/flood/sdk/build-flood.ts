@@ -165,7 +165,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		)
 	}
 
-	const batched = "batched" in options ? options.batched : undefined
+	const batched = "batched" in options ? options.batched : null
 	const source = "batched" in options ? undefined : options.source
 	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
@@ -175,7 +175,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			: `source: ${source!.layer} · EPSG:${source!.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${source!.origin}`
 	)
 
-	if (options.expectedFeatureCount !== undefined && options.expectedFeatureCount !== declaredFeatureCount) {
+	if (options.expectedFeatureCount && options.expectedFeatureCount !== declaredFeatureCount) {
 		throw new Error(
 			`flood build: the source declares ${declaredFeatureCount} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
 		)

@@ -283,13 +283,11 @@ export function sourceRightsGaps(
 	const rows = new Map(register.sources.map((row) => [row.sourceID, row]))
 	const gaps: SourceRightsGap[] = []
 
-	const former = corpusVersion
-		? resolved.mapping.history?.find((entry) => entry.corpora.includes(corpusVersion))
-		: undefined
+	const former = corpusVersion ? resolved.mapping.history?.find((entry) => entry.corpora.includes(corpusVersion)) : null
 
 	for (const input of former?.inputs ?? resolved.mapping.inputs) {
 		const row = rows.get(input.registerSource)
-		const decision = row ? decisions.get(row.license) : undefined
+		const decision = row ? decisions.get(row.license) : null
 
 		if (!row || !decision) {
 			gaps.push({

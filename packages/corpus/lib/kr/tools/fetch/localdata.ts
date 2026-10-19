@@ -48,7 +48,7 @@ export interface FetchLocaldataKROptions extends BaseFetchOptions {
 	 *
 	 * @defaultValue every category the portal lists.
 	 */
-	categories?: string[]
+	categories?: string[] | null
 }
 
 interface Category {

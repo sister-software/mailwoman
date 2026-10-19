@@ -11,7 +11,7 @@ interface FixturePlace {
 	country: string
 	lat: number
 	lon: number
-	population?: number
+	population?: number | null
 }
 
 const FIXTURE: FixturePlace[] = [
@@ -19,7 +19,7 @@ const FIXTURE: FixturePlace[] = [
 	{ id: 1002, name: "Springfield", country: "US", lat: 42.1, lon: -72.54, population: 153_672 },
 	{ id: 1003, name: "Springfield", country: "US", lat: 37.2, lon: -93.28, population: 171_589 },
 
-	{ id: 1004, name: "Springfield", country: "US", lat: 33.5, lon: -81.28, population: undefined },
+	{ id: 1004, name: "Springfield", country: "US", lat: 33.5, lon: -81.28, population: null },
 
 	{ id: 1100, name: "Tokyo", country: "JP", lat: 35.68, lon: 139.69, population: 13_500_000 },
 ]
@@ -52,7 +52,7 @@ function buildFixtureDB(): DatabaseClient<WOFDatabase> {
 	for (const p of FIXTURE) {
 		insertSpr.run(p.id, p.name, p.country, p.lat, p.lon, p.lat - 0.05, p.lat + 0.05, p.lon - 0.05, p.lon + 0.05)
 
-		if (p.population !== undefined) {
+		if (p.population) {
 			insertPop.run(p.id, p.population)
 		}
 	}

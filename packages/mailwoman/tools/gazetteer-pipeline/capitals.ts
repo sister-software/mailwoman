@@ -140,7 +140,7 @@ export function parseCapitalRows(text: string): CapitalReferenceEntry[] {
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- pre-filtered: only capital-candidate rows reach this split, a few dozen per dump
 		const cols = line.split("\t")
-		const level = cols[6] === "P" ? LEVEL_BY_FEATURE_CODE[cols[7] ?? ""] : undefined
+		const level = cols[6] === "P" ? LEVEL_BY_FEATURE_CODE[cols[7] ?? ""] : null
 
 		if (!level) continue
 
@@ -290,7 +290,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	// `false`: the head is spliced rather than written.
 	// The regex below reopens its closing brace so the entries can be printed one per line.
 	// A trailing newline puts a character after that brace and the match silently fails.
-	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
+	const head = prettyJSON({ ...reference, entries: null }, false).replace(/\n\}$/, ",\n")
 	const body = reference.entries.map((e) => "\t\t" + stringifyJSON(e)).join(",\n")
 
 	await makeDirectories(dirname(options.outPath))

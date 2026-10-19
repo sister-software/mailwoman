@@ -144,7 +144,7 @@ export class Ancestrie implements AncestrieReaderLike {
 		const statePos = this.sections.stateTable + stateID * STATE_ENTRY_SIZE
 		const refStart = this.view.getUint32(statePos + 8, true)
 		const refCount = this.view.getUint32(statePos + 12, true)
-		const count = limit === undefined ? refCount : Math.min(limit, refCount)
+		const count = typeof limit !== "number" ? refCount : Math.min(limit, refCount)
 		const records: AncestrieRecord[] = new Array(count)
 
 		for (let i = 0; i < count; i++) {

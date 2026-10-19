@@ -32,7 +32,7 @@ function run(country?: string, limit?: number) {
 		adapterOptions: {
 			inputPath: fixtureCSV,
 			...(country ? { country } : {}),
-			...(limit === undefined ? {} : { limit }),
+			...(typeof limit !== "number" ? {} : { limit }),
 		},
 		outputDir: scratch.path,
 		corpusVersion: "0.1.0",
@@ -122,7 +122,7 @@ describe("bd-adresses adapter against fixture sample.csv", () => {
 		await run()
 
 		const rows = await readCanonicalRows(scratch.path, BD_ADRESSES_ADAPTER_ID)
-		const unnumbered = rows.filter((r) => r.components.house_number === undefined)
+		const unnumbered = rows.filter((r) => !r.components.house_number)
 
 		// `Al Géidgen` and `Rue Laurent Menager` publish an empty `numero` in the file.
 		expect(unnumbered.map((r) => r.components.street).toSorted()).toEqual(["Al Géidgen", "Rue Laurent Menager"])

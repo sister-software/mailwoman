@@ -170,7 +170,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 		// A void states that the number is unknown, so emitting the address with no
 		// `house_number` would record an absence the publisher never stated.
 		expect(voided).toBeUndefined()
-		expect(rows.every((r) => r.components.house_number !== undefined)).toBe(true)
+		expect(rows.every((r) => r.components.house_number)).toBe(true)
 		expect(rows.every((r) => r.components.house_number !== "")).toBe(true)
 	})
 

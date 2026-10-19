@@ -115,7 +115,7 @@ export async function trainCoarsePlacer(
 		)) {
 			const y = classIdx.get(r.country)
 
-			if (y === undefined) continue
+			if (!y) continue
 			out.push({ x: Int32Array.from(featurize(r.raw)), y })
 		}
 

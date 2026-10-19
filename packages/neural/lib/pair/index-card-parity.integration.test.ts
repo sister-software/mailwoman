@@ -108,7 +108,7 @@ describe("pair-index ↔ model-card parity", () => {
 				`δ=${facts.delta}`
 			)
 
-			if (facts.transitionBeta !== undefined) {
+			if (facts.transitionBeta) {
 				expect(
 					`${cardDelta}${String(block!.transition_beta ?? "")}`,
 					`${pkg}: artifact carries transitionBeta=${facts.transitionBeta} but the card does not record it`
@@ -123,7 +123,7 @@ describe("pair-index ↔ model-card parity", () => {
 			// so a substring match on "5" would pass on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`
 
-			if (facts.parentDelta === undefined) {
+			if (!facts.parentDelta) {
 				expect(
 					cardDelta,
 					`${pkg}: card claims a parentDelta but the artifact carries none — the parent bias is OFF for this locale`

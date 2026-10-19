@@ -79,7 +79,7 @@ export interface POISearchQuery {
 	 *
 	 * Required for category/brand queries (k-ring expansion).
 	 */
-	center?: { latitude: number; longitude: number }
+	center?: { latitude: number; longitude: number } | null
 	/**
 	 * Ring budget: the count of res-9 k-rings to expand before giving up.
 	 *
@@ -88,7 +88,7 @@ export interface POISearchQuery {
 	 * @defaultValue `16` ≈ ~5.4 km
 	 */
 	maxRings?: number
-	limit?: number
+	limit?: number | null
 }
 
 export interface POISearchHit {
@@ -183,7 +183,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		const limit = Math.max(1, query.limit ?? DEFAULT_LIMIT)
 
 		if (query.name) {
-			return this.#searchByName(query.name, limit, query.center)
+			return this.#searchByName(query.name, limit, query.center ?? undefined)
 		}
 
 		if (query.categoryIDs?.length || query.brandWikidata) {
@@ -235,7 +235,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		for (const id of query.categoryIDs ?? []) {
 			const resolved = this.#categoryToID.get(id)
 
-			if (resolved !== undefined) {
+			if (resolved) {
 				categoryIDs.push(resolved)
 			}
 		}

@@ -123,7 +123,7 @@ export interface NeuralAddressClassifierConfig {
 	 * The postcode-anchor lookup for a model trained with the `anchor_features`
 	 * and `anchor_confidence` inputs.
 	 */
-	postcodeAnchorLookup?: AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup | null
 
 	/**
 	 * The substrings the anchor channel looks up, read from the model card's
@@ -135,7 +135,7 @@ export interface NeuralAddressClassifierConfig {
 	 * The gazetteer lexicon for a model trained with the `gazetteer_features` and
 	 * `gazetteer_confidence` inputs, marking candidate tags such as country, region and PO box.
 	 */
-	gazetteerLexicon?: GazetteerLexicon
+	gazetteerLexicon?: GazetteerLexicon | null
 
 	/**
 	 * Country-surface lexicon for a model trained with the `country_features`

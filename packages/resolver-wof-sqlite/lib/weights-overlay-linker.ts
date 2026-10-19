@@ -385,7 +385,7 @@ async function pairIndexIsFresh(
 			return false
 		}
 
-		if (minimumPlausibleBytes !== undefined && (await statPath(dest)).size < minimumPlausibleBytes) {
+		if (minimumPlausibleBytes && (await statPath(dest)).size < minimumPlausibleBytes) {
 			console.log(
 				`rebuilding ${artifact} — ${(await statPath(dest)).size.toLocaleString()} bytes is implausibly small ` +
 					`for this recipe (wrong-source clobber)`
@@ -508,8 +508,8 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 			country,
 			"--delta",
 			String(delta),
-			...(transitionBeta === undefined ? [] : ["--transition-beta", String(transitionBeta)]),
-			...(parentDelta === undefined ? [] : ["--parent-delta", String(parentDelta)]),
+			...(!transitionBeta ? [] : ["--transition-beta", String(transitionBeta)]),
+			...(!parentDelta ? [] : ["--parent-delta", String(parentDelta)]),
 			...extraArgs,
 		],
 		{ stdio: "inherit" }
@@ -727,7 +727,7 @@ async function linkBaseModelPair(destDir: PathBuilder, digestCard: string | null
 	const recipe = await readReleaseConfig()
 
 	const dataRoot = dataRootPath()
-	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : undefined
+	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : null
 
 	const pair = [
 		{ label: "model", name: "model.onnx", override: $public.MAILWOMAN_DEV_MODEL, recipe: recipe.weights.model },

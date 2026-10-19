@@ -205,7 +205,7 @@ export function planCountryMove(options: {
 		repos: options.repos.map((r) => ({
 			name: r.name,
 			packedKB: r.packedKB ?? null,
-			checkoutKB: r.packedKB === undefined ? null : r.packedKB * CHECKOUT_SIZE_RATIO,
+			checkoutKB: !r.packedKB ? null : r.packedKB * CHECKOUT_SIZE_RATIO,
 		})),
 		blockers,
 	}

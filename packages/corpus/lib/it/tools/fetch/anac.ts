@@ -137,7 +137,7 @@ export interface DownloadANACOptions {
 	 * Which editions to fetch: a year, `undated`, or `full`.
 	 * @defaultValue {@linkcode IT_ANAC_DEFAULT_EDITIONS}
 	 */
-	editions?: readonly string[]
+	editions?: readonly string[] | null
 	/**
 	 * Keep the compressed copy beside the `.jsonl`.
 	 *

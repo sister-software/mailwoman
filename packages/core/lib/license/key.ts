@@ -53,7 +53,7 @@ export const LicenseKeyPayloadSchema = z.object({
 	 * The last valid date, inclusive.
 	 * A key without it does not expire.
 	 */
-	expires: CalendarDate.optional(),
+	expires: CalendarDate.nullable().optional(),
 	/**
 	 * Either `all` or the list of packages covered by the agreement.
 	 */
@@ -65,11 +65,11 @@ export const LicenseKeyPayloadSchema = z.object({
 	/**
 	 * An opaque serial for checking the license status online.
 	 */
-	lid: z.string().min(1).optional(),
+	lid: z.string().min(1).nullable().optional(),
 	/**
 	 * The version of the terms that the licensee accepted.
 	 */
-	agreement: z.string().min(1).optional(),
+	agreement: z.string().min(1).nullable().optional(),
 })
 
 /**

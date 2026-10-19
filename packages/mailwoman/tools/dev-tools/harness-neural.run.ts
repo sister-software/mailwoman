@@ -489,13 +489,13 @@ interface AssertionResult {
 async function runAssertion(
 	a: ExtractedAssertion,
 	neuralClassifier: NeuralAddressClassifier,
-	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
-	pipeline?: ReturnType<typeof createRuntimePipeline>
+	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1] | null,
+	pipeline?: ReturnType<typeof createRuntimePipeline> | null
 ): Promise<AssertionResult> {
 	// Neural, one tree, loose semantics: pass if any of the expected solutions
 	// is matched by the top-1 neural output.
 	// The fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
-	const tree = await neuralClassifier.parse(a.input, parseOpts)
+	const tree = await neuralClassifier.parse(a.input, parseOpts ?? undefined)
 	const flat = decodeAsJSON(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToVisibleRecord(flat)
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
@@ -793,7 +793,7 @@ async function main(): Promise<void> {
 	// (Stage 3 / grouper / reconcile) rather than coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
-		: undefined
+		: null
 
 	if (pipeline) {
 		console.error("Assembled-pipeline arm ON (--assembled): grading runPipeline alongside raw neural.")

@@ -494,7 +494,7 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	if (deps.localeCountryPrior && !opts.defaultCountry) {
 		opts.localeCountryPrior = deps.localeCountryPrior
 
-		if (deps.localeCountryPriorWeight !== undefined) {
+		if (deps.localeCountryPriorWeight) {
 			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
 		}
 	}
@@ -601,9 +601,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			const dominant =
 				localityValue && deps.resolver.findPlace
 					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
-					: undefined
+					: null
 
-			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
+			const dominantBearer = dominant?.country && dominant.exactMatch !== false ? dominant.country : null
 
 			const dominantDisagreesWithPlacer =
 				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
@@ -683,17 +683,17 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.interpolation = interpolation
 		// An explicit calibration overrides the artifact's own value.
 		// Otherwise a legacy database falls back to the in-code table.
-		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : null
 
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
-				: undefined
+				: null
 
 		const calibration = explicit ?? fallback
 
 		// Skip no-op calibration unless explicitly overriding artifact calibration.
-		if (calibration && (calibration !== 1 || (explicit !== undefined && interpolation.radiusCalibration != null))) {
+		if (calibration && (calibration !== 1 || (explicit && interpolation.radiusCalibration != null))) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}

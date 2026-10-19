@@ -109,7 +109,7 @@ function oracleAt(point: { lat: number; lon: number }): OracleGeocoderLike & { c
 					partialMatch: false,
 					placeID: null,
 					plusCode: null,
-					raw: undefined,
+					raw: null,
 				},
 			]
 		},

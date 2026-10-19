@@ -135,9 +135,9 @@ function traceMargin(trace: ResolveNodeTrace): number {
 	const scores = trace.candidates.map((candidate) => candidate.score).toSorted((left, right) => right - left)
 	const [top, runnerUp] = scores
 
-	if (top === undefined) return 0
+	if (typeof top !== "number") return 0
 
-	if (runnerUp === undefined) return 1
+	if (typeof runnerUp !== "number") return 1
 
 	const span = Math.abs(top)
 
@@ -181,7 +181,7 @@ function gradeSelection(
 
 	const correct = panel.gold.placeIDs.some((placeID) => String(placeID) === selection)
 
-	if (selectedCoord?.lat === undefined || selectedCoord.lon === undefined) {
+	if (typeof selectedCoord?.lat !== "number" || typeof selectedCoord.lon !== "number") {
 		return { correct, wrongArea: null, distanceKm: null }
 	}
 

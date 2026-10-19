@@ -146,7 +146,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	const parseOpts = Object.keys(repairOpts).length
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
-		: undefined
+		: null
 
 	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer
 	// and conventions channels listed in the model-card `requires` block.
@@ -202,7 +202,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 
 	for (const entry of golden) {
 		total++
-		const tree = await classifier.parse(entry.raw, parseOpts)
+		const tree = await classifier.parse(entry.raw, parseOpts ?? undefined)
 		const predicted = decodeAsJSON(tree)
 		const expected = entry.components
 

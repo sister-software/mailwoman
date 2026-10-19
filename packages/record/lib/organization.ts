@@ -155,8 +155,8 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
  */
 function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string> {
 	const jurisdiction = options?.jurisdiction?.trim().toUpperCase()
-	const jurisdictionPack = jurisdiction ? JURISDICTION_DESIGNATIONS[jurisdiction] : undefined
-	const protectPack = options?.domain ? DOMAIN_PROTECTED[options.domain] : undefined
+	const jurisdictionPack = jurisdiction ? JURISDICTION_DESIGNATIONS[jurisdiction] : null
+	const protectPack = options?.domain ? DOMAIN_PROTECTED[options.domain] : null
 
 	if (!jurisdictionPack && !protectPack?.length) return BASE_DESIGNATIONS
 

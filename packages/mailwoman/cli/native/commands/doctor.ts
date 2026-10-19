@@ -39,12 +39,12 @@ export async function run(args: readonly string[]): Promise<number> {
 		const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
 
 		const report = await runDoctor()
-		const environment = booleanValue(parsed.values, "verbose") ? await describeEnvironment() : undefined
+		const environment = booleanValue(parsed.values, "verbose") ? await describeEnvironment() : null
 
 		process.stdout.write(
 			booleanValue(parsed.values, "json")
 				? prettyJSON(environment ? { ...report, environment } : report)
-				: `${renderDoctorReport(report, environment)}\n`
+				: `${renderDoctorReport(report, environment ?? undefined)}\n`
 		)
 
 		return report.exitCode

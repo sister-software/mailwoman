@@ -49,7 +49,7 @@ const asked = values.regions
 	? TextSpliterator.from(values.regions, { delimiter: "," })
 			.map((code) => code.toUpperCase())
 			.toArray()
-	: undefined
+	: null
 
 const perGroup = Number(values["per-group"] ?? values["per-region"])
 
@@ -165,7 +165,7 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 	}
 
 	for (const subject of bucket) {
-		const spelled = values["spell-region"] ? matchSubdivisionIn(subject.country, subject.region)?.name : undefined
+		const spelled = values["spell-region"] ? matchSubdivisionIn(subject.country, subject.region)?.name : null
 
 		// A region the codex cannot spell is skipped rather than rendered under its code: leaving
 		// it in would put coded rows inside an arm whose whole claim is that they are spelled.

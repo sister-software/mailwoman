@@ -109,7 +109,7 @@ export const localeScopeCheck: RepoCheck = {
 		const shipping = new Set(
 			[...shippingLocales(await readReleaseConfig(context.repoRoot))]
 				.map((locale) => locale.split("-")[1]?.toUpperCase())
-				.filter((country): country is string => country !== undefined)
+				.filter((country): country is string => typeof country === "string")
 		)
 
 		for (const country of [...shipping].toSorted()) {

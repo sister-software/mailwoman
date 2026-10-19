@@ -206,7 +206,7 @@ async function runOperation<TContext extends OperationContext>(
 		? prettyJSON(output)
 		: operation.formatOutput
 			? operation.formatOutput(output)
-			: String(output === undefined ? "ok" : prettyJSON(output))
+			: String(!output ? "ok" : prettyJSON(output))
 
 	io.stdout(`${renderedOutput}\n`)
 

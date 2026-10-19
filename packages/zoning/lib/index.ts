@@ -444,7 +444,7 @@ export class ZoningLookup implements Disposable {
 			country: "",
 		}
 
-		const term = area.crosswalk_code ? this.#crosswalkTerms.get(area.crosswalk_code) : undefined
+		const term = area.crosswalk_code ? this.#crosswalkTerms.get(area.crosswalk_code) : null
 
 		return {
 			areaID: area.area_id,

@@ -347,7 +347,7 @@ export function collectParseFacts(
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
 		const expects = (COMPONENT_FOR_KNOWN_FORMAT as Record<string, string | undefined>)[hit.format] ?? null
-		const carried = expects ? components[expects] : undefined
+		const carried = expects ? components[expects] : null
 		const wanted = foldForSpanMatch(hit.span.body)
 
 		return {
@@ -355,7 +355,7 @@ export function collectParseFacts(
 			confidence: hit.confidence,
 			text: hit.span.body,
 			expects_component: expects,
-			matched: wanted.length > 0 && carried !== undefined && foldForSpanMatch(carried).includes(wanted),
+			matched: wanted.length > 0 && carried != null && foldForSpanMatch(carried).includes(wanted),
 		}
 	})
 
@@ -379,7 +379,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
-		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
+		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : null
 		// The rank vector's key order is the resolver's stage execution order,
 		// because the recorder writes one entry per stage as it runs: the first key is
 		// the backend's own order, the last the order the pick came from.
@@ -886,7 +886,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		elapsed_ms: Date.now() - startedAt,
 		// Under a cap the emitted rows lead with the non-clean ones and say what they left out.
 		// The aggregates are computed over every row regardless.
-		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
-		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
+		rows: !rowsCap ? emittedRows : emittedRows.slice(0, rowsCap),
+		rows_omitted: !rowsCap ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}
 }

@@ -279,7 +279,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			// for the old one keeps working past the removal it was warned about.
 			values[option.deprecatedName] = undefined
 
-			if (retired !== undefined) {
+			if (retired) {
 				// Both spellings is a usage error rather than a precedence rule.
 				if (values[name] !== undefined && values[name] !== option.default) {
 					throw new CLIUsageError(`--${option.deprecatedName} is the old name for --${name}; pass one of them.`)
@@ -293,19 +293,19 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 
 		const raw = values[name]
 
-		if (values.help !== true && raw === undefined && option.required) {
+		if (values.help !== true && raw == null && option.required) {
 			throw new CLIUsageError(`Missing required option: --${name}.`)
 		}
 
 		if (option.type === "number") {
-			if (raw === undefined) {
+			if (raw == null) {
 				values[name] = option.default
 			} else if (option.multiple) {
 				values[name] = (Array.isArray(raw) ? raw : [raw]).map((value) => parseNumber(String(value), name, option))
 			} else {
 				values[name] = parseNumber(String(raw), name, option)
 			}
-		} else if (option.type === "string" && raw !== undefined) {
+		} else if (option.type === "string" && raw) {
 			for (const value of Array.isArray(raw) ? raw : [raw]) {
 				// parseArgs yields strings for a string option, so a non-string here came from the spec's default.
 				if (typeof value !== "string") {
@@ -480,7 +480,7 @@ export const booleanOption = (description: string) => ({ type: "boolean", defaul
 export const positiveIntegerOption = (description: string, defaultValue?: number) =>
 	({
 		type: "number",
-		...(defaultValue === undefined ? {} : { default: defaultValue }),
+		...(!defaultValue ? {} : { default: defaultValue }),
 		validate: positiveInteger,
 		validationMessage: `${description} must be a positive integer.`,
 		description,

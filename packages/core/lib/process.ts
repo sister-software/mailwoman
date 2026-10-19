@@ -507,7 +507,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 	async #stop(): Promise<void> {
 		const { child } = this
 
-		if (child.exitCode === null && child.signalCode === null && child.pid !== undefined) {
+		if (child.exitCode === null && child.signalCode === null && child.pid) {
 			child.kill("SIGTERM")
 
 			const escalation = setTimeout(() => child.kill("SIGKILL"), this.#killGraceMs)

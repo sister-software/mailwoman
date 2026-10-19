@@ -213,7 +213,7 @@ export async function buildStreetMorphologyFST(
 			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
-			if (next === undefined) {
+			if (!next) {
 				next = nodes.length
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)

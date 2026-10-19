@@ -58,7 +58,7 @@ export type Claim<V = unknown> =
 	| (ClaimBase<V> & { status: "inferred"; derivedFrom: readonly string[]; explanation: string })
 
 export function claimsFor(subject: EntityID, claims: readonly Claim[], axis?: ClaimAxis): readonly Claim[] {
-	return claims.filter((claim) => claim.subject === subject && (axis === undefined || claim.axis === axis))
+	return claims.filter((claim) => claim.subject === subject && (!axis || claim.axis === axis))
 }
 
 /**

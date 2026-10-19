@@ -91,7 +91,7 @@ export interface DeOrderEvalOptions {
 	 * Row cap applied to each run (omitted means all rows), profiling only, since a capped run reads the
 	 * first N rows in file order and its locality percentages are not comparable with a floor reading.
 	 */
-	limit?: number
+	limit?: number | null
 	/**
 	 * Answers a repeated `findPlace` query from a per-run memo, each of the six runs
 	 * keeping its own because each builds its own rig.
@@ -140,7 +140,7 @@ export async function deOrderEval(
 		return { ok: false, out: out.toString() }
 	}
 
-	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : undefined
+	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : null
 
 	await makeDirectories(out)
 
@@ -169,7 +169,7 @@ export async function deOrderEval(
 					tokenizer: tok,
 					...anchorOptions,
 					defaultCountry: country,
-					...(options.limit ? { limit: options.limit } : {}),
+					...(typeof options.limit === "number" ? { limit: options.limit } : {}),
 					...(options.lookupMemo ? { lookupMemo: true } : {}),
 					...(profileDirectory ? { profileJSON: profileDirectory(`${outName}.json`).toString() } : {}),
 				},

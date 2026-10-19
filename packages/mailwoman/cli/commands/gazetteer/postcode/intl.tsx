@@ -289,7 +289,7 @@ async function foldIntoCandidate(
 	const ccID = (code: string): number => {
 		let id = ccCache.get(code)
 
-		if (id !== undefined) return id
+		if (id) return id
 		const r = getRow<{ id: number }>(getCc, code)
 
 		if (r) {

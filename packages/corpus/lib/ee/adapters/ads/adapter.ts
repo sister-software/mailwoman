@@ -173,7 +173,7 @@ export function createADSAdapter(): CorpusAdapter {
 			for await (const feature of features) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const properties = feature.properties ?? {}
 

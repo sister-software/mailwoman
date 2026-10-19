@@ -183,7 +183,7 @@ const deps: MCPToolDeps = {
 
 		const osmTags =
 			subject.kind === "category"
-				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag !== undefined)
+				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => typeof tag === "string")
 				: []
 
 		return emitOverpassQL(
@@ -214,19 +214,22 @@ const deps: MCPToolDeps = {
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
 
-		return await filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
+		return await filingLandscape(db, {
+			geoids: q.geoids ?? undefined,
+			h3Cells: q.h3Cells ?? undefined,
+		})
 	},
 
 	async plausibilityCheck(q) {
-		const bdcDB = await openBDCDatabaseIfPresent(q.bdcDatabasePath)
-		const poi = await openPlausibilityPOIDeps(q.poiDatabasePath)
+		const bdcDB = await openBDCDatabaseIfPresent(q.bdcDatabasePath ?? undefined)
+		const poi = await openPlausibilityPOIDeps(q.poiDatabasePath ?? undefined)
 
 		try {
 			return await plausibilityCheck(
 				{
-					address: q.address,
-					point: q.point,
-					geoid: q.geoid,
+					address: q.address ?? undefined,
+					point: q.point ?? undefined,
+					geoid: q.geoid ?? undefined,
 					technologyCode: q.technologyCode,
 					claimedDownloadMbps: q.claimedDownloadMbps,
 				},
@@ -245,7 +248,7 @@ const deps: MCPToolDeps = {
 
 		let frn: FRN | null = null
 
-		if (q.frn) {
+		if (q.frn != null) {
 			const parsed = toFRN(q.frn)
 
 			if (!parsed) {
@@ -257,9 +260,9 @@ const deps: MCPToolDeps = {
 
 		return await filerLookup(db, {
 			frn,
-			form499ID: q.form499ID,
-			bdcProviderID: q.bdcProviderID,
-			asOf: q.asOf,
+			form499ID: q.form499ID ?? undefined,
+			bdcProviderID: q.bdcProviderID ?? undefined,
+			asOf: q.asOf ?? undefined,
 		})
 	},
 
@@ -269,9 +272,9 @@ const deps: MCPToolDeps = {
 		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
 		return await familyRollup(db, {
-			familyID: q.familyID,
-			nodeID: q.nodeID,
-			asOf: q.asOf,
+			familyID: q.familyID ?? undefined,
+			nodeID: q.nodeID ?? undefined,
+			asOf: q.asOf ?? undefined,
 		})
 	},
 }

@@ -122,7 +122,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// A national build must key with the locale its provider reads with.
 		// An unregistered country throws here instead of keying with the wrong rules.
-		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
+		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : null
 
 		const finalOut = resolvePath(
 			options.out ??

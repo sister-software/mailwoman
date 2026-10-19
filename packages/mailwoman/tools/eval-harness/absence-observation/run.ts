@@ -93,12 +93,12 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 	const coverageDatabasePath = options.coverageDatabasePath ?? poiDatabasePath(definition.coverageLayerFile)
 
 	const needsSemanticRoute = definition.rows.some((row) => row.requiresSemanticRoute)
-	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : undefined
+	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : null
 	const absenceRoute = await createAbsenceObservationRoute({ coverageDatabasePath })
 
 	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
-		// After the spread, never before: an explicit `db: undefined` in `...options` would overwrite the default.
+		// After the spread, never before: an explicit `db: null` in `...options` would overwrite the default.
 		db: options.db ?? coverageDatabasePath,
 		...(semanticRoute ? { poiSemanticLookup: semanticRoute.lookup } : {}),
 	})
@@ -160,14 +160,14 @@ async function gradeRow(
 	const searchedCategories =
 		result.poiIntent?.type === "intent" && result.poiIntent.intent.subject.kind === "category"
 			? [...result.poiIntent.intent.subject.categoryIDs].toSorted(compareByCodePoint)
-			: undefined
+			: null
 
 	const searchedSetBreach =
 		row.searchedCategories && row.searchedCategories.join("\u0000") !== (searchedCategories ?? []).join("\u0000")
 			? `registered searched set [${row.searchedCategories.join(", ")}], observed ${
 					searchedCategories ? `[${searchedCategories.join(", ")}]` : "no category intent"
 				}`
-			: undefined
+			: null
 
 	const graded: AbsenceRowResult = {
 		id: row.id,

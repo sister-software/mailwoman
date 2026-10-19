@@ -50,11 +50,11 @@ export interface AddressNode {
 	/**
 	 * The origin of the node, such as `rule`, `neural` or `resolver`.
 	 */
-	source?: string
+	source?: string | null
 	/**
 	 * An ID within `source`, such as a rule ID, model version or place ID.
 	 */
-	sourceID?: string
+	sourceID?: string | null
 	/**
 	 * The latitude of the resolved place's centroid.
 	 */
@@ -71,7 +71,7 @@ export interface AddressNode {
 	/**
 	 * Diagnostic metadata.
 	 */
-	metadata?: Record<string, unknown>
+	metadata?: Record<string, unknown> | null
 	/**
 	 * Runner-up places in score order.
 	 * The selected place is in `placeID`, `lat` and `lon`.
@@ -167,7 +167,7 @@ export interface AddressTree {
 	 *
 	 * @defaultValue the Western hierarchy.
 	 */
-	system?: AddressSystem
+	system?: AddressSystem | null
 	/**
 	 * The country predicted by the parse-time locale classifier, when it was confident.
 	 */
