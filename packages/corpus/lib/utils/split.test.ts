@@ -248,6 +248,24 @@ describe("defaultHoldouts", () => {
 		expect(splitForRow({ ...ro, components: { street: "UNIRII", postcode: "200000" } })).toBe("train")
 	})
 
+	it("holds out ES, IT, AU and NZ rows by postcode prefix, and the admin rows by region", () => {
+		const cases: [country: string, held: MinRow["components"], kept: MinRow["components"]][] = [
+			["ES", { postcode: "07001" }, { postcode: "28001" }],
+			["ES", { region: "Asturias" }, { region: "Madrid" }],
+			["IT", { postcode: "09124" }, { postcode: "00184" }],
+			["IT", { region: "Bolzano/Bozen" }, { region: "Turin" }],
+			["AU", { postcode: "7000" }, { postcode: "2000" }],
+			["AU", { postcode: "0800" }, { postcode: "3000" }],
+			["NZ", { postcode: "9810" }, { postcode: "9016" }],
+			["NZ", { locality: "Invercargill" }, { locality: "Dunedin" }],
+		]
+
+		for (const [country, held, kept] of cases) {
+			expect(splitForRow({ source_id: `${country}-1`, country, components: held }), country).not.toBe("train")
+			expect(splitForRow({ source_id: `${country}-1`, country, components: kept }), country).toBe("train")
+		}
+	})
+
 	it("holds out an OSM street row by its city when it carries neither region nor postcode", () => {
 		const enugu = { source_id: "osm-1", country: "NG", components: { street: "Ogui Road", locality: "Enugu" } }
 

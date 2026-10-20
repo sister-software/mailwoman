@@ -35,8 +35,24 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "02" : "10"}${String(600 + index).padStart(3, "0")}`,
 		})),
 	],
-	["IT", NAMES.map((locality) => ({ locality: locality.toUpperCase(), postcode: "67010", region: "AQ" }))],
-	["AU", NAMES.map((locality) => ({ locality: locality.toUpperCase(), postcode: "2840", region: "NSW" }))],
+	// `09` (Sardinia) is a declared IT holdout and `67` is not.
+	[
+		"IT",
+		NAMES.slice(0, 60).map((locality, index) => ({
+			locality: locality.toUpperCase(),
+			postcode: index % 2 ? "09124" : "67010",
+			region: index % 2 ? "CA" : "AQ",
+		})),
+	],
+	// `7` (Tasmania) is a declared AU holdout and `2` is not.
+	[
+		"AU",
+		NAMES.slice(0, 60).map((locality, index) => ({
+			locality: locality.toUpperCase(),
+			postcode: index % 2 ? "7000" : "2840",
+			region: index % 2 ? "TAS" : "NSW",
+		})),
+	],
 ])
 
 const generate = (seed: number) => generatePostalGuidelineRows({ places: PLACES, count: 40, seed, source: SOURCE })
