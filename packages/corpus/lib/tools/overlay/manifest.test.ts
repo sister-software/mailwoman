@@ -7,18 +7,20 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { basename } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { openDuckDB } from "#parquet/duckdb"
+import { writeParquetFile } from "#parquet/writers"
 import type { SourceRightsRecord } from "#source-register/corpus-inputs"
-import { useScratchDir } from "#test-kit"
+import { gbOverlayRow as gbRow, useScratchDir } from "#test-kit"
 import {
 	assembleOverlayManifest,
 	baseManifestFiles,
 	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
-	splitFromFilename,
 } from "#tools/overlay/manifest"
+import { splitOverlaySlice } from "#tools/overlay/split-slice"
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
@@ -41,20 +43,7 @@ function manifestWith(key: string, paths: readonly string[]): Parameters<typeof 
 	} as Parameters<typeof baseManifestFiles>[0]
 }
 
-describe("splitFromFilename", () => {
-	it("reads the split splitOverlaySlice encodes, and answers null for a name it did not write", () => {
-		expect(splitFromFilename("part-gb.val.parquet")).toBe("val")
-		expect(splitFromFilename("part-gb.test.parquet")).toBe("test")
-		expect(splitFromFilename("part-anchor-absorption-train.val.parquet")).toBe("val")
-
-		expect(splitFromFilename("part-synth-german-val.parquet")).toBeNull()
-		expect(splitFromFilename("part-synth-german-train.parquet")).toBeNull()
-		expect(splitFromFilename("part-0000.parquet")).toBeNull()
-		expect(splitFromFilename("val.parquet")).toBeNull()
-	})
-})
-
-describe("assembleOverlayManifest, on who chose a held-out split", () => {
+describe("assembleOverlayManifest", () => {
 	const scratch = useScratchDir("overlay-manifest")
 
 	/**
@@ -81,40 +70,82 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		return path
 	}
 
-	const overlay = (parquet: string, split: "train" | "val" | "test") => ({
+	const overlay = (parquet: string) => ({
 		base: "",
 		newDir: scratch.path,
 		modalRoot: "/data/corpus/versioned/v0.2.0/corpus-v0.2.0",
 		version: "0.2.0",
-		files: [{ parquet, source: "syn-de", split }],
+		files: [{ parquet, source: "syn-de" }],
 		note: "",
 		// These fixtures use sources no register row permits.
 		// The source-rights tests below run without the override.
 		unshippableReason: "test fixture: overlay mechanics",
 	})
 
-	it("refuses a val split asserted for a file split-slice did not write", async () => {
+	it("adds a file with a split attribute at the overlay root and counts each split from the attribute", async () => {
 		const base = await writeBase()
+		const input = scratch.path("part-gb-attr.parquet")
 
-		await expect(assembleOverlayManifest({ ...overlay("part-synth-german-val.parquet", "val"), base })).rejects.toThrow(
-			/did not come from 'mailwoman corpus split-slice'/
+		await writeParquetFile(
+			[gbRow("gb-a", "Parc Venton Close", "Camborne", "TR14 7TT"), gbRow("gb-b", "Baker Street", "London", "NW1 6XE")],
+			input,
+			{ extractHash: "fixture", codeHash: "fixture", config: {} }
 		)
+
+		const split = await splitOverlaySlice({ input, outputDir: scratch.path })
+
+		await assembleOverlayManifest({
+			...overlay("part-gb-attr.parquet"),
+			base,
+			files: [
+				{ parquet: "part-gb-attr.parquet", source: "rendered-gb-os-open", splitAttribute: basename(split.attribute) },
+			],
+		})
+
+		const written = await readLocalJSONFile<{
+			slices: Array<{ path: string; split?: string; split_attribute?: { policy_hash: string } }>
+			counts: Record<string, number>
+			split_decided_by: { policy_hashes: string[] }
+		}>(scratch.path("MANIFEST.json").toString())
+
+		const added = written.slices.at(-1)!
+
+		expect(added.path).toBe("/data/corpus/versioned/v0.2.0/corpus-v0.2.0/part-gb-attr.parquet")
+		expect(added.split).toBeUndefined()
+		expect(added.split_attribute?.policy_hash).toBe(split.policyHash)
+		expect(written.split_decided_by.policy_hashes).toEqual([split.policyHash])
+
+		expect(written.counts).toEqual({
+			train: 1 + split.counts.train,
+			val: split.counts.val,
+			test: split.counts.test,
+		})
 	})
 
-	it("refuses a split that contradicts the one the filename carries", async () => {
+	it("refuses an attribute that describes other bytes than the file beside it", async () => {
 		const base = await writeBase()
+		const input = scratch.path("part-gb-stale.parquet")
+		const derivation = { extractHash: "fixture", codeHash: "fixture", config: {} }
 
-		await expect(assembleOverlayManifest({ ...overlay("part-gb.val.parquet", "test"), base })).rejects.toThrow(
-			/names split 'val' and the caller asked for 'test'/
-		)
-	})
+		await writeParquetFile([gbRow("gb-c", "Baker Street", "London", "NW1 6XE")], input, derivation)
 
-	it("lets a train file through without a routed name, since train holds nothing out", async () => {
-		const base = await writeBase()
+		const split = await splitOverlaySlice({ input, outputDir: scratch.path })
+
+		await writeParquetFile([gbRow("gb-d", "Hope Street", "Liverpool", "L1 9BP")], input, derivation)
 
 		await expect(
-			assembleOverlayManifest({ ...overlay("part-synth-german-train.parquet", "train"), base })
-		).rejects.not.toThrow(/split-slice/)
+			assembleOverlayManifest({
+				...overlay("part-gb-stale.parquet"),
+				base,
+				files: [
+					{
+						parquet: "part-gb-stale.parquet",
+						source: "rendered-gb-os-open",
+						splitAttribute: basename(split.attribute),
+					},
+				],
+			})
+		).rejects.toThrow(/Run 'mailwoman corpus split-slice'/)
 	})
 
 	/**
@@ -143,9 +174,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		// The caller's label would make the manifest disagree with the rows the run trains on.
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "synth-german", split: "train" }],
+				files: [{ parquet, source: "synth-german" }],
 			})
 		).rejects.toThrow(/holds source "rendered-de".*asked to record "synth-german"/s)
 	})
@@ -155,9 +186,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-agrees.train.parquet", "rendered-de")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-de", split: "train" }],
+			files: [{ parquet, source: "rendered-de" }],
 		})
 
 		// `assembleOverlayManifest` writes the manifest rather than returning it.
@@ -205,9 +236,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-gb-v2.train.parquet", "rendered-gb")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			files: [{ parquet, source: "rendered-gb" }],
 			replaceSources: ["rendered-gb"],
 		})
 
@@ -232,9 +263,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "rendered-de", split: "train" }],
+				files: [{ parquet, source: "rendered-de" }],
 				replaceSources: ["rendered-de"],
 			})
 		).rejects.toThrow(/holds no file with source 'rendered-de'/)
@@ -246,9 +277,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "rendered-gb", split: "train" }],
+				files: [{ parquet, source: "rendered-gb" }],
 				unshippableReason: null,
 			})
 		).rejects.toThrow(/corpus source rendered-gb reads register source gb-property-building-1 .*refused/s)
@@ -262,9 +293,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "ban", split: "train" }],
+				files: [{ parquet, source: "ban" }],
 				unshippableReason: null,
 			})
 		).rejects.toThrow(/cannot check the corpus sources of 1 file\(s\) of base.*absent locally/s)
@@ -289,9 +320,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		)
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "ban", split: "train" }],
+			files: [{ parquet, source: "ban" }],
 			unshippableReason: null,
 		})
 
@@ -303,14 +334,79 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		expect(written.source_rights.sources_checked).toEqual(expect.arrayContaining(["ban", "wof-admin"]))
 	})
 
+	it("records a deletion with the rows it removes and nets them out of the split counts", async () => {
+		const base = await writeBaseWithGB()
+		const path = scratch.path("train", "part-de-del.train.parquet").toString()
+
+		await makeDirectories(scratch.path("train"))
+
+		{
+			using db = await openDuckDB()
+
+			await db.run(
+				`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
+			)
+		}
+
+		await assembleOverlayManifest({
+			...overlay("part-de-del.train.parquet"),
+			base,
+			files: [{ parquet: "part-de-del.train.parquet", source: "rendered-de" }],
+			deletions: [
+				{
+					target: { source: "rendered-de" },
+					sourceIDs: ["de-1", "de-3", "de-absent"],
+					reason: "fixture",
+					issue: "#2741",
+				},
+			],
+		})
+
+		const written = await readLocalJSONFile<{
+			counts: { train: number; val: number; test: number }
+			deletions: Array<{ source_ids: string[]; rows_deleted: Record<string, number>; issue: string }>
+		}>(scratch.path("MANIFEST.json").toString())
+
+		expect(written.deletions).toHaveLength(1)
+		expect(written.deletions[0]!.rows_deleted).toEqual({ train: 2, val: 0, test: 0 })
+		expect(written.deletions[0]!.source_ids).toEqual(["de-1", "de-3", "de-absent"])
+		// The base's 15 train rows plus 5 added, less the 2 the deletion removes.
+		expect(written.counts).toEqual({ train: 18, val: 2, test: 3 })
+	})
+
+	it("refuses a deletion that names no issue or no file of the version", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-de-del2.train.parquet", "rendered-de")
+
+		const args = {
+			...overlay(parquet),
+			base,
+			files: [{ parquet, source: "rendered-de" }],
+		}
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "rendered-de" }, sourceIDs: ["row-1"], reason: "fixture", issue: "2741" }],
+			})
+		).rejects.toThrow(/spell it #<number>/)
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "nowhere" }, sourceIDs: ["row-1"], reason: "fixture", issue: "#2741" }],
+			})
+		).rejects.toThrow(/names no file of this version/)
+	})
+
 	it("records the overlay as not shippable when the override admits an unpermitted source", async () => {
 		const base = await writeBaseWithGB()
 		const parquet = await writeOverlayParquet("part-gb-v4.train.parquet", "rendered-gb")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			files: [{ parquet, source: "rendered-gb" }],
 			replaceSources: ["rendered-gb"],
 		})
 

@@ -17,6 +17,7 @@ import pyarrow.parquet as pq
 
 from ...labels import active_components_present
 from ..augment import SPAN_KEYS
+from .corpus_files import CorpusFile, RowFilter, _admitted_mask
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
@@ -46,6 +47,7 @@ def _file_row_iter(
     max_weight: float,
     coarse_filter: bool,
     row_group_limit: int | None = None,
+    row_filter: RowFilter | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Yield filter-accepted rows from a single parquet file, with row-group and row shuffle.
 
@@ -74,6 +76,10 @@ def _file_row_iter(
         )
     has_spans = bool(span_present)
     columns = list(_REQUIRED_COLUMNS) + (list(_SPAN_COLUMNS) if has_spans else [])
+    # The manifest's deletions and split attribute decide a row by its `source_id`, so the column is read only
+    # for a file with a filter.
+    if row_filter is not None:
+        columns.append("source_id")
     rg_order = list(range(pf.num_row_groups))
     rng.shuffle(rg_order)
     for rg in rg_order:
@@ -83,6 +89,9 @@ def _file_row_iter(
         labels_col = t["labels"]
         countries = t["country"]
         sources = t["source"]
+        # One hash-set membership pass per row group, rather than one Python string per row.
+        mask = _admitted_mask(t["source_id"].combine_chunks(), row_filter) if row_filter is not None else None
+        admitted = mask.to_pylist() if mask is not None else None
         span_cols = {c: t[c] for c in _SPAN_COLUMNS} if has_spans else None
         idx_order = list(range(t.num_rows))
         rng.shuffle(idx_order)
@@ -90,6 +99,8 @@ def _file_row_iter(
         for i in idx_order:
             if row_group_limit is not None and taken >= row_group_limit:
                 break
+            if admitted is not None and not admitted[i]:
+                continue
             source = sources[i].as_py()
             if expected_source is not None and source != expected_source:
                 continue
@@ -136,7 +147,7 @@ def _file_row_iter(
 
 
 def _source_iter(
-    paths: list[Path],
+    files: list[CorpusFile],
     *,
     expected_source: str,
     rng: random.Random,
@@ -155,14 +166,15 @@ def _source_iter(
     widening it. ``docs/records/engineering/corpus-draw-coverage.mdx`` records the measurement and
     the candidate repairs.
     """
-    order = list(paths)
+    order = list(files)
     rng.shuffle(order)
-    for s in order:
+    for file in order:
         yield from _file_row_iter(
-            s,
+            file.path,
             expected_source=expected_source,
             rng=rng,
             country_weights=country_weights,
             max_weight=max_weight,
             coarse_filter=coarse_filter,
+            row_filter=file.row_filter,
         )

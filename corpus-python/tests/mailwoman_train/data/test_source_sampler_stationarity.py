@@ -4,10 +4,10 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.data.loader import iter_rows
+from tests.corpus_fixture import write_corpus_parquet
 
 LEGACY_SCHEMA = pa.schema(
     [
@@ -38,7 +38,7 @@ def _write_corpus(tmp_path: Path, files: dict[str, list[dict]]) -> Path:
     (corpus / "train").mkdir(parents=True)
     for name, rows in files.items():
         table = pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA)
-        pq.write_table(table, corpus / "train" / name)
+        write_corpus_parquet(table, corpus / "train" / name)
     return corpus
 
 
@@ -139,7 +139,7 @@ def test_source_named_at_zero_is_declined_without_raising(tmp_path: Path) -> Non
 def test_val_split_still_tolerates_an_unnamed_source(tmp_path: Path) -> None:
     corpus = tmp_path / "corpus"
     (corpus / "val").mkdir(parents=True)
-    pq.write_table(
+    write_corpus_parquet(
         pa.Table.from_pylist(_rows("held-out", 8), schema=LEGACY_SCHEMA),
         corpus / "val" / "part-val.parquet",
     )

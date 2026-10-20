@@ -66,11 +66,29 @@ def test_partial_resolution_raises_with_missing_list(tmp_path: Path) -> None:
         _parquet_paths(corpus, "train")
 
 
-def test_all_missing_falls_through_to_glob(tmp_path: Path) -> None:
+def test_a_manifest_whose_files_are_all_absent_raises_rather_than_globbing(tmp_path: Path) -> None:
     corpus = _mk(tmp_path, [{"split": "train", "sha256": X_SHA, "path": "/nope/train/x.parquet"}])
-    legacy = corpus / "train" / "legacy.parquet"
-    legacy.write_bytes(b"x")
-    assert _parquet_paths(corpus, "train") == [legacy]
+    (corpus / "train" / "unlisted.parquet").write_bytes(b"x")
+    with pytest.raises(FileNotFoundError, match="x.parquet"):
+        _parquet_paths(corpus, "train")
+
+
+def test_the_glob_of_a_corpus_without_a_manifest_verifies_each_file_against_its_record(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    (corpus / "train").mkdir(parents=True)
+    part = corpus / "train" / "data.parquet"
+    part.write_bytes(b"x")
+    record = corpus / "train" / "data.RECORD.json"
+    record.write_text(json.dumps({"sha256": X_SHA}))
+    assert _parquet_paths(corpus, "train") == [part]
+
+    record.write_text(json.dumps({"sha256": "0" * 64}))
+    with pytest.raises(ValueError, match="hashes to sha256"):
+        _parquet_paths(corpus, "train")
+
+    record.unlink()
+    with pytest.raises(ValueError, match="no data.RECORD.json"):
+        _parquet_paths(corpus, "train")
 
 
 def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_path: Path) -> None:

@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Any
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import collate, iter_encoded, iter_rows, source_row_counts
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
+from tests.corpus_fixture import write_corpus_parquet
 
 #: Committed beside this file. Regenerate with `uv run python
 #: tests/mailwoman_train/data/test_loader_split_parity.py` only when the current code is already
@@ -145,7 +145,7 @@ def build_reference_corpus(root: Path) -> Path:
         ("train/part-beta-0.parquet", beta),
         ("val/part-val-0.parquet", held_out),
     ):
-        pq.write_table(pa.Table.from_pylist(rows, schema=SCHEMA), corpus / name, row_group_size=8)
+        write_corpus_parquet(pa.Table.from_pylist(rows, schema=SCHEMA), corpus / name, row_group_size=8)
     return corpus
 
 

@@ -40,10 +40,10 @@ export const spec = {
 			deprecatedName: "slice-parquet",
 		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
-		split: {
+		"split-attribute": {
 			type: "string",
 			description:
-				"Split per parquet, comma-separated. Unset puts every file in train. val or test is accepted only for a file `corpus split-slice` wrote, whose name ends .val.parquet or .test.parquet.",
+				"Split attribute files `corpus split-slice` wrote under --new-dir, comma-separated. Each names its parquet, which then holds every split's rows at <new-dir>/<parquet>. A parquet without one is train, at <new-dir>/train/<parquet>.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
 		"unshippable-reason": {
@@ -51,6 +51,11 @@ export const spec = {
 			description:
 				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
 				"local experiment. States why; the manifest records the corpus as not shippable",
+		},
+		deletions: {
+			type: "string",
+			description:
+				"A JSON file holding an array of deletions, each with a target ({path} or {source}), sourceIDs or a sourceIDsFile parquet, a reason and an issue (#<number>). The loader drops those rows by source_id.",
 		},
 		"replace-source": {
 			type: "string",
@@ -63,10 +68,12 @@ export const spec = {
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools/overlay/manifest")
+		const { readDeletionRequests } = await import("@mailwoman/corpus/tools/overlay/deletions")
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
-		const splits = options.split ? extractDelimited(options.split) : []
+		const { readSplitAttribute } = await import("@mailwoman/corpus/tools/overlay/split-attribute")
+		const { resolvePath } = await import("path-ts")
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(
@@ -74,16 +81,17 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		if (splits.length && splits.length !== parquets.length) {
-			throw new CommandError(
-				`--split names ${splits.length} splits and --parquet ${parquets.length} files; give one split per file or omit the flag`
-			)
-		}
+		// Each attribute file states the parquet it describes, so the flag needs no positional pairing.
+		const attributeFor = new Map<string, string>()
 
-		const unknown = splits.filter((split) => split !== "train" && split !== "val" && split !== "test")
+		for (const name of options.splitAttribute ? extractDelimited(options.splitAttribute) : []) {
+			const attribute = await readSplitAttribute(resolvePath(options.newDir, name))
 
-		if (unknown.length) {
-			throw new CommandError(`--split takes train, val or test; got ${unknown.join(", ")}`)
+			if (!parquets.includes(attribute.file.name)) {
+				throw new CommandError(`${name} describes ${attribute.file.name}, which --parquet does not list`)
+			}
+
+			attributeFor.set(attribute.file.name, name)
 		}
 
 		await assembleOverlayManifest({
@@ -94,11 +102,12 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			files: parquets.map((parquet, index) => ({
 				parquet,
 				source: sources[index]!,
-				split: (splits[index] ?? "train") as "train" | "val" | "test",
+				splitAttribute: attributeFor.get(parquet),
 			})),
 			note: options.note,
 			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
 			unshippableReason: options.unshippableReason,
+			deletions: options.deletions ? await readDeletionRequests(options.deletions) : [],
 		})
 
 		return "done"

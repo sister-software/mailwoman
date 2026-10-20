@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus split-slice --input <parquet> --out-dir <dir>` — route one overlay parquet
- *   through the holdout policy the base build applies, writing a parquet per split it reaches.
+ *   through the holdout policy the base build applies, writing the split attribute file that decides
+ *   each row's split by `source_id`, keyed by the policy's hash.
  *
  *   A corpus overlay is appended to a manifest as a train file, so a country whose only rows of a given
- *   kind live in an overlay has no held-out row of that kind. Pass the per-split outputs to
- *   `mailwoman corpus overlay-manifest --split` so the manifest records where each one belongs.
+ *   kind live in an overlay has no held-out row of that kind. Pass the attribute to
+ *   `mailwoman corpus overlay-manifest --split-attribute` so the manifest records which rows are held out.
  */
 
 import { Box, Text } from "ink"
@@ -23,7 +24,7 @@ export const spec = {
 	description: "Route an overlay parquet through the corpus holdout policy.",
 	options: {
 		input: { type: "string", required: true, description: "The overlay parquet to route" },
-		"out-dir": { type: "string", required: true, description: "Directory the per-split parquets are written to" },
+		"out-dir": { type: "string", required: true, description: "Directory the split attribute file is written to" },
 	},
 } as const satisfies CommandSpec
 
@@ -36,7 +37,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	const { rows, counts, outputs } = state.result
+	const { rows, counts, attribute } = state.result
 
 	return (
 		<Box flexDirection="column">
@@ -47,9 +48,11 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			{(["train", "val", "test"] as const).map((split) => (
 				<Text key={split}>
 					{"  "}
-					{split}: {counts[split].toLocaleString()} {outputs[split] ? `→ ${outputs[split]}` : "(no file written)"}
+					{split}: {counts[split].toLocaleString()}
 				</Text>
 			))}
+
+			<Text>split attribute → {attribute}</Text>
 		</Box>
 	)
 }

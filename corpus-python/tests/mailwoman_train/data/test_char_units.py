@@ -13,7 +13,6 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.config import DataConfig
@@ -28,6 +27,7 @@ from mailwoman_train.tokenizer.char import (
     encode_row_units,
     save_char_vocab,
 )
+from tests.corpus_fixture import write_corpus_parquet
 
 # region encode_row_units
 
@@ -195,7 +195,7 @@ def _write_corpus(tmp_path: Path, rows: list[dict], schema: pa.Schema = SCHEMA) 
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
     table = pa.Table.from_pylist([{k: r.get(k) for k in schema.names} for r in rows], schema=schema)
-    pq.write_table(table, corpus / "train" / "part-0000.parquet")
+    write_corpus_parquet(table, corpus / "train" / "part-0000.parquet")
     return corpus
 
 

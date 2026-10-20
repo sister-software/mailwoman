@@ -4,10 +4,10 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 
 from mailwoman_train.data.loader import iter_rows
 from mailwoman_train.data.relabel import AffixRelabelLexicon
+from tests.corpus_fixture import write_corpus_parquet
 
 LEGACY_SCHEMA = pa.schema(
     [
@@ -34,7 +34,7 @@ def _row(raw: str, source: str, labels: list[str] | None = None) -> dict:
 def _write_split(corpus: Path, split: str, files: dict[str, list[dict]]) -> None:
     (corpus / split).mkdir(parents=True, exist_ok=True)
     for name, rows in files.items():
-        pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / split / name)
+        write_corpus_parquet(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / split / name)
 
 
 def _val_rows(corpus: Path, **overrides) -> list[dict]:
@@ -98,7 +98,7 @@ def test_val_row_limit_spreads_over_row_groups(tmp_path: Path) -> None:
     corpus = tmp_path / "corpus"
     (corpus / "val").mkdir(parents=True)
     rows = [_row(f"{i} Gamma St", "a") for i in range(64)]
-    pq.write_table(
+    write_corpus_parquet(
         pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "val" / "part-a.parquet", row_group_size=8
     )
 
