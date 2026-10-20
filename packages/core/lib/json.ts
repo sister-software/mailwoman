@@ -60,6 +60,25 @@ export function stringifyJSON<T>(input: T, keys?: readonly string[]): Stringifie
 }
 
 /**
+ * Serializes a value as canonical JSON for hashing.
+ *
+ * Object keys are sorted at every depth and `undefined` entries are dropped,
+ * so reformatting a file or reordering an object's keys does not change the hash.
+ * Array order is preserved because an array's order is part of its value.
+ */
+export function canonicalJSON(value: unknown): string {
+	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
+
+	if (Array.isArray(value)) return `[${value.map((entry) => canonicalJSON(entry)).join(",")}]`
+
+	const entries = Object.entries(value as Record<string, unknown>)
+		.filter(([, entryValue]) => entryValue !== undefined)
+		.toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+
+	return `{${entries.map(([key, entryValue]) => `${stringifyJSON(key)}:${canonicalJSON(entryValue)}`).join(",")}}`
+}
+
+/**
  * Given serialized JSON, attempt to parse it.
  *
  * Non-throwing: invalid JSON — and any non-string input, `Buffer` included —

@@ -9,6 +9,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { ParquetRow } from "#parquet/schema"
@@ -71,7 +72,8 @@ export interface SplitSliceOptions {
 	input: PathBuilderLike
 	/**
 	 * Where the per-split parquets are written.
-	 * Each filename combines the input and its split.
+	 *
+	 * Each filename combines the input and its split, and each file's record sits beside it.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -117,13 +119,18 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	}
 
 	const outputs: Partial<Record<SplitName, string>> = {}
+	const extractHash = await sha256File(input)
 
 	for (const split of ["train", "val", "test"] as const) {
 		if (!buckets[split].length) continue
 
 		const output = resolvePath(options.outputDir, `${stem}.${split}.parquet`)
 
-		await writeParquetFile(buckets[split], output)
+		await writeParquetFile(buckets[split], output, {
+			extractHash,
+			config: { tool: "split-slice", split, holdouts },
+		})
+
 		outputs[split] = output
 	}
 

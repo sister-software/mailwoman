@@ -8,7 +8,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { md5File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -24,25 +24,6 @@ import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board/runt
  */
 export function preregistrationPath(directory: string, name: string): string {
 	return resolvePackagePath("mailwoman", "tools", "eval-harness", directory, name)
-}
-
-/**
- * Serializes a value as canonical JSON for hashing.
- *
- * Object keys are sorted at every depth and `undefined` entries are dropped,
- * so reformatting the file does not change the hash.
- * Array order is preserved because row order is reported order.
- */
-export function canonicalJSON(value: unknown): string {
-	if (value === null || typeof value !== "object") return stringifyJSON(value) ?? "null"
-
-	if (Array.isArray(value)) return `[${value.map((entry) => canonicalJSON(entry)).join(",")}]`
-
-	const entries = Object.entries(value as Record<string, unknown>)
-		.filter(([, entryValue]) => entryValue !== undefined)
-		.toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-
-	return `{${entries.map(([key, entryValue]) => `${stringifyJSON(key)}:${canonicalJSON(entryValue)}`).join(",")}}`
 }
 
 /**

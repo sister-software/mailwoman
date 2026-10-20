@@ -5,37 +5,37 @@
  * @file Writes Parquet files and the manifest that describes their contents.
  *
  *   This module exposes two writers. {@linkcode writeParquetFile} writes one file from rows already in memory.
- *   {@linkcode writeParquetSplits} streams per-split row iterables into the number of files the row cap requires. It
- *   returns the manifest. Both writers create their parent directory, as `@mailwoman/core/fs` writers do
- *   encode rather than repeat at each call site.
+ *   {@linkcode writeParquetSplits} streams per-split row iterables into one set of files per source, as many as the
+ *   row cap requires. It returns the manifest. Both writers create their parent directory and write a record beside
+ *   every file (`#parquet/record`).
  *
  *   Layout under `<outputDir>`:
  *
  *   ```
  *   corpus-v<version>/
- *     manifest.json
- *     train/
- *       part-0000.parquet
- *       part-0001.parquet
- *     val/
- *       part-0000.parquet
- *     test/
- *       part-0000.parquet
+ *     MANIFEST.json
+ *   store/
+ *     <source>/
+ *       <derivation hash>/
+ *         data.parquet
+ *         data.RECORD.json
  *   ```
  *
- *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
- *   {@linkcode ROW_GROUP_SIZE} rows. The manifest captures every file's path, row count, byte size and SHA-256, the
- *   digest computed by re-reading the file once after close — cheap against the cost of writing it.
+ *   A file holds the rows of one source in one split. Its directory is named by its derivation hash, over the
+ *   build's extract hash, this package's code hash, the build config with the file's source, split and part, and
+ *   the builder version, so two builds that would write different bytes never share a path. The manifest names each
+ *   file's split, which is how the per-split routing survives without a split directory.
  *
- *   A part is closed by its row count and never by a source boundary, so one part may hold the tail of one source and
- *   the head of the next. A reader must therefore take a file's sources from all of its rows.
+ *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
+ *   {@linkcode ROW_GROUP_SIZE} rows. The manifest captures every file's path, source, row count, byte size and
+ *   SHA-256, the digest computed by re-reading the file once after close — cheap against the cost of writing it.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, movePath, removePath, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
@@ -45,6 +45,17 @@ import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { corpusDirectoryName } from "#directory"
 import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import {
+	addToTally,
+	derivationHash,
+	type FileDerivation,
+	licenseLabel,
+	type ParquetFileRecord,
+	readParquetRecord,
+	resolveDerivation,
+	type SourceLicenseTally,
+	writeParquetRecord,
+} from "#parquet/record"
 import {
 	PARQUET_COLUMN_TYPES,
 	PARQUET_COLUMNS,
@@ -130,9 +141,37 @@ function parquetTable(rows: readonly ParquetRow[]) {
 }
 
 /**
- * Write one parquet file from rows held in memory.
+ * Rows per license label, per source, over rows held in memory.
  */
-export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBuilderLike): Promise<void> {
+function tallyRows(rows: readonly ParquetRow[]): SourceLicenseTally {
+	const tally: SourceLicenseTally = new Map()
+
+	for (const row of rows) {
+		addToTally(tally, row.source, licenseLabel(row.license), 1)
+	}
+
+	return tally
+}
+
+/**
+ * Write one parquet file from rows held in memory, and its record beside it.
+ *
+ * @throws When the rows hold more than one source, because a record describes a file of one source.
+ */
+export async function writeParquetFile(
+	rows: readonly ParquetRow[],
+	path: PathBuilderLike,
+	derivation: FileDerivation
+): Promise<ParquetFileRecord> {
+	const tally = tallyRows(rows)
+
+	if (tally.size !== 1) {
+		throw new Error(
+			`writeParquetFile: ${path.toString()} would hold ${tally.size} sources (${[...tally.keys()].join(", ")}); ` +
+				`each parquet file holds one source.`
+		)
+	}
+
 	const arrow = parquetTable(rows)
 	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
 
@@ -147,6 +186,13 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 	// File identity and provenance live in manifest.json, so omitting file
 	// metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+
+	return writeParquetRecord({
+		path,
+		tally,
+		derivation: await resolveDerivation(derivation),
+		builtAt: new Date().toISOString(),
+	})
 }
 
 /**
@@ -167,12 +213,19 @@ export interface ParquetFileDescriptor {
 	first_source_id: string
 	last_source_id: string
 	/**
-	 * The file's corpus source slug, when the writer knows it.
+	 * The file's corpus source slug.
 	 *
-	 * `audit.ts` prefers this over inferring the source from `first_source_id`'s prefix;
-	 * {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
+	 * {@linkcode writeParquetSplits} writes one source per file and always sets it.
+	 * A manifest written before it did lists multi-source `part-NNNN.parquet` files
+	 * without one, so a reader of an older manifest finds it absent and `audit.ts`
+	 * infers the source from `first_source_id`'s prefix.
 	 */
 	source?: string
+	/**
+	 * The file's derivation hash, which names its store directory.
+	 * Absent from manifests written before the store.
+	 */
+	derivation_hash?: string
 }
 
 export interface ParquetManifest {
@@ -189,9 +242,17 @@ export interface WriteParquetSplitsOptions {
 	/**
 	 * Root output directory.
 	 *
-	 * The corpus version directory is created beneath it.
+	 * The corpus version directory and the `store/` directory are created beneath it.
 	 */
 	outputDir: PathBuilderLike
+
+	/**
+	 * The extract hash and the config every file's derivation hash covers.
+	 *
+	 * The writer adds each file's source, split, part and row cap to the config,
+	 * and the corpus version, because rows carry it.
+	 */
+	derivation: FileDerivation
 
 	/**
 	 * Corpus version stamped onto rows and into the output directory name.
@@ -212,7 +273,7 @@ export interface WriteParquetSplitsOptions {
 	 * A descriptor is appended only after its `.parquet` file closes, so each recorded file is complete.
 	 *
 	 * A resumed run rereads each descriptor's size.
-	 * It discards that number of rows from the front of each split's iterable and opens the next file index.
+	 * For each split and source it discards the rows the recorded files hold and opens the next part.
 	 *
 	 * The caller therefore has to supply the same iterables in the same order.
 	 * For `buildCorpus` that means the same labeled files and the same shuffle seed.
@@ -255,12 +316,39 @@ async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void
 }
 
 /**
- * Streams labeled rows into `.parquet` files, with one set per split.
- * It writes the manifest that describes them.
+ * A source id becomes a store directory's name, so it must be one path segment.
+ */
+const STORE_SOURCE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
+
+/**
+ * The file one split's rows of one source are being written to.
+ */
+interface OpenPart {
+	source: string
+	part: number
+	stagePath: string
+	stage: WriteStream
+	rows: number
+	firstSourceID: string
+	lastSourceID: string
+	tally: SourceLicenseTally
+}
+
+/**
+ * Streams labeled rows into `.parquet` files, with one set per split and source.
  *
- * Splits are processed sequentially so only one file is open at a time.
+ * It writes the manifest that describes them, and a record beside every file.
+ *
+ * Splits are processed sequentially.
+ * Within a split one file is open per source, since rows arrive interleaved
+ * across sources after the shuffle.
+ *
  * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
  * writes the Parquet file from disk.
+ *
+ * A file whose store path already holds a file is kept when the two sha256 values agree,
+ * since the path names its derivation and the bytes are the same.
+ * A disagreement throws, because one derivation wrote two different files.
  */
 export async function writeParquetSplits(
 	perSplit: PerSplitRows,
@@ -268,10 +356,13 @@ export async function writeParquetSplits(
 ): Promise<ParquetManifest> {
 	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
 	const corpusDir = resolvePathBuilder(opts.outputDir, corpusDirectoryName(opts.corpusVersion))
-	await makeDirectories(corpusDir)
+	const storeDir = resolvePathBuilder(opts.outputDir, "store")
+	await makeDirectories(corpusDir, storeDir)
 
 	const manifestPath = corpusDir("MANIFEST.json")
 	const files: ParquetFileDescriptor[] = opts.resume ? await readFinishedParquetFiles(manifestPath) : []
+	const derivation = await resolveDerivation(opts.derivation)
+	const builtAt = new Date().toISOString()
 
 	/**
 	 * The manifest as the finished files describe it.
@@ -308,105 +399,152 @@ export async function writeParquetSplits(
 
 		await using staging = await temporaryDirectory(`mailwoman-parquet-${split}-`)
 
-		const finished = files.filter((file) => file.split === split)
+		// The rows of each source already in this split's `.parquet` files.
+		// A resumed run reads the same iterable from its start, so a source's rows arrive again
+		// in the same order and the first of them are discarded rather than written twice.
+		const skipRows = new Map<string, number>()
+		const nextPart = new Map<string, number>()
 
-		// The rows of this split already in `.parquet` files.
-		// A resumed run reads the same iterable from its start, so these rows arrive again
-		// and are discarded rather than written twice.
-		let skipRows = finished.reduce((total, file) => total + file.rows, 0)
+		for (const file of files) {
+			if (file.split !== split || !file.source) continue
 
-		let fileIndex = finished.length
-		let path = ""
-		let stagePath = ""
-		let fileRows = 0
-		let stage: WriteStream | null = null
-		let firstSourceID = ""
-		let lastSourceID = ""
-
-		const openFile = async (): Promise<void> => {
-			const splitDir = corpusDir(split)
-			await makeDirectories(splitDir)
-			// A string, because the manifest records it.
-			path = splitDir(`part-${String(fileIndex).padStart(4, "0")}.parquet`).toString()
-
-			// A string, because DuckDB reads it inside SQL text.
-			stagePath = staging.path(`part-${String(fileIndex).padStart(4, "0")}.ndjson`).toString()
-			stage = staging.use(openWriteStream(stagePath))
-			fileRows = 0
-			firstSourceID = ""
-			lastSourceID = ""
+			skipRows.set(file.source, (skipRows.get(file.source) ?? 0) + file.rows)
+			nextPart.set(file.source, (nextPart.get(file.source) ?? 0) + 1)
 		}
 
-		const closeFile = async (): Promise<void> => {
-			const activeStage = stage
+		const open = new Map<string, OpenPart>()
 
-			if (!activeStage) return
-
-			await new Promise<void>((resolve, reject) => {
-				activeStage.end((error?: Error | null) => (error ? reject(error) : resolve()))
-			})
-
-			if (fileRows) {
-				await writeStagedParquet(stagePath, path)
-
-				const fileStat = await tryStat(path)
-				const sha256 = await sha256File(path)
-
-				files.push({
-					split,
-					path,
-					format: "parquet",
-					compression: PARQUET_COMPRESSION,
-					rows: fileRows,
-					bytes: fileStat?.size ?? 0,
-					sha256,
-					first_source_id: firstSourceID,
-					last_source_id: lastSourceID,
-				})
-
-				// Written per file rather than once at the end, so an interrupted build resumes
-				// at the next file index instead of rewriting every split.
-				// About 700 small writes over a full build.
-				await writeLocalJSONFile(manifestNow(), manifestPath)
+		const openPart = (source: string): OpenPart => {
+			if (!STORE_SOURCE_PATTERN.test(source)) {
+				throw new Error(`writeParquetSplits: source ${stringifyJSON(source)} cannot name a store directory`)
 			}
 
-			stage = null
-			fileRows = 0
+			const part = nextPart.get(source) ?? 0
+
+			nextPart.set(source, part + 1)
+
+			// A string, because DuckDB reads it inside SQL text.
+			const stagePath = staging.path(`${source}-${part}.ndjson`).toString()
+
+			const opened: OpenPart = {
+				source,
+				part,
+				stagePath,
+				stage: staging.use(openWriteStream(stagePath)),
+				rows: 0,
+				firstSourceID: "",
+				lastSourceID: "",
+				tally: new Map(),
+			}
+
+			open.set(source, opened)
+
+			return opened
+		}
+
+		const closePart = async (opened: OpenPart): Promise<void> => {
+			open.delete(opened.source)
+
+			await new Promise<void>((resolve, reject) => {
+				opened.stage.end((error?: Error | null) => (error ? reject(error) : resolve()))
+			})
+
+			if (!opened.rows) return
+
+			const fileDerivation = {
+				...derivation,
+				config: {
+					...(derivation.config as Record<string, unknown>),
+					corpusVersion: opts.corpusVersion,
+					rowsPerFile,
+					source: opened.source,
+					split,
+					part: opened.part,
+				},
+			}
+
+			const hash = derivationHash(fileDerivation)
+			const fileDir = storeDir(opened.source, hash)
+			// A string, because the manifest records it.
+			const path = fileDir("data.parquet").toString()
+			const pending = fileDir("data.parquet.partial").toString()
+
+			await makeDirectories(fileDir)
+			await writeStagedParquet(opened.stagePath, pending)
+
+			const sha256 = await sha256File(pending)
+			const existing = await tryStat(path)
+
+			if (existing) {
+				const kept = await sha256File(path)
+
+				if (kept !== sha256) {
+					throw new Error(
+						`writeParquetSplits: ${path} holds sha256 ${kept} and this build wrote ${sha256} under the same ` +
+							`derivation hash. A derivation input is missing from the hash, or the writer is not deterministic.`
+					)
+				}
+
+				await removePath(pending)
+			} else {
+				await movePath(pending, path)
+			}
+
+			const record: ParquetFileRecord =
+				(existing ? await readParquetRecord(path) : null) ??
+				(await writeParquetRecord({ path, tally: opened.tally, derivation: fileDerivation, builtAt }))
+
+			files.push({
+				split,
+				path,
+				format: "parquet",
+				compression: PARQUET_COMPRESSION,
+				rows: opened.rows,
+				bytes: (await tryStat(path))?.size ?? 0,
+				sha256: record.sha256,
+				first_source_id: opened.firstSourceID,
+				last_source_id: opened.lastSourceID,
+				source: opened.source,
+				derivation_hash: hash,
+			})
+
+			// Written per file rather than once at the end, so an interrupted build resumes
+			// at each source's next part instead of rewriting every split.
+			await writeLocalJSONFile(manifestNow(), manifestPath)
 		}
 
 		for await (const row of rows) {
-			if (skipRows > 0) {
-				skipRows--
+			const skip = skipRows.get(row.source) ?? 0
+
+			if (skip > 0) {
+				skipRows.set(row.source, skip - 1)
 
 				continue
 			}
 
-			if (!path) {
-				await openFile()
-			}
-
+			const opened = open.get(row.source) ?? openPart(row.source)
 			const pq = rowToParquet(row)
 
-			if (!stage) throw new Error("Parquet file writer was not opened")
-			await writeStagedRow(stage, pq)
+			await writeStagedRow(opened.stage, pq)
 
-			fileRows++
+			opened.rows++
 
-			if (fileRows === 1) {
-				firstSourceID = row.source_id
+			if (opened.rows === 1) {
+				opened.firstSourceID = row.source_id
 			}
 
-			lastSourceID = row.source_id
+			opened.lastSourceID = row.source_id
+			addToTally(opened.tally, row.source, licenseLabel(pq.license), 1)
 
-			if (fileRows >= rowsPerFile) {
-				await closeFile()
-
-				fileIndex++
-				path = ""
+			if (opened.rows >= rowsPerFile) {
+				await closePart(opened)
 			}
 		}
 
-		await closeFile()
+		// `closePart` deletes the entry being visited, which a Map iterator permits.
+		for (const opened of open.values()) {
+			await closePart(opened)
+		}
 	}
 
 	const manifest = manifestNow()
@@ -419,7 +557,7 @@ export async function writeParquetSplits(
 /**
  * The finished `.parquet` files an earlier run recorded, each verified against its file on disk.
  *
- * @throws When a recorded file is missing or its size differs from the descriptor.
+ * @throws When a recorded file names no source, is missing, or its size differs from the descriptor.
  * The writer creates a descriptor only after closing the file.
  * Either case therefore means the file changed after its run.
  * The writer would produce a corpus whose manifest describes bytes the files
@@ -431,6 +569,13 @@ async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<
 	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
 
 	for (const file of manifest.slices) {
+		if (!file.source) {
+			throw new Error(
+				`resume refused: ${manifestPath.toString()} records ${file.path} with no source, so it was written ` +
+					`before files held one source each. Delete the manifest to write every parquet file again.`
+			)
+		}
+
 		const stat = await tryStat(file.path)
 
 		if (!stat) {

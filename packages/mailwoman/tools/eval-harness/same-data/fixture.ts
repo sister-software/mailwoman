@@ -15,10 +15,11 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { canonicalJSON } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
-import { canonicalJSON, definitionContentHash } from "#tools/eval-harness/preregistration"
+import { definitionContentHash } from "#tools/eval-harness/preregistration"
 
 /**
  * The row interface's version.

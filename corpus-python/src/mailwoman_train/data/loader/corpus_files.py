@@ -1,10 +1,12 @@
 """Lists the parquet files of a corpus split and counts rows per source.
 
-Only `file_source_counts` reads row data. It reads only the dictionary-encoded `source` column.
+Only `file_source_counts` reads row data. It reads only the dictionary-encoded `source` column. Listing a split
+from its manifest hashes each file once per process against the manifest's sha256.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -15,6 +17,39 @@ import pyarrow.parquet as pq
 #: The manifest key older corpora use for their parquet file list. Built corpora are immutable, so the
 #: reader accepts both keys and the writer emits only `slices`.
 _PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
+
+#: The directory the corpus build writes single-source files under, beside the corpus version directories.
+_STORE_DIR = "store"
+
+#: Files this process has already hashed, keyed by resolved path and the digest the manifest lists. A split's files
+#: are listed several times per run (mixture sizing, source counts, the loader), and each is hashed once.
+_VERIFIED: set[tuple[str, str]] = set()
+
+
+def file_sha256(path: Path) -> str:
+    """Return the hex sha256 of a file, read in 8 MiB chunks."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(8 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_file_sha256(path: Path, expected: str | None) -> None:
+    """Raise unless ``path`` hashes to the sha256 its manifest entry lists.
+
+    An entry with no sha256 raises too: a file the manifest cannot vouch for is not one the loader can tell apart
+    from a file rewritten in place.
+    """
+    if not expected:
+        raise ValueError(f"MANIFEST lists {path} with no sha256, so its bytes cannot be verified")
+    key = (str(path), expected)
+    if key in _VERIFIED:
+        return
+    actual = file_sha256(path)
+    if actual != expected:
+        raise ValueError(f"{path} hashes to sha256 {actual} and MANIFEST lists {expected}")
+    _VERIFIED.add(key)
 
 
 def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -41,6 +76,14 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
     Re-rooting on the tail by itself would read the overlay's part in place of the base's.
     """
     parts = raw.parts
+
+    # A store file, ``store/<source>/<derivation hash>/data.parquet``, sits beside the corpus directories rather
+    # than inside one, and its path names no split: the manifest entry does.
+    if _STORE_DIR in parts:
+        cand = corpus_dir.parent / Path(*parts[parts.index(_STORE_DIR) :])
+
+        return cand if cand.exists() else None
+
     at = parts.index(split) if split in parts else None
 
     if at is None:
@@ -61,15 +104,17 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
 def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Return the parquet files for one split, from MANIFEST.json or a directory glob.
 
-    The manifest lists an absolute ``path`` and ``split`` per file. An overlay manifest also lists
+    The manifest lists an absolute ``path``, ``split`` and ``sha256`` per file. An overlay manifest also lists
     files in its base corpus. Use each path as-is when it exists. Otherwise, re-root it with
-    `_reroot`. Run the glob only when the manifest resolves no files.
+    `_reroot`. Every resolved file is hashed against its listed sha256 once per process, and a mismatch raises.
+    Run the glob only when the manifest resolves no files.
     """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
         base_version = data.get("base_corpus_version")
         resolved: list[Path] = []
+        digests: list[str | None] = []
         rerooted = 0
         missing: list[str] = []
         declared = 0
@@ -80,10 +125,12 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
             raw = Path(s["path"])
             if raw.exists():
                 resolved.append(raw)
+                digests.append(s.get("sha256"))
                 continue
             cand = _reroot(raw, corpus_dir, split)
             if cand is not None:
                 resolved.append(cand)
+                digests.append(s.get("sha256"))
                 rerooted += 1
             else:
                 missing.append(str(raw))
@@ -98,6 +145,8 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
                 + ("\n  ..." if len(missing) > 10 else "")
             )
         if resolved:
+            for path, digest in zip(resolved, digests, strict=True):
+                verify_file_sha256(path, digest)
             print(
                 f"[parquet] {split}: {len(resolved)} resolved ({rerooted} re-rooted) from MANIFEST"
                 + (f" (base_corpus_version={base_version})" if base_version else " (no base_corpus_version field)")

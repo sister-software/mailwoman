@@ -38,6 +38,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { corpusDirectoryName } from "#directory"
+import type { FileDerivation } from "#parquet/record"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
@@ -93,7 +94,8 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 async function writeOneFile(
 	rows: readonly LabeledRow[],
 	outPath: string,
-	source: string
+	source: string,
+	derivation: FileDerivation
 ): Promise<ParquetFileDescriptor> {
 	let firstSourceID = ""
 	let lastSourceID = ""
@@ -106,10 +108,9 @@ async function writeOneFile(
 		lastSourceID = row.source_id
 	}
 
-	await writeParquetFile(rows.map(rowToParquet), outPath)
+	const { sha256 } = await writeParquetFile(rows.map(rowToParquet), outPath, derivation)
 
 	const fileStat = await tryStat(outPath)
-	const sha256 = await sha256File(outPath)
 
 	return {
 		split: "train",
@@ -179,13 +180,19 @@ export async function buildTranslitOverlay(
 
 	const newFiles: ParquetFileDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].toSorted()
+	const extractHash = await sha256File(options.jsonl)
 
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
 		// A string, because the manifest records it.
 		const outPath = trainDir(`part-translit-${slug}.parquet`).toString()
-		const descriptor = await writeOneFile(rows, outPath, source)
+
+		const descriptor = await writeOneFile(rows, outPath, source, {
+			extractHash,
+			config: { tool: "translit", corpusVersion, source },
+		})
+
 		newFiles.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}

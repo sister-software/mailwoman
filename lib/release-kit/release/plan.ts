@@ -17,8 +17,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { canonicalJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { canonicalJSON } from "mailwoman/tools/eval-harness/preregistration"
 import { resolvePath } from "path-ts"
 
 import { releaseWorkspaces } from "#release-kit/release/stage"
