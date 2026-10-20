@@ -13,15 +13,10 @@
  *   means from placed unit centroids.
  */
 
-import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import type { PostcodeBinaryEntry } from "@mailwoman/postcode/binary-resolver"
 import type { NamedLatLon } from "@mailwoman/spatial"
 
-/**
- * GB inward code length (`\d[A-Z]{2}`).
- * The outward code is everything before it.
- */
-const GB_INWARD_LENGTH = 3
+import { gbOutwardFromKey } from "#gazetteer/gb/outward"
 
 /**
  * GB key granularity.
@@ -102,20 +97,6 @@ export function postcodeBinaryKey(country: string, name: string): string {
 	const upper = (name || "").trim().toUpperCase()
 
 	return country.toUpperCase() === "GB" ? upper.replaceAll(" ", "") : upper
-}
-
-/**
- * Returns GB outward district from a unit postcode key.
- *
- * Accepts spaced or unspaced forms.
- * Every string outside the GB unit shape returns `null`.
- */
-export function gbOutwardFromKey(name: string): string | null {
-	const key = postcodeBinaryKey("GB", name)
-
-	if (!UK_POSTCODE_PATTERN.test(key)) return null
-
-	return key.slice(0, -GB_INWARD_LENGTH)
 }
 
 /**
