@@ -11,6 +11,10 @@
  *     --manifest <corpus MANIFEST.json> --baseline <weights cache> --candidates <cache>,<cache> --out <report .json> \
  *     [--provenance <history .json>]
  *
+ *   `--dataset <dataset manifest .json>` scores a frozen, versioned sample (`heldout/dataset/freeze.run.ts`) in
+ *   place of drawing one from `--manifest`; the rows file's sha256 is checked against the manifest. Every
+ *   outcome carries the row's `group`, which `release/evaluate.ts` resamples by.
+ *
  *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" | "known_overlap",
  *   "evidence": "<where the history was recorded>" } } }`. A row it does not name is classed `unknown`.
  */
@@ -19,6 +23,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import {
 	assertPairedArms,
 	type CountryScore,
@@ -34,6 +39,10 @@ const { values } = parseArguments({
 		manifest: {
 			type: "string",
 			description: "The corpus MANIFEST.json whose test files hold the rows",
+		},
+		dataset: {
+			type: "string",
+			description: "A frozen held-out dataset manifest (heldout/dataset/freeze.run.ts), in place of --manifest",
 		},
 		"per-country": {
 			type: "string",
@@ -64,9 +73,11 @@ const { values } = parseArguments({
 	},
 })
 
-if (!values.manifest || !values.baseline || !values.candidates || !values.out) {
-	throw new Error("--manifest, --baseline, --candidates and --out are required")
+if (!(values.manifest || values.dataset) || !values.baseline || !values.candidates || !values.out) {
+	throw new Error("--manifest or --dataset, --baseline, --candidates and --out are required")
 }
+
+if (values.manifest && values.dataset) throw new Error("--manifest and --dataset name two row sets; pass one")
 
 let history: ProvenanceHistory | undefined
 
@@ -90,9 +101,22 @@ if (values.provenance) {
 	history = new Map(Object.entries(file.rows))
 }
 
-const { rows, counts } = await sampleHeldoutRows(values.manifest, Number(values["per-country"]), values["path-root"])
+const { rows, counts, dataset } = values.dataset
+	? await readHeldoutDatasetRows(values.dataset).then((frozen) => ({
+			rows: frozen.rows,
+			counts: frozen.manifest.cells,
+			dataset: {
+				path: values.dataset!,
+				datasetID: frozen.manifest.datasetID,
+				version: frozen.manifest.version,
+			},
+		}))
+	: {
+			...(await sampleHeldoutRows(values.manifest!, Number(values["per-country"]), values["path-root"])),
+			dataset: null,
+		}
 
-console.error(`${rows.length} held-out rows from ${values.manifest}`)
+console.error(`${rows.length} held-out rows from ${values.dataset ?? values.manifest}`)
 
 const arms = [values.baseline, ...values.candidates.split(",").map((s) => s.trim())]
 const scored: HeldoutArmResult[] = []
@@ -124,7 +148,8 @@ const report = counts.map((cell) => ({
 
 await writeLocalJSONFile(
 	{
-		manifest: values.manifest,
+		manifest: values.manifest ?? null,
+		dataset,
 		provenance: values.provenance ?? null,
 		rows: rows.length,
 		arms,

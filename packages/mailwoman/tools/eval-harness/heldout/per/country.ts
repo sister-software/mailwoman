@@ -23,6 +23,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -41,6 +42,10 @@ export interface HeldoutRow {
 	country: string | null
 	source: string
 	source_id: string | null
+	/**
+	 * The independent sampling unit the row belongs to; see {@linkcode heldoutRowGroup}.
+	 */
+	group: string
 }
 
 /**
@@ -97,6 +102,10 @@ export interface HeldoutRowOutcome {
 	country: string
 	source: string
 	kind: HeldoutRowKind
+	/**
+	 * The row's {@linkcode heldoutRowGroup}, which keeps derived variants together in resampling.
+	 */
+	group: string
 	provenance: HeldoutProvenance
 	/**
 	 * The predicted spans equal the annotated spans, with no missing and no additional span.
@@ -159,6 +168,103 @@ export function heldoutRowID(row: Pick<HeldoutRow, "source" | "source_id" | "raw
 }
 
 /**
+ * The grouping columns a held-out sample reads from every test file.
+ */
+export const HELDOUT_GROUP_COLUMNS = ["source_id", "base_source_id"] as const
+
+/**
+ * The independent group of one corpus row: its `base_source_id` when the row was
+ * derived from a base row, else its own `source_id`.
+ *
+ * A derived row records the `source_id` of the row it came from, so a base row
+ * and every augmentation of it (case, typo, reorder variants) share one group,
+ * and the paired bootstrap resamples them together.
+ *
+ * The key is not prefixed with the source.
+ * A base row may sit in a different source from its derivatives, and a
+ * recipe may name a base by a register key such as `<register>:<csv>:<key>`,
+ * so a source prefix would split groups that belong together.
+ *
+ * Two unrelated sources that happen to share an id string are merged into one group,
+ * which widens an interval rather than narrowing it.
+ *
+ * Limits: the group joins only rows linked through `base_source_id`.
+ * Two distinct rows describing the same address from different publishers, or many
+ * addresses on one street or in one small place, remain separate groups; a larger unit
+ * for that shared place or source structure needs a key the corpus does not yet record.
+ *
+ * @throws When neither column holds a non-empty string: an unreadable grouping column
+ * is refused rather than defaulted to the row's own identity.
+ */
+export function heldoutRowGroup(row: { source_id?: unknown; base_source_id?: unknown }, rowLabel: string): string {
+	const base = row.base_source_id
+
+	if (base != null) {
+		if (typeof base !== "string" || !base) {
+			throw new Error(`held-out row ${rowLabel} holds an unreadable base_source_id: ${stringifyJSON(base)}`)
+		}
+
+		return base
+	}
+
+	const own = row.source_id
+
+	if (typeof own !== "string" || !own) {
+		throw new Error(
+			`held-out row ${rowLabel} has no readable grouping column: base_source_id is null and source_id is ${stringifyJSON(own ?? null)}`
+		)
+	}
+
+	return own
+}
+
+/**
+ * Throws unless every file carries the grouping columns.
+ *
+ * `read_parquet(..., union_by_name = true)` fills a column a file lacks with `NULL`,
+ * which would read as "not derived" on every row of that file.
+ */
+export async function assertGroupColumns(files: readonly string[]): Promise<void> {
+	for (const file of files) {
+		const columns = await parquetColumnNames(file)
+		const missing = HELDOUT_GROUP_COLUMNS.filter((column) => !columns.includes(column))
+
+		if (missing.length) {
+			throw new Error(`${file} lacks the grouping column(s) ${missing.join(", ")}; refusing to sample without them`)
+		}
+	}
+}
+
+/**
+ * The rule a held-out sample is drawn by, recorded in a dataset manifest.
+ */
+export interface HeldoutSamplingRule {
+	method: "per-country-kind-hash-order"
+	/**
+	 * Rows drawn per country and row kind.
+	 */
+	perCountry: number
+	/**
+	 * Mixed into the order hash; `null` orders by `hash(raw)` alone.
+	 */
+	seed: number | null
+	/**
+	 * The ordering expression, for a reader outside this module.
+	 */
+	order: string
+}
+
+/**
+ * The ordering a sample with `seed` uses: DuckDB `hash`, then the row's identity columns
+ * as a tiebreak so rows with identical text are drawn in a fixed order.
+ */
+export function heldoutSampleOrder(seed: number | null): string {
+	const key = seed == null ? "hash(raw)" : `hash(raw, ${Math.trunc(seed).toString()})`
+
+	return `${key}, source, source_id`
+}
+
+/**
  * Reads up to `perCountry` test-split rows per country and row kind from a corpus
  * manifest's test files, with the number of test rows available in each cell.
  *
@@ -170,8 +276,14 @@ export function heldoutRowID(row: Pick<HeldoutRow, "source" | "source_id" | "raw
 export async function sampleHeldoutRows(
 	manifestPath: PathBuilderLike,
 	perCountry: number,
-	pathRoot: string
-): Promise<{ rows: HeldoutRow[]; counts: HeldoutCellCount[] }> {
+	pathRoot: string,
+	seed: number | null = null
+): Promise<{
+	rows: HeldoutRow[]
+	counts: HeldoutCellCount[]
+	files: string[]
+	rule: HeldoutSamplingRule
+}> {
 	const manifest = await readLocalJSONFile<{
 		slices: Array<{ path: string; split: string }>
 	}>(manifestPath)
@@ -182,13 +294,15 @@ export async function sampleHeldoutRows(
 
 	if (!files.length) throw new Error(`${manifestPath.toString()} lists no test files`)
 
+	await assertGroupColumns(files)
+
 	using db = await openDuckDB()
 	const source = `read_parquet([${files.map((file) => `'${escapeSQLString(file)}'`).join(", ")}], union_by_name = true)`
 
 	const reader = await db.runAndReadAll(
-		`SELECT raw, span_starts, span_ends, span_tags, country, source, source_id FROM ${source} ` +
+		`SELECT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id FROM ${source} ` +
 			// Each country draws its quota of address rows and of gazetteer rows separately (`heldoutRowKind`).
-			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), starts_with(source, 'wof-') ORDER BY hash(raw)) <= ` +
+			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), starts_with(source, 'wof-') ORDER BY ${heldoutSampleOrder(seed)}) <= ` +
 			Math.trunc(perCountry).toString()
 	)
 
@@ -206,6 +320,7 @@ export async function sampleHeldoutRows(
 	}
 
 	const rows = reader.getRowObjects().map((row): HeldoutRow => ({
+		group: heldoutRowGroup(row, `${String(row.source)}:${String(row.source_id)}`),
 		raw: String(row.raw),
 		span_starts: spanList(row.span_starts).map(Number),
 		span_ends: spanList(row.span_ends).map(Number),
@@ -225,7 +340,14 @@ export async function sampleHeldoutRows(
 		available: Number(row.n),
 	}))
 
-	return { rows, counts: countHeldoutCells(available, rows) }
+	const rule: HeldoutSamplingRule = {
+		method: "per-country-kind-hash-order",
+		perCountry: Math.trunc(perCountry),
+		seed,
+		order: heldoutSampleOrder(seed),
+	}
+
+	return { rows, counts: countHeldoutCells(available, rows), files, rule }
 }
 
 /**
@@ -281,6 +403,7 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 		country: row.country ?? "ZZ",
 		source: row.source,
 		kind: heldoutRowKind(row.source),
+		group: row.group,
 		provenance: history?.get(rowID)?.provenance ?? "unknown",
 		exact: exactOutcome.exact,
 		missingSpans: exactOutcome.missing.length,

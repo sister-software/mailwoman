@@ -19,7 +19,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pathBuilder } from "path-ts"
+import { resolvePath } from "path-ts"
 
 import { evaluateReleaseSpec, type OutcomeRow, pairOutcomes } from "#tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
@@ -71,8 +71,8 @@ const armRows = (arm: string): OutcomeRow[] => {
 const paired = pairOutcomes(armRows(values["published-arm"]), armRows(values["candidate-arm"]))
 
 const artifacts = {
-	published: await sha256File(pathBuilder(values["published-arm"], "model.onnx")),
-	candidate: await sha256File(pathBuilder(values["candidate-arm"], "model.onnx")),
+	published: await sha256File(resolvePath(values["published-arm"], "model.onnx")),
+	candidate: await sha256File(resolvePath(values["candidate-arm"], "model.onnx")),
 }
 
 const verdict = evaluateReleaseSpec(spec, paired, artifacts)

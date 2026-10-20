@@ -1,13 +1,112 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { describe, expect, it } from "vitest"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { afterAll, describe, expect, it } from "vitest"
 
 import {
 	assertPairedArms,
 	countHeldoutCells,
 	type HeldoutRow,
+	heldoutRowGroup,
 	heldoutRowID,
+	sampleHeldoutRows,
 	scoreHeldoutArm,
 } from "#tools/eval-harness/heldout/per/country"
+
+const directory = await temporaryDirectory("mw-heldout-country-")
+
+afterAll(() => directory[Symbol.asyncDispose]())
+
+/**
+ * Writes a small test-split parquet file and a corpus manifest naming it under `/data`.
+ */
+async function writeFixtureCorpus(name: string, valuesSQL: string, columns: string): Promise<string> {
+	const file = directory.path(name, "test", "part-0.parquet").toString()
+	const manifest = directory.path(name, "MANIFEST.json").toString()
+
+	await writeLocalJSONFile({ slices: [{ path: `/data/${name}/test/part-0.parquet`, split: "test" }] }, manifest)
+
+	await makeDirectories(directory.path(name, "test"))
+
+	using db = await openDuckDB()
+
+	await db.run(`COPY (SELECT * FROM (VALUES ${valuesSQL}) t(${columns})) TO '${file}' (FORMAT parquet)`)
+
+	return manifest
+}
+
+describe("heldoutRowGroup", () => {
+	it("keys a derived row by its base row and a base row by its own id", () => {
+		expect(heldoutRowGroup({ source_id: "oa:1", base_source_id: null }, "r")).toBe("oa:1")
+		expect(heldoutRowGroup({ source_id: "oa:1~case", base_source_id: "oa:1" }, "r")).toBe("oa:1")
+	})
+
+	it("refuses a row whose grouping columns are unreadable", () => {
+		expect(() => heldoutRowGroup({ source_id: null, base_source_id: null }, "r")).toThrow(/no readable grouping/u)
+		expect(() => heldoutRowGroup({ source_id: "x", base_source_id: "" }, "r")).toThrow(/unreadable base_source_id/u)
+		expect(() => heldoutRowGroup({ source_id: 7, base_source_id: undefined }, "r")).toThrow(/no readable grouping/u)
+	})
+})
+
+describe("sampleHeldoutRows grouping", () => {
+	const spans = "[0], [4], ['street']"
+	const columns = "raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id"
+
+	it("gives a base row and its derived variants one group", async () => {
+		const manifest = await writeFixtureCorpus(
+			"grouped",
+			[
+				`('Main', ${spans}, 'US', 'oa-us', 'b1', NULL)`,
+				`('main', ${spans}, 'US', 'oa-us', 'b1~lower', 'b1')`,
+				`('MAIN', ${spans}, 'US', 'oa-us', 'b1~upper', 'b1')`,
+				`('Elms', ${spans}, 'US', 'oa-us', 'b2', NULL)`,
+			].join(", "),
+			columns
+		)
+
+		const { rows, rule } = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7)
+		const groups = new Map(rows.map((row) => [row.source_id, row.group]))
+
+		expect(groups).toEqual(
+			new Map([
+				["b1", "b1"],
+				["b1~lower", "b1"],
+				["b1~upper", "b1"],
+				["b2", "b2"],
+			])
+		)
+
+		expect(rule).toMatchObject({ perCountry: 10, seed: 7 })
+
+		const arm = await scoreHeldoutArm(rows, async (row) => ({
+			raw: row.raw,
+			roots: [],
+		}))
+
+		expect(new Set(arm.rows.filter((r) => r.group === "b1").map((r) => r.rowID)).size).toBe(3)
+	})
+
+	it("refuses a file that lacks the base_source_id column", async () => {
+		const manifest = await writeFixtureCorpus(
+			"ungrouped",
+			`('Main', ${spans}, 'US', 'oa-us', 'b1')`,
+			"raw, span_starts, span_ends, span_tags, country, source, source_id"
+		)
+
+		await expect(sampleHeldoutRows(manifest, 10, directory.path.toString())).rejects.toThrow(/base_source_id/u)
+	})
+
+	it("refuses a sampled row whose grouping columns are both null", async () => {
+		const manifest = await writeFixtureCorpus(
+			"null-group",
+			`('Main', ${spans}, 'US', 'oa-us', NULL::VARCHAR, NULL::VARCHAR)`,
+			columns
+		)
+
+		await expect(sampleHeldoutRows(manifest, 10, directory.path.toString())).rejects.toThrow(/no readable grouping/u)
+	})
+})
 
 const node = (raw: string, tag: AddressNode["tag"], start: number, end: number): AddressNode => ({
 	tag,
@@ -27,6 +126,7 @@ const rows: HeldoutRow[] = [
 		country: "US",
 		source: "oa-us",
 		source_id: "a1",
+		group: "a1",
 	},
 	{
 		raw: "Wollin, Mecklenburg-Vorpommern",
@@ -36,6 +136,7 @@ const rows: HeldoutRow[] = [
 		country: "DE",
 		source: "wof-de",
 		source_id: null,
+		group: "wof-place-1",
 	},
 ]
 
