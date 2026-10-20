@@ -9,8 +9,8 @@
 # 1. `data.corpus_dir` moves to v0.8.0: the v0.8.0-store base build of the eleven base adapters, plus the
 #    single-source overlay files added since v0.7.0. #2750 removed the corpus-time order mixing (the
 #    `--intl-fraction` reversal, fr-order variant C and the postcode-order recipe), so the order mix of a rebuilt
-#    corpus lives in this config's postcode-move rate. That holds only for overlay files rendered after #2750. The
-#    launch plan lists the v0.7.x overlay files that still carry a corpus-time order mix.
+#    corpus lives in this config's postcode-move rate. The launch plan re-renders the three v0.7.x overlay files
+#    that mixed order at corpus time and deletes overture's reversed ES, BE and PL rows before v0.8.0 is assembled.
 # 2. `data.augment_postcode_move_prob` is set. At 0.0 this arm draws no randomness for the move, so its stream is
 #    the stream every config before #2750 reads.
 # 3. Seven receipts under the #2750 heading. The receipts match drawn rows before augmentation, so they assert the
@@ -407,8 +407,8 @@ data:
     # #2750. The move copies a train row whose postcode sits on its layout's native side of the locality-and-region
     # block, so these four receipts floor that native population in the D-rule locales. They match the drawn row
     # before augmentation, so they read the same in all three arms. Each floor is a presence floor, set well under the
-    # source's share of a 1,000,000-row epoch rather than fitted to an audit; a shortfall stops the run for a
-    # diagnosis, and the floor is not lowered to pass.
+    # source's share of a 1,000,000-row epoch rather than fitted to an audit. A shortfall stops the run for a
+    # diagnosis, and the floor stays where it is.
     - name: us-native-locality-region-postcode
       min_draws: 10000
       country: US

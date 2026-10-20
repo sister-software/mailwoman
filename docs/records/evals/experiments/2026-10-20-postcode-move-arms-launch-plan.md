@@ -44,29 +44,73 @@ Assumed corpus path on the volume: `/data/corpus/versioned/v0.8.0/corpus-v0.8.0/
 `0.8.0`. It is assembled by `mailwoman corpus overlay-manifest` from the `v0.8.0-store` base
 (`/mnt/mw/corpus/versioned/v0.8.0-store`, building from `packages/corpus/data/builds/v0.7.0-de-holdout/inputs.json`)
 plus the single-source overlay files that `v0.7.10-gb-county` adds to v0.7.0. Every base path is re-rooted to
-`/data/corpus/versioned/v0.8.0-store/…`; the count of manifest paths containing `/mnt` must be 0.
+`/data/corpus/versioned/v0.8.0-store/…`, and the count of manifest paths containing `/mnt` must be 0.
 
 The base build runs the eleven adapters of v0.7.0 under their v0.7.0 source names: `ban`, `state-ia-contractors`,
 `state-ny-notaries`, `state-tx-notaries`, `tiger`, `usgov-hrsa-fqhc`, `usgov-imls-pls`, `usgov-nad`, `usgov-nppes`,
-`wof-admin`, `wof-postalcode`. No config source is expected to be renamed by the build (inferred from the adapter keys;
-the finished store's directory names confirm it).
+`wof-admin`, `wof-postalcode`. The build is expected to keep every config source name. That is inferred from the
+adapter keys, and the finished store's directory names confirm it.
 
-Overlay files carried from v0.7.x that still hold a corpus-time order mix, so the p000 arm is not order-pure unless
-they are re-rendered after #2750:
+## Order-pure overlays before assembly
 
-| source                | file                                                   | mix                                                                        |
-| --------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `rendered-gb-os-open` | `rendered-gb-os-open.*.parquet`                        | rendered with `--intl-fraction 0.0664`                                     |
-| `rendered-de`         | `part-synth-german-00000.*.parquet`                    | rendered with `--intl-fraction 0.4`                                        |
-| `rendered-fr-order`   | `part-synth-fr-order-train.train.parquet`              | includes variant C, which #2750 removed                                    |
-| `overture`            | `part-overture-multilocale-3order-train.train.parquet` | 100,000 native and 50,000 reversed rows in ES, BE and PL; producer retired |
+Decided 2026-10-20: the p000 arm reads no corpus-time order mix. Four v0.7.x overlay files mixed order at corpus time:
+
+| source                | v0.7.x file                                                                | rows (train/val/test)   | mix                                                 |
+| --------------------- | -------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------- |
+| `rendered-gb-os-open` | `v0.7.10-gb-county/…/rendered-gb-os-open.*.parquet`                        | 786,626 / 6,706 / 6,668 | rendered with `--intl-fraction 0.0664`              |
+| `rendered-de`         | `v0.7.0-de-holdout/…/part-synth-german-00000.*.parquet`                    | 187,485 / 8,260 / 8,255 | rendered with `--intl-fraction 0.4`                 |
+| `rendered-fr-order`   | `v0.7.0-de-holdout/…/part-synth-fr-order-train.train.parquet`              | 50,000 train            | includes variant C, which #2750 removed             |
+| `overture`            | `v0.7.0-de-holdout/…/part-overture-multilocale-3order-train.train.parquet` | 2,400,000 train         | reversed ES, BE and PL rows from a retired producer |
 
 In the first row group of the v0.7.10 train files (observed, 20,000 rows each), `[postcode, locality]` is contiguous in
 9,970 `rendered-de` rows and `[locality, postcode]` in 15,838 `rendered-gb-os-open` rows.
 
-Six sources are refused by the post-#2754 builder for want of a register license id, so they cannot be re-rendered
-yet. One of them, `invented-po-box-military`, is in this config at reps 8.0 with receipt `us-military-po-box`; the
-v0.7.x file is reused.
+1. Re-render the three recipe sources from the post-#2750 tree, at their v0.7.x counts and seeds. The recipes no
+   longer take `--intl-fraction`, and `fr-order` now renders variants A, B and D:
+
+   ```bash
+   mailwoman corpus slice locale --country GB --count 800000 --seed 42 --out <dir>/rendered-gb-os-open.jsonl
+   mailwoman corpus slice german --count 200000 --seed 42 --out <dir>/rendered-de.jsonl
+   mailwoman corpus slice fr-order --count 50000 --seed 42 --out <dir>/rendered-fr-order.jsonl
+   ```
+
+   For each file: `mailwoman corpus align-slice`, `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`,
+   which writes the `<stem>.split.<policy hash>.json` attribute file. Each keeps its wire identifier, so the configs'
+   weights apply unchanged.
+
+2. Drop the reversed `overture` rows with a deletion. Read the 3order file's `source_id`, `country`, `span_tags`,
+   `span_starts` and `span_ends`. For each ES, BE and PL row, compare the postcode span's start with the locality and
+   region block's against `postcodePlacement` from `@mailwoman/postcode/country-formats` (the table `postcode-layouts.json`
+   is generated from). Every row whose postcode sits on the side opposite the stated placement goes into
+   `<dir>/overture-reversed-es-be-pl.parquet` as a `source_id` column. No committed tool does this yet. It is a run
+   tool under `packages/mailwoman/tools/dev-tools/corpus/`, and its row count per country must match the census's
+   reversed counts before the deletion is used. Then `<dir>/deletions.json`:
+
+   ```json
+   [
+   	{
+   		"target": { "path": "train/part-overture-multilocale-3order-train.train.parquet" },
+   		"sourceIDsFile": "<dir>/overture-reversed-es-be-pl.parquet",
+   		"reason": "Reversed postcode order in ES, BE and PL, placed against libaddressinput's fmt. The training-time postcode move replaces it.",
+   		"issue": "#2750"
+   	}
+   ]
+   ```
+
+3. Assemble v0.8.0 over the store, replacing the three re-rendered sources and applying the deletion:
+
+   ```bash
+   mailwoman corpus overlay-manifest --base /mnt/mw/corpus/versioned/v0.8.0-store/MANIFEST.json \
+     --replace-source rendered-gb-os-open --replace-source rendered-de --replace-source rendered-fr-order \
+     --deletions <dir>/deletions.json --corpus-version 0.8.0 …
+   ```
+
+   Then freeze the manifest with `freeze-overlay-manifest.run.ts` and check that the count of manifest paths containing
+   `/mnt` is 0.
+
+`invented-po-box-military` keeps its v0.7.x file. It is one of six sources the post-#2754 builder refuses for want of a
+register license id, so it cannot be re-rendered yet. This config gives it reps 8.0 and the receipt
+`us-military-po-box`.
 
 ## Receipts
 
@@ -92,7 +136,7 @@ What can be asserted before a GPU is allocated:
 1. Every receipt passes in each arm. The draw pass does not read the copy rate, so `draw_level` and
    `required_corpus_receipts` must be identical across the three reports.
 2. `emitted_level.augmented_share` rises from p000 to p005 to p015. The difference is the move's copies plus the
-   effect of the shifted random stream, so it is a direction check, not a rate measurement.
+   effect of the shifted random stream, so it checks direction only. The rate comes from step 3.
 3. The moved share itself is unmeasured until the loader's outcome log of the first epoch. Read it from the p005 and
    p015 training logs and record `moved` against each skip reason. Exposing the counter in the audit report is the
    change that would make it measurable on CPU.
@@ -103,8 +147,8 @@ What can be asserted before a GPU is allocated:
    assembled `v0.8.0` directory (MANIFEST.json, split-attribute files, any deletions sidecars) to
    `:s3:mailwoman-assets/corpus/v0.8.0/`. Size estimate: the base part files in v0.7.10's manifest total 78.4 GB, the
    whole v0.7.0-de-holdout tree 79.1 GB, so about 75 to 80 GB for the store (unknown until the build exits). The
-   overlay files total 1.1 GB and are already on the volume under their v0.7.x directories; re-rendered overlays add
-   their own bytes.
+   overlay files total 1.1 GB and are already on the volume under their v0.7.x directories. The three re-rendered
+   overlays and the deletion sidecar are new bytes, about 0.1 GB going by the v0.7.x files' sizes.
 2. `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**" --low-level-retries 30 --retries 8`
    delivers the three configs.
 3. From `corpus-python/`: `modal run -m launch.train_remote::sync_assets --corpus-versions v0.8.0-store,v0.8.0`,
