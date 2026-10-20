@@ -97,7 +97,7 @@ describe("routeFamilyWithLeadingRun", () => {
 	 * The four board rows that pass today with Han or Hangul inside a Latin line.
 	 *
 	 * A reading that moves one of these changes the graph serving a checking row.
-	 * Two rows are in GB, listed in `scope.config.json` under `dRuleProtected`.
+	 * Two rows are in GB.
 	 */
 	const LATIN_LED = [
 		"JJAN! 짠 Châtelet, 14 Rue du Pont Neuf, 75001 Paris",

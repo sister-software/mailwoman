@@ -16,11 +16,12 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { dRuleCountries, readScopeConfig, tieredCountries } from "@mailwoman/core/scope-config"
+import { readScopeConfig, tieredCountries } from "@mailwoman/core/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { epochMixtureAuditPath } from "@mailwoman/corpus/source-register"
+import { pathBuilder } from "path-ts"
 
 import { censusCoverage, newestManifest } from "#coverage"
 import { admittedByShippedGraphs, resolveTrainingConfig } from "#tools/coverage/census"
@@ -32,6 +33,8 @@ import {
 	readCoverageFunnel,
 	StageState,
 } from "#tools/eval-harness/coverage-funnel"
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/current-release-spec"
+import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({
 	options: {
@@ -89,6 +92,7 @@ async function readMixtureAudit(
 
 const repoRoot = repoRootPath()
 const scope = await readScopeConfig(repoRoot)
+const releaseSpec = await readReleaseSpec(pathBuilder(CURRENT_RELEASE_SPEC))
 const config = resolveTrainingConfig(scope, { requested: values.config })
 const configPath = config.path
 const manifestPath = await newestManifest()
@@ -123,7 +127,10 @@ const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, c
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
 	tieredCountries: [...tieredCountries(scope)],
-	protectedCountries: dRuleCountries(scope).map((entry) => entry.country),
+	requiredCountries: releaseSpec.requirements.flatMap((requirement) =>
+		requirement.kind === "country" ? [requirement.country] : []
+	),
+	releaseSpecVersion: releaseSpec.specVersion,
 	...(mixtureAuditPresent ? { mixtureAudit: mixtureAuditPath } : {}),
 	...(mixture ? { sampledRows: mixture.rows, sampledTotal: mixture.total } : {}),
 })
