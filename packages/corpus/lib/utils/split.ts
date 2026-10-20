@@ -18,6 +18,7 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } f
 import { createHash } from "@mailwoman/core/hash"
 import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -286,6 +287,34 @@ export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
 }
 
+interface FoldedHoldoutNames {
+	regions: ReadonlySet<string>
+	localities: ReadonlySet<string>
+}
+
+const foldedNamesCache = new WeakMap<object, FoldedHoldoutNames>()
+
+/**
+ * A policy's region and locality names under `foldNFKCWhitespace`, computed once per policy object.
+ *
+ * Sources write one place in several cases and spacings (`Asturias`, `ASTURIAS`, `Balearic  Islands`).
+ * An exact match held out one spelling and trained on the rest.
+ */
+function foldedNamesFor(declared: CountryHoldout, policy: HoldoutPolicy): FoldedHoldoutNames {
+	const cached = foldedNamesCache.get(declared)
+
+	if (cached) return cached
+
+	const names: FoldedHoldoutNames = {
+		regions: new Set((policy.regions ?? []).map(foldNFKCWhitespace)),
+		localities: new Set((policy.localities ?? []).map(foldNFKCWhitespace)),
+	}
+
+	foldedNamesCache.set(declared, names)
+
+	return names
+}
+
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components">
 
 /**
@@ -304,11 +333,12 @@ export function splitForRow(
 
 	if (declared) {
 		const policy = holdoutPolicyFor(declared)
+		const folded = foldedNamesFor(declared, policy)
 
 		isHeldOut = Boolean(
-			(region && (policy.regions?.includes(region) ?? false)) ||
+			(region && folded.regions.has(foldNFKCWhitespace(region))) ||
 			(postcode && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
-			(locality && (policy.localities?.includes(locality) ?? false))
+			(locality && folded.localities.has(foldNFKCWhitespace(locality)))
 		)
 	} else {
 		// A country without a declared holdout holds out whole places chosen by hash,

@@ -248,6 +248,25 @@ describe("defaultHoldouts", () => {
 		expect(splitForRow({ ...ro, components: { street: "UNIRII", postcode: "200000" } })).toBe("train")
 	})
 
+	it("holds out a case or spacing variant of a held-out region or locality", () => {
+		const variants: [country: string, components: MinRow["components"]][] = [
+			["ES", { region: "ASTURIAS" }],
+			["ES", { region: "balearic  islands" }],
+			["US", { region: "vermont" }],
+			["GP", { locality: "LE MOULE" }],
+			["NZ", { locality: " invercargill " }],
+		]
+
+		for (const [country, components] of variants) {
+			expect(
+				splitForRow({ source_id: `${country}-v`, country, components }),
+				`${country} ${components.region ?? components.locality}`
+			).not.toBe("train")
+		}
+
+		expect(splitForRow({ source_id: "ES-v", country: "ES", components: { region: "ASTURIA" } })).toBe("train")
+	})
+
 	it("holds out ES, IT, AU and NZ rows by postcode prefix, and the admin rows by region", () => {
 		const cases: [country: string, held: MinRow["components"], kept: MinRow["components"]][] = [
 			["ES", { postcode: "07001" }, { postcode: "28001" }],
