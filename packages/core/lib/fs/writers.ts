@@ -363,6 +363,41 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
 }
 
 /**
+ * The path of a staging file beside `destination`, unique to this process and call.
+ *
+ * A sibling sits on the destination's filesystem, so a `rename` from it onto the destination is atomic.
+ */
+export function stagingSiblingPath(destination: PathBuilderLike): string {
+	const target = destination.toString()
+
+	return `${target}.staging-${process.pid}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+/**
+ * Copies one file onto `destination` so that a concurrent reader sees the old file
+ * or the new one, never an absent or partly written destination.
+ *
+ * The bytes go to a staging file in the destination's directory.
+ * A `rename` then moves the staging file over the destination.
+ *
+ * A symlink at the destination is replaced rather than written through.
+ */
+export async function replaceFileAtomically(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
+	const target = destination.toString()
+	const staging = stagingSiblingPath(target)
+
+	await mkdir(dirname(target), { recursive: true })
+
+	try {
+		await copyFile(source.toString(), staging)
+		await rename(staging, target)
+	} catch (error) {
+		await rm(staging, { force: true })
+		throw error
+	}
+}
+
+/**
  * Moves a file or directory with `rename` and creates the destination's parent directory first.
  *
  * `rename` is atomic and fails across filesystems.
