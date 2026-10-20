@@ -217,7 +217,6 @@ export function createBDAdressesAdapter(): CorpusAdapter {
 						locale: "und-LU",
 						source: BD_ADRESSES_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: BD_ADRESSES_DEFAULT_LICENSE,
 					}
 

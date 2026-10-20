@@ -242,7 +242,6 @@ export function createADSAdapter(): CorpusAdapter {
 					locale: "et-EE",
 					source: ADS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: ADS_DEFAULT_LICENSE,
 				}
 

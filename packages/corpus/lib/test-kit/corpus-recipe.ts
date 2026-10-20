@@ -23,7 +23,7 @@ import type { RecipeOptions } from "#recipes/scaffold"
  */
 export interface RecipeRow {
 	raw: string
-	recipe?: string
+	template?: string
 	register?: string | null
 	surface?: string
 	base_source_id?: string | null

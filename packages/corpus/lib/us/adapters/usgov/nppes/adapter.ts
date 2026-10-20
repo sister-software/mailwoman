@@ -164,7 +164,6 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_NPPES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_NPPES_DEFAULT_LICENSE,
 				}
 

@@ -179,7 +179,6 @@ export function createTigerAdapter(): CorpusAdapter {
 							locale: "en-US",
 							source: TIGER_ADAPTER_ID,
 							source_id: `${TIGER_ADAPTER_ID}-st-${row.linearid}-${variant.variantKey}`,
-							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
 
@@ -205,7 +204,6 @@ export function createTigerAdapter(): CorpusAdapter {
 							locale: "en-US",
 							source: TIGER_ADAPTER_ID,
 							source_id: `${TIGER_ADAPTER_ID}-pl-${row.geoid}-${variant.variantKey}`,
-							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
 

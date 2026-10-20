@@ -230,7 +230,6 @@ export const sgRegisterRecipe: CorpusRecipe = {
 					locale: "en-SG",
 					source,
 					source_id: recipeSourceID(source, { raw: rendering.raw }),
-					corpus_version: "0.1.0",
 					license:
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				},

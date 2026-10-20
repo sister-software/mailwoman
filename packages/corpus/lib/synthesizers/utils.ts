@@ -31,7 +31,7 @@ export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
 /**
- * Build an augmented row with its `RecipeMarker`.
+ * Build an augmented row with its `AugmentationMarker`.
  */
 function withAugmentation(
 	source: CanonicalRow,
@@ -39,14 +39,14 @@ function withAugmentation(
 	newRaw: string,
 	newComponents: ComponentDict
 ): CanonicalRow {
-	const baseID = source.recipe?.base_source_id ?? source.source_id
+	const baseID = source.augmentation?.base_source_id ?? source.source_id
 
 	return {
 		...source,
 		raw: newRaw,
 		components: newComponents,
 		source_id: `${source.source_id}+${method}`,
-		recipe: { recipe: method, base_source_id: baseID },
+		augmentation: { name: method, base_source_id: baseID },
 	}
 }
 
@@ -830,7 +830,7 @@ export function composeAdversarialRow(
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
 	]
 
-	const baseSourceID = address.recipe?.base_source_id ?? address.source_id
+	const baseSourceID = address.augmentation?.base_source_id ?? address.source_id
 	const method = `compose:${options.pattern}`
 
 	const composed: LabeledRow = {
@@ -840,9 +840,8 @@ export function composeAdversarialRow(
 		locale: address.locale,
 		source: address.source,
 		source_id: `${address.source_id}+${method}`,
-		corpus_version: address.corpus_version,
 		license: address.license,
-		recipe: { recipe: method, base_source_id: baseSourceID },
+		augmentation: { name: method, base_source_id: baseSourceID },
 		tokens,
 		labels,
 		span_starts: spans.map((s) => s.start),

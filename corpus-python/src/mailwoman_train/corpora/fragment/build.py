@@ -32,7 +32,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ...paths import resolve_data_root_default
-from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
+from ...source_rights import add_unshippable_flag, admit_sources, stamp_row_licenses, write_rights_record
 from .rows import (
     COUNTRY_SURFACES,
     render,
@@ -392,6 +392,9 @@ def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: rand
     measure. It is the only place this function's `rng` is consumed.
     """
     rng.shuffle(rows)
+    # Each row's license note describes the upstream its row group read. The column holds the source's
+    # register license id instead, as every corpus writer stamps it. The note stays in the code that wrote it.
+    rows = stamp_row_licenses(rows, context="fragment-assay build")
     dev_count = len(rows) // 10
     dev, train = rows[:dev_count], rows[dev_count:]
 
@@ -438,9 +441,7 @@ def main() -> None:
                 "locale": locale,
                 "source": SOURCE,
                 "source_id": f"{SOURCE}-{country}-{len(rows)}",
-                "corpus_version": "0.10.2",
                 "license": license_note,
-                "recipe": "fragment-assay",
                 "register": register,
                 "surface": surface,
                 "base_source_id": None,

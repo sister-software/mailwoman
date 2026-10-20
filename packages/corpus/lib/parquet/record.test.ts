@@ -5,13 +5,16 @@
  * @file The derivation hash, the per-file record, and the fold of records into a training manifest's tally.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, removeFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { readParquetRows } from "#parquet/readers"
 import {
+	addToTally,
 	derivationHash,
 	type DerivationInputs,
 	foldSourceLicenses,
@@ -22,6 +25,7 @@ import {
 } from "#parquet/record"
 import { rowToParquet } from "#parquet/schema"
 import { writeParquetFile, writeParquetSplits } from "#parquet/writers"
+import { committedRowLicenses } from "#source-register/row-license"
 import { type LabeledRow, SurfaceOrigin } from "#types"
 
 let scratch: TemporaryDirectory
@@ -87,7 +91,6 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	country: "FR",
 	source: "ban",
 	source_id: "r-1",
-	corpus_version: "0.1.0",
 	license: "etalab-2.0",
 	register: "ban",
 	surface: SurfaceOrigin.Attested,
@@ -241,16 +244,39 @@ describe("foldSourceLicenses", () => {
 		expect(folded.reread).toBe(2)
 		expect(rowsBySourceFromTally(folded.tally)).toEqual(rowsBySourceFromTally(reread))
 
-		const bySource = rowsBySourceFromTally(folded.tally)
+		const licenses = await committedRowLicenses()
+		const expected = new Map<string, Map<string, number>>()
 
-		// Seven train rows (three under ODbL), one val row and one legacy row.
-		expect(bySource.get("ban")).toEqual({
-			rows: 9,
-			license: "etalab-2.0",
-			licenseValues: { "etalab-2.0": 6, "ODbL-1.0": 3 },
-		})
+		// Seven train rows and one val row, written under the register's id whatever their
+		// producer stated, and one legacy row carrying the prose an older file holds.
+		addToTally(expected, "ban", licenses.licenseOf("ban")!, 8)
+		addToTally(expected, "ban", "etalab-2.0", 1)
+		addToTally(expected, "tiger", licenses.licenseOf("tiger")!, 1)
+		addToTally(expected, "tiger", "none-recorded-on-rows", 2)
 
-		expect(bySource.get("tiger")).toEqual({ rows: 3, license: "none-recorded-on-rows" })
+		expect(folded.tally.get("ban")).toEqual(expected.get("ban"))
+		expect(folded.tally.get("tiger")).toEqual(expected.get("tiger"))
+	})
+
+	it("records the producers' statements the license column no longer carries", async () => {
+		const rows = fixtureRows()
+
+		const manifest = await writeParquetSplits(
+			{ train: asyncFrom(rows.train) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
+		const licenses = await committedRowLicenses()
+		const banFile = manifest.slices.find((file) => file.source === "ban")!
+		const record = (await readParquetRecord(banFile.path))!
+
+		expect(record.licenseValues).toEqual({ [licenses.licenseOf("ban")!]: 7 })
+		// `etalab-2.0` is the id itself, so only the ODbL statement differs from it.
+		expect(record.licenseStatements).toEqual({ "ODbL-1.0": 3 })
+
+		expect(await readSourceLicenseTally([banFile.path])).toEqual(
+			new Map([["ban", new Map([[licenses.licenseOf("ban")!, 7]])]])
+		)
 	})
 
 	it("refuses a record whose row count disagrees with the manifest", async () => {
@@ -289,6 +315,51 @@ describe("writeParquetFile", () => {
 				scratch.path("unmapped.parquet"),
 				FIXTURE_DERIVATION
 			)
-		).rejects.toThrow(/maps to no register source/u)
+		).rejects.toThrow(/does not map the source/u)
+	})
+
+	it("refuses a row whose source has no license id and writes no file", async () => {
+		// `synthetic-secondary` is mapped to authored inputs only, so no register decision names its terms.
+		const path = scratch.path("unlicensed.parquet")
+
+		await expect(
+			writeParquetFile(
+				[rowToParquet(labeled({ source: "synthetic-secondary", license: "Synthetic" }))],
+				path,
+				FIXTURE_DERIVATION
+			)
+		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
+
+		expect(await pathExists(path)).toBe(false)
+		expect(await pathExists(recordPathFor(path))).toBe(false)
+	})
+
+	it("writes the register's license id in place of the producer's prose", async () => {
+		const path = scratch.path("gb.parquet").toString()
+		const prose = "OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES"
+
+		const record = await writeParquetFile(
+			[rowToParquet(labeled({ source: "rendered-gb-os-open", license: prose }))],
+			path,
+			FIXTURE_DERIVATION
+		)
+
+		const licenses = await committedRowLicenses()
+		const [row] = await readParquetRows<{ license: string }>(path, { columns: ["license"] })
+
+		expect(row!.license).toBe(licenses.licenseOf("rendered-gb-os-open"))
+		expect(row!.license).not.toBe(prose)
+		expect(record.licenseStatements).toEqual({ [prose]: 1 })
+	})
+})
+
+describe("writeParquetSplits", () => {
+	it("refuses a row whose source has no license id", async () => {
+		await expect(
+			writeParquetSplits(
+				{ train: asyncFrom([labeled({ source: "synthetic-secondary", source_id: "s-1" })]) },
+				{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+			)
+		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
 	})
 })

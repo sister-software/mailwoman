@@ -184,6 +184,70 @@ class SourceRights:
                 )
         return gaps
 
+    def row_license(self, source: str) -> str | None:
+        """The value a corpus row's `license` column holds for ``source``, or None when it has none.
+
+        Mirrors `mappingLicenseID` in `@mailwoman/corpus/source-register/row-license`: each register input
+        contributes its decision's elected SPDX identifier, or `LicenseRef-<licenseID>` for any other decision,
+        and the distinct ids join with ` AND `. A source mapped only to authored inputs, or not mapped, has none.
+        """
+        source_id = self.spellings.get(source)
+        if source_id is None:
+            return None
+        ids: set[str] = set()
+        for entry in self.mappings[source_id]["inputs"]:
+            decision = self.decisions.get(entry["license"])
+            if decision is None:
+                raise ValueError(
+                    f"corpus source input {entry['registerSource']!r} names license {entry['license']!r}, "
+                    "which the register does not declare"
+                )
+            ids.add(_decision_license_id(decision))
+        return " AND ".join(sorted(ids)) if ids else None
+
+
+class RowLicenseError(ValueError):
+    """Raised when a writer would write a row whose source has no license id."""
+
+    def __init__(self, context: str, source: str) -> None:
+        self.source = source
+        super().__init__(
+            f"{context}: rows of {source!r} have no license id, because packages/corpus/data/corpus-source-inputs.json "
+            "maps the source to no register source. A row's license column holds the SPDX or LicenseRef id of its "
+            "register inputs' decisions, so the row is refused rather than written with a placeholder."
+        )
+
+
+def _decision_license_id(decision: dict[str, Any]) -> str:
+    """The id one license decision contributes to a row's `license` column. Mirrors `decisionLicenseID`."""
+    if decision.get("state") == "elected" and decision.get("spdx"):
+        return str(decision["spdx"])
+    return f"LicenseRef-{decision['licenseID']}"
+
+
+def stamp_row_licenses(
+    rows: Iterable[dict[str, Any]], *, context: str, rights: SourceRights | None = None
+) -> list[dict[str, Any]]:
+    """Return ``rows`` with each `license` set to its source's register license id.
+
+    Every Python corpus writer calls this before a row reaches a parquet file, as the TypeScript writers call
+    `stampRowLicense`. Raises :class:`RowLicenseError` for a source with no license id, so no row is written with
+    a placeholder.
+    """
+    table = rights or committed_source_rights()
+    known: dict[str, str] = {}
+    stamped: list[dict[str, Any]] = []
+    for row in rows:
+        source = row["source"]
+        license_id = known.get(source)
+        if license_id is None:
+            license_id = table.row_license(source)
+            if license_id is None:
+                raise RowLicenseError(context, source)
+            known[source] = license_id
+        stamped.append({**row, "license": license_id})
+    return stamped
+
 
 def _missing_permissions(decision: dict[str, Any]) -> tuple[tuple[str, ...], str]:
     """The training operations a decision does not permit, with the first reason. Mirrors `permissionFor`."""

@@ -179,7 +179,6 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						locale,
 						source: sourceName,
 						source_id: recipeSourceID(sourceName, { raw: rendering.raw }),
-						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},
 					`${name}:${rendering.register}`,

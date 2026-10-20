@@ -615,7 +615,6 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 			country,
 			source: CORDIS_ADAPTER_ID,
 			source_id: stableSourceID(CORDIS_ADAPTER_ID, aligned),
-			corpus_version: "",
 			license: CORDIS_LICENSE,
 		},
 		discarded,

@@ -22,7 +22,7 @@
  *   The canonical-field report covers every row source. It groups the rows by `canonicalDedupKey` and
  *   counts, per `CanonicalRow` field outside the key, the number of collapsed groups that hold more than one
  *   value of that field. The fields the runner stamps after the adapter yields — `addressRole`,
- *   `register`, `surface`, `corpus_version` — are the adapter's constants under `--adapter`, so they
+ *   `register`, `surface` — are the adapter's constants under `--adapter`, so they
  *   read as identical whatever the build wrote.
  *
  *   The source-column report needs `--source-csv` and `--id-column`. It joins each collapsed group
@@ -71,19 +71,10 @@ import { CSVSpliterator, JSONSpliterator } from "spliterator"
 /**
  * The `CanonicalRow` fields that sit outside the dedup key.
  *
- * `raw`, `components`, `country` and `recipe` are the key, so they are identical across a
- * collapsed group by construction and reporting them would state the definition back.
+ * `raw`, `components`, `country` and `augmentation` are the key, so they are identical across
+ * a collapsed group by construction and reporting them would state the definition back.
  */
-const TRACKED_FIELDS = [
-	"source",
-	"source_id",
-	"license",
-	"locale",
-	"addressRole",
-	"register",
-	"surface",
-	"corpus_version",
-] as const
+const TRACKED_FIELDS = ["source", "source_id", "license", "locale", "addressRole", "register", "surface"] as const
 
 /**
  * The number of group sizes the size table prints before summarizing the tail.

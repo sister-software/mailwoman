@@ -250,7 +250,6 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				...row,
 				// The rename is the runner's, after `assertEmittedRow` has held the adapter to emitting its own id.
 				source: opts.sourceName ?? row.source,
-				corpus_version: corpusVersion,
 				addressRole: row.addressRole ?? adapter.addressRole,
 				// `register` is nullable and null is a statement rather than an absence,
 				// so only an undefined field takes the adapter's declaration.

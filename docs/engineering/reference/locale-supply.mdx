@@ -48,13 +48,17 @@ corpus stores. The left column below uses the spelling the measured corpus,
 | `synth-es` | `rendered-es` | the CNIG export, read raw for the pedanía variant            |
 | `synth-nz` | `rendered-nz` | a LINZ-derived OpenAddresses extract                         |
 
-Three columns record this, each answering one question. `recipe` names the code that produced the
+Three columns record this, each answering one question. `source` names the code that produced the
 row, `register` names the publication its record came from, and `surface` states how the text was
 built: `attested` is the publisher's own string, `composed` is a template over one real record's
-fields, and `invented` names no published record.
+fields, and `invented` names no published record. A fourth, `augmentation`, names the transform that
+derived a row from the base row `base_source_id` names, such as `case-lower`, and is null on every
+other row. A corpus written before #2741 holds that value, or the producer's name, in a `recipe`
+column; `corpusRowFromParquet` in `@mailwoman/corpus/parquet/schema` reads it as an augmentation only
+where `base_source_id` is set.
 
-So `rendered-gb` writes `recipe: gb`, `register: gb-hm-land-registry-ppd`, `surface: composed` — a
-Land Registry record in the recipe's order. `invented-po-box` writes `register: null`,
+So `rendered-gb-os-open` writes `register: gb-os-opendata`, `surface: composed` — an OS OpenData
+record in the recipe's order. `invented-po-box` writes `register: null`,
 `surface: invented`, because no register asserts that box exists. `fragment-assay`,
 `spliced-sub-venue` and the other shape recipes divide the same way.
 

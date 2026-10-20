@@ -100,8 +100,18 @@ export interface ParquetFileRecord {
 	rows: number
 	/**
 	 * Every license label the rows carry, with the rows under each.
+	 *
+	 * A file written since #2741 carries one label, the SPDX or `LicenseRef-*`
+	 * id of its source's register inputs.
 	 */
 	licenseValues: LicenseTally
+	/**
+	 * The producers' own statements of the rows' terms, with the rows under each,
+	 * which the `license` column no longer carries.
+	 *
+	 * Absent from a record written before #2741.
+	 */
+	licenseStatements?: LicenseTally
 	/**
 	 * The register sources `corpus-source-inputs.json` maps {@linkcode source} to when the file was written.
 	 */
@@ -238,9 +248,20 @@ export interface WriteParquetRecordOptions {
 	derivation: DerivationInputs
 	builtAt: string
 	/**
+	 * The producers' statements the writer replaced with the license id, with the rows under each.
+	 */
+	statements?: ReadonlyMap<string, number>
+	/**
 	 * @defaultValue {@linkcode committedCorpusSourceInputs}
 	 */
 	sourceInputs?: CorpusSourceInputs
+}
+
+/**
+ * A tally's entries sorted by key, as a record stores them.
+ */
+function sortedTally(tally: ReadonlyMap<string, number>): LicenseTally {
+	return Object.fromEntries([...tally].toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
 }
 
 /**
@@ -272,7 +293,6 @@ export async function writeParquetRecord(options: WriteParquetRecordOptions): Pr
 	}
 
 	const labels = options.tally.get(source)!
-	const licenseValues = Object.fromEntries([...labels].toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
 
 	const record: ParquetFileRecord = {
 		source,
@@ -280,7 +300,8 @@ export async function writeParquetRecord(options: WriteParquetRecordOptions): Pr
 		derivation: options.derivation,
 		sha256: await sha256File(path),
 		rows: [...labels.values()].reduce((total, rows) => total + rows, 0),
-		licenseValues,
+		licenseValues: sortedTally(labels),
+		...(options.statements?.size ? { licenseStatements: sortedTally(options.statements) } : {}),
 		registerInputs: mapping.mapping.inputs,
 		builtAt: options.builtAt,
 	}

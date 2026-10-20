@@ -254,7 +254,6 @@ export interface CanonicalRecipeRow {
 	locale?: string
 	source: string
 	source_id: string
-	corpus_version?: string
 	license?: string
 }
 
@@ -364,14 +363,18 @@ export function requireRegister(opts: RecipeOptions, recipe: string): string {
 
 /**
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
- * with its recipe id and provenance as one jsonl line.
+ * with its template and provenance as one jsonl line.
+ *
+ * `template` names the recipe's template that shaped the row, such as `sg-register:block`.
+ * It is a field of the recipe output, read by the recipe's tests and audits, and not a parquet column:
+ * the row's producer is its `source`, and `augmentation` names only a row derived from a base row.
  *
  * The provenance columns are flat because the parquet schema is flat.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
 	canonical: CanonicalRecipeRow,
-	recipe: string,
+	template: string,
 	provenance: RecipeProvenance
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
@@ -382,7 +385,7 @@ export function alignAndWrite(
 	write(
 		stringifyJSON({
 			...aligned.row,
-			recipe,
+			template,
 			register: provenance.register,
 			surface: provenance.surface,
 			base_source_id: provenance.baseSourceID ?? null,

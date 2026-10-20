@@ -201,7 +201,6 @@ export function* emitWOFJSONRows(options: EmitWOFJSONRowsOptions): Generator<Can
 					locale: localeByCountry[record.country],
 					source: adapterID,
 					source_id: `${adapterID}-${record.id}-${slot.key}-${variant.suffix}`,
-					corpus_version: "",
 					license: "CC0-1.0",
 				}
 

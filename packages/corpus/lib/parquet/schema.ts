@@ -62,11 +62,20 @@ export interface ParquetRow {
 	locale?: string | null
 	source: string
 	source_id: string
-	corpus_version: string
+	/**
+	 * The SPDX identifier or `LicenseRef-*` id of the source's register inputs,
+	 * which every writer stamps from `#source-register/row-license`.
+	 *
+	 * A file written before the column had this meaning holds the producer's prose here,
+	 * and {@linkcode corpusRowFromParquet} passes it through unchanged.
+	 */
 	license: string
 	register?: string | null
 	surface: string
-	recipe?: string | null
+	/**
+	 * The augmentation that derived the row from the row `base_source_id` names, or `null`.
+	 */
+	augmentation?: string | null
 	base_source_id?: string | null
 	[key: string]: unknown
 }
@@ -87,11 +96,10 @@ export const PARQUET_COLUMNS = [
 	"locale",
 	"source",
 	"source_id",
-	"corpus_version",
 	"license",
 	"register",
 	"surface",
-	"recipe",
+	"augmentation",
 	"base_source_id",
 ] as const
 
@@ -112,11 +120,10 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	locale: "VARCHAR",
 	source: "VARCHAR",
 	source_id: "VARCHAR",
-	corpus_version: "VARCHAR",
 	license: "VARCHAR",
 	register: "VARCHAR",
 	surface: "VARCHAR",
-	recipe: "VARCHAR",
+	augmentation: "VARCHAR",
 	base_source_id: "VARCHAR",
 }
 
@@ -141,11 +148,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	locale: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 	source: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	source_id: { type: "UTF8", compression: PARQUET_COMPRESSION },
-	corpus_version: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	license: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	register: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 	surface: { type: "UTF8", compression: PARQUET_COMPRESSION },
-	recipe: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	augmentation: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 	base_source_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 }
 
@@ -204,11 +210,48 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		locale: row.locale ?? null,
 		source: row.source,
 		source_id: row.source_id,
-		corpus_version: row.corpus_version,
+		// The producer's statement, which the writer replaces with the register's id (`stampRowLicense`).
 		license: row.license,
 		register: row.register ?? null,
 		surface: row.surface,
-		recipe: row.recipe?.recipe ?? null,
-		base_source_id: row.recipe?.base_source_id ?? null,
+		augmentation: row.augmentation?.name ?? null,
+		base_source_id: row.augmentation?.base_source_id ?? null,
 	}
+}
+
+/**
+ * The columns a corpus parquet file written before #2741 carries in place of `augmentation`.
+ */
+export const RETIRED_PARQUET_COLUMNS = ["corpus_version", "recipe"] as const
+
+/**
+ * Read one row of a corpus parquet file of either schema as a {@linkcode ParquetRow}.
+ *
+ * This is the one place an older file's columns map to the current ones.
+ * A v0.7.x file carries `corpus_version`, the run of whichever recipe or build wrote the row,
+ * and `recipe`, which held an augmentation name on a row derived from a base row
+ * and the producer's own name or template on every other row.
+ *
+ * Measured over the 1,069 files of `v0.7.10-gb-county`, a `recipe` value is an
+ * augmentation exactly where `base_source_id` is set, so that value becomes `augmentation`
+ * and every other becomes `null`; the producer is the row's `source`.
+ * `corpus_version` is dropped, because the file's record and the manifest name the corpus.
+ *
+ * `license` passes through unchanged.
+ * An older file holds the producer's prose there, which is what the file says,
+ * and a writer re-stamps the register's id when the row is written again.
+ *
+ * Every other column passes through, so a projection of current columns reads the same from both schemas.
+ */
+export function corpusRowFromParquet(raw: Record<string, unknown>): ParquetRow {
+	if (!("recipe" in raw) && !("corpus_version" in raw)) return raw as ParquetRow
+
+	const { recipe, corpus_version: _corpusVersion, ...rest } = raw
+	const baseSourceID = rest["base_source_id"]
+	const derived = typeof baseSourceID === "string" && baseSourceID !== ""
+
+	return {
+		...rest,
+		augmentation: derived && typeof recipe === "string" ? recipe : ((rest["augmentation"] as string | null) ?? null),
+	} as ParquetRow
 }

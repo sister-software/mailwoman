@@ -228,7 +228,6 @@ export function createGBPAAdapter(): CorpusAdapter {
 					source: GBPA_BS_ADAPTER_ID,
 					// The GBPA's own address id separates two points the rendered components cannot.
 					source_id: stableSourceIDFromParts(GBPA_BS_ADAPTER_ID, { ...aligned, add_id: record.AddID ?? "" }),
-					corpus_version: "",
 					license: GBPA_BS_LICENSE,
 				}
 

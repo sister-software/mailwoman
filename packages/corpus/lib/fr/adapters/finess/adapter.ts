@@ -521,7 +521,6 @@ export function readFinessRecord(cells: readonly string[]): FinessReading {
 			locale: `fr-${country}`,
 			source: FR_FINESS_ADAPTER_ID,
 			source_id: stableSourceID(FR_FINESS_ADAPTER_ID, rendered.components),
-			corpus_version: "",
 			license: FR_FINESS_LICENSE,
 		},
 		trimmed,

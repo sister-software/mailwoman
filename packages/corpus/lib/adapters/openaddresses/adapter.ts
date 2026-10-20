@@ -224,7 +224,6 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 						country,
 						source: OPENADDRESSES_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license,
 					}
 

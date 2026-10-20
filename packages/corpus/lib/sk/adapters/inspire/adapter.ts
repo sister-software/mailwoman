@@ -349,7 +349,6 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Refe
 		locale: "sk-SK",
 		source: SK_INSPIRE_ADAPTER_ID,
 		source_id: addressID ? `${SK_INSPIRE_ADAPTER_ID}-${addressID}` : stableSourceID(SK_INSPIRE_ADAPTER_ID, aligned),
-		corpus_version: "",
 		license: SK_INSPIRE_DEFAULT_LICENSE,
 	}
 }

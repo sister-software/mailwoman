@@ -28,13 +28,13 @@ import type { CanonicalRow } from "#types"
  * corpus-level decision the runner does not take today.
  *
  * An augmented row is never deduplicated against the row it was fanned from, because
- * `recipe.recipe` joins the key when present and each augmentation variant therefore survives.
+ * `augmentation.name` joins the key when present and each augmentation variant therefore survives.
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
 	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]
 	const compPart = sortedKeys.map((k) => `${k}=${row.components[k] ?? ""}`).join("\u001F")
 	const rawNorm = row.raw.toLowerCase().replaceAll(/\s+/g, " ").trim()
-	const recipePart = row.recipe ? `\u001E${row.recipe.recipe}` : ""
+	const augmentationPart = row.augmentation ? `\u001E${row.augmentation.name}` : ""
 
-	return `${row.country}\u001E${rawNorm}\u001E${compPart}${recipePart}`
+	return `${row.country}\u001E${rawNorm}\u001E${compPart}${augmentationPart}`
 }

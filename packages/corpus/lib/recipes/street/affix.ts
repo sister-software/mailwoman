@@ -434,7 +434,6 @@ export const streetAffixRecipe: CorpusRecipe = {
 				locale: "en-US",
 				source,
 				source_id: stableSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					"OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
 			}
@@ -503,7 +502,6 @@ export const streetAffixRecipe: CorpusRecipe = {
 					locale,
 					source,
 					source_id: stableSourceID(source, components),
-					corpus_version: "0.4.0",
 					license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix recipe)",
 				}
 
@@ -616,7 +614,6 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 				locale: "en-US",
 				source,
 				source_id: recipeSourceID(source, { ...components, class: rowClass, n: String(emitted) }),
-				corpus_version: "0.19.0",
 				license:
 					"OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
 			}

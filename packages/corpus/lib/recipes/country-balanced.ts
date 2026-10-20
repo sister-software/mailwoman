@@ -476,7 +476,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				locale: localeTag,
 				source,
 				source_id: stableSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					"OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
 			}
@@ -492,7 +491,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "country",
 					base_source_id: null,
 					register: rowRegister ?? requireRegister(opts, "country-balanced"),
 					surface: SurfaceOrigin.Composed,

@@ -25,7 +25,7 @@ describe("canonicalRows", () => {
 
 		await writeLocalTextFile(`${line("deepseek-kryptonite", "k-1")}\n${line("deepseek-translit-cyrl", "t-1")}\n`, jsonl)
 
-		await expect(Array.fromAsync(canonicalRows(jsonl, "0.4.0"))).rejects.toThrow(/must hold one source/u)
+		await expect(Array.fromAsync(canonicalRows(jsonl))).rejects.toThrow(/must hold one source/u)
 	})
 
 	it("reads a jsonl of one source", async () => {
@@ -33,6 +33,6 @@ describe("canonicalRows", () => {
 
 		await writeLocalTextFile(`${line("deepseek-kryptonite", "k-1")}\n${line("deepseek-kryptonite", "k-2")}\n`, jsonl)
 
-		expect(await Array.fromAsync(canonicalRows(jsonl, "0.4.0"))).toHaveLength(2)
+		expect(await Array.fromAsync(canonicalRows(jsonl))).toHaveLength(2)
 	})
 })

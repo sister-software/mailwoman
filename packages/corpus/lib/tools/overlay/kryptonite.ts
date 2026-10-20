@@ -52,7 +52,7 @@ export interface KryptoniteOverlayOptions {
  * The files' extract hash covers the whole jsonl, which is exact only while every
  * row belongs to the one source those files hold.
  */
-export async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
+export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow> {
 	let first: string | null = null
 
 	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
@@ -76,17 +76,15 @@ export async function* canonicalRows(jsonl: string, corpusVersion: string): Asyn
 			locale: (raw["locale"] as string) ?? undefined,
 			source,
 			source_id: raw["source_id"] as string,
-			corpus_version: corpusVersion,
 			license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-			recipe: raw["recipe"] as CanonicalRow["recipe"],
 			register: (raw["register"] as string | null) ?? null,
 			surface: requireSurface(raw, "deepseek-kryptonite"),
 		}
 	}
 }
 
-async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog: string[]): AsyncIterable<LabeledRow> {
-	for await (const row of canonicalRows(jsonl, corpusVersion)) {
+async function* labeledRows(jsonl: string, quarantineLog: string[]): AsyncIterable<LabeledRow> {
+	for await (const row of canonicalRows(jsonl)) {
 		const result = alignRow(row)
 
 		if (result.kind === "labeled") {
@@ -115,7 +113,7 @@ export async function buildKryptoniteOverlay(
 	const quarantine: string[] = []
 
 	const newManifest = await writeParquetSplits(
-		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
+		{ train: labeledRows(options.jsonl, quarantine) },
 		{
 			outputDir: outDir,
 			corpusVersion,

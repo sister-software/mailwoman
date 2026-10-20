@@ -626,7 +626,6 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 							locale: "nl-BE",
 							source: VLAANDEREN_ADAPTER_ID,
 							source_id: seed ? `${VLAANDEREN_ADAPTER_ID}-${seed}` : stableSourceID(VLAANDEREN_ADAPTER_ID, aligned),
-							corpus_version: "",
 							license: VLAANDEREN_DEFAULT_LICENSE,
 						}
 

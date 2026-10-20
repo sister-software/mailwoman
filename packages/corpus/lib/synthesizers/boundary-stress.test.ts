@@ -26,7 +26,6 @@ function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 		// CanonicalRow requires a country.
 		// The synthesized row includes only the locale it was minted for.
 		country: r.locale.split("-")[1] ?? "DE",
-		corpus_version: "0.0.0-test",
 		license: "synthetic fixture — not distributed",
 	}
 }

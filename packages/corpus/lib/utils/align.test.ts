@@ -16,7 +16,6 @@ const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	country: "US",
 	source: "test",
 	source_id: "t-1",
-	corpus_version: "0.1.0",
 	license: "CC0-1.0",
 	...over,
 })

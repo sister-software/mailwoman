@@ -138,7 +138,6 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_IRS_BMF_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_IRS_BMF_DEFAULT_LICENSE,
 				}
 

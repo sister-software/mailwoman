@@ -319,7 +319,6 @@ export function createIsleOfManLandRegistryAdapter(): CorpusAdapter {
 					// The file has no record id or coordinates.
 					// The dedupe above leaves one row per distinct address, so the components identify the row.
 					source_id: stableSourceIDFromParts(LANDREGISTRY_IM_ADAPTER_ID, aligned),
-					corpus_version: "",
 					license: LANDREGISTRY_IM_LICENSE,
 				}
 

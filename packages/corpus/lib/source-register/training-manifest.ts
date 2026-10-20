@@ -18,7 +18,10 @@ import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "
 /**
  * The license label recorded for a source whose rows carry no label.
  *
- * A recipe can write rows with an empty `license` column.
+ * A recipe in a corpus built before #2741 could write rows with an empty `license` column.
+ * A current writer stamps the register's id and refuses a source that has none,
+ * so only an older file reaches this label.
+ *
  * An empty string in the record would read as a source that carries no terms,
  * and `summarizeLicense` would find no identifier in it and report no obligation.
  *

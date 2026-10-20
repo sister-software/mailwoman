@@ -100,7 +100,6 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				locale: "cs-CZ",
 				source,
 				source_id,
-				corpus_version: "0.10.0",
 				license:
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}

@@ -4,10 +4,13 @@ import hashlib
 import random
 from collections import Counter
 from collections.abc import Iterable, Iterator
+from pathlib import Path
 from typing import Any
 
 import pyarrow as pa
+import pyarrow.parquet as pq
 
+from ..source_rights import stamp_row_licenses
 from ..text.normalize import normalize_text
 from ..tokenizer import char_label_array_from_spans
 
@@ -21,9 +24,18 @@ SCHEMA = pa.schema(
         ("span_tags", pa.list_(pa.string())),
         ("country", pa.string()),
         ("source", pa.string()),
+        ("license", pa.string()),
         ("register", pa.string()),
     ]
 )
+
+
+def write_corpus_parquet(rows: list[dict[str, Any]], path: Path, *, context: str, schema: pa.Schema = SCHEMA) -> None:
+    """Write corpus rows to one parquet file, each `license` set to its source's register license id.
+
+    Raises `RowLicenseError` before writing when a row's source has no license id, so no file holds a placeholder.
+    """
+    pq.write_table(pa.Table.from_pylist(stamp_row_licenses(rows, context=context), schema=schema), path)
 
 
 MAX_FIELD_CHARS = 64

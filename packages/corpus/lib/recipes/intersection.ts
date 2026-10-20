@@ -561,7 +561,6 @@ export const intersectionRecipe: CorpusRecipe = {
 				locale: "en-US",
 				source,
 				source_id: stableSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					"TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
 			}

@@ -82,7 +82,6 @@ export const streetBareRecipe: CorpusRecipe = {
 					bare: String(isBare),
 					n: String(emitted),
 				}),
-				corpus_version: "0.4.0",
 				license: "Synthetic — US street templates, public-domain street/city pools",
 			}
 
@@ -100,7 +99,6 @@ export const streetBareRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "street-bare",
 					base_source_id: null,
 					register: requireRegister(opts, "street-bare"),
 					surface: SurfaceOrigin.Composed,

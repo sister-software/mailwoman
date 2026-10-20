@@ -407,8 +407,6 @@ const LICENSE =
 	"Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names " +
 	"(CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons"
 
-const CORPUS_VERSION = "0.16.0"
-
 const bump = (record: Record<string, number>, key: string): void => {
 	record[key] = (record[key] ?? 0) + 1
 }
@@ -469,7 +467,6 @@ function emitRow(
 		locale: leg.locale,
 		source: context.source,
 		source_id: recipeSourceID(context.source, { ...components, ...disambiguator }),
-		corpus_version: CORPUS_VERSION,
 		license: LICENSE,
 	})
 

@@ -172,7 +172,6 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						country: cc,
 						source: GEONAMES_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: GEONAMES_DEFAULT_LICENSE,
 					}
 

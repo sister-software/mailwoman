@@ -132,7 +132,6 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_IA_CONTRACTORS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 				}
 

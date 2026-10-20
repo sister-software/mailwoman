@@ -171,7 +171,6 @@ export function createBanAdapter(): CorpusAdapter {
 					locale: `fr-${country}`,
 					source: BAN_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: "Licence Ouverte 2.0",
 				}
 

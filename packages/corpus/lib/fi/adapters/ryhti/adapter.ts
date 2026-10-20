@@ -296,7 +296,6 @@ export function createRyhtiAdapter(): CorpusAdapter {
 						locale: `${surface.language}-${country}`,
 						source: RYHTI_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: "CC-BY-4.0",
 					}
 

@@ -503,7 +503,6 @@ export function createWallonieAdapter(): CorpusAdapter {
 						locale: "fr-BE",
 						source: WALLONIE_ADAPTER_ID,
 						source_id: seed ? `${WALLONIE_ADAPTER_ID}-${seed}` : stableSourceID(WALLONIE_ADAPTER_ID, aligned),
-						corpus_version: "",
 						license: WALLONIE_DEFAULT_LICENSE,
 					}
 

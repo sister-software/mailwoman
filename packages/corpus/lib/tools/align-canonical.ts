@@ -26,14 +26,13 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * Output goes to jsonl so it joins the same jsonl-to-parquet path every other overlay uses.
  *
  * Usage: mailwoman corpus align-slice\ --input /path/canonical-kryptonite.jsonl\
- * --out /tmp/kryptonite-labeled.jsonl\ --corpus-version 0.5.0
+ * --out /tmp/kryptonite-labeled.jsonl
  */
 import { alignRow } from "#utils"
 
 export interface AlignCanonicalOptions {
 	input: string
 	output: string
-	corpusVersion: string
 }
 
 export async function alignCanonicalRows(args: AlignCanonicalOptions): Promise<void> {
@@ -43,8 +42,6 @@ export async function alignCanonicalRows(args: AlignCanonicalOptions): Promise<v
 	const quarantineReasons: Record<string, number> = {}
 
 	for await (const canonical of JSONSpliterator.fromAsync<Parameters<typeof alignRow>[0]>(args.input)) {
-		// Stamp the target corpus version so the emitted row's provenance matches the run it joins.
-		canonical.corpus_version = args.corpusVersion
 		const result = alignRow(canonical)
 
 		if (result.kind === "labeled") {

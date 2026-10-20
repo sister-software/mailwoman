@@ -21,7 +21,7 @@ import type { CanonicalRow } from "#types"
  * A row carrying only the fields the reader consults.
  */
 function rowFrom(source: string, country: string): CanonicalRow {
-	return { raw: "", components: {}, country, source, source_id: "x", corpus_version: "", license: "" }
+	return { raw: "", components: {}, country, source, source_id: "x", license: "" }
 }
 
 describe("sourceEligibilityKey", () => {

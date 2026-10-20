@@ -214,7 +214,6 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 					locale: tuple.locale,
 					source: REVIEWED_POSTCODE_TAIL_SOURCE,
 					source_id: sourceID,
-					corpus_version: "0.11.0",
 					license: `Synthetic rendering of reviewed postal facts — ${tuple.provenance.publisher}; source terms recorded in reviewed-ve-postcode-tuples.json`,
 				}
 

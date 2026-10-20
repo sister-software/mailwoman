@@ -317,7 +317,6 @@ export const germanRecipe: CorpusRecipe = {
 				locale: synth.locale,
 				source,
 				source_id: sourceID,
-				corpus_version: "0.4.0",
 				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered native-order — see ingest SOURCES`,
 			}
 

@@ -22,7 +22,9 @@ import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
-import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
+import { corpusRowFromParquet, PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
+import { stampRowLicense } from "#parquet/writers"
+import { committedRowLicenses, type RowLicenses } from "#source-register/row-license"
 
 /**
  * The columns this converter writes and the DuckDB type for each column.
@@ -58,6 +60,10 @@ export interface JSONLToParquetOptions {
 	 * @defaultValue `50000`
 	 */
 	rowGroupSize?: number
+	/**
+	 * @defaultValue {@linkcode committedRowLicenses}
+	 */
+	licenses?: RowLicenses
 }
 
 /**
@@ -67,6 +73,11 @@ export interface JSONLToParquetSummary {
 	read: number
 	written: number
 	outPath: string
+	/**
+	 * The producers' license statements the converter replaced with the register's id,
+	 * with the rows under each.
+	 */
+	licenseStatements: Record<string, number>
 }
 
 /**
@@ -119,21 +130,30 @@ export async function jsonlToParquet(
 
 	let rows = 0
 	let lineNo = 0
+	const licenses = options.licenses ?? (await committedRowLicenses())
+	const statements = new Map<string, number>()
 
-	// TextSpliterator rather than JSONSpliterator: the staging write below streams
-	// the RAW line bytes to DuckDB verbatim (the parse here only validates),
-	// so a re-serialized JSONSpliterator row would defeat the point.
+	// TextSpliterator rather than JSONSpliterator, so a malformed line is reported by its number.
 	// The reader trims each line (a trailing \r included); `skipEmpty: false` keeps
 	// blank lines so `lineNo` matches the file.
 	for await (const line of TextSpliterator.fromAsync(delimitedSource(options.input), { skipEmpty: false })) {
 		lineNo++
 
 		if (!line) continue
-		const row = parseJSONStrict<Record<string, unknown>>(line)
-		assertSpanTriple(row, lineNo)
+		const parsed = parseJSONStrict<Record<string, unknown>>(line)
+		assertSpanTriple(parsed, lineNo)
+
+		// A jsonl written before #2741 holds `recipe` and `corpus_version`, mapped here as for a parquet row.
+		const row = stampRowLicense(
+			corpusRowFromParquet(parsed),
+			licenses,
+			statements,
+			`jsonlToParquet ${options.input.toString()} line ${lineNo}`
+		)
+
 		// DuckDB's `read_json` projects to the explicit `columns` map below
 		// (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
-		stage.write(line + "\n")
+		stage.write(stringifyJSON(row) + "\n")
 
 		rows++
 	}
@@ -164,5 +184,5 @@ export async function jsonlToParquet(
 	const written = Number(counted.getRowObjects()[0]!.n)
 	report?.(`Wrote ${written} rows to ${output}`)
 
-	return { read: rows, written, outPath: output }
+	return { read: rows, written, outPath: output, licenseStatements: Object.fromEntries(statements) }
 }

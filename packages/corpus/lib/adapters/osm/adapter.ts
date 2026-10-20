@@ -349,7 +349,6 @@ export function createOSMAdapter(): CorpusAdapter {
 					country,
 					source: OSM_ADAPTER_ID,
 					source_id: stableSourceID(OSM_ADAPTER_ID, aligned),
-					corpus_version: "",
 					license: OSM_LICENSE,
 				}
 

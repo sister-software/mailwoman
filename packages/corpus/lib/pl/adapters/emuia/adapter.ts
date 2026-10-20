@@ -183,7 +183,6 @@ export function createEMUiAAdapter(): CorpusAdapter {
 						locale: "pl-PL",
 						source: EMUIA_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: EMUIA_DEFAULT_LICENSE,
 					}
 

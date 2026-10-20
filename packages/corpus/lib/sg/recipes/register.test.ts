@@ -137,7 +137,7 @@ describe("sg-register recipe", () => {
 			expect(row.country).toBe("SG")
 			expect(row.locale).toBe("en-SG")
 			expect(row.source).toBe(defaultRecipeSource("synth-sg-register"))
-			expect(row.recipe).toMatch(/^sg-register:(official|block|bracket_postcode|building_led)$/u)
+			expect(row.template).toMatch(/^sg-register:(official|block|bracket_postcode|building_led)$/u)
 			expect(row.tokens?.length).toBe(row.labels?.length)
 			expect(row.labels?.filter((label) => label.endsWith("house_number"))).toHaveLength(1)
 			expect(row.labels?.filter((label) => label.endsWith("postcode"))).toHaveLength(1)

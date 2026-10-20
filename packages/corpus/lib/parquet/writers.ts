@@ -50,7 +50,6 @@ import {
 	type DerivationInputs,
 	derivationHash,
 	type FileDerivation,
-	licenseLabel,
 	type ParquetFileRecord,
 	readParquetRecord,
 	resolveDerivation,
@@ -66,6 +65,7 @@ import {
 	rowToParquet,
 	ROWS_PER_FILE,
 } from "#parquet/schema"
+import { committedRowLicenses, type RowLicenses } from "#source-register/row-license"
 import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
 
@@ -114,10 +114,6 @@ function parquetTable(rows: readonly ParquetRow[]) {
 			rows.map((row) => row.source_id),
 			new Utf8()
 		),
-		corpus_version: vectorFromArray(
-			rows.map((row) => row.corpus_version),
-			new Utf8()
-		),
 		license: vectorFromArray(
 			rows.map((row) => row.license),
 			new Utf8()
@@ -130,8 +126,8 @@ function parquetTable(rows: readonly ParquetRow[]) {
 			rows.map((row) => row.surface),
 			new Utf8()
 		),
-		recipe: vectorFromArray(
-			rows.map((row) => row.recipe ?? null),
+		augmentation: vectorFromArray(
+			rows.map((row) => row.augmentation ?? null),
 			new Utf8()
 		),
 		base_source_id: vectorFromArray(
@@ -142,36 +138,69 @@ function parquetTable(rows: readonly ParquetRow[]) {
 }
 
 /**
- * Rows per license label, per source, over rows held in memory.
+ * Replace a row's `license` with its source's register license id, counting the statement it replaced.
+ *
+ * Every parquet writer calls it before a row reaches a file, so the column holds an SPDX
+ * or `LicenseRef-*` id and the producer's prose moves to the file's record.
+ *
+ * @throws When the row's source has no license id, so no row is written with a placeholder.
  */
-function tallyRows(rows: readonly ParquetRow[]): SourceLicenseTally {
-	const tally: SourceLicenseTally = new Map()
+export function stampRowLicense(
+	row: ParquetRow,
+	licenses: RowLicenses,
+	statements: Map<string, number>,
+	context: string
+): ParquetRow {
+	const id = licenses.require(row.source, context)
 
-	for (const row of rows) {
-		addToTally(tally, row.source, licenseLabel(row.license), 1)
+	if (typeof row.license === "string" && row.license && row.license !== id) {
+		statements.set(row.license, (statements.get(row.license) ?? 0) + 1)
 	}
 
-	return tally
+	return { ...row, license: id }
+}
+
+/**
+ * Options for {@linkcode writeParquetFile}.
+ */
+export interface WriteParquetFileOptions {
+	/**
+	 * @defaultValue {@linkcode committedRowLicenses}
+	 */
+	licenses?: RowLicenses
 }
 
 /**
  * Write one parquet file from rows held in memory, and its record beside it.
  *
+ * Each row's `license` is replaced with its source's register license id.
+ * {@linkcode stampRowLicense} does the replacement.
+ *
  * @throws When the rows hold more than one source, because a record describes a file of one source.
+ * @throws When the source has no license id.
  */
 export async function writeParquetFile(
-	rows: readonly ParquetRow[],
+	input: readonly ParquetRow[],
 	path: PathBuilderLike,
-	derivation: FileDerivation
+	derivation: FileDerivation,
+	options: WriteParquetFileOptions = {}
 ): Promise<ParquetFileRecord> {
-	const tally = tallyRows(rows)
+	const sources = new Set(input.map((row) => row.source))
 
-	if (tally.size !== 1) {
+	if (sources.size !== 1) {
 		throw new Error(
-			`writeParquetFile: ${path.toString()} would hold ${tally.size} sources (${[...tally.keys()].join(", ")}); ` +
+			`writeParquetFile: ${path.toString()} would hold ${sources.size} sources (${[...sources].join(", ")}); ` +
 				`each parquet file holds one source.`
 		)
 	}
+
+	const licenses = options.licenses ?? (await committedRowLicenses())
+	const statements = new Map<string, number>()
+	const context = `writeParquetFile ${path.toString()}`
+	const rows = input.map((row) => stampRowLicense(row, licenses, statements, context))
+	const tally: SourceLicenseTally = new Map()
+
+	addToTally(tally, rows[0]!.source, rows[0]!.license, rows.length)
 
 	const arrow = parquetTable(rows)
 	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
@@ -191,6 +220,7 @@ export async function writeParquetFile(
 	return writeParquetRecord({
 		path,
 		tally,
+		statements,
 		derivation: await resolveDerivation(derivation),
 		builtAt: new Date().toISOString(),
 	})
@@ -251,16 +281,22 @@ export interface WriteParquetSplitsOptions {
 	 * The extract hash, code hash and config of one source's files.
 	 *
 	 * Each file holds one source's rows, so its derivation covers only that source's inputs and code.
-	 * The writer adds the file's source, split, part and row cap to the config,
-	 * and the corpus version, because rows carry it.
+	 * The writer adds the file's source, split, part and row cap to the config.
+	 *
+	 * Rows hold no corpus version, so the version is not a derivation input.
 	 * It calls this once per source.
 	 */
 	derivationFor: (source: string) => FileDerivation | Promise<FileDerivation>
 
 	/**
-	 * Corpus version stamped onto rows and into the output directory name.
+	 * Corpus version recorded in the manifest and the output directory name.
 	 */
 	corpusVersion: string
+
+	/**
+	 * @defaultValue {@linkcode committedRowLicenses}
+	 */
+	licenses?: RowLicenses
 
 	/**
 	 * Max rows per `.parquet` file.
@@ -335,6 +371,7 @@ interface OpenPart {
 	firstSourceID: string
 	lastSourceID: string
 	tally: SourceLicenseTally
+	statements: Map<string, number>
 }
 
 /**
@@ -363,6 +400,7 @@ export async function writeParquetSplits(
 	await makeDirectories(corpusDir, storeDir)
 
 	const manifestPath = corpusDir("MANIFEST.json")
+	const licenses = opts.licenses ?? (await committedRowLicenses())
 	const files: ParquetFileDescriptor[] = opts.resume ? await readFinishedParquetFiles(manifestPath) : []
 	const derivations = new Map<string, Promise<DerivationInputs>>()
 
@@ -450,6 +488,7 @@ export async function writeParquetSplits(
 				firstSourceID: "",
 				lastSourceID: "",
 				tally: new Map(),
+				statements: new Map(),
 			}
 
 			open.set(source, opened)
@@ -472,7 +511,6 @@ export async function writeParquetSplits(
 				...derivation,
 				config: {
 					...(derivation.config as Record<string, unknown>),
-					corpusVersion: opts.corpusVersion,
 					rowsPerFile,
 					source: opened.source,
 					// The sources whose rows this file read.
@@ -512,7 +550,13 @@ export async function writeParquetSplits(
 
 			const record: ParquetFileRecord =
 				(existing ? await readParquetRecord(path) : null) ??
-				(await writeParquetRecord({ path, tally: opened.tally, derivation: fileDerivation, builtAt }))
+				(await writeParquetRecord({
+					path,
+					tally: opened.tally,
+					statements: opened.statements,
+					derivation: fileDerivation,
+					builtAt,
+				}))
 
 			files.push({
 				split,
@@ -543,7 +587,7 @@ export async function writeParquetSplits(
 			}
 
 			const opened = open.get(row.source) ?? openPart(row.source)
-			const pq = rowToParquet(row)
+			const pq = stampRowLicense(rowToParquet(row), licenses, opened.statements, "writeParquetSplits")
 
 			await writeStagedRow(opened.stage, pq)
 
@@ -554,7 +598,7 @@ export async function writeParquetSplits(
 			}
 
 			opened.lastSourceID = row.source_id
-			addToTally(opened.tally, row.source, licenseLabel(pq.license), 1)
+			addToTally(opened.tally, row.source, pq.license, 1)
 
 			if (opened.rows >= rowsPerFile) {
 				await closePart(opened)

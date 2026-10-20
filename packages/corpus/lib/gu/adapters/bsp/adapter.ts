@@ -408,7 +408,6 @@ export function createGuamAddressPointsAdapter(): CorpusAdapter {
 							lat: typeof lat === "number" ? String(lat) : "",
 							lon: typeof lon === "number" ? String(lon) : "",
 						}),
-						corpus_version: "",
 						license: BSP_GU_LICENSE,
 					}
 

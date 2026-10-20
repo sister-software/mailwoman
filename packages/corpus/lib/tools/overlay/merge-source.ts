@@ -14,9 +14,9 @@ import { mulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { moduleGraphHash } from "#build/code-hash"
+import { openCorpusRowStream } from "#parquet/corpus-rows"
 import { type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
-import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
 
 /**
@@ -77,7 +77,7 @@ export interface MergeSourceResult {
 
 async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<ParquetRow> {
 	for (const input of inputs) {
-		yield* openParquetRowStream<ParquetRow>(input)
+		yield* openCorpusRowStream(input)
 	}
 }
 

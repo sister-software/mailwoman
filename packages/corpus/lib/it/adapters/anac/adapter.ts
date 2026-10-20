@@ -445,7 +445,6 @@ export function readANACParty(party: ANACParty): ANACPartyReading {
 			locale: "it-IT",
 			source: IT_ANAC_ADAPTER_ID,
 			source_id: stableSourceID(IT_ANAC_ADAPTER_ID, aligned),
-			corpus_version: "",
 			license: IT_ANAC_LICENSE,
 		},
 	}

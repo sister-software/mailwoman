@@ -16,7 +16,6 @@ function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 		country: "FR",
 		source: "test",
 		source_id: "test-1",
-		corpus_version: "0.1.0",
 		license: "CC0-1.0",
 		...overrides,
 	}
@@ -48,8 +47,8 @@ describe("canonicalDedupKey", () => {
 	})
 
 	it("distinguishes synthetic rows by augmentation method", () => {
-		const a = fixtureRow({ recipe: { recipe: "case-upper", base_source_id: "test-1" } })
-		const b = fixtureRow({ recipe: { recipe: "accent-strip", base_source_id: "test-1" } })
+		const a = fixtureRow({ augmentation: { name: "case-upper", base_source_id: "test-1" } })
+		const b = fixtureRow({ augmentation: { name: "accent-strip", base_source_id: "test-1" } })
 		const c = fixtureRow()
 		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(b))
 		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(c))

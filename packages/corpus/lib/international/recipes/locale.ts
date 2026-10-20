@@ -108,10 +108,6 @@ export interface LocaleCountrySource {
 	 */
 	register: SourceRegister
 	/**
-	 * The corpus version written to each row.
-	 */
-	corpusVersion: string
-	/**
 	 * The dataset and terms the row's `license` names, before the rendering order.
 	 *
 	 * @defaultValue `OpenAddresses <CC> tuples`
@@ -130,7 +126,6 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: defaultRecipeSource("synth-german"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.4.0",
 		parts: [
 			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
 			{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
@@ -139,55 +134,46 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	FR: {
 		source: defaultRecipeSource("synth-fr"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.4.0",
 		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: defaultRecipeSource("synth-nl"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
 		source: defaultRecipeSource("synth-it"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
 	PT: {
 		source: defaultRecipeSource("synth-pt"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
 	},
 	CH: {
 		source: defaultRecipeSource("synth-ch"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
 	},
 	HR: {
 		source: defaultRecipeSource("synth-hr"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
 	},
 	SK: {
 		source: defaultRecipeSource("synth-sk"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
 	},
 	LU: {
 		source: defaultRecipeSource("synth-lu"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
 	},
 	ES: {
 		source: defaultRecipeSource("synth-es"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 		// The raw CNIG file keeps pedanía names that the conformed OA file drops.
 		pedaniaParts: [
@@ -204,7 +190,6 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// The source has no postcodes.
 		source: defaultRecipeSource("synth-nz"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
@@ -214,7 +199,6 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// so GB rows carry a source name of their own.
 		source: defaultRecipeSource("synth-gb-os-open"),
 		register: SourceRegister.OrdnanceSurveyOpenData,
-		corpusVersion: "0.9.9",
 		license: "OS OpenData GB tuples (OGL-UK-3.0)",
 		// The adapter's rows carry no region.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
@@ -700,7 +684,6 @@ export const localeRecipe: CorpusRecipe = {
 				locale: synth.locale,
 				source,
 				source_id: sourceID,
-				corpus_version: countrySource.corpusVersion,
 				license: `${countrySource.license ?? `OpenAddresses ${country} tuples`}, rendered ${order}-order — see ingest SOURCES`,
 			}
 
@@ -717,7 +700,6 @@ export const localeRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: source,
 					order,
 					base_source_id: null,
 					register: countrySource.register,

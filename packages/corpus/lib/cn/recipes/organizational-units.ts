@@ -150,7 +150,6 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 				locale: "zh-CN",
 				source: opts.sourceName ?? SOURCE,
 				source_id: recipeSourceID(opts.sourceName ?? SOURCE, { raw }),
-				corpus_version: "0.4.0",
 				license:
 					"CC-BY-4.0 — GeoNames populated places, INFERRED from the `<name>, <admin1>, <country>` row shape; data/coarse-placer carries no per-row source",
 			}

@@ -147,7 +147,6 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				locale: String(t.locale ?? "und"),
 				source: sourceLabel,
 				source_id,
-				corpus_version: "0.11.0",
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 

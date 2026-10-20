@@ -91,7 +91,6 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "anchor-absorption",
 					template: synth.template,
 					// The components are drawn from weighted template tables rather than read from a
 					// register, so the row teaches the absorption shape and names no published address.

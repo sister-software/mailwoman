@@ -152,7 +152,6 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 						locale: synth.locale,
 						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: PO_BOX_LICENSE,
 					}
 
@@ -190,7 +189,6 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 						locale: mil.locale,
 						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: PO_BOX_LICENSE,
 					}
 

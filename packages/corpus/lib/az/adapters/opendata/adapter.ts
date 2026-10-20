@@ -366,7 +366,6 @@ export function createAzerbaijanPlacesAdapter(): CorpusAdapter {
 							lat: typeof lat === "number" ? String(lat) : "",
 							lon: typeof lon === "number" ? String(lon) : "",
 						}),
-						corpus_version: "",
 						license: OPENDATA_AZ_LICENSE,
 					}
 

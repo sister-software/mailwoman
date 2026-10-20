@@ -179,7 +179,6 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_SAMHSA_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_SAMHSA_DEFAULT_LICENSE,
 				}
 

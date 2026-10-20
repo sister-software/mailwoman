@@ -16,7 +16,6 @@ function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 		country: "FR",
 		source: "test",
 		source_id: "test-1",
-		corpus_version: "0.1.0",
 		license: "CC0-1.0",
 		...overrides,
 	}

@@ -218,7 +218,6 @@ export function createAdressurFaroeAdapter(): CorpusAdapter {
 							...aligned,
 							address_id: present(record.address_id) ?? "",
 						}),
-						corpus_version: "",
 						license: ADRESSUR_FO_LICENSE,
 					}
 

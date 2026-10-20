@@ -88,7 +88,6 @@ export const frBareStreetRecipe: CorpusRecipe = {
 							f: "bare-nonvoie",
 							v: String(read),
 						}),
-						corpus_version: "0.9.4",
 						license:
 							"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 					}
@@ -141,7 +140,6 @@ export const frBareStreetRecipe: CorpusRecipe = {
 				locale: "fr-FR",
 				source: FR_BARE_STREET_SOURCE,
 				source_id,
-				corpus_version: "0.9.4",
 				license:
 					"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
 			}
