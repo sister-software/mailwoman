@@ -6,8 +6,8 @@
  *   Dev-weights linker for `@mailwoman/neural-weights-it-it`: it builds the index that makes
  *   `resolveWeights({locale: "it-it"})` surface `pairIndexPath` in local dev.
  *
- *   The index is inert without the `it` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
- *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): Italian addresses write the CAP
+ *   The index is inert without the `it` entry in `LEADING_POSTCODE_COUNTRIES`
+ *   (`neural/pair/prior-windows.ts`): Italian addresses write the CAP
  *   first ("00184 Roma"), so a parent segment folds to a key no bare-comune entry matches.
  */
 

@@ -8,12 +8,7 @@
  *   bias writes over the windows this module builds.
  */
 
-import { PLZ_PATTERN } from "@mailwoman/codex/de"
-import { CODIGO_POSTAL_PATTERN } from "@mailwoman/codex/es"
-import { CODE_POSTAL_PATTERN } from "@mailwoman/codex/fr"
-import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
-import { CAP_PATTERN } from "@mailwoman/codex/it"
-import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
+import { postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
 import type { WordGroup } from "#fst-prior"
 import type { TokenLike } from "#query-shape-prior"
@@ -178,25 +173,6 @@ export function computeGroupSegments(
 export const MAX_TRAILING_POSTCODE_WORDS = 2
 
 /**
- * Per-country postcode shape used by the segment path's trailing-postcode strip,
- * keyed by the pair index header's lowercase ISO country.
- *
- * Each entry is the same anchored shape `@mailwoman/codex/<system>` owns, so the strip
- * and the postcode-repair and postcode-anchor passes never drift on what a GB or NZ postcode is.
- * A header country with no entry here produces no strip.
- *
- * Grow this map only with a real codex shape for the added country.
- */
-export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
-	["gb", UK_POSTCODE_PATTERN],
-	["nz", NZ_POSTCODE_PATTERN],
-	["fr", CODE_POSTAL_PATTERN],
-	["de", PLZ_PATTERN],
-	["es", CODIGO_POSTAL_PATTERN],
-	["it", CAP_PATTERN],
-])
-
-/**
  * Countries whose postal convention writes the postcode before the locality on the same
  * line ("12210 Montpeyroux") rather than after it ("Macclesfield SK11 9PD").
  *
@@ -204,15 +180,18 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
  * rather than by the country merely writing the postcode first.
  *
  * A country absent from this set is deliberate: en-IN is absent because the PIN goes last,
- * so the trailing-postcode strip already folds its parent segment correctly.
+ * so the trailing-postcode strip folds its parent segment.
  */
 export const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
 
 /**
  * The trailing-postcode shape for the index's header country, or `null` when no shape is known.
+ *
+ * The shape is the country's libaddressinput postcode format, so every country with a
+ * pair index strips a trailing postcode the same way the postcode package admits one.
  */
 export function segmentParentPostcodeShape(country: string | null): RegExp | null {
-	return country ? (SEGMENT_PARENT_POSTCODE_SHAPES.get(country.toLowerCase()) ?? null) : null
+	return country ? (postcodeSyntax(country)?.pattern ?? null) : null
 }
 
 /**

@@ -462,8 +462,17 @@ describe("BuildPlacetypePairPriors — segment-parent same-field postcode strip"
 		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
 	})
 
-	it("A country with no known codex shape (au) → no strip, byte-stable: the same-field postcode stays in the parent key and the pair does NOT fire", () => {
-		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "au")
+	it("strips an AU four-digit postcode from the parent key, because libaddressinput states the AU shape", () => {
+		const index = mockPairIndex({ "carlton|melbourne": "dependent_locality" }, 6, undefined, "au")
+		const text = "Carlton, Melbourne 3053"
+		const pieces = makePiecesWithCommas(text)
+		buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(index.calls).toContainEqual(["carlton", "melbourne"])
+	})
+
+	it("A country with no stated postcode system (ae) → no strip, byte-stable: the same-field number stays in the parent key and the pair does NOT fire", () => {
+		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "ae")
 		const text = "Plimmerton, Porirua 5026"
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)

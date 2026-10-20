@@ -177,9 +177,8 @@ await materializeDevOverlay({
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
  *   TODO(${slug}): say what makes this locale's index required, and what it is inert without. If
- *   the locale writes its postcode before the locality, it needs entries in
- *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
- *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
+ *   the locale writes its postcode before the locality, it needs an entry in
+ *   \`LEADING_POSTCODE_COUNTRIES\` (\`neural/pair/prior-windows.ts\`) or the artifact changes nothing; if it writes the postcode
  *   last, say so, because the absence from that set is then deliberate. Write this for ${slug} rather than
  *   for whichever locale you read first.
  */

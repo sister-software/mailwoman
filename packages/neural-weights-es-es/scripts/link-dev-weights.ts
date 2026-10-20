@@ -6,8 +6,8 @@
  *   Dev-weights linker for `@mailwoman/neural-weights-es-es`: it builds the index that makes
  *   `resolveWeights({locale: "es-es"})` surface `pairIndexPath` in local dev.
  *
- *   The index is inert without the `es` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
- *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): Spanish addresses write the
+ *   The index is inert without the `es` entry in `LEADING_POSTCODE_COUNTRIES`
+ *   (`neural/pair/prior-windows.ts`): Spanish addresses write the
  *   código postal first ("28013 Madrid"), so a parent segment folds to a key no bare-municipio entry
  *   matches.
  */
