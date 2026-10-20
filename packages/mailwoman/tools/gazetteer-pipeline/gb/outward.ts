@@ -16,13 +16,20 @@ import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 const GB_INWARD_LENGTH = 3
 
 /**
+ * Normalizes a GB postcode into its binary key: trimmed, uppercased and unspaced.
+ */
+export function gbPostcodeKey(name: string): string {
+	return (name || "").trim().toUpperCase().replaceAll(" ", "")
+}
+
+/**
  * Returns GB outward district from a unit postcode key.
  *
  * Accepts spaced or unspaced forms.
  * Every string outside the GB unit shape returns `null`.
  */
 export function gbOutwardFromKey(name: string): string | null {
-	const key = (name || "").trim().toUpperCase().replaceAll(" ", "")
+	const key = gbPostcodeKey(name)
 
 	if (!UK_POSTCODE_PATTERN.test(key)) return null
 

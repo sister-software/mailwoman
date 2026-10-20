@@ -16,7 +16,7 @@
 import type { PostcodeBinaryEntry } from "@mailwoman/postcode/binary-resolver"
 import type { NamedLatLon } from "@mailwoman/spatial"
 
-import { gbOutwardFromKey } from "#gazetteer/gb/outward"
+import { gbOutwardFromKey, gbPostcodeKey } from "#gazetteer/gb/outward"
 
 /**
  * GB key granularity.
@@ -94,9 +94,8 @@ export interface BuildPostcodeBinaryResult {
  * Every other country is uppercased as-is.
  */
 export function postcodeBinaryKey(country: string, name: string): string {
-	const upper = (name || "").trim().toUpperCase()
-
-	return country.toUpperCase() === "GB" ? upper.replaceAll(" ", "") : upper
+	// country-branch: GB keys drop the space between the outward and inward halves; the rule lives in gb/outward.
+	return country.toUpperCase() === "GB" ? gbPostcodeKey(name) : (name || "").trim().toUpperCase()
 }
 
 /**
