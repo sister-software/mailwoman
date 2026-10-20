@@ -66,6 +66,12 @@ export interface ParquetRowStreamOptions {
 	 * Stop after this number of rows.
 	 */
 	limit?: number
+	/**
+	 * A DuckDB boolean expression rows must satisfy, interpolated as the `WHERE` clause.
+	 *
+	 * The caller builds it, escaping every literal with `escapeSQLString`.
+	 */
+	where?: string
 }
 
 /**
@@ -79,13 +85,14 @@ export async function* openParquetRowStream<T>(
 	path: PathBuilderLike,
 	options: ParquetRowStreamOptions = {}
 ): AsyncGenerator<T> {
-	const { columns, limit } = options
+	const { columns, limit, where } = options
 	// Disposed when this generator finishes or a consumer abandons it,
 	// since `for await` calls `.return()` on break.
 	using db = await openDuckDB()
 	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
 	const limitClause = typeof limit !== "number" ? "" : ` LIMIT ${validateRowLimit(limit)}`
-	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path.toString())}')${limitClause}`
+	const whereClause = where ? ` WHERE ${where}` : ""
+	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path.toString())}')${whereClause}${limitClause}`
 
 	try {
 		const stream = await db.stream(sql)

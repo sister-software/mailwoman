@@ -37,7 +37,7 @@
  * `Am Stengber`, `An Hiesel` and `Um Reebou`.
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
- * `#recipes/bare/country` and `#tools/postcode-triples`.
+ * `#recipes/bare/country` and `#tools/postcode/triples`.
  * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher did not
  * tag.
  *

@@ -11,7 +11,7 @@
  *   four-digit value in a six-digit country is not.
  */
 
-import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
+import { COUNTRY_POSTCODE_FORMAT_SOURCES, type PostcodeLocalityPlacement } from "#country-formats/data"
 
 /**
  * One country's postcode format, compiled.
@@ -98,6 +98,18 @@ export function postcodeSyntax(countryCode: string): PostcodeSyntax | null {
 	compiled.set(code, format)
 
 	return format
+}
+
+/**
+ * Whether `countryCode`'s layout prints the postcode before or after the locality,
+ * as libaddressinput's `fmt` states it.
+ *
+ * Null when the dataset states no postcode for the country, or when its layout prints
+ * only one of the two fields, as Japan's and Singapore's do.
+ * A caller that needs an order treats null as "unknown" rather than picking one.
+ */
+export function postcodePlacement(countryCode: string): PostcodeLocalityPlacement | null {
+	return COUNTRY_POSTCODE_FORMAT_SOURCES[countryCode.toUpperCase()]?.postcodePlacement ?? null
 }
 
 /**

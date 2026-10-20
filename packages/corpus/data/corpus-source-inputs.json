@@ -3,6 +3,13 @@
 	"$rule": "A new source joins this table, and each publication it reads joins the register, before any build reads it. An input is a publication whose text reaches a row's `raw` string or a component value. A list consulted only to filter rows, to order fields or to decide which label a span already in the row receives is not one. A table written in this repository, including `@mailwoman/codex`'s tables and the runtime's `Intl` data, is listed under `authored` with the publication it follows. A publication with no register row gets one in `source-additions.json` under an unchecked decision, so the gap shows rather than hides.",
 	"$aliases": "`aliases` holds the retired `synth-*` spelling from `RECIPE_SOURCES`, which archived corpora and the configs that target them store.",
 	"$history": "`history` records what a source read in corpora built before its producer changed inputs under the same id. The build and training checks read `inputs`; the release audit reads the entry naming the corpus a published model trained on.",
+	"$derivations": "A derivation names a recipe that rewrites the rows of any base source and labels them `<prefix>-<base source>`. Such a label has no entry of its own: it resolves to its base source's entry, because the recipe adds no text and so reads exactly the publications the base row read. A derivation that adds text from another publication is a source of its own and belongs under `sources`.",
+	"derivations": {
+		"postcode-order": {
+			"producer": "packages/corpus/lib/recipes/postcode-order.ts",
+			"note": "Rewrites the base row's house number, street, locality and postcode with the postcode on the locality side its country's libaddressinput layout does not use. The layout only orders fields, so it is not an input."
+		}
+	},
 	"sources": {
 		"adressur-fo": {
 			"inputs": [

@@ -67,7 +67,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!options.out) throw new CommandError("--out <tuples.jsonl> required")
 
-		const tools = await import("@mailwoman/corpus/tools/postcode-triples")
+		const tools = await import("@mailwoman/corpus/tools/postcode/triples")
 		const countries = splitCountryCodes(options.countries)
 
 		type Extracted =

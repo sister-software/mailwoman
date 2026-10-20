@@ -465,6 +465,24 @@ describe("writeParquetSplits", () => {
 		expect(streamed[0]).toEqual({ country: "FR", labels: ["B-locality"] })
 	})
 
+	it("streams only the rows a where clause keeps", async () => {
+		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
+
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
+
+		const streamed = await Array.fromAsync(
+			openParquetRowStream<{ source_id: string }>(m.slices[0]!.path, {
+				columns: ["source_id"],
+				where: "source_id IN ('t-1', 't-3') AND list_contains(span_tags, 'locality')",
+			})
+		)
+
+		expect(streamed.map((row) => row.source_id).toSorted()).toEqual(["t-1", "t-3"])
+	})
+
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
 		// Only train provided.
 		// Val + test omitted entirely.

@@ -28,6 +28,17 @@ def test_rendered_gb_is_refused_on_the_price_paid_data_row() -> None:
     assert ppd[0].missing == ("transform", "train")
 
 
+def test_a_derived_label_is_judged_by_its_base_source() -> None:
+    """`postcode-order-<base>` adds no text, so it inherits the base source's inputs: admitted where the base is,
+    refused where the base is, and unmapped where the base is unmapped."""
+    rights = committed_source_rights()
+    assert rights.gaps("postcode-order-ban") == rights.gaps("ban") == []
+    refused = rights.gaps("postcode-order-rendered-gb")
+    assert [gap.register_source for gap in refused] == [gap.register_source for gap in rights.gaps("rendered-gb")]
+    (gap,) = rights.gaps("postcode-order-never-mapped-source")
+    assert gap.register_source is None
+
+
 def test_an_unmapped_source_is_refused() -> None:
     (gap,) = committed_source_rights().gaps("never-mapped-source")
     assert gap.register_source is None

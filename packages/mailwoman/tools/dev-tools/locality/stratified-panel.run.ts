@@ -39,7 +39,7 @@ import {
 	DEFAULT_LOCALITY_QUOTA,
 	geonamesPostalPath,
 	readTriplesFromGeonames,
-} from "@mailwoman/corpus/tools/postcode-triples"
+} from "@mailwoman/corpus/tools/postcode/triples"
 
 import { suffixTail } from "#tools/dev-tools/coord-panel"
 
