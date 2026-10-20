@@ -16,11 +16,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.data.loader.corpus_files import CorpusFile, file_source_counts, source_row_counts
 from mailwoman_train.data.loader.mixture import _apply_source_weights, _index_by_source
+from tests.corpus_fixture import write_corpus_parquet
 
 SCHEMA = pa.schema(
     [
@@ -48,7 +48,7 @@ def _rows(source: str, n: int) -> list[dict]:
 
 def _write(path: Path, rows: list[dict]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pylist(rows, schema=SCHEMA), path)
+    write_corpus_parquet(pa.Table.from_pylist(rows, schema=SCHEMA), path)
     return path
 
 
@@ -63,7 +63,7 @@ def test_file_source_counts_raises_on_a_label_less_golden_file(tmp_path: Path) -
     table = pa.Table.from_pylist([{"raw": "x", "source": None}], schema=schema)
     path = tmp_path / "train" / "golden.parquet"
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(table, path)
+    write_corpus_parquet(table, path)
 
     with pytest.raises(TypeError):
         file_source_counts(path)

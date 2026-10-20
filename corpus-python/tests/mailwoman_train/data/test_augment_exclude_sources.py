@@ -4,9 +4,9 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 
 from mailwoman_train.data.loader import iter_rows
+from tests.corpus_fixture import write_corpus_parquet
 
 LEGACY_SCHEMA = pa.schema(
     [
@@ -39,7 +39,7 @@ def _write_corpus(tmp_path: Path) -> Path:
         ("part-synth.parquet", _rows("synth-suffix-boundary", 8)),
         ("part-a.parquet", _rows("tiger", 8)),
     ):
-        pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / name)
+        write_corpus_parquet(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / name)
     return corpus
 
 

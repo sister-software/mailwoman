@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import Any
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import torch
 
 from mailwoman_train.config import Config, load_config
@@ -29,6 +28,7 @@ from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train.trainer import train
 from tests import paths
+from tests.corpus_fixture import write_corpus_parquet
 
 CONFIGS = paths.CONFIGS
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
@@ -71,7 +71,7 @@ def _probe_config(root: Path) -> Config:
     corpus = root / "corpus"
     for split in ("train", "val"):
         (corpus / split).mkdir(parents=True)
-        pq.write_table(pa.Table.from_pylist(ROWS, schema=SCHEMA), corpus / split / "part-0000.parquet")
+        write_corpus_parquet(pa.Table.from_pylist(ROWS, schema=SCHEMA), corpus / split / "part-0000.parquet")
     vocab = build_char_vocab([str(row["raw"]) for row in ROWS], min_count=1)
     vocab_path = corpus / "char-vocab.json"
     save_char_vocab(vocab, vocab_path)

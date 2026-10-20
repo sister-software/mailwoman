@@ -15,12 +15,12 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import encode as encode_module
 from mailwoman_train.data.loader import iter_encoded, iter_rows
+from tests.corpus_fixture import write_corpus_parquet
 
 #: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
 #: which is the only thing that would touch a tokenizer, so the object is never called — but
@@ -64,7 +64,7 @@ def _write_corpus(tmp_path: Path, rows: list[dict], drop_columns: tuple[str, ...
     for col in drop_columns:
         schema = schema.remove(schema.get_field_index(col))
     table = pa.Table.from_pylist([{k: r.get(k) for k in schema.names} for r in rows], schema=schema)
-    pq.write_table(table, corpus / "train" / "part-0000.parquet")
+    write_corpus_parquet(table, corpus / "train" / "part-0000.parquet")
     return corpus
 
 

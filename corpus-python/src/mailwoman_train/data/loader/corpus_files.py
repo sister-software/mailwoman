@@ -169,15 +169,16 @@ def corpus_split_files(corpus_dir: Path, split: str) -> list[CorpusFile]:
     The manifest lists an absolute ``path``, ``split`` and ``sha256`` per file. An overlay manifest also lists
     files in its base corpus. Use each path as-is when it exists. Otherwise, re-root it with
     `_reroot`. Every resolved file is hashed against its listed sha256 once per process, and a mismatch raises.
-    Run the glob only when the manifest resolves no files.
+    Glob ``<split>/*.parquet`` only for a corpus whose manifest is absent or lists no file at all, and then hash each
+    file against the ``RECORD.json`` beside it.
     """
     manifest = corpus_dir / "MANIFEST.json"
-    if not manifest.exists():
+    data = json.loads(manifest.read_text()) if manifest.exists() else {}
+    if not manifest_files(data):
         return [CorpusFile(path) for path in _glob_split(corpus_dir, split)]
-    data = json.loads(manifest.read_text())
     entries = _manifest_split_entries(data, corpus_dir, split)
     if not entries:
-        return [CorpusFile(path) for path in _glob_split(corpus_dir, split)]
+        raise FileNotFoundError(f"{manifest} lists no '{split}' parquet file")
     deletions = [(d["target"], _deletion_ids(d, corpus_dir)) for d in data.get("deletions") or []]
     files: list[CorpusFile] = []
     for path, entry in entries:
@@ -231,16 +232,35 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     return [f.path for f in files]
 
 
+#: The suffix of the record the corpus writers put beside each parquet file: ``data.parquet`` has ``data.RECORD.json``.
+_RECORD_SUFFIX = ".RECORD.json"
+
+
 def _glob_split(corpus_dir: Path, split: str) -> list[Path]:
-    """The directory-glob listing of an older corpus with no manifest file list."""
+    """The directory-glob listing of a corpus with no manifest file list, each file verified against its record.
+
+    With no manifest entry to vouch for a file, its ``<stem>.RECORD.json`` is the only statement of its bytes, so a
+    file without one raises rather than training on bytes no record describes.
+    """
     paths = sorted((corpus_dir / split).glob("*.parquet"))
     if not paths:
         raise FileNotFoundError(f"no parquet files via MANIFEST or {corpus_dir / split}")
+    for path in paths:
+        record = path.with_name(path.name.removesuffix(".parquet") + _RECORD_SUFFIX)
+        if not record.exists():
+            raise ValueError(
+                f"{path} is listed by no MANIFEST and has no {record.name} beside it, so its bytes cannot be verified"
+            )
+        verify_file_sha256(path, json.loads(record.read_text()).get("sha256"))
     return paths
 
 
 def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) -> list[tuple[Path, dict[str, Any]]]:
-    """Resolve and verify the manifest entries of one split, or return an empty list when none resolves."""
+    """Resolve and verify the manifest entries of one split.
+
+    Raises when any declared entry resolves to no file. A manifest whose files are all absent once fell through to a
+    directory glob, which read whatever unlisted files sat under ``<split>/`` without verifying them.
+    """
     base_version = data.get("base_corpus_version")
     resolved: list[tuple[Path, dict[str, Any]]] = []
     rerooted = 0
@@ -264,10 +284,9 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
             rerooted += 1
         else:
             missing.append(str(raw))
-    # A partly resolved manifest means the corpus is broken, e.g. an overlay without its base.
-    # The loader raises rather than training on the remaining files from the wrong corpus. When no path
-    # resolves, the glob fallback handles older monolithic corpora.
-    if resolved and missing:
+    # A manifest with unresolvable files means the corpus is broken, e.g. an overlay without its base.
+    # The loader raises rather than training on the remaining files, or on unlisted ones a glob would find.
+    if missing:
         raise FileNotFoundError(
             f"MANIFEST declares {declared} '{split}' parquet files but {len(missing)} are unresolvable "
             f"(as-is AND re-rooted under {corpus_dir}):\n  "
