@@ -45,7 +45,7 @@ export async function trainingManifestRoots(directory: PathBuilderLike): Promise
 	const names = await Globerator.from("*.json", { cwd: directory.toString(), onlyFiles: true }).toArray()
 	const roots: StoreRoot[] = []
 
-	for (const name of names.map(String).toSorted()) {
+	for (const name of names.toSorted()) {
 		const path = resolvePath(directory, name)
 		const manifest = await readLocalJSONFile<{ corpusVersion?: unknown }>(path)
 
@@ -153,7 +153,7 @@ export async function listStoreDirectories(storeRoot: string): Promise<StoreDire
 	const files = await Globerator.from("*/*/**/*", { cwd: storeRoot, onlyFiles: true }).toArray()
 	const directories = new Map<string, StoreDirectory>()
 
-	for (const relative of files.map(String)) {
+	for (const relative of files) {
 		const [source, hash] = relative.split("/")
 		const path = resolvePath(storeRoot, source!, hash!)
 		const stat = await statPath(resolvePath(storeRoot, relative))

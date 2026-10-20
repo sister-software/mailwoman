@@ -77,7 +77,7 @@ const cards = await Globerator.from("packages/neural-weights-*/model-card.json",
 	onlyFiles: true,
 }).toArray()
 
-for (const card of cards.map(String).toSorted()) {
+for (const card of cards.toSorted()) {
 	const { roots: named, unparsed } = await modelCardRoots(repoRootPathBuilder(card).toString())
 
 	roots.push(...named)
@@ -117,7 +117,7 @@ for (const entry of reach) {
 const stores = values.store ?? [
 	...new Set(
 		(await Globerator.from("*/store/**/*", { cwd: versionedRoot, onlyFiles: true }).toArray()).map((relative) =>
-			resolvePath(versionedRoot, String(relative).split("/")[0]!, "store")
+			resolvePath(versionedRoot, relative.split("/")[0]!, "store")
 		)
 	),
 ]
