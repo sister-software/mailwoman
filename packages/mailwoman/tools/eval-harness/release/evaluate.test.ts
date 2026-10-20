@@ -95,14 +95,17 @@ describe("evaluateReleaseSpec", () => {
 		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
 	})
 
-	it("reads the committed current specification as insufficient evidence", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v2\.json$/u)
+	it("reads the current specification as insufficient evidence when required countries have no rows", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v3\.json$/u)
 
 		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v2.json", import.meta.url).pathname)
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v3.json", import.meta.url).pathname)
 		)
 
-		const verdict = evaluateReleaseSpec(committed, rowsFor("US", 50, 40, 45), artifacts)
+		const verdict = evaluateReleaseSpec(committed, rowsFor("US", 50, 40, 45), {
+			published: committed.identities.published.sha256!,
+			candidate: CANDIDATE,
+		})
 
 		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
 	})
@@ -236,11 +239,13 @@ describe("small and degenerate samples", () => {
 
 	it("reports a stratum of one unit as insufficient rather than zero width", () => {
 		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.5 } })
+
 		const verdict = evaluateReleaseSpec(
 			spec,
 			rowsFor("US", 5, 5, 5, () => "one"),
 			artifacts
 		)
+
 		const objective = check(verdict, "objective")
 
 		expect(objective.lower).toBeNull()

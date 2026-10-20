@@ -8,8 +8,6 @@ const committedPath = new URL("specs/release-requirements.v2.json", import.meta.
 
 describe("validateReleaseSpec", () => {
 	it("accepts the committed v2 specification with every threshold unregistered", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v2\.json$/u)
-
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
 		expect(spec.schemaVersion).toBe(2)
@@ -17,6 +15,20 @@ describe("validateReleaseSpec", () => {
 		expect(spec.objective.minimumImprovement).toBeNull()
 		expect(spec.statistics.confidenceLevel).toBeNull()
 		expect(spec.requirements.every((req) => req.minimum === null)).toBe(true)
+	})
+
+	it("accepts the current v3 specification with every requirement registered", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v3\.json$/u)
+
+		const spec = validateReleaseSpec(
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v3.json", import.meta.url).pathname)
+		)
+
+		expect(spec.statistics.rowsIndependent).toBe(false)
+		expect(spec.statistics.confidenceLevel).not.toBeNull()
+		expect(spec.objective.minimumImprovement).not.toBeNull()
+		expect(spec.requirements.length).toBeGreaterThan(0)
+		expect(spec.requirements.every((req) => req.minimum !== null)).toBe(true)
 	})
 
 	it("refuses a specification that omits rowsIndependent", async () => {

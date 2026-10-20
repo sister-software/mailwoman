@@ -21,7 +21,7 @@ replacement updates the row it settles and names that version.
   in `release-requirements.v1.json` replaces it, because v1 registers no requirement, objective set or threshold.
   The check stays in code until a specification version registers its replacement and that replacement runs.
 - **replaced**: the check no longer decides anything in code, and its replacement exists on this branch.
-- **retired**: the check is removed and nothing replaces it, for the stated reason.
+- **retired**: the check is removed without a replacement, for the stated reason.
 - **retained**: the check stays as it is, with a role the policy keeps.
 
 ## Graded arc (`lib/dev-mcp/arc.ts`, `mwdev_arc`)
@@ -29,7 +29,7 @@ replacement updates the row it settles and names that version.
 | Check                                                              | Status   | Reason                                                                                                                                                                                      | Replacement                                                                                                                                                                                                   |
 | ------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D-rule: any board regression in FR or US (tier 1) blocks the ship  | replaced | Historical country privilege. The policy grants FR, US, DE and GB additional requirements only when a stated product need justifies them, and their former D-rule inclusion grants no veto. | Release eligibility read from the release verdict (`readReleaseEligibility`). A required country is a `CountryRequirement` in a release spec version.                                                         |
-| D-rule: any board regression in DE or GB (`dRuleProtected`) blocks | replaced | Same as above. The recorded reasons (thin DE board, GB's checking-row count) describe board detectability, not a product requirement.                                                       | Same as above. `dRuleProtected` is removed from `scope.config.json`.                                                                                                                                          |
+| D-rule: any board regression in DE or GB (`dRuleProtected`) blocks | replaced | Same as above. The recorded reasons (thin DE board, GB's checking-row count) describe board detectability rather than a product requirement.                                                | Same as above. `dRuleProtected` is removed from `scope.config.json`.                                                                                                                                          |
 | Board net must be positive to ship                                 | replaced | The board is a curated failure-finding collection whose row counts do not decide promotion.                                                                                                 | Board regressions are `findings` with the input, both arms' output and the checker's issues. The objective improvement `Q_candidate - Q_published` in the release verdict decides improvement.                |
 | Attributable net (candidate minus null) must be positive to ship   | replaced | Training attribution and release eligibility are distinct answers.                                                                                                                          | Still computed and reported as `attribution.net` and `attribution.regressions`, and it no longer decides release eligibility.                                                                                 |
 | Self-control leg must show zero differing rows                     | retained | A rig that disagrees with itself produces no evidence about the candidate.                                                                                                                  | Unchanged. A dirty control sets `attribution.attributable` to false. It does not set release eligibility, which comes from the held-out verdict rather than this rig.                                         |
@@ -66,7 +66,7 @@ stated product reason. None is registered in v1, so every floor below is **retai
 | `us.unit_real`            |  73.0 | score-affix unit designators (n=34) | retained-pending | Capability: unit recovery                                                                                      |
 | `fr.postcode`             |  98.8 | per-locale F1, FR                   | retained-pending | FR country requirement, if a product need is stated                                                            |
 | `fr.house_number`         |  96.6 | per-locale F1, FR                   | retained-pending | FR country requirement, if a product need is stated                                                            |
-| `fr.region`               |  36.7 | per-locale F1, FR                   | retained-pending | FR country requirement or retirement; a 36.7 floor states a historical reading, not a product need             |
+| `fr.region`               |  36.7 | per-locale F1, FR                   | retained-pending | FR country requirement or retirement; a 36.7 floor states a historical reading rather than a product need      |
 | `de.native_locality`      |  89.5 | de-order-eval anchor-on cell        | retained-pending | DE country requirement, if a product need is stated                                                            |
 | `arena.perturb`           |  59.9 | perturbation arena (n=398)          | retained-pending | Capability: robustness to perturbed input, or diagnostic                                                       |
 | `us.po_box_real`          |  94.3 | PO Box fixture (n=2000)             | retained-pending | Capability: reading a PO Box                                                                                   |
@@ -85,7 +85,7 @@ stated product reason. None is registered in v1, so every floor below is **retai
 | Compiled-freshness warning                                      | retained         | Measurement validity of the harness itself.                                                                                    | Unchanged.                                                                                                                                                   |
 | `cascade.demo_smoke` (read by the verdict, unfloored in v9.0.0) | retained         | Not a floor in the current spec; a geocoding requirement would be measured through the served path with annotated coordinates. | Geocoding requirement in a later spec version, if one is registered.                                                                                         |
 | Preset compare                                                  | retained         | Smoke test for tag collapse; never decided promotion.                                                                          | Unchanged.                                                                                                                                                   |
-| `$watch` entries in `v9.0.0-base.json`                          | retained         | Recorded observations, not floors.                                                                                             | Unchanged.                                                                                                                                                   |
+| `$watch` entries in `v9.0.0-base.json`                          | retained         | Recorded observations without a floor.                                                                                         | Unchanged.                                                                                                                                                   |
 
 ## Not changed in this lane
 
@@ -96,3 +96,21 @@ stated product reason. None is registered in v1, so every floor below is **retai
 - `mwdev_promotion_eval` still decides on the floors above. Until a release spec registers requirements, every
   release verdict is `insufficient_evidence`, so `mwdev_arc` reports release eligibility as insufficient evidence
   for every candidate.
+
+## Specification v3 (2026-10-20)
+
+`release-requirements.v3.json` registers the requirements decided in `2026-10-20-release-requirements-v3.md`.
+That record's section 6 settles the retained-pending rows above:
+
+- Fifteen floors in `v9.0.0-base.json` are replaced by the nine country requirements and the `po_box_cedex`,
+  `venue_unit` and `country_token` capabilities.
+- `us.street_prefix`, `us.street_suffix`, `us.intersection_real`, `arena.perturb` and `fr.bare_street_intact`
+  are retired as deciders and stay as diagnostics.
+- The 1.5 pp int8-vs-fp32 cap is retired, because the verdict is tied to the int8 artifact's sha256.
+- The mask-regression lock is retained as a configuration check outside the specification. It compares the
+  candidate with and without the ship config's conventions mask and does not read the published model's
+  answers, so the row above that describes it as a comparison against the published model is inaccurate.
+
+The floors stay in `v9.0.0-base.json` and `mwdev_promotion_eval` until the first v3 verdict runs on a frozen,
+audited dataset. Every v3 verdict is `insufficient_evidence` until the evaluation collection holds
+`verified_unseen` address rows for ES, IT, AU and NZ.
