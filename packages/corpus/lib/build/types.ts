@@ -51,6 +51,31 @@ export const BuildProfile = {
 export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
 
 /**
+ * What a build does with the work a previous build left under its output directory.
+ *
+ * No choice is implicit: a build that finds prior work and was given neither `Resume`
+ * nor `Fresh` refuses before it opens any output.
+ */
+export const PriorOutput = {
+	/**
+	 * Refuse when the output directory holds an align checkpoint, a non-empty
+	 * align output, or a finished adapter run.
+	 */
+	Refuse: "refuse",
+	/**
+	 * Reuse each finished adapter run, continue the align phase from its checkpoint,
+	 * and keep the parquet files the parquet manifest records.
+	 */
+	Resume: "resume",
+	/**
+	 * Remove the checkpoint, the align outputs and every adapter manifest, then build from the start.
+	 */
+	Fresh: "fresh",
+} as const
+
+export type PriorOutput = (typeof PriorOutput)[keyof typeof PriorOutput]
+
+/**
  * Per-invocation options for `buildCorpus`.
  */
 export interface BuildCorpusOptions {
@@ -153,6 +178,13 @@ export interface BuildCorpusOptions {
 	 * in {@linkcode BuildCorpusManifest.source_rights}.
 	 */
 	unshippableReason?: string
+
+	/**
+	 * What to do with a previous build's work under `outputDir`.
+	 *
+	 * @defaultValue {@linkcode PriorOutput.Refuse}
+	 */
+	priorOutput?: PriorOutput
 }
 
 /**

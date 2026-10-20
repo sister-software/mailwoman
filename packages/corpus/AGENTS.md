@@ -145,6 +145,14 @@ change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap
 peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
 `rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
 
+A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
+adapter `MANIFEST.json`, and names each file with its size. To continue an interrupted build, rerun
+the same command with `--resume`:
+`mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json --out <out> --resume`.
+It reuses each finished adapter run, truncates the align outputs to the checkpoint's offsets and
+aligns the remaining adapters, and keeps the parquet files the parquet manifest records. `--fresh`
+deletes that work and builds from the start; nothing is deleted without one of the two flags.
+
 ## License election
 
 A grant that enumerates its rights grants those rights and no others. An omission is neither a

@@ -20,7 +20,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
-import { BuildProfile } from "@mailwoman/corpus/build/types"
+import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
@@ -118,6 +118,20 @@ export const spec = {
 				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
 				"local experiment. States why; the corpus manifest records it as not shippable",
 		},
+		resume: {
+			type: "boolean",
+			default: false,
+			description:
+				"Continue a previous build under --out: reuse its finished adapter runs, continue align from " +
+				"align-checkpoint.json and keep the parquet files its manifest records",
+		},
+		fresh: {
+			type: "boolean",
+			default: false,
+			description:
+				"Delete a previous build's align checkpoint, align outputs and adapter manifests under --out " +
+				"and build from the start. Without --resume or --fresh, a build refuses an --out holding prior work",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -189,6 +203,10 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 					throw new CommandError(`--inputs ${options.inputs} could not be read as a build record: ${error.message}`)
 				})
 
+		if (options.resume && options.fresh) {
+			throw new CommandError("--resume and --fresh are opposite choices; pass one.")
+		}
+
 		const adapters = defaultAdapterRegistry.list()
 
 		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
@@ -208,6 +226,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			licensePolicy: options.licensePolicy as LicensePolicy,
 			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : null,
 			unshippableReason: options.unshippableReason,
+			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 

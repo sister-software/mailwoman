@@ -11,13 +11,10 @@ import { z } from "zod"
 
 /**
  * Corpus build settings.
+ *
+ * Empty: whether a build resumes is the `priorOutput` option of `buildCorpus`, chosen per run.
  */
-export const PublicCorpusEnvSchema = z.object({
-	MAILWOMAN_RESUME: z.string().optional().meta({
-		title: "Build resume",
-		description: "Resume-state override used by corpus build tooling.",
-	}),
-})
+export const PublicCorpusEnvSchema = z.object({})
 
 /**
  * Credentials the corpus acquisition and golden-expansion tooling send.

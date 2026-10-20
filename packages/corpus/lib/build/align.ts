@@ -26,7 +26,6 @@ import {
 import { createIneligibilityReader } from "#build/eligibility"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
-import { $public } from "#env"
 import { flushStream, once, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
@@ -60,6 +59,11 @@ export interface AlignPhaseOptions {
 	labeledPaths: Record<SplitName, PathBuilder>
 	quarantinePath: PathBuilder
 	checkpointPath: PathBuilder
+
+	/**
+	 * Continue from the checkpoint at `checkpointPath` rather than writing the outputs from the start.
+	 */
+	resume: boolean
 
 	onProgress?: (stage: BuildStage, message: string) => void
 }
@@ -187,13 +191,12 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 
 	const paths: Record<AlignOutputName, PathBuilder> = { ...opts.labeledPaths, quarantine: opts.quarantinePath }
 
-	const checkpoint =
-		$public.MAILWOMAN_RESUME === "1"
-			? await readAlignCheckpoint(opts.checkpointPath, {
-					settings,
-					adapterOrder: opts.adapterRuns.map((run) => run.adapter_id),
-				})
-			: null
+	const checkpoint = opts.resume
+		? await readAlignCheckpoint(opts.checkpointPath, {
+				settings,
+				adapterOrder: opts.adapterRuns.map((run) => run.adapter_id),
+			})
+		: null
 
 	let tally: AlignTally = {
 		aligned: 0,

@@ -20,9 +20,15 @@ import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
 import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
+import { settlePriorWork } from "#build/prior-output"
 import { streamJSONL } from "#build/rows"
-import { BuildProfile, TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
-import { $public } from "#env"
+import {
+	BuildProfile,
+	PriorOutput,
+	TRAINING_MANIFEST_FILE,
+	type BuildCorpusManifest,
+	type BuildCorpusOptions,
+} from "#build/types"
 import { extractFingerprint, type FileDerivation } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import {
@@ -102,6 +108,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const shuffleSeed = opts.shuffleSeed ?? DEFAULT_SHUFFLE_SEED
 	const profile = opts.profile ?? BuildProfile.Exploratory
 	const licensePolicy = opts.licensePolicy ?? LicensePolicy.All
+	const priorOutput = opts.priorOutput ?? PriorOutput.Refuse
+	const resume = priorOutput === PriorOutput.Resume
 	const built_at = new Date().toISOString()
 
 	// The build reports heap state when it aborts with SIGABRT.
@@ -134,19 +142,31 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	await makeDirectories(outputDir, intermediateDir)
 
-	const { runs: adapterRuns, skipped } = await runAdapterPhase({
-		adapters,
-		adapterInputs: opts.adapterInputs,
-		corpusVersion: opts.corpusVersion,
-		intermediateDir,
-		onProgress: opts.onProgress,
-	})
-
 	const labeledPaths: Record<SplitName, PathBuilder> = {
 		train: intermediateDir("labeled-train.jsonl"),
 		val: intermediateDir("labeled-val.jsonl"),
 		test: intermediateDir("labeled-test.jsonl"),
 	}
+
+	const quarantinePath = intermediateDir("quarantine.jsonl")
+	const checkpointPath = intermediateDir("align-checkpoint.json")
+
+	// Settled before any phase opens an output, because both phases overwrite unless they resume.
+	await settlePriorWork(priorOutput, {
+		intermediateDir,
+		checkpointPath,
+		alignPaths: { ...labeledPaths, quarantine: quarantinePath },
+		adapterIDs: configured,
+	})
+
+	const { runs: adapterRuns, skipped } = await runAdapterPhase({
+		adapters,
+		adapterInputs: opts.adapterInputs,
+		corpusVersion: opts.corpusVersion,
+		intermediateDir,
+		resume,
+		onProgress: opts.onProgress,
+	})
 
 	const holdouts = defaultHoldouts()
 	const registerDecisions = await readRegisterDecisions()
@@ -161,8 +181,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdouts,
 		eligibility: profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null,
 		labeledPaths,
-		quarantinePath: intermediateDir("quarantine.jsonl"),
-		checkpointPath: intermediateDir("align-checkpoint.json"),
+		quarantinePath,
+		checkpointPath,
+		resume,
 		onProgress: opts.onProgress,
 	})
 
@@ -223,7 +244,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			outputDir,
 			corpusVersion: opts.corpusVersion,
 			rowsPerFile,
-			resume: $public.MAILWOMAN_RESUME === "1",
+			resume,
 			derivationFor,
 		}
 	)

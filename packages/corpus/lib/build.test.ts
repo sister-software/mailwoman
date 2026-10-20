@@ -20,6 +20,7 @@ import {
 	assertHeapForAdapters,
 	buildCorpus,
 	BuildProfile,
+	PriorOutput,
 	RESIDENT_ADAPTER_HEAP_FLOOR_BYTES,
 	type BuildStage,
 } from "#build"
@@ -387,10 +388,6 @@ describe("buildCorpus resume", () => {
 		return named
 	}
 
-	afterEach(() => {
-		vi.unstubAllEnvs()
-	})
-
 	const parquetManifest = (outDir: PathBuilder) =>
 		readLocalJSONFile<ParquetManifest>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
@@ -408,11 +405,10 @@ describe("buildCorpus resume", () => {
 
 		const stages: string[] = []
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
 		const second = await buildCorpus({
 			...options,
 			outputDir: outDir,
+			priorOutput: PriorOutput.Resume,
 			onProgress: (_stage, message) => stages.push(message),
 		})
 
@@ -442,9 +438,7 @@ describe("buildCorpus resume", () => {
 
 		expect(await sha256File(trainPath)).not.toBe(before)
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await buildCorpus({ ...options, outputDir: outDir })
+		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
 
 		expect(await sha256File(trainPath)).toBe(before)
 	})
@@ -454,11 +448,9 @@ describe("buildCorpus resume", () => {
 
 		await buildCorpus({ ...options, outputDir: outDir })
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await expect(buildCorpus({ ...options, outputDir: outDir, synthesize: false })).rejects.toThrow(
-			/resume refused.*align-checkpoint\.json/s
-		)
+		await expect(
+			buildCorpus({ ...options, outputDir: outDir, synthesize: false, priorOutput: PriorOutput.Resume })
+		).rejects.toThrow(/resume refused.*align-checkpoint\.json/s)
 	})
 
 	it("refuses to resume when a recorded parquet file is no longer on disk", async () => {
@@ -471,11 +463,113 @@ describe("buildCorpus resume", () => {
 		await removeFile(recorded.path)
 		await removePath(outDir("intermediate", "align-checkpoint.json"))
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
+		await expect(buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })).rejects.toThrow(
 			/resume refused.*no file sits at that path/s
 		)
+	})
+
+	const intermediateSizes = async (outDir: PathBuilder): Promise<Record<string, number | null>> => {
+		const sizes: Record<string, number | null> = {}
+
+		for (const name of [
+			"labeled-train.jsonl",
+			"labeled-val.jsonl",
+			"labeled-test.jsonl",
+			"quarantine.jsonl",
+			"align-checkpoint.json",
+			"wof-admin/canonical.jsonl",
+			"wof-admin/MANIFEST.json",
+		]) {
+			const path = outDir("intermediate", ...name.split("/"))
+
+			sizes[name] = (await pathExists(path)) ? (await statPath(path)).size : null
+		}
+
+		return sizes
+	}
+
+	it("refuses a rerun into an output holding a checkpoint and leaves every file as it was", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await intermediateSizes(outDir)
+		const trainDigest = await sha256File(outDir("intermediate", "labeled-train.jsonl"))
+
+		expect(before["labeled-train.jsonl"]).toBeGreaterThan(0)
+
+		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
+			/corpus build refused.*align-checkpoint\.json records 1 aligned adapters: wof-admin.*labeled-train\.jsonl: [\d,]+ bytes.*--resume.*--fresh/s
+		)
+
+		expect(await intermediateSizes(outDir)).toEqual(before)
+		expect(await sha256File(outDir("intermediate", "labeled-train.jsonl"))).toBe(trainDigest)
+	})
+
+	it("refuses a rerun when only a finished adapter run is present", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		for (const name of ["labeled-train.jsonl", "labeled-val.jsonl", "labeled-test.jsonl", "quarantine.jsonl"]) {
+			await removePath(outDir("intermediate", name))
+		}
+
+		await removePath(outDir("intermediate", "align-checkpoint.json"))
+
+		const before = await intermediateSizes(outDir)
+
+		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(/adapter run wof-admin/)
+		expect(await intermediateSizes(outDir)).toEqual(before)
+	})
+
+	it("continues from the checkpoint on a resume rather than aligning a completed adapter again", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await intermediateSizes(outDir)
+		const stages: string[] = []
+
+		await buildCorpus({
+			...options,
+			outputDir: outDir,
+			priorOutput: PriorOutput.Resume,
+			onProgress: (_stage, message) => stages.push(message),
+		})
+
+		expect(stages.some((message) => message.startsWith("resumed wof-admin"))).toBe(true)
+		expect(stages.some((message) => message.startsWith("aligning wof-admin"))).toBe(false)
+
+		const after = await intermediateSizes(outDir)
+
+		expect(after["labeled-train.jsonl"]).toBe(before["labeled-train.jsonl"])
+		expect(after["wof-admin/canonical.jsonl"]).toBe(before["wof-admin/canonical.jsonl"])
+	})
+
+	it("deletes the prior work and builds from the start under an explicit fresh choice", async () => {
+		const outDir = scratch.path("build")
+
+		const first = await buildCorpus({ ...options, outputDir: outDir })
+		const trainPath = outDir("intermediate", "labeled-train.jsonl")
+		const digest = await sha256File(trainPath)
+
+		// Stands for rows a fresh build must not keep.
+		await appendLocalTextFile(`${stringifyJSON({ raw: "row from the earlier build" })}\n`, trainPath)
+
+		const stages: string[] = []
+
+		const second = await buildCorpus({
+			...options,
+			outputDir: outDir,
+			priorOutput: PriorOutput.Fresh,
+			onProgress: (_stage, message) => stages.push(message),
+		})
+
+		expect(stages.some((message) => message.startsWith("aligning wof-admin"))).toBe(true)
+		expect(stages.some((message) => message.startsWith("resumed"))).toBe(false)
+		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
+		expect(await sha256File(trainPath)).toBe(digest)
 	})
 })
 

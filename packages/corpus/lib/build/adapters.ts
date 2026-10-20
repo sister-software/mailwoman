@@ -11,7 +11,6 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilder } from "path-ts"
 
 import type { BuildStage } from "#build/types"
-import { $public } from "#env"
 import { runAdapter, type AdapterRunManifest } from "#runner"
 import type { AdapterOptions, CorpusAdapter } from "#types"
 
@@ -20,6 +19,12 @@ export interface AdapterPhaseOptions {
 	adapterInputs: Record<string, AdapterOptions>
 	corpusVersion: string
 	intermediateDir: PathBuilder
+
+	/**
+	 * Reuse each adapter run a previous build finished rather than driving the adapter again.
+	 */
+	resume: boolean
+
 	onProgress?: (stage: BuildStage, message: string) => void
 }
 
@@ -48,8 +53,6 @@ export interface AdapterPhaseResult {
  * A resumed build that reuses a short file can produce a corpus whose row count later readers accept.
  */
 async function reusableRun(adapterID: string, adapterDir: PathBuilder): Promise<AdapterRunManifest | null> {
-	if ($public.MAILWOMAN_RESUME !== "1") return null
-
 	const cachedManifest = adapterDir("MANIFEST.json")
 	const canonicalPath = adapterDir("canonical.jsonl")
 
@@ -86,7 +89,7 @@ export async function runAdapterPhase(opts: AdapterPhaseOptions): Promise<Adapte
 			continue
 		}
 
-		const cached = await reusableRun(adapter.id, opts.intermediateDir(adapter.id))
+		const cached = opts.resume ? await reusableRun(adapter.id, opts.intermediateDir(adapter.id)) : null
 
 		if (cached) {
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
