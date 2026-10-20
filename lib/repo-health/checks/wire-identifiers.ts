@@ -21,13 +21,8 @@
  *   spelling stored in their corpus, so both spellings of a recipe source pass by design.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { knownOverlaySourceNames } from "@mailwoman/corpus/recipes/sources"
-import {
-	corpusSourceInputsPath,
-	type CorpusSourceInputsFile,
-	derivedSourceBase,
-} from "@mailwoman/corpus/source-register/corpus-inputs"
 import { relative } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -165,7 +160,6 @@ export const wireIdentifiersCheck: RepoCheck = {
 		"Every source id a training config addresses is one an adapter, a recipe or a carried overlay emits, under a spelling the source table records.",
 	async run(context) {
 		const declared = await declaredSourceNames(context)
-		const inputs = await readLocalJSONFile<CorpusSourceInputsFile>(corpusSourceInputsPath())
 		const configs = await trackedSourcePaths(context, { globs: [CONFIGS], existingOnly: true })
 		const diagnostics: Diagnostic[] = []
 
@@ -174,11 +168,6 @@ export const wireIdentifiersCheck: RepoCheck = {
 
 			for (const { name, field, line } of configSourceNames(await readLocalTextFile(config))) {
 				if (declared.has(name)) continue
-
-				// A derived label (`postcode-order-ban`) is emitted whenever its base source is.
-				const derived = derivedSourceBase(inputs, name)
-
-				if (derived && declared.has(derived.base)) continue
 
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

@@ -94,18 +94,6 @@ class SourceRights:
     register_sources: dict[str, dict[str, Any]]
     mappings: dict[str, dict[str, Any]]
     spellings: dict[str, str] = field(default_factory=dict)
-    #: Derivation prefixes. A label ``<prefix>-<base>`` resolves to its base source, as `derivedSourceBase` does.
-    derivations: tuple[str, ...] = ()
-
-    def resolve(self, source: str) -> str | None:
-        """The table id ``source`` is filed under, following a derived label to its base source."""
-        source_id = self.spellings.get(source)
-        if source_id is not None:
-            return source_id
-        for prefix in self.derivations:
-            if source.startswith(f"{prefix}-") and len(source) > len(prefix) + 1:
-                return self.resolve(source[len(prefix) + 1 :])
-        return None
 
     @classmethod
     def from_files(cls, register_path: Path, inputs_path: Path) -> SourceRights:
@@ -130,7 +118,6 @@ class SourceRights:
             register_sources={row["sourceID"]: row for row in register["sources"]},
             mappings=mappings,
             spellings=spellings,
-            derivations=tuple(table.get("derivations", {})),
         )
 
     def permits_training(self, register_source: str) -> bool:
@@ -146,7 +133,7 @@ class SourceRights:
         records the earlier inputs under ``history`` with the corpora built from them, and those rows are judged
         by the inputs that built them, as `sourceRightsGaps` does in TypeScript.
         """
-        source_id = self.resolve(source)
+        source_id = self.spellings.get(source)
         if source_id is None:
             return [
                 SourceRightsGap(

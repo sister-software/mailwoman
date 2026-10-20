@@ -59,13 +59,6 @@ export type RenderedGermanRow = RenderedLocaleRow
 export interface LocaleRenderOpts {
 	random?: () => number
 	/**
-	 * The order used to render the same components.
-	 *
-	 * `"native"` (default) uses the country's own template (DE → house-after-street, postcode-before-city).
-	 * `"international"` renders house-first and postcode-after-city.
-	 */
-	order?: "native" | "international"
-	/**
 	 * Postcode surface shape.
 	 *
 	 * `"conventional"` (default) canonicalizes to the country's rendered form
@@ -83,7 +76,6 @@ export interface LocaleRenderOpts {
 	 *
 	 * `"template"` (default) keeps the template's own join.
 	 * `"space"` collapses `<street>, <house_number>` → `<street> <house_number>` after rendering.
-	 * International order ignores this.
 	 */
 	nativeHouseJoin?: "template" | "space"
 	/**
@@ -92,8 +84,6 @@ export interface LocaleRenderOpts {
 	 * `", "` (default) is the template's own join.
 	 * `" "` renders the comma-free single-line register for dictation or a copy out of a
 	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
-	 *
-	 * Only native order uses this option.
 	 */
 	separator?: ", " | " "
 }
@@ -157,13 +147,7 @@ function tokenPresent(raw: string, value: string): boolean {
  * with light variation (house number and postcode may be dropped).
  *
  * Returns `null` when the tuple is too thin or a component would not align to an exact span.
- *
- * Region handling depends on order:
- * - native omits region for alignment reliability
- * - international includes region in the tail
- *
- * Pass `opts.order: "international"` to render the same components house-first and postcode-after-city
- * instead (see {@link LocaleRenderOpts.order}), matching common feed-style layouts.
+ * The row omits the region for alignment reliability.
  */
 export function renderLocaleRow(
 	base: LocaleBaseTuple,
@@ -171,13 +155,12 @@ export function renderLocaleRow(
 	opts: LocaleRenderOpts = {}
 ): RenderedLocaleRow | null {
 	const random = opts.random ?? Math.random
-	const order = opts.order ?? "native"
 
 	if (!base.street || !base.locality) return null
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
-	// Sub-locality is part of the address body in both orders.
+	// Sub-locality is part of the address body.
 	// If the template does not surface it verbatim, the row is dropped below.
 	if (base.dependent_locality) {
 		components.dependent_locality = base.dependent_locality
@@ -196,23 +179,13 @@ export function renderLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
-	// International order places region in the tail.
-	// Native order omits it for alignment.
-	if (order === "international" && base.region) {
-		components.region = base.region
-	}
-
-	// Native order uses the country's template.
-	// International order uses the US template.
-	// No random draw here, keeping RNG sequence stable.
-	const renderCountry = order === "international" ? "US" : country
-	const separator = order === "native" ? (opts.separator ?? ", ") : ", "
-	let raw = formatAddress(components, renderCountry, { separator })
+	const separator = opts.separator ?? ", "
+	let raw = formatAddress(components, country, { separator })
 
 	if (!raw) return null
 
-	// Optional native-order rewrite: `<street>, <hn>` -> `<street> <hn>`.
-	if (order === "native" && separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {
+	// Optional rewrite: `<street>, <hn>` -> `<street> <hn>`.
+	if (separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {
 		raw = raw.replace(
 			`${components.street}, ${components.house_number}`,
 			`${components.street} ${components.house_number}`

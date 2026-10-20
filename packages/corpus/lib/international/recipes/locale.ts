@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Samples real address tuples for one country and renders them in native or international order.
- *   It emits aligned rows. The recipe samples and renders with separate seeded generators.
+ *   Samples real address tuples for one country and renders them in the country's native order.
+ *   It emits aligned rows. The recipe samples and renders with separate seeded generators. The postcode on the far
+ *   side of the locality is the training-time `postcode_move` augmentation's job (#2750).
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -566,11 +567,10 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
 	description:
-		"Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples (OS OpenData for GB), both orders → renderLocaleRow",
+		"Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples (OS OpenData for GB), native order → renderLocaleRow",
 	mode: "generate",
 	options: [
 		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
-		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
 		{
 			flag: "--country-fraction <f>",
 			description:
@@ -592,12 +592,6 @@ export const localeRecipe: CorpusRecipe = {
 			throw new Error(
 				`No OA sources registered for --country ${country}. Known: ${Object.keys(COUNTRY_SOURCES).join(", ")}.`
 			)
-		}
-
-		const intlFraction = opts.intlFraction ?? 0.4
-
-		if (!(intlFraction >= 0 && intlFraction <= 1)) {
-			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
 		}
 
 		const countryFraction = opts.countryFraction ?? 0
@@ -639,7 +633,7 @@ export const localeRecipe: CorpusRecipe = {
 
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
-			const order = random() < intlFraction ? "international" : "native"
+			const order = "native"
 
 			// These draws happen only for ES and NL, so other countries' seeded output
 			// is unaffected. country-branch: the ES house-number join and the NL glued
@@ -656,7 +650,7 @@ export const localeRecipe: CorpusRecipe = {
 						: ("conventional" as const)
 					: undefined
 
-			const synth = renderLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
+			const synth = renderLocaleRow(base, country, { random, nativeHouseJoin, postcodeShape })
 
 			if (!synth) {
 				skipped++

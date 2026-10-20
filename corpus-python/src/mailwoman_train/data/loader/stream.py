@@ -39,6 +39,7 @@ class TrainOnlyPolicy:
     punct_drop_prob: float = 0.0
     upper_case_prob: float = 0.0
     ordinal_prob: float = 0.0
+    postcode_move_prob: float = 0.0
     relabel_lexicon: AffixRelabelLexicon | None = None
 
     @property
@@ -51,6 +52,7 @@ class TrainOnlyPolicy:
             self.punct_drop_prob,
             self.upper_case_prob,
             self.ordinal_prob,
+            self.postcode_move_prob,
         )
 
 
@@ -92,6 +94,7 @@ def iter_rows(
     augment_punct_drop_prob: float = 0.0,
     augment_upper_case_prob: float = 0.0,
     augment_ordinal_prob: float = 0.0,
+    augment_postcode_move_prob: float = 0.0,
     augment_exclude_sources: Sequence[str] = (),
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
@@ -138,6 +141,7 @@ def iter_rows(
             punct_drop_prob=augment_punct_drop_prob,
             upper_case_prob=augment_upper_case_prob,
             ordinal_prob=augment_ordinal_prob,
+            postcode_move_prob=augment_postcode_move_prob,
             relabel_lexicon=affix_relabel_lexicon,
         ),
     )
@@ -185,6 +189,7 @@ def iter_rows(
         punct_drop_prob=policy.punct_drop_prob,
         upper_case_prob=policy.upper_case_prob,
         ordinal_prob=policy.ordinal_prob,
+        postcode_move_prob=policy.postcode_move_prob,
         excluded_sources=frozenset(augment_exclude_sources),
         relabel_lexicon=policy.relabel_lexicon,
     )
@@ -192,21 +197,30 @@ def iter_rows(
     def _emit(row: dict[str, Any]) -> Iterator[dict[str, Any]]:
         return emit_row(row, rng, emit_policy)
 
-    # Stream out: every time we yield, pull the next from upstream into the freed slot.
-    for row in upstream:
-        j = rng.randrange(len(buf))
-        out = buf[j]
-        buf[j] = row
-        for emitted in _emit(out):
-            yield emitted
-            yielded += 1
-            if row_limit is not None and yielded >= row_limit:
-                return
-    # Drain whatever remains in the buffer.
-    rng.shuffle(buf)
-    for out in buf:
-        for emitted in _emit(out):
-            yield emitted
-            yielded += 1
-            if row_limit is not None and yielded >= row_limit:
-                return
+    try:
+        # Stream out: every time we yield, pull the next from upstream into the freed slot.
+        for row in upstream:
+            j = rng.randrange(len(buf))
+            out = buf[j]
+            buf[j] = row
+            for emitted in _emit(out):
+                yield emitted
+                yielded += 1
+                if row_limit is not None and yielded >= row_limit:
+                    return
+        # Drain whatever remains in the buffer.
+        rng.shuffle(buf)
+        for out in buf:
+            for emitted in _emit(out):
+                yield emitted
+                yielded += 1
+                if row_limit is not None and yielded >= row_limit:
+                    return
+    finally:
+        # Each skip reason is counted, so a knob that fires on few rows says why rather than reading as a small share.
+        if emit_policy.postcode_move_outcomes:
+            logger.info(
+                "split=%r: postcode_move draws by outcome: %s",
+                split,
+                dict(emit_policy.postcode_move_outcomes.most_common()),
+            )

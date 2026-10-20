@@ -9,9 +9,11 @@ dropping a guard, re-shuffles every corpus a seeded run reads.
 from __future__ import annotations
 
 import random
+from collections import Counter
 from collections.abc import Iterator
 from typing import Any
 
+from .postcode_move import move_postcode
 from .splice import drop_separator_punct, glue_region_postcode, lowercase_row, splice_expansion, upper_case_row
 from .tables import _STREET_FAMILY_LABELS, DIRECTIONALS, ORDINAL_STREETS, US_STATES
 
@@ -26,12 +28,17 @@ def augment_row(
     punct_drop_prob: float = 0.0,
     upper_case_prob: float = 0.0,
     ordinal_prob: float = 0.0,
+    postcode_move_prob: float = 0.0,
+    postcode_move_outcomes: Counter[str] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Yield the original row, then optionally an augmented copy.
 
     Each augmentation fires independently with its configured probability. When an
     augmentation fires, a COPY of the row is yielded with the expansion applied.
-    The original row is always yielded first, unchanged.
+    The original row is always yielded first, unchanged, so every probability is an additive
+    copy rate rather than a share of the emitted stream.
+
+    ``postcode_move_outcomes`` counts each postcode-move draw under ``moved`` or its `SkipReason`.
     """
     yield row
 
@@ -106,3 +113,13 @@ def augment_row(
         uppered = upper_case_row(row)
         if uppered is not None:
             yield uppered
+
+    # Postcode move (#2750): a copy with the postcode on the far side of its locality-and-region block. Drawn
+    # last, behind the prob guard, so every config written before it keeps its stream. The share of the emitted
+    # stream it reaches is the draw rate times the eligible share. The encode `observer` measures it.
+    if postcode_move_prob > 0 and rng.random() < postcode_move_prob:
+        moved, reason = move_postcode(row)
+        if postcode_move_outcomes is not None:
+            postcode_move_outcomes[reason or "moved"] += 1
+        if moved is not None:
+            yield moved

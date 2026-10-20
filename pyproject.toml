@@ -79,12 +79,14 @@ where = ["corpus-python/src"]
 # Package data shipped with modules:
 # - `py.typed`: exposes type hints to downstream users.
 # - `features/postcode-shapes.json`: required by `features/postcode_shapes.py`.
+# - `data/augment/postcode-layouts.json`: required by `data/augment/postcode_move.py`.
 # - Missing these in wheel can fail import-time behavior.
 [tool.setuptools.package-data]
 mailwoman_train = [
 	"py.typed",
 	"address_systems.json",
 	"features/postcode-shapes.json",
+	"data/augment/postcode-layouts.json",
 	"exposure/floors.json",
 	"configs/*.yaml",
 ]

@@ -23,7 +23,7 @@ from .receipts import CorpusReceiptError, matches_receipt
 if TYPE_CHECKING:
     from ...config import CorpusReceiptConfig
 
-AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_case", "ordinal")
+AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_case", "ordinal", "postcode_move")
 
 
 @dataclass
@@ -78,6 +78,7 @@ def config_augment(data: Any) -> dict[str, float]:
         "punct_drop": data.augment_punct_drop_prob,
         "upper_case": data.augment_upper_case_prob,
         "ordinal": data.augment_ordinal_prob,
+        "postcode_move": data.augment_postcode_move_prob,
     }
 
 
@@ -189,6 +190,7 @@ def run_emitted_pass(
         punct_drop_prob=augment["punct_drop"],
         upper_case_prob=augment["upper_case"],
         ordinal_prob=augment["ordinal"],
+        postcode_move_prob=augment["postcode_move"],
         excluded_sources=frozenset(augment_exclude_sources),
     )
     totals: Counter[str] = Counter()

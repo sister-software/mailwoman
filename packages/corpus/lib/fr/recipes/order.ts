@@ -83,17 +83,18 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
-// Cumulative cutoffs for four reversed layouts.
-const REVERSED_VARIANT_A_CUTOFF = 0.25
-const REVERSED_VARIANT_B_CUTOFF = 0.5
-const REVERSED_VARIANT_C_CUTOFF = 0.75
+// Cumulative cutoffs for three reversed layouts.
+// Each moves the admin tail ahead of the street or splits it around the street.
+// The training-time `postcode_move` augmentation (#2750) moves the postcode across the locality.
+const REVERSED_VARIANT_A_CUTOFF = 1 / 3
+const REVERSED_VARIANT_B_CUTOFF = 2 / 3
 
 /**
  * Recipe registered with the corpus builder.
  */
 export const frOrderRecipe: CorpusRecipe = {
 	name: "fr-order",
-	description: "French reversed-order rows (#560): real OA FR tuples rendered canonical + 4 postcode-first variants",
+	description: "French reversed-order rows (#560): real OA FR tuples rendered canonical + 3 reversed variants",
 	mode: "generate",
 	options: [
 		{ flag: "--reversed-fraction <p>", description: "Fraction rendered reversed-order. Default 0.5" },
@@ -143,9 +144,6 @@ export const frOrderRecipe: CorpusRecipe = {
 				} else if (variantRoll < REVERSED_VARIANT_B_CUTOFF) {
 					// Locality, postcode, number and street.
 					raw = `${locality}, ${postcode}, ${house_number} ${street}`
-				} else if (variantRoll < REVERSED_VARIANT_C_CUTOFF) {
-					// Locality, number, street and postcode without commas.
-					raw = `${locality} ${house_number} ${street} ${postcode}`
 				} else {
 					// Postcode, number, street, then locality.
 					raw = `${postcode}, ${house_number} ${street}, ${locality}`

@@ -14,7 +14,6 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { BUILTIN_ADAPTERS } from "#adapters"
-import { POSTCODE_ORDER_SOURCE_PREFIX, postcodeOrderSource } from "#recipes/postcode-order"
 import { CARRIED_SOURCES, RECIPE_SOURCES } from "#recipes/sources"
 import { readAddressSourceRegister } from "#source-register"
 import {
@@ -46,28 +45,6 @@ describe("the committed corpus-source table", () => {
 		]
 
 		expect(declared.filter((source) => !inputs.resolve(source))).toEqual([])
-	})
-
-	it("resolves a derived label to its base source, so it is admitted and refused where the base is", () => {
-		const producer = inputs.file.derivations?.[POSTCODE_ORDER_SOURCE_PREFIX]?.producer
-		const rowsOf = (source: string) => sourceRightsGaps(source, inputs, register).map((gap) => gap.registerSource)
-
-		expect(producer).toBe("packages/corpus/lib/recipes/postcode-order.ts")
-		expect(inputs.resolve(postcodeOrderSource("ban"))?.id).toBe("ban")
-		expect(rowsOf(postcodeOrderSource("ban"))).toEqual(rowsOf("ban"))
-		expect(rowsOf(postcodeOrderSource("rendered-gb"))).toEqual(rowsOf("rendered-gb"))
-		expect(rowsOf("rendered-gb")).not.toEqual([])
-		expect(inputs.resolve(postcodeOrderSource("never-mapped-source"))).toBeNull()
-		expect(inputs.resolve(`${POSTCODE_ORDER_SOURCE_PREFIX}-`)).toBeNull()
-	})
-
-	it("refuses a source entry that begins with a derivation prefix", () => {
-		expect(() =>
-			indexCorpusSourceInputs({
-				derivations: { "postcode-order": { producer: "p.ts" } },
-				sources: { "postcode-order-ban": { inputs: [], authored: ["x"] } },
-			})
-		).toThrow(/derivation prefix/)
 	})
 
 	it.each(["v0.7.0-de-holdout.effective.json", "v0.7.2-address-systems.effective.json", "v0.7.7-no-ppd.json"])(

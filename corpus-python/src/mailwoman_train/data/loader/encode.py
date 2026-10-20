@@ -207,6 +207,7 @@ def iter_encoded(
         augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
         augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
         augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
+        augment_postcode_move_prob=getattr(cfg_data, "augment_postcode_move_prob", 0.0),
         augment_exclude_sources=getattr(cfg_data, "augment_exclude_sources", ()),
         affix_relabel_lexicon=lexicons.affix_relabel,
     ):
