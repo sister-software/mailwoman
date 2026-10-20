@@ -23,7 +23,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
-import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -251,7 +251,13 @@ export async function assertGroupColumns(files: readonly string[]): Promise<void
  * The rule a held-out sample is drawn by, recorded in a dataset manifest.
  */
 export interface HeldoutSamplingRule {
-	method: "per-country-kind-hash-order"
+	/**
+	 * `per-record-country-kind-hash-order`: one row per `<source>:<source_id>` record,
+	 * then the per-country and per-kind quota in hash order.
+	 *
+	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
+	 */
+	method: "per-record-country-kind-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
@@ -289,7 +295,8 @@ export async function sampleHeldoutRows(
 	manifestPath: PathBuilderLike,
 	perCountry: number,
 	pathRoot: string,
-	seed: number | null = null
+	seed: number | null = null,
+	limits: DuckDBLimits = {}
 ): Promise<{
 	rows: HeldoutRow[]
 	counts: HeldoutCellCount[]
@@ -308,14 +315,28 @@ export async function sampleHeldoutRows(
 
 	await assertGroupColumns(files)
 
-	using db = await openDuckDB()
-	const source = `read_parquet([${files.map((file) => `'${escapeSQLString(file)}'`).join(", ")}], union_by_name = true)`
+	using db = await openDuckDB(limits)
+
+	// A row's identity is its record, `<source>:<source_id>` (`heldoutRowID`),
+	// and the overlap audit joins training rows on that record.
+	// A test split can hold one record more than once: the same row written twice,
+	// or several renderings of one record under its id.
+	// The sample and the available counts therefore read one row per record, the first in sample order.
+	// Rows without a `source_id` are identified by their text and keep every distinct row.
+	const source =
+		`(SELECT DISTINCT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id ` +
+		`FROM read_parquet([${files.map((file) => `'${escapeSQLString(file)}'`).join(", ")}], union_by_name = true) ` +
+		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, source_id ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
 
 	const reader = await db.runAndReadAll(
 		`SELECT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id FROM ${source} ` +
 			// Each country draws its quota of address rows and of gazetteer rows separately (`heldoutRowKind`).
 			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), starts_with(source, 'wof-') ORDER BY ${heldoutSampleOrder(seed)}) <= ` +
-			Math.trunc(perCountry).toString()
+			Math.trunc(perCountry).toString() +
+			// Without an ORDER BY, DuckDB returns the window's rows in a run-dependent order,
+			// and the rows file's sha256, which a dataset manifest records, would differ between
+			// two freezes of one sample.
+			` ORDER BY coalesce(country, 'ZZ'), starts_with(source, 'wof-'), ${heldoutSampleOrder(seed)}`
 	)
 
 	const availableReader = await db.runAndReadAll(
@@ -353,7 +374,7 @@ export async function sampleHeldoutRows(
 	}))
 
 	const rule: HeldoutSamplingRule = {
-		method: "per-country-kind-hash-order",
+		method: "per-record-country-kind-hash-order",
 		perCountry: Math.trunc(perCountry),
 		seed,
 		order: heldoutSampleOrder(seed),

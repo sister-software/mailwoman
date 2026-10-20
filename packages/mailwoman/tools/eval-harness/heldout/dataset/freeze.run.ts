@@ -46,8 +46,20 @@ const { values } = parseArguments({
 			description: "Local directory for the manifest's /data prefix",
 		},
 		out: { type: "string", description: "Where to write the dataset manifest" },
+		"duckdb-memory-gib": {
+			type: "string",
+			description: "DuckDB memory limit in GiB; defaults to openDuckDB's share of host memory",
+		},
+		"duckdb-threads": { type: "string", description: "DuckDB worker threads" },
 	},
 })
+
+const duckDBLimits = {
+	...(values["duckdb-memory-gib"]
+		? { memoryLimitBytes: Math.floor(Number(values["duckdb-memory-gib"]) * 2 ** 30) }
+		: {}),
+	...(values["duckdb-threads"] ? { threads: Number(values["duckdb-threads"]) } : {}),
+}
 
 if (!values.manifest || !values["dataset-id"] || !values.out) {
 	throw new Error("--manifest, --dataset-id and --out are required")
@@ -58,7 +70,14 @@ const seed = values.seed == null ? null : Number(values.seed)
 if (seed != null && !Number.isSafeInteger(seed)) throw new Error(`--seed ${values.seed} is not an integer`)
 
 const corpus = await readLocalJSONFile<{ corpus_version?: unknown }>(values.manifest)
-const sample = await sampleHeldoutRows(values.manifest, Number(values["per-country"]), values["path-root"], seed)
+
+const sample = await sampleHeldoutRows(
+	values.manifest,
+	Number(values["per-country"]),
+	values["path-root"],
+	seed,
+	duckDBLimits
+)
 
 const engine = await (async () => {
 	using db = await openDuckDB()

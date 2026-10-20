@@ -27,7 +27,7 @@ const row = (sourceID: string, country: string, source: string, raw = "12 Main S
 })
 
 const sampling = (perCountry: number) => ({
-	method: "per-country-kind-hash-order" as const,
+	method: "per-record-country-kind-hash-order" as const,
 	perCountry,
 	seed: null,
 	order: "hash(raw), source, source_id",

@@ -90,6 +90,24 @@ describe("sampleHeldoutRows grouping", () => {
 		expect(new Set(arm.rows.filter((r) => r.group === "b1").map((r) => r.rowID)).size).toBe(3)
 	})
 
+	it("reads one row per record when a record repeats, and counts it once", async () => {
+		const manifest = await writeFixtureCorpus(
+			"repeated",
+			[
+				`('Main', ${spans}, 'US', 'oa-us', 'r1', NULL)`,
+				`('Main', ${spans}, 'US', 'oa-us', 'r1', NULL)`,
+				`('Main St', [0], [7], ['street'], 'US', 'oa-us', 'r1', NULL)`,
+				`('Elms', ${spans}, 'US', 'oa-us', 'r2', NULL)`,
+			].join(", "),
+			columns
+		)
+
+		const { rows, counts } = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7)
+
+		expect(rows.map((row) => row.source_id).toSorted()).toEqual(["r1", "r2"])
+		expect(counts).toEqual([{ country: "US", kind: "address", available: 2, sampled: 2 }])
+	})
+
 	it("refuses a file that lacks the base_source_id column", async () => {
 		const manifest = await writeFixtureCorpus(
 			"ungrouped",

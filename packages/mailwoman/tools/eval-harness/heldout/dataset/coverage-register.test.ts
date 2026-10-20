@@ -29,7 +29,7 @@ const dataset = buildHeldoutDatasetManifest({
 		files: [],
 	},
 	sampling: {
-		method: "per-country-kind-hash-order",
+		method: "per-record-country-kind-hash-order",
 		perCountry: 10,
 		seed: null,
 		order: "hash(raw)",
