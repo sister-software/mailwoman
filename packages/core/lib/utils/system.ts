@@ -7,7 +7,7 @@
  *   This is the only module that reads those values from `node:os` or the heap ceiling from `node:v8`.
  */
 
-import { arch, availableParallelism as nativeAvailableParallelism, cpus, platform, totalmem } from "node:os"
+import { arch, availableParallelism as nativeAvailableParallelism, cpus, hostname, platform, totalmem } from "node:os"
 import { getHeapStatistics } from "node:v8"
 
 /**
@@ -29,6 +29,13 @@ export function cpuCount(): number {
  */
 export function cpuModel(): string {
 	return cpus()[0]?.model.trim() ?? "unknown CPU"
+}
+
+/**
+ * The host's name as the operating system reports it, for a record that states which machine wrote it.
+ */
+export function hostName(): string {
+	return hostname()
 }
 
 /**

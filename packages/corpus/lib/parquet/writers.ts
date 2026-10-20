@@ -35,7 +35,14 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, movePath, removePath, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	movePath,
+	removePath,
+	removePathIfPresent,
+	writeLocalBuffer,
+	writeLocalJSONFile,
+} from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
@@ -44,7 +51,7 @@ import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet 
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { corpusDirectoryName } from "#directory"
-import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { type DuckDBLimits, escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import {
 	addToTally,
 	type DerivationInputs,
@@ -318,6 +325,55 @@ export interface WriteParquetSplitsOptions {
 	 * For `buildCorpus` that means the same labeled files and the same shuffle seed.
 	 */
 	resume?: boolean
+
+	/**
+	 * Where the manifest of the files this call writes is kept and, under `resume`, read back.
+	 *
+	 * A parallel build's source worker keeps its own and the coordinator assembles
+	 * the corpus manifest from them.
+	 *
+	 * @defaultValue `<corpusDir>/MANIFEST.json`
+	 */
+	manifestPath?: PathBuilderLike
+
+	/**
+	 * Limits for the DuckDB instance that converts each staged part.
+	 *
+	 * @defaultValue {@linkcode openDuckDB}'s defaults
+	 */
+	duckdb?: DuckDBLimits
+}
+
+/**
+ * The manifest that a set of finished files describes.
+ *
+ * `counts` and `total_rows` are summed from the descriptors rather than from a running row counter,
+ * so a manifest written between two files never claims the rows of the file being written.
+ * Files are listed by split, then path, so the order does not depend on which file finished first.
+ */
+export function parquetManifestOf(
+	files: readonly ParquetFileDescriptor[],
+	opts: { corpusVersion: string; rowsPerFile: number }
+): ParquetManifest {
+	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+	let totalRows = 0
+
+	for (const file of files) {
+		counts[file.split] += file.rows
+		totalRows += file.rows
+	}
+
+	return {
+		corpus_version: opts.corpusVersion,
+		schema: PARQUET_COLUMNS,
+		rows_per_slice: opts.rowsPerFile,
+		row_group_size: ROW_GROUP_SIZE,
+		slices: files.toSorted((a, b) =>
+			a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)
+		),
+		counts,
+		total_rows: totalRows,
+	}
 }
 
 /**
@@ -330,8 +386,8 @@ export interface WriteParquetSplitsOptions {
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
-async function writeStagedParquet(stagePath: string, outputPath: string): Promise<void> {
-	using db = await openDuckDB()
+async function writeStagedParquet(stagePath: string, outputPath: string, limits?: DuckDBLimits): Promise<void> {
+	using db = await openDuckDB(limits)
 	const columns = [...PARQUET_COLUMNS]
 
 	const columnsLiteral =
@@ -393,13 +449,14 @@ interface OpenPart {
  * output being written, plus DuckDB's spill during that conversion.
  *
  * A failed conversion records no file and adds no manifest entry, so a resumed run writes that part again.
- * The writer removes neither the staged part nor the `data.parquet.partial` output on failure.
+ * The writer keeps the staged part on failure and removes its own partial output.
  *
- * The error names the source, part, row count, source-id range and staged path.
+ * The error states the source, part, row count, source-id range and staged path.
  * The staged part goes when the split's staging directory is disposed.
- *
  * Its rows can be regenerated from the deterministic input.
- * The partial output stays in the store until the next run's conversion overwrites it.
+ *
+ * Each conversion writes `data.parquet.partial.<pid>.<random>` and renames it into place,
+ * so two writers of one derivation never write the same file.
  *
  * A file whose store path already holds a file is kept when the two sha256 values agree,
  * since the path names its derivation and the bytes are the same.
@@ -414,7 +471,7 @@ export async function writeParquetSplits(
 	const storeDir = resolvePathBuilder(opts.outputDir, "store")
 	await makeDirectories(corpusDir, storeDir)
 
-	const manifestPath = corpusDir("MANIFEST.json")
+	const manifestPath = opts.manifestPath ?? corpusDir("MANIFEST.json")
 	const licenses = opts.licenses ?? (await committedRowLicenses())
 	const files: ParquetFileDescriptor[] = opts.resume ? await readFinishedParquetFiles(manifestPath) : []
 	const derivations = new Map<string, Promise<DerivationInputs>>()
@@ -432,33 +489,8 @@ export async function writeParquetSplits(
 
 	const builtAt = new Date().toISOString()
 
-	/**
-	 * The manifest as the finished files describe it.
-	 *
-	 * `counts` and `total_rows` are summed from the descriptors rather than from a running row counter,
-	 * so a manifest written between two files never claims the rows of the file being written.
-	 */
-	const manifestNow = (): ParquetManifest => {
-		const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
-		let totalRows = 0
-
-		for (const file of files) {
-			counts[file.split] += file.rows
-			totalRows += file.rows
-		}
-
-		return {
-			corpus_version: opts.corpusVersion,
-			schema: PARQUET_COLUMNS,
-			rows_per_slice: rowsPerFile,
-			row_group_size: ROW_GROUP_SIZE,
-			slices: files.toSorted((a, b) =>
-				a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)
-			),
-			counts,
-			total_rows: totalRows,
-		}
-	}
+	const manifestNow = (): ParquetManifest =>
+		parquetManifestOf(files, { corpusVersion: opts.corpusVersion, rowsPerFile })
 
 	for (const split of ["train", "val", "test"] as const) {
 		const rows = perSplit[split]
@@ -544,13 +576,16 @@ export async function writeParquetSplits(
 			const fileDir = storeDir(opened.source, hash)
 			// A string, because the manifest records it.
 			const path = fileDir("data.parquet").toString()
-			const pending = fileDir("data.parquet.partial").toString()
+			// Named for this writer, so two builds converting the same derivation never write one file.
+			const pending = fileDir(`data.parquet.partial.${process.pid}.${crypto.randomUUID().slice(0, 8)}`).toString()
 
 			await makeDirectories(fileDir)
 
 			try {
-				await writeStagedParquet(opened.stagePath, pending)
+				await writeStagedParquet(opened.stagePath, pending, opts.duckdb)
 			} catch (error) {
+				await removePathIfPresent(pending)
+
 				throw new Error(
 					`writeParquetSplits: converting ${split} part ${opened.part} of ${opened.source} ` +
 						`(${opened.rows.toLocaleString()} rows, source_id ${opened.firstSourceID} to ${opened.lastSourceID}) ` +
@@ -560,7 +595,7 @@ export async function writeParquetSplits(
 			}
 
 			// The converter's connection closed when `writeStagedParquet` returned,
-			// so nothing reads the staged part any more.
+			// so no reader holds the staged part open.
 			// Removing it here bounds staging to the parts still open.
 			await removePath(opened.stagePath)
 

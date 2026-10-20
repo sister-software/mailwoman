@@ -6,7 +6,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
-import { shuffleWith } from "@mailwoman/core/random"
+import { mulberry32, shuffleWith } from "@mailwoman/core/random"
 
 /**
  * Rows held in memory while shuffling, when the caller names no window.
@@ -58,6 +58,29 @@ export async function* shuffleWithinWindow<T>(
 
 	yield* buffer
 }
+
+/**
+ * One split's rows as the corpus build writes them to parquet: shuffled within each source's run,
+ * each source drawing from a generator seeded by the build's seed, the split's salt and the source id.
+ *
+ * Each split and source gets its own generator, so a file's row order depends only on its
+ * own source's rows and not on how many rows other splits or sources happened to contain.
+ */
+export function shuffleSplitRows<T extends { source: string }>(
+	rows: AsyncIterable<T>,
+	opts: { seed: number; salt: number; window: number }
+): AsyncGenerator<T> {
+	return shuffleWithinSourceRuns(
+		rows,
+		(source) => mulberry32(sourceShuffleSeed(opts.seed + opts.salt, source)),
+		opts.window
+	)
+}
+
+/**
+ * The salt each split's shuffle seed adds to the build's seed.
+ */
+export const SPLIT_SHUFFLE_SALT = { train: 0, val: 1, test: 2 } as const
 
 /**
  * A 32-bit seed for one source's shuffle, from a base seed and the source id.

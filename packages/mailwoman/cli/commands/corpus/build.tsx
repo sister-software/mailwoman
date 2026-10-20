@@ -132,6 +132,22 @@ export const spec = {
 				"Delete a previous build's align checkpoint, align outputs and adapter manifests under --out " +
 				"and build from the start. Without --resume or --fresh, a build refuses an --out holding prior work",
 		},
+		jobs: {
+			type: "number",
+			default: 1,
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--jobs must be a positive integer.",
+			description:
+				"Worker processes to run at once. 1 builds serially in this process; above 1 each source's adapter, " +
+				"align and parquet work runs in workers with their own heap and DuckDB limits, and a --jobs whose " +
+				"workers do not fit in host memory is refused",
+		},
+		"fresh-sources": {
+			type: "string",
+			description:
+				"With --resume and --jobs above 1: comma-separated sources whose finished work is discarded and built " +
+				"again, while every other finished source is reused",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -209,9 +225,16 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		const adapters = defaultAdapterRegistry.list()
 
+		if (options.freshSources && !(options.resume && options.jobs > 1)) {
+			throw new CommandError("--fresh-sources applies to a parallel build resumed with --resume and --jobs above 1.")
+		}
+
 		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
 		// own tests run the WOF adapter against a five-kilobyte fixture under the default heap.
-		assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
+		// A parallel build runs each adapter in a worker whose heap it sets, so this process needs none of it.
+		if (options.jobs <= 1) {
+			assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
+		}
 
 		const m = await buildCorpus({
 			outputDir: options.out,
@@ -227,6 +250,13 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : null,
 			unshippableReason: options.unshippableReason,
 			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
+			jobs: options.jobs,
+			freshSources: options.freshSources
+				? options.freshSources
+						.split(",")
+						.map((source) => source.trim())
+						.filter(Boolean)
+				: undefined,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 

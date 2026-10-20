@@ -185,6 +185,39 @@ export interface BuildCorpusOptions {
 	 * @defaultValue {@linkcode PriorOutput.Refuse}
 	 */
 	priorOutput?: PriorOutput
+
+	/**
+	 * Worker processes the build runs at once.
+	 *
+	 * `1` runs every phase in this process, in the serial order this function has always used.
+	 * Above `1` a coordinator runs each source's adapter, align and parquet work in
+	 * worker processes, each with its own heap, DuckDB limits and temporary directory,
+	 * and assembles the same corpus from their records.
+	 *
+	 * `planWorkerBudget` refuses a value whose workers do not fit in host memory.
+	 *
+	 * @defaultValue `1`
+	 */
+	jobs?: number
+
+	/**
+	 * Host memory the worker budget is computed from.
+	 *
+	 * @defaultValue the host's total memory
+	 */
+	hostMemoryBytes?: number
+
+	/**
+	 * Sources whose parallel-build state is deleted before a resumed build, so they are
+	 * built again from their adapter run while every other finished source is reused.
+	 */
+	freshSources?: readonly string[]
+
+	/**
+	 * Cancels a parallel build: the coordinator stops its workers, keeps every finished
+	 * source's record for a later `--resume`, releases the output lock and rejects.
+	 */
+	signal?: AbortSignal
 }
 
 /**
