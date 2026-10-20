@@ -33,10 +33,12 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
 import type { FileDerivation } from "#parquet/record"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
@@ -180,7 +182,7 @@ export async function buildTranslitOverlay(
 
 	const newFiles: ParquetFileDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].toSorted()
-	const extractHash = await sha256File(options.jsonl)
+	const codeHash = await moduleGraphHash([import.meta.filename])
 
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
@@ -188,9 +190,11 @@ export async function buildTranslitOverlay(
 		// A string, because the manifest records it.
 		const outPath = trainDir(`part-translit-${slug}.parquet`).toString()
 
+		// The jsonl holds every script's rows, so a file's extract hash covers only the rows of its own source.
 		const descriptor = await writeOneFile(rows, outPath, source, {
-			extractHash,
-			config: { tool: "translit", corpusVersion, source },
+			extractHash: sha256Hex(rows.map((row) => stringifyJSON(row)).join("\n")),
+			codeHash,
+			config: { tool: "translit", corpusVersion, source, inputSources: [source] },
 		})
 
 		newFiles.push(descriptor)

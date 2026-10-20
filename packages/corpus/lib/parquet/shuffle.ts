@@ -5,6 +5,7 @@
  * @file A bounded streaming shuffle over the rows headed for parquet, so a row-group is a sample of its source.
  */
 
+import { sha256Hex } from "@mailwoman/core/hash"
 import { shuffleWith } from "@mailwoman/core/random"
 
 /**
@@ -56,4 +57,79 @@ export async function* shuffleWithinWindow<T>(
 	shuffleWith(buffer, random)
 
 	yield* buffer
+}
+
+/**
+ * A 32-bit seed for one source's shuffle, from a base seed and the source id.
+ */
+export function sourceShuffleSeed(seed: number, source: string): number {
+	return (seed + Number.parseInt(sha256Hex(source).slice(0, 8), 16)) >>> 0
+}
+
+/**
+ * Yield rows shuffled within a sliding window per source, each source drawing from its own generator.
+ *
+ * A source's row order then depends on its own rows alone, so a file holding one
+ * source has bytes that no other source's rows can change.
+ * The corpus build writes a source's rows contiguously, so the window is flushed
+ * when the source changes and memory stays bounded by one window.
+ * A source that recurs later keeps its generator's state.
+ *
+ * @param randomFor Called once per source for that source's generator.
+ */
+export async function* shuffleWithinSourceRuns<T extends { source: string }>(
+	rows: AsyncIterable<T>,
+	randomFor: (source: string) => () => number,
+	windowSize: number = DEFAULT_SHUFFLE_WINDOW
+): AsyncGenerator<T> {
+	if (windowSize <= 1) {
+		yield* rows
+
+		return
+	}
+
+	const generators = new Map<string, () => number>()
+	let buffer: T[] = []
+	let current: string | null = null
+
+	const generator = (source: string): (() => number) => {
+		let random = generators.get(source)
+
+		if (!random) {
+			random = randomFor(source)
+			generators.set(source, random)
+		}
+
+		return random
+	}
+
+	for await (const row of rows) {
+		if (current != null && row.source !== current) {
+			shuffleWith(buffer, generator(current))
+
+			yield* buffer
+
+			buffer = []
+		}
+
+		current = row.source
+
+		if (buffer.length < windowSize) {
+			buffer.push(row)
+
+			continue
+		}
+
+		const index = Math.floor(generator(current)() * buffer.length)
+		const chosen = buffer[index]!
+		buffer[index] = row
+
+		yield chosen
+	}
+
+	if (current != null) {
+		shuffleWith(buffer, generator(current))
+
+		yield* buffer
+	}
 }

@@ -87,6 +87,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
 		"apache-arrow": "^21.2.0",
+		"dependency-cruiser": "^18.6.0",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.9.0",
 		"path-ts": "^2.5.0",

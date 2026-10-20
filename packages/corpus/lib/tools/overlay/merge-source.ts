@@ -13,6 +13,7 @@ import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { mulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { openParquetRowStream } from "#parquet/streams"
@@ -104,6 +105,7 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 	}
 
 	const extractHash = sha256Hex(inputDigests.join("\n"))
+	const codeHash = await moduleGraphHash([import.meta.filename])
 
 	const byCountry: Record<string, number> = {}
 	const bySource: Record<string, number> = {}
@@ -118,6 +120,7 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 
 		await writeParquetFile(pending, output, {
 			extractHash,
+			codeHash,
 			config: { tool: "merge-source", seed, windowSize, rowsPerFile, part: outputs.length },
 		})
 

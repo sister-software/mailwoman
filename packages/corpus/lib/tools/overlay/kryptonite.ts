@@ -24,6 +24,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
@@ -99,7 +100,11 @@ export async function buildKryptoniteOverlay(
 		{
 			outputDir: outDir,
 			corpusVersion,
-			derivation: { extractHash: await sha256File(options.jsonl), config: { tool: "kryptonite", source } },
+			derivationFor: async () => ({
+				extractHash: await sha256File(options.jsonl),
+				codeHash: await moduleGraphHash([import.meta.filename]),
+				config: { tool: "kryptonite", source },
+			}),
 		}
 	)
 
