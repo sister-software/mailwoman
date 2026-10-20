@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads `scope.config.json`. It lists the countries in each locale tier and the extra countries where the graded
- *   arc blocks a regression.
+ *   Reads `scope.config.json`. It lists the countries in each locale tier, the shipping locales outside any tier,
+ *   and the training config behind each shipped model. Tier membership grants no release privilege: release
+ *   requirements are registered in `packages/mailwoman/tools/eval-harness/release/specs/`.
  *
  *   The config holds membership only. `docs/engineering/scope.mdx` contains the evidence for each tier.
  *   The `repo-health` `locale-scope` check fails when the two disagree.
@@ -36,11 +37,6 @@ export type ScopeTierKey = (typeof SCOPE_TIER_KEYS)[number]
  */
 export interface ScopeConfig {
 	tiers: Record<string, string[]>
-	/**
-	 * Maps each country outside tier 1 where the arc blocks a regression to the reason.
-	 * Tier-1 countries need no entry.
-	 */
-	dRuleProtected: Record<string, string>
 	/**
 	 * Maps each shipping locale's country that belongs to no tier to the reason.
 	 */
@@ -129,37 +125,4 @@ export function shippedTrainingConfigs(scope: ScopeConfig): Array<ShippedTrainin
 		.filter(([family]) => !family.startsWith("$"))
 		.map(([family, entry]) => ({ family, ...entry }))
 		.toSorted((left, right) => left.family.localeCompare(right.family))
-}
-
-/**
- * A country where the D-rule blocks a regression, with the reason.
- * The arc prints the reason when it reports a D-rule block.
- */
-export interface ProtectedCountry {
-	country: string
-	reason: string
-}
-
-/**
- * Returns the countries that a default-on change must not regress: all of tier
- * 1 plus the `dRuleProtected` entries.
- *
- * The result is sorted by country code so the output is stable across runs.
- */
-export function dRuleCountries(scope: ScopeConfig): ProtectedCountry[] {
-	const protectedCountries = new Map<string, string>()
-
-	for (const country of scope.tiers["1"] ?? []) {
-		protectedCountries.set(country, "tier 1 — iron rule 6 protects it unconditionally")
-	}
-
-	for (const [country, reason] of Object.entries(scope.dRuleProtected ?? {})) {
-		if (country.startsWith("$")) continue
-
-		protectedCountries.set(country, reason)
-	}
-
-	return [...protectedCountries]
-		.map(([country, reason]) => ({ country, reason }))
-		.toSorted((left, right) => left.country.localeCompare(right.country))
 }

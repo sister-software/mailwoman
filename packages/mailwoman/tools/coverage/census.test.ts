@@ -375,7 +375,6 @@ describe("resolveTrainingConfig", () => {
 	 */
 	const scope = {
 		tiers: {},
-		dRuleProtected: {},
 		untieredShippingLocales: {},
 		trainingConfigs: {
 			"en-us": {
