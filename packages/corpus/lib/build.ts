@@ -18,17 +18,23 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
+import { adapterModules, moduleGraphHashes } from "#build/code-hash"
 import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
 import { streamJSONL } from "#build/rows"
 import { BuildProfile, TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
 import { $public } from "#env"
-import { extractFingerprint } from "#parquet/record"
+import { extractFingerprint, type FileDerivation } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
-import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
+import {
+	DEFAULT_SHUFFLE_SEED,
+	DEFAULT_SHUFFLE_WINDOW,
+	shuffleWithinSourceRuns,
+	sourceShuffleSeed,
+} from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
 import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
 import { freezeTrainingManifest } from "#source-register/training-manifest"
-import type { AdapterOptions, LabeledRow } from "#types"
+import type { AdapterOptions, CorpusAdapter, LabeledRow } from "#types"
 import { LicensePolicy } from "#utils/license"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
@@ -36,27 +42,52 @@ export * from "#build/heap"
 export * from "#build/types"
 
 /**
- * The extract hash of a base build: each configured adapter's options with its
- * input replaced by the input's fingerprint.
+ * The extract hash of one adapter's rows: its options with its input replaced by the input's fingerprint.
  *
- * It covers every adapter rather than one per source, because the align phase
- * deduplicates across adapters and the synthesizers fan one source's rows into another's,
- * so any adapter's input can change any file.
+ * A base row's `source` is its adapter's id (the runner refuses any other), a synthesized
+ * row keeps its ancestor's `source`, and the runner deduplicates within one adapter's run.
+ * A source's files therefore read only that adapter's input.
+ *
  * `outputDir` is left out: it locates an adapter's side state and does not change a row.
  */
-async function adapterExtractHash(
-	configured: readonly string[],
-	adapterInputs: Record<string, AdapterOptions>
-): Promise<string> {
-	const described: Record<string, unknown> = {}
+async function adapterExtractHash(options: AdapterOptions): Promise<string> {
+	const { inputPath, outputDir: _outputDir, ...rest } = options
 
-	for (const id of configured.toSorted()) {
-		const { inputPath, outputDir: _outputDir, ...options } = adapterInputs[id]!
+	return sha256Hex(canonicalJSON({ ...rest, input: await extractFingerprint(inputPath) }))
+}
 
-		described[id] = { ...options, input: await extractFingerprint(inputPath) }
+/**
+ * This module, repository-relative: the root of the build pipeline every base source passes through.
+ */
+const BUILD_MODULE = "packages/corpus/lib/build.ts"
+
+/**
+ * The derivation of each configured adapter's files, from one cruise of the module graph.
+ *
+ * A source's code hash covers the build pipeline (`lib/build.ts` and what it reaches) and the
+ * adapter's own module graph, so an edit to one adapter changes only that adapter's files.
+ */
+async function adapterDerivations(
+	adapters: readonly CorpusAdapter[],
+	adapterInputs: Record<string, AdapterOptions>,
+	config: Record<string, unknown>
+): Promise<(source: string) => Promise<FileDerivation>> {
+	const modules = await adapterModules(adapters)
+
+	const codeHashes = await moduleGraphHashes(
+		Object.fromEntries([...modules].map(([id, module]) => [id, [BUILD_MODULE, module]]))
+	)
+
+	return async (source) => {
+		const options = adapterInputs[source]
+		const codeHash = codeHashes.get(source)
+
+		if (!options || !codeHash) {
+			throw new Error(`buildCorpus: rows of ${source} reached the parquet phase and no configured adapter has that id`)
+		}
+
+		return { extractHash: await adapterExtractHash(options), codeHash, config }
 	}
-
-	return sha256Hex(canonicalJSON(described))
 }
 
 /**
@@ -150,10 +181,14 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	opts.onProgress?.("parquet", "writing parquet files")
 
-	// Each split gets its own generator seeded from one base, so a split's row order does
-	// not depend on the number of rows the earlier splits happened to contain.
+	// Each split and source gets its own generator seeded from one base, so a file's row order depends
+	// only on its own source's rows and not on how many rows other splits or sources happened to contain.
 	const shuffled = (path: PathBuilderLike, salt: number) =>
-		shuffleWithinWindow(streamJSONL<LabeledRow>(path), makeMulberry32(shuffleSeed + salt), shuffleWindow)
+		shuffleWithinSourceRuns(
+			streamJSONL<LabeledRow>(path),
+			(source) => makeMulberry32(sourceShuffleSeed(shuffleSeed + salt, source)),
+			shuffleWindow
+		)
 
 	opts.onProgress?.(
 		"parquet",
@@ -162,7 +197,20 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			: "writing rows in arrival order (shuffle window disabled)"
 	)
 
-	opts.onProgress?.("parquet", "fingerprinting adapter inputs for the derivation hash")
+	const derivationFor = await adapterDerivations(
+		adapters.filter((adapter) => configured.includes(adapter.id)),
+		opts.adapterInputs,
+		{
+			tool: "build",
+			synthesize,
+			profile,
+			licensePolicy,
+			excludeLicenses: (opts.excludeLicenses ?? []).map((pattern) => pattern.source),
+			holdouts,
+			shuffleSeed,
+			shuffleWindow,
+		}
+	)
 
 	const parquetManifest = await writeParquetSplits(
 		{
@@ -175,19 +223,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			corpusVersion: opts.corpusVersion,
 			rowsPerFile,
 			resume: $public.MAILWOMAN_RESUME === "1",
-			derivation: {
-				extractHash: await adapterExtractHash(configured, opts.adapterInputs),
-				config: {
-					tool: "build",
-					synthesize,
-					profile,
-					licensePolicy,
-					excludeLicenses: (opts.excludeLicenses ?? []).map((pattern) => pattern.source),
-					holdouts,
-					shuffleSeed,
-					shuffleWindow,
-				},
-			},
+			derivationFor,
 		}
 	)
 

@@ -21,9 +21,9 @@
  *         data.RECORD.json
  *   ```
  *
- *   A file holds the rows of one source in one split. Its directory is named by its derivation hash, over the
- *   build's extract hash, this package's code hash, the build config with the file's source, split and part, and
- *   the builder version, so two builds that would write different bytes never share a path. The manifest names each
+ *   A file holds the rows of one source in one split. Its directory is named by its derivation hash, over that
+ *   source's extract hash and code hash, the build config with the file's source, split and part, and the builder
+ *   version, so two builds that would write different bytes never share a path. The manifest names each
  *   file's split, which is how the per-split routing survives without a split directory.
  *
  *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
@@ -47,6 +47,7 @@ import { corpusDirectoryName } from "#directory"
 import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import {
 	addToTally,
+	type DerivationInputs,
 	derivationHash,
 	type FileDerivation,
 	licenseLabel,
@@ -247,12 +248,14 @@ export interface WriteParquetSplitsOptions {
 	outputDir: PathBuilderLike
 
 	/**
-	 * The extract hash and the config every file's derivation hash covers.
+	 * The extract hash, code hash and config of one source's files.
 	 *
-	 * The writer adds each file's source, split, part and row cap to the config,
+	 * Each file holds one source's rows, so its derivation covers only that source's inputs and code.
+	 * The writer adds the file's source, split, part and row cap to the config,
 	 * and the corpus version, because rows carry it.
+	 * It calls this once per source.
 	 */
-	derivation: FileDerivation
+	derivationFor: (source: string) => FileDerivation | Promise<FileDerivation>
 
 	/**
 	 * Corpus version stamped onto rows and into the output directory name.
@@ -361,7 +364,19 @@ export async function writeParquetSplits(
 
 	const manifestPath = corpusDir("MANIFEST.json")
 	const files: ParquetFileDescriptor[] = opts.resume ? await readFinishedParquetFiles(manifestPath) : []
-	const derivation = await resolveDerivation(opts.derivation)
+	const derivations = new Map<string, Promise<DerivationInputs>>()
+
+	const sourceDerivation = (source: string): Promise<DerivationInputs> => {
+		let derivation = derivations.get(source)
+
+		if (!derivation) {
+			derivation = Promise.resolve(opts.derivationFor(source)).then(resolveDerivation)
+			derivations.set(source, derivation)
+		}
+
+		return derivation
+	}
+
 	const builtAt = new Date().toISOString()
 
 	/**
@@ -451,6 +466,8 @@ export async function writeParquetSplits(
 
 			if (!opened.rows) return
 
+			const derivation = await sourceDerivation(opened.source)
+
 			const fileDerivation = {
 				...derivation,
 				config: {
@@ -458,6 +475,9 @@ export async function writeParquetSplits(
 					corpusVersion: opts.corpusVersion,
 					rowsPerFile,
 					source: opened.source,
+					// The sources whose rows this file read.
+					// A file holds one source and reads only it.
+					inputSources: [opened.source],
 					split,
 					part: opened.part,
 				},

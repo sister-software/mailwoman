@@ -22,7 +22,7 @@ const root = await temporaryDirectory("mw-split-slice-")
 
 afterAll(() => root[Symbol.asyncDispose]())
 
-const FIXTURE_DERIVATION = { extractHash: "fixture", config: {} }
+const FIXTURE_DERIVATION = { extractHash: "fixture", codeHash: "fixture", config: {} }
 
 /**
  * One GB row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.

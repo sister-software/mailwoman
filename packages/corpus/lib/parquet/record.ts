@@ -15,7 +15,7 @@
  *   The derivation hash covers four inputs, and omitting one marks a stale file as current:
  *
  *   - The extract hash, over the data the rows were read from.
- *   - The code hash, over every module of this package's `lib/`.
+ *   - The code hash, over the `lib/` modules the file's producer reaches (`#build/code-hash`).
  *   - The canonical config, every option that changes the bytes, with the file's source, split and part.
  *   - The builder version, this package's `version`.
  */
@@ -53,7 +53,7 @@ export interface DerivationInputs {
 	 */
 	extractHash: string
 	/**
-	 * A digest of the code that turned that data into rows: see {@linkcode corpusCodeHash}.
+	 * A digest of the modules the file's producer reaches, from `moduleGraphHash` in `#build/code-hash`.
 	 */
 	codeHash: string
 	/**
@@ -70,11 +70,14 @@ export interface DerivationInputs {
 
 /**
  * The inputs a caller supplies.
- *
- * The writer adds the code hash and builder version, which describe the writer itself.
+ * The writer adds the builder version.
  */
 export interface FileDerivation {
 	extractHash: string
+	/**
+	 * The digest of the modules the file's producer reaches, from `moduleGraphHash` in `#build/code-hash`.
+	 */
+	codeHash: string
 	config: Record<string, unknown>
 }
 
@@ -120,35 +123,6 @@ export function derivationHash(inputs: DerivationInputs): string {
 	)
 }
 
-let codeHashPromise: Promise<string> | null = null
-
-/**
- * A digest over every non-test module under this package's `lib/`,
- * as `relative path NUL sha256` lines in path order.
- *
- * It covers the whole package rather than one adapter or recipe, because the align phase,
- * the synthesizers and the holdout policy are shared by every source and each of them changes rows.
- */
-export function corpusCodeHash(): Promise<string> {
-	codeHashPromise ??= (async () => {
-		const libDir = resolvePackagePath("@mailwoman/corpus", "lib")
-		const names = await Globerator.from("**/*.ts", { cwd: libDir, absolute: false }).toArray()
-		const modules = names.filter((name) => !name.endsWith(".test.ts"))
-
-		if (!modules.length) throw new Error(`corpusCodeHash: ${libDir} holds no module`)
-
-		const lines: string[] = []
-
-		for (const name of modules.toSorted()) {
-			lines.push(`${name}\0${await sha256File(resolvePath(libDir, name))}`)
-		}
-
-		return sha256Hex(lines.join("\n"))
-	})()
-
-	return codeHashPromise
-}
-
 let builderVersionPromise: Promise<string> | null = null
 
 /**
@@ -163,12 +137,12 @@ export function corpusBuilderVersion(): Promise<string> {
 }
 
 /**
- * Complete a caller's derivation with the writer's code hash and builder version.
+ * Complete a caller's derivation with the builder version.
  */
 export async function resolveDerivation(derivation: FileDerivation): Promise<DerivationInputs> {
 	return {
 		extractHash: derivation.extractHash,
-		codeHash: await corpusCodeHash(),
+		codeHash: derivation.codeHash,
 		config: derivation.config,
 		builderVersion: await corpusBuilderVersion(),
 	}

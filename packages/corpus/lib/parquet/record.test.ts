@@ -103,7 +103,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 	yield* items
 }
 
-const FIXTURE_DERIVATION = { extractHash: "fixture", config: { tool: "test" } }
+const FIXTURE_DERIVATION = { extractHash: "fixture", codeHash: "fixture", config: { tool: "test" } }
 
 /**
  * A fixture corpus of four sources across two splits, with two license labels on one source
@@ -131,7 +131,7 @@ describe("writeParquetSplits", () => {
 
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(rows.train), val: asyncFrom(rows.val) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 4, derivation: FIXTURE_DERIVATION }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 4, derivationFor: () => FIXTURE_DERIVATION }
 		)
 
 		// ban train 7 rows → 4 + 3, wof-admin train 7 → 4 + 3, tiger 1, and one file per source in val.
@@ -165,7 +165,14 @@ describe("writeParquetSplits", () => {
 
 	it("keeps a file whose store path already holds the same bytes", async () => {
 		const rows = fixtureRows()
-		const options = { outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 4, derivation: FIXTURE_DERIVATION }
+
+		const options = {
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			rowsPerFile: 4,
+			derivationFor: () => FIXTURE_DERIVATION,
+		}
+
 		const first = await writeParquetSplits({ train: asyncFrom(rows.train) }, options)
 		const second = await writeParquetSplits({ train: asyncFrom(rows.train) }, options)
 
@@ -175,7 +182,7 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("refuses a store path that holds different bytes under the same derivation hash", async () => {
-		const options = { outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		const options = { outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 
 		await writeParquetSplits({ train: asyncFrom([labeled({ raw: "Paris" })]) }, options)
 
@@ -191,7 +198,7 @@ describe("foldSourceLicenses", () => {
 
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(rows.train), val: asyncFrom(rows.val) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 4, derivation: FIXTURE_DERIVATION }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 4, derivationFor: () => FIXTURE_DERIVATION }
 		)
 
 		// An overlay file whose record was never written, standing for one built before records existed.

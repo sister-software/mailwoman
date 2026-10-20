@@ -7,7 +7,12 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
+import {
+	DEFAULT_SHUFFLE_WINDOW,
+	shuffleWithinSourceRuns,
+	shuffleWithinWindow,
+	sourceShuffleSeed,
+} from "#parquet/shuffle"
 
 async function* from<T>(items: readonly T[]): AsyncIterable<T> {
 	for (const item of items) {
@@ -75,5 +80,35 @@ describe("shuffleWithinWindow", () => {
 		// The last 100 rows are the buffer drained at the end, so every row is still
 		// accounted for rather than the tail being dropped with the buffer.
 		expect(new Set(out).size).toBe(10_000)
+	})
+})
+
+describe("shuffleWithinSourceRuns", () => {
+	const rowsOf = (source: string, count: number) => Array.from({ length: count }, (_, index) => ({ source, index }))
+	const randomFor = (source: string) => makeMulberry32(sourceShuffleSeed(7, source))
+
+	const orderOf = (rows: readonly { source: string; index: number }[], source: string) =>
+		rows.filter((row) => row.source === source).map((row) => row.index)
+
+	it("orders one source's rows the same whatever the other sources hold", async () => {
+		const withSmallB = await collect(
+			shuffleWithinSourceRuns(from([...rowsOf("a", 300), ...rowsOf("b", 10)]), randomFor, 50)
+		)
+
+		const withLargeB = await collect(
+			shuffleWithinSourceRuns(from([...rowsOf("b", 900), ...rowsOf("a", 300)]), randomFor, 50)
+		)
+
+		expect(orderOf(withSmallB, "a")).toEqual(orderOf(withLargeB, "a"))
+		expect(orderOf(withSmallB, "a")).not.toEqual(rowsOf("a", 300).map((row) => row.index))
+	})
+
+	it("emits every row once and never moves a row across a source boundary", async () => {
+		const input = [...rowsOf("a", 120), ...rowsOf("b", 80)]
+		const out = await collect(shuffleWithinSourceRuns(from(input), randomFor, 30))
+
+		expect(out).toHaveLength(input.length)
+		expect(out.slice(0, 120).every((row) => row.source === "a")).toBe(true)
+		expect(orderOf(out, "b").toSorted((x, y) => x - y)).toEqual(rowsOf("b", 80).map((row) => row.index))
 	})
 })

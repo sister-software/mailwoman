@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/adapter"
+import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/license"
 import {
 	deriveEffectiveTrainingManifest,
 	DrawEvidence,

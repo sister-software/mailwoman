@@ -12,6 +12,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
+import { moduleGraphHash } from "#build/code-hash"
 import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
@@ -120,6 +121,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 
 	const outputs: Partial<Record<SplitName, string>> = {}
 	const extractHash = await sha256File(input)
+	const codeHash = await moduleGraphHash([import.meta.filename])
 
 	for (const split of ["train", "val", "test"] as const) {
 		if (!buckets[split].length) continue
@@ -128,6 +130,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 
 		await writeParquetFile(buckets[split], output, {
 			extractHash,
+			codeHash,
 			config: { tool: "split-slice", split, holdouts },
 		})
 
