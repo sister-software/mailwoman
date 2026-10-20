@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { type ReleaseRequirementSpec, validateReleaseSpec } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v6.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v7.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v6 specification with every requirement registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v6\.json$/u)
+	it("accepts the current v7 specification with every requirement registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v7\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -60,7 +60,7 @@ describe("validateReleaseSpec", () => {
 
 	it("differs from v5 only by the postal_unit capability, the rationale and the version", async () => {
 		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(5))
-		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(6))
 		const added = v6.requirements.filter((req) => !v5.requirements.some((old) => old.id === req.id))
 
 		expect(v6.specVersion).toBe("6")
@@ -88,6 +88,26 @@ describe("validateReleaseSpec", () => {
 		})
 
 		expect(withoutChanges(v6)).toEqual(withoutChanges(v5))
+	})
+
+	it("differs from v6 only in the scorer revision, the rationale and the version", async () => {
+		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(6))
+		const v7 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+
+		expect(v7.specVersion).toBe("7")
+		expect(v7.rationale).not.toBe(v6.rationale)
+		expect(v7.rationale).toMatch(/Only the scorer's street normalization changed\. Every threshold is unchanged/u)
+		expect(v7.identities.scorer.id).toBe(v6.identities.scorer.id)
+		expect(v7.identities.scorer.revision).not.toBe(v6.identities.scorer.revision)
+
+		const withoutChanges = (spec: ReleaseRequirementSpec) => ({
+			...spec,
+			specVersion: null,
+			rationale: null,
+			identities: { ...spec.identities, scorer: { ...spec.identities.scorer, revision: null } },
+		})
+
+		expect(withoutChanges(v7)).toEqual(withoutChanges(v6))
 	})
 
 	it("refuses the schema 2 records, which hold a single admitted list", async () => {

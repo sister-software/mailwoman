@@ -9,7 +9,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage-register.run.ts \
  *     --dataset <dataset manifest .json> \
- *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v6.json] \
+ *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v7.json] \
  *     [--provenance <overlap audit .json>] [--verdict <verdict .json>] \
  *     [--out docs/engineering/reference/evaluation-coverage.mdx] [--json docs/engineering/reference/evaluation-coverage.json]
  */
