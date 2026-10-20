@@ -136,11 +136,13 @@ the precedent.
 ## Base corpus build cost
 
 A base corpus build,
-`mailwoman corpus build --inputs "$(cat $MAILWOMAN_DATA_ROOT/corpus/build-logs/v0.5.0-inputs.json)"`,
-takes about 11.5 hours for roughly 680 M rows, and that inputs file is the only record of the 11
-adapters and their input paths. Budget a day, run the build in the background with
-`--max-old-space-size=12288`, and smoke-build two small adapters first to prove a schema change end to
-end. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
+`mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
+takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
+input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in the background with
+`NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
+change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
+`--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and
+peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
 `rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
 
 ## License election
