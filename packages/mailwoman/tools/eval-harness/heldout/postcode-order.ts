@@ -18,7 +18,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { parseForGeocode } from "#geocode/core"
 import { loadParsePriors } from "#geocode/parse-priors"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
-import { exactMatch, foldToComponents } from "#tools/eval-harness/per/locale-f1"
+import { componentsMatchExactly, foldToComponents } from "#tools/eval-harness/per/locale-f1"
 import { normalizeComponent } from "#tools/eval-harness/per/tag-f1"
 
 /**
@@ -122,7 +122,7 @@ export function scoreNonNativeOrderRows(
 				tally(target[tag], gold.length > 0, gold === normalizeComponent(prediction[tag]))
 			}
 
-			tally(target.full, true, exactMatch(prediction, row.components))
+			tally(target.full, true, componentsMatchExactly(prediction, row.components))
 		}
 	}
 

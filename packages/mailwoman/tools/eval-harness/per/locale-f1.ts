@@ -249,7 +249,7 @@ async function readStreetConvention(goldenDir: string): Promise<Record<string, s
 /**
  * Whether every tag in either record holds the same normalized text in both.
  */
-export function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
+export function componentsMatchExactly(pred: Record<string, string>, gold: Record<string, string>): boolean {
 	const keys = new Set([...Object.keys(pred), ...Object.keys(gold)])
 
 	for (const k of keys) if (normalizeComponent(pred[k]) !== normalizeComponent(gold[k])) return false
@@ -345,7 +345,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	let exact = 0
 
 	for (let i = 0; i < rows.length; i++)
-		if (exactMatch(preds[i]!, rows[i]!.components)) {
+		if (componentsMatchExactly(preds[i]!, rows[i]!.components)) {
 			exact++
 		}
 
