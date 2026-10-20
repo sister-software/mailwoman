@@ -15,8 +15,12 @@
  *   place of drawing one from `--manifest`; the rows file's sha256 is checked against the manifest. Every
  *   outcome carries the row's `group`, which `release/evaluate.ts` resamples by.
  *
- *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" | "known_overlap",
- *   "evidence": "<where the history was recorded>" } } }`. A row it does not name is classed `unknown`.
+ *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
+ *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it does
+ *   not name is classed `unknown`.
+ *
+ *   Each row is parsed by its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), so every arm's cache
+ *   must hold every package the rows need. The report records the rule and the country-to-package map.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -27,12 +31,15 @@ import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/mani
 import {
 	assertPairedArms,
 	type CountryScore,
+	HELDOUT_INFERENCE_RULE,
 	type HeldoutArmResult,
+	readHeldoutLocalePackages,
 	type ProvenanceHistory,
 	type ProvenanceRecord,
 	sampleHeldoutRows,
 	scoreHeldoutWeights,
 } from "#tools/eval-harness/heldout/per/country"
+import { HELDOUT_PROVENANCE_CLASSES } from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({
 	options: {
@@ -89,7 +96,10 @@ if (values.provenance) {
 	if (!file.rows) throw new Error(`${values.provenance} holds no rows object`)
 
 	for (const [rowID, record] of Object.entries(file.rows)) {
-		if (record.provenance !== "verified_unseen" && record.provenance !== "known_overlap") {
+		if (
+			!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(record.provenance) ||
+			record.provenance === "unknown"
+		) {
 			throw new Error(`${values.provenance} row ${rowID} has provenance ${String(record.provenance)}`)
 		}
 
@@ -120,11 +130,12 @@ console.error(`${rows.length} held-out rows from ${values.dataset ?? values.mani
 
 const arms = [values.baseline, ...values.candidates.split(",").map((s) => s.trim())]
 const scored: HeldoutArmResult[] = []
+const packages = await readHeldoutLocalePackages()
 
 for (const arm of arms) {
 	console.error(`scoring ${arm}`)
 
-	scored.push(await scoreHeldoutWeights(rows, arm, history))
+	scored.push(await scoreHeldoutWeights(rows, arm, history, { packages }))
 }
 
 assertPairedArms(scored)
@@ -151,6 +162,7 @@ await writeLocalJSONFile(
 		manifest: values.manifest ?? null,
 		dataset,
 		provenance: values.provenance ?? null,
+		inference: { rule: HELDOUT_INFERENCE_RULE, packages: Object.fromEntries(packages) },
 		rows: rows.length,
 		arms,
 		countries: report,

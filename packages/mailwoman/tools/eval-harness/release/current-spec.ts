@@ -20,5 +20,5 @@ export const CURRENT_RELEASE_SPEC: string = resolvePackagePath(
 	"eval-harness",
 	"release",
 	"specs",
-	"release-requirements.v3.json"
+	"release-requirements.v4.json"
 )

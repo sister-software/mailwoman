@@ -51,7 +51,7 @@ const dataset = buildHeldoutDatasetManifest({
 })
 
 const spec = validateReleaseSpec({
-	schemaVersion: 2,
+	schemaVersion: 3,
 	specVersion: "fixture-1",
 	rationale: "fixture",
 	requirements: [
@@ -93,7 +93,7 @@ const spec = validateReleaseSpec({
 		groupingAssumption: "fixture",
 		requiredPrecision: null,
 	},
-	provenance: { admitted: [] },
+	provenance: { admitted: { minimum: [], comparative: [] } },
 	evaluations: {
 		development: { id: null, description: "fixture" },
 		confirmation: { id: null, description: "fixture" },
@@ -193,9 +193,10 @@ describe("buildCoverageRegister", () => {
 
 		const us = register.rows.find((r) => r.country === "US")!
 
-		// The row the audit does not name is unknown, not unseen.
+		// The audit's rows map omits one row, and that row counts as unknown.
 		expect(us.provenance).toEqual({
 			verified_unseen: 1,
+			unseen_by_candidate: 0,
 			known_overlap: 1,
 			unknown: 1,
 		})

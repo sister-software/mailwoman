@@ -226,6 +226,8 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
 7. `rowsIndependent` is `false` and the held-out rows carry groups once frozen, so no check is blocked by
    grouping. Item 1 is the only work this needs.
 
+2026-10-20: items 5 and 6 and the evaluator half of item 3 landed on branch `release-quality-scorer`. `scoreHeldoutWeights` parses each row with its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), records the package per row, and refuses a package whose loader reports an unfed required channel. Specification v4 (schema 3) admits `verified_unseen` and `unseen_by_candidate` rows for minimum checks and only `verified_unseen` rows for comparative checks.
+
 ## 8. Simulation
 
 Scenario file: `/tmp/claude-1000/-home-lab-Projects-mailwoman/fa269c16-8422-42f8-b944-7d4b32b5974f/scratchpad/v3-scenarios.json`.

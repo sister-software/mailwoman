@@ -68,6 +68,7 @@ import {
 	softmax,
 	viterbi,
 } from "#viterbi"
+import type { UnfedChannelReport } from "#weights/channels"
 import { enforceWordConsistency } from "#word-consistency"
 
 export type {
@@ -216,6 +217,16 @@ export class NeuralAddressClassifier {
 		return this.cfg.modelPath && this.cfg.weightsSource
 			? { modelPath: this.cfg.modelPath, source: this.cfg.weightsSource }
 			: null
+	}
+
+	/**
+	 * The required channels `loadFromWeights` could not feed, so parses run with them off.
+	 *
+	 * Empty when every required channel is fed or the instance was constructed directly.
+	 * An evaluator that must not grade a degraded configuration refuses a non-empty list.
+	 */
+	get unfedChannels(): readonly UnfedChannelReport[] {
+		return this.cfg.unfedChannels ?? []
 	}
 
 	/**

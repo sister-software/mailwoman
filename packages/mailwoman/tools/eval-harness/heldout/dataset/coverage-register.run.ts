@@ -9,7 +9,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage-register.run.ts \
  *     --dataset <dataset manifest .json> \
- *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v2.json] \
+ *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v4.json] \
  *     [--provenance <overlap audit .json>] [--verdict <verdict .json>] \
  *     [--out docs/engineering/reference/evaluation-coverage.mdx] [--json docs/engineering/reference/evaluation-coverage.json]
  */
@@ -25,6 +25,7 @@ import {
 } from "#tools/eval-harness/heldout/dataset/coverage-register"
 import { readHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { ProvenanceRecord } from "#tools/eval-harness/heldout/per/country"
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import type { ReleaseVerdict } from "#tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
@@ -33,8 +34,7 @@ const { values } = parseArguments({
 		dataset: { type: "string", description: "The held-out dataset manifest" },
 		spec: {
 			type: "string",
-			default: "packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v2.json",
-			description: "The release-requirement specification",
+			description: "The release-requirement specification, repository-relative (default: CURRENT_RELEASE_SPEC)",
 		},
 		provenance: {
 			type: "string",
@@ -80,7 +80,7 @@ if (values.provenance) {
 
 const register = buildCoverageRegister({
 	dataset: await readHeldoutDatasetManifest(values.dataset),
-	spec: await readReleaseSpec(repoRootPath(values.spec)),
+	spec: await readReleaseSpec(values.spec ? repoRootPath(values.spec) : CURRENT_RELEASE_SPEC),
 	provenance,
 	verdict: values.verdict ? await readLocalJSONFile<ReleaseVerdict>(values.verdict) : null,
 })
@@ -88,7 +88,7 @@ const register = buildCoverageRegister({
 const command = [
 	"node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage-register.run.ts",
 	`--dataset ${values.dataset}`,
-	`--spec ${values.spec}`,
+	...(values.spec ? [`--spec ${values.spec}`] : []),
 	...(values.provenance ? [`--provenance ${values.provenance}`] : []),
 	...(values.verdict ? [`--verdict ${values.verdict}`] : []),
 ].join(" \\\n  ")

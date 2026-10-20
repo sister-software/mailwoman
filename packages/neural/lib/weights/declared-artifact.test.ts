@@ -1,5 +1,5 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { createSymbolicLink, writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
@@ -42,6 +42,17 @@ describe("readDeclaredArtifactFile", () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
 		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({ file: "postcode-us.bin", present: false })
+	})
+
+	it("reports a declared artifact present when the package directory is a symbolic link, as a staged cache holds it", async () => {
+		const real = await packageDir({ files: { postcode_anchor: "postcode-us.bin" } }, ["postcode-us.bin"])
+		const cache = fixtures.use(await temporaryDirectory("weights-cache-")).path
+		const linked = cache("node_modules", "@mailwoman", "neural-weights-en-us")
+
+		await createSymbolicLink(real, linked, "dir")
+
+		expect(await readDeclaredArtifactFile(linked)).toMatchObject({ file: "postcode-us.bin", present: true })
+		expect(await unfedAnchorDetail(linked)).toMatch(/parsed EMPTY/)
 	})
 
 	it("Prefers the PCB1 binary over the legacy JSON lookup when a card names both", async () => {

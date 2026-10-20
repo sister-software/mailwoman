@@ -9,11 +9,12 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts \
  *     --dataset <dataset manifest .json> --corpora <corpus MANIFEST.json>,<corpus MANIFEST.json> \
- *     --model-cards <published model-card.json>,<candidate model-card.json> --out <provenance .json> \
+ *     --model-cards <published model-card.json>,<candidate model-card.json> \
+ *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
  *     [--path-root /mnt/mw] [--verify-file-sha256]
  *
  *   Name the candidate's corpus, the published model's corpus, and every earlier corpus either was trained on.
- *   Each training file is read through DuckDB projecting only the id columns; a partial read is refused.
+ *   Each training file is read through DuckDB projecting only the id columns. A partial read is refused.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -32,6 +33,10 @@ const { values } = parseArguments({
 		"model-cards": {
 			type: "string",
 			description: "Model cards of the compared models, comma-separated",
+		},
+		"candidate-model-card": {
+			type: "string",
+			description: "Which of --model-cards is the candidate's, for the unseen_by_candidate class",
 		},
 		"path-root": {
 			type: "string",
@@ -60,6 +65,7 @@ const result = await auditHeldoutOverlap({
 	dataset: await readHeldoutDatasetManifest(values.dataset),
 	corpora: split(values.corpora),
 	modelCards: split(values["model-cards"]),
+	...(values["candidate-model-card"] ? { candidateModelCard: values["candidate-model-card"] } : {}),
 	pathRoot: values["path-root"],
 	verifyFileSHA256: values["verify-file-sha256"] === true,
 })
@@ -84,7 +90,8 @@ for (const card of result.audit.modelCards) {
 }
 
 console.log(
-	`verified_unseen ${result.audit.counts.verified_unseen}, known_overlap ${result.audit.counts.known_overlap}, ` +
+	`verified_unseen ${result.audit.counts.verified_unseen}, unseen_by_candidate ${result.audit.counts.unseen_by_candidate}, ` +
+		`known_overlap ${result.audit.counts.known_overlap}, ` +
 		`unknown ${result.audit.counts.unknown}`
 )
 

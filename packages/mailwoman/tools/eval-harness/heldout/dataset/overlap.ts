@@ -4,26 +4,28 @@
  * @author Teffen Ellis, et al.
  *
  *   Audits a held-out dataset for overlap with the training and development data of the models it compares,
- *   and classes each row `known_overlap`, `verified_unseen` or `unknown` for `heldout/per/country.run.ts
- *   --provenance`.
+ *   and classes each row `known_overlap`, `verified_unseen`, `unseen_by_candidate` or `unknown` for
+ *   `heldout/per/country.run.ts --provenance`. A row is `unseen_by_candidate` when the candidate's card is named,
+ *   its corpus was read and holds no match, and the row is not `verified_unseen` (the published model trained on
+ *   it, or its history is not established); release minimum checks may read such rows.
  *
  *   Every named corpus manifest's train and val files are read through DuckDB, projecting only `source`,
  *   `source_id` and `base_source_id`. A row overlaps when a training row carries its identity
  *   (`<source>:<source_id>`) or its group (`base_source_id`, else `source_id`, as `heldoutRowGroup` keys it),
- *   so a training row derived from the same base row counts. Test files are listed and skipped; a file whose
+ *   so a training row derived from the same base row counts. Test files are listed and skipped. A file whose
  *   split an attribute file decides is read whole and its rows that the attribute assigns to `test` are
  *   dropped.
  *
  *   The audit refuses a partial read: a missing file, a file lacking an id column, a row count that differs
  *   from the manifest's record, an attribute file whose sha256 differs, or a file entry with no split throws,
  *   naming the file. A row is `verified_unseen` only when it is absent from every corpus read and every named
- *   model card's `training.corpus_version` names a corpus that was read; otherwise a row without overlap is
+ *   model card's `training.corpus_version` identifies a corpus that was read. Otherwise a row without overlap is
  *   `unknown`, and the audit records why.
  *
- *   Limits: overlap is decided by identity and group, not by text. A training row holding the same address
- *   text under another source or id is not detected. A model card names the corpus of its final training run
- *   only; a card that records an `init_from` is refused for `verified_unseen`, because the ancestry's corpora
- *   are not named.
+ *   Limits: overlap is decided by identity and group alone, and text is never compared. A training row holding
+ *   the same address text under another source or id goes undetected. A model card records the corpus of its
+ *   final training run only. A card that records an `init_from` is refused for `verified_unseen`, because the
+ *   ancestry's corpora are unrecorded.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -53,7 +55,7 @@ export interface OverlapFileRecord {
 	read: boolean
 	rows: number
 	/**
-	 * The sha256 the corpus manifest records; recomputed only when `sha256Verified`.
+	 * The sha256 the corpus manifest records, recomputed only when `sha256Verified`.
 	 */
 	sha256: string | null
 	sha256Verified: boolean
@@ -176,12 +178,23 @@ export async function auditHeldoutOverlap(input: {
 	dataset: HeldoutDatasetManifest
 	corpora: readonly string[]
 	modelCards: readonly string[]
+	/**
+	 * Which of `modelCards` is the candidate's.
+	 *
+	 * When named and its corpus was read, a row absent from that corpus is at least
+	 * `unseen_by_candidate`, whatever the published model's history.
+	 */
+	candidateModelCard?: string
 	pathRoot: string
 	verifyFileSHA256?: boolean
 }): Promise<OverlapProvenanceFile> {
 	const { dataset } = input
 
 	if (!input.corpora.length) throw new Error("the overlap audit names no training corpus")
+
+	if (input.candidateModelCard != null && !input.modelCards.includes(input.candidateModelCard)) {
+		throw new Error(`the candidate model card ${input.candidateModelCard} is not among the model cards named`)
+	}
 
 	const byID = new Set(dataset.rows.map((entry) => entry.rowID))
 	const byGroup = new Map<string, string[]>()
@@ -194,7 +207,22 @@ export async function auditHeldoutOverlap(input: {
 	}
 
 	const evidence = new Map<string, string>()
+	/**
+	 * The corpora (by `corpus_version`, else manifest path) each overlapping row was found in.
+	 */
+	const overlapCorpora = new Map<string, Set<string>>()
 	const corpora: OverlapCorpusRecord[] = []
+
+	const recordOverlap = (rowID: string, label: string, detail: string) => {
+		if (!evidence.has(rowID)) {
+			evidence.set(rowID, detail)
+		}
+
+		const found = overlapCorpora.get(rowID) ?? new Set<string>()
+
+		found.add(label)
+		overlapCorpora.set(rowID, found)
+	}
 
 	using db = await openDuckDB()
 
@@ -318,16 +346,14 @@ export async function auditHeldoutOverlap(input: {
 				const trainingID = `${String(row.source)}:${String(sourceID)}`
 				const where = `in ${label} ${split} file ${descriptor.path}`
 
-				if (byID.has(trainingID) && !evidence.has(trainingID)) {
-					evidence.set(trainingID, `identity ${trainingID} ${where}`)
+				if (byID.has(trainingID)) {
+					recordOverlap(trainingID, label, `identity ${trainingID} ${where}`)
 				}
 
 				const group = row.base_source_id == null ? sourceID : String(row.base_source_id)
 
 				for (const member of (group != null && byGroup.get(group)) || []) {
-					if (!evidence.has(member)) {
-						evidence.set(member, `group ${group} (training row ${trainingID}) ${where}`)
-					}
+					recordOverlap(member, label, `group ${group} (training row ${trainingID}) ${where}`)
 				}
 			}
 
@@ -368,8 +394,15 @@ export async function auditHeldoutOverlap(input: {
 
 	const verifiedUnseenAdmitted = reasons.length === 0
 
+	const candidateCard =
+		input.candidateModelCard == null ? null : modelCards.find((card) => card.path === input.candidateModelCard)!
+
+	// The candidate's own history is established when its card records a corpus that was read and no init_from.
+	const candidateCorpus = candidateCard?.matched ? candidateCard.corpusVersion : null
+
 	const counts: Record<HeldoutProvenance, number> = {
 		verified_unseen: 0,
+		unseen_by_candidate: 0,
 		known_overlap: 0,
 		unknown: 0,
 	}
@@ -377,11 +410,17 @@ export async function auditHeldoutOverlap(input: {
 	const classes = new Map<string, HeldoutProvenance>()
 
 	for (const entry of dataset.rows) {
-		const cls: HeldoutProvenance = evidence.has(entry.rowID)
-			? "known_overlap"
-			: verifiedUnseenAdmitted
+		const overlapped = evidence.has(entry.rowID)
+		const unseenByCandidate = candidateCorpus != null && !overlapCorpora.get(entry.rowID)?.has(candidateCorpus)
+
+		const cls: HeldoutProvenance =
+			!overlapped && verifiedUnseenAdmitted
 				? "verified_unseen"
-				: "unknown"
+				: unseenByCandidate
+					? "unseen_by_candidate"
+					: overlapped
+						? "known_overlap"
+						: "unknown"
 
 		classes.set(entry.rowID, cls)
 
@@ -417,6 +456,13 @@ export async function auditHeldoutOverlap(input: {
 			}
 		} else if (cls === "verified_unseen") {
 			rows[entry.rowID] = { provenance: cls, evidence: unseenEvidence }
+		} else if (cls === "unseen_by_candidate") {
+			const published = evidence.get(entry.rowID) ?? "the published model's history is not established"
+
+			rows[entry.rowID] = {
+				provenance: cls,
+				evidence: `${cite}: absent from the candidate's ${candidateCorpus!}, every train and val file read; ${published}`,
+			}
 		} else {
 			unknown.push(entry.rowID)
 		}

@@ -12,11 +12,17 @@
  *   as if correlated variants were independent are too narrow (the 2026-10-20 simulation measured 33% joint
  *   coverage against a nominal 95%).
  *
+ *   Admission. A minimum check reads the rows whose provenance class `provenance.admitted.minimum` lists (rows
+ *   the candidate never trained on, whatever the published model saw). The objective and max-loss checks read
+ *   only `provenance.admitted.comparative` (rows neither model trained on), because a row one model trained on
+ *   favors that model in a comparison. The verdict also records the inference rule the outcomes were produced
+ *   under. Outcomes that record none, or rows without a weights locale package, are insufficient evidence.
+ *
  *   Simultaneous bounds. Every check the specification declares counts toward the registered correction
  *   (Bonferroni or Sidak), registered threshold or not, giving one per-side tail probability for every bound.
  *
  *   A minimum check (a candidate rate against a minimum) uses a Clopper–Pearson interval on the effective
- *   count. The cluster-robust (ratio-estimator) variance of the rate over units gives the design effect
+ *   count. The cluster (sandwich, ratio-estimator) variance of the rate over units gives the design effect
  *   `deff = V_cluster / (p (1 - p) / n)`, and the effective count is `n / deff`, clamped to `[units, n]`.
  *   When the rate is 0 or 1 the design effect cannot be estimated and the effective count is the number of
  *   units, the most conservative value the clamp admits. Clopper–Pearson was chosen over a percentile
@@ -27,28 +33,29 @@
  *   cannot show a minimum is met is insufficient evidence.
  *
  *   A difference check (a capability's loss against its permitted loss, and the equal-country objective's Q
- *   improvement) uses an analytic cluster-robust variance of the paired difference. Within each stratum (one
- *   per objective country; one for a capability's pooled rows) the variance of the mean paired difference is
+ *   improvement) uses an analytic cluster (sandwich) variance of the paired difference. Within each stratum (one
+ *   per objective country, or one for a capability's pooled rows) the variance of the mean paired difference is
  *   `G / (G - 1) * sum_g (d_g - D m_g)^2 / n^2` over its G units, and Q's variance is the sum of the
  *   per-country variances over K^2. The bound is the estimate plus or minus a Student t quantile whose degrees
  *   of freedom are the Welch–Satterthwaite combination of the strata's `G - 1`. A stratum with fewer than two
  *   units has no variance estimate and makes the check insufficient. A stratum whose estimated variance is zero
- *   (in practice, no discordant unit) is degenerate: its variance is replaced by the exact zero-event bound,
+ *   (in practice, when no unit is discordant) is degenerate: its variance is replaced by the exact zero-event bound,
  *   `q / G` with `q = 1 - tail^(1/G)` the Clopper–Pearson upper bound on the share of discordant units, since
  *   a unit's mean paired difference lies in [-1, 1]. A degenerate sample therefore never reports zero width,
- *   and it decides only once its unit count makes that bound narrow enough; a bound that is still zero width
+ *   and it decides only once its unit count makes that bound narrow enough. A bound that is still zero width
  *   is insufficient evidence.
  *
  *   Boundary comparisons are inclusive on the passing side. A check passes when its lower bound is at least
  *   its threshold and its point estimate is at least its threshold. It fails when its upper bound is below the
  *   threshold. Anything between is insufficient evidence. A missing threshold or confidence level, a check
  *   without rows, an unregistered artifact identity, or ungrouped rows without a declaration of independence
- *   is insufficient evidence; none of these is ever read as zero loss or a pass.
+ *   is insufficient evidence. None of these is ever read as zero loss or a pass.
  */
 
 import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tools/eval-harness/heldout/per/country"
 import { clopperPearson, studentTUpperQuantile } from "#tools/eval-harness/release/bounds"
 import {
+	HELDOUT_PROVENANCE_CLASSES,
 	MultipleComparisonMethod,
 	type ReleaseRequirementSpec,
 	type RowSelector,
@@ -64,15 +71,20 @@ export interface PairedRow {
 	kind: HeldoutRowKind
 	provenance: HeldoutProvenance
 	group: string | null
+	/**
+	 * The weights locale package that parsed the row in both arms, `null` when the outcomes do not record it.
+	 */
+	weightsLocale: string | null
 	published: boolean
 	candidate: boolean
 }
 
 /**
- * The per-row outcome fields this evaluator reads, with the optional grouping metadata.
+ * The per-row outcome fields this evaluator reads, with the optional grouping and package metadata.
  */
 export type OutcomeRow = Pick<HeldoutRowOutcome, "rowID" | "country" | "source" | "kind" | "provenance" | "exact"> & {
 	group?: string | null
+	weightsLocale?: string | null
 }
 
 /**
@@ -134,7 +146,10 @@ export interface CheckResult {
 
 export interface ProvenanceClassReport {
 	provenance: HeldoutProvenance
-	admitted: boolean
+	/**
+	 * Whether minimum checks, and comparative checks, read this class.
+	 */
+	admitted: { minimum: boolean; comparative: boolean }
 	rows: number
 	countries: Array<{
 		country: string
@@ -155,6 +170,11 @@ export interface ReleaseVerdict {
 	reasons: string[]
 	checks: CheckResult[]
 	provenance: ProvenanceClassReport[]
+	/**
+	 * The inference rule that produced the outcomes, as the held-out report records it,
+	 * and how many rows each weights locale package parsed.
+	 */
+	inference: { rule: string | null; rowsByWeightsLocale: Record<string, number> }
 	statistics: {
 		confidenceLevel: number | null
 		method: MultipleComparisonMethod
@@ -195,7 +215,7 @@ export function pairOutcomes(published: readonly OutcomeRow[], candidate: readon
 				throw new TypeError(`${name} outcome ${row.rowID} lacks a country or source`)
 			}
 
-			if (row.provenance !== "verified_unseen" && row.provenance !== "known_overlap" && row.provenance !== "unknown") {
+			if (!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(row.provenance)) {
 				throw new Error(`${name} outcome ${row.rowID} has provenance ${String(row.provenance)}`)
 			}
 		}
@@ -205,6 +225,10 @@ export function pairOutcomes(published: readonly OutcomeRow[], candidate: readon
 
 		for (const field of ["country", "source", "kind", "provenance"] as const) {
 			if (p[field] !== c[field]) throw new Error(`row ${p.rowID} differs between arms in ${field}`)
+		}
+
+		if ((p.weightsLocale ?? null) !== (c.weightsLocale ?? null)) {
+			throw new Error(`row ${p.rowID} was parsed by different weights locale packages in the two arms`)
 		}
 
 		if ((p.group ?? null) !== (c.group ?? null)) throw new Error(`row ${p.rowID} differs between arms in group`)
@@ -219,6 +243,7 @@ export function pairOutcomes(published: readonly OutcomeRow[], candidate: readon
 			kind: p.kind,
 			provenance: p.provenance,
 			group: p.group ?? null,
+			weightsLocale: p.weightsLocale ?? null,
 			published: p.exact,
 			candidate: c.exact,
 		}
@@ -345,7 +370,7 @@ interface DifferenceBound {
 }
 
 /**
- * Cluster-robust t bounds on a weighted sum of per-stratum mean paired
+ * Cluster-variance t bounds on a weighted sum of per-stratum mean paired
  * differences (candidate minus published).
  *
  * Returns the strata that hold fewer than two units instead when any does.
@@ -415,13 +440,19 @@ interface CheckPlan {
 	id: string
 	check: CheckResult["check"]
 	threshold: number | null
+	/**
+	 * The admitted rows this check kind reads; `rowIndices` and the strata index into it.
+	 */
+	rows: readonly PairedRow[]
 	rowIndices: number[]
 	/**
-	 * Countries whose rows the statistic needs; a missing one makes the check insufficient.
+	 * Countries whose rows the statistic needs.
+	 * A missing one makes the check insufficient.
 	 */
 	missingCountries: string[]
 	/**
-	 * Minimum checks read the pooled rows; difference checks read these strata.
+	 * Minimum checks read the pooled rows.
+	 * Difference checks read these strata.
 	 */
 	strata: Array<{ label: string; weight: number; indices: number[] }>
 }
@@ -435,7 +466,8 @@ interface CheckPlan {
 export function evaluateReleaseSpec(
 	spec: ReleaseRequirementSpec,
 	pairedRows: readonly PairedRow[],
-	artifacts: { published: string; candidate: string }
+	artifacts: { published: string; candidate: string },
+	inference: { rule: string | null }
 ): ReleaseVerdict {
 	const globalReasons: string[] = []
 
@@ -449,64 +481,91 @@ export function evaluateReleaseSpec(
 		}
 	}
 
-	const admitted = new Set(spec.provenance.admitted)
-
-	if (!admitted.size) {
-		globalReasons.push("the specification admits no provenance class for comparative claims")
+	if (!inference.rule) {
+		globalReasons.push("the outcomes record no inference rule, so the configuration that produced them is unknown")
 	}
 
-	const rows = pairedRows.filter((row) => admitted.has(row.provenance))
-	const allIndices = rows.map((_, i) => i)
+	const unrecordedLocale = pairedRows.filter((row) => row.weightsLocale == null).length
+
+	if (unrecordedLocale) {
+		globalReasons.push(`${unrecordedLocale} of ${pairedRows.length} rows record no weights locale package`)
+	}
+
+	const admittedFor = {
+		minimum: new Set(spec.provenance.admitted.minimum),
+		comparative: new Set(spec.provenance.admitted.comparative),
+	}
+
+	for (const kind of ["minimum", "comparative"] as const) {
+		if (!admittedFor[kind].size) {
+			globalReasons.push(`the specification admits no provenance class for ${kind} checks`)
+		}
+	}
+
+	// Minimum checks read rows unseen by the candidate.
+	// Comparative checks read rows unseen by both models.
+	const rowsFor = {
+		minimum: pairedRows.filter((row) => admittedFor.minimum.has(row.provenance)),
+		comparative: pairedRows.filter((row) => admittedFor.comparative.has(row.provenance)),
+	}
+
 	const plans: CheckPlan[] = []
 
-	for (const req of spec.requirements) {
-		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
-		const indices = allIndices.filter((i) => selects(rows[i]!, select))
+	const selectIndices = (rows: readonly PairedRow[], select: RowSelector) => {
+		const indices = rows.flatMap((row, i) => (selects(row, select) ? [i] : []))
 
 		const missingCountries = (select.countries ?? []).filter(
 			(country) => !indices.some((i) => rows[i]!.country === country)
 		)
 
+		return { indices, missingCountries }
+	}
+
+	for (const req of spec.requirements) {
+		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
+		const minimum = selectIndices(rowsFor.minimum, select)
+
 		plans.push({
 			id: req.id,
 			check: "minimum",
 			threshold: req.minimum,
-			rowIndices: indices,
-			missingCountries,
+			rows: rowsFor.minimum,
+			rowIndices: minimum.indices,
+			missingCountries: minimum.missingCountries,
 			strata: [],
 		})
 
 		if (req.kind === "capability" && req.maxLoss != null) {
+			const comparative = selectIndices(rowsFor.comparative, select)
+
 			plans.push({
 				id: req.id,
 				check: "max_loss",
 				threshold: -req.maxLoss,
-				rowIndices: indices,
-				missingCountries,
-				strata: [{ label: req.id, weight: 1, indices }],
+				rows: rowsFor.comparative,
+				rowIndices: comparative.indices,
+				missingCountries: comparative.missingCountries,
+				strata: [{ label: req.id, weight: 1, indices: comparative.indices }],
 			})
 		}
 	}
 
-	const objectiveIndices = allIndices.filter((i) =>
-		selects(rows[i]!, {
-			...spec.objective.select,
-			countries: spec.objective.countries,
-		})
-	)
-
-	const objectiveCountriesWithRows = new Set(objectiveIndices.map((i) => rows[i]!.country))
+	const objective = selectIndices(rowsFor.comparative, {
+		...spec.objective.select,
+		countries: spec.objective.countries,
+	})
 
 	plans.push({
 		id: "objective",
 		check: "objective",
 		threshold: spec.objective.minimumImprovement,
-		rowIndices: objectiveIndices,
-		missingCountries: spec.objective.countries.filter((country) => !objectiveCountriesWithRows.has(country)),
+		rows: rowsFor.comparative,
+		rowIndices: objective.indices,
+		missingCountries: objective.missingCountries,
 		strata: spec.objective.countries.map((country) => ({
 			label: country,
 			weight: 1 / spec.objective.countries.length,
-			indices: objectiveIndices.filter((i) => rows[i]!.country === country),
+			indices: objective.indices.filter((i) => rowsFor.comparative[i]!.country === country),
 		})),
 	})
 
@@ -521,6 +580,7 @@ export function evaluateReleaseSpec(
 
 	const checks = plans.map((plan): CheckResult => {
 		const reasons: string[] = []
+		const { rows } = plan
 		const ungrouped = plan.rowIndices.filter((i) => rows[i]!.group == null).length
 		const unitsValid = rowsIndependent || ungrouped === 0
 
@@ -635,6 +695,13 @@ export function evaluateReleaseSpec(
 			: ReleaseOutcome.Insufficient
 
 	const grouped = pairedRows.filter((row) => row.group != null).length
+	const rowsByWeightsLocale: Record<string, number> = {}
+
+	for (const row of pairedRows) {
+		const key = row.weightsLocale ?? "unrecorded"
+
+		rowsByWeightsLocale[key] = (rowsByWeightsLocale[key] ?? 0) + 1
+	}
 
 	return {
 		specVersion: spec.specVersion,
@@ -642,6 +709,10 @@ export function evaluateReleaseSpec(
 		reasons: globalReasons,
 		checks,
 		provenance: reportProvenanceClasses(spec, pairedRows),
+		inference: {
+			rule: inference.rule,
+			rowsByWeightsLocale,
+		},
 		statistics: {
 			confidenceLevel,
 			method: multipleComparison,
@@ -659,7 +730,7 @@ export function evaluateReleaseSpec(
  * Point estimates per provenance class, reported separately whether or not the class is admitted.
  */
 function reportProvenanceClasses(spec: ReleaseRequirementSpec, rows: readonly PairedRow[]): ProvenanceClassReport[] {
-	return (["verified_unseen", "known_overlap", "unknown"] as const).map((provenance) => {
+	return HELDOUT_PROVENANCE_CLASSES.map((provenance) => {
 		const members = rows.filter((row) => row.provenance === provenance && selects(row, spec.objective.select))
 		const byCountry = new Map<string, { rows: number; published: number; candidate: number }>()
 
@@ -700,7 +771,10 @@ function reportProvenanceClasses(spec: ReleaseRequirementSpec, rows: readonly Pa
 
 		return {
 			provenance,
-			admitted: spec.provenance.admitted.includes(provenance),
+			admitted: {
+				minimum: spec.provenance.admitted.minimum.includes(provenance),
+				comparative: spec.provenance.admitted.comparative.includes(provenance),
+			},
 			rows: members.length,
 			countries: [...byCountry.entries()]
 				.toSorted(([a], [b]) => a.localeCompare(b))

@@ -54,7 +54,10 @@ const spec = await readReleaseSpec(values.spec)
 
 const report = await readLocalJSONFile<{
 	outcomes?: Array<{ arm?: unknown; rows?: unknown }>
+	inference?: { rule?: unknown }
 }>(values.report)
+
+const inferenceRule = typeof report.inference?.rule === "string" && report.inference.rule ? report.inference.rule : null
 
 if (!Array.isArray(report.outcomes)) throw new Error(`${values.report} holds no outcomes array`)
 
@@ -75,7 +78,7 @@ const artifacts = {
 	candidate: await sha256File(resolvePath(values["candidate-arm"], "model.onnx")),
 }
 
-const verdict = evaluateReleaseSpec(spec, paired, artifacts)
+const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule })
 
 await writeLocalJSONFile({ spec: values.spec, report: values.report, ...verdict }, values.out)
 
@@ -105,8 +108,23 @@ for (const check of verdict.checks) {
 	)
 }
 
-console.log(["provenance", "admitted", "rows", "Q published", "Q candidate"].join("\t"))
+console.log(["provenance", "minimum", "comparative", "rows", "Q published", "Q candidate"].join("\t"))
 
 for (const cls of verdict.provenance) {
-	console.log([cls.provenance, cls.admitted, cls.rows, show(cls.qPublished), show(cls.qCandidate)].join("\t"))
+	console.log(
+		[
+			cls.provenance,
+			cls.admitted.minimum,
+			cls.admitted.comparative,
+			cls.rows,
+			show(cls.qPublished),
+			show(cls.qCandidate),
+		].join("\t")
+	)
+}
+
+console.log(`inference: ${verdict.inference.rule ?? "unrecorded"}`)
+
+for (const [locale, rows] of Object.entries(verdict.inference.rowsByWeightsLocale)) {
+	console.log(`  ${locale}\t${rows}`)
 }

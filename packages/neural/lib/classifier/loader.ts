@@ -28,6 +28,7 @@ import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
 import { MailwomanTokenizer } from "#tokenizer"
 import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
+import type { UnfedChannel, UnfedChannelReport } from "#weights/channels"
 
 /**
  * Loads the classifier for the caller's locale and routes inputs in another script,
@@ -159,7 +160,14 @@ export async function loadClassifierFromWeights(
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
-	const warnUnfedChannel = unfedChannelWarner(`${opts.locale ?? "en-us"} (${resolved.packageDir ?? resolved.source})`)
+	const weightsPackage = String(resolved.packageDir ?? resolved.source)
+	const warnUnfed = unfedChannelWarner(`${opts.locale ?? "en-us"} (${weightsPackage})`)
+	const unfedChannels: UnfedChannelReport[] = []
+
+	const warnUnfedChannel = (channel: UnfedChannel, detail: string) => {
+		unfedChannels.push({ channel, weightsPackage, detail })
+		warnUnfed(channel, detail)
+	}
 
 	if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 		try {
@@ -298,6 +306,7 @@ export async function loadClassifierFromWeights(
 		...(resolved.postcodePrefixPaths ? { postcodePrefixPaths: resolved.postcodePrefixPaths } : {}),
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
+		unfedChannels,
 		suppressGazetteerNearPostcode,
 		bridgePunctuationGaps,
 		addressSystemConventions,

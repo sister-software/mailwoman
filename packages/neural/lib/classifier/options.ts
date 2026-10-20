@@ -34,6 +34,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
+import type { UnfedChannelReport } from "#weights/channels"
 
 /**
  * Configures a neural address classifier.
@@ -118,6 +119,11 @@ export interface NeuralAddressClassifierConfig {
 	 * `package:<package>`, or `overlay:<locale>`.
 	 */
 	weightsSource?: string
+
+	/**
+	 * The required channels `loadFromWeights` could not feed, empty when every required channel is fed.
+	 */
+	unfedChannels?: readonly UnfedChannelReport[]
 
 	/**
 	 * The postcode-anchor lookup for a model trained with the `anchor_features`

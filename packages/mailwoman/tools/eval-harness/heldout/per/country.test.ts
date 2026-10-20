@@ -10,8 +10,11 @@ import {
 	type HeldoutRow,
 	heldoutRowGroup,
 	heldoutRowID,
+	heldoutWeightsLocale,
+	readHeldoutLocalePackages,
 	sampleHeldoutRows,
 	scoreHeldoutArm,
+	scoreHeldoutWeights,
 } from "#tools/eval-harness/heldout/per/country"
 
 const directory = await temporaryDirectory("mw-heldout-country-")
@@ -202,6 +205,67 @@ describe("scoreHeldoutArm", () => {
 		const bad = { ...rows[0]!, span_ends: [2] }
 
 		await expect(scoreHeldoutArm([bad], async () => exactTree(rows[0]!))).rejects.toThrow(/row oa-us:a1/u)
+	})
+})
+
+describe("scoreHeldoutWeights", () => {
+	const packages = new Map([
+		["US", "en-us"],
+		["DE", "de-de"],
+	])
+
+	it("parses each row with its country's shipped package, falling back to en-us, and records it", async () => {
+		const loaded: string[] = []
+		const rowsWithFallback: HeldoutRow[] = [...rows, { ...rows[0]!, country: "UY", source_id: "u1", group: "u1" }]
+
+		const arm = await scoreHeldoutWeights(rowsWithFallback, "/cache", undefined, {
+			packages,
+			load: async (locale, cacheRoot) => {
+				loaded.push(`${locale}@${cacheRoot}`)
+
+				return {
+					unfedChannels: [],
+					parse: async (raw: string) => exactTree(rowsWithFallback.find((r) => r.raw === raw)!),
+				} as never
+			},
+		})
+
+		expect(arm.rows.map((r) => [r.country, r.weightsLocale])).toEqual([
+			["US", "en-us"],
+			["DE", "de-de"],
+			["UY", "en-us"],
+		])
+
+		expect(loaded).toEqual(["en-us@/cache", "de-de@/cache"])
+		expect(heldoutWeightsLocale(null, packages)).toBe("en-us")
+		expect(heldoutWeightsLocale("de", packages)).toBe("de-de")
+	})
+
+	it("refuses a package whose loader reports an unfed required channel", async () => {
+		const unfedChannels = [
+			{
+				channel: "anchor",
+				weightsPackage: "/cache/node_modules/@mailwoman/neural-weights-en-us",
+				detail: "postcode-us.bin is NOT in the package",
+			},
+		]
+
+		await expect(
+			scoreHeldoutWeights(rows, "/cache", undefined, {
+				packages,
+				load: async () => ({ unfedChannels, parse: async () => exactTree(rows[0]!) }) as never,
+			})
+		).rejects.toThrow(
+			/required anchor channel unfed for \/cache\/node_modules\/@mailwoman\/neural-weights-en-us \(postcode-us\.bin/u
+		)
+	})
+
+	it("reads the shipped Latin locales from release.config.json", async () => {
+		const shipped = await readHeldoutLocalePackages()
+
+		expect(shipped.get("US")).toBe("en-us")
+		expect(shipped.get("GB")).toBe("en-gb")
+		expect([...shipped.values()].every((locale) => /^[a-z]{2}-[a-z]{2}$/u.test(locale))).toBe(true)
 	})
 })
 

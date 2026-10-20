@@ -19,7 +19,7 @@ import type { HeldoutProvenance, HeldoutRowKind } from "#tools/eval-harness/held
 /**
  * The specification format version this reader accepts.
  */
-export const RELEASE_SPEC_SCHEMA_VERSION = 2
+export const RELEASE_SPEC_SCHEMA_VERSION = 3
 
 /**
  * The multiple-comparison corrections the evaluator implements for simultaneous bounds.
@@ -31,7 +31,18 @@ export const MultipleComparisonMethod = {
 
 export type MultipleComparisonMethod = (typeof MultipleComparisonMethod)[keyof typeof MultipleComparisonMethod]
 
-const PROVENANCE_CLASSES: readonly HeldoutProvenance[] = ["verified_unseen", "known_overlap", "unknown"]
+/**
+ * Every held-out provenance class, in report order.
+ *
+ * It lives here rather than beside the type so a spec reader does not load the scorer's model runtime.
+ */
+export const HELDOUT_PROVENANCE_CLASSES = [
+	"verified_unseen",
+	"unseen_by_candidate",
+	"known_overlap",
+	"unknown",
+] as const satisfies readonly HeldoutProvenance[]
+
 const ROW_KINDS: readonly HeldoutRowKind[] = ["address", "gazetteer"]
 
 /**
@@ -39,15 +50,18 @@ const ROW_KINDS: readonly HeldoutRowKind[] = ["address", "gazetteer"]
  */
 export interface RowSelector {
 	/**
-	 * Row kinds admitted; an absent list admits every kind.
+	 * Row kinds admitted.
+	 * An absent list admits every kind.
 	 */
 	kinds?: HeldoutRowKind[]
 	/**
-	 * Row sources admitted; an absent list admits every source.
+	 * Row sources admitted.
+	 * An absent list admits every source.
 	 */
 	sources?: string[]
 	/**
-	 * Countries admitted; an absent list admits every country.
+	 * Countries admitted.
+	 * An absent list admits every country.
 	 */
 	countries?: string[]
 }
@@ -87,7 +101,8 @@ export interface CapabilityRequirement {
 	/**
 	 * The largest permitted loss, `published - candidate`, in exact parse rate.
 	 *
-	 * Absent or `null` registers no additional loss limit; the minimum still applies.
+	 * Absent or `null` registers no additional loss limit.
+	 * The minimum still applies.
 	 */
 	maxLoss?: number | null
 	maxLossReason?: string
@@ -116,7 +131,7 @@ export interface ReleaseRequirementSpec {
 	requirements: ReleaseRequirement[]
 	objective: {
 		/**
-		 * The fixed objective country set C; Q is the equal-weight mean of per-country exact parse rates.
+		 * The fixed objective country set C. Q is the equal-weight mean of per-country exact parse rates.
 		 */
 		countries: string[]
 		select?: Omit<RowSelector, "countries">
@@ -160,10 +175,17 @@ export interface ReleaseRequirementSpec {
 	}
 	provenance: {
 		/**
-		 * The provenance classes comparative claims may use.
-		 * Every class is reported; only these decide.
+		 * The provenance classes each kind of check reads.
+		 * Every class is reported, and only these decide.
+		 *
+		 * `minimum`: the classes a minimum check (a candidate rate against its minimum) reads.
+		 * A row the candidate never trained on measures the candidate whatever the published model saw.
+		 *
+		 * `comparative`: the classes the objective and max-loss checks read.
+		 * A comparison needs rows neither model trained on, so each listed class
+		 * must also be listed under `minimum`.
 		 */
-		admitted: HeldoutProvenance[]
+		admitted: { minimum: HeldoutProvenance[]; comparative: HeldoutProvenance[] }
 	}
 	evaluations: {
 		development: { id: string | null; description: string }
@@ -401,7 +423,36 @@ export function validateReleaseSpec(input: unknown, source = "release spec"): Re
 
 	const provenance = object(root.provenance, "$.provenance")
 
-	stringList(provenance.admitted, "$.provenance.admitted", PROVENANCE_CLASSES)
+	if (Array.isArray(provenance.admitted)) {
+		fail(
+			"$.provenance.admitted",
+			"is a single list, retired in schema 3: name { minimum: [...], comparative: [...] } so each check kind reads its own classes"
+		)
+	}
+
+	const admitted = object(provenance.admitted, "$.provenance.admitted")
+
+	for (const key of Object.keys(admitted)) {
+		if (key !== "minimum" && key !== "comparative") {
+			fail(`$.provenance.admitted.${key}`, "is unknown")
+		}
+	}
+
+	stringList(admitted.minimum, "$.provenance.admitted.minimum", HELDOUT_PROVENANCE_CLASSES)
+	stringList(admitted.comparative, "$.provenance.admitted.comparative", HELDOUT_PROVENANCE_CLASSES)
+
+	for (const [i, cls] of (admitted.comparative as string[]).entries()) {
+		if (cls === "unseen_by_candidate" || cls === "known_overlap" || cls === "unknown") {
+			fail(
+				`$.provenance.admitted.comparative[${i}]`,
+				`admits ${cls}, whose rows are not established unseen by the published model`
+			)
+		}
+
+		if (!(admitted.minimum as string[]).includes(cls)) {
+			fail(`$.provenance.admitted.comparative[${i}]`, `admits ${cls}, which minimum checks do not admit`)
+		}
+	}
 
 	const evaluations = object(root.evaluations, "$.evaluations")
 

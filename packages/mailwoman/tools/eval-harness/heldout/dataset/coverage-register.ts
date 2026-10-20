@@ -10,8 +10,8 @@
  *   The country set is every country the specification names (a country requirement, the objective set, a
  *   capability selector) together with every country the dataset's availability count holds, so a required
  *   country with no test rows still gets a row. Evidence that was not measured is `null` and renders as
- *   insufficient evidence; it is never written as zero. A required or objective country with no sampled
- *   address rows is insufficient evidence; an experimental country stays visibly unqualified.
+ *   insufficient evidence. It is never written as zero. A required or objective country with no sampled
+ *   address rows is insufficient evidence. An experimental country stays visibly unqualified.
  */
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -27,7 +27,7 @@ export interface CoverageRegisterRow {
 	country: string
 	status: CoverageRequirementStatus
 	/**
-	 * Whether the country is in the objective set C; a required country may also be.
+	 * Whether the country is in the objective set C. A required country may also be.
 	 */
 	objective: boolean
 	requirementIDs: string[]
@@ -150,7 +150,7 @@ export function buildCoverageRegister(input: {
 			}
 
 			if (input.provenance) {
-				provenance = { verified_unseen: 0, known_overlap: 0, unknown: 0 }
+				provenance = { verified_unseen: 0, unseen_by_candidate: 0, known_overlap: 0, unknown: 0 }
 
 				for (const entry of entries) {
 					provenance[input.provenance.rows[entry.rowID]?.provenance ?? "unknown"]++
@@ -263,7 +263,7 @@ export function renderCoverageRegisterMarkdown(register: CoverageRegister, comma
 			`Evaluation status comes from ${register.verdict ? `a verdict whose outcome is ${EVALUATION_LABEL[register.verdict.outcome]}` : "no verdict"}. ` +
 			"A cell that reads insufficient evidence was not measured; it is not zero.",
 		"",
-		"| Country | Status | Addresses available | Addresses sampled | Groups | Place names sampled | Sources | Unseen / overlap / unknown | Evaluation |",
+		"| Country | Status | Addresses available | Addresses sampled | Groups | Place names sampled | Sources | Unseen / unseen by candidate / overlap / unknown | Evaluation |",
 		"| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
 	]
 
@@ -278,7 +278,7 @@ export function renderCoverageRegisterMarkdown(register: CoverageRegister, comma
 			: INSUFFICIENT
 
 		const provenance = row.provenance
-			? `${row.provenance.verified_unseen} / ${row.provenance.known_overlap} / ${row.provenance.unknown}`
+			? `${row.provenance.verified_unseen} / ${row.provenance.unseen_by_candidate} / ${row.provenance.known_overlap} / ${row.provenance.unknown}`
 			: INSUFFICIENT
 
 		const evaluation = `${EVALUATION_LABEL[row.evaluation.status]}${row.evaluation.reasons.length ? `: ${row.evaluation.reasons.join("; ")}` : ""}`

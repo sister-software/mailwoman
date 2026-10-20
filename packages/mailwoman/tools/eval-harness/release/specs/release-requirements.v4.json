@@ -1,0 +1,192 @@
+{
+	"schemaVersion": 3,
+	"specVersion": "4",
+	"rationale": "Version 4 carries every value of version 3 (docs/records/evals/2026-10-20-release-requirements-v3.md, issue #2763) and changes two things, both from section 7 of that record. Item 3: provenance admission is per check kind (schema 3). A minimum check reads rows the candidate never trained on, verified_unseen and unseen_by_candidate, because a row the published model trained on still measures the candidate; the objective and max-loss checks read only verified_unseen rows, because a row either model trained on favors that model in a comparison. This lets a holdout added at a base rebuild (ES, IT, AU, NZ) decide those countries' minima although 10.7.0 trained on the rows. Item 5: the inference identity names the served-locale-package rule that scoreHeldoutWeights now applies, in place of the en-US package for every row. No candidate result had been examined under version 3; no confirmation read is recorded.",
+	"requirements": [
+		{
+			"id": "country-US",
+			"kind": "country",
+			"country": "US",
+			"reason": "Shipped en-us graph: rooftop geocoding, the demo default, postcode-us.bin and pair-index-us.bin. Exact parse of house number, street with the corpus affix split, locality, region and ZIP on three rows in five.",
+			"minimum": 0.6,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-FR",
+			"kind": "country",
+			"country": "FR",
+			"reason": "Shipped fr-fr overlay: rooftop geocoding over BAN and the lieu-dit pair index. Number, street, postcode and locality exact on nine rows in ten.",
+			"minimum": 0.9,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-GB",
+			"kind": "country",
+			"country": "GB",
+			"reason": "Shipped en-gb overlay: postcode-gb.bin, the GB pair index and county-as-region rows. Number, street, locality and postcode exact on four rows in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-DE",
+			"kind": "country",
+			"country": "DE",
+			"reason": "Shipped de-de overlay with the Ortsteil pair index. Street, number, PLZ and locality exact in either order on seventeen rows in twenty.",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-IN",
+			"kind": "country",
+			"country": "IN",
+			"reason": "Shipped en-in overlay with the area-line pair index. Area line, locality and PIN exact on half the OSM-style rows.",
+			"minimum": 0.5,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-ES",
+			"kind": "country",
+			"country": "ES",
+			"reason": "Shipped es-es overlay with a pair index; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-IT",
+			"kind": "country",
+			"country": "IT",
+			"reason": "Shipped it-it overlay with a pair index; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-AU",
+			"kind": "country",
+			"country": "AU",
+			"reason": "Shipped en-au overlay, GNAF-trained; tier-2 claim. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "country-NZ",
+			"kind": "country",
+			"country": "NZ",
+			"reason": "Shipped en-nz overlay with the LINZ pair index. Register rows exact on four in five.",
+			"minimum": 0.8,
+			"select": {
+				"kinds": ["address"]
+			}
+		},
+		{
+			"id": "po_box_cedex",
+			"kind": "capability",
+			"task": "Reading a PO Box, locked bag or CEDEX designator as one component beside an intact locality line",
+			"metric": "exact_parse",
+			"reason": "Closed-vocabulary slot behind the former us.po_box_real and fr.cedex_real floors.",
+			"minimum": 0.85,
+			"maxLoss": 0.05,
+			"maxLossReason": "A closed-vocabulary slot that moves 5 pp has lost a surface form; the country minima would absorb a loss this size.",
+			"select": {
+				"kinds": ["address"],
+				"sources": ["invented-po-box-cedex"]
+			}
+		},
+		{
+			"id": "venue_unit",
+			"kind": "capability",
+			"task": "Recovering a venue name and its unit designator ahead of the street line",
+			"metric": "exact_parse",
+			"reason": "The former us.unit_real floor (n=34) on the one held-out source with a controlled unit span (1,936 rows).",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"],
+				"sources": ["spliced-sub-venue"]
+			}
+		},
+		{
+			"id": "country_token",
+			"kind": "capability",
+			"task": "A trailing country name tagged country rather than absorbed into the locality",
+			"metric": "exact_parse",
+			"reason": "The former us.country_homograph_f1 floor (n=54) protected the country slot; the homograph confound stays a diagnostic.",
+			"minimum": 0.85,
+			"select": {
+				"kinds": ["address"],
+				"sources": ["spliced-country"]
+			}
+		}
+	],
+	"objective": {
+		"countries": ["US", "FR", "GB", "DE", "IN", "ES", "IT", "AU", "NZ"],
+		"select": {
+			"kinds": ["address"]
+		},
+		"minimumImprovement": 0
+	},
+	"identities": {
+		"dataset": {
+			"id": null,
+			"sha256": null
+		},
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "02fec0af5"
+		},
+		"inference": {
+			"description": "HELDOUT_INFERENCE_RULE in heldout/per/country.ts (served-locale-package): each row is parsed by the shipped Latin locale package for its country (release.config.json locales), falling back to en-us, with the row's country as localeHint; a package whose loader reports an unfed required channel is refused. The verdict records the rule and the rows each package parsed.",
+			"options": {
+				"postcodeRepair": true,
+				"localeHint": "row.country",
+				"weightsLocale": "served-locale-package"
+			}
+		},
+		"published": {
+			"description": "@mailwoman/neural-weights-en-us 10.7.0 model.onnx (int8, md5 5356ecba83e3774a5d9717277c051ac2)",
+			"sha256": "e90aeab4b07d03a5b599331c1e68aa70d37e96478151795bcdc6dabb82d9aca9"
+		},
+		"candidate": {
+			"description": "The exact release artifact's model.onnx",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": 0.95,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"rowsIndependent": false,
+		"groupingAssumption": "A row's independent unit is its group within its country: base_source_id when derived, else source_id. Rows are not declared independent, so a check that reads an ungrouped row is insufficient evidence. Limitation: structure shared across groups (one source's conventions, one place's many addresses) is not modelled. The dataset quota counts groups, not rows, against 1,000 per country.",
+		"requiredPrecision": 0.08
+	},
+	"provenance": {
+		"admitted": {
+			"minimum": ["verified_unseen", "unseen_by_candidate"],
+			"comparative": ["verified_unseen"]
+		}
+	},
+	"evaluations": {
+		"development": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-dev with one seed; used for recipe, checkpoint and seed selection."
+		},
+		"confirmation": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-confirm with a disjoint seed; read only for the release decision, every read recorded in the next spec version's rationale."
+		}
+	}
+}

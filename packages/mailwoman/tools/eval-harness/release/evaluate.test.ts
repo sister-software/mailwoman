@@ -14,10 +14,18 @@ import { type ReleaseRequirementSpec, validateReleaseSpec } from "#tools/eval-ha
 const PUBLISHED = "a".repeat(64)
 const CANDIDATE = "b".repeat(64)
 const artifacts = { published: PUBLISHED, candidate: CANDIDATE }
+const INFERENCE = { rule: "test rule" }
+
+const evaluate = (
+	spec: ReleaseRequirementSpec,
+	rows: readonly PairedRow[],
+	measured: { published: string; candidate: string },
+	inference: { rule: string | null } = INFERENCE
+) => evaluateReleaseSpec(spec, rows, measured, inference)
 
 const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequirementSpec =>
 	validateReleaseSpec({
-		schemaVersion: 2,
+		schemaVersion: 3,
 		specVersion: "test",
 		rationale: "test",
 		requirements: [
@@ -45,7 +53,7 @@ const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequi
 			groupingAssumption: "test",
 			requiredPrecision: null,
 		},
-		provenance: { admitted: ["verified_unseen"] },
+		provenance: { admitted: { minimum: ["verified_unseen", "unseen_by_candidate"], comparative: ["verified_unseen"] } },
 		evaluations: {
 			development: { id: null, description: "d" },
 			confirmation: { id: null, description: "c" },
@@ -64,6 +72,7 @@ const rowsFor = (country: string, n: number, published: number, candidate: numbe
 		kind: "address",
 		provenance: "verified_unseen",
 		group: group ? group(i) : null,
+		weightsLocale: "en-us",
 		published: i < published,
 		candidate: i < candidate,
 	}))
@@ -84,11 +93,7 @@ describe("evaluateReleaseSpec", () => {
 			],
 		})
 
-		const verdict = evaluateReleaseSpec(
-			spec,
-			[...rowsFor("US", 200, 180, 200), ...rowsFor("FR", 200, 180, 200)],
-			artifacts
-		)
+		const verdict = evaluate(spec, [...rowsFor("US", 200, 180, 200), ...rowsFor("FR", 200, 180, 200)], artifacts)
 
 		expect(check(verdict, "us").outcome).toBe(ReleaseOutcome.Insufficient)
 		expect(check(verdict, "us").reasons).toContain("threshold unregistered")
@@ -96,13 +101,13 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("reads the current specification as insufficient evidence when required countries have no rows", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v3\.json$/u)
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v4\.json$/u)
 
 		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v3.json", import.meta.url).pathname)
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v4.json", import.meta.url).pathname)
 		)
 
-		const verdict = evaluateReleaseSpec(committed, rowsFor("US", 50, 40, 45), {
+		const verdict = evaluate(committed, rowsFor("US", 50, 40, 45), {
 			published: committed.identities.published.sha256!,
 			candidate: CANDIDATE,
 		})
@@ -111,33 +116,21 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("passes when every lower bound clears its threshold", () => {
-		const verdict = evaluateReleaseSpec(
-			baseSpec(),
-			[...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)],
-			artifacts
-		)
+		const verdict = evaluate(baseSpec(), [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)], artifacts)
 
 		expect(verdict.checks.map((c) => c.outcome)).toEqual([ReleaseOutcome.Pass, ReleaseOutcome.Pass])
 		expect(verdict.outcome).toBe(ReleaseOutcome.Pass)
 	})
 
 	it("fails when the upper bound is below a minimum", () => {
-		const verdict = evaluateReleaseSpec(
-			baseSpec(),
-			[...rowsFor("US", 400, 100, 100), ...rowsFor("FR", 400, 300, 380)],
-			artifacts
-		)
+		const verdict = evaluate(baseSpec(), [...rowsFor("US", 400, 100, 100), ...rowsFor("FR", 400, 300, 380)], artifacts)
 
 		expect(check(verdict, "us").outcome).toBe(ReleaseOutcome.Fail)
 		expect(verdict.outcome).toBe(ReleaseOutcome.Fail)
 	})
 
 	it("reports insufficient evidence when an interval crosses the threshold", () => {
-		const verdict = evaluateReleaseSpec(
-			baseSpec(),
-			[...rowsFor("US", 20, 10, 11), ...rowsFor("FR", 400, 300, 380)],
-			artifacts
-		)
+		const verdict = evaluate(baseSpec(), [...rowsFor("US", 20, 10, 11), ...rowsFor("FR", 400, 300, 380)], artifacts)
 
 		const us = check(verdict, "us")
 
@@ -148,7 +141,7 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("reports insufficient evidence for a required country without rows", () => {
-		const verdict = evaluateReleaseSpec(baseSpec(), rowsFor("FR", 400, 300, 380), artifacts)
+		const verdict = evaluate(baseSpec(), rowsFor("FR", 400, 300, 380), artifacts)
 
 		expect(check(verdict, "us").reasons).toContain("required country US has no admitted rows")
 		expect(check(verdict, "objective").outcome).toBe(ReleaseOutcome.Insufficient)
@@ -156,9 +149,10 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("weights each objective country equally regardless of row count", () => {
-		const verdict = evaluateReleaseSpec(
+		const verdict = evaluate(
 			baseSpec(),
-			// US gains 0.1 on 2000 rows; FR loses 0.4 on 50 rows.
+			// US gains 0.1 on 2000 rows.
+			// FR loses 0.4 on 50 rows.
 			// Row-weighted the change is positive.
 			[...rowsFor("US", 2000, 1600, 1800), ...rowsFor("FR", 50, 40, 20)],
 			artifacts
@@ -174,21 +168,96 @@ describe("evaluateReleaseSpec", () => {
 			provenance: "unknown" as const,
 		}))
 
-		const verdict = evaluateReleaseSpec(baseSpec(), rows, artifacts)
+		const verdict = evaluate(baseSpec(), rows, artifacts)
 
 		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
-		expect(verdict.provenance.find((p) => p.provenance === "unknown")).toMatchObject({ admitted: false, rows: 800 })
+
+		expect(verdict.provenance.find((p) => p.provenance === "unknown")).toMatchObject({
+			admitted: { minimum: false, comparative: false },
+			rows: 800,
+		})
+	})
+
+	it("lets minimum checks read rows unseen by the candidate while comparative checks read only rows unseen by both", () => {
+		const unseenByCandidate = (rows: PairedRow[]) =>
+			rows.map((row) => ({ ...row, provenance: "unseen_by_candidate" as const }))
+
+		const spec = baseSpec({
+			requirements: [
+				{ id: "us", kind: "country", country: "US", reason: "t", minimum: 0.5 },
+				{
+					id: "cap",
+					kind: "capability",
+					task: "t",
+					metric: "exact_parse",
+					reason: "t",
+					minimum: 0.5,
+					maxLoss: 0.05,
+					maxLossReason: "t",
+					select: { countries: ["US"] },
+				},
+			],
+		})
+
+		// US rows were in the published model's training data only.
+		// FR rows are unseen by both.
+		const verdict = evaluate(
+			spec,
+			[...unseenByCandidate(rowsFor("US", 400, 390, 380)), ...rowsFor("FR", 400, 300, 380)],
+			artifacts
+		)
+
+		expect(verdict.checks.find((c) => c.id === "us" && c.check === "minimum")).toMatchObject({
+			rows: 400,
+			outcome: ReleaseOutcome.Pass,
+		})
+
+		expect(verdict.checks.find((c) => c.id === "cap" && c.check === "max_loss")).toMatchObject({
+			rows: 0,
+			outcome: ReleaseOutcome.Insufficient,
+		})
+
+		const objective = check(verdict, "objective")
+
+		expect(objective.rows).toBe(400)
+		expect(objective.reasons).toContain("required country US has no admitted rows")
+
+		expect(verdict.provenance.find((p) => p.provenance === "unseen_by_candidate")).toMatchObject({
+			admitted: { minimum: true, comparative: false },
+			rows: 400,
+		})
+	})
+
+	it("reports the inference rule and refuses outcomes that record none", () => {
+		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)]
+		const recorded = evaluate(baseSpec(), rows, artifacts)
+
+		expect(recorded.inference).toEqual({ rule: "test rule", rowsByWeightsLocale: { "en-us": 800 } })
+
+		const unrecorded = evaluate(baseSpec(), rows, artifacts, { rule: null })
+
+		expect(unrecorded.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(unrecorded.reasons.join(" ")).toMatch(/no inference rule/u)
+
+		const noLocale = evaluate(
+			baseSpec(),
+			rows.map((row) => ({ ...row, weightsLocale: null })),
+			artifacts
+		)
+
+		expect(noLocale.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(noLocale.inference.rowsByWeightsLocale).toEqual({ unrecorded: 800 })
 	})
 
 	it("is deterministic", () => {
 		const rows = [...rowsFor("US", 60, 30, 40), ...rowsFor("FR", 60, 30, 40)]
 
-		expect(evaluateReleaseSpec(baseSpec(), rows, artifacts)).toEqual(evaluateReleaseSpec(baseSpec(), rows, artifacts))
+		expect(evaluate(baseSpec(), rows, artifacts)).toEqual(evaluate(baseSpec(), rows, artifacts))
 	})
 
 	it("refuses an artifact whose hash differs from the registered identity", () => {
 		expect(() =>
-			evaluateReleaseSpec(baseSpec(), rowsFor("US", 10, 5, 5), {
+			evaluate(baseSpec(), rowsFor("US", 10, 5, 5), {
 				published: PUBLISHED,
 				candidate: "c".repeat(64),
 			})
@@ -205,7 +274,7 @@ describe("small and degenerate samples", () => {
 			objective: { countries: ["US"], minimumImprovement: -0.05 },
 		})
 
-		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 10, 10, 10, grouped), artifacts)
+		const verdict = evaluate(spec, rowsFor("US", 10, 10, 10, grouped), artifacts)
 		const us = check(verdict, "us")
 
 		expect(us.estimate).toBe(1)
@@ -218,7 +287,7 @@ describe("small and degenerate samples", () => {
 
 	it("gives a sample with no discordant pair a non-zero width and does not pass it", () => {
 		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: 0 } })
-		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 20, 15, 15, grouped), artifacts)
+		const verdict = evaluate(spec, rowsFor("US", 20, 15, 15, grouped), artifacts)
 		const objective = check(verdict, "objective")
 
 		expect(objective.estimate).toBe(0)
@@ -229,7 +298,7 @@ describe("small and degenerate samples", () => {
 
 	it("decides a degenerate difference once the sample is large", () => {
 		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.05 } })
-		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 4000, 3000, 3000, grouped), artifacts)
+		const verdict = evaluate(spec, rowsFor("US", 4000, 3000, 3000, grouped), artifacts)
 		const objective = check(verdict, "objective")
 
 		expect(objective.degenerateStrata).toEqual(["US"])
@@ -240,7 +309,7 @@ describe("small and degenerate samples", () => {
 	it("reports a stratum of one unit as insufficient rather than zero width", () => {
 		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.5 } })
 
-		const verdict = evaluateReleaseSpec(
+		const verdict = evaluate(
 			spec,
 			rowsFor("US", 5, 5, 5, () => "one"),
 			artifacts
@@ -261,7 +330,7 @@ describe("grouping", () => {
 	})
 
 	it("reports insufficient evidence for ungrouped rows when rows are not declared independent", () => {
-		const verdict = evaluateReleaseSpec(
+		const verdict = evaluate(
 			notIndependent(baseSpec()),
 			[...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)],
 			artifacts
@@ -278,7 +347,7 @@ describe("grouping", () => {
 	})
 
 	it("decides grouped rows when rows are not declared independent", () => {
-		const verdict = evaluateReleaseSpec(
+		const verdict = evaluate(
 			notIndependent(baseSpec()),
 			[...rowsFor("US", 400, 300, 380, (i) => `g${i}`), ...rowsFor("FR", 400, 300, 380, (i) => `g${i}`)],
 			artifacts
@@ -288,13 +357,13 @@ describe("grouping", () => {
 	})
 
 	it("widens a rate's bounds when variants share a group", () => {
-		// Groups of five identical rows: 80 independent units, not 400.
+		// Groups of five identical rows: 400 rows make 80 independent units.
 		const rows = rowsFor("US", 400, 300, 300, (i) => `g${Math.floor(i / 5)}`)
 		const spec = baseSpec({ objective: { countries: ["US"], minimumImprovement: -1 } })
-		const groupedUS = check(evaluateReleaseSpec(notIndependent(spec), rows, artifacts), "us")
+		const groupedUS = check(evaluate(notIndependent(spec), rows, artifacts), "us")
 
 		const independentUS = check(
-			evaluateReleaseSpec(
+			evaluate(
 				spec,
 				rows.map((row) => ({ ...row, group: null })),
 				artifacts
@@ -325,5 +394,15 @@ describe("pairOutcomes", () => {
 
 	it("refuses an unreadable outcome", () => {
 		expect(() => pairOutcomes([row("a", true)], [{ ...row("a", true), exact: "yes" as never }])).toThrow(/unreadable/u)
+	})
+
+	it("carries the weights locale and refuses arms parsed by different packages", () => {
+		expect(
+			pairOutcomes([{ ...row("a", true), weightsLocale: "en-gb" }], [{ ...row("a", false), weightsLocale: "en-gb" }])[0]
+		).toMatchObject({ weightsLocale: "en-gb" })
+
+		expect(() =>
+			pairOutcomes([{ ...row("a", true), weightsLocale: "en-gb" }], [{ ...row("a", true), weightsLocale: "en-us" }])
+		).toThrow(/different weights locale packages/u)
 	})
 })

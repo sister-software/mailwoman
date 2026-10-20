@@ -13,8 +13,8 @@
  *   Every arm records one outcome per row, keyed by a stable row identity, so a later step can compute paired
  *   differences between the published model and a candidate. The primary outcome is exact parse correctness
  *   (`score/exact-parse`). Two diagnostics remain: a gold span counts as recovered when the parse holds its
- *   text, folded, under the same tag, and `goldRecovered` marks a row whose every gold span was recovered,
- *   which permits additional predictions and is therefore not exact parse accuracy.
+ *   text, folded, under the same tag, and `goldRecovered` marks a row whose every gold span was recovered.
+ *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -22,6 +22,7 @@ import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
@@ -43,13 +44,13 @@ export interface HeldoutRow {
 	source: string
 	source_id: string | null
 	/**
-	 * The independent sampling unit the row belongs to; see {@linkcode heldoutRowGroup}.
+	 * The independent sampling unit the row belongs to, as {@linkcode heldoutRowGroup} keys it.
 	 */
 	group: string
 }
 
 /**
- * The kind of a held-out row; see {@linkcode heldoutRowKind}.
+ * The kind of a held-out row, as {@linkcode heldoutRowKind} reads it.
  */
 export type HeldoutRowKind = "gazetteer" | "address"
 
@@ -58,6 +59,10 @@ export type HeldoutRowKind = "gazetteer" | "address"
  *
  * - `verified_unseen`: a recorded exclusion history shows neither the published model
  *   nor the candidate trained on the row.
+ * - `unseen_by_candidate`: a recorded history shows the candidate did not train on the row,
+ *   while the published model did or its history is not established.
+ *   A minimum check may read such a row.
+ *   A comparative check may not, because the row favors the published model.
  * - `known_overlap`: a recorded history shows at least one of them trained on the row.
  * - `unknown`: no recorded history covers the row.
  *
@@ -66,7 +71,7 @@ export type HeldoutRowKind = "gazetteer" | "address"
  * Membership in the test split is not evidence: a row moved into the test split by a
  * split repair may have been in the published model's training data.
  */
-export type HeldoutProvenance = "verified_unseen" | "known_overlap" | "unknown"
+export type HeldoutProvenance = "verified_unseen" | "unseen_by_candidate" | "known_overlap" | "unknown"
 
 /**
  * A recorded exclusion history entry for one row.
@@ -108,6 +113,11 @@ export interface HeldoutRowOutcome {
 	group: string
 	provenance: HeldoutProvenance
 	/**
+	 * The weights locale package that parsed the row, under {@linkcode HELDOUT_INFERENCE_RULE}.
+	 * Absent when the parse function named no package.
+	 */
+	weightsLocale?: string
+	/**
 	 * The predicted spans equal the annotated spans, with no missing and no additional span.
 	 */
 	exact: boolean
@@ -116,7 +126,8 @@ export interface HeldoutRowOutcome {
 	spans: number
 	spansRecovered: number
 	/**
-	 * Every gold span was recovered by folded text; additional predictions are permitted.
+	 * Every gold span was recovered by folded text.
+	 * Additional predictions are permitted.
 	 */
 	goldRecovered: boolean
 }
@@ -189,9 +200,10 @@ export const HELDOUT_GROUP_COLUMNS = ["source_id", "base_source_id"] as const
  * which widens an interval rather than narrowing it.
  *
  * Limits: the group joins only rows linked through `base_source_id`.
- * Two distinct rows describing the same address from different publishers, or many
- * addresses on one street or in one small place, remain separate groups; a larger unit
- * for that shared place or source structure needs a key the corpus does not yet record.
+ * Two distinct rows describing the same address from different publishers,
+ * or many addresses on one street or in one small place, remain separate groups.
+ *
+ * A larger unit for that shared place or source structure needs a key the corpus does not yet record.
  *
  * @throws When neither column holds a non-empty string: an unreadable grouping column
  * is refused rather than defaulted to the row's own identity.
@@ -422,7 +434,8 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 export async function scoreHeldoutArm(
 	rows: readonly HeldoutRow[],
 	parse: (row: HeldoutRow) => Promise<AddressTree>,
-	history?: ProvenanceHistory
+	history?: ProvenanceHistory,
+	weightsLocaleFor?: (row: HeldoutRow) => string
 ): Promise<HeldoutArmResult> {
 	const outcomes: HeldoutRowOutcome[] = []
 	const cells = new Map<string, CountryScore>()
@@ -430,6 +443,10 @@ export async function scoreHeldoutArm(
 
 	for (const row of rows) {
 		const outcome = scoreHeldoutRow(row, await parse(row), history)
+
+		if (weightsLocaleFor) {
+			outcome.weightsLocale = weightsLocaleFor(row)
+		}
 
 		if (seen.has(outcome.rowID)) {
 			throw new Error(`two held-out rows share the identity ${outcome.rowID}`)
@@ -488,25 +505,104 @@ export function assertPairedArms(arms: readonly HeldoutArmResult[]): void {
 }
 
 /**
- * Scores one model, loaded from a package-shaped weights directory as `mwdev_arc` takes, over every row.
+ * The rule that chooses the weights package each held-out row is parsed with,
+ * recorded in every report and every release verdict.
+ */
+export const HELDOUT_INFERENCE_RULE =
+	"served-locale-package: each row is parsed by the shipped Latin locale package whose region subtag is the " +
+	"row's country (release.config.json `locales`, through weightsPackageByCountry), loaded from the arm's " +
+	"weights cache; a country without a shipped package is parsed by en-us. NeuralAddressClassifier.parse runs " +
+	"with postcodeRepair and the row's country as localeHint. A package whose loader reports an unfed required " +
+	"channel is refused."
+
+/**
+ * The base package a country without its own shipped package is parsed with.
+ */
+export const HELDOUT_BASE_LOCALE = "en-us"
+
+/**
+ * Returns the shipped Latin locale packages keyed by country, as production installs them.
+ *
+ * Only `locales` is read: the character-path families in `charWeights` are separate graphs
+ * and outside the Latin graph's release requirements.
+ */
+export async function readHeldoutLocalePackages(): Promise<ReadonlyMap<string, string>> {
+	const config = await readReleaseConfig()
+
+	return weightsPackageByCountry({ locales: config.locales })
+}
+
+/**
+ * The weights locale package a row is parsed with under {@linkcode HELDOUT_INFERENCE_RULE}.
+ */
+export function heldoutWeightsLocale(country: string | null, packages: ReadonlyMap<string, string>): string {
+	return (country && packages.get(country.toUpperCase())) || HELDOUT_BASE_LOCALE
+}
+
+/**
+ * The part of a loaded classifier the held-out scorer uses.
+ */
+export type HeldoutClassifier = Pick<NeuralAddressClassifier, "parse" | "unfedChannels">
+
+/**
+ * Loads one locale package from a weights cache.
+ */
+export type HeldoutClassifierLoader = (locale: string, cacheRoot: string) => Promise<HeldoutClassifier>
+
+const loadFromCache: HeldoutClassifierLoader = (locale, cacheRoot) =>
+	NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot })
+
+/**
+ * Scores one model, loaded from a package-shaped weights cache as `mwdev_arc` takes, over every row,
+ * parsing each row with the package {@linkcode HELDOUT_INFERENCE_RULE} names and recording it per row.
+ *
+ * @throws When a package the rows need is absent from the cache, or its loader reports an unfed
+ * required channel: a degraded configuration is not the product the requirements describe.
  */
 export async function scoreHeldoutWeights(
 	rows: readonly HeldoutRow[],
 	cacheRoot: string,
-	history?: ProvenanceHistory
+	history?: ProvenanceHistory,
+	options: { packages?: ReadonlyMap<string, string>; load?: HeldoutClassifierLoader } = {}
 ): Promise<HeldoutArmResult> {
-	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		locale: "en-US",
-		cacheRoot,
-	})
+	const packages = options.packages ?? (await readHeldoutLocalePackages())
+	const load = options.load ?? loadFromCache
+	const classifiers = new Map<string, Promise<HeldoutClassifier>>()
+
+	const classifierFor = (locale: string): Promise<HeldoutClassifier> => {
+		let pending = classifiers.get(locale)
+
+		if (!pending) {
+			pending = load(locale, cacheRoot).then((classifier) => {
+				const [unfed, ...more] = classifier.unfedChannels
+
+				if (unfed) {
+					throw new Error(
+						`refusing to score ${locale} from ${cacheRoot}: the loader reports the required ${unfed.channel} ` +
+							`channel unfed for ${unfed.weightsPackage} (${unfed.detail})` +
+							(more.length ? `, and ${more.map((m) => m.channel).join(", ")} as well` : "")
+					)
+				}
+
+				return classifier
+			})
+
+			classifiers.set(locale, pending)
+		}
+
+		return pending
+	}
+
+	const localeFor = (row: HeldoutRow) => heldoutWeightsLocale(row.country, packages)
 
 	return scoreHeldoutArm(
 		rows,
-		(row) =>
-			classifier.parse(row.raw, {
+		async (row) =>
+			(await classifierFor(localeFor(row))).parse(row.raw, {
 				postcodeRepair: true,
 				...(row.country ? { localeHint: row.country } : {}),
 			}),
-		history
+		history,
+		localeFor
 	)
 }

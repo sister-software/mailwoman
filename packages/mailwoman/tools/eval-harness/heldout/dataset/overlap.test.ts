@@ -130,6 +130,7 @@ describe("auditHeldoutOverlap", () => {
 
 		expect(result.audit.counts).toEqual({
 			verified_unseen: 2,
+			unseen_by_candidate: 0,
 			known_overlap: 2,
 			unknown: 0,
 		})
@@ -172,12 +173,93 @@ describe("auditHeldoutOverlap", () => {
 
 		expect(result.audit.counts).toEqual({
 			verified_unseen: 0,
+			unseen_by_candidate: 0,
 			known_overlap: 2,
 			unknown: 2,
 		})
 
 		expect(result.unknown.toSorted()).toEqual(["oa-us:fresh", "oa-us:held-only"])
 		expect(Object.values(result.rows).every((record) => record.provenance === "known_overlap")).toBe(true)
+	})
+
+	it("classes rows absent from the candidate's corpus unseen_by_candidate, even where the published model trained on them", async () => {
+		const published = await writeCorpus("ubc-published", "v-ubc-published")
+		const publishedCard = await writeCard("ubc-published", "v-ubc-published")
+		const candidateCorpus = `${root}/ubc-candidate/MANIFEST.json`
+		const trainRows = await writeIDs("ubc-candidate/train/part-0.parquet", [["oa-us", "variant-base", null]])
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "v-ubc-candidate",
+				slices: [{ path: "/data/ubc-candidate/train/part-0.parquet", split: "train", rows: trainRows, sha256: "t" }],
+			},
+			candidateCorpus
+		)
+
+		const candidateCard = await writeCard("ubc-candidate", "v-ubc-candidate")
+
+		const result = await auditHeldoutOverlap({
+			dataset,
+			corpora: [published, candidateCorpus],
+			modelCards: [publishedCard, candidateCard],
+			candidateModelCard: candidateCard,
+			pathRoot: root,
+		})
+
+		expect(result.audit.counts).toEqual({
+			verified_unseen: 2,
+			unseen_by_candidate: 1,
+			known_overlap: 1,
+			unknown: 0,
+		})
+
+		// "same" is in the published corpus only; "variant-base" is in the candidate's.
+		expect(result.rows["oa-us:same"]).toMatchObject({ provenance: "unseen_by_candidate" })
+
+		expect(result.rows["oa-us:same"]!.evidence).toMatch(
+			/absent from the candidate's v-ubc-candidate.*identity oa-us:same in v-ubc-published/u
+		)
+
+		expect(result.rows["oa-us:variant-base"]).toMatchObject({ provenance: "known_overlap" })
+	})
+
+	it("classes unseen_by_candidate rows when only the published model's history is unestablished", async () => {
+		const corpus = await writeCorpus("ubc-only", "v-ubc-only")
+		const candidateCard = await writeCard("ubc-only", "v-ubc-only")
+		const unread = await writeCard("ubc-unread", "v-ubc-never-read")
+
+		const result = await auditHeldoutOverlap({
+			dataset,
+			corpora: [corpus],
+			modelCards: [unread, candidateCard],
+			candidateModelCard: candidateCard,
+			pathRoot: root,
+		})
+
+		expect(result.audit.verifiedUnseenAdmitted).toBe(false)
+		expect(result.audit.counts).toEqual({ verified_unseen: 0, unseen_by_candidate: 2, known_overlap: 2, unknown: 0 })
+		expect(result.rows["oa-us:fresh"]!.evidence).toMatch(/published model's history is not established/u)
+
+		const swapped = await auditHeldoutOverlap({
+			dataset,
+			corpora: [corpus],
+			modelCards: [unread, candidateCard],
+			candidateModelCard: unread,
+			pathRoot: root,
+		})
+
+		// A candidate card whose corpus was left unread leaves the candidate's history unestablished.
+		expect(swapped.audit.counts).toEqual({ verified_unseen: 0, unseen_by_candidate: 0, known_overlap: 2, unknown: 2 })
+
+		await expect(
+			auditHeldoutOverlap({
+				dataset,
+				corpora: [corpus],
+				modelCards: [unread],
+				candidateModelCard: candidateCard,
+				pathRoot: root,
+			})
+		).rejects.toThrow(/not among the model cards named/u)
 	})
 
 	it("refuses verified_unseen when no model card is named", async () => {

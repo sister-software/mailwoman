@@ -16,7 +16,7 @@
  *       discordance d = P(published != candidate): P(1, 0) = (d - delta) / 2 and P(0, 1) = (d + delta) / 2, with
  *       delta the true candidate minus published rate.
  *   - Rows come in groups of `groupSize`. With probability `correlation` a group shares one pair for every
- *       member, as derived variants of one address would; otherwise each member draws its own pair. Each arm's
+ *       member, as derived variants of one address would. Otherwise each member draws its own pair. Each arm's
  *       marginal rate is preserved, and the within-group correlation of either arm's outcome is `correlation`.
  *   - `grouping: "metadata"` gives every row its group id; `"row_identity"` omits it, so the evaluator treats
  *       every row as independent.
@@ -53,7 +53,9 @@ export interface SimulatedCountry {
 	 */
 	discordance?: number
 	/**
-	 * Rows per group; the last group may be smaller.
+	 * Rows per group.
+	 *
+	 * The last group may be smaller.
 	 * Defaults to 1.
 	 */
 	groupSize?: number
@@ -84,8 +86,10 @@ export interface SimulationScenario {
 	confidenceLevel: number
 	multipleComparison?: MultipleComparisonMethod
 	/**
-	 * `row_identity` omits the group field; the synthetic specification never declares
-	 * rows independent, so those scenarios measure the refusal of ungrouped rows.
+	 * `row_identity` omits the group field.
+	 *
+	 * The synthetic specification never declares rows independent, so those scenarios
+	 * measure the refusal of ungrouped rows.
 	 */
 	grouping: "metadata" | "row_identity"
 	selection?: { candidates: number; confirmation: "same" | "fresh" }
@@ -322,6 +326,7 @@ function drawSet(scenario: SimulationScenario, random: () => number): DrawnSet {
 					kind: "address",
 					provenance: "verified_unseen",
 					group: scenario.grouping === "metadata" ? `${c.country}:g${g}` : null,
+					weightsLocale: "simulation",
 					published: unitPublished[unit] === 1,
 				})
 			}
@@ -378,7 +383,7 @@ const CANDIDATE_SHA = "1".repeat(64)
 export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSpec {
 	return validateReleaseSpec(
 		{
-			schemaVersion: 2,
+			schemaVersion: 3,
 			specVersion: `simulation:${scenario.id}`,
 			rationale: "Simulation parameters for statistical validation; not a registered requirement.",
 			requirements: scenario.countries
@@ -415,7 +420,7 @@ export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSp
 				groupingAssumption: `simulation: ${scenario.grouping}`,
 				requiredPrecision: null,
 			},
-			provenance: { admitted: ["verified_unseen"] },
+			provenance: { admitted: { minimum: ["verified_unseen"], comparative: ["verified_unseen"] } },
 			evaluations: {
 				development: { id: null, description: "simulation" },
 				confirmation: { id: null, description: "simulation" },
@@ -522,10 +527,12 @@ export function simulateScenario(scenario: SimulationScenario, repetitions: numb
 
 		rowsPerSet = paired.length
 
-		const verdict = evaluateReleaseSpec(scenarioSpec(scenario), paired, {
-			published: PUBLISHED_SHA,
-			candidate: CANDIDATE_SHA,
-		})
+		const verdict = evaluateReleaseSpec(
+			scenarioSpec(scenario),
+			paired,
+			{ published: PUBLISHED_SHA, candidate: CANDIDATE_SHA },
+			{ rule: "simulation" }
+		)
 
 		if (verdict.outcome === ReleaseOutcome.Pass) {
 			pass++

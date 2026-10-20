@@ -188,6 +188,25 @@ export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: 
 export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
 
 /**
+ * One required channel that `loadFromWeights` could not feed, as the loaded classifier reports it.
+ *
+ * The console warning is deduplicated per process.
+ * This record is kept on every classifier it applies to, so a caller that must
+ * refuse a degraded parse reads it rather than the log.
+ */
+export interface UnfedChannelReport {
+	channel: UnfedChannel
+	/**
+	 * The weights package directory, or the resolution source when no directory was resolved.
+	 */
+	weightsPackage: string
+	/**
+	 * Why the channel is unfed, such as the declared file that is missing.
+	 */
+	detail: string
+}
+
+/**
  * The process-wide set of `<channel>:<package>` keys already warned about.
  */
 const warnedUnfedChannels = new Set<string>()
