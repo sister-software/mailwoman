@@ -188,7 +188,6 @@ export function cadastralRow(address: CadastralAddress, source: CadastralSource)
 		source_id: address.addressID
 			? `${source.adapterID}-${address.addressID}`
 			: stableSourceID(source.adapterID, aligned),
-		corpus_version: "",
 		license: source.license,
 	}
 }

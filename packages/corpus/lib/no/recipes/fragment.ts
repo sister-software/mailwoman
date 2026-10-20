@@ -109,7 +109,6 @@ export const noFragmentRecipe: CorpusRecipe = {
 				locale: "nb-NO",
 				source: NO_FRAGMENT_SOURCE,
 				source_id,
-				corpus_version: "0.11.0",
 				license: "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
 			}
 

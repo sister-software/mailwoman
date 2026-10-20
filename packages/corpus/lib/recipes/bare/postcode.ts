@@ -276,7 +276,6 @@ export const barePostcodeRecipe: CorpusRecipe = {
 							...components,
 							c: country,
 						}),
-						corpus_version: "0.30.0",
 						license:
 							"Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
 					}

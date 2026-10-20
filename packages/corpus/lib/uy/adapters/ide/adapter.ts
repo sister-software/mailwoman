@@ -254,7 +254,6 @@ export function createIDEUruguayAdapter(): CorpusAdapter {
 							lat: record.latitud ?? "",
 							lon: record.longitud ?? "",
 						}),
-						corpus_version: "",
 						license: IDE_UY_LICENSE,
 					}
 

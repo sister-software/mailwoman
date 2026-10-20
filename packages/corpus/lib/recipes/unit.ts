@@ -298,7 +298,6 @@ export const unitRecipe: CorpusRecipe = {
 				locale: "en-US",
 				source,
 				source_id: stableSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					"OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 			}
@@ -314,7 +313,6 @@ export const unitRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "unit",
 					base_source_id: null,
 					register: base.register ?? requireRegister(opts, "unit"),
 					surface: SurfaceOrigin.Composed,

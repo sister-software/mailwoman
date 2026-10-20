@@ -320,7 +320,6 @@ export function createDKInspireAdapter(): CorpusAdapter {
 						locale: "da-DK",
 						source: DK_INSPIRE_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: DK_INSPIRE_DEFAULT_LICENSE,
 					}
 

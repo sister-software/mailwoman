@@ -26,7 +26,6 @@ import {
 interface MinRow {
 	source_id: string
 	country: string
-	corpus_version: string
 	components: { region?: string; postcode?: string; locality?: string; street?: string; house_number?: string }
 }
 
@@ -52,7 +51,6 @@ interface SplitManifestOnDisk {
 const row = (id: string, country: string, region?: string): MinRow => ({
 	source_id: id,
 	country,
-	corpus_version: "0.1.0",
 	components: region ? { region } : {},
 })
 
@@ -302,7 +300,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	const banRow = (id: string, postcode: string): MinRow => ({
 		source_id: id,
 		country: "FR",
-		corpus_version: "0.1.0",
 		components: { postcode, locality: "Ajaccio", street: "Cours Napoléon", house_number: "12" },
 	})
 
@@ -334,7 +331,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		const gbRow = (id: string, postcode: string): MinRow => ({
 			source_id: id,
 			country: "GB",
-			corpus_version: "0.1.0",
 			components: { postcode, locality: "Truro", street: "Lemon Street", house_number: "12" },
 		})
 
@@ -364,7 +360,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		const deRow = (id: string, postcode: string): MinRow => ({
 			source_id: id,
 			country: "DE",
-			corpus_version: "0.1.0",
 			components: { postcode, locality: "Görlitz", street: "Berliner Straße", house_number: "14" },
 		})
 
@@ -387,7 +382,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		const adminRow = (id: string, region: string): MinRow => ({
 			source_id: id,
 			country: "DE",
-			corpus_version: "0.1.0",
 			components: { region, locality: "Saarbrücken" },
 		})
 
@@ -407,7 +401,10 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 
 describe("writeSplitManifests", () => {
 	it("writes train/val/test txt files + SPLIT_MANIFEST.json", async () => {
-		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
+		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")], {
+			corpusVersion: "0.1.0",
+		})
+
 		await writeSplitManifests(m, scratch.path)
 
 		const train = await readLocalTextFile(scratch.path("train.txt"))

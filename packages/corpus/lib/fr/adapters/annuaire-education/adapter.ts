@@ -529,7 +529,6 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 			locale: `fr-${country}`,
 			source: FR_ANNUAIRE_EDUCATION_ADAPTER_ID,
 			source_id: stableSourceID(FR_ANNUAIRE_EDUCATION_ADAPTER_ID, rendered.components),
-			corpus_version: "",
 			license: FR_ANNUAIRE_EDUCATION_LICENSE,
 		},
 		trimmed,

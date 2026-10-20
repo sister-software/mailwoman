@@ -248,7 +248,6 @@ function emit(
 			locale: countryToLocale(country),
 			source,
 			source_id: recipeSourceID(source, { ...idParts, template }),
-			corpus_version: "0.12.0",
 			license: LICENSE,
 		},
 		template,

@@ -225,7 +225,6 @@ export function createLLVLiechtensteinAdapter(): CorpusAdapter {
 						...aligned,
 						egaid: record.ADR_EGAID ?? "",
 					}),
-					corpus_version: "",
 					license: LLV_LI_LICENSE,
 				}
 

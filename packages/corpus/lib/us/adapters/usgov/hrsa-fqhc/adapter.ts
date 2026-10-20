@@ -155,7 +155,6 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_HRSA_FQHC_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 				}
 

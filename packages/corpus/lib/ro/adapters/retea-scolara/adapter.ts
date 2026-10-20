@@ -181,7 +181,6 @@ export function readReteaScolaraUnit(unit: ReteaScolaraUnit): ReteaScolaraReadin
 			locale: "ro-RO",
 			source: RO_RETEA_SCOLARA_ADAPTER_ID,
 			source_id: stableSourceID(RO_RETEA_SCOLARA_ADAPTER_ID, rendered.components),
-			corpus_version: "",
 			license: RO_RETEA_SCOLARA_LICENSE,
 		},
 	}

@@ -129,7 +129,6 @@ export const noStreetLedRecipe: CorpusRecipe = {
 				locale: "nb-NO",
 				source,
 				source_id,
-				corpus_version: "0.10.0",
 				license:
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}

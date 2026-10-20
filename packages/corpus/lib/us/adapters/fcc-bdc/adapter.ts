@@ -139,7 +139,6 @@ export function createFccBdcAdapter(): CorpusAdapter {
 						locale: "en-US",
 						source: FCC_BDC_ADAPTER_ID,
 						source_id: `${FCC_BDC_ADAPTER_ID}-${row.location_id}`,
-						corpus_version: "",
 						license: FCC_BDC_DEFAULT_LICENSE,
 					}
 

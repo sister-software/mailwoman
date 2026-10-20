@@ -26,7 +26,6 @@ from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
-import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..countries import jp, tw
@@ -37,7 +36,7 @@ from ..paths import data_root_path
 from ..source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ..text.normalize import normalize_text
 from ..tokenizer.char import build_char_vocab, save_char_vocab
-from .builder import SCHEMA, coverage_stats, muni_bucket, select_exact, verify_cjk_record
+from .builder import coverage_stats, muni_bucket, select_exact, verify_cjk_record, write_corpus_parquet
 
 
 def sources_dir(*parts: str) -> Path:
@@ -167,8 +166,8 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         part = 0
         for start in range(0, len(subset), args.rows_per_part):
             chunk = subset[start : start + args.rows_per_part]
-            pq.write_table(
-                pa.Table.from_pylist(chunk, schema=SCHEMA), out_dir / split / f"{locale['part']}-{part:04d}.parquet"
+            write_corpus_parquet(
+                chunk, out_dir / split / f"{locale['part']}-{part:04d}.parquet", context="registry corpus build"
             )
             part += 1
         splits[split] = {"rows": len(subset), "parts": part, "coverage": coverage_stats(subset[: args.stats_sample])}

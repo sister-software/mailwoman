@@ -287,7 +287,6 @@ function composeRow(
 		locale: "cs-CZ",
 		source: CZ_CUZK_ADAPTER_ID,
 		source_id: seed ? `${CZ_CUZK_ADAPTER_ID}-${seed}` : stableSourceID(CZ_CUZK_ADAPTER_ID, aligned),
-		corpus_version: "",
 		license: CZ_CUZK_LICENSE,
 	}
 }

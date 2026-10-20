@@ -89,7 +89,6 @@ export const noStreetRecipe: CorpusRecipe = {
 							template: synth.template,
 							v: String(v),
 						}),
-						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
 					synth.template,

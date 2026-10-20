@@ -116,7 +116,6 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_NY_NOTARIES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 				}
 

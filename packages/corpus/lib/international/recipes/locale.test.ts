@@ -397,7 +397,6 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 	const esLikeSource: LocaleCountrySource = {
 		source: "synth-es",
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: defaultParts,
 		pedaniaParts,
 	}
@@ -405,7 +404,6 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 	const noPedaniaSource: LocaleCountrySource = {
 		source: "synth-de",
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.4.0",
 		parts: defaultParts,
 	}
 

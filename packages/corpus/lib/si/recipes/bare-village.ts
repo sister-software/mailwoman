@@ -91,7 +91,6 @@ export const siBareVillageRecipe: CorpusRecipe = {
 				locale: "sl-SI",
 				source,
 				source_id,
-				corpus_version: "0.9.9",
 				license:
 					"Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
 			}

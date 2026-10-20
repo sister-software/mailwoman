@@ -38,7 +38,6 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	country: "FR",
 	source: "wof-admin",
 	source_id: "t-1",
-	corpus_version: "0.1.0",
 	license: "CC0-1.0",
 	register: "whos-on-first",
 	surface: SurfaceOrigin.Attested,
@@ -75,21 +74,21 @@ describe("rowToParquet", () => {
 	it("flattens synth + locale onto top-level columns", () => {
 		const row = labeled({
 			locale: "fr-FR",
-			recipe: { recipe: "case-upper", base_source_id: "t-1" },
+			augmentation: { name: "case-upper", base_source_id: "t-1" },
 			source_id: "t-1+case-upper",
 		})
 
 		const pq = rowToParquet(row)
 		expect(pq.locale).toBe("fr-FR")
-		expect(pq.recipe).toBe("case-upper")
+		expect(pq.augmentation).toBe("case-upper")
 		expect(pq.base_source_id).toBe("t-1")
 		expect(pq.source_id).toBe("t-1+case-upper")
 	})
 
 	it("emits null for missing optional fields", () => {
-		const pq = rowToParquet(labeled({ locale: null, recipe: null }))
+		const pq = rowToParquet(labeled({ locale: null, augmentation: null }))
 		expect(pq.locale).toBeNull()
-		expect(pq.recipe).toBeNull()
+		expect(pq.augmentation).toBeNull()
 		expect(pq.base_source_id).toBeNull()
 	})
 
@@ -137,10 +136,10 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
-	it("marks locale / register / recipe / base_source_id optional and surface required", () => {
+	it("marks locale / register / augmentation / base_source_id optional and surface required", () => {
 		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.register!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.augmentation!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
 		// A null register means the row has no published-record identity.
 		// A non-null surface records text provenance for every row.
@@ -253,11 +252,10 @@ describe("writeParquetSplits", () => {
 			"locale",
 			"source",
 			"source_id",
-			"corpus_version",
 			"license",
 			"register",
 			"surface",
-			"recipe",
+			"augmentation",
 			"base_source_id",
 		])
 	})

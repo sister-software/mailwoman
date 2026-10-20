@@ -139,7 +139,6 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_TX_NOTARIES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 				}
 

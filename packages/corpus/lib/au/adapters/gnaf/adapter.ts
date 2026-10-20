@@ -128,7 +128,6 @@ export function createGNAFAdapter(): CorpusAdapter {
 					locale: "en-AU",
 					source: GNAF_ADAPTER_ID,
 					source_id: `${stableSourceID(GNAF_ADAPTER_ID, aligned)}-o${order}`,
-					corpus_version: "",
 					license: GNAF_DEFAULT_LICENSE,
 				}
 

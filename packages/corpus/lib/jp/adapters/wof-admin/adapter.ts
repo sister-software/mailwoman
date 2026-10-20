@@ -204,7 +204,6 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 					locale: "ja-JP",
 					source: WOF_ADMIN_JP_ADAPTER_ID,
 					source_id: `${WOF_ADMIN_JP_ADAPTER_ID}-${seed.id}`,
-					corpus_version: "",
 					license: "CC-BY-4.0",
 				}
 

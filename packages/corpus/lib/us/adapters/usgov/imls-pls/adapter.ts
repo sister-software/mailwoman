@@ -124,7 +124,6 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_IMLS_PLS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 				}
 

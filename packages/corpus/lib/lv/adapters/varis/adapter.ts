@@ -411,7 +411,6 @@ export function readVarisBuilding(record: VarisRecord, places: VarisPlaces): Var
 			locale: "lv-LV",
 			source: LV_VARIS_ADAPTER_ID,
 			source_id: `${LV_VARIS_ADAPTER_ID}-${record.KODS}`,
-			corpus_version: "",
 			license: LV_VARIS_LICENSE,
 		},
 	}

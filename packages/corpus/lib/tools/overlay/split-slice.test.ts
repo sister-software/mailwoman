@@ -48,11 +48,10 @@ function gbRow(sourceID: string, street: string, locality: string, postcode: str
 		locale: "en-GB",
 		source: "rendered-gb-os-open",
 		source_id: sourceID,
-		corpus_version: "0.6.0-test",
 		license: "OGL-UK-3.0",
 		register: "gb-os-opendata",
 		surface: "composed",
-		recipe: "rendered-gb-os-open",
+		augmentation: null,
 		base_source_id: null,
 	}
 }

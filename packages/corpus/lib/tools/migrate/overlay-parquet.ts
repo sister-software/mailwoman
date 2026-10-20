@@ -153,7 +153,8 @@ export async function migrateOverlayParquet(
 
 		const migrated = {
 			...rest,
-			recipe: recipe ?? null,
+			// A `synth_method` is an augmentation only on a row derived from a base row, as `corpusRowFromParquet` reads it.
+			augmentation: baseSourceID ? (recipe ?? null) : null,
 			base_source_id: baseSourceID ?? null,
 			register: registerForSource(source),
 			surface: surfaceForSource(source),

@@ -602,7 +602,6 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 			country,
 			source: GLEIF_ADAPTER_ID,
 			source_id: stableSourceID(GLEIF_ADAPTER_ID, { country, ...aligned }),
-			corpus_version: "",
 			license: GLEIF_LICENSE,
 			addressRole: block === GLEIFAddressBlock.Legal ? AddressRole.RegisteredOffice : AddressRole.Facility,
 		},

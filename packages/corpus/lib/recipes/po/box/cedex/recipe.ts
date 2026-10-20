@@ -178,7 +178,6 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				locale,
 				source,
 				source_id: recipeSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					country === "CA"
 						? "GeoNames CA (CC-BY 4.0) locality skeletons + Canada Post box forms (corpus templates); postcodes synthesized to the codex CA pattern"
@@ -203,7 +202,7 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: kind,
+					template: kind,
 					base_source_id: null,
 					register: null,
 					surface: SurfaceOrigin.Invented,

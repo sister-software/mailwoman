@@ -441,7 +441,6 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 						locale: "en-GB",
 						source: GB_OS_OPEN_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: GB_OS_OPEN_LICENSE,
 					}
 

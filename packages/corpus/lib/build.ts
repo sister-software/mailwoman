@@ -33,6 +33,7 @@ import {
 } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
 import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
+import { committedRowLicenses } from "#source-register/row-license"
 import { freezeTrainingManifest } from "#source-register/training-manifest"
 import type { AdapterOptions, CorpusAdapter, LabeledRow } from "#types"
 import { LicensePolicy } from "#utils/license"
@@ -243,13 +244,24 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
 
+	// `writeParquetSplits` stamped each source's register id into the files' `license` column.
+	// The record states that id rather than the producer's statement the align phase read.
+	const rowLicenses = await committedRowLicenses()
+
+	const rowsBySource = new Map(
+		[...align.rowsBySource].map(([source, contributed]) => [
+			source,
+			{ ...contributed, license: rowLicenses.require(source, `corpus build ${opts.corpusVersion}`) },
+		])
+	)
+
 	// Frozen from what this build observed rather than re-derived later, because the register moves
 	// as terms are reviewed and a re-derived record would describe a build that never happened.
 	const trainingManifest = freezeTrainingManifest({
 		corpusVersion: opts.corpusVersion,
 		builtAt: built_at,
 		profile,
-		rowsBySource: align.rowsBySource,
+		rowsBySource,
 		decisionsByLicense: registerDecisions,
 		refused: align.ineligibleSources,
 	})

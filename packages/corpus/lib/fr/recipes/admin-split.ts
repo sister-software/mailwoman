@@ -187,7 +187,6 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 				locale: "fr-FR",
 				source,
 				source_id: sourceID,
-				corpus_version: "0.5.0",
 				license: LICENSE,
 			}
 
@@ -202,7 +201,6 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "fr-admin-split",
 					order,
 					base_source_id: null,
 					register: SourceRegister.BaseAdresseNationale,

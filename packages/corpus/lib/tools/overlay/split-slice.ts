@@ -13,8 +13,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { moduleGraphHash } from "#build/code-hash"
+import { openCorpusRowStream } from "#parquet/corpus-rows"
 import type { ParquetRow } from "#parquet/schema"
-import { openParquetRowStream } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
 import type { CanonicalRow } from "#types"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
@@ -110,7 +110,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	const buckets: Record<SplitName, ParquetRow[]> = { train: [], val: [], test: [] }
 	let index = 0
 
-	for await (const row of openParquetRowStream<ParquetRow>(input)) {
+	for await (const row of openCorpusRowStream(input)) {
 		const components = holdoutComponents(row, index, input)
 		const split = splitForRow({ source_id: row.source_id, country: row.country, components }, holdouts)
 

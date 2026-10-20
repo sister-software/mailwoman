@@ -87,7 +87,6 @@ export const boundaryStressRecipe: CorpusRecipe = {
 				locale: row.locale,
 				source,
 				source_id,
-				corpus_version: "0.6.0",
 				license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",
 			}
 
@@ -103,7 +102,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: `boundary-stress:${row.template}`,
+					template: `boundary-stress:${row.template}`,
 					base_source_id: null,
 					// Every component is drawn from a template mix built to sit on a tag boundary.
 					register: null,

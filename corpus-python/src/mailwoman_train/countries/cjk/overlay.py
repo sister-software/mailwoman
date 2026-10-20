@@ -40,10 +40,9 @@ from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
-import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ...corpora.builder import SCHEMA, verify_cjk_record
+from ...corpora.builder import verify_cjk_record, write_corpus_parquet
 from ...labels import resolve_label_set
 from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ...tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
@@ -123,7 +122,7 @@ def build(
             tag_counts.update(record["span_tags"])
         if not records:
             raise RuntimeError(f"{source} holds no rows")
-        pq.write_table(pa.Table.from_pylist(records, schema=SCHEMA), out_dir / split / "cn-units-0000.parquet")
+        write_corpus_parquet(records, out_dir / split / "cn-units-0000.parquet", context="CJK overlay build")
         counts[split] = len(records)
 
     board = [to_cn_record(row) for row in read_jsonl(cn_test)]

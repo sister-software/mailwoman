@@ -6,7 +6,7 @@
  *   Align one canonical recipe output with the current tokenizer.
  */
 
-import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -17,14 +17,6 @@ export const spec = {
 	options: {
 		input: { type: "string", required: true, description: "Canonical jsonl input" },
 		out: { type: "string", required: true, description: "Labeled jsonl output", deprecatedName: "output" },
-		"corpus-version": {
-			type: "string",
-			required: true,
-			description: "Corpus version stamp for the emitted rows",
-			validate: isCorpusVersion,
-			validationMessage:
-				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
-		},
 	},
 } as const satisfies CommandSpec
 
@@ -35,7 +27,6 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 		await alignCanonicalRows({
 			input: options.input,
 			output: options.out,
-			corpusVersion: options.corpusVersion,
 		})
 
 		return "done"

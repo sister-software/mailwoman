@@ -275,7 +275,6 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 						locale: "en-US",
 						source: USGOV_NAD_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: USGOV_NAD_DEFAULT_LICENSE,
 					}
 

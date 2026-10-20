@@ -113,7 +113,8 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		const firstRow = (await openParquetRowStream<ParquetRow>(trainFile.path).next()).value ?? null
 
 		expect(firstRow).not.toBeNull()
-		expect(firstRow!.corpus_version).toBe("0.1.0")
+		expect(firstRow).not.toHaveProperty("corpus_version")
+		expect(firstRow).toHaveProperty("augmentation")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
 
 		for (const file of corpusManifest.slices) {

@@ -114,7 +114,6 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				locale: "nl-NL",
 				source,
 				source_id,
-				corpus_version: "0.10.0",
 				license:
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}

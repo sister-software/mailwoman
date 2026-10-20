@@ -170,7 +170,6 @@ export function createOvertureAdapter(): CorpusAdapter {
 					country,
 					source: OVERTURE_ADAPTER_ID,
 					source_id: stableSourceID(OVERTURE_ADAPTER_ID, aligned),
-					corpus_version: "",
 					license: OVERTURE_DEFAULT_LICENSE,
 				}
 

@@ -531,7 +531,6 @@ export function createBrusselsAdapter(): CorpusAdapter {
 						locale: "fr-BE",
 						source: BRUSSELS_ADAPTER_ID,
 						source_id: seed ? `${BRUSSELS_ADAPTER_ID}-${seed}` : stableSourceID(BRUSSELS_ADAPTER_ID, aligned),
-						corpus_version: "",
 						license: BRUSSELS_DEFAULT_LICENSE,
 					}
 

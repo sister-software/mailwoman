@@ -188,7 +188,6 @@ export const frOrderRecipe: CorpusRecipe = {
 				locale: "fr-FR",
 				source,
 				source_id: sourceID,
-				corpus_version: "0.5.0",
 				license: "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
 			}
 

@@ -61,6 +61,12 @@ export interface SplitOptions {
 	 * The holdout policy keyed by ISO 3166-1 alpha-2 country code.
 	 */
 	holdouts?: Record<string, CountryHoldout>
+	/**
+	 * The corpus version the manifest records.
+	 *
+	 * @defaultValue `""`
+	 */
+	corpusVersion?: string
 }
 
 /**
@@ -72,7 +78,7 @@ export interface SplitManifest {
 	test: string[]
 	holdouts: Record<string, CountryHoldout>
 	/**
-	 * The corpus version, read from the first row that has one.
+	 * The corpus version the caller named.
 	 */
 	corpus_version: string
 	counts: { train: number; val: number; test: number; total: number }
@@ -255,7 +261,7 @@ export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
 }
 
-type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
+type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components">
 
 /**
  * Returns the split for one row.
@@ -303,13 +309,8 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	const train: string[] = []
 	const val: string[] = []
 	const test: string[] = []
-	let corpus_version = ""
 
 	for (const row of rows) {
-		if (!corpus_version && row.corpus_version) {
-			corpus_version = row.corpus_version
-		}
-
 		const split = splitForRow(row, holdouts)
 
 		if (split === "train") {
@@ -328,7 +329,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 		val,
 		test,
 		holdouts,
-		corpus_version,
+		corpus_version: opts.corpusVersion ?? "",
 		counts: { train: train.length, val: val.length, test: test.length, total },
 	}
 }
@@ -369,7 +370,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 /**
  * The `LabeledRow` fields that the split functions read.
  */
-export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
+export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "components">
 
 /**
  * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file per split.

@@ -336,7 +336,6 @@ function composeRow(
 		locale: "nl-NL",
 		source: NL_KADASTER_ADAPTER_ID,
 		source_id: addressID ? `${NL_KADASTER_ADAPTER_ID}-${addressID}` : stableSourceID(NL_KADASTER_ADAPTER_ID, aligned),
-		corpus_version: "",
 		license: NL_KADASTER_DEFAULT_LICENSE,
 	}
 }

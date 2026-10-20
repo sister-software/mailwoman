@@ -71,7 +71,7 @@ export interface TranslitOverlayOptions {
 	legacyPathPrefix?: string
 }
 
-function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): CanonicalRow {
+function toCanonicalRow(raw: Record<string, unknown>): CanonicalRow {
 	return {
 		raw: raw["raw"] as string,
 		components: raw["components"] as Record<string, string>,
@@ -79,9 +79,7 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 		locale: (raw["locale"] as string) ?? undefined,
 		source: raw["source"] as string,
 		source_id: raw["source_id"] as string,
-		corpus_version: corpusVersion,
 		license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-		recipe: raw["recipe"] as CanonicalRow["recipe"],
 		register: (raw["register"] as string | null) ?? null,
 		surface: requireSurface(raw, "translit"),
 	}
@@ -160,7 +158,7 @@ export async function buildTranslitOverlay(
 
 	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(options.jsonl))) {
 		totalIn++
-		const canon = toCanonicalRow(raw, corpusVersion)
+		const canon = toCanonicalRow(raw)
 		const result = alignRow(canon)
 
 		if (result.kind !== "labeled") {
@@ -194,7 +192,7 @@ export async function buildTranslitOverlay(
 		const descriptor = await writeOneFile(rows, outPath, source, {
 			extractHash: sha256Hex(rows.map((row) => stringifyJSON(row)).join("\n")),
 			codeHash,
-			config: { tool: "translit", corpusVersion, source, inputSources: [source] },
+			config: { tool: "translit", source, inputSources: [source] },
 		})
 
 		newFiles.push(descriptor)

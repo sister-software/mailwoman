@@ -384,7 +384,8 @@ meant to attribute an effect.
 ## Add a corpus recipe
 
 1. The recipe lives in `packages/corpus/lib/recipes/` and its row generator in
-   `packages/corpus/lib/synthesizers/`. Every row records `synth: {method, base_source_id}` ancestry.
+   `packages/corpus/lib/synthesizers/`. An augmented row records `augmentation: {name, base_source_id}`
+   ancestry, and its `license` column holds the SPDX or `LicenseRef-*` id the writer reads from the register.
 2. Audit format diversity against the forms observed in the real eval _before_ generating. Low
    diversity teaches lexical pattern-matching instead of the boundary.
 3. Overlay manifests declare lineage against a base corpus version

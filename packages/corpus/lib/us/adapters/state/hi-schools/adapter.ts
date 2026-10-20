@@ -155,7 +155,6 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_HI_SCHOOLS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 				}
 

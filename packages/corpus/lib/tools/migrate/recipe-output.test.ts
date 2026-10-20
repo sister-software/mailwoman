@@ -48,7 +48,9 @@ describe("migrateRecipeOutput", () => {
 
 		expect(summary.rows).toBe(1)
 		expect(summary.alreadyMigrated).toBe(0)
-		expect(row.recipe).toBe("intersection")
+		// The row has no base row, so `intersection` is the producer's id and the augmentation column is null.
+		expect(row.augmentation).toBeNull()
+		expect(row).not.toHaveProperty("recipe")
 		expect(row.base_source_id).toBeNull()
 		expect(row.surface).toBe("invented")
 		// The weaker claim for a migrated row: the rows are real and their upstream is unrecorded.

@@ -188,12 +188,13 @@ export interface SourceProvenance {
 	source_id: string
 
 	/**
-	 * The corpus version stamped by the runner.
-	 */
-	corpus_version: string
-
-	/**
-	 * The license label or SPDX id for this row.
+	 * The producer's statement of the terms its rows are under, such as an adapter's `defaultLicense`.
+	 *
+	 * The parquet `license` column holds a different value.
+	 * A parquet writer writes the SPDX or `LicenseRef-*` id of the source's register inputs there.
+	 *
+	 * The id comes from `#source-register/row-license`.
+	 * The writer records this statement in the file's `RECORD.json` under `licenseStatements`.
 	 *
 	 * @defaultValue the adapter's `defaultLicense`, and sources with per-record terms override it.
 	 */
@@ -201,13 +202,13 @@ export interface SourceProvenance {
 }
 
 /**
- * The recipe that produced a row and the row it was derived from.
+ * The augmentation that derived a row from a base row, and that base row.
  */
-export interface RecipeMarker {
+export interface AugmentationMarker {
 	/**
-	 * A stable recipe id, such as `"german"` or `"compose:case-perturb+typo"`.
+	 * A stable augmentation name, such as `"case-lower"` or `"compose:case-perturb+typo"`.
 	 */
-	recipe: string
+	name: string
 
 	/**
 	 * The `source_id` of the row that this row was derived from.
@@ -269,9 +270,11 @@ export interface CanonicalRow extends SourceProvenance {
 	surface?: SurfaceOrigin
 
 	/**
-	 * The recipe that produced the row, when a recipe did.
+	 * The augmentation that derived the row from a base row, when one did.
+	 *
+	 * The row's producer is its `source`.
 	 */
-	recipe?: RecipeMarker | null
+	augmentation?: AugmentationMarker | null
 }
 
 /**
@@ -445,7 +448,7 @@ export interface CorpusAdapter {
 	 *
 	 * Implementations must apply `opts.country` and `opts.limit`, check `opts.signal` at each
 	 * iteration, set `source` to `this.id`, and set `license` unless a row overrides it.
-	 * They must not set `corpus_version`, which the runner stamps, or mutate rows already yielded.
+	 * They must not mutate rows already yielded.
 	 */
 	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
 }

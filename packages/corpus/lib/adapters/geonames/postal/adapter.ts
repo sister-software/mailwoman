@@ -99,7 +99,6 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 						country: cc,
 						source: GEONAMES_POSTAL_ADAPTER_ID,
 						source_id: `${stableSourceID(GEONAMES_POSTAL_ADAPTER_ID, aligned)}-${v.slot}`,
-						corpus_version: "",
 						license: GEONAMES_POSTAL_DEFAULT_LICENSE,
 					}
 

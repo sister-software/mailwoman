@@ -49,7 +49,6 @@ function row(id: string): CanonicalRow {
 		locale: "cs-CZ",
 		source: "test",
 		source_id: id,
-		corpus_version: "",
 		license: "CC0-1.0",
 	}
 }

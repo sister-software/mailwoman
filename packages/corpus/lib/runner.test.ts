@@ -65,12 +65,11 @@ describe("runAdapter", () => {
 		country: "FR",
 		source: "test",
 		source_id: "t-1",
-		corpus_version: "",
 		license: "CC0-1.0",
 		...over,
 	})
 
-	it("writes JSONL + MANIFEST with row-stamped corpus_version and stable sha256", async () => {
+	it("writes JSONL + MANIFEST with the corpus_version in the manifest only and a stable sha256", async () => {
 		const adapter = makeAdapter({
 			id: "syn",
 			rows: [
@@ -96,7 +95,7 @@ describe("runAdapter", () => {
 		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines).toHaveLength(2)
-		expect(lines[0]!.corpus_version).toBe("0.1.0")
+		expect(lines[0]).not.toHaveProperty("corpus_version")
 		expect(lines[0]!.source).toBe("syn")
 
 		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.path("syn", "MANIFEST.json"))
