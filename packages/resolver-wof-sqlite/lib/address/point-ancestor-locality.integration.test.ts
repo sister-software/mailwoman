@@ -57,7 +57,6 @@ describe.skipIf(!hasStack)("an address keyed to an ancestor of the parsed locali
 		using register = new AddressPointSqliteLookup(registerPath)
 
 		const resolved = await createWOFResolver(backend).resolveTree(nycTree(number, street, suffix, locality), {
-			defaultCountry: "US",
 			addressPoints: register,
 		})
 

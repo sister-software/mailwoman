@@ -159,8 +159,9 @@ function interpolatorAt(at: { lat: number; lon: number }): InterpolationLookup {
 		find: () => ({
 			...at,
 			interpolated: true,
-			method: "tiger",
+			method: "tiger_range",
 			parityMatched: true,
+			bracket: null,
 			uncertaintyM: 100,
 			source: "test",
 			release: "r",
