@@ -36,7 +36,7 @@
 # known limitation for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
 # "learned after_region" from "learned India" using only the trailing-arm rows. The VE rows separate them.
 #
-# extraction is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
+# extraction is committed now (packages/corpus/lib/tools/postcode/triples.ts); v0.24.0's was a one-off
 # that never landed. That missing script made the recipe output unbuildable for a new country. Route
 # notes in its docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames supplies the triple inline for PT/MX/IN,
 # and nearest-locality-centroid was measured (13.5-81.1% agreement) and rejected.

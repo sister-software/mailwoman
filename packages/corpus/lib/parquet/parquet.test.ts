@@ -467,7 +467,11 @@ describe("writeParquetSplits", () => {
 
 	it("streams only the rows a where clause keeps", async () => {
 		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
 
 		const streamed = await Array.fromAsync(
 			openParquetRowStream<{ source_id: string }>(m.slices[0]!.path, {

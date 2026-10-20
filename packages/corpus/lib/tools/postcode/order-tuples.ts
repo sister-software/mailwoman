@@ -13,11 +13,19 @@
  */
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { escapeSQLString } from "#parquet/duckdb"
+import type { ParquetFileRecord } from "#parquet/record"
+import { type ParquetRow, rowToParquet } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
-import { applyCountryBudget } from "#tools/postcode-triples"
+import { writeParquetFile } from "#parquet/writers"
+import { applyCountryBudget } from "#tools/postcode/triples"
+import type { LabeledRow } from "#types"
 
 /**
  * The corpus columns the extraction reads.
@@ -217,6 +225,60 @@ export async function* readPostcodeOrderTuples(
 			}
 		}
 	}
+}
+
+/**
+ * What {@linkcode writePostcodeOrderParquet} reads and writes.
+ */
+export interface PostcodeOrderParquetOptions {
+	/**
+	 * The `postcode-order` recipe's labeled-row JSONL, one source.
+	 */
+	rows: PathBuilderLike
+	/**
+	 * The tuples file the recipe read: the base source's extract.
+	 */
+	tuples: PathBuilderLike
+	/**
+	 * The parquet file to write.
+	 * Its record is written beside it.
+	 */
+	output: PathBuilderLike
+	/**
+	 * The seed the recipe ran with, since it decides the separator variants.
+	 */
+	seed: number
+}
+
+/**
+ * Writes the recipe's rows as one parquet file with its record.
+ *
+ * The derivation records the three inputs that decide the bytes.
+ * The extract hash is the base source's tuples file.
+ *
+ * The config holds the recipe module's hash, the hash of the libaddressinput placement table, and the seed.
+ */
+export async function writePostcodeOrderParquet(options: PostcodeOrderParquetOptions): Promise<ParquetFileRecord> {
+	const rows: ParquetRow[] = []
+
+	for await (const line of TextSpliterator.fromAsync(options.rows)) {
+		if (line) {
+			rows.push(rowToParquet(parseJSONStrict<LabeledRow>(line)))
+		}
+	}
+
+	const recipeModule = resolveModulePath("@mailwoman/corpus/recipes/postcode-order")
+	const placementData = resolveModulePath("@mailwoman/postcode/country-formats/data")
+
+	return writeParquetFile(rows, options.output, {
+		extractHash: await sha256File(options.tuples),
+		config: {
+			recipe: "postcode-order",
+			recipeModule: await sha256File(recipeModule),
+			placementData: await sha256File(placementData),
+			seed: options.seed,
+		},
+	})
 }
 
 /**

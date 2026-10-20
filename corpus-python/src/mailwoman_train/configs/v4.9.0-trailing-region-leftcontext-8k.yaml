@@ -11,7 +11,7 @@
 # from column 3. Column 3 holds the most specific place name for the postcode. That place can be a
 # street or a colonia rather than the city. Most rows therefore contain a name before the locality, so
 # the model does not learn that the first place-name segment is always the locality. The triples come from
-# packages/corpus/lib/tools/postcode-triples.ts.
+# packages/corpus/lib/tools/postcode/triples.ts.
 #
 # Every after_region row is from IN, and no source contains a VE postcode. The VE board rows test whether
 # the after_region form generalizes beyond India.

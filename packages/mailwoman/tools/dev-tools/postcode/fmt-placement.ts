@@ -17,7 +17,7 @@ import type { PostcodeLocalityPlacement } from "@mailwoman/postcode/country-form
  * The answer is then null rather than a guess.
  * The layouts of JP, SG, GI and KY print `%Z` and no `%C`.
  */
-export function postcodePlacementOf(fmt: string | undefined): PostcodeLocalityPlacement | null {
+export function placementInFormat(fmt: string | undefined): PostcodeLocalityPlacement | null {
 	if (!fmt) return null
 
 	const postcode = fmt.indexOf("%Z")

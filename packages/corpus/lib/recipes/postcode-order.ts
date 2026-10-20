@@ -7,7 +7,7 @@
  *
  *   A French address arrives as `«postcode» «locality»` in every source, so `Via del Corso 12, Roma 00186` or
  *   `Av. Paulista 1000, 01310-100 São Paulo` is a sequence the model has not been trained on. This recipe reads
- *   tuples from `tools/postcode-order-tuples`, keeps the source's street and house-number order, and writes the
+ *   tuples from `tools/postcode/order-tuples`, keeps the source's street and house-number order, and writes the
  *   postcode in the slot opposite the native one. The native slot comes from libaddressinput's `fmt` through
  *   `postcodePlacement`, so a country whose layout states no order yields no rows rather than a guessed one.
  *

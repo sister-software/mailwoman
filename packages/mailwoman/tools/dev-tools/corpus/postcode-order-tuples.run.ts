@@ -21,7 +21,7 @@ import {
 	readPostcodeOrderTuples,
 	samplePostcodeOrderTuples,
 	writePostcodeOrderTuples,
-} from "@mailwoman/corpus/tools/postcode-order-tuples"
+} from "@mailwoman/corpus/tools/postcode/order-tuples"
 
 import { readMixtureFiles } from "#tools/dev-tools/corpus/mixture"
 
@@ -52,7 +52,7 @@ const split = (list: string) =>
 	list
 		.split(",")
 		.map((value) => value.trim())
-		.filter(Boolean)
+		.filter((value) => value.length > 0)
 
 const mixture = await readMixtureFiles(values.corpus, values.split!, values.files ? Number(values.files) : null)
 

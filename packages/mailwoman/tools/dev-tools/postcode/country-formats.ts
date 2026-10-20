@@ -16,7 +16,7 @@ import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { Globerator } from "spliterator/node/fs"
 
-import { postcodePlacementOf } from "./fmt-placement.ts"
+import { placementInFormat } from "./fmt-placement.ts"
 
 interface AddressMetadata {
 	readonly fmt?: string
@@ -99,7 +99,7 @@ for (const file of await Globerator.files("json", {
 
 	const prefix = postcodePrefix(metadata.fmt)
 	const pattern = stringifyJSON(metadata.zip)
-	const placement = postcodePlacementOf(metadata.fmt)
+	const placement = placementInFormat(metadata.fmt)
 
 	const fields = [
 		...(prefix ? [`prefix: ${stringifyJSON(prefix)}`] : []),

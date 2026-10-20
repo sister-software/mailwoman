@@ -23,7 +23,7 @@ import {
 	readTriplesFromGeonames,
 	readTriplesFromParentJoin,
 	regionWrittenForms,
-} from "#tools/postcode-triples"
+} from "#tools/postcode/triples"
 
 const TAB = String.fromCharCode(9)
 const root = await temporaryDirectory("mw-postcode-triples-")

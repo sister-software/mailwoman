@@ -4,15 +4,22 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
+import { committedCorpusSourceInputs, readParquetRecord } from "#parquet/record"
+import { postcodeOrderRecipe } from "#recipes/postcode-order"
+import { TEST_REGISTER } from "#test-kit/corpus-recipe"
 import {
+	writePostcodeOrderParquet,
 	postcodeOrderFilterSQL,
 	postcodeOrderTupleOf,
 	samplePostcodeOrderTuples,
 	type PostcodeOrderCorpusRow,
 	type PostcodeOrderTuple,
-} from "#tools/postcode-order-tuples"
+} from "#tools/postcode/order-tuples"
 
 /**
  * A corpus row with spans computed from the component texts, so the offsets match `raw`.
@@ -104,6 +111,56 @@ describe("postcodeOrderFilterSQL", () => {
 
 	it("refuses an empty country or source set", () => {
 		expect(() => postcodeOrderFilterSQL([], ["ban"])).toThrow(/at least one country and one source/)
+	})
+})
+
+describe("writePostcodeOrderParquet", () => {
+	it("writes the recipe's rows through the parquet writer with a record naming its derivation inputs", async () => {
+		await using dir = await temporaryDirectory("postcode-order-parquet-")
+		const tuples = dir.path("tuples.jsonl")
+		const rows = dir.path("rows.jsonl")
+		const output = dir.path("data.parquet")
+
+		const tuple = {
+			house_number: "12",
+			street: "Via del Corso",
+			locality: "Roma",
+			postcode: "00186",
+			cc: "IT",
+			source: "openaddresses",
+			license: "test license",
+			streetFirst: true,
+			baseSourceID: "it-1",
+		}
+
+		await writeLocalJSONLFile([tuple, tuple], tuples)
+
+		const lines: string[] = []
+
+		await postcodeOrderRecipe.run(
+			{ output: "", seed: 7, variants: 1, input: tuples, register: TEST_REGISTER },
+			(line) => lines.push(line)
+		)
+
+		await writeLocalTextFile(lines, rows)
+
+		const written = await writePostcodeOrderParquet({ rows, tuples, output, seed: 7 })
+		const record = await readParquetRecord(output)
+
+		expect(record).toEqual(written)
+		expect(record).toMatchObject({ source: "postcode-order-openaddresses", rows: 2 })
+		expect(record!.derivation.extractHash).toBe(await sha256File(tuples))
+
+		expect(Object.keys(record!.derivation.config as object).toSorted()).toEqual([
+			"placementData",
+			"recipe",
+			"recipeModule",
+			"seed",
+		])
+
+		expect(record!.registerInputs).toEqual(
+			(await committedCorpusSourceInputs()).resolve("openaddresses")!.mapping.inputs
+		)
 	})
 })
 
