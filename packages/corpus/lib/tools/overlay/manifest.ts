@@ -17,6 +17,15 @@ import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { openSourceRightsAdmission, type SourceRightsRecord } from "#source-register/corpus-inputs"
+import {
+	type CorpusDeletion,
+	type DeletionRequest,
+	deletionTargets,
+	matchedSourceIDs,
+	prepareDeletion,
+	type PreparedDeletion,
+	readDeletionIDs,
+} from "#tools/overlay/deletions"
 import type { SplitName } from "#utils/split"
 
 interface ParquetFileDescriptor {
@@ -58,6 +67,11 @@ interface BaseManifest {
 	 * The source-rights record a build or assembly wrote when it checked its sources.
 	 */
 	source_rights?: SourceRightsRecord
+	/**
+	 * The rows the base removed from its stored files.
+	 * Its `counts` are net of them.
+	 */
+	deletions?: CorpusDeletion[]
 }
 
 /**
@@ -263,6 +277,76 @@ export interface OverlayManifestOptions {
 	 * Without it the assembly refuses them, and with it the manifest records the corpus as not shippable.
 	 */
 	unshippableReason?: string | null
+	/**
+	 * Rows to remove from the version's files by `source_id`.
+	 *
+	 * The base's own deletions stay in the version while a file they target remains.
+	 */
+	deletions?: readonly DeletionRequest[]
+}
+
+/**
+ * The rows each deletion removes, per split, counted over the version's files.
+ *
+ * Every targeted file is read locally, and an absent one throws, because a count taken
+ * over the files present would understate what the loader removes.
+ */
+async function countDeletions(
+	prepared: readonly PreparedDeletion[],
+	files: readonly ManifestFile[],
+	addedLocalPaths: ReadonlyMap<string, string>
+): Promise<CorpusDeletion[]> {
+	const counted: CorpusDeletion[] = []
+
+	for (const { deletion, ids } of prepared) {
+		const targets = files.filter((file) => deletionTargets(deletion.target, file))
+
+		if (!targets.length) {
+			throw new Error(`deletion ${stringifyJSON(deletion.target)} (${deletion.issue}) names no file of this version`)
+		}
+
+		const rows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+		for (const file of targets) {
+			const local = addedLocalPaths.get(file.path) ?? localManifestFilePath(file.path)
+
+			if (!(await pathExists(local))) {
+				throw new Error(`${local} is targeted by deletion ${deletion.issue} and absent from the data root`)
+			}
+
+			const split = file["split"] as SplitName
+
+			if (!(split in rows)) throw new Error(`${file.path} records no split, so its deleted rows have no split`)
+
+			rows[split] += (await matchedSourceIDs(local, ids)).length
+		}
+
+		counted.push({ ...deletion, rows_deleted: rows })
+	}
+
+	return counted
+}
+
+/**
+ * Load a base deletion's id set, inline or from its sidecar under the local data root.
+ */
+async function carriedDeletion(deletion: CorpusDeletion): Promise<PreparedDeletion> {
+	const { rows_deleted: _counted, ...entry } = deletion
+
+	if (deletion.source_ids) return { deletion: entry, ids: new Set(deletion.source_ids) }
+
+	if (!deletion.source_ids_file) throw new Error(`base deletion ${deletion.issue} names no source_id set`)
+
+	const local = localManifestFilePath(deletion.source_ids_file.path)
+	const ids = await readDeletionIDs(local)
+
+	if (ids.size !== deletion.source_ids_file.ids) {
+		throw new Error(
+			`${local} holds ${ids.size} ids and base deletion ${deletion.issue} records ${deletion.source_ids_file.ids}`
+		)
+	}
+
+	return { deletion: entry, ids }
 }
 
 /**
@@ -465,21 +549,18 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const sourceRights = await checkOverlaySources(args, base, kept)
 
 	const added: ParquetFileDescriptor[] = []
+	const addedLocalPaths = new Map<string, string>()
 
 	const newDir = PathBuilder.from(args.newDir)
 
 	for (const file of args.files) {
 		const split = file.split ?? "train"
+		// DuckDB reads the path inside SQL text, so it must be a string.
+		const local = newDir(split, file.parquet).toString()
+		const modal = `${args.modalRoot}/${split}/${file.parquet}`
 
-		added.push(
-			await descriptor(
-				// DuckDB reads the path inside SQL text, so it must be a string.
-				newDir(split, file.parquet).toString(),
-				`${args.modalRoot}/${split}/${file.parquet}`,
-				split,
-				file.source
-			)
-		)
+		added.push(await descriptor(local, modal, split, file.source))
+		addedLocalPaths.set(modal, local)
 	}
 
 	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
@@ -487,6 +568,40 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	for (const file of added) {
 		addedRows[file.split] += file.rows
 	}
+
+	// The base's counts are net of its own deletions, so they are added back before every
+	// deletion this version keeps is counted again over the files it now lists.
+	const baseDeleted: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const deletion of base.deletions ?? []) {
+		for (const split of ["train", "val", "test"] as const) {
+			baseDeleted[split] += deletion.rows_deleted[split]
+		}
+	}
+
+	const listedFiles: ManifestFile[] = [...kept, ...added]
+
+	const carried = await Promise.all(
+		(base.deletions ?? [])
+			.filter((deletion) => listedFiles.some((file) => deletionTargets(deletion.target, file)))
+			.map(carriedDeletion)
+	)
+
+	const requested = await Promise.all(
+		(args.deletions ?? []).map((request) => prepareDeletion(request, newDir, args.modalRoot))
+	)
+
+	const deletions = await countDeletions([...carried, ...requested], listedFiles, addedLocalPaths)
+	const deletedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const deletion of deletions) {
+		for (const split of ["train", "val", "test"] as const) {
+			deletedRows[split] += deletion.rows_deleted[split]
+		}
+	}
+
+	const netCount = (split: SplitName): number =>
+		base.counts[split] + baseDeleted[split] - droppedRows[split] + addedRows[split] - deletedRows[split]
 
 	const sources = args.files.map((file) => file.source).join(", ")
 
@@ -501,20 +616,11 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		schema: base.schema,
 		rows_per_slice: baseRowsPerFile(base),
 		row_group_size: base.row_group_size,
-		slices: [...kept, ...added],
-		counts: {
-			train: base.counts.train - droppedRows.train + addedRows.train,
-			val: base.counts.val - droppedRows.val + addedRows.val,
-			test: base.counts.test - droppedRows.test + addedRows.test,
-		},
-		total_rows:
-			base.total_rows -
-			droppedRows.train -
-			droppedRows.val -
-			droppedRows.test +
-			addedRows.train +
-			addedRows.val +
-			addedRows.test,
+		slices: listedFiles,
+		// The rows the loader reads: the stored rows of `slices` less those `deletions` names.
+		counts: { train: netCount("train"), val: netCount("val"), test: netCount("test") },
+		total_rows: netCount("train") + netCount("val") + netCount("test"),
+		deletions,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
 		// from `slices` and treating the base build's set as the whole.

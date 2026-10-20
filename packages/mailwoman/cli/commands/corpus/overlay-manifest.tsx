@@ -52,6 +52,11 @@ export const spec = {
 				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
 				"local experiment. States why; the manifest records the corpus as not shippable",
 		},
+		deletions: {
+			type: "string",
+			description:
+				"A JSON file holding an array of deletions, each with a target ({path} or {source}), sourceIDs or a sourceIDsFile parquet, a reason and an issue (#<number>). The loader drops those rows by source_id.",
+		},
 		"replace-source": {
 			type: "string",
 			description:
@@ -63,6 +68,7 @@ export const spec = {
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools/overlay/manifest")
+		const { readDeletionRequests } = await import("@mailwoman/corpus/tools/overlay/deletions")
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
@@ -99,6 +105,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			note: options.note,
 			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
 			unshippableReason: options.unshippableReason,
+			deletions: options.deletions ? await readDeletionRequests(options.deletions) : [],
 		})
 
 		return "done"

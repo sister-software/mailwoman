@@ -19,7 +19,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.data.loader.corpus_files import file_source_counts, source_row_counts
+from mailwoman_train.data.loader.corpus_files import CorpusFile, file_source_counts, source_row_counts
 from mailwoman_train.data.loader.mixture import _apply_source_weights, _index_by_source
 
 SCHEMA = pa.schema(
@@ -73,11 +73,11 @@ def test_the_index_lists_a_multi_source_file_under_each_of_its_sources(tmp_path:
     single = _write(tmp_path / "train" / "part-0000.parquet", _rows("tiger", 4))
     mixed = _write(tmp_path / "train" / "part-0001.parquet", _rows("tiger", 4) + _rows("usgov-nad", 2))
 
-    index = _index_by_source([single, mixed])
+    index = _index_by_source([CorpusFile(single), CorpusFile(mixed)])
 
     assert sorted(index) == ["tiger", "usgov-nad"]
-    assert sorted(index["tiger"]) == sorted([single, mixed])
-    assert index["usgov-nad"] == [mixed]
+    assert sorted(f.path for f in index["tiger"]) == sorted([single, mixed])
+    assert index["usgov-nad"] == [CorpusFile(mixed)]
 
 
 def test_the_unnamed_source_guard_sees_a_source_that_never_opens_a_file(tmp_path: Path) -> None:
@@ -85,7 +85,7 @@ def test_the_unnamed_source_guard_sees_a_source_that_never_opens_a_file(tmp_path
     mixed = _write(tmp_path / "train" / "part-0000.parquet", _rows("tiger", 4) + _rows("usgov-nad", 2))
 
     with pytest.raises(ValueError, match="usgov-nad"):
-        _apply_source_weights(_index_by_source([mixed]), {"tiger": 1.0}, "train")
+        _apply_source_weights(_index_by_source([CorpusFile(mixed)]), {"tiger": 1.0}, "train")
 
 
 def test_row_counts_split_a_multi_source_file_between_its_sources(tmp_path: Path) -> None:

@@ -18,23 +18,30 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
-from .corpus_files import _parquet_paths, file_source_counts
+from .corpus_files import CorpusFile, corpus_split_files, file_source_counts
 from .parquet import _file_row_iter, _source_iter
 
 logger = logging.getLogger(__name__)
 
 
-def _held_out_quotas(paths: list[Path], row_limit: int, rng: random.Random) -> list[int]:
+def _split_rows(file: CorpusFile) -> int:
+    """The rows of one file the split reads: the footer count, or the filtered count for a filtered file."""
+    if file.row_filter is None:
+        return pq.ParquetFile(file.path).metadata.num_rows
+    return sum(file_source_counts(file.path, file.row_filter).values())
+
+
+def _held_out_quotas(files: list[CorpusFile], row_limit: int, rng: random.Random) -> list[int]:
     """Rows to take from each file for a draw of ``row_limit`` rows, in proportion to the file's rows.
 
     Each file's share is ``row_limit`` times its rows over the split's rows. The draw takes the whole
     part of the share. It takes one more row with probability equal to the fractional part. A file too
     small for one whole row therefore reaches the draw at its share across repeated draws.
     """
-    rows = [pq.ParquetFile(s).metadata.num_rows for s in paths]
+    rows = [_split_rows(f) for f in files]
     total = sum(rows)
     if total == 0:
-        return [0 for _ in paths]
+        return [0 for _ in files]
     quotas: list[int] = []
     for n in rows:
         share = row_limit * n / total
@@ -44,7 +51,7 @@ def _held_out_quotas(paths: list[Path], row_limit: int, rng: random.Random) -> l
 
 
 def _stream_held_out(
-    paths: list[Path],
+    files: list[CorpusFile],
     split: str,
     *,
     rng: random.Random,
@@ -65,12 +72,13 @@ def _stream_held_out(
     validation draw over a split of 36 files held 745 rows with ``unit`` under one file order and 64
     under another, where the split holds 9.0%.
     """
-    order = [s for s in paths if s.exists()]
+    order = [f for f in files if f.path.exists()]
     rng.shuffle(order)
     quotas = _held_out_quotas(order, row_limit, rng) if row_limit is not None else [None] * len(order)
-    for s, quota in zip(order, quotas, strict=True):
+    for file, quota in zip(order, quotas, strict=True):
         if quota == 0:
             continue
+        s = file.path
         # Keep a --golden misuse check here. A label-less golden file used for val would produce
         # garbage metrics. `file_source_counts` raises on the non-string cell such a file contains.
         try:
@@ -88,6 +96,7 @@ def _stream_held_out(
                 country_weights=country_weights,
                 max_weight=max_weight,
                 coarse_filter=coarse_filter,
+                row_filter=file.row_filter,
             )
             continue
         row_groups = max(1, pq.ParquetFile(s).num_row_groups)
@@ -99,11 +108,12 @@ def _stream_held_out(
             max_weight=max_weight,
             coarse_filter=coarse_filter,
             row_group_limit=math.ceil(quota / row_groups),
+            row_filter=file.row_filter,
         )
         yield from islice(rows, quota)
 
 
-def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
+def _index_by_source(files: list[CorpusFile]) -> dict[str, list[CorpusFile]]:
     """Bucket parquet files by every `source` they list.
 
     Index a file under each source it lists. `_file_row_iter` filters for the requested source.
@@ -114,22 +124,23 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     A missing or unreadable file is skipped and reported. A file with a non-string source raises,
     because that is a --golden (label-less) file used as a train file.
     """
-    by_source: dict[str, list[Path]] = {}
+    by_source: dict[str, list[CorpusFile]] = {}
     skipped: list[tuple[Path, str]] = []
     multi: list[tuple[Path, list[str]]] = []
-    for s in paths:
+    for file in files:
+        s = file.path
         if not s.exists():
             skipped.append((s, "file not found"))
             continue
         try:
-            per_source = file_source_counts(s)
+            per_source = file_source_counts(s, file.row_filter)
         except Exception as exc:
             skipped.append((s, str(exc)))
             continue
         if len(per_source) > 1:
             multi.append((s, sorted(per_source)))
         for src in per_source:
-            by_source.setdefault(src, []).append(s)
+            by_source.setdefault(src, []).append(file)
 
     if skipped:
         logger.warning(
@@ -151,8 +162,8 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
 
 
 def _apply_source_weights(
-    by_source: dict[str, list[Path]], source_weights: dict[str, float], split: str
-) -> dict[str, list[Path]]:
+    by_source: dict[str, list[CorpusFile]], source_weights: dict[str, float], split: str
+) -> dict[str, list[CorpusFile]]:
     """Drop sources with zero weight. Refuse sources absent from the weights.
 
     A source with zero weight is the config declining it deliberately. A source absent from the weights
@@ -258,7 +269,7 @@ def _raw_row_stream(
 
     Memory is one active row-group per source, about ``|sources| × 50 MB`` peak.
     """
-    paths = _parquet_paths(corpus_dir, split)
+    paths = corpus_split_files(corpus_dir, split)
     max_weight = max(country_weights.values())
 
     if split != "train":

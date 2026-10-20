@@ -303,6 +303,71 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		expect(written.source_rights.sources_checked).toEqual(expect.arrayContaining(["ban", "wof-admin"]))
 	})
 
+	it("records a deletion with the rows it removes and nets them out of the split counts", async () => {
+		const base = await writeBaseWithGB()
+		const path = scratch.path("train", "part-de-del.train.parquet").toString()
+
+		await makeDirectories(scratch.path("train"))
+
+		{
+			using db = await openDuckDB()
+
+			await db.run(
+				`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
+			)
+		}
+
+		await assembleOverlayManifest({
+			...overlay("part-de-del.train.parquet", "train"),
+			base,
+			files: [{ parquet: "part-de-del.train.parquet", source: "rendered-de", split: "train" }],
+			deletions: [
+				{
+					target: { source: "rendered-de" },
+					sourceIDs: ["de-1", "de-3", "de-absent"],
+					reason: "fixture",
+					issue: "#2741",
+				},
+			],
+		})
+
+		const written = await readLocalJSONFile<{
+			counts: { train: number; val: number; test: number }
+			deletions: Array<{ source_ids: string[]; rows_deleted: Record<string, number>; issue: string }>
+		}>(scratch.path("MANIFEST.json").toString())
+
+		expect(written.deletions).toHaveLength(1)
+		expect(written.deletions[0]!.rows_deleted).toEqual({ train: 2, val: 0, test: 0 })
+		expect(written.deletions[0]!.source_ids).toEqual(["de-1", "de-3", "de-absent"])
+		// The base's 15 train rows plus 5 added, less the 2 the deletion removes.
+		expect(written.counts).toEqual({ train: 18, val: 2, test: 3 })
+	})
+
+	it("refuses a deletion that names no issue or no file of the version", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-de-del2.train.parquet", "rendered-de")
+
+		const args = {
+			...overlay(parquet, "train"),
+			base,
+			files: [{ parquet, source: "rendered-de", split: "train" as const }],
+		}
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "rendered-de" }, sourceIDs: ["row-1"], reason: "fixture", issue: "2741" }],
+			})
+		).rejects.toThrow(/spell it #<number>/)
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "nowhere" }, sourceIDs: ["row-1"], reason: "fixture", issue: "#2741" }],
+			})
+		).rejects.toThrow(/names no file of this version/)
+	})
+
 	it("records the overlay as not shippable when the override admits an unpermitted source", async () => {
 		const base = await writeBaseWithGB()
 		const parquet = await writeOverlayParquet("part-gb-v4.train.parquet", "rendered-gb")
