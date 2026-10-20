@@ -95,7 +95,7 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
    the side the placement does not use. A native row that shares its id with a reversed row stays, and so does a row
    without a postcode or a locality. `writeParquetFile` writes the output with a `RECORD.json` whose derivation holds
    the input's sha256, the tool's import-graph code hash and the placement of every country in the file. The source
-   label stays `overture`. Observed 2026-10-20: 1,851,471 rows out of 2,400,000; the rows removed per country equal the
+   label stays `overture`. Observed 2026-10-20: 1,851,471 rows out of 2,400,000. The rows removed per country equal the
    reversed counts, and the census query on the output counts 0 rows with the postcode after the locality in every
    country.
 
