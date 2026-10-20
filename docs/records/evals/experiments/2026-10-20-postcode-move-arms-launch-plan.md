@@ -55,12 +55,12 @@ adapter keys, and the finished store's directory names confirm it.
 
 Decided 2026-10-20: the p000 arm reads no corpus-time order mix. Four v0.7.x overlay files mixed order at corpus time:
 
-| source                | v0.7.x file                                                                | rows (train/val/test)   | mix                                                 |
-| --------------------- | -------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------- |
-| `rendered-gb-os-open` | `v0.7.10-gb-county/…/rendered-gb-os-open.*.parquet`                        | 786,626 / 6,706 / 6,668 | rendered with `--intl-fraction 0.0664`              |
-| `rendered-de`         | `v0.7.0-de-holdout/…/part-synth-german-00000.*.parquet`                    | 187,485 / 8,260 / 8,255 | rendered with `--intl-fraction 0.4`                 |
-| `rendered-fr-order`   | `v0.7.0-de-holdout/…/part-synth-fr-order-train.train.parquet`              | 50,000 train            | includes variant C, which #2750 removed             |
-| `overture`            | `v0.7.0-de-holdout/…/part-overture-multilocale-3order-train.train.parquet` | 2,400,000 train         | reversed ES, BE and PL rows from a retired producer |
+| source                | v0.7.x file                                                                | rows (train/val/test)   | mix                                                   |
+| --------------------- | -------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------- |
+| `rendered-gb-os-open` | `v0.7.10-gb-county/…/rendered-gb-os-open.*.parquet`                        | 786,626 / 6,706 / 6,668 | rendered with `--intl-fraction 0.0664`                |
+| `rendered-de`         | `v0.7.0-de-holdout/…/part-synth-german-00000.*.parquet`                    | 187,485 / 8,260 / 8,255 | rendered with `--intl-fraction 0.4`                   |
+| `rendered-fr-order`   | `v0.7.0-de-holdout/…/part-synth-fr-order-train.train.parquet`              | 50,000 train            | includes variant C, which #2750 removed               |
+| `overture`            | `v0.7.0-de-holdout/…/part-overture-multilocale-3order-train.train.parquet` | 2,400,000 train         | reversed rows in 12 countries from a retired producer |
 
 In the first row group of the v0.7.10 train files (observed, 20,000 rows each), `[postcode, locality]` is contiguous in
 9,970 `rendered-de` rows and `[locality, postcode]` in 15,838 `rendered-gb-os-open` rows.
@@ -78,31 +78,33 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
    which writes the `<stem>.split.<policy hash>.json` attribute file. Each keeps its wire identifier, so the configs'
    weights apply unchanged.
 
-2. Drop the reversed `overture` rows with a deletion. Read the 3order file's `source_id`, `country`, `span_tags`,
-   `span_starts` and `span_ends`. For each ES, BE and PL row, compare the postcode span's start with the locality and
-   region block's against `postcodePlacement` from `@mailwoman/postcode/country-formats` (the table `postcode-layouts.json`
-   is generated from). Every row whose postcode sits on the side opposite the stated placement goes into
-   `<dir>/overture-reversed-es-be-pl.parquet` as a `source_id` column. No committed tool does this yet. It is a run
-   tool under `packages/mailwoman/tools/dev-tools/corpus/`, and its row count per country must match the census's
-   reversed counts before the deletion is used. Then `<dir>/deletions.json`:
+2. Replace the 3order `overture` file with its native-order rows. The file holds reversed rows in 12 countries: AT,
+   BE, CH, DE, DK, ES, FI, HR, NO, PL, PT and SI, 548,529 rows in all, each country's count equal to the census. A
+   deletion keyed by `source_id` would remove native rows as well, because the file renders one record in several
+   orders under one id (2,400,000 rows, 2,298,332 ids). Across the 12 countries it would also drop 68,923 native rows,
+   52,799 of them in FI. The rows are filtered by content instead:
 
-   ```json
-   [
-   	{
-   		"target": { "path": "train/part-overture-multilocale-3order-train.train.parquet" },
-   		"sourceIDsFile": "<dir>/overture-reversed-es-be-pl.parquet",
-   		"reason": "Reversed postcode order in ES, BE and PL, placed against libaddressinput's fmt. The training-time postcode move replaces it.",
-   		"issue": "#2750"
-   	}
-   ]
+   ```bash
+   node packages/mailwoman/tools/dev-tools/corpus/order-deletions.run.ts \
+     --in <v0.7.0-de-holdout>/train/part-overture-multilocale-3order-train.train.parquet \
+     --write-native <dir>/overture-multilocale-native.parquet
    ```
 
-3. Assemble v0.8.0 over the store, replacing the three re-rendered sources and applying the deletion:
+   The tool judges each row on its own. It compares the postcode span's start with the locality-and-region block's
+   against `postcodePlacement` from `@mailwoman/postcode/country-formats`, and drops the row when the postcode sits on
+   the side the placement does not use. A native row that shares its id with a reversed row stays, and so does a row
+   without a postcode or a locality. `writeParquetFile` writes the output with a `RECORD.json` whose derivation holds
+   the input's sha256, the tool's import-graph code hash and the placement of every country in the file. The source
+   label stays `overture`. Observed 2026-10-20: 1,851,471 rows out of 2,400,000; the rows removed per country equal the
+   reversed counts, and the census query on the output counts 0 rows with the postcode after the locality in every
+   country.
+
+3. Assemble v0.8.0 over the store, replacing the three re-rendered sources and `overture`:
 
    ```bash
    mailwoman corpus overlay-manifest --base /mnt/mw/corpus/versioned/v0.8.0-store/MANIFEST.json \
      --replace-source rendered-gb-os-open --replace-source rendered-de --replace-source rendered-fr-order \
-     --deletions <dir>/deletions.json --corpus-version 0.8.0 …
+     --replace-source overture --corpus-version 0.8.0 …
    ```
 
    Then freeze the manifest with `freeze-overlay-manifest.run.ts` and check that the count of manifest paths containing

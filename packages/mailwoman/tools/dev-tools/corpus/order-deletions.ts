@@ -10,9 +10,16 @@
  *   as a deletion sidecar (#2750).
  */
 
+import { sha256File } from "@mailwoman/core/hash"
+import { moduleGraphHash } from "@mailwoman/corpus/build/code-hash"
+import { openCorpusRowStream } from "@mailwoman/corpus/parquet/corpus-rows"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import type { ParquetFileRecord } from "@mailwoman/corpus/parquet/record"
+import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
+import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
 import { postcodePlacement } from "@mailwoman/postcode/country-formats"
+import type { PostcodeLocalityPlacement } from "@mailwoman/postcode/country-formats/data"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -21,16 +28,11 @@ import type { PathBuilderLike } from "path-ts"
 const ADMIN_BLOCK_TAGS: ReadonlySet<string> = new Set(["locality", "region"])
 
 /**
- * Which side of the admin block a row's postcode starts on.
- */
-export type PostcodeSide = "before_locality" | "after_locality"
-
-/**
  * The side of the locality-and-region block the row's single postcode span sits on.
  *
  * Null when the row lacks a locality, holds other than one postcode, or has admin spans on both sides of it.
  */
-export function postcodeSide(tags: readonly string[], starts: readonly number[]): PostcodeSide | null {
+export function postcodeSide(tags: readonly string[], starts: readonly number[]): PostcodeLocalityPlacement | null {
 	if (tags.length !== starts.length)
 		throw new Error(`span_tags has ${tags.length} entries and span_starts ${starts.length}`)
 
@@ -109,7 +111,8 @@ export interface ReversedRows {
 }
 
 /**
- * Scan a parquet file, restricted to `countries` when given, for rows {@linkcode isReversedOrder} matches.
+ * Scan a parquet file, restricted to `countries` when given, for rows
+ * {@linkcode rowPostcodeOrder} calls reversed.
  */
 export async function findReversedRows(path: PathBuilderLike, countries?: readonly string[]): Promise<ReversedRows> {
 	const wanted = countries?.length ? new Set(countries.map((code) => code.toUpperCase())) : null
@@ -156,6 +159,61 @@ export async function findReversedRows(path: PathBuilderLike, countries?: readon
 	}
 
 	return { ids: [...reversedIDs], countries: counts }
+}
+
+/**
+ * Per-country rows read and kept by {@linkcode writeNativeRows}.
+ */
+export interface CountryNativeCount {
+	rowsIn: number
+	rowsOut: number
+}
+
+/**
+ * What {@linkcode writeNativeRows} wrote.
+ */
+export interface NativeRowsResult {
+	countries: Map<string, CountryNativeCount>
+	record: ParquetFileRecord
+}
+
+/**
+ * Write every row of `input` except those {@linkcode rowPostcodeOrder} calls reversed, judged row by row.
+ *
+ * A native row that shares its `source_id` with a reversed row stays, and
+ * so does a row the order is undetermined for.
+ * The output goes through `writeParquetFile`, so its record stores a derivation over the input's
+ * sha256, this module's import-graph code hash and the placement of every country the input holds.
+ */
+export async function writeNativeRows(input: PathBuilderLike, output: PathBuilderLike): Promise<NativeRowsResult> {
+	const countries = new Map<string, CountryNativeCount>()
+	const kept: ParquetRow[] = []
+
+	for await (const row of openCorpusRowStream<ParquetRow>(input)) {
+		const country = (row.country ?? "").toUpperCase()
+		const count = countries.get(country) ?? { rowsIn: 0, rowsOut: 0 }
+
+		countries.set(country, count)
+
+		count.rowsIn++
+
+		if (rowPostcodeOrder(row) === "reversed") continue
+
+		count.rowsOut++
+		kept.push(row)
+	}
+
+	const placements = Object.fromEntries(
+		[...countries.keys()].toSorted().map((country) => [country, postcodePlacement(country)])
+	)
+
+	const record = await writeParquetFile(kept, output, {
+		extractHash: await sha256File(input),
+		codeHash: await moduleGraphHash([import.meta.filename]),
+		config: { tool: "order-deletions", mode: "write-native", placements },
+	})
+
+	return { countries, record }
 }
 
 /**
