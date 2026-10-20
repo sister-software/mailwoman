@@ -1,6 +1,6 @@
 """Training-time augmentation: expand abbreviations to teach token equivalence.
 
-Seven augmentations, applied independently with configurable probability:
+Eight augmentations, applied independently with configurable probability:
 
 1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
    Teaches the model that both abbreviated and expanded directionals are the same
@@ -22,9 +22,13 @@ Seven augmentations, applied independently with configurable probability:
 5. **Lowercase**, 6. **punctuation drop**, 7. **all-caps**: whole-row rewrites, each
    length-preserving or span-re-targeting, so the labels survive the rewrite.
 
+8. **Postcode move** (#2750): the postcode moved to the far side of its locality-and-region
+   block, from the side the country's libaddressinput layout prints it on.
+
 The modules:
 
 - `tables.py` — the surface pairs each expansion draws from.
+- `postcode_move.py` — the postcode move, its skip reasons and the layout table it reads.
 - `splice.py` — editing a row's text and re-targeting its tokens, labels and spans.
 - `apply.py` — augmentation choices for one row. It also defines the draw order.
 """
@@ -32,6 +36,7 @@ The modules:
 from __future__ import annotations
 
 from .apply import augment_row
+from .postcode_move import SkipReason, move_postcode, postcode_layouts
 from .splice import (
     DROP_PUNCT,
     SPAN_KEYS,
@@ -50,10 +55,13 @@ __all__ = [
     "ORDINAL_STREETS",
     "SPAN_KEYS",
     "US_STATES",
+    "SkipReason",
     "augment_row",
     "drop_separator_punct",
     "glue_region_postcode",
     "lowercase_row",
+    "move_postcode",
+    "postcode_layouts",
     "row_span_triple",
     "splice_expansion",
     "upper_case_row",

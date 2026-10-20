@@ -19,6 +19,7 @@ call sites by construction instead of by someone remembering the second one.
 from __future__ import annotations
 
 import random
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
@@ -26,15 +27,36 @@ from typing import Any
 from .augment import augment_row
 from .relabel import AffixRelabelLexicon, relabel_row
 
+#: Sources the postcode move skips, because their producers already write the postcode on a side their layout
+#: does not use: G-NAF's postcode-before-street rows, the Czech postcode-first preposition recipe under its current
+#: and retired spellings, the KR `postcode_first` register, and GeoNames postal's `postcode locality` rows. Moving
+#: their postcode again would mix order a second time at an unmeasured share.
+POSTCODE_MOVE_EXCLUDED_SOURCES: frozenset[str] = frozenset(
+    {
+        "gnaf",
+        "geonames-postal",
+        "juso-kr",
+        "localdata-kr",
+        *(
+            f"{prefix}-cz-pcfirst-preposition{suffix}"
+            for prefix in ("rendered", "synth")
+            for suffix in ("", "-v20", "-v21")
+        ),
+    }
+)
+
 
 @dataclass(frozen=True)
 class EmitPolicy:
     """Everything that decides what one sampled row becomes.
 
-    The seven probabilities are `augment_row`'s, in its argument order. `excluded_sources` names the
+    The eight probabilities are `augment_row`'s, in its argument order. `excluded_sources` names the
     sources that bypass augmentation entirely: copies of an oversampled source compound its repetition
-    without adding diversity (2026-08-10). The relabel still applies to an excluded source because
-    the two policies are independent. A reimplementation can lose that independence.
+    without adding diversity (2026-08-10). `postcode_move_excluded_sources` names the sources only the
+    postcode move skips. The relabel still applies to an excluded source because the two policies are
+    independent. A reimplementation can lose that independence.
+
+    `postcode_move_outcomes` counts each postcode-move draw as moved or under its skip reason.
     """
 
     directional_prob: float = 0.0
@@ -44,8 +66,11 @@ class EmitPolicy:
     punct_drop_prob: float = 0.0
     upper_case_prob: float = 0.0
     ordinal_prob: float = 0.0
+    postcode_move_prob: float = 0.0
     excluded_sources: frozenset[str] = field(default_factory=frozenset)
+    postcode_move_excluded_sources: frozenset[str] = POSTCODE_MOVE_EXCLUDED_SOURCES
     relabel_lexicon: AffixRelabelLexicon | None = None
+    postcode_move_outcomes: Counter[str] = field(default_factory=Counter, compare=False)
 
     @property
     def augments(self) -> bool:
@@ -60,6 +85,7 @@ class EmitPolicy:
                 self.punct_drop_prob,
                 self.upper_case_prob,
                 self.ordinal_prob,
+                self.postcode_move_prob,
             )
         )
 
@@ -86,6 +112,8 @@ def emit_row(row: dict[str, Any], rng: random.Random, policy: EmitPolicy) -> Ite
             policy.punct_drop_prob,
             policy.upper_case_prob,
             policy.ordinal_prob,
+            0.0 if row["source"] in policy.postcode_move_excluded_sources else policy.postcode_move_prob,
+            policy.postcode_move_outcomes,
         ):
             if policy.relabel_lexicon is not None:
                 augmented = {**augmented, "labels": list(augmented["labels"])}

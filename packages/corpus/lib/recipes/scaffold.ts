@@ -418,9 +418,8 @@ export interface RecipeOptions {
 	reversedFraction?: number | null
 	edgesDir?: string
 	country?: string
-	intlFraction?: number | null
 	/**
-	 * `german`: fraction of native-order rows rendered with no commas at all.
+	 * `german`: fraction of rows rendered with no commas at all.
 	 *
 	 * @defaultValue `0.3`
 	 */

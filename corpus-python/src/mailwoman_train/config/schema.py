@@ -68,6 +68,12 @@ class DataConfig:
     augment_punct_drop_prob: float = 0.0
     augment_upper_case_prob: float = 0.0
 
+    # The rate at which a sampled train row adds a copy with its postcode moved to the far side of its locality-and-
+    # region block (#2750). It is an additive copy rate: the original row is always emitted, and a row the move
+    # cannot handle is skipped and counted, so the share of moved rows in the stream is lower. The encode observer
+    # measures that share. Validation rows are never augmented.
+    augment_postcode_move_prob: float = 0.0
+
     augment_exclude_sources: list[str] = field(default_factory=list)
 
     anchor_lookup_path: str | None = None

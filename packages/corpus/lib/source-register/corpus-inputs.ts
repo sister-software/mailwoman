@@ -99,44 +99,10 @@ export interface CorpusSourceHistory {
 }
 
 /**
- * A recipe that rewrites the rows of any base source under the label `<prefix>-<base source>`.
- */
-export interface CorpusSourceDerivation {
-	/**
-	 * The file that writes the rows, relative to the repository root.
-	 */
-	producer: string
-	note?: string
-}
-
-/**
  * The committed table.
  */
 export interface CorpusSourceInputsFile {
-	/**
-	 * Derivations keyed by label prefix.
-	 *
-	 * A derived label adds no publication.
-	 * It resolves to its base source's mapping.
-	 */
-	derivations?: Readonly<Record<string, CorpusSourceDerivation>>
 	sources: Readonly<Record<string, CorpusSourceMapping>>
-}
-
-/**
- * The derivation prefix and base source a label is spelled from, or null when no declared prefix begins it.
- */
-export function derivedSourceBase(
-	file: CorpusSourceInputsFile,
-	source: string
-): { prefix: string; base: string } | null {
-	for (const prefix of Object.keys(file.derivations ?? {})) {
-		if (source.startsWith(`${prefix}-`) && source.length > prefix.length + 1) {
-			return { prefix, base: source.slice(prefix.length + 1) }
-		}
-	}
-
-	return null
 }
 
 /**
@@ -146,8 +112,6 @@ export interface CorpusSourceInputs {
 	readonly file: CorpusSourceInputsFile
 	/**
 	 * The mapping a spelling resolves to, with the id it is filed under.
-	 *
-	 * A derived label (`postcode-order-ban`) answers its base source's mapping and id.
 	 */
 	resolve(source: string): { id: string; mapping: CorpusSourceMapping } | null
 }
@@ -179,28 +143,14 @@ export function indexCorpusSourceInputs(file: CorpusSourceInputsFile): CorpusSou
 		}
 	}
 
-	for (const prefix of Object.keys(file.derivations ?? {})) {
-		const claimed = [...bySpelling.keys()].find((spelling) => spelling.startsWith(`${prefix}-`))
+	return {
+		file,
+		resolve(source) {
+			const id = bySpelling.get(source)
 
-		if (claimed) {
-			throw new Error(
-				`corpus source ${stringifyJSON(claimed)} begins with the derivation prefix ${stringifyJSON(prefix)}, ` +
-					"so it would resolve both as its own entry and as a derived label"
-			)
-		}
+			return id ? { id, mapping: file.sources[id]! } : null
+		},
 	}
-
-	const resolve = (source: string): { id: string; mapping: CorpusSourceMapping } | null => {
-		const id = bySpelling.get(source)
-
-		if (id) return { id, mapping: file.sources[id]! }
-
-		const derived = derivedSourceBase(file, source)
-
-		return derived ? resolve(derived.base) : null
-	}
-
-	return { file, resolve }
 }
 
 /**
@@ -209,12 +159,6 @@ export function indexCorpusSourceInputs(file: CorpusSourceInputsFile): CorpusSou
 export function auditCorpusSourceInputs(file: CorpusSourceInputsFile, register: AddressSourceRegister): string[] {
 	const problems: string[] = []
 	const sources = new Map(register.sources.map((source) => [source.sourceID, source]))
-
-	for (const [prefix, derivation] of Object.entries(file.derivations ?? {})) {
-		if (!derivation.producer) {
-			problems.push(`derivation ${stringifyJSON(prefix)} names no producer`)
-		}
-	}
 
 	for (const [id, mapping] of Object.entries(file.sources)) {
 		const named = stringifyJSON(id)

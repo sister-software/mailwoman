@@ -4,18 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  * `german` recipe: German coverage rows from real OpenAddresses tuples (Berlin and Saxony, cached
- * zips). Each sampled tuple renders through {@link renderGermanRow} in both orders, with
- * `--intl-fraction` (default 0.4) in international order and the rest in idiomatic German order.
+ * zips). Each sampled tuple renders through {@link renderGermanRow} in idiomatic German order.
  * Generate mode builds a tuple pool from the cached zips, then draws `--count` rows with the passed
- * `random`.
- *
- * The combined renderings keep native-only recipe output from over-teaching German order.
- * Over-teaching German order appears as a collapse on the US/feed-order eval.
+ * `random`. The postcode on the far side of the locality is the training-time `postcode_move`
+ * augmentation's job (#2750), so the recipe writes no reversed rows.
  *
  * Two registers are absent from the OA tuples. A comma-free single line (`Neusser Str. 12 Nippes 50733
  * Köln`) segments as one unit at stage 2. With one segment, the placetype-pair prior never fires.
  * The model then reads `Nippes` as a second street. The one-value-per-tag projection deletes it.
- * `--comma-free-fraction` renders that share of native-order rows with `" "` as the line separator. OA
+ * `--comma-free-fraction` renders that share of rows with `" "` as the line separator. OA
  * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
@@ -49,7 +46,6 @@ interface GermanSource {
  * Each source's `region` is the Bundesland the file covers.
  *
  * OA's region column is empty for DE, so the region comes from the per-state file.
- * The international order needs it for the "City, Region Postcode" tail.
  *
  * The Berlin file is a city-state whose region equals its locality.
  * The Saxony file is Sachsen.
@@ -208,14 +204,12 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
  */
 export const germanRecipe: CorpusRecipe = {
 	name: "german",
-	description: "German coverage rows from real OA tuples (Berlin/Saxony), both orders → renderGermanRow",
+	description: "German coverage rows from real OA tuples (Berlin/Saxony) → renderGermanRow",
 	mode: "generate",
 	options: [
-		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
 		{
 			flag: "--comma-free-fraction <f>",
-			description:
-				"Fraction of native-order rows rendered with no commas (the single-line register, #1946). Default 0.3",
+			description: "Fraction of rows rendered with no commas (the single-line register, #1946). Default 0.3",
 		},
 		{
 			flag: "--ortsteil-fraction <f>",
@@ -230,12 +224,10 @@ export const germanRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-german")
-		const intlFraction = opts.intlFraction ?? 0.4
 		const commaFreeFraction = opts.commaFreeFraction ?? 0.3
 		const ortsteilFraction = opts.ortsteilFraction ?? 0.3
 
 		for (const [flag, value] of [
-			["--intl-fraction", intlFraction],
 			["--comma-free-fraction", commaFreeFraction],
 			["--ortsteil-fraction", ortsteilFraction],
 		] as const) {
@@ -282,13 +274,9 @@ export const germanRecipe: CorpusRecipe = {
 
 		while (emitted < count && guard++ < count * 6) {
 			const drawn = pool[Math.floor(random() * N)]!
-			// Per-row order: `--intl-fraction` of rows render house-first / postcode-after-city
-			// (the US/feed layout), the rest in idiomatic German order.
-			// Same components either way.
-			const order = random() < intlFraction ? "international" : "native"
 			// OA does not provide these two registers.
-			// Draw each independently of the order so every combination occurs: an Ortsteil
-			// borrowed from the tuple's own locality or a native line with no commas.
+			// Each is drawn independently, so every combination occurs.
+			// One is an Ortsteil borrowed from the tuple's own locality, the other a line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
 
 			const ortsteil =
@@ -297,8 +285,8 @@ export const germanRecipe: CorpusRecipe = {
 					: null
 
 			const base: LocaleBaseTuple = ortsteil ? { ...drawn, dependent_locality: ortsteil } : drawn
-			const separator = order === "native" && random() < commaFreeFraction ? " " : ", "
-			const synth = renderGermanRow(base, { random, order, separator })
+			const separator = random() < commaFreeFraction ? " " : ", "
+			const synth = renderGermanRow(base, { random, separator })
 
 			if (!synth) {
 				skipped++
@@ -307,9 +295,8 @@ export const germanRecipe: CorpusRecipe = {
 			}
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO.
-			// `order` accompanies each row so the eval can stratify native vs international.
 			if (opts.golden) {
-				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order }))
+				write(stringifyJSON({ raw: synth.raw, components: synth.components, country: "DE", order: "native" }))
 
 				emitted++
 
@@ -331,7 +318,7 @@ export const germanRecipe: CorpusRecipe = {
 				source,
 				source_id: sourceID,
 				corpus_version: "0.4.0",
-				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
+				license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered native-order — see ingest SOURCES`,
 			}
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
@@ -346,7 +333,7 @@ export const germanRecipe: CorpusRecipe = {
 				stringifyJSON({
 					...aligned.row,
 					synth_method: "german",
-					synth_order: order,
+					synth_order: "native",
 					synth_separator: separator === " " ? "space" : "comma",
 					synth_base_id: null,
 				})
