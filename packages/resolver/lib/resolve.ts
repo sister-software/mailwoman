@@ -264,9 +264,13 @@ class WOFResolver implements Resolver {
 			await applyPostcodeConsistency(newRoots, consistencyThresholdKm, opts.postcodeConsistencyMaxMoveKm)
 		}
 
+		// A register can key a borough's or neighborhood's addresses to an ancestor's name,
+		// so a miss retries the ancestors.
+		const ancestorsOf = this.#backend.ancestors?.bind(this.#backend)
+
 		// Optional exact address-point tier.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// Optional interpolation tier after exact points.
@@ -282,7 +286,7 @@ class WOFResolver implements Resolver {
 
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.
