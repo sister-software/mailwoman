@@ -52,7 +52,7 @@ export interface AdapterPhaseResult {
  * The recorded byte count distinguishes those cases.
  * A resumed build that reuses a short file can produce a corpus whose row count later readers accept.
  */
-async function reusableRun(adapterID: string, adapterDir: PathBuilder): Promise<AdapterRunManifest | null> {
+export async function reusableRun(adapterID: string, adapterDir: PathBuilder): Promise<AdapterRunManifest | null> {
 	const cachedManifest = adapterDir("MANIFEST.json")
 	const canonicalPath = adapterDir("canonical.jsonl")
 

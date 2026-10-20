@@ -326,6 +326,27 @@ function isAdapter(value: unknown): value is CorpusAdapter {
 }
 
 /**
+ * Import the adapter with `adapterID` from its module, as {@linkcode adapterModules} found it.
+ *
+ * A parallel build's worker loads its one adapter this way rather than through the
+ * registration module, which imports every adapter.
+ *
+ * @throws When the module exports no adapter with that id.
+ */
+export async function loadAdapterFromModule(
+	module: string,
+	adapterID: string,
+	repositoryRoot: string = defaultRepositoryRoot()
+): Promise<CorpusAdapter> {
+	const exports = (await import(pathToFileURL(resolvePath(repositoryRoot, module)).href)) as Record<string, unknown>
+	const adapter = Object.values(exports).find((value) => isAdapter(value) && value.id === adapterID)
+
+	if (!adapter) throw new Error(`loadAdapterFromModule: ${module} exports no adapter with id ${adapterID}`)
+
+	return adapter as CorpusAdapter
+}
+
+/**
  * The module of this package that registers every built-in adapter, repository-relative.
  */
 export const ADAPTER_REGISTRATION_MODULE = "packages/corpus/lib/adapters.ts"

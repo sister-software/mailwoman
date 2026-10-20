@@ -12,9 +12,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { tryStat } from "@mailwoman/core/fs/readers/stat"
+import { isDirectory, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import type { PathBuilder } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import type { AlignCheckpoint, AlignOutputName } from "#build/checkpoint"
 import { PriorOutput } from "#build/types"
@@ -37,6 +38,11 @@ export interface PriorWork {
 	 * Each configured adapter whose `MANIFEST.json` records a finished run, with its canonical file's size.
 	 */
 	adapterRuns: { adapterID: string; manifest: PathBuilder; canonicalBytes: number | null }[]
+
+	/**
+	 * Each source directory a parallel build left under `intermediate/sources/`.
+	 */
+	sourceStates: PathBuilder[]
 }
 
 export interface PriorWorkPaths {
@@ -85,11 +91,24 @@ export async function readPriorWork(paths: PriorWorkPaths): Promise<PriorWork> {
 		adapterRuns.push({ adapterID, manifest, canonicalBytes: canonical ? canonical.size : null })
 	}
 
-	return { checkpoint, alignOutputs, adapterRuns }
+	const sourcesDir = paths.intermediateDir("sources")
+
+	const sourceStates = (await isDirectory(sourcesDir))
+		? (await Globerator.from("*", { cwd: sourcesDir.toString(), absolute: false, onlyFiles: false }).toSorted()).map(
+				(name) => sourcesDir(name)
+			)
+		: []
+
+	return { checkpoint, alignOutputs, adapterRuns, sourceStates }
 }
 
 function hasPriorWork(work: PriorWork): boolean {
-	return work.checkpoint != null || work.alignOutputs.length > 0 || work.adapterRuns.length > 0
+	return (
+		work.checkpoint != null ||
+		work.alignOutputs.length > 0 ||
+		work.adapterRuns.length > 0 ||
+		work.sourceStates.length > 0
+	)
 }
 
 /**
@@ -114,6 +133,10 @@ export function describePriorWork(work: PriorWork): string {
 			`adapter run ${run.adapterID}: ${run.manifest.toString()}, canonical.jsonl ` +
 				(run.canonicalBytes == null ? "absent" : `${run.canonicalBytes.toLocaleString("en-US")} bytes`)
 		)
+	}
+
+	for (const state of work.sourceStates) {
+		lines.push(`parallel-build source state ${state.toString()}`)
 	}
 
 	return lines.map((line) => `  ${line}`).join("\n")
@@ -152,6 +175,10 @@ export async function settlePriorWork(choice: PriorOutput, paths: PriorWorkPaths
 
 		for (const run of work.adapterRuns) {
 			await removePathIfPresent(run.manifest)
+		}
+
+		for (const state of work.sourceStates) {
+			await removePathIfPresent(state)
 		}
 	}
 

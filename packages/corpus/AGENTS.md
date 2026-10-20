@@ -151,7 +151,17 @@ the same command with `--resume`:
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json --out <out> --resume`.
 It reuses each finished adapter run, truncates the align outputs to the checkpoint's offsets and
 aligns the remaining adapters, and keeps the parquet files the parquet manifest records. `--fresh`
-deletes that work and builds from the start; nothing is deleted without one of the two flags.
+deletes that work and builds from the start; a build without one of the two flags deletes no file.
+
+`--jobs K` above 1 runs each source's adapter, align and parquet work in worker processes
+(`lib/build/parallel.ts`) and writes the same parquet, split and manifest bytes as `--jobs 1`; only
+the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root, and
+`planWorkerBudget` in `lib/build/budget.ts` refuses a K whose workers do not fit in host memory.
+A source is reused under `--resume` only through its `intermediate/sources/<id>/SOURCE_COMPLETE.json`,
+re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources alone. A parallel build
+writes no top-level `labeled-*.jsonl`: each source's labeled rows stay under its own state directory.
+A lock directory, `.corpus-build.lock` under `--out`, refuses a second build of the same output in
+either mode.
 
 ## License election
 
