@@ -7,7 +7,13 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
-import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	movePath,
+	removePathIfPresent,
+	replaceFileAtomically,
+	stagingSiblingPath,
+} from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
 import { spawnProcessSync } from "@mailwoman/core/process"
@@ -85,11 +91,7 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 		return false
 	}
 
-	const dest = resolvePath(dir, filename)
-
-	await removePathIfPresent(dest)
-
-	await copyFileTo(cached, dest)
+	await replaceFileAtomically(cached, resolvePath(dir, filename))
 	context.log(`derived store HIT → ${filename}`)
 
 	return true
@@ -106,10 +108,35 @@ async function stashDerived(context: MaterializationContext, dir: string, filena
 
 	try {
 		await makeDirectories(context.derivedStore)
-		await copyFileTo(resolvePath(dir, filename), resolvePath(context.derivedStore, filename))
+		await replaceFileAtomically(resolvePath(dir, filename), resolvePath(context.derivedStore, filename))
 		context.log(`derived store WRITE → ${filename}`)
 	} catch (error) {
 		context.log(`derived store write skipped for ${filename}: ${String(error)}`)
+	}
+}
+
+/**
+ * Runs a builder that writes `filename` into a staging directory beside `dir`,
+ * then renames the result over `dir/filename`.
+ *
+ * A reader of the destination during the build sees the previous file, never an absent one.
+ */
+async function buildIntoPlace(dir: string, filename: string, build: (outDir: string) => void): Promise<void> {
+	const dest = resolvePath(dir, filename)
+	const staging = stagingSiblingPath(dest)
+
+	await makeDirectories(staging)
+
+	try {
+		build(staging)
+
+		const built = resolvePath(staging, filename)
+
+		if (!(await pathExists(built))) throw new Error(`the ${filename} builder ran but ${built} was not produced`)
+
+		await movePath(built, dest)
+	} finally {
+		await removePathIfPresent(staging)
 	}
 }
 
@@ -164,10 +191,8 @@ export async function copyWeights({
 		const modelDest = resolvePath(dir, "model.onnx")
 		const tokenizerDest = resolvePath(dir, "tokenizer.model")
 
-		await removePathIfPresent(modelDest)
-		await removePathIfPresent(tokenizerDest)
-		await copyFileTo(sourceModel, modelDest)
-		await copyFileTo(sourceTokenizer, tokenizerDest)
+		await replaceFileAtomically(sourceModel, modelDest)
+		await replaceFileAtomically(sourceTokenizer, tokenizerDest)
 		log(`copied weights → ${workspace}/{model.onnx,tokenizer.model}`)
 
 		await materializeSoftFeed(context, workspace, dir)
@@ -191,10 +216,7 @@ export async function copyWeights({
 				throw new Error(`Missing char-path source for ${family}: ${source}`)
 			}
 
-			const dest = resolvePath(dir, name)
-
-			await removePathIfPresent(dest)
-			await copyFileTo(source, dest)
+			await replaceFileAtomically(source, resolvePath(dir, name))
 		}
 
 		log(`copied char weights → ${workspace}/{model.onnx,char-vocab.json}`)
@@ -253,9 +275,7 @@ async function materializeFST(context: MaterializationContext, workspace: string
 		)
 	}
 
-	const dest = resolvePath(dir, `fst-${locale}.bin`)
-	await removePathIfPresent(dest)
-	await copyFileTo(src, dest)
+	await replaceFileAtomically(src, resolvePath(dir, `fst-${locale}.bin`))
 	context.log(`copied FST → ${workspace}/fst-${locale}.bin`)
 }
 
@@ -279,9 +299,7 @@ async function materializeStreetMorphology(context: MaterializationContext, work
 		)
 	}
 
-	const dest = resolvePath(dir, "fst-street-morphology.bin")
-	await removePathIfPresent(dest)
-	await copyFileTo(src, dest)
+	await replaceFileAtomically(src, resolvePath(dir, "fst-street-morphology.bin"))
 	context.log(`copied street-morphology FST → ${workspace}/fst-street-morphology.bin`)
 }
 
@@ -293,9 +311,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 			)
 		}
 
-		const dest = resolvePath(dir, basename)
-		await removePathIfPresent(dest)
-		await copyFileTo(source, dest)
+		await replaceFileAtomically(source, resolvePath(dir, basename))
 		context.log(`copied soft-feed → ${workspace}/${basename}`)
 	}
 
@@ -306,9 +322,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 			)
 		}
 
-		const dest = resolvePath(dir, "locality-surface-lexicon-v7.json")
-		await removePathIfPresent(dest)
-		await copyFileTo(context.sourceLocalitySurface, dest)
+		await replaceFileAtomically(context.sourceLocalitySurface, resolvePath(dir, "locality-surface-lexicon-v7.json"))
 		context.log(`copied soft-feed → ${workspace}/locality-surface-lexicon-v7.json`)
 	}
 
@@ -331,23 +345,20 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		)
 	}
 
-	const binDest = resolvePath(dir, `postcode-${country}.bin`)
-
 	if (await serveFromDerivedStore(context, dir, `postcode-${country}.bin`)) return
-
-	await removePathIfPresent(binDest)
 
 	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/main.js")
 
-	const r = spawnProcessSync(
-		process.execPath,
-		[cli, "gazetteer", "postcode-binary", "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
-		{ stdio: "inherit" }
-	)
+	await buildIntoPlace(dir, `postcode-${country}.bin`, (outDir) => {
+		const r = spawnProcessSync(
+			process.execPath,
+			[cli, "gazetteer", "postcode-binary", "--out", outDir, "--locale", `${country.toUpperCase()}:${db}`],
+			{ stdio: "inherit" }
+		)
 
-	if (r.status !== 0) throw new Error(`gazetteer postcode-binary failed for ${country} (exit ${r.status})`)
+		if (r.status !== 0) throw new Error(`gazetteer postcode-binary failed for ${country} (exit ${r.status})`)
+	})
 
-	if (!(await pathExists(binDest))) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
 	await stashDerived(context, dir, `postcode-${country}.bin`)
 	context.log(`built soft-feed → ${workspace}/postcode-${country}.bin`)
 }
@@ -387,10 +398,7 @@ async function materializePostcodePrefix(context: MaterializationContext, worksp
 			)
 		}
 
-		const dest = resolvePath(dir, shippedName)
-
-		await removePathIfPresent(dest)
-		await copyFileTo(source.path, dest)
+		await replaceFileAtomically(source.path, resolvePath(dir, shippedName))
 		context.log(`copied postcode-prefix → ${workspace}/${shippedName} (built ${header.buildDate})`)
 	}
 }
@@ -433,39 +441,36 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		}
 	}
 
-	const binDest = resolvePath(dir, `pair-index-${country}.bin`)
-
 	if (await serveFromDerivedStore(context, dir, `pair-index-${country}.bin`)) return
-
-	await removePathIfPresent(binDest)
 
 	const cli = resolvePath(context.repoRoot, "packages/mailwoman/out/cli/main.js")
 
-	const r = spawnProcessSync(
-		process.execPath,
-		[
-			cli,
-			"gazetteer",
-			"pair-index",
-			"--out",
-			dir,
-			"--country",
-			country,
-			"--delta",
-			String(entry.delta),
-			...(source ? ["--source", source] : []),
-			...(entry.transitionBeta ? ["--transition-beta", String(entry.transitionBeta)] : []),
-			...(entry.parentDelta ? ["--parent-delta", String(entry.parentDelta)] : []),
-			...(boroughDB ? ["--borough-db", boroughDB] : []),
-			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
-			...(banDir ? ["--ban-dir", banDir] : []),
-		],
-		{ stdio: "inherit" }
-	)
+	await buildIntoPlace(dir, `pair-index-${country}.bin`, (outDir) => {
+		const r = spawnProcessSync(
+			process.execPath,
+			[
+				cli,
+				"gazetteer",
+				"pair-index",
+				"--out",
+				outDir,
+				"--country",
+				country,
+				"--delta",
+				String(entry.delta),
+				...(source ? ["--source", source] : []),
+				...(entry.transitionBeta ? ["--transition-beta", String(entry.transitionBeta)] : []),
+				...(entry.parentDelta ? ["--parent-delta", String(entry.parentDelta)] : []),
+				...(boroughDB ? ["--borough-db", boroughDB] : []),
+				...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
+				...(banDir ? ["--ban-dir", banDir] : []),
+			],
+			{ stdio: "inherit" }
+		)
 
-	if (r.status !== 0) throw new Error(`gazetteer pair-index failed for ${country} (exit ${r.status})`)
+		if (r.status !== 0) throw new Error(`gazetteer pair-index failed for ${country} (exit ${r.status})`)
+	})
 
-	if (!(await pathExists(binDest))) throw new Error(`gazetteer pair-index ran but ${binDest} was not produced`)
 	await stashDerived(context, dir, `pair-index-${country}.bin`)
 	context.log(`built soft-feed → ${workspace}/pair-index-${country}.bin (delta=${entry.delta})`)
 }
