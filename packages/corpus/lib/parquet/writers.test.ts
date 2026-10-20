@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests the staging lifecycle of `writeParquetSplits`: staged parts are removed after conversion, a failed
- *   conversion records nothing, and a resumed run writes the same files as an uninterrupted one.
+ *   conversion leaves the manifest without that part, and a resumed run writes the same files as an uninterrupted one.
  */
 
 import { dirname } from "node:path"
@@ -13,8 +13,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { ParquetManifest } from "#parquet/record"
-import { writeParquetSplits } from "#parquet/writers"
+import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 

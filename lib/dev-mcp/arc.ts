@@ -8,7 +8,7 @@
  *   subtracted from the candidate. Release eligibility asks whether the exact candidate artifact meets the
  *   registered release requirements, and it is read from the verdict `release/evaluate.run.ts` writes for that
  *   artifact and that specification version. The board's changed rows are reported as findings with their
- *   addresses; no board count decides release eligibility.
+ *   addresses. Release eligibility is decided by the verdict alone.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -16,7 +16,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
 import { ReleaseOutcome } from "mailwoman/tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "mailwoman/tools/eval-harness/release/requirements"
-import { pathBuilder } from "path-ts"
+import { resolvePath } from "path-ts"
 
 import { runCompare } from "#dev-mcp/compare"
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -377,12 +377,12 @@ export async function readReleaseEvidence(
 	releaseVerdict: string | undefined,
 	releaseSpec: string | undefined
 ): Promise<ReleaseEvidence> {
-	const spec = await readReleaseSpec(pathBuilder(releaseSpec ?? CURRENT_RELEASE_SPEC))
+	const spec = await readReleaseSpec(resolvePath(releaseSpec ?? CURRENT_RELEASE_SPEC))
 
 	return {
 		verdict: releaseVerdict ? await readLocalJSONFile<unknown>(releaseVerdict) : null,
 		verdictPath: releaseVerdict ?? null,
-		candidateSHA256: await sha256File(pathBuilder(candidate, "model.onnx")),
+		candidateSHA256: await sha256File(resolvePath(candidate, "model.onnx")),
 		specVersion: spec.specVersion,
 	}
 }

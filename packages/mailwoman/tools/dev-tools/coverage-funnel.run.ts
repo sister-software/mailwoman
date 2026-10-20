@@ -21,7 +21,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { epochMixtureAuditPath } from "@mailwoman/corpus/source-register"
-import { pathBuilder } from "path-ts"
+import { resolvePath } from "path-ts"
 
 import { censusCoverage, newestManifest } from "#coverage"
 import { admittedByShippedGraphs, resolveTrainingConfig } from "#tools/coverage/census"
@@ -92,7 +92,7 @@ async function readMixtureAudit(
 
 const repoRoot = repoRootPath()
 const scope = await readScopeConfig(repoRoot)
-const releaseSpec = await readReleaseSpec(pathBuilder(CURRENT_RELEASE_SPEC))
+const releaseSpec = await readReleaseSpec(resolvePath(CURRENT_RELEASE_SPEC))
 const config = resolveTrainingConfig(scope, { requested: values.config })
 const configPath = config.path
 const manifestPath = await newestManifest()
