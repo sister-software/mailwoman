@@ -142,6 +142,14 @@ export const spec = {
 				"align and parquet work runs in workers with their own heap and DuckDB limits, and a --jobs whose " +
 				"workers do not fit in host memory is refused",
 		},
+		"align-range-mib": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--align-range-mib must be a positive integer.",
+			description:
+				"With --jobs above 1: canonical MiB per align worker, so a larger source aligns in several byte ranges " +
+				"at once (default 2048). The ranges change which worker aligns a row and never the bytes written",
+		},
 		"fresh-sources": {
 			type: "string",
 			description:
@@ -251,6 +259,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			unshippableReason: options.unshippableReason,
 			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
 			jobs: options.jobs,
+			alignRangeBytes: options.alignRangeMib ? options.alignRangeMib * 1024 ** 2 : undefined,
 			freshSources: options.freshSources
 				? options.freshSources
 						.split(",")

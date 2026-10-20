@@ -66,6 +66,15 @@ import type { CorpusAdapter } from "#types"
 import { defaultHoldouts, SPLIT_NAMES, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
 /**
+ * Canonical bytes per align range when the caller states none.
+ *
+ * A source smaller than this aligns in one task.
+ * The 2026-10-20 profile aligned 14.6 M rows in 189 s, so a 2 GiB range of `usgov-nad`'s
+ * rows takes minutes and a large source spreads over every worker.
+ */
+export const ALIGN_RANGE_BYTES = 2 * 1024 ** 3
+
+/**
  * What the coordinator needs from `buildCorpus`.
  */
 export interface ParallelBuildContext {
@@ -331,10 +340,15 @@ class WorkerPool {
 }
 
 /**
- * The number of align ranges for a canonical file: one, so each source aligns in one task.
+ * The number of align ranges for a canonical file of `bytes`: one per `rangeBytes`,
+ * at most twice the job count.
+ *
+ * More ranges than workers lets a large source's ranges interleave with other sources' tasks,
+ * and the cap keeps the per-process start cost below the work each range does.
+ * The count changes which processes align which rows and never the bytes they write.
  */
-function alignRangeCount(): number {
-	return 1
+export function alignRangeCount(bytes: number, rangeBytes: number, jobs: number): number {
+	return Math.min(2 * jobs, Math.max(1, Math.ceil(bytes / rangeBytes)))
 }
 
 /**
@@ -481,7 +495,11 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 
 		const canonicalPath = run!.jsonl_path
 		const weight = run!.bytes
-		const plans: AlignRangePlan[] = await planAlignRanges(canonicalPath, alignRangeCount())
+
+		const plans: AlignRangePlan[] = await planAlignRanges(
+			canonicalPath,
+			alignRangeCount(weight, opts.alignRangeBytes ?? ALIGN_RANGE_BYTES, ctx.budget.jobs)
+		)
 
 		await Promise.all(
 			plans.map(async (plan) => {

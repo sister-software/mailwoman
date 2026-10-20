@@ -22,6 +22,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { buildCorpus, PriorOutput, type BuildCorpusOptions } from "#build"
+import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align-range"
 import { planWorkerBudget, workerReservationBytes } from "#build/budget"
 import { acquireBuildLock, BUILD_LOCK_DIRECTORY } from "#build/lock"
 import { sourceStateDirectory, SOURCE_RECORD_FILE, type SourceCompletionRecord } from "#build/source-record"
@@ -187,6 +188,49 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		// Each worker ran under the ceiling it was given rather than the parent's.
 		expect(runs.every((run) => run.heapLimitBytes >= 6 * GiB)).toBe(true)
 		expect(runs.every((run) => run.maxRSSBytes > 0)).toBe(true)
+	})
+
+	it("aligns each source in several byte ranges and writes the serial build's bytes", async () => {
+		const outDir = scratch.path("ranges")
+
+		// Small enough that every fixture's canonical file divides into several ranges.
+		await buildCorpus(baseOptions(outDir, { jobs: 3, alignRangeBytes: 2048 }))
+
+		expect(await snapshot(outDir)).toEqual(serial)
+
+		const runs = await readLocalJSONFile<{ task: string }[]>(outDir("intermediate", "workers", "WORKERS.json"))
+
+		for (const source of ["ban", "wof-admin"]) {
+			const ranges = runs.filter((run) => run.task.startsWith(`${source}/align-`))
+
+			expect(ranges.length).toBeGreaterThan(1)
+		}
+
+		// A resumed build realigns a range whose record is gone and reuses the others.
+		const record = await readLocalJSONFile<SourceCompletionRecord>(
+			sourceStateDirectory(outDir("intermediate"), "ban")(SOURCE_RECORD_FILE)
+		)
+
+		expect(record.alignRanges.length).toBeGreaterThan(1)
+
+		await removePath(sourceStateDirectory(outDir("intermediate"), "ban")(SOURCE_RECORD_FILE))
+		await removePath(
+			alignRangeDirectory(sourceStateDirectory(outDir("intermediate"), "ban"), {
+				index: 1,
+				count: record.alignRanges.length,
+			})(ALIGN_RANGE_RECORD_FILE)
+		)
+
+		await buildCorpus(baseOptions(outDir, { jobs: 3, alignRangeBytes: 2048, priorOutput: PriorOutput.Resume }))
+
+		const resumed = await readLocalJSONFile<{ task: string }[]>(outDir("intermediate", "workers", "WORKERS.json"))
+
+		expect(resumed.map((run) => run.task).filter((task) => task.startsWith("ban/"))).toEqual([
+			`ban/align-2-of-${record.alignRanges.length}`,
+			"ban/finish",
+		])
+
+		expect(await snapshot(outDir)).toEqual(serial)
 	})
 
 	it("resumes a build cancelled while a source was writing parquet and lands on the serial bytes", async () => {

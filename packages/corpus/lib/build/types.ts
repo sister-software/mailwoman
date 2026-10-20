@@ -208,6 +208,15 @@ export interface BuildCorpusOptions {
 	hostMemoryBytes?: number
 
 	/**
+	 * Canonical bytes per align range when `jobs` is above `1`.
+	 *
+	 * A source whose `canonical.jsonl` is larger is aligned in contiguous ranges by several workers.
+	 *
+	 * @defaultValue `ALIGN_RANGE_BYTES`
+	 */
+	alignRangeBytes?: number
+
+	/**
 	 * Sources whose parallel-build state is deleted before a resumed build, so they are
 	 * built again from their adapter run while every other finished source is reused.
 	 */
