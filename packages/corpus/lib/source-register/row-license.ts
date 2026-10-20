@@ -91,7 +91,10 @@ export interface RowLicenses {
 /**
  * Builds the lookup over an already-read register and source table.
  */
-export function createRowLicenses(register: AddressSourceRegister, inputs: CorpusSourceInputs): RowLicenses {
+export function createRowLicenses(
+	register: Pick<AddressSourceRegister, "licenses">,
+	inputs: CorpusSourceInputs
+): RowLicenses {
 	const decisions = new Map(register.licenses.map((decision) => [decision.licenseID, decision]))
 	const known = new Map<string, string | null>()
 

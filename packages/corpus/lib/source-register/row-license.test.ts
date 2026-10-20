@@ -15,7 +15,7 @@ const ELECTED = { licenseID: "ogl-gb", state: "elected", electedTerms: "OGL v3",
 const UNSTATED = { licenseID: "lo-fr", state: "elected", electedTerms: "Licence Ouverte" } as LicenseDecision
 const UNCHECKED = { licenseID: "unchecked-us-census", state: "unchecked" } as LicenseDecision
 
-const register = { licenses: [ELECTED, UNSTATED, UNCHECKED] } as unknown as AddressSourceRegister
+const register: Pick<AddressSourceRegister, "licenses"> = { licenses: [ELECTED, UNSTATED, UNCHECKED] }
 
 const input = (license: string) => ({ registerSource: `${license}-source`, license, reads: "fixture" })
 
