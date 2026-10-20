@@ -36,7 +36,7 @@ import {
 	type LicenseRefusalKind,
 	type LicenseVerdictCache,
 } from "#utils/license"
-import { splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
+import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
 
 export interface AlignPhaseOptions {
 	/**
@@ -57,6 +57,14 @@ export interface AlignPhaseOptions {
 	eligibility: ReadonlyMap<string, readonly string[]> | null
 
 	labeledPaths: Record<SplitName, PathBuilder>
+
+	/**
+	 * Where each split's `source_id` values are written, one per line in the order their rows were aligned.
+	 *
+	 * The split phase sorts these rather than parsing every labeled row again for its id.
+	 */
+	sourceIDPaths?: Record<SplitName, PathBuilder> | null
+
 	quarantinePath: PathBuilder
 	checkpointPath: PathBuilder
 
@@ -92,6 +100,14 @@ export interface AlignPhaseResult {
 	excludedByEligibility: number
 	rowsBySource: Map<string, { rows: number; license: string }>
 	ineligibleSources: Map<string, readonly string[]>
+
+	/**
+	 * The source-id lists this phase wrote, or `null` when it wrote none.
+	 *
+	 * A phase resumed from a checkpoint that records no list offsets writes none,
+	 * because the rows before the checkpoint have no ids on disk.
+	 */
+	sourceIDPaths: Record<SplitName, PathBuilder> | null
 
 	/**
 	 * The license cache this phase uses.
@@ -177,6 +193,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		refusedBySource: new Map(),
 		rowsBySource: new Map(),
 		ineligibleSources: ineligibility.refused,
+		sourceIDPaths: null,
 		licenses,
 	}
 
@@ -231,10 +248,41 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		? { ...checkpoint.offsets }
 		: { train: 0, val: 0, test: 0, quarantine: 0 }
 
+	// A checkpoint without list offsets predates the lists, so the rows it counts have no ids on disk.
+	const idPaths = opts.sourceIDPaths && (!checkpoint || checkpoint.source_id_offsets) ? opts.sourceIDPaths : null
+	const idOffsets: Record<SplitName, number> = { train: 0, val: 0, test: 0, ...checkpoint?.source_id_offsets }
+
+	if (idPaths && checkpoint) {
+		for (const split of SPLIT_NAMES) {
+			await truncateFile(idPaths[split], idOffsets[split])
+		}
+	}
+
+	const idStreams: Record<SplitName, WriteStream> | null = idPaths
+		? {
+				train: openWriteStream(idPaths.train, { encoding: "utf8", flags }),
+				val: openWriteStream(idPaths.val, { encoding: "utf8", flags }),
+				test: openWriteStream(idPaths.test, { encoding: "utf8", flags }),
+			}
+		: null
+
+	result.sourceIDPaths = idPaths
+
 	const writeLine = (name: AlignOutputName, line: string): void => {
 		offsets[name] += Buffer.byteLength(line, "utf8")
 		streams[name].write(line)
 	}
+
+	const writeSourceID = (split: SplitName, sourceID: string): void => {
+		if (!idStreams) return
+
+		const line = `${sourceID}\n`
+
+		idOffsets[split] += Buffer.byteLength(line, "utf8")
+		idStreams[split].write(line)
+	}
+
+	const allStreams = (): WriteStream[] => [...Object.values(streams), ...(idStreams ? Object.values(idStreams) : [])]
 
 	const quarantine = (row: CanonicalRow, reason: string): void => {
 		writeLine("quarantine", `${stringifyJSON({ row, reason })}\n`)
@@ -321,6 +369,12 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 
 					writeLine(split, `${stringifyJSON(aligned.row)}\n`)
 
+					// The split phase used to parse every labeled row back for this one field.
+					// The same guard it applied keeps the list identical to what that parse produced.
+					if (typeof aligned.row.source_id === "string") {
+						writeSourceID(split, aligned.row.source_id)
+					}
+
 					result.counts[split]++
 
 					tally.aligned++
@@ -336,7 +390,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		// Mid-adapter recovery is unavailable.
 		// The largest adapter takes about twenty minutes to align.
 		// A row offset inside one adapter's file would still require replaying that adapter's synthesis.
-		await Promise.all(ALIGN_OUTPUTS.map((name) => flushStream(streams[name])))
+		await Promise.all(allStreams().map((stream) => flushStream(stream)))
 
 		completed.push(adapterRun.adapter_id)
 
@@ -344,6 +398,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			settings,
 			completed_adapters: [...completed],
 			offsets: { ...offsets },
+			...(idStreams ? { source_id_offsets: { ...idOffsets } } : {}),
 			counts: { ...result.counts },
 			aligned: tally.aligned,
 			quarantined: tally.quarantined,
@@ -358,11 +413,11 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		})
 	}
 
-	for (const stream of Object.values(streams)) {
+	for (const stream of allStreams()) {
 		stream.end()
 	}
 
-	await Promise.all(Object.values(streams).map((stream) => once(stream, "close")))
+	await Promise.all(allStreams().map((stream) => once(stream, "close")))
 
 	return { ...result, ...tally }
 }

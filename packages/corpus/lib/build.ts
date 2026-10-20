@@ -148,6 +148,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		test: intermediateDir("labeled-test.jsonl"),
 	}
 
+	const sourceIDPaths: Record<SplitName, PathBuilder> = {
+		train: intermediateDir("source-ids-train.txt"),
+		val: intermediateDir("source-ids-val.txt"),
+		test: intermediateDir("source-ids-test.txt"),
+	}
+
 	const quarantinePath = intermediateDir("quarantine.jsonl")
 	const checkpointPath = intermediateDir("align-checkpoint.json")
 
@@ -155,7 +161,13 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	await settlePriorWork(priorOutput, {
 		intermediateDir,
 		checkpointPath,
-		alignPaths: { ...labeledPaths, quarantine: quarantinePath },
+		alignPaths: {
+			...labeledPaths,
+			quarantine: quarantinePath,
+			"source-ids-train": sourceIDPaths.train,
+			"source-ids-val": sourceIDPaths.val,
+			"source-ids-test": sourceIDPaths.test,
+		},
 		adapterIDs: configured,
 	})
 
@@ -181,6 +193,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdouts,
 		eligibility: profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null,
 		labeledPaths,
+		sourceIDPaths,
 		quarantinePath,
 		checkpointPath,
 		resume,
@@ -195,6 +208,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	const splitCounts = await writeSplitManifestsFromLabeledFiles({
 		labeledPaths,
+		sourceIDPaths: align.sourceIDPaths,
 		outputDir: outputDir("splits"),
 		corpusVersion: opts.corpusVersion,
 		counts: align.counts,

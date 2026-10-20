@@ -7,7 +7,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { appendLocalTextFile, removeFile, removePath } from "@mailwoman/core/fs/writers"
+import { appendLocalTextFile, removeFile, removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -30,6 +30,7 @@ import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import type { ParquetManifest } from "#parquet/writers"
 import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
+import { writeSplitManifestsFromLabeledFiles } from "#utils/split"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
@@ -421,6 +422,59 @@ describe("buildCorpus resume", () => {
 
 		expect(secondParquet.slices.map((slice) => slice.sha256)).toEqual(firstParquet.slices.map((s) => s.sha256))
 		expect(await alignDigests(outDir)).toEqual(firstDigests)
+	})
+
+	it("sorts the ids align recorded into the split files a parse of the labeled rows writes", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const checkpoint = await readLocalJSONFile<AlignCheckpoint>(outDir("intermediate", "align-checkpoint.json"))
+
+		expect(checkpoint.source_id_offsets?.train).toBe(
+			(await statPath(outDir("intermediate", "source-ids-train.txt"))).size
+		)
+
+		const reparsed = scratch.path("reparsed")
+
+		await writeSplitManifestsFromLabeledFiles({
+			labeledPaths: {
+				train: outDir("intermediate", "labeled-train.jsonl"),
+				val: outDir("intermediate", "labeled-val.jsonl"),
+				test: outDir("intermediate", "labeled-test.jsonl"),
+			},
+			outputDir: reparsed,
+			corpusVersion: "0.1.0",
+			counts: { train: 0, val: 0, test: 0 },
+		})
+
+		for (const name of ["train.txt", "val.txt", "test.txt"]) {
+			expect(await sha256File(outDir("splits", name))).toBe(await sha256File(reparsed(name)))
+		}
+
+		expect((await statPath(outDir("splits", "train.txt"))).size).toBeGreaterThan(0)
+	})
+
+	it("reads the ids from the labeled rows when the checkpoint predates the id lists", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await sha256File(outDir("splits", "train.txt"))
+		const checkpointPath = outDir("intermediate", "align-checkpoint.json")
+		const { source_id_offsets: _offsets, ...older } = await readLocalJSONFile<AlignCheckpoint>(checkpointPath)
+
+		await writeLocalJSONFile(older, checkpointPath)
+
+		for (const split of ["train", "val", "test"]) {
+			await removePath(outDir("intermediate", `source-ids-${split}.txt`))
+		}
+
+		await removePath(outDir("splits"))
+		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
+
+		expect(await sha256File(outDir("splits", "train.txt"))).toBe(before)
+		expect(await pathExists(outDir("intermediate", "source-ids-train.txt"))).toBe(false)
 	})
 
 	it("discards bytes written past the checkpoint rather than appending after them", async () => {

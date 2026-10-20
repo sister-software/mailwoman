@@ -30,6 +30,11 @@ import type { CanonicalRow, LabeledRow } from "#types"
 export type SplitName = "train" | "val" | "test"
 
 /**
+ * The three splits, in the order a build writes them.
+ */
+export const SPLIT_NAMES: readonly SplitName[] = ["train", "val", "test"]
+
+/**
  * The component values that identify the places one country holds out.
  *
  * Sources represent a place in different components: `usgov-nad` and `tiger` emit `region`,
@@ -428,14 +433,26 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "components">
 
 /**
- * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file per split.
+ * Writes the same files as `writeSplitManifests` from the rows' `source_id` values.
  *
  * `buildCorpus` calls this after its align loop partitions rows with `splitForRow`.
  * The caller passes the counts to avoid rescanning the files.
  * `sort(1)` spills to disk, so memory stays constant.
+ *
+ * Each split's ids come from the first of these the caller supplies:
+ *
+ * - `sortedSourceIDPaths`: lists already sorted by byte, merged by `sort -m`.
+ *   A build that aligned its sources apart passes each source's sorted list.
+ * - `sourceIDPaths`: one id per line in the order align wrote them, read by `sort` directly.
+ * - `labeledPaths`, the labeled JSONL itself, parsed for each row's `source_id`.
+ *   An align phase resumed from a checkpoint written before align recorded ids leaves only this.
+ *
+ * The three write the same bytes from the same rows, because each feeds `sort` the same multiset of ids.
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, PathBuilderLike>
+	sourceIDPaths?: Record<SplitName, PathBuilderLike> | null
+	sortedSourceIDPaths?: Record<SplitName, readonly PathBuilderLike[]> | null
 	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
@@ -445,9 +462,17 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
 
 	for (const split of ["train", "val", "test"] as const) {
-		const labeledPath = opts.labeledPaths[split]
 		const outPath = resolvePathBuilder(opts.outputDir, `${split}.txt`)
-		await streamSortedSourceIDs(labeledPath, outPath)
+		const sorted = opts.sortedSourceIDPaths?.[split]
+		const ids = opts.sourceIDPaths?.[split]
+
+		if (sorted) {
+			await sortLines(sorted, outPath, { merge: true })
+		} else if (ids) {
+			await sortLines([ids], outPath)
+		} else {
+			await streamSortedSourceIDs(opts.labeledPaths[split], outPath)
+		}
 	}
 
 	const total = opts.counts.train + opts.counts.val + opts.counts.test
@@ -492,19 +517,41 @@ async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath:
 
 	await outClosed
 
+	await sortLines([unsortedPath], outPath)
+
+	await removePath(unsortedPath).catch(() => {})
+}
+
+/**
+ * Sort the lines of `inputs` by byte into `outPath` with `sort(1)`, which spills to disk.
+ *
+ * With `merge`, each input must already be sorted by byte, and `sort -m` merges them without sorting again.
+ * Duplicate lines are kept either way, and zero inputs write an empty file.
+ */
+export async function sortLines(
+	inputs: readonly PathBuilderLike[],
+	outPath: PathBuilderLike,
+	options: { merge?: boolean } = {}
+): Promise<void> {
+	if (!inputs.length) {
+		await writeLocalTextFile("", outPath)
+
+		return
+	}
+
+	const args = [...(options.merge ? ["-m"] : []), ...inputs.map((input) => input.toString()), "-o", outPath.toString()]
+
 	await new Promise<void>((resolve, reject) => {
 		// `LC_ALL=C` sorts by byte, so the order is the same on every host.
-		const proc = spawnProcess("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
+		const proc = spawnProcess("sort", args, { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
 
 		proc.on("exit", (code) => {
 			if (code === 0) {
 				resolve()
 			} else {
-				reject(new Error(`sort exited with code ${code}`))
+				reject(new Error(`sort ${args.join(" ")} exited with code ${code}`))
 			}
 		})
 	})
-
-	await removePath(unsortedPath).catch(() => {})
 }
