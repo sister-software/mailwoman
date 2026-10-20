@@ -34,6 +34,9 @@ export interface WorkerResources {
 	duckdbBytes: number
 	/**
 	 * DuckDB's `threads`.
+	 *
+	 * The parquet conversion runs at `CONVERSION_THREADS` whatever this says, because a multi-threaded
+	 * conversion's bytes vary between runs, so one thread is the whole of a worker's DuckDB work.
 	 */
 	duckdbThreads: number
 }
@@ -47,7 +50,7 @@ export interface WorkerResources {
  * (`#build/heap`), with a 16 GiB heap above the 15 GiB floor `assertHeapForAdapters` enforces.
  */
 export const WORKER_CLASSES = {
-	standard: { heapBytes: 6 * GiB, duckdbBytes: 1.5 * GiB, duckdbThreads: 2 },
+	standard: { heapBytes: 6 * GiB, duckdbBytes: 1.5 * GiB, duckdbThreads: 1 },
 	resident: { heapBytes: 16 * GiB, duckdbBytes: 0, duckdbThreads: 1 },
 } as const satisfies Record<string, WorkerResources>
 

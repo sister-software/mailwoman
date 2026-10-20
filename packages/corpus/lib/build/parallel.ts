@@ -142,7 +142,7 @@ async function logTail(path: string, lines = 20): Promise<string> {
 class WorkerPool {
 	readonly runs: WorkerRun[] = []
 	#queue: PendingTask[] = []
-	#running = new Map<string, { child: ChildProcess; workerClass: WorkerClass }>()
+	#running = new Map<string, { child: ChildProcess | null; workerClass: WorkerClass }>()
 	#cancelled: Error | null = null
 	readonly #jobs: number
 	readonly #budgetBytes: number
@@ -185,8 +185,9 @@ class WorkerPool {
 			pending.reject(reason)
 		}
 
+		// A slot whose process has not been forked yet has no child, and its start sees the cancellation.
 		for (const { child } of this.#running.values()) {
-			child.kill("SIGTERM")
+			child?.kill("SIGTERM")
 		}
 	}
 
@@ -273,13 +274,16 @@ class WorkerPool {
 		}
 
 		// Reserved before the first await, so the next dispatch counts this worker.
-		const slot = { child: null as unknown as ChildProcess, workerClass }
+		const slot: { child: ChildProcess | null; workerClass: WorkerClass } = { child: null, workerClass }
 
 		this.#running.set(task.id, slot)
 
 		try {
 			await makeDirectories(task.temporaryRoot)
 			await writeLocalJSONFile(task, taskPath)
+
+			// A cancellation during the two writes above found no process to stop, so none is started.
+			if (this.#cancelled) throw this.#cancelled
 
 			const log = openWriteStream(logPath, { flags: "a" })
 

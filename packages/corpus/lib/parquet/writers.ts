@@ -386,7 +386,17 @@ export function parquetManifestOf(
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
-async function writeStagedParquet(stagePath: string, outputPath: string, limits?: DuckDBLimits): Promise<void> {
+/**
+ * DuckDB threads for converting a staged part, whatever the instance's own limit.
+ */
+export const CONVERSION_THREADS = 1
+
+/**
+ * Convert one staged NDJSON part to a parquet file at `outputPath`.
+ *
+ * @internal Exported for the test that converts one part under several instance thread limits.
+ */
+export async function writeStagedParquet(stagePath: string, outputPath: string, limits?: DuckDBLimits): Promise<void> {
 	using db = await openDuckDB(limits)
 	const columns = [...PARQUET_COLUMNS]
 
@@ -396,6 +406,12 @@ async function writeStagedParquet(stagePath: string, outputPath: string, limits?
 	const selectList = columns.map(escapeSQLIdentifier).join(", ")
 
 	await db.run("SET preserve_insertion_order=true")
+	// The row-group boundaries of a multi-threaded COPY move between runs: measured 2026-10-20
+	// on one 1,000,000-row `ban` part, three conversions each at 2, 4 and 16 threads wrote
+	// two different files at every count, and 1 thread wrote one file every time.
+	// Rows and their order were the same throughout.
+	// One thread makes a file's bytes a function of its rows, on any host and in any worker.
+	await db.run(`SET threads=${CONVERSION_THREADS}`)
 
 	await db.run(
 		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
