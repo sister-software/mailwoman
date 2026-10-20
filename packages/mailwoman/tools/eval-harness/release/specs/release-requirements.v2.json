@@ -1,0 +1,49 @@
+{
+	"schemaVersion": 2,
+	"specVersion": "2",
+	"rationale": "Version 2 of the release-quality-requirements structure (D_RULE_REDESIGN confirmed 2026-10-20, issue #2763). It changes only the statistical procedure, after the 2026-10-20 release-quality simulation measured three defects in version 1's percentile bootstrap: per-country minima use Clopper-Pearson bounds on the design-effect-adjusted effective count, paired differences and the objective use cluster-robust t bounds with a zero-event floor, and ungrouped rows decide only when rows are declared independent. Like version 1, it registers no required country, capability, objective country set or numerical threshold, and carries no operator proposal value, so every evaluation against it is insufficient evidence. Minima will be proposed with evidence once the machinery runs; the operator decides them in a later version.",
+	"requirements": [],
+	"objective": {
+		"countries": [],
+		"select": { "kinds": ["address"] },
+		"minimumImprovement": null
+	},
+	"identities": {
+		"dataset": { "id": null, "sha256": null },
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "02fec0af5"
+		},
+		"inference": {
+			"description": "NeuralAddressClassifier.parse with the row's country as localeHint, as scoreHeldoutWeights calls it",
+			"options": { "postcodeRepair": true, "localeHint": "row.country" }
+		},
+		"published": {
+			"description": "The published model's model.onnx",
+			"sha256": null
+		},
+		"candidate": {
+			"description": "The exact release artifact's model.onnx",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": null,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"rowsIndependent": false,
+		"groupingAssumption": "A row's independent unit is its group within its country: derived variants of one address or place share a group, and a larger unit is used where shared place or source structure requires it. Rows are not declared independent, so a check that reads a row without grouping metadata is insufficient evidence rather than treating correlated variants as independent. Limitation: structure shared across groups (one source's conventions, one place's many addresses) is not modelled unless the grouping metadata names it.",
+		"requiredPrecision": null
+	},
+	"provenance": { "admitted": [] },
+	"evaluations": {
+		"development": {
+			"id": null,
+			"description": "Unregistered: no versioned development evaluation collection exists yet."
+		},
+		"confirmation": {
+			"id": null,
+			"description": "Unregistered: no independent confirmation collection exists yet."
+		}
+	}
+}

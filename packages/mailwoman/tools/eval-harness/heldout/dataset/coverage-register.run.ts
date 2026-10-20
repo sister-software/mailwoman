@@ -9,7 +9,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage-register.run.ts \
  *     --dataset <dataset manifest .json> \
- *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v1.json] \
+ *     [--spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v2.json] \
  *     [--provenance <overlap audit .json>] [--verdict <verdict .json>] \
  *     [--out docs/engineering/reference/evaluation-coverage.mdx] [--json docs/engineering/reference/evaluation-coverage.json]
  */
@@ -33,7 +33,7 @@ const { values } = parseArguments({
 		dataset: { type: "string", description: "The held-out dataset manifest" },
 		spec: {
 			type: "string",
-			default: "packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v1.json",
+			default: "packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v2.json",
 			description: "The release-requirement specification",
 		},
 		provenance: {

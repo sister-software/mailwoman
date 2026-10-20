@@ -147,6 +147,80 @@ both):
    54.5% (`equal-sizes-meets`). No scenario produced an erroneous approval except findings 1 and 4. This
    measures the evaluator under these simulation parameters only.
 
+## After the fix
+
+Findings 1 to 3 were defects in `evaluate.ts`; the evaluator now computes its bounds differently, and the
+current specification moved to `specs/release-requirements.v2.json` (schema 2). Decided changes:
+
+- **Minimum checks** use a Clopper–Pearson interval on the effective count. The cluster-robust variance of
+  the rate over a country's groups gives a design effect, and the effective count is the row count divided
+  by it, clamped to between the number of groups and the number of rows. At a rate of 0 or 1 the design
+  effect cannot be estimated and the effective count is the number of groups. Clopper–Pearson is exact on
+  independent binomial counts and its bound away from 0 or 1 never collapses: 10 exact rows of 10 at the
+  per-side tail 0.0125 give a lower bound of 0.0125^(1/10) = 0.645.
+- **Difference checks** (a capability's permitted loss and the Q improvement) use an analytic cluster-robust
+  variance of the paired difference per country, summed over the objective countries with weight 1/K, and a
+  Student t quantile with Welch–Satterthwaite degrees of freedom. A country with fewer than two groups makes
+  the check insufficient. A country whose estimated variance is zero (no discordant group) takes the exact
+  zero-event bound q / G, with q = 1 - tail^(1/G), in its place, so a degenerate sample never has zero width
+  and decides only once its group count makes that bound narrow. A bound that still has zero width is
+  insufficient evidence.
+- **Grouping.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
+  that reads a row without a group reports no bounds and is insufficient evidence. v2 sets it to `false`. The
+  simulation's synthetic specification also sets it to `false`, so the `row_identity` scenarios now measure
+  the refusal: their checks have no bounds, which the coverage columns count as not covering.
+- The bootstrap is gone, so schema 2 refuses `resamples` and `seed`, and the verdict reports
+  `rowsIndependent`, each check's `method`, `effectiveRows`, `degreesOfFreedom` and `degenerateStrata` in
+  place of `failedResamples`.
+
+Same command, scenario set and seeds (R = 200, seeds 2763 to 2962). The "before" run was repeated on
+`origin/main` f8d6dece3, finishing at 17:19:13Z on 2026-10-20, and reproduced the Results table above
+exactly (238.2 s). The "after" run finished at 17:20:53Z and took 7.4 s. A corpus build ran beside both.
+
+| Scenario                         | Joint coverage before | Joint coverage after | Lowest per-check after       | Pass after        | Erroneous approval after | Erroneous fail after | Insufficient after  |
+| -------------------------------- | --------------------- | -------------------- | ---------------------------- | ----------------- | ------------------------ | -------------------- | ------------------- |
+| equal-sizes-meets                | 94.5 [90.4, 96.9]     | 96.0 [92.3, 98.0]    | objective: 98.5 [95.7, 99.5] | 52.0 [45.1, 58.8] | n/a                      | 0.0 [0.0, 1.9]       | 48.0 [41.2, 54.9]   |
+| equal-sizes-one-below-minimum    | 93.5 [89.2, 96.2]     | 96.0 [92.3, 98.0]    | objective: 98.5 [95.7, 99.5] | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 87.0 [81.6, 91.0]   |
+| unequal-sizes-meets              | 82.5 [76.6, 87.1]     | 96.0 [92.3, 98.0]    | BB: 99.0 [96.4, 99.7]        | 0.0 [0.0, 1.9]    | n/a                      | 0.0 [0.0, 1.9]       | 100.0 [98.1, 100.0] |
+| small-10-rows                    | 19.5 [14.6, 25.5]     | 98.5 [95.7, 99.5]    | BB: 99.5 [97.2, 99.9]        | 0.0 [0.0, 1.9]    | n/a                      | 0.0 [0.0, 1.9]       | 100.0 [98.1, 100.0] |
+| small-50-rows                    | 88.0 [82.8, 91.8]     | 98.5 [95.7, 99.5]    | objective: 99.0 [96.4, 99.7] | 11.0 [7.4, 16.1]  | n/a                      | 0.0 [0.0, 1.9]       | 89.0 [83.9, 92.6]   |
+| small-10-rows-below-minimum      | 94.5 [90.4, 96.9]     | 98.5 [95.7, 99.5]    | AA: 99.5 [97.2, 99.9]        | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 95.5 [91.7, 97.6]   |
+| small-10-rows-near-minimum       | 82.0 [76.1, 86.7]     | 100.0 [98.1, 100.0]  | AA: 100.0 [98.1, 100.0]      | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 100.0 [98.1, 100.0] |
+| independent-rows                 | 97.5 [94.3, 98.9]     | 96.5 [93.0, 98.3]    | DD: 98.5 [95.7, 99.5]        | 48.5 [41.7, 55.4] | n/a                      | 0.0 [0.0, 1.9]       | 51.5 [44.6, 58.3]   |
+| correlated-grouped               | 90.5 [85.6, 93.8]     | 94.0 [89.8, 96.5]    | AA: 98.0 [95.0, 99.2]        | 0.5 [0.1, 2.8]    | n/a                      | 0.0 [0.0, 1.9]       | 99.5 [97.2, 99.9]   |
+| correlated-ignored               | 33.0 [26.9, 39.8]     | 0.0 (no bounds)      | AA: 0.0 (no bounds)          | 0.0 [0.0, 1.9]    | n/a                      | 0.0 [0.0, 1.9]       | 100.0 [98.1, 100.0] |
+| correlated-ignored-below-minimum | 31.5 [25.5, 38.2]     | 0.0 (no bounds)      | AA: 0.0 (no bounds)          | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 100.0 [98.1, 100.0] |
+| correlated-grouped-below-minimum | 91.5 [86.8, 94.6]     | 96.0 [92.3, 98.0]    | AA: 98.5 [95.7, 99.5]        | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 92.5 [88.0, 95.4]   |
+| boundary-minimum                 | 96.0 [92.3, 98.0]     | 96.0 [92.3, 98.0]    | BB: 98.5 [95.7, 99.5]        | 0.0 [0.0, 1.9]    | n/a                      | 2.5 [1.1, 5.7]       | 97.5 [94.3, 98.9]   |
+| boundary-improvement             | 97.5 [94.3, 98.9]     | 96.5 [93.0, 98.3]    | DD: 98.5 [95.7, 99.5]        | 0.0 [0.0, 1.9]    | n/a                      | 0.0 [0.0, 1.9]       | 100.0 [98.1, 100.0] |
+| selection-k1                     | 96.5 [93.0, 98.3]     | 97.5 [94.3, 98.9]    | AA: 99.5 [97.2, 99.9]        | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 98.5 [95.7, 99.5]   |
+| selection-k50-same-set           | 65.0 [58.2, 71.3]     | 67.5 [60.7, 73.6]    | objective: 80.0 [73.9, 85.0] | 4.5 [2.4, 8.3]    | 4.5 [2.4, 8.3]           | n/a                  | 95.5 [91.7, 97.6]   |
+| selection-k50-fresh-set          | 94.5 [90.4, 96.9]     | 96.5 [93.0, 98.3]    | BB: 99.0 [96.4, 99.7]        | 0.0 [0.0, 1.9]    | 0.0 [0.0, 1.9]           | n/a                  | 98.0 [95.0, 99.2]   |
+
+Against the targets (observed):
+
+- `small-10-rows-near-minimum` erroneous approval fell from 18.0% [13.3, 23.9] to 0.0% [0.0, 1.9], below the
+  5% target.
+- Joint coverage in the grouped scenarios: `correlated-grouped` 94.0% [89.8, 96.5] and `unequal-sizes-meets`
+  96.0% [92.3, 98.0]; 95% lies inside both intervals. `correlated-grouped`'s point estimate is below 95%, and
+  R = 200 cannot tell 94% from 95%. The 40-row countries of `unequal-sizes-meets` now reach at least 99.0%
+  [96.4, 99.7] per check against a nominal 99.5%. Every scenario other than the ungrouped and same-set
+  selection ones has joint coverage whose interval includes 95%.
+- Missing groups no longer decide: both `row_identity` scenarios are 100% insufficient evidence and report no
+  bounds.
+- `boundary-minimum` erroneous fail is 2.5% [1.1, 5.7] with the truth exactly at the minimum in four
+  countries. The bound allows up to 4 x 0.005 = 2% there (four per-side tails of 0.05/5/2); the interval
+  includes it.
+- **Still short of nominal: `selection-k50-same-set`**, joint coverage 67.5% and erroneous approval 4.5%
+  [2.4, 8.3]. This is finding 4, not a bound defect: no interval computed on the rows that chose the
+  candidate covers the selected candidate's truth. The fresh-set arm is at nominal (96.5%, 0.0% approval).
+  The remedy is procedural, confirmation on rows not used for selection, as the policy's development and
+  confirmation collections require.
+- **Cost (observed):** the exact bounds are more conservative. Pass rates where the truth meets every
+  requirement fell in `small-50-rows` (26.5% to 11.0%), `small-10-rows` (2.5% to 0.0%),
+  `unequal-sizes-meets` (1.5% to 0.0%) and `correlated-grouped` (1.5% to 0.5%), and stayed level where
+  countries hold 300 to 400 rows (`equal-sizes-meets` 54.5% to 52.0%, `independent-rows` 49.0% to 48.5%).
+
 ## Limitations
 
 The generative model has one correlation level per country and no structure shared across countries, places or

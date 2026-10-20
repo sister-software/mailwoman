@@ -19,7 +19,7 @@ import type { HeldoutProvenance, HeldoutRowKind } from "#tools/eval-harness/held
 /**
  * The specification format version this reader accepts.
  */
-export const RELEASE_SPEC_SCHEMA_VERSION = 1
+export const RELEASE_SPEC_SCHEMA_VERSION = 2
 
 /**
  * The multiple-comparison corrections the evaluator implements for simultaneous bounds.
@@ -141,12 +141,17 @@ export interface ReleaseRequirementSpec {
 		/**
 		 * The resampling unit.
 		 *
-		 * `group` resamples by a row's grouping metadata and falls back to row identity.
+		 * `group`: a row's grouping metadata within its country names its independent unit.
 		 */
 		samplingUnit: "group"
+		/**
+		 * Whether the rows are declared independent, so that a row without grouping metadata is its own unit.
+		 *
+		 * `false` makes any check that reads an ungrouped row insufficient evidence.
+		 * There is no default: the reader refuses a specification that omits it.
+		 */
+		rowsIndependent: boolean
 		groupingAssumption: string
-		resamples: number
-		seed: number
 		/**
 		 * Required interval half-width, or `null` while unregistered.
 		 * Reported against, never defaulted.
@@ -376,14 +381,16 @@ export function validateReleaseSpec(input: unknown, source = "release spec"): Re
 		fail("$.statistics.samplingUnit", "must be group")
 	}
 
-	string(statistics.groupingAssumption, "$.statistics.groupingAssumption")
-
-	if (!Number.isSafeInteger(statistics.resamples) || (statistics.resamples as number) < 1) {
-		fail("$.statistics.resamples", "must be a positive integer")
+	if (typeof statistics.rowsIndependent !== "boolean") {
+		fail("$.statistics.rowsIndependent", "must be present as true or false; it has no default")
 	}
 
-	if (!Number.isSafeInteger(statistics.seed)) {
-		fail("$.statistics.seed", "must be an integer")
+	string(statistics.groupingAssumption, "$.statistics.groupingAssumption")
+
+	for (const retired of ["resamples", "seed"]) {
+		if (retired in statistics) {
+			fail(`$.statistics.${retired}`, "is retired in schema 2: bounds are analytic and draw no resamples")
+		}
 	}
 
 	if (!("requiredPrecision" in statistics)) {

@@ -83,7 +83,10 @@ export interface SimulationScenario {
 	minimumImprovement: number
 	confidenceLevel: number
 	multipleComparison?: MultipleComparisonMethod
-	resamples: number
+	/**
+	 * `row_identity` omits the group field; the synthetic specification never declares
+	 * rows independent, so those scenarios measure the refusal of ungrouped rows.
+	 */
 	grouping: "metadata" | "row_identity"
 	selection?: { candidates: number; confirmation: "same" | "fresh" }
 }
@@ -130,7 +133,9 @@ export interface ScenarioReport {
 	jointCoverage: Rate
 	checks: CheckCoverage[]
 	/**
-	 * Evaluations in which some check had no bounds (a resample drew none of its rows).
+	 * Evaluations in which some check had no bounds, such as ungrouped rows the
+	 * specification does not declare independent.
+	 * Such a check counts as not covering its truth.
 	 */
 	unbounded: number
 }
@@ -191,6 +196,7 @@ export function validateSimulationScenario(scenario: SimulationScenario): void {
 		if (names.has(c.country)) {
 			fail(`country ${c.country} appears twice`)
 		}
+
 		names.add(c.country)
 
 		if (!Number.isInteger(c.rows) || c.rows < 1) {
@@ -230,10 +236,6 @@ export function validateSimulationScenario(scenario: SimulationScenario): void {
 
 	if (!(scenario.confidenceLevel > 0 && scenario.confidenceLevel < 1)) {
 		fail("confidenceLevel must lie in (0, 1)")
-	}
-
-	if (!Number.isInteger(scenario.resamples) || scenario.resamples < 1) {
-		fail("resamples must be a positive integer")
 	}
 
 	if (scenario.grouping !== "metadata" && scenario.grouping !== "row_identity") {
@@ -373,10 +375,10 @@ const CANDIDATE_SHA = "1".repeat(64)
  * The synthetic specification a scenario is evaluated against.
  * Its thresholds are simulation parameters.
  */
-export function scenarioSpec(scenario: SimulationScenario, seed: number): ReleaseRequirementSpec {
+export function scenarioSpec(scenario: SimulationScenario): ReleaseRequirementSpec {
 	return validateReleaseSpec(
 		{
-			schemaVersion: 1,
+			schemaVersion: 2,
 			specVersion: `simulation:${scenario.id}`,
 			rationale: "Simulation parameters for statistical validation; not a registered requirement.",
 			requirements: scenario.countries
@@ -409,9 +411,8 @@ export function scenarioSpec(scenario: SimulationScenario, seed: number): Releas
 				confidenceLevel: scenario.confidenceLevel,
 				multipleComparison: scenario.multipleComparison ?? MultipleComparisonMethod.Bonferroni,
 				samplingUnit: "group",
+				rowsIndependent: false,
 				groupingAssumption: `simulation: ${scenario.grouping}`,
-				resamples: scenario.resamples,
-				seed,
 				requiredPrecision: null,
 			},
 			provenance: { admitted: ["verified_unseen"] },
@@ -451,8 +452,8 @@ function measuredImprovement(rows: readonly PairedRow[], countries: readonly str
 /**
  * Runs `repetitions` evaluations of a scenario.
  *
- * Repetition r draws data from seed `seed + r` and gives the evaluator's bootstrap the
- * seed `seed + r` as well, so every repetition is distinct and the run is reproducible.
+ * Repetition r draws data from seed `seed + r`, so every repetition is distinct and the run is reproducible.
+ * The evaluator's bounds are analytic and draw no random numbers of their own.
  */
 export function simulateScenario(scenario: SimulationScenario, repetitions: number, seed: number): ScenarioReport {
 	validateSimulationScenario(scenario)
@@ -521,7 +522,7 @@ export function simulateScenario(scenario: SimulationScenario, repetitions: numb
 
 		rowsPerSet = paired.length
 
-		const verdict = evaluateReleaseSpec(scenarioSpec(scenario, (seed + r) >>> 0), paired, {
+		const verdict = evaluateReleaseSpec(scenarioSpec(scenario), paired, {
 			published: PUBLISHED_SHA,
 			candidate: CANDIDATE_SHA,
 		})

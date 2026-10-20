@@ -31,7 +31,7 @@ veto are removed. The procedure:
    verdict as `insufficient_evidence`, reports attribution separately, and lists board regressions with their
    addresses as findings to investigate rather than vetoes.
 
-**No threshold is registered yet.** `release-requirements.v1.json` registers no required country, capability,
+**No threshold is registered yet.** `release-requirements.v2.json` registers no required country, capability,
 minimum, improvement or confidence level, so every verdict is `insufficient_evidence` and the procedure cannot approve
 a release. Report release eligibility as insufficient evidence, never as a pass. Until a spec version registers the
 replacements, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped

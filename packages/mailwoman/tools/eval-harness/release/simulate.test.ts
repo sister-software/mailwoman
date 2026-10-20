@@ -6,10 +6,11 @@ const scenario = (overrides: Partial<SimulationScenario> = {}): SimulationScenar
 	id: "test",
 	description: "test",
 	countries: [
-		{ country: "AA", rows: 20, published: 1, candidate: 1, minimum: 0.9 },
+		// Large enough that an all-exact country's exact lower bound clears 0.9; at 20 and 30 rows it does not.
+		{ country: "AA", rows: 200, published: 1, candidate: 1, minimum: 0.9 },
 		{
 			country: "BB",
-			rows: 30,
+			rows: 300,
 			published: 0,
 			candidate: 1,
 			discordance: 1,
@@ -18,7 +19,6 @@ const scenario = (overrides: Partial<SimulationScenario> = {}): SimulationScenar
 	],
 	minimumImprovement: 0,
 	confidenceLevel: 0.95,
-	resamples: 50,
 	grouping: "metadata",
 	...overrides,
 })
@@ -38,6 +38,27 @@ describe("simulateScenario", () => {
 		expect(report.pass.count).toBe(5)
 		expect(report.erroneousFail?.count).toBe(0)
 		expect(report.erroneousApproval).toBeNull()
+	})
+
+	it("does not pass a small all-exact sample whose true rate misses the minimum", () => {
+		const report = simulateScenario(
+			scenario({
+				countries: [{ country: "AA", rows: 10, published: 0.85, candidate: 0.85, discordance: 0.1, minimum: 0.9 }],
+				minimumImprovement: -0.05,
+			}),
+			100,
+			2763
+		)
+
+		expect(report.truthMeetsAll).toBe(false)
+		expect(report.erroneousApproval?.count).toBe(0)
+	})
+
+	it("refuses to bound ungrouped rows the specification does not declare independent", () => {
+		const report = simulateScenario(scenario({ grouping: "row_identity" }), 3, 1)
+
+		expect(report.insufficient.count).toBe(3)
+		expect(report.unbounded).toBe(3)
 	})
 
 	it("fails every zero-variance evaluation whose truth misses a minimum, with no erroneous approval", () => {

@@ -6,27 +6,48 @@
  *   Evaluates a release-requirement specification against the paired per-row outcomes the held-out grader
  *   writes (`heldout/per/country`), returning pass, fail or insufficient evidence.
  *
- *   Uncertainty comes from a paired grouped bootstrap. Each resample draws, within every country, as many
- *   independent groups as the country holds, with replacement, and applies the same draw to both arms. Every
- *   country's exact parse rate, every capability rate and the equal-country objective Q are recomputed from
- *   that draw. A row's group is its `group` field when the outcome carries one, else its row identity; the
- *   result records which.
+ *   Independent units. A row's unit is its `group` within its country. A row without a group is its own unit
+ *   only when the specification declares rows independent (`statistics.rowsIndependent: true`); otherwise any
+ *   check that reads an ungrouped row is insufficient evidence and reports no bounds, because bounds computed
+ *   as if correlated variants were independent are too narrow (the 2026-10-20 simulation measured 33% joint
+ *   coverage against a nominal 95%).
  *
- *   Bounds are two-sided percentile intervals, adjusted for the number of checks the specification declares
- *   (every check counts, registered threshold or not) by the registered correction. The lower percentile index
- *   is `floor(p (n - 1))` and the upper `ceil((1 - p) (n - 1))` of the sorted resample values, which widens
- *   rather than narrows an interval on discrete scores.
+ *   Simultaneous bounds. Every check the specification declares counts toward the registered correction
+ *   (Bonferroni or Sidak), registered threshold or not, giving one per-side tail probability for every bound.
+ *
+ *   A minimum check (a candidate rate against a minimum) uses a Clopper–Pearson interval on the effective
+ *   count. The cluster-robust (ratio-estimator) variance of the rate over units gives the design effect
+ *   `deff = V_cluster / (p (1 - p) / n)`, and the effective count is `n / deff`, clamped to `[units, n]`.
+ *   When the rate is 0 or 1 the design effect cannot be estimated and the effective count is the number of
+ *   units, the most conservative value the clamp admits. Clopper–Pearson was chosen over a percentile
+ *   bootstrap and over Wilson because it is exact (never below nominal) on independent binomial counts,
+ *   discrete samples included, and its bound away from 0 or 1 never collapses: ten exact rows of ten give a
+ *   lower bound well below 1, where every bootstrap resample of them is 1 and the percentile interval was
+ *   [1, 1]. Its conservatism costs power at small samples, which the policy accepts: a small sample that
+ *   cannot show a minimum is met is insufficient evidence.
+ *
+ *   A difference check (a capability's loss against its permitted loss, and the equal-country objective's Q
+ *   improvement) uses an analytic cluster-robust variance of the paired difference. Within each stratum (one
+ *   per objective country; one for a capability's pooled rows) the variance of the mean paired difference is
+ *   `G / (G - 1) * sum_g (d_g - D m_g)^2 / n^2` over its G units, and Q's variance is the sum of the
+ *   per-country variances over K^2. The bound is the estimate plus or minus a Student t quantile whose degrees
+ *   of freedom are the Welch–Satterthwaite combination of the strata's `G - 1`. A stratum with fewer than two
+ *   units has no variance estimate and makes the check insufficient. A stratum whose estimated variance is zero
+ *   (in practice, no discordant unit) is degenerate: its variance is replaced by the exact zero-event bound,
+ *   `q / G` with `q = 1 - tail^(1/G)` the Clopper–Pearson upper bound on the share of discordant units, since
+ *   a unit's mean paired difference lies in [-1, 1]. A degenerate sample therefore never reports zero width,
+ *   and it decides only once its unit count makes that bound narrow enough; a bound that is still zero width
+ *   is insufficient evidence.
  *
  *   Boundary comparisons are inclusive on the passing side. A check passes when its lower bound is at least
  *   its threshold and its point estimate is at least its threshold. It fails when its upper bound is below the
  *   threshold. Anything between is insufficient evidence. A missing threshold or confidence level, a check
- *   without rows, an unregistered artifact identity, or a resample in which a check's rows were all drawn
- *   away is insufficient evidence; none of these is ever read as zero loss or a pass.
+ *   without rows, an unregistered artifact identity, or ungrouped rows without a declaration of independence
+ *   is insufficient evidence; none of these is ever read as zero loss or a pass.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
-
 import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tools/eval-harness/heldout/per/country"
+import { clopperPearson, studentTUpperQuantile } from "#tools/eval-harness/release/bounds"
 import {
 	MultipleComparisonMethod,
 	type ReleaseRequirementSpec,
@@ -68,6 +89,16 @@ export const ReleaseOutcome = {
 
 export type ReleaseOutcome = (typeof ReleaseOutcome)[keyof typeof ReleaseOutcome]
 
+/**
+ * How a check's bounds were computed.
+ */
+export const BoundMethod = {
+	ClopperPearson: "clopper_pearson_design_effect",
+	ClusterRobustT: "cluster_robust_t",
+} as const
+
+export type BoundMethod = (typeof BoundMethod)[keyof typeof BoundMethod]
+
 export interface CheckResult {
 	id: string
 	/**
@@ -77,6 +108,7 @@ export interface CheckResult {
 	 * `objective`: Q improvement against the required improvement.
 	 */
 	check: "minimum" | "max_loss" | "objective"
+	method: BoundMethod
 	threshold: number | null
 	rows: number
 	groups: number
@@ -84,7 +116,18 @@ export interface CheckResult {
 	publishedEstimate: number | null
 	lower: number | null
 	upper: number | null
-	failedResamples: number
+	/**
+	 * Minimum checks: the effective count the Clopper–Pearson interval used.
+	 */
+	effectiveRows: number | null
+	/**
+	 * Difference checks: the Welch–Satterthwaite degrees of freedom of the t quantile.
+	 */
+	degreesOfFreedom: number | null
+	/**
+	 * Strata whose zero estimated variance was replaced by the zero-event bound.
+	 */
+	degenerateStrata: string[]
 	outcome: ReleaseOutcome
 	reasons: string[]
 }
@@ -116,9 +159,11 @@ export interface ReleaseVerdict {
 		confidenceLevel: number | null
 		method: MultipleComparisonMethod
 		simultaneousChecks: number
+		/**
+		 * The per-side tail probability of every bound under the correction.
+		 */
 		percentile: number | null
-		resamples: number
-		seed: number
+		rowsIndependent: boolean
 		grouping: "metadata" | "row_identity" | "mixed"
 		groupingAssumption: string
 	}
@@ -209,9 +254,162 @@ function selects(row: PairedRow, select: RowSelector | undefined): boolean {
 }
 
 /**
- * A statistic over row weights, returning `null` when the weighted rows it needs are empty.
+ * One independent unit's totals: rows, candidate exact rows and published exact rows.
  */
-type Statistic = (weights: Float64Array) => number | null
+interface Unit {
+	rows: number
+	candidate: number
+	published: number
+}
+
+/**
+ * Groups rows into independent units keyed by country and group, a row without a group being its own unit.
+ */
+function independentUnits(rows: readonly PairedRow[], indices: readonly number[]): Unit[] {
+	const units = new Map<string, Unit>()
+
+	for (const i of indices) {
+		const row = rows[i]!
+		const key = `${row.country}\u0000${row.group == null ? `row\u0000${row.rowID}` : `group\u0000${row.group}`}`
+		const unit = units.get(key) ?? { rows: 0, candidate: 0, published: 0 }
+
+		unit.rows++
+		unit.candidate += Number(row.candidate)
+		unit.published += Number(row.published)
+		units.set(key, unit)
+	}
+
+	return [...units.values()]
+}
+
+interface RateBound {
+	estimate: number
+	publishedEstimate: number
+	lower: number
+	upper: number
+	effectiveRows: number
+}
+
+/**
+ * Clopper–Pearson bounds on the candidate rate at the design-effect-adjusted effective count.
+ */
+function rateBound(units: readonly Unit[], tail: number): RateBound | null {
+	const G = units.length
+	let n = 0
+	let hits = 0
+	let published = 0
+
+	for (const unit of units) {
+		n += unit.rows
+		hits += unit.candidate
+		published += unit.published
+	}
+
+	if (!n) return null
+
+	const p = hits / n
+	const binomial = (p * (1 - p)) / n
+	let effectiveRows = G
+
+	if (binomial > 0 && G > 1) {
+		let squares = 0
+
+		for (const unit of units) {
+			squares += (unit.candidate - p * unit.rows) ** 2
+		}
+
+		const cluster = ((G / (G - 1)) * squares) / (n * n)
+		const designEffect = cluster / binomial
+
+		effectiveRows = Math.min(n, Math.max(G, designEffect > 0 ? n / designEffect : n))
+	}
+
+	const { lower, upper } = clopperPearson(p * effectiveRows, effectiveRows, tail)
+
+	return { estimate: p, publishedEstimate: published / n, lower, upper, effectiveRows }
+}
+
+interface DifferenceStratum {
+	label: string
+	weight: number
+	units: Unit[]
+}
+
+interface DifferenceBound {
+	estimate: number
+	publishedEstimate: number
+	lower: number
+	upper: number
+	degreesOfFreedom: number
+	degenerateStrata: string[]
+}
+
+/**
+ * Cluster-robust t bounds on a weighted sum of per-stratum mean paired
+ * differences (candidate minus published).
+ *
+ * Returns the strata that hold fewer than two units instead when any does.
+ */
+function differenceBound(
+	strata: readonly DifferenceStratum[],
+	tail: number
+): DifferenceBound | { tooFewUnits: string[] } {
+	const tooFewUnits = strata.filter((s) => s.units.length < 2).map((s) => s.label)
+
+	if (tooFewUnits.length || !strata.length) return { tooFewUnits }
+
+	let estimate = 0
+	let publishedEstimate = 0
+	let variance = 0
+	let satterthwaite = 0
+	const degenerateStrata: string[] = []
+
+	for (const { label, weight, units } of strata) {
+		const G = units.length
+		let n = 0
+		let diff = 0
+		let published = 0
+
+		for (const unit of units) {
+			n += unit.rows
+			diff += unit.candidate - unit.published
+			published += unit.published
+		}
+
+		const D = diff / n
+		let squares = 0
+
+		for (const unit of units) {
+			squares += (unit.candidate - unit.published - D * unit.rows) ** 2
+		}
+
+		let v = ((G / (G - 1)) * squares) / (n * n)
+
+		if (!(v > 0)) {
+			v = (1 - tail ** (1 / G)) / G
+			degenerateStrata.push(label)
+		}
+
+		const contribution = weight * weight * v
+
+		estimate += weight * D
+		publishedEstimate += (weight * published) / n
+		variance += contribution
+		satterthwaite += (contribution * contribution) / (G - 1)
+	}
+
+	const degreesOfFreedom = Math.max(1, (variance * variance) / satterthwaite)
+	const half = studentTUpperQuantile(tail, degreesOfFreedom) * Math.sqrt(variance)
+
+	return {
+		estimate,
+		publishedEstimate,
+		lower: Math.max(-1, estimate - half),
+		upper: Math.min(1, estimate + half),
+		degreesOfFreedom,
+		degenerateStrata,
+	}
+}
 
 interface CheckPlan {
 	id: string
@@ -222,111 +420,10 @@ interface CheckPlan {
 	 * Countries whose rows the statistic needs; a missing one makes the check insufficient.
 	 */
 	missingCountries: string[]
-	candidate: Statistic
-	published: Statistic | null
 	/**
-	 * The quantity compared with the threshold.
+	 * Minimum checks read the pooled rows; difference checks read these strata.
 	 */
-	compared: Statistic
-}
-
-function rate(rows: readonly PairedRow[], indices: readonly number[], arm: "published" | "candidate"): Statistic {
-	return (weights) => {
-		let n = 0
-		let hit = 0
-
-		for (const i of indices) {
-			const w = weights[i]!
-
-			n += w
-
-			if (rows[i]![arm]) {
-				hit += w
-			}
-		}
-
-		return n > 0 ? hit / n : null
-	}
-}
-
-function equalCountryMean(perCountry: readonly Statistic[]): Statistic {
-	return (weights) => {
-		if (!perCountry.length) return null
-
-		let sum = 0
-
-		for (const stat of perCountry) {
-			const value = stat(weights)
-
-			if (value == null) return null
-			sum += value
-		}
-
-		return sum / perCountry.length
-	}
-}
-
-function difference(a: Statistic, b: Statistic): Statistic {
-	return (weights) => {
-		const x = a(weights)
-		const y = b(weights)
-
-		return x == null || y == null ? null : x - y
-	}
-}
-
-/**
- * Builds a paired grouped resampler: each call returns row weights drawn by resampling
- * groups within each country, with replacement, from a seeded generator.
- */
-export function groupedResampler(
-	rows: readonly PairedRow[],
-	seed: number
-): { draw: () => Float64Array; groups: Map<string, number> } {
-	const strata = new Map<string, Map<string, number[]>>()
-
-	for (const [i, row] of rows.entries()) {
-		const groups = strata.get(row.country) ?? new Map<string, number[]>()
-		const key = row.group ?? row.rowID
-		const members = groups.get(key) ?? []
-
-		members.push(i)
-		groups.set(key, members)
-		strata.set(row.country, groups)
-	}
-
-	const stratumGroups = [...strata.entries()]
-		.toSorted(([a], [b]) => a.localeCompare(b))
-		.map(([, groups]) => [...groups.values()])
-
-	const random = mulberry32(seed)
-
-	return {
-		groups: new Map([...strata.entries()].map(([country, groups]) => [country, groups.size])),
-		draw: () => {
-			const weights = new Float64Array(rows.length)
-
-			for (const groups of stratumGroups) {
-				for (const _ of groups) {
-					for (const i of groups[Math.floor(random() * groups.length)]!) {
-						weights[i]!++
-					}
-				}
-			}
-
-			return weights
-		},
-	}
-}
-
-function quantileIndex(n: number, p: number, side: "lower" | "upper"): number {
-	const position = side === "lower" ? p * (n - 1) : (1 - p) * (n - 1)
-
-	return Math.min(n - 1, Math.max(0, side === "lower" ? Math.floor(position + 1e-12) : Math.ceil(position - 1e-12)))
-}
-
-function countGroups(rows: readonly PairedRow[], indices: readonly number[]): number {
-	return new Set(indices.map((i) => `${rows[i]!.country}\u0000${rows[i]!.group ?? rows[i]!.rowID}`)).size
+	strata: Array<{ label: string; weight: number; indices: number[] }>
 }
 
 /**
@@ -365,8 +462,6 @@ export function evaluateReleaseSpec(
 	for (const req of spec.requirements) {
 		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
 		const indices = allIndices.filter((i) => selects(rows[i]!, select))
-		const candidate = rate(rows, indices, "candidate")
-		const published = rate(rows, indices, "published")
 
 		const missingCountries = (select.countries ?? []).filter(
 			(country) => !indices.some((i) => rows[i]!.country === country)
@@ -378,9 +473,7 @@ export function evaluateReleaseSpec(
 			threshold: req.minimum,
 			rowIndices: indices,
 			missingCountries,
-			candidate,
-			published,
-			compared: candidate,
+			strata: [],
 		})
 
 		if (req.kind === "capability" && req.maxLoss != null) {
@@ -390,9 +483,7 @@ export function evaluateReleaseSpec(
 				threshold: -req.maxLoss,
 				rowIndices: indices,
 				missingCountries,
-				candidate,
-				published,
-				compared: difference(candidate, published),
+				strata: [{ label: req.id, weight: 1, indices }],
 			})
 		}
 	}
@@ -404,17 +495,6 @@ export function evaluateReleaseSpec(
 		})
 	)
 
-	const perCountry = (arm: "published" | "candidate") =>
-		spec.objective.countries.map((country) =>
-			rate(
-				rows,
-				objectiveIndices.filter((i) => rows[i]!.country === country),
-				arm
-			)
-		)
-
-	const qCandidate = equalCountryMean(perCountry("candidate"))
-	const qPublished = equalCountryMean(perCountry("published"))
 	const objectiveCountriesWithRows = new Set(objectiveIndices.map((i) => rows[i]!.country))
 
 	plans.push({
@@ -423,12 +503,14 @@ export function evaluateReleaseSpec(
 		threshold: spec.objective.minimumImprovement,
 		rowIndices: objectiveIndices,
 		missingCountries: spec.objective.countries.filter((country) => !objectiveCountriesWithRows.has(country)),
-		candidate: qCandidate,
-		published: qPublished,
-		compared: difference(qCandidate, qPublished),
+		strata: spec.objective.countries.map((country) => ({
+			label: country,
+			weight: 1 / spec.objective.countries.length,
+			indices: objectiveIndices.filter((i) => rows[i]!.country === country),
+		})),
 	})
 
-	const { confidenceLevel, multipleComparison, resamples, seed } = spec.statistics
+	const { confidenceLevel, multipleComparison, rowsIndependent } = spec.statistics
 
 	const percentile =
 		confidenceLevel == null ? null : adjustedPercentile(confidenceLevel, plans.length, multipleComparison)
@@ -437,35 +519,10 @@ export function evaluateReleaseSpec(
 		globalReasons.push("the confidence level is unregistered")
 	}
 
-	const samples = plans.map(() => [] as number[])
-	const failures = plans.map(() => 0)
-	const resampler = groupedResampler(rows, seed)
-
-	if (percentile != null && rows.length) {
-		for (let r = 0; r < resamples; r++) {
-			const weights = resampler.draw()
-
-			for (const [k, plan] of plans.entries()) {
-				const value = plan.compared(weights)
-
-				if (value == null) {
-					failures[k]!++
-				} else {
-					samples[k]!.push(value)
-				}
-			}
-		}
-	}
-
-	const ones = new Float64Array(rows.length).fill(1)
-
-	const checks = plans.map((plan, k): CheckResult => {
+	const checks = plans.map((plan): CheckResult => {
 		const reasons: string[] = []
-		const estimate = plan.compared(ones)
-		const sorted = samples[k]!.toSorted((a, b) => a - b)
-		const bounded = percentile != null && sorted.length > 0 && failures[k] === 0
-		const lower = bounded ? sorted[quantileIndex(sorted.length, percentile, "lower")]! : null
-		const upper = bounded ? sorted[quantileIndex(sorted.length, percentile, "upper")]! : null
+		const ungrouped = plan.rowIndices.filter((i) => rows[i]!.group == null).length
+		const unitsValid = rowsIndependent || ungrouped === 0
 
 		if (plan.threshold == null) {
 			reasons.push("threshold unregistered")
@@ -479,8 +536,59 @@ export function evaluateReleaseSpec(
 			reasons.push(`required country ${country} has no admitted rows`)
 		}
 
-		if (failures[k]) {
-			reasons.push(`${failures[k]} resamples drew none of this check's rows`)
+		if (!unitsValid) {
+			reasons.push(
+				`${ungrouped} of ${plan.rowIndices.length} rows carry no group and the specification does not declare rows independent`
+			)
+		}
+
+		let estimate: number | null = null
+		let publishedEstimate: number | null = null
+		let lower: number | null = null
+		let upper: number | null = null
+		let effectiveRows: number | null = null
+		let degreesOfFreedom: number | null = null
+		let degenerateStrata: string[] = []
+		const boundable = percentile != null && plan.rowIndices.length > 0 && !plan.missingCountries.length
+
+		if (plan.check === "minimum") {
+			const bound = plan.rowIndices.length
+				? rateBound(independentUnits(rows, plan.rowIndices), percentile ?? 0.025)
+				: null
+
+			estimate = bound?.estimate ?? null
+			publishedEstimate = bound?.publishedEstimate ?? null
+
+			if (bound && boundable && unitsValid) {
+				lower = bound.lower
+				upper = bound.upper
+				effectiveRows = bound.effectiveRows
+			}
+		} else if (!plan.missingCountries.length && plan.strata.length) {
+			const bound = differenceBound(
+				plan.strata.map((s) => ({ label: s.label, weight: s.weight, units: independentUnits(rows, s.indices) })),
+				percentile ?? 0.025
+			)
+
+			if ("tooFewUnits" in bound) {
+				for (const label of bound.tooFewUnits) {
+					reasons.push(`${label} holds fewer than two independent units, so its variance cannot be estimated`)
+				}
+			} else {
+				estimate = bound.estimate
+				publishedEstimate = bound.publishedEstimate
+
+				if (boundable && unitsValid) {
+					lower = bound.lower
+					upper = bound.upper
+					degreesOfFreedom = bound.degreesOfFreedom
+					degenerateStrata = bound.degenerateStrata
+				}
+			}
+		}
+
+		if (lower != null && upper != null && !(upper > lower)) {
+			reasons.push(`the interval [${lower}, ${upper}] has zero width`)
 		}
 
 		let outcome: ReleaseOutcome = ReleaseOutcome.Insufficient
@@ -498,19 +606,20 @@ export function evaluateReleaseSpec(
 			reasons.push("no confidence bounds without a registered confidence level")
 		}
 
-		const publishedEstimate = plan.published?.(ones) ?? null
-
 		return {
 			id: plan.id,
 			check: plan.check,
+			method: plan.check === "minimum" ? BoundMethod.ClopperPearson : BoundMethod.ClusterRobustT,
 			threshold: plan.threshold,
 			rows: plan.rowIndices.length,
-			groups: countGroups(rows, plan.rowIndices),
+			groups: independentUnits(rows, plan.rowIndices).length,
 			estimate,
 			publishedEstimate,
 			lower,
 			upper,
-			failedResamples: failures[k]!,
+			effectiveRows,
+			degreesOfFreedom,
+			degenerateStrata,
 			outcome,
 			reasons,
 		}
@@ -538,8 +647,7 @@ export function evaluateReleaseSpec(
 			method: multipleComparison,
 			simultaneousChecks: plans.length,
 			percentile,
-			resamples,
-			seed,
+			rowsIndependent,
 			grouping: grouped === 0 ? "row_identity" : grouped === pairedRows.length ? "metadata" : "mixed",
 			groupingAssumption: spec.statistics.groupingAssumption,
 		},

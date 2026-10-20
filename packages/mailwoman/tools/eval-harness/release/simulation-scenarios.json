@@ -48,7 +48,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -98,7 +97,6 @@
 			],
 			"minimumImprovement": -0.05,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -180,7 +178,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -222,7 +219,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -264,7 +260,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -306,7 +301,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -324,7 +318,6 @@
 			],
 			"minimumImprovement": -0.05,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -366,7 +359,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -416,7 +408,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -466,7 +457,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "row_identity"
 		},
 		{
@@ -516,7 +506,6 @@
 			],
 			"minimumImprovement": -0.05,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "row_identity"
 		},
 		{
@@ -566,7 +555,6 @@
 			],
 			"minimumImprovement": -0.05,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -608,7 +596,6 @@
 			],
 			"minimumImprovement": -0.05,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -650,7 +637,6 @@
 			],
 			"minimumImprovement": 0.02,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata"
 		},
 		{
@@ -692,7 +678,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata",
 			"selection": { "candidates": 1, "confirmation": "same" }
 		},
@@ -735,7 +720,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata",
 			"selection": { "candidates": 50, "confirmation": "same" }
 		},
@@ -778,7 +762,6 @@
 			],
 			"minimumImprovement": 0,
 			"confidenceLevel": 0.95,
-			"resamples": 1000,
 			"grouping": "metadata",
 			"selection": { "candidates": 50, "confirmation": "fresh" }
 		}

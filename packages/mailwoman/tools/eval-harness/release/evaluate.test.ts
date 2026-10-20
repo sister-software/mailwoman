@@ -1,9 +1,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import {
 	evaluateReleaseSpec,
-	groupedResampler,
 	type OutcomeRow,
 	type PairedRow,
 	pairOutcomes,
@@ -17,7 +17,7 @@ const artifacts = { published: PUBLISHED, candidate: CANDIDATE }
 
 const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequirementSpec =>
 	validateReleaseSpec({
-		schemaVersion: 1,
+		schemaVersion: 2,
 		specVersion: "test",
 		rationale: "test",
 		requirements: [
@@ -41,9 +41,8 @@ const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequi
 			confidenceLevel: 0.95,
 			multipleComparison: "bonferroni",
 			samplingUnit: "group",
+			rowsIndependent: true,
 			groupingAssumption: "test",
-			resamples: 500,
-			seed: 1,
 			requiredPrecision: null,
 		},
 		provenance: { admitted: ["verified_unseen"] },
@@ -96,9 +95,11 @@ describe("evaluateReleaseSpec", () => {
 		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
 	})
 
-	it("reads the committed first specification as insufficient evidence", async () => {
+	it("reads the committed current specification as insufficient evidence", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v2\.json$/u)
+
 		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v1.json", import.meta.url).pathname)
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v2.json", import.meta.url).pathname)
 		)
 
 		const verdict = evaluateReleaseSpec(committed, rowsFor("US", 50, 40, 45), artifacts)
@@ -176,7 +177,7 @@ describe("evaluateReleaseSpec", () => {
 		expect(verdict.provenance.find((p) => p.provenance === "unknown")).toMatchObject({ admitted: false, rows: 800 })
 	})
 
-	it("is deterministic for a seed", () => {
+	it("is deterministic", () => {
 		const rows = [...rowsFor("US", 60, 30, 40), ...rowsFor("FR", 60, 30, 40)]
 
 		expect(evaluateReleaseSpec(baseSpec(), rows, artifacts)).toEqual(evaluateReleaseSpec(baseSpec(), rows, artifacts))
@@ -192,22 +193,113 @@ describe("evaluateReleaseSpec", () => {
 	})
 })
 
-describe("groupedResampler", () => {
-	it("draws a group's rows together", () => {
-		const rows = rowsFor("US", 30, 10, 10, (i) => `g${Math.floor(i / 3)}`)
-		const { draw, groups } = groupedResampler(rows, 7)
+describe("small and degenerate samples", () => {
+	const grouped = (i: number) => `g${i}`
 
-		expect(groups.get("US")).toBe(10)
+	it("does not pass a small sample in which every row is exact", () => {
+		const spec = baseSpec({
+			requirements: [{ id: "us", kind: "country", country: "US", reason: "t", minimum: 0.9 }],
+			objective: { countries: ["US"], minimumImprovement: -0.05 },
+		})
 
-		for (let r = 0; r < 50; r++) {
-			const weights = draw()
+		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 10, 10, 10, grouped), artifacts)
+		const us = check(verdict, "us")
 
-			for (let g = 0; g < 10; g++) {
-				expect(new Set([weights[3 * g], weights[3 * g + 1], weights[3 * g + 2]]).size).toBe(1)
-			}
+		expect(us.estimate).toBe(1)
+		expect(us.upper).toBe(1)
+		// 10 of 10 at a per-side tail of 0.0125: the exact lower bound is 0.0125^(1/10).
+		expect(us.lower!).toBeCloseTo(0.0125 ** (1 / 10), 6)
+		expect(us.outcome).toBe(ReleaseOutcome.Insufficient)
+		expect(verdict.outcome).not.toBe(ReleaseOutcome.Pass)
+	})
 
-			expect(weights.reduce((a, b) => a + b, 0)).toBe(30)
+	it("gives a sample with no discordant pair a non-zero width and does not pass it", () => {
+		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: 0 } })
+		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 20, 15, 15, grouped), artifacts)
+		const objective = check(verdict, "objective")
+
+		expect(objective.estimate).toBe(0)
+		expect(objective.degenerateStrata).toEqual(["US"])
+		expect(objective.upper! - objective.lower!).toBeGreaterThan(0)
+		expect(objective.outcome).toBe(ReleaseOutcome.Insufficient)
+	})
+
+	it("decides a degenerate difference once the sample is large", () => {
+		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.05 } })
+		const verdict = evaluateReleaseSpec(spec, rowsFor("US", 4000, 3000, 3000, grouped), artifacts)
+		const objective = check(verdict, "objective")
+
+		expect(objective.degenerateStrata).toEqual(["US"])
+		expect(objective.lower!).toBeGreaterThanOrEqual(-0.05)
+		expect(objective.outcome).toBe(ReleaseOutcome.Pass)
+	})
+
+	it("reports a stratum of one unit as insufficient rather than zero width", () => {
+		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.5 } })
+		const verdict = evaluateReleaseSpec(
+			spec,
+			rowsFor("US", 5, 5, 5, () => "one"),
+			artifacts
+		)
+		const objective = check(verdict, "objective")
+
+		expect(objective.lower).toBeNull()
+		expect(objective.reasons.join(" ")).toMatch(/fewer than two independent units/u)
+		expect(objective.outcome).toBe(ReleaseOutcome.Insufficient)
+	})
+})
+
+describe("grouping", () => {
+	const notIndependent = (spec: ReleaseRequirementSpec): ReleaseRequirementSpec => ({
+		...spec,
+		statistics: { ...spec.statistics, rowsIndependent: false },
+	})
+
+	it("reports insufficient evidence for ungrouped rows when rows are not declared independent", () => {
+		const verdict = evaluateReleaseSpec(
+			notIndependent(baseSpec()),
+			[...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)],
+			artifacts
+		)
+
+		for (const c of verdict.checks) {
+			expect(c.outcome).toBe(ReleaseOutcome.Insufficient)
+			expect(c.lower).toBeNull()
+			expect(c.reasons.join(" ")).toMatch(/400 of 400 rows carry no group|800 of 800 rows carry no group/u)
 		}
+
+		expect(verdict.statistics.rowsIndependent).toBe(false)
+		expect(verdict.outcome).toBe(ReleaseOutcome.Insufficient)
+	})
+
+	it("decides grouped rows when rows are not declared independent", () => {
+		const verdict = evaluateReleaseSpec(
+			notIndependent(baseSpec()),
+			[...rowsFor("US", 400, 300, 380, (i) => `g${i}`), ...rowsFor("FR", 400, 300, 380, (i) => `g${i}`)],
+			artifacts
+		)
+
+		expect(verdict.outcome).toBe(ReleaseOutcome.Pass)
+	})
+
+	it("widens a rate's bounds when variants share a group", () => {
+		// Groups of five identical rows: 80 independent units, not 400.
+		const rows = rowsFor("US", 400, 300, 300, (i) => `g${Math.floor(i / 5)}`)
+		const spec = baseSpec({ objective: { countries: ["US"], minimumImprovement: -1 } })
+		const groupedUS = check(evaluateReleaseSpec(notIndependent(spec), rows, artifacts), "us")
+
+		const independentUS = check(
+			evaluateReleaseSpec(
+				spec,
+				rows.map((row) => ({ ...row, group: null })),
+				artifacts
+			),
+			"us"
+		)
+
+		expect(groupedUS.effectiveRows!).toBeCloseTo(80, 6)
+		expect(independentUS.effectiveRows).toBe(400)
+		expect(groupedUS.upper! - groupedUS.lower!).toBeGreaterThan(independentUS.upper! - independentUS.lower!)
 	})
 })
 

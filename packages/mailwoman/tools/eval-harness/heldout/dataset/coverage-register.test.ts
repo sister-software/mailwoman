@@ -51,7 +51,7 @@ const dataset = buildHeldoutDatasetManifest({
 })
 
 const spec = validateReleaseSpec({
-	schemaVersion: 1,
+	schemaVersion: 2,
 	specVersion: "fixture-1",
 	rationale: "fixture",
 	requirements: [
@@ -89,9 +89,8 @@ const spec = validateReleaseSpec({
 		confidenceLevel: null,
 		multipleComparison: "bonferroni",
 		samplingUnit: "group",
+		rowsIndependent: false,
 		groupingAssumption: "fixture",
-		resamples: 10,
-		seed: 1,
 		requiredPrecision: null,
 	},
 	provenance: { admitted: [] },
@@ -170,7 +169,10 @@ describe("buildCoverageRegister", () => {
 						publishedEstimate: 1,
 						lower: null,
 						upper: null,
-						failedResamples: 0,
+						method: "clopper_pearson_design_effect",
+						effectiveRows: null,
+						degreesOfFreedom: null,
+						degenerateStrata: [],
 						outcome: "insufficient_evidence",
 						reasons: ["threshold unregistered"],
 					},
@@ -181,8 +183,7 @@ describe("buildCoverageRegister", () => {
 					method: "bonferroni",
 					simultaneousChecks: 1,
 					percentile: null,
-					resamples: 10,
-					seed: 1,
+					rowsIndependent: false,
 					grouping: "metadata",
 					groupingAssumption: "fixture",
 				},
