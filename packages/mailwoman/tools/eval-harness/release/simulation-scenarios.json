@@ -1,0 +1,786 @@
+{
+	"note": "Every rate, minimum and minimumImprovement in this file is a SIMULATION PARAMETER chosen to exercise the evaluator. None is a registered release requirement, and none may be copied into specs/.",
+	"scenarios": [
+		{
+			"id": "equal-sizes-meets",
+			"description": "Five countries of 300 independent rows; candidate 0.82 vs published 0.80 everywhere; minimum 0.70; required improvement 0.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "EE",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "equal-sizes-one-below-minimum",
+			"description": "As equal-sizes-meets, but country EE's true candidate rate is 0.66 against a minimum of 0.70.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "EE",
+					"rows": 300,
+					"published": 0.7,
+					"candidate": 0.66,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": -0.05,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "unequal-sizes-meets",
+			"description": "One country of 2000 rows and eight of 40; candidate 0.88 vs published 0.85; minimum 0.70; required improvement 0.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 2000,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "EE",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "FF",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "GG",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "HH",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				},
+				{
+					"country": "II",
+					"rows": 40,
+					"published": 0.85,
+					"candidate": 0.88,
+					"discordance": 0.08,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "small-10-rows",
+			"description": "Four countries of 10 rows; candidate 0.90 vs published 0.85; minimum 0.70; required improvement 0.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 10,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 10,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 10,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 10,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "small-50-rows",
+			"description": "As small-10-rows with 50 rows per country.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 50,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 50,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 50,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 50,
+					"published": 0.85,
+					"candidate": 0.9,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "small-10-rows-below-minimum",
+			"description": "Four countries of 10 rows; true candidate 0.60 against a minimum of 0.70 in every country.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 10,
+					"published": 0.6,
+					"candidate": 0.6,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 10,
+					"published": 0.6,
+					"candidate": 0.6,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 10,
+					"published": 0.6,
+					"candidate": 0.6,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 10,
+					"published": 0.6,
+					"candidate": 0.6,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "small-10-rows-near-minimum",
+			"description": "One country of 10 rows; true candidate 0.85 against a minimum of 0.90. A 10/10 sample (probability 0.85^10 = 0.197) gives every resample the value 1.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 10,
+					"published": 0.85,
+					"candidate": 0.85,
+					"discordance": 0.1,
+					"minimum": 0.9
+				}
+			],
+			"minimumImprovement": -0.05,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "independent-rows",
+			"description": "Control for the grouping pair: four countries of 400 independent rows (group size 1).",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "correlated-grouped",
+			"description": "Four countries of 400 rows in groups of 5 derived variants with within-group correlation 0.8; groups passed to the evaluator.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "correlated-ignored",
+			"description": "As correlated-grouped, but rows carry no group field, so the evaluator resamples rows as if independent.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "row_identity"
+		},
+		{
+			"id": "correlated-ignored-below-minimum",
+			"description": "Correlated variants without group metadata; true candidate 0.67 against a minimum of 0.70 in every country.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": -0.05,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "row_identity"
+		},
+		{
+			"id": "correlated-grouped-below-minimum",
+			"description": "As correlated-ignored-below-minimum with group metadata passed to the evaluator.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.67,
+					"candidate": 0.67,
+					"discordance": 0.1,
+					"groupSize": 5,
+					"correlation": 0.8,
+					"minimum": 0.7
+				}
+			],
+			"minimumImprovement": -0.05,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "boundary-minimum",
+			"description": "True candidate rate exactly at the minimum 0.80 in every country (inclusive boundary: the truth meets it).",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.8,
+					"discordance": 0.1,
+					"minimum": 0.8
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.8,
+					"discordance": 0.1,
+					"minimum": 0.8
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.8,
+					"discordance": 0.1,
+					"minimum": 0.8
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.8,
+					"discordance": 0.1,
+					"minimum": 0.8
+				}
+			],
+			"minimumImprovement": -0.05,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "boundary-improvement",
+			"description": "True Q improvement exactly at the required improvement 0.02; minima far below the rates.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "BB",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "CC",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "DD",
+					"rows": 400,
+					"published": 0.8,
+					"candidate": 0.82,
+					"discordance": 0.1,
+					"minimum": 0.5
+				}
+			],
+			"minimumImprovement": 0.02,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata"
+		},
+		{
+			"id": "selection-k1",
+			"description": "Baseline for repeated selection: four countries of 300 rows, candidate 0.795 vs published 0.80 (true improvement -0.005) against a required improvement of 0, one candidate.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "BB",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "CC",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "DD",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata",
+			"selection": { "candidates": 1, "confirmation": "same" }
+		},
+		{
+			"id": "selection-k50-same-set",
+			"description": "As selection-k1, but the best of 50 candidates with that same truth by measured Q improvement is chosen and evaluated on the same rows.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "BB",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "CC",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "DD",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata",
+			"selection": { "candidates": 50, "confirmation": "same" }
+		},
+		{
+			"id": "selection-k50-fresh-set",
+			"description": "As selection-k50-same-set, but the chosen candidate is evaluated on freshly drawn confirmation rows.",
+			"countries": [
+				{
+					"country": "AA",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "BB",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "CC",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				},
+				{
+					"country": "DD",
+					"rows": 300,
+					"published": 0.8,
+					"candidate": 0.795,
+					"discordance": 0.1,
+					"minimum": 0.5
+				}
+			],
+			"minimumImprovement": 0,
+			"confidenceLevel": 0.95,
+			"resamples": 1000,
+			"grouping": "metadata",
+			"selection": { "candidates": 50, "confirmation": "fresh" }
+		}
+	]
+}
