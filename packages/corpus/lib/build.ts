@@ -9,6 +9,8 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256Hex } from "@mailwoman/core/hash"
+import { canonicalJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -20,17 +22,42 @@ import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility
 import { streamJSONL } from "#build/rows"
 import { BuildProfile, TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
 import { $public } from "#env"
+import { extractFingerprint } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
 import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
 import { freezeTrainingManifest } from "#source-register/training-manifest"
-import type { LabeledRow } from "#types"
+import type { AdapterOptions, LabeledRow } from "#types"
 import { LicensePolicy } from "#utils/license"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
 export * from "#build/heap"
 export * from "#build/types"
+
+/**
+ * The extract hash of a base build: each configured adapter's options with its
+ * input replaced by the input's fingerprint.
+ *
+ * It covers every adapter rather than one per source, because the align phase
+ * deduplicates across adapters and the synthesizers fan one source's rows into another's,
+ * so any adapter's input can change any file.
+ * `outputDir` is left out: it locates an adapter's side state and does not change a row.
+ */
+async function adapterExtractHash(
+	configured: readonly string[],
+	adapterInputs: Record<string, AdapterOptions>
+): Promise<string> {
+	const described: Record<string, unknown> = {}
+
+	for (const id of configured.toSorted()) {
+		const { inputPath, outputDir: _outputDir, ...options } = adapterInputs[id]!
+
+		described[id] = { ...options, input: await extractFingerprint(inputPath) }
+	}
+
+	return sha256Hex(canonicalJSON(described))
+}
 
 /**
  * Drive the full corpus build to completion.
@@ -135,6 +162,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			: "writing rows in arrival order (shuffle window disabled)"
 	)
 
+	opts.onProgress?.("parquet", "fingerprinting adapter inputs for the derivation hash")
+
 	const parquetManifest = await writeParquetSplits(
 		{
 			train: shuffled(labeledPaths.train, 0),
@@ -146,6 +175,19 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			corpusVersion: opts.corpusVersion,
 			rowsPerFile,
 			resume: $public.MAILWOMAN_RESUME === "1",
+			derivation: {
+				extractHash: await adapterExtractHash(configured, opts.adapterInputs),
+				config: {
+					tool: "build",
+					synthesize,
+					profile,
+					licensePolicy,
+					excludeLicenses: (opts.excludeLicenses ?? []).map((pattern) => pattern.source),
+					holdouts,
+					shuffleSeed,
+					shuffleWindow,
+				},
+			},
 		}
 	)
 

@@ -26,11 +26,17 @@ import { writeParquetSplits } from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 
+/**
+ * The derivation every writer test passes.
+ * These tests read rows back and assert no store path.
+ */
+const FIXTURE_DERIVATION = { extractHash: "fixture", config: {} }
+
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",
 	components: { locality: "Paris" },
 	country: "FR",
-	source: "test",
+	source: "wof-admin",
 	source_id: "t-1",
 	corpus_version: "0.1.0",
 	license: "CC0-1.0",
@@ -166,7 +172,7 @@ describe("readers", () => {
 	async function written(rows: readonly LabeledRow[]): Promise<string> {
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
 		)
 
 		return manifest.slices[0]!.path
@@ -219,7 +225,7 @@ describe("writeParquetSplits", () => {
 	it("refuses a projection that requests a column absent from the file schema", async () => {
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-projection" })]) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
 		)
 
 		const consume = async () => {
@@ -268,7 +274,7 @@ describe("writeParquetSplits", () => {
 
 		const m = await writeParquetSplits(
 			{ train: asyncFrom(trainRows), val: asyncFrom(valRows), test: asyncFrom(testRows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION, rowsPerFile: 10 }
 		)
 
 		expect(m.total_rows).toBe(4)
@@ -343,7 +349,11 @@ describe("writeParquetSplits", () => {
 			}),
 		]
 
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.5.0", derivation: FIXTURE_DERIVATION }
+		)
+
 		const back = await readParquet(m.slices[0]!.path)
 		expect(back).toHaveLength(3)
 
@@ -368,7 +378,10 @@ describe("writeParquetSplits", () => {
 		const rows = [labeled({ source_id: "t-1", span_starts: null, span_ends: null, span_tags: null })]
 
 		await expect(
-			writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
+			writeParquetSplits(
+				{ train: asyncFrom(rows) },
+				{ outputDir: scratch.path, corpusVersion: "0.5.0", derivation: FIXTURE_DERIVATION }
+			)
 		).rejects.toThrow(/missing the char-offset span triple/)
 	})
 
@@ -377,14 +390,13 @@ describe("writeParquetSplits", () => {
 
 		const m = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION, rowsPerFile: 10 }
 		)
 
 		const trainFiles = m.slices.filter((s) => s.split === "train")
-		expect(trainFiles).toHaveLength(3) // 10 + 10 + 5
-		expect(trainFiles[0]!.rows).toBe(10)
-		expect(trainFiles[1]!.rows).toBe(10)
-		expect(trainFiles[2]!.rows).toBe(5)
+		// The manifest orders files by store path.
+		// A derivation hash decides that path, so the counts are compared as a set.
+		expect(trainFiles.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
 		expect(m.total_rows).toBe(25)
 
 		// Confirm each file is a real readable .parquet
@@ -396,9 +408,19 @@ describe("writeParquetSplits", () => {
 
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
-		const a = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const a = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
+
 		await removePathIfPresent(scratch.path("corpus-v0.1.0"))
-		const b = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const b = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
+
 		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
 	})
 
@@ -410,7 +432,11 @@ describe("writeParquetSplits", () => {
 			labeled({ source_id: "t-without", raw: "no locale" }),
 		]
 
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
+
 		const back = await readParquet(m.slices[0]!.path)
 		expect(back).toHaveLength(2)
 		const withLocale = back.find((r) => r.source_id === "t-with")!
@@ -421,7 +447,11 @@ describe("writeParquetSplits", () => {
 
 	it("streams projected rows without materializing the file", async () => {
 		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+		)
 
 		const streamed = []
 
@@ -440,7 +470,7 @@ describe("writeParquetSplits", () => {
 		// Val + test omitted entirely.
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
 		)
 
 		expect(m.counts).toEqual({ train: 1, val: 0, test: 0 })

@@ -20,6 +20,7 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -95,7 +96,11 @@ export async function buildKryptoniteOverlay(
 
 	const newManifest = await writeParquetSplits(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
-		{ outputDir: outDir, corpusVersion }
+		{
+			outputDir: outDir,
+			corpusVersion,
+			derivation: { extractHash: await sha256File(options.jsonl), config: { tool: "kryptonite", source } },
+		}
 	)
 
 	report?.(
@@ -107,14 +112,6 @@ export async function buildKryptoniteOverlay(
 		const qPath = corpusDir("quarantine-kryptonite.tsv")
 		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath}`)
-	}
-
-	// Stamp the new file's source field for audit.ts
-	// (which prefers the descriptor's `source` over first_source_id-prefix inference).
-	// Without this, deepseek-kryptonite IDs would have to match a prefix in KNOWN_SOURCE_PREFIXES.
-	// We add it there too as a belt-and-braces.
-	for (const file of newManifest.slices) {
-		file.source = source
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every parquet file from base + the new file(s).

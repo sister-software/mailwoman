@@ -13,9 +13,10 @@
  *   The base record cannot be composed with the added files, because it counts the adapter rows the build
  *   aligned and the build's files also hold the rows it synthesized from them. Measured over
  *   `v0.7.0-de-holdout`: the record counts 118,938,779 rows and the build's own `part-NNNN.parquet` files hold
- *   692,848,471. This reads every file the overlay manifest lists and groups the rows by their `source` and
- *   `license` columns. The trainer's loader reads those two columns. The record therefore states what the
- *   corpus holds rather than what one stage of its assembly observed.
+ *   692,848,471. This tallies every file the overlay manifest lists by its rows' `source` and `license` columns,
+ *   which the trainer's loader reads. A file with a `<stem>.RECORD.json` beside it contributes the tally its writer
+ *   recorded. Only a file without one is re-read. The record therefore states what the corpus holds rather than
+ *   what one stage of its assembly observed.
  *
  *   The profile and the refused set are the base record's, because an overlay file enters by a recipe or an
  *   adapter run that applies no eligibility reading of its own. The license decisions are read from the register
@@ -33,8 +34,8 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { readRegisterDecisions } from "@mailwoman/corpus/build/eligibility"
-import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { freezeTrainingManifest, NO_LICENSE_RECORDED, type TrainingManifest } from "@mailwoman/corpus/source-register"
+import { foldSourceLicenses, rowsBySourceFromTally } from "@mailwoman/corpus/parquet/record"
+import { freezeTrainingManifest, type TrainingManifest } from "@mailwoman/corpus/source-register"
 import { localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { dirname, resolvePath } from "path-ts"
 
@@ -61,7 +62,7 @@ if (!values.out) throw new Error("--out is required")
 
 interface OverlayManifest {
 	corpus_version: string
-	slices: Array<{ path: string; rows: number; source?: string }>
+	slices: Array<{ path: string; rows: number; sha256?: string; source?: string }>
 }
 
 interface OverlayPlan {
@@ -86,67 +87,19 @@ for (const file of files) {
 	if (!(await pathExists(file))) throw new Error(`${file} is listed by the manifest and absent from the data root`)
 }
 
-console.log(`${corpusVersion}: reading ${files.length} files, ${listed.toLocaleString()} rows listed`)
+console.log(`${corpusVersion}: folding ${files.length} files, ${listed.toLocaleString()} rows listed`)
 
-const labelsBySource = new Map<string, Map<string, number>>()
-let counted = 0
-
-{
-	using db = await openDuckDB({ threads: 8 })
-
-	const list = files.map((path) => `'${escapeSQLString(path)}'`).join(", ")
-
-	const result = await db.runAndReadAll(
-		`SELECT source, license, count(*) AS rows FROM read_parquet([${list}]) GROUP BY source, license ORDER BY source, license`
-	)
-
-	for (const row of result.getRows()) {
-		const [source, license, rows] = row as [unknown, unknown, unknown]
-		const count = Number(rows)
-
-		counted += count
-
-		if (typeof source !== "string" || !source) {
-			throw new Error(`${count.toLocaleString()} rows carry no source, so no record can attribute them`)
-		}
-
-		// A row with an empty label is recorded under the label that says so,
-		// because an empty string would read as a source carrying no terms.
-		const label = typeof license === "string" && license ? license : NO_LICENSE_RECORDED
-		const labels = labelsBySource.get(source) ?? new Map<string, number>()
-
-		labels.set(label, (labels.get(label) ?? 0) + count)
-		labelsBySource.set(source, labels)
-	}
-}
-
-if (counted !== listed) {
-	throw new Error(`the files hold ${counted.toLocaleString()} rows and the manifest lists ${listed.toLocaleString()}`)
-}
-
-// A source whose rows carry several labels records the majority label as its license and keeps
-// every label with its rows, so the record states the whole set rather than one row's reading.
-const rowsBySource = new Map(
-	[...labelsBySource].map(([source, labels]) => {
-		const ordered = [...labels].toSorted(([a, left], [b, right]) => right - left || a.localeCompare(b))
-		const rows = ordered.reduce((total, [, count]) => total + count, 0)
-
-		return [
-			source,
-			{
-				rows,
-				license: ordered[0]![0],
-				...(ordered.length > 1 ? { licenseValues: Object.fromEntries(ordered) } : {}),
-			},
-		]
-	})
+const { tally, folded, reread } = await foldSourceLicenses(
+	manifest.slices.map((file, index) => ({ path: files[index]!, rows: file.rows, sha256: file.sha256 }))
 )
+
+console.log(`${corpusVersion}: ${folded} files folded from their records, ${reread} re-read for want of one`)
 
 const frozen = freezeTrainingManifest({
 	corpusVersion,
 	builtAt: plan.appliedAt,
 	profile: base.profile,
-	rowsBySource,
+	rowsBySource: rowsBySourceFromTally(tally),
 	decisionsByLicense: await readRegisterDecisions(),
 	refused: new Map(Object.entries(base.refused)),
 })

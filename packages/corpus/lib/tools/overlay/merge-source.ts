@@ -9,6 +9,7 @@
  *   A shuffle across the inputs mixes each source's countries within each row group.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { mulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
@@ -82,15 +83,27 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 /**
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
+ * Each written file gets a record beside it, whose extract hash covers every input's sha256 in order.
+ *
  * @throws When the inputs contain more than one `source`, because a manifest
  * entry records one source per file.
- * The check runs after the stream ends, so files flushed before it remain on disk.
+ * An output file that would mix sources is refused when it is written.
+ * A file flushed before the second source arrived remains on disk.
  */
 export async function mergeSourceFiles(options: MergeSourceOptions): Promise<MergeSourceResult> {
 	const inputs = options.inputs.map((input) => input.toString())
-	const random = mulberry32(options.seed ?? DEFAULT_SHUFFLE_SEED)
 	const rowsPerFile = options.rowsPerFile ?? ROWS_PER_FILE
 	const stem = options.output.toString().replace(/\.parquet$/u, "")
+	const windowSize = options.windowSize ?? DEFAULT_SHUFFLE_WINDOW
+	const seed = options.seed ?? DEFAULT_SHUFFLE_SEED
+	const random = mulberry32(seed)
+	const inputDigests: string[] = []
+
+	for (const input of inputs) {
+		inputDigests.push(await sha256File(input))
+	}
+
+	const extractHash = sha256Hex(inputDigests.join("\n"))
 
 	const byCountry: Record<string, number> = {}
 	const bySource: Record<string, number> = {}
@@ -103,16 +116,16 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 
 		const output = `${stem}-${String(outputs.length).padStart(5, "0")}.parquet`
 
-		await writeParquetFile(pending, output)
+		await writeParquetFile(pending, output, {
+			extractHash,
+			config: { tool: "merge-source", seed, windowSize, rowsPerFile, part: outputs.length },
+		})
+
 		outputs.push(output)
 		pending = []
 	}
 
-	for await (const row of shuffleWithinWindow(
-		readAll(options.inputs),
-		random,
-		options.windowSize ?? DEFAULT_SHUFFLE_WINDOW
-	)) {
+	for await (const row of shuffleWithinWindow(readAll(options.inputs), random, windowSize)) {
 		pending.push(row)
 
 		rows++

@@ -6,13 +6,12 @@
  *   Defines the frozen semantic-utility probe and audits its decision criteria.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { type CaseGrade, gradeCase, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
 import type { POIBoardExpect } from "#tools/eval-harness/poi/board/expectations"
 import {
-	canonicalJSON,
 	definitionContentHash,
 	duplicateRowIDProblems,
 	loadFrozenDefinition,

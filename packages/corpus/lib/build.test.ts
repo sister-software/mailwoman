@@ -24,6 +24,7 @@ import {
 	type BuildStage,
 } from "#build"
 import type { AlignCheckpoint } from "#build/checkpoint"
+import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import type { ParquetManifest } from "#parquet/writers"
@@ -92,7 +93,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
-			slices: Array<{ split: string; format: string; path: string }>
+			slices: Array<{ split: string; format: string; path: string; rows: number }>
 		}>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
@@ -114,6 +115,13 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
+
+		for (const file of corpusManifest.slices) {
+			const record = await readParquetRecord(file.path)
+
+			expect(file.path).toMatch(new RegExp(`/store/${record!.source}/${record!.derivationHash}/data\\.parquet$`, "u"))
+			expect(record!.rows).toBe(file.rows)
+		}
 	})
 
 	it("routes rows whose components.region is held out to val/test", async () => {

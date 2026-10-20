@@ -10,8 +10,10 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { sha256File } from "@mailwoman/core/hash"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-slice"
@@ -19,6 +21,8 @@ import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-slice
 const root = await temporaryDirectory("mw-split-slice-")
 
 afterAll(() => root[Symbol.asyncDispose]())
+
+const FIXTURE_DERIVATION = { extractHash: "fixture", config: {} }
 
 /**
  * One GB row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.
@@ -65,7 +69,8 @@ describe("splitOverlaySlice", () => {
 				gbRow("gb-4", "Baker Street", "London", "NW1 6XE"),
 				gbRow("gb-5", "Hope Street", "Liverpool", "L1 9BP"),
 			],
-			input
+			input,
+			FIXTURE_DERIVATION
 		)
 
 		const result = await splitOverlaySlice({ input, outputDir: root.path })
@@ -73,12 +78,20 @@ describe("splitOverlaySlice", () => {
 		expect(result.rows).toBe(5)
 		expect(result.counts.train).toBe(2)
 		expect(result.counts.val + result.counts.test).toBe(3)
+
+		for (const [split, output] of Object.entries(result.outputs)) {
+			const record = await readParquetRecord(output)
+
+			expect(record?.source).toBe("rendered-gb-os-open")
+			expect(record?.rows).toBe(result.counts[split as keyof typeof result.counts])
+			expect(record?.sha256).toBe(await sha256File(output))
+		}
 	})
 
 	it("keeps a Liverpool postcode in train, because `L` is not one of the holdout's prefixes", async () => {
 		const input = root.path("part-liverpool.parquet")
 
-		await writeParquetFile([gbRow("gb-6", "Hope Street", "Liverpool", "L1 9BP")], input)
+		await writeParquetFile([gbRow("gb-6", "Hope Street", "Liverpool", "L1 9BP")], input, FIXTURE_DERIVATION)
 
 		const result = await splitOverlaySlice({ input, outputDir: root.path })
 
@@ -90,7 +103,7 @@ describe("splitOverlaySlice", () => {
 	it("writes no file for a split that drew no row", async () => {
 		const input = root.path("part-london.parquet")
 
-		await writeParquetFile([gbRow("gb-7", "Baker Street", "London", "NW1 6XE")], input)
+		await writeParquetFile([gbRow("gb-7", "Baker Street", "London", "NW1 6XE")], input, FIXTURE_DERIVATION)
 
 		const result = await splitOverlaySlice({ input, outputDir: root.path })
 

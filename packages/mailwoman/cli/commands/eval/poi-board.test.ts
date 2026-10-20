@@ -1,3 +1,4 @@
+import { canonicalJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIQueryResult } from "@mailwoman/core/pipeline"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
@@ -14,7 +15,6 @@ import {
 	type POIBoardFixture,
 	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
-import { canonicalJSON } from "#tools/eval-harness/preregistration"
 import { loadProbeDefinition } from "#tools/eval-harness/semantic-utility/probe"
 
 const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
