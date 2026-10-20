@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { postcodeSyntax, acceptPostcode } from "#country-formats"
+import { postcodePlacement, postcodeSyntax, acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 
 describe("acceptPostcode", () => {
@@ -61,6 +61,15 @@ describe("acceptPostcode", () => {
 	test("matches nothing for a country that states no postcode", () => {
 		expect(postcodeSyntax("AE")).toBeNull()
 		expect(acceptPostcode("00000", "AE")).toBeNull()
+	})
+
+	test("reads where the layout prints the postcode relative to the locality", () => {
+		expect(postcodePlacement("fr")).toBe("before_locality")
+		expect(postcodePlacement("BR")).toBe("after_locality")
+		// Japan's layout prints no locality field, so it states no order.
+		expect(postcodePlacement("JP")).toBeNull()
+		// The UAE states no postcode at all.
+		expect(postcodePlacement("AE")).toBeNull()
 	})
 
 	test("every stated pattern compiles anchored", () => {
