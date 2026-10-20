@@ -31,10 +31,11 @@ veto are removed. The procedure:
    verdict as `insufficient_evidence`, reports attribution separately, and lists board regressions with their
    addresses as findings to investigate rather than vetoes.
 
-**No threshold is registered yet.** `release-requirements.v2.json` registers no required country, capability,
-minimum, improvement or confidence level, so every verdict is `insufficient_evidence` and the procedure cannot approve
-a release. Report release eligibility as insufficient evidence, never as a pass. Until a spec version registers the
-replacements, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped
+**Requirements are registered, evidence is not yet.** `release-requirements.v4.json` registers the country and
+capability minima, the objective and the confidence settings (`docs/records/evals/2026-10-20-release-requirements-v3.md`).
+A verdict stays `insufficient_evidence` until a frozen dataset with an overlap audit holds admitted rows for every
+required country. Report release eligibility exactly as the verdict states it. Until the first verdict runs on that
+dataset, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped
 `weights_cache`) still decides with its retained-pending floors. Use the passed and total counts the command prints.
 `docs/records/evals/2026-10-20-promotion-check-migration.md` lists every earlier check and its status.
 
