@@ -27,30 +27,52 @@ steps to follow.
    recipes in one 20k run dilutes every tag. This was measured twice. See the cumulative-dilution
    note in the
    [parity scorecard](../records/evals/competitive-parity/parity-scorecard-2026-06-09.md).
-5. **The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5): a default-on mechanism must
-   not ship with a known regression vs the shipped model on any tier-1 locale.** This applies to
-   decode-time mechanisms (priors, admission checks, FSTs) exactly as it does to model promotions. A
-   bar revision can defer a _target_, but it can never permit a default-on _regression_. The
-   compliant options are to fix the regression, to enable the mechanism per locale so the regressing
-   locale is unaffected, or to ship it opt-in. (The rule was adopted because #1318 shipped default-on
-   with a −6.8pp FR admin-street-homonym regression behind a bar revision. That change is recorded as
-   a documented violation with a standing obligation to fix it, and it does not set a precedent.)
+5. **A default-on model or decoder change is released against registered quality requirements
+   (policy adopted 2026-10-20, #2763).** The
+   [release quality policy](../articles/developers/knowledge-base/address-intelligence/release-quality.mdx)
+   replaces the D-rule. A candidate must meet every minimum registered for a required country or
+   capability, and the lower confidence bound on its improvement over the published model in the
+   equal-country exact-parse objective must meet the registered amount. The published model is the
+   comparison for reporting gains and losses. Its past answers do not define the minimum. A loss
+   inside the registered requirements may ship, and the release report lists the affected countries
+   and address patterns with their measured losses. This applies to decode-time mechanisms (priors,
+   admission checks, FSTs) as it does to model promotions.
 
-   **For a model promotion, the D-rule is measured on held-out address rows (adopted 2026-10-18).**
-   `packages/mailwoman/tools/eval-harness/heldout/per/country.run.ts` samples the candidate corpus's
-   test split per country and per row kind, and scores the shipped model and each candidate on the
-   same rows. A tier-1 locale regresses when its address-row span recall falls below the shipped
-   model's by more than the gap between two seeds of the candidate trained on one corpus. The
-   regression board's row count is a smoke check for a model promotion. On the board, a
-   from-scratch candidate moves more rows than the seed pair agrees on: v7.10.0's seeds 42 and 43
-   each regressed 9 GB board rows, 6 of them in common, while their GB address-row recall differed
-   by 0.9 points. The board also holds rows only for locales it was written for, so the gains a
-   corpus change brings to new countries reach it only where a row happens to exist. Gazetteer rows,
-   the Who's On First place names with their admin parents, are reported beside the address rows
-   for information only, because they include name variants in scripts a country does not write.
+   The procedure, with the tools that implement it:
+   - `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts` freezes a versioned
+     evaluation sample with grouping, `dataset/overlap.run.ts` classes each row `verified_unseen`,
+     `known_overlap` or `unknown` against the training corpora, `dataset/compare.run.ts` reports the
+     differences between two versions, and `dataset/coverage-register.run.ts` writes the per-country
+     coverage register.
+   - `heldout/per/country.run.ts --dataset` scores the published model and the candidate on the same
+     frozen rows and writes one paired exact-parse outcome per row. `rowsExactParse` is exact parse;
+     `rowsGoldRecovered` permits additional predictions and is a diagnostic.
+   - `release/evaluate.run.ts` evaluates the paired outcomes against the current specification
+     (`release/current-spec.ts`) and writes a verdict of `pass`, `fail` or `insufficient_evidence`.
+   - `mwdev_arc` with `release_verdict` (and `release_spec` to name another version) reads release
+     eligibility from that verdict, refusing one whose `model.onnx` sha256 or specification version
+     differs from the graded artifact. Self-control and candidate-minus-placebo arithmetic are
+     reported under `attribution`. Board regressions are findings with their addresses and do not
+     block.
 
-   **The precondition: each locale the D-rule covers needs a validation split that can show a
-   regression.** The rule blocks on a regression against the shipped model, and `evaluate()` reports
+   **No threshold is registered.** `release-requirements.v1.json` registers no required country,
+   capability, minimum, improvement amount or confidence level, so every evaluation against it is
+   `insufficient_evidence` and this procedure cannot approve a release. Until a specification
+   version registers them, the earlier promotion checks keep deciding `mwdev_promotion_eval`.
+   [The migration record](../records/evals/2026-10-20-promotion-check-migration.md) lists every
+   earlier check as retained, replaced, retired or retained-pending.
+
+   _History._ The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5) stated that a
+   default-on mechanism must not ship with a known regression against the shipped model on any tier-1
+   locale, with DE and GB added through `dRuleProtected`. It was adopted because #1318 shipped
+   default-on with a −6.8pp FR admin-street-homonym regression behind a bar revision. From
+   2026-10-18 a model promotion measured it on held-out address-row span recall against the gap
+   between two seeds (v7.10.0's seeds 42 and 43 each regressed 9 GB board rows, 6 in common, while
+   their GB address-row recall differed by 0.9 points). `dRuleCountries` and `dRuleProtected` were
+   removed on 2026-10-20.
+
+   **The precondition: each required country needs a validation split that can show a
+   regression.** A check against the published model needs rows to compare, and `evaluate()` reports
    `val_loss`, `val_rows` and `macro_f1` over the whole split. A locale without rows in that split
    changes none of those numbers, so a run reports no regression for it regardless of what happened.
    That report looks identical to a real absence of regression.
@@ -60,7 +82,7 @@ steps to follow.
    differ. In the measurement below, US held 1,780,240 validation street rows while the others held
    thousands or none, so US rows by themselves would meet a global number.
 
-   Measured on `v0.32.0-locality-shape` (#2353), against the four locales the D-rule covers: FR and
+   Measured on `v0.32.0-locality-shape` (#2353), against the four locales the D-rule then covered: FR and
    US by tier 1, and DE and GB by the `dRuleProtected` entry `scope.config.json` held at the time:
 
    | locale |         validation rows | of those, carrying a street |
@@ -154,8 +176,8 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
    that symlinks the `en-us` card rather than a trained base.
 
 Exactly three packages ship a model: `en-us`, `cjk` and `base-latn`. FR, US, DE and GB therefore
-share one weight matrix, and every default-on change must be a Pareto improvement across the four
-D-rule locales. Before proposing a per-locale graph, measure that locale's labeled supply (a
+share one weight matrix, and a default-on change for one of them moves the others. Its release
+verdict and report must cover every required country and list each measured loss. Before proposing a per-locale graph, measure that locale's labeled supply (a
 per-script CN model was refused on 126 rows) and fix #2313 and #2318, which any split inherits.
 
 ## The standard eval battery
@@ -434,7 +456,7 @@ resolver mechanism ships.
   the `--locale` and `--board` it is given. The parse board and the served board answer different questions. Read a
   resolver change on the served board. `SCOPE.mdx` claims a locale only when a coordinate-graded eval exists for it,
   and the served board is the eval that satisfies that rule.
-- **The D-rule here.** Only the character model emits the JP tags, so a resolver mechanism keyed on them cannot reach a
+- **The release check here.** Only the character model emits the JP tags, so a resolver mechanism keyed on them cannot reach a
   Latin row by construction. Run the check anyway: `mwdev_compare` over the full regression board, origin/main against
   the working tree, before the mechanism ships.
 

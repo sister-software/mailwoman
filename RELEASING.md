@@ -400,6 +400,15 @@ unchanged). **A different trained model requires a separate promotion operation.
 this pipeline more than once, because the moving parts are not obvious. This section is the ordered runbook,
 first walked end to end for v4.11.0 (the v1.8.0 fr-admin-split promotion). Do the steps in order and verify each.
 
+**Release eligibility (since 2026-10-20, #2763).** A promotion needs a `pass` verdict from
+`packages/mailwoman/tools/eval-harness/release/evaluate.run.ts` for the exact `model.onnx` and the current
+release-requirement specification, as iron rule 5 of `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`
+describes. The D-rule and its FR, GB and DE veto are removed. The current specification registers no
+threshold, so every verdict is insufficient evidence and the procedure cannot approve a release yet. Until
+a specification registers replacements, the promotion eval's floors still decide as retained-pending checks
+(`docs/records/evals/2026-10-20-promotion-check-migration.md`). Report release eligibility as insufficient
+evidence, and list every measured loss against the published model with its countries and address patterns.
+
 ### Fast-path cheat sheet (lessons from the v4.15.0 promotion)
 
 Read this first. Once you know the steps, a promotion takes about 30 minutes. It involves three independent

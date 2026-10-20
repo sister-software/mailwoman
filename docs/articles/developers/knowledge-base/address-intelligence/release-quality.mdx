@@ -1,0 +1,71 @@
+---
+title: How model releases will be evaluated
+description: The planned release policy measures country and capability quality, reports uncertainty, and permits documented tradeoffs between model versions.
+role: explanation
+---
+
+# How model releases will be evaluated
+
+Mailwoman's planned release policy will require a model to meet explicit quality requirements and improve an overall parsing score. An upgrade may change individual answers, and some countries or address patterns may score lower than in the previous version.
+
+This policy direction was adopted on 2026-10-20. Its evaluation tooling is partly in the repository, and no numerical requirement has been registered. This page describes the intended procedure. Published releases have not been certified against it.
+
+## What an acceptable release means
+
+A release specification will state the countries and address tasks the model must handle, the minimum acceptable scores, and the evidence needed to establish them. An address task might be reading a PO Box, recovering an apartment number, or distinguishing a street name from an administrative name.
+
+The candidate must meet every required minimum and exceed the published model's overall score by the amount the specification requires. A higher average cannot compensate for failing a required task. The published model provides the comparison for gains and losses. The specification defines acceptable quality.
+
+Countries receive requirements based on the product's intended coverage. Historical inclusion in a regression check gives a country no permanent privilege. A country with insufficient evaluation evidence will be identified explicitly. If the release requires that country, the missing evidence prevents approval.
+
+## How parsing quality will be measured
+
+The primary measure will be exact parse accuracy: the fraction of evaluated addresses whose predicted component labels and boundaries match the annotated answer completely. The scorer counts both missing and additional components as errors. It will document the normalization rules it applies.
+
+Each country receives its own score. The overall score is the sum of those country scores divided by the number of countries in a fixed evaluation set. This gives each country equal influence, regardless of its evaluation address count.
+
+The report will also show component-level results. These help distinguish failures involving postcodes, street names, units and other components. A geocoding claim will require a separate evaluation of returned coordinates against reference coordinates at a stated distance tolerance.
+
+## Why the evaluation data matters
+
+The evaluation collection will have its own version and membership, maintained independently of a candidate's training corpus. Both the candidate and the published model will be evaluated on the same inputs.
+
+The report will identify the sources, sampled address counts and known overlap with training data. Related examples, such as several renderings of one address, contain shared information. The uncertainty calculation must account for that relationship.
+
+Data used to choose a model will be separate from the data used to confirm the final release decision. A changed evaluation collection will require a new comparison of both models. Results from different collection versions will remain separately identified.
+
+## What uncertainty means for approval
+
+An evaluation estimates performance on the population its examples represent. A confidence interval describes the uncertainty around that estimate under the evaluation's sampling assumptions.
+
+Approval will require enough evidence that every minimum is met and the required overall improvement is achieved. If the evidence establishes that a requirement is unmet, the candidate fails. If the available evidence cannot settle the question, the result is insufficient evidence. Both outcomes prevent approval.
+
+A small sample can reveal a large failure. It may still be too small to establish acceptable quality or distinguish a small improvement. Reports will give the evaluated address counts and uncertainty alongside the scores.
+
+## Why answers can change
+
+The policy permits a release to perform worse on some inputs while improving the declared overall score and satisfying every required minimum. Release reports will identify measured losses and explain the accepted tradeoffs.
+
+Curated regression examples will continue to reveal failures that averages can conceal. A changed answer can lead to a focused evaluation of the affected address pattern. Its effect on release approval will depend on the stated quality requirements.
+
+Repeated training runs will help assess whether a training method produces consistent results. The particular exported model intended for publication must pass its own evaluation. Results averaged across several training runs cannot establish that an individual model meets the requirements.
+
+For an application that depends on specific address patterns, evaluate an upgrade against representative inputs from that application. The release report describes the measured countries, tasks and datasets. Your traffic may have a different distribution.
+
+## Adoption status
+
+As of 2026-10-20, the repository contains the following parts of the procedure. None of them has run end to end on a real evaluation collection or model.
+
+- An exact parse scorer that counts missing and additional components as errors, and a held-out evaluator that writes one paired outcome per address for each model.
+- A group identifier on related examples, versioned evaluation dataset manifests, an audit of overlap with training data, and a generator for a per-country coverage register.
+- A versioned release specification and an evaluator that produces pass, fail or insufficient evidence from paired outcomes.
+- A training-run grader that reads release eligibility from that evaluator's result for the exact model file and specification version, and reports regression examples as findings rather than vetoes.
+- Removal of the earlier rule that let any regression example in FR, US, DE or GB block a release.
+
+The first specification version registers no required country, task, minimum, improvement amount or confidence level. Every evaluation against it therefore returns insufficient evidence, and the procedure cannot approve a release yet. The earlier promotion checks still run until a specification version registers their replacements. A [migration record](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/2026-10-20-promotion-check-migration.md) lists each earlier check and its status.
+
+## Related
+
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) describes the current coverage declarations.
+- [How to read our numbers](../../../resources/benchmarks/reading-our-numbers.mdx) explains the limits of benchmark results.
+- [Report a parsing bug](../../how-to/report-a-parsing-bug.mdx) describes the evidence needed to investigate a specific input.

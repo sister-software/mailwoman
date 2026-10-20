@@ -126,6 +126,7 @@ const sidebars: SidebarsConfig = {
 						"developers/knowledge-base/address-intelligence/decoding-and-viterbi",
 						"developers/knowledge-base/address-intelligence/calibration-and-confidence",
 						"developers/knowledge-base/address-intelligence/training-and-the-corpus",
+						"developers/knowledge-base/address-intelligence/release-quality",
 						"developers/knowledge-base/address-intelligence/what-the-model-cannot-do",
 					],
 				},

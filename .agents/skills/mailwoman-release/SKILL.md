@@ -179,6 +179,10 @@ surfaces name the new model version. Commit all three on main before dispatching
 1. **The eval ledger.** Append the promotion check's run with
    `node packages/mailwoman/out/cli/main.js eval ledger-append --out-dir <promotion out-dir> --model-version <target> --run-id <label>-<yyyymmdd> --model-path "@mailwoman/neural-weights-en-us@<target>" --card packages/neural-weights-en-us/model-card.json`.
    A check that failed a floor the operator accepted needs `--operator-exception <metric>`.
+   Those floors are retained-pending checks under the release-quality policy (#2763). Report the
+   release verdict from `release/evaluate.run.ts` beside them. While the current specification
+   registers no threshold, that verdict is insufficient evidence and does not approve the release, and
+   the D-rule's FR, GB and DE veto no longer applies.
 2. **The release matrix.** Add a row for `<target>` at the top of "## The matrix" in
    `docs/engineering/releases.mdx`, and move `(current)` to it.
 3. **The status page.** Update the `:::info[Verified as of …]` box, the version table and the model

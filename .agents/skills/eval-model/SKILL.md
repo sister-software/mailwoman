@@ -1,6 +1,6 @@
 ---
 name: eval-model
-description: Deciding whether a model change may ship. The shipping decision rests on the full regression board plus the promotion battery, run through the warm-engine mwdev tools. The six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
+description: Deciding whether a model change may ship. Release eligibility comes from a release verdict against registered quality requirements, alongside the promotion battery, run through the warm-engine mwdev tools. The six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
 ---
 
 ## Six addresses do not decide
@@ -14,15 +14,31 @@ coordinates, a non-US locale, and geocoding, and they use a baseline from a mode
 
 ## What decides
 
-Three floors, all of which must hold:
+Release eligibility comes from a release verdict against registered quality requirements (policy adopted
+2026-10-20, #2763). Iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` states the procedure, and
+`docs/articles/developers/knowledge-base/address-intelligence/release-quality.mdx` explains the policy. The D-rule and its FR, GB and DE
+veto are removed. The procedure:
 
-1. **Net improved-minus-regressed ≥ 0 on the full regression board.**
-2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not add one.
-3. **The promotion battery passes every floor declared by the eval spec**
-   (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped `weights_cache`). The command reports the passed and total floor counts. Do not
-   copy a count into this runbook because adding a floor would make it stale.
+1. **Freeze the evaluation sample** with `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts`. Then
+   run `dataset/overlap.run.ts` for each row's provenance class and `dataset/coverage-register.run.ts` for the coverage
+   register. `dataset/compare.run.ts` reports what changed between two sample versions.
+2. **Score both models on the same rows**: `heldout/per/country.run.ts --dataset <frozen sample>` writes one paired
+   exact-parse outcome per row for the published model and the candidate.
+3. **Evaluate against the current specification**: `release/evaluate.run.ts` writes a verdict of `pass`, `fail` or
+   `insufficient_evidence` against `release/current-spec.ts`. Only `pass` permits promotion.
+4. **Grade the arc**: `mwdev_arc` with `release_verdict=<verdict JSON>`, and `release_spec` to name another version.
+   It refuses a verdict whose `model.onnx` sha256 or spec version differs from the candidate's, reports a missing
+   verdict as `insufficient_evidence`, reports attribution separately, and lists board regressions with their
+   addresses as findings to investigate rather than vetoes.
 
-Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
+**No threshold is registered yet.** `release-requirements.v1.json` registers no required country, capability,
+minimum, improvement or confidence level, so every verdict is `insufficient_evidence` and the procedure cannot approve
+a release. Report release eligibility as insufficient evidence, never as a pass. Until a spec version registers the
+replacements, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped
+`weights_cache`) still decides with its retained-pending floors. Use the passed and total counts the command prints.
+`docs/records/evals/2026-10-20-promotion-check-migration.md` lists every earlier check and its status.
+
+Run the arc with `mwdev_arc`, which also runs the controls that make the number mean anything:
 
 ```
 mwdev_arc candidate=<staged candidate root> \
@@ -114,7 +130,7 @@ Take it to the board.
 ## Related
 
 - `.agents/skills/training-arc/SKILL.md` — the protocol, and the controls that precede a number
-- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change. Iron rule 6 is the D-rule
+- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change. Iron rule 5 is the release-quality procedure
 - `packages/core/lib/pipeline/grouper-audit.test.ts` — the audit no-op test for the v0.5.3 collapse pattern
 - `docs/records/evals/model-versions/2026-05-27-v0.5.3-diagnostic-training-review.mdx` — the eval that
   produced the smoke presets
