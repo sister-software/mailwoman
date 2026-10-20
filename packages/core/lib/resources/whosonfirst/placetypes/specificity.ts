@@ -105,3 +105,15 @@ export function isStrictlyFiner(
 
 	return a > b
 }
+
+/**
+ * The settlement placetypes, `localadmin` through `microhood`.
+ *
+ * Each ranks finer than `county` and coarser than `postalcode`.
+ * A register that keys a borough's addresses to a containing place keys them to one of these.
+ */
+export const SETTLEMENT_PLACETYPES: ReadonlySet<string> = new Set(
+	Object.keys(PLACETYPE_SPECIFICITY).filter(
+		(placetype) => isStrictlyFiner(placetype, "county") && isStrictlyFiner("postalcode", placetype)
+	)
+)

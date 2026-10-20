@@ -15,7 +15,20 @@ import {
 	isStrictlyFiner,
 	PLACETYPE_SPECIFICITY,
 	placetypeSpecificity,
+	SETTLEMENT_PLACETYPES,
 } from "#resources/whosonfirst/placetypes/specificity"
+
+describe("SETTLEMENT_PLACETYPES", () => {
+	it("holds every placetype between county and postalcode, exclusive", () => {
+		for (const placetype of ["localadmin", "locality", "borough", "macrohood", "neighbourhood", "microhood"]) {
+			expect(SETTLEMENT_PLACETYPES.has(placetype)).toBe(true)
+		}
+
+		for (const placetype of ["county", "region", "country", "postalcode", "venue"]) {
+			expect(SETTLEMENT_PLACETYPES.has(placetype)).toBe(false)
+		}
+	})
+})
 
 describe("placetypeSpecificity", () => {
 	it("orders the admin ladder coarse to fine", () => {

@@ -8,7 +8,7 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { adminLadderForNodes } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversineKm, isLatLonBounds } from "@mailwoman/spatial"
 
 import { adminCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -94,18 +94,9 @@ function coordinateSourceOf(point: RegisterRowPoint): CoordinateSource | null {
  * when the resolver recorded no extent for the place.
  */
 function halfDiagonalM(bbox: unknown): number | null {
-	if (!bbox || typeof bbox !== "object") return null
+	if (!isLatLonBounds(bbox)) return null
 
-	const { minLat, minLon, maxLat, maxLon } = bbox as Record<string, unknown>
-
-	if (
-		typeof minLat !== "number" ||
-		typeof minLon !== "number" ||
-		typeof maxLat !== "number" ||
-		typeof maxLon !== "number"
-	) {
-		return null
-	}
+	const { minLat, minLon, maxLat, maxLon } = bbox
 
 	return Math.round((haversineKm(minLat, minLon, maxLat, maxLon) * 1000) / 2)
 }

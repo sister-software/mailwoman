@@ -481,6 +481,26 @@ export interface LatLonBounds {
 }
 
 /**
+ * Type-predicate for a {@linkcode LatLonBounds} object with four numeric bounds.
+ */
+export function isLatLonBounds(input: unknown): input is LatLonBounds {
+	if (!input || typeof input !== "object") return false
+
+	const { minLat, maxLat, minLon, maxLon } = input as Record<string, unknown>
+
+	return (
+		typeof minLat === "number" && typeof maxLat === "number" && typeof minLon === "number" && typeof maxLon === "number"
+	)
+}
+
+/**
+ * Whether the bounds contain the point, edges included.
+ */
+export function latLonBoundsContain(bounds: LatLonBounds, lat: number, lon: number): boolean {
+	return lat >= bounds.minLat && lat <= bounds.maxLat && lon >= bounds.minLon && lon <= bounds.maxLon
+}
+
+/**
  * Approximate bounds `radiusKM` in each direction around a point.
  *
  * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally,

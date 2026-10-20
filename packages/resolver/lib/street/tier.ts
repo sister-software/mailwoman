@@ -7,7 +7,10 @@
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import { WOFPrefix } from "@mailwoman/core/placetypes"
+import type { AddressPointLookup, Ancestor, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import { SETTLEMENT_PLACETYPES } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { isLatLonBounds, latLonBoundsContain, type LatLonBounds } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
 import { foldName } from "#fold-name"
@@ -29,6 +32,43 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(".", ""))
 
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
+
+/**
+ * Reads the resolved place's own extent from `resolver_bbox`, which `decorateNode`
+ * writes only for an extent with area.
+ */
+function resolvedExtent(node: AddressNode | null | undefined): LatLonBounds | null {
+	const box = node?.metadata?.["resolver_bbox"]
+
+	return isLatLonBounds(box) ? box : null
+}
+
+/**
+ * Returns the names of the resolved locality's settlement ancestors, nearest first.
+ *
+ * A register keyed to a city stores an address in one of its boroughs or neighborhoods
+ * under the city's name, so a register could store any of these as the address's locality.
+ */
+function ancestorLocalityNames(
+	node: AddressNode | null,
+	ancestorsOf: ((id: number | string) => Ancestor[]) | undefined
+): string[] {
+	if (!node || !ancestorsOf || typeof node.placeID !== "string" || !node.placeID.startsWith(WOFPrefix)) return []
+
+	const seen = new Set([foldName(node.value)])
+	const names: string[] = []
+
+	for (const ancestor of ancestorsOf(node.placeID.slice(WOFPrefix.length))) {
+		const key = foldName(ancestor.name)
+
+		if (!SETTLEMENT_PLACETYPES.has(ancestor.placetype) || !key || seen.has(key)) continue
+
+		seen.add(key)
+		names.push(ancestor.name.trim())
+	}
+
+	return names
+}
 
 /**
  * Returns every `(street, house_number)` pair in the tree, ordered by how close the
@@ -79,8 +119,19 @@ function firstOfTag(roots: readonly AddressNode[], tag: AddressNode["tag"]): Add
  * and number pair the lookup finds.
  *
  * With `bboxFallback`, the lookup is also bounded to a box around the resolved locality's coordinate.
+ *
+ * With `ancestorsOf`, a miss is retried with the names of the resolved locality's WOF ancestors,
+ * nearest first, for a register that keys a borough or neighborhood to its city.
+ * An ancestor-keyed row answers only when it lies inside the resolved locality's own bounding box,
+ * because the ancestor key also matches the same street and number in the ancestor's other parts.
+ * A locality without a bounding box gets no retry.
  */
-export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bboxFallback?: boolean): void {
+export function applyAddressPoint(
+	roots: AddressNode[],
+	lookup: AddressPointLookup,
+	bboxFallback?: boolean,
+	ancestorsOf?: (id: number | string) => Ancestor[]
+): void {
 	const pairs = streetNumberPairs(roots)
 	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
 	const localityNode = firstOfTag(roots, "locality")
@@ -128,6 +179,34 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		}
 	}
 
+	let ancestorLocality: string | null = null
+	const extent = resolvedExtent(localityNode)
+
+	if (!hit && locality && extent) {
+		retry: for (const name of ancestorLocalityNames(localityNode, ancestorsOf)) {
+			for (const pair of pairs) {
+				const candidate = lookup.find({
+					street: assembleStreetValue(pair.street, directionalUnit),
+					number: pair.houseNumber.value,
+					postcode: postcode ?? null,
+					locality: name,
+					region: region ?? null,
+					subregion: subregion ?? null,
+					bbox,
+				})
+
+				if (candidate && latLonBoundsContain(extent, candidate.lat, candidate.lon)) {
+					hit = candidate
+					street = pair.street
+					houseNumber = pair.houseNumber
+					ancestorLocality = name
+
+					break retry
+				}
+			}
+		}
+	}
+
 	if (!hit || !street || !houseNumber) return
 
 	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "address_point" }
@@ -143,6 +222,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			postcode: hit.postcode || null,
 		},
 		resolution_tier: "address_point",
+		...(ancestorLocality ? { address_point_ancestor_locality: ancestorLocality } : {}),
 	}
 }
 
@@ -152,6 +232,11 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
  *
  * It writes `interpolated_point` rather than `address_point`, so an estimate
  * never overwrites a real situs point.
+ *
+ * A query without a postcode is scoped only by its locality, so its estimate must lie inside the resolved
+ * locality's bounding box, and an estimate outside it is refused as a namesake street elsewhere.
+ * A postcode-scoped estimate is not checked, because a mailing city's postcode
+ * can reach past the WOF place's extent.
  */
 export function applyInterpolation(
 	roots: AddressNode[],
@@ -171,6 +256,7 @@ export function applyInterpolation(
 	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
 	const near = postcode ? undefined : localityCoord
+	const extent = postcode ? null : resolvedExtent(resolvedLocality)
 
 	let street: AddressNode | null = null
 	let houseNumber: AddressNode | null = null
@@ -183,6 +269,10 @@ export function applyInterpolation(
 			postcode,
 			...(near ? { near } : {}),
 		})
+
+		if (hit && extent && !latLonBoundsContain(extent, hit.lat, hit.lon)) {
+			hit = null
+		}
 
 		if (hit) {
 			street = pair.street
