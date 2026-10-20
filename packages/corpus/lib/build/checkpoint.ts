@@ -67,6 +67,16 @@ export interface AlignCheckpoint {
 	 */
 	offsets: Record<AlignOutputName, number>
 
+	/**
+	 * Byte length of each split's source-id list at the checkpoint.
+	 * A resumed build shortens each list to this length.
+	 *
+	 * Absent from a checkpoint written before align recorded ids.
+	 * A build resumed from one writes no list, and its split phase reads the ids
+	 * from the labeled files instead.
+	 */
+	source_id_offsets?: Record<"train" | "val" | "test", number>
+
 	counts: Record<"train" | "val" | "test", number>
 	aligned: number
 	quarantined: number

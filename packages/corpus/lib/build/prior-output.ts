@@ -42,7 +42,10 @@ export interface PriorWork {
 export interface PriorWorkPaths {
 	intermediateDir: PathBuilder
 	checkpointPath: PathBuilder
-	alignPaths: Record<AlignOutputName, PathBuilder>
+	/**
+	 * Every file the align phase writes: its four outputs and the source-id lists beside them.
+	 */
+	alignPaths: Record<AlignOutputName, PathBuilder> & Record<string, PathBuilder>
 	adapterIDs: readonly string[]
 }
 
