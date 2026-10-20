@@ -6,7 +6,7 @@
  *   NZ Post delivery-service types and identifier rules from ADV358. The parser also recognizes the unofficial
  *   alias "Private Box" for a PO Box.
  *
- * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, Oct 2021)}
+ * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, June 2011)}
  * @see {@link https://www.nzpost.co.nz/business/shipping-in-nz/addressing-standards NZ Post addressing standards}
  * @see {@link https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail NZ Post — how to address mail}
  */

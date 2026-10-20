@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { type ReleaseRequirementSpec, validateReleaseSpec } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v4.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v5.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v4 specification with every requirement registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v4\.json$/u)
+	it("accepts the current v5 specification with every requirement registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v5\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -28,12 +28,34 @@ describe("validateReleaseSpec", () => {
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
 		const v3 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(3))
-		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(4))
 
 		expect(v4.requirements).toEqual(v3.requirements)
 		expect(v4.objective).toEqual(v3.objective)
 		expect(v4.statistics).toEqual(v3.statistics)
 		expect(v4.identities.published).toEqual(v3.identities.published)
+	})
+
+	it("differs from v4 only in the po_box_cedex source selector, the rationale and the version", async () => {
+		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(4))
+		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const v4Selector = v4.requirements.find((req) => req.id === "po_box_cedex")!.select
+		const v5Selector = v5.requirements.find((req) => req.id === "po_box_cedex")!.select
+
+		expect(v5.specVersion).toBe("5")
+		expect(v5.rationale).not.toBe(v4.rationale)
+		expect(v5Selector.sources).toEqual([...v4Selector.sources!, "invented-postal-guideline"])
+
+		const withoutChanges = (spec: ReleaseRequirementSpec) => ({
+			...spec,
+			specVersion: null,
+			rationale: null,
+			requirements: spec.requirements.map((req) =>
+				req.id === "po_box_cedex" ? { ...req, select: { ...req.select, sources: null } } : req
+			),
+		})
+
+		expect(withoutChanges(v5)).toEqual(withoutChanges(v4))
 	})
 
 	it("refuses the schema 2 records, which hold a single admitted list", async () => {

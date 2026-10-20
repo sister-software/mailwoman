@@ -32,6 +32,7 @@ import { houseVenueRecipe } from "#recipes/house-venue"
 import { intersectionRecipe } from "#recipes/intersection"
 import { poBoxRecipe } from "#recipes/po/box"
 import { poBoxCedexRecipe } from "#recipes/po/box/cedex"
+import { postalGuidelineRecipe } from "#recipes/postal-guideline"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { streetRecipe } from "#recipes/street"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "#recipes/street/affix"
@@ -62,6 +63,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	houseVenueRecipe,
 	poBoxRecipe,
 	poBoxCedexRecipe,
+	postalGuidelineRecipe,
 	unitRecipe,
 	intersectionRecipe,
 	germanRecipe,

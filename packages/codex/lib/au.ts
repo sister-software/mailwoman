@@ -9,6 +9,7 @@
  *   territories. It also defines the 4-digit postcode.
  */
 
+export * from "#au/delivery-guideline"
 export * from "#au/delivery-service"
 export * from "#au/level-designator"
 export * from "#au/postcode"

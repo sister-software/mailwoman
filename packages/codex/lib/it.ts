@@ -7,3 +7,4 @@
  */
 
 export * from "#it/cap"
+export * from "#it/casella-postale"

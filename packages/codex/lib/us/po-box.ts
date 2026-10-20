@@ -9,7 +9,8 @@
  * Exposes helpers to detect ({@link isPOBox}), normalize ({@link normalizePOBox}),
  * and extract ({@link matchPOBox}) PO Box values.
  *
- * @see {@link https://pe.usps.com/text/pub28/28c2_012.htm USPS Pub 28 §29 (PO Box / Caller service)}
+ * @see {@link https://pe.usps.com/text/pub28/28c2_036.htm USPS Pub 28 §281 (Post Office Box address format)}
+ * @see {@link https://pe.usps.com/text/pub28/28c2_038.htm USPS Pub 28 §283 (Caller, Firm Caller, Bin, Lockbox and Drawer)}
  */
 
 /**

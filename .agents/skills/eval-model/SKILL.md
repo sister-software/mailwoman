@@ -31,7 +31,7 @@ veto are removed. The procedure:
    verdict as `insufficient_evidence`, reports attribution separately, and lists board regressions with their
    addresses as findings to investigate rather than vetoes.
 
-**Requirements are registered, evidence is not yet.** `release-requirements.v4.json` registers the country and
+**Requirements are registered, evidence is not yet.** `release-requirements.v5.json` registers the country and
 capability minima, the objective and the confidence settings (`docs/records/evals/2026-10-20-release-requirements-v3.md`).
 A verdict stays `insufficient_evidence` until a frozen dataset with an overlap audit holds admitted rows for every
 required country. Report release eligibility exactly as the verdict states it. Until the first verdict runs on that

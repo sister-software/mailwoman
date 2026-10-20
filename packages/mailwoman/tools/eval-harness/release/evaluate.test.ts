@@ -101,10 +101,10 @@ describe("evaluateReleaseSpec", () => {
 	})
 
 	it("reads the current specification as insufficient evidence when required countries have no rows", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v4\.json$/u)
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v5\.json$/u)
 
 		const committed = validateReleaseSpec(
-			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v4.json", import.meta.url).pathname)
+			await readLocalJSONFile<unknown>(new URL("specs/release-requirements.v5.json", import.meta.url).pathname)
 		)
 
 		const verdict = evaluate(committed, rowsFor("US", 50, 40, 45), {
