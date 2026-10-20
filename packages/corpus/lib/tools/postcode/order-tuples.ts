@@ -19,6 +19,7 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { escapeSQLString } from "#parquet/duckdb"
 import type { ParquetFileRecord } from "#parquet/record"
 import { type ParquetRow, rowToParquet } from "#parquet/schema"
@@ -253,10 +254,12 @@ export interface PostcodeOrderParquetOptions {
 /**
  * Writes the recipe's rows as one parquet file with its record.
  *
- * The derivation records the three inputs that decide the bytes.
- * The extract hash is the base source's tuples file.
+ * The extract hash is the base source's tuples file, and `inputSources` names that base source.
+ * The code hash covers the recipe module, this writer and what they import at runtime, across workspaces.
  *
- * The config holds the recipe module's hash, the hash of the libaddressinput placement table, and the seed.
+ * That includes `@mailwoman/postcode`'s placement table, which the recipe reaches through `country-formats`.
+ *
+ * @throws When the tuples file holds more than one base source, since one file's extract is one source's.
  */
 export async function writePostcodeOrderParquet(options: PostcodeOrderParquetOptions): Promise<ParquetFileRecord> {
 	const rows: ParquetRow[] = []
@@ -267,16 +270,31 @@ export async function writePostcodeOrderParquet(options: PostcodeOrderParquetOpt
 		}
 	}
 
-	const recipeModule = resolveModulePath("@mailwoman/corpus/recipes/postcode-order")
-	const placementData = resolveModulePath("@mailwoman/postcode/country-formats/data")
+	const baseSources = new Set<string>()
+
+	for await (const line of TextSpliterator.fromAsync(options.tuples)) {
+		if (line) {
+			baseSources.add(parseJSONStrict<PostcodeOrderTuple>(line).source)
+		}
+	}
+
+	if (baseSources.size !== 1) {
+		throw new Error(
+			`writePostcodeOrderParquet: ${options.tuples.toString()} holds ${baseSources.size} base sources ` +
+				`(${[...baseSources].join(", ")}). Write one tuples file per base source.`
+		)
+	}
 
 	return writeParquetFile(rows, options.output, {
 		extractHash: await sha256File(options.tuples),
+		codeHash: await moduleGraphHash([
+			resolveModulePath("@mailwoman/corpus/recipes/postcode-order"),
+			import.meta.filename,
+		]),
 		config: {
 			recipe: "postcode-order",
-			recipeModule: await sha256File(recipeModule),
-			placementData: await sha256File(placementData),
 			seed: options.seed,
+			inputSources: [...baseSources],
 		},
 	})
 }
