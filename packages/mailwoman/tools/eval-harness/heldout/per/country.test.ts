@@ -198,6 +198,7 @@ describe("scoreHeldoutArm", () => {
 		expect(candidate.cells.get("US/address")).toEqual({
 			rows: 1,
 			rowsExactParse: 0,
+			rowsStreetJoinChanged: 0,
 			rowsGoldRecovered: 1,
 			spans: 2,
 			spansRecovered: 2,

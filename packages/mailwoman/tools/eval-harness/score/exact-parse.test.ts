@@ -1,6 +1,12 @@
+import { streetSpanConventionFor } from "@mailwoman/codex/street-convention"
 import { describe, expect, it } from "vitest"
 
-import { scoreExactParse, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
+import {
+	joinStreetSpans,
+	scoreExactParse,
+	scoreExactParseUnderConvention,
+	validateAnnotatedSpans,
+} from "#tools/eval-harness/score/exact-parse"
 
 // The annotated street span [3, 11) ends on the space before the comma, so trimming moves its end to 10.
 const raw = "12 Main St ,Springfield"
@@ -110,5 +116,83 @@ describe("validateAnnotatedSpans", () => {
 				span_tags: ["house_number", "street"],
 			})
 		).toThrow(/overlaps/u)
+	})
+})
+
+describe("scoreExactParseUnderConvention", () => {
+	// "40 Lister Lane, Halifax": house_number [0, 2), street [3, 14), locality [16, 23).
+	const street = "40 Lister Lane, Halifax"
+
+	const wholeGold = validateAnnotatedSpans(
+		{ raw: street, span_starts: [0, 3, 16], span_ends: [2, 14, 23], span_tags: ["house_number", "street", "locality"] },
+		"whole"
+	)
+
+	const splitGold = validateAnnotatedSpans(
+		{
+			raw: street,
+			span_starts: [0, 3, 10, 16],
+			span_ends: [2, 9, 14, 23],
+			span_tags: ["house_number", "street", "street_suffix", "locality"],
+		},
+		"split"
+	)
+
+	const splitPrediction = [
+		{ tag: "house_number", start: 0, end: 2 },
+		{ tag: "street", start: 3, end: 9 },
+		{ tag: "street_suffix", start: 10, end: 14 },
+		{ tag: "locality", start: 16, end: 23 },
+	]
+
+	it("joins a predicted street_suffix into the street for a whole-street country", () => {
+		const outcome = scoreExactParseUnderConvention(street, wholeGold, splitPrediction, streetSpanConventionFor("GB"))
+
+		expect(outcome).toMatchObject({ exact: true, streetConvention: "whole", streetJoinChanged: true })
+	})
+
+	it("compares a US split as it is, exact only when the gold also splits", () => {
+		const convention = streetSpanConventionFor("US")
+
+		expect(scoreExactParseUnderConvention(street, splitGold, splitPrediction, convention)).toMatchObject({
+			exact: true,
+			streetConvention: "split",
+			streetJoinChanged: false,
+		})
+
+		expect(scoreExactParseUnderConvention(street, wholeGold, splitPrediction, convention).exact).toBe(false)
+	})
+
+	it("still refuses a wrong street boundary under the whole convention", () => {
+		const wrongBoundary = [
+			{ tag: "house_number", start: 0, end: 2 },
+			{ tag: "street", start: 3, end: 9 },
+			{ tag: "locality", start: 10, end: 23 },
+		]
+
+		const outcome = scoreExactParseUnderConvention(street, wholeGold, wrongBoundary, streetSpanConventionFor("GB"))
+
+		expect(outcome.exact).toBe(false)
+		expect(outcome.streetJoinChanged).toBe(false)
+		expect(outcome.missing).toHaveLength(2)
+
+		expect(outcome.missing).toEqual(
+			expect.arrayContaining([
+				{ tag: "street", start: 3, end: 14 },
+				{ tag: "locality", start: 16, end: 23 },
+			])
+		)
+	})
+
+	it("does not join street pieces separated by punctuation", () => {
+		expect(
+			joinStreetSpans("Lister, Lane", [
+				{ tag: "street", start: 0, end: 6 },
+				{ tag: "street_suffix", start: 8, end: 12 },
+			])
+		).toEqual([
+			{ tag: "street", start: 0, end: 6 },
+			{ tag: "street", start: 8, end: 12 },
+		])
 	})
 })

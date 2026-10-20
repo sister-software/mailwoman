@@ -17,6 +17,7 @@
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
+import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street-convention"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -30,7 +31,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
 
-import { scoreExactParse, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
+import { scoreExactParseUnderConvention, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
 
 /**
  * One held-out row, in the corpus parquet schema.
@@ -121,6 +122,14 @@ export interface HeldoutRowOutcome {
 	 * The predicted spans equal the annotated spans, with no missing and no additional span.
 	 */
 	exact: boolean
+	/**
+	 * The country's street span convention the row was scored under.
+	 */
+	streetConvention: StreetSpanConvention
+	/**
+	 * The `whole` convention's street join changed `exact`.
+	 */
+	streetJoinChanged: boolean
 	missingSpans: number
 	additionalSpans: number
 	spans: number
@@ -141,6 +150,10 @@ export interface CountryScore {
 	 * Rows whose predicted spans exactly equal the annotated spans.
 	 */
 	rowsExactParse: number
+	/**
+	 * Rows whose `exact` the `whole` street convention's join changed.
+	 */
+	rowsStreetJoinChanged: number
 	/**
 	 * Rows whose every gold span the parse recovered, permitting additional predictions.
 	 * A diagnostic.
@@ -418,7 +431,14 @@ export function countHeldoutCells(
 export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: ProvenanceHistory): HeldoutRowOutcome {
 	const rowID = heldoutRowID(row)
 	const annotated = validateAnnotatedSpans(row, rowID)
-	const exactOutcome = scoreExactParse(row.raw, annotated, [...walkNodes(tree.roots)])
+
+	const exactOutcome = scoreExactParseUnderConvention(
+		row.raw,
+		annotated,
+		[...walkNodes(tree.roots)],
+		streetSpanConventionFor(row.country)
+	)
+
 	const byTag = groupTuplesByTag(tree)
 
 	let spansRecovered = 0
@@ -439,6 +459,8 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 		group: row.group,
 		provenance: history?.get(rowID)?.provenance ?? "unknown",
 		exact: exactOutcome.exact,
+		streetConvention: exactOutcome.streetConvention,
+		streetJoinChanged: exactOutcome.streetJoinChanged,
 		missingSpans: exactOutcome.missing.length,
 		additionalSpans: exactOutcome.additional.length,
 		spans: row.span_tags.length,
@@ -481,6 +503,7 @@ export async function scoreHeldoutArm(
 		const cell = cells.get(key) ?? {
 			rows: 0,
 			rowsExactParse: 0,
+			rowsStreetJoinChanged: 0,
 			rowsGoldRecovered: 0,
 			spans: 0,
 			spansRecovered: 0,
@@ -492,6 +515,10 @@ export async function scoreHeldoutArm(
 
 		if (outcome.exact) {
 			cell.rowsExactParse++
+		}
+
+		if (outcome.streetJoinChanged) {
+			cell.rowsStreetJoinChanged++
 		}
 
 		if (outcome.goldRecovered) {

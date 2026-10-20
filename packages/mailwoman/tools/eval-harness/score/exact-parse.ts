@@ -11,8 +11,18 @@
  *
  *   Normalization. Offsets index the row's `raw` string in UTF-16 code units, the unit both the corpus and
  *   the decoder use. Each span, annotated or predicted, has the whitespace at its edges trimmed before
- *   comparison, so `[0, 5)` over `"Main "` equals `[0, 4)`. Case is not folded because boundaries, not text,
- *   are compared, and the classifier's case normalization preserves length.
+ *   comparison, so `[0, 5)` over `"Main "` equals `[0, 4)`. Case keeps its written form because the
+ *   comparison reads boundaries rather than text, and the classifier's case normalization preserves length.
+ *
+ *   Street convention. Each row is scored under its country's street span convention, read from
+ *   `streetSpanConventionFor` in `@mailwoman/codex/street-convention`. Under the `split` convention (US),
+ *   `street_prefix`, `street_prefix_particle`, `street` and `street_suffix` spans are compared as they are,
+ *   so a gold row that splits the street requires the split and a gold row that keeps it whole refuses it.
+ *   Under the `whole` convention (every other country), {@linkcode joinStreetSpans} first joins each run of
+ *   those spans that touch or are separated only by whitespace into one `street` span from the first start
+ *   to the last end, on the predicted side and the annotated side alike. `Lister` + `street_suffix: Lane`
+ *   then equals `street: Lister Lane`, while a street that ends at the wrong word still fails. The outcome
+ *   records the convention applied and whether joining changed the result.
  *
  *   Repeated components. Spans are compared as a multiset, so two annotated `locality` spans require two
  *   predicted `locality` spans at those boundaries, and a predicted span duplicated at one position counts
@@ -27,7 +37,8 @@
  *   it.
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
+import { COMPONENT_TAGS, type ComponentTag, STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
+import type { StreetSpanConvention } from "@mailwoman/codex/street-convention"
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
@@ -65,6 +76,21 @@ export interface ExactParseOutcome {
 	 * Predicted spans with no annotated span at the same tag and boundaries.
 	 */
 	additional: ComponentSpan[]
+}
+
+/**
+ * An exact-parse comparison made under one country's street span convention.
+ */
+export interface ConventionExactParseOutcome extends ExactParseOutcome {
+	/**
+	 * The street span convention the row was scored under.
+	 */
+	streetConvention: StreetSpanConvention
+	/**
+	 * The `whole` convention's street join changed `exact` from the unjoined comparison.
+	 * Always false under `split`.
+	 */
+	streetJoinChanged: boolean
 }
 
 const KNOWN_TAGS: ReadonlySet<string> = new Set(COMPONENT_TAGS)
@@ -146,7 +172,8 @@ const spanKey = (span: ComponentSpan): string => `${span.tag}\u0000${span.start}
  * Compares predicted spans against a row's validated annotated spans as multisets.
  *
  * @param annotated The output of {@linkcode validateAnnotatedSpans}.
- * @param predicted Every predicted span; each is trimmed against `raw` here.
+ * @param predicted Every predicted span.
+ * Each is trimmed against `raw` here.
  */
 export function scoreExactParse(
 	raw: string,
@@ -186,4 +213,61 @@ export function scoreExactParse(
 		missing,
 		additional,
 	}
+}
+
+const STREET_FAMILY: ReadonlySet<string> = new Set(STREET_FAMILY_TAGS)
+
+/**
+ * Joins each run of street-family spans that touch, overlap or are separated only by
+ * whitespace in `raw` into one `street` span, the `whole` street convention.
+ *
+ * Other spans pass through unchanged.
+ * Each span is trimmed against `raw` first.
+ */
+export function joinStreetSpans(raw: string, spans: readonly ComponentSpan[]): ComponentSpan[] {
+	const trimmed = spans.map((span) => trimSpan(raw, span))
+	const out = trimmed.filter((span) => !STREET_FAMILY.has(span.tag))
+
+	const street = trimmed
+		.filter((span) => STREET_FAMILY.has(span.tag))
+		.toSorted((a, b) => a.start - b.start || a.end - b.end)
+
+	let run: ComponentSpan | null = null
+
+	for (const span of street) {
+		if (run && (span.start <= run.end || raw.slice(run.end, span.start).trim() === "")) {
+			run.end = Math.max(run.end, span.end)
+		} else {
+			if (run) {
+				out.push(run)
+			}
+
+			run = { tag: "street", start: span.start, end: span.end }
+		}
+	}
+
+	if (run) {
+		out.push(run)
+	}
+
+	return out
+}
+
+/**
+ * Compares predicted spans against a row's validated annotated spans under `streetConvention`,
+ * as the module documentation's street convention section states.
+ */
+export function scoreExactParseUnderConvention(
+	raw: string,
+	annotated: readonly ComponentSpan[],
+	predicted: readonly ComponentSpan[],
+	streetConvention: StreetSpanConvention
+): ConventionExactParseOutcome {
+	const unjoined = scoreExactParse(raw, annotated, predicted)
+
+	if (streetConvention === "split") return { ...unjoined, streetConvention, streetJoinChanged: false }
+
+	const joined = scoreExactParse(raw, joinStreetSpans(raw, annotated), joinStreetSpans(raw, predicted))
+
+	return { ...joined, streetConvention, streetJoinChanged: joined.exact !== unjoined.exact }
 }
