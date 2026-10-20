@@ -7,8 +7,9 @@
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { WOFPrefix } from "@mailwoman/core/placetypes"
 import type { AddressPointLookup, Ancestor, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
-import { SETTLEMENT_PLACETYPES, WOFPrefix } from "@mailwoman/core/resources/whosonfirst"
+import { SETTLEMENT_PLACETYPES } from "@mailwoman/core/resources/whosonfirst/specificity"
 import { isLatLonBounds, latLonBoundsContain, type LatLonBounds } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
