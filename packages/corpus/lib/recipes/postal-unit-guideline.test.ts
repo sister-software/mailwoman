@@ -42,9 +42,26 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "TR" : "AL"}${1 + (index % 9)} ${1 + (index % 7)}AB`,
 		})),
 	],
-	["IT", NAMES.map((locality) => ({ locality, postcode: "67010", region: "AQ" }))],
-	["AU", NAMES.map((locality) => ({ locality: locality.toUpperCase(), postcode: "2840", region: "NSW" }))],
-	["NZ", NAMES.map((locality) => ({ locality, postcode: "7942" }))],
+	// `09` (Sardinia) is a declared IT holdout and `67` is not.
+	[
+		"IT",
+		NAMES.slice(0, 80).map((locality, index) => ({
+			locality,
+			postcode: index % 2 ? "09124" : "67010",
+			region: index % 2 ? "CA" : "AQ",
+		})),
+	],
+	// `7` (Tasmania) is a declared AU holdout and `2` is not.
+	[
+		"AU",
+		NAMES.slice(0, 80).map((locality, index) => ({
+			locality: locality.toUpperCase(),
+			postcode: index % 2 ? "7000" : "2840",
+			region: index % 2 ? "TAS" : "NSW",
+		})),
+	],
+	// `98` (Southland) is a declared NZ holdout and `79` is not.
+	["NZ", NAMES.slice(0, 80).map((locality, index) => ({ locality, postcode: index % 2 ? "9810" : "7942" }))],
 ])
 
 const generate = (seed: number) =>
@@ -71,6 +88,7 @@ async function readSyntheticSecondaryDesignators(): Promise<string[]> {
 		"EU_ENTRANCES",
 		"EU_STAIRCASES",
 	]
+
 	const forms: string[] = []
 
 	for (const name of names) {

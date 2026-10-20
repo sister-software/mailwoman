@@ -207,6 +207,31 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			regions: ["Alba", "Hunedoara", "Mureș", "Sibiu"],
 			postcodePrefixes: ["51", "33", "54", "55"],
 		},
+		ES: {
+			// The Balearic Islands 07 and Asturias 33: a Spanish postcode's first two digits name its province.
+			// The Canary Islands, 35 and 38, would hold out every Overture ES row, because the
+			// Overture sample this corpus draws for ES has postcodes in those two provinces only.
+			regions: ["Asturias", "Principado de Asturias", "Balearic Islands", "Illes Balears", "Islas Baleares"],
+			postcodePrefixes: ["07", "33"],
+		},
+		IT: {
+			// Sardinia 07 to 09, Valle d'Aosta 11, and Trentino-Alto Adige 38 and 39.
+			// The region names are the province spellings `wof-admin` writes.
+			regions: ["Trento", "Bolzano/Bozen", "Valle D'Aosta", "South Sardinia"],
+			postcodePrefixes: ["07", "08", "09", "11", "38", "39"],
+		},
+		AU: {
+			// The Northern Territory 08 and 09, and Tasmania 7.
+			// No other Australian postcode begins with 7.
+			regions: ["TAS", "NT"],
+			postcodePrefixes: ["08", "09", "7"],
+		},
+		NZ: {
+			// Southland: postcodes 96 to 98.
+			// The OSM-derived rows hold no postcode, so the city names supply those.
+			postcodePrefixes: ["96", "97", "98"],
+			localities: ["Invercargill", "West Invercargill", "Gore", "East Gore"],
+		},
 	}
 }
 
