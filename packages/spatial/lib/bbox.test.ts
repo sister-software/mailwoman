@@ -6,7 +6,32 @@
 
 import { expect, test } from "vitest"
 
-import { bboxAround, is2DBBox, is3DBBox, isBBox } from "#index"
+import { bboxAround, is2DBBox, is3DBBox, isBBox, isLatLonBounds, latLonBoundsContain } from "#index"
+
+test("isLatLonBounds: accepts four numeric bounds and refuses anything missing one", () => {
+	expect(isLatLonBounds({ minLat: 1, maxLat: 2, minLon: 3, maxLon: 4 })).toBe(true)
+
+	for (const input of [
+		null,
+		undefined,
+		"bounds",
+		4,
+		{},
+		{ minLat: 1, maxLat: 2, minLon: 3 },
+		{ minLat: "1", maxLat: 2, minLon: 3, maxLon: 4 },
+	]) {
+		expect(isLatLonBounds(input)).toBe(false)
+	}
+})
+
+test("latLonBoundsContain: includes the edges and refuses a point outside either axis", () => {
+	const bounds = { minLat: 40, maxLat: 41, minLon: -74, maxLon: -73 }
+
+	expect(latLonBoundsContain(bounds, 40.5, -73.5)).toBe(true)
+	expect(latLonBoundsContain(bounds, 40, -74)).toBe(true)
+	expect(latLonBoundsContain(bounds, 41.1, -73.5)).toBe(false)
+	expect(latLonBoundsContain(bounds, 40.5, -74.1)).toBe(false)
+})
 
 // 2D GeoJSON bbox: [west, south, east, north]. 3D adds min/max altitude: [w, s, minA, e, n, maxA].
 const BBOX_2D = [-74.1, 40.6, -73.9, 40.9]

@@ -8,6 +8,8 @@ import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, Ancestor, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import { SETTLEMENT_PLACETYPES, WOFPrefix } from "@mailwoman/core/resources/whosonfirst"
+import { isLatLonBounds, latLonBoundsContain, type LatLonBounds } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
 import { foldName } from "#fold-name"
@@ -30,72 +32,38 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
 
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
-interface LatLonBox {
-	minLat: number
-	maxLat: number
-	minLon: number
-	maxLon: number
-}
-
-/**
- * WOF placetypes whose name a register can store as the locality of an address in a finer place.
- *
- * A register keyed to a city stores an address in one of its boroughs
- * or neighborhoods under the city's name, so a miss on the parsed place is retried
- * with each ancestor of these placetypes, nearest first.
- */
-const LOCALITY_ANCESTOR_PLACETYPES: ReadonlySet<string> = new Set([
-	"neighbourhood",
-	"macrohood",
-	"borough",
-	"locality",
-	"localadmin",
-])
-
 /**
  * Reads the resolved place's own extent from `resolver_bbox`, which `decorateNode`
  * writes only for an extent with area.
  */
-function resolvedExtent(node: AddressNode | null | undefined): LatLonBox | null {
-	const box = node?.metadata?.["resolver_bbox"] as Partial<LatLonBox> | undefined
+function resolvedExtent(node: AddressNode | null | undefined): LatLonBounds | null {
+	const box = node?.metadata?.["resolver_bbox"]
 
-	if (
-		typeof box?.minLat !== "number" ||
-		typeof box.maxLat !== "number" ||
-		typeof box.minLon !== "number" ||
-		typeof box.maxLon !== "number"
-	) {
-		return null
-	}
-
-	return { minLat: box.minLat, maxLat: box.maxLat, minLon: box.minLon, maxLon: box.maxLon }
-}
-
-function boxContains(box: LatLonBox, lat: number, lon: number): boolean {
-	return lat >= box.minLat && lat <= box.maxLat && lon >= box.minLon && lon <= box.maxLon
+	return isLatLonBounds(box) ? box : null
 }
 
 /**
- * Returns the names of the resolved locality's ancestors that a register could
- * store as its locality, nearest first.
+ * Returns the names of the resolved locality's settlement ancestors, nearest first.
+ *
+ * A register keyed to a city stores an address in one of its boroughs or neighborhoods
+ * under the city's name, so a register could store any of these as the address's locality.
  */
 function ancestorLocalityNames(
 	node: AddressNode | null,
 	ancestorsOf: ((id: number | string) => Ancestor[]) | undefined
 ): string[] {
-	if (!node || !ancestorsOf || typeof node.placeID !== "string" || !node.placeID.startsWith("wof:")) return []
+	if (!node || !ancestorsOf || typeof node.placeID !== "string" || !node.placeID.startsWith(WOFPrefix)) return []
 
-	const own = node.value.trim().toLowerCase()
+	const seen = new Set([foldName(node.value)])
 	const names: string[] = []
 
-	for (const ancestor of ancestorsOf(node.placeID.slice("wof:".length))) {
-		const name = ancestor.name.trim()
+	for (const ancestor of ancestorsOf(node.placeID.slice(WOFPrefix.length))) {
+		const key = foldName(ancestor.name)
 
-		if (!LOCALITY_ANCESTOR_PLACETYPES.has(ancestor.placetype) || !name) continue
+		if (!SETTLEMENT_PLACETYPES.has(ancestor.placetype) || !key || seen.has(key)) continue
 
-		if (name.toLowerCase() === own || names.includes(name)) continue
-
-		names.push(name)
+		seen.add(key)
+		names.push(ancestor.name.trim())
 	}
 
 	return names
@@ -226,7 +194,7 @@ export function applyAddressPoint(
 					bbox,
 				})
 
-				if (candidate && boxContains(extent, candidate.lat, candidate.lon)) {
+				if (candidate && latLonBoundsContain(extent, candidate.lat, candidate.lon)) {
 					hit = candidate
 					street = pair.street
 					houseNumber = pair.houseNumber
@@ -301,7 +269,7 @@ export function applyInterpolation(
 			...(near ? { near } : {}),
 		})
 
-		if (hit && extent && !boxContains(extent, hit.lat, hit.lon)) {
+		if (hit && extent && !latLonBoundsContain(extent, hit.lat, hit.lon)) {
 			hit = null
 		}
 
