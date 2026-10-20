@@ -185,8 +185,34 @@ def corpus_split_files(corpus_dir: Path, split: str) -> list[CorpusFile]:
         for target, ids in deletions:
             if _deletion_targets(target, entry):
                 drop = drop | ids
-        files.append(CorpusFile(path, RowFilter(drop=drop) if drop else None))
+        keep: frozenset[str] | None = None
+        if "split_attribute" in entry:
+            held = _split_attribute(entry, corpus_dir)
+            if split == "train":
+                drop = drop | held["val"] | held["test"]
+            else:
+                keep = held[split]
+        files.append(CorpusFile(path, RowFilter(drop=drop, keep=keep) if drop or keep is not None else None))
     return sorted(files, key=lambda f: f.path)
+
+
+def _split_attribute(entry: dict[str, Any], corpus_dir: Path) -> dict[str, frozenset[str]]:
+    """Read and verify the split attribute a manifest entry names, returning its held-out ids per split.
+
+    The attribute's sha256 must match the entry, and the data file it describes must be the entry's file, or
+    the split of each row would come from a decision about other bytes.
+    """
+    reference = entry["split_attribute"]
+    path = _resolve_sidecar(reference["path"], corpus_dir, "")
+    verify_file_sha256(path, reference.get("sha256"))
+    attribute = json.loads(path.read_text())
+    if attribute.get("attribute") != "split" or attribute.get("policyHash") != reference.get("policy_hash"):
+        raise ValueError(f"{path} is not the split attribute under policy {reference.get('policy_hash')}")
+    if attribute["file"]["sha256"] != entry.get("sha256"):
+        raise ValueError(
+            f"{path} describes sha256 {attribute['file']['sha256']} and MANIFEST lists {entry.get('sha256')}"
+        )
+    return {"val": frozenset(attribute["val"]), "test": frozenset(attribute["test"])}
 
 
 def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
@@ -221,14 +247,18 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
     missing: list[str] = []
     declared = 0
     for s in manifest_files(data):
-        if s.get("split") != split:
+        # A file with a split attribute holds every split's rows, and the attribute decides each row.
+        attributed = "split_attribute" in s
+        if s.get("split") != split and not attributed:
             continue
         declared += 1
         raw = Path(s["path"])
         if raw.exists():
             resolved.append((raw, s))
             continue
-        cand = _reroot(raw, corpus_dir, split)
+        # An attributed file sits at the root of the corpus directory that adds it.
+        cand = (corpus_dir / raw.name if (corpus_dir / raw.name).exists() else None) if attributed else None
+        cand = cand or _reroot(raw, corpus_dir, split)
         if cand is not None:
             resolved.append((cand, s))
             rerooted += 1

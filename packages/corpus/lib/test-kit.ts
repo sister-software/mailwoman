@@ -15,6 +15,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
 
+import type { ParquetRow } from "#parquet/schema"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -114,3 +115,35 @@ export async function writeDelimitedFixture<P extends PathBuilderLike>(
 export const LIVE_PUBLISHER_TESTS =
 	// oxlint-disable-next-line sister-software/no-process-globals -- stated in the block above.
 	process.env.MAILWOMAN_LIVE_PUBLISHER_TESTS === "1"
+
+/**
+ * One GB parquet row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.
+ *
+ * The streets and postcodes come from OS OpenData (OGL v3.0), not from HM Land Registry Price Paid Data.
+ *
+ * The span triple is what the holdout splitter reads, so the offsets name the real substring:
+ * a fixture whose spans pointed elsewhere would pass against a splitter reading the wrong column.
+ */
+export function gbOverlayRow(sourceID: string, street: string, locality: string, postcode: string): ParquetRow {
+	const raw = `${street}, ${locality}, ${postcode}`
+	const localityStart = street.length + 2
+	const postcodeStart = localityStart + locality.length + 2
+
+	return {
+		raw,
+		tokens: raw.split(" "),
+		labels: raw.split(" ").map(() => "O"),
+		span_starts: [0, localityStart, postcodeStart],
+		span_ends: [street.length, localityStart + locality.length, raw.length],
+		span_tags: ["street", "locality", "postcode"],
+		country: "GB",
+		locale: "en-GB",
+		source: "rendered-gb-os-open",
+		source_id: sourceID,
+		license: "OGL-UK-3.0",
+		register: "gb-os-opendata",
+		surface: "composed",
+		augmentation: null,
+		base_source_id: null,
+	}
+}

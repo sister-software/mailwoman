@@ -9,13 +9,17 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
-import { moduleGraphHash } from "#build/code-hash"
 import { openCorpusRowStream } from "#parquet/corpus-rows"
-import type { ParquetRow } from "#parquet/schema"
-import { writeParquetFile } from "#parquet/writers"
+import {
+	SPLIT_ATTRIBUTE,
+	type SplitAttributeFile,
+	splitAttributeFilename,
+	splitPolicyHash,
+} from "#tools/overlay/split-attribute"
 import type { CanonicalRow } from "#types"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
 
@@ -68,13 +72,11 @@ export function holdoutComponents(row: SpannedRow, index: number, input: string)
 export interface SplitSliceOptions {
 	/**
 	 * The parquet to route.
-	 * Its rows are read once and held per split in memory.
+	 * Its rows are read once, and the file is left unchanged.
 	 */
 	input: PathBuilderLike
 	/**
-	 * Where the per-split parquets are written.
-	 *
-	 * Each filename combines the input and its split, and each file's record sits beside it.
+	 * Where the attribute file is written.
 	 */
 	outputDir: PathBuilderLike
 	/**
@@ -88,59 +90,68 @@ export interface SplitSliceResult {
 	rows: number
 	counts: Record<SplitName, number>
 	/**
-	 * The file written per split.
-	 *
-	 * A split with zero rows has no output file.
-	 * An empty parquet would suggest that the writer lost its rows.
+	 * The attribute file written, `<stem>.split.<policy hash>.json`.
 	 */
-	outputs: Partial<Record<SplitName, string>>
+	attribute: string
+	policyHash: string
 }
 
 /**
- * Split one overlay parquet into up to three, by the same policy the base build applies.
+ * Decide the split of every row of one overlay parquet by the policy the base build applies,
+ * and write the decision as an attribute file keyed by the policy's hash.
  *
- * Each output filename combines the input name and split name.
- * The function leaves the input file in place.
+ * @throws When one `source_id` appears on two rows that the policy sends to different splits,
+ * since an attribute keyed by `source_id` could state only one of them.
  */
 export async function splitOverlaySlice(options: SplitSliceOptions): Promise<SplitSliceResult> {
 	const input = options.input.toString()
 	const holdouts = options.holdouts ?? defaultHoldouts()
-	const stem = basename(input).replace(/\.parquet$/u, "")
-
-	const buckets: Record<SplitName, ParquetRow[]> = { train: [], val: [], test: [] }
+	const decided = new Map<string, SplitName>()
+	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let index = 0
 
 	for await (const row of openCorpusRowStream(input)) {
 		const components = holdoutComponents(row, index, input)
 		const split = splitForRow({ source_id: row.source_id, country: row.country, components }, holdouts)
+		const earlier = decided.get(row.source_id)
 
-		buckets[split].push(row)
+		if (earlier && earlier !== split) {
+			throw new Error(
+				`${input} row ${index} (${row.source_id}) falls in ${split} and an earlier row with the same source_id in ` +
+					`${earlier}, so no attribute keyed by source_id can state both.`
+			)
+		}
+
+		decided.set(row.source_id, split)
+
+		counts[split]++
 
 		index++
 	}
 
-	const outputs: Partial<Record<SplitName, string>> = {}
-	const extractHash = await sha256File(input)
-	const codeHash = await moduleGraphHash([import.meta.filename])
+	const { policyHash, codeHash } = await splitPolicyHash(holdouts)
 
-	for (const split of ["train", "val", "test"] as const) {
-		if (!buckets[split].length) continue
+	const heldOut = (split: SplitName) =>
+		[...decided]
+			.filter(([, value]) => value === split)
+			.map(([id]) => id)
+			.toSorted()
 
-		const output = resolvePath(options.outputDir, `${stem}.${split}.parquet`)
+	const name = basename(input)
 
-		await writeParquetFile(buckets[split], output, {
-			extractHash,
-			codeHash,
-			config: { tool: "split-slice", split, holdouts },
-		})
-
-		outputs[split] = output
+	const attribute: SplitAttributeFile = {
+		attribute: SPLIT_ATTRIBUTE,
+		policyHash,
+		policy: { holdouts, codeHash },
+		file: { name, sha256: await sha256File(input), rows: index },
+		counts,
+		val: heldOut("val"),
+		test: heldOut("test"),
 	}
 
-	return {
-		input,
-		rows: index,
-		counts: { train: buckets.train.length, val: buckets.val.length, test: buckets.test.length },
-		outputs,
-	}
+	const output = resolvePath(options.outputDir, splitAttributeFilename(name, policyHash))
+
+	await writeLocalJSONFile(attribute, output)
+
+	return { input, rows: index, counts, attribute: output, policyHash }
 }

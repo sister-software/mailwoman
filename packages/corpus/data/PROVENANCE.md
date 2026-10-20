@@ -580,8 +580,9 @@ stopped resolving when the data root moved to `/mnt/mw` on 2026-09-23.
 The source data itself is not committed and not reproducible from this repository. What the record
 establishes is which path each adapter was pointed at. A corpus `MANIFEST.json` states that for no adapter.
 
-`builds/<version>/OVERLAY_PLAN.json` holds what an overlay assembly was asked to add: the per-file
-`parquet`, `source` and `split` triples, the base manifest it extended, the Modal root, and the note.
+`builds/<version>/OVERLAY_PLAN.json` holds what an overlay assembly was asked to add: each file's
+`parquet` and `source` with the split attribute that decides its rows (a plan written before split
+attributes records a `split` and `route` instead), the base manifest it extended, the Modal root, and the note.
 `assembleOverlayManifest` writes it next to the `MANIFEST.json` it produced, and the copy here is the one a
 later assembly on the same base reads. The `v0.6.0-register-surface` plan (66 files in three lists) was
 produced by three scripts in a session scratch directory with the old data root written into them, and was

@@ -390,8 +390,9 @@ meant to attribute an effect.
    diversity teaches lexical pattern-matching instead of the boundary.
 3. Overlay manifests declare lineage against a base corpus version
    (`mailwoman corpus overlay-manifest` writes one). Never hand-edit a manifest.
-4. Route every corpus overlay parquet through `mailwoman corpus split-slice`, then register the per-split
-   outputs with `mailwoman corpus overlay-manifest --split`. If a corpus overlay is appended as a train
+4. Route every corpus overlay parquet through `mailwoman corpus split-slice`, which writes a split
+   attribute keyed by the holdout policy's hash, then register the file and its attribute with
+   `mailwoman corpus overlay-manifest --split-attribute`. If a corpus overlay is appended as a train
    file and a country's only rows of some kind come from that overlay, the country ends up with no
    held-out row of that kind. A hand-picked split has the same result and leaves no record of
    the choice. In `v0.6.0-register-surface`, the `synth-german` overlay (204,000 OpenAddresses rows

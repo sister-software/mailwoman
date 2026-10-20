@@ -13,10 +13,12 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256File } from "@mailwoman/core/hash"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
+import { gbOverlayRow } from "#test-kit"
+import { readSplitAttribute, splitOfSourceID } from "#tools/overlay/split-attribute"
 import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-slice"
+import { defaultHoldouts, type SplitName, splitForRow } from "#utils/split"
 
 const root = await temporaryDirectory("mw-split-slice-")
 
@@ -24,67 +26,58 @@ afterAll(() => root[Symbol.asyncDispose]())
 
 const FIXTURE_DERIVATION = { extractHash: "fixture", codeHash: "fixture", config: {} }
 
-/**
- * One GB row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.
- *
- * The streets and postcodes come from OS OpenData (OGL v3.0), not from HM Land Registry Price Paid Data.
- *
- * The span triple is what the splitter reads, so the offsets have to name the real substring:
- * a fixture whose spans point elsewhere would pass against a splitter reading the wrong column.
- */
-function gbRow(sourceID: string, street: string, locality: string, postcode: string): ParquetRow {
-	const raw = `${street}, ${locality}, ${postcode}`
-	const localityStart = street.length + 2
-	const postcodeStart = localityStart + locality.length + 2
+const gbRow = gbOverlayRow
 
-	return {
-		raw,
-		tokens: raw.split(" "),
-		labels: raw.split(" ").map(() => "O"),
-		span_starts: [0, localityStart, postcodeStart],
-		span_ends: [street.length, localityStart + locality.length, raw.length],
-		span_tags: ["street", "locality", "postcode"],
-		country: "GB",
-		locale: "en-GB",
-		source: "rendered-gb-os-open",
-		source_id: sourceID,
-		license: "OGL-UK-3.0",
-		register: "gb-os-opendata",
-		surface: "composed",
-		augmentation: null,
-		base_source_id: null,
+/**
+ * GB rows across every holdout prefix and around them, plus enough held-out
+ * rows that both `val` and `test` draw.
+ */
+function fixtureRows(): ParquetRow[] {
+	const rows: ParquetRow[] = [
+		gbRow("gb-1", "Parc Venton Close", "Camborne", "TR14 7TT"),
+		gbRow("gb-2", "Bangor Road", "Conwy", "LL32 8EA"),
+		gbRow("gb-3", "Stubbing Drive", "Hebden Bridge", "HX7 6LS"),
+		gbRow("gb-4", "Baker Street", "London", "NW1 6XE"),
+		gbRow("gb-5", "Hope Street", "Liverpool", "L1 9BP"),
+	]
+
+	for (let index = 0; index < 60; index++) {
+		const postcode = ["TR1 1AA", "LL11 2BB", "HX1 3CC", "L1 4DD", "LS1 5EE", "M1 6FF"][index % 6]!
+
+		rows.push(gbRow(`gb-fixture-${index}`, `${index} High Street`, "Somewhere", postcode))
 	}
+
+	return rows
 }
 
 describe("splitOverlaySlice", () => {
-	it("moves a row whose postcode area the GB holdout names out of the train split", async () => {
+	it("decides every row's split exactly as splitForRow does under the same policy", async () => {
 		const input = root.path("part-gb.parquet")
+		const rows = fixtureRows()
 
-		await writeParquetFile(
-			[
-				gbRow("gb-1", "Parc Venton Close", "Camborne", "TR14 7TT"),
-				gbRow("gb-2", "Bangor Road", "Conwy", "LL32 8EA"),
-				gbRow("gb-3", "Stubbing Drive", "Hebden Bridge", "HX7 6LS"),
-				gbRow("gb-4", "Baker Street", "London", "NW1 6XE"),
-				gbRow("gb-5", "Hope Street", "Liverpool", "L1 9BP"),
-			],
-			input,
-			FIXTURE_DERIVATION
-		)
+		await writeParquetFile(rows, input, FIXTURE_DERIVATION)
 
 		const result = await splitOverlaySlice({ input, outputDir: root.path })
+		const attribute = await readSplitAttribute(result.attribute)
+		const expected: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
-		expect(result.rows).toBe(5)
-		expect(result.counts.train).toBe(2)
-		expect(result.counts.val + result.counts.test).toBe(3)
+		// `splitForRow` over the components read back from each row is the decision the filename route made
+		// when it bucketed rows into `<stem>.<split>.parquet`, so equality here keeps every row's split.
+		for (const [index, row] of rows.entries()) {
+			const components = holdoutComponents(row, index, "fixture")
+			const split = splitForRow({ source_id: row.source_id, country: row.country, components }, defaultHoldouts())
 
-		for (const [split, output] of Object.entries(result.outputs)) {
-			const record = await readParquetRecord(output)
+			expect(splitOfSourceID(attribute, row.source_id), row.source_id).toBe(split)
 
-			expect(record?.source).toBe("rendered-gb-os-open")
-			expect(record?.rows).toBe(result.counts[split as keyof typeof result.counts])
-			expect(record?.sha256).toBe(await sha256File(output))
+			expected[split]++
 		}
+
+		expect(result.counts).toEqual(expected)
+		expect(attribute.counts).toEqual(expected)
+		expect(expected.val).toBeGreaterThan(0)
+		expect(expected.test).toBeGreaterThan(0)
+		expect(attribute.file).toEqual({ name: "part-gb.parquet", sha256: await sha256File(input), rows: rows.length })
+		expect(result.attribute.endsWith(`part-gb.split.${result.policyHash}.json`)).toBe(true)
 	})
 
 	it("keeps a Liverpool postcode in train, because `L` is not one of the holdout's prefixes", async () => {
@@ -93,20 +86,28 @@ describe("splitOverlaySlice", () => {
 		await writeParquetFile([gbRow("gb-6", "Hope Street", "Liverpool", "L1 9BP")], input, FIXTURE_DERIVATION)
 
 		const result = await splitOverlaySlice({ input, outputDir: root.path })
+		const attribute = await readSplitAttribute(result.attribute)
 
 		expect(result.counts.train).toBe(1)
-		expect(result.outputs.val).toBeUndefined()
-		expect(result.outputs.test).toBeUndefined()
+		expect(attribute.val).toEqual([])
+		expect(attribute.test).toEqual([])
 	})
 
-	it("writes no file for a split that drew no row", async () => {
+	it("names a different attribute file when the holdout table changes", async () => {
 		const input = root.path("part-london.parquet")
 
 		await writeParquetFile([gbRow("gb-7", "Baker Street", "London", "NW1 6XE")], input, FIXTURE_DERIVATION)
 
-		const result = await splitOverlaySlice({ input, outputDir: root.path })
+		const policy = await splitOverlaySlice({ input, outputDir: root.path })
 
-		expect(Object.keys(result.outputs)).toEqual(["train"])
+		const widened = await splitOverlaySlice({
+			input,
+			outputDir: root.path,
+			holdouts: { ...defaultHoldouts(), GB: { postcodePrefixes: ["NW"] } },
+		})
+
+		expect(widened.policyHash).not.toBe(policy.policyHash)
+		expect(widened.counts.train).toBe(0)
 	})
 })
 

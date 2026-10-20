@@ -26,10 +26,31 @@ import {
 	type PreparedDeletion,
 	readDeletionIDs,
 } from "#tools/overlay/deletions"
+import {
+	readSplitAttribute,
+	SPLIT_ATTRIBUTE,
+	type SplitAttributeFile,
+	splitOfSourceID,
+} from "#tools/overlay/split-attribute"
 import type { SplitName } from "#utils/split"
 
-interface ParquetFileDescriptor {
-	split: SplitName
+/**
+ * The attribute file that decides the split of each row of one manifest file.
+ */
+interface SplitAttributeReference {
+	path: string
+	sha256: string
+	policy_hash: string
+	counts: Record<SplitName, number>
+}
+
+/**
+ * A manifest file entry.
+ *
+ * A file holds one split's rows and records it under `split`, or holds every split's rows
+ * and points under `split_attribute` at the attribute that decides each row.
+ */
+type ParquetFileDescriptor = {
 	path: string
 	format: "parquet"
 	compression: string
@@ -39,7 +60,7 @@ interface ParquetFileDescriptor {
 	first_source_id: string
 	last_source_id: string
 	source: string
-}
+} & ({ split: SplitName } | { split_attribute: SplitAttributeReference })
 
 type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 
@@ -111,25 +132,14 @@ export interface OverlayFile {
 	parquet: string
 	source: string
 	/**
-	 * The split that the file's rows belong to.
+	 * The split attribute `corpus split-slice` wrote for the file, by its name under the overlay directory.
 	 *
-	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
-	 * so that the holdout policy chooses held-out rows.
-	 *
-	 * @defaultValue `train`
+	 * A file with an attribute sits at `<newDir>/<parquet>` and holds every split's rows,
+	 * and the attribute decides each row.
+	 * A file without one sits at `<newDir>/train/<parquet>` and all its rows are train,
+	 * so held-out rows reach a manifest only through the holdout policy.
 	 */
-	split?: SplitName
-}
-
-/**
- * Returns the split encoded in a `<stem>.<split>.parquet` filename, or `null` for any other name.
- *
- * Only `splitOverlaySlice` writes names with this suffix.
- */
-export function splitFromFilename(parquet: string): SplitName | null {
-	const match = /\.(train|val|test)\.parquet$/.exec(parquet)
-
-	return match ? (match[1] as SplitName) : null
+	splitAttribute?: string
 }
 
 /**
@@ -154,7 +164,7 @@ export function splitFromFilename(parquet: string): SplitName | null {
 async function descriptor(
 	localPath: string,
 	modalPath: string,
-	split: SplitName,
+	placement: { split: SplitName } | { split_attribute: SplitAttributeReference },
 	source: string
 ): Promise<ParquetFileDescriptor> {
 	// `assembleOverlayManifest` calls this once for each file.
@@ -177,7 +187,7 @@ async function descriptor(
 	}
 
 	return {
-		split,
+		...placement,
 		path: modalPath,
 		format: "parquet",
 		compression: "SNAPPY",
@@ -213,45 +223,17 @@ export interface OverlayPlan {
 	note: string
 	appliedAt: string
 	/**
-	 * Each added file with the route its split came from.
+	 * Each added file with the split attribute that decides its rows, or `null` when every row is train.
 	 *
-	 * `route` reads `split-slice` when the filename includes the split suffix written by the command.
-	 * `caller` reads the split supplied as an argument.
-	 *
-	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
-	 * and put 770 of DE's 3,987 validation `source_id`s in train.
-	 * The filename was the only place that showed this (#2359).
+	 * A hand-placed split reached `v0.6.0-register-surface` and put 770 of DE's
+	 * 3,987 validation `source_id`s in train (#2359), so a held-out row enters only
+	 * through an attribute the holdout policy wrote.
 	 */
-	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
+	files: Array<{ parquet: string; source: string; splitAttribute: { path: string; policyHash: string } | null }>
 	/**
 	 * The base sources whose files this overlay dropped.
 	 */
 	replacedSources: string[]
-}
-
-/**
- * How one overlay file's split was decided.
- */
-export const SplitRoute = {
-	/**
-	 * `corpus split-slice` applied `splitForRow` to every row and wrote the split into the filename.
-	 */
-	SplitSlice: "split-slice",
-
-	/**
-	 * The caller supplied the split.
-	 * The holdout policy never saw these rows.
-	 */
-	Caller: "caller",
-} as const
-
-export type SplitRoute = (typeof SplitRoute)[keyof typeof SplitRoute]
-
-/**
- * Which route decided one file's split.
- */
-export function splitRouteFor(parquet: string): SplitRoute {
-	return splitFromFilename(parquet) ? SplitRoute.SplitSlice : SplitRoute.Caller
 }
 
 export interface OverlayManifestOptions {
@@ -294,7 +276,8 @@ export interface OverlayManifestOptions {
 async function countDeletions(
 	prepared: readonly PreparedDeletion[],
 	files: readonly ManifestFile[],
-	addedLocalPaths: ReadonlyMap<string, string>
+	addedLocalPaths: ReadonlyMap<string, string>,
+	attributes: ReadonlyMap<string, SplitAttributeFile>
 ): Promise<CorpusDeletion[]> {
 	const counted: CorpusDeletion[] = []
 
@@ -314,11 +297,22 @@ async function countDeletions(
 				throw new Error(`${local} is targeted by deletion ${deletion.issue} and absent from the data root`)
 			}
 
+			const matched = await matchedSourceIDs(local, ids)
+			const attribute = attributes.get(file.path)
+
+			if (attribute) {
+				for (const id of matched) {
+					rows[splitOfSourceID(attribute, id)]++
+				}
+
+				continue
+			}
+
 			const split = file["split"] as SplitName
 
 			if (!(split in rows)) throw new Error(`${file.path} records no split, so its deleted rows have no split`)
 
-			rows[split] += (await matchedSourceIDs(local, ids)).length
+			rows[split] += matched.length
 		}
 
 		counted.push({ ...deletion, rows_deleted: rows })
@@ -473,11 +467,11 @@ export function localManifestFilePath(path: string): string {
  *
  * A base file whose source `args.replaceSources` lists is dropped.
  *
- * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
- * The suffix shows that the holdout policy chose its rows.
- * A `train` file has no naming requirement.
+ * An added file with a split attribute holds every split's rows, and its entry points at the attribute.
+ * `splitOverlaySlice` wrote that attribute by applying the holdout policy to each row.
+ * An added file without one is train.
  *
- * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
+ * @throws When the base lists no files, or an attribute describes a different file than the one beside it.
  */
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	if (!args.files.length) throw new Error("an overlay must add at least one parquet file")
@@ -507,31 +501,20 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// Held-out rows must come from the holdout policy.
-	// The filename records the split.
-	// A caller that picks held-out rows by hand can leak them into train.
-	for (const file of args.files) {
-		if (!file.split || file.split === "train") continue
-
-		const named = splitFromFilename(file.parquet)
-
-		if (named === file.split) continue
-
-		throw new Error(
-			named
-				? `${file.parquet} names split '${named}' and the caller asked for '${file.split}'. The filename is ` +
-						`what splitOverlaySlice wrote, so it decides; pass the split the name carries or route the file again.`
-				: `${file.parquet} was asked for split '${file.split}' and carries no '.${file.split}.parquet' suffix, ` +
-						`so it did not come from 'mailwoman corpus split-slice' and its held-out rows were chosen by the ` +
-						`caller rather than by the holdout policy. Route it through split-slice and add the per-split ` +
-						`outputs it writes. A file appended to 'train' needs none of this.`
-		)
-	}
-
 	const dropped = baseFiles.filter((s) => s.source && replaced.has(s.source))
 	const droppedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const file of dropped) {
+		const reference = file["split_attribute"] as SplitAttributeReference | undefined
+
+		if (reference) {
+			for (const split of ["train", "val", "test"] as const) {
+				droppedRows[split] += reference.counts[split]
+			}
+
+			continue
+		}
+
 		const split = file["split"] as SplitName
 		const rows = file["rows"]
 
@@ -542,7 +525,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		droppedRows[split] += rows
 	}
 
-	const kept = baseFiles
+	const kept: ManifestFile[] = baseFiles
 		.filter((s) => !dropped.includes(s))
 		.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 
@@ -550,23 +533,63 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	const added: ParquetFileDescriptor[] = []
 	const addedLocalPaths = new Map<string, string>()
+	// The split attribute of every listed file that has one, keyed by the path the manifest lists.
+	const attributes = new Map<string, SplitAttributeFile>()
+	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const file of kept) {
+		const reference = file["split_attribute"] as SplitAttributeReference | undefined
+
+		if (reference) {
+			attributes.set(file.path, await readSplitAttribute(localManifestFilePath(reference.path)))
+		}
+	}
 
 	const newDir = PathBuilder.from(args.newDir)
 
 	for (const file of args.files) {
-		const split = file.split ?? "train"
-		// DuckDB reads the path inside SQL text, so it must be a string.
-		const local = newDir(split, file.parquet).toString()
-		const modal = `${args.modalRoot}/${split}/${file.parquet}`
+		if (!file.splitAttribute) {
+			// DuckDB reads the path inside SQL text, so it must be a string.
+			const local = newDir("train", file.parquet).toString()
+			const modal = `${args.modalRoot}/train/${file.parquet}`
+			const entry = await descriptor(local, modal, { split: "train" }, file.source)
 
-		added.push(await descriptor(local, modal, split, file.source))
+			added.push(entry)
+			addedLocalPaths.set(modal, local)
+			addedRows.train += entry.rows
+
+			continue
+		}
+
+		const local = newDir(file.parquet).toString()
+		const modal = `${args.modalRoot}/${file.parquet}`
+		const attributePath = newDir(file.splitAttribute).toString()
+		const attribute = await readSplitAttribute(attributePath)
+
+		const reference: SplitAttributeReference = {
+			path: `${args.modalRoot}/${file.splitAttribute}`,
+			sha256: sha256Hex(await readLocalBuffer(attributePath)),
+			policy_hash: attribute.policyHash,
+			counts: attribute.counts,
+		}
+
+		const entry = await descriptor(local, modal, { split_attribute: reference }, file.source)
+
+		if (attribute.file.sha256 !== entry.sha256 || attribute.file.rows !== entry.rows) {
+			throw new Error(
+				`${attributePath} describes ${attribute.file.name} at sha256 ${attribute.file.sha256} with ` +
+					`${attribute.file.rows} rows, and ${local} hashes to ${entry.sha256} with ${entry.rows}. ` +
+					`Run 'mailwoman corpus split-slice' on the file the manifest adds.`
+			)
+		}
+
+		added.push(entry)
 		addedLocalPaths.set(modal, local)
-	}
+		attributes.set(modal, attribute)
 
-	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
-
-	for (const file of added) {
-		addedRows[file.split] += file.rows
+		for (const split of ["train", "val", "test"] as const) {
+			addedRows[split] += attribute.counts[split]
+		}
 	}
 
 	// The base's counts are net of its own deletions, so they are added back before every
@@ -591,7 +614,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		(args.deletions ?? []).map((request) => prepareDeletion(request, newDir, args.modalRoot))
 	)
 
-	const deletions = await countDeletions([...carried, ...requested], listedFiles, addedLocalPaths)
+	const deletions = await countDeletions([...carried, ...requested], listedFiles, addedLocalPaths, attributes)
 	const deletedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const deletion of deletions) {
@@ -620,6 +643,13 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		// The rows the loader reads: the stored rows of `slices` less those `deletions` names.
 		counts: { train: netCount("train"), val: netCount("val"), test: netCount("test") },
 		total_rows: netCount("train") + netCount("val") + netCount("test"),
+		// What decides a row's split: a file's own `split`, or for a file listing
+		// `split_attribute`, the attribute file under these policy hashes.
+		split_decided_by: {
+			file: listedFiles.filter((file) => !file["split_attribute"]).length,
+			attribute: SPLIT_ATTRIBUTE,
+			policy_hashes: [...new Set([...attributes.values()].map((attribute) => attribute.policyHash))].toSorted(),
+		},
 		deletions,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
@@ -649,8 +679,9 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		files: args.files.map((file) => ({
 			parquet: file.parquet,
 			source: file.source,
-			split: file.split ?? "train",
-			route: splitRouteFor(file.parquet),
+			splitAttribute: file.splitAttribute
+				? { path: file.splitAttribute, policyHash: attributes.get(`${args.modalRoot}/${file.parquet}`)!.policyHash }
+				: null,
 		})),
 		replacedSources: [...replaced],
 	}
@@ -666,10 +697,12 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
-	// The route prints beside the split, because a hand-placed split is otherwise visible only in a filename.
-	for (const [index, file] of added.entries()) {
-		const route = plan.files[index]?.route ?? SplitRoute.Caller
+	for (const file of added) {
+		const split =
+			"split_attribute" in file
+				? `split by attribute ${file.split_attribute.policy_hash.slice(0, 12)} ${stringifyJSON(file.split_attribute.counts)}`
+				: file.split
 
-		console.log(`  ${file.source} ${file.split} via ${route}: ${file.rows} rows (${file.bytes} bytes)`)
+		console.log(`  ${file.source} ${split}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }
