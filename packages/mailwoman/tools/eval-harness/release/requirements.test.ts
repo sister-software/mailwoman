@@ -44,7 +44,7 @@ describe("validateReleaseSpec", () => {
 
 		expect(v5.specVersion).toBe("5")
 		expect(v5.rationale).not.toBe(v4.rationale)
-		expect(v5Selector.sources).toEqual([...v4Selector.sources!, "invented-postal-guideline"])
+		expect(v5Selector?.sources).toEqual([...v4Selector!.sources!, "invented-postal-guideline"])
 
 		const withoutChanges = (spec: ReleaseRequirementSpec) => ({
 			...spec,

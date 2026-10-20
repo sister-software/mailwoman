@@ -8,7 +8,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import type { ComponentDict } from "@mailwoman/codex/component"
+import type { ComponentDict } from "@mailwoman/codex/address/render"
 import type { PostalGuidelineRule } from "@mailwoman/codex/postal-guideline"
 
 /**

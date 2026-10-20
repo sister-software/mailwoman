@@ -135,11 +135,15 @@ describe("postal-unit-guideline", () => {
 		for (const row of rows) {
 			expect(splitForRow(row)).toBe("test")
 			expect(row.source).toBe(SOURCE)
-			expect(row.span_tags.filter((tag) => tag === "unit")).toHaveLength(1)
-			expect(row.span_tags).toHaveLength(Object.keys(row.components).length)
+			const tags = row.span_tags!
+			const starts = row.span_starts!
+			const ends = row.span_ends!
 
-			row.span_tags.forEach((tag, index) => {
-				const text = row.raw.slice(row.span_starts[index], row.span_ends[index])
+			expect(tags.filter((tag) => tag === "unit")).toHaveLength(1)
+			expect(tags).toHaveLength(Object.keys(row.components).length)
+
+			tags.forEach((tag, index) => {
+				const text = row.raw.slice(starts[index], ends[index])
 
 				expect(text.toLowerCase(), `${tag} in ${row.raw}`).toBe(row.components[tag]!.toLowerCase())
 			})

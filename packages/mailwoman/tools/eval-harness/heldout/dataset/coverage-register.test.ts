@@ -158,6 +158,7 @@ describe("buildCoverageRegister", () => {
 				specVersion: "fixture-1",
 				outcome: "insufficient_evidence",
 				reasons: [],
+				inference: { rule: null, rowsByWeightsLocale: {} },
 				checks: [
 					{
 						id: "us",

@@ -98,7 +98,7 @@ if (values.provenance) {
 	for (const [rowID, record] of Object.entries(file.rows)) {
 		if (
 			!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(record.provenance) ||
-			record.provenance === "unknown"
+			(record.provenance as string) === "unknown"
 		) {
 			throw new Error(`${values.provenance} row ${rowID} has provenance ${String(record.provenance)}`)
 		}
