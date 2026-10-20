@@ -13,7 +13,7 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
+import { basename, dirname, normalize, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { openSourceRightsAdmission, type SourceRightsRecord } from "#source-register/corpus-inputs"
@@ -106,9 +106,9 @@ export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILE
 	const slices = manifest.slices
 	const preRename = manifest[PRE_RENAME_FILES_KEY]
 
-	if (Array.isArray(slices) && slices.length) return slices as ManifestFile[]
+	if (Array.isArray(slices) && slices.length) return refuseRepeatedFiles(slices as ManifestFile[])
 
-	if (Array.isArray(preRename)) return preRename as ManifestFile[]
+	if (Array.isArray(preRename)) return refuseRepeatedFiles(preRename as ManifestFile[])
 
 	if (Array.isArray(slices)) return slices as ManifestFile[]
 
@@ -116,6 +116,46 @@ export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILE
 		`manifest names no file list: neither "slices" nor the pre-rename key holds an array. An empty list here ` +
 			`would read as a corpus of no files, which is a measurement this manifest does not support.`
 	)
+}
+
+/**
+ * Returns `files` when no two entries name the same file, by normalized path
+ * or by `sha256`, and throws naming both entries otherwise.
+ *
+ * A file listed twice is read twice, so every row in it would count twice in its split
+ * and weigh its records twice in training.
+ */
+export function refuseRepeatedFiles<T extends { path: string; sha256?: unknown }>(files: T[]): T[] {
+	const byPath = new Map<string, number>()
+	const bySHA = new Map<string, number>()
+
+	for (const [index, file] of files.entries()) {
+		const path = normalize(file.path)
+		const earlierPath = byPath.get(path)
+
+		if (typeof earlierPath === "number") {
+			throw new TypeError(
+				`manifest lists ${path} twice (entries ${earlierPath} and ${index}), so its rows would be read twice.`
+			)
+		}
+
+		byPath.set(path, index)
+
+		if (typeof file.sha256 !== "string") continue
+
+		const earlierSHA = bySHA.get(file.sha256)
+
+		if (typeof earlierSHA === "number") {
+			throw new TypeError(
+				`manifest lists sha256 ${file.sha256} twice: ${files[earlierSHA]!.path} (entry ${earlierSHA}) and ` +
+					`${file.path} (entry ${index}) are the same bytes, so their rows would be read twice.`
+			)
+		}
+
+		bySHA.set(file.sha256, index)
+	}
+
+	return files
 }
 
 /**
@@ -602,7 +642,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	const listedFiles: ManifestFile[] = [...kept, ...added]
+	const listedFiles: ManifestFile[] = refuseRepeatedFiles([...kept, ...added])
 
 	const carried = await Promise.all(
 		(base.deletions ?? [])

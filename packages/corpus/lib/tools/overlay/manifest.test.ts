@@ -471,4 +471,26 @@ describe("baseManifestFiles", () => {
 		// The overlay assembler's requirement for a non-empty base lives in its own caller.
 		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
 	})
+
+	it("REFUSES a manifest that lists one path twice, after normalizing it", () => {
+		const twice = manifestWith("slices", ["/c/test/part-0000.parquet", "/c/test/./part-0000.parquet"])
+
+		expect(() => baseManifestFiles(twice)).toThrow(/lists \/c\/test\/part-0000\.parquet twice/u)
+	})
+
+	it("REFUSES a manifest that lists the same bytes under two paths", () => {
+		const sameBytes = {
+			...manifestWith("slices", []),
+			slices: [
+				{ path: "/c/v1/test/ban.parquet", sha256: "ab".repeat(32) },
+				{ path: "/c/v2/test/ban.parquet", sha256: "ab".repeat(32) },
+			],
+		} as Parameters<typeof baseManifestFiles>[0]
+
+		expect(() => baseManifestFiles(sameBytes)).toThrow(/sha256 (ab){32} twice/u)
+	})
+
+	it("refuses a repeat under the pre-rename key too", () => {
+		expect(() => baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "a.parquet"]))).toThrow(/twice/u)
+	})
 })
