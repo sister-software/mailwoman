@@ -146,8 +146,8 @@ def _deletion_ids(deletion: dict[str, Any], corpus_dir: Path) -> frozenset[str]:
     sidecar = deletion.get("source_ids_file")
     if (inline is None) == (sidecar is None):
         raise ValueError(f"MANIFEST deletion {deletion.get('issue')} must give source_ids or source_ids_file, not both")
-    if inline is not None:
-        return frozenset(inline)
+    if sidecar is None:
+        return frozenset(inline or ())
     path = _resolve_sidecar(sidecar["path"], corpus_dir, "deletions")
     verify_file_sha256(path, sidecar.get("sha256"))
     ids = _read_id_column(path)
@@ -159,8 +159,8 @@ def _deletion_ids(deletion: dict[str, Any], corpus_dir: Path) -> frozenset[str]:
 def _deletion_targets(target: dict[str, Any], entry: dict[str, Any]) -> bool:
     """Whether a deletion's target names this manifest entry, by its listed path or its source."""
     if "path" in target:
-        return target["path"] == entry.get("path")
-    return target.get("source") == entry.get("source")
+        return bool(target["path"] == entry.get("path"))
+    return bool(target.get("source") == entry.get("source"))
 
 
 def corpus_split_files(corpus_dir: Path, split: str) -> list[CorpusFile]:

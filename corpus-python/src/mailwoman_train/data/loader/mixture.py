@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def _split_rows(file: CorpusFile) -> int:
     """The rows of one file the split reads: the footer count, or the filtered count for a filtered file."""
     if file.row_filter is None:
-        return pq.ParquetFile(file.path).metadata.num_rows
+        return int(pq.ParquetFile(file.path).metadata.num_rows)
     return sum(file_source_counts(file.path, file.row_filter).values())
 
 
