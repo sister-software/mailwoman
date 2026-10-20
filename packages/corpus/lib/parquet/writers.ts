@@ -385,6 +385,21 @@ interface OpenPart {
  *
  * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
  * writes the Parquet file from disk.
+ * A staged part is removed as soon as its conversion succeeds, so the split's staging
+ * directory holds only the parts still open, at most one per source.
+ *
+ * Each source's final part stays open until the split's rows end.
+ * Peak disk demand is therefore the unfinished staged parts, plus the conversion
+ * output being written, plus DuckDB's spill during that conversion.
+ *
+ * A failed conversion records no file and adds no manifest entry, so a resumed run writes that part again.
+ * The writer removes neither the staged part nor the `data.parquet.partial` output on failure.
+ *
+ * The error names the source, part, row count, source-id range and staged path.
+ * The staged part goes when the split's staging directory is disposed.
+ *
+ * Its rows can be regenerated from the deterministic input.
+ * The partial output stays in the store until the next run's conversion overwrites it.
  *
  * A file whose store path already holds a file is kept when the two sha256 values agree,
  * since the path names its derivation and the bytes are the same.
@@ -503,7 +518,11 @@ export async function writeParquetSplits(
 				opened.stage.end((error?: Error | null) => (error ? reject(error) : resolve()))
 			})
 
-			if (!opened.rows) return
+			if (!opened.rows) {
+				await removePath(opened.stagePath)
+
+				return
+			}
 
 			const derivation = await sourceDerivation(opened.source)
 
@@ -528,7 +547,22 @@ export async function writeParquetSplits(
 			const pending = fileDir("data.parquet.partial").toString()
 
 			await makeDirectories(fileDir)
-			await writeStagedParquet(opened.stagePath, pending)
+
+			try {
+				await writeStagedParquet(opened.stagePath, pending)
+			} catch (error) {
+				throw new Error(
+					`writeParquetSplits: converting ${split} part ${opened.part} of ${opened.source} ` +
+						`(${opened.rows.toLocaleString()} rows, source_id ${opened.firstSourceID} to ${opened.lastSourceID}) ` +
+						`from ${opened.stagePath} to ${pending} failed. No file was recorded for this part.`,
+					{ cause: error }
+				)
+			}
+
+			// The converter's connection closed when `writeStagedParquet` returned,
+			// so nothing reads the staged part any more.
+			// Removing it here bounds staging to the parts still open.
+			await removePath(opened.stagePath)
 
 			const sha256 = await sha256File(pending)
 			const existing = await tryStat(path)
