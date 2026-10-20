@@ -158,7 +158,10 @@ interface GoldenRow {
  * Which mode applies is decided per row from the golden dir's own manifest
  * (see {@linkcode readStreetConvention}), never from a flag someone has to remember.
  */
-function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStreetParts = true): Record<string, string> {
+export function foldToComponents(
+	flat: Partial<Record<ComponentTag, string>>,
+	foldStreetParts = true
+): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
 
@@ -243,7 +246,10 @@ async function readStreetConvention(goldenDir: string): Promise<Record<string, s
 	return {}
 }
 
-function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
+/**
+ * Whether every tag in either record holds the same normalized text in both.
+ */
+export function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
 	const keys = new Set([...Object.keys(pred), ...Object.keys(gold)])
 
 	for (const k of keys) if (normalizeComponent(pred[k]) !== normalizeComponent(gold[k])) return false
