@@ -45,17 +45,36 @@ export interface KryptoniteOverlayOptions {
 	source?: string
 }
 
-async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
+/**
+ * Read the jsonl's rows.
+ *
+ * @throws When the rows name more than one source.
+ * The files' extract hash covers the whole jsonl, which is exact only while every
+ * row belongs to the one source those files hold.
+ */
+export async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
+	let first: string | null = null
+
 	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
+		const source = (raw["source"] as string) ?? "deepseek-kryptonite"
+
+		first ??= source
+
+		if (source !== first) {
+			throw new Error(
+				`${jsonl} holds rows of ${first} and ${source}. A kryptonite overlay hashes the whole jsonl as its ` +
+					`extract, so the jsonl must hold one source.`
+			)
+		}
 
 		yield {
 			raw: raw["raw"] as string,
 			components,
 			country: (raw["country"] as string) ?? "US",
 			locale: (raw["locale"] as string) ?? undefined,
-			source: (raw["source"] as string) ?? "deepseek-kryptonite",
+			source,
 			source_id: raw["source_id"] as string,
 			corpus_version: corpusVersion,
 			license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",

@@ -87,7 +87,6 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
 		"apache-arrow": "^21.2.0",
-		"dependency-cruiser": "^18.6.0",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.9.0",
 		"path-ts": "^2.5.0",
@@ -98,7 +97,9 @@
 	"devDependencies": {
 		"@types/node": "^26.6.5",
 		"adm-zip": "^0.6.1",
+		"dependency-cruiser": "^18.6.0",
 		"kysely": "^0.29.6",
-		"write-excel-file": "^4.1.1"
+		"write-excel-file": "^4.1.1",
+		"yaml": "^2.9.0"
 	}
 }

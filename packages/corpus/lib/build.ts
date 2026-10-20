@@ -57,6 +57,11 @@ async function adapterExtractHash(options: AdapterOptions): Promise<string> {
 }
 
 /**
+ * This module, repository-relative: the root of the build pipeline every base source passes through.
+ */
+const BUILD_MODULE = "packages/corpus/lib/build.ts"
+
+/**
  * The derivation of each configured adapter's files, from one cruise of the module graph.
  *
  * A source's code hash covers the build pipeline (`lib/build.ts` and what it reaches) and the
@@ -70,7 +75,7 @@ async function adapterDerivations(
 	const modules = await adapterModules(adapters)
 
 	const codeHashes = await moduleGraphHashes(
-		Object.fromEntries([...modules].map(([id, module]) => [id, ["lib/build.ts", module]]))
+		Object.fromEntries([...modules].map(([id, module]) => [id, [BUILD_MODULE, module]]))
 	)
 
 	return async (source) => {

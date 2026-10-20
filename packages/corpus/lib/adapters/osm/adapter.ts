@@ -17,6 +17,7 @@ import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { postcodeSyntax, acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { TextSpliterator } from "spliterator"
 
+import { OSM_LICENSE } from "#adapters/osm/license"
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -32,30 +33,6 @@ import {
  * Registry id for this adapter, stamped into every row it emits.
  */
 export const OSM_ADAPTER_ID = "osm"
-
-/**
- * OpenStreetMap's license.
- *
- * Its recorded obligations include share-alike, so a build run under
- * `LicensePolicy.ShareAlikeFree` refuses every row carrying it.
- */
-export const OSM_LICENSE = "ODbL-1.0"
-
-/**
- * The URL of the ODbL license text.
- */
-export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
-
-/**
- * The attribution OSM requires in redistributed data and derived works.
- *
- * A database built from OSM embeds it.
- * A model card holds it when OSM-derived rows reach the checkpoint.
- * The effective training manifest records those rows.
- */
-export const OSM_ATTRIBUTION =
-	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
-	`(${OSM_LICENSE_URL}); see https://www.openstreetmap.org/copyright.`
 
 /**
  * The per-row shape `@mailwoman/osm`'s `emit-corpus-jsonl` writes.

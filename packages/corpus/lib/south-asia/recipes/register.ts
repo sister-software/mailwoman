@@ -29,7 +29,8 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
+import { componentsForOSMRow, sameName } from "#adapters/osm/adapter"
+import { OSM_LICENSE } from "#adapters/osm/license"
 import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"

@@ -6242,6 +6242,7 @@ __metadata:
     read-excel-file: "npm:^9.3.12"
     spliterator: "npm:^9.2.1"
     write-excel-file: "npm:^4.1.1"
+    yaml: "npm:^2.9.0"
     zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
