@@ -10,10 +10,14 @@ import { dirname } from "node:path"
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { sha256File } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
+import { ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
+import { type ParquetManifest, writeParquetSplits, writeStagedParquet } from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 
@@ -225,5 +229,35 @@ describe("writeParquetSplits staging", () => {
 		expect(stagedCounts).toHaveLength(sources.length * maxParts)
 		expect(Math.max(...stagedCounts)).toBeLessThanOrEqual(sources.length)
 		expect(manifest.total_rows).toBe(sources.length * perSource)
+	})
+})
+
+describe("writeStagedParquet", () => {
+	it("writes the same bytes from one staged part under every instance thread limit", { timeout: 120_000 }, async () => {
+		// Several row groups, because a multi-threaded COPY moved row-group boundaries between runs.
+		const rows = ROW_GROUP_SIZE * 3 + 1234
+		const stagePath = scratch.path("part.ndjson").toString()
+		const stage = openWriteStream(stagePath)
+
+		for (let index = 0; index < rows; index++) {
+			stage.write(`${stringifyJSON(rowToParquet(labeled("ban", index)))}\n`)
+		}
+
+		await new Promise<void>((resolve, reject) => {
+			stage.end((error?: Error | null) => (error ? reject(error) : resolve()))
+		})
+
+		const digests = new Set<string>()
+
+		for (const threads of [1, 2, 4]) {
+			for (let run = 0; run < 2; run++) {
+				const out = scratch.path(`t${threads}-r${run}.parquet`).toString()
+
+				await writeStagedParquet(stagePath, out, { threads, memoryLimitBytes: 1024 ** 3 })
+				digests.add(await sha256File(out))
+			}
+		}
+
+		expect([...digests]).toHaveLength(1)
 	})
 })
