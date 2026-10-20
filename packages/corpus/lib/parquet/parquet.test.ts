@@ -470,7 +470,7 @@ describe("writeParquetSplits", () => {
 
 		const m = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivation: FIXTURE_DERIVATION }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
 		const streamed = await Array.fromAsync(

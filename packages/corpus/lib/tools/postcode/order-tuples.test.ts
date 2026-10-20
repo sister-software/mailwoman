@@ -7,8 +7,10 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
+import { cruiseModuleGraph, moduleGraphHash, reachableModules } from "#build/code-hash"
 import { committedCorpusSourceInputs, readParquetRecord } from "#parquet/record"
 import { postcodeOrderRecipe } from "#recipes/postcode-order"
 import { TEST_REGISTER } from "#test-kit/corpus-recipe"
@@ -151,12 +153,24 @@ describe("writePostcodeOrderParquet", () => {
 		expect(record).toMatchObject({ source: "postcode-order-openaddresses", rows: 2 })
 		expect(record!.derivation.extractHash).toBe(await sha256File(tuples))
 
-		expect(Object.keys(record!.derivation.config as object).toSorted()).toEqual([
-			"placementData",
-			"recipe",
-			"recipeModule",
-			"seed",
-		])
+		expect(record!.derivation.config).toEqual({ recipe: "postcode-order", seed: 7, inputSources: ["openaddresses"] })
+
+		// The code hash reaches the placement table through the recipe's import of `country-formats`.
+		const graph = await cruiseModuleGraph(
+			["packages/corpus/lib/recipes/postcode-order.ts", "packages/corpus/lib/tools/postcode/order-tuples.ts"],
+			repoRootPath()
+		)
+
+		expect(reachableModules(graph, ["packages/corpus/lib/recipes/postcode-order.ts"]).modules).toContain(
+			"packages/postcode/lib/country-formats/data.ts"
+		)
+
+		expect(record!.derivation.codeHash).toBe(
+			await moduleGraphHash([
+				"packages/corpus/lib/recipes/postcode-order.ts",
+				"packages/corpus/lib/tools/postcode/order-tuples.ts",
+			])
+		)
 
 		expect(record!.registerInputs).toEqual(
 			(await committedCorpusSourceInputs()).resolve("openaddresses")!.mapping.inputs
