@@ -33,7 +33,7 @@ import {
 	readCoverageFunnel,
 	StageState,
 } from "#tools/eval-harness/coverage-funnel"
-import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/current-release-spec"
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({

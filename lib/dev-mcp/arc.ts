@@ -13,7 +13,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256File } from "@mailwoman/core/hash"
-import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/current-release-spec"
+import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
 import { ReleaseOutcome } from "mailwoman/tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "mailwoman/tools/eval-harness/release/requirements"
 import { pathBuilder } from "path-ts"
