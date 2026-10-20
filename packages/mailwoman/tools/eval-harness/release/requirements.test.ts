@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { type ReleaseRequirementSpec, validateReleaseSpec } from "#tools/eval-harness/release/requirements"
 
-const committedPath = new URL("specs/release-requirements.v5.json", import.meta.url).pathname
+const committedPath = new URL("specs/release-requirements.v6.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v5 specification with every requirement registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v5\.json$/u)
+	it("accepts the current v6 specification with every requirement registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v6\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 
@@ -38,7 +38,7 @@ describe("validateReleaseSpec", () => {
 
 	it("differs from v4 only in the po_box_cedex source selector, the rationale and the version", async () => {
 		const v4 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(4))
-		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(5))
 		const v4Selector = v4.requirements.find((req) => req.id === "po_box_cedex")!.select
 		const v5Selector = v5.requirements.find((req) => req.id === "po_box_cedex")!.select
 
@@ -56,6 +56,38 @@ describe("validateReleaseSpec", () => {
 		})
 
 		expect(withoutChanges(v5)).toEqual(withoutChanges(v4))
+	})
+
+	it("differs from v5 only by the postal_unit capability, the rationale and the version", async () => {
+		const v5 = await readLocalJSONFile<ReleaseRequirementSpec>(specRecord(5))
+		const v6 = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
+		const added = v6.requirements.filter((req) => !v5.requirements.some((old) => old.id === req.id))
+
+		expect(v6.specVersion).toBe("6")
+		expect(v6.rationale).not.toBe(v5.rationale)
+		expect(v6.rationale).toMatch(/#2764/u)
+		expect(v6.rationale).toMatch(/Bonferroni family from 14 checks .* to 15/u)
+
+		expect(added).toEqual([
+			expect.objectContaining({
+				id: "postal_unit",
+				kind: "capability",
+				metric: "exact_parse",
+				minimum: 0.85,
+				select: { kinds: ["address"], sources: ["invented-postal-unit-guideline"] },
+			}),
+		])
+
+		expect(added[0]!.reason).toMatch(/#2764/u)
+
+		const withoutChanges = (spec: ReleaseRequirementSpec) => ({
+			...spec,
+			specVersion: null,
+			rationale: null,
+			requirements: spec.requirements.filter((req) => req.id !== "postal_unit"),
+		})
+
+		expect(withoutChanges(v6)).toEqual(withoutChanges(v5))
 	})
 
 	it("refuses the schema 2 records, which hold a single admitted list", async () => {

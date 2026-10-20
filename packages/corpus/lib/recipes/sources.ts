@@ -246,6 +246,15 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 				"is not test. The box number is drawn; the designator and line arrangement follow a cited operator " +
 				"guideline. The retired spelling never reached a corpus: the recipe was written after the rename.",
 		],
+		[
+			"postal-unit-guideline",
+			"recipes/postal-unit-guideline.ts",
+			"Evaluation only, through the postal-guideline generator: every row names a place the split holds out, " +
+				"and the recipe refuses a row whose split is not test. The unit identifier, street number and street " +
+				"name are drawn; the designator and line arrangement follow a cited operator guideline. A source " +
+				"separate from postal-guideline keeps the po_box_cedex and postal_unit release capabilities apart. " +
+				"The retired spelling never reached a corpus.",
+		],
 		["intersection", "recipes/intersection.ts"],
 		["anchor-absorption", "recipes/anchor-absorption.ts"],
 		["boundary-stress", "recipes/boundary-stress.ts"],

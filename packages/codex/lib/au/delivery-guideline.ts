@@ -26,7 +26,10 @@ const CORRECT_ADDRESSING = {
 	fetched: "2026-10-20",
 } as const satisfies Omit<PostalGuidelineCitation, "quote" | "transcription">
 
-const HINTS_AND_TIPS = {
+/**
+ * The barcode booklet's citation fields, shared by every Australia Post rule table that quotes it.
+ */
+export const AU_HINTS_AND_TIPS_CITATION = {
 	document: "Hints and tips to get a higher address match rate",
 	publisher: "Australia Post",
 	edition: "176067_Hints & Tips 20pp, print stamp 9/7/03",
@@ -71,7 +74,11 @@ export const AU_DELIVERY_GUIDELINE_RULES = [
 		requiresNumber: requiresNumber("CARE PO"),
 		requiresOffice: false,
 		statement: "Care of Post Office is abbreviated CARE PO.",
-		citation: { ...HINTS_AND_TIPS, quote: "CARE OF POST OFFICE CARE PO", transcription: TABLE_TRANSCRIPTION },
+		citation: {
+			...AU_HINTS_AND_TIPS_CITATION,
+			quote: "CARE OF POST OFFICE CARE PO",
+			transcription: TABLE_TRANSCRIPTION,
+		},
 	},
 	{
 		id: "au-mail-service",
@@ -79,7 +86,7 @@ export const AU_DELIVERY_GUIDELINE_RULES = [
 		requiresNumber: requiresNumber("MS"),
 		requiresOffice: false,
 		statement: "Mail Service is abbreviated MS.",
-		citation: { ...HINTS_AND_TIPS, quote: "MAIL SERVICE MS", transcription: TABLE_TRANSCRIPTION },
+		citation: { ...AU_HINTS_AND_TIPS_CITATION, quote: "MAIL SERVICE MS", transcription: TABLE_TRANSCRIPTION },
 	},
 	{
 		id: "au-roadside-mail-service",
@@ -87,7 +94,7 @@ export const AU_DELIVERY_GUIDELINE_RULES = [
 		requiresNumber: requiresNumber("RMS"),
 		requiresOffice: false,
 		statement: "Roadside Mail Service is abbreviated RMS.",
-		citation: { ...HINTS_AND_TIPS, quote: "ROADSIDE MAIL SERVICE RMS", transcription: TABLE_TRANSCRIPTION },
+		citation: { ...AU_HINTS_AND_TIPS_CITATION, quote: "ROADSIDE MAIL SERVICE RMS", transcription: TABLE_TRANSCRIPTION },
 	},
 ] as const satisfies readonly PoBoxGuidelineRule[]
 

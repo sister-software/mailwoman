@@ -1765,6 +1765,24 @@
 			],
 			"note": "Evaluation only (#2764). The recipe refuses any row whose split is not test, and the box numbers are drawn."
 		},
+		"invented-postal-unit-guideline": {
+			"aliases": ["synth-postal-unit-guideline"],
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the FR, GB, IT, AU and NZ postal exports' place, postcode, province-code and state-code columns, restricted to places the corpus split holds out; a second held-out place name stands in as the street or residence name"
+				}
+			],
+			"authored": [
+				"FR_UNIT_LINE_RULES in packages/codex/lib/fr/unit-line.ts, following La Poste's Adressage des plis SP 8855 Volume 2, Version 1.14, section 3.2 (sha256 65d3bff819e556ef68e55fb3f3567d0f0b9f610c2b09020154bc1b121be1683a)",
+				"GB_SUB_BUILDING_RULES in packages/codex/lib/gb/sub-building.ts, following Royal Mail's PAF Programmers' Guide, Edition 7 Version 6 (sha256 e74e47faf24de3ccf090dde9bdfed1d523ed881b6580609087f2611e2736a163), and GB_STREET_TYPES in packages/codex/lib/gb/street-type.ts",
+				"IT_UNIT_LINE_RULES in packages/codex/lib/it/unit-line.ts, following Poste Italiane's Caratteristiche standard degli invii – Posta Registrata, PRS.INDES.STA.1 Versione 3, Ed. 14/10/2025 (sha256 3d77a1f795ccf658f66c9e98544b450a2f34cee931d5b0f5f9855020172543eb)",
+				"AU_UNIT_TYPE_RULES in packages/codex/lib/au/unit-type.ts, following Australia Post's barcode Hints & Tips booklet, print stamp 9/7/03 (sha256 380bd7f458568e6ad5e500f62f2166c89816d5aab4daaa01abf2cf32b7e525a1)",
+				"NZ_UNIT_TYPE_RULES in packages/codex/lib/nz/unit-type.ts, following NZ Post's Address Standards, ADV 358DF11 June 2011 (sha256 a5b09205190f388db490750d4d392aaf2ed9f2c31b6162b4cc7c8fab75639492)"
+			],
+			"note": "Evaluation only (#2764). The recipe refuses any row whose split is not test; unit identifiers and street numbers are drawn."
+		},
 		"invented-street": {
 			"aliases": ["synth-street"],
 			"inputs": [

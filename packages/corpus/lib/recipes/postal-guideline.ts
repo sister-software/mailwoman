@@ -170,7 +170,7 @@ export function generatePostalGuidelineRows(opts: PostalGuidelineRowsOptions): P
 		let emitted = 0
 
 		for (let attempt = 0; emitted < opts.count && attempt < opts.count * ATTEMPTS_PER_ROW; attempt++) {
-			const rendering = leg.render(random, sample(pool, random))
+			const rendering = leg.render(random, sample(pool, random), pool)
 
 			if (!Object.values(rendering.components).every((value) => rendering.raw.includes(value))) {
 				throw new Error(`postal-guideline: ${leg.country} rendered a component its raw omits: ${rendering.raw}`)

@@ -9,7 +9,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/component"
-import type { PoBoxGuidelineRule } from "@mailwoman/codex/postal-guideline"
+import type { PostalGuidelineRule } from "@mailwoman/codex/postal-guideline"
 
 /**
  * The longest GeoNames place name a leg writes, the same cap the `po-box-cedex` place readers apply.
@@ -57,7 +57,7 @@ export interface PostalGuidelineLeg {
 	/**
 	 * The cited rules the leg renders.
 	 */
-	rules: readonly PoBoxGuidelineRule[]
+	rules: readonly PostalGuidelineRule[]
 	/**
 	 * Every designator surface form the leg writes, in the case it writes it.
 	 */
@@ -66,7 +66,69 @@ export interface PostalGuidelineLeg {
 	 * Reads one GeoNames postal row, or returns null for a row the leg cannot render.
 	 */
 	placeFromColumns(columns: readonly string[]): PostalGuidelinePlace | null
-	render(random: () => number, place: PostalGuidelinePlace): PostalGuidelineRendering
+	/**
+	 * Renders one row naming `place`.
+	 *
+	 * @param pool - Every held-out place of the leg's country, from which a leg
+	 * may draw a name for a street or a residence.
+	 */
+	render(
+		random: () => number,
+		place: PostalGuidelinePlace,
+		pool: readonly PostalGuidelinePlace[]
+	): PostalGuidelineRendering
+}
+
+/**
+ * One component on a guideline line: its tag and the text written for it.
+ */
+export type GuidelinePart = readonly [tag: string, text: string]
+
+/**
+ * Writes cited address lines in the order given, the parts of a line joined by a space
+ * and the lines joined by `separator`, and throws when a tag repeats.
+ */
+export function joinGuidelineLines(
+	lines: ReadonlyArray<readonly GuidelinePart[]>,
+	separator: string
+): Pick<PostalGuidelineRendering, "raw" | "components"> {
+	const components: Record<string, string> = {}
+
+	for (const [tag, text] of lines.flat()) {
+		if (tag in components) throw new Error(`postal-guideline: the lines write ${tag} twice.`)
+
+		components[tag] = text
+	}
+
+	return { raw: lines.map((line) => line.map(([, text]) => text).join(" ")).join(separator), components }
+}
+
+/**
+ * Draws {@link drawOtherPlaceName} makes before it gives up.
+ *
+ * A pool that yields no distinct name in twenty draws leaves the leg's fallback name in place.
+ */
+const OTHER_PLACE_ATTEMPTS = 20
+
+/**
+ * Draws a held-out place name, other than the row's own locality and sharing no
+ * substring with it either way, for a street or residence name.
+ * Returns null when the pool holds no such name.
+ */
+export function drawOtherPlaceName(
+	random: () => number,
+	place: PostalGuidelinePlace,
+	pool: readonly PostalGuidelinePlace[]
+): string | null {
+	const own = place.locality.toLowerCase()
+
+	for (let attempt = 0; attempt < OTHER_PLACE_ATTEMPTS; attempt++) {
+		const other = pool[Math.floor(random() * pool.length)]?.locality.toLowerCase()
+
+		if (other && !other.includes(own) && !own.includes(other)) return other
+	}
+
+	return null
 }
 
 /**
@@ -76,6 +138,16 @@ export function drawBoxNumber(random: () => number, digits: number): string {
 	const low = 10 ** (digits - 1)
 
 	return String(low + Math.floor(random() * (9 * low)))
+}
+
+/**
+ * Draws a unit identifier: a number of one or two digits with no leading zero, or,
+ * when `letterShare` allows, one capital letter from A to H.
+ */
+export function drawUnitIdentifier(random: () => number, letterShare: number): string {
+	if (random() < letterShare) return String.fromCharCode(65 + Math.floor(random() * 8))
+
+	return drawBoxNumber(random, 1 + Math.floor(random() * 2))
 }
 
 /**

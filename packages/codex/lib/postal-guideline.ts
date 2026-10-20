@@ -9,6 +9,10 @@
  *   citation lets a generator or a check read the source with the rule: the document, its edition,
  *   the section, the sentence quoted from the fetched copy, and the hash of that copy. A row
  *   without a citation is refused by {@linkcode assertPostalGuidelineCitation}.
+ *
+ *   Two rule shapes share the citation: {@linkcode PoBoxGuidelineRule} for a post-office box and its
+ *   national equivalents, and {@linkcode PostalUnitGuidelineRule} for a unit, floor, staircase,
+ *   entrance or building designator.
  */
 
 /**
@@ -56,13 +60,24 @@ export interface PostalGuidelineCitation {
 }
 
 /**
- * One rule for writing a post-office box or its national equivalent, with its citation.
+ * The id, statement and citation stored on every postal rule row, whatever the rule governs.
  */
-export interface PoBoxGuidelineRule {
+export interface PostalGuidelineRule {
 	/**
 	 * A stable id for the rule, unique within its country's table.
 	 */
 	id: string
+	/**
+	 * The rule restated in English.
+	 */
+	statement: string
+	citation: PostalGuidelineCitation
+}
+
+/**
+ * One rule for writing a post-office box or its national equivalent, with its citation.
+ */
+export interface PoBoxGuidelineRule extends PostalGuidelineRule {
 	/**
 	 * The designator as the cited document writes it on the delivery line.
 	 */
@@ -75,11 +90,60 @@ export interface PoBoxGuidelineRule {
 	 * Whether the cited document asks for the office that holds the box on the same line.
 	 */
 	requiresOffice: boolean
+}
+
+/**
+ * What part of a building a postal unit designator names.
+ */
+export const PostalUnitKind = {
 	/**
-	 * The rule restated in English.
+	 * A dwelling, office, shop or other separately addressed portion of a building.
 	 */
-	statement: string
-	citation: PostalGuidelineCitation
+	Unit: "unit",
+	/**
+	 * A floor or level.
+	 */
+	Level: "level",
+	/**
+	 * A staircase.
+	 */
+	Staircase: "staircase",
+	/**
+	 * An entrance or doorway.
+	 */
+	Entrance: "entrance",
+	/**
+	 * A building, tower, residence or estate within a site.
+	 */
+	Building: "building",
+	/**
+	 * A letter box or corridor inside a building.
+	 */
+	Interior: "interior",
+} as const
+
+/**
+ * One of the {@link PostalUnitKind} values.
+ */
+export type PostalUnitKind = (typeof PostalUnitKind)[keyof typeof PostalUnitKind]
+
+/**
+ * One rule for writing a unit, floor, staircase, entrance or building designator, with its citation.
+ */
+export interface PostalUnitGuidelineRule extends PostalGuidelineRule {
+	kind: PostalUnitKind
+	/**
+	 * The designator as the cited document writes it in full.
+	 */
+	designator: string
+	/**
+	 * The abbreviation the cited document lists for the designator, or null when it lists none.
+	 */
+	abbreviation: string | null
+	/**
+	 * Whether the cited document gives the designator an identifier after it.
+	 */
+	requiresIdentifier: boolean
 }
 
 const SHA256_PATTERN = /^[0-9a-f]{64}$/u

@@ -12,7 +12,10 @@
 
 import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal-guideline"
 
-const POSTA_REGISTRATA = {
+/**
+ * The Posta Registrata document's citation fields, shared by every Poste Italiane rule table.
+ */
+export const IT_POSTA_REGISTRATA_CITATION = {
 	document: "Caratteristiche standard degli invii – Posta Registrata",
 	publisher: "Poste Italiane",
 	edition: "PRS.INDES.STA.1 - Versione 3 - Ed. 14/10/2025",
@@ -22,7 +25,10 @@ const POSTA_REGISTRATA = {
 	fetched: "2026-10-20",
 } as const satisfies Omit<PostalGuidelineCitation, "quote" | "transcription">
 
-const COLUMN_TRANSCRIPTION =
+/**
+ * How a quote from the Posta Registrata document's two-column address table was transcribed.
+ */
+export const IT_POSTA_REGISTRATA_COLUMN_TRANSCRIPTION =
 	"The PDF sets this table in two columns, so its extracted text interleaves the cells; the line was " +
 	"rejoined from its fragments, without the stray page-column digit between them."
 
@@ -39,11 +45,11 @@ export const IT_CASELLA_POSTALE_RULES = [
 			"The fourth address line gives the words CASELLA POSTALE, the box number and the office where the box is, " +
 			"in place of the street and civic number.",
 		citation: {
-			...POSTA_REGISTRATA,
+			...IT_POSTA_REGISTRATA_CITATION,
 			quote:
 				"4° riga: via nome della via numero civico (in alternativa la dicitura “CASELLA POSTALE”, il numero " +
 				"della stessa e l’ufficio dove è ubicata)",
-			transcription: COLUMN_TRANSCRIPTION,
+			transcription: IT_POSTA_REGISTRATA_COLUMN_TRANSCRIPTION,
 		},
 	},
 	{
@@ -53,9 +59,9 @@ export const IT_CASELLA_POSTALE_RULES = [
 		requiresOffice: true,
 		statement: "The fifth line gives the CAP, the locality and the province abbreviation, in that order.",
 		citation: {
-			...POSTA_REGISTRATA,
+			...IT_POSTA_REGISTRATA_CITATION,
 			quote: "5° riga: CAP località sigla provincia",
-			transcription: COLUMN_TRANSCRIPTION,
+			transcription: IT_POSTA_REGISTRATA_COLUMN_TRANSCRIPTION,
 		},
 	},
 	{
@@ -67,7 +73,7 @@ export const IT_CASELLA_POSTALE_RULES = [
 			"Poste Italiane's own contact address writes Casella Postale and the number, a dash, then the CAP and the " +
 			"locality, with no office named.",
 		citation: {
-			...POSTA_REGISTRATA,
+			...IT_POSTA_REGISTRATA_CITATION,
 			section: "Contatti, Scrivici (page 44)",
 			quote: "Casella Postale 160 – 00144 Roma",
 			transcription: null,
