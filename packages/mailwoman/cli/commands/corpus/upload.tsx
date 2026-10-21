@@ -24,20 +24,28 @@ import { $private } from "#env"
 const DEFAULT_BUCKET = "mailwoman-assets"
 
 /**
- * Retry counts for every transfer here, above rclone's defaults of 10 low-level and 3 high-level.
+ * Transfer flags for every R2 job here.
  *
- * R2 intermittently returns 501 before a retry succeeds.
- * `push_artifact` in `corpus-python/launch/artifacts.py` already retries with these two values.
+ * The bucket is versioned, so R2 answers each upload's `PUT` with an
+ * `X-Amz-Version-Id`. rclone then confirms the object with `HEAD <key>?versionId=<id>`,
+ * which R2 answers with 501 Not Implemented every time, so every file fails
+ * although its bytes landed (observed 2026-10-21 with `--dump headers`).
+ * `--s3-no-head` skips that request, and {@linkcode R2_SIZE_CHECK} confirms the transfer afterwards.
  *
- * At the defaults, one 501 ends the job.
- * A 74 GiB corpus over a mobile link can encounter enough failures to matter.
- *
- * One lost transfer then costs the remaining file rather than one request.
+ * The retry counts stay above rclone's defaults of 10 low-level and 3 high-level
+ * for transient failures on a long transfer.
+ * `push_artifact` in `corpus-python/launch/artifacts.py` uses the same two values.
  *
  * `rclone sync` compares size and modification time, so a re-run after any failure skips
  * the files that landed and re-sends only a file it was mid-way through.
  */
-const R2_RETRIES = ["--low-level-retries", "30", "--retries", "8"]
+const R2_TRANSFER_FLAGS = ["--s3-no-head", "--low-level-retries", "30", "--retries", "8"]
+
+/**
+ * The comparison that replaces rclone's skipped post-upload `HEAD`: every local
+ * file exists in the destination with the same size.
+ */
+const R2_SIZE_CHECK = ["--size-only", "--one-way"]
 
 /**
  * CLI command definition used by the filesystem router.
@@ -351,11 +359,17 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			try {
 				await runProcess(
 					"rclone",
-					["sync", job.source.toString(), job.dest, ...job.extra, ...dry, ...R2_RETRIES, "--stats-one-line"],
+					["sync", job.source.toString(), job.dest, ...job.extra, ...dry, ...R2_TRANSFER_FLAGS, "--stats-one-line"],
 					{ env }
 				)
 
-				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
+				if (!options.dryRun) {
+					await runProcess("rclone", ["check", job.source.toString(), job.dest, ...job.extra, ...R2_SIZE_CHECK], {
+						env,
+					})
+				}
+
+				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced and size-checked" })
 			} catch (error: unknown) {
 				const e = error as Record<string, unknown>
 
