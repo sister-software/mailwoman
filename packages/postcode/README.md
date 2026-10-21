@@ -45,10 +45,16 @@ The package answers three different questions about a postcode, and each answer 
 - **Syntax:** does a country's postcode grammar accept this text? `acceptPostcode` answers from libaddressinput's
   patterns plus `lib/country-formats/written-forms.ts`. That file holds the written forms the generated data leaves
   out, such as the US ZIP+4 written without its dash. A syntax match means the text could be a postcode. Whether the
-  code is allocated is a membership question.
+  code is allocated is a membership question. `canComplete` asks the same question of a partial postcode: can
+  some suffix make the text a whole postcode, and in which candidate countries? `PrefixAutomaton`
+  (`lib/prefix-automaton.ts`) compiles the pattern `postcodeSyntax` matches whole into an NFA that tests
+  prefixes. Its header states the supported regex subset and the one approximation, at `\b` and `$`, which can
+  only widen the answer.
 - **Membership:** is this code, or a code beginning with this prefix, one the data has seen? PCB1 answers for
   exact codes and PFX1 for prefixes, each with its own coverage. An unobserved code inside a country's coverage is
-  different from a code outside it.
+  different from a code outside it. Given PFX1 indexes, `canComplete` reports membership in its own `membership`
+  field (`observed`, `unobserved` or `out-of-coverage`, with each index's scope and coverage note), and that field
+  never changes the syntax answer.
 - **Geography:** which places does the code point to? PCB1 records candidate places for a code, and PFX1 records
   weighted ancestors for a prefix. A character prefix is not geographic containment, so a prefix match is evidence
   about the code's region only, and the place a full code names needs an exact PCB1 match.
@@ -76,4 +82,5 @@ the parse names:
 
 The check removes a wrong postcode. It never invents one, and it never relabels a span as something else.
 
-The remaining steps tracked by #2679 add to this package.
+No autocomplete path calls `canComplete` yet. The FST autocomplete in `packages/mailwoman/lib/autocomplete-core.ts`
+completes place names and never asks whether a postcode prefix can complete.
