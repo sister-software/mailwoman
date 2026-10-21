@@ -34,9 +34,11 @@ vi.mock("#parquet/duckdb", async (importOriginal) => {
 		...actual,
 		openDuckDB: async (...args: Parameters<typeof actual.openDuckDB>) => {
 			const db = await actual.openDuckDB(...args)
+
 			const result = await db.runAndReadAll(
 				"SELECT current_setting('memory_limit') AS memory_limit, current_setting('threads') AS threads"
 			)
+
 			const row = result.getRowObjectsJS()[0] as { memory_limit: unknown; threads: unknown }
 
 			opened.push({ memoryLimit: String(row.memory_limit), threads: String(row.threads) })
@@ -46,7 +48,7 @@ vi.mock("#parquet/duckdb", async (importOriginal) => {
 	}
 })
 
-const BASE_MANIFEST ="/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
+const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
 /**
  * The pre-rename file-list key, spelled by concatenation because the word is banned
@@ -400,8 +402,8 @@ describe("assembleOverlayManifest", () => {
 
 	describe("DuckDB limits", () => {
 		/**
-		 * Assemble a version that adds a file and deletes rows from it through a sidecar, so the
-		 * descriptor read, the sidecar read and the deletion tally each open a connection.
+		 * Assemble a version that adds a file and deletes rows from it through a sidecar,
+		 * so the descriptor read, the sidecar read and the deletion tally each open a connection.
 		 */
 		async function assembleWithDeletion(limits?: DuckDBLimits): Promise<void> {
 			const base = await writeBaseWithGB()
@@ -417,6 +419,7 @@ describe("assembleOverlayManifest", () => {
 				await db.run(
 					`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
 				)
+
 				await db.run(`COPY (SELECT 'de-2' AS source_id) TO '${sidecar}' (FORMAT parquet)`)
 			}
 
@@ -426,9 +429,7 @@ describe("assembleOverlayManifest", () => {
 				...overlay(name),
 				base,
 				files: [{ parquet: name, source: "rendered-de" }],
-				deletions: [
-					{ target: { source: "rendered-de" }, sourceIDsFile: sidecar, reason: "fixture", issue: "#2741" },
-				],
+				deletions: [{ target: { source: "rendered-de" }, sourceIDsFile: sidecar, reason: "fixture", issue: "#2741" }],
 				limits,
 			})
 		}

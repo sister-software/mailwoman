@@ -23,6 +23,7 @@ describe("corpus overlay-manifest DuckDB options", () => {
 		const result = await db.runAndReadAll(
 			"SELECT current_setting('memory_limit') AS memory_limit, current_setting('threads') AS threads"
 		)
+
 		const row = result.getRowObjectsJS()[0] as { memory_limit: unknown; threads: unknown }
 
 		expect(String(row.memory_limit)).toBe("4.0 GiB")

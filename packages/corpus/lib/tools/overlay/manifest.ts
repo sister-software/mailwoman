@@ -307,8 +307,8 @@ export interface OverlayManifestOptions {
 	 */
 	deletions?: readonly DeletionRequest[]
 	/**
-	 * The memory and thread limits of every DuckDB connection the assembly opens: the added files'
-	 * descriptors, the base files' source reads, and the deletion reads and tallies.
+	 * The memory and thread limits of every DuckDB connection the assembly opens: the added
+	 * files' descriptors, the base files' source reads, and the deletion reads and tallies.
 	 *
 	 * @defaultValue {@linkcode openDuckDB}'s defaults
 	 */
@@ -383,7 +383,7 @@ async function carriedDeletion(deletion: CorpusDeletion, limits: DuckDBLimits | 
 	const local = localManifestFilePath(deletion.source_ids_file.path)
 	const ids = await readDeletionIDs(local, limits)
 
-	if (ids.size !==deletion.source_ids_file.ids) {
+	if (ids.size !== deletion.source_ids_file.ids) {
 		throw new Error(
 			`${local} holds ${ids.size} ids and base deletion ${deletion.issue} records ${deletion.source_ids_file.ids}`
 		)
@@ -671,6 +671,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		attributes,
 		args.limits
 	)
+
 	const deletedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const deletion of deletions) {

@@ -8,7 +8,6 @@
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-
 import type { DuckDBLimits } from "@mailwoman/corpus/parquet/duckdb"
 
 import {

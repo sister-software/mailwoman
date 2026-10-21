@@ -51,17 +51,19 @@ export const DUCKDB_MEMORY_SHARE = 0.25
  * The share of the host's threads one DuckDB instance takes when its caller names no count.
  *
  * DuckDB's own default is every core.
- * Each thread holds part of the memory limit and its own scan buffers, so an instance at every core
- * beside a second job starves that job of CPU while it still competes for the same memory.
- * The share matches {@linkcode DUCKDB_MEMORY_SHARE} for the same reason: four concurrent instances
- * fit the host together.
+ * Each thread holds part of the memory limit and its own scan buffers, so an instance at every
+ * core beside a second job starves that job of CPU while it still competes for the same memory.
+ *
+ * The share matches {@linkcode DUCKDB_MEMORY_SHARE} for the same reason:
+ * four concurrent instances fit the host together.
  *
  * @defaultValue a quarter, at least one thread.
  */
 export const DUCKDB_THREAD_SHARE = 0.25
 
 /**
- * The memory one instance holds when its caller names no limit: {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
+ * The memory one instance holds when its caller names no limit:
+ * {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
  */
 export async function defaultDuckDBMemoryLimitBytes(): Promise<number> {
 	const { totalMemoryBytes } = await import("@mailwoman/core/utils/system")
@@ -70,7 +72,8 @@ export async function defaultDuckDBMemoryLimitBytes(): Promise<number> {
 }
 
 /**
- * The threads one instance runs when its caller names no count: {@linkcode DUCKDB_THREAD_SHARE} of the host's.
+ * The threads one instance runs when its caller names no count:
+ * {@linkcode DUCKDB_THREAD_SHARE} of the host's.
  */
 export async function defaultDuckDBThreads(): Promise<number> {
 	const { availableParallelism } = await import("@mailwoman/core/utils/system")
