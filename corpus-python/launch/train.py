@@ -145,16 +145,21 @@ def _train_gpu(
 
     cfg = load_config(config_path)
 
-    # Verify the corpus the config points at exists on the volume. The data loader reads
-    # cfg.data.corpus_dir, so fail loud here if it is missing.
-    train_dir = os.path.join(cfg.data.corpus_dir, "train")
-    if not os.path.isdir(train_dir):
+    # Verify the corpus the config points at is on the volume through the loader's own file list, so this
+    # check reads the same manifest, re-rooting and split attributes the training will. A corpus whose files sit
+    # at its root beside split-attribute files has no `train/` directory, so a directory check refuses it.
+    from pathlib import Path as _Path
+
+    from mailwoman_train.data.loader.corpus_files import corpus_split_files
+
+    try:
+        train_files = corpus_split_files(_Path(cfg.data.corpus_dir), "train")
+    except FileNotFoundError as error:
         raise RuntimeError(
-            f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
+            f"Corpus not found under cfg.data.corpus_dir={cfg.data.corpus_dir}: {error}. "
             "Stage it first: `modal run -m launch.train_remote::sync --version <name>`."
-        )
-    file_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {cfg.data.corpus_dir} ({file_count} train parquet files)")
+        ) from error
+    print(f"Corpus: {cfg.data.corpus_dir} ({len(train_files)} train parquet files)")
 
     if cfg.data.required_corpus_receipts:
         from pathlib import Path
