@@ -41,7 +41,7 @@
 	align-items: center;
 	margin: 0 var(--ss-spacing-2);
 	padding: var(--ss-spacing-1) var(--ss-spacing-3);
-	border: var(--ss-border-width-global) solid var(--ss-color-frame-gray);
+	border: var(--ss-border-width-global) solid var(--ss-color-edge);
 	border-radius: var(--ss-radius-global);
 	background: var(--ss-color-utility);
 	box-shadow: var(--ss-shadow-utility);
@@ -74,7 +74,7 @@
 	background: transparent;
 	box-shadow: none;
 	color: inherit;
-	border: var(--ss-border-width-global) solid var(--ss-color-frame-gray);
+	border: var(--ss-border-width-global) solid var(--ss-color-edge);
 	font: inherit;
 	font-size: 0.75rem;
 	line-height: 1.4;

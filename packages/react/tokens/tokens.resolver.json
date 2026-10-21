@@ -49,11 +49,15 @@
 								"$type": "color"
 							},
 							"key": {
-								"$value": "{mw.color-night-raised}",
+								"$value": "{mw.color-night-key}",
+								"$type": "color"
+							},
+							"key-edge": {
+								"$value": "{mw.color-link-night}",
 								"$type": "color"
 							},
 							"key-hover": {
-								"$value": "{mw.color-night-rule}",
+								"$value": "{mw.color-night-key-hover}",
 								"$type": "color"
 							},
 							"key-current": {
@@ -61,11 +65,19 @@
 								"$type": "color"
 							},
 							"utility": {
-								"$value": "{mw.color-night-raised}",
+								"$value": "{mw.color-night-key}",
 								"$type": "color"
 							},
 							"rule": {
 								"$value": "{mw.color-night-rule}",
+								"$type": "color"
+							},
+							"edge": {
+								"$value": "{mw.color-night-edge}",
+								"$type": "color"
+							},
+							"table-head": {
+								"$value": "{mw.color-night-table-head}",
 								"$type": "color"
 							},
 							"chrome": {
@@ -214,6 +226,10 @@
 								},
 								"$type": "color"
 							},
+							"emphasis-0": {
+								"$value": "{color.gray-1000}",
+								"$type": "color"
+							},
 							"emphasis-100": {
 								"$value": "{color.gray-900}",
 								"$type": "color"
@@ -246,7 +262,11 @@
 								"$value": "{color.gray-100}",
 								"$type": "color"
 							},
-							"key-edge": {
+							"emphasis-1000": {
+								"$value": "{color.gray-0}",
+								"$type": "color"
+							},
+							"selected": {
 								"$value": "{mw.color-link-night}",
 								"$type": "color"
 							}

@@ -14,7 +14,14 @@
  *   Component rules read `--ss-*` roles or `--mw-*` tokens, never a palette color.
  */
 
-import { cssName, DispositionSpecs, dispositionTokens, TokenIndex, type TokenEntry } from "@sister.software/theme"
+import {
+	cssName,
+	DispositionSpecs,
+	dispositionTokens,
+	nightTone,
+	TokenIndex,
+	type TokenEntry,
+} from "@sister.software/theme"
 import { createSisterSoftwareStyleframe, SisterSoftwareStyleframeOptions } from "@sister.software/theme/styleframe"
 
 /**
@@ -36,25 +43,35 @@ const { variable, theme, ref } = s
  * own colors: the blue, navy and magenta of the seal instead of the house pinks and mint.
  *
  * Shared components read these color roles and inherit the product palette.
- * Each pair below holds at least 5.9:1.
+ * Each pair below holds at least 5.3:1.
  */
 
 /**
  * Mailwoman's palette.
  */
+const blue = "#1a00ff"
+const sky = "#e6e9ff"
+const rule = "#cfd4f0"
+
 const Palette: readonly TokenEntry[] = [
-	{ name: "mw.color-blue", value: "#1a00ff", usage: "Links, primary fills, the current item. White on it 8.4:1." },
+	{ name: "mw.color-blue", value: blue, usage: "Links, primary fills, the current item. White on it 8.4:1." },
 	{ name: "mw.color-navy", value: "#00093a", usage: "The seal's ground. Text on the light-blue night link." },
 	{ name: "mw.color-magenta", value: "#ff00b0", usage: "The seal. Focal accents only." },
 	{ name: "mw.color-ground", value: "#f6f7fb", usage: "Cool page ground. Charcoal 10.3:1, blue 7.9:1." },
 	{ name: "mw.color-surface", value: "#edf0fb", usage: "Panels: TOC, footer." },
-	{ name: "mw.color-sky", value: "#e6e9ff", usage: "Keys and the hero band. Charcoal 9.2:1, blue 7.0:1." },
-	{ name: "mw.color-rule", value: "#cfd4f0", usage: "Hairline rules." },
-	{ name: "mw.color-night", value: "#060b26", usage: "Dark page ground. Text 15.8:1." },
-	{ name: "mw.color-night-surface", value: "#0d1438", usage: "Dark panels." },
-	{ name: "mw.color-night-raised", value: "#161e4a", usage: "Dark keys and fills. Text 13.0:1." },
-	{ name: "mw.color-night-rule", value: "#28316a", usage: "Dark hairline rules." },
-	{ name: "mw.color-link-night", value: "#9a95ff", usage: "Dark links and primary fills. 6.2:1 or better." },
+	{ name: "mw.color-sky", value: sky, usage: "Keys and the hero band. Charcoal 9.2:1, blue 7.0:1." },
+	{ name: "mw.color-rule", value: rule, usage: "Hairline rules." },
+	// The night tones are the day colors with the lights turned down, as in the shared dark theme.
+	{ name: "mw.color-night", value: nightTone(sky, 0.2), usage: "Dark page ground: sky at night. Text 14.8:1." },
+	{ name: "mw.color-night-surface", value: nightTone(sky, 0.235), usage: "Dark panels: TOC, footer." },
+	{ name: "mw.color-night-raised", value: nightTone(sky, 0.27, 0.035), usage: "Dark raised fills. Text 12.3:1." },
+	{ name: "mw.color-night-key", value: nightTone(sky, 0.3, 0.04), usage: "Dark keys. Text 11.2:1, link 5.3:1." },
+	{ name: "mw.color-night-key-hover", value: nightTone(sky, 0.34, 0.045), usage: "A dark key under the pointer." },
+	{ name: "mw.color-night-rule", value: nightTone(rule, 0.38, 0.035), usage: "Dark hairline rules." },
+	{ name: "mw.color-night-edge", value: nightTone(rule, 0.48, 0.03), usage: "Dark panel and table borders." },
+	{ name: "mw.color-night-table-head", value: nightTone(blue, 0.34, 0.08), usage: "Dark table header row." },
+	{ name: "mw.color-night-shadow", value: nightTone(sky, 0.12, 0.02), usage: "Dark hard shadows, below the ground." },
+	{ name: "mw.color-link-night", value: "#9a95ff", usage: "Dark links and primary fills. 5.3:1 or better." },
 	{ name: "mw.color-focus-night", value: "#b9b5ff", usage: "Dark focus ring." },
 ]
 
@@ -82,21 +99,28 @@ role("color.background", "{mw.color-ground}", "{mw.color-night}")
 role("color.background-surface", "{mw.color-surface}", "{mw.color-night-surface}")
 role("color.background-raised", "{color.white}", "{mw.color-night-raised}")
 role("color.rail", "{mw.color-sky}", "{mw.color-night-surface}")
-role("color.key", "{mw.color-sky}", "{mw.color-night-raised}")
+role("color.key", "{mw.color-sky}", "{mw.color-night-key}")
 role("color.key-edge", "{mw.color-blue}", "{mw.color-link-night}")
-role("color.key-hover", "{color.white}", "{mw.color-night-rule}")
+role("color.key-hover", "{color.white}", "{mw.color-night-key-hover}")
 role("color.key-current", "{color.white}", "{mw.color-night}")
-role("color.utility", "{color.white}", "{mw.color-night-raised}")
+role("color.utility", "{color.white}", "{mw.color-night-key}")
 role("color.rule", "{mw.color-rule}", "{mw.color-night-rule}")
-role("color.selected", "{mw.color-blue}")
+role("color.edge", "{color.frame-gray}", "{mw.color-night-edge}")
+role("color.table-head", "{mw.color-sky}", "{mw.color-night-table-head}")
+role("color.selected", "{mw.color-blue}", "{mw.color-link-night}")
 role("color.chrome", "{color.chrome-bar-active}", "{mw.color-night-surface}")
 role("color.chrome-inactive", "{color.chrome-bar}", "{mw.color-night-raised}")
 role("color.frame", "{color.chrome-edge}", "{mw.color-night-rule}")
 role("color.focus-ring", "{mw.color-blue}", "{mw.color-focus-night}")
-role("shadow.tile", "-6px 9px 0 rgba(26, 0, 255, 0.22)", "-6px 9px 0 rgba(154, 149, 255, 0.28)")
-role("shadow.tile-pressed", "-2px 3px 0 rgba(26, 0, 255, 0.22)", "-2px 3px 0 rgba(154, 149, 255, 0.28)")
-role("shadow.utility", "-6px 9px 0 rgba(0, 9, 58, 0.14)", "-6px 9px 0 rgba(0, 0, 0, 0.5)")
-role("shadow.utility-pressed", "-2px 3px 0 rgba(0, 9, 58, 0.14)", "-2px 3px 0 rgba(0, 0, 0, 0.5)")
+
+// Hard shadows: blue-tinted on the day grounds, and at night a slab below the ground like every shared shadow.
+const nightShadow = palette.resolve("mw.color-night-shadow")
+
+role("shadow.tile", "-6px 9px 0 rgba(26, 0, 255, 0.22)", `-6px 9px 0 ${nightShadow}`)
+role("shadow.tile-pressed", "-2px 3px 0 rgba(26, 0, 255, 0.22)", `-2px 3px 0 ${nightShadow}`)
+role("shadow.utility", "-6px 9px 0 rgba(0, 9, 58, 0.14)", `-6px 9px 0 ${nightShadow}`)
+role("shadow.utility-pressed", "-2px 3px 0 rgba(0, 9, 58, 0.14)", `-2px 3px 0 ${nightShadow}`)
+theme("dark", (context) => context.variable("shadow.primary", `-6px 9px 0 ${nightShadow}`))
 
 // The primary ladder is recomputed from Mailwoman blue with the shared theme's own arithmetic.
 const primary = (base: string) =>
