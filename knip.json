@@ -63,7 +63,8 @@
 			"entry": ["lib/index.ts", "test/fixtures/**/*.ts"]
 		},
 		"packages/react": {
-			"entry": ["lib/index.ts", "styleframe.config.ts"]
+			"entry": ["lib/index.ts", "styleframe.config.ts"],
+			"ignoreDependencies": ["@sister.software/fonts"]
 		},
 		"packages/astrogeology": {
 			"entry": ["lib/cli.ts", "lib/commands/*.tsx"],
@@ -117,7 +118,7 @@
 				"src/**/*.{js,ts,tsx}",
 				"static/**/*.{js,mjs,ts}"
 			],
-			"ignoreDependencies": ["@mailwoman/cartographer"]
+			"ignoreDependencies": ["@mailwoman/cartographer", "@sister.software/docusaurus-theme-docusaurus-theme"]
 		}
 	}
 }

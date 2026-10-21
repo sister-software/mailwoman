@@ -42,7 +42,7 @@
 	}
 }
 
-/* The navbar search control (src/theme/SearchBar.tsx): a utility key beside GitHub and the colour-mode toggle. */
+/* The navbar search control (src/theme/SearchBar.tsx): a utility key beside GitHub and the color-mode toggle. */
 .navbar__search-button {
 	display: inline-flex;
 	gap: var(--ss-spacing-2);

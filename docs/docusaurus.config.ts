@@ -232,7 +232,7 @@ const config: Config = {
 			},
 		},
 		navbar: {
-			// The bar hides on scroll; on docs pages the brand moves into the top of the rail (the shared theme).
+			// The top row of the bar hides on scroll. The category row below it stays (the shared theme).
 			hideOnScroll: true,
 			title: "Mailwoman",
 			logo: {

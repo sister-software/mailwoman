@@ -9,9 +9,9 @@
  * undefined names paint Infima's LIGHT values inside a dark app without
  * anything failing. A token that is missing should look missing.
  *
- * A rule may read roles only. Reaching a palette colour (`--ss-color-mint`,
+ * A rule may read roles only. Reaching a palette color (`--ss-color-mint`,
  * `--ss-figure-*`) from here skips the layer that says what a value is FOR, and
- * a palette colour does not follow the dark theme.
+ * a palette color does not follow the dark theme.
  *
  * No CSS module hashing — the class names are stable and namespaced, and no
  * component imports this file, so the bare package import stays node-safe.

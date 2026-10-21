@@ -13,7 +13,7 @@ import type { PlaceGeometry } from "#map/geometry"
 /**
  * The brand's selection accent, matched to {@link PlaceMarker}.
  *
- * MapLibre paint takes a literal colour, so it is read from the theme's data rather than a custom property.
+ * MapLibre paint takes a literal color, so it is read from the theme's data rather than a custom property.
  */
 const OUTLINE_COLOR = Tokens.resolve("color.cyan-electric")
 

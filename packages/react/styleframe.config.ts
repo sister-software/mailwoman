@@ -6,12 +6,12 @@
  *   Defines the design tokens for `@mailwoman/react`. `tokens.css` is generated from this file.
  *   `styleframe dtcg export` publishes the values as W3C DTCG JSON.
  *
- *   The brand comes from `@sister.software/theme`: colour roles, type, spacing, shape and motion are the shared
+ *   The brand comes from `@sister.software/theme`: color roles, type, spacing, shape and motion are the shared
  *   `--ss-*` tokens, including the dark theme the map apps select with `data-theme="dark"` on `<html>`. This file adds
- *   only what is Mailwoman's own, under `--mw-*`: the confidence and pipeline-stage colours, the app type scale, the
+ *   only what is Mailwoman's own, under `--mw-*`: the confidence and pipeline-stage colors, the app type scale, the
  *   glass material, the safe-area insets and the map's label font.
  *
- *   Component rules read `--ss-*` roles or `--mw-*` tokens, never a palette colour.
+ *   Component rules read `--ss-*` roles or `--mw-*` tokens, never a palette color.
  */
 
 import { cssName } from "@sister.software/theme"
@@ -47,7 +47,7 @@ variable("mw.color-confidence-low-tint", ref("color.danger-contrast-background")
 /**
  * The pipeline stage hues for the timing bar.
  *
- * They avoid the confidence colours so that green keeps a single meaning.
+ * They avoid the confidence colors so that green keeps a single meaning.
  */
 variable("mw.color-stage-shape", ref("figure.cobalt"))
 variable("mw.color-stage-classify", ref("figure.violet"))
@@ -60,7 +60,7 @@ variable("mw.color-stage-resolve", ref("color.turquoise"))
 /**
  * The app type scale.
  *
- * The docs use Infima's heading sizes; the map apps set denser UI text on this scale.
+ * The docs use Infima's heading sizes. The map apps set denser UI text on this scale.
  */
 variable("mw.font-size-display", "2.125rem")
 variable("mw.font-size-title", "1.375rem")
@@ -75,7 +75,7 @@ variable("mw.font-size-caption", "0.75rem")
  * The SDF font stack for map labels.
  *
  * MapLibre draws labels from signed-distance-field glyph ranges, so the DOM faces do not apply to the map.
- * The value must be a stack that the glyph host serves; Go has no glyph ranges there
+ * The value must be a stack that the glyph host serves. Go has no glyph ranges there
  * yet, so labels stay on Bliss Pro.
  */
 variable("mw.font-family-map", `"Bliss Pro Regular"`)
