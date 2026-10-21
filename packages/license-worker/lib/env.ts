@@ -37,15 +37,15 @@ export interface LicenseWorkerBindings {
 	EVALUATE_LIMITER: RateLimit
 	DOWNLOAD_LIMITER: RateLimit
 	/**
-	 * The S3 API credentials, account and private bucket that presign paid-artifact downloads.
+	 * The S3 API credentials, endpoint and private bucket that presign paid-artifact downloads.
 	 *
-	 * All four are absent until the operator provisions the bucket, and the download
-	 * route answers 503 while any is missing.
+	 * The two secrets arrive through `wrangler secret put`, and the download route
+	 * answers 503 while any of the four is missing.
 	 * Every other route runs without them.
 	 */
 	R2_ACCESS_KEY_ID?: string
 	R2_SECRET_ACCESS_KEY?: string
-	R2_ACCOUNT_ID?: string
+	R2_S3_ENDPOINT?: string
 	PAID_ARTIFACTS_BUCKET?: string
 }
 
