@@ -12,6 +12,7 @@
  */
 
 import { COUNTRY_POSTCODE_FORMAT_SOURCES, type PostcodeLocalityPlacement } from "#country-formats/data"
+import { COUNTRY_POSTCODE_WRITTEN_FORMS } from "#country-formats/written-forms"
 
 /**
  * One country's postcode format, compiled.
@@ -80,7 +81,7 @@ export function tolerateSpacing(pattern: string): string {
  * The postcode format libaddressinput states for `countryCode`, or null when it states none.
  *
  * The compiled pattern accepts any case and any run of whitespace, including none,
- * where the stated form has a space.
+ * where the stated form has a space, and each form `COUNTRY_POSTCODE_WRITTEN_FORMS` adds.
  * A null answer means the dataset records no postcode system for the country,
  * as for the United Arab Emirates.
  */
@@ -91,8 +92,14 @@ export function postcodeSyntax(countryCode: string): PostcodeSyntax | null {
 
 	const source = COUNTRY_POSTCODE_FORMAT_SOURCES[code]
 
+	// A written form libaddressinput omits, such as a ZIP+4 with no separator, is one more alternative.
+	const alternatives = source ? [source.pattern, ...(COUNTRY_POSTCODE_WRITTEN_FORMS[code] ?? [])] : []
+
 	const format = source
-		? { pattern: new RegExp(`^(?:${tolerateSpacing(source.pattern)})$`, "iu"), prefix: source.prefix ?? null }
+		? {
+				pattern: new RegExp(`^(?:${alternatives.map((p) => `(?:${tolerateSpacing(p)})`).join("|")})$`, "iu"),
+				prefix: source.prefix ?? null,
+			}
 		: null
 
 	compiled.set(code, format)
