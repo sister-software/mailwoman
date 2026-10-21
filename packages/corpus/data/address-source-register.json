@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "1692528a2e4a455b46589a13a0adea23f006ba393532e09d6cce69d99a287e9e",
+	"contentDigest": "b986f1c8fdf3d3633781dbef6d1b2169a5c93d8d914437db3b8cf4e5a6323961",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -919,6 +919,7 @@
 		{
 			"state": "elected",
 			"electedTerms": "Umhvørvisstovan, Brúksrættur og treytir (June 2019)",
+			"spdx": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
 			"termsVersion": "June 2019",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
 			"retrievedAt": "2026-10-18",

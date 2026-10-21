@@ -549,5 +549,25 @@
 			"/data/corpus-python/src/mailwoman_train/__pycache__",
 			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
 		]
+	},
+	"sync_v810_base": {
+		"rclone_commands": [
+			"rclone copy :s3:mailwoman-assets/corpus-python/src/ /data/corpus-python/src/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.8.0-store/ /data/corpus/versioned/v0.8.0-store/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.8.0/ /data/corpus/versioned/v0.8.0/corpus-v0.8.0/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16",
+			"rclone copy :s3:mailwoman-assets/corpus/v0.8.1/ /data/corpus/versioned/v0.8.1/corpus-v0.8.1/ --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+		],
+		"check_paths": [
+			"/data/corpus-python/src/mailwoman_train/configs/v8.1.0-base-60k.yaml",
+			"/data/corpus/versioned/v0.8.0-store/store/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.parquet",
+			"/data/corpus/versioned/v0.8.0/corpus-v0.8.0/ads.parquet",
+			"/data/corpus/versioned/v0.8.1/corpus-v0.8.1/MANIFEST.json",
+			"/data/corpus/versioned/v0.8.1/corpus-v0.8.1/attributes/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.split.39f12117a11bd2ab247973403f7bac7f2748112aa65278852496f9295af8cbd3.json",
+			"/data/corpus/versioned/v0.8.1/corpus-v0.8.1/usgov-imls-pls-40e826ff-distinct.parquet"
+		],
+		"pycache_paths": [
+			"/data/corpus-python/src/mailwoman_train/__pycache__",
+			"/data/corpus-python/src/mailwoman_train/configs/__pycache__"
+		]
 	}
 }
