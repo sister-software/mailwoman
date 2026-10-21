@@ -23,6 +23,11 @@ The operator decided the following, and each stands until the operator revisits 
 - Versioned clickwrap terms precede any sale.
 - A key changes only what the doctor reports, never runtime behavior.
 - The notice text is public. Its reasoning is private.
+- A declared or evaluation token for an intent other than `open-source` travels only by email. The claim route
+  reports the message's delivery state and never the token or the secret, so the stated address is the one place
+  the key arrives.
+- An evaluation is thirty days once. Its token is answered on refresh while it lasts and never minted again, so the
+  address continues by declaring or buying. The kill switch stops every mint, re-issuance included.
 
 ## Two environments
 

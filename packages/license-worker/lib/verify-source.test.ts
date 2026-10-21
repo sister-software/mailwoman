@@ -61,9 +61,7 @@ describe("verifySourceURL", () => {
 	})
 
 	it("is unverified when the fetch itself fails", async () => {
-		const failing = (async () => {
-			throw new TypeError("fetch failed")
-		}) as unknown as typeof fetch
+		const failing = (() => Promise.reject(new TypeError("fetch failed"))) as typeof fetch
 
 		expect(await verifySourceURL(failing, "https://github.com/example/project")).toBe("unverified")
 	})

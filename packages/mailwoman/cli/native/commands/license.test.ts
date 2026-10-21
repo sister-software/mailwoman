@@ -109,23 +109,11 @@ describe("license declare and license evaluate", () => {
 		await expect(declareAction(parsed, { trustedKeys })).rejects.toThrow(/--email/u)
 	})
 
-	it("evaluate polls the claim until the token arrives and adopts it with the secret", async () => {
-		const token = await declaredToken({ intent: "evaluation", licensee: "Trial Ltd", expires: "2026-11-20" })
-
+	it("evaluate polls the claim until the message is sent, then points at the adopt command in the message", async () => {
 		const transport = stubTransport([
 			{ body: { status: "pending", claim: CLAIM } },
 			{ body: { status: "pending" } },
-			{
-				body: {
-					status: "issued",
-					token,
-					lid: LID,
-					licensee: "Trial Ltd",
-					issued: "2026-10-21",
-					expires: "2026-11-20",
-					refresh_secret: SECRET,
-				},
-			},
+			{ body: { status: "sent", licensee: "Trial Ltd", issued: "2026-10-21", expires: "2026-11-20" } },
 		])
 
 		const parsed = parseCommand(spec, ["evaluate", "--email", "trial@example.com", "--name", "Trial Ltd"])
@@ -133,9 +121,21 @@ describe("license declare and license evaluate", () => {
 		expect(await evaluateAction(parsed, { client: { axios: transport.axios }, trustedKeys, pollIntervalMs: 0 })).toBe(0)
 
 		expect(transport.calls).toEqual(["/v1/evaluations", `/v1/declarations/${CLAIM}`, `/v1/declarations/${CLAIM}`])
-		expect(await readConfiguredLicenseToken()).toEqual({ token, source: "file" })
-		expect(await readRefreshCredentials()).toEqual({ lid: LID, secret: SECRET })
-		expect(stdout.join("")).toContain("trial@example.com")
+		// The key travels only by email.
+		// The key and credential files stay absent until the adopt command from the message runs.
+		expect(await readConfiguredLicenseToken()).toBeNull()
+		expect(await readRefreshCredentials()).toBeNull()
+		expect(stdout.join("")).toContain("sent to trial@example.com")
+		expect(stdout.join("")).toContain("mailwoman license adopt")
+	})
+
+	it("evaluate reports a failed send and exits 1", async () => {
+		const transport = stubTransport([{ body: { status: "pending", claim: CLAIM } }, { body: { status: "failed" } }])
+		const parsed = parseCommand(spec, ["evaluate", "--email", "trial@example.com", "--name", "Trial Ltd"])
+
+		await expect(
+			evaluateAction(parsed, { client: { axios: transport.axios }, trustedKeys, pollIntervalMs: 0 })
+		).rejects.toThrow(/could not be delivered/u)
 	})
 
 	it("evaluate for an address that has received its evaluation is refused with the license page", async () => {

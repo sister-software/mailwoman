@@ -86,7 +86,33 @@ describe("the declaration routes", () => {
 		expect(a.sent).toHaveLength(0)
 	})
 
-	it("declare: an academic declaration answers a claim, and the claim route answers the token with the secret once", async () => {
+	it("evaluate: refresh answers the current token while it lasts and lapsed after it expires, minting nothing", async () => {
+		const a = await app()
+
+		const pending = (await (
+			await a.post("/v1/evaluations", { email: "trial-refresh@example.com", name: "Trial Ltd" })
+		).json()) as IssuedBody
+
+		expect(pending.status).toBe("pending")
+
+		const sent = a.sent.find((message) => message.to === "trial-refresh@example.com")
+
+		if (!sent?.refreshSecret) throw new Error("the evaluation email carried no secret")
+
+		const credentials = { lid: sent.lid, secret: sent.refreshSecret }
+		const near = await app({ now: Date.UTC(2026, 10, 10) })
+
+		expect(await (await near.post("/v1/licenses/refresh", credentials)).json()).toMatchObject({
+			status: "active",
+			token: sent.token,
+		})
+
+		const after = await app({ now: Date.UTC(2026, 10, 21) })
+
+		expect(await (await after.post("/v1/licenses/refresh", credentials)).json()).toEqual({ status: "lapsed" })
+	})
+
+	it("declare: an academic declaration answers a claim, and the claim route reports delivery without the token", async () => {
 		const a = await app()
 
 		const pending = (await (
@@ -102,15 +128,10 @@ describe("the declaration routes", () => {
 		expect(pending.claim).toMatch(/^clm_[A-Za-z0-9_-]{22}$/u)
 		expect(a.sent[0]?.to).toBe("prof@example.edu")
 
-		const first = (await (await a.get(`/v1/declarations/${pending.claim}`)).json()) as IssuedBody
+		const claimed = (await (await a.get(`/v1/declarations/${pending.claim}`)).json()) as IssuedBody
 
-		expect(first).toMatchObject({ status: "issued", licensee: "Dr Example", expires: "2027-10-21" })
-		expect(first.refresh_secret).toMatch(/^[A-Za-z0-9_-]{43}$/u)
-
-		const again = (await (await a.get(`/v1/declarations/${pending.claim}`)).json()) as IssuedBody
-
-		expect(again.refresh_secret).toBeUndefined()
-		expect(again.token).toBe(first.token)
+		// The claim reports delivery and never the token or the secret: the address is the possession proof.
+		expect(claimed).toEqual({ status: "sent", licensee: "Dr Example", issued: "2026-10-21", expires: "2027-10-21" })
 		expect((await a.get(`/v1/declarations/clm_${"x".repeat(22)}`)).status).toBe(404)
 	})
 

@@ -126,7 +126,9 @@ For enterprise terms, seats, or a negotiated agreement,
 
 Three routes issue a key. Each writes it to `$MAILWOMAN_CONFIG_ROOT/license/key` with its refresh
 secret beside it. The purchase route is above. The other two stay on the open-source branch: the key
-admits the paid tiers, the source offer still applies, and the notice states it.
+admits the paid tiers, the source offer still applies, and the notice states it. The `declare`,
+`evaluate` and `setup` commands ship in the release after 10.7.0, and `npm view mailwoman version` tells
+you which release you have.
 
 **Declare** an open-source, non-profit, academic or student use. An open-source project gives its public
 source URL and receives the key in the response. The other intents give an organization and an address
@@ -143,8 +145,8 @@ date, `mailwoman license refresh` re-issues the key, and the notice counts the d
 student key lasts one year. An expired key leaves every artifact on disk working and stops new downloads
 until it is re-issued.
 
-**Evaluate** for thirty days with an email address. An address receives one evaluation. After it,
-declare or buy.
+**Evaluate** for thirty days with an email address. An address receives one evaluation, and the key is
+not re-issued. After it, declare or buy.
 
 ```bash
 mailwoman license evaluate --name "Your team" --email you@example.com

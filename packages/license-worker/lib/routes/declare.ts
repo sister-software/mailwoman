@@ -11,10 +11,9 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 
-import { ClaimResponseSchema } from "#claim-interface"
 import { type DeclarationDependencies, issueDeclaration } from "#declare"
 import type { LicenseWorkerEnv } from "#env"
-import { currentIssuance, findDeclarationByClaim, takePendingDeclarationSecret } from "#ledger/declarations"
+import { currentIssuance, findDeclarationByClaim } from "#ledger/declarations"
 import { LicenseState } from "#ledger/schema"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
 
@@ -78,6 +77,20 @@ const declareRoute = createRoute({
 	},
 })
 
+/**
+ * What the claim answers.
+ *
+ * A `sent` answer repeats the licensee and the dates the message states.
+ * The token and the secret stay out of it.
+ * A holder of the claim id therefore still needs the message.
+ */
+export const DeclarationClaimSchema = z.discriminatedUnion("status", [
+	z.object({ status: z.literal("pending") }),
+	z.object({ status: z.literal("sent"), licensee: z.string(), issued: z.string(), expires: z.string() }),
+	z.object({ status: z.literal("failed") }),
+	z.object({ status: z.literal("revoked") }),
+])
+
 const claimRoute = createRoute({
 	method: "get",
 	path: "/v1/declarations/{claimID}",
@@ -86,8 +99,9 @@ const claimRoute = createRoute({
 	},
 	responses: {
 		200: {
-			description: "Pending until the token is minted; then the token, once with the refresh secret.",
-			content: { "application/json": { schema: ClaimResponseSchema } },
+			description:
+				"The delivery state of the message that carries the token: pending, sent or failed. The token and the secret travel only in the message.",
+			content: { "application/json": { schema: DeclarationClaimSchema } },
 		},
 		404: {
 			description: "No declaration answers to this claim.",
@@ -151,19 +165,16 @@ export function registerDeclarationRoutes(
 
 		const issuance = await currentIssuance(deps.ledger, declaration.lid)
 
-		if (!issuance) return c.json({ status: "pending" as const }, 200)
+		if (!issuance || issuance.email_state === "pending") return c.json({ status: "pending" as const }, 200)
 
-		const refreshSecret = await takePendingDeclarationSecret(deps.ledger, declaration.lid)
+		if (issuance.email_state === "failed") return c.json({ status: "failed" as const }, 200)
 
 		return c.json(
 			{
-				status: "issued" as const,
-				token: issuance.token,
-				lid: declaration.lid,
+				status: "sent" as const,
 				licensee: declaration.licensee,
 				issued: issuance.issued,
 				expires: issuance.expires,
-				...(refreshSecret ? { refresh_secret: refreshSecret } : {}),
 			},
 			200
 		)

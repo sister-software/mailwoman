@@ -79,8 +79,16 @@ function declaredPayload(key: LicenseKeyVerification | undefined): LicenseKeyPay
 function declaredNoticeSentence(payload: LicenseKeyPayload): string {
 	const intent = payload.intent ?? "open-source"
 
+	if (intent === "evaluation") return `Evaluating until ${payload.expires ?? "the end of the evaluation"}.`
+
 	return payload.expires ? `Declared ${intent} until ${payload.expires}.` : `Declared ${intent}.`
 }
+
+/**
+ * The routes an evaluator has once the thirty days end.
+ * An evaluation is never re-issued.
+ */
+const EVALUATION_ROUTES = "declare an open-source, non-profit, academic or student use, or buy a license"
 
 /**
  * The stderr statement of a declaration, which may name the licensee
@@ -91,13 +99,16 @@ function declaredNoticeSentence(payload: LicenseKeyPayload): string {
  */
 function declaredNoticeLine(payload: LicenseKeyPayload, licenseURL: string, now: Date): string {
 	const intent = payload.intent ?? "open-source"
-	const head = `Declared ${intent} for ${payload.licensee}${payload.expires ? ` until ${payload.expires}` : ""}`
+	const evaluation = intent === "evaluation"
+	const verb = evaluation ? "Evaluating" : `Declared ${intent}`
+	const head = `${verb} for ${payload.licensee}${payload.expires ? ` until ${payload.expires}` : ""}`
 	const days = payload.expires ? daysUntil(payload.expires, now) : null
 
 	if (days != null && days <= EXPIRY_NOTICE_DAYS) {
 		const span = days === 1 ? "1 day" : `${days} days`
+		const next = evaluation ? `${EVALUATION_ROUTES}, before then` : "run `mailwoman license refresh` before then"
 
-		return `${head}, which is in ${span}: run \`mailwoman license refresh\` before then. ${licenseURL}`
+		return `${head}, which is in ${span}: ${next}. ${licenseURL}`
 	}
 
 	return `${head}: ${licenseURL}`
@@ -157,10 +168,12 @@ export function licenseNoticeLines(
 	const expiredOn = key?.status === "expired" ? (key.payload.expires ?? undefined) : undefined
 
 	if (expiredOn && key?.status === "expired" && key.payload.terms === LicenseTerms.OpenSource) {
-		return [
-			noticeSentence(stamp.license, expiredOn),
-			`Your declaration expired on ${expiredOn}: run \`mailwoman license refresh\`, or declare again. ${stamp.license_url}`,
-		]
+		const ended =
+			key.payload.intent === "evaluation"
+				? `Your evaluation ended on ${expiredOn}: ${EVALUATION_ROUTES}.`
+				: `Your declaration expired on ${expiredOn}: run \`mailwoman license refresh\`, or declare again.`
+
+		return [noticeSentence(stamp.license, expiredOn), `${ended} ${stamp.license_url}`]
 	}
 
 	return [noticeSentence(stamp.license, expiredOn), `${NOTICE_REMEDY}: ${stamp.license_url}`]

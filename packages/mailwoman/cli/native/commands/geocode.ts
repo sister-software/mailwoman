@@ -25,7 +25,7 @@ import {
 	runNativeCommand,
 	stringValue,
 } from "#cli/native/spec"
-import { coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
+import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 
 const debugSizePattern = /^\d+x\d+$/u
@@ -308,20 +308,20 @@ function formatText(result: GeocodeResult): string {
  * A data root that cannot be read counts as one with no bundle installed,
  * so the statement still appears and the result is still printed.
  */
+let installedBundlesOnce: Promise<ReadonlySet<string>> | null = null
+
 async function resultCoverage(result: GeocodeResult): Promise<EngineCoverage | null> {
-	let installed: ReadonlySet<string>
+	// The disk is read only when a tiered bundle covers this result's country, and once per process after that.
+	if (!ceilingCandidate(result)) return null
 
-	try {
-		installed = await installedBundleNames(dataRootPath())
-	} catch {
-		installed = new Set()
-	}
+	installedBundlesOnce ??= installedBundleNames(dataRootPath()).catch((): ReadonlySet<string> => new Set())
 
-	return precisionCeiling(result, installed)
+	return precisionCeiling(result, await installedBundlesOnce)
 }
 
 async function formatResult(result: GeocodeResult, format: Format, compact: boolean): Promise<string> {
-	const coverage = await resultCoverage(result)
+	// The JSON-LD projection has no engine block, so it reads no coverage.
+	const coverage = format === "jsonld" ? null : await resultCoverage(result)
 
 	if (format === "text") {
 		return coverage ? `${formatText(result)}\n${coverageSentence(coverage)}` : formatText(result)

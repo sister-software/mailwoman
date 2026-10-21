@@ -113,7 +113,11 @@ export function registerDownloadRoute(app: OpenAPIHono, env: LicenseWorkerEnv, d
 
 		const { payload } = verification
 
-		if (!scopeAdmits(payload.scope, artifact)) return c.json({ error: "scope" }, 403)
+		// A multi-artifact bundle requests `<tier>/<path>`; the scope admits the tier, the catalog holds the path.
+		const slash = artifact.indexOf("/")
+		const scopeEntry = slash === -1 ? artifact : artifact.slice(0, slash)
+
+		if (!scopeAdmits(payload.scope, scopeEntry)) return c.json({ error: "scope" }, 403)
 
 		if (typeof payload.lid === "string") {
 			const holder = (await findLicense(deps.ledger, payload.lid)) ?? (await findDeclaration(deps.ledger, payload.lid))

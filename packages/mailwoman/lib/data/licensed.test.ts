@@ -8,7 +8,7 @@ import type { LicenseKeyPayload, LicenseKeyVerification } from "@mailwoman/core/
 import { describe, expect, it } from "vitest"
 
 import type { DataBundle } from "#data/bundles"
-import { licensedPullDecision } from "#data/licensed"
+import { licensedArtifactName, licensedPullDecision } from "#data/licensed"
 
 const free: DataBundle = {
 	name: "candidate",
@@ -57,9 +57,29 @@ describe("licensedPullDecision", () => {
 		if (decision.kind !== "refused") return
 
 		expect(decision.lines[0]).toBe("`gb-streets` is a licensed artifact. Get a token by one of:")
-		expect(decision.lines.join("\n")).toContain("mailwoman license declare --intent open-source --project <url>")
-		expect(decision.lines.join("\n")).toContain("mailwoman license evaluate --email <address>")
+
+		expect(decision.lines.join("\n")).toContain(
+			'mailwoman license declare --intent open-source --name "<project>" --project <url>'
+		)
+
+		expect(decision.lines.join("\n")).toContain('mailwoman license evaluate --name "<you>" --email <address>')
 		expect(decision.lines.join("\n")).toContain("https://mailwoman.ai/license")
+	})
+
+	it("requests a single-artifact bundle under its tier and a multi-artifact bundle under the tier plus the path", () => {
+		const [only] = licensed.artifacts
+
+		expect(licensedArtifactName(licensed, only!)).toBe("tier:gb-streets")
+
+		const two: DataBundle = {
+			...licensed,
+			artifacts: [
+				{ remotePath: "tiers/gb/a.db", localPath: "tiers/gb-a.db", md5Sidecar: false, approxBytes: 1 },
+				{ remotePath: "tiers/gb/b.db", localPath: "tiers/gb-b.db", md5Sidecar: false, approxBytes: 1 },
+			],
+		}
+
+		expect(licensedArtifactName(two, two.artifacts[1]!)).toBe("tier:gb-streets/tiers/gb-b.db")
 	})
 
 	it("adds the refresh command when the configured key has expired", () => {

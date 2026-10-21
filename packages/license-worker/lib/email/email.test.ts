@@ -72,6 +72,24 @@ describe("the license message", () => {
 	const renewal = { ...first, refreshSecret: null, issued: "2026-11-01", expires: "2026-12-15" }
 	const site = "https://mailwoman.ai"
 
+	it("tells an evaluator the key is not re-issued and points at the declare and buy routes", () => {
+		const evaluation = {
+			...first,
+			licensee: "Trial Ltd",
+			agreement: null,
+			intent: "evaluation" as const,
+			issued: "2026-10-21",
+			expires: "2026-11-20",
+		}
+
+		const text = renderLicenseEmail(evaluation, site)
+
+		expect(text).toContain("not re-issued")
+		expect(text).toContain(`${site}/license`)
+		expect(text).not.toContain("mailwoman license refresh")
+		expect(licenseEmailSubject(evaluation)).toContain("evaluation")
+	})
+
 	it("walks the buyer from the key to what comes after it, in text and in HTML alike", () => {
 		const text = renderLicenseEmail(first, site)
 		const html = renderLicenseEmailHTML(first, site, "licenses@mailwoman.ai")

@@ -86,6 +86,9 @@ export function registerRefreshRoute(app: OpenAPIHono, env: LicenseWorkerEnv, de
 
 			const issuance = await reissueDeclaration(env, deps, declaration)
 
+			// An evaluation past its thirty days, or any declaration under the kill switch with no token left, lapses.
+			if (!issuance) return c.json({ status: "lapsed" as const }, 200)
+
 			return c.json(
 				{ status: "active" as const, token: issuance.token, issued: issuance.issued, expires: issuance.expires },
 				200

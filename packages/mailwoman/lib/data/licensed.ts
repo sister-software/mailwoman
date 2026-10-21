@@ -10,7 +10,7 @@
 
 import { docsSiteURL, type LicenseKeyVerification, scopeAdmits } from "@mailwoman/core/license"
 
-import type { DataBundle } from "#data/bundles"
+import type { BundleArtifact, DataBundle } from "#data/bundles"
 
 /**
  * The token this installation has configured, with its offline verification.
@@ -30,9 +30,9 @@ export type LicensedPullDecision =
  */
 export function licenseRouteLines(): string[] {
 	return [
-		"  mailwoman license declare --intent open-source --project <url>   # free for an open-source project",
-		"  mailwoman license evaluate --email <address>                      # thirty days",
-		`  ${docsSiteURL()}/license                                       # commercial`,
+		'  mailwoman license declare --intent open-source --name "<project>" --project <url>   # free for an open-source project',
+		'  mailwoman license evaluate --name "<you>" --email <address>                         # thirty days',
+		`  ${docsSiteURL()}/license                                                          # commercial`,
 	]
 }
 
@@ -41,6 +41,19 @@ export function licenseRouteLines(): string[] {
  */
 export function bundleArtifactName(bundle: DataBundle): string {
 	return bundle.tier ?? bundle.name
+}
+
+/**
+ * The name one artifact of a licensed bundle is requested under.
+ *
+ * A bundle with one artifact uses the bundle's name.
+ * A bundle with several appends the artifact's local path after a slash, so the worker's catalog
+ * has one entry per object while the token's scope is checked against the bundle's name.
+ */
+export function licensedArtifactName(bundle: DataBundle, artifact: BundleArtifact): string {
+	const name = bundleArtifactName(bundle)
+
+	return bundle.artifacts.length === 1 ? name : `${name}/${artifact.localPath}`
 }
 
 /**

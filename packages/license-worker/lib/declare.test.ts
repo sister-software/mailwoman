@@ -200,8 +200,74 @@ test("re-issue keeps the current token with 100 days left, and mints seq 2 and v
 
 	const late = await reissueDeclaration(h.signing.env, { ...h.deps, now: () => Date.UTC(2027, 2, 1) }, declaration)
 
+	if (!late) throw new Error("the re-issue minted nothing")
+
 	expect(late.seq).toBe(2)
 	expect(decodeLicenseKeyPayload(late.token)).toMatchObject({ seq: 2, issued: "2027-03-01", expires: "2027-06-10" })
 	expect(await findDeclaration(h.ledger, issued.lid)).toMatchObject({ verification: "verified" })
 	expect(h.email.sent).toHaveLength(0)
+})
+
+test("an evaluation is never re-issued: the current token is answered while it lasts and null after it expires", async () => {
+	const h = await harness()
+
+	const pending = await issueDeclaration(h.signing.env, h.deps, {
+		intent: "evaluation",
+		name: "Trial Ltd",
+		email: "trial-reissue@example.com",
+	})
+
+	if (pending.outcome !== "pending") throw new Error(pending.outcome)
+
+	const declaration = await findDeclaration(h.ledger, pending.lid)
+
+	if (!declaration) throw new Error("declaration vanished")
+
+	// 2026-11-10 is ten days before the thirty-day expiry on 2026-11-20.
+	const near = await reissueDeclaration(h.signing.env, { ...h.deps, now: () => Date.UTC(2026, 10, 10) }, declaration)
+
+	expect(near).toMatchObject({ seq: 1, expires: "2026-11-20" })
+
+	const after = await reissueDeclaration(h.signing.env, { ...h.deps, now: () => Date.UTC(2026, 10, 21) }, declaration)
+
+	expect(after).toBeNull()
+	expect(await currentIssuance(h.ledger, pending.lid)).toMatchObject({ seq: 1 })
+	expect(h.email.sent).toHaveLength(1)
+})
+
+test("with issuance disabled a re-issue answers the current token and mints nothing", async () => {
+	const open = await harness()
+
+	const issued = await issueDeclaration(open.signing.env, open.deps, {
+		intent: "open-source",
+		name: "Example Project",
+		sourceURL: "https://github.com/example/disabled",
+	})
+
+	if (issued.outcome !== "issued") throw new Error(issued.outcome)
+
+	const declaration = await findDeclaration(open.ledger, issued.lid)
+
+	if (!declaration) throw new Error("declaration vanished")
+
+	const closed = await harness({ issuance: false, now: Date.UTC(2027, 2, 1) })
+	const answer = await reissueDeclaration(closed.signing.env, closed.deps, declaration)
+
+	expect(answer).toMatchObject({ seq: 1, token: issued.token })
+	expect(await currentIssuance(open.ledger, issued.lid)).toMatchObject({ seq: 1 })
+})
+
+test("an evaluation address is one address whatever its case or surrounding space", async () => {
+	const h = await harness()
+
+	expect(
+		(await issueDeclaration(h.signing.env, h.deps, { intent: "evaluation", name: "A", email: "Case@Example.com" }))
+			.outcome
+	).toBe("pending")
+
+	expect(
+		await issueDeclaration(h.signing.env, h.deps, { intent: "evaluation", name: "B", email: " case@example.com " })
+	).toEqual({ outcome: "refused", reason: "evaluation_exists" })
+
+	expect(h.email.sent[0]?.message.to).toBe("case@example.com")
 })

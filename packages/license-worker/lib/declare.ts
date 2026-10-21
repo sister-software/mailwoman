@@ -167,13 +167,15 @@ export async function issueDeclaration(
 	if (!env.issuanceEnabled) return { outcome: "refused", reason: "issuance_disabled" }
 
 	const emailed = EMAILED_INTENTS.has(request.intent)
+	// One address is one address whatever its case or surrounding space, so the one-evaluation rule reads it normalized.
+	const email = request.email?.trim().toLowerCase() || null
 
 	if (request.intent === "open-source" && !request.sourceURL)
 		return { outcome: "refused", reason: "missing_source_url" }
 
-	if (emailed && !request.email) return { outcome: "refused", reason: "missing_email" }
+	if (emailed && !email) return { outcome: "refused", reason: "missing_email" }
 
-	if (request.intent === "evaluation" && request.email && (await findEvaluationByEmail(deps.ledger, request.email))) {
+	if (request.intent === "evaluation" && email && (await findEvaluationByEmail(deps.ledger, email))) {
 		return { outcome: "refused", reason: "evaluation_exists" }
 	}
 
@@ -186,14 +188,14 @@ export async function issueDeclaration(
 			lid,
 			intent: request.intent,
 			licensee: request.name,
-			email: request.email ?? null,
+			email,
 			organization: request.organization ?? null,
 			source_url: request.sourceURL ?? null,
 			claim_id: claim,
 			refresh_secret_sha256: await secretDigest(secret),
-			// The response answers the secret for open-source.
-			// The emailed intents answer it once through the claim.
-			refresh_secret_pending: emailed ? secret : null,
+			// The secret travels in the response for open-source and in the message for the other intents.
+			// The ledger keeps its digest only, so no route can answer it later.
+			refresh_secret_pending: null,
 			first_install: request.install ?? null,
 		})
 	} catch (error) {
@@ -230,11 +232,19 @@ export async function reissueDeclaration(
 	env: LicenseWorkerEnv,
 	deps: DeclarationDependencies,
 	declaration: DeclarationRow
-): Promise<IssuanceRow> {
+): Promise<IssuanceRow | null> {
 	const current = await currentIssuance(deps.ledger, declaration.lid)
 	const today = todayUTC(deps.now)
 
 	if (current && daysBetween(today, current.expires) > EXPIRY_NOTICE_DAYS) return current
+
+	// An evaluation is thirty days once.
+	// Its token is answered while it lasts and never minted again.
+	// The address that received it continues by declaring or buying, as the spec and the message both say.
+	// The kill switch likewise stops every mint, so a refresh under it serves the token that exists.
+	if (declaration.intent === "evaluation" || !env.issuanceEnabled) {
+		return current && daysBetween(today, current.expires) >= 0 ? current : null
+	}
 
 	if (declaration.intent === "open-source" && declaration.source_url) {
 		const verification = await verifySourceURL(deps.fetch, declaration.source_url)

@@ -64,19 +64,31 @@ export function precisionCeiling(
 	installed: ReadonlySet<string>,
 	bundles: Readonly<Record<string, DataBundle>> = BUNDLES
 ): EngineCoverage | null {
+	const bundle = ceilingCandidate(result, bundles)
+
+	if (!bundle?.tier || installed.has(bundle.name)) return null
+
+	return { resolved: result.resolution_tier, tier: bundle.tier, command: `mailwoman data pull ${bundle.name}` }
+}
+
+/**
+ * The first tiered bundle that covers the result's country, when the result resolved
+ * coarsely enough for a tier to matter, or `null`.
+ *
+ * This reads no disk, so a caller can skip the installed-bundle scan when it answers `null`,
+ * which it does for every result today because no bundle declares a tier.
+ */
+export function ceilingCandidate(
+	result: Pick<GeocodeResult, "resolution_tier" | "countryCode">,
+	bundles: Readonly<Record<string, DataBundle>> = BUNDLES
+): DataBundle | null {
 	if (!CEILING_TIERS.has(result.resolution_tier)) return null
 
 	const country = result.countryCode
 
 	if (country == null) return null
 
-	for (const bundle of Object.values(bundles)) {
-		if (!bundle.tier || !bundle.countries?.includes(country) || installed.has(bundle.name)) continue
-
-		return { resolved: result.resolution_tier, tier: bundle.tier, command: `mailwoman data pull ${bundle.name}` }
-	}
-
-	return null
+	return Object.values(bundles).find((bundle) => bundle.tier && bundle.countries?.includes(country)) ?? null
 }
 
 /**

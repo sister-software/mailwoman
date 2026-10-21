@@ -9,6 +9,8 @@
  *   to write. It never names an amount or a Stripe id.
  */
 
+import { EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
+
 import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "#client/constants"
 import type { LicenseEmail } from "#email/provider"
 
@@ -25,7 +27,9 @@ export interface EmailSection {
 
 export function licenseEmailSubject(message: LicenseEmail): string {
 	if (message.agreement == null) {
-		return `Your Mailwoman license, declared ${message.intent ?? "open-source"} (${message.issued} to ${message.expires})`
+		return message.intent === "evaluation"
+			? `Your Mailwoman evaluation key (${message.issued} to ${message.expires})`
+			: `Your Mailwoman license, declared ${message.intent ?? "open-source"} (${message.issued} to ${message.expires})`
 	}
 
 	return `Your Mailwoman commercial license (${message.issued} to ${message.expires})`
@@ -236,15 +240,25 @@ function declaredEmailSections(message: LicenseEmail, origin: string): EmailSect
 				},
 			],
 		},
-		{
-			heading: "Re-issue",
-			blocks: [
-				{
-					kind: "paragraph",
-					text: `This key runs to ${message.expires}. From 28 days before that date, one command on a machine that adopted the key fetches the next one: mailwoman license refresh. The AGPL's obligations apply throughout, and the key changes what mailwoman reports about its license, never what it runs.`,
+		intent === "evaluation"
+			? {
+					heading: "After the evaluation",
+					blocks: [
+						{
+							kind: "paragraph",
+							text: `This key runs to ${message.expires} and is not re-issued. To continue past that date, declare an open-source, non-profit, academic or student use with mailwoman license declare, or buy a commercial license at ${origin}/license. The AGPL's obligations apply throughout, and the key changes what mailwoman reports about its license, never what it runs.`,
+						},
+					],
+				}
+			: {
+					heading: "Re-issue",
+					blocks: [
+						{
+							kind: "paragraph",
+							text: `This key runs to ${message.expires}. From ${EXPIRY_NOTICE_DAYS} days before that date, one command on a machine that adopted the key fetches the next one: mailwoman license refresh. The AGPL's obligations apply throughout, and the key changes what mailwoman reports about its license, never what it runs.`,
+						},
+					],
 				},
-			],
-		},
 		{
 			heading: "Help",
 			blocks: [

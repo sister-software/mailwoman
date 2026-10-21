@@ -90,6 +90,7 @@ describe("the declaration, evaluation, claim and download clients", () => {
 			issued: "2026-10-21",
 			expires: "2027-03-11",
 		}
+
 		const ok = stubTransport([{ body: issued }])
 
 		expect(
@@ -141,20 +142,11 @@ describe("the declaration, evaluation, claim and download clients", () => {
 		)
 	})
 
-	it("claim gets the declaration's claim and maps the worker's 404 to not_found", async () => {
-		const issued = {
-			status: "issued",
-			token: "mwl1.a.b",
-			lid: LID,
-			licensee: "Dr Example",
-			issued: "2026-10-21",
-			expires: "2027-10-21",
-			refresh_secret: SECRET,
-		}
+	it("claim gets the declaration's delivery state and maps the worker's 404 to not_found", async () => {
+		const sent = { status: "sent", licensee: "Dr Example", issued: "2026-10-21", expires: "2027-10-21" }
+		const ok = stubTransport([{ body: sent }])
 
-		const ok = stubTransport([{ body: issued }])
-
-		expect(await claimDeclaration(CLAIM, { axios: ok.axios })).toEqual(issued)
+		expect(await claimDeclaration(CLAIM, { axios: ok.axios })).toEqual(sent)
 		expect(ok.calls).toEqual([`/v1/declarations/${CLAIM}`])
 		expect(ok.configs[0]).toMatchObject({ cache: false, method: "get" })
 
@@ -170,11 +162,13 @@ describe("the declaration, evaluation, claim and download clients", () => {
 			expires: "2026-10-21T01:00:00.000Z",
 			bytes: 1,
 		}
+
 		const ok = stubTransport([{ body: granted }])
 
 		expect(await requestDownload({ token: "mwl1.a.b", artifact: "tier:gb-streets" }, { axios: ok.axios })).toEqual(
 			granted
 		)
+
 		expect(ok.calls).toEqual(["/v1/downloads"])
 
 		const scope = stubTransport([{ status: 403, body: { error: "scope" } }])

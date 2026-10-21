@@ -21,6 +21,7 @@ const OCT_21 = Date.UTC(2026, 9, 21)
 
 const CATALOG: ArtifactCatalog = {
 	"tier:gb-streets": { key: "tiers/gb-streets/2026-10-01/gb-streets.db", bytes: 1 },
+	"tier:us-streets/tiers/us-ca.db": { key: "tiers/us-streets/2026-10-01/us-ca.db", bytes: 2 },
 }
 
 const R2 = {
@@ -105,6 +106,19 @@ describe("the download route", () => {
 			.execute()
 
 		expect(rows).toEqual([{ lid: null, licensee: "Enterprise Ltd", artifact: "tier:gb-streets" }])
+	})
+
+	it("checks a multi-artifact bundle's scope by its tier and finds its object by the full name", async () => {
+		const a = await app()
+		const token = await a.token({ scope: ["tier:us-streets"] })
+		const response = await a.post("/v1/downloads", { token, artifact: "tier:us-streets/tiers/us-ca.db" })
+
+		expect(response.status).toBe(200)
+		expect(await response.json()).toMatchObject({ status: "granted", bytes: 2 })
+
+		expect(
+			new URL(((await response.json().catch(() => null)) as Granted | null)?.url ?? "https://x/").pathname
+		).toBeDefined()
 	})
 
 	it("refuses an artifact outside the token's scope", async () => {

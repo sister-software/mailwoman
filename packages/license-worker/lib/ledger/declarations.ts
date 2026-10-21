@@ -20,10 +20,6 @@ import type {
 	SourceVerification,
 } from "#ledger/schema"
 
-function nowISO(): string {
-	return new Date().toISOString()
-}
-
 /**
  * Insert a declared license.
  *
@@ -98,33 +94,6 @@ export async function setIssuanceEmailState(
 		.set({ email_state: state, email_message_id: messageID })
 		.where("issuance_id", "=", issuanceID)
 		.execute()
-}
-
-/**
- * Read the plaintext refresh secret once.
- *
- * The clear is conditioned on the value read, so of two claims racing only the
- * one whose update lands a row answers the secret.
- */
-export async function takePendingDeclarationSecret(ledger: Ledger, lid: string): Promise<string | null> {
-	const row = await ledger
-		.selectFrom("declarations")
-		.select("refresh_secret_pending")
-		.where("lid", "=", lid)
-		.executeTakeFirst()
-
-	const secret = row?.refresh_secret_pending
-
-	if (secret == null) return null
-
-	const cleared = await ledger
-		.updateTable("declarations")
-		.set({ refresh_secret_pending: null, updated_at: nowISO() })
-		.where("lid", "=", lid)
-		.where("refresh_secret_pending", "=", secret)
-		.executeTakeFirst()
-
-	return Number(cleared.numUpdatedRows ?? 0) > 0 ? secret : null
 }
 
 /**

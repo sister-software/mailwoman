@@ -10,7 +10,7 @@ import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import type { DataBundle } from "#data/bundles"
-import { coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
+import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
 
 const candidate: DataBundle = {
 	name: "candidate",
@@ -65,6 +65,15 @@ describe("precisionCeiling", () => {
 		).toBe(
 			"Resolved to admin. The tier:gb-streets tier covers this country and is not installed: mailwoman data pull gb-streets"
 		)
+	})
+})
+
+describe("ceilingCandidate", () => {
+	it("picks the tiered bundle for the result's country before any disk is read, and nothing for a fine result", () => {
+		expect(ceilingCandidate({ resolution_tier: "admin", countryCode: "GB" }, bundles)?.name).toBe("gb-streets")
+		expect(ceilingCandidate({ resolution_tier: "street", countryCode: "GB" }, bundles)).toBeNull()
+		expect(ceilingCandidate({ resolution_tier: "admin", countryCode: "US" }, bundles)).toBeNull()
+		expect(ceilingCandidate({ resolution_tier: "admin", countryCode: null }, bundles)).toBeNull()
 	})
 })
 

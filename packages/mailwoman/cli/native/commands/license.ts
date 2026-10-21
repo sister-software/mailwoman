@@ -466,11 +466,14 @@ function pause(ms: number): Promise<void> {
 }
 
 type ClaimOutcome =
-	| { kind: "issued"; answer: Extract<DeclarationClaimAnswer, { status: "issued" }> }
+	| { kind: "sent"; answer: Extract<DeclarationClaimAnswer, { status: "sent" }> }
 	| { kind: "unreachable"; reason: string }
 
 /**
- * Poll a declaration's claim until the token lands, the worker stops answering, or the deadline passes.
+ * Poll a declaration's claim until the message is sent, the send fails,
+ * the worker stops answering, or the deadline passes.
+ *
+ * The claim reports the delivery state: the token and the secret arrive only in the message.
  */
 async function awaitClaim(claim: string, email: string, deps: LicenseActionDependencies): Promise<ClaimOutcome> {
 	const interval = deps.pollIntervalMs ?? DECLARATION_CLAIM_INTERVAL_MS
@@ -481,10 +484,12 @@ async function awaitClaim(claim: string, email: string, deps: LicenseActionDepen
 		const answer = await claimDeclaration(claim, deps.client)
 
 		switch (answer.status) {
-			case "issued":
-				return { kind: "issued", answer }
+			case "sent":
+				return { kind: "sent", answer }
 			case "unreachable":
 				return { kind: "unreachable", reason: answer.reason }
+			case "failed":
+				throw new CLIError(`The key could not be delivered to ${email}. Check the address and run the command again.`)
 			case "revoked":
 				throw new CLIError("This declaration is revoked, and no key is issued for it.")
 			case "not_found":
@@ -521,7 +526,7 @@ async function finishDeclaration(
 		case "pending": {
 			const address = email ?? "your address"
 
-			process.stdout.write(`Your key is on its way to ${address}. Waiting for it to arrive (claim ${answer.claim}).\n`)
+			process.stdout.write(`Your key is on its way to ${address}. Waiting for the message to go out.\n`)
 
 			const claimed = await awaitClaim(answer.claim, address, deps)
 
@@ -533,11 +538,16 @@ async function finishDeclaration(
 				return EXIT_UNREACHABLE
 			}
 
-			const issued = claimed.answer
+			const { licensee, issued, expires } = claimed.answer
 
-			printAdopted(parsed, await adoptIssued(issued.token, issued.lid, issued.refresh_secret ?? null, trustedKeys), [
-				`delivered to:     ${address}`,
-			])
+			process.stdout.write(
+				[
+					`Your key was sent to ${address} for ${licensee}, valid ${issued} to ${expires}.`,
+					"Run the adopt command from the message on each machine that runs mailwoman:",
+					'  mailwoman license adopt "<key>" --secret "<refresh secret>"',
+					"",
+				].join("\n")
+			)
 
 			return 0
 		}

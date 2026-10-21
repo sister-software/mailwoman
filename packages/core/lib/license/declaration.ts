@@ -46,21 +46,14 @@ export type DeclarationAnswer =
 	| { status: "unreachable"; reason: string }
 
 /**
- * What the declaration claim route answers.
+ * What the declaration claim route answers: the delivery state of the message that holds the token.
  *
- * The refresh secret appears once, on the first claim that finds the token.
+ * The route never answers the token or the secret, so the stated address is the one place they arrive.
  */
 export type DeclarationClaimAnswer =
-	| {
-			status: "issued"
-			token: string
-			lid: string
-			licensee: string
-			issued: string
-			expires: string
-			refresh_secret?: string
-	  }
 	| { status: "pending" }
+	| { status: "sent"; licensee: string; issued: string; expires: string }
+	| { status: "failed" }
 	| { status: "revoked" }
 	| { status: "not_found" }
 	| { status: "unreachable"; reason: string }

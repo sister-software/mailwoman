@@ -18,7 +18,6 @@ import {
 	recordDownload,
 	setDeclarationVerification,
 	setIssuanceEmailState,
-	takePendingDeclarationSecret,
 } from "#ledger/declarations"
 import { LicenseState } from "#ledger/schema"
 import { applyMigrations } from "#test/support/migrations"
@@ -123,16 +122,6 @@ test("a non-profit declaration with the same email is admitted beside an evaluat
 
 	expect((await findDeclarationByClaim(ledger, "clm_e"))?.intent).toBe("non-profit")
 	expect(await findDeclarationByClaim(ledger, "clm_missing")).toBeNull()
-})
-
-test("the pending refresh secret is answered once", async () => {
-	const ledger = openLedger(env.LICENSE_LEDGER)
-	const row = declaration("f")
-
-	await createDeclaration(ledger, row)
-
-	expect(await takePendingDeclarationSecret(ledger, row.lid)).toBe("secret")
-	expect(await takePendingDeclarationSecret(ledger, row.lid)).toBeNull()
 })
 
 test("source verification is recorded with its time", async () => {
