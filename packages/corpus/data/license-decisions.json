@@ -815,6 +815,7 @@
 		"unchecked-access-free-fo-umhv-rvisstovan": {
 			"state": "elected",
 			"electedTerms": "Umhvørvisstovan, Brúksrættur og treytir (June 2019)",
+			"spdx": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
 			"termsVersion": "June 2019",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/",
 			"retrievedAt": "2026-10-18",

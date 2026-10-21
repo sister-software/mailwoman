@@ -2,11 +2,11 @@
 # 0.0 arm of the #2750 arms, with these differences:
 #
 # 1. `data.required_validation_label_support` declares a floor per component label, measured on the val draw this
-#    config scores: 4,096 rows requested under seed 43, of which 4,080 pass the length filter, from 48 countries.
-#    Each floor is half the label's measured row count, rounded down. The rule is the same for every label, and a
-#    floor is a regression guard against a rebuild or a weight change that halves a label's presence in the draw,
-#    not a fitted threshold. A label that the draw holds in fewer than 20 rows gets no floor, because half of it is
-#    under 10 rows and a macro-F1 term from that few rows moves with each one: `cedex` (1 row). `po_box`,
+#    config scores on corpus v0.8.1: 4,096 rows requested under seed 43, of which 3,905 pass the length filter, from
+#    47 countries. Each floor is half the label's measured row count, rounded down. The rule is the same for every
+#    label, and a floor is a regression guard against a rebuild or a weight change that halves a label's presence in
+#    the draw. A label that the draw holds in fewer than 20 rows gets no floor, because half of it is under 10 rows
+#    and a macro-F1 term from that few rows moves with each one: `dependent_locality` (12 rows). `cedex`, `po_box`,
 #    `subregion`, `intersection_a` and `intersection_b` hold no row in the draw and get none.
 # 2. `train.output_dir` and `train.trackio_run_name` name the run.
 # 3. `invented-postal-guideline` and `invented-postal-unit-guideline` take train rows once their recipes are rerun
@@ -518,24 +518,22 @@ data:
     - country: PF
       min_rows: 20
       min_street_rows: 10
-    - country: PM
-      min_rows: 20
-      min_street_rows: 10
-  # Half of each label's rows in the 4,080-row val draw of v0.8.0 (see the header). Measured counts: locality 3,704,
-  # postcode 3,496, street 3,357, house_number 3,080, region 2,786, street_suffix 1,853 (US only), street_prefix 944,
-  # unit 368, country 276, venue 231, dependent_locality 88.
+    # PM has no entry. The hashed place holdout (6ff893e25) leaves it no held-out place on v0.8.1, so its val split
+    # holds 1 row, and a country with no held-out split gets no floor, as BL and MF got none in v7.2.0.
+  # Half of each label's rows in the 3,905-row val draw of v0.8.1 (see the header). Measured counts: postcode 3,627,
+  # locality 3,569, street 3,514, house_number 3,219, region 2,441, street_suffix 1,758 (US only), street_prefix
+  # 1,171, venue 297, unit 132, country 92, dependent_locality 12 (no floor).
   required_validation_label_support:
-    - {label: locality, split: val, min_rows: 1852}
-    - {label: postcode, split: val, min_rows: 1748}
-    - {label: street, split: val, min_rows: 1678}
-    - {label: house_number, split: val, min_rows: 1540}
-    - {label: region, split: val, min_rows: 1393}
-    - {label: street_suffix, split: val, min_rows: 926}
-    - {label: street_prefix, split: val, min_rows: 472}
-    - {label: unit, split: val, min_rows: 184}
-    - {label: country, split: val, min_rows: 138}
-    - {label: venue, split: val, min_rows: 115}
-    - {label: dependent_locality, split: val, min_rows: 44}
+    - {label: postcode, split: val, min_rows: 1813}
+    - {label: locality, split: val, min_rows: 1784}
+    - {label: street, split: val, min_rows: 1757}
+    - {label: house_number, split: val, min_rows: 1609}
+    - {label: region, split: val, min_rows: 1220}
+    - {label: street_suffix, split: val, min_rows: 879}
+    - {label: street_prefix, split: val, min_rows: 585}
+    - {label: venue, split: val, min_rows: 148}
+    - {label: unit, split: val, min_rows: 66}
+    - {label: country, split: val, min_rows: 46}
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row

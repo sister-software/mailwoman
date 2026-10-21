@@ -682,7 +682,7 @@
 		{
 			"source": "adressur-fo",
 			"rows": 2776,
-			"license": "LicenseRef-unchecked-access-free-fo-umhv-rvisstovan",
+			"license": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
 			"decision": null
 		},
 		{
@@ -1132,5 +1132,5 @@
 	],
 	"refused": {},
 	"totalRows": 675547005,
-	"contentDigest": "1d68d6d0cf4883d1bd457b903d573a4940035dd2cfea9e5c96e82e782a2211c5"
+	"contentDigest": "b01d8d6aeaf2ad6d02f917947ebc664c07f45e84515286db41fb5cfdd86542e4"
 }
