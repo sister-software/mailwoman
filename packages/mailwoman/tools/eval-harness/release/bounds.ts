@@ -9,8 +9,10 @@
  */
 
 /**
- * Term cap for the incomplete-beta continued fraction; it converges in well under 100 terms for
- * the parameters a release check produces, so the cap only guards against a non-converging input.
+ * Term cap for the incomplete-beta continued fraction.
+ *
+ * It converges in well under 100 terms for the parameters a release check produces,
+ * so the cap only guards against a non-converging input.
  */
 const FRACTION_MAX_TERMS = 500
 
@@ -20,7 +22,7 @@ const FRACTION_MAX_TERMS = 500
 const FRACTION_TOLERANCE = 1e-15
 
 /**
- * Bisection step cap for the beta quantile; 2^-200 is far below the tolerance, so the cap is never reached.
+ * Bisection step cap for the beta quantile. 2^-200 is far below the tolerance, so the cap is never reached.
  */
 const BISECTION_MAX_STEPS = 200
 
@@ -134,8 +136,9 @@ export function betaQuantile(p: number, a: number, b: number): number {
 /**
  * The Clopper–Pearson interval for `successes` of `n` trials, each side with tail probability `tail`.
  *
- * `successes` and `n` may be fractional, as an effective count under a design effect is;
- * the beta-quantile form extends the exact interval continuously.
+ * `successes` and `n` may be fractional, as an effective count under a design effect is.
+ * The beta-quantile form extends the exact interval continuously.
+ *
  * Zero successes give a lower bound of 0 and `n` successes an upper bound of 1,
  * but the other bound never collapses onto the estimate.
  */

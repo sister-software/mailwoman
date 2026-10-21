@@ -6,7 +6,7 @@
  *   A versioned evaluation dataset: a held-out sample frozen into a manifest that can be committed, beside a
  *   rows file whose sha256 the manifest records.
  *
- *   The manifest names the corpus manifest the sample was drawn from (path, sha256, corpus version), the
+ *   The manifest records the corpus manifest the sample was drawn from (path, sha256, corpus version), the
  *   sampling rule and seed, the source set, the available and sampled counts per country and row kind, and one
  *   entry per row: identity, country, source, kind, group, a hash of its expected spans, and its annotation
  *   provenance. The rows file holds the text and spans the grader parses.
@@ -48,7 +48,7 @@ export interface HeldoutDatasetEntry {
 	kind: HeldoutRowKind
 	group: string
 	/**
-	 * Sha256 over the row's text and its annotated span triple; see {@linkcode expectedSpansSHA256}.
+	 * Sha256 over the row's text and its annotated span triple, computed by {@linkcode expectedSpansSHA256}.
 	 */
 	spansSHA256: string
 	/**
@@ -83,7 +83,8 @@ export interface HeldoutDatasetManifest {
 	}
 	sampling: HeldoutSamplingRule & {
 		/**
-		 * The DuckDB version whose `hash` ordered the sample; another version may order rows differently.
+		 * The DuckDB version whose `hash` ordered the sample.
+		 * Another version may order rows differently.
 		 */
 		engine: string
 	}
@@ -274,7 +275,8 @@ export async function readHeldoutDatasetRows(
 		throw new Error(`${rowsPath.toString()} has sha256 ${digest}; the manifest records ${manifest.rowsFile.sha256}`)
 	}
 
-	// The file was hashed above as text; JSONSpliterator re-reads it, line by line, for the rows.
+	// The file was hashed above as text.
+	// JSONSpliterator re-reads it, line by line, for the rows.
 	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<HeldoutRow>(rowsPath))
 
 	if (rows.length !== manifest.rows.length) {
