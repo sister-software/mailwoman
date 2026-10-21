@@ -172,16 +172,6 @@ export type LicenseKeyVerification =
 	| { status: "invalid"; reason: string }
 
 /**
- * Returns whether a verification grants the commercial branch: the token is valid
- * and its terms are commercial.
- *
- * A valid open-source token answers false, so the AGPL branch and its notice stay in place for it.
- */
-export function grantsCommercialTerms(key: LicenseKeyVerification | null | undefined): boolean {
-	return key?.status === "valid" && key.payload.terms === LicenseTerms.Commercial
-}
-
-/**
  * An Ed25519 signing key pair with both keys PEM-encoded.
  */
 export interface LicenseSigningKeyPair {

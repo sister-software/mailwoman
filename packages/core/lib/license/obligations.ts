@@ -8,8 +8,20 @@
  */
 
 import { stringifyJSON } from "#json"
-import { grantsCommercialTerms, type LicenseKeyVerification } from "#license/key"
+import type { LicenseKeyVerification } from "#license/key"
 import type { LicenseKeyPublication } from "#license/publication"
+
+/**
+ * Returns whether a verification grants the commercial branch: the token is valid
+ * and its terms are commercial.
+ *
+ * A valid open-source token answers false, so the AGPL branch and its notice stay in place for it.
+ * The function lives here rather than in `key.ts` because this module sits in the docs site's plugin
+ * graph, which jiti evaluates, and a value import of `key.ts` would pull its zod schema into that graph.
+ */
+export function grantsCommercialTerms(key: LicenseKeyVerification | null | undefined): boolean {
+	return key?.status === "valid" && key.payload.terms === "LicenseRef-Commercial"
+}
 
 /**
  * The obligation classes the summary reports.

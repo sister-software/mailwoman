@@ -9,14 +9,8 @@
 
 import { EXPIRY_NOTICE_DAYS } from "#license/declaration"
 import { docsSiteURL } from "#license/docs-site"
-import {
-	grantsCommercialTerms,
-	licenseExpiryInstant,
-	type LicenseKeyPayload,
-	type LicenseKeyVerification,
-	LicenseTerms,
-} from "#license/key"
-import { appliedLicenseBranch } from "#license/obligations"
+import { licenseExpiryInstant, type LicenseKeyPayload, type LicenseKeyVerification, LicenseTerms } from "#license/key"
+import { appliedLicenseBranch, grantsCommercialTerms } from "#license/obligations"
 
 /**
  * The singular page path the notice and the `Link: rel="license"` header point at,
