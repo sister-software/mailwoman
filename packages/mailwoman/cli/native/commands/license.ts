@@ -19,15 +19,20 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
+	type DeclarationAnswer,
+	type DeclarationClaimAnswer,
+	type DeclarationRequest,
 	decodeLicenseKeyPayload,
 	docsSiteURL,
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	isSelfServicePayload,
+	LicenseIntent,
 	licenseKeyID,
 	type LicenseKeyPayload,
 	type LicenseKeyVerification,
 	publishedLicenseKeys,
+	readOrMintInstallationID,
 	readRefreshCredentials,
 	trustedLicenseSigningKeys,
 	verifyLicenseKey,
@@ -35,7 +40,17 @@ import {
 	writeRefreshCredentials,
 } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, licenseKeysWellKnownURL } from "@mailwoman/core/license/publication"
-import { checkLicenseStatus, licenseWorkerURL, refreshLicenseKey } from "@mailwoman/core/license/status"
+import {
+	checkLicenseStatus,
+	claimDeclaration,
+	DECLARATION_CLAIM_DEADLINE_MS,
+	DECLARATION_CLAIM_INTERVAL_MS,
+	declareLicense,
+	type LicenseWorkerClientOptions,
+	licenseWorkerURL,
+	refreshLicenseKey,
+	requestEvaluation,
+} from "@mailwoman/core/license/status"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
@@ -64,7 +79,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "action",
-			description: "One of: keygen, issue, verify, register, adopt, refresh, attribution.",
+			description: "One of: keygen, issue, verify, register, adopt, refresh, declare, evaluate, attribution.",
 			required: true,
 		},
 		{ name: "argument", description: "adopt: the token to adopt.", required: false },
@@ -85,6 +100,33 @@ export const spec = {
 			type: "string",
 			hint: "name",
 			description: "issue: who holds the license, as the doctor should print it.",
+		},
+		intent: {
+			type: "string",
+			hint: "open-source|non-profit|academic|student",
+			description:
+				"declare: the declaration's intent. open-source gives --project; the others give --organization and --email.",
+		},
+		name: {
+			type: "string",
+			hint: "text",
+			description: "declare, evaluate: the project or the person the token is issued to, as the doctor prints it.",
+		},
+		project: {
+			type: "string",
+			hint: "url",
+			description: "declare --intent open-source: the project's public source URL.",
+		},
+		organization: {
+			type: "string",
+			hint: "text",
+			description: "declare: the non-profit, university or school.",
+		},
+		email: {
+			type: "string",
+			hint: "address",
+			description:
+				"declare, evaluate: the address the token is sent to. For a declaration it is an address at the organization.",
 		},
 		expires: {
 			type: "string",
@@ -272,13 +314,9 @@ async function adopt(parsed: ParsedCommand): Promise<number> {
 
 	if (!token) throw new CLIUsageError("adopt needs the token: mailwoman license adopt <token> [--secret <secret>].")
 
-	const verification = await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys() })
-	const refusal = refusalFor(verification)
-
-	if (refusal || verification.status !== "valid") throw new CLIError(`Not adopted: ${refusal ?? verification.status}`)
-
 	const secret = stringValue(parsed.values, "secret")
-	const lid = licenseIDOf(verification, token)
+	const decoded = decodeLicenseKeyPayload(token)
+	const lid = decoded && isSelfServicePayload(decoded) ? decoded.lid : null
 
 	if (secret && !lid) {
 		throw new CLIError(
@@ -286,26 +324,59 @@ async function adopt(parsed: ParsedCommand): Promise<number> {
 		)
 	}
 
+	printAdopted(parsed, await adoptIssued(token, lid, secret, trustedLicenseSigningKeys()))
+
+	return 0
+}
+
+interface AdoptedKey {
+	keyPath: string
+	refreshPath: string | null
+	payload: LicenseKeyPayload
+}
+
+/**
+ * Verify a token against the trusted keys and write it with its refresh credentials.
+ *
+ * The shared tail of `adopt`, `declare` and `evaluate`: a token this build cannot verify
+ * is never written, because the runtime would read it as unknown on every invocation.
+ */
+async function adoptIssued(
+	token: string,
+	lid: string | null,
+	secret: string | null,
+	trustedKeys: Readonly<Record<string, string>>
+): Promise<AdoptedKey> {
+	const verification = await verifyLicenseKey(token, { trustedKeys })
+	const refusal = refusalFor(verification)
+
+	if (refusal || verification.status !== "valid") throw new CLIError(`Not adopted: ${refusal ?? verification.status}`)
+
 	const keyPath = await writeLicenseKeyFile(token)
 	const refreshPath = secret && lid ? await writeRefreshCredentials({ lid, secret }) : null
 
+	return { keyPath, refreshPath, payload: verification.payload }
+}
+
+function printAdopted(parsed: ParsedCommand, adopted: AdoptedKey, extraLines: readonly string[] = []): void {
 	if (booleanValue(parsed.values, "json")) {
-		process.stdout.write(prettyJSON({ keyPath, refreshPath, payload: verification.payload }))
-	} else {
-		process.stdout.write(
-			[
-				`key written:      ${keyPath}`,
-				...(refreshPath ? [`refresh secret:   ${refreshPath} (mode 0600)`] : []),
-				`licensee:         ${verification.payload.licensee}`,
-				`expires:          ${verification.payload.expires ?? "never"}`,
-				"",
-				"Check it: mailwoman license verify --online",
-				"",
-			].join("\n")
-		)
+		process.stdout.write(prettyJSON(adopted))
+
+		return
 	}
 
-	return 0
+	process.stdout.write(
+		[
+			`key written:      ${adopted.keyPath}`,
+			...(adopted.refreshPath ? [`refresh secret:   ${adopted.refreshPath} (mode 0600)`] : []),
+			`licensee:         ${adopted.payload.licensee}`,
+			`expires:          ${adopted.payload.expires ?? "never"}`,
+			...extraLines,
+			"",
+			"Check it: mailwoman license verify --online",
+			"",
+		].join("\n")
+	)
 }
 
 /**
@@ -367,6 +438,180 @@ async function refresh(parsed: ParsedCommand): Promise<number> {
 				`This license is ${answer.status}; no key is issued for it. Manage billing at ${docsSiteURL()}/license.`
 			)
 	}
+}
+
+/**
+ * What a declaration or evaluation action may have injected: the worker transport,
+ * the keys a token must verify against, and the claim poll's cadence.
+ * Production uses the defaults, and a test scripts each.
+ */
+export interface LicenseActionDependencies {
+	client?: LicenseWorkerClientOptions
+	trustedKeys?: Readonly<Record<string, string>>
+	pollIntervalMs?: number
+	pollDeadlineMs?: number
+}
+
+const DECLARED_INTENTS: ReadonlySet<string> = new Set([
+	LicenseIntent.OpenSource,
+	LicenseIntent.NonProfit,
+	LicenseIntent.Academic,
+	LicenseIntent.Student,
+])
+
+function pause(ms: number): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms)
+	})
+}
+
+type ClaimOutcome =
+	| { kind: "issued"; answer: Extract<DeclarationClaimAnswer, { status: "issued" }> }
+	| { kind: "unreachable"; reason: string }
+
+/**
+ * Poll a declaration's claim until the token lands, the worker stops answering, or the deadline passes.
+ */
+async function awaitClaim(claim: string, email: string, deps: LicenseActionDependencies): Promise<ClaimOutcome> {
+	const interval = deps.pollIntervalMs ?? DECLARATION_CLAIM_INTERVAL_MS
+	const deadline = deps.pollDeadlineMs ?? DECLARATION_CLAIM_DEADLINE_MS
+	const started = Date.now()
+
+	for (;;) {
+		const answer = await claimDeclaration(claim, deps.client)
+
+		switch (answer.status) {
+			case "issued":
+				return { kind: "issued", answer }
+			case "unreachable":
+				return { kind: "unreachable", reason: answer.reason }
+			case "revoked":
+				throw new CLIError("This declaration is revoked, and no key is issued for it.")
+			case "not_found":
+				throw new CLIError(`No declaration answers to claim ${claim}.`)
+			case "pending":
+				break
+		}
+
+		if (Date.now() - started >= deadline) {
+			throw new CLIError(`Check your inbox at ${email}; run the adopt command from the message.`)
+		}
+
+		await pause(interval)
+	}
+}
+
+/**
+ * Turn the worker's answer into an adopted key: at once for an issued token,
+ * after the claim for a token that travels by email.
+ */
+async function finishDeclaration(
+	parsed: ParsedCommand,
+	answer: DeclarationAnswer,
+	email: string | null,
+	deps: LicenseActionDependencies
+): Promise<number> {
+	const trustedKeys = deps.trustedKeys ?? trustedLicenseSigningKeys()
+
+	switch (answer.status) {
+		case "issued":
+			printAdopted(parsed, await adoptIssued(answer.token, answer.lid, answer.secret, trustedKeys))
+
+			return 0
+		case "pending": {
+			const address = email ?? "your address"
+
+			process.stdout.write(`Your key is on its way to ${address}. Waiting for it to arrive (claim ${answer.claim}).\n`)
+
+			const claimed = await awaitClaim(answer.claim, address, deps)
+
+			if (claimed.kind === "unreachable") {
+				process.stderr.write(
+					`${licenseWorkerURL()} did not answer: ${claimed.reason}. The message still arrives; adopt the key from it.\n`
+				)
+
+				return EXIT_UNREACHABLE
+			}
+
+			const issued = claimed.answer
+
+			printAdopted(parsed, await adoptIssued(issued.token, issued.lid, issued.refresh_secret ?? null, trustedKeys), [
+				`delivered to:     ${address}`,
+			])
+
+			return 0
+		}
+		case "refused":
+			if (answer.reason === "evaluation_exists") {
+				throw new CLIError(
+					`This address has already received its evaluation. A declaration or a commercial license continues it: ${docsSiteURL()}/license`
+				)
+			}
+
+			throw new CLIError(`Refused: ${answer.reason}.`)
+		case "unreachable":
+			process.stderr.write(`${licenseWorkerURL()} did not answer: ${answer.reason}.\n`)
+
+			return EXIT_UNREACHABLE
+	}
+}
+
+/**
+ * `license declare`: record a declaration of intent with the worker and adopt the token it issues.
+ */
+export async function declareAction(parsed: ParsedCommand, deps: LicenseActionDependencies = {}): Promise<number> {
+	const intent = stringValue(parsed.values, "intent")
+
+	if (!intent || !DECLARED_INTENTS.has(intent)) {
+		throw new CLIUsageError("declare requires --intent open-source, non-profit, academic or student.")
+	}
+
+	const name = stringValue(parsed.values, "name")
+
+	if (!name) throw new CLIUsageError("declare requires --name <the project or the person the token is issued to>.")
+
+	const project = stringValue(parsed.values, "project")
+	const organization = stringValue(parsed.values, "organization")
+	const email = stringValue(parsed.values, "email")
+
+	if (intent === LicenseIntent.OpenSource && !project) {
+		throw new CLIUsageError("declare --intent open-source requires --project <the project's public source URL>.")
+	}
+
+	if (intent !== LicenseIntent.OpenSource && (!email || !organization)) {
+		throw new CLIUsageError(
+			`declare --intent ${intent} requires --organization <name> and --email <an address at it>, where the key is sent.`
+		)
+	}
+
+	const request: DeclarationRequest = {
+		intent: intent as DeclarationRequest["intent"],
+		name,
+		install: await readOrMintInstallationID(),
+		...(project ? { sourceURL: project } : {}),
+		...(organization ? { organization } : {}),
+		...(email ? { email } : {}),
+	}
+
+	return finishDeclaration(parsed, await declareLicense(request, deps.client), email, deps)
+}
+
+/**
+ * `license evaluate`: ask for a thirty-day token on an email address and adopt it when it arrives.
+ */
+export async function evaluateAction(parsed: ParsedCommand, deps: LicenseActionDependencies = {}): Promise<number> {
+	const email = stringValue(parsed.values, "email")
+	const name = stringValue(parsed.values, "name")
+
+	if (!email || !name) {
+		throw new CLIUsageError(
+			"evaluate requires --email <the address the key is sent to> and --name <who is evaluating>."
+		)
+	}
+
+	const install = await readOrMintInstallationID()
+
+	return finishDeclaration(parsed, await requestEvaluation({ email, name, install }, deps.client), email, deps)
 }
 
 async function verifyCommand(parsed: ParsedCommand): Promise<number> {
@@ -483,11 +728,15 @@ export async function run(args: readonly string[]): Promise<number> {
 				return adopt(parsed)
 			case "refresh":
 				return refresh(parsed)
+			case "declare":
+				return declareAction(parsed)
+			case "evaluate":
+				return evaluateAction(parsed)
 			case "attribution":
 				return attributionCommand(parsed)
 			default:
 				throw new CLIUsageError(
-					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt, refresh or attribution.`
+					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt, refresh, declare, evaluate or attribution.`
 				)
 		}
 	})

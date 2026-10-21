@@ -118,24 +118,29 @@ Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes 
 mailwoman license [options] <action> [argument]
 ```
 
-| Argument     | Required | Description                                                           |
-| ------------ | -------- | --------------------------------------------------------------------- |
-| `<action>`   | Yes      | One of: keygen, issue, verify, register, adopt, refresh, attribution. |
-| `[argument]` | No       | adopt: the token to adopt.                                            |
+| Argument     | Required | Description                                                                              |
+| ------------ | -------- | ---------------------------------------------------------------------------------------- |
+| `<action>`   | Yes      | One of: keygen, issue, verify, register, adopt, refresh, declare, evaluate, attribution. |
+| `[argument]` | No       | adopt: the token to adopt.                                                               |
 
-| Flag                          | Type    | Default | Description                                                                                                                                                 |
-| ----------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--lid [lid]`                 | string  | —       | refresh: the license id, when not reading $MAILWOMAN_CONFIG_ROOT/license/refresh.json.                                                                      |
-| `--secret [secret]`           | string  | —       | adopt: the refresh secret from the purchase page or the first email, stored beside the key. refresh: the secret, when not reading the credentials file.     |
-| `--licensee [licensee]`       | string  | —       | issue: who holds the license, as the doctor should print it.                                                                                                |
-| `--expires [expires]`         | string  | —       | issue: the last day the key is valid, inclusive. Omit for a key with no expiry.                                                                             |
-| `--scope [scope]`             | string  | `all`   | issue: `all`, or a comma-separated list of the packages the agreement covers.                                                                               |
-| `--major [major]`             | string  | —       | keygen: the mailwoman major version the key id is prefixed with. Defaults to this build's.                                                                  |
-| `--key [key]`                 | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                                                                                             |
-| `--signing-key [signing-key]` | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.                                                                     |
-| `--online`                    | boolean | `false` | verify: also ask mailwoman.ai's well-known register whether the key id is still listed, and the license worker whether a self-service license still stands. |
-| `--write`                     | boolean | `false` | register: write the well-known file under docs/static instead of printing it.                                                                               |
-| `--json`                      | boolean | `false` | Emit the result as JSON.                                                                                                                                    |
+| Flag                            | Type    | Default | Description                                                                                                                                                 |
+| ------------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--lid [lid]`                   | string  | —       | refresh: the license id, when not reading $MAILWOMAN_CONFIG_ROOT/license/refresh.json.                                                                      |
+| `--secret [secret]`             | string  | —       | adopt: the refresh secret from the purchase page or the first email, stored beside the key. refresh: the secret, when not reading the credentials file.     |
+| `--licensee [licensee]`         | string  | —       | issue: who holds the license, as the doctor should print it.                                                                                                |
+| `--intent [intent]`             | string  | —       | declare: the declaration's intent. open-source gives --project; the others give --organization and --email.                                                 |
+| `--name [name]`                 | string  | —       | declare, evaluate: the project or the person the token is issued to, as the doctor prints it.                                                               |
+| `--project [project]`           | string  | —       | declare --intent open-source: the project's public source URL.                                                                                              |
+| `--organization [organization]` | string  | —       | declare: the non-profit, university or school.                                                                                                              |
+| `--email [email]`               | string  | —       | declare, evaluate: the address the token is sent to. For a declaration it is an address at the organization.                                                |
+| `--expires [expires]`           | string  | —       | issue: the last day the key is valid, inclusive. Omit for a key with no expiry.                                                                             |
+| `--scope [scope]`               | string  | `all`   | issue: `all`, or a comma-separated list of the packages the agreement covers.                                                                               |
+| `--major [major]`               | string  | —       | keygen: the mailwoman major version the key id is prefixed with. Defaults to this build's.                                                                  |
+| `--key [key]`                   | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                                                                                             |
+| `--signing-key [signing-key]`   | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.                                                                     |
+| `--online`                      | boolean | `false` | verify: also ask mailwoman.ai's well-known register whether the key id is still listed, and the license worker whether a self-service license still stands. |
+| `--write`                       | boolean | `false` | register: write the well-known file under docs/static instead of printing it.                                                                               |
+| `--json`                        | boolean | `false` | Emit the result as JSON.                                                                                                                                    |
 
 ### `mailwoman openapi`
 
