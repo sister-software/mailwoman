@@ -5,7 +5,8 @@
 # `wrangler.sandbox.toml`, a separate file passed with `-c`, so no flag can land the wrong environment on this name.
 # The workflow compiles the tree before it deploys, and it deploys only from a push whose changed workspaces lie in
 # this worker's dependency closure, so a change in `docs` never redeploys a license worker. Every secret arrives
-# through `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY).
+# through `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY,
+# R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY).
 # No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and the `bundle-graph` health check
 # holds the license subpaths free of Node builtins.
 
@@ -23,6 +24,9 @@ SITE_ORIGIN = "https://mailwoman.ai"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "true"
 LICENSE_SIGNING_KID = "v9-e3d8105a"
+# The paid-artifact bucket lives in the EU jurisdiction, and a jurisdiction bucket answers only on its own S3 host.
+R2_S3_ENDPOINT = "https://63b0e7042b83d769ab70c149b91d7362.eu.r2.cloudflarestorage.com"
+PAID_ARTIFACTS_BUCKET = "mailwoman-assets"
 
 [[send_email]]
 name = "EMAIL_SENDER"

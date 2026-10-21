@@ -18,12 +18,19 @@ export const PRESIGN_SECONDS = 3600
 /**
  * The bindings presigning reads.
  *
- * All four are absent until the operator provisions the bucket.
+ * The two secrets arrive through `wrangler secret put`.
+ * The endpoint and the bucket are vars in `wrangler.toml`.
  */
 export interface PresignBindings {
 	R2_ACCESS_KEY_ID?: string
 	R2_SECRET_ACCESS_KEY?: string
-	R2_ACCOUNT_ID?: string
+	/**
+	 * The bucket's S3 API origin, `https://<account>.<jurisdiction>.r2.cloudflarestorage.com`.
+	 *
+	 * A bucket created under a jurisdiction answers only on that jurisdiction's host,
+	 * so the var holds the whole origin rather than the account id.
+	 */
+	R2_S3_ENDPOINT?: string
 	PAID_ARTIFACTS_BUCKET?: string
 }
 
@@ -38,8 +45,8 @@ export function presignConfigured(env: PresignBindings): env is ConfiguredPresig
 		env.R2_ACCESS_KEY_ID.length > 0 &&
 		typeof env.R2_SECRET_ACCESS_KEY === "string" &&
 		env.R2_SECRET_ACCESS_KEY.length > 0 &&
-		typeof env.R2_ACCOUNT_ID === "string" &&
-		env.R2_ACCOUNT_ID.length > 0 &&
+		typeof env.R2_S3_ENDPOINT === "string" &&
+		env.R2_S3_ENDPOINT.length > 0 &&
 		typeof env.PAID_ARTIFACTS_BUCKET === "string" &&
 		env.PAID_ARTIFACTS_BUCKET.length > 0
 	)
@@ -65,7 +72,8 @@ export async function presignObject(
 		region: "auto",
 	})
 
-	const url = new URL(`https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.PAID_ARTIFACTS_BUCKET}/${key}`)
+	// Resolved against the origin, so a trailing slash on the endpoint still yields one slash before the bucket.
+	const url = new URL(`${env.PAID_ARTIFACTS_BUCKET}/${key}`, env.R2_S3_ENDPOINT)
 
 	url.searchParams.set("X-Amz-Expires", String(expiresSeconds))
 
