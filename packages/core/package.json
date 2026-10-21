@@ -137,6 +137,11 @@
 			"node": "./lib/license/declaration.ts",
 			"default": "./out/license/declaration.js"
 		},
+		"./license/install-id": {
+			"types": "./out/license/install-id.d.ts",
+			"node": "./lib/license/install-id.ts",
+			"default": "./out/license/install-id.js"
+		},
 		"./license/obligations": {
 			"types": "./out/license/obligations.d.ts",
 			"node": "./lib/license/obligations.ts",

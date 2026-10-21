@@ -38,6 +38,7 @@ function healthyDeps(): DoctorDeps {
 		addressPointDatabases: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
 		licenseKey: async () => null,
+		installationID: async () => null,
 		confirmLicenseKeyPublished: async () => "unreachable",
 		checkLicenseStatus: async () => "unknown",
 		refusedObligations: () => [],
@@ -173,6 +174,7 @@ describe("runDoctor (injected boundaries)", () => {
 			keyStatus: null,
 			lid: null,
 			lidStatus: null,
+			installationID: null,
 		})
 
 		expect(poi.license).toEqual({
@@ -231,6 +233,19 @@ describe("runDoctor (injected boundaries)", () => {
 		})
 
 		expect(check.detail).toContain("confirmed by mailwoman.ai")
+	})
+
+	it("license posture: the installation id is reported when the config root holds one", async () => {
+		const installationID = "6f1e2a4c-9b3d-4e8f-a1c2-0d5e6f7a8b9c"
+		const report = await runDoctor({ ...healthyDeps(), installationID: async () => installationID })
+		const check = byID(report.checks, "license-mailwoman")
+
+		expect(check.license?.installationID).toBe(installationID)
+		expect(check.detail).toContain(`installation id ${installationID}`)
+
+		const unminted = await runDoctor(healthyDeps())
+
+		expect(byID(unminted.checks, "license-mailwoman").detail).not.toContain("installation id")
 	})
 
 	it("license posture: a self-service key reports the license's status as its own word; revoked degrades the check, unreachable does not, and a hand-issued key never asks", async () => {
