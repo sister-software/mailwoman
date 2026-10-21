@@ -25,6 +25,7 @@ import { buildCorpus, PriorOutput, type BuildCorpusOptions } from "#build"
 import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align-range"
 import { planWorkerBudget, workerReservationBytes } from "#build/budget"
 import { acquireBuildLock, BUILD_LOCK_DIRECTORY } from "#build/lock"
+import { concatenateFiles } from "#build/parallel"
 import { sourceStateDirectory, SOURCE_RECORD_FILE, type SourceCompletionRecord } from "#build/source-record"
 import { SOURCE_PARQUET_MANIFEST_FILE } from "#build/worker"
 import { banAdapter } from "#fr/adapters/ban/adapter"
@@ -214,6 +215,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		expect(record.alignRanges.length).toBeGreaterThan(1)
 
 		await removePath(sourceStateDirectory(outDir("intermediate"), "ban")(SOURCE_RECORD_FILE))
+
 		await removePath(
 			alignRangeDirectory(sourceStateDirectory(outDir("intermediate"), "ban"), {
 				index: 1,
@@ -382,6 +384,43 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		await buildCorpus(baseOptions(outDir, { jobs: 2 }))
 
 		expect(await snapshot(outDir)).toEqual(serial)
+	})
+})
+
+describe("parallel build concatenation", () => {
+	it("joins more than ten sources into one stream without accumulating its listeners", async () => {
+		await using dir = await temporaryDirectory("mailwoman-concatenate-")
+		const sources = Array.from({ length: 24 }, (_, index) => dir.path(`part-${index}.jsonl`))
+		const expected = sources.map((_, index) => `{"row":${index}}\n`)
+
+		await Promise.all(sources.map((source, index) => writeLocalTextFile(expected[index]!, source)))
+
+		const warnings: Error[] = []
+
+		const onWarning = (warning: Error): void => {
+			if (warning.name === "MaxListenersExceededWarning") {
+				warnings.push(warning)
+			}
+		}
+
+		process.on("warning", onWarning)
+
+		try {
+			await concatenateFiles(
+				sources.map((source) => source.toString()),
+				dir.path("joined.jsonl")
+			)
+
+			// `emitWarning` delivers on the next tick.
+			await new Promise<void>((resolve) => {
+				setImmediate(resolve)
+			})
+		} finally {
+			process.off("warning", onWarning)
+		}
+
+		expect(warnings.map((warning) => warning.message)).toEqual([])
+		expect(await readLocalTextFile(dir.path("joined.jsonl"))).toBe(expected.join(""))
 	})
 })
 

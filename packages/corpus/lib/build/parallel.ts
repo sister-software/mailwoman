@@ -32,7 +32,7 @@ import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailw
 import { forkProcess, type ChildProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { reusableRun } from "#build/adapters"
@@ -357,17 +357,19 @@ export function alignRangeCount(bytes: number, rangeBytes: number, jobs: number)
 
 /**
  * Concatenate files in order into `destination`.
+ *
+ * One pipeline reads every source in order and writes the one write stream.
+ * A pipeline per source with `end: false` leaves its four completion listeners on the
+ * destination, so a build with more than ten sources tripped `MaxListenersExceededWarning`.
  */
-async function concatenateFiles(sources: readonly string[], destination: PathBuilder): Promise<void> {
-	const out = openWriteStream(destination, { flags: "w" })
-
-	for (const source of sources) {
-		await pipeline(openReadStream(source), out, { end: false })
+export async function concatenateFiles(sources: readonly string[], destination: PathBuilderLike): Promise<void> {
+	async function* chunks(): AsyncGenerator<string | Buffer> {
+		for (const source of sources) {
+			yield* openReadStream(source)
+		}
 	}
 
-	await new Promise<void>((resolve, reject) => {
-		out.end((error?: Error | null) => (error ? reject(error) : resolve()))
-	})
+	await pipeline(chunks, openWriteStream(destination, { flags: "w" }))
 }
 
 /**
