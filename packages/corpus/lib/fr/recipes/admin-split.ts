@@ -15,6 +15,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
+import { RenderedRowIDs } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
@@ -150,6 +151,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 		let guard = 0
 		const orderCounts: Record<string, number> = {}
 		const N = pool.length
+		const rowIDs = new RenderedRowIDs()
 
 		while (emitted < count && guard++ < count * 12) {
 			const base = pool[Math.floor(random() * N)]!
@@ -174,11 +176,21 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const sourceID = stableSourceID(source, {
-				locality: components.locality,
-				region: components.region,
-				postcode: components.postcode,
-			})
+			// The record is the commune, and the text tells its orders apart (#2765).
+			const sourceID = rowIDs.claim(
+				stableSourceID(source, {
+					locality: components.locality,
+					region: components.region,
+					postcode: components.postcode,
+				}),
+				raw
+			)
+
+			if (!sourceID) {
+				skipped++
+
+				continue
+			}
 
 			const canonical: CanonicalRow = {
 				raw,

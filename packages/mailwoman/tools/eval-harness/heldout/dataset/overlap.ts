@@ -11,7 +11,8 @@
  *
  *   Every named corpus manifest's train and val files are read through DuckDB, projecting only `source`,
  *   `source_id` and `base_source_id`. A row overlaps when a training row carries its identity
- *   (`<source>:<source_id>`) or its group (`base_source_id`, else `source_id`, as `heldoutRowGroup` keys it),
+ *   (`<source>:<source_id>`) or its group (`base_source_id`, else `source_id`, read up to the last `#`, as
+ *   `heldoutRowGroup` keys it),
  *   so a training row derived from the same base row counts. Test files are listed and skipped. A file whose
  *   split an attribute file decides is read whole and its rows that the attribute assigns to `test` are
  *   dropped.
@@ -32,6 +33,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
+import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
@@ -341,7 +343,7 @@ export async function auditHeldoutOverlap(input: {
 			const reader = await db.runAndReadAll(
 				`SELECT t.source AS source, t.source_id AS source_id, ${baseColumn} AS base_source_id FROM ${quoted} t ` +
 					`WHERE (t.source || ':' || t.source_id) IN (SELECT k FROM eval_ids) ` +
-					`OR coalesce(${baseColumn}, t.source_id) IN (SELECT k FROM eval_groups)`
+					`OR ${recordIDSQL(`coalesce(${baseColumn}, t.source_id)`)} IN (SELECT k FROM eval_groups)`
 			)
 
 			let matches = 0
@@ -365,7 +367,8 @@ export async function auditHeldoutOverlap(input: {
 					recordOverlap(trainingID, label, `identity ${trainingID} ${where}`)
 				}
 
-				const group = row.base_source_id == null ? sourceID : String(row.base_source_id)
+				const groupID = row.base_source_id == null ? sourceID : String(row.base_source_id)
+				const group = groupID == null ? null : recordIDOf(groupID)
 
 				for (const member of (group != null && byGroup.get(group)) || []) {
 					recordOverlap(member, label, `group ${group} (training row ${trainingID}) ${where}`)

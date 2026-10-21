@@ -27,6 +27,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
+import { RenderedRowIDs } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
@@ -271,6 +272,7 @@ export const germanRecipe: CorpusRecipe = {
 		let withOrtsteil = 0
 		let commaFree = 0
 		const N = pool.length
+		const rowIDs = new RenderedRowIDs()
 
 		while (emitted < count && guard++ < count * 6) {
 			const drawn = pool[Math.floor(random() * N)]!
@@ -303,12 +305,22 @@ export const germanRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const sourceID = stableSourceID(source, {
-				street: synth.components.street,
-				house_number: synth.components.house_number,
-				locality: synth.components.locality,
-				postcode: synth.components.postcode,
-			})
+			// The record is the tuple, and the text tells its renderings apart (#2765).
+			const sourceID = rowIDs.claim(
+				stableSourceID(source, {
+					street: synth.components.street,
+					house_number: synth.components.house_number,
+					locality: synth.components.locality,
+					postcode: synth.components.postcode,
+				}),
+				synth.raw
+			)
+
+			if (!sourceID) {
+				skipped++
+
+				continue
+			}
 
 			const canonical = {
 				raw: synth.raw,

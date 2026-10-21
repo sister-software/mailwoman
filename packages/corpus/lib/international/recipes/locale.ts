@@ -20,6 +20,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, JSONSpliterator } from "spliterator"
 
+import { RenderedRowIDs } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import { openConstituentCountryReader } from "#gb/constituent-country"
@@ -614,6 +615,7 @@ export const localeRecipe: CorpusRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+		const rowIDs = new RenderedRowIDs()
 
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
@@ -670,12 +672,22 @@ export const localeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const sourceID = stableSourceID(source, {
-				street: synth.components.street,
-				house_number: synth.components.house_number,
-				locality: synth.components.locality,
-				postcode: synth.components.postcode,
-			})
+			// The record is the tuple, and the text tells its renderings apart (#2765).
+			const sourceID = rowIDs.claim(
+				stableSourceID(source, {
+					street: synth.components.street,
+					house_number: synth.components.house_number,
+					locality: synth.components.locality,
+					postcode: synth.components.postcode,
+				}),
+				synth.raw
+			)
+
+			if (!sourceID) {
+				skipped++
+
+				continue
+			}
 
 			const canonical = {
 				raw: synth.raw,

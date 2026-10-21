@@ -8,10 +8,11 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { recordIDOf } from "#adapters/record-id"
 import { readParquetRows } from "#parquet/readers"
 import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
-import { distinctRowIDs, ROW_ID_SEPARATOR } from "#tools/overlay/distinct-row-ids"
+import { distinctRowIDs } from "#tools/overlay/distinct-row-ids"
 import { splitOverlaySlice } from "#tools/overlay/split-slice"
 
 const root = await temporaryDirectory("mw-distinct-row-ids-")
@@ -75,7 +76,7 @@ describe("distinctRowIDs", () => {
 		expect(written.at(-1)!.source_id).toBe("synth-house-venue-alone")
 
 		for (const row of written.slice(0, 200)) {
-			expect(row.source_id.slice(0, row.source_id.lastIndexOf(ROW_ID_SEPARATOR))).toBe("synth-house-venue-shared")
+			expect(recordIDOf(row.source_id)).toBe("synth-house-venue-shared")
 		}
 
 		const split = await splitOverlaySlice({ input: output, outputDir: root.path })

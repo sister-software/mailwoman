@@ -22,6 +22,7 @@ import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
 
 /**
@@ -689,7 +690,8 @@ export function splitForRow(
 
 	if (!isHeldOut) return "train"
 
-	return hashBucket(row.source_id, 2) === 0 ? "val" : "test"
+	// The bucket is the record's, so the rendered rows of one record stay together in val or test.
+	return hashBucket(recordIDOf(row.source_id), 2) === 0 ? "val" : "test"
 }
 
 /**

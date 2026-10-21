@@ -24,6 +24,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
@@ -217,6 +218,8 @@ export const HELDOUT_GROUP_COLUMNS = ["source_id", "base_source_id"] as const
  * The independent group of one corpus row: its `base_source_id` when the row was
  * derived from a base row, else its own `source_id`.
  *
+ * Either id is read up to its last `#` (`recordIDOf`), so the rendered rows of one record share its group.
+ *
  * A derived row records the `source_id` of the row it came from, so a base row
  * and every augmentation of it (case, typo, reorder variants) share one group,
  * and the paired bootstrap resamples them together.
@@ -246,7 +249,7 @@ export function heldoutRowGroup(row: { source_id?: unknown; base_source_id?: unk
 			throw new Error(`held-out row ${rowLabel} holds an unreadable base_source_id: ${stringifyJSON(base)}`)
 		}
 
-		return base
+		return recordIDOf(base)
 	}
 
 	const own = row.source_id
@@ -257,7 +260,7 @@ export function heldoutRowGroup(row: { source_id?: unknown; base_source_id?: unk
 		)
 	}
 
-	return own
+	return recordIDOf(own)
 }
 
 /**
@@ -282,12 +285,15 @@ export async function assertGroupColumns(files: readonly string[]): Promise<void
  */
 export interface HeldoutSamplingRule {
 	/**
-	 * `per-record-country-kind-hash-order`: one row per `<source>:<source_id>` record,
-	 * then the per-country and per-kind quota in hash order.
+	 * `per-record-id-country-kind-hash-order`: one row per record, then the per-country
+	 * and per-kind quota in hash order.
+	 *
+	 * A record is `<source>` plus the part of `source_id` before the last `#`.
+	 * It replaced `per-record-country-kind-hash-order`, which read one row per whole `source_id`.
 	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-country-kind-hash-order"
+	method: "per-record-id-country-kind-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
@@ -436,10 +442,10 @@ export async function sampleHeldoutRows(
 		(exclude?.groups ?? []).map((group) => `(${quote(group)})`)
 	)
 
-	// A row's identity is its record, `<source>:<source_id>` (`heldoutRowID`),
-	// and the overlap audit joins training rows on that record.
-	// A test split can hold one record more than once: the same row written twice,
-	// or several renderings of one record under its id.
+	// A row's identity is `<source>:<source_id>` (`heldoutRowID`).
+	// Its record is the part of `source_id` before the last `#` (`recordIDOf`).
+	// A test split can hold one record more than once: the same row written twice, several
+	// renderings of one record under its id, or renderings whose ids differ after the `#`.
 	// The sample and the available counts therefore read one row per record, the first in sample order.
 	// Rows without a `source_id` are identified by their text and keep every distinct row.
 	// A row whose group (`heldoutRowGroup`) an excluded dataset holds is never drawn.
@@ -448,8 +454,8 @@ export async function sampleHeldoutRows(
 		`FROM read_parquet([${files.map(quote).join(", ")}], union_by_name = true, filename = true) t ` +
 		`WHERE (t.filename NOT IN (SELECT file FROM attribute_files) ` +
 		`OR (t.filename, CAST(t.source_id AS VARCHAR)) IN (SELECT (file, source_id) FROM attribute_test)) ` +
-		`AND coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR)) NOT IN (SELECT k FROM excluded_groups) ` +
-		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, source_id ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
+		`AND ${recordIDSQL("coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR))")} NOT IN (SELECT k FROM excluded_groups) ` +
+		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, ${recordIDSQL("source_id")} ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
 
 	const reader = await db.runAndReadAll(
 		`SELECT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id FROM ${source} ` +
@@ -497,7 +503,7 @@ export async function sampleHeldoutRows(
 	}))
 
 	const rule: HeldoutSamplingRule = {
-		method: "per-record-country-kind-hash-order",
+		method: "per-record-id-country-kind-hash-order",
 		perCountry: Math.trunc(perCountry),
 		seed,
 		order: heldoutSampleOrder(seed),
