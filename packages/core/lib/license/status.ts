@@ -18,6 +18,13 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
 import { ResourceError } from "#errors/schema"
+import type {
+	DeclarationAnswer,
+	DeclarationClaimAnswer,
+	DeclarationRequest,
+	DownloadAnswer,
+	DownloadRequest,
+} from "#license/declaration"
 import { silentLogger } from "#logging"
 import { withoutTrailingSlashes } from "#strings/format"
 
@@ -132,5 +139,147 @@ export async function refreshLicenseKey(
 		if (error instanceof ResourceError && error.status === HTTP_NOT_FOUND) return { status: "not_found" }
 
 		return { status: "unreachable", reason: error instanceof Error ? error.message : String(error) }
+	}
+}
+
+/**
+ * The interval between two polls of a declaration's claim while its token travels by email.
+ */
+export const DECLARATION_CLAIM_INTERVAL_MS = 3000
+
+/**
+ * How long the CLI polls a claim before telling the user to adopt the token from the message instead.
+ */
+export const DECLARATION_CLAIM_DEADLINE_MS = 120_000
+
+const HTTP_BAD_REQUEST = 400
+const HTTP_FORBIDDEN = 403
+const HTTP_CONFLICT = 409
+const HTTP_SERVICE_UNAVAILABLE = 503
+
+/**
+ * The `error` word of the worker's JSON body behind a refused response,
+ * read from the Axios cause the API client keeps on the error.
+ */
+function refusalWord(error: ResourceError): string | null {
+	const cause = error.cause as { response?: { data?: { error?: unknown } } } | undefined
+	const word = cause?.response?.data?.error
+
+	return typeof word === "string" ? word : null
+}
+
+function requestFailureReason(error: unknown): string {
+	return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * A GET with the interceptor's per-request cache switch off.
+ */
+function uncachedGet(url: string): CacheRequestConfig {
+	return { url, method: "GET", cache: false }
+}
+
+/**
+ * Post a declaration of intent.
+ *
+ * An open-source declaration answers `issued` with the token and its refresh secret.
+ * The other intents answer `pending` with the claim to poll.
+ *
+ * A 400 is the worker refusing a field, read back as `refused`.
+ */
+export async function declareLicense(
+	request: DeclarationRequest,
+	options: LicenseWorkerClientOptions = {}
+): Promise<DeclarationAnswer> {
+	await using api = client(options)
+
+	try {
+		const response = await api.fetch<DeclarationAnswer>(uncachedPost("/v1/declarations", request))
+
+		return response.data
+	} catch (error) {
+		if (error instanceof ResourceError && error.status === HTTP_BAD_REQUEST) {
+			return { status: "refused", reason: refusalWord(error) ?? "refused" }
+		}
+
+		return { status: "unreachable", reason: requestFailureReason(error) }
+	}
+}
+
+/**
+ * Request a thirty-day evaluation for an address.
+ *
+ * The worker's 409, an address that has received its evaluation, reads back
+ * as the `evaluation_exists` refusal.
+ */
+export async function requestEvaluation(
+	request: { email: string; name: string; install?: string },
+	options: LicenseWorkerClientOptions = {}
+): Promise<DeclarationAnswer> {
+	await using api = client(options)
+
+	try {
+		const response = await api.fetch<DeclarationAnswer>(uncachedPost("/v1/evaluations", request))
+
+		return response.data
+	} catch (error) {
+		if (error instanceof ResourceError && error.status === HTTP_CONFLICT) {
+			return { status: "refused", reason: "evaluation_exists" }
+		}
+
+		return { status: "unreachable", reason: requestFailureReason(error) }
+	}
+}
+
+/**
+ * Poll a declaration's claim once.
+ *
+ * The worker's 404 reads back as `not_found`.
+ */
+export async function claimDeclaration(
+	claimID: string,
+	options: LicenseWorkerClientOptions = {}
+): Promise<DeclarationClaimAnswer> {
+	await using api = client(options)
+
+	try {
+		const response = await api.fetch<DeclarationClaimAnswer>(
+			uncachedGet(`/v1/declarations/${encodeURIComponent(claimID)}`)
+		)
+
+		return response.data
+	} catch (error) {
+		if (error instanceof ResourceError && error.status === HTTP_NOT_FOUND) return { status: "not_found" }
+
+		return { status: "unreachable", reason: requestFailureReason(error) }
+	}
+}
+
+/**
+ * Ask for a presigned download of a paid artifact.
+ *
+ * A 403 and a 400 read back as `refused` with the worker's word, and a 503 as
+ * `unavailable`, the worker before its bucket is provisioned.
+ */
+export async function requestDownload(
+	request: DownloadRequest,
+	options: LicenseWorkerClientOptions = {}
+): Promise<DownloadAnswer> {
+	await using api = client(options)
+
+	try {
+		const response = await api.fetch<DownloadAnswer>(uncachedPost("/v1/downloads", request))
+
+		return response.data
+	} catch (error) {
+		if (error instanceof ResourceError) {
+			if (error.status === HTTP_SERVICE_UNAVAILABLE) return { status: "unavailable" }
+
+			if (error.status === HTTP_FORBIDDEN || error.status === HTTP_BAD_REQUEST) {
+				return { status: "refused", reason: refusalWord(error) ?? "refused" }
+			}
+		}
+
+		return { status: "unreachable", reason: requestFailureReason(error) }
 	}
 }

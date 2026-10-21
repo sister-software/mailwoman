@@ -12,10 +12,14 @@ import {
 	decodeLicenseKeyPayload,
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
+	grantsCommercialTerms,
 	isSelfServicePayload,
 	LICENSE_KEY_PREFIX,
+	LicenseIntent,
 	licenseKeyID,
 	type LicenseKeyPayload,
+	LicenseTerms,
+	scopeAdmits,
 	verifyLicenseKey,
 } from "#license"
 import { resolvePackagePath } from "#module/resolvers"
@@ -138,5 +142,79 @@ describe("license key", () => {
 		expect(decodeLicenseKeyPayload("mwl1.not-base64url.sig")).toBeNull()
 		expect(decodeLicenseKeyPayload("mwl2.a.b")).toBeNull()
 		expect(decodeLicenseKeyPayload("two.parts")).toBeNull()
+	})
+})
+
+describe("declared-intent claims", () => {
+	const INSTALL = "6f1e2a4c-9b3d-4e8f-a1c2-0d5e6f7a8b9c"
+
+	it("verifies a commercial token minted before the claims existed", async () => {
+		expect(legacy.payload).not.toHaveProperty("intent")
+		expect(legacy.payload).not.toHaveProperty("seq")
+
+		const verified = await verifyLicenseKey(legacy.token, {
+			trustedKeys: { [legacy.kid]: legacy.publicKeyPEM },
+			now: new Date("2027-01-01T00:00:00Z"),
+		})
+
+		expect(verified.status).toBe("valid")
+		expect(grantsCommercialTerms(verified)).toBe(true)
+	})
+
+	it("carries AGPL-3.0-only terms with intent, seq and install", async () => {
+		const declared: LicenseKeyPayload = {
+			...payload,
+			terms: LicenseTerms.OpenSource,
+			intent: LicenseIntent.OpenSource,
+			seq: 3,
+			install: INSTALL,
+			lid: "lic_0123456789abcdefghijkl",
+		}
+
+		const token = await encodeLicenseKey(declared, pair.privateKeyPEM)
+
+		expect(decodeLicenseKeyPayload(token)).toMatchObject({
+			terms: "AGPL-3.0-only",
+			intent: "open-source",
+			seq: 3,
+			install: INSTALL,
+		})
+
+		const verified = await verifyLicenseKey(token, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })
+
+		expect(verified.status).toBe("valid")
+		expect(grantsCommercialTerms(verified)).toBe(false)
+	})
+
+	it("refuses terms outside the two branches, a seq below 1, and an install that is not a UUID", async () => {
+		await expect(
+			encodeLicenseKey({ ...payload, terms: "MIT" as LicenseKeyPayload["terms"] }, pair.privateKeyPEM)
+		).rejects.toThrow(/Invalid option/u)
+
+		await expect(encodeLicenseKey({ ...payload, seq: 0 }, pair.privateKeyPEM)).rejects.toThrow(/Too small/u)
+
+		await expect(encodeLicenseKey({ ...payload, install: "not-a-uuid" }, pair.privateKeyPEM)).rejects.toThrow(
+			/Invalid UUID/u
+		)
+	})
+
+	it("admits an artifact under scope all, under its own name, and under no other", () => {
+		expect(scopeAdmits("all", "tier:gb-streets")).toBe(true)
+		expect(scopeAdmits(["tier:gb-streets"], "tier:gb-streets")).toBe(true)
+		expect(scopeAdmits(["@mailwoman/neural-weights-en-gb"], "tier:gb-streets")).toBe(false)
+	})
+
+	it("reads a payload with a lid and no agreement as self-service", () => {
+		expect(isSelfServicePayload({ ...payload, lid: "lic_0123456789abcdefghijkl" })).toBe(true)
+	})
+
+	it("grants commercial terms only to a valid token on the commercial branch", () => {
+		expect(grantsCommercialTerms(null)).toBe(false)
+		expect(grantsCommercialTerms({ status: "expired", kid, payload })).toBe(false)
+		expect(grantsCommercialTerms({ status: "valid", kid, payload })).toBe(true)
+
+		expect(
+			grantsCommercialTerms({ status: "valid", kid, payload: { ...payload, terms: LicenseTerms.OpenSource } })
+		).toBe(false)
 	})
 })

@@ -11,7 +11,12 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
-import { isSelfServicePayload, type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
+import {
+	isSelfServicePayload,
+	type LicenseKeyVerification,
+	readInstallationID,
+	verifyConfiguredLicenseKey,
+} from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
@@ -116,6 +121,12 @@ export interface DoctorDeps {
 	 */
 	licenseKey(): Promise<LicenseKeyVerification | null>
 	/**
+	 * The installation id under the config root, or `null` before the first license
+	 * or data-pull action mints one.
+	 * The doctor reads it and never mints it.
+	 */
+	installationID(): Promise<string | null>
+	/**
 	 * Asks mailwoman.ai's well-known register whether a key id is still listed,
 	 * answering `unreachable` rather than throwing when there is no route.
 	 */
@@ -206,6 +217,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		addressPointDatabases: () => addressPointDatabases(dataRoot),
 		runtimeLicense: readRuntimeLicense,
 		licenseKey: () => verifyConfiguredLicenseKey(),
+		installationID: () => readInstallationID(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
 		checkLicenseStatus: (lid) => checkLicenseStatus(lid),
 		refusedObligations: () => ($public.MAILWOMAN_REFUSE_OBLIGATIONS ?? "").split(",").filter((value) => value.trim()),
@@ -401,6 +413,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		key: key ?? null,
 		publication: publication ?? null,
 		lidStatus: lidStatus ?? null,
+		installationID: await deps.installationID(),
 	})
 
 	const fixedLayerObservations = (

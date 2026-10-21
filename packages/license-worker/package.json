@@ -46,6 +46,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/universe": "workspace:*",
 		"@react-email/components": "^1.0.12",
+		"aws4fetch": "^1.0.20",
 		"hono": "^4.13.13",
 		"kysely": "^0.29.6",
 		"kysely-d1": "^0.4.0",

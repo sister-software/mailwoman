@@ -47,6 +47,7 @@ import {
 	type RemoteArtifactState,
 } from "#data/bundles"
 import { probeManifest } from "#data/inventory"
+import { licensedArtifactName, licensedPullDecision, type ConfiguredKey } from "#data/licensed"
 import {
 	OBLIGATION_REFUSALS,
 	type ObligationFinding,
@@ -239,6 +240,63 @@ interface PullResult {
 	pulledCandidate: boolean
 }
 
+/**
+ * The configured token with its offline verification, or `null` when none is configured.
+ *
+ * Read once per pull, and only when a bundle asks, so a free pull touches no key.
+ */
+let configuredKeyOnce: Promise<ConfiguredKey | null> | null = null
+
+async function configuredKey(): Promise<ConfiguredKey | null> {
+	configuredKeyOnce ??= (async () => {
+		const { readConfiguredLicenseToken, trustedLicenseSigningKeys, verifyLicenseKey } =
+			await import("@mailwoman/core/license")
+
+		const configured = await readConfiguredLicenseToken()
+
+		if (!configured) return null
+
+		return {
+			token: configured.token,
+			verification: await verifyLicenseKey(configured.token, { trustedKeys: trustedLicenseSigningKeys() }),
+		}
+	})()
+
+	return configuredKeyOnce
+}
+
+interface GrantedDownload {
+	url: string
+	/**
+	 * The object's size as the worker's catalog records it, the one check a presigned object admits.
+	 */
+	bytes: number | null
+}
+
+/**
+ * Trade the token for a presigned URL of one licensed artifact.
+ *
+ * @throws when the worker refuses, is not provisioned, or does not answer,
+ * with the worker's word in the message.
+ */
+async function grantedDownload(token: string, artifact: string): Promise<GrantedDownload> {
+	const { requestDownload } = await import("@mailwoman/core/license/status")
+	const { readInstallationID } = await import("@mailwoman/core/license")
+	const install = await readInstallationID()
+	const answer = await requestDownload({ token, artifact, ...(install ? { install } : {}) })
+
+	switch (answer.status) {
+		case "granted":
+			return { url: answer.url, bytes: answer.bytes }
+		case "refused":
+			throw new Error(`${artifact}: the license worker refused the download (${answer.reason})`)
+		case "unavailable":
+			throw new Error(`${artifact}: the license worker's download bucket is not provisioned yet`)
+		case "unreachable":
+			throw new Error(`${artifact}: the license worker did not answer: ${answer.reason}`)
+	}
+}
+
 async function pullBundles(
 	bundleNames: string[],
 	opts: {
@@ -319,6 +377,22 @@ async function pullBundles(
 			continue
 		}
 
+		// A licensed bundle is fetched through the license worker with the configured token.
+		// The decision is taken before any artifact is considered, so a refusal transfers no byte.
+		const decision = licensedPullDecision(bundle, bundle.access === "licensed" ? await configuredKey() : null)
+
+		if (decision.kind === "refused") {
+			ok = false
+
+			for (const line of decision.lines) {
+				checks.push({ ok: false, check: `${name}: license`, detail: line })
+			}
+
+			continue
+		}
+
+		const grantedToken = decision.kind === "granted" ? decision.token : null
+
 		for (const artifact of artifacts) {
 			const label = `${name}: ${artifact.remotePath}`
 			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
@@ -344,12 +418,24 @@ async function pullBundles(
 				continue
 			}
 
+			// A licensed artifact is absent from the public bucket, so its source is the worker's
+			// presigned URL and its one check is the size the worker's catalog records.
+			// The URL holds a signature, so the log line states the artifact rather than the URL.
+			const granted = grantedToken ? await grantedDownload(grantedToken, licensedArtifactName(bundle, artifact)) : null
+
 			console.error(
-				`▸ pull ${artifactURL(artifact, opts.host)} (~${ByteFormatter.formatSI(artifact.approxBytes)}) → ${localAbsPath}`
+				granted
+					? `▸ pull ${name}: ${artifact.remotePath} through the license worker (~${ByteFormatter.formatSI(artifact.approxBytes)}) → ${localAbsPath}`
+					: `▸ pull ${artifactURL(artifact, opts.host)} (~${ByteFormatter.formatSI(artifact.approxBytes)}) → ${localAbsPath}`
 			)
 
 			try {
-				const remote = await probeRemote(client!, artifact, opts.host)
+				const remote: RemoteArtifactState = granted
+					? granted.bytes != null
+						? { contentLength: granted.bytes }
+						: {}
+					: await probeRemote(client!, artifact, opts.host)
+
 				// Staged under this pull's data root because `--data-root` overrides
 				// `dataRootPath`'s `$MAILWOMAN_DATA_ROOT`.
 				const stageDir = resolvePath(dataRoot, "tmp")
@@ -357,7 +443,7 @@ async function pullBundles(
 				await makeDirectories(stageDir)
 				const tmpPath = resolvePath(stageDir, `${Date.now()}-${basename(artifact.localPath)}`)
 
-				const bytesWritten = await downloadToDisk(artifactURL(artifact, opts.host), tmpPath)
+				const bytesWritten = await downloadToDisk(granted ? granted.url : artifactURL(artifact, opts.host), tmpPath)
 
 				let verifyDetail: string
 

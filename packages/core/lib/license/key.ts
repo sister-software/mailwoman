@@ -33,6 +33,42 @@ const LICENSE_KEY_PARTS = 3
 const CalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "expected YYYY-MM-DD")
 
 /**
+ * The two branches of the dual license a token can grant.
+ *
+ * A commercial token releases the holder from the AGPL source offer.
+ * An open-source token grants artifact access and leaves every AGPL obligation in place.
+ */
+export const LicenseTerms = {
+	Commercial: "LicenseRef-Commercial",
+	OpenSource: "AGPL-3.0-only",
+} as const
+
+export type LicenseTerms = (typeof LicenseTerms)[keyof typeof LicenseTerms]
+
+/**
+ * The route that issued a token.
+ *
+ * `commercial` is a purchase.
+ * `evaluation` is the thirty-day route.
+ * The other four are declarations of intent.
+ */
+export const LicenseIntent = {
+	OpenSource: "open-source",
+	NonProfit: "non-profit",
+	Academic: "academic",
+	Student: "student",
+	Evaluation: "evaluation",
+	Commercial: "commercial",
+} as const
+
+export type LicenseIntent = (typeof LicenseIntent)[keyof typeof LicenseIntent]
+
+/**
+ * The prefix of a scope entry that is an atlas tier rather than a package.
+ */
+export const TIER_SCOPE_PREFIX = "tier:"
+
+/**
  * The schema of a license-key payload.
  */
 export const LicenseKeyPayloadSchema = z.object({
@@ -55,21 +91,45 @@ export const LicenseKeyPayloadSchema = z.object({
 	 */
 	expires: CalendarDate.nullable().optional(),
 	/**
-	 * Either `all` or the list of packages covered by the agreement.
+	 * Either `all` or the list of packages and `tier:<name>` entries the token may download.
 	 */
 	scope: z.union([z.literal("all"), z.array(z.string().min(1)).min(1)]),
 	/**
-	 * The license terms that the key grants.
+	 * The license branch that the key grants.
 	 */
-	terms: z.literal("LicenseRef-Commercial"),
+	terms: z.enum([LicenseTerms.Commercial, LicenseTerms.OpenSource]),
 	/**
 	 * An opaque serial for checking the license status online.
 	 */
 	lid: z.string().min(1).nullable().optional(),
 	/**
 	 * The version of the terms that the licensee accepted.
+	 * A declared token has none.
 	 */
 	agreement: z.string().min(1).nullable().optional(),
+	/**
+	 * The route that issued the token.
+	 * A hand-issued token has none.
+	 */
+	intent: z
+		.enum([
+			LicenseIntent.OpenSource,
+			LicenseIntent.NonProfit,
+			LicenseIntent.Academic,
+			LicenseIntent.Student,
+			LicenseIntent.Evaluation,
+			LicenseIntent.Commercial,
+		])
+		.optional(),
+	/**
+	 * The issuance ordinal within the license, 1 for the first token.
+	 */
+	seq: z.number().int().min(1).optional(),
+	/**
+	 * The installation id the requesting CLI reported.
+	 * The token is never bound to it.
+	 */
+	install: z.uuid().optional(),
 })
 
 /**
@@ -78,15 +138,27 @@ export const LicenseKeyPayloadSchema = z.object({
 export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
 
 /**
- * A payload that has both the serial and the accepted-agreement version.
+ * A payload the worker issued, identified by its serial.
+ *
+ * A purchased token also has `agreement`.
+ * A declared token has none.
  */
-export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string; agreement: string }
+export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string }
 
 /**
- * Returns whether a payload has both `lid` and `agreement`.
+ * Returns whether a payload has a `lid`.
+ * The online status routes are keyed by it.
  */
 export function isSelfServicePayload(payload: LicenseKeyPayload): payload is SelfServiceLicenseKeyPayload {
-	return typeof payload.lid === "string" && typeof payload.agreement === "string"
+	return typeof payload.lid === "string"
+}
+
+/**
+ * Returns whether a scope admits an artifact.
+ * An artifact is a package name or a `tier:<name>` entry.
+ */
+export function scopeAdmits(scope: LicenseKeyPayload["scope"], artifact: string): boolean {
+	return scope === "all" || scope.includes(artifact)
 }
 
 /**
@@ -137,7 +209,7 @@ export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM
 /**
  * Returns the last UTC millisecond of the expiration date.
  */
-function expiryInstant(expires: string): Date {
+export function licenseExpiryInstant(expires: string): Date {
 	return new Date(`${expires}T23:59:59.999Z`)
 }
 
@@ -199,7 +271,7 @@ export async function verifyLicenseKey(
 
 	const now = options.now ?? new Date()
 
-	if (payload.expires && expiryInstant(payload.expires) < now) {
+	if (payload.expires && licenseExpiryInstant(payload.expires) < now) {
 		return { status: "expired", kid: payload.kid, payload }
 	}
 

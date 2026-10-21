@@ -39,6 +39,19 @@ const expired = await verifyLicenseKey(token, { trustedKeys, now: new Date("2027
 const unknownKey = await verifyLicenseKey(token, { trustedKeys: {}, now: new Date("2027-01-01T00:00:00Z") })
 const invalid = await verifyLicenseKey("mwl1.not.real", { trustedKeys })
 
+const declaredPayload: LicenseKeyPayload = {
+	...payload,
+	licensee: "Example Project",
+	expires: "2027-03-11",
+	terms: "AGPL-3.0-only",
+	intent: "open-source",
+	seq: 1,
+	lid: "lic_0123456789abcdefghijkl",
+}
+
+const declaredToken = await encodeLicenseKey(declaredPayload, pair.privateKeyPEM)
+const validDeclared = await verifyLicenseKey(declaredToken, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })
+
 describe("licensePageURL", () => {
 	it("defaults to mailwoman.ai and strips a trailing slash", () => {
 		expect(licensePageURL()).toBe("https://mailwoman.ai/license")
@@ -78,15 +91,87 @@ describe("buildEngineStamp", () => {
 		expect(stamp.notice).not.toBeNull()
 	})
 
+	it("keeps the open-source branch and states the declaration for a valid AGPL-3.0-only key", () => {
+		const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: validDeclared })
+
+		expect(stamp.license).toBe("AGPL-3.0-only")
+
+		expect(stamp.notice).toBe(
+			"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. Declared open-source until 2027-03-11."
+		)
+	})
+
 	it("never carries the licensee or the key id, whatever the key reads", () => {
-		for (const key of [undefined, valid, expired, unknownKey, invalid]) {
+		for (const key of [undefined, valid, expired, unknownKey, invalid, validDeclared]) {
 			const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key })
 
 			expect(Object.keys(stamp).toSorted()).toEqual(["license", "license_url", "name", "notice", "version"])
 
 			expect(stringifyJSON(stamp)).not.toContain("Example Ltd")
+			expect(stringifyJSON(stamp)).not.toContain("Example Project")
 			expect(stringifyJSON(stamp)).not.toContain(kid)
 		}
+	})
+})
+
+describe("licenseNoticeLines for a declared key", () => {
+	const stamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: validDeclared })
+
+	it("keeps the obligation line and states the declaration with its holder and the URL", () => {
+		expect(licenseNoticeLines(stamp, validDeclared, new Date("2027-01-01T00:00:00Z"))).toEqual([
+			"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.",
+			"Declared open-source for Example Project until 2027-03-11: https://mailwoman.ai/license",
+		])
+	})
+
+	it("states the lapse and the re-issue command once a declared key has expired", async () => {
+		const expiredDeclared = await verifyLicenseKey(declaredToken, {
+			trustedKeys,
+			now: new Date("2027-03-12T00:00:00Z"),
+		})
+
+		const lapsed = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: expiredDeclared })
+
+		expect(licenseNoticeLines(lapsed, expiredDeclared, new Date("2027-03-12T00:00:00Z"))).toEqual([
+			"mailwoman is licensed AGPL-3.0-only (the configured license key expired on 2027-03-11): modified or network-served copies must offer their source.",
+			"Your declaration expired on 2027-03-11: run `mailwoman license refresh`, or declare again. https://mailwoman.ai/license",
+		])
+	})
+
+	it("states an evaluation's end and the declare-or-buy routes, never a refresh", async () => {
+		const evaluationPayload: LicenseKeyPayload = {
+			...declaredPayload,
+			licensee: "Trial Ltd",
+			intent: "evaluation",
+			expires: "2026-11-20",
+		}
+
+		const evaluationToken = await encodeLicenseKey(evaluationPayload, pair.privateKeyPEM)
+		const evaluating = await verifyLicenseKey(evaluationToken, { trustedKeys, now: new Date("2026-10-25T00:00:00Z") })
+		const evaluatingStamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: evaluating })
+
+		expect(evaluatingStamp.notice).toContain("Evaluating until 2026-11-20.")
+
+		const near = licenseNoticeLines(evaluatingStamp, evaluating, new Date("2026-11-10T00:00:00Z"))
+
+		expect(near?.[1]).toBe(
+			"Evaluating for Trial Ltd until 2026-11-20, which is in 10 days: declare an open-source, non-profit, academic or student use, or buy a license, before then. https://mailwoman.ai/license"
+		)
+
+		const ended = await verifyLicenseKey(evaluationToken, { trustedKeys, now: new Date("2026-11-21T00:00:00Z") })
+		const endedStamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: ended })
+
+		expect(licenseNoticeLines(endedStamp, ended, new Date("2026-11-21T00:00:00Z"))?.[1]).toBe(
+			"Your evaluation ended on 2026-11-20: declare an open-source, non-profit, academic or student use, or buy a license. https://mailwoman.ai/license"
+		)
+	})
+
+	it("announces the expiry date from 28 days before it", () => {
+		const lines = licenseNoticeLines(stamp, validDeclared, new Date("2027-02-20T00:00:00Z"))
+
+		expect(lines?.[1]).toBe(
+			"Declared open-source for Example Project until 2027-03-11, which is in 19 days: run `mailwoman license refresh` before then. https://mailwoman.ai/license"
+		)
 	})
 })
 

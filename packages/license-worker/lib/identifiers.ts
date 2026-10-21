@@ -23,6 +23,29 @@ export function newLicenseID(): string {
 }
 
 /**
+ * `clm_` plus 22 URL-safe characters from 16 random bytes: the claim the CLI polls
+ * while a declared token travels by email.
+ */
+export function newClaimID(): string {
+	return `clm_${toBase64URL(randomBytes(16))}`
+}
+
+/**
+ * `iss_` plus 22 URL-safe characters from 16 random bytes: the key of one issuance row,
+ * and the idempotency key of the email that delivers it.
+ */
+export function newIssuanceID(): string {
+	return `iss_${toBase64URL(randomBytes(16))}`
+}
+
+/**
+ * `dl_` plus 22 URL-safe characters from 16 random bytes: the key of one granted download.
+ */
+export function newDownloadID(): string {
+	return `dl_${toBase64URL(randomBytes(16))}`
+}
+
+/**
  * 32 random bytes, url-safe: the per-license capability the refresh route accepts,
  * shown once and stored by digest.
  */

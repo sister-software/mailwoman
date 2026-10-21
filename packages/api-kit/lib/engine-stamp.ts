@@ -25,6 +25,7 @@ export const EngineStampSchema = z
 		license: z.string(),
 		license_url: z.string(),
 		notice: z.string().nullable(),
+		coverage: z.object({ resolved: z.string(), tier: z.string(), command: z.string() }).optional(),
 	})
 	.meta({ id: "EngineStamp" }) satisfies z.ZodType<EngineStamp>
 

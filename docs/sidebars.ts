@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
 		"solutions/keep-addresses-inside",
 		"solutions/fleet-reverse-geocoding",
 		"solutions/resolve-a-messy-file",
+		"solutions/research-and-teaching",
 	],
 	developers: [
 		{

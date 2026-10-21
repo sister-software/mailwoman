@@ -100,6 +100,10 @@ export interface LicensePosture {
 	 */
 	lid: string | null
 	lidStatus: LicenseStatusAnswer | null
+	/**
+	 * The UUID this installation minted into its config root, reported for Mailwoman's own license alone.
+	 */
+	installationID?: string | null
 }
 
 /**
@@ -517,6 +521,11 @@ export interface RuntimeLicenseObservation {
 	 * This status does not change the offline license branch.
 	 */
 	lidStatus: LicenseStatusAnswer | null
+	/**
+	 * The installation id under the config root, or `null` before the first license
+	 * or data-pull action mints one.
+	 */
+	installationID: string | null
 }
 
 /**
@@ -540,6 +549,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: commercial })
 	const summary = summarizeLicense(applied)
 	const obligations = `obligations: ${describeObligations(summary.obligations, summary.recognized)}`
+	const trailer = o.installationID ? `${obligations} · installation id ${o.installationID}` : obligations
 	const lid = key && "payload" in key && isSelfServicePayload(key.payload) ? key.payload.lid : null
 
 	const license: LicensePosture = {
@@ -554,13 +564,14 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		keyStatus: key ? (retired && key.status === "valid" ? "retired" : key.status) : null,
 		lid: lid || null,
 		lidStatus: o.lidStatus,
+		installationID: o.installationID,
 	}
 
 	if (!key) {
 		return {
 			...base,
 			status: CheckStatus.OK,
-			detail: `${applied} — no license key configured, so the open-source branch applies · ${obligations}`,
+			detail: `${applied} — no license key configured, so the open-source branch applies · ${trailer}`,
 			license,
 		}
 	}
@@ -583,7 +594,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 			return {
 				...base,
 				status: CheckStatus.Degraded,
-				detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}); online this license is ${o.lidStatus} · ${obligations}`,
+				detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}); online this license is ${o.lidStatus} · ${trailer}`,
 				consequence:
 					`The key verifies offline until its date, so the runtime still applies the commercial branch; online, the license it names is ${o.lidStatus}. ` +
 					`Manage billing at ${docsSiteURL()}/license.`,
@@ -601,7 +612,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		return {
 			...base,
 			status: CheckStatus.OK,
-			detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}; ${freshness}${standing}) · ${obligations}`,
+			detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}; ${freshness}${standing}) · ${trailer}`,
 			license,
 		}
 	}
@@ -616,7 +627,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	return {
 		...base,
 		status: CheckStatus.Degraded,
-		detail: `${applied} — ${reason}; the open-source branch applies · ${obligations}`,
+		detail: `${applied} — ${reason}; the open-source branch applies · ${trailer}`,
 		consequence:
 			"A configured license key that does not verify leaves this installation under AGPL-3.0-only terms: attribution, share-alike on modifications, and a source offer to network users.",
 		fix: "mailwoman license verify   (then request a current key from Sister Software)",

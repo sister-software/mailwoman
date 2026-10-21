@@ -8,9 +8,10 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 
+import { type DeclarationDependencies, reissueDeclaration } from "#declare"
 import type { LicenseWorkerEnv } from "#env"
 import { secretDigest, secretDigestsMatch } from "#identifiers"
-import type { Ledger } from "#ledger/client"
+import { findDeclaration } from "#ledger/declarations"
 import { currentToken, findLicense } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
@@ -56,7 +57,9 @@ const refreshRoute = createRoute({
 	},
 })
 
-export function registerRefreshRoute(app: OpenAPIHono, env: LicenseWorkerEnv, ledger: Ledger): void {
+export function registerRefreshRoute(app: OpenAPIHono, env: LicenseWorkerEnv, deps: DeclarationDependencies): void {
+	const { ledger } = deps
+
 	app.openapi(refreshRoute, async (c) => {
 		const { lid, secret } = c.req.valid("json")
 
@@ -67,8 +70,33 @@ export function registerRefreshRoute(app: OpenAPIHono, env: LicenseWorkerEnv, le
 		const license = await findLicense(ledger, lid)
 		const digest = await secretDigest(secret)
 
+		if (!license) {
+			// A declared license shares the lid namespace.
+			// It is re-issued here rather than read, because its next token is minted
+			// on demand rather than by an invoice.
+			const declaration = await findDeclaration(ledger, lid)
+
+			if (!declaration || !secretDigestsMatch(declaration.refresh_secret_sha256, digest)) {
+				return c.json({ error: "not found" }, 404)
+			}
+
+			if (declaration.license_state === LicenseState.Revoked || declaration.license_state === LicenseState.Lapsed) {
+				return c.json({ status: declaration.license_state }, 200)
+			}
+
+			const issuance = await reissueDeclaration(env, deps, declaration)
+
+			// An evaluation past its thirty days, or any declaration under the kill switch with no token left, lapses.
+			if (!issuance) return c.json({ status: "lapsed" as const }, 200)
+
+			return c.json(
+				{ status: "active" as const, token: issuance.token, issued: issuance.issued, expires: issuance.expires },
+				200
+			)
+		}
+
 		// The digest is computed before the lookup is consulted, so a missing lid costs the same work as a wrong secret.
-		if (!license || !secretDigestsMatch(license.refresh_secret_sha256, digest)) {
+		if (!secretDigestsMatch(license.refresh_secret_sha256, digest)) {
 			return c.json({ error: "not found" }, 404)
 		}
 

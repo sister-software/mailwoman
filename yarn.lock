@@ -6482,6 +6482,7 @@ __metadata:
     "@types/react-dom": "npm:^19.3.0"
     "@vitest/runner": "npm:^4.1.12"
     "@vitest/snapshot": "npm:^4.1.12"
+    aws4fetch: "npm:^1.0.20"
     hono: "npm:^4.13.13"
     kysely: "npm:^0.29.6"
     kysely-d1: "npm:^0.4.0"
@@ -13507,6 +13508,13 @@ __metadata:
     "@fastify/error": "npm:^4.0.0"
     fastq: "npm:^1.17.1"
   checksum: 10/8286c6c3791ea24240fb7a977b6214f98f839881a809f577222e18a1e5e4b5cc399b7e74c3dbaa38d5c27bb6225697a167ce8a3b4da6c986b9c7323b7ee443dc
+  languageName: node
+  linkType: hard
+
+"aws4fetch@npm:^1.0.20":
+  version: 1.0.20
+  resolution: "aws4fetch@npm:1.0.20"
+  checksum: 10/1329dd5913224c9a4fcb276633a2677baafe8224c3e4b99083309b30af4b114b33a73b6674369419f1978b83e905c4fff61d4af175c24450707c3cf027bb86da
   languageName: node
   linkType: hard
 

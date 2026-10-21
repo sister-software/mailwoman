@@ -10,6 +10,7 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 
 import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
+import { findDeclaration } from "#ledger/declarations"
 import { findLicense } from "#ledger/licenses"
 import { publicLicenseStatus } from "#policy"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
@@ -45,7 +46,7 @@ export function registerStatusRoute(app: OpenAPIHono, env: LicenseWorkerEnv, led
 			return c.json({ error: "rate limited" }, 429)
 		}
 
-		const license = await findLicense(ledger, lid)
+		const license = (await findLicense(ledger, lid)) ?? (await findDeclaration(ledger, lid))
 
 		return c.json({ status: license ? publicLicenseStatus(license.license_state) : "unknown" }, 200)
 	})
