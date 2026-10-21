@@ -206,6 +206,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			rowsPerFile,
 			resume,
 			derivationFor,
+			onStaging: (split, peakBytes) =>
+				opts.onProgress?.("parquet", `${split} staging peaked at ${peakBytes.toLocaleString("en-US")} bytes`),
 		}
 	)
 

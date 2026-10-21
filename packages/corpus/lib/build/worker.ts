@@ -263,6 +263,8 @@ async function runFinishTask(task: FinishTask, report: (message: string) => void
 			rowsPerFile: task.buildSettings.rowsPerFile,
 			resume,
 			manifestPath,
+			onStaging: (split, peakBytes) =>
+				report(`${split} parquet staging peaked at ${peakBytes.toLocaleString("en-US")} bytes`),
 			duckdb: {
 				memoryLimitBytes: task.resources.duckdbBytes,
 				threads: task.resources.duckdbThreads,

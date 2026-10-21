@@ -91,8 +91,12 @@ export interface DuckDBLimits {
  * Every connection has a memory limit.
  * It is set here rather than at each call site because host memory exhaustion affects
  * every process, including processes unrelated to the query that caused it.
+ *
+ * `databasePath` names a database file for a caller whose tables outgrow memory,
+ * such as the parquet writer's staging.
+ * The default keeps every table in memory.
  */
-export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableDuckDB> {
+export async function openDuckDB(limits: DuckDBLimits = {}, databasePath = ":memory:"): Promise<DisposableDuckDB> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const { dataRootPath } = await import("@mailwoman/core/data-root")
 	const { ByteFormatter } = await import("@mailwoman/core/fs/formatters")
@@ -107,7 +111,7 @@ export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableD
 	// Created here, where the default is chosen.
 	await makeDirectories(temporaryDirectory)
 
-	const instance = await DuckDBInstance.create(":memory:", {
+	const instance = await DuckDBInstance.create(databasePath, {
 		// DuckDB parses the value, so it takes a string with a unit rather than a byte count.
 		// `formatIEC` writes the binary unit DuckDB reads back verbatim; `formatSI`'s `MB`
 		// would be read as decimal megabytes and set a limit 4.9% under the one this asked for.

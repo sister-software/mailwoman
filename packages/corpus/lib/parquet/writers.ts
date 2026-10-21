@@ -33,7 +33,6 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
-import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	makeDirectories,
@@ -45,13 +44,13 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { once } from "@mailwoman/core/utils/events"
 import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { corpusDirectoryName } from "#directory"
-import { type DuckDBLimits, escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { openColumnarStage } from "#parquet/columnar-stage"
+import type { DuckDBLimits } from "#parquet/duckdb"
 import {
 	addToTally,
 	type DerivationInputs,
@@ -64,7 +63,6 @@ import {
 	writeParquetRecord,
 } from "#parquet/record"
 import {
-	PARQUET_COLUMN_TYPES,
 	PARQUET_COLUMNS,
 	PARQUET_COMPRESSION,
 	type ParquetRow,
@@ -158,13 +156,28 @@ export function stampRowLicense(
 	statements: Map<string, number>,
 	context: string
 ): ParquetRow {
+	return { ...row, license: rowLicenseID(row, licenses, statements, context) }
+}
+
+/**
+ * The register license id {@linkcode stampRowLicense} writes into `row`,
+ * counting the statement it replaces.
+ *
+ * A writer that owns `row` assigns it in place rather than copying the row.
+ */
+function rowLicenseID(
+	row: ParquetRow,
+	licenses: RowLicenses,
+	statements: Map<string, number>,
+	context: string
+): string {
 	const id = licenses.require(row.source, context)
 
 	if (typeof row.license === "string" && row.license && row.license !== id) {
 		statements.set(row.license, (statements.get(row.license) ?? 0) + 1)
 	}
 
-	return { ...row, license: id }
+	return id
 }
 
 /**
@@ -337,11 +350,18 @@ export interface WriteParquetSplitsOptions {
 	manifestPath?: PathBuilderLike
 
 	/**
-	 * Limits for the DuckDB instance that converts each staged part.
+	 * Limits for the DuckDB instance that stages and converts each split's parts.
 	 *
-	 * @defaultValue {@linkcode openDuckDB}'s defaults
+	 * The thread limit does not apply: the instance runs at `CONVERSION_THREADS` (`#parquet/columnar-stage`).
+	 *
+	 * @defaultValue `openDuckDB`'s defaults
 	 */
 	duckdb?: DuckDBLimits
+
+	/**
+	 * Called once per split written, with the most bytes its staging database held on disk.
+	 */
+	onStaging?: (split: SplitName, peakBytes: number) => void
 }
 
 /**
@@ -387,46 +407,6 @@ export function parquetManifestOf(
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
 /**
- * DuckDB threads for converting a staged part, whatever the instance's own limit.
- */
-export const CONVERSION_THREADS = 1
-
-/**
- * Convert one staged NDJSON part to a parquet file at `outputPath`.
- *
- * @internal Exported for the test that converts one part under several instance thread limits.
- */
-export async function writeStagedParquet(stagePath: string, outputPath: string, limits?: DuckDBLimits): Promise<void> {
-	using db = await openDuckDB(limits)
-	const columns = [...PARQUET_COLUMNS]
-
-	const columnsLiteral =
-		"{" + columns.map((column) => `'${column}': '${PARQUET_COLUMN_TYPES[column]}'`).join(", ") + "}"
-
-	const selectList = columns.map(escapeSQLIdentifier).join(", ")
-
-	await db.run("SET preserve_insertion_order=true")
-	// The row-group boundaries of a multi-threaded COPY move between runs: measured 2026-10-20
-	// on one 1,000,000-row `ban` part, three conversions each at 2, 4 and 16 threads wrote
-	// two different files at every count, and 1 thread wrote one file every time.
-	// Rows and their order were the same throughout.
-	// One thread makes a file's bytes a function of its rows, on any host and in any worker.
-	await db.run(`SET threads=${CONVERSION_THREADS}`)
-
-	await db.run(
-		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
-			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-			`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
-	)
-}
-
-async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void> {
-	if (!stage.write(stringifyJSON(row) + "\n")) {
-		await once(stage, "drain")
-	}
-}
-
-/**
  * A source id becomes a store directory's name, so it must be one path segment.
  */
 const STORE_SOURCE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
@@ -437,8 +417,10 @@ const STORE_SOURCE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
 interface OpenPart {
 	source: string
 	part: number
-	stagePath: string
-	stage: WriteStream
+	/**
+	 * The part's name in the split's columnar stage.
+	 */
+	stageName: string
 	rows: number
 	firstSourceID: string
 	lastSourceID: string
@@ -455,20 +437,21 @@ interface OpenPart {
  * Within a split one file is open per source, since rows arrive interleaved
  * across sources after the shuffle.
  *
- * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
- * writes the Parquet file from disk.
- * A staged part is removed as soon as its conversion succeeds, so the split's staging
- * directory holds only the parts still open, at most one per source.
+ * Rows are staged in columnar batches as tables of one DuckDB database file per split
+ * (`#parquet/columnar-stage`), then DuckDB writes each part's Parquet file from its table.
+ * A part's table is dropped as soon as its conversion succeeds, so the staging
+ * database holds only the parts still open, at most one per source.
  *
  * Each source's final part stays open until the split's rows end.
- * Peak disk demand is therefore the unfinished staged parts, plus the conversion
- * output being written, plus DuckDB's spill during that conversion.
+ * Peak disk demand is therefore the staging database, plus the conversion output
+ * being written, plus DuckDB's spill during that conversion.
+ * `onStaging` reports the database's peak.
  *
  * A failed conversion records no file and adds no manifest entry, so a resumed run writes that part again.
- * The writer keeps the staged part on failure and removes its own partial output.
+ * The writer keeps the staged table on failure and removes its own partial output.
  *
- * The error states the source, part, row count, source-id range and staged path.
- * The staged part goes when the split's staging directory is disposed.
+ * The error states the source, part, row count, source-id range and staging database.
+ * The staged table goes when the split's staging directory is disposed.
  * Its rows can be regenerated from the deterministic input.
  *
  * Each conversion writes `data.parquet.partial.<pid>.<random>` and renames it into place,
@@ -514,6 +497,10 @@ export async function writeParquetSplits(
 		if (!rows) continue
 
 		await using staging = await temporaryDirectory(`mailwoman-parquet-${split}-`)
+		// A string, because DuckDB opens it and the error names it.
+		const stagePath = staging.path("stage.duckdb").toString()
+		const stage = staging.use(await openColumnarStage(stagePath, opts.duckdb))
+		let stagePeakBytes = 0
 
 		// The rows of each source already in this split's `.parquet` files.
 		// A resumed run reads the same iterable from its start, so a source's rows arrive again
@@ -530,7 +517,7 @@ export async function writeParquetSplits(
 
 		const open = new Map<string, OpenPart>()
 
-		const openPart = (source: string): OpenPart => {
+		const openPart = async (source: string): Promise<OpenPart> => {
 			if (!STORE_SOURCE_PATTERN.test(source)) {
 				throw new Error(`writeParquetSplits: source ${stringifyJSON(source)} cannot name a store directory`)
 			}
@@ -539,14 +526,14 @@ export async function writeParquetSplits(
 
 			nextPart.set(source, part + 1)
 
-			// A string, because DuckDB reads it inside SQL text.
-			const stagePath = staging.path(`${source}-${part}.ndjson`).toString()
+			const stageName = `${source}-${part}`
+
+			await stage.open(stageName)
 
 			const opened: OpenPart = {
 				source,
 				part,
-				stagePath,
-				stage: staging.use(openWriteStream(stagePath)),
+				stageName,
 				rows: 0,
 				firstSourceID: "",
 				lastSourceID: "",
@@ -562,15 +549,13 @@ export async function writeParquetSplits(
 		const closePart = async (opened: OpenPart): Promise<void> => {
 			open.delete(opened.source)
 
-			await new Promise<void>((resolve, reject) => {
-				opened.stage.end((error?: Error | null) => (error ? reject(error) : resolve()))
-			})
-
 			if (!opened.rows) {
-				await removePath(opened.stagePath)
+				await stage.discard(opened.stageName)
 
 				return
 			}
+
+			stagePeakBytes = Math.max(stagePeakBytes, await stage.diskBytes())
 
 			const derivation = await sourceDerivation(opened.source)
 
@@ -598,22 +583,19 @@ export async function writeParquetSplits(
 			await makeDirectories(fileDir)
 
 			try {
-				await writeStagedParquet(opened.stagePath, pending, opts.duckdb)
+				// Drops the part's table once the file is written, which bounds staging to the parts still open.
+				await stage.convert(opened.stageName, pending)
 			} catch (error) {
 				await removePathIfPresent(pending)
 
 				throw new Error(
 					`writeParquetSplits: converting ${split} part ${opened.part} of ${opened.source} ` +
 						`(${opened.rows.toLocaleString()} rows, source_id ${opened.firstSourceID} to ${opened.lastSourceID}) ` +
-						`from ${opened.stagePath} to ${pending} failed. No file was recorded for this part.`,
+						`from staged table ${opened.stageName} in ${stagePath} to ${pending} failed. ` +
+						`No file was recorded for this part.`,
 					{ cause: error }
 				)
 			}
-
-			// The converter's connection closed when `writeStagedParquet` returned,
-			// so no reader holds the staged part open.
-			// Removing it here bounds staging to the parts still open.
-			await removePath(opened.stagePath)
 
 			const sha256 = await sha256File(pending)
 			const existing = await tryStat(path)
@@ -671,10 +653,13 @@ export async function writeParquetSplits(
 				continue
 			}
 
-			const opened = open.get(row.source) ?? openPart(row.source)
-			const pq = stampRowLicense(rowToParquet(row), licenses, opened.statements, "writeParquetSplits")
+			const opened = open.get(row.source) ?? (await openPart(row.source))
+			// `rowToParquet` returns a fresh object, so the license is stamped in place rather than on a copy.
+			const pq = rowToParquet(row)
 
-			await writeStagedRow(opened.stage, pq)
+			pq.license = rowLicenseID(pq, licenses, opened.statements, "writeParquetSplits")
+
+			await stage.append(opened.stageName, pq)
 
 			opened.rows++
 
@@ -694,6 +679,8 @@ export async function writeParquetSplits(
 		for (const opened of open.values()) {
 			await closePart(opened)
 		}
+
+		opts.onStaging?.(split, stagePeakBytes)
 	}
 
 	const manifest = manifestNow()

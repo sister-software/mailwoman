@@ -2,31 +2,28 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests the staging lifecycle of `writeParquetSplits`: staged parts are removed after conversion, a failed
- *   conversion leaves the manifest without that part, and a resumed run writes the same files as an uninterrupted one.
+ * @file Tests the staging lifecycle of `writeParquetSplits`: staged tables are dropped after conversion, a failed
+ *   conversion leaves the manifest without that part, a resumed run writes the same files as an uninterrupted one,
+ *   and a file's bytes depend on its rows and not on the thread limit or the other sources interleaved with them.
  */
 
-import { dirname } from "node:path"
-
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
-import { type ParquetManifest, writeParquetSplits, writeStagedParquet } from "#parquet/writers"
+import { ROW_GROUP_SIZE } from "#parquet/schema"
+import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 
 /**
- * Called before each staged-part conversion with the staged input and the output path.
+ * Called before each staged-part conversion with the staged table, the output path
+ * and the part tables the staging database holds at that moment.
  * A throw fails that conversion.
  */
 const hooks = vi.hoisted(() => ({
-	onConvert: null as null | ((stagePath: string, outputPath: string) => Promise<void> | void),
+	onConvert: null as null | ((table: string, outputPath: string, tables: string[]) => Promise<void> | void),
 }))
 
 vi.mock("#parquet/duckdb", async (importOriginal) => {
@@ -39,10 +36,18 @@ vi.mock("#parquet/duckdb", async (importOriginal) => {
 			const run = db.run.bind(db)
 
 			db.run = (async (sql: string, ...rest: unknown[]) => {
-				const match = /read_json\('([^']+)'.*\bTO '([^']+)'/su.exec(sql)
+				const match = /^COPY \(SELECT .* FROM (part_\d+)\) TO '([^']+)'/su.exec(sql)
 
 				if (match && hooks.onConvert) {
-					await hooks.onConvert(match[1]!, match[2]!)
+					const listed = await db.runAndReadAll(
+						"SELECT table_name FROM duckdb_tables() WHERE table_name NOT LIKE '%_dict' ORDER BY table_name"
+					)
+
+					await hooks.onConvert(
+						match[1]!,
+						match[2]!,
+						listed.getRowsJson().map(([name]) => String(name))
+					)
 				}
 
 				return (run as (sql: string, ...rest: unknown[]) => unknown)(sql, ...rest)
@@ -108,18 +113,13 @@ afterEach(async () => {
 })
 
 describe("writeParquetSplits staging", () => {
-	it("removes each staged part once its conversion succeeds", async () => {
+	it("drops each staged table once its conversion succeeds", async () => {
 		const converted: string[] = []
 		const presentAtNextConversion: string[] = []
 
-		hooks.onConvert = async (stagePath) => {
-			for (const earlier of converted) {
-				if (await pathExists(earlier)) {
-					presentAtNextConversion.push(earlier)
-				}
-			}
-
-			converted.push(stagePath)
+		hooks.onConvert = (table, _outputPath, tables) => {
+			presentAtNextConversion.push(...converted.filter((earlier) => tables.includes(earlier)))
+			converted.push(table)
 		}
 
 		const manifest = await writeParquetSplits(
@@ -130,23 +130,17 @@ describe("writeParquetSplits staging", () => {
 		expect(converted).toHaveLength(3)
 		expect(presentAtNextConversion).toEqual([])
 		expect(manifest.slices.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
-
-		for (const file of manifest.slices) {
-			expect(await pathExists(file.path)).toBe(true)
-		}
 	})
 
-	it("records no file for a failed conversion and keeps its staged part for the error", async () => {
+	it("records no file for a failed conversion and names its staged table in the error", async () => {
 		let conversions = 0
-		let failedStage = ""
-		let failedStagePresent = false
+		let failedTable = ""
 
-		hooks.onConvert = async (stagePath) => {
+		hooks.onConvert = (table) => {
 			conversions++
 
 			if (conversions === 2) {
-				failedStage = stagePath
-				failedStagePresent = await pathExists(stagePath)
+				failedTable = table
 
 				throw new Error("injected conversion failure")
 			}
@@ -158,8 +152,8 @@ describe("writeParquetSplits staging", () => {
 		)
 
 		await expect(write).rejects.toThrow(/converting train part 1 of wof-admin.*No file was recorded/su)
-		await expect(write).rejects.toThrow(failedStage)
-		expect(failedStagePresent).toBe(true)
+		await expect(write).rejects.toThrow(/staged table wof-admin-1 in .*stage\.duckdb/u)
+		expect(failedTable).toMatch(/^part_\d+$/u)
 
 		const manifest = await readLocalJSONFile<ParquetManifest>(scratch.path("corpus-v0.1.0", "MANIFEST.json"))
 
@@ -203,61 +197,72 @@ describe("writeParquetSplits staging", () => {
 		const sources = ["wof-admin", "wof-postalcode", "openaddresses"]
 		const perSource = 20
 		const rowsPerFile = 3
-		const maxParts = Math.ceil(perSource / rowsPerFile)
 		const stagedCounts: number[] = []
+		const peaks: number[] = []
 
-		hooks.onConvert = async (stagePath) => {
-			const staging = dirname(stagePath)
-			let staged = 0
-
-			for (const source of sources) {
-				for (let part = 0; part < maxParts; part++) {
-					if (await pathExists(`${staging}/${source}-${part}.ndjson`)) {
-						staged++
-					}
-				}
-			}
-
-			stagedCounts.push(staged)
+		hooks.onConvert = (_table, _outputPath, tables) => {
+			stagedCounts.push(tables.length)
 		}
 
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(interleaved(sources, perSource)) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile }
+			{
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+				derivationFor: () => FIXTURE_DERIVATION,
+				rowsPerFile,
+				onStaging: (_split, peakBytes) => peaks.push(peakBytes),
+			}
 		)
 
-		expect(stagedCounts).toHaveLength(sources.length * maxParts)
+		expect(stagedCounts).toHaveLength(sources.length * Math.ceil(perSource / rowsPerFile))
 		expect(Math.max(...stagedCounts)).toBeLessThanOrEqual(sources.length)
 		expect(manifest.total_rows).toBe(sources.length * perSource)
+		expect(peaks).toHaveLength(1)
+		expect(peaks[0]).toBeGreaterThan(0)
 	})
 })
 
-describe("writeStagedParquet", () => {
-	it("writes the same bytes from one staged part under every instance thread limit", { timeout: 120_000 }, async () => {
-		// Several row groups, because a multi-threaded COPY moved row-group boundaries between runs.
-		const rows = ROW_GROUP_SIZE * 3 + 1234
-		const stagePath = scratch.path("part.ndjson").toString()
-		const stage = openWriteStream(stagePath)
+describe("writeParquetSplits bytes", () => {
+	const write = async (rows: readonly LabeledRow[], duckdb: { threads?: number } = {}) => {
+		await using out = await temporaryDirectory("mailwoman-parquet-bytes-")
 
-		for (let index = 0; index < rows; index++) {
-			stage.write(`${stringifyJSON(rowToParquet(labeled("ban", index)))}\n`)
-		}
+		const manifest = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{
+				outputDir: out.path,
+				corpusVersion: "0.1.0",
+				derivationFor: () => FIXTURE_DERIVATION,
+				rowsPerFile: ROW_GROUP_SIZE * 3 + 1234,
+				duckdb: { ...duckdb, memoryLimitBytes: 1024 ** 3 },
+			}
+		)
 
-		await new Promise<void>((resolve, reject) => {
-			stage.end((error?: Error | null) => (error ? reject(error) : resolve()))
-		})
+		return new Map(manifest.slices.map((file) => [`${file.source}:${file.rows}`, file.sha256]))
+	}
 
+	it("writes the same bytes under every instance thread limit", { timeout: 180_000 }, async () => {
+		// Several row groups and more than one part, because a multi-threaded COPY moved row-group boundaries.
+		const rows = interleaved(["ban"], ROW_GROUP_SIZE * 4)
 		const digests = new Set<string>()
 
 		for (const threads of [1, 2, 4]) {
-			for (let run = 0; run < 2; run++) {
-				const out = scratch.path(`t${threads}-r${run}.parquet`).toString()
-
-				await writeStagedParquet(stagePath, out, { threads, memoryLimitBytes: 1024 ** 3 })
-				digests.add(await sha256File(out))
-			}
+			digests.add(stringifyJSON([...(await write(rows, { threads }))]))
 		}
 
 		expect([...digests]).toHaveLength(1)
 	})
+
+	it(
+		"writes a source's files from its rows alone, whatever other sources interleave",
+		{ timeout: 180_000 },
+		async () => {
+			const alone = await write(interleaved(["ban"], ROW_GROUP_SIZE + 4321))
+			const mixed = await write(interleaved(["ban", "wof-admin"], ROW_GROUP_SIZE + 4321))
+
+			for (const [key, sha256] of alone) {
+				expect(mixed.get(key)).toBe(sha256)
+			}
+		}
+	)
 })
