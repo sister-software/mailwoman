@@ -173,7 +173,7 @@ Each writes `/data/audits/epoch-mixture-<stem>.json`. A failed receipt stops the
 
 ```bash
 node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <log> --cwd corpus-python \
-  -- modal run -d -m launch.train_remote --config v8.0.0-postcode-move-p000-60k.yaml --resume none
+  -- uv run --extra dev modal run -d -m launch.train_remote --config v8.0.0-postcode-move-p000-60k.yaml --resume none
 ```
 
 Repeat with the p005 and p015 configs. The entry point reruns the receipts on CPU as its preflight and refuses the GPU

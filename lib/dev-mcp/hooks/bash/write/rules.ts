@@ -174,7 +174,8 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
  * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
-	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
+	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python " +
+	"-- uv run --extra dev modal run …`, " +
 	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
 	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
 	"the container mid-training. Watch the run by polling the volume for its next checkpoint rather than by holding the client " +
@@ -224,6 +225,20 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// The head skips the `timeout` wrapper, but the segment still starts with it.
 		// Every timed Modal command is refused, because the expiry kills the client.
 		pattern: /^\s*timeout\b/u,
+		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
+		guidance: DETACHED_LAUNCH_GUIDANCE,
+	},
+	{
+		head: "uv",
+		// Launches run the Modal client from the venv as `uv run --extra dev modal run …`, so the segment's head is `uv`.
+		pattern: /(?:^|\s)run\b[^\n]*\smodal\s+run\b[^\n]*(?:\s-d\b|\s--detach\b)/u,
+		because:
+			"`uv run modal run -d` from Bash leaves the client in this shell's process group, and killing the client cancels the remote run",
+		guidance: DETACHED_LAUNCH_GUIDANCE,
+	},
+	{
+		head: "uv",
+		pattern: /^\s*timeout\b[^\n]*\smodal\s/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
 	},

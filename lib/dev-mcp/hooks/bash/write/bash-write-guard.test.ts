@@ -96,6 +96,9 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 		["a timed launch", `timeout 600 modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
 		["a timed Modal command with no detach", `timeout 200 modal run corpus-python/launch/train_remote.py::audit`],
 		["a detached launch behind a directory change", `cd corpus-python && modal run -d launch/train_remote.py`],
+		["a detached launch through the venv", `uv run --extra dev modal run -d -m launch.train_remote --config x.yaml`],
+		["a detached launch through the venv, long flag", `uv run modal run --detach -m launch.train_remote`],
+		["a timed launch through the venv", `timeout 600 uv run --extra dev modal run -m launch.train_remote::audit`],
 	])("refuses %s", (_label, command) => {
 		expect(refusalFor(command)).not.toBeNull()
 	})
@@ -221,6 +224,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 			`modal run corpus-python/launch/train_remote.py::sync_v540`,
 		],
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
+		["a short Modal command through the venv", `uv run --extra dev modal run -m launch.train_remote::sync --version x`],
+		["a venv test run", `uv run --extra dev pytest corpus-python/tests -q -d`],
 		[
 			"the detached launcher itself",
 			`node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,

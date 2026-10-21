@@ -15,6 +15,10 @@
  *   disappear.
  *
  *   Run: node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> -- <command> [arg ...]
+ *
+ *   A Modal training launch runs the client from the corpus-python venv:
+ *   node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python \
+ *     -- uv run --extra dev modal run -d -m launch.train_remote --config <recipe>.yaml --resume none
  */
 
 import { open } from "@mailwoman/core/fs/readers/stat"

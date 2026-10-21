@@ -154,7 +154,8 @@ def _load_r2_env() -> dict[str, str]:
 
 # The container has no `.env` file. Build the secret from the local checkout only.
 # An unconditional secret would crash every function that does not use R2.
-r2_secret = modal.Secret.from_dict(_load_r2_env() if modal.is_local() else {})
+# The unpacking builds the `dict[str, str | None]` that `from_dict` declares, which a `dict[str, str]` is not.
+r2_secret = modal.Secret.from_dict({**_load_r2_env()} if modal.is_local() else {})
 
 
 def _load_hf_env() -> dict[str, str]:
@@ -164,4 +165,4 @@ def _load_hf_env() -> dict[str, str]:
     return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))
 
 
-hf_secret = modal.Secret.from_dict(_load_hf_env() if modal.is_local() else {})
+hf_secret = modal.Secret.from_dict({**_load_hf_env()} if modal.is_local() else {})
