@@ -6,8 +6,8 @@
  *   The expiry date of a token, decided by the intent that issued it. An evaluation lasts thirty days. An academic or
  *   student token lasts a year. An open-source or non-profit declaration expires on the quarter lead date nearest to
  *   its issue date plus four months, so a token lives between eleven and twenty-four weeks and every expiry falls
- *   three weeks before a calendar quarter starts. A commercial token's expiry is its billing period, decided in
- *   `fulfil.ts`.
+ *   three weeks before a calendar quarter starts. A commercial token's expiry is its billing period, decided where
+ *   the paid invoice becomes a token.
  */
 
 import type { LicenseIntent } from "@mailwoman/core/license/key"
@@ -107,7 +107,7 @@ export function declarationExpiry(issued: string): string {
  * The expiry date for a token of the given intent issued on `issued`.
  *
  * @throws for the commercial intent.
- * Its expiry is the billing period, decided at fulfilment.
+ * Its expiry is the billing period, decided when the paid invoice is turned into a token.
  */
 export function expiryForIntent(intent: LicenseIntent, issued: string): string {
 	switch (intent) {
@@ -121,7 +121,7 @@ export function expiryForIntent(intent: LicenseIntent, issued: string): string {
 			return declarationExpiry(issued)
 		case "commercial":
 			throw new Error(
-				"a commercial token's expiry is its billing period end plus the grace days, decided at fulfilment"
+				"a commercial token's expiry is its billing period end plus the grace days, decided when the invoice is paid"
 			)
 	}
 }
