@@ -27,6 +27,7 @@ import { interfaceTool } from "#dev-mcp/tools/interface"
 import { lookupTool } from "#dev-mcp/tools/lookup"
 import { minimalPairsTool } from "#dev-mcp/tools/minimal-pairs"
 import { parseCompareTool } from "#dev-mcp/tools/parse-compare"
+import { postcodeTool } from "#dev-mcp/tools/postcode"
 import { provenanceTool } from "#dev-mcp/tools/provenance"
 import { reliabilityTool } from "#dev-mcp/tools/reliability"
 import { rigTool } from "#dev-mcp/tools/rig"
@@ -48,6 +49,7 @@ const FACTORIES = [
 	daemonTool,
 	inputsTool,
 	lookupTool,
+	postcodeTool,
 	runTool,
 	compareTool,
 	arcTool,
