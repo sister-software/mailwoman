@@ -18,7 +18,8 @@ from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 # `_required_train_seconds` preflights any recipe against the ceiling inside train(), so a config
 # that cannot fit fails before the run starts rather than at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
-# ~4.25 optimizer steps/s at batch 128 on the A100.
+# ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The function now requests the 80 GB card.
+# That card has the same compute and more memory bandwidth. This rate therefore stays a conservative preflight bound.
 MEASURED_STEPS_PER_SECOND = 4.25
 # Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
 # batches) plus a flat allowance for startup/shutdown outside the step loop.
@@ -87,7 +88,10 @@ def preflight_corpus_receipts(config_name: str) -> str:
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
-    gpu="A100",
+    gpu="A100-80GB",
+    # The loader streams in this process (`num_workers` is unread), so extra cores serve pyarrow decoding and
+    # torch's CPU threads. The reservation guarantees them rather than relying on burst capacity.
+    cpu=8.0,
     timeout=TRAIN_TIMEOUT_SECONDS,
     memory=32768,
 )
@@ -98,7 +102,7 @@ def _train_gpu(
     trackio_space: str = "",
     corpus_receipt_token: str = "",
 ) -> None:
-    """Run the CE-only classifier training on an A100.
+    """Run the CE-only classifier training on an A100 80 GB.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
     to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
