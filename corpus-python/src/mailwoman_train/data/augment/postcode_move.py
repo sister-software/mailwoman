@@ -55,10 +55,10 @@ class SkipReason:
     WORD_ACROSS_BOUNDARY = "word_across_boundary"
     """A token holds text on both sides of a unit boundary, so it cannot move with either side."""
     SPANS_OVERLAP = "spans_overlap"
-    """The input's spans overlap or nest, so no cut moves one without part of another."""
+    """The input's spans overlap or nest, so no slice of the text moves one span without part of another."""
     SPAN_EDGE_WHITESPACE = "span_edge_whitespace"
     """The moved block or the postcode starts or ends on whitespace (a locality span holding the space after the
-    street), so the cut would glue the postcode to the word before it (``MAIN ST11550``)."""
+    street), so moving the block would glue the postcode to the word before it (``MAIN ST11550``)."""
     INVALID_OUTPUT = "invalid_output"
     """The moved row's spans are out of bounds, unsorted or overlapping. The move refuses rather than emit a row the
     encoder rejects."""
