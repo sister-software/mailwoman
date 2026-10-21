@@ -33,6 +33,10 @@ class LabelSupportError(RuntimeError):
         super().__init__(message)
         self.report = report
 
+    def __reduce__(self) -> tuple[type[LabelSupportError], tuple[str, dict[str, Any]]]:
+        """Rebuild from the message and the report, so the error survives pickling out of a Modal function."""
+        return (type(self), (str(self.args[0]), self.report))
+
 
 def head_labels(label_ids: Sequence[int], bio_labels: Sequence[str]) -> set[str]:
     """The component tags a row holds, read from the `B-` tags among its piece labels."""

@@ -17,13 +17,9 @@
 
 import type { PathBuilderLike } from "path-ts"
 
+import { ROW_ID_SEPARATOR } from "#adapters/record-id"
 import { escapeSQLString, openDuckDB, type DuckDBLimits } from "#parquet/duckdb"
 import { PARQUET_COMPRESSION } from "#parquet/schema"
-
-/**
- * The separator between a record's id and the per-row suffix {@linkcode distinctRowIDs} appends.
- */
-export const ROW_ID_SEPARATOR = "#"
 
 export interface DistinctRowIDsOptions {
 	input: PathBuilderLike

@@ -21,6 +21,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
+import { rawTextDiscriminator, rowSourceID } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
@@ -47,6 +48,7 @@ interface ImlsOutletRow {
 	STABR: string
 	CNTY: string
 	FSCSKEY: string
+	FSCS_SEQ: string
 }
 
 export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
@@ -113,8 +115,10 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				const fscsKey = record.FSCSKEY ?? ""
 
+				// FSCSKEY identifies the library system, and every outlet of a system shares it.
+				// The record is the system, and the outlet's FSCS_SEQ tells its rows apart (#2765).
 				const sourceID = fscsKey
-					? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
+					? rowSourceID(`${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`, record.FSCS_SEQ || rawTextDiscriminator(raw))
 					: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
 
 				yield {

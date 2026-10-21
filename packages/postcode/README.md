@@ -38,4 +38,49 @@ export:
 - `@mailwoman/postcode/prefix-index` holds `PostcodePrefixIndexResolver`, which reads a PFX1 prefix index from
   bytes and probes a prefix for its weighted ancestry, and `serializePostcodePrefixIndex`, which writes one.
 
-The remaining steps tracked by #2679 add to this package.
+## Three kinds of evidence
+
+The package answers three different questions about a postcode, and each answer carries its own kind of evidence:
+
+- **Syntax:** does a country's postcode grammar accept this text? `acceptPostcode` answers from libaddressinput's
+  patterns plus `lib/country-formats/written-forms.ts`. That file holds the written forms the generated data leaves
+  out, such as the US ZIP+4 written without its dash. A syntax match means the text could be a postcode. Whether the
+  code is allocated is a membership question. `canComplete` asks the same question of a partial postcode: can
+  some suffix make the text a whole postcode, and in which candidate countries? `PrefixAutomaton`
+  (`lib/prefix-automaton.ts`) compiles the pattern `postcodeSyntax` matches whole into an NFA that tests
+  prefixes. Its header states the supported regex subset and the one approximation, at `\b` and `$`, which can
+  only widen the answer.
+- **Membership:** is this code, or a code beginning with this prefix, one the data has seen? PCB1 answers for
+  exact codes and PFX1 for prefixes, each with its own coverage. An unobserved code inside a country's coverage is
+  different from a code outside it. Given PFX1 indexes, `canComplete` reports membership in its own `membership`
+  field (`observed`, `unobserved` or `out-of-coverage`, with each index's scope and coverage note), and that field
+  never changes the syntax answer.
+- **Geography:** which places does the code point to? PCB1 records candidate places for a code, and PFX1 records
+  weighted ancestors for a prefix. A character prefix is not geographic containment, so a prefix match is evidence
+  about the code's region only, and the place a full code names needs an exact PCB1 match.
+
+A consumer keeps these apart. A five-digit token is syntactically valid in several countries at once (`110 00` matches CZ, SK, SE and
+GR), so a syntax answer is a set of countries, never one country.
+
+## Where postcode evidence enters a parse
+
+The neural model decides which tokens are the postcode. The package never overrides that decision at decode time.
+A decode-time bias toward syntax-accepted spans was measured on the regression board and held back (#2681). A bias
+small enough to change no other board row also left every row it was meant to fix with its old label, because the model's margin on
+those tokens exceeds it. Larger biases regressed rows, for example by reading Ireland as an Eircode or by pushing a
+road number away from `13 Mile Road`. A postcode's position is learned instead from training data, including the
+training-time move that copies a row's postcode across its admin tail (#2750).
+
+The package's evidence enters after the parse, in the resolver. `applyPostcodeShapeCoherence`, switched by
+`postcodeShapeCoherence` and on by default, checks the postcode span against the syntax of every country or region
+the parse names:
+
+- A span one of those countries accepts is confirmed, and the accepting countries narrow the postcode lookup.
+- A span none of them accepts is excluded. It keeps its tag and its text, and the postcode slot in the result stays
+  empty. It never becomes a house number, and it never overwrites a house number the parse found.
+- A parse that names no country leaves the span as it is.
+
+The check removes a wrong postcode. It never invents one, and it never relabels a span as something else.
+
+No autocomplete path calls `canComplete` yet. The FST autocomplete in `packages/mailwoman/lib/autocomplete-core.ts`
+completes place names and never asks whether a postcode prefix can complete.

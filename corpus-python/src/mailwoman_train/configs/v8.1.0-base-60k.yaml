@@ -344,9 +344,11 @@ data:
       min_draws: 2600
       source: osm-bd
       country: BD
-    # The address-system sources, each at 90% of its expected draws over the 1,000,000-row epoch.
+    # The address-system sources, each at 90% of its expected draws over the 1,000,000-row epoch, rounded down to
+    # a multiple of 10. The draws are the v0.8.1 epoch-mixture audit's, because the holdout redesign (6ff893e25)
+    # moved these sources' train supply.
     - name: ban-gp-exposure
-      min_draws: 2610
+      min_draws: 2640
       source: ban-gp
       country: GP
     - name: ban-mq-exposure
@@ -354,56 +356,56 @@ data:
       source: ban-mq
       country: MQ
     - name: ban-re-exposure
-      min_draws: 2900
+      min_draws: 2890
       source: ban-re
       country: RE
     - name: ban-gf-exposure
-      min_draws: 1880
+      min_draws: 1830
       source: ban-gf
       country: GF
     - name: ban-yt-exposure
-      min_draws: 1590
+      min_draws: 1550
       source: ban-yt
       country: YT
     - name: ban-nc-exposure
-      min_draws: 1700
+      min_draws: 1680
       source: ban-nc
       country: NC
     - name: ban-pm-exposure
-      min_draws: 630
+      min_draws: 710
       source: ban-pm
       country: PM
     - name: ban-bl-exposure
-      min_draws: 650
+      min_draws: 670
       source: ban-bl
       country: BL
     - name: ban-mf-exposure
-      min_draws: 860
+      min_draws: 830
       source: ban-mf
       country: MF
     - name: ban-pf-exposure
-      min_draws: 610
+      min_draws: 810
       source: ban-pf
       country: PF
     - name: ro-retea-scolara-exposure
-      min_draws: 3730
+      min_draws: 3740
       source: ro-retea-scolara
       country: RO
     - name: lv-varis-exposure
-      min_draws: 5800
+      min_draws: 5850
       source: lv-varis
       country: LV
     - name: cordis-exposure
-      min_draws: 6770
+      min_draws: 6650
       source: cordis
     - name: fr-finess-overseas-exposure
-      min_draws: 1120
+      min_draws: 1010
       source: fr-finess-overseas
     - name: fr-annuaire-education-overseas-exposure
-      min_draws: 1300
+      min_draws: 1150
       source: fr-annuaire-education-overseas
     - name: gleif-lei-exposure
-      min_draws: 23770
+      min_draws: 23510
       source: gleif-lei
     # #2750. The move copies a train row whose postcode sits on its layout's native side of the locality-and-region
     # block, so these four receipts floor that native population in the D-rule locales. They match the drawn row

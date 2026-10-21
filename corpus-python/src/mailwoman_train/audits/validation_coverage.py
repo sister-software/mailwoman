@@ -135,6 +135,10 @@ class ValidationCoverageError(ValueError):
         super().__init__(message)
         self.report = report
 
+    def __reduce__(self) -> tuple[type[ValidationCoverageError], tuple[str, dict[str, Any]]]:
+        """Rebuild from the message and the report, so the error survives pickling out of a Modal function."""
+        return (type(self), (str(self.args[0]), self.report))
+
 
 #: The ``country`` of a coverage entry that applies to every country ``country_weights`` admits.
 EVERY_ADMITTED_COUNTRY = "*"

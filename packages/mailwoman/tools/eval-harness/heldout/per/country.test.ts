@@ -50,6 +50,14 @@ describe("heldoutRowGroup", () => {
 		expect(heldoutRowGroup({ source_id: "oa:1~case", base_source_id: "oa:1" }, "r")).toBe("oa:1")
 	})
 
+	it("keys the rendered rows of one record by the id before the last #", () => {
+		const rendered = { source_id: "rendered-de-184f944b0b1f#0123456789ab", base_source_id: null }
+		const augmented = { source_id: "usgov-imls-pls-WY0008#003+case-lower", base_source_id: "usgov-imls-pls-WY0008#003" }
+
+		expect(heldoutRowGroup(rendered, "r")).toBe("rendered-de-184f944b0b1f")
+		expect(heldoutRowGroup(augmented, "r")).toBe("usgov-imls-pls-WY0008")
+	})
+
 	it("refuses a row whose grouping columns are unreadable", () => {
 		expect(() => heldoutRowGroup({ source_id: null, base_source_id: null }, "r")).toThrow(/no readable grouping/u)
 		expect(() => heldoutRowGroup({ source_id: "x", base_source_id: "" }, "r")).toThrow(/unreadable base_source_id/u)
@@ -270,6 +278,7 @@ describe("scoreHeldoutArm", () => {
 			["oa-us", "address"],
 			[probe, "address"],
 		])
+
 		expect(arm.cells.get("US/address")?.rows).toBe(1)
 		expect(arm.cells.get(`US/${HELDOUT_CAPABILITY_CELL}`)?.rows).toBe(1)
 	})

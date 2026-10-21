@@ -104,9 +104,9 @@ export interface HeldoutDatasetManifest {
  * in `heldout/per/country` keys on.
  */
 export const HELDOUT_GROUPING_ASSUMPTION =
-	"A row's group is its base_source_id when it was derived from a base row, else its own source_id, so a base " +
-	"row and its augmentations resample together. Distinct rows describing one address from different publishers, " +
-	"and addresses sharing a street or small place, remain separate groups; ids are not source-prefixed, so equal " +
+	"A row's group is its base_source_id when it was derived from a base row, else its own source_id, read up to " +
+	"the last '#', so a base row, its augmentations and the other rendered rows of its record resample together. " +
+	"Distinct rows describing one address from different publishers, and addresses sharing a street or small place, remain separate groups; ids are not source-prefixed, so equal " +
 	"id strings in unrelated sources merge, which widens rather than narrows an interval."
 
 /**

@@ -26,6 +26,10 @@ class CorpusReceiptError(ValueError):
         super().__init__(message)
         self.report = report
 
+    def __reduce__(self) -> tuple[type[CorpusReceiptError], tuple[str, dict[str, Any]]]:
+        """Rebuild from the message and the report, so the error survives pickling out of a Modal function."""
+        return (type(self), (str(self.args[0]), self.report))
+
 
 def corpus_receipt_binding(config_path: Path, corpus_dir: Path) -> str:
     """Return a SHA-256 digest of the config file and the corpus MANIFEST, each prefixed by its length."""
