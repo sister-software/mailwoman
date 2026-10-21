@@ -137,17 +137,16 @@ en-au 32, en-nz 28, it-it 3. The total is 26,610. Countries without a shipped pa
 
 ### Verdicts, spec v6
 
-Every row is `unknown` (observed: 22,610 address rows in the `unknown` class; the 4,000 gazetteer rows sit outside the
+Every row is `unknown` (observed: 22,610 address rows in the `unknown` class, and the 4,000 gazetteer rows sit outside the
 provenance table). v6 admits `verified_unseen` and `unseen_by_candidate` to minimum checks and only `verified_unseen` to
 comparative checks. `known_overlap` and `unknown` are admitted to neither.
 
 1. v720 candidate vs v7100 published. Observed: `insufficient_evidence`. Global reason: "the candidate artifact
    identity is unregistered". Each of the 15 checks reads 0 rows and 0 groups, and each is `insufficient_evidence`:
-   - `country-US`, `-FR`, `-GB`, `-DE`, `-IN`, `-ES`, `-IT`, `-AU`, `-NZ` (minimum; thresholds 0.60, 0.90, 0.80,
-     0.85, 0.50, 0.80, 0.80, 0.80, 0.80): "no admitted rows; required country XX has no admitted rows".
+   - `country-US`, `-FR`, `-GB`, `-DE`, `-IN`, `-ES`, `-IT`, `-AU`, `-NZ` (minimum, thresholds 0.60, 0.90, 0.80,
+     0.85, 0.50, 0.80, 0.80, 0.80, 0.80): `no admitted rows; required country XX has no admitted rows`.
    - `po_box_cedex` minimum (0.85): "no admitted rows".
-   - `po_box_cedex` max_loss (−0.05): "no admitted rows; po_box_cedex holds fewer than two independent units, so its
-     variance cannot be estimated".
+   - `po_box_cedex` max_loss (−0.05): `no admitted rows; po_box_cedex holds fewer than two independent units, so its variance cannot be estimated`.
    - `venue_unit`, `country_token`, `postal_unit` minimum (0.85): "no admitted rows".
    - `objective` (0.0000): "no admitted rows", plus the nine required-country reasons.
    - Descriptive Q over the `unknown` class: published 0.8375, candidate 0.7263.
