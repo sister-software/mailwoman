@@ -165,7 +165,23 @@ export interface CountryScore {
 }
 
 /**
- * One arm's per-row outcomes, in row order, and their totals keyed `<country>/<kind>`.
+ * The cell kind that holds a country's capability-probe rows, apart from its address and gazetteer cells.
+ */
+export const HELDOUT_CAPABILITY_CELL = "capability"
+
+/**
+ * The cell key a scored row is totalled under: `<country>/<kind>`, or `<country>/capability` for a row whose
+ * source is a capability probe.
+ */
+export function heldoutCellKey(
+	outcome: Pick<HeldoutRowOutcome, "country" | "kind" | "source">,
+	capabilitySources: ReadonlySet<string>
+): string {
+	return `${outcome.country}/${capabilitySources.has(outcome.source) ? HELDOUT_CAPABILITY_CELL : outcome.kind}`
+}
+
+/**
+ * One arm's per-row outcomes, in row order, and their totals keyed by {@linkcode heldoutCellKey}.
  */
 export interface HeldoutArmResult {
 	rows: HeldoutRowOutcome[]
@@ -568,13 +584,18 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 /**
  * Scores one arm over every row, given a parse function.
  *
+ * A row whose source is in `capabilitySources` keeps its outcome, which the capability checks read, and is
+ * totalled in its country's capability cell rather than its address cell. A release specification names
+ * those sources through `capabilityProbeSources`.
+ *
  * Refuses rows that share an identity, because paired outcomes are joined by identity.
  */
 export async function scoreHeldoutArm(
 	rows: readonly HeldoutRow[],
 	parse: (row: HeldoutRow) => Promise<AddressTree>,
 	history?: ProvenanceHistory,
-	weightsLocaleFor?: (row: HeldoutRow) => string
+	weightsLocaleFor?: (row: HeldoutRow) => string,
+	capabilitySources: ReadonlySet<string> = new Set()
 ): Promise<HeldoutArmResult> {
 	const outcomes: HeldoutRowOutcome[] = []
 	const cells = new Map<string, CountryScore>()
@@ -594,7 +615,7 @@ export async function scoreHeldoutArm(
 		seen.add(outcome.rowID)
 		outcomes.push(outcome)
 
-		const key = `${outcome.country}/${outcome.kind}`
+		const key = heldoutCellKey(outcome, capabilitySources)
 
 		const cell = cells.get(key) ?? {
 			rows: 0,
@@ -707,7 +728,14 @@ export async function scoreHeldoutWeights(
 	rows: readonly HeldoutRow[],
 	cacheRoot: string,
 	history?: ProvenanceHistory,
-	options: { packages?: ReadonlyMap<string, string>; load?: HeldoutClassifierLoader } = {}
+	options: {
+		packages?: ReadonlyMap<string, string>
+		load?: HeldoutClassifierLoader
+		/**
+		 * Sources totalled in a country's capability cell, as {@linkcode scoreHeldoutArm} takes them.
+		 */
+		capabilitySources?: ReadonlySet<string>
+	} = {}
 ): Promise<HeldoutArmResult> {
 	const packages = options.packages ?? (await readHeldoutLocalePackages())
 	const load = options.load ?? loadFromCache
@@ -747,6 +775,7 @@ export async function scoreHeldoutWeights(
 				...(row.country ? { localeHint: row.country } : {}),
 			}),
 		history,
-		localeFor
+		localeFor,
+		options.capabilitySources
 	)
 }

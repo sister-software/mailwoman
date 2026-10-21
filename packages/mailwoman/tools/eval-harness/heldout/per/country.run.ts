@@ -19,6 +19,10 @@
  *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it does
  *   not name is classed `unknown`.
  *
+ *   `--spec` names the release specification (default: the current one) whose capability requirements select
+ *   the capability-probe sources. Their rows are reported in a `<country>/capability` entry rather than in the
+ *   country's address cell.
+ *
  *   Each row is parsed by its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), so every arm's cache
  *   must hold every package the rows need. The report records the rule and the country-to-package map.
  */
@@ -31,6 +35,7 @@ import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/mani
 import {
 	assertPairedArms,
 	type CountryScore,
+	HELDOUT_CAPABILITY_CELL,
 	HELDOUT_INFERENCE_RULE,
 	type HeldoutArmResult,
 	readHeldoutLocalePackages,
@@ -39,7 +44,12 @@ import {
 	sampleHeldoutRows,
 	scoreHeldoutWeights,
 } from "#tools/eval-harness/heldout/per/country"
-import { HELDOUT_PROVENANCE_CLASSES } from "#tools/eval-harness/release/requirements"
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
+import {
+	capabilityProbeSources,
+	HELDOUT_PROVENANCE_CLASSES,
+	readReleaseSpec,
+} from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({
 	options: {
@@ -76,6 +86,12 @@ const { values } = parseArguments({
 		out: {
 			type: "string",
 			description: "Where to write the per-country report",
+		},
+		spec: {
+			type: "string",
+			default: CURRENT_RELEASE_SPEC,
+			description:
+				"The release specification whose capability requirements name the probe sources kept out of the address cells",
 		},
 	},
 })
@@ -131,11 +147,12 @@ console.error(`${rows.length} held-out rows from ${values.dataset ?? values.mani
 const arms = [values.baseline, ...values.candidates.split(",").map((s) => s.trim())]
 const scored: HeldoutArmResult[] = []
 const packages = await readHeldoutLocalePackages()
+const capabilitySources = capabilityProbeSources(await readReleaseSpec(values.spec))
 
 for (const arm of arms) {
 	console.error(`scoring ${arm}`)
 
-	scored.push(await scoreHeldoutWeights(rows, arm, history, { packages }))
+	scored.push(await scoreHeldoutWeights(rows, arm, history, { packages, capabilitySources }))
 }
 
 assertPairedArms(scored)
@@ -148,20 +165,40 @@ const withRates = (s: CountryScore) => ({
 	spanRate: rate(s.spansRecovered, s.spans),
 })
 
-const report = counts.map((cell) => ({
-	...cell,
-	arms: arms.map((arm, i) => {
-		const score = scored[i]!.cells.get(`${cell.country}/${cell.kind}`)
+const armScores = (key: string) =>
+	arms.map((arm, i) => {
+		const score = scored[i]!.cells.get(key)
 
 		return { arm, ...(score ? withRates(score) : { rows: 0 }) }
-	}),
-}))
+	})
+
+// A sampled cell's `sampled` counts every row drawn into it. Its arm scores leave out the capability-probe
+// rows, which take their own `<country>/capability` entry.
+const capabilityCountries = [
+	...new Set(
+		[...scored[0]!.cells.keys()]
+			.filter((key) => key.endsWith(`/${HELDOUT_CAPABILITY_CELL}`))
+			.map((key) => key.split("/")[0]!)
+	),
+].toSorted()
+
+const report = [
+	...counts.map((cell) => ({ ...cell, arms: armScores(`${cell.country}/${cell.kind}`) })),
+	...capabilityCountries.map((country) => ({
+		country,
+		kind: HELDOUT_CAPABILITY_CELL,
+		available: null,
+		sampled: scored[0]!.cells.get(`${country}/${HELDOUT_CAPABILITY_CELL}`)!.rows,
+		arms: armScores(`${country}/${HELDOUT_CAPABILITY_CELL}`),
+	})),
+]
 
 await writeLocalJSONFile(
 	{
 		manifest: values.manifest ?? null,
 		dataset,
 		provenance: values.provenance ?? null,
+		capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },
 		inference: { rule: HELDOUT_INFERENCE_RULE, packages: Object.fromEntries(packages) },
 		rows: rows.length,
 		arms,

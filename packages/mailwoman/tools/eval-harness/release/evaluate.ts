@@ -18,6 +18,9 @@
  *   favors that model in a comparison. The verdict also records the inference rule the outcomes were produced
  *   under. Outcomes that record none, or rows without a weights locale package, are insufficient evidence.
  *
+ *   Capability probes. A source a capability requirement selects is read only by capability checks. Country
+ *   checks, the objective and the per-class country report leave its rows out.
+ *
  *   Simultaneous bounds. Every check the specification declares counts toward the registered correction
  *   (Bonferroni or Sidak), registered threshold or not, giving one per-side tail probability for every bound.
  *
@@ -55,6 +58,7 @@
 import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tools/eval-harness/heldout/per/country"
 import { clopperPearson, studentTUpperQuantile } from "#tools/eval-harness/release/bounds"
 import {
+	capabilityProbeSources,
 	HELDOUT_PROVENANCE_CLASSES,
 	MultipleComparisonMethod,
 	type ReleaseRequirementSpec,
@@ -511,8 +515,14 @@ export function evaluateReleaseSpec(
 
 	const plans: CheckPlan[] = []
 
-	const selectIndices = (rows: readonly PairedRow[], select: RowSelector) => {
-		const indices = rows.flatMap((row, i) => (selects(row, select) ? [i] : []))
+	// A country requirement and the objective measure a country's ordinary addresses,
+	// so they leave out the rows a capability requirement selects.
+	const probes = capabilityProbeSources(spec)
+
+	const selectIndices = (rows: readonly PairedRow[], select: RowSelector, withoutProbes: boolean) => {
+		const indices = rows.flatMap((row, i) =>
+			selects(row, select) && !(withoutProbes && probes.has(row.source)) ? [i] : []
+		)
 
 		const missingCountries = (select.countries ?? []).filter(
 			(country) => !indices.some((i) => rows[i]!.country === country)
@@ -523,7 +533,7 @@ export function evaluateReleaseSpec(
 
 	for (const req of spec.requirements) {
 		const select: RowSelector = req.kind === "country" ? { ...req.select, countries: [req.country] } : req.select
-		const minimum = selectIndices(rowsFor.minimum, select)
+		const minimum = selectIndices(rowsFor.minimum, select, req.kind === "country")
 
 		plans.push({
 			id: req.id,
@@ -536,7 +546,7 @@ export function evaluateReleaseSpec(
 		})
 
 		if (req.kind === "capability" && req.maxLoss != null) {
-			const comparative = selectIndices(rowsFor.comparative, select)
+			const comparative = selectIndices(rowsFor.comparative, select, false)
 
 			plans.push({
 				id: req.id,
@@ -550,10 +560,14 @@ export function evaluateReleaseSpec(
 		}
 	}
 
-	const objective = selectIndices(rowsFor.comparative, {
-		...spec.objective.select,
-		countries: spec.objective.countries,
-	})
+	const objective = selectIndices(
+		rowsFor.comparative,
+		{
+			...spec.objective.select,
+			countries: spec.objective.countries,
+		},
+		true
+	)
 
 	plans.push({
 		id: "objective",
@@ -730,8 +744,12 @@ export function evaluateReleaseSpec(
  * Point estimates per provenance class, reported separately whether or not the class is admitted.
  */
 function reportProvenanceClasses(spec: ReleaseRequirementSpec, rows: readonly PairedRow[]): ProvenanceClassReport[] {
+	const probes = capabilityProbeSources(spec)
+
 	return HELDOUT_PROVENANCE_CLASSES.map((provenance) => {
-		const members = rows.filter((row) => row.provenance === provenance && selects(row, spec.objective.select))
+		const members = rows.filter(
+			(row) => row.provenance === provenance && selects(row, spec.objective.select) && !probes.has(row.source)
+		)
 		const byCountry = new Map<string, { rows: number; published: number; candidate: number }>()
 
 		for (const row of members) {

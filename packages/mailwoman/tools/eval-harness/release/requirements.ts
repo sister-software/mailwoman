@@ -193,6 +193,16 @@ export interface ReleaseRequirementSpec {
 	}
 }
 
+/**
+ * The sources a specification's capability requirements select: the capability probes.
+ *
+ * A probe's rows measure one address task, such as reading a PO Box, rather than how the model reads
+ * its country's ordinary addresses, so a country cell and the objective leave them out.
+ */
+export function capabilityProbeSources(spec: Pick<ReleaseRequirementSpec, "requirements">): ReadonlySet<string> {
+	return new Set(spec.requirements.flatMap((req) => (req.kind === "capability" ? (req.select.sources ?? []) : [])))
+}
+
 class SpecError extends Error {
 	constructor(source: string, path: string, problem: string) {
 		super(`${source}: ${path} ${problem}`)

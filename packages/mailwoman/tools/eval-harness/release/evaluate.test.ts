@@ -162,6 +162,42 @@ describe("evaluateReleaseSpec", () => {
 		expect(check(verdict, "objective").outcome).toBe(ReleaseOutcome.Fail)
 	})
 
+	it("leaves a capability probe's rows out of country checks and the objective, and scores them under the capability", () => {
+		const spec = baseSpec({
+			requirements: [
+				...baseSpec().requirements,
+				{
+					id: "postal_unit",
+					kind: "capability",
+					task: "test",
+					metric: "exact_parse",
+					reason: "test",
+					minimum: 0.5,
+					select: { kinds: ["address"], sources: ["invented-postal-unit-guideline"] },
+				},
+			],
+		})
+
+		const probe = rowsFor("US", 100, 0, 0).map((row) => ({
+			...row,
+			rowID: `probe:${row.rowID}`,
+			source: "invented-postal-unit-guideline",
+		}))
+
+		const ordinary = [...rowsFor("US", 200, 150, 150), ...rowsFor("FR", 200, 150, 150)]
+		const verdict = evaluate(spec, [...ordinary, ...probe], artifacts)
+		const us = verdict.checks.find((c) => c.id === "us" && c.check === "minimum")!
+
+		expect(us.rows).toBe(200)
+		expect(us.estimate).toBeCloseTo(0.75, 10)
+		expect(check(verdict, "objective").rows).toBe(400)
+		expect(verdict.checks.find((c) => c.id === "postal_unit")!.rows).toBe(100)
+
+		const verified = verdict.provenance.find((c) => c.provenance === "verified_unseen")!
+
+		expect(verified.rows).toBe(400)
+	})
+
 	it("admits only the provenance classes the specification names and reports every class", () => {
 		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)].map((row) => ({
 			...row,

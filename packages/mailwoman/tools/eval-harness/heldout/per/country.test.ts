@@ -8,6 +8,7 @@ import { afterAll, describe, expect, it } from "vitest"
 import {
 	assertPairedArms,
 	countHeldoutCells,
+	HELDOUT_CAPABILITY_CELL,
 	type HeldoutClassifier,
 	type HeldoutRow,
 	heldoutRowGroup,
@@ -18,6 +19,8 @@ import {
 	scoreHeldoutArm,
 	scoreHeldoutWeights,
 } from "#tools/eval-harness/heldout/per/country"
+import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
+import { capabilityProbeSources, readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const directory = await temporaryDirectory("mw-heldout-country-")
 
@@ -254,6 +257,21 @@ describe("scoreHeldoutArm", () => {
 			spans: 2,
 			spansRecovered: 2,
 		})
+	})
+
+	it("totals a capability probe's rows in the country's capability cell, not its address cell", async () => {
+		const spec = await readReleaseSpec(CURRENT_RELEASE_SPEC)
+		const probes = capabilityProbeSources(spec)
+		const [probe] = [...probes]
+		const probeRow: HeldoutRow = { ...rows[0]!, source: probe!, source_id: "p1", group: "p1" }
+		const arm = await scoreHeldoutArm([rows[0]!, probeRow], async (row) => exactTree(row), undefined, undefined, probes)
+
+		expect(arm.rows.map((r) => [r.source, r.kind])).toEqual([
+			["oa-us", "address"],
+			[probe, "address"],
+		])
+		expect(arm.cells.get("US/address")?.rows).toBe(1)
+		expect(arm.cells.get(`US/${HELDOUT_CAPABILITY_CELL}`)?.rows).toBe(1)
 	})
 
 	it("assigns a provenance class only from a recorded history", async () => {

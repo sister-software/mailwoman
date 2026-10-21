@@ -2,7 +2,11 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
-import { type ReleaseRequirementSpec, validateReleaseSpec } from "#tools/eval-harness/release/requirements"
+import {
+	capabilityProbeSources,
+	type ReleaseRequirementSpec,
+	validateReleaseSpec,
+} from "#tools/eval-harness/release/requirements"
 
 const committedPath = new URL("specs/release-requirements.v7.json", import.meta.url).pathname
 const specRecord = (version: number) => new URL(`specs/release-requirements.v${version}.json`, import.meta.url).pathname
@@ -24,6 +28,23 @@ describe("validateReleaseSpec", () => {
 			minimum: ["verified_unseen", "unseen_by_candidate"],
 			comparative: ["verified_unseen"],
 		})
+	})
+
+	it("names as capability probes the sources of po_box_cedex, postal_unit, venue_unit and country_token", async () => {
+		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
+		const probes = capabilityProbeSources(spec)
+
+		for (const id of ["po_box_cedex", "postal_unit", "venue_unit", "country_token"]) {
+			const req = spec.requirements.find((candidate) => candidate.id === id)
+
+			expect(req?.kind, id).toBe("capability")
+			expect(req!.select!.sources!.length, id).toBeGreaterThan(0)
+
+			for (const source of req!.select!.sources!) expect(probes.has(source), source).toBe(true)
+		}
+
+		expect(probes.has("invented-postal-guideline")).toBe(true)
+		expect(probes.has("invented-postal-unit-guideline")).toBe(true)
 	})
 
 	it("carries every v3 requirement value into v4 unchanged", async () => {
