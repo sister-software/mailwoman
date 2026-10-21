@@ -108,6 +108,6 @@ describe("heldOutNamePattern", () => {
 		const pattern = new RegExp(heldOutNamePattern("NT").replace("(?i)", ""), "iu")
 
 		expect(pattern.test("Darwin NT 0800")).toBe(true)
-		expect(pattern.test("Northern Territory, Centre")).toBe(false)
+		expect(pattern.test("Northern Territory, Alice Springs")).toBe(false)
 	})
 })

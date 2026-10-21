@@ -170,8 +170,8 @@ export interface CountryScore {
 export const HELDOUT_CAPABILITY_CELL = "capability"
 
 /**
- * The cell key a scored row is totalled under: `<country>/<kind>`, or `<country>/capability` for a row whose
- * source is a capability probe.
+ * The cell key a scored row is totaled under: `<country>/<kind>`, or `<country>/capability`
+ * for a row whose source is a capability probe.
  */
 export function heldoutCellKey(
 	outcome: Pick<HeldoutRowOutcome, "country" | "kind" | "source">,
@@ -584,9 +584,9 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 /**
  * Scores one arm over every row, given a parse function.
  *
- * A row whose source is in `capabilitySources` keeps its outcome, which the capability checks read, and is
- * totalled in its country's capability cell rather than its address cell. A release specification names
- * those sources through `capabilityProbeSources`.
+ * A row whose source is in `capabilitySources` keeps its outcome, which the capability
+ * checks read, and is totaled in its country's capability cell rather than its address cell.
+ * A release specification names those sources through `capabilityProbeSources`.
  *
  * Refuses rows that share an identity, because paired outcomes are joined by identity.
  */
@@ -732,7 +732,7 @@ export async function scoreHeldoutWeights(
 		packages?: ReadonlyMap<string, string>
 		load?: HeldoutClassifierLoader
 		/**
-		 * Sources totalled in a country's capability cell, as {@linkcode scoreHeldoutArm} takes them.
+		 * Sources totaled in a country's capability cell, as {@linkcode scoreHeldoutArm} takes them.
 		 */
 		capabilitySources?: ReadonlySet<string>
 	} = {}

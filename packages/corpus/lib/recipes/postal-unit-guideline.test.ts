@@ -192,7 +192,7 @@ describe("postal-unit-guideline", () => {
 			if (splitForRow(row) !== "train") continue
 
 			for (const name of heldOutNames) {
-				expect(row.raw.toLowerCase().includes(name), `${name} in ${row.raw}`).toBe(false)
+				expect(row.raw.toLowerCase(), `${name} in ${row.raw}`).not.toContain(name)
 			}
 		}
 	})
