@@ -34,14 +34,6 @@
 	transform: translate(-4px, 6px);
 }
 
-/* On docs pages the keys start after the rail, and below this width the CTA would cover them. The hero and the
-   product pages still carry the demo link. */
-@media (997px <= width < 1600px) {
-	html.docs-wrapper .navbar__item.navbar__cta {
-		display: none;
-	}
-}
-
 /* The navbar search control (src/theme/SearchBar.tsx): a utility key beside GitHub and the color-mode toggle. */
 .navbar__search-button {
 	display: inline-flex;
@@ -96,18 +88,5 @@
 
 	.navbar__search-button {
 		padding: var(--ss-spacing-2);
-	}
-}
-
-/* With the shared theme's compact keys, the search key drops its label until the bar is wide enough. */
-@media (997px <= width < 1440px) {
-	html.docs-wrapper .navbar__search-label {
-		display: none;
-	}
-}
-
-@media (997px <= width < 1200px) {
-	html.docs-wrapper .navbar__search-keys {
-		display: none;
 	}
 }

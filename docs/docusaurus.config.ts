@@ -210,7 +210,7 @@ const config: Config = {
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
-					customCss: ["./src/css/docs-subheader.css", "./src/css/mermaid.css", "./src/css/custom.css"],
+					customCss: ["./src/css/mermaid.css", "./src/css/custom.css"],
 				},
 			} satisfies Preset.Options,
 		],

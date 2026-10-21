@@ -221,7 +221,7 @@
 	--ss-transition-fast: 50ms;
 	--ss-transition-slow: 400ms;
 	--ss-transition-timing-default: cubic-bezier(0.08, 0.52, 0.52, 1);
-	--ss-layout-rail: 320px;
+	--ss-layout-rail: 280px;
 	--ss-layout-page-max: 1440px;
 	--ss-layout-measure: 72ch;
 	--ss-layout-window-max: 640px;
