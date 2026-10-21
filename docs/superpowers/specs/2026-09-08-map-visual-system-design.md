@@ -4,7 +4,7 @@
 > (`@sister.software/theme`, `--ss-*`); `@mailwoman/react` merges it and adds only Mailwoman's own tokens
 > (`--mw-*`: confidence, stages, glass material, safe-area, map label font). The docs site uses
 > `@sister.software/docusaurus-theme`, which generates every `--ifm-*` variable from the shared tokens. The
-> decision below that "`@mailwoman/react` owns the tokens" no longer holds; the materials and chrome
+> decision below that "`@mailwoman/react` owns the tokens" no longer holds. The materials and chrome
 > sections still describe the apps.
 
 Three deployed apps (`earth.mailwoman.ai`, `moon.mailwoman.ai`, `mars.mailwoman.ai`) share one React
