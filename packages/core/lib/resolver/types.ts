@@ -267,7 +267,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	postalCompoundRecovery: true,
 	postcodeConsistency: true,
 	postcodeCountryCoherence: true,
-	postcodeShapeCoherence: false,
+	postcodeShapeCoherence: true,
 	postcodeContainmentCoherence: false,
 	postcodePrefixPrior: false,
 	adminCoherence: true,

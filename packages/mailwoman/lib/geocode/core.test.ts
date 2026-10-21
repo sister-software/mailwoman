@@ -665,7 +665,7 @@ describe("The lineage-attachment wiring", () => {
 			includeAncestors: true,
 			postcodeCountryCoherence: true,
 			adminContainmentRerank: true,
-			postcodeShapeCoherence: false,
+			postcodeShapeCoherence: true,
 			postcodeContainmentCoherence: false,
 			spanRescoreRequireContextRemainder: false,
 			postcodePrefixPrior: false,

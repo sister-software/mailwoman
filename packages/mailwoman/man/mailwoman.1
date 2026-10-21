@@ -75,7 +75,7 @@ Options:
   \-\-country\-scope <string>                    Locale country\-scoping policy (default: auto)
   \-\-[no\-]admin\-coherence                      Joint admin consistency (default: true)
   \-\-[no\-]postcode\-country\-coherence           Postcode country consistency (default: true)
-  \-\-postcode\-shape\-coherence                  Postcode shape consistency (default: false)
+  \-\-[no\-]postcode\-shape\-coherence             Postcode shape consistency (default: true)
   \-\-postcode\-containment\-coherence            Postcode containment reranking (default: false)
   \-\-neural                                    Use neural\-only path (default: false)
   \-\-[no\-]poi                                  Enable POI query detection (default: true)
@@ -141,8 +141,8 @@ Options:
                                               a wrong country scope. (default: true)
   \-\-[no\-]fork\-entity                          Probe POI data for exact entities when a fork parse
                                               does not resolve. (default: true)
-  \-\-postcode\-shape\-coherence                  Opt into postcode shape exclusion/demotion. (default:
-                                              false)
+  \-\-[no\-]postcode\-shape\-coherence             Exclude a postcode span whose shape no named country's
+                                              syntax accepts. (default: true)
   \-\-postcode\-containment\-coherence            Opt into postcode\-centroid locality reranking.
                                               (default: false)
   \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
