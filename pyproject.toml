@@ -38,6 +38,10 @@ dev = [
 	"bandit>=1.8",
 	# PyYAML is untyped upstream; the stub package keeps `mypy --strict` honest about our code.
 	"types-PyYAML>=6.0.12",
+	# The Modal client runs each launch's local entrypoint, which imports `mailwoman_train`.
+	# A global `modal` binary cannot see this venv, so launches run `uv run --extra dev modal run -m launch...`.
+	# Pinned to the client version the launches were made with, so a lock refresh cannot move it.
+	"modal==1.4.3",
 ]
 train = [
 	# Train stack is pinned on purpose:
@@ -136,7 +140,7 @@ ignore_missing_imports = true
 module = ["sentencepiece.sentencepiece_model_pb2"]
 follow_imports = "skip"
 
-# Modal SDK is available in `modal run` environments, not local default env.
+# The Modal SDK is in the `dev` extra; a base install without it still type-checks.
 # Without it, decorators become `Any` and trigger cascading untyped-decorator noise.
 # Keep checks meaningful by ignoring missing `modal` imports and relaxing decorators in `launch.*`.
 [[tool.mypy.overrides]]

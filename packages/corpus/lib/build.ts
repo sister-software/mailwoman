@@ -26,7 +26,7 @@ import { writeBuildManifests } from "#build/manifest"
 import { runParallelBuild } from "#build/parallel"
 import { settlePriorWork } from "#build/prior-output"
 import { streamJSONL } from "#build/rows"
-import { adapterDerivations, derivationConfig, resolveBuildSettings } from "#build/settings"
+import { adapterDerivations, derivationConfig, resolveCorpusSettings } from "#build/settings"
 import { BuildProfile, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
 import { shuffleSplitRows, SPLIT_SHUFFLE_SALT } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
@@ -42,7 +42,7 @@ export * from "#build/types"
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
-	const settings = resolveBuildSettings(opts)
+	const settings = resolveCorpusSettings(opts)
 	const { synthesize, rowsPerFile, shuffleWindow, shuffleSeed, profile, licensePolicy, resume } = settings
 	const jobs = opts.jobs ?? 1
 	const built_at = new Date().toISOString()

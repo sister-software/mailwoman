@@ -324,7 +324,7 @@ function send(message: WorkerMessage): Promise<void> {
 	})
 }
 
-async function workerMain(): Promise<void> {
+async function runWorkerProcess(): Promise<void> {
 	const [taskPath] = cliArguments()
 
 	if (!taskPath) throw new Error("corpus build worker: expected a task file path as the first argument")
@@ -343,7 +343,7 @@ async function workerMain(): Promise<void> {
 }
 
 if (import.meta.main) {
-	workerMain().then(
+	runWorkerProcess().then(
 		() => {
 			process.removeAllListeners("disconnect")
 			process.disconnect?.()

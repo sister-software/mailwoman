@@ -160,15 +160,15 @@ export function wilsonRate(count: number, total: number, z = 1.96): Rate {
 	const p = count / total
 	const z2 = z * z
 	const denom = 1 + z2 / total
-	const centre = p + z2 / (2 * total)
+	const center = p + z2 / (2 * total)
 	const spread = z * Math.sqrt((p * (1 - p)) / total + z2 / (4 * total * total))
 
 	return {
 		count,
 		total,
 		rate: p,
-		low: Math.max(0, (centre - spread) / denom),
-		high: Math.min(1, (centre + spread) / denom),
+		low: Math.max(0, (center - spread) / denom),
+		high: Math.min(1, (center + spread) / denom),
 	}
 }
 

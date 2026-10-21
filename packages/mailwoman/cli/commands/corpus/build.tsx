@@ -264,7 +264,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				? options.freshSources
 						.split(",")
 						.map((source) => source.trim())
-						.filter(Boolean)
+						.filter((source) => source.length > 0)
 				: undefined,
 			onProgress: (name, message) => setStage({ name, message }),
 		})

@@ -276,6 +276,88 @@ class TestSkipReasons:
         assert move_postcode(row) == (None, SkipReason.WORD_ACROSS_BOUNDARY)
 
 
+class TestSpanShapesThatCrashedEncoding:
+    """Shapes from the v0.8.0 sweep whose moved rows failed `char_label_array_from_spans` (run p005)."""
+
+    @staticmethod
+    def _notary_row() -> dict[str, Any]:
+        # state-ny-notaries stores the locality span from the space after the street: street [19, 26), locality
+        # [26, 35). The move used to carry the street's end with the block, so the street nested the postcode.
+        raw = "THERESA TEBBETT 99 MAIN ST HEPSTEAD NY 11550"
+        starts, ends = [0, 16, 19, 26, 36, 39], [15, 18, 26, 35, 38, 44]
+        tags = ["venue", "house_number", "street", "locality", "region", "postcode"]
+        tokens = raw.split()
+        return {
+            "raw": raw,
+            "tokens": tokens,
+            "labels": labels_from_spans(raw, tokens, starts, ends, tags),
+            "span_starts": starts,
+            "span_ends": ends,
+            "span_tags": tags,
+            "country": "US",
+            "source": "state-ny-notaries",
+        }
+
+    def test_locality_span_holding_the_leading_space_is_skipped(self) -> None:
+        assert move_postcode(self._notary_row()) == (None, SkipReason.SPAN_EDGE_WHITESPACE)
+
+    def test_overlapping_input_spans_are_skipped(self) -> None:
+        # The observed crash: postcode@[34, 39) inside a span at [23, 40).
+        row = self._notary_row()
+        row["span_starts"] = [0, 16, 19, 23, 36, 34]
+        row["span_ends"] = [15, 18, 22, 40, 38, 39]
+        assert move_postcode(row) == (None, SkipReason.SPANS_OVERLAP)
+
+    def test_a_span_ending_at_the_block_start_stays_put(self) -> None:
+        # A comma with no space between the street and a trimmed block: the street keeps its end.
+        raw = "1 Main St,Brooklyn NY 11214"
+        starts, ends, tags = (
+            [0, 2, 10, 19, 22],
+            [1, 9, 18, 21, 27],
+            ["house_number", "street", "locality", "region", "postcode"],
+        )
+        tokens = ["1", "Main", "St", "Brooklyn", "NY", "11214"]
+        row = {
+            "raw": raw,
+            "tokens": tokens,
+            "labels": labels_from_spans(raw, tokens, starts, ends, tags),
+            "span_starts": starts,
+            "span_ends": ends,
+            "span_tags": tags,
+            "country": "US",
+            "source": "openaddresses",
+        }
+        moved, reason = move_postcode(row)
+        assert reason is None and moved is not None
+        assert moved["raw"] == "1 Main St,11214 Brooklyn NY"
+        assert span_texts(moved) == span_texts(row)
+        assert (moved["span_starts"], moved["span_ends"]) == ([0, 2, 10, 16, 25], [1, 9, 15, 24, 27])
+
+    def test_an_invalid_output_is_refused(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from mailwoman_train.data.augment import postcode_move
+
+        real = postcode_move._spans_ordered
+        calls: list[int] = []
+
+        def failing_on_output(length: int, spans: list[tuple[int, int]]) -> bool:
+            calls.append(length)
+            return real(length, spans) and len(calls) == 1
+
+        monkeypatch.setattr(postcode_move, "_spans_ordered", failing_on_output)
+        row = make_row(
+            "123 Main St, Brooklyn, NY 11226",
+            [
+                ("house_number", "123"),
+                ("street", "Main St"),
+                ("locality", "Brooklyn"),
+                ("region", "NY"),
+                ("postcode", "11226"),
+            ],
+            "US",
+        )
+        assert move_postcode(row) == (None, SkipReason.INVALID_OUTPUT)
+
+
 class TestTheKnob:
     def _row(self) -> dict[str, Any]:
         return make_row(

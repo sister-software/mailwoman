@@ -59,7 +59,7 @@ const split = (value: string | undefined) =>
 	(value ?? "")
 		.split(",")
 		.map((item) => item.trim())
-		.filter(Boolean)
+		.filter((item) => item.length > 0)
 
 const result = await auditHeldoutOverlap({
 	dataset: await readHeldoutDatasetManifest(values.dataset),

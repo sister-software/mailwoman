@@ -79,40 +79,53 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Fields this command reads from a version's top-level `MANIFEST.json`.
+ * Fields this command reads from a version's `MANIFEST.json` files.
  *
  * Derived from `BuildCorpusManifest` to keep names in sync with the build output.
  * Optional so older manifests still parse.
+ *
+ * `total_rows` is the assembled corpus manifest's row count.
+ * `overlay-manifest` rewrites it on each merge.
+ *
+ * It counts the same labeled rows as the build manifest's `total_aligned_rows`,
+ * so the two are comparable and their difference is what the corpus overlays added.
  */
 type UploadedCorpusManifest = Partial<
 	Pick<BuildCorpusManifest, "licenses" | "license_policy" | "licenses_cover" | "total_aligned_rows">
->
+> & { total_rows?: number }
 
 /**
- * The row count in the corpus's manifest.
- * `overlay-manifest` rewrites this count on each merge.
+ * Which on-disk layout a `--corpus-directory` entry holds, and the directory the upload sends.
  *
- * `total_rows` here counts the same labeled rows as the build manifest's `total_aligned_rows`,
- * so the two are comparable and their difference is what the corpus overlays added.
+ * A nested entry is `<root>/<entry>/corpus-<entry>/`, whose own `MANIFEST.json`
+ * is the assembled corpus manifest.
+ * A build output also writes the build manifest at `<root>/<entry>/MANIFEST.json`;
+ * an overlay corpus assembled by `overlay-manifest` has none.
+ *
+ * A flat entry is `<root>/<entry>/` and its `MANIFEST.json` sits at the root of what is sent.
  */
-interface AssembledCorpusManifest {
-	total_rows?: number
+export interface CorpusUploadSource {
+	layout: "nested" | "flat"
+	entry: PathBuilderLike
+	source: PathBuilderLike
 }
 
 /**
- * The assembled corpus manifest's `total_rows`, or `null` when no manifest sits at `path`.
+ * Read one manifest the share-alike check needs, or throw naming the path.
  *
- * A build without a corpus manifest and a flat-layout entry without one both read
- * `undefined`. {@linkcode refuseShareAlike} then skips the overlay comparison
- * rather than reading a missing file as a corpus with no overlay rows.
+ * `--allow-share-alike` does not reach this: the flag accepts a known share-alike set
+ * or an unrecorded one, and a manifest that cannot be read is neither.
  */
-async function assembledRowCount(path: PathBuilderLike): Promise<number | null> {
+async function readRequiredManifest(version: string, path: PathBuilderLike): Promise<UploadedCorpusManifest> {
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
 	try {
-		return (await readLocalJSONFile<AssembledCorpusManifest>(path)).total_rows ?? null
-	} catch {
-		return null
+		return await readLocalJSONFile<UploadedCorpusManifest>(path)
+	} catch (error) {
+		throw new Error(
+			`corpus ${version}: ${path} could not be read (${(error as Error).message}), so the license set of ` +
+				`what this upload sends is unknown. --allow-share-alike does not cover an unreadable manifest.`
+		)
 	}
 }
 
@@ -125,50 +138,45 @@ async function assembledRowCount(path: PathBuilderLike): Promise<number | null> 
  * row's obligation is a property of its license value and a share-alike register can
  * reach a corpus through a source whose id identifies a different license.
  *
- * An unreadable or absent `MANIFEST.json` throws as well.
- * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
+ * The manifest at the root of the uploaded directory must be readable.
+ * An unreadable one throws even when `allow` is set.
  *
- * `corpusRows` is the assembled corpus manifest's own `total_rows`, or `null`
- * when the upload found no nested corpus directory to read one from.
- * It decides whether the license set answers for every row.
+ * For a nested entry the build manifest beside it is read when present,
+ * and throws when present but unreadable.
+ *
+ * The license set comes from whichever of the two records a `licenses` map, the uploaded one first.
+ * When neither does, the set is unrecorded and refuses unless `allow` is set.
  */
-async function refuseShareAlike(
-	version: string,
-	manifestPath: PathBuilderLike,
-	allow: boolean,
-	corpusRows: number | null
-): Promise<void> {
-	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+export async function refuseShareAlike(version: string, upload: CorpusUploadSource, allow: boolean): Promise<void> {
 	const { stringifyJSON } = await import("@mailwoman/core/json")
 	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
 
-	let manifest: UploadedCorpusManifest
+	const uploadedPath = PathBuilder.from(upload.source)("MANIFEST.json")
+	const uploaded = await readRequiredManifest(version, uploadedPath)
+	const buildPath = PathBuilder.from(upload.entry)("MANIFEST.json")
 
-	try {
-		manifest = await readLocalJSONFile<UploadedCorpusManifest>(manifestPath)
-	} catch (error) {
+	const build =
+		upload.layout === "nested" && (await pathExists(buildPath)) ? await readRequiredManifest(version, buildPath) : null
+
+	const recorded = uploaded.licenses ? uploaded : build?.licenses ? build : null
+	const corpusRows = uploaded.total_rows ?? null
+
+	if (!recorded?.licenses) {
+		const read = build ? `${uploadedPath} and ${buildPath}` : `${uploadedPath}`
+
 		const detail =
-			`corpus ${version}: ${manifestPath} could not be read (${(error as Error).message}), so its license ` +
-			`set is unknown.`
+			`corpus ${version}: ${read} record no \`licenses\` map, so the license set of this ${upload.layout}-layout ` +
+			`upload is unrecorded.`
 
-		if (!allow) {
-			throw new Error(
-				`${detail} Build the version through \`mw corpus build\`, which writes it, or pass ` +
-					`--allow-share-alike to upload without the check.`
-			)
-		}
+		if (!allow) throw new Error(`${detail} Pass --allow-share-alike to upload without the check.`)
 
 		process.stderr.write(`${detail}\nProceeding under --allow-share-alike.\n`)
 
 		return
 	}
 
-	if (!manifest.licenses) {
-		throw new Error(
-			`corpus ${version}: ${manifestPath} records no \`licenses\` map, so its license set is unknown. ` +
-				`Pass --allow-share-alike to upload without the check.`
-		)
-	}
+	const manifest = recorded
+	const licenses = recorded.licenses
 
 	// `align` increments the `licenses` map once per canonical adapter row.
 	// `total_aligned_rows` counts the labeled rows produced from those rows.
@@ -201,7 +209,7 @@ async function refuseShareAlike(
 		process.stderr.write(`${detail}\nProceeding under --allow-share-alike.\n`)
 	}
 
-	const findings = shareAlikeFindings(manifest.licenses)
+	const findings = shareAlikeFindings(licenses)
 
 	if (!findings.length) return
 
@@ -308,12 +316,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			// so the reader has to see which one this transfer wrote rather than infer it from the key.
 			process.stderr.write(`corpus ${directory}: ${layout} layout, uploading ${source}\n`)
 
-			await refuseShareAlike(
-				directory,
-				corpusRoot(directory, "MANIFEST.json"),
-				options.allowShareAlike,
-				await assembledRowCount(PathBuilder.from(source)("MANIFEST.json"))
-			)
+			await refuseShareAlike(directory, { layout, entry: corpusRoot(directory), source }, options.allowShareAlike)
 
 			jobs.push({
 				label: `corpus ${directory}`,

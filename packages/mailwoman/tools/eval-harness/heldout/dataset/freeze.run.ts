@@ -18,7 +18,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 
-import { writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
+import { readHeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
 import { sampleHeldoutRows } from "#tools/eval-harness/heldout/per/country"
 
 const { values } = parseArguments({
@@ -51,6 +51,15 @@ const { values } = parseArguments({
 			description: "DuckDB memory limit in GiB; defaults to openDuckDB's share of host memory",
 		},
 		"duckdb-threads": { type: "string", description: "DuckDB worker threads" },
+		"exclude-dataset": {
+			type: "string",
+			description: "A frozen dataset manifest whose groups this sample never draws, for a disjoint confirmation set",
+		},
+		"skip-files": {
+			type: "string",
+			description:
+				"Manifest file paths (as the manifest lists them) not to read, comma-separated; recorded in the rule",
+		},
 	},
 })
 
@@ -76,7 +85,22 @@ const sample = await sampleHeldoutRows(
 	Number(values["per-country"]),
 	values["path-root"],
 	seed,
-	duckDBLimits
+	duckDBLimits,
+	await (async () => {
+		if (!values["exclude-dataset"]) return null
+
+		const excluded = await readHeldoutDatasetManifest(values["exclude-dataset"])
+
+		return {
+			datasetID: excluded.datasetID,
+			version: excluded.version,
+			groups: [...new Set(excluded.rows.map((row) => row.group))],
+		}
+	})(),
+	(values["skip-files"] ?? "")
+		.split(",")
+		.map((path) => path.trim())
+		.filter((path) => path.length > 0)
 )
 
 const engine = await (async () => {

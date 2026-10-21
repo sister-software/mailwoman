@@ -6,7 +6,8 @@ const scenario = (overrides: Partial<SimulationScenario> = {}): SimulationScenar
 	id: "test",
 	description: "test",
 	countries: [
-		// Large enough that an all-exact country's exact lower bound clears 0.9; at 20 and 30 rows it does not.
+		// Large enough that an all-exact country's exact lower bound clears 0.9.
+		// At 20 and 30 rows it stays below 0.9.
 		{ country: "AA", rows: 200, published: 1, candidate: 1, minimum: 0.9 },
 		{
 			country: "BB",

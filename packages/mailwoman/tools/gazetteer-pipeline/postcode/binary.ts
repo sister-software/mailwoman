@@ -94,7 +94,8 @@ export interface BuildPostcodeBinaryResult {
  * Every other country is uppercased as-is.
  */
 export function postcodeBinaryKey(country: string, name: string): string {
-	// country-branch: GB keys drop the space between the outward and inward halves; the rule lives in gb/outward.
+	// country-branch: GB keys drop the space between the outward and inward halves.
+	// The rule lives in gb/outward.
 	return country.toUpperCase() === "GB" ? gbPostcodeKey(name) : (name || "").trim().toUpperCase()
 }
 

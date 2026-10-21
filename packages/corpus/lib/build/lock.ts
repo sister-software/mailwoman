@@ -34,8 +34,7 @@ export interface BuildLockOwner {
 /**
  * Whether a process with this pid exists on this host.
  *
- * Signal 0 is an existence check: the kernel reports whether the pid can be
- * signalled and delivers no signal.
+ * Signal 0 is an existence check: the kernel reports whether the pid can be signaled and delivers no signal.
  * `EPERM` means the process exists under another user.
  */
 function processExists(pid: number): boolean {

@@ -155,17 +155,17 @@ describe("validateReleaseSpec", () => {
 	it("refuses an unknown multiple-comparison method", async () => {
 		const spec = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
 
-		spec.statistics.multipleComparison = "holm-ish" as never
+		const malformed = { ...spec, statistics: { ...spec.statistics, multipleComparison: "holm-ish" } }
 
-		expect(() => validateReleaseSpec(spec)).toThrow(/unknown method holm-ish/u)
+		expect(() => validateReleaseSpec(malformed)).toThrow(/unknown method holm-ish/u)
 	})
 
 	it("refuses a requirement whose minimum is omitted rather than null", async () => {
 		const spec = await readLocalJSONFile<ReleaseRequirementSpec>(committedPath)
 
-		spec.requirements = [{ id: "us", kind: "country", country: "US", reason: "t" } as never]
+		const malformed = { ...spec, requirements: [{ id: "us", kind: "country", country: "US", reason: "t" }] }
 
-		expect(() => validateReleaseSpec(spec)).toThrow(/minimum must be present/u)
+		expect(() => validateReleaseSpec(malformed)).toThrow(/minimum must be present/u)
 	})
 
 	it("refuses a malformed artifact digest", async () => {

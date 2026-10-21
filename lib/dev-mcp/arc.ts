@@ -77,7 +77,7 @@ export interface ArcLeg {
  * A fine-tune needs a null leg.
  * A from-scratch run has no such requirement.
  */
-export type RunShape = "fine-tune" | "from-scratch"
+type RunShape = "fine-tune" | "from-scratch"
 
 /**
  * What the arc knows about release evidence for the candidate.
@@ -101,7 +101,7 @@ export interface ReleaseEvidence {
 /**
  * Release eligibility of the candidate artifact, as the release verdict decides it.
  */
-export interface ReleaseEligibility {
+interface ReleaseEligibility {
 	outcome: ReleaseOutcome
 	specVersion: string
 	candidateSHA256: string
@@ -116,7 +116,7 @@ export interface ReleaseEligibility {
  * A verdict evaluated for another artifact or another specification version,
  * or one whose fields cannot be read, is refused with an error.
  */
-export function readReleaseEligibility(evidence: ReleaseEvidence): ReleaseEligibility {
+function readReleaseEligibility(evidence: ReleaseEvidence): ReleaseEligibility {
 	const base = {
 		specVersion: evidence.specVersion,
 		candidateSHA256: evidence.candidateSHA256,
@@ -372,7 +372,7 @@ export function decideArc(input: ArcDecisionInput): ArcResult {
 /**
  * Reads the release evidence for a candidate weights directory.
  */
-export async function readReleaseEvidence(
+async function readReleaseEvidence(
 	candidate: string,
 	releaseVerdict: string | undefined,
 	releaseSpec: string | undefined

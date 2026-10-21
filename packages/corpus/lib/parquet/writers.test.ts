@@ -14,10 +14,15 @@ import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
-import { type ParquetManifest, writeParquetSplits, writeStagedParquet } from "#parquet/writers"
+import {
+	type ParquetManifest,
+	type WriteParquetSplitsOptions,
+	writeParquetSplits,
+	writeStagedParquet,
+} from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 
@@ -25,33 +30,24 @@ import type { LabeledRow } from "#types"
  * Called before each staged-part conversion with the staged input and the output path.
  * A throw fails that conversion.
  */
-const hooks = vi.hoisted(() => ({
+const hooks = {
 	onConvert: null as null | ((stagePath: string, outputPath: string) => Promise<void> | void),
-}))
+}
 
-vi.mock("#parquet/duckdb", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("#parquet/duckdb")>()
-
-	return {
-		...actual,
-		openDuckDB: async (...args: Parameters<typeof actual.openDuckDB>) => {
-			const db = await actual.openDuckDB(...args)
-			const run = db.run.bind(db)
-
-			db.run = (async (sql: string, ...rest: unknown[]) => {
-				const match = /read_json\('([^']+)'.*\bTO '([^']+)'/su.exec(sql)
-
-				if (match && hooks.onConvert) {
-					await hooks.onConvert(match[1]!, match[2]!)
-				}
-
-				return (run as (sql: string, ...rest: unknown[]) => unknown)(sql, ...rest)
-			}) as typeof db.run
-
-			return db
-		},
+/**
+ * The real conversion behind {@linkcode hooks}, passed through `convertStagedPart`.
+ */
+const convertStagedPart: NonNullable<WriteParquetSplitsOptions["convertStagedPart"]> = async (
+	stagePath,
+	outputPath,
+	limits
+) => {
+	if (hooks.onConvert) {
+		await hooks.onConvert(stagePath, outputPath)
 	}
-})
+
+	await writeStagedParquet(stagePath, outputPath, limits)
+}
 
 const FIXTURE_DERIVATION = { extractHash: "fixture", codeHash: "fixture", config: {} }
 
@@ -124,7 +120,13 @@ describe("writeParquetSplits staging", () => {
 
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(interleaved(["wof-admin"], 25)) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile: 10 }
+			{
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+				derivationFor: () => FIXTURE_DERIVATION,
+				rowsPerFile: 10,
+				convertStagedPart,
+			}
 		)
 
 		expect(converted).toHaveLength(3)
@@ -154,7 +156,13 @@ describe("writeParquetSplits staging", () => {
 
 		const write = writeParquetSplits(
 			{ train: asyncFrom(interleaved(["wof-admin"], 25)) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile: 10 }
+			{
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+				derivationFor: () => FIXTURE_DERIVATION,
+				rowsPerFile: 10,
+				convertStagedPart,
+			}
 		)
 
 		await expect(write).rejects.toThrow(/converting train part 1 of wof-admin.*No file was recorded/su)
@@ -175,6 +183,7 @@ describe("writeParquetSplits staging", () => {
 			corpusVersion: "0.1.0",
 			derivationFor: () => FIXTURE_DERIVATION,
 			rowsPerFile: 4,
+			convertStagedPart,
 		})
 
 		await using uninterruptedDir = await temporaryDirectory("mailwoman-parquet-uninterrupted-")
@@ -223,7 +232,13 @@ describe("writeParquetSplits staging", () => {
 
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(interleaved(sources, perSource)) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile }
+			{
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+				derivationFor: () => FIXTURE_DERIVATION,
+				rowsPerFile,
+				convertStagedPart,
+			}
 		)
 
 		expect(stagedCounts).toHaveLength(sources.length * maxParts)

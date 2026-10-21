@@ -30,10 +30,10 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-import pyarrow.dataset as ds
+import pyarrow.parquet as pq
 
 from ..config import ValidationCoverageConfig, load_config
-from ..data.loader import _parquet_paths
+from ..data.loader.corpus_files import CorpusFile, _admitted_mask, corpus_split_files
 
 #: Tags whose presence makes a row street-level. A validation row with neither measures only the
 #: admin hierarchy. That differs from parsing an address.
@@ -44,8 +44,12 @@ STREET_TAGS = frozenset({"street", "house_number"})
 COLUMNS = ["country", "span_tags", "source"]
 
 
-def scan_split(files: list[Path]) -> dict[str, Any]:
-    """Count rows, street rows and sources per country over one split's parquet files."""
+def scan_split(files: list[CorpusFile | Path]) -> dict[str, Any]:
+    """Count rows, street rows and sources per country over one split's parquet files.
+
+    Each file is read through its manifest row filter, so a file split by an attribute contributes only the rows
+    of this split. A bare path reads every row of its file.
+    """
     rows: Counter[str] = Counter()
     street_rows: Counter[str] = Counter()
     by_source: Counter[str] = Counter()
@@ -56,12 +60,19 @@ def scan_split(files: list[Path]) -> dict[str, Any]:
             "validation rows, and reporting it as zero coverage would state the wrong finding."
         )
 
-    dataset = ds.dataset([str(path) for path in files], format="parquet")
+    for entry in files:
+        file = entry if isinstance(entry, CorpusFile) else CorpusFile(entry)
+        columns = COLUMNS if file.row_filter is None else [*COLUMNS, "source_id"]
+        table = pq.ParquetFile(file.path).read(columns=columns)
 
-    for batch in dataset.to_batches(columns=COLUMNS, batch_size=8192):
-        countries = batch.column("country").to_pylist()
-        tags = batch.column("span_tags").to_pylist()
-        sources = batch.column("source").to_pylist()
+        if file.row_filter is not None:
+            mask = _admitted_mask(table["source_id"].combine_chunks(), file.row_filter)
+            if mask is not None:
+                table = table.filter(mask)
+
+        countries = table.column("country").to_pylist()
+        tags = table.column("span_tags").to_pylist()
+        sources = table.column("source").to_pylist()
 
         for country, span_tags, source in zip(countries, tags, sources, strict=True):
             key = str(country or "(none)")
@@ -87,7 +98,7 @@ def audit(corpus_dir: Path, splits: tuple[str, ...] = ("val", "test")) -> dict[s
     """Scan each split and report per-country row and street-row counts."""
     return {
         "corpus_dir": str(corpus_dir),
-        "splits": {split: scan_split(_parquet_paths(corpus_dir, split)) for split in splits},
+        "splits": {split: scan_split(list(corpus_split_files(corpus_dir, split))) for split in splits},
     }
 
 

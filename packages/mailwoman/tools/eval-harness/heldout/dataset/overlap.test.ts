@@ -156,6 +156,15 @@ describe("auditHeldoutOverlap", () => {
 		])
 	})
 
+	it("matches a card's v-prefixed corpus key to a manifest's bare corpus_version", async () => {
+		const corpus = await writeCorpus("prefixed", "0.9.1")
+		const card = await writeCard("prefixed", "v0.9.1")
+
+		const result = await auditHeldoutOverlap({ dataset, corpora: [corpus], modelCards: [card], pathRoot: root })
+
+		expect(result.audit.modelCards[0]).toMatchObject({ matched: true, problem: null })
+	})
+
 	it("refuses verified_unseen when a model card's corpus is not among those read", async () => {
 		const corpus = await writeCorpus("candidate", "v-candidate")
 		const read = await writeCard("candidate", "v-candidate")

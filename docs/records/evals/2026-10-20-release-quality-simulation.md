@@ -61,8 +61,8 @@ each scenario's rates, sizes, grouping and simulation thresholds. In summary:
 | small-10-rows-near-minimum       | 1 x 10                                               | 0.85 to 0.85, d 0.10                       | minimum 0.90, improvement -0.05 | 2   |
 | independent-rows                 | 4 x 400, group size 1                                | 0.80 to 0.82, d 0.10                       | minimum 0.70, improvement 0     | 5   |
 | correlated-grouped               | 4 x 400, groups of 5, rho 0.8                        | 0.80 to 0.82, d 0.10                       | minimum 0.70, improvement 0     | 5   |
-| correlated-ignored               | as above, no group field                             | 0.80 to 0.82, d 0.10                       | minimum 0.70, improvement 0     | 5   |
-| correlated-ignored-below-minimum | 4 x 400, groups of 5, rho 0.8, no group field        | 0.67 to 0.67, d 0.10                       | minimum 0.70, improvement -0.05 | 5   |
+| correlated-ignored               | as above, group field absent                         | 0.80 to 0.82, d 0.10                       | minimum 0.70, improvement 0     | 5   |
+| correlated-ignored-below-minimum | 4 x 400, groups of 5, rho 0.8, group field absent    | 0.67 to 0.67, d 0.10                       | minimum 0.70, improvement -0.05 | 5   |
 | correlated-grouped-below-minimum | as above, groups passed                              | 0.67 to 0.67, d 0.10                       | minimum 0.70, improvement -0.05 | 5   |
 | boundary-minimum                 | 4 x 400                                              | 0.80 to 0.80, d 0.10                       | minimum 0.80, improvement -0.05 | 5   |
 | boundary-improvement             | 4 x 400                                              | 0.80 to 0.82 (improvement 0.02), d 0.10    | minimum 0.50, improvement 0.02  | 5   |
@@ -152,14 +152,14 @@ both):
 Findings 1 to 3 were defects in `evaluate.ts`; the evaluator now computes its bounds differently, and the
 current specification moved to `specs/release-requirements.v2.json` (schema 2). Decided changes:
 
-- **Minimum checks** use a Clopper–Pearson interval on the effective count. The cluster-robust variance of
+- **Minimum checks** use a Clopper–Pearson interval on the effective count. The clustered sandwich variance of
   the rate over a country's groups gives a design effect, and the effective count is the row count divided
   by it, clamped to between the number of groups and the number of rows. At a rate of 0 or 1 the design
   effect cannot be estimated and the effective count is the number of groups. Clopper–Pearson is exact on
   independent binomial counts and its bound away from 0 or 1 never collapses: 10 exact rows of 10 at the
   per-side tail 0.0125 give a lower bound of 0.0125^(1/10) = 0.645.
-- **Difference checks** (a capability's permitted loss and the Q improvement) use an analytic cluster-robust
-  variance of the paired difference per country, summed over the objective countries with weight 1/K, and a
+- **Difference checks** (a capability's permitted loss and the Q improvement) use an analytic clustered
+  sandwich variance of the paired difference per country, summed over the objective countries with weight 1/K, and a
   Student t quantile with Welch–Satterthwaite degrees of freedom. A country with fewer than two groups makes
   the check insufficient. A country whose estimated variance is zero (no discordant group) takes the exact
   zero-event bound q / G, with q = 1 - tail^(1/G), in its place, so a degenerate sample never has zero width
@@ -212,9 +212,9 @@ Against the targets (observed):
   countries. The bound allows up to 4 x 0.005 = 2% there (four per-side tails of 0.05/5/2); the interval
   includes it.
 - **Still short of nominal: `selection-k50-same-set`**, joint coverage 67.5% and erroneous approval 4.5%
-  [2.4, 8.3]. This is finding 4, not a bound defect: no interval computed on the rows that chose the
+  [2.4, 8.3]. This is finding 4 (selection on the same rows) rather than a bound defect: no interval computed on the rows that chose the
   candidate covers the selected candidate's truth. The fresh-set arm is at nominal (96.5%, 0.0% approval).
-  The remedy is procedural, confirmation on rows not used for selection, as the policy's development and
+  The correction is procedural, confirmation on rows not used for selection, as the policy's development and
   confirmation collections require.
 - **Cost (observed):** the exact bounds are more conservative. Pass rates where the truth meets every
   requirement fell in `small-50-rows` (26.5% to 11.0%), `small-10-rows` (2.5% to 0.0%),

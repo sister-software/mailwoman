@@ -210,6 +210,15 @@ function isObject(value: unknown): value is Record<string, unknown> {
  * Validates a parsed specification and returns it typed, or throws naming the first malformed field.
  */
 export function validateReleaseSpec(input: unknown, source = "release spec"): ReleaseRequirementSpec {
+	assertReleaseSpec(input, source)
+
+	return input
+}
+
+/**
+ * Throws naming the first malformed field of a parsed specification.
+ */
+function assertReleaseSpec(input: unknown, source: string): asserts input is ReleaseRequirementSpec {
 	const fail = (path: string, problem: string): never => {
 		throw new SpecError(source, path, problem)
 	}
@@ -462,8 +471,6 @@ export function validateReleaseSpec(input: unknown, source = "release spec"): Re
 		nullableString(evaluation.id, `$.evaluations.${which}.id`)
 		string(evaluation.description, `$.evaluations.${which}.description`)
 	}
-
-	return root as unknown as ReleaseRequirementSpec
 }
 
 /**

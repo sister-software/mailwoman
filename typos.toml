@@ -22,6 +22,8 @@ extend-exclude = [
 	"docs/records/evals/",
 	"**/*preregistration*.md",
 	"**/*preregistration*.mdx",
+	# A registered release specification is hashed into every verdict that cites it, so its text stays as registered.
+	"packages/mailwoman/tools/eval-harness/release/specs/",
 	"docs/static/benchmarks/",
 	"packages/corpus/data/",
 	"packages/core/data/libpostal/",
@@ -90,6 +92,12 @@ extend-ignore-re = [
 	'''Church of the Holy Sepulchre''',
 	'''Viet Nam|Valles Marineris''',
 	'''Courrier d'Entreprise''',
+	# Postal-guideline citations in the codex: La Poste's division name, Poste Italiane's document code, and
+	# sentences quoted from the La Poste and Deutsche Post guidelines.
+	'''Branche Services-Courrier-Colis''',
+	'''PRS\.INDES\.STA\.1''',
+	'''"Exemple : [^"]*"''',
+	'''Hausnummer geben Sie die Postfachnummer an\. Eine Ortsteilbezeichnung ist nicht notwendig\.''',
 	'''© les contributeurs de la Base Adresse Nationale''',
 	'''\b(?:5th Avenue Theatre|Royal Theatre|Grand Theatre|Belfast Grand Opera Theatre)\b''',
 	'''\bBroadway Theatre(?: Company)?\b|5th\s+Avenue\s+Theatre''',

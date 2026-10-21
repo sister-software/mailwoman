@@ -1,6 +1,7 @@
 """Lists the parquet files of a corpus split and counts rows per source.
 
-Only `file_source_counts` reads row data. It reads only the dictionary-encoded `source` column. Listing a split
+`file_source_counts` reads only the dictionary-encoded `source` column. `admitted_batches` reads the columns a
+caller names, through the file's row filter. Listing a split
 from its manifest hashes each file once per process against the manifest's sha256.
 """
 
@@ -8,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -313,6 +315,31 @@ def _admitted_mask(source_ids: Any, row_filter: RowFilter) -> Any:
         kept = pc.invert(dropped)
         mask = kept if mask is None else pc.and_(mask, kept)
     return mask
+
+
+def admitted_batches(
+    file: CorpusFile, columns: list[str], *, batch_size: int = 65536, predicate: Any = None
+) -> Iterator[pa.RecordBatch]:
+    """Yield one file's record batches over ``columns``, holding only the rows its split admits.
+
+    ``source_id`` is read for the filter when the file has one and is returned only when ``columns`` names it.
+    ``predicate`` is a `pyarrow.dataset` expression applied before the split filter, so row-group statistics can
+    skip groups it excludes.
+    """
+    import pyarrow.dataset as ds
+
+    read = columns if file.row_filter is None or "source_id" in columns else [*columns, "source_id"]
+    for batch in ds.dataset(str(file.path), format="parquet").to_batches(
+        columns=read, filter=predicate, batch_size=batch_size
+    ):
+        if file.row_filter is not None:
+            mask = _admitted_mask(batch.column("source_id"), file.row_filter)
+            if mask is not None:
+                batch = batch.filter(mask)
+            if read is not columns:
+                batch = batch.select(columns)
+        if batch.num_rows:
+            yield batch
 
 
 def file_source_counts(path: Path, row_filter: RowFilter | None = None) -> dict[str, int]:

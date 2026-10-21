@@ -54,6 +54,14 @@ class SkipReason:
     """The postcode already sits on the side the country's layout does not use."""
     WORD_ACROSS_BOUNDARY = "word_across_boundary"
     """A token holds text on both sides of a unit boundary, so it cannot move with either side."""
+    SPANS_OVERLAP = "spans_overlap"
+    """The input's spans overlap or nest, so no cut moves one without part of another."""
+    SPAN_EDGE_WHITESPACE = "span_edge_whitespace"
+    """The moved block or the postcode starts or ends on whitespace (a locality span holding the space after the
+    street), so the cut would glue the postcode to the word before it (``MAIN ST11550``)."""
+    INVALID_OUTPUT = "invalid_output"
+    """The moved row's spans are out of bounds, unsorted or overlapping. The move refuses rather than emit a row the
+    encoder rejects."""
 
 
 @cache
@@ -89,6 +97,8 @@ def move_postcode(
     if tags.count("postcode") != 1:
         return None, SkipReason.NOT_BLOCK
     order = sorted(range(len(starts)), key=lambda i: starts[i])
+    if not _spans_ordered(len(row["raw"]), [(starts[i], ends[i]) for i in order]):
+        return None, SkipReason.SPANS_OVERLAP
     position = order.index(tags.index("postcode"))
     before = _admin_run(order, tags, range(position - 1, -1, -1))
     after = _admin_run(order, tags, range(position + 1, len(order)))
@@ -107,6 +117,8 @@ def move_postcode(
     block = (min(starts[i] for i in run), max(ends[i] for i in run))
     pc = (starts[postcode_index], ends[postcode_index])
     (s1, e1), (s2, e2) = (block, pc) if side == "after" else (pc, block)
+    if any(raw[offset].isspace() for offset in (s1, e1 - 1, s2, e2 - 1)):
+        return None, SkipReason.SPAN_EDGE_WHITESPACE
     if not _SEPARATOR.fullmatch(raw[e1:s2]):
         return None, SkipReason.NOT_BLOCK
     moved_indices = {*run, postcode_index}
@@ -115,8 +127,9 @@ def move_postcode(
 
     def shifted(offset: int, *, end: bool) -> int:
         """Where ``offset`` lands once the units at [s1, e1) and [s2, e2) swap around the separator."""
-        inside_first = s1 <= offset < e1 or (end and s1 < offset <= e1)
-        inside_second = s2 <= offset < e2 or (end and s2 < offset <= e2)
+        # A start is inside a unit on [s, e) and an end on (s, e], so a span ending where a unit starts stays put.
+        inside_first = s1 < offset <= e1 if end else s1 <= offset < e1
+        inside_second = s2 < offset <= e2 if end else s2 <= offset < e2
         if inside_first:
             return offset + (e2 - e1)
         if inside_second:
@@ -151,6 +164,8 @@ def move_postcode(
         (shifted(start, end=False), shifted(end, end=True), tag)
         for start, end, tag in zip(starts, ends, tags, strict=True)
     )
+    if not _spans_ordered(len(new_raw), [(start, end) for start, end, _ in spans]):
+        return None, SkipReason.INVALID_OUTPUT
     return {
         **row,
         "raw": new_raw,
@@ -160,6 +175,17 @@ def move_postcode(
         "span_ends": [end for _, end, _ in spans],
         "span_tags": [tag for _, _, tag in spans],
     }, None
+
+
+def _spans_ordered(length: int, spans: list[tuple[int, int]]) -> bool:
+    """Whether ``spans``, in order, are non-empty, in bounds, sorted and disjoint, as `char_label_array_from_spans`
+    requires."""
+    previous_end = 0
+    for start, end in spans:
+        if not (previous_end <= start < end <= length):
+            return False
+        previous_end = end
+    return True
 
 
 def _admin_run(order: list[int], tags: list[str], positions: range) -> list[int]:
