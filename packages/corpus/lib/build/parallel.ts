@@ -360,7 +360,7 @@ export function alignRangeCount(bytes: number, rangeBytes: number, jobs: number)
  *
  * One pipeline reads every source in order and writes the one write stream.
  * A pipeline per source with `end: false` leaves its four completion listeners on the
- * destination, so a build with more than ten sources tripped `MaxListenersExceededWarning`.
+ * destination, so a build with more than ten sources tripped Node's max-listeners warning.
  */
 export async function concatenateFiles(sources: readonly string[], destination: PathBuilderLike): Promise<void> {
 	async function* chunks(): AsyncGenerator<string | Buffer> {

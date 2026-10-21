@@ -393,7 +393,12 @@ describe("pairOutcomes", () => {
 	})
 
 	it("refuses an unreadable outcome", () => {
-		expect(() => pairOutcomes([row("a", true)], [{ ...row("a", true), exact: "yes" as never }])).toThrow(/unreadable/u)
+		// An outcome read off disk holds whatever the file held, which the row type cannot express.
+		const unreadable = row("a", true)
+
+		Reflect.set(unreadable, "exact", "yes")
+
+		expect(() => pairOutcomes([row("a", true)], [unreadable])).toThrow(/unreadable/u)
 	})
 
 	it("carries the weights locale and refuses arms parsed by different packages", () => {

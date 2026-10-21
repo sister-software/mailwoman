@@ -7,6 +7,7 @@ import { afterAll, describe, expect, it } from "vitest"
 import {
 	assertPairedArms,
 	countHeldoutCells,
+	type HeldoutClassifier,
 	type HeldoutRow,
 	heldoutRowGroup,
 	heldoutRowID,
@@ -242,10 +243,12 @@ describe("scoreHeldoutWeights", () => {
 			load: async (locale, cacheRoot) => {
 				loaded.push(`${locale}@${cacheRoot}`)
 
-				return {
+				const classifier: HeldoutClassifier = {
 					unfedChannels: [],
 					parse: async (raw: string) => exactTree(rowsWithFallback.find((r) => r.raw === raw)!),
-				} as never
+				}
+
+				return classifier
 			},
 		})
 
@@ -261,7 +264,7 @@ describe("scoreHeldoutWeights", () => {
 	})
 
 	it("refuses a package whose loader reports an unfed required channel", async () => {
-		const unfedChannels = [
+		const unfedChannels: HeldoutClassifier["unfedChannels"] = [
 			{
 				channel: "anchor",
 				weightsPackage: "/cache/node_modules/@mailwoman/neural-weights-en-us",
@@ -272,7 +275,7 @@ describe("scoreHeldoutWeights", () => {
 		await expect(
 			scoreHeldoutWeights(rows, "/cache", undefined, {
 				packages,
-				load: async () => ({ unfedChannels, parse: async () => exactTree(rows[0]!) }) as never,
+				load: async () => ({ unfedChannels, parse: async () => exactTree(rows[0]!) }),
 			})
 		).rejects.toThrow(
 			/required anchor channel unfed for \/cache\/node_modules\/@mailwoman\/neural-weights-en-us \(postcode-us\.bin/u

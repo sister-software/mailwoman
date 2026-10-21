@@ -35,7 +35,7 @@ export interface ResolvedBuildSettings {
 	resume: boolean
 }
 
-export function resolveBuildSettings(opts: BuildCorpusOptions): ResolvedBuildSettings {
+export function resolveCorpusSettings(opts: BuildCorpusOptions): ResolvedBuildSettings {
 	const priorOutput = opts.priorOutput ?? PriorOutput.Refuse
 
 	return {
