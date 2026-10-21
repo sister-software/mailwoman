@@ -42,7 +42,7 @@
 	}
 }
 
-/* The navbar search control (src/theme/SearchBar.tsx): a cream utility key. */
+/* The navbar search control (src/theme/SearchBar.tsx): a utility key beside GitHub and the colour-mode toggle. */
 .navbar__search-button {
 	display: inline-flex;
 	gap: var(--ss-spacing-2);
@@ -51,15 +51,15 @@
 	padding: var(--ss-spacing-1) var(--ss-spacing-3);
 	border: var(--ss-border-width-global) solid var(--ss-color-frame-gray);
 	border-radius: var(--ss-radius-global);
-	background: var(--ss-color-paper-cream);
+	background: var(--ss-color-utility);
 	box-shadow: var(--ss-shadow-utility);
-	color: var(--ss-color-charcoal);
+	color: var(--ss-color-content);
 	font: inherit;
 	cursor: pointer;
 }
 
 .navbar__search-button:hover {
-	background: var(--ss-color-white);
+	background: var(--ss-color-key-hover);
 }
 
 .navbar__search-button:active {
@@ -96,5 +96,18 @@
 
 	.navbar__search-button {
 		padding: var(--ss-spacing-2);
+	}
+}
+
+/* With the shared theme's compact keys, the search key drops its label until the bar is wide enough. */
+@media (997px <= width < 1440px) {
+	html.docs-wrapper .navbar__search-label {
+		display: none;
+	}
+}
+
+@media (997px <= width < 1200px) {
+	html.docs-wrapper .navbar__search-keys {
+		display: none;
 	}
 }

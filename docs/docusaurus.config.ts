@@ -292,6 +292,8 @@ const config: Config = {
 					href: "https://github.com/sister-software/mailwoman",
 					label: "GitHub",
 					position: "right",
+					// A utility key with the GitHub mark (the shared theme's classic.css).
+					className: "navbar__item--github",
 				},
 			],
 		},

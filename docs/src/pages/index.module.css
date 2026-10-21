@@ -5,8 +5,8 @@
 .heroBanner {
 	padding: 5rem 0 4rem;
 	text-align: center;
-	/* The desktop wallpaper: a brand surface, kept on Paper in both themes (data-theme="light" on the element). */
-	background: var(--ss-color-paper-pink);
+	/* The rail's ground: wallpaper pink on Paper, the night surface in the dark theme. */
+	background: var(--ss-color-rail);
 	color: var(--ss-color-content);
 	overflow: hidden;
 }

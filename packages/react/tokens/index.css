@@ -149,11 +149,22 @@
 	--ss-link-hover-color: var(--ss-link-color);
 	--ss-link-decoration: underline;
 	--ss-link-hover-decoration: var(--ss-link-decoration);
+	--ss-color-rail: var(--ss-color-paper-pink);
+	--ss-color-key: var(--ss-color-mint);
+	--ss-color-key-edge: var(--ss-color-mint-edge);
+	--ss-color-key-hover: var(--ss-color-paper-cream);
+	--ss-color-key-current: var(--ss-color-white);
+	--ss-color-utility: var(--ss-color-paper-cream);
+	--ss-color-rule: var(--ss-color-desktop-chrome);
+	--ss-color-chrome: var(--ss-color-chrome-bar-active);
+	--ss-color-chrome-inactive: var(--ss-color-chrome-bar);
+	--ss-color-frame: var(--ss-color-chrome-edge);
+	--ss-color-frame-ink: var(--ss-color-chrome-ink);
 	--ss-font-family-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
 	--ss-font-family-reading: "Go Web", "Go Fallback", -apple-system, BlinkMacSystemFont, sans-serif;
 	--ss-font-family-system: "Pixelify Sans", "Go Mono Web", "Go Mono Fallback", monospace;
 	--ss-font-family-smallcaps: "Go Smallcaps Web", "Go Web", "Go Fallback", sans-serif;
-	--ss-font-family-mono: "Go Mono Web", "Go Mono Fallback", Menlo, "SF Mono", monospace;
+	--ss-font-family-mono: "Fira Code Web", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", Courier, monospace;
 	--ss-font-family-base: var(--ss-font-family-reading);
 	--ss-font-family-heading: var(--ss-font-family-reading);
 	--ss-font-family-monospace: var(--ss-font-family-mono);
@@ -424,6 +435,21 @@
 	--ss-color-content-inverse: var(--ss-color-white);
 	--ss-color-hover-overlay: rgba(55, 61, 64, 0.05);
 	--ss-color-focus-ring: var(--ss-color-focus);
+	--ss-color-rail: var(--ss-color-paper-pink);
+	--ss-color-key: var(--ss-color-mint);
+	--ss-color-key-hover: var(--ss-color-paper-cream);
+	--ss-color-key-current: var(--ss-color-white);
+	--ss-color-utility: var(--ss-color-paper-cream);
+	--ss-color-rule: var(--ss-color-desktop-chrome);
+	--ss-color-chrome: var(--ss-color-chrome-bar-active);
+	--ss-color-chrome-inactive: var(--ss-color-chrome-bar);
+	--ss-color-frame: var(--ss-color-chrome-edge);
+	--ss-color-frame-ink: var(--ss-color-chrome-ink);
+	--ss-shadow-tile: -6px 9px 0 #f6a6ac;
+	--ss-shadow-tile-pressed: -2px 3px 0 #f6a6ac;
+	--ss-shadow-utility: -6px 9px 0 rgba(0, 0, 0, 0.1);
+	--ss-shadow-utility-pressed: -2px 3px 0 rgba(0, 0, 0, 0.1);
+	--ss-shadow-pane: -5px 6px 0 rgba(0, 0, 0, 0.1);
 	--ss-color-primary: var(--ss-color-link);
 	--ss-color-primary-darkest: #00476b;
 	--ss-color-primary-darker: #005782;
@@ -454,6 +480,8 @@
 	--ss-color-emphasis-900: var(--ss-color-gray-900);
 	--ss-link-color: var(--ss-color-primary);
 	--ss-link-hover-color: var(--ss-link-color);
+	--ss-shadow-lw: var(--ss-shadow-utility);
+	--ss-shadow-md: var(--ss-shadow-utility-pressed);
 }
 
 [data-theme="dark"] {
@@ -465,6 +493,21 @@
 	--ss-color-content-inverse: var(--ss-color-charcoal);
 	--ss-color-hover-overlay: rgba(236, 231, 229, 0.06);
 	--ss-color-focus-ring: var(--ss-color-focus-night);
+	--ss-color-rail: var(--ss-color-night-surface);
+	--ss-color-key: var(--ss-color-night-raised);
+	--ss-color-key-hover: var(--ss-color-charcoal);
+	--ss-color-key-current: var(--ss-color-night);
+	--ss-color-utility: var(--ss-color-night-raised);
+	--ss-color-rule: var(--ss-color-charcoal);
+	--ss-color-chrome: var(--ss-color-night-surface);
+	--ss-color-chrome-inactive: var(--ss-color-night-raised);
+	--ss-color-frame: var(--ss-color-charcoal);
+	--ss-color-frame-ink: var(--ss-color-moonlight-muted);
+	--ss-shadow-tile: -6px 9px 0 rgba(246, 166, 172, 0.35);
+	--ss-shadow-tile-pressed: -2px 3px 0 rgba(246, 166, 172, 0.35);
+	--ss-shadow-utility: -6px 9px 0 rgba(0, 0, 0, 0.45);
+	--ss-shadow-utility-pressed: -2px 3px 0 rgba(0, 0, 0, 0.45);
+	--ss-shadow-pane: -5px 6px 0 rgba(0, 0, 0, 0.45);
 	--ss-color-primary: var(--ss-color-link-night);
 	--ss-color-primary-darkest: #3f81a2;
 	--ss-color-primary-darker: #4d9cc5;
@@ -495,6 +538,8 @@
 	--ss-color-emphasis-900: var(--ss-color-gray-100);
 	--ss-link-color: var(--ss-color-primary);
 	--ss-link-hover-color: var(--ss-link-color);
+	--ss-shadow-lw: var(--ss-shadow-utility);
+	--ss-shadow-md: var(--ss-shadow-utility-pressed);
 	--mw-material-glass-background: rgba(27, 30, 32, 0.86);
 	--mw-material-glass-border: rgba(236, 231, 229, 0.14);
 	--mw-material-glass-shadow: -6px 9px 0 rgba(0, 0, 0, 0.45);

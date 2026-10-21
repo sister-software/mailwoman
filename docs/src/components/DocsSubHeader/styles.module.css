@@ -1,8 +1,7 @@
 /**
- * Styling for the docs section sub-header (see ./index.tsx). The band sits on the
- * page ground under the floating navbar keys, a hairline rule below it; the
- * current section takes the brand's current-item treatment (lavender-deep, white,
- * underlined). The
+ * Styling for the docs section sub-header (see ./index.tsx). A row of small-caps
+ * section links under the floating navbar keys, with no ground of its own; the
+ * current section is underlined. The
  * layout offsets that keep this band from overlapping the sidebar/TOC live in
  * src/css/docs-subheader.css (global, theme-class-scoped); only the band's own
  * look lives here.
@@ -13,8 +12,6 @@
 	top: var(--ifm-navbar-height);
 	z-index: calc(var(--ifm-z-index-fixed) - 1);
 	height: var(--mw-docs-subheader-height);
-	background-color: var(--ss-color-background);
-	border-bottom: var(--ss-border-width-global) solid var(--ss-color-emphasis-300);
 	transition: transform var(--ifm-transition-fast) ease;
 	will-change: transform;
 }
@@ -80,9 +77,9 @@
 
 .linkActive,
 .linkActive:hover {
-	color: var(--ss-color-white);
-	background-color: var(--ss-color-lavender-deep);
+	color: var(--ss-link-color);
 	text-decoration: underline;
+	text-underline-offset: 4px;
 }
 
 /* The rail runs the full height of the page; the band starts at its right edge. */

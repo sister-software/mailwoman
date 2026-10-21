@@ -44,6 +44,46 @@
 								"$value": "{color.focus-night}",
 								"$type": "color"
 							},
+							"rail": {
+								"$value": "{color.night-surface}",
+								"$type": "color"
+							},
+							"key": {
+								"$value": "{color.night-raised}",
+								"$type": "color"
+							},
+							"key-hover": {
+								"$value": "{color.charcoal}",
+								"$type": "color"
+							},
+							"key-current": {
+								"$value": "{color.night}",
+								"$type": "color"
+							},
+							"utility": {
+								"$value": "{color.night-raised}",
+								"$type": "color"
+							},
+							"rule": {
+								"$value": "{color.charcoal}",
+								"$type": "color"
+							},
+							"chrome": {
+								"$value": "{color.night-surface}",
+								"$type": "color"
+							},
+							"chrome-inactive": {
+								"$value": "{color.night-raised}",
+								"$type": "color"
+							},
+							"frame": {
+								"$value": "{color.charcoal}",
+								"$type": "color"
+							},
+							"frame-ink": {
+								"$value": "{color.moonlight-muted}",
+								"$type": "color"
+							},
 							"primary": {
 								"$value": "{color.link-night}",
 								"$type": "color"
