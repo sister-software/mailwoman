@@ -15,7 +15,7 @@ import { scopeAdmits, verifyLicenseKey } from "@mailwoman/core/license/key"
 import { trustedLicenseSigningKeys } from "@mailwoman/core/license/register"
 
 import type { ArtifactCatalog } from "#artifacts/catalog"
-import { PRESIGN_SECONDS, presignConfigured, presignedArtifactURL } from "#artifacts/presign"
+import { PRESIGN_SECONDS, presignConfigured, presignObject } from "#artifacts/presign"
 import type { LicenseWorkerEnv } from "#env"
 import { newDownloadID } from "#identifiers"
 import type { Ledger } from "#ledger/client"
@@ -129,7 +129,7 @@ export function registerDownloadRoute(app: OpenAPIHono, env: LicenseWorkerEnv, d
 			if (standing !== "active") return c.json({ error: standing }, 403)
 		}
 
-		const url = await presignedArtifactURL(env, entry.key)
+		const url = await presignObject(env, entry.key)
 
 		await recordDownload(deps.ledger, {
 			download_id: newDownloadID(),

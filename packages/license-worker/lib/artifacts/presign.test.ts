@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { presignConfigured, presignedArtifactURL } from "#artifacts/presign"
+import { presignConfigured, presignObject } from "#artifacts/presign"
 
 const configured = {
 	R2_ACCESS_KEY_ID: "testaccesskeyid00000000000000000",
@@ -15,9 +15,9 @@ const configured = {
 	PAID_ARTIFACTS_BUCKET: "mailwoman-paid-test",
 }
 
-describe("presignedArtifactURL", () => {
+describe("presignObject", () => {
 	it("signs a GET on the bucket's S3 host with a one-hour expiry in the query", async () => {
-		const url = new URL(await presignedArtifactURL(configured, "tiers/gb-streets/2026-10-01/gb-streets.db"))
+		const url = new URL(await presignObject(configured, "tiers/gb-streets/2026-10-01/gb-streets.db"))
 
 		expect(url.host).toBe("0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com")
 		expect(url.pathname).toBe("/mailwoman-paid-test/tiers/gb-streets/2026-10-01/gb-streets.db")

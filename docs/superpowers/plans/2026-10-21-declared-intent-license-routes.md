@@ -18,7 +18,7 @@ Cloudflare Workers through Wrangler and `@cloudflare/vitest-pool-workers`, Ink w
 
 ## Global Constraints
 
-- Relative imports carry `.ts`; sibling imports go through the workspace `#` map; a directory module is `<dir>.ts`.
+- Relative imports include `.ts`. Sibling imports go through the workspace `#` map. A directory module is `<dir>.ts`.
 - A constant object plus a derived union replaces `enum`. Constructor parameter properties and runtime namespaces are
   not used.
 - A test sits beside its module as `<name>.test.ts`; a CLI test that spawns the compiled entry is
@@ -41,11 +41,11 @@ Cloudflare Workers through Wrangler and `@cloudflare/vitest-pool-workers`, Ink w
    it with a fixture token whose payload has no `intent`, `seq` or `install`.
 2. An issue date near a month end plus four months: `2026-10-31` rolls to `2027-03-03` under `Date.UTC` and the
    nearest lead is `2027-03-11`; Task 4 pins it.
-3. A second evaluation for an address that already received one answers 409 and mints no token; Task 6 pins it.
-4. A lid-less hand-issued token downloads, a `lapsed` lid is refused, and an artifact outside `scope` is refused;
+3. A second evaluation for an address that already received one answers 409 and mints no token. Task 6 pins it.
+4. A lid-less hand-issued token downloads, a `lapsed` lid is refused, and an artifact outside `scope` is refused.
    Task 7 pins all three.
 5. `data pull` of a free bundle is unchanged with no token, and of a licensed bundle with an expired token prints the
-   refresh command; Task 10 pins both.
+   refresh command. Task 10 pins both.
 
 ---
 
@@ -271,7 +271,7 @@ test("expiryForIntent", () => {
 ```
 
 - [ ] **Step 2: Run** `yarn workspace @mailwoman/license-worker vitest run lib/expiry.test.ts` — Expected: the run fails with the module not found.
-- [ ] **Step 3: Implement.** Candidates are the four lead dates in the target's year and the two neighboring years; pick the smallest absolute day difference; on equal difference pick the later date.
+- [ ] **Step 3: Implement.** Candidates are the four lead dates in the target's year and the two neighboring years. Pick the smallest absolute day difference. On equal difference pick the later date.
 - [ ] **Step 4: Run** — Expected: the run passes.
 - [ ] **Step 5: Commit** — `Add the expiry rule per license intent`.
 
@@ -364,7 +364,7 @@ CREATE INDEX downloads_by_lid ON downloads(lid, created_at);
 - Create: `packages/license-worker/lib/declare.ts`, `lib/declare.test.ts`
 - Create: `packages/license-worker/lib/verify-source.ts`, `lib/verify-source.test.ts`
 - Create: `packages/license-worker/lib/routes/declare.ts`, `lib/routes/evaluate.ts`
-- Modify: `packages/license-worker/lib/routes/refresh.ts` (fall through to a declaration), `lib/app.ts` (register, `fetch` dependency), `lib/env.ts` (`DECLARE_LIMITER`, `EVALUATE_LIMITER`), `wrangler.toml` and `wrangler.sandbox.toml` (two `[[ratelimits]]` each: production `2004`, `2005`; sandbox `1004`, `1005`), `lib/email/provider.ts` (`agreement: string | null`), `lib/email/content.ts` (facts row only when `agreement` is set; subject `Your Mailwoman license (<intent>)` for a declared token), `lib/identifiers.ts` (`newClaimID(): string` = `clm_` + 22 url-safe characters)
+- Modify: `packages/license-worker/lib/routes/refresh.ts` (fall through to a declaration), `lib/app.ts` (register, `fetch` dependency), `lib/env.ts` (`DECLARE_LIMITER`, `EVALUATE_LIMITER`), `wrangler.toml` and `wrangler.sandbox.toml` (two `[[ratelimits]]` each: production `2004` and `2005`, sandbox `1004` and `1005`), `lib/email/provider.ts` (`agreement: string | null`), `lib/email/content.ts` (facts row only when `agreement` is set, and subject `Your Mailwoman license (<intent>)` for a declared token), `lib/identifiers.ts` (`newClaimID(): string` = `clm_` + 22 url-safe characters)
 - Test: `packages/license-worker/lib/routes.test.ts` (extend with the three routes)
 
 **Interfaces:**
@@ -375,7 +375,7 @@ CREATE INDEX downloads_by_lid ON downloads(lid, created_at);
     `DeclarationOutcome = { outcome: "issued"; lid; token; secret; issued; expires } | { outcome: "pending"; claim: string; lid } | { outcome: "refused"; reason: "evaluation_exists" | "missing_email" | "missing_source_url" | "issuance_disabled" }`.
   - `reissueDeclaration(env, deps, declaration: DeclarationRow, now): Promise<IssuanceRow>`: returns the current issuance when it expires more than `EXPIRY_NOTICE_DAYS` after today, otherwise mints `seq + 1` with a fresh expiry, runs `verifySourceURL` for `open-source`, and emails the token when the declaration has an email.
   - `verifySourceURL(fetchImpl: typeof fetch, url: string): Promise<"verified" | "unverified">`: for `https://github.com/<owner>/<repo>` fetch `https://raw.githubusercontent.com/<owner>/<repo>/HEAD/LICENSE` then `LICENSE.md`; otherwise fetch `<url>/LICENSE`; `verified` when the body contains one of `GNU AFFERO GENERAL PUBLIC LICENSE`, `GNU GENERAL PUBLIC LICENSE`, `GNU LESSER GENERAL PUBLIC LICENSE`, `Apache License`, `MIT License`, `Mozilla Public License`, `BSD`.
-  - Routes: `POST /v1/declarations` (body `DeclarationRequest` without `evaluation`; 200 `{ status: "issued", token, lid, secret, issued, expires }` or `{ status: "pending", claim }`; 400 on a missing field; 429), `GET /v1/declarations/{claimID}` (the `ClaimResponseSchema` shape, the secret once), `POST /v1/evaluations` (body `{ email, name, install? }`; 200 `{ status: "pending", claim }`; 409 `{ error: "evaluation exists" }`; 429).
+  - Routes: `POST /v1/declarations` (body `DeclarationRequest` without `evaluation`, 200 `{ status: "issued", token, lid, secret, issued, expires }` or `{ status: "pending", claim }`, 400 on a missing field, 429), `GET /v1/declarations/{claimID}` (the `ClaimResponseSchema` shape, the secret once), `POST /v1/evaluations` (body `{ email, name, install? }`, 200 `{ status: "pending", claim }`, 409 `{ error: "evaluation exists" }`, 429).
   - Payload minted: `{ v: 1, kid: env.LICENSE_SIGNING_KID, licensee: name, issued, expires, scope: "all", terms: "AGPL-3.0-only", lid, intent, seq, install? }`.
 
 - [ ] **Step 1: Write the failing tests** in `declare.test.ts` and `routes.test.ts`:
@@ -410,12 +410,12 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
 **Interfaces:**
 
 - Produces:
-  - `ArtifactCatalog = Readonly<Record<string, { key: string; bytes: number | null }>>`; `PAID_ARTIFACTS: ArtifactCatalog = {}` with a comment that the operator fills it when the first paid artifact is published.
-  - `presignedArtifactURL(env, key: string, expiresSeconds = 3600): Promise<string>` on `AwsClient` from `aws4fetch` with `service: "s3"`, `region: "auto"`, `signQuery: true`, host `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${PAID_ARTIFACTS_BUCKET}/${key}`.
-  - `POST /v1/downloads` body `{ token: string; artifact: string; install?: string }`: 503 `{ error: "downloads unavailable" }` when the R2 vars are absent; 400 on an unknown artifact; 403 `{ error: "scope" | "lapsed" | "revoked" | "expired" | "invalid" | "unknown_key" }`; 200 `{ status: "granted", url, expires, bytes }` and one `downloads` row.
+  - `ArtifactCatalog`, a `Readonly<Record<string, ArtifactEntry>>` where an entry is `{ key: string, bytes: number | null }`, and `PAID_ARTIFACTS: ArtifactCatalog = {}` with a comment that the operator fills it when the first paid artifact is published.
+  - `presignObject(env, key: string, expiresSeconds = 3600): Promise<string>` on `AwsClient` from `aws4fetch` with `service: "s3"`, `region: "auto"`, `signQuery: true`, host `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${PAID_ARTIFACTS_BUCKET}/${key}`.
+  - `POST /v1/downloads` body `{ token: string; artifact: string; install?: string }`: 503 `{ error: "downloads unavailable" }` when the R2 vars are absent, 400 on an unknown artifact, 403 `{ error: "scope" | "lapsed" | "revoked" | "expired" | "invalid" | "unknown_key" }`, 200 `{ status: "granted", url, expires, bytes }` and one `downloads` row.
   - Verification order: `verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys() })` must be `valid`; `scopeAdmits(payload.scope, artifact)`; when `payload.lid` is set, the `licenses` or `declarations` row must be `active`; otherwise the token is admitted.
 
-- [ ] **Step 1: Write the failing tests**: a lid-less hand-issued valid token is granted; a declaration in state `lapsed` is refused `lapsed`; a token with `scope: ["@mailwoman/neural-weights-en-gb"]` asking for `tier:gb-streets` is refused `scope`; an unknown artifact answers 400; absent R2 vars answer 503; the presigned URL contains `X-Amz-Signature`, `X-Amz-Expires=3600` and the bucket host.
+- [ ] **Step 1: Write the failing tests**: a lid-less hand-issued valid token is granted, a declaration in state `lapsed` is refused `lapsed`, a token with `scope: ["@mailwoman/neural-weights-en-gb"]` asking for `tier:gb-streets` is refused `scope`, an unknown artifact answers 400, absent R2 vars answer 503, and the presigned URL contains `X-Amz-Signature`, `X-Amz-Expires=3600` and the bucket host.
 - [ ] **Step 2: Run** — Expected: the run fails on the missing route.
 - [ ] **Step 3: Implement**, with the catalog injected in tests as `{ "tier:gb-streets": { key: "tiers/gb-streets/2026-10-01/gb-streets.db", bytes: 1 } }` and the R2 vars set to fixtures in the test env.
 - [ ] **Step 4: Run** `yarn workspace @mailwoman/license-worker vitest run` and `yarn vitest run packages/core/lib/worker-bundle.integration.test.ts` — Expected: both runs pass, the bundle free of `node:` specifiers.
@@ -487,7 +487,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
     `https://mailwoman.ai/license # commercial`; an expired key adds `Your key expired on <date>: mailwoman license refresh`.
   - In `pull.tsx`, a `granted` decision fetches each artifact through `requestDownload` and streams the answered URL where `artifactURL` is used today; `refused` prints the lines and exits 1 before any transfer.
 
-- [ ] **Step 1: Write the failing tests**: a bundle without `access` is `free` with no key; a licensed bundle with no key is `refused` with the three commands; with an expired key the refresh line appears; with a valid key it is `granted`.
+- [ ] **Step 1: Write the failing tests**: a bundle without `access` is `free` without a key, a licensed bundle without a key is `refused` with the three commands, an expired key adds the refresh line, and a valid key is `granted`.
 - [ ] **Step 2: Run** `yarn vitest run packages/mailwoman/lib/data/licensed.test.ts` — Expected: the run fails with the module not found.
 - [ ] **Step 3: Implement.** No existing bundle gains `access: "licensed"`; the field is declared for the first paid artifact.
 - [ ] **Step 4: Run** `yarn vitest run packages/mailwoman/lib/data` — Expected: the run passes.
@@ -510,7 +510,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
   - `precisionCeiling(result: Pick<GeocodeResult, "resolution_tier" | "hierarchy">, installed: ReadonlySet<string>, bundles = BUNDLES): EngineCoverage | null`: the country is the first `countryCode` in `hierarchy`; a bundle with `tier`, `countries` containing it, and absent from `installed` yields an entry whose `resolved` is `result.resolution_tier`, whose `tier` is `bundle.tier`, and whose `command` is `mailwoman data pull` followed by the bundle name, when `resolution_tier` is coarser than the street tiers, and `null` otherwise.
   - `coverageSentence(coverage: EngineCoverage): string` = `Resolved to ${resolved}. The ${tier} tier covers this country and is not installed: ${command}`.
 
-- [ ] **Step 1: Write the failing tests** with a bundles fixture `{ "gb-streets": { tier: "tier:gb-streets", countries: ["GB"], access: "licensed", … } }`: a GB locality result with the tier uninstalled yields the entry; installed yields `null`; a US result yields `null`; a street-level GB result yields `null`.
+- [ ] **Step 1: Write the failing tests** with a bundles fixture `{ "gb-streets": { tier: "tier:gb-streets", countries: ["GB"], access: "licensed", … } }`: a GB locality result with the tier uninstalled yields the entry, installed yields `null`, a US result yields `null`, and a street-level GB result yields `null`.
 - [ ] **Step 2: Run** — Expected: the run fails with the module not found.
 - [ ] **Step 3: Implement**, reading `RESOLUTION_TIERS` to list the street-level tiers in one constant with a comment.
 - [ ] **Step 4: Wire `geocode.ts`**: `engine: coverage ? { ...stamp, coverage } : stamp`; print `coverageSentence` after the text result. Run `yarn vitest run packages/mailwoman/lib/data/ceiling.test.ts` — Expected: the run passes.
@@ -528,7 +528,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
 
 **Interfaces:**
 
-- Consumes: `BUNDLES` with `access`, `tier`, `countries`; Task 10 decision; Task 9 commands; `mailwomanCLIPath()`.
+- Consumes: `BUNDLES` with `access`, `tier`, `countries`, Task 10 decision, Task 9 commands, `mailwomanCLIPath()`.
 - Produces:
   - `SETUP_SAMPLE_ADDRESS = "1600 Pennsylvania Avenue NW, Washington, DC 20500"`.
   - `SetupRoute = "declare" | "evaluate" | "buy" | "skip"`.
@@ -537,7 +537,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
   - `spec = { name: "setup", options: { interactive: { type: "boolean", default: true }, countries: { type: "string", multiple: true } } }`.
   - The interactive flow: check roots → run `mailwoman parse --json <sample>` through `runFile(process.execPath, [cliBin, …])` and show the components → `TextInput` for countries when none passed → `tiersFor` table → `Select` of `SetupRoute` → for `declare` and `evaluate`, prompt the fields and call the Task 9 actions' functions → `data pull` of the chosen bundles → the doctor's license line.
 
-- [ ] **Step 1: Write the failing tests**: `tiersFor(["GB"])` lists the GB bundle with `access` and `installed`; `setupSummary` prints one line per tier and the parse verdict; the integration test runs `setup --no-interactive --countries GB` on the compiled CLI and asserts exit 0 and the `Parsed:` line.
+- [ ] **Step 1: Write the failing tests**: `tiersFor(["GB"])` lists the GB bundle with `access` and `installed`. `setupSummary` prints one line per tier and the parse verdict. The integration test runs `setup --no-interactive --countries GB` on the compiled CLI and asserts exit 0 and the `Parsed:` line.
 - [ ] **Step 2: Run** — Expected: the run fails with the module not found.
 - [ ] **Step 3: Implement** the pure module, then the Ink command with `@inkjs/ui` `Select`, `TextInput`, `ConfirmInput` and `useCommandTask` from `#cli-kit`. Render with `interactive: true` in any PTY test, per `packages/mailwoman/AGENTS.md`.
 - [ ] **Step 4: Run** `yarn compile && yarn vitest run packages/mailwoman/cli/setup packages/mailwoman/cli/commands/setup.integration.test.ts` — Expected: the run passes.
@@ -555,8 +555,8 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
 - Regenerate: the CLI reference through `yarn workspace @mailwoman/docs` `generate-cli-reference` so `license declare`, `license evaluate` and `setup` appear
 
 The pricing table has three columns, `Open source`, `Commercial` and `Enterprise`, and these rows: parser and
-geocoder; base weights; country weights overlays; atlas tiers beyond the base; release from the AGPL source offer; OEM
-redistribution; support; custom fine-tunes and acceptance suites; price (`Free`, `$250 a month or $2,400 a year`,
+geocoder, base weights, country weights overlays, atlas tiers beyond the base, release from the AGPL source offer, OEM
+redistribution, support, custom fine-tunes and acceptance suites, price (`Free`, `$250 a month or $2,400 a year`,
 `From $15,000 a year`); who it is for. Under `Open source`, the rows `Open-source project`, `Academic`, `Student`,
 `Non-profit` and `Thirty-day evaluation` each read `Declare with mailwoman license …` and link the license page.
 

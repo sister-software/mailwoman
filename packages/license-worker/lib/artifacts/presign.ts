@@ -51,7 +51,7 @@ export function presignConfigured(env: PresignBindings): env is ConfiguredPresig
  * @throws when the bindings are not configured.
  * Callers check `presignConfigured` first and answer 503.
  */
-export async function presignedArtifactURL(
+export async function presignObject(
 	env: PresignBindings,
 	key: string,
 	expiresSeconds: number = PRESIGN_SECONDS

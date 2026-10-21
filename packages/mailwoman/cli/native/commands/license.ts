@@ -105,7 +105,7 @@ export const spec = {
 			type: "string",
 			hint: "open-source|non-profit|academic|student",
 			description:
-				"declare: the declaration's intent. open-source gives --project; the others give --organization and --email.",
+				"declare: the declaration's intent. open-source gives --project. The others give --organization and --email.",
 		},
 		name: {
 			type: "string",
