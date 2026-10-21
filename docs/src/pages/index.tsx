@@ -11,7 +11,7 @@ import styles from "./index.module.css"
 
 function HomepageHeader(): ReactNode {
 	return (
-		<header className={clsx("hero", styles.heroBanner)}>
+		<header className={clsx("hero", styles.heroBanner)} data-theme="light">
 			<div className="container">
 				<p className={styles.heroEyebrow}>Open source · No API key · Runs in your process</p>
 				<Heading as="h1" className={styles.heroTitle}>

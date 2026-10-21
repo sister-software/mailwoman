@@ -8,7 +8,7 @@
 	.messageText,
 	.noteText,
 	text.actor {
-		font-family: var(--ifm-font-family-monospace, "Fira Code Web", monospace) !important;
+		font-family: var(--ss-font-family-monospace) !important;
 	}
 
 	/* =====================  FLOWCHART  ======================================== */
@@ -19,8 +19,8 @@
 	g.node circle,
 	g.node ellipse,
 	g.node path {
-		fill: var(--ifm-background-surface-color, #ffffff) !important;
-		stroke: var(--mw-line-strong, #21201c) !important;
+		fill: var(--ss-color-background-raised) !important;
+		stroke: var(--ss-color-content) !important;
 		stroke-width: 1.5px !important;
 	}
 
@@ -28,29 +28,29 @@
 	g.node .nodeLabel,
 	g.node text,
 	g.node .nodeLabel p {
-		fill: var(--ifm-font-color-base, #21201c) !important;
-		color: var(--ifm-font-color-base, #21201c) !important;
+		fill: var(--ss-color-content) !important;
+		color: var(--ss-color-content) !important;
 	}
 
 	/* Edges + arrowheads — strong ink in light, pale slate in dark. */
 	.edgePaths path,
 	.flowchart-link {
-		stroke: var(--mw-line-strong, #21201c) !important;
+		stroke: var(--ss-color-content) !important;
 		stroke-width: 1.5px !important;
 		fill: none !important;
 	}
 	.marker,
 	marker path,
 	defs marker path {
-		fill: var(--mw-line-strong, #21201c) !important;
-		stroke: var(--mw-line-strong, #21201c) !important;
+		fill: var(--ss-color-content) !important;
+		stroke: var(--ss-color-content) !important;
 	}
 
 	/* Edge labels — sit on the page color so they never collide with a line. */
 	.edgeLabel,
 	.edgeLabel p {
-		color: var(--ifm-font-color-base, #21201c) !important;
-		fill: var(--ifm-font-color-base, #21201c) !important;
+		color: var(--ss-color-content) !important;
+		fill: var(--ss-color-content) !important;
 		background-color: var(--ifm-background-color) !important;
 	}
 	.edgeLabel rect,
@@ -62,7 +62,7 @@
 	/* Subgraph clusters — faint surface, hairline border. */
 	.cluster rect {
 		fill: var(--ifm-hover-overlay, rgba(0, 0, 0, 0.04)) !important;
-		stroke: var(--mw-line, #b9d8ec) !important;
+		stroke: var(--ss-color-emphasis-300) !important;
 		stroke-dasharray: 3 2 !important;
 	}
 	.cluster text,
@@ -73,59 +73,59 @@
 	/* =====================  SEQUENCE  ======================================== */
 
 	.actor {
-		fill: var(--ifm-background-surface-color, #ffffff) !important;
-		stroke: var(--mw-line-strong, #21201c) !important;
+		fill: var(--ss-color-background-raised) !important;
+		stroke: var(--ss-color-content) !important;
 	}
 	text.actor,
 	text.actor > tspan {
-		fill: var(--ifm-font-color-base, #21201c) !important;
+		fill: var(--ss-color-content) !important;
 		stroke: none !important;
 	}
 	.actor-line {
-		stroke: var(--mw-line, #b9d8ec) !important;
+		stroke: var(--ss-color-emphasis-300) !important;
 	}
 	.messageLine0,
 	.messageLine1 {
-		stroke: var(--mw-line-strong, #21201c) !important;
+		stroke: var(--ss-color-content) !important;
 	}
 	.messageText {
-		fill: var(--ifm-font-color-base, #21201c) !important;
+		fill: var(--ss-color-content) !important;
 	}
 	#arrowhead path,
 	.sequenceNumber {
-		fill: var(--mw-line-strong, #21201c) !important;
+		fill: var(--ss-color-content) !important;
 	}
 
 	/* Activation bars — blue accent (brand "info"). */
 	.activation0,
 	.activation1,
 	.activation2 {
-		fill: color-mix(in srgb, var(--mw-blue, #1a00ff) 14%, var(--ifm-background-surface-color)) !important;
-		stroke: var(--mw-blue, #1a00ff) !important;
+		fill: color-mix(in srgb, var(--ss-color-info) 14%, var(--ifm-background-surface-color)) !important;
+		stroke: var(--ss-color-info) !important;
 	}
 
 	/* Notes — amber accent (brand "secondary/warning"). */
 	.note {
-		fill: color-mix(in srgb, var(--mw-amber, #ffa600) 16%, var(--ifm-background-surface-color)) !important;
-		stroke: var(--mw-amber, #ffa600) !important;
+		fill: color-mix(in srgb, var(--ss-color-warning) 16%, var(--ifm-background-surface-color)) !important;
+		stroke: var(--ss-color-warning) !important;
 	}
 	.noteText,
 	.noteText > tspan {
-		fill: var(--ifm-font-color-base, #21201c) !important;
+		fill: var(--ss-color-content) !important;
 	}
 
 	/* Loop / alt / opt boxes. */
 	.labelBox {
-		fill: color-mix(in srgb, var(--mw-magenta, #ff00b0) 12%, var(--ifm-background-surface-color)) !important;
-		stroke: var(--mw-magenta, #ff00b0) !important;
+		fill: color-mix(in srgb, var(--ss-color-primary) 12%, var(--ifm-background-surface-color)) !important;
+		stroke: var(--ss-color-primary) !important;
 	}
 	.labelText,
 	.labelText > tspan,
 	.loopText,
 	.loopText > tspan {
-		fill: var(--ifm-font-color-base, #21201c) !important;
+		fill: var(--ss-color-content) !important;
 	}
 	.loopLine {
-		stroke: var(--mw-magenta, #ff00b0) !important;
+		stroke: var(--ss-color-primary) !important;
 	}
 }

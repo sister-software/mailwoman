@@ -34,19 +34,12 @@
 	   to that column's offset at rest, so without this it'd be double-counted — a
 	   ~48px dead gap above the first item. Pull up by navbar + band to cancel it. */
 	.withSubHeader :global(.theme-doc-sidebar-container) {
-		margin-top: calc(-1 * (var(--ifm-navbar-height) + var(--mm-docs-subheader-height)));
-	}
-
-	/* Clear the band when stuck (scrolled): the sidebar menu scrolls inside a viewport
-	   pinned to the top, so its first item needs the band's height of top padding. */
-	.withSubHeader :global(.theme-doc-sidebar-menu) {
-		padding-top: var(--mm-docs-subheader-height);
-		transition: padding-top var(--ifm-transition-fast) ease;
+		margin-top: calc(-1 * (var(--ifm-navbar-height) + var(--mw-docs-subheader-height)));
 	}
 
 	.withSubHeader :global(.theme-doc-toc-desktop) {
-		top: calc(var(--ifm-navbar-height) + 1rem + var(--mm-docs-subheader-height));
-		max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem + var(--mm-docs-subheader-height)));
+		top: calc(var(--ifm-navbar-height) + 1rem + var(--mw-docs-subheader-height));
+		max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem + var(--mw-docs-subheader-height)));
 		transition: top var(--ifm-transition-fast) ease;
 	}
 
@@ -54,9 +47,6 @@
 	   the band's slide-up, so the sticky columns don't leave a blank strip up top.
 	   The container margin above only affects the at-rest (band-visible) position, so
 	   it needs no hidden-state variant. */
-	.subHeaderHidden :global(.theme-doc-sidebar-menu) {
-		padding-top: 0;
-	}
 
 	.subHeaderHidden :global(.theme-doc-toc-desktop) {
 		top: calc(var(--ifm-navbar-height) + 1rem);

@@ -60,29 +60,11 @@ const config: Config = {
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
+				// Map label glyphs (SDF ranges) still load from here.
+				// The page faces come from @sister.software/fonts.
 				href: "https://public.mailwoman.ai",
 			},
 		},
-		// The four faces that paint above the fold, preloaded.
-		// Without them the font chain measured ~1.57 s to first font byte on a warm cache.
-		// Any other face still loads lazily.
-		...(
-			[
-				"BlissPro/WOFF2/BlissPro-Latin.woff2",
-				"BlissPro/WOFF2/BlissPro-Medium-Latin.woff2",
-				"BlissPro/WOFF2/BlissPro-Bold-Latin.woff2",
-				"FiraCode/WOFF2/FiraCode-VF.woff2",
-			] as const
-		).map((file) => ({
-			tagName: "link",
-			attributes: {
-				rel: "preload",
-				as: "font",
-				type: "font/woff2",
-				crossorigin: "anonymous",
-				href: `https://public.mailwoman.ai/fonts/${file}`,
-			},
-		})),
 		{
 			tagName: "link",
 			attributes: {
@@ -158,7 +140,8 @@ const config: Config = {
 		],
 	],
 
-	themes: ["@docusaurus/theme-mermaid"],
+	// The Sister Software brand: fonts, tokens, the Infima bridge, the classic-theme restyle, footer and code blocks.
+	themes: ["@sister.software/docusaurus-theme", "@docusaurus/theme-mermaid"],
 
 	markdown: {
 		mermaid: true,
@@ -227,18 +210,7 @@ const config: Config = {
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
-					customCss: [
-						"./src/css/fonts/BlissPro.css",
-						"./src/css/fonts/FiraCode.css",
-						"./src/css/theme-light.css",
-						"./src/css/theme-dark.css",
-						"./src/css/markdown.css",
-						"./src/css/sidebar.css",
-						"./src/css/docs-subheader.css",
-						"./src/css/toc-mobile.css",
-						"./src/css/mermaid.css",
-						"./src/css/custom.css",
-					],
+					customCss: ["./src/css/docs-subheader.css", "./src/css/mermaid.css", "./src/css/custom.css"],
 				},
 			} satisfies Preset.Options,
 		],
@@ -254,12 +226,14 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Fira Code Web", monospace',
+				fontFamily: '"Go Mono Web", "Go Mono Fallback", monospace',
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
-				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
+				themeVariables: { primaryColor: "#ffffff", lineColor: "#373d40" },
 			},
 		},
 		navbar: {
+			// The bar hides on scroll; on docs pages the brand moves into the top of the rail (the shared theme).
+			hideOnScroll: true,
 			title: "Mailwoman",
 			logo: {
 				alt: "Mailwoman 〒 hanko seal",
@@ -322,7 +296,6 @@ const config: Config = {
 			],
 		},
 		footer: {
-			style: "dark",
 			links: [
 				{
 					title: "Try it",
@@ -367,8 +340,8 @@ const config: Config = {
 			copyright: `© ${new Date().getFullYear()} Nirrius LLC, DBA Sister Software.`,
 		},
 		prism: {
-			theme: prismThemes.github,
-			darkTheme: prismThemes.dracula,
+			// The brand's framed dark code block in both themes (okaidia on --ss-color-code-bg).
+			theme: { ...prismThemes.okaidia, plain: { ...prismThemes.okaidia.plain, backgroundColor: "#272823" } },
 		},
 	} satisfies Preset.ThemeConfig,
 }
