@@ -3,12 +3,12 @@
 	position: absolute;
 	z-index: 2;
 	padding: 8px 10px;
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-control);
-	background: var(--control-background);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
+	background: var(--ss-color-emphasis-100);
 	backdrop-filter: blur(4px);
-	color: var(--color-text-primary);
-	font-size: var(--font-size-caption);
+	color: var(--ss-color-content);
+	font-size: var(--mw-font-size-caption);
 	pointer-events: none;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .card dt {
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .card dd {
@@ -38,7 +38,7 @@
 }
 
 .systemKey {
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 }
 
 .legend {
@@ -70,10 +70,10 @@
 	width: 14px;
 	height: 14px;
 	flex: none;
-	border-radius: var(--radius-tight);
+	border-radius: var(--ss-radius-global);
 }
 
 .note {
 	margin: 6px 0 0;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }

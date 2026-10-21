@@ -65,7 +65,7 @@ function ReleaseRuntimeInspector({ delayMs = 0, fail = false }: { delayMs?: numb
 	const rt = useReleaseRuntime<StoryAssets, StoryRelease>({ loadManifest, loadAssets })
 
 	return (
-		<div style={{ fontFamily: "var(--font-family-code, monospace)", maxWidth: 520, display: "grid", gap: 8 }}>
+		<div style={{ fontFamily: "var(--ss-font-family-monospace, monospace)", maxWidth: 520, display: "grid", gap: 8 }}>
 			<div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
 				<label>
 					Version{" "}

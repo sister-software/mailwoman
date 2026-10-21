@@ -1,7 +1,7 @@
 .featureTargets {
-	font-family: var(--font-family-code);
-	color: var(--color-background-canvas);
-	-webkit-text-stroke: 3px var(--color-text-primary);
+	font-family: var(--ss-font-family-monospace);
+	color: var(--ss-color-background);
+	-webkit-text-stroke: 3px var(--ss-color-content);
 	paint-order: stroke;
 }
 
@@ -16,7 +16,7 @@
 	grid-template-columns: auto 1fr;
 	gap: 2px 8px;
 	margin: 0;
-	background: var(--control-background);
+	background: var(--ss-color-emphasis-100);
 	backdrop-filter: blur(2px);
 }
 .featureProperties dt {

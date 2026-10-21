@@ -14,11 +14,11 @@ body,
 }
 
 body {
-	background: var(--color-background-canvas);
-	color: var(--color-text-primary);
-	font-family: var(--font-family-text);
-	font-size: var(--font-size-body);
-	line-height: var(--line-height-body);
+	background: var(--ss-color-background);
+	color: var(--ss-color-content);
+	font-family: var(--ss-font-family-base);
+	font-size: var(--mw-font-size-body);
+	line-height: var(--ss-line-height-base);
 }
 
 main[data-route] {
@@ -38,21 +38,21 @@ main[data-route] {
  */
 main[data-route] .maplibregl-ctrl-bottom-right,
 main[data-route] .maplibregl-ctrl-bottom-left {
-	bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
+	bottom: calc(var(--mw-map-footer-height) + var(--mw-safe-area-bottom));
 }
 
 main[data-route] .maplibregl-ctrl-top-right {
-	top: calc(6.5rem + var(--safe-area-top));
-	right: var(--safe-area-right);
+	top: calc(6.5rem + var(--mw-safe-area-top));
+	right: var(--mw-safe-area-right);
 }
 
 /* MapLibre paints its controls white; every one of them belongs to the same glass the rest of the chrome is. */
 main[data-route] .maplibregl-ctrl-group {
-	background: var(--material-glass-background);
-	border: 1px solid var(--material-glass-border);
-	box-shadow: var(--material-glass-shadow);
-	border-radius: var(--radius-panel);
-	color: var(--color-text-primary);
+	background: var(--mw-material-glass-background);
+	border: 1px solid var(--mw-material-glass-border);
+	box-shadow: var(--mw-material-glass-shadow);
+	border-radius: var(--ss-radius-global);
+	color: var(--ss-color-content);
 }
 
 /*

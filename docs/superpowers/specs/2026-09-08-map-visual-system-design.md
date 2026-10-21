@@ -1,5 +1,12 @@
 # The map visual system: tokens, materials and chrome for Earth, Moon and Mars
 
+> **Superseded in part (2026-10-21).** The token vocabulary now comes from the shared Sister Software brand
+> (`@sister.software/theme`, `--ss-*`); `@mailwoman/react` merges it and adds only Mailwoman's own tokens
+> (`--mw-*`: confidence, stages, glass material, safe-area, map label font). The docs site uses
+> `@sister.software/docusaurus-theme`, which generates every `--ifm-*` variable from the shared tokens. The
+> decision below that "`@mailwoman/react` owns the tokens" no longer holds; the materials and chrome
+> sections still describe the apps.
+
 Three deployed apps (`earth.mailwoman.ai`, `moon.mailwoman.ai`, `mars.mailwoman.ai`) share one React
 component package and one stylesheet, and none of them has a finished product design. This design gives
 the four consumers of `@mailwoman/react` a single token vocabulary that the package owns, replaces the
