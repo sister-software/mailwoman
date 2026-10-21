@@ -51,15 +51,20 @@ def _eligible_rows(cfg: Any, countries: set[str] | None) -> Iterator[dict[str, A
     import pyarrow.compute as pc
     import pyarrow.parquet as pq
 
-    from ..data.loader.corpus_files import _parquet_paths
+    from ..data.loader.corpus_files import _admitted_mask, corpus_split_files
 
     country_weights: dict[str, float] = cfg.data.country_weights
     source_weights: dict[str, float] | None = cfg.data.source_weights
     admitted = [c for c, w in country_weights.items() if w > 0 and (countries is None or c in countries)]
     wanted = pa.array(admitted)
     columns = ["raw", "country", "source", "span_starts", "span_ends", "span_tags"]
-    for path in _parquet_paths(Path(cfg.data.corpus_dir), "train"):
-        for batch in pq.ParquetFile(path).iter_batches(columns=columns, batch_size=65536):
+    for file in corpus_split_files(Path(cfg.data.corpus_dir), "train"):
+        read = columns if file.row_filter is None else [*columns, "source_id"]
+        for batch in pq.ParquetFile(file.path).iter_batches(columns=read, batch_size=65536):
+            if file.row_filter is not None:
+                mask = _admitted_mask(batch.column("source_id"), file.row_filter)
+                if mask is not None:
+                    batch = batch.filter(mask)
             # The country filter runs in Arrow, so a corpus of hundreds of millions of rows converts only
             # the admitted countries' rows to Python.
             kept = batch.filter(pc.is_in(pc.utf8_upper(batch.column("country")), value_set=wanted))
