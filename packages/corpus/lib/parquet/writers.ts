@@ -342,6 +342,17 @@ export interface WriteParquetSplitsOptions {
 	 * @defaultValue {@linkcode openDuckDB}'s defaults
 	 */
 	duckdb?: DuckDBLimits
+
+	/**
+	 * Converts one staged NDJSON part to the parquet file at `outputPath`.
+	 *
+	 * It exists for tests and for callers that wrap the conversion, such as to
+	 * observe each part or to fail one.
+	 * A wrapper calls {@linkcode writeStagedParquet} to perform the conversion itself.
+	 *
+	 * @defaultValue {@linkcode writeStagedParquet}
+	 */
+	convertStagedPart?: (stagePath: string, outputPath: string, limits?: DuckDBLimits) => Promise<void>
 }
 
 /**
@@ -598,7 +609,7 @@ export async function writeParquetSplits(
 			await makeDirectories(fileDir)
 
 			try {
-				await writeStagedParquet(opened.stagePath, pending, opts.duckdb)
+				await (opts.convertStagedPart ?? writeStagedParquet)(opened.stagePath, pending, opts.duckdb)
 			} catch (error) {
 				await removePathIfPresent(pending)
 
