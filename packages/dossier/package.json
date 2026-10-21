@@ -61,6 +61,6 @@
 		"@mailwoman/record": "workspace:*"
 	},
 	"engines": {
-		"node": ">=24.18.0"
+		"node": "^24.22.1 || >=26.12.1"
 	}
 }
