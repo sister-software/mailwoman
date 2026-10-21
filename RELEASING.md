@@ -163,6 +163,24 @@ A non-zero exit blocks the ship. The Gauntlet has three layers (`mailwoman/eval-
 The Gauntlet is not yet a `release-it` hook. Wire it into the release flow once the candidate path is
 standardized.
 
+## Release ordering for the license routes
+
+A token whose `terms` is `AGPL-3.0-only` fails the payload schema of every release before the one that
+ships the union, so the pieces land in this order:
+
+1. Release the schema: the `terms` union, the `intent`, `seq` and `install` claims, and the download
+   client in `@mailwoman/core/license`. This is the release that `mailwoman license declare`,
+   `mailwoman license evaluate` and `mailwoman setup` ship in.
+2. Deploy the worker's declaration, evaluation and download routes. The routes are inert until a
+   released CLI can adopt what they issue.
+3. Provision the private bucket and set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID` and
+   `PAID_ARTIFACTS_BUCKET` on the worker. Until then the download route answers 503 and every other
+   route runs.
+4. Publish the first paid artifact to the bucket, list it in `PAID_ARTIFACTS` in
+   `packages/license-worker/lib/artifacts/catalog.ts`, and mark its bundle `access: "licensed"` in
+   `packages/mailwoman/lib/data/bundles.ts` in the next release. A weights overlay that becomes paid
+   leaves public npm at that release, and the releases already published stay published.
+
 ## Real release
 
 ```bash

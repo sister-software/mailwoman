@@ -30,6 +30,11 @@ steps take about ten minutes, plus the time for the one-time gazetteer download.
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 ```
 
+`npx mailwoman setup` runs steps 2 and 3 as one command, lists the data tiers for the countries you
+name with their size and whether each is free or licensed, and offers a license key by declaration,
+evaluation or purchase. `npx mailwoman setup --no-interactive --countries US` prints the same report
+without prompts. The steps below walk the same path one piece at a time.
+
 ## 2. Ask it what it has
 
 Run `doctor` before you debug anything else. It runs seven checks, and for each missing piece it

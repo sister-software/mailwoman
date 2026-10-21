@@ -1,0 +1,71 @@
+---
+title: Research and teaching
+description: Mailwoman is free for research and coursework under the AGPL. An academic or student declaration issues a key that admits every data tier for a year, and the repository includes a citation file.
+role: landing
+audience: teams
+---
+
+# Research and teaching
+
+Mailwoman is a postal-address parser and geocoder that runs inside your own process from a model file
+on your own disk. For a research group or a classroom that means an install without an API key or a
+per-lookup bill, and data that never leaves the machine. The AGPL-3.0 release covers the parser, the geocoder and the base model, and
+an academic or student declaration adds the data tiers for a year.
+
+## Install and check
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+npx mailwoman setup
+```
+
+`setup` parses a sample address through the installed model, lists the data tiers for the countries you
+name with their size, and offers the declaration below. The
+[ten-minute trial](../developers/get-started/ten-minute-trial.mdx) walks the same steps one at a time.
+
+## Declare academic or student use
+
+```bash
+mailwoman license declare --intent academic --name "Dr You" --organization "Your University" --email you@example.edu
+mailwoman license declare --intent student --name "You" --organization "Your School" --email you@example.edu
+```
+
+The key arrives at the address you give, the command waits for it and writes it under your config
+directory, and it lasts one year. It stays on the AGPL branch: the source offer applies to a modified
+copy you serve over a network, and a paper that uses the unmodified software owes attribution only.
+The key admits every published data tier to `mailwoman data pull`, and a geocode that a tier would have
+resolved further states the tier and the command that fetches it.
+
+A thesis project with its own public repository may declare as an open-source project instead, with the
+repository's URL, and receive the key in the response.
+
+## Cite it
+
+The repository includes a `CITATION.cff`. GitHub renders it as a citation in APA and BibTeX. Cite the
+software and the version you ran. `mailwoman doctor` prints the version. Cite the data tiers you used by
+their vintage. Each artifact's manifest records it.
+
+```bibtex
+@software{mailwoman,
+	author = {Ellis, Teffen},
+	title = {Mailwoman},
+	url = {https://github.com/sister-software/mailwoman},
+	version = {10.7.0},
+	year = {2026}
+}
+```
+
+## What the data terms mean for a paper
+
+The code license and the data license are separate questions. The reference data comes from open
+sources with their own terms, and a paper that redistributes a derived dataset follows those terms.
+`mailwoman data pull` prints each bundle's publishers, terms and obligations before it transfers a byte,
+and `mailwoman license attribution` prints what the installed weights packages owe upstream. Read
+[Security and compliance](../about/security-and-compliance.mdx) before you publish a derived dataset.
+
+## Reproducibility
+
+Every artifact is sealed and dated, each weights package records its training sources in
+`PROVENANCE.json`, and the published [evaluation reports](../resources/benchmarks/index.mdx) state the
+held-out sets and the numbers for each release. A result from one version and one artifact vintage can
+be reproduced from those records.

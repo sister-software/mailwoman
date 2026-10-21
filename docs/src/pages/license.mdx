@@ -122,6 +122,38 @@ data you pulled separately, and whether a recorded entry is the whole of what th
 For enterprise terms, seats, or a negotiated agreement,
 [email us about a license](mailto:teffen@sister.software?subject=Mailwoman%20licensing).
 
+## Get a key by declaration or evaluation
+
+Three routes issue a key. Each writes it to `$MAILWOMAN_CONFIG_ROOT/license/key` with its refresh
+secret beside it. The purchase route is above. The other two stay on the open-source branch: the key
+admits the paid tiers, the source offer still applies, and the notice states it.
+
+**Declare** an open-source, non-profit, academic or student use. An open-source project gives its public
+source URL and receives the key in the response. The other intents give an organization and an address
+at it, and the key arrives by email while the command waits for it.
+
+```bash
+mailwoman license declare --intent open-source --name "Your project" --project https://github.com/you/project
+mailwoman license declare --intent academic --name "Dr You" --organization "Your University" --email you@example.edu
+```
+
+An open-source or non-profit key expires on the next quarter lead date at least eleven weeks after it is
+issued. The lead dates are 11 March, 10 June, 10 September and 11 December. From 28 days before the
+date, `mailwoman license refresh` re-issues the key, and the notice counts the days down. An academic or
+student key lasts one year. An expired key leaves every artifact on disk working and stops new downloads
+until it is re-issued.
+
+**Evaluate** for thirty days with an email address. An address receives one evaluation. After it,
+declare or buy.
+
+```bash
+mailwoman license evaluate --name "Your team" --email you@example.com
+```
+
+`mailwoman setup` runs the first parse, lists the tiers for the countries you name with their size and
+whether each is free or licensed, and offers these routes. A geocode that a tier would have resolved
+further states the tier and the `mailwoman data pull` command that fetches it.
+
 ## Configure and check a key
 
 A key is a signed token verified offline against the public keys each release ships.

@@ -1,85 +1,120 @@
 ---
 title: Pricing
-description: Free under the AGPL, $250 a month for the commercial license, from $15,000 a year for enterprise work. No per-address fees.
+description: Free under the AGPL, $250 a month for the commercial license, from $15,000 a year for enterprise work. No per-address fees, and a declaration route for open-source, academic and non-profit work.
 role: landing
 audience: teams
 ---
 
 # License prices
 
-Mailwoman runs where your code runs, so there is no meter. You either need a release from the
-AGPL's source-sharing condition or you do not, and the price does not move when your volume does.
+Mailwoman runs where your code runs, so there is no meter. You either need a release from the AGPL's
+source-sharing condition or you do not, and the price does not move when your volume does. The table
+states what each tier includes. The sections after it state the routes to a key and what we commit to.
 
-## Open source — free
+|                                          | Open source                                                               | Commercial                                                     | Enterprise                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Price                                    | Free                                                                      | $250 a month or $2,400 a year, per legal entity                | From $15,000 a year                                               |
+| The parser, the geocoder and the servers | Included                                                                  | Included                                                       | Included                                                          |
+| The base model weights                   | Included                                                                  | Included                                                       | Included                                                          |
+| Country weights overlays                 | With a declared key                                                       | Included                                                       | Included                                                          |
+| Atlas tiers beyond the base              | With a declared key                                                       | Included                                                       | Included                                                          |
+| Release from the AGPL source offer       | No. The AGPL applies to what you ship or serve                            | Included                                                       | Included                                                          |
+| OEM redistribution                       | Under the AGPL only                                                       | Not covered. Ask about OEM terms                               | By agreement                                                      |
+| Support                                  | The public tracker                                                        | A direct line to the engineers who built it                    | Designated contacts and an agreed response time                   |
+| Fine-tunes and acceptance suites         | Not included                                                              | Not included                                                   | Scoped with you                                                   |
+| Who it is for                            | Open-source projects, academic and student work, non-profits, evaluations | Companies under 250 employees and under $10M in annual revenue | Larger companies, OEM, and address stock unlike any public corpus |
 
-AGPL-3.0. That covers the parser, the geocoder, the resolvers, the published model weights and the
-drop-in API servers. Install it or fork it, and run it in production.
+As of release 10.7.0 every published weights package and data bundle is free to download. The first
+paid tier arrives with the release that lists it, and the rows above state the terms it arrives under.
 
-The AGPL attaches one condition. If you distribute software built on Mailwoman, or run it as a
-network service that other people use, those users are entitled to your corresponding source under
-the same license. Plenty of teams are fine with that. If yours is not, the next tier is what you
-want.
+## Open source, free
 
-## Commercial license — $250 a month
+AGPL-3.0. That covers the parser, the geocoder, the resolvers, the base model weights and the drop-in
+API servers. Install it or fork it, and run it in production.
+
+The AGPL attaches one condition. If you distribute software built on Mailwoman, or run it as a network
+service that other people use, those users are entitled to your corresponding source under the same
+license. Plenty of teams are fine with that. If yours is not, the commercial tier is what you want.
+
+A key on the open-source branch admits the paid tiers without changing the terms: the source offer still
+applies, and the notice states it. Four declarations issue one. Each is a single command.
+
+| Declaration           | Command                                                                                                      | Key lasts                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Open-source project   | `mailwoman license declare --intent open-source --name "<project>" --project <public source URL>`            | to the next quarter lead date, at least eleven weeks; `license refresh` re-issues it |
+| Academic              | `mailwoman license declare --intent academic --name "<you>" --organization "<university>" --email <address>` | one year                                                                             |
+| Student               | `mailwoman license declare --intent student --name "<you>" --organization "<school>" --email <address>`      | one year                                                                             |
+| Non-profit            | `mailwoman license declare --intent non-profit --name "<you>" --organization "<name>" --email <address>`     | to the next quarter lead date, at least eleven weeks                                 |
+| Thirty-day evaluation | `mailwoman license evaluate --name "<team>" --email <address>`                                               | thirty days, once per address, then declare or buy                                   |
+
+The quarter lead dates are 11 March, 10 June, 10 September and 11 December. The
+[research and teaching](./solutions/research-and-teaching.mdx) page covers the academic and student
+routes and how to cite Mailwoman.
+
+## Commercial license, $250 a month
 
 Or $2,400 a year. That works out to $200 a month. Per legal entity.
 
 This releases you from the AGPL's source-sharing condition, so you can build closed-source products
 and services on Mailwoman and keep your source private. One subscription covers one company: every
-developer, every environment, and every product you ship or host yourself. There are no seats to
-count and no per-address fees. You also get a direct line to the engineers who built it.
+developer, every environment, and every product you ship or host yourself. There are no seats to count
+and no per-address fees. You also get a direct line to the engineers who built it.
 
 The tier is sized for smaller companies, under 250 employees and under $10M in annual revenue. Past
 either line, see Enterprise.
 
-## Enterprise — from $15,000 a year
+## Enterprise, from $15,000 a year
 
-Scope agreed with you. This is the tier for address stock that resembles no public corpus:
-legacy CRM exports, records typed by field crews, or a country and format the open model has never
-been graded on. The work is scoped with you, and it has covered a model fine-tuned on your own
-addresses, an acceptance suite built from your data with the numbers reported to you before anything
-ships, and support with designated contacts and an agreed response time.
+Scope agreed with you. This is the tier for address stock that resembles no public corpus: legacy CRM
+exports, records typed by field crews, or a country and format the open model has never been graded on.
+The work is scoped with you, and it has covered a model fine-tuned on your own addresses, an acceptance
+suite built from your data with the numbers reported to you before anything ships, and support with
+designated contacts and an agreed response time.
 
 Every enterprise agreement includes the commercial license, so the release from the AGPL condition
 comes with it at any company size. This is also the tier for companies past the commercial license's
-size fence. The acceptance suite runs on the same discipline as our own published
+size limit. The acceptance suite runs on the same discipline as our own published
 [Benchmarks](./resources/benchmarks/index.mdx).
 
-If Mailwoman ships inside something you license to other people — a CRM, a billing platform, a
-device — that is redistribution, and the commercial subscription above does not cover it. Ask about
-OEM terms: a flat annual fee per product, banded by reach, with no revenue share and no exclusivity.
+If Mailwoman ships inside something you license to other people, such as a CRM, a billing platform or a
+device, that is redistribution, and the commercial subscription above does not cover it. Ask about OEM
+terms: a flat annual fee per product, banded by reach, with no revenue share and no exclusivity.
 
 _All prices are in US dollars and exclude VAT and sales taxes._
 
 ## What we commit to
 
-**Your rate is fixed at signup.** If the published price rises later, it rises for new
-subscriptions. Yours stays where it started for as long as you keep it active.
+**Your rate is fixed at signup.** If the published price rises later, it rises for new subscriptions.
+Yours stays where it started for as long as you keep it active.
 
 **Published releases stay published.** Every AGPL release already shipped is licensed to you
 permanently. That follows from the license itself, and we could not withdraw a grant we have already
 made.
 
 **We do not count your lookups.** There is no meter and no usage to true up at renewal. See
-[Eliminate the per-request bill](./solutions/eliminate-the-per-request-bill.mdx) for the arithmetic against a
-metered rate as your volume grows.
+[Eliminate the per-request bill](./solutions/eliminate-the-per-request-bill.mdx) for the arithmetic
+against a metered rate as your volume grows.
+
+**A key never changes what runs.** A key changes what `mailwoman doctor` reports and which tiers
+`mailwoman data pull` fetches. An artifact already on disk keeps working after the key expires.
 
 ## What we do not commit to
 
-**A data refresh cadence.** The gazetteer and layer artifacts are rebuilt when coverage changes or
-an ingest bug is fixed rather than on a schedule, and no schedule is committed. Each artifact is sealed and
+**A data refresh cadence.** The gazetteer and layer artifacts are rebuilt when coverage changes or an
+ingest bug is fixed rather than on a schedule, and no schedule is committed. Each artifact is sealed and
 dated, so you can always tell which vintage you are running.
 
-**A license for the data.** The code license and the data license are separate questions. Ours is
-the code. The reference data comes from open sources with their own terms, and some of those follow
-the data into your product — read
-[Security and compliance](./about/security-and-compliance.mdx) before you ship.
+**A license for the data.** The code license and the data license are separate questions. Ours is the
+code. The reference data comes from open sources with their own terms, and some of those follow the
+data into your product. Read [Security and compliance](./about/security-and-compliance.mdx) before you
+ship.
 
 ## Buy a license
 
-The commercial license is self-service: pick monthly or yearly on the [license page](/license), and checkout issues
-your key on the spot. That page also covers how a key is configured, what `mailwoman license verify` and
-`mailwoman doctor` report, and how a renewal reissues it.
+The commercial license is self-service: pick monthly or yearly on the [license page](/license), and
+checkout issues your key on the spot. That page also covers how a key is configured, what
+`mailwoman license verify` and `mailwoman doctor` report, how a renewal reissues it, and the declaration
+and evaluation commands.
 
 [Buy a commercial license →](/license)
 

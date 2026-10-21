@@ -38,6 +38,11 @@ runtime that executes the model. `@mailwoman/neural-weights-en-us` is the Englis
 None of these packages runs an install script, so the only network traffic during the install is npm
 fetching tarballs.
 
+One command performs the rest of this page as a check. `npx mailwoman setup` reads the data and
+config roots, parses a sample address through the installed model, lists the data tiers for the
+countries you name, and offers a license key by declaration, evaluation or purchase. The steps below
+do the same work by hand, so you see each piece.
+
 ## 2. Write the script
 
 Save this as `parse.mjs`.
