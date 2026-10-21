@@ -132,6 +132,11 @@
 			"node": "./lib/license/key.ts",
 			"default": "./out/license/key.js"
 		},
+		"./license/declaration": {
+			"types": "./out/license/declaration.d.ts",
+			"node": "./lib/license/declaration.ts",
+			"default": "./out/license/declaration.js"
+		},
 		"./license/obligations": {
 			"types": "./out/license/obligations.d.ts",
 			"node": "./lib/license/obligations.ts",
