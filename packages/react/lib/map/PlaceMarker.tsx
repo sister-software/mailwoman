@@ -12,13 +12,15 @@
  *   the `@mailwoman/react/map` subpath, never the package root.
  */
 
+import { Tokens } from "@sister.software/theme"
 import type { ReactNode } from "react"
 import { Marker } from "react-map-gl/maplibre"
 
 /**
- * The house pink the demo has always drawn the resolved-place marker in.
+ * The brand's selection accent (`--ss-color-cyan-electric`), which reads on
+ * both the light and dark basemaps.
  */
-const MARKER_COLOR = "#e0367c"
+const MARKER_COLOR = Tokens.resolve("color.cyan-electric")
 
 export interface PlaceMarkerProps {
 	/**

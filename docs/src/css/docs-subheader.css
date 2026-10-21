@@ -4,5 +4,5 @@
    both read this so the two stay in lockstep. Kept global — and out of a CSS
    module — so the value is a plain authored token, not a hashed name. */
 :root {
-	--mm-docs-subheader-height: 3rem;
+	--mw-docs-subheader-height: 3rem;
 }

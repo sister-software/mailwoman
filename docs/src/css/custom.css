@@ -1,176 +1,100 @@
 /**
- * Any CSS included here will be global. The classic template bundles Infima.
- * RECONCILED with the Mailwoman design system — see ./README.md.
+ * Mailwoman's additions to the Sister Software docs theme (`@sister.software/docusaurus-theme`), which supplies the
+ * fonts, tokens, Infima mapping and classic-theme restyle. Only Mailwoman-specific controls live here.
  */
 
-html {
-	-webkit-font-smoothing: antialiased;
-	font-smoothing: antialiased;
-	text-rendering: optimizeLegibility; /* FIX: was "optimizelegibility" (invalid casing → ignored) */
-}
-
-/* FIX: the core light-theme failure lived here — active link was painted
-   magenta (var(--ifm-color-primary)) directly on the #1a00ff slab, which
-   vibrates and fails AA. Now: white text on the solid darker-blue active
-   background (set in the theme files) + a magenta inset bar so the brand
-   accent survives while the label stays legible. */
-.menu__link--active {
-	color: var(--ifm-menu-color-active);
-	font-weight: var(--ifm-font-weight-bold);
-	/* box-shadow: inset 3px 0 0 var(--ifm-color-primary); */
-}
-
+/* Nested categories sit flush under their level-1 parent. */
 .theme-doc-sidebar-menu.menu__list .theme-doc-sidebar-item-category-level-1 > .menu__list {
 	padding-left: 0;
 }
 
-.footer--dark {
-	--ifm-footer-background-color: var(--ifm-color-gray-900);
-}
-
-/* FIX: the colorMode (sun/moon) toggle inherits Infima's default colors —
-   currentColor for the icon, --ifm-color-emphasis-200 for the hover overlay.
-   On the navy navbar both wash out: the icon reads as a dim half-disc and the
-   hover bg is invisible. Pin the icon to the navbar link color (pale slate ↔
-   white on hover) and use a translucent-white hover pad that survives the dark
-   chrome in both themes. */
-.navbar [class*="colorModeToggle"] .clean-btn,
-.navbar .clean-btn[class*="colorModeToggle"] {
-	color: var(--ifm-navbar-link-color);
-	transition:
-		color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
-		background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
-}
-.navbar [class*="colorModeToggle"] .clean-btn:hover,
-.navbar [class*="colorModeToggle"] .clean-btn:focus-visible,
-.navbar .clean-btn[class*="colorModeToggle"]:hover,
-.navbar .clean-btn[class*="colorModeToggle"]:focus-visible {
-	background-color: rgb(255 255 255 / 12%);
-	color: #fff;
-}
-.navbar [class*="colorModeToggle"] svg {
-	width: 1.25rem;
-	height: 1.25rem;
-}
-
-/* FIX: the mobile sidebar drawer reuses the navy chrome, but two header controls
-   inherit dark body-text colors against it:
-   - the color-mode toggle in the drawer header (not caught by the .navbar rule
-     above because of the sidebar's different wrapper) reads as a dark half-disc;
-   - the "← Back to main menu" bar sits on the electric-blue active slab
-     (--ifm-menu-color-background-active) yet keeps dark label text.
-   Pin both to the navbar link color / white, matching the desktop chrome. */
-.navbar-sidebar [class*="toggleButton"],
-.navbar-sidebar [class*="colorModeToggle"] .clean-btn {
-	color: var(--ifm-navbar-link-color);
-}
-.navbar-sidebar [class*="toggleButton"]:hover,
-.navbar-sidebar [class*="colorModeToggle"] .clean-btn:hover {
-	background-color: rgb(255 255 255 / 12%);
-	color: #fff;
-}
-.navbar-sidebar__back {
-	color: #fff;
-	font-weight: var(--ifm-font-weight-bold);
-}
-
-/* FIX: the hamburger toggle's icon is drawn with stroke="currentColor", and the
-   button inherits --ifm-font-color-base (dark in light mode) — so on the navy
-   navbar the three bars vanished in light mode while showing fine in dark. Pin
-   it to the navbar link color (pale slate ↔ white on hover), like the other
-   navbar controls, so it reads in both themes. */
-.navbar__toggle {
-	color: var(--ifm-navbar-link-color);
-}
-.navbar__toggle:hover {
-	color: #fff;
-}
-
-/* FIX: Infima's default table is a full grid of faint warm-gray hairlines that
-   all but disappears on the cyan page. The design system instead uses a
-   rule-based table — a hard ink underline beneath the header, thin cool-blue
-   hairlines between body rows, and no vertical lines or outer box. Reproduce it
-   here (--mw-line / --mw-line-strong are set per-theme). */
-.markdown table {
-	border: 0;
-	border-collapse: collapse;
-}
-.markdown table thead {
-	background: transparent;
-}
-.markdown table thead tr {
-	border-bottom: 2px solid var(--mw-line-strong);
-}
-.markdown table th,
-.markdown table td {
-	border: 0;
-	border-bottom: 1px solid var(--mw-line);
-}
-
 .glossary-term-wrapper a {
-	border-bottom-color: var(--ifm-color-emphasis-500);
+	border-bottom-color: var(--ss-color-emphasis-500);
 }
 
-/* Navbar call to action (docusaurus.config.ts's `className: "navbar__cta"`).
-   Infima gives navbar items a flat link treatment, so the demo — the one thing
-   we want a first-time visitor to click — reads identically to "Pricing". Pill
-   it in the brand magenta, which is --ifm-color-primary in both themes, and use
-   white ink: the magenta is dark enough for white text on either background. */
+/* Navbar call to action (docusaurus.config.ts's `className: "navbar__cta"`): the one primary key in the bar, so the
+   demo doesn't read like every other link. */
 .navbar__item.navbar__cta,
 .navbar-sidebar .menu__link.navbar__cta {
-	background: var(--ifm-color-primary);
-	color: var(--ifm-color-white);
-	border-radius: 999px;
-	padding: 0.3rem 0.9rem;
-	font-weight: 600;
-}
-.navbar__item.navbar__cta:hover,
-.navbar-sidebar .menu__link.navbar__cta:hover {
-	background: var(--ifm-color-primary-dark);
-	color: var(--ifm-color-white);
+	background: var(--ss-color-primary);
+	border: var(--ss-border-width-global) solid var(--ss-color-primary);
+	box-shadow: var(--ss-shadow-primary);
+	color: var(--ss-color-content-inverse);
+	text-decoration: none;
 }
 
-/* The navbar search control (src/theme/SearchBar.tsx). It sits on the navy navbar in both themes, so it
-   takes the navbar's link color and a translucent outline rather than a filled field. */
+.navbar__item.navbar__cta:hover,
+.navbar-sidebar .menu__link.navbar__cta:hover {
+	background: var(--ss-color-primary-dark);
+	color: var(--ss-color-content-inverse);
+}
+
+.navbar__item.navbar__cta:active {
+	box-shadow: none;
+	transform: translate(-4px, 6px);
+}
+
+/* On docs pages the keys start after the rail, and below this width the CTA would cover them. The hero and the
+   product pages still carry the demo link. */
+@media (997px <= width < 1600px) {
+	html.docs-wrapper .navbar__item.navbar__cta {
+		display: none;
+	}
+}
+
+/* The navbar search control (src/theme/SearchBar.tsx): a cream utility key. */
 .navbar__search-button {
 	display: inline-flex;
-	gap: 0.5rem;
+	gap: var(--ss-spacing-2);
 	align-items: center;
-	margin: 0 0.5rem;
-	padding: 0.3rem 0.6rem 0.3rem 0.75rem;
-	border: 1px solid color-mix(in srgb, var(--ifm-navbar-link-color) 40%, transparent);
-	border-radius: 999px;
-	background: transparent;
-	color: var(--ifm-navbar-link-color);
+	margin: 0 var(--ss-spacing-2);
+	padding: var(--ss-spacing-1) var(--ss-spacing-3);
+	border: var(--ss-border-width-global) solid var(--ss-color-frame-gray);
+	border-radius: var(--ss-radius-global);
+	background: var(--ss-color-paper-cream);
+	box-shadow: var(--ss-shadow-utility);
+	color: var(--ss-color-charcoal);
 	font: inherit;
 	cursor: pointer;
 }
+
 .navbar__search-button:hover {
-	border-color: var(--ifm-navbar-link-color);
+	background: var(--ss-color-white);
 }
+
+.navbar__search-button:active {
+	box-shadow: var(--ss-shadow-utility-pressed);
+	transform: translate(-4px, 6px);
+}
+
 .navbar__search-button:focus-visible {
-	outline: 2px solid var(--ifm-color-primary);
+	outline: 2px solid var(--ss-color-focus-ring);
 	outline-offset: 2px;
 }
+
 .navbar__search-icon {
 	width: 1rem;
 	height: 1rem;
 }
+
 .navbar__search-keys {
-	padding: 0 0.35rem;
+	padding: 0 var(--ss-spacing-1);
+	background: transparent;
+	box-shadow: none;
+	color: inherit;
+	border: var(--ss-border-width-global) solid var(--ss-color-frame-gray);
 	font: inherit;
 	font-size: 0.75rem;
 	line-height: 1.4;
-	border: 1px solid color-mix(in srgb, var(--ifm-navbar-link-color) 40%, transparent);
-	border-radius: 0.3rem;
 }
+
 @media (width <= 996px) {
 	.navbar__search-label,
 	.navbar__search-keys {
 		display: none;
 	}
+
 	.navbar__search-button {
-		padding: 0.4rem;
-		border-radius: 50%;
+		padding: var(--ss-spacing-2);
 	}
 }

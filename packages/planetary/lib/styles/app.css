@@ -16,10 +16,10 @@ body,
 
 body {
 	background: #05070d;
-	color: var(--color-text-primary);
-	font-family: var(--font-family-text);
-	font-size: var(--font-size-body);
-	line-height: var(--line-height-body);
+	color: var(--ss-color-content);
+	font-family: var(--ss-font-family-base);
+	font-size: var(--mw-font-size-body);
+	line-height: var(--ss-line-height-base);
 }
 
 main[data-body="mars"] {
@@ -96,9 +96,9 @@ main[data-route] .maplibregl-canvas {
  */
 .search-slot {
 	position: absolute;
-	top: calc(1rem + var(--safe-area-top));
-	left: calc(1rem + var(--safe-area-left));
-	right: calc(1rem + var(--safe-area-right));
+	top: calc(1rem + var(--mw-safe-area-top));
+	left: calc(1rem + var(--mw-safe-area-left));
+	right: calc(1rem + var(--mw-safe-area-right));
 	max-width: 34rem;
 	z-index: 3;
 	display: grid;
@@ -127,7 +127,7 @@ main[data-route] .maplibregl-canvas {
 	/* Clear of the control capsule in the same corner: 2.5rem of control, its 1rem inset, and a 0.5rem gap. */
 	.search-slot {
 		max-width: none;
-		right: calc(4rem + var(--safe-area-right));
+		right: calc(4rem + var(--mw-safe-area-right));
 	}
 }
 
@@ -140,7 +140,7 @@ main[data-route] .maplibregl-canvas {
 
 /* A color, not an opacity: a faded term also fades the glass behind it toward the map, which is where contrast goes. */
 .feature-panel dt {
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .feature-panel dd {
@@ -150,8 +150,8 @@ main[data-route] .maplibregl-canvas {
 .feature-panel__code,
 .feature-panel__convention,
 .feature-panel__source {
-	color: var(--color-text-tertiary);
-	font-size: var(--font-size-caption);
+	color: var(--ss-color-emphasis-600);
+	font-size: var(--mw-font-size-caption);
 }
 
 /* The footer strip owns its own layout; this rule only pins it to the map's lower edge. */

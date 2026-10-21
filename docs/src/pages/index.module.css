@@ -5,33 +5,10 @@
 .heroBanner {
 	padding: 5rem 0 4rem;
 	text-align: center;
-	background:
-		linear-gradient(135deg, hsl(318.62deg 100% 50.01% / 55%), hsl(267.59deg 100% 50% / 34%)) repeat scroll 0% 0% / auto
-			padding-box border-box,
-		rgb(33, 36, 44) none repeat scroll 0% 0% / auto padding-box border-box;
-	color: #fff;
+	/* The desktop wallpaper: a brand surface, kept on Paper in both themes (data-theme="light" on the element). */
+	background: var(--ss-color-paper-pink);
+	color: var(--ss-color-content);
 	overflow: hidden;
-}
-
-.heroBanner :global(.button--primary) {
-	background-color: #fff;
-	border-color: #fff;
-	color: hsl(230.21deg 100% 11.41%);
-}
-.heroBanner :global(.button--primary:hover) {
-	background-color: hsl(220deg 40% 95%);
-	border-color: hsl(220deg 40% 95%);
-	color: hsl(230.21deg 100% 11.41%);
-}
-.heroBanner :global(.button--secondary) {
-	background-color: hsl(39deg 100% 50%);
-	border-color: hsl(39deg 100% 50%);
-	color: hsl(230.21deg 100% 11.41%);
-}
-.heroBanner :global(.button--secondary:hover) {
-	background-color: hsl(39deg 100% 55%);
-	border-color: hsl(39deg 100% 55%);
-	color: hsl(230.21deg 100% 11.41%);
 }
 
 .heroTitle {
@@ -95,15 +72,13 @@
 	font-weight: 600;
 }
 
-/* Hero eyebrow + the address→coordinate signature line */
+/* Hero eyebrow + the address→coordinate signature line, set as a strip of the brand's dark code block. */
 .heroEyebrow {
-	font-family: var(--ifm-font-family-monospace);
-	font-size: 0.8rem;
-	letter-spacing: 0.18em;
-	text-transform: uppercase;
-	color: hsl(39deg 100% 64%);
-	margin-bottom: 0.85rem;
-	opacity: 0.95;
+	font-family: var(--ss-font-family-smallcaps);
+	font-size: 0.875rem;
+	letter-spacing: 0.04em;
+	color: var(--ss-color-content-secondary);
+	margin-bottom: var(--ss-spacing-3);
 }
 
 .heroTransform {
@@ -111,46 +86,38 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
-	gap: 0.55rem;
-	margin: 1.75rem auto 0.35rem;
-	padding: 0.5rem 0.95rem;
-	font-family: var(--ifm-font-family-monospace);
+	gap: var(--ss-spacing-2);
+	margin: var(--ss-spacing-6) auto var(--ss-spacing-1);
+	padding: var(--ss-spacing-2) var(--ss-spacing-4);
+	font-family: var(--ss-font-family-monospace);
 	font-size: 0.95rem;
-	background: rgba(0, 0, 0, 0.24);
-	border: 1px solid rgba(255, 255, 255, 0.16);
-	border-radius: 8px;
+	background: var(--ss-color-code-bg);
+	border: var(--ss-border-width-code) solid var(--ss-color-code-frame);
+	box-shadow: var(--ss-shadow-utility);
 }
 .heroIn {
-	color: rgba(255, 255, 255, 0.92);
+	color: var(--ss-syntax-yellow);
 }
 .heroArrow {
-	color: hsl(39deg 100% 64%);
+	color: var(--ss-syntax-pink);
 	font-weight: 700;
 }
 .heroOut {
-	color: hsl(318deg 100% 82%);
+	color: var(--ss-syntax-cyan);
 }
 .heroTier {
 	font-size: 0.72rem;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.72);
-	border: 1px solid rgba(255, 255, 255, 0.28);
-	border-radius: 999px;
+	color: var(--ss-syntax-green);
+	border: var(--ss-border-width-global) solid var(--ss-syntax-green);
+	border-radius: var(--ss-radius-tag);
 	padding: 0.05rem 0.5rem;
 }
 .heroWhy {
-	margin-top: 1rem;
+	margin-top: var(--ss-spacing-4);
 	margin-bottom: 0;
 	font-size: 0.95rem;
-}
-.heroWhy a {
-	color: rgba(255, 255, 255, 0.9);
-	text-decoration: underline;
-	text-underline-offset: 3px;
-}
-.heroWhy a:hover {
-	color: #fff;
 }
 
 /* Use-case gallery */
@@ -175,7 +142,7 @@
 	flex-direction: column;
 	padding: 1.25rem 1.25rem 1.1rem;
 	border: 1px solid var(--ifm-color-emphasis-200);
-	border-radius: 12px;
+	border-radius: var(--ss-radius-global);
 	background: var(--ifm-background-surface-color);
 	transition:
 		border-color 0.15s ease,
@@ -212,7 +179,7 @@
 	color: var(--ifm-color-content-secondary);
 	background: var(--ifm-color-emphasis-100);
 	border: none;
-	border-radius: 6px;
+	border-radius: var(--ss-radius-global);
 	padding: 0.5rem 0.6rem;
 	margin: 0.85rem 0;
 	/* These lines were `white-space: nowrap` + `overflow-x: auto`, which truncated every card's example mid-string with
@@ -285,7 +252,7 @@
 }
 .featuredImageLink {
 	display: block;
-	border-radius: 12px;
+	border-radius: var(--ss-radius-global);
 	overflow: hidden;
 	border: 1px solid var(--ifm-color-emphasis-200);
 	transition:

@@ -5,7 +5,7 @@
 .layerTogglePanel {
 	display: grid;
 	gap: 0.1rem;
-	font-size: var(--font-size-footnote);
+	font-size: var(--mw-font-size-footnote);
 }
 
 /* The panel's own lead paragraph is not a row, so it carries the space before the first one. */
@@ -18,26 +18,26 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.3rem 0.35rem;
-	border-radius: var(--radius-control);
+	border-radius: var(--ss-radius-global);
 	cursor: pointer;
 	user-select: none;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .layerToggleRow:hover {
-	color: var(--color-text-primary);
-	background: var(--control-background);
+	color: var(--ss-color-content);
+	background: var(--ss-color-emphasis-100);
 }
 
 .layerToggleRow:focus-within {
-	outline: 2px solid var(--color-selection);
+	outline: 2px solid var(--ss-color-primary);
 	outline-offset: -2px;
 }
 
 .layerToggleRow input[type="checkbox"] {
 	margin: 0;
 	cursor: pointer;
-	accent-color: var(--color-accent);
+	accent-color: var(--ss-color-primary);
 }
 
 .layerToggleLabel {
@@ -48,8 +48,8 @@
 /* How many layers the group carries, set apart from its name so the row reads as a name and a count, not one phrase. */
 .layerToggleCount {
 	flex: 0 0 auto;
-	font-family: var(--font-family-number);
-	font-size: var(--font-size-caption);
-	color: var(--color-text-tertiary);
+	font-family: var(--ss-font-family-monospace);
+	font-size: var(--mw-font-size-caption);
+	color: var(--ss-color-emphasis-600);
 	font-variant-numeric: tabular-nums;
 }

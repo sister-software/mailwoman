@@ -24,8 +24,8 @@ const preview: Preview = {
 		backgrounds: {
 			default: "light",
 			values: [
-				{ name: "light", value: "#ffffff" },
-				{ name: "dark", value: "#1b1b1d" },
+				{ name: "light", value: "#f6f2f1" },
+				{ name: "dark", value: "#1b1e20" },
 			],
 		},
 	},
@@ -33,7 +33,7 @@ const preview: Preview = {
 		(Story, context) => {
 			const background = context.globals["backgrounds"] as { value?: string } | undefined
 
-			document.documentElement.dataset["theme"] = background?.value === "#1b1b1d" ? "dark" : "light"
+			document.documentElement.dataset["theme"] = background?.value === "#1b1e20" ? "dark" : "light"
 
 			return Story()
 		},

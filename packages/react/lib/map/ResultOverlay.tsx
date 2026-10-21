@@ -4,15 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import { Tokens } from "@sister.software/theme"
 import type { ReactNode } from "react"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import type { PlaceGeometry } from "#map/geometry"
 
 /**
- * The house pink, matched to {@link PlaceMarker}.
+ * The brand's selection accent, matched to {@link PlaceMarker}.
+ *
+ * MapLibre paint takes a literal colour, so it is read from the theme's data rather than a custom property.
  */
-const OUTLINE_COLOR = "#e0367c"
+const OUTLINE_COLOR = Tokens.resolve("color.cyan-electric")
 
 export interface ResultOverlayProps {
 	/**
