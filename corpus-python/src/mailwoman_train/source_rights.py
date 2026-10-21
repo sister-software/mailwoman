@@ -57,6 +57,7 @@ class SourceRightsError(RuntimeError):
     """Raised when an output would admit a source lacking the permission and no override was given."""
 
     def __init__(self, context: str, gaps: list[SourceRightsGap]) -> None:
+        self.context = context
         self.gaps = gaps
         sources = len({gap.source for gap in gaps})
         lines = "\n  ".join(gap.describe() for gap in gaps)
@@ -67,6 +68,10 @@ class SourceRightsError(RuntimeError):
             f"packages/corpus/data/corpus-source-inputs.json, or pass {UNSHIPPABLE_FLAG} <why> (a config's "
             "data.unshippable_reason for a training run) for a local experiment, which marks the output as not shippable."
         )
+
+    def __reduce__(self) -> tuple[type[SourceRightsError], tuple[str, list[SourceRightsGap]]]:
+        """Rebuild from the context and the gaps, so the error survives pickling out of a Modal function."""
+        return (type(self), (self.context, self.gaps))
 
     @classmethod
     def unenumerable(cls, context: str) -> SourceRightsError:
@@ -210,12 +215,17 @@ class RowLicenseError(ValueError):
     """Raised when a writer would write a row whose source has no license id."""
 
     def __init__(self, context: str, source: str) -> None:
+        self.context = context
         self.source = source
         super().__init__(
             f"{context}: rows of {source!r} have no license id, because packages/corpus/data/corpus-source-inputs.json "
             "maps the source to no register source. A row's license column holds the SPDX or LicenseRef id of its "
             "register inputs' decisions, so the row is refused rather than written with a placeholder."
         )
+
+    def __reduce__(self) -> tuple[type[RowLicenseError], tuple[str, str]]:
+        """Rebuild from the context and the source, so the error survives pickling out of a Modal function."""
+        return (type(self), (self.context, self.source))
 
 
 def _decision_license_id(decision: dict[str, Any]) -> str:
