@@ -5,7 +5,7 @@
  */
 
 import { matchCountry, matchSubdivision, matchSubdivisionsAnywhere } from "@mailwoman/codex/country"
-import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { collectNodes, POSTCODE_SHAPE_EXCLUDED_KEY, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { acceptPostcode, postcodeSyntax } from "@mailwoman/postcode/country-formats"
 
 /**
@@ -97,8 +97,8 @@ function collectSiblingCountries(roots: readonly AddressNode[]): Set<string> {
  * Checks each postcode span against the libaddressinput postcode syntax of the countries
  * and regions listed in the same tree, without querying a backend.
  *
- * A span that has none of those syntaxes is excluded: an all-digit span is retagged
- * `house_number`, and any other span is stamped `postcode_shape_excluded`.
+ * A span that has none of those syntaxes is excluded: it keeps its tag and text and is stamped
+ * `postcode_shape_excluded`, which takes it out of the result slots (`isShapeExcludedPostcode`).
  */
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {
 	const verdict: PostcodeShapeVerdict = { narrowing: null, confirmed: [], excluded: [], abstained: [] }
@@ -128,11 +128,9 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 		if (siblingCountries.size) {
 			verdict.excluded.push(code)
 
-			if (/^\d+$/.test(code)) {
-				node.tag = "house_number"
-			} else {
-				node.metadata = { ...node.metadata, postcode_shape_excluded: true }
-			}
+			// The span keeps its tag and text, and the stamp takes it out of the result slots.
+			// A retag to `house_number` would overwrite the house number the parse already found.
+			node.metadata = { ...node.metadata, [POSTCODE_SHAPE_EXCLUDED_KEY]: true }
 
 			continue
 		}
@@ -141,13 +139,4 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 	}
 
 	return verdict
-}
-
-/**
- * Returns true for a postcode span excluded by shape coherence when it could not be retagged.
- *
- * Every postcode consumer in the resolver must skip that span.
- */
-export function isShapeExcludedPostcode(node: AddressNode): boolean {
-	return node.tag === "postcode" && node.metadata?.["postcode_shape_excluded"] === true
 }

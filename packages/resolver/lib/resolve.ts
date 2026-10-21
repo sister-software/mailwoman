@@ -10,7 +10,13 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
-import { collectNodes, type AddressNode, type AddressTree, type Interpretation } from "@mailwoman/core/decoder"
+import {
+	collectNodes,
+	isShapeExcludedPostcode,
+	type AddressNode,
+	type AddressTree,
+	type Interpretation,
+} from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
 	type DefaultCountry,
@@ -47,7 +53,7 @@ import {
 	stampPostcodeCountryScope,
 } from "#postcode/country-coherence"
 import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
-import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode/shape-coherence"
+import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
 import {
 	applyPostcodeConsistency,
 	applyRooftopConsistency,

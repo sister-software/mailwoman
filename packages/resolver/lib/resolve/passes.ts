@@ -5,7 +5,7 @@
  */
 
 import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
-import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
 	type DefaultCountry,
@@ -25,7 +25,6 @@ import { haversineKm } from "@mailwoman/spatial"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
-import { isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 const TRACE_CANDIDATE_CAP = 10

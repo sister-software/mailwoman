@@ -7,6 +7,7 @@
 export * from "#decoder/build-tree"
 export * from "#decoder/calibration"
 export * from "#decoder/containment"
+export * from "#decoder/excluded-span"
 export * from "#decoder/proposals-to-tree"
 export * from "#decoder/resolve-proposal-overlaps"
 export * from "#decoder/serialize/json"
