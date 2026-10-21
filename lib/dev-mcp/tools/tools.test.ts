@@ -70,6 +70,11 @@ const LITERAL = {
 	why: "a fixed three-input set for the handler interface",
 }
 
+it("registers the postcode record lookup", async () => {
+	const table = await tableWith([])
+	expect(table.get("mwdev_postcode")?.inputSchema).toBeDefined()
+})
+
 describe("mwdev_job", () => {
 	/**
 	 * A child that prints a gauntlet-shaped log and exits 1.
