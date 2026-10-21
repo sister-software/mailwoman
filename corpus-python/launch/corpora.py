@@ -498,4 +498,22 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout/train/part-0000.parquet",
         ),
     ),
+    # The v0.8.0 manifest names base files at corpus/versioned/v0.8.0-store/store/..., so the store uses the
+    # `FLAT` layout. The overlay directory was uploaded nested and uses `WRAPPED`, as `corpus upload` writes it.
+    "v800_postcode_move": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.8.0-store", FLAT, flags=STEADY),
+            corpus("v0.8.0", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v8.0.0-postcode-move-p000-60k.yaml",
+            "corpus/versioned/v0.8.0/corpus-v0.8.0/MANIFEST.json",
+            "corpus/versioned/v0.8.0/corpus-v0.8.0/adressur-fo.parquet",
+            "corpus/versioned/v0.8.0-store/store/usgov-nad/132341875b8dd879b2d927ef6f315a88fa18210d130dded1f24d21d71df585ed/data.parquet",
+            "corpus/versioned/v0.8.0-store/store/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.parquet",
+            "corpus/versioned/v0.8.0-store/store/wof-admin/891d71a9dae5d757202570e48dc9edceb89e79db27a5b83b7bfc3668eb438f58/data.parquet",
+        ),
+    ),
 }
