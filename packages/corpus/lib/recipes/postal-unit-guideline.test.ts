@@ -11,7 +11,7 @@ import { POSTAL_UNIT_GUIDELINE_LEGS } from "#recipes/postal-unit-guideline"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 import { PROPOSED_DESIGNATORS, SHIPPED_DESIGNATOR_SEED } from "#subvenue/table"
-import { defaultHoldouts, splitForRow } from "#utils/split"
+import { defaultHoldouts, holdoutPolicyFor, splitForRow } from "#utils/split"
 
 const SOURCE = defaultRecipeSource("synth-postal-unit-guideline")
 const SYLLABLES = ["ba", "ce", "di", "fo", "gu", "la", "me", "no", "pi", "ro", "sa", "te", "vi", "zu"]
@@ -23,6 +23,15 @@ const NAMES = SYLLABLES.flatMap((first) =>
 	SYLLABLES.flatMap((second) =>
 		SYLLABLES.map((third) => `${first[0]!.toUpperCase()}${first.slice(1)}${second}${third}`)
 	)
+)
+
+// Title-cased single words, which the NZ leg renders as a town.
+const NZ_HELD_LOCALITIES = (holdoutPolicyFor(defaultHoldouts().NZ ?? null).localities ?? [])
+	.filter((name) => /^[a-z]+$/u.test(name))
+	.map((name) => `${name[0]!.toUpperCase()}${name.slice(1)}`)
+
+const IT_HELD_LOCALITIES = (holdoutPolicyFor(defaultHoldouts().IT ?? null).localities ?? []).map((name) =>
+	name.toUpperCase()
 )
 
 const PLACES = new Map<string, PostalGuidelinePlace[]>([
@@ -42,26 +51,32 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "TR" : "AL"}${1 + (index % 9)} ${1 + (index % 7)}AB`,
 		})),
 	],
-	// `09` (Sardinia) is a declared IT holdout and `67` is not.
+	// Every odd place is a declared IT locality holdout and every even place is not.
 	[
 		"IT",
 		NAMES.slice(0, 80).map((locality, index) => ({
-			locality,
+			locality: index % 2 ? IT_HELD_LOCALITIES[index % IT_HELD_LOCALITIES.length]! : locality,
 			postcode: index % 2 ? "09124" : "67010",
 			region: index % 2 ? "CA" : "AQ",
 		})),
 	],
-	// `7` (Tasmania) is a declared AU holdout and `2` is not.
+	// `733` is a declared AU district holdout and `284` is not.
 	[
 		"AU",
 		NAMES.slice(0, 80).map((locality, index) => ({
 			locality: locality.toUpperCase(),
-			postcode: index % 2 ? "7000" : "2840",
+			postcode: index % 2 ? "7330" : "2840",
 			region: index % 2 ? "TAS" : "NSW",
 		})),
 	],
-	// `98` (Southland) is a declared NZ holdout and `79` is not.
-	["NZ", NAMES.slice(0, 80).map((locality, index) => ({ locality, postcode: index % 2 ? "9810" : "7942" }))],
+	// Every odd place is a declared NZ locality holdout and every even place is not.
+	[
+		"NZ",
+		NAMES.slice(0, 80).map((locality, index) => ({
+			locality: index % 2 ? NZ_HELD_LOCALITIES[index % NZ_HELD_LOCALITIES.length]! : locality,
+			postcode: index % 2 ? "9016" : "7942",
+		})),
+	],
 ])
 
 const generate = (seed: number) =>

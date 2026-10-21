@@ -30,7 +30,7 @@ import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import type { ParquetManifest } from "#parquet/writers"
 import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
-import { writeSplitManifestsFromLabeledFiles } from "#utils/split"
+import { defaultHoldouts, writeSplitManifestsFromLabeledFiles } from "#utils/split"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
@@ -106,7 +106,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		)
 
 		expect(splitManifest.corpus_version).toBe("0.1.0")
-		expect(splitManifest.holdouts.US).toContain("Vermont")
+		expect(splitManifest.holdouts.US).toEqual(defaultHoldouts().US)
 
 		const trainFile = corpusManifest.slices.find((s) => s.split === "train")!
 		expect(trainFile).toBeDefined()
@@ -127,7 +127,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		}
 	})
 
-	it("routes rows whose components.region is held out to val/test", async () => {
+	it("trains on Vermont admin rows, because no holdout keys on a region (#2777)", async () => {
 		const outDir = scratch.path("build")
 
 		await buildCorpus({
@@ -150,14 +150,14 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			readVermontRows(outDir("intermediate", "labeled-test.jsonl")),
 		])
 
-		const vermontHeldOut = [...valVermont, ...testVermont]
-		expect(vermontHeldOut.length).toBeGreaterThan(0)
-		expect(trainVermont).toEqual([])
+		// The fixture's Vermont rows carry no postcode, so no declared US district holds them out.
+		expect([...valVermont, ...testVermont]).toEqual([])
+		expect(trainVermont.length).toBeGreaterThan(0)
 
 		const trainIDs = new Set(await TextSpliterator.fromAsync(outDir("splits", "train.txt")).toArray())
 
-		for (const r of vermontHeldOut) {
-			expect(trainIDs.has(r.source_id)).toBe(false)
+		for (const r of trainVermont) {
+			expect(trainIDs.has(r.source_id)).toBe(true)
 		}
 	})
 

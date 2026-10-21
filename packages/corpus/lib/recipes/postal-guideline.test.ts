@@ -7,7 +7,7 @@ import { generatePostalGuidelineRows, partitionPlaces, POSTAL_GUIDELINE_LEGS } f
 import type { PostalGuidelinePlace } from "#recipes/postal-guideline/leg"
 import { defaultRecipeSource } from "#recipes/sources"
 import { PO_BOX_LOCALE_TEMPLATES } from "#synthesizers/po-box"
-import { defaultHoldouts, splitForRow } from "#utils/split"
+import { defaultHoldouts, holdoutPolicyFor, splitForRow } from "#utils/split"
 
 const SOURCE = defaultRecipeSource("synth-postal-guideline")
 const SYLLABLES = ["ba", "ce", "di", "fo", "gu", "la", "me", "no", "pi", "ro", "sa", "te", "vi", "zu"]
@@ -21,6 +21,8 @@ const NAMES = SYLLABLES.flatMap((first) =>
 	)
 )
 
+const IT_HELD_LOCALITIES = holdoutPolicyFor(defaultHoldouts().IT ?? null).localities ?? []
+
 const PLACES = new Map<string, PostalGuidelinePlace[]>([
 	// `02` is the declared DE street-level holdout and `10` is not.
 	[
@@ -30,21 +32,21 @@ const PLACES = new Map<string, PostalGuidelinePlace[]>([
 			postcode: `${index % 2 ? "02" : "10"}${String(600 + index).padStart(3, "0")}`,
 		})),
 	],
-	// `09` (Sardinia) is a declared IT holdout and `67` is not.
+	// Every odd place is a declared IT locality holdout and every even place is not.
 	[
 		"IT",
 		NAMES.slice(0, 60).map((locality, index) => ({
-			locality: locality.toUpperCase(),
+			locality: (index % 2 ? IT_HELD_LOCALITIES[index % IT_HELD_LOCALITIES.length]! : locality).toUpperCase(),
 			postcode: index % 2 ? "09124" : "67010",
 			region: index % 2 ? "CA" : "AQ",
 		})),
 	],
-	// `7` (Tasmania) is a declared AU holdout and `2` is not.
+	// `733` is a declared AU district holdout and `284` is not.
 	[
 		"AU",
 		NAMES.slice(0, 60).map((locality, index) => ({
 			locality: locality.toUpperCase(),
-			postcode: index % 2 ? "7000" : "2840",
+			postcode: index % 2 ? "7330" : "2840",
 			region: index % 2 ? "TAS" : "NSW",
 		})),
 	],

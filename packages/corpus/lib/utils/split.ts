@@ -91,152 +91,486 @@ export interface SplitManifest {
 }
 
 /**
- * Returns the default holdouts — small, peripheral places in each country.
- * A change here takes effect at the next base corpus rebuild.
+ * Returns the default holdouts: places below the first-level region in each country,
+ * keyed only by open-vocabulary values, a postcode district or a locality.
+ * A change here takes effect at the next split of the corpus.
+ *
+ * No entry keys on a region.
+ * A region's name is a region span only in rows from that region, so holding a
+ * region out removes it as a label from training, and the model then relabels it
+ * (#2777: v0.8.0 train held 0 region spans for VT, ND, WY, Asturias, Kerala and Cornwall).
+ *
+ * Holding out places inside regions takes a small part of each region it touches
+ * and leaves the test split measuring unseen places under labels the model has seen.
+ *
+ * A selection script chose the district and locality lists below from the v0.8.0 rows of each country:
+ * - Candidates are postcode districts of a fixed length (US 3, AU 3, RO 4, LV and the French
+ *   overseas jurisdictions the full postcode), or, where most rows carry no postcode,
+ *   localities grouped by spelling with accents and punctuation removed.
+ *   A locality whose spelling matches a region surface is not a candidate.
+ *   Each candidate carries at least 1% of the country's v0.8.0 held-out rows.
+ * - They are walked in the order of `hashBucket(\`${country}|${candidate}\`, 2 ** 32)`
+ *   and taken while the country's held-out rows stay at or under its v0.8.0 held-out rows,
+ *   because a borderline row goes to training.
+ *   A country whose candidates under that bound number fewer than two takes its smallest
+ *   candidates up to two, so its held-out set has groups to grade (YT, PF and NC).
+ *   Taking also requires that every region with at least 100 rows loses at most
+ *   `min(0.25, max(0.05, 3 × share))` of its rows, and of its rows with no postcode,
+ *   where `share` is the country's v0.8.0 held-out share.
+ * - A locality group is held out by every spelling the v0.8.0 rows write.
+ * `held-out-spans.full.test.ts` checks a built corpus against this table.
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
-		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
-		FR: {
-			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
-			// BAN street rows have no region, so these postcode departments hold out the
-			// same three places: Corse 20, Creuse 23 and Lozère 48.
-			postcodePrefixes: ["20", "23", "48"],
-		},
-		DE: {
-			// Only `wof-admin` has a DE region, so these Länder hold out admin rows only.
-			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
-			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
-			// so the regions above match no street row.
-			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout.
-			// German postcodes have five digits, so this holdout cannot collide.
-			postcodePrefixes: ["02"],
-		},
-		GB: {
-			// GB street rows have no region, so the holdout matches postcode areas —
-			// Truro, Llandudno and Halifax.
-			// Each prefix has two letters and none is a prefix of another
-			// (`L` for Liverpool would also match `LL`).
-			postcodePrefixes: ["TR", "LL", "HX"],
-			// Cornwall matches the admin rows for the same place `TR` covers.
-			regions: ["Cornwall"],
-		},
-		// The eight countries below enter training through OpenStreetMap rows. Most hold no
-		// region and some no postcode, so each holdout matches its place three ways: the region an
-		// admin row holds, the postcode prefix, and the city as the OSM rows spell it. The spellings
-		// are the ones the 2026-10-02 extracts write.
-		CN: {
-			// Gansu by its province and capital, and Qinghai `81` and Tibet `85` by postcode.
-			regions: ["甘肃省", "甘肃", "Gansu"],
-			postcodePrefixes: ["81", "85"],
-			localities: ["兰州市", "兰州", "Lanzhou"],
-		},
-		IN: {
-			// Kerala.
-			// Its PIN codes run 67 to 69.
-			regions: ["Kerala"],
-			postcodePrefixes: ["67", "68", "69"],
-			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
-		},
-		ID: {
-			// Bali.
-			// Its postcodes begin `80`.
-			regions: ["Bali"],
-			postcodePrefixes: ["80"],
-			localities: ["Denpasar", "Bali"],
-		},
-		NG: {
-			// Enugu State.
-			// OSM Nigeria rows hold almost no postcode or region, so the city names supply the holdout.
-			regions: ["Enugu"],
-			localities: ["Enugu", "Nsukka"],
-		},
-		// A region or locality name keys a holdout only where rows of other places also write it,
-		// so the holdout removes the place and leaves the word in training (#2777).
-		// A name only the held-out rows wrote is dropped.
-		// Where a postcode prefix still holds the place out, the rows that write the place
-		// without a postcode return to train and keep the word there.
-		// `held-out-names.full.test.ts` counts the train rows writing each name here.
-		PK: {
-			// Islamabad Capital Territory by postcode and its city's Latin spelling.
-			// The territory's name and the Urdu city name were written only by held-out rows.
-			postcodePrefixes: ["44"],
-			localities: ["Islamabad", "islamabad"],
-		},
-		BD: {
-			// Chattogram, Khulna and Sylhet.
-			// Their postcodes begin 4, 9 and 3 respectively.
-			// Khulna is held out by postcode alone, because no other row wrote the name.
-			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
-			localities: ["Chittagong", "Chattogram", "Sylhet"],
-		},
-		VN: {
-			// Cần Thơ and Huế.
-			// The `Thành phố` forms were written only by held-out rows, so those rows train
-			// and the bare names hold the cities out.
-			regions: ["Cần Thơ", "Thừa Thiên Huế"],
-			localities: ["Cần Thơ", "Huế"],
-		},
-		RU: {
-			// Primorsky Krai.
-			// Its postcodes run 690 to 692.
-			// The krai's name and Vladivostok and Ussuriysk were written only by held-out rows.
-			postcodePrefixes: ["690", "691", "692"],
-			localities: ["Находка"],
-		},
-		// Each French overseas jurisdiction is one INSEE department with one postcode range,
-		// so the BAN rows hold out by commune, spelled as BAN's `nom_commune` writes it.
-		// Each commune named here is also written by rows of another commune of the same jurisdiction.
-		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
-		// so neither has a place to hold out.
-		// Saint-Pierre-et-Miquelon is left to the hashed holdout: Miquelon-Langlade is
-		// written by no other row, and Saint-Pierre holds 2,706 of its 3,084 rows.
-		GP: { localities: ["Saint-François", "Port-Louis"] },
-		MQ: { localities: ["Le François", "Saint-Pierre"] },
-		GF: { localities: ["Kourou"] },
-		RE: { localities: ["Saint-Louis", "Saint-Leu"] },
-		YT: { localities: ["Dzaoudzi"] },
-		// Pirae: Papeete holds 5,308 of PF's 7,261 rows, and Tumaraa's name is written by no other row.
-		PF: { localities: ["Pirae"] },
-		NC: { localities: ["Koné", "Kaala-Gomen"] },
-		LV: {
-			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni municipalities.
-			// Their postcodes begin LV-56, LV-57, LV-45 and LV-53.
-			// The state city Rēzekne lies in no municipality.
-			// The municipality names are not keys, because only rows inside them write them.
-			postcodePrefixes: ["LV-45", "LV-53", "LV-56", "LV-57"],
-			localities: ["Rēzekne"],
-		},
-		RO: {
-			// Alba 51, Hunedoara 33, Mureș 54 and Sibiu 55: a Romanian postcode's first two digits name its county.
-			regions: ["Alba", "Hunedoara", "Mureș", "Sibiu"],
-			postcodePrefixes: ["51", "33", "54", "55"],
-		},
-		ES: {
-			// The Balearic Islands 07 and Asturias 33: a Spanish postcode's first two digits name its province.
-			// The Canary Islands, 35 and 38, would hold out every Overture ES row, because the
-			// Overture sample this corpus draws for ES has postcodes in those two provinces only.
-			// Postcode only: as region keys, the two provinces' names had no train row as a region,
-			// and the `wof-admin` rows that write them without a postcode now train (#2777).
-			postcodePrefixes: ["07", "33"],
-		},
-		IT: {
-			// Sardinia 07 to 09, Valle d'Aosta 11, and Trentino-Alto Adige 38 and 39.
-			// Postcode only, for the reason ES gives: the `wof-admin` province rows carry no postcode and train.
-			postcodePrefixes: ["07", "08", "09", "11", "38", "39"],
+		// FR, DE and GB keep the postcode areas of earlier corpora, so the held-out
+		// rows already verified unseen stay unseen.
+		// Their region names, Corse, Lozère, Creuse, Saarland, Mecklenburg-Vorpommern
+		// and Cornwall, left the table.
+		// FR: Corse 20, Creuse 23 and Lozère 48.
+		// DE: area 02, Upper Lusatia in eastern Sachsen.
+		// GB: Truro, Llandudno and Halifax.
+		// Each prefix has two letters and none is a prefix of another.
+		FR: { postcodePrefixes: ["20", "23", "48"] },
+		DE: { postcodePrefixes: ["02"] },
+		GB: { postcodePrefixes: ["TR", "LL", "HX"] },
+		// Three-digit ZIP areas.
+		US: {
+			postcodePrefixes: [
+				"084",
+				"156",
+				"171",
+				"172",
+				"223",
+				"317",
+				"364",
+				"450",
+				"664",
+				"683",
+				"716",
+				"734",
+				"759",
+				"763",
+				"808",
+				"881",
+			],
 		},
 		AU: {
-			// The Northern Territory 08 and 09, and Tasmania 7.
-			// No other Australian postcode begins with 7.
-			// Postcode only, so `TAS` and `NT` stay in training through the rows written without a postcode.
-			postcodePrefixes: ["08", "09", "7"],
+			postcodePrefixes: [
+				"080",
+				"083",
+				"203",
+				"248",
+				"366",
+				"375",
+				"379",
+				"397",
+				"406",
+				"467",
+				"470",
+				"523",
+				"607",
+				"628",
+				"631",
+				"640",
+				"651",
+				"733",
+			],
+		},
+		LV: {
+			postcodePrefixes: [
+				"LV-1004",
+				"LV-1023",
+				"LV-1029",
+				"LV-1057",
+				"LV-2011",
+				"LV-2012",
+				"LV-2016",
+				"LV-2105",
+				"LV-2111",
+				"LV-2119",
+				"LV-2161",
+				"LV-3001",
+				"LV-3007",
+				"LV-3145",
+				"LV-3284",
+				"LV-3456",
+				"LV-3708",
+				"LV-3933",
+				"LV-4033",
+				"LV-4245",
+				"LV-4630",
+				"LV-4838",
+				"LV-5022",
+				"LV-5070",
+				"LV-5120",
+				"LV-5202",
+				"LV-5413",
+				"LV-5414",
+				"LV-5417",
+				"LV-5418",
+				"LV-5422",
+				"LV-5449",
+				"LV-5473",
+				"LV-5481",
+				"LV-5664",
+				"LV-5674",
+			],
+		},
+		RO: {
+			postcodePrefixes: [
+				"0312",
+				"0613",
+				"0751",
+				"1070",
+				"1073",
+				"1153",
+				"1276",
+				"1300",
+				"1470",
+				"2004",
+				"2005",
+				"2173",
+				"2200",
+				"2352",
+				"2477",
+				"3102",
+				"3271",
+				"4000",
+				"4004",
+				"4073",
+				"4173",
+				"4270",
+				"4451",
+				"5004",
+				"5101",
+				"5176",
+				"5356",
+				"5475",
+				"5510",
+				"5571",
+				"6052",
+				"6170",
+				"6271",
+				"7000",
+				"7001",
+				"7005",
+				"7006",
+				"7202",
+				"7251",
+				"7254",
+				"7310",
+				"7370",
+				"7375",
+				"8004",
+				"9003",
+				"9272",
+			],
+		},
+		// Each French overseas jurisdiction's BAN rows carry a commune postcode, so these hold out communes.
+		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
+		// and Saint-Pierre-et-Miquelon's Saint-Pierre holds 2,706 of its 3,084 rows,
+		// so those three are left to the hashed holdout.
+		GP: { postcodePrefixes: ["97113", "97125", "97126", "97128", "97136"] },
+		MQ: { postcodePrefixes: ["97211", "97216", "97225", "97227", "97233"] },
+		GF: {
+			postcodePrefixes: ["97313", "97314", "97315", "97316", "97319", "97350", "97360", "97380", "97390"],
+		},
+		RE: { postcodePrefixes: ["97423", "97427", "97438", "97442", "97450"] },
+		YT: { postcodePrefixes: ["97625", "97660"] },
+		PF: { postcodePrefixes: ["98713", "98716"] },
+		NC: { postcodePrefixes: ["98817", "98820", "98859"] },
+		// The countries below carry a postcode on few rows (ES 13%, IT 6%, RU 20% and under 40% for the rest),
+		// so their holdouts are localities.
+		// ID's `<different>` and NG's `edo state` and `imo`, a placeholder and two state
+		// names written as localities, were dropped from the selection.
+		// One VN commune of Hàm Thuận was dropped too, because the repository spelling
+		// check reads its last word as a typo.
+		// CN and IN are left to the hashed holdout: their locality spans are a
+		// million village and neighborhood names with a median of about ten rows,
+		// so a declared list would need tens of thousands of entries.
+		ES: {
+			localities: [
+				"adeje",
+				"agaete",
+				"agaetė",
+				"aguimes",
+				"agüimes",
+				"alegría-dulantzi",
+				"amurrio",
+				"arafo",
+				"arico",
+				"arona",
+				"fasnia",
+				"granadilla de abona",
+				"guia de isora",
+				"guía de isora",
+				"hermigua",
+				"melgar de yuso",
+				"mogan",
+				"mogán",
+				"san bartolome de tirajana",
+				"san bartolomé de tirajana",
+				"san miguel de abona",
+				"san sebastián de la gomera",
+				"santiago del teide",
+				"tejeda",
+				"valle gran rey",
+				"vallehermoso",
+			],
+		},
+		IT: {
+			localities: [
+				"arborea",
+				"arbórea",
+				"buggerru",
+				"cabras",
+				"domusnovas",
+				"fluminimaggiore",
+				"gonnesa",
+				"guspini",
+				"gùspini",
+				"marrubiu",
+				"marrùbiu",
+				"perdaxius",
+				"porto torres",
+				"portoscuso",
+				"portotorres",
+				"san giovanni suergiu",
+				"san nicolo d'arcidano",
+				"san nicolo' d'arcidano",
+				"san nicolò d'arcidano",
+				"san nicolò d’arcidano",
+				"sant'anna arresi",
+				"sant'antioco",
+				"santa giusta",
+				"santantioco",
+				"sant’anna arresi",
+				"sant’antioco",
+				"stintino",
+				"terralba",
+			],
+		},
+		ID: {
+			localities: [
+				"balikpapan",
+				"bekasi",
+				"blega",
+				"bogor",
+				"central jakarta",
+				"depok",
+				"east jakarta",
+				"garut",
+				"jakarta utara",
+				"jimbaran",
+				"kabupaten bandung",
+				"karawang",
+				"kel. karang pamulang",
+				"kota bandung",
+				"kota batam",
+				"kota bekasi",
+				"kota malang",
+				"kota tangerang selatan",
+				"kupang",
+				"kuta",
+				"lhokseumawe",
+				"makassar",
+				"mataram",
+				"rancah",
+				"salatiga",
+				"samarinda",
+				"sidoarjo",
+				"sleman",
+				"surakarta",
+				"west jakarta",
+			],
+		},
+		PK: {
+			localities: ["faisal town", "gujrat", "multan", "اسلام آباد"],
+		},
+		VN: {
+			localities: [
+				"bien hoa",
+				"biên hòa",
+				"buon ma thuot",
+				"buôn ma thuột",
+				"dĩ an - bình dương",
+				"ha giang",
+				"ha long",
+				"hà giang",
+				"hạ long",
+				"long xuyên",
+				"mui ne",
+				"móng cái",
+				"mũi né",
+				"mỹ tho",
+				"phan rang - tháp chàm",
+				"phan rang- tháp chàm",
+				"phan rang-tháp chàm",
+				"phường 13",
+				"phường 15",
+				"phường 16",
+				"phường 2",
+				"phường 22",
+				"phường hiệp bình chánh",
+				"phường hiệp thành",
+				"phường hòa thạnh",
+				"phường thới an",
+				"phường tân quy",
+				"phường tân quý",
+				"phường đại mỗ",
+				"pleiku",
+				"q.cấu giấy",
+				"q.cầu giấy",
+				"sa pa",
+				"saigon",
+				"sapa",
+				"sài gòn",
+				"thành phố huế",
+				"thành phố hải phòng",
+				"thành phố phú quốc",
+				"thành phố thái nguyên",
+				"thành phố thủ dầu một",
+				"thành phố vũng tàu",
+				"tp. hcm",
+				"tp.hồ chí minh",
+				"tuy hoa",
+				"tuy hoà",
+				"tuy hòa",
+				"tân an",
+				"vinh",
+				"việt trì",
+				"vung tau",
+				"vũng tàu",
+				"xã lai vung",
+				"đồng hới",
+				"đồng xoài",
+			],
+		},
+		NG: {
+			localities: [
+				"ibadan",
+				"iiupeju",
+				"ilorin",
+				"isiozi-akah",
+				"kabala",
+				"korongilum",
+				"kosofe",
+				"lekki peninsula ii",
+				"lokoja",
+				"magodo",
+				"makera",
+				"mararaba",
+				"nsukka",
+				"ota",
+				"oyo town",
+				"suncity",
+				"udu",
+				"unec enugu",
+				"zaria",
+			],
+		},
+		BD: {
+			localities: [
+				", gazipur",
+				",gazipur",
+				"brahmanbaria",
+				"chandpur",
+				"chattogram",
+				"chattogram (chittagong)",
+				"chittagong",
+				"chittagong.",
+				"dhanmondi",
+				"gazipur",
+				"jamalpur",
+				"jessore",
+				"lalmatia",
+				"magura",
+				"mirpur 10",
+				"mirpur-10",
+				"mohammadpur area",
+				"narsingdi",
+				"paity",
+				"patuakhali",
+				"rajbari",
+				"rajshahi",
+				"ramganj",
+				"rangamati",
+				"sonargaon",
+				"sreemangal",
+				"terokhada khulna",
+				"tongi",
+				"uttara",
+				"uttara.",
+				"ডেমরা",
+				"মোহাম্মদপুর",
+			],
 		},
 		NZ: {
-			// Southland: postcodes 96 to 98.
-			// The OSM-derived rows hold no postcode, so the city names supply those.
-			// West Invercargill and East Gore were written only by held-out rows.
-			postcodePrefixes: ["96", "97", "98"],
-			localities: ["Invercargill", "Gore"],
+			localities: [
+				"ashburton",
+				"auckland central",
+				"awarua plains",
+				"bell block",
+				"chartwell",
+				"christchurch",
+				"christchurch central",
+				"conical hills",
+				"dunedin",
+				"east end",
+				"east gore",
+				"east tamaki",
+				"eastern bush",
+				"glengarry",
+				"glenham",
+				"gummies bush",
+				"hamilton east",
+				"hillsborough",
+				"kaeo",
+				"kaitaia",
+				"levin",
+				"lochiel",
+				"manapouri",
+				"masterton",
+				"mataura",
+				"mossburn",
+				"new plymouth",
+				"ngaruawahia",
+				"niagara",
+				"nightcaps",
+				"otapiri gorge",
+				"otautau",
+				"papamoa",
+				"papatoetoe",
+				"pauanui",
+				"queenstown",
+				"riverton",
+				"rolleston",
+				"round hill",
+				"south hillend",
+				"southbridge",
+				"stoke",
+				"strathern",
+				"taupo",
+				"taupō",
+				"the key",
+				"tisbury",
+				"tokoroa",
+				"twizel",
+				"waikiwi",
+				"waipounamu",
+				"waitara",
+				"wallacetown",
+				"wanaka",
+				"waverley",
+				"wellington",
+				"wendon valley",
+				"westport",
+				"whitford",
+				"wyndham",
+			],
+		},
+		RU: {
+			localities: ["алатырь", "архангельск", "валевая", "дубенки", "дубёнки", "лукьяновка", "таврово", "шадринск"],
 		},
 	}
 }
