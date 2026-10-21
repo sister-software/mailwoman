@@ -6,8 +6,10 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 
@@ -23,6 +25,7 @@ import {
 	runNativeCommand,
 	stringValue,
 } from "#cli/native/spec"
+import { coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 
 const debugSizePattern = /^\d+x\d+$/u
@@ -299,9 +302,29 @@ function formatText(result: GeocodeResult): string {
 	return lines.join("\n")
 }
 
+/**
+ * The ceiling this result met, read against the data root's installed bundles.
+ *
+ * A data root that cannot be read counts as one with no bundle installed,
+ * so the statement still appears and the result is still printed.
+ */
+async function resultCoverage(result: GeocodeResult): Promise<EngineCoverage | null> {
+	let installed: ReadonlySet<string>
+
+	try {
+		installed = await installedBundleNames(dataRootPath())
+	} catch {
+		installed = new Set()
+	}
+
+	return precisionCeiling(result, installed)
+}
+
 async function formatResult(result: GeocodeResult, format: Format, compact: boolean): Promise<string> {
+	const coverage = await resultCoverage(result)
+
 	if (format === "text") {
-		return formatText(result)
+		return coverage ? `${formatText(result)}\n${coverageSentence(coverage)}` : formatText(result)
 	}
 
 	if (format === "jsonld") {
@@ -333,8 +356,9 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 	}
 
 	const { stamp } = await resolveEngineStamp()
+	const engine = coverage ? { ...stamp, coverage } : stamp
 
-	return compact ? stringifyJSON({ ...result, engine: stamp }) : prettyJSON({ ...result, engine: stamp }, false, 2)
+	return compact ? stringifyJSON({ ...result, engine }) : prettyJSON({ ...result, engine }, false, 2)
 }
 
 async function openSession(options: GeocodeOptions) {
