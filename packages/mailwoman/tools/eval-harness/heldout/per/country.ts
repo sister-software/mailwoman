@@ -21,12 +21,13 @@ import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/c
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
+import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
@@ -283,6 +284,23 @@ export interface HeldoutSamplingRule {
 	 * The ordering expression, for a reader outside this module.
 	 */
 	order: string
+	/**
+	 * The dataset whose groups this sample never draws, so the two are disjoint by group and by row.
+	 */
+	excludes?: { datasetID: string; version: string }
+	/**
+	 * Manifest file paths the sample did not read, such as a file that lacks a grouping column.
+	 */
+	skippedFiles?: string[]
+}
+
+/**
+ * A frozen dataset whose groups a new sample must not draw.
+ */
+export interface HeldoutSampleExclusion {
+	datasetID: string
+	version: string
+	groups: readonly string[]
 }
 
 /**
@@ -309,7 +327,9 @@ export async function sampleHeldoutRows(
 	perCountry: number,
 	pathRoot: string,
 	seed: number | null = null,
-	limits: DuckDBLimits = {}
+	limits: DuckDBLimits = {},
+	exclude: HeldoutSampleExclusion | null = null,
+	skipFiles: readonly string[] = []
 ): Promise<{
 	rows: HeldoutRow[]
 	counts: HeldoutCellCount[]
@@ -317,12 +337,55 @@ export async function sampleHeldoutRows(
 	rule: HeldoutSamplingRule
 }> {
 	const manifest = await readLocalJSONFile<{
-		slices: Array<{ path: string; split: string }>
+		slices: Array<{
+			path: string
+			split?: string
+			split_attribute?: { path?: unknown; sha256?: unknown; counts?: { test?: unknown } }
+		}>
 	}>(manifestPath)
 
-	const files = manifest.slices
-		.filter((slice) => slice.split === "test")
-		.map((slice) => slice.path.replace(/^\/data/u, pathRoot))
+	const files: string[] = []
+	// A file split by an attribute holds every split.
+	// Only the attribute's `test` ids are read from it.
+	const attributeTestIDs: Array<{ file: string; ids: string[] }> = []
+
+	const unlisted = skipFiles.filter((path) => !manifest.slices.some((slice) => slice.path === path))
+
+	if (unlisted.length) throw new Error(`${manifestPath.toString()} lists no file ${unlisted.join(", ")} to skip`)
+
+	for (const slice of manifest.slices) {
+		if (skipFiles.includes(slice.path)) continue
+
+		const file = slice.path.replace(/^\/data/u, pathRoot)
+
+		if (slice.split === "test") {
+			files.push(file)
+
+			continue
+		}
+
+		const reference = slice.split_attribute
+
+		if (!reference) continue
+
+		if (typeof reference.path !== "string" || typeof reference.sha256 !== "string") {
+			throw new TypeError(`${manifestPath.toString()} file ${slice.path} names an incomplete split attribute`)
+		}
+
+		const attributePath = reference.path.replace(/^\/data/u, pathRoot)
+		const digest = await sha256File(attributePath)
+
+		if (digest !== reference.sha256) {
+			throw new Error(`${attributePath} has sha256 ${digest}; ${manifestPath.toString()} records ${reference.sha256}`)
+		}
+
+		const { test } = await readSplitAttribute(attributePath)
+
+		if (!test.length) continue
+
+		files.push(file)
+		attributeTestIDs.push({ file, ids: test })
+	}
 
 	if (!files.length) throw new Error(`${manifestPath.toString()} lists no test files`)
 
@@ -330,15 +393,46 @@ export async function sampleHeldoutRows(
 
 	using db = await openDuckDB(limits)
 
+	await db.run(`CREATE TEMP TABLE attribute_files (file VARCHAR)`)
+	await db.run(`CREATE TEMP TABLE attribute_test (file VARCHAR, source_id VARCHAR)`)
+	await db.run(`CREATE TEMP TABLE excluded_groups (k VARCHAR)`)
+
+	const insert = async (table: string, tuples: string[]) => {
+		for (let start = 0; start < tuples.length; start += 5000) {
+			await db.run(`INSERT INTO ${table} VALUES ${tuples.slice(start, start + 5000).join(", ")}`)
+		}
+	}
+
+	const quote = (value: string) => `'${escapeSQLString(value)}'`
+
+	await insert(
+		"attribute_files",
+		attributeTestIDs.map(({ file }) => `(${quote(file)})`)
+	)
+
+	await insert(
+		"attribute_test",
+		attributeTestIDs.flatMap(({ file, ids }) => ids.map((id) => `(${quote(file)}, ${quote(id)})`))
+	)
+
+	await insert(
+		"excluded_groups",
+		(exclude?.groups ?? []).map((group) => `(${quote(group)})`)
+	)
+
 	// A row's identity is its record, `<source>:<source_id>` (`heldoutRowID`),
 	// and the overlap audit joins training rows on that record.
 	// A test split can hold one record more than once: the same row written twice,
 	// or several renderings of one record under its id.
 	// The sample and the available counts therefore read one row per record, the first in sample order.
 	// Rows without a `source_id` are identified by their text and keep every distinct row.
+	// A row whose group (`heldoutRowGroup`) an excluded dataset holds is never drawn.
 	const source =
 		`(SELECT DISTINCT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id ` +
-		`FROM read_parquet([${files.map((file) => `'${escapeSQLString(file)}'`).join(", ")}], union_by_name = true) ` +
+		`FROM read_parquet([${files.map(quote).join(", ")}], union_by_name = true, filename = true) t ` +
+		`WHERE (t.filename NOT IN (SELECT file FROM attribute_files) ` +
+		`OR (t.filename, CAST(t.source_id AS VARCHAR)) IN (SELECT (file, source_id) FROM attribute_test)) ` +
+		`AND coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR)) NOT IN (SELECT k FROM excluded_groups) ` +
 		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, source_id ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
 
 	const reader = await db.runAndReadAll(
@@ -391,6 +485,8 @@ export async function sampleHeldoutRows(
 		perCountry: Math.trunc(perCountry),
 		seed,
 		order: heldoutSampleOrder(seed),
+		...(exclude ? { excludes: { datasetID: exclude.datasetID, version: exclude.version } } : {}),
+		...(skipFiles.length ? { skippedFiles: [...skipFiles].toSorted() } : {}),
 	}
 
 	return { rows, counts: countHeldoutCells(available, rows), files, rule }

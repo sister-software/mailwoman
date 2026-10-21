@@ -1,6 +1,7 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -107,6 +108,55 @@ describe("sampleHeldoutRows grouping", () => {
 
 		expect(rows.map((row) => row.source_id).toSorted()).toEqual(["r1", "r2"])
 		expect(counts).toEqual([{ country: "US", kind: "address", available: 2, sampled: 2 }])
+	})
+
+	it("reads only an attribute-split file's test ids and never draws an excluded group", async () => {
+		const manifest = await writeFixtureCorpus(
+			"attributed",
+			[
+				`('Main', ${spans}, 'US', 'oa-us', 'a1', NULL)`,
+				`('main', ${spans}, 'US', 'oa-us', 'a1~lower', 'a1')`,
+				`('Elms', ${spans}, 'US', 'oa-us', 'a2', NULL)`,
+				`('Oak', ${spans}, 'US', 'oa-us', 'a3', NULL)`,
+			].join(", "),
+			columns
+		)
+
+		const attribute = directory.path("attributed", "part.split.json").toString()
+
+		await writeLocalJSONFile({ attribute: "split", val: ["a3"], test: ["a1", "a1~lower", "a2"] }, attribute)
+
+		await writeLocalJSONFile(
+			{
+				slices: [
+					{
+						path: "/data/attributed/test/part-0.parquet",
+						split_attribute: { path: "/data/attributed/part.split.json", sha256: await sha256File(attribute) },
+					},
+				],
+			},
+			manifest
+		)
+
+		const all = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7)
+
+		expect(all.rows.map((row) => row.source_id).toSorted()).toEqual(["a1", "a1~lower", "a2"])
+
+		const rest = await sampleHeldoutRows(
+			manifest,
+			10,
+			directory.path.toString(),
+			7,
+			{},
+			{
+				datasetID: "dev",
+				version: "v",
+				groups: ["a1"],
+			}
+		)
+
+		expect(rest.rows.map((row) => row.source_id)).toEqual(["a2"])
+		expect(rest.rule.excludes).toEqual({ datasetID: "dev", version: "v" })
 	})
 
 	it("refuses a file that lacks the base_source_id column", async () => {

@@ -63,6 +63,10 @@ export interface OverlapFileRecord {
 	 * Rows the split attribute assigned to `test` and the audit therefore did not count as training data.
 	 */
 	excludedTestRows?: number
+	/**
+	 * The file has no `base_source_id` column, so its rows were grouped by their own `source_id`.
+	 */
+	baseSourceIDAbsent?: boolean
 	matches: number
 }
 
@@ -157,7 +161,10 @@ async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Pr
 		}
 	}
 
-	if (!corporaRead.has(corpusVersion)) {
+	// A card names its corpus as `v<version>` (the training-manifest key) while a MANIFEST.json records `<version>`.
+	const bare = (version: string) => version.replace(/^v(?=\d)/u, "")
+
+	if (![...corporaRead].some((read) => bare(read) === bare(corpusVersion))) {
 		return {
 			path,
 			corpusVersion,
@@ -280,7 +287,15 @@ export async function auditHeldoutOverlap(input: {
 				throw new Error(`${file} (listed by ${manifestPath}) is missing; refusing a partial read`)
 
 			const columns = await parquetColumnNames(file)
-			const missing = OVERLAP_ID_COLUMNS.filter((column) => !columns.includes(column))
+			// A file with no base_source_id column records no derivation, so each row
+			// is its own group, as a NULL base_source_id is.
+			// The file record says so.
+			// The identity columns stay required.
+			const baseSourceIDAbsent = !columns.includes("base_source_id")
+
+			const missing = OVERLAP_ID_COLUMNS.filter((column) => column !== "base_source_id" && !columns.includes(column))
+
+			const baseColumn = baseSourceIDAbsent ? "CAST(NULL AS VARCHAR)" : "t.base_source_id"
 
 			if (missing.length) throw new Error(`${file} lacks ${missing.join(", ")}; refusing a partial read`)
 
@@ -324,9 +339,9 @@ export async function auditHeldoutOverlap(input: {
 			}
 
 			const reader = await db.runAndReadAll(
-				`SELECT t.source AS source, t.source_id AS source_id, t.base_source_id AS base_source_id FROM ${quoted} t ` +
+				`SELECT t.source AS source, t.source_id AS source_id, ${baseColumn} AS base_source_id FROM ${quoted} t ` +
 					`WHERE (t.source || ':' || t.source_id) IN (SELECT k FROM eval_ids) ` +
-					`OR coalesce(t.base_source_id, t.source_id) IN (SELECT k FROM eval_groups)`
+					`OR coalesce(${baseColumn}, t.source_id) IN (SELECT k FROM eval_groups)`
 			)
 
 			let matches = 0
@@ -365,6 +380,7 @@ export async function auditHeldoutOverlap(input: {
 				sha256: recordedSHA,
 				sha256Verified,
 				...(split === "attribute" ? { excludedTestRows } : {}),
+				...(baseSourceIDAbsent ? { baseSourceIDAbsent } : {}),
 				matches,
 			})
 		}
