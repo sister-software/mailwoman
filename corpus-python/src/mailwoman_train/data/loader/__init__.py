@@ -61,6 +61,7 @@ from .corpus_files import _PRE_RENAME_MANIFEST_KEY as _PRE_RENAME_MANIFEST_KEY
 from .corpus_files import (
     CorpusFile,
     RowFilter,
+    admitted_batches,
     corpus_split_files,
     file_source_counts,
     manifest_files,
@@ -78,6 +79,7 @@ __all__ = [
     "IGNORE_INDEX",
     "CorpusFile",
     "RowFilter",
+    "admitted_batches",
     "collate",
     "corpus_split_files",
     "file_source_counts",

@@ -67,27 +67,29 @@ def diagnose_corpus(
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data.loader import _parquet_paths, file_source_counts
+    from mailwoman_train.data.loader import corpus_split_files, file_source_counts
 
-    paths = _parquet_paths(corpus_root, "train")
-    print(f"\n_parquet_paths returned {len(paths)} train parquet files")
+    files = corpus_split_files(corpus_root, "train")
+    filtered = sum(1 for f in files if f.row_filter is not None)
+    print(f"\ncorpus_split_files returned {len(files)} train parquet files, {filtered} read through a row filter")
 
     # A file counts under every source it contains. That matches the loader's index.
     # A single count under each file's first-row source omits sources that never open a file.
+    # Rows are counted through each file's row filter, so a file split by an attribute counts only its train rows.
     by_source: Counter[str] = Counter()
     rows_by_source: Counter[str] = Counter()
     multi = 0
     errors = 0
-    for p in paths:
-        if not p.exists():
+    for f in files:
+        if not f.path.exists():
             errors += 1
             continue
         try:
-            per_source = file_source_counts(p)
+            per_source = file_source_counts(f.path, f.row_filter)
         except Exception as exc:  # noqa: BLE001
             errors += 1
             if errors <= 3:
-                print(f"  ERROR reading {p}: {exc}")
+                print(f"  ERROR reading {f.path}: {exc}")
             continue
         if len(per_source) > 1:
             multi += 1
@@ -95,7 +97,7 @@ def diagnose_corpus(
             by_source[src] += 1
             rows_by_source[src] += row_count
 
-    readable = len(paths) - errors
+    readable = len(files) - errors
     print(f"\nSource index ({errors} errors, {readable} readable, {multi} carrying more than one source):")
     for src, count in by_source.most_common():
         print(f"  {src:35s} {count:4d} files  {rows_by_source[src]:>12,} rows")
@@ -148,22 +150,20 @@ def country_census_raw(
     from collections import Counter
     from pathlib import Path
 
-    import pyarrow.parquet as pq
-
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    from mailwoman_train.data.loader import _parquet_paths
+    from mailwoman_train.data.loader import admitted_batches, corpus_split_files
 
-    files = _parquet_paths(Path(corpus_dir), "train")
+    # Each file is read through its row filter, so a file split by an attribute contributes only its train rows.
+    files = corpus_split_files(Path(corpus_dir), "train")
     print(f"train parquet files: {len(files)}")
 
     counts: Counter[str] = Counter()
     by_source: dict[str, Counter[str]] = {}
     seen = 0
-    for path in files:
-        pf = pq.ParquetFile(path)
-        for batch in pf.iter_batches(batch_size=8192, columns=["country", "source"]):
+    for file in files:
+        for batch in admitted_batches(file, ["country", "source"], batch_size=8192):
             cc = batch.column("country").to_pylist()
             ss = batch.column("source").to_pylist()
             for c, s_ in zip(cc, ss, strict=True):
@@ -590,12 +590,11 @@ def locale_supply_census(
     from pathlib import Path
 
     import pyarrow.compute as pc
-    import pyarrow.dataset as ds
 
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    from mailwoman_train.data.loader import _parquet_paths
+    from mailwoman_train.data.loader import admitted_batches, corpus_split_files
 
     want = country.strip().upper()
     columns = ["country", "source", "source_id", "raw", "span_tags", "surface", "register"]
@@ -613,7 +612,8 @@ def locale_supply_census(
     report: dict[str, object] = {"country": want, "corpus_dir": corpus_dir, "splits": by_split}
 
     for split in (s.strip() for s in splits.split(",") if s.strip()):
-        files = _parquet_paths(Path(corpus_dir), split)
+        # Each file is read through its row filter, so a file split by an attribute counts only this split's rows.
+        files = corpus_split_files(Path(corpus_dir), split)
         surfaces: set[int] = set()
         record_ids: set[int] = set()
         sequences: Counter[str] = Counter()
@@ -623,12 +623,13 @@ def locale_supply_census(
         rows = street_rows = invented_rows = street_and_region_rows = 0
 
         started = time.monotonic()
-        dataset = ds.dataset([str(path) for path in files], format="parquet")
+        batches = (
+            batch
+            for file in files
+            for batch in admitted_batches(file, columns, batch_size=8192, predicate=pc.field("country") == want)
+        )
 
-        for batch in dataset.to_batches(columns=columns, filter=pc.field("country") == want, batch_size=8192):
-            if not batch.num_rows:
-                continue
-
+        for batch in batches:
             sources = batch.column("source").to_pylist()
             ids = batch.column("source_id").to_pylist()
             raws = batch.column("raw").to_pylist()

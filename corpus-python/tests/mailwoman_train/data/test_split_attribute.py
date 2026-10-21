@@ -13,7 +13,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from mailwoman_train.data.loader import corpus_split_files, source_row_counts
+from mailwoman_train.data.loader import admitted_batches, corpus_split_files, source_row_counts
 from mailwoman_train.data.loader.parquet import _file_row_iter
 
 
@@ -98,6 +98,37 @@ def test_a_deletion_applies_inside_an_attributed_split(tmp_path: Path) -> None:
 
     assert _split_ids(corpus, "val") == ["1"]
     assert _split_ids(corpus, "train") == ["2", "3", "4", "6", "7", "9"]
+
+
+def _batch_ids(corpus: Path, split: str, columns: list[str], **kwargs: object) -> list[str]:
+    out: list[str] = []
+    for file in corpus_split_files(corpus, split):
+        for batch in admitted_batches(file, columns, **kwargs):  # type: ignore[arg-type]
+            assert batch.schema.names == columns
+            out.extend(raw.split(" ")[0] for raw in batch.column("raw").to_pylist())
+    return sorted(out, key=int)
+
+
+def test_admitted_batches_hold_only_the_rows_each_split_reads(tmp_path: Path) -> None:
+    corpus = _corpus(
+        tmp_path,
+        deletions=[{"target": {"source": "rendered-gb-os-open"}, "source_ids": ["gb-0"], "reason": "r", "issue": "#1"}],
+    )
+
+    for split in ("train", "val", "test"):
+        assert _batch_ids(corpus, split, ["raw", "country"]) == _split_ids(corpus, split)
+        assert _batch_ids(corpus, split, ["raw", "source_id"]) == _split_ids(corpus, split)
+
+    assert _batch_ids(corpus, "train", ["raw"], batch_size=2) == ["2", "3", "4", "6", "7", "9"]
+
+
+def test_admitted_batches_apply_a_predicate_before_the_split_filter(tmp_path: Path) -> None:
+    import pyarrow.compute as pc
+
+    corpus = _corpus(tmp_path)
+
+    assert _batch_ids(corpus, "val", ["raw"], predicate=pc.field("country") == "GB") == ["1", "5"]
+    assert _batch_ids(corpus, "val", ["raw"], predicate=pc.field("country") == "FR") == []
 
 
 def test_an_attribute_for_other_bytes_refuses(tmp_path: Path) -> None:
