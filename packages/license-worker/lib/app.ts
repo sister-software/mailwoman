@@ -16,10 +16,15 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import type Stripe from "stripe"
 
+import { type ArtifactCatalog, PAID_ARTIFACTS } from "#artifacts/catalog"
+import type { DeclarationDependencies } from "#declare"
 import type { EmailProvider } from "#email/provider"
 import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
 import { registerClaimRoute } from "#routes/claim"
+import { registerDeclarationRoutes } from "#routes/declare"
+import { registerDownloadRoute } from "#routes/download"
+import { registerEvaluationRoute } from "#routes/evaluate"
 import { registerHealthRoute, type SigningStatusReport } from "#routes/health"
 import { registerRefreshRoute } from "#routes/refresh"
 import { registerStatusRoute } from "#routes/status"
@@ -36,11 +41,32 @@ export interface AppDependencies {
 	 */
 	stripe?: Stripe
 	now?: () => number
+	/**
+	 * Reads a declared source URL's license file on re-issuance.
+	 *
+	 * The platform's `fetch` when absent.
+	 * A test scripts one.
+	 */
+	fetch?: typeof fetch
+	/**
+	 * The paid artifacts the download route serves.
+	 *
+	 * The shipped catalog when absent.
+	 * A test injects one.
+	 */
+	artifacts?: ArtifactCatalog
 }
 
 export function createLicenseWorkerApp(env: LicenseWorkerEnv, deps: AppDependencies): OpenAPIHono {
 	const app = new OpenAPIHono()
 	const fulfil = { stripe: deps.stripe ?? stripeClient(env), ledger: deps.ledger, email: deps.email, now: deps.now }
+
+	const declaring: DeclarationDependencies = {
+		ledger: deps.ledger,
+		email: deps.email,
+		fetch: deps.fetch ?? globalThis.fetch.bind(globalThis),
+		now: deps.now,
+	}
 
 	app.use(async (c, next) => {
 		c.header("Cache-Control", "no-store")
@@ -65,8 +91,11 @@ export function createLicenseWorkerApp(env: LicenseWorkerEnv, deps: AppDependenc
 	registerHealthRoute(app, env, deps.signingStatus, deps.ledger, deps.now)
 	registerWebhookRoute(app, env, fulfil)
 	registerClaimRoute(app, env, fulfil)
-	registerRefreshRoute(app, env, deps.ledger)
+	registerRefreshRoute(app, env, declaring)
 	registerStatusRoute(app, env, deps.ledger)
+	registerDeclarationRoutes(app, env, declaring)
+	registerEvaluationRoute(app, env, declaring)
+	registerDownloadRoute(app, env, { ledger: deps.ledger, artifacts: deps.artifacts ?? PAID_ARTIFACTS, now: deps.now })
 
 	return app
 }

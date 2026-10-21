@@ -51,6 +51,13 @@ function dayNumber(date: string): number {
 }
 
 /**
+ * The whole days from one UTC calendar date to another, negative when `to` precedes `from`.
+ */
+export function daysBetween(from: string, to: string): number {
+	return dayNumber(to) - dayNumber(from)
+}
+
+/**
  * The calendar date `months` after `date`.
  *
  * A day past the end of the target month rolls forward, as `Date.UTC` does,
@@ -99,7 +106,8 @@ export function declarationExpiry(issued: string): string {
 /**
  * The expiry date for a token of the given intent issued on `issued`.
  *
- * @throws for the commercial intent, whose expiry is the billing period.
+ * @throws for the commercial intent.
+ * Its expiry is the billing period, decided at fulfilment.
  */
 export function expiryForIntent(intent: LicenseIntent, issued: string): string {
 	switch (intent) {

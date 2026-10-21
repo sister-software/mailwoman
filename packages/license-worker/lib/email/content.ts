@@ -24,7 +24,18 @@ export interface EmailSection {
 }
 
 export function licenseEmailSubject(message: LicenseEmail): string {
+	if (message.agreement == null) {
+		return `Your Mailwoman license, declared ${message.intent ?? "open-source"} (${message.issued} to ${message.expires})`
+	}
+
 	return `Your Mailwoman commercial license (${message.issued} to ${message.expires})`
+}
+
+/**
+ * The heading of the message: the commercial title for a purchase, a plain one for a declared token.
+ */
+export function licenseEmailTitle(message: LicenseEmail): string {
+	return message.agreement == null ? "Your Mailwoman license" : "Your Mailwoman commercial license"
 }
 
 /**
@@ -49,6 +60,10 @@ export function adoptCommand(message: LicenseEmail): string {
 
 export function licenseEmailSections(message: LicenseEmail, siteOrigin: string): EmailSection[] {
 	const origin = siteOrigin.replace(/\/$/u, "")
+	const agreement = message.agreement
+
+	if (agreement == null) return declaredEmailSections(message, origin)
+
 	const first = message.refreshSecret
 
 	const secret: EmailSection = first
@@ -87,7 +102,7 @@ export function licenseEmailSections(message: LicenseEmail, siteOrigin: string):
 						["Licensee", message.licensee],
 						["License id", message.lid],
 						["Valid", `${message.issued} to ${message.expires} (UTC, inclusive)`],
-						["Agreement", message.agreement],
+						["Agreement", agreement],
 					],
 				},
 			],
@@ -141,9 +156,103 @@ export function licenseEmailSections(message: LicenseEmail, siteOrigin: string):
 				},
 				{
 					kind: "link",
-					label: `The agreement you accepted (${message.agreement})`,
-					url: `${origin}/license/terms/${message.agreement}`,
+					label: `The agreement you accepted (${agreement})`,
+					url: `${origin}/license/terms/${agreement}`,
 				},
+			],
+		},
+	]
+}
+
+/**
+ * The message for a declared token.
+ *
+ * It states the declaration and its term, the key, the secret on the first message,
+ * how to install the key, and how a re-issue arrives.
+ * It has no billing section and links no agreement.
+ */
+function declaredEmailSections(message: LicenseEmail, origin: string): EmailSection[] {
+	const intent = message.intent ?? "open-source"
+	const first = message.refreshSecret
+
+	const secret: EmailSection = first
+		? {
+				heading: "Your refresh secret",
+				blocks: [
+					{
+						kind: "paragraph",
+						text: "Shown once, in this message. Keep it with the key: it is what fetches your re-issued keys.",
+					},
+					{ kind: "code", text: message.refreshSecret ?? "" },
+				],
+			}
+		: {
+				heading: "Your refresh secret",
+				blocks: [
+					{
+						kind: "paragraph",
+						text: "It was in your first message, and a machine that adopted the key with it already holds it.",
+					},
+				],
+			}
+
+	return [
+		{
+			blocks: [
+				{
+					kind: "paragraph",
+					text: first
+						? `Your ${intent} declaration is recorded. Your key is below, with the steps that follow it.`
+						: `Your ${intent} declaration was re-issued, and this is the key for the new period. A machine that adopted the key fetches this one on its own.`,
+				},
+				{
+					kind: "facts",
+					rows: [
+						["Licensee", message.licensee],
+						["License id", message.lid],
+						["Declared", intent],
+						["Valid", `${message.issued} to ${message.expires} (UTC, inclusive)`],
+						["Terms", "AGPL-3.0-only"],
+					],
+				},
+			],
+		},
+		{
+			heading: "Your key",
+			blocks: [{ kind: "code", text: message.token }],
+		},
+		secret,
+		{
+			heading: "Install it",
+			blocks: [
+				{
+					kind: "paragraph",
+					text: "On each machine that runs mailwoman, adopt the key once and check it. The first command stores the key and the secret under your config directory; the second confirms the key against this service.",
+				},
+				{ kind: "code", text: `${adoptCommand(message)}\nmailwoman license verify --online` },
+				{
+					kind: "paragraph",
+					text: "For a container or a CI job, set MAILWOMAN_LICENSE_KEY to the key instead; it is read before the stored one.",
+				},
+			],
+		},
+		{
+			heading: "Re-issue",
+			blocks: [
+				{
+					kind: "paragraph",
+					text: `This key runs to ${message.expires}. From 28 days before that date, one command on a machine that adopted the key fetches the next one: mailwoman license refresh. The AGPL's obligations apply throughout, and the key changes what mailwoman reports about its license, never what it runs.`,
+				},
+			],
+		},
+		{
+			heading: "Help",
+			blocks: [
+				{
+					kind: "paragraph",
+					text: `Write to ${SUPPORT_EMAIL} with your license id for anything this message does not answer.`,
+				},
+				{ kind: "link", label: "The license page", url: `${origin}/license` },
 			],
 		},
 	]
