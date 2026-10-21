@@ -145,6 +145,27 @@ export interface DataBundle {
 	 * The property is absent when the artifact has no publisher column.
 	 */
 	sourceCensus?: BundleSourceCensus
+
+	/**
+	 * `licensed` for a paid artifact that `data pull` fetches through the license worker with a token.
+	 *
+	 * Absent for a free bundle on the public bucket.
+	 * Every bundle today is free.
+	 */
+	access?: "licensed"
+
+	/**
+	 * The scope entry a token must admit for this bundle, such as `tier:gb-streets`,
+	 * and the name the worker's catalog serves it under.
+	 * Set on a licensed bundle.
+	 */
+	tier?: string
+
+	/**
+	 * The ISO 3166-1 alpha-2 codes of the countries the bundle resolves further than the base tier does.
+	 * The precision-ceiling statement reads it.
+	 */
+	countries?: readonly string[]
 }
 
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {

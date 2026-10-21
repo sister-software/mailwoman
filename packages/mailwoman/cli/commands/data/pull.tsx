@@ -47,6 +47,7 @@ import {
 	type RemoteArtifactState,
 } from "#data/bundles"
 import { probeManifest } from "#data/inventory"
+import { bundleArtifactName, licensedPullDecision, type ConfiguredKey } from "#data/licensed"
 import {
 	OBLIGATION_REFUSALS,
 	type ObligationFinding,
@@ -239,6 +240,49 @@ interface PullResult {
 	pulledCandidate: boolean
 }
 
+/**
+ * The configured token with its offline verification, or `null` when none is configured.
+ *
+ * Read once per pull, and only when a bundle asks, so a free pull touches no key.
+ */
+async function configuredKey(): Promise<ConfiguredKey | null> {
+	const { readConfiguredLicenseToken, trustedLicenseSigningKeys, verifyLicenseKey } =
+		await import("@mailwoman/core/license")
+
+	const configured = await readConfiguredLicenseToken()
+
+	if (!configured) return null
+
+	return {
+		token: configured.token,
+		verification: await verifyLicenseKey(configured.token, { trustedKeys: trustedLicenseSigningKeys() }),
+	}
+}
+
+/**
+ * Trade the token for a presigned URL of one licensed artifact.
+ *
+ * @throws when the worker refuses, is not provisioned, or does not answer,
+ * with the worker's word in the message.
+ */
+async function grantedDownloadURL(token: string, artifact: string): Promise<string> {
+	const { requestDownload } = await import("@mailwoman/core/license/status")
+	const { readInstallationID } = await import("@mailwoman/core/license")
+	const install = await readInstallationID()
+	const answer = await requestDownload({ token, artifact, ...(install ? { install } : {}) })
+
+	switch (answer.status) {
+		case "granted":
+			return answer.url
+		case "refused":
+			throw new Error(`${artifact}: the license worker refused the download (${answer.reason})`)
+		case "unavailable":
+			throw new Error(`${artifact}: the license worker's download bucket is not provisioned yet`)
+		case "unreachable":
+			throw new Error(`${artifact}: the license worker did not answer: ${answer.reason}`)
+	}
+}
+
 async function pullBundles(
 	bundleNames: string[],
 	opts: {
@@ -319,6 +363,22 @@ async function pullBundles(
 			continue
 		}
 
+		// A licensed bundle is fetched through the license worker with the configured token.
+		// The decision is taken before any artifact is considered, so a refusal transfers no byte.
+		const decision = licensedPullDecision(bundle, await configuredKey())
+
+		if (decision.kind === "refused") {
+			ok = false
+
+			for (const line of decision.lines) {
+				checks.push({ ok: false, check: `${name}: license`, detail: line })
+			}
+
+			continue
+		}
+
+		const grantedToken = decision.kind === "granted" ? decision.token : null
+
 		for (const artifact of artifacts) {
 			const label = `${name}: ${artifact.remotePath}`
 			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
@@ -357,7 +417,11 @@ async function pullBundles(
 				await makeDirectories(stageDir)
 				const tmpPath = resolvePath(stageDir, `${Date.now()}-${basename(artifact.localPath)}`)
 
-				const bytesWritten = await downloadToDisk(artifactURL(artifact, opts.host), tmpPath)
+				const source = grantedToken
+					? await grantedDownloadURL(grantedToken, bundleArtifactName(bundle))
+					: artifactURL(artifact, opts.host)
+
+				const bytesWritten = await downloadToDisk(source, tmpPath)
 
 				let verifyDetail: string
 
