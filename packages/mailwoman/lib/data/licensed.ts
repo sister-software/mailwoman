@@ -26,9 +26,9 @@ export type LicensedPullDecision =
 	| { kind: "refused"; lines: string[] }
 
 /**
- * The three routes to a token, as the refusal prints them.
+ * The three routes to a token, as the refusal and the setup wizard print them.
  */
-function routeLines(): string[] {
+export function licenseRouteLines(): string[] {
 	return [
 		"  mailwoman license declare --intent open-source --project <url>   # free for an open-source project",
 		"  mailwoman license evaluate --email <address>                      # thirty days",
@@ -51,7 +51,7 @@ export function licensedPullDecision(bundle: DataBundle, configured: ConfiguredK
 
 	const header = `\`${bundle.name}\` is a licensed artifact. Get a token by one of:`
 
-	if (!configured) return { kind: "refused", lines: [header, ...routeLines()] }
+	if (!configured) return { kind: "refused", lines: [header, ...licenseRouteLines()] }
 
 	const { verification } = configured
 
@@ -60,14 +60,17 @@ export function licensedPullDecision(bundle: DataBundle, configured: ConfiguredK
 			kind: "refused",
 			lines: [
 				header,
-				...routeLines(),
+				...licenseRouteLines(),
 				`Your key expired on ${verification.payload.expires}: mailwoman license refresh`,
 			],
 		}
 	}
 
 	if (verification.status !== "valid") {
-		return { kind: "refused", lines: [header, ...routeLines(), `Your configured key reads ${verification.status}.`] }
+		return {
+			kind: "refused",
+			lines: [header, ...licenseRouteLines(), `Your configured key reads ${verification.status}.`],
+		}
 	}
 
 	const artifact = bundleArtifactName(bundle)
@@ -75,7 +78,11 @@ export function licensedPullDecision(bundle: DataBundle, configured: ConfiguredK
 	if (!scopeAdmits(verification.payload.scope, artifact)) {
 		return {
 			kind: "refused",
-			lines: [header, ...routeLines(), `Your key's scope excludes ${artifact}; its agreement covers other artifacts.`],
+			lines: [
+				header,
+				...licenseRouteLines(),
+				`Your key's scope excludes ${artifact}; its agreement covers other artifacts.`,
+			],
 		}
 	}
 
