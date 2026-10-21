@@ -516,4 +516,23 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v0.8.0-store/store/wof-admin/891d71a9dae5d757202570e48dc9edceb89e79db27a5b83b7bfc3668eb438f58/data.parquet",
         ),
     ),
+    # The v0.8.1 manifest lists the v0.8.0 store and overlay files at their v0.8.0 paths and adds its own replacement files and
+    # every split attribute under corpus/versioned/v0.8.1/corpus-v0.8.1/, so it stages all three directories.
+    "v810_base": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.8.0-store", FLAT, flags=STEADY),
+            corpus("v0.8.0", WRAPPED, flags=STEADY),
+            corpus("v0.8.1", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v8.1.0-base-60k.yaml",
+            "corpus/versioned/v0.8.1/corpus-v0.8.1/MANIFEST.json",
+            "corpus/versioned/v0.8.1/corpus-v0.8.1/usgov-imls-pls-40e826ff-distinct.parquet",
+            "corpus/versioned/v0.8.1/corpus-v0.8.1/attributes/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.split.39f12117a11bd2ab247973403f7bac7f2748112aa65278852496f9295af8cbd3.json",
+            "corpus/versioned/v0.8.0/corpus-v0.8.0/ads.parquet",
+            "corpus/versioned/v0.8.0-store/store/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.parquet",
+        ),
+    ),
 }
