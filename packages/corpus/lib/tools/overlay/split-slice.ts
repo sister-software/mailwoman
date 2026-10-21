@@ -118,7 +118,8 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		if (earlier && earlier !== split) {
 			throw new Error(
 				`${input} row ${index} (${row.source_id}) falls in ${split} and an earlier row with the same source_id in ` +
-					`${earlier}, so no attribute keyed by source_id can state both.`
+					`${earlier}, so no attribute keyed by source_id can state both. ` +
+					`Give each row its own id with \`distinctRowIDs\` from #tools/overlay/distinct-row-ids, then split that file.`
 			)
 		}
 
