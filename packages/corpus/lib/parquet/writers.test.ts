@@ -36,7 +36,7 @@ vi.mock("#parquet/duckdb", async (importOriginal) => {
 			const run = db.run.bind(db)
 
 			db.run = (async (sql: string, ...rest: unknown[]) => {
-				const match = /^COPY \(SELECT .* FROM (part_\d+)\) TO '([^']+)'/su.exec(sql)
+				const match = /^COPY \(WITH .* FROM (part_\d+) AS staged .*\) TO '([^']+)'/su.exec(sql)
 
 				if (match && hooks.onConvert) {
 					const listed = await db.runAndReadAll(

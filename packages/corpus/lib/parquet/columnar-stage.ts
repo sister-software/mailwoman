@@ -12,8 +12,8 @@
  *
  *   A string column whose values repeat (tokens, labels, span tags, country, license and the other categorical
  *   columns) is staged as integer codes into a per-part dictionary, because a code costs no call into DuckDB and a
- *   string costs one. {@linkcode ColumnarStage.convert} hands each dictionary to DuckDB as a list variable and
- *   decodes the codes in the `COPY`, so the parquet file holds the same strings and types as
+ *   string costs one. {@linkcode ColumnarStage.convert} hands each dictionary to DuckDB as a table, joins its lists
+ *   to the staged rows and decodes the codes in the `COPY`, so the parquet file holds the same strings and types as
  *   {@linkcode PARQUET_COLUMN_TYPES} declares. The order of first appearance assigns the codes, and the file holds
  *   only the decoded strings, so the codes never reach the output.
  *
@@ -22,7 +22,7 @@
  *   {@linkcode ROW_GROUP_SIZE} rows. A file's bytes are then a function of its rows, whatever other parts the stage holds.
  */
 
-import type { DuckDBAppender, DuckDBDataChunk, DuckDBListValue, DuckDBType } from "@duckdb/node-api"
+import type { DuckDBAppender, DuckDBDataChunk, DuckDBType } from "@duckdb/node-api"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 
 import {
@@ -96,7 +96,13 @@ class Dictionary {
 	readonly values: string[] = []
 	readonly #codes = new Map<string, number>()
 
+	#last: string | null = null
+	#lastCode = -1
+
 	code(value: string): number {
+		// Consecutive rows of a part mostly repeat a categorical value, and a comparison skips the hash.
+		if (value === this.#last) return this.#lastCode
+
 		let code = this.#codes.get(value)
 
 		if (code === undefined) {
@@ -105,18 +111,192 @@ class Dictionary {
 			this.#codes.set(value, code)
 		}
 
+		this.#last = value
+		this.#lastCode = code
+
 		return code
 	}
 }
 
+type Bindings = typeof import("@duckdb/node-bindings")
+
 /**
- * The rows of one part not yet handed to DuckDB, one array per column.
+ * One column of a {@linkcode ColumnBatch}.
+ *
+ * A `text` column holds its strings.
+ * A `code` column holds one int32 per row.
+ *
+ * A list column holds DuckDB's list entries (offset and length, two uint64 per row,
+ * written as four uint32) over a child array of int32.
+ * `invalid` marks the rows whose value is null in DuckDB's validity layout,
+ * one bit per row, set when valid.
+ */
+interface BatchColumn {
+	kind: StageKind
+	dictionary: Dictionary | null
+	texts: (string | null)[]
+	ints: Int32Array
+	entries: Uint32Array
+	child: Int32Array
+	childLength: number
+	validity: Uint8Array
+	nulls: number
+}
+
+/**
+ * Rows not yet handed to DuckDB, held in the layout of a DuckDB data chunk so a flush copies
+ * each column in one call, apart from the `text` columns, which take one call per string.
+ */
+class ColumnBatch {
+	rows = 0
+	readonly columns: BatchColumn[]
+
+	constructor(dictionaries: ReadonlyMap<ParquetColumn, Dictionary>) {
+		this.columns = PARQUET_COLUMNS.map((column) => ({
+			kind: STAGE_KINDS[column],
+			dictionary: dictionaries.get(column) ?? null,
+			texts: [],
+			ints: new Int32Array(STAGE_BATCH_ROWS),
+			entries: new Uint32Array(STAGE_BATCH_ROWS * 4),
+			child: new Int32Array(STAGE_BATCH_ROWS * 4),
+			childLength: 0,
+			validity: new Uint8Array(STAGE_BATCH_ROWS / 8).fill(0xff),
+			nulls: 0,
+		}))
+	}
+
+	add(row: ParquetRow): void {
+		const index = this.rows
+
+		for (let position = 0; position < PARQUET_COLUMNS.length; position++) {
+			const column = this.columns[position]!
+			const value = row[PARQUET_COLUMNS[position]!]
+
+			if (value == null) {
+				column.validity[index >> 3]! &= ~(1 << (index & 7))
+
+				column.nulls++
+
+				if (column.kind === "text") {
+					column.texts.push(null)
+				}
+
+				// A null list is an entry of length zero at the current child length.
+				column.entries[index * 4] = column.childLength
+
+				continue
+			}
+
+			switch (column.kind) {
+				case "text":
+					column.texts.push(value as string)
+					break
+				case "code":
+					column.ints[index] = column.dictionary!.code(value as string)
+					break
+				default: {
+					const items = value as readonly (string | number)[]
+					const start = column.childLength
+					const end = start + items.length
+
+					if (end > column.child.length) {
+						const grown = new Int32Array(Math.max(end, column.child.length * 2))
+
+						grown.set(column.child.subarray(0, start))
+						column.child = grown
+					}
+
+					for (let item = 0; item < items.length; item++) {
+						column.child[start + item] =
+							column.kind === "codes"
+								? column.dictionary!.code(items[item] as string)
+								: int32Of(items[item], PARQUET_COLUMNS[position]!)
+					}
+
+					column.entries[index * 4] = start
+					column.entries[index * 4 + 2] = items.length
+					column.childLength = end
+				}
+			}
+		}
+
+		this.rows++
+	}
+
+	/**
+	 * Write the batch into `chunk`'s vectors and empty it.
+	 */
+	writeTo(bindings: Bindings, chunk: import("@duckdb/node-bindings").DataChunk): void {
+		const rows = this.rows
+
+		for (const [position, column] of this.columns.entries()) {
+			const vector = bindings.data_chunk_get_vector(chunk, position)
+
+			switch (column.kind) {
+				case "text":
+					for (let index = 0; index < rows; index++) {
+						const text = column.texts[index]
+
+						if (text != null) {
+							bindings.vector_assign_string_element(vector, index, text)
+						}
+					}
+
+					column.texts = []
+					break
+				case "code":
+					bindings.copy_data_to_vector(vector, 0, column.ints.buffer, 0, rows * 4)
+					break
+				default: {
+					bindings.list_vector_reserve(vector, column.childLength)
+					bindings.list_vector_set_size(vector, column.childLength)
+
+					if (column.childLength) {
+						bindings.copy_data_to_vector(
+							bindings.list_vector_get_child(vector),
+							0,
+							column.child.buffer,
+							0,
+							column.childLength * 4
+						)
+					}
+
+					bindings.copy_data_to_vector(vector, 0, column.entries.buffer, 0, rows * 16)
+					column.entries.fill(0)
+					column.childLength = 0
+				}
+			}
+
+			if (column.nulls) {
+				bindings.vector_ensure_validity_writable(vector)
+				bindings.copy_data_to_vector_validity(vector, 0, column.validity.buffer, 0, Math.ceil(rows / 64) * 8)
+				column.validity.fill(0xff)
+				column.nulls = 0
+			}
+		}
+
+		bindings.data_chunk_set_size(chunk, rows)
+		this.rows = 0
+	}
+}
+
+function int32Of(value: unknown, column: string): number {
+	if (typeof value !== "number" || (value | 0) !== value) {
+		throw new Error(`columnar stage: ${column} holds ${String(value)}, which is not an int32`)
+	}
+
+	return value
+}
+
+/**
+ * The rows of one part not yet handed to DuckDB.
  */
 interface StagedPart {
 	table: string
+	appender: DuckDBAppender
+	appenderOpen: boolean
 	dictionaries: Map<ParquetColumn, Dictionary>
-	batch: unknown[][]
-	batchRows: number
+	batch: ColumnBatch
 	rows: number
 }
 
@@ -160,7 +340,8 @@ export interface ColumnarStage extends Disposable {
  * The instance runs at {@linkcode CONVERSION_THREADS} threads and the memory limit `limits` gives.
  */
 export async function openColumnarStage(databasePath: string, limits: DuckDBLimits = {}): Promise<ColumnarStage> {
-	const { DuckDBDataChunk, INTEGER, LIST, VARCHAR, listValue } = await import("@duckdb/node-api")
+	const { DuckDBDataChunk, INTEGER, LIST, VARCHAR } = await import("@duckdb/node-api")
+	const { default: bindings } = await import("@duckdb/node-bindings")
 
 	const db: DisposableDuckDB = await openDuckDB({ ...limits, threads: CONVERSION_THREADS }, databasePath)
 
@@ -185,30 +366,26 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 	const parts = new Map<string, StagedPart>()
 	let tables = 0
 
-	const emptyBatch = (): unknown[][] => PARQUET_COLUMNS.map(() => [])
-
-	const appendChunk = async (table: string, columns: readonly (readonly unknown[])[], types: DuckDBType[]) => {
+	const appendChunk = (appender: DuckDBAppender, columns: readonly (readonly unknown[])[], types: DuckDBType[]) => {
 		const rows = columns[0]!.length
 
 		if (!rows) return
 
-		const appender: DuckDBAppender = await db.createAppender(table)
+		const chunk: DuckDBDataChunk = DuckDBDataChunk.create(types, rows)
 
-		try {
-			const chunk: DuckDBDataChunk = DuckDBDataChunk.create(types, rows)
-
-			chunk.setColumns(columns as never)
-			appender.appendDataChunk(chunk)
-			appender.flushSync()
-		} finally {
-			appender.closeSync()
-		}
+		chunk.setColumns(columns as never)
+		appender.appendDataChunk(chunk)
 	}
 
-	const flush = async (part: StagedPart) => {
-		await appendChunk(part.table, part.batch, chunkTypes)
-		part.batch = emptyBatch()
-		part.batchRows = 0
+	// The appender commits when its own buffer fills and when it closes, rather than once per batch,
+	// because a commit per batch cost three quarters of the writer's time on a 420,000-row fixture.
+	const flush = (part: StagedPart) => {
+		if (!part.batch.rows) return
+
+		const chunk: DuckDBDataChunk = DuckDBDataChunk.create(chunkTypes)
+
+		part.batch.writeTo(bindings, chunk.chunk)
+		part.appender.appendDataChunk(chunk)
 	}
 
 	const partNamed = (name: string): StagedPart => {
@@ -219,8 +396,16 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 		return part
 	}
 
+	const closeAppender = (part: StagedPart) => {
+		if (!part.appenderOpen) return
+
+		part.appenderOpen = false
+		part.appender.closeSync()
+	}
+
 	const dropPart = async (name: string, part: StagedPart) => {
 		parts.delete(name)
+		closeAppender(part)
 		await db.run(`DROP TABLE IF EXISTS ${part.table}`)
 		await db.run(`DROP TABLE IF EXISTS ${part.table}_dict`)
 	}
@@ -233,15 +418,18 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 
 			await db.run(`CREATE TABLE ${table} (${tableDDL})`)
 
+			const dictionaries = new Map(
+				PARQUET_COLUMNS.filter((column) => STAGE_KINDS[column] === "code" || STAGE_KINDS[column] === "codes").map(
+					(column) => [column, new Dictionary()]
+				)
+			)
+
 			parts.set(name, {
 				table,
-				dictionaries: new Map(
-					PARQUET_COLUMNS.filter((column) => STAGE_KINDS[column] === "code" || STAGE_KINDS[column] === "codes").map(
-						(column) => [column, new Dictionary()]
-					)
-				),
-				batch: emptyBatch(),
-				batchRows: 0,
+				appender: await db.createAppender(table),
+				appenderOpen: true,
+				dictionaries,
+				batch: new ColumnBatch(dictionaries),
 				rows: 0,
 			})
 		},
@@ -249,46 +437,20 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 		async append(name, row) {
 			const part = partNamed(name)
 
-			for (let index = 0; index < PARQUET_COLUMNS.length; index++) {
-				const column = PARQUET_COLUMNS[index]!
-				const value = row[column]
-				let staged: unknown
-
-				switch (kinds[index]) {
-					case "text":
-						staged = typeof value === "string" ? value : null
-						break
-					case "code":
-						staged = typeof value === "string" ? part.dictionaries.get(column)!.code(value) : null
-						break
-					case "codes": {
-						const dictionary = part.dictionaries.get(column)!
-
-						staged = Array.isArray(value)
-							? listValue((value as readonly string[]).map((item) => dictionary.code(item)))
-							: null
-
-						break
-					}
-					case "ints":
-						staged = Array.isArray(value) ? (listValue(value as readonly number[]) as DuckDBListValue) : null
-						break
-				}
-
-				part.batch[index]!.push(staged)
-			}
+			part.batch.add(row)
 
 			part.rows++
 
-			if (++part.batchRows >= STAGE_BATCH_ROWS) {
-				await flush(part)
+			if (part.batch.rows >= STAGE_BATCH_ROWS) {
+				flush(part)
 			}
 		},
 
 		async convert(name, outputPath) {
 			const part = partNamed(name)
 
-			await flush(part)
+			flush(part)
+			closeAppender(part)
 
 			// Every dictionary, one row per column and code, so each becomes one list variable.
 			const dictTable = `${part.table}_dict`
@@ -296,51 +458,59 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 
 			await db.run(`CREATE OR REPLACE TABLE ${dictTable} (col INTEGER, code INTEGER, value VARCHAR)`)
 
+			const dictAppender = await db.createAppender(dictTable)
 			const dictColumns: [number[], number[], string[]] = [[], [], []]
 			const dictTypes = [INTEGER, INTEGER, VARCHAR]
 
-			for (const [index, [, dictionary]] of coded.entries()) {
-				for (const [code, value] of dictionary.values.entries()) {
-					dictColumns[0].push(index)
-					dictColumns[1].push(code)
-					dictColumns[2].push(value)
+			try {
+				for (const [index, [, dictionary]] of coded.entries()) {
+					for (const [code, value] of dictionary.values.entries()) {
+						dictColumns[0].push(index)
+						dictColumns[1].push(code)
+						dictColumns[2].push(value)
 
-					if (dictColumns[0].length >= STAGE_BATCH_ROWS) {
-						await appendChunk(dictTable, dictColumns, dictTypes)
-						dictColumns[0] = []
-						dictColumns[1] = []
-						dictColumns[2] = []
+						if (dictColumns[0].length >= STAGE_BATCH_ROWS) {
+							appendChunk(dictAppender, dictColumns, dictTypes)
+							dictColumns[0] = []
+							dictColumns[1] = []
+							dictColumns[2] = []
+						}
 					}
 				}
+
+				appendChunk(dictAppender, dictColumns, dictTypes)
+			} finally {
+				dictAppender.closeSync()
 			}
 
-			await appendChunk(dictTable, dictColumns, dictTypes)
-
-			for (const [index] of coded.entries()) {
-				await db.run(
-					`SET VARIABLE mw_dict_${index} = ` +
-						`(SELECT coalesce(list(value ORDER BY code), []::VARCHAR[]) FROM ${dictTable} WHERE col = ${index})`
+			// One row holding every dictionary as a list, joined to each staged row.
+			// A dictionary held in a session variable was read again for every list element
+			// and made the conversion five times slower.
+			const dictionaries = coded
+				.map(
+					(_, index) => `coalesce(list(value ORDER BY code) FILTER (WHERE col = ${index}), []::VARCHAR[]) AS d${index}`
 				)
-			}
+				.join(", ")
 
-			const variable = (column: ParquetColumn) =>
-				`getvariable('mw_dict_${coded.findIndex(([codedColumn]) => codedColumn === column)}')`
+			const dictionaryOf = (column: ParquetColumn) =>
+				`dict.d${coded.findIndex(([codedColumn]) => codedColumn === column)}`
 
 			const selectList = PARQUET_COLUMNS.map((column) => {
 				const identifier = escapeSQLIdentifier(column)
 
 				switch (STAGE_KINDS[column]) {
 					case "code":
-						return `${variable(column)}[${identifier} + 1] AS ${identifier}`
+						return `${dictionaryOf(column)}[staged.${identifier} + 1] AS ${identifier}`
 					case "codes":
-						return `list_transform(${identifier}, code -> ${variable(column)}[code + 1]) AS ${identifier}`
+						return `list_transform(staged.${identifier}, code -> ${dictionaryOf(column)}[code + 1]) AS ${identifier}`
 					default:
-						return identifier
+						return `staged.${identifier}`
 				}
 			}).join(", ")
 
 			await db.run(
-				`COPY (SELECT ${selectList} FROM ${part.table}) ` +
+				`COPY (WITH dict AS (SELECT ${dictionaries} FROM ${dictTable}) ` +
+					`SELECT ${selectList} FROM ${part.table} AS staged CROSS JOIN dict) ` +
 					`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
 			)
 
@@ -360,6 +530,11 @@ export async function openColumnarStage(databasePath: string, limits: DuckDBLimi
 		},
 
 		[Symbol.dispose]() {
+			// An appender is closed before the connection it writes through.
+			for (const part of parts.values()) {
+				closeAppender(part)
+			}
+
 			parts.clear()
 			db[Symbol.dispose]()
 		},
