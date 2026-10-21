@@ -32,9 +32,11 @@ const { variable, theme, ref } = s
 // #region Product theme
 
 /*
- * Mailwoman keeps the Sister Software structure (type, keys, hard shadows, windows) in its own colors: the blue,
- * navy and magenta of the seal instead of the house pinks and mint. Only roles change, so every shared component
- * follows. Each pair below holds at least 5.9:1.
+ * Mailwoman keeps the Sister Software structure (type, keys, hard shadows, windows) in its
+ * own colors: the blue, navy and magenta of the seal instead of the house pinks and mint.
+ *
+ * Shared components read these color roles and inherit the product palette.
+ * Each pair below holds at least 5.9:1.
  */
 
 /**
@@ -71,7 +73,9 @@ const role = (name: string, paper: string, night?: string) => {
 	variable(name, value(paper))
 	theme("light", (context) => context.variable(name, value(paper)))
 
-	if (night) theme("dark", (context) => context.variable(name, value(night)))
+	if (night) {
+		theme("dark", (context) => context.variable(name, value(night)))
+	}
 }
 
 role("color.background", "{mw.color-ground}", "{mw.color-night}")
@@ -99,6 +103,7 @@ const primary = (base: string) =>
 	dispositionTokens("primary", { ...DispositionSpecs.primary, base }, palette).filter(
 		({ name }) => !name.includes("-contrast-") && name !== "color.primary"
 	)
+
 const nightPrimary = new Map(primary("mw.color-link-night").map(({ name, value }) => [name, value]))
 
 role("color.primary", "{mw.color-blue}", "{mw.color-link-night}")
@@ -140,7 +145,8 @@ variable("mw.color-stage-resolve", ref("color.turquoise"))
 /**
  * The app type scale.
  *
- * The docs use Infima's heading sizes. The map apps set denser UI text on this scale.
+ * The docs use Infima's heading sizes.
+ * The map apps set denser UI text on this scale.
  */
 variable("mw.font-size-display", "2.125rem")
 variable("mw.font-size-title", "1.375rem")
@@ -155,8 +161,9 @@ variable("mw.font-size-caption", "0.75rem")
  * The SDF font stack for map labels.
  *
  * MapLibre draws labels from signed-distance-field glyph ranges, so the DOM faces do not apply to the map.
- * The value must be a stack that the glyph host serves. Go has no glyph ranges there
- * yet, so labels stay on Bliss Pro.
+ * The value must be a stack that the glyph host serves.
+ *
+ * Go has no glyph ranges there yet, so labels stay on Bliss Pro.
  */
 variable("mw.font-family-map", `"Bliss Pro Regular"`)
 

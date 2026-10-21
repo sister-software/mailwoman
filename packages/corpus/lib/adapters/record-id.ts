@@ -72,6 +72,8 @@ export class RenderedRowIDs {
 /**
  * The record a `source_id` belongs to: the part before the last `#`, or the whole id when it holds none.
  */
+// repo-health-ignore export-name-affix -- This removes a corpus row discriminator.
+// Stripe's idOf reads an expandable object ID.
 export function recordIDOf(sourceID: string): string {
 	const at = sourceID.lastIndexOf(ROW_ID_SEPARATOR)
 
