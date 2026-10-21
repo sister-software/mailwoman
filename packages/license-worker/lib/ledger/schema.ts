@@ -8,6 +8,7 @@
  *   defaults is `Generated`, so an insert may omit it and a select always includes it.
  */
 
+import type { LicenseIntent } from "@mailwoman/core/license/key"
 import type { Generated, Insertable, Selectable } from "kysely"
 
 /**
@@ -64,10 +65,66 @@ interface StripeEventsTable {
 	result: Generated<string>
 }
 
+/**
+ * The intents a declared license can hold.
+ * The commercial intent lives in `licenses`.
+ */
+export type DeclarationIntent = Exclude<LicenseIntent, "commercial">
+
+/**
+ * Whether the worker found an AGPL-compatible license file at a declared source URL.
+ */
+export type SourceVerification = "unverified" | "verified"
+
+interface DeclarationsTable {
+	lid: string
+	intent: DeclarationIntent
+	licensee: string
+	email: string | null
+	organization: string | null
+	source_url: string | null
+	claim_id: string | null
+	verification: Generated<SourceVerification>
+	verified_at: string | null
+	refresh_secret_sha256: string
+	refresh_secret_pending: string | null
+	first_install: string | null
+	license_state: Generated<LicenseState>
+	created_at: Generated<string>
+	updated_at: Generated<string>
+}
+
+interface IssuancesTable {
+	issuance_id: string
+	lid: string
+	seq: number
+	issued: string
+	expires: string
+	install: string | null
+	payload_json: string
+	token: string
+	email_state: Generated<EmailState>
+	email_message_id: string | null
+	created_at: Generated<string>
+}
+
+interface DownloadsTable {
+	download_id: string
+	lid: string | null
+	kid: string
+	licensee: string
+	install: string | null
+	artifact: string
+	created_at: Generated<string>
+}
+
 export interface LedgerDatabase {
 	licenses: LicensesTable
 	license_tokens: LicenseTokensTable
 	stripe_events: StripeEventsTable
+	declarations: DeclarationsTable
+	issuances: IssuancesTable
+	downloads: DownloadsTable
 }
 
 /**
@@ -134,6 +191,45 @@ export const LEDGER_COLUMNS: LedgerColumns = {
 		received_at: "generated",
 		result: "generated",
 	},
+	declarations: {
+		lid: "required",
+		intent: "required",
+		licensee: "required",
+		email: "nullable",
+		organization: "nullable",
+		source_url: "nullable",
+		claim_id: "nullable",
+		verification: "generated",
+		verified_at: "nullable",
+		refresh_secret_sha256: "required",
+		refresh_secret_pending: "nullable",
+		first_install: "nullable",
+		license_state: "generated",
+		created_at: "generated",
+		updated_at: "generated",
+	},
+	issuances: {
+		issuance_id: "required",
+		lid: "required",
+		seq: "required",
+		issued: "required",
+		expires: "required",
+		install: "nullable",
+		payload_json: "required",
+		token: "required",
+		email_state: "generated",
+		email_message_id: "nullable",
+		created_at: "generated",
+	},
+	downloads: {
+		download_id: "required",
+		lid: "nullable",
+		kid: "required",
+		licensee: "required",
+		install: "nullable",
+		artifact: "required",
+		created_at: "generated",
+	},
 }
 
 export type LicenseRow = Selectable<LicensesTable>
@@ -143,3 +239,13 @@ export type LicenseTokenRow = Selectable<LicenseTokensTable>
 export type NewLicense = Insertable<LicensesTable>
 
 export type NewToken = Insertable<LicenseTokensTable>
+
+export type DeclarationRow = Selectable<DeclarationsTable>
+
+export type NewDeclaration = Insertable<DeclarationsTable>
+
+export type IssuanceRow = Selectable<IssuancesTable>
+
+export type NewIssuance = Insertable<IssuancesTable>
+
+export type NewDownload = Insertable<DownloadsTable>
