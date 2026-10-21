@@ -8,7 +8,7 @@
  */
 
 import { stringifyJSON } from "#json"
-import type { LicenseKeyVerification } from "#license/key"
+import { grantsCommercialTerms, type LicenseKeyVerification } from "#license/key"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**
@@ -186,7 +186,7 @@ export function appliedLicenseBranch(
 ): string {
 	const retired = publication === "retired" || publication === "unlisted"
 
-	return chooseLicenseBranch(expression, { commercialAgreement: key?.status === "valid" && !retired })
+	return chooseLicenseBranch(expression, { commercialAgreement: grantsCommercialTerms(key) && !retired })
 }
 
 /**

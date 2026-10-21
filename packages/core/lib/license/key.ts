@@ -140,8 +140,8 @@ export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
 /**
  * A payload the worker issued, identified by its serial.
  *
- * A purchased token also carries `agreement`.
- * A declared token carries none.
+ * A purchased token also has `agreement`.
+ * A declared token has none.
  */
 export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string }
 
