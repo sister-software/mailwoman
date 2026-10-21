@@ -9,6 +9,11 @@
 #    under 10 rows and a macro-F1 term from that few rows moves with each one: `cedex` (1 row). `po_box`,
 #    `subregion`, `intersection_a` and `intersection_b` hold no row in the draw and get none.
 # 2. `train.output_dir` and `train.trackio_run_name` name the run.
+# 3. `invented-postal-guideline` and `invented-postal-unit-guideline` take train rows once their recipes are rerun
+#    and re-split: each row now takes its place's split rather than test. Regenerated in memory at the default
+#    2,000 rows per leg, they hold about 5,600 and 9,400 train rows. Weights 1.5 and 2.5 give about 8 passes per
+#    row, the exposure `invented-po-box-military`, the other small invented PO-box source, takes through
+#    `source_reps`. `invented-po-box-cedex` and `spliced-unit-v30` take about 0.86 passes over 50,000 rows each.
 #
 # The coverage block keeps v8.0.0's explicit countries and has no `country: "*"` entry. On v0.8.0 the val split holds
 # no row for 74 of the 215 countries `country_weights` admits, 20 of which have no row in any split, so any
@@ -65,6 +70,8 @@ data:
     spliced-unit: 0.0 # Replaced by spliced-unit-v30.
     spliced-unit-v30: 1.5
     invented-po-box-cedex: 1.5
+    invented-postal-guideline: 1.5 # Header, point 3.
+    invented-postal-unit-guideline: 2.5 # Header, point 3.
     spliced-affix: 2.0
     spliced-country: 2.0
     overture: 3.0

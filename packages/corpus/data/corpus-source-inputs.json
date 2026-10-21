@@ -1755,7 +1755,7 @@
 				{
 					"registerSource": "ch-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-ch-geonames",
-					"reads": "the DE, IT and AU postal exports' place, postcode, province-code and state-code columns, restricted to places the corpus split holds out"
+					"reads": "the DE, IT and AU postal exports' place, postcode, province-code and state-code columns"
 				}
 			],
 			"authored": [
@@ -1763,7 +1763,7 @@
 				"IT_CASELLA_POSTALE_RULES in packages/codex/lib/it/casella-postale.ts, following Poste Italiane's Caratteristiche standard degli invii – Posta Registrata, PRS.INDES.STA.1 Versione 3, Ed. 14/10/2025 (sha256 3d77a1f795ccf658f66c9e98544b450a2f34cee931d5b0f5f9855020172543eb)",
 				"AU_DELIVERY_GUIDELINE_RULES in packages/codex/lib/au/delivery-guideline.ts, following Australia Post's Correct addressing brochure, SAP 8833878 Nov 2022 (sha256 d0925a8acb31ab7e5bb2503f61626831d51cf3f606f9971266e7b5af1506e21d), and its barcode Hints & Tips booklet, print stamp 9/7/03 (sha256 380bd7f458568e6ad5e500f62f2166c89816d5aab4daaa01abf2cf32b7e525a1)"
 			],
-			"note": "Evaluation only (#2764). The recipe refuses any row whose split is not test, and the box numbers are drawn."
+			"note": "Issue #2764. Each row takes the split of its place; the release capabilities read the test rows. The box numbers are drawn."
 		},
 		"invented-postal-unit-guideline": {
 			"aliases": ["synth-postal-unit-guideline"],
@@ -1771,7 +1771,7 @@
 				{
 					"registerSource": "ch-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-ch-geonames",
-					"reads": "the FR, GB, IT, AU and NZ postal exports' place, postcode, province-code and state-code columns, restricted to places the corpus split holds out; a second held-out place name stands in as the street or residence name"
+					"reads": "the FR, GB, IT, AU and NZ postal exports' place, postcode, province-code and state-code columns; a second place name on the same side of the split's holdout stands in as the street or residence name"
 				}
 			],
 			"authored": [
@@ -1781,7 +1781,7 @@
 				"AU_UNIT_TYPE_RULES in packages/codex/lib/au/unit-type.ts, following Australia Post's barcode Hints & Tips booklet, print stamp 9/7/03 (sha256 380bd7f458568e6ad5e500f62f2166c89816d5aab4daaa01abf2cf32b7e525a1)",
 				"NZ_UNIT_TYPE_RULES in packages/codex/lib/nz/unit-type.ts, following NZ Post's Address Standards, ADV 358DF11 June 2011 (sha256 a5b09205190f388db490750d4d392aaf2ed9f2c31b6162b4cc7c8fab75639492)"
 			],
-			"note": "Evaluation only (#2764). The recipe refuses any row whose split is not test; unit identifiers and street numbers are drawn."
+			"note": "Issue #2764. Each row takes the split of its place; the release capabilities read the test rows. Unit identifiers and street numbers are drawn."
 		},
 		"invented-street": {
 			"aliases": ["synth-street"],

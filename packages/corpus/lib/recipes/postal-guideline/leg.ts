@@ -69,8 +69,8 @@ export interface PostalGuidelineLeg {
 	/**
 	 * Renders one row naming `place`.
 	 *
-	 * @param pool - Every held-out place of the leg's country, from which a leg
-	 * may draw a name for a street or a residence.
+	 * @param pool - The places of the leg's country on the same side of the split's
+	 * holdout as `place`, from which a leg may draw a name for a street or a residence.
 	 */
 	render(
 		random: () => number,

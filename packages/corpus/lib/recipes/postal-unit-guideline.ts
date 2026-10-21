@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `postal-unit-guideline` recipe: evaluation-only rows that write a flat, unit, floor,
- *   staircase or building designator as the postal operator's published guideline states it. It runs
- *   the `postal-guideline` generator over unit legs, so every row's locality is a place the split holds out,
- *   goes through the aligner and is refused unless its split is `test`.
+ *   The `postal-unit-guideline` recipe: rows that write a flat, unit, floor, staircase or building
+ *   designator as the postal operator's published guideline states it. It runs the `postal-guideline`
+ *   generator over unit legs, so every row goes through the aligner and takes the split its place
+ *   gives it.
  *
  *   The rows get their own source, `invented-postal-unit-guideline`, rather than the PO-box rows'
  *   `invented-postal-guideline`: a release capability selects rows by source, so a separate source
@@ -51,8 +51,8 @@ export const POSTAL_UNIT_GUIDELINE_LEGS: readonly PostalGuidelineLeg[] = [
 export const postalUnitGuidelineRecipe: CorpusRecipe = {
 	name: "postal-unit-guideline",
 	description:
-		"Evaluation-only unit rows (FR line 2/3 designators, GB Flat, IT scala/piano/interno, AU and NZ unit types) " +
-		"from cited operator guidelines, on held-out GeoNames places; every row splits to test",
+		"Unit rows (FR line 2/3 designators, GB Flat, IT scala/piano/interno, AU and NZ unit types) " +
+		"from cited operator guidelines, on GeoNames places; each row takes its place's split",
 	mode: "generate",
 	options: [{ flag: "--count", description: "Rows per country leg (default 2000)" }],
 	async run(opts, write) {

@@ -5,7 +5,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { GB_SUB_BUILDING_GUIDELINE_LEG } from "#gb/recipes/sub-building-guideline"
-import { generatePostalGuidelineRows, heldOutPlaces } from "#recipes/postal-guideline"
+import { generatePostalGuidelineRows, partitionPlaces } from "#recipes/postal-guideline"
 import type { PostalGuidelinePlace } from "#recipes/postal-guideline/leg"
 import { POSTAL_UNIT_GUIDELINE_LEGS } from "#recipes/postal-unit-guideline"
 import { defaultRecipeSource } from "#recipes/sources"
@@ -127,13 +127,12 @@ describe("postal-unit-guideline", () => {
 		expect(SOURCE).not.toBe(defaultRecipeSource("synth-postal-guideline"))
 	})
 
-	it("emits only rows the split puts in test, each with one unit span that matches its component", () => {
+	it("emits rows each with one unit span that matches its component", () => {
 		const rows = generate(7)
 
 		expect(rows).toHaveLength(40 * POSTAL_UNIT_GUIDELINE_LEGS.length)
 
 		for (const row of rows) {
-			expect(splitForRow(row)).toBe("test")
 			expect(row.source).toBe(SOURCE)
 			const tags = row.span_tags!
 			const starts = row.span_starts!
@@ -171,18 +170,29 @@ describe("postal-unit-guideline", () => {
 		expect(generate(42).map((row) => row.raw)).not.toEqual(generate(43).map((row) => row.raw))
 	})
 
-	it("draws skeletons only from held-out places", () => {
+	it("gives every leg train rows as well as held-out rows, each on its place's split", () => {
+		const rows = generate(3)
+
+		for (const leg of POSTAL_UNIT_GUIDELINE_LEGS) {
+			const splits = rows.filter((row) => row.country === leg.country).map((row) => splitForRow(row))
+
+			expect(splits.filter((split) => split === "train").length, leg.country).toBeGreaterThan(0)
+			expect(splits.filter((split) => split !== "train").length, leg.country).toBeGreaterThan(0)
+		}
+	})
+
+	it("names no held-out place on a training row", () => {
 		const gb = GB_SUB_BUILDING_GUIDELINE_LEG
-		const kept = heldOutPlaces(gb, PLACES.get(gb.country)!, defaultHoldouts())
+		const { heldOut } = partitionPlaces(gb, PLACES.get(gb.country)!, defaultHoldouts())
+		const heldOutNames = heldOut.map((place) => place.locality.toLowerCase())
 
-		expect(kept.length).toBeGreaterThan(0)
-		expect(kept.every((place) => place.postcode.startsWith("TR"))).toBe(true)
+		expect(heldOutNames.length).toBeGreaterThan(0)
 
-		for (const row of generate(3)) {
-			const heldOutPrefix = { GB: "TR", FR: "23" }[row.country]
+		for (const row of generate(3).filter((candidate) => candidate.country === gb.country)) {
+			if (splitForRow(row) !== "train") continue
 
-			if (heldOutPrefix) {
-				expect(row.components.postcode!.startsWith(heldOutPrefix)).toBe(true)
+			for (const name of heldOutNames) {
+				expect(row.raw.toLowerCase().includes(name), `${name} in ${row.raw}`).toBe(false)
 			}
 		}
 	})

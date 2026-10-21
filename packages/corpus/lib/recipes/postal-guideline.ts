@@ -3,17 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `postal-guideline` recipe: evaluation-only rows that write a post-office box or its national
- *   equivalent as the postal operator's published guideline states it. Each country's leg renders
- *   only forms its codex rule table cites, and no leg uses a training recipe's leader vocabulary.
+ *   The `postal-guideline` recipe: rows that write a post-office box or its national equivalent as
+ *   the postal operator's published guideline states it. Each country's leg renders only forms its
+ *   codex rule table cites.
  *
- *   Every row's locality and postcode come from a place that {@linkcode splitForRow} holds out, and
- *   the recipe keeps a row only when its split is `test`. A place the split holds out sends half its
- *   rows to `val` by a hash of `source_id`, so the recipe redraws the box number of a row that lands
- *   there. Before returning, it checks every row again and throws on any row outside `test`.
- *
- *   The holdouts are read when the recipe runs. A base rebuild that changes them changes which places
- *   qualify, so the rows are generated against the split of the corpus they are evaluated with.
+ *   Rows draw their locality and postcode from every place of the country, and each row takes the
+ *   split {@linkcode splitForRow} gives its place, so the source has train, val and test rows like
+ *   every other source. The release capabilities read its test rows.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -91,22 +87,30 @@ export interface PostalGuidelineRowsOptions {
  */
 function isHeldOutPlace(
 	country: string,
-	components: Record<string, string>,
+	place: PostalGuidelinePlace,
 	holdouts: Record<string, CountryHoldout>
 ): boolean {
+	const components: Record<string, string> = { locality: place.locality, postcode: place.postcode }
+
+	if (place.region) {
+		components.region = place.region
+	}
+
 	return splitForRow({ source_id: "", country, components }, holdouts) !== "train"
 }
 
 /**
- * The held-out places of one leg, in input order and without repeats.
+ * The places of one leg, in input order and without repeats, divided by whether the split holds
+ * them out.
  */
-export function heldOutPlaces(
+export function partitionPlaces(
 	leg: PostalGuidelineLeg,
 	places: readonly PostalGuidelinePlace[],
 	holdouts: Record<string, CountryHoldout>
-): PostalGuidelinePlace[] {
+): { train: PostalGuidelinePlace[]; heldOut: PostalGuidelinePlace[] } {
 	const seen = new Set<string>()
-	const kept: PostalGuidelinePlace[] = []
+	const train: PostalGuidelinePlace[] = []
+	const heldOut: PostalGuidelinePlace[] = []
 
 	for (const place of places) {
 		const key = `${place.locality}|${place.postcode}|${place.region ?? ""}`.toLowerCase()
@@ -115,43 +119,24 @@ export function heldOutPlaces(
 
 		seen.add(key)
 
-		const components: Record<string, string> = { locality: place.locality, postcode: place.postcode }
-
-		if (place.region) {
-			components.region = place.region
-		}
-
-		if (isHeldOutPlace(leg.country, components, holdouts)) {
-			kept.push(place)
+		if (isHeldOutPlace(leg.country, place, holdouts)) {
+			heldOut.push(place)
+		} else {
+			train.push(place)
 		}
 	}
 
-	return kept
+	return { train, heldOut }
 }
 
 /**
- * Throws unless every row's split is `test`, naming the first row that is not.
- */
-export function assertEveryRowInTest(
-	rows: ReadonlyArray<Pick<LabeledRow, "source_id" | "country" | "components" | "raw">>,
-	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
-): void {
-	for (const row of rows) {
-		const split = splitForRow(row, holdouts)
-
-		if (split !== "test") {
-			throw new Error(
-				`postal-guideline: row ${row.source_id} (${stringifyJSON(row.raw)}) splits to ${split}, not test. ` +
-					`The source is evaluation-only, so the recipe refuses to emit it.`
-			)
-		}
-	}
-}
-
-/**
- * Renders, aligns and checks the rows of every leg.
+ * Renders and aligns the rows of every leg.
  *
- * Throws when a leg has no held-out place or cannot reach `count` rows, rather than returning fewer.
+ * Each row's split is the one {@linkcode splitForRow} gives its place, as for every other source.
+ * A leg draws a street or residence name only from places on the same side of the holdout as the
+ * row's own place, so a training row never writes a held-out place's name.
+ *
+ * Throws when a leg has no place or cannot reach `count` rows, rather than returning fewer.
  */
 export function generatePostalGuidelineRows(opts: PostalGuidelineRowsOptions): PostalGuidelineRow[] {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -160,17 +145,20 @@ export function generatePostalGuidelineRows(opts: PostalGuidelineRowsOptions): P
 	const rows: PostalGuidelineRow[] = []
 
 	for (const leg of legs) {
-		const pool = heldOutPlaces(leg, opts.places.get(leg.country) ?? [], holdouts)
+		const { train, heldOut } = partitionPlaces(leg, opts.places.get(leg.country) ?? [], holdouts)
+		const all = [...train, ...heldOut]
 
-		if (!pool.length) {
-			throw new Error(`postal-guideline: no ${leg.country} place is held out by the split, so the leg has no skeleton.`)
+		if (!all.length) {
+			throw new Error(`postal-guideline: no ${leg.country} place is readable, so the leg has no skeleton.`)
 		}
 
 		const seen = new Set<string>()
 		let emitted = 0
 
 		for (let attempt = 0; emitted < opts.count && attempt < opts.count * ATTEMPTS_PER_ROW; attempt++) {
-			const rendering = leg.render(random, sample(pool, random), pool)
+			const place = sample(all, random)
+			const pool = isHeldOutPlace(leg.country, place, holdouts) ? heldOut : train
+			const rendering = leg.render(random, place, pool)
 
 			if (!Object.values(rendering.components).every((value) => rendering.raw.includes(value))) {
 				throw new Error(`postal-guideline: ${leg.country} rendered a component its raw omits: ${rendering.raw}`)
@@ -189,8 +177,6 @@ export function generatePostalGuidelineRows(opts: PostalGuidelineRowsOptions): P
 				source_id: sourceID,
 				license: `GeoNames postal export (CC-BY 4.0) places + ${leg.rules[0]!.citation.publisher} guideline forms (@mailwoman/codex)`,
 			}
-
-			if (splitForRow(canonical, holdouts) !== "test") continue
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
@@ -213,12 +199,10 @@ export function generatePostalGuidelineRows(opts: PostalGuidelineRowsOptions): P
 
 		if (emitted < opts.count) {
 			throw new Error(
-				`postal-guideline: ${leg.country} reached ${emitted} of ${opts.count} rows from ${pool.length} held-out places.`
+				`postal-guideline: ${leg.country} reached ${emitted} of ${opts.count} rows from ${all.length} places.`
 			)
 		}
 	}
-
-	assertEveryRowInTest(rows, holdouts)
 
 	return rows
 }
@@ -264,8 +248,8 @@ export async function readPostalGuidelinePlaces(leg: PostalGuidelineLeg): Promis
 export const postalGuidelineRecipe: CorpusRecipe = {
 	name: "postal-guideline",
 	description:
-		"Evaluation-only PO box rows (DE Postfach, IT casella postale, AU CARE PO/MS/RMS) from cited operator guidelines, " +
-		"on held-out GeoNames places; every row splits to test",
+		"PO box rows (DE Postfach, IT casella postale, AU CARE PO/MS/RMS) from cited operator guidelines, " +
+		"on GeoNames places; each row takes its place's split",
 	mode: "generate",
 	options: [{ flag: "--count", description: "Rows per country leg (default 2000)" }],
 	async run(opts, write) {

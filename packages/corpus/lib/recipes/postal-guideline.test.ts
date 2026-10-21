@@ -3,12 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { DE_POSTFACH_GUIDELINE_LEG } from "#de/recipes/postfach-guideline"
 import * as trainingLeaders from "#recipes/po/box/cedex/vocabulary"
-import {
-	assertEveryRowInTest,
-	generatePostalGuidelineRows,
-	heldOutPlaces,
-	POSTAL_GUIDELINE_LEGS,
-} from "#recipes/postal-guideline"
+import { generatePostalGuidelineRows, partitionPlaces, POSTAL_GUIDELINE_LEGS } from "#recipes/postal-guideline"
 import type { PostalGuidelinePlace } from "#recipes/postal-guideline/leg"
 import { defaultRecipeSource } from "#recipes/sources"
 import { PO_BOX_LOCALE_TEMPLATES } from "#synthesizers/po-box"
@@ -76,13 +71,12 @@ describe("postal-guideline", () => {
 		expect(SOURCE).toBe("invented-postal-guideline")
 	})
 
-	it("emits only rows the split puts in test, aligned with a po_box span", () => {
+	it("emits rows aligned with a po_box span", () => {
 		const rows = generate(7)
 
 		expect(rows).toHaveLength(40 * POSTAL_GUIDELINE_LEGS.length)
 
 		for (const row of rows) {
-			expect(splitForRow(row)).toBe("test")
 			expect(row.source).toBe(SOURCE)
 			expect(row.span_tags).toContain("po_box")
 			expect(row.span_tags).toHaveLength(Object.keys(row.components).length)
@@ -110,31 +104,32 @@ describe("postal-guideline", () => {
 		expect(generate(42).map((row) => row.raw)).not.toEqual(generate(43).map((row) => row.raw))
 	})
 
-	it("draws skeletons only from held-out places", () => {
-		const de = DE_POSTFACH_GUIDELINE_LEG
-		const kept = heldOutPlaces(de, PLACES.get(de.country)!, defaultHoldouts())
+	it("gives every leg train rows as well as held-out rows, each on its place's split", () => {
+		const rows = generate(7)
 
-		expect(kept.length).toBeGreaterThan(0)
-		expect(kept.every((place) => place.postcode.startsWith("02"))).toBe(true)
+		for (const leg of POSTAL_GUIDELINE_LEGS) {
+			const splits = rows.filter((row) => row.country === leg.country).map((row) => splitForRow(row))
 
-		for (const row of generate(3).filter((candidate) => candidate.country === de.country)) {
-			expect(row.components.postcode!.startsWith("02")).toBe(true)
+			expect(splits.filter((split) => split === "train").length, leg.country).toBeGreaterThan(0)
+			expect(splits.filter((split) => split !== "train").length, leg.country).toBeGreaterThan(0)
 		}
 	})
 
-	it("refuses a leg whose country holds out none of its places", () => {
-		const places = new Map([...PLACES, ["DE", [{ locality: "Berlin", postcode: "10115" }]]])
+	it("divides places by the split's holdout", () => {
+		const de = DE_POSTFACH_GUIDELINE_LEG
+		const { train, heldOut } = partitionPlaces(de, PLACES.get(de.country)!, defaultHoldouts())
 
-		expect(() => generatePostalGuidelineRows({ places, count: 5, seed: 1, source: SOURCE })).toThrow(
-			/no DE place is held out/u
-		)
+		expect(heldOut.length).toBeGreaterThan(0)
+		expect(heldOut.every((place) => place.postcode.startsWith("02"))).toBe(true)
+		expect(train.every((place) => !place.postcode.startsWith("02"))).toBe(true)
 	})
 
-	it("refuses a row whose split is not test", () => {
-		const rows = generate(5)
-		const withoutDE = { ...defaultHoldouts(), DE: { postcodePrefixes: ["99"] } }
+	it("refuses a leg with no readable place", () => {
+		const places = new Map([...PLACES, ["DE", []]])
 
-		expect(() => assertEveryRowInTest(rows, withoutDE)).toThrow(/splits to train, not test/u)
+		expect(() => generatePostalGuidelineRows({ places, count: 5, seed: 1, source: SOURCE })).toThrow(
+			/no DE place is readable/u
+		)
 	})
 
 	it("writes no designator a training recipe uses as a PO-box leader", () => {
