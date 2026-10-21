@@ -228,7 +228,11 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("declares a holdout for every French overseas jurisdiction with more than one commune, and for Romania", () => {
-		for (const country of ["GP", "MQ", "GF", "RE", "PM", "YT", "PF", "NC", "RO"]) {
+		// PM is left to the hashed holdout: neither of its two communes can be held out
+		// without removing a name from training or taking most of its rows.
+		expect(defaultHoldouts()["PM"]).toBeUndefined()
+
+		for (const country of ["GP", "MQ", "GF", "RE", "YT", "PF", "NC", "RO"]) {
 			const policy = policyOf(defaultHoldouts()[country])
 
 			expect(
@@ -239,7 +243,12 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("holds out a BAN overseas row by its commune and a Romanian row by its county's postcode prefix", () => {
-		const moule = { source_id: "ban-1", country: "GP", components: { street: "Rue Saint-Jean", locality: "Le Moule" } }
+		const moule = {
+			source_id: "ban-1",
+			country: "GP",
+			components: { street: "Rue Saint-Jean", locality: "Saint-François" },
+		}
+
 		const ro = { source_id: "ro-1", country: "RO", components: { street: "REPUBLICII", postcode: "515400" } }
 
 		expect(splitForRow(moule)).not.toBe("train")
@@ -250,10 +259,10 @@ describe("defaultHoldouts", () => {
 
 	it("holds out a case or spacing variant of a held-out region or locality", () => {
 		const variants: [country: string, components: MinRow["components"]][] = [
-			["ES", { region: "ASTURIAS" }],
-			["ES", { region: "balearic  islands" }],
+			["VN", { region: "CẦN THƠ" }],
+			["VN", { locality: "huế" }],
 			["US", { region: "vermont" }],
-			["GP", { locality: "LE MOULE" }],
+			["GP", { locality: "SAINT-FRANÇOIS" }],
 			["NZ", { locality: " invercargill " }],
 		]
 
@@ -264,15 +273,22 @@ describe("defaultHoldouts", () => {
 			).not.toBe("train")
 		}
 
-		expect(splitForRow({ source_id: "ES-v", country: "ES", components: { region: "ASTURIA" } })).toBe("train")
+		expect(splitForRow({ source_id: "US-v", country: "US", components: { region: "VERMON" } })).toBe("train")
 	})
 
-	it("holds out ES, IT, AU and NZ rows by postcode prefix, and the admin rows by region", () => {
+	it("holds out ES, IT, AU and NZ rows by postcode prefix, and trains on a row that names the province only", () => {
+		// A region-name key removed `Illes Balears` and `Principado de Asturias` from training (#2777).
+		for (const region of ["Illes Balears", "Principado de Asturias", "Trento", "TAS"]) {
+			for (const country of ["ES", "IT", "AU"]) {
+				expect(splitForRow({ source_id: `${country}-r`, country, components: { region } }), region).toBe("train")
+			}
+		}
+
 		const cases: [country: string, held: MinRow["components"], kept: MinRow["components"]][] = [
 			["ES", { postcode: "07001" }, { postcode: "28001" }],
-			["ES", { region: "Asturias" }, { region: "Madrid" }],
+			["ES", { postcode: "33003", region: "Principado de Asturias" }, { postcode: "28013", region: "Madrid" }],
 			["IT", { postcode: "09124" }, { postcode: "00184" }],
-			["IT", { region: "Bolzano/Bozen" }, { region: "Turin" }],
+			["IT", { postcode: "39100", region: "Bolzano/Bozen" }, { postcode: "10121", region: "Turin" }],
 			["AU", { postcode: "7000" }, { postcode: "2000" }],
 			["AU", { postcode: "0800" }, { postcode: "3000" }],
 			["NZ", { postcode: "9810" }, { postcode: "9016" }],

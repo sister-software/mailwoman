@@ -151,60 +151,59 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			regions: ["Enugu"],
 			localities: ["Enugu", "Nsukka"],
 		},
+		// A region or locality name keys a holdout only where rows of other places also write it,
+		// so the holdout removes the place and leaves the word in training (#2777).
+		// A name only the held-out rows wrote is dropped.
+		// Where a postcode prefix still holds the place out, the rows that write the place
+		// without a postcode return to train and keep the word there.
+		// `held-out-names.full.test.ts` counts the train rows writing each name here.
 		PK: {
-			// Islamabad Capital Territory, in both scripts the extract writes.
-			regions: ["Islamabad Capital Territory"],
+			// Islamabad Capital Territory by postcode and its city's Latin spelling.
+			// The territory's name and the Urdu city name were written only by held-out rows.
 			postcodePrefixes: ["44"],
-			localities: ["Islamabad", "islamabad", "اسلام آباد"],
+			localities: ["Islamabad", "islamabad"],
 		},
 		BD: {
 			// Chattogram, Khulna and Sylhet.
 			// Their postcodes begin 4, 9 and 3 respectively.
+			// Khulna is held out by postcode alone, because no other row wrote the name.
 			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
-			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
+			localities: ["Chittagong", "Chattogram", "Sylhet"],
 		},
 		VN: {
-			regions: ["Thành phố Cần Thơ", "Cần Thơ", "Thừa Thiên Huế"],
-			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
+			// Cần Thơ and Huế.
+			// The `Thành phố` forms were written only by held-out rows, so those rows train
+			// and the bare names hold the cities out.
+			regions: ["Cần Thơ", "Thừa Thiên Huế"],
+			localities: ["Cần Thơ", "Huế"],
 		},
 		RU: {
 			// Primorsky Krai.
 			// Its postcodes run 690 to 692.
-			regions: ["Приморский край"],
+			// The krai's name and Vladivostok and Ussuriysk were written only by held-out rows.
 			postcodePrefixes: ["690", "691", "692"],
-			localities: ["Владивосток", "Уссурийск", "Находка"],
+			localities: ["Находка"],
 		},
 		// Each French overseas jurisdiction is one INSEE department with one postcode range,
 		// so the BAN rows hold out by commune, spelled as BAN's `nom_commune` writes it.
+		// Each commune named here is also written by rows of another commune of the same jurisdiction.
 		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
 		// so neither has a place to hold out.
-		GP: { localities: ["Le Moule"] },
-		MQ: { localities: ["Le Robert", "Ducos"] },
+		// Saint-Pierre-et-Miquelon is left to the hashed holdout: Miquelon-Langlade is
+		// written by no other row, and Saint-Pierre holds 2,706 of its 3,084 rows.
+		GP: { localities: ["Saint-François", "Port-Louis"] },
+		MQ: { localities: ["Le François", "Saint-Pierre"] },
 		GF: { localities: ["Kourou"] },
 		RE: { localities: ["Saint-Louis", "Saint-Leu"] },
-		PM: { localities: ["Miquelon-Langlade"] },
-		YT: { localities: ["Dzaoudzi", "Pamandzi"] },
-		// Tumaraa holds 1,522 of PF's 6,755 rows with a street, more than a tenth,
-		// because Pirae's 958 rows have no street name and Papeete has the remaining 5,233.
-		PF: { localities: ["Tumaraa"] },
-		NC: { localities: ["Koné", "Pouembout", "Kaala-Gomen"] },
+		YT: { localities: ["Dzaoudzi"] },
+		// Pirae: Papeete holds 5,308 of PF's 7,261 rows, and Tumaraa's name is written by no other row.
+		PF: { localities: ["Pirae"] },
+		NC: { localities: ["Koné", "Kaala-Gomen"] },
 		LV: {
 			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni municipalities.
 			// Their postcodes begin LV-56, LV-57, LV-45 and LV-53.
 			// The state city Rēzekne lies in no municipality.
-			// The address register writes `nov.`; other sources spell the municipality out.
-			regions: [
-				"Krāslavas nov.",
-				"Ludzas nov.",
-				"Balvu nov.",
-				"Preiļu nov.",
-				"Līvānu nov.",
-				"Krāslavas novads",
-				"Ludzas novads",
-				"Balvu novads",
-				"Preiļu novads",
-				"Līvānu novads",
-			],
+			// The municipality names are not keys, because only rows inside them write them.
 			postcodePrefixes: ["LV-45", "LV-53", "LV-56", "LV-57"],
 			localities: ["Rēzekne"],
 		},
@@ -217,26 +216,27 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			// The Balearic Islands 07 and Asturias 33: a Spanish postcode's first two digits name its province.
 			// The Canary Islands, 35 and 38, would hold out every Overture ES row, because the
 			// Overture sample this corpus draws for ES has postcodes in those two provinces only.
-			regions: ["Asturias", "Principado de Asturias", "Balearic Islands", "Illes Balears", "Islas Baleares"],
+			// Postcode only: as region keys, the two provinces' names had no train row as a region,
+			// and the `wof-admin` rows that write them without a postcode now train (#2777).
 			postcodePrefixes: ["07", "33"],
 		},
 		IT: {
 			// Sardinia 07 to 09, Valle d'Aosta 11, and Trentino-Alto Adige 38 and 39.
-			// The region names are the province spellings `wof-admin` writes.
-			regions: ["Trento", "Bolzano/Bozen", "Valle D'Aosta", "South Sardinia"],
+			// Postcode only, for the reason ES gives: the `wof-admin` province rows carry no postcode and train.
 			postcodePrefixes: ["07", "08", "09", "11", "38", "39"],
 		},
 		AU: {
 			// The Northern Territory 08 and 09, and Tasmania 7.
 			// No other Australian postcode begins with 7.
-			regions: ["TAS", "NT"],
+			// Postcode only, so `TAS` and `NT` stay in training through the rows written without a postcode.
 			postcodePrefixes: ["08", "09", "7"],
 		},
 		NZ: {
 			// Southland: postcodes 96 to 98.
 			// The OSM-derived rows hold no postcode, so the city names supply those.
+			// West Invercargill and East Gore were written only by held-out rows.
 			postcodePrefixes: ["96", "97", "98"],
-			localities: ["Invercargill", "West Invercargill", "Gore", "East Gore"],
+			localities: ["Invercargill", "Gore"],
 		},
 	}
 }

@@ -14,7 +14,14 @@ import { z } from "zod"
  *
  * Empty: whether a build resumes is the `priorOutput` option of `buildCorpus`, chosen per run.
  */
-export const PublicCorpusEnvSchema = z.object({})
+export const PublicCorpusEnvSchema = z.object({
+	// The corpus manifest `held-out-names.full.test.ts` scans, or `default` for the latest base corpus.
+	MAILWOMAN_HOLDOUT_CHECK_MANIFEST: z.string().optional().meta({
+		title: "Holdout check manifest",
+		description:
+			"Corpus manifest whose train rows the held-out-name check counts; `default` reads the latest base corpus. Unset skips the check.",
+	}),
+})
 
 /**
  * Credentials the corpus acquisition and golden-expansion tooling send.
