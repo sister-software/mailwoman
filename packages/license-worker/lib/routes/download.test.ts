@@ -27,7 +27,7 @@ const CATALOG: ArtifactCatalog = {
 const R2 = {
 	R2_ACCESS_KEY_ID: "testaccesskeyid00000000000000000",
 	R2_SECRET_ACCESS_KEY: "testsecretaccesskey000000000000000000000000000000000000000000000",
-	R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+	R2_S3_ENDPOINT: "https://0123456789abcdef0123456789abcdef.eu.r2.cloudflarestorage.com",
 	PAID_ARTIFACTS_BUCKET: "mailwoman-paid-test",
 }
 
@@ -94,7 +94,7 @@ describe("the download route", () => {
 		const url = new URL(body.url)
 
 		expect(body).toMatchObject({ status: "granted", bytes: 1 })
-		expect(url.host).toBe("0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com")
+		expect(url.host).toBe("0123456789abcdef0123456789abcdef.eu.r2.cloudflarestorage.com")
 		expect(url.pathname).toBe("/mailwoman-paid-test/tiers/gb-streets/2026-10-01/gb-streets.db")
 		expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[0-9a-f]{64}$/u)
 		expect(body.expires).toBe(new Date(OCT_21 + 3600 * 1000).toISOString())
