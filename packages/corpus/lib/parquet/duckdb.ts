@@ -48,6 +48,37 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
 export const DUCKDB_MEMORY_SHARE = 0.25
 
 /**
+ * The share of the host's threads one DuckDB instance takes when its caller names no count.
+ *
+ * DuckDB's own default is every core.
+ * Each thread holds part of the memory limit and its own scan buffers, so an instance at every core
+ * beside a second job starves that job of CPU while it still competes for the same memory.
+ * The share matches {@linkcode DUCKDB_MEMORY_SHARE} for the same reason: four concurrent instances
+ * fit the host together.
+ *
+ * @defaultValue a quarter, at least one thread.
+ */
+export const DUCKDB_THREAD_SHARE = 0.25
+
+/**
+ * The memory one instance holds when its caller names no limit: {@linkcode DUCKDB_MEMORY_SHARE} of host memory.
+ */
+export async function defaultDuckDBMemoryLimitBytes(): Promise<number> {
+	const { totalMemoryBytes } = await import("@mailwoman/core/utils/system")
+
+	return Math.floor(totalMemoryBytes() * DUCKDB_MEMORY_SHARE)
+}
+
+/**
+ * The threads one instance runs when its caller names no count: {@linkcode DUCKDB_THREAD_SHARE} of the host's.
+ */
+export async function defaultDuckDBThreads(): Promise<number> {
+	const { availableParallelism } = await import("@mailwoman/core/utils/system")
+
+	return Math.max(1, Math.floor(availableParallelism() * DUCKDB_THREAD_SHARE))
+}
+
+/**
  * Per-instance settings, applied on every connection this module opens.
  */
 export interface DuckDBLimits {
@@ -63,7 +94,7 @@ export interface DuckDBLimits {
 	 * A build phase that runs DuckDB beside other work sets this, because each thread
 	 * holds its own share of the memory limit and the default takes every core.
 	 *
-	 * @defaultValue DuckDB's own choice.
+	 * @defaultValue {@linkcode DUCKDB_THREAD_SHARE} of the host's threads.
 	 */
 	threads?: number
 
@@ -97,9 +128,9 @@ export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableD
 	const { dataRootPath } = await import("@mailwoman/core/data-root")
 	const { ByteFormatter } = await import("@mailwoman/core/fs/formatters")
 	const { makeDirectories } = await import("@mailwoman/core/fs/writers")
-	const { totalMemoryBytes } = await import("@mailwoman/core/utils/system")
 
-	const memoryLimitBytes = limits.memoryLimitBytes ?? Math.floor(totalMemoryBytes() * DUCKDB_MEMORY_SHARE)
+	const memoryLimitBytes = limits.memoryLimitBytes ?? (await defaultDuckDBMemoryLimitBytes())
+	const threads = limits.threads ?? (await defaultDuckDBThreads())
 	const temporaryDirectory = limits.temporaryDirectory ?? dataRootPath("tmp", "duckdb").toString()
 
 	// DuckDB writes a spill file rather than creating the directory, so a missing
@@ -113,7 +144,7 @@ export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableD
 		// would be read as decimal megabytes and set a limit 4.9% under the one this asked for.
 		memory_limit: ByteFormatter.formatIEC(memoryLimitBytes),
 		temp_directory: temporaryDirectory,
-		...(limits.threads ? { threads: String(limits.threads) } : {}),
+		threads: String(threads),
 	})
 
 	const connection = await instance.connect()

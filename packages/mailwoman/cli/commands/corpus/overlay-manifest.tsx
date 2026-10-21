@@ -9,7 +9,16 @@
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import type { DuckDBLimits } from "@mailwoman/corpus/parquet/duckdb"
+
+import {
+	isCorpusVersion,
+	positiveInteger,
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -62,8 +71,36 @@ export const spec = {
 			description:
 				"Base sources to drop, comma-separated. The base's files with each source leave the manifest and its counts, so the added files take their place.",
 		},
+		"duckdb-memory-gib": {
+			type: "number",
+			validate: (value: number) => Number.isFinite(value) && value > 0,
+			validationMessage: "--duckdb-memory-gib must be a positive number of GiB.",
+			description:
+				"Memory limit in GiB of each DuckDB connection the assembly opens. Defaults to DUCKDB_MEMORY_SHARE (a quarter) of host memory",
+		},
+		"duckdb-threads": {
+			type: "number",
+			validate: positiveInteger,
+			validationMessage: "--duckdb-threads must be a positive integer.",
+			description:
+				"Threads of each DuckDB connection the assembly opens. Defaults to DUCKDB_THREAD_SHARE (a quarter) of the host's threads",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The DuckDB limits the two `--duckdb-*` options state, in {@linkcode DuckDBLimits}'s units.
+ *
+ * An omitted option stays absent so `openDuckDB` applies its stated default.
+ */
+export function overlayDuckDBLimits(options: { duckdbMemoryGib?: number; duckdbThreads?: number }): DuckDBLimits {
+	return {
+		...(typeof options.duckdbMemoryGib === "number"
+			? { memoryLimitBytes: Math.floor(options.duckdbMemoryGib * 2 ** 30) }
+			: {}),
+		...(typeof options.duckdbThreads === "number" ? { threads: options.duckdbThreads } : {}),
+	}
+}
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -108,6 +145,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
 			unshippableReason: options.unshippableReason,
 			deletions: options.deletions ? await readDeletionRequests(options.deletions) : [],
+			limits: overlayDuckDBLimits(options),
 		})
 
 		return "done"

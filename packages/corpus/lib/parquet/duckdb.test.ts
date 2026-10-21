@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { totalMemoryBytes } from "@mailwoman/core/utils/system"
+import { availableParallelism, totalMemoryBytes } from "@mailwoman/core/utils/system"
 import { describe, expect, it } from "vitest"
 
-import { DUCKDB_MEMORY_SHARE, openDuckDB } from "#parquet/duckdb"
+import { defaultDuckDBThreads, DUCKDB_MEMORY_SHARE, DUCKDB_THREAD_SHARE, openDuckDB } from "#parquet/duckdb"
 
 /**
  * One setting as DuckDB reports it back.
@@ -38,6 +38,13 @@ describe("openDuckDB", () => {
 		// Two instances at half the host exceed it together.
 		// That is the case that took the machine down on 2026-09-28.
 		expect(DUCKDB_MEMORY_SHARE * 4).toBeLessThanOrEqual(1)
+	})
+
+	it("runs a stated share of the host's threads rather than DuckDB's every-core default", async () => {
+		using db = await openDuckDB()
+
+		expect(await setting(db, "threads")).toBe(String(await defaultDuckDBThreads()))
+		expect(await defaultDuckDBThreads()).toBe(Math.max(1, Math.floor(availableParallelism() * DUCKDB_THREAD_SHARE)))
 	})
 
 	it("takes an explicit limit and thread count for a caller that knows what else is running", async () => {

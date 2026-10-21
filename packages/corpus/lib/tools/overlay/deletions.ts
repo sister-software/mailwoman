@@ -21,6 +21,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilder } from "path-ts"
 
+import type { DuckDBLimits } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
 
 /**
@@ -102,8 +103,8 @@ export interface PreparedDeletion {
  *
  * @throws When the file is missing, lacks the column, or a row's `source_id` is not a non-empty string.
  */
-export async function readDeletionIDs(path: string): Promise<Set<string>> {
-	const rows = await readParquetRows<{ source_id: unknown }>(path, { columns: ["source_id"] })
+export async function readDeletionIDs(path: string, limits?: DuckDBLimits): Promise<Set<string>> {
+	const rows = await readParquetRows<{ source_id: unknown }>(path, { columns: ["source_id"], limits })
 	const ids = new Set<string>()
 
 	for (const [index, row] of rows.entries()) {
@@ -126,7 +127,8 @@ export async function readDeletionIDs(path: string): Promise<Set<string>> {
 export async function prepareDeletion(
 	request: DeletionRequest,
 	versionDir: PathBuilder,
-	modalRoot: string
+	modalRoot: string,
+	limits?: DuckDBLimits
 ): Promise<PreparedDeletion> {
 	const label = "path" in request.target ? `path ${request.target.path}` : `source ${request.target.source}`
 
@@ -154,7 +156,7 @@ export async function prepareDeletion(
 
 	if (!(await pathExists(local))) throw new Error(`the deletion sidecar ${local} is absent`)
 
-	const ids = await readDeletionIDs(local)
+	const ids = await readDeletionIDs(local, limits)
 
 	if (!ids.size) throw new Error(`the deletion sidecar ${local} holds no source_id`)
 
@@ -182,8 +184,12 @@ export function deletionTargets(target: DeletionTarget, file: { path: string; so
 /**
  * The `source_id` values of one parquet file that a set holds.
  */
-export async function matchedSourceIDs(localPath: string, ids: ReadonlySet<string>): Promise<string[]> {
-	const rows = await readParquetRows<{ source_id: string }>(localPath, { columns: ["source_id"] })
+export async function matchedSourceIDs(
+	localPath: string,
+	ids: ReadonlySet<string>,
+	limits?: DuckDBLimits
+): Promise<string[]> {
+	const rows = await readParquetRows<{ source_id: string }>(localPath, { columns: ["source_id"], limits })
 
 	return rows.map((row) => row.source_id).filter((id) => ids.has(id))
 }

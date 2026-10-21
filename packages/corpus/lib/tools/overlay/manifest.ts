@@ -15,7 +15,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, normalize, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { type DuckDBLimits, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { openSourceRightsAdmission, type SourceRightsRecord } from "#source-register/corpus-inputs"
 import {
 	type CorpusDeletion,
@@ -205,10 +205,11 @@ async function descriptor(
 	localPath: string,
 	modalPath: string,
 	placement: { split: SplitName } | { split_attribute: SplitAttributeReference },
-	source: string
+	source: string,
+	limits: DuckDBLimits | undefined
 ): Promise<ParquetFileDescriptor> {
 	// `assembleOverlayManifest` calls this once for each file.
-	using db = await openDuckDB()
+	using db = await openDuckDB(limits)
 
 	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
 
@@ -305,6 +306,13 @@ export interface OverlayManifestOptions {
 	 * The base's own deletions stay in the version while a file they target remains.
 	 */
 	deletions?: readonly DeletionRequest[]
+	/**
+	 * The memory and thread limits of every DuckDB connection the assembly opens: the added files'
+	 * descriptors, the base files' source reads, and the deletion reads and tallies.
+	 *
+	 * @defaultValue {@linkcode openDuckDB}'s defaults
+	 */
+	limits?: DuckDBLimits
 }
 
 /**
@@ -317,7 +325,8 @@ async function countDeletions(
 	prepared: readonly PreparedDeletion[],
 	files: readonly ManifestFile[],
 	addedLocalPaths: ReadonlyMap<string, string>,
-	attributes: ReadonlyMap<string, SplitAttributeFile>
+	attributes: ReadonlyMap<string, SplitAttributeFile>,
+	limits: DuckDBLimits | undefined
 ): Promise<CorpusDeletion[]> {
 	const counted: CorpusDeletion[] = []
 
@@ -337,7 +346,7 @@ async function countDeletions(
 				throw new Error(`${local} is targeted by deletion ${deletion.issue} and absent from the data root`)
 			}
 
-			const matched = await matchedSourceIDs(local, ids)
+			const matched = await matchedSourceIDs(local, ids, limits)
 			const attribute = attributes.get(file.path)
 
 			if (attribute) {
@@ -364,7 +373,7 @@ async function countDeletions(
 /**
  * Load a base deletion's id set, inline or from its sidecar under the local data root.
  */
-async function carriedDeletion(deletion: CorpusDeletion): Promise<PreparedDeletion> {
+async function carriedDeletion(deletion: CorpusDeletion, limits: DuckDBLimits | undefined): Promise<PreparedDeletion> {
 	const { rows_deleted: _counted, ...entry } = deletion
 
 	if (deletion.source_ids) return { deletion: entry, ids: new Set(deletion.source_ids) }
@@ -372,9 +381,9 @@ async function carriedDeletion(deletion: CorpusDeletion): Promise<PreparedDeleti
 	if (!deletion.source_ids_file) throw new Error(`base deletion ${deletion.issue} names no source_id set`)
 
 	const local = localManifestFilePath(deletion.source_ids_file.path)
-	const ids = await readDeletionIDs(local)
+	const ids = await readDeletionIDs(local, limits)
 
-	if (ids.size !== deletion.source_ids_file.ids) {
+	if (ids.size !==deletion.source_ids_file.ids) {
 		throw new Error(
 			`${local} holds ${ids.size} ids and base deletion ${deletion.issue} records ${deletion.source_ids_file.ids}`
 		)
@@ -392,7 +401,8 @@ async function carriedDeletion(deletion: CorpusDeletion): Promise<PreparedDeleti
  * The caller therefore cannot mistake a partial read for the whole base.
  */
 async function readBaseFileSources(
-	files: readonly ManifestFile[]
+	files: readonly ManifestFile[],
+	limits: DuckDBLimits | undefined
 ): Promise<{ sources: string[]; unreadable: null } | { sources: null; unreadable: string }> {
 	const paths = files.map((file) => localManifestFilePath(file.path))
 	const absent: string[] = []
@@ -407,7 +417,7 @@ async function readBaseFileSources(
 		return { sources: null, unreadable: `${absent.length} of them are absent locally (first: ${absent[0]})` }
 	}
 
-	using db = await openDuckDB()
+	using db = await openDuckDB(limits)
 
 	const list = paths.map((path) => `'${escapeSQLString(path)}'`).join(", ")
 	const result = await db.runAndReadAll(`SELECT DISTINCT source FROM read_parquet([${list}])`)
@@ -454,7 +464,7 @@ async function checkOverlaySources(
 	}
 
 	// A base without a record is read instead: its files' own `source` column is what the loader groups rows by.
-	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed) : null
+	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed, args.limits) : null
 
 	for (const source of read?.sources ?? []) {
 		named.add(source)
@@ -592,7 +602,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			// DuckDB reads the path inside SQL text, so it must be a string.
 			const local = newDir("train", file.parquet).toString()
 			const modal = `${args.modalRoot}/train/${file.parquet}`
-			const entry = await descriptor(local, modal, { split: "train" }, file.source)
+			const entry = await descriptor(local, modal, { split: "train" }, file.source, args.limits)
 
 			added.push(entry)
 			addedLocalPaths.set(modal, local)
@@ -613,7 +623,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			counts: attribute.counts,
 		}
 
-		const entry = await descriptor(local, modal, { split_attribute: reference }, file.source)
+		const entry = await descriptor(local, modal, { split_attribute: reference }, file.source, args.limits)
 
 		if (attribute.file.sha256 !== entry.sha256 || attribute.file.rows !== entry.rows) {
 			throw new Error(
@@ -647,14 +657,20 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const carried = await Promise.all(
 		(base.deletions ?? [])
 			.filter((deletion) => listedFiles.some((file) => deletionTargets(deletion.target, file)))
-			.map(carriedDeletion)
+			.map((deletion) => carriedDeletion(deletion, args.limits))
 	)
 
 	const requested = await Promise.all(
-		(args.deletions ?? []).map((request) => prepareDeletion(request, newDir, args.modalRoot))
+		(args.deletions ?? []).map((request) => prepareDeletion(request, newDir, args.modalRoot, args.limits))
 	)
 
-	const deletions = await countDeletions([...carried, ...requested], listedFiles, addedLocalPaths, attributes)
+	const deletions = await countDeletions(
+		[...carried, ...requested],
+		listedFiles,
+		addedLocalPaths,
+		attributes,
+		args.limits
+	)
 	const deletedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const deletion of deletions) {

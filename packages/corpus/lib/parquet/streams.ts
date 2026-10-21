@@ -10,7 +10,7 @@
 
 import type { PathBuilderLike } from "path-ts"
 
-import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { type DuckDBLimits, escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 
 /**
  * DuckDB hands a list column back as `{ items: [...] }`.
@@ -72,6 +72,12 @@ export interface ParquetRowStreamOptions {
 	 * The caller builds it, escaping every literal with `escapeSQLString`.
 	 */
 	where?: string
+	/**
+	 * The memory and thread limits of the connection the stream opens.
+	 *
+	 * @defaultValue {@linkcode openDuckDB}'s defaults
+	 */
+	limits?: DuckDBLimits
 }
 
 /**
@@ -85,10 +91,10 @@ export async function* openParquetRowStream<T>(
 	path: PathBuilderLike,
 	options: ParquetRowStreamOptions = {}
 ): AsyncGenerator<T> {
-	const { columns, limit, where } = options
+	const { columns, limit, where, limits } = options
 	// Disposed when this generator finishes or a consumer abandons it,
 	// since `for await` calls `.return()` on break.
-	using db = await openDuckDB()
+	using db = await openDuckDB(limits)
 	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
 	const limitClause = typeof limit !== "number" ? "" : ` LIMIT ${validateRowLimit(limit)}`
 	const whereClause = where ? ` WHERE ${where}` : ""

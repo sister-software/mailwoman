@@ -8,9 +8,9 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { basename } from "path-ts"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
-import { openDuckDB } from "#parquet/duckdb"
+import { defaultDuckDBMemoryLimitBytes, defaultDuckDBThreads, type DuckDBLimits, openDuckDB } from "#parquet/duckdb"
 import { writeParquetFile } from "#parquet/writers"
 import type { SourceRightsRecord } from "#source-register/corpus-inputs"
 import { gbOverlayRow as gbRow, useScratchDir } from "#test-kit"
@@ -22,7 +22,31 @@ import {
 } from "#tools/overlay/manifest"
 import { splitOverlaySlice } from "#tools/overlay/split-slice"
 
-const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
+/**
+ * The `memory_limit` and `threads` each DuckDB connection reports back as it opens.
+ */
+const opened = vi.hoisted(() => [] as Array<{ memoryLimit: string; threads: string }>)
+
+vi.mock("#parquet/duckdb", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("#parquet/duckdb")>()
+
+	return {
+		...actual,
+		openDuckDB: async (...args: Parameters<typeof actual.openDuckDB>) => {
+			const db = await actual.openDuckDB(...args)
+			const result = await db.runAndReadAll(
+				"SELECT current_setting('memory_limit') AS memory_limit, current_setting('threads') AS threads"
+			)
+			const row = result.getRowObjectsJS()[0] as { memory_limit: unknown; threads: unknown }
+
+			opened.push({ memoryLimit: String(row.memory_limit), threads: String(row.threads) })
+
+			return db
+		},
+	}
+})
+
+const BASE_MANIFEST ="/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
 /**
  * The pre-rename file-list key, spelled by concatenation because the word is banned
@@ -372,6 +396,71 @@ describe("assembleOverlayManifest", () => {
 		expect(written.deletions[0]!.source_ids).toEqual(["de-1", "de-3", "de-absent"])
 		// The base's 15 train rows plus 5 added, less the 2 the deletion removes.
 		expect(written.counts).toEqual({ train: 18, val: 2, test: 3 })
+	})
+
+	describe("DuckDB limits", () => {
+		/**
+		 * Assemble a version that adds a file and deletes rows from it through a sidecar, so the
+		 * descriptor read, the sidecar read and the deletion tally each open a connection.
+		 */
+		async function assembleWithDeletion(limits?: DuckDBLimits): Promise<void> {
+			const base = await writeBaseWithGB()
+			const name = "part-de-lim.train.parquet"
+			const path = scratch.path("train", name).toString()
+			const sidecar = scratch.path("delete-ids.parquet").toString()
+
+			await makeDirectories(scratch.path("train"))
+
+			{
+				using db = await openDuckDB()
+
+				await db.run(
+					`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
+				)
+				await db.run(`COPY (SELECT 'de-2' AS source_id) TO '${sidecar}' (FORMAT parquet)`)
+			}
+
+			opened.length = 0
+
+			await assembleOverlayManifest({
+				...overlay(name),
+				base,
+				files: [{ parquet: name, source: "rendered-de" }],
+				deletions: [
+					{ target: { source: "rendered-de" }, sourceIDsFile: sidecar, reason: "fixture", issue: "#2741" },
+				],
+				limits,
+			})
+		}
+
+		it("opens every connection at the limits the caller passes", async () => {
+			await assembleWithDeletion({ memoryLimitBytes: 512 * 1024 * 1024, threads: 2 })
+
+			// The descriptor, the sidecar read and the tally.
+			expect(opened.length).toBeGreaterThanOrEqual(3)
+			expect(new Set(opened.map((setting) => setting.memoryLimit))).toEqual(new Set(["512.0 MiB"]))
+			expect(new Set(opened.map((setting) => setting.threads))).toEqual(new Set(["2"]))
+		})
+
+		it("applies openDuckDB's stated defaults when the caller passes none", async () => {
+			await assembleWithDeletion()
+
+			const threads = String(await defaultDuckDBThreads())
+			const expected = await defaultDuckDBMemoryLimitBytes()
+
+			expect(opened.length).toBeGreaterThanOrEqual(3)
+
+			for (const setting of opened) {
+				expect(setting.threads).toBe(threads)
+
+				const [value, unit] = setting.memoryLimit.split(" ")
+				const bytes = Number(value) * (unit === "GiB" ? 1024 ** 3 : unit === "MiB" ? 1024 ** 2 : 1)
+
+				// DuckDB rounds the value it reports, so the assertion is a band rather than an equality.
+				expect(bytes).toBeGreaterThan(expected * 0.9)
+				expect(bytes).toBeLessThan(expected * 1.1)
+			}
+		})
 	})
 
 	it("refuses a deletion that names no issue or no file of the version", async () => {
