@@ -261,8 +261,8 @@
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"@sister.software/fonts": "^14.3.0",
-		"@sister.software/theme": "^14.3.0",
+		"@sister.software/fonts": "^14.4.0",
+		"@sister.software/theme": "^14.4.0",
 		"@types/geojson": "^7946.0.16"
 	},
 	"devDependencies": {

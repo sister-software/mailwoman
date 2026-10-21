@@ -14,7 +14,7 @@
  *   Component rules read `--ss-*` roles or `--mw-*` tokens, never a palette color.
  */
 
-import { cssName } from "@sister.software/theme"
+import { cssName, DispositionSpecs, dispositionTokens, TokenIndex, type TokenEntry } from "@sister.software/theme"
 import { createSisterSoftwareStyleframe, SisterSoftwareStyleframeOptions } from "@sister.software/theme/styleframe"
 
 /**
@@ -28,6 +28,86 @@ const s = createSisterSoftwareStyleframe({
 })
 
 const { variable, theme, ref } = s
+
+// #region Product theme
+
+/*
+ * Mailwoman keeps the Sister Software structure (type, keys, hard shadows, windows) in its own colors: the blue,
+ * navy and magenta of the seal instead of the house pinks and mint. Only roles change, so every shared component
+ * follows. Each pair below holds at least 5.9:1.
+ */
+
+/**
+ * Mailwoman's palette.
+ */
+const Palette: readonly TokenEntry[] = [
+	{ name: "mw.color-blue", value: "#1a00ff", usage: "Links, primary fills, the current item. White on it 8.4:1." },
+	{ name: "mw.color-navy", value: "#00093a", usage: "The seal's ground. Text on the light-blue night link." },
+	{ name: "mw.color-magenta", value: "#ff00b0", usage: "The seal. Focal accents only." },
+	{ name: "mw.color-ground", value: "#f6f7fb", usage: "Cool page ground. Charcoal 10.3:1, blue 7.9:1." },
+	{ name: "mw.color-surface", value: "#edf0fb", usage: "Panels: TOC, footer." },
+	{ name: "mw.color-sky", value: "#e6e9ff", usage: "Keys and the hero band. Charcoal 9.2:1, blue 7.0:1." },
+	{ name: "mw.color-rule", value: "#cfd4f0", usage: "Hairline rules." },
+	{ name: "mw.color-night", value: "#060b26", usage: "Dark page ground. Text 15.8:1." },
+	{ name: "mw.color-night-surface", value: "#0d1438", usage: "Dark panels." },
+	{ name: "mw.color-night-raised", value: "#161e4a", usage: "Dark keys and fills. Text 13.0:1." },
+	{ name: "mw.color-night-rule", value: "#28316a", usage: "Dark hairline rules." },
+	{ name: "mw.color-link-night", value: "#9a95ff", usage: "Dark links and primary fills. 6.2:1 or better." },
+	{ name: "mw.color-focus-night", value: "#b9b5ff", usage: "Dark focus ring." },
+]
+
+for (const token of Palette) {
+	variable(token.name, token.value)
+}
+
+const palette = new TokenIndex(Palette)
+
+/**
+ * Sets a role in both the default theme and the Paper scope (`data-theme="light"`), and optionally at night.
+ */
+const role = (name: string, paper: string, night?: string) => {
+	const value = (v: string) => (v.startsWith("{") ? ref(v.slice(1, -1)) : v)
+
+	variable(name, value(paper))
+	theme("light", (context) => context.variable(name, value(paper)))
+
+	if (night) theme("dark", (context) => context.variable(name, value(night)))
+}
+
+role("color.background", "{mw.color-ground}", "{mw.color-night}")
+role("color.background-surface", "{mw.color-surface}", "{mw.color-night-surface}")
+role("color.background-raised", "{color.white}", "{mw.color-night-raised}")
+role("color.rail", "{mw.color-sky}", "{mw.color-night-surface}")
+role("color.key", "{mw.color-sky}", "{mw.color-night-raised}")
+role("color.key-edge", "{mw.color-blue}", "{mw.color-link-night}")
+role("color.key-hover", "{color.white}", "{mw.color-night-rule}")
+role("color.key-current", "{color.white}", "{mw.color-night}")
+role("color.utility", "{color.white}", "{mw.color-night-raised}")
+role("color.rule", "{mw.color-rule}", "{mw.color-night-rule}")
+role("color.selected", "{mw.color-blue}")
+role("color.chrome", "{color.chrome-bar-active}", "{mw.color-night-surface}")
+role("color.chrome-inactive", "{color.chrome-bar}", "{mw.color-night-raised}")
+role("color.frame", "{color.chrome-edge}", "{mw.color-night-rule}")
+role("color.focus-ring", "{mw.color-blue}", "{mw.color-focus-night}")
+role("shadow.tile", "-6px 9px 0 rgba(26, 0, 255, 0.22)", "-6px 9px 0 rgba(154, 149, 255, 0.28)")
+role("shadow.tile-pressed", "-2px 3px 0 rgba(26, 0, 255, 0.22)", "-2px 3px 0 rgba(154, 149, 255, 0.28)")
+role("shadow.utility", "-6px 9px 0 rgba(0, 9, 58, 0.14)", "-6px 9px 0 rgba(0, 0, 0, 0.5)")
+role("shadow.utility-pressed", "-2px 3px 0 rgba(0, 9, 58, 0.14)", "-2px 3px 0 rgba(0, 0, 0, 0.5)")
+
+// The primary ladder is recomputed from Mailwoman blue with the shared theme's own arithmetic.
+const primary = (base: string) =>
+	dispositionTokens("primary", { ...DispositionSpecs.primary, base }, palette).filter(
+		({ name }) => !name.includes("-contrast-") && name !== "color.primary"
+	)
+const nightPrimary = new Map(primary("mw.color-link-night").map(({ name, value }) => [name, value]))
+
+role("color.primary", "{mw.color-blue}", "{mw.color-link-night}")
+
+for (const { name, value } of primary("mw.color-blue")) {
+	role(name, value, nightPrimary.get(name))
+}
+
+// #endregion
 
 // #region Confidence and stages
 

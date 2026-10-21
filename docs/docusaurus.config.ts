@@ -140,8 +140,12 @@ const config: Config = {
 		],
 	],
 
-	// The Sister Software brand: fonts, tokens, the Infima bridge, the classic-theme restyle, footer and code blocks.
-	themes: ["@sister.software/docusaurus-theme", "@docusaurus/theme-mermaid"],
+	// The Sister Software brand: fonts, the Infima bridge, the classic-theme restyle, footer and code blocks. Its tokens
+	// come from @mailwoman/react, the shared tokens with Mailwoman's blue product theme merged in.
+	themes: [
+		["@sister.software/docusaurus-theme", { tokens: "@mailwoman/react/tokens.css" }],
+		"@docusaurus/theme-mermaid",
+	],
 
 	markdown: {
 		mermaid: true,

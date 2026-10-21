@@ -6273,9 +6273,9 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.64.1"
-    "@sister.software/docusaurus-theme": "npm:^14.3.0"
-    "@sister.software/fonts": "npm:^14.3.0"
-    "@sister.software/theme": "npm:^14.3.0"
+    "@sister.software/docusaurus-theme": "npm:^14.4.0"
+    "@sister.software/fonts": "npm:^14.4.0"
+    "@sister.software/theme": "npm:^14.4.0"
     "@storybook/addon-docs": "npm:^10.6.2"
     "@storybook/react-vite": "npm:^10.6.2"
     "@types/node": "npm:^26.6.5"
@@ -6913,8 +6913,8 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    "@sister.software/fonts": "npm:^14.3.0"
-    "@sister.software/theme": "npm:^14.3.0"
+    "@sister.software/fonts": "npm:^14.4.0"
+    "@sister.software/theme": "npm:^14.4.0"
     "@storybook/addon-docs": "npm:^10.6.2"
     "@storybook/react-vite": "npm:^10.6.2"
     "@styleframe/core": "npm:^3.6.2"
@@ -10054,26 +10054,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/docusaurus-theme@npm:^14.3.0":
-  version: 14.3.0
-  resolution: "@sister.software/docusaurus-theme@npm:14.3.0"
+"@sister.software/docusaurus-theme@npm:^14.4.0":
+  version: 14.4.0
+  resolution: "@sister.software/docusaurus-theme@npm:14.4.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.3.0"
-    "@sister.software/theme": "npm:^14.3.0"
+    "@sister.software/fonts": "npm:^14.4.0"
+    "@sister.software/theme": "npm:^14.4.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     "@docusaurus/core": ^3.10.0
     "@docusaurus/theme-classic": ^3.10.0
     "@docusaurus/theme-common": ^3.10.0
     react: ^19.0.0
-  checksum: 10/da207dd47993b94ef457ce850dd63316b7af9abc30e50d875ed475b874d210c78fefcf52a3f313fa59b904085c164963e8cfe92064d1eb534416dd67d51e8fdc
+  checksum: 10/92cc32d2d74871108ed2cedb8f4217e3bb4f66cfe733220871859b5cf3040889237cb1c5932efce208f94e0ebed96ecd539637ca7275382c1403a293c990e181
   languageName: node
   linkType: hard
 
-"@sister.software/fonts@npm:^14.3.0":
-  version: 14.3.0
-  resolution: "@sister.software/fonts@npm:14.3.0"
-  checksum: 10/2ad78027d9959089814b8da4e7f096b87e37a9de7a42cff1db09ebc8ed8321d8734fd548f8491c9e4390a6393414b47b8e017b04c304922b5cdcb7d41d428c28
+"@sister.software/fonts@npm:^14.4.0":
+  version: 14.4.0
+  resolution: "@sister.software/fonts@npm:14.4.0"
+  checksum: 10/b1ce218677258d7175d0759e3ce9994736af9146128745b49ef090b091f4cf65fb2dbcaaed383b070d989ff6a12f59568b19772aa5d7639a136cea3edc609609
   languageName: node
   linkType: hard
 
@@ -10099,13 +10099,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/theme@npm:^14.3.0":
-  version: 14.3.0
-  resolution: "@sister.software/theme@npm:14.3.0"
+"@sister.software/theme@npm:^14.4.0":
+  version: 14.4.0
+  resolution: "@sister.software/theme@npm:14.4.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.3.0"
+    "@sister.software/fonts": "npm:^14.4.0"
     styleframe: "npm:^3.9.1"
-  checksum: 10/770775a50fb7402b86ff3a2c07570f11e7c0c0ead2c878dfc65c1e7fbbf7945d87e5175c8c748c904e8c35254b436e39e3e2e45e2a26cc92d66e66e4ab8d20c8
+  checksum: 10/8f7037d784ba4ce1ab0cda9144b6c94b42eed696d1723e681063fb581cffcde187e0143fcd45f3ca23ac602d1a578a1a9d1ab66ed067b36b41cc631b97bd3910
   languageName: node
   linkType: hard
 
