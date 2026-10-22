@@ -27,7 +27,7 @@ function prefixes(value: string): string[] {
 }
 
 async function readExamples(): Promise<Map<string, string[]>> {
-	const dir = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+	const dir = resolvePackageDirectory("@mailwoman/dictionaries")("data", "chromium-i18n", "ssl-address")
 	const examples = new Map<string, string[]>()
 
 	for (const country of COUNTRIES) {
