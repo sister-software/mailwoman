@@ -131,7 +131,7 @@ for (const file of await Globerator.files("json", {
 		patternLine.replaceAll("\t", "    ").length <= PRINT_WIDTH ? [patternLine] : [`\t\tpattern:`, `\t\t\t${pattern},`]
 
 	entries.push(
-		inline.replace("\t", "    ").length <= PRINT_WIDTH
+		inline.replaceAll("\t", "    ").length <= PRINT_WIDTH
 			? inline
 			: [`\t${code}: {`, ...patternLines, ...fields.map((field) => `\t\t${field},`), `\t},`].join("\n")
 	)
