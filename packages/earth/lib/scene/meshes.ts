@@ -96,8 +96,14 @@ export function loft(rings: readonly LoftRing[], builder = new MeshBuilder()): M
 	}
 
 	const cap = (section: LoftRing, up: boolean) => {
-		const center: RGB = [0, 0, section.z]
 		const n = section.ring.length
+
+		// The fan starts at the ring's centroid, so a ring offset from the mesh axis, such as a tower leg, caps correctly.
+		const center: RGB = [
+			section.ring.reduce((sum, [x]) => sum + x, 0) / n,
+			section.ring.reduce((sum, [, y]) => sum + y, 0) / n,
+			section.z,
+		]
 
 		for (let i = 0; i < n; i++) {
 			const p = section.ring[i]!
@@ -225,19 +231,42 @@ export function tokyoTowerMesh(): SceneMesh {
 	const white = hexRGB("#f4f1ea")
 	const deck = hexRGB("#c9ced3")
 
-	// Approximate half-width of the square section at each height.
+	const square = (half: number, cx = 0, cy = 0): Array<[number, number]> =>
+		regularRing(4, half * Math.SQRT2, Math.PI / 4).map(([x, y]) => [x + cx, y + cy])
+
+	const builder = new MeshBuilder()
+
+	// Four legs stand at the corners of the 80 m base and lean in to meet the body at 55 m,
+	// leaving the open arches between them.
+	for (const [sx, sy] of [
+		[1, 1],
+		[-1, 1],
+		[-1, -1],
+		[1, -1],
+	] as const) {
+		loft(
+			[
+				{ z: 0, ring: square(7, 33 * sx, 33 * sy), color: orange },
+				{ z: 30, ring: square(5.5, 25 * sx, 25 * sy), color: orange },
+				{ z: 55, ring: square(4.5, 17 * sx, 17 * sy), color: orange },
+			],
+			builder
+		)
+	}
+
+	// Approximate half-width of the square body at each height.
 	// The 80 m base and 333 m height are published.
+	// The bands above the top deck alternate orange and white, about 15 m each.
 	const profile: Array<[z: number, half: number, color: RGB]> = [
-		[0, 40, orange],
-		[30, 30, orange],
-		[60, 22, orange],
+		[50, 21.5, orange],
 		[100, 15, orange],
 		[125, 12, deck],
 		[145, 11, deck],
-		[150, 9, orange],
-		[175, 7.5, white],
-		[190, 6.5, orange],
-		[205, 5.8, white],
+		[150, 9, white],
+		[165, 8, orange],
+		[180, 7.2, white],
+		[195, 6.4, orange],
+		[210, 5.6, white],
 		[223, 5, deck],
 		[250, 4, orange],
 		[265, 3.2, white],
@@ -248,7 +277,8 @@ export function tokyoTowerMesh(): SceneMesh {
 	]
 
 	return loft(
-		profile.map(([z, half, color]) => ({ z, ring: regularRing(4, half * Math.SQRT2, Math.PI / 4), color }))
+		profile.map(([z, half, color]) => ({ z, ring: square(half), color })),
+		builder
 	).build()
 }
 
