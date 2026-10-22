@@ -51,6 +51,8 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/structures": "workspace:*",
 		"@mailwoman/universe": "workspace:*",
+		"@math.gl/core": "4.1.0",
+		"@math.gl/geospatial": "4.1.0",
 		"mailwoman": "workspace:*",
 		"maplibre-gl": "^6.14.0",
 		"onnxruntime-web": "1.30.0",

@@ -38,6 +38,13 @@ export interface PlateauTileset {
 	 * The tileset root's extent as `[west, south, east, north]` in degrees.
 	 */
 	bounds: [number, number, number, number]
+	/**
+	 * The geoid height in meters at the center of `bounds`, from GSI's Japanese geoid model.
+	 *
+	 * PLATEAU writes building heights above the WGS84 ellipsoid. A map that draws the ground at
+	 * 0 m lowers the tileset by this value so the buildings stand on the ground.
+	 */
+	geoidHeight: number
 }
 
 /**
