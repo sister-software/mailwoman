@@ -9,7 +9,7 @@ import type { ExpressionSpecification, LayerSpecification } from "maplibre-gl"
 
 import { BuildingLayers } from "#base/buildings"
 import { InfrastructureLayers } from "#base/infrastructure"
-import { OceanLayers } from "#base/ocean"
+import { OceanCoastLayers, OceanFloorLayers } from "#base/ocean"
 import { HillshadeTileSetID } from "#base/terrain"
 import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
@@ -295,16 +295,43 @@ const OneWayArrowLayer: LayerSpecification = {
 }
 
 /**
- * The Protomaps water fill, which the ocean layers follow.
+ * The Protomaps land fill, which the ocean floor layers precede.
+ */
+const EARTH_FILL_LAYER_ID = "earth"
+
+/**
+ * The Protomaps water fill, which the coast glow follows.
  */
 const WATER_FILL_LAYER_ID = "water"
+
+/**
+ * Places the ocean layers around the Protomaps fills.
+ *
+ * The sea floor draws under the land fill, and the water fill leaves the ocean clear
+ * so the depth shading shows.
+ * Lakes and rivers keep the water fill.
+ */
+function withOceanLayers(layer: LayerSpecification): LayerSpecification[] {
+	if (layer.id === EARTH_FILL_LAYER_ID) return [...OceanFloorLayers, layer]
+
+	if (layer.id !== WATER_FILL_LAYER_ID || layer.type !== "fill") return [layer]
+
+	const oceanClear: LayerSpecification = {
+		...layer,
+		paint: {
+			...layer.paint,
+			"fill-color": ["case", ["==", ["get", "kind"], "ocean"], "rgba(0, 0, 0, 0)", GuideMapPalette.water],
+		},
+	}
+
+	return [oceanClear, ...OceanCoastLayers]
+}
 
 /**
  * The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries.
  */
 export const BaseLayers: LayerSpecification[] = [
-	// The ocean's depth shading sits directly over the water fill, under roads and land cover drawn after it.
-	...nonLabelLayers.flatMap((layer) => (layer.id === WATER_FILL_LAYER_ID ? [layer, ...OceanLayers] : [layer])),
+	...nonLabelLayers.flatMap(withOceanLayers),
 	{
 		id: LayerID(MailwomanBaseTileSetID, "water-outline"),
 		type: "line",

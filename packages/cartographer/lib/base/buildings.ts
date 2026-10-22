@@ -11,7 +11,6 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { GuideMapPalette, MailwomanBaseTileSetID } from "#base/theme"
-import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
@@ -102,27 +101,6 @@ export const BuildingLayers: LayerSpecification[] = [
 			"line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 1],
 			"line-color": BUILDING_EDGE,
 			"line-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, ["case", isModeled, 0, 0.8]],
-		},
-	},
-
-	{
-		id: "basemap-buildings-kind",
-		type: "symbol",
-		source: MailwomanBaseTileSetID,
-		"source-layer": "buildings",
-		minzoom: 11,
-		layout: {
-			visibility: "none",
-			"text-field": ["to-string", ["id"]],
-			"text-offset": [0, 0],
-			"text-anchor": "center",
-			"text-font": [MAP_FONT_REGULAR],
-		},
-
-		paint: {
-			"text-color": "black",
-			"text-halo-color": "red",
-			"text-halo-width": 1,
 		},
 	},
 ]

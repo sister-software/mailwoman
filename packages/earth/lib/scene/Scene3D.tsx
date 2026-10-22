@@ -82,9 +82,24 @@ const CITY_MODELS = electedPlateauTilesets(
 )
 
 /**
- * The zoom from which the city models draw, where a building spans enough pixels for its roof to read.
+ * The zoom from which the city models load and start to fade in.
  */
-const CITY_MODEL_MIN_ZOOM = 15
+const CITY_MODEL_MIN_ZOOM = 14.5
+
+/**
+ * The zoom at which the city models are opaque and replace the extruded footprints they cover.
+ */
+const CITY_MODEL_OPAQUE_ZOOM = 15.5
+
+/**
+ * The city models' opacity at a zoom, in steps of 0.1 so a zoom gesture redraws
+ * the overlay at most ten times.
+ */
+function cityModelOpacity(zoom: number): number {
+	const ramp = (zoom - CITY_MODEL_MIN_ZOOM) / (CITY_MODEL_OPAQUE_ZOOM - CITY_MODEL_MIN_ZOOM)
+
+	return Math.round(Math.min(Math.max(ramp, 0), 1) * 10) / 10
+}
 
 /**
  * Tileset options that lower a tileset by its geoid height along the local vertical.
@@ -308,9 +323,11 @@ export const Scene3D: React.FC = () => {
 			}
 
 			const cityModels = cityModelsInView(map)
-			const cityModelKey = cityModels.map((tileset) => tileset.url).join(" ")
+			const opacity = cityModelOpacity(map.getZoom())
+			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
 
-			markModeledFootprints(map, cityModels, modeledFootprints)
+			// While the models fade in, the footprints under them stay drawn, so the two cross-fade.
+			markModeledFootprints(map, opacity === 1 ? cityModels : [], modeledFootprints)
 
 			if (!changed && drawnSize === trees.size && drawnCityModels === cityModelKey) return
 			changed = false
@@ -384,6 +401,7 @@ export const Scene3D: React.FC = () => {
 								data: tileset.url,
 								loader: Tiles3DLoader,
 								loadOptions: loadOptionsFor(tileset),
+								opacity,
 							})
 					),
 				],
@@ -402,14 +420,28 @@ export const Scene3D: React.FC = () => {
 			}
 		}
 
+		let scheduledOpacity = cityModelOpacity(map.getZoom())
+
+		// A zoom gesture redraws the overlay only when the city models' opacity crosses a step.
+		const scheduleFade = () => {
+			const opacity = cityModelOpacity(map.getZoom())
+
+			if (opacity !== scheduledOpacity) {
+				scheduledOpacity = opacity
+				schedule()
+			}
+		}
+
 		schedule()
 		map.on("sourcedata", schedule)
 		map.on("moveend", schedule)
+		map.on("zoom", scheduleFade)
 
 		return () => {
 			cancelAnimationFrame(frame)
 			map.off("sourcedata", schedule)
 			map.off("moveend", schedule)
+			map.off("zoom", scheduleFade)
 		}
 	}, [map, overlay, meshes])
 

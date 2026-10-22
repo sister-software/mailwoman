@@ -4,13 +4,29 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LayerSpecification } from "@maplibre/maplibre-gl-style-spec"
+import type { GeoJSONSourceSpecification, LayerSpecification } from "@maplibre/maplibre-gl-style-spec"
 
 import { BathymetryTileSetID } from "#base/terrain"
 import { GuideMapPalette, MailwomanBaseTileSetID } from "#base/theme"
 import { LayerID } from "#styles/layers"
+import { TileSetSourceID } from "#styles/sources"
 
 const OceanLayerID = LayerID.bind(null, MailwomanBaseTileSetID)
+
+/**
+ * Identifier for the coarse land source drawn while basemap tiles load.
+ */
+export const LandUnderlayTileSetID = TileSetSourceID("land-underlay")
+
+/**
+ * Creates the coarse land source: Natural Earth's 1:110m land polygons, rounded to two decimal places.
+ *
+ * The file is 87 KB, so it arrives before the basemap tiles and the globe shows
+ * its continents from the first frame.
+ */
+export function createLandUnderlaySource(): GeoJSONSourceSpecification {
+	return { type: "geojson", data: "https://public.mailwoman.ai/natural-earth/land-110m.json" }
+}
 
 /**
  * Colors of the sea floor by depth, from the shelf to the abyssal plain.
@@ -30,15 +46,16 @@ export const OceanPalette = {
 } as const
 
 /**
- * The ocean's depth shading, drawn over the water fill.
+ * The ocean's depth shading, drawn under the land fill.
  *
  * The terrain tiles carry bathymetry from ETOPO1, so elevation below zero is the sea floor.
- * - `ocean-depth` colors the water by depth with a `color-relief` layer.
- *   It is transparent at zero and above, so land and inland water keep their own fills.
+ * The bathymetry ends at z10 and is stretched beyond it, so its coastline misses reclaimed land.
+ *
+ * The land fill drawn over these layers decides the coast instead.
+ * - `ocean-depth` colors the sea by depth with a `color-relief` layer.
  * - `ocean-floor` shades the sea floor's relief up to z7, where the land hillshade takes over.
- * - `ocean-coast-glow` draws a pale blurred line along the ocean's edge.
  */
-export const OceanLayers: LayerSpecification[] = [
+export const OceanFloorLayers: LayerSpecification[] = [
 	{
 		id: OceanLayerID("ocean-depth"),
 		type: "color-relief",
@@ -61,8 +78,6 @@ export const OceanLayers: LayerSpecification[] = [
 				OceanPalette.shelf,
 				-1,
 				GuideMapPalette.water,
-				0,
-				"rgba(0, 0, 0, 0)",
 			],
 		},
 	},
@@ -78,6 +93,19 @@ export const OceanLayers: LayerSpecification[] = [
 			"hillshade-accent-color": OceanPalette.deep,
 		},
 	},
+	// The basemap's land fill covers this layer once its tiles load.
+	{
+		id: OceanLayerID("land-underlay"),
+		type: "fill",
+		source: LandUnderlayTileSetID,
+		paint: { "fill-color": GuideMapPalette.ground },
+	},
+]
+
+/**
+ * The pale blurred line along the ocean's edge, drawn over the water fill.
+ */
+export const OceanCoastLayers: LayerSpecification[] = [
 	{
 		id: OceanLayerID("ocean-coast-glow"),
 		type: "line",
