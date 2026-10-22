@@ -121,40 +121,29 @@ export const Scene3D: React.FC = () => {
 	useEffect(() => {
 		if (!map) return
 
-		// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
-		// Hiding them only when the loaded tiles held points switched them back on during tile loads.
-		for (const layer of TreeLayers) {
-			if (map.getLayer(layer.id)) {
-				map.setLayoutProperty(layer.id, "visibility", "none")
-			}
-		}
-
-		// Interleaved deck.gl layers join the end of MapLibre's layer list unless they name a `beforeId`.
-		// Inserting them before the first symbol layer keeps every label drawn above the meshes.
-		// `@deck.gl/mapbox` reads the prop from every layer but declares it in a type its index does
-		// not export, so it is spread in from this object rather than written as a typed layer prop.
-		const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
-
-		const landmarkLayers = meshes.landmarks.map(
-			(landmark) =>
-				new SimpleMeshLayer({
-					id: `landmark-${landmark.id}`,
-					...placement,
-					data: [landmark],
-					mesh: landmark.mesh,
-					getPosition: (d: typeof landmark) => d.position,
-					getColor: [255, 255, 255],
-					coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-					material: { ambient: 0.55, diffuse: 0.6, shininess: 24, specularColor: [40, 40, 40] },
-				})
-		)
-
 		// A layer or overlay change repaints the map, and the repaint fires `idle` again.
 		// An update whose tree set matches the last one returns early.
 		// That early return ends the cycle.
 		let lastSignature: string | null = null
 
+		// Every read of the style waits for it to load.
+		// Before then `getStyle()` returns no layers, and a throw here unmounts the whole app.
 		const update = () => {
+			if (!map.isStyleLoaded()) return
+
+			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
+			for (const layer of TreeLayers) {
+				if (map.getLayer(layer.id) && map.getLayoutProperty(layer.id, "visibility") !== "none") {
+					map.setLayoutProperty(layer.id, "visibility", "none")
+				}
+			}
+
+			// Interleaved deck.gl layers join the end of MapLibre's layer list unless they name a `beforeId`.
+			// Inserting them before the first symbol layer keeps every label drawn above the meshes.
+			// `@deck.gl/mapbox` reads the prop from every layer but declares it in a type its index does not
+			// export, so it is spread in from this object rather than written as a typed layer prop.
+			const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
+
 			const trees = map.getZoom() >= TREE_MIN_ZOOM ? readTrees(map) : { broadleaf: [], conifer: [] }
 			const first = trees.broadleaf[0] ?? trees.conifer[0]
 			const signature = `${trees.broadleaf.length}:${trees.conifer.length}:${first?.position.join(",") ?? ""}`
@@ -179,6 +168,20 @@ export const Scene3D: React.FC = () => {
 					material: { ambient: 0.6, diffuse: 0.55, shininess: 8, specularColor: [20, 20, 20] },
 					updateTriggers: { getColor: data.length },
 				})
+
+			const landmarkLayers = meshes.landmarks.map(
+				(landmark) =>
+					new SimpleMeshLayer({
+						id: `landmark-${landmark.id}`,
+						...placement,
+						data: [landmark],
+						mesh: landmark.mesh,
+						getPosition: (d: typeof landmark) => d.position,
+						getColor: [255, 255, 255],
+						coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+						material: { ambient: 0.55, diffuse: 0.6, shininess: 24, specularColor: [40, 40, 40] },
+					})
+			)
 
 			overlay.setProps({
 				layers: [

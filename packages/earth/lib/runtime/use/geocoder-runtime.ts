@@ -174,7 +174,7 @@ function modelDisabled(): boolean {
  * before it is published through the tile worker.
  */
 function basemapSourceURL(configured: URL): string {
-	const candidate = typeof location !== "undefined" ? new URLSearchParams(location.search).get("basemap") : null
+	const candidate = basemapBuildURL()
 
 	if (!candidate) return String(configured)
 
@@ -187,6 +187,29 @@ function basemapSourceURL(configured: URL): string {
 }
 
 let pmtilesProtocolRegistered = false
+
+/**
+ * The `?basemap=` PMTiles URL of a `mailwoman/basemaps` build, or null
+ * when the page loads the configured basemap.
+ */
+function basemapBuildURL(): string | null {
+	return typeof location !== "undefined" ? new URLSearchParams(location.search).get("basemap") : null
+}
+
+/**
+ * Whether the page loads a `mailwoman/basemaps` build through `?basemap=`
+ * rather than the configured basemap.
+ */
+export function loadsBasemapBuild(): boolean {
+	return basemapBuildURL() !== null
+}
+
+/**
+ * Source layers only a `mailwoman/basemaps` build holds.
+ *
+ * The configured Protomaps tiles lack them, and MapLibre logs an error for every style layer that reads one.
+ */
+const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 	if (modelDisabled()) return Promise.resolve(null)
@@ -225,15 +248,22 @@ export function useGeocoderRuntime({
 		}
 	}, [rt.selectedVersion])
 
-	const mapStyle = useMemo<MapCanvasStyle>(
-		() =>
-			new StyleSpecificationComposer({
-				sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
-				light: GuideMapLight,
-				sky: GuideMapSky,
-			}).toJSON(),
-		[config.basemapTileJSONURL]
-	)
+	const mapStyle = useMemo<MapCanvasStyle>(() => {
+		const style = new StyleSpecificationComposer({
+			sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
+			light: GuideMapLight,
+			sky: GuideMapSky,
+		}).toJSON()
+
+		if (loadsBasemapBuild()) return style
+
+		return {
+			...style,
+			layers: style.layers.filter(
+				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
+			),
+		}
+	}, [config.basemapTileJSONURL])
 
 	/*
 	 * These callbacks read `rt.assets` and name it as a dependency.

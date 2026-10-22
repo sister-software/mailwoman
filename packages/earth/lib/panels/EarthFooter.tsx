@@ -13,14 +13,13 @@ import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 
+import { loadsBasemapBuild } from "#runtime/use/geocoder-runtime"
+
 /**
  * The basemap the page loads: a `?basemap=` link loads a `mailwoman/basemaps` build,
  * and the page otherwise loads the Protomaps v4 planet build.
  */
-const LOADED_BASEMAP =
-	typeof location !== "undefined" && new URLSearchParams(location.search).has("basemap")
-		? Basemap.MailwomanBuild
-		: Basemap.ProtomapsV4
+const LOADED_BASEMAP = loadsBasemapBuild() ? Basemap.MailwomanBuild : Basemap.ProtomapsV4
 
 /**
  * The credits for every source the map draws from: the loaded basemap's inputs
