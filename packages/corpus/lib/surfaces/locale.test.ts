@@ -256,9 +256,9 @@ describe("withRegion: the region in the native order (#2676)", () => {
 
 		if (aligned.kind !== "labeled") throw new Error(`expected a labeled row for ${row.raw}`)
 
-		const span_starts = aligned.row.span_starts ?? []
-		const span_ends = aligned.row.span_ends ?? []
-		const span_tags = aligned.row.span_tags ?? []
+		const { span_starts, span_ends, span_tags } = aligned.row
+
+		if (!span_starts || !span_ends || !span_tags) throw new Error(`expected aligned spans for ${row.raw}`)
 
 		return Object.fromEntries(span_tags.map((tag, i) => [tag, row.raw.slice(span_starts[i], span_ends[i])]))
 	}
