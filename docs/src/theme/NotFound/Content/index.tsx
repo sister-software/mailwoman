@@ -32,7 +32,7 @@ const DESTINATIONS: readonly Destination[] = [
 		blurb: "What Mailwoman is, installed and parsing in ten minutes.",
 	},
 	{
-		to: "/docs/pricing",
+		to: "/pricing",
 		label: "Pricing",
 		blurb: "Free under the AGPL, or a flat commercial license.",
 	},

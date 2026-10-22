@@ -136,8 +136,7 @@ const sidebars: SidebarsConfig = {
 		"developers/status",
 		"developers/support",
 	],
-	// The root-level pricing page lives here and is also linked from the navbar.
-	about: ["about/mission", "about/security-and-compliance", "about/contact", "pricing"],
+	about: ["about/mission", "about/security-and-compliance", "about/contact"],
 	resources: [
 		{
 			type: "category",

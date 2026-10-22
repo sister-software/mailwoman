@@ -116,8 +116,8 @@ const config: Config = {
 			{
 				redirects: [
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
-					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses.
-					{ from: "/pricing", to: "/docs/pricing" },
+					// Pricing moved out of the docs to a page of its own.
+					{ from: "/docs/pricing", to: "/pricing" },
 					// The license page is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },
 				],
@@ -279,9 +279,8 @@ const config: Config = {
 					label: "About",
 				},
 				{
-					// Direct doc link rather than a sidebar: pricing lives in the `about` sidebar
-					// for nav-tree membership, but a reader looking for the price wants one click.
-					to: "/docs/pricing",
+					// A page of its own, outside the docs.
+					to: "/pricing",
 					label: "Pricing",
 					position: "left",
 				},
@@ -315,7 +314,7 @@ const config: Config = {
 				{
 					title: "More",
 					items: [
-						{ label: "Pricing", to: "/docs/pricing" },
+						{ label: "Pricing", to: "/pricing" },
 						{ label: "License", to: "/license" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },

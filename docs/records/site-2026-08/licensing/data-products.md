@@ -341,7 +341,7 @@ country instead, so those rows take the register's terms. The model card now rea
 ## See also
 
 - [Data licensing & provenance](./data-provenance.md): the per-source license table, the ODbL boundary, and what counsel still needs to confirm.
-- [Engine tiers and OEM pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
+- [Engine tiers and OEM pricing](https://mailwoman.ai/pricing): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
 - [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx): the schema every layer database embeds, and the source of the tier vocabulary on this page.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx): the worked build/verify/publish example.
 - [Data, locales, and coverage](../concepts/data-locales-and-coverage.mdx): the same layers, described by what they can and cannot resolve.

@@ -76,7 +76,7 @@ function Fork(): ReactNode {
 							</p>
 							<code className={styles.cardTransform}>2M addresses/month · $250 · 20M addresses/month · $250</code>
 							<p className={styles.cardLinks}>
-								<Link to="/docs/pricing">See the pricing →</Link>
+								<Link to="/pricing">See the pricing →</Link>
 							</p>
 						</div>
 					</div>
@@ -215,7 +215,7 @@ function FeatureStrip(): ReactNode {
 						<p>
 							Parsed components resolve to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs and
 							WGS-84 coordinates over pre-indexed SQLite. It uses only <code>node:sqlite</code>, without SpatiaLite or a
-							native build step. The gazetteer is a 1.65 GB download you keep, not a service you call.
+							native build step. The gazetteer is a 2.88 GB download you keep, not a service you call.
 						</p>
 					</div>
 					<div className="col col--3">
