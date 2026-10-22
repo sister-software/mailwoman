@@ -29,13 +29,8 @@ export const InfrastructurePalette = {
 	cistern: "#3d7fd6",
 	defibrillator: "#2f9e5b",
 	structure: "#e6e2d8",
-	/**
-	 * Japanese post boxes are red.
-	 */
-	postBox: "#d6312b",
 	signal: "#e3a019",
 	streetLamp: "#c9b458",
-	furniture: "#9a7b5f",
 	kerb: "#b4afa5",
 	crosswalk: "#ffffff",
 	bikeLane: "#3a8fd6",
@@ -215,11 +210,7 @@ export const InfrastructureLayers: LayerSpecification[] = [
 		filter: [
 			"all",
 			isPoint,
-			[
-				"in",
-				["get", "kind"],
-				["literal", ["emergency", "barrier", "water", "man_made", "highway", "amenity", "leisure", "power"]],
-			],
+			["in", ["get", "kind"], ["literal", ["emergency", "barrier", "water", "man_made", "highway", "power"]]],
 		],
 		paint: {
 			"circle-color": [
@@ -233,18 +224,12 @@ export const InfrastructureLayers: LayerSpecification[] = [
 				InfrastructurePalette.defibrillator,
 				["water_tower", "storage_tank", "pumping_station"],
 				InfrastructurePalette.waterNetwork,
-				"post_box",
-				InfrastructurePalette.postBox,
 				["traffic_signals", "stop", "give_way", "speed_camera", "traffic_mirror"],
 				InfrastructurePalette.signal,
 				"street_lamp",
 				InfrastructurePalette.streetLamp,
-				["bench", "picnic_table", "waste_basket", "recycling", "bicycle_parking", "vending_machine"],
-				InfrastructurePalette.furniture,
 				["pole", "utility_pole", "manhole"],
 				InfrastructurePalette.power,
-				["drinking_water", "telephone"],
-				InfrastructurePalette.cistern,
 				InfrastructurePalette.wall,
 			],
 			"circle-radius": ["interpolate", ["linear"], ["zoom"], 16, 1.5, 19, 3.5],
