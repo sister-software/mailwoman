@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { tokyoSkytreeMesh, tokyoTowerMesh, type SceneMesh } from "./meshes.ts"
+import { tokyoSkytreeMesh, tokyoTowerMesh, type SceneMesh } from "#scene/meshes"
 
 function vertices(mesh: SceneMesh): Array<[number, number, number]> {
 	const values = mesh.attributes.positions.value
