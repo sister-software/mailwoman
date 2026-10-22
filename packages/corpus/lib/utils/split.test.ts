@@ -377,18 +377,23 @@ describe("defaultHoldouts", () => {
 		// The `split.ts` comment records the evidence used to set these prefixes.
 		const gb = policyOf(defaultHoldouts().GB)
 
-		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
+		expect(gb.postcodePrefixes?.slice(0, 2)).toEqual(["TR", "HX"])
+		// The LL area is held out by district rather than whole (Conwy, Wrecsam and Sir Ddinbych lie inside it).
+		expect(gb.postcodePrefixes).not.toContain("LL")
+		expect(gb.postcodePrefixes?.filter((prefix) => prefix.startsWith("LL")).every((p) => /^LL\d{2}$/u.test(p))).toBe(
+			true
+		)
 		expect(gb.regions).toBeUndefined()
 	})
 
-	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
+	it("gives every GB prefix at least two letters, so one area cannot swallow another", () => {
 		// `L` is Liverpool and `LL` is Llandudno.
 		// A one-letter prefix uses `startsWith`, so `L` would match Liverpool and Llandudno.
 		// That would exceed the reviewed holdout size.
 		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
 
 		for (const prefix of prefixes) {
-			expect(prefix).toHaveLength(2)
+			expect(prefix).toMatch(/^[A-Z]{2}(\d{2})?$/u)
 		}
 
 		for (const prefix of prefixes) {
@@ -444,7 +449,9 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		})
 
 		expect(splitForRow(gbRow("gb-truro", "TR1 2LS"))).not.toBe("train")
-		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-bangor", "LL57 2DG"))).not.toBe("train")
+		// The LL area is held out by district, so Llandudno's LL30 trains.
+		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).toBe("train")
 		expect(splitForRow(gbRow("gb-halifax", "HX1 1UG"))).not.toBe("train")
 
 		expect(splitForRow(gbRow("gb-london", "SW1A 1AA"))).toBe("train")

@@ -535,4 +535,26 @@ CORPUS_VERSIONS: dict[str, CorpusVersion] = {
             "corpus/versioned/v0.8.0-store/store/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.parquet",
         ),
     ),
+    # The v0.8.2 manifest lists the v0.8.0 store, v0.8.0 and v0.8.1 files at their own paths and adds the rebuilt
+    # rendered-gb-os-open and rendered-de files and every split attribute under corpus/versioned/v0.8.2/corpus-v0.8.2/,
+    # so it stages all four directories.
+    "v820_base": CorpusVersion(
+        copies=(
+            mirror("corpus-python/src/", flags=STEADY),
+            corpus("v0.8.0-store", FLAT, flags=STEADY),
+            corpus("v0.8.0", WRAPPED, flags=STEADY),
+            corpus("v0.8.1", WRAPPED, flags=STEADY),
+            corpus("v0.8.2", WRAPPED, flags=STEADY),
+        ),
+        pycache=PACKAGE_AND_CONFIGS,
+        checks=(
+            "corpus-python/src/mailwoman_train/configs/v8.2.0-base-60k.yaml",
+            "corpus/versioned/v0.8.2/corpus-v0.8.2/MANIFEST.json",
+            "corpus/versioned/v0.8.2/corpus-v0.8.2/rendered-gb-os-open.parquet",
+            "corpus/versioned/v0.8.2/corpus-v0.8.2/attributes/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.split.b79af048f668262ed4aecf8d81ea773b868977875466c0c9832263a872a8889a.json",
+            "corpus/versioned/v0.8.1/corpus-v0.8.1/usgov-imls-pls-40e826ff-distinct.parquet",
+            "corpus/versioned/v0.8.0/corpus-v0.8.0/ads.parquet",
+            "corpus/versioned/v0.8.0-store/store/ban/b066097abea16801a7232a1c5a6571016cfb9beac13f26e0119bcd59e8bcc434/data.parquet",
+        ),
+    ),
 }

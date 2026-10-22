@@ -18,6 +18,7 @@ import { afterAll, describe, expect, it } from "vitest"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
+	chooseRegionName,
 	cleanCityNoise,
 	type LocaleCountrySource,
 	type LocalePart,
@@ -422,5 +423,47 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 
 	it("override false: always the default parts, even when pedaniaParts exists", () => {
 		expect(resolveLocaleParts(esLikeSource, false)).toBe(defaultParts)
+	})
+})
+
+describe("chooseRegionName", () => {
+	const counting = (values: number[]) => {
+		let draws = 0
+
+		return { random: () => values[draws++ % values.length]!, draws: () => draws }
+	}
+
+	it("writes one name when both halves of the pair are equal, drawing nothing", () => {
+		const rng = counting([0.1])
+
+		expect(chooseRegionName("Gwynedd - Gwynedd", " - ", rng.random)).toBe("Gwynedd")
+		expect(rng.draws()).toBe(0)
+	})
+
+	it("writes the Welsh or the English half of a pair by one draw", () => {
+		const rng = counting([0.2, 0.8])
+
+		expect(chooseRegionName("Caerdydd - Cardiff", " - ", rng.random)).toBe("Caerdydd")
+		expect(chooseRegionName("Caerdydd - Cardiff", " - ", rng.random)).toBe("Cardiff")
+		expect(rng.draws()).toBe(2)
+	})
+
+	it("returns a region without the separator unchanged, drawing nothing", () => {
+		const rng = counting([0.1])
+
+		expect(chooseRegionName("Norfolk", " - ", rng.random)).toBe("Norfolk")
+		expect(chooseRegionName("Stratford-on-Avon", " - ", rng.random)).toBe("Stratford-on-Avon")
+		expect(rng.draws()).toBe(0)
+	})
+
+	it("is deterministic for a seeded generator and writes each half", () => {
+		const names = (seed: number) => {
+			const random = makeMulberry32(seed)
+
+			return Array.from({ length: 200 }, () => chooseRegionName("Abertawe - Swansea", " - ", random))
+		}
+
+		expect(names(7)).toEqual(names(7))
+		expect(new Set(names(7))).toEqual(new Set(["Abertawe", "Swansea"]))
 	})
 })

@@ -115,6 +115,13 @@ export interface LocaleCountrySource {
 	 */
 	regionFraction?: number
 	/**
+	 * The separator between the two languages of a region name the source writes as a pair,
+	 * such as `Caerdydd - Cardiff`, read by {@linkcode chooseRegionName}.
+	 *
+	 * @defaultValue absent: the region is written as the source writes it.
+	 */
+	regionPairSeparator?: string
+	/**
 	 * The dataset and terms the row's `license` names, before the rendering order.
 	 *
 	 * @defaultValue `OpenAddresses <CC> tuples`
@@ -211,6 +218,9 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// or constituent country. The run skips a row whose text it already wrote (#2765), and a row with a
 		// region rarely repeats, so 5.7% of draws yields 6.6% of written rows.
 		regionFraction: 0.057,
+		// OS Open Names writes a Welsh county as `<Welsh> - <English>`, as in `Caerdydd - Cardiff`
+		// or `Gwynedd - Gwynedd`, and an address writes one of the two.
+		regionPairSeparator: " - ",
 		// The adapter's rows carry no region.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
@@ -557,6 +567,28 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 }
 
 /**
+ * The one name a row writes for a region the source writes as a pair of names joined by `separator`.
+ *
+ * Two equal halves give that name without a draw.
+ * Two different halves give one of them, chosen by one draw from `random`.
+ * A region without the separator is returned as it is.
+ */
+export function chooseRegionName(region: string, separator: string, random: () => number): string {
+	const at = region.indexOf(separator)
+
+	if (at === -1) return region
+
+	const first = region.slice(0, at).trim()
+	const second = region.slice(at + separator.length).trim()
+
+	if (!first || !second) return first || second || region
+
+	if (first === second) return first
+
+	return random() < 0.5 ? first : second
+}
+
+/**
  * The locale recipe registered with the corpus builder.
  */
 export const localeRecipe: CorpusRecipe = {
@@ -657,7 +689,15 @@ export const localeRecipe: CorpusRecipe = {
 					: undefined
 
 			const withRegion = regionFraction > 0 && regionRandom() < regionFraction
-			const synth = renderLocaleRow(base, country, { random, nativeHouseJoin, postcodeShape, withRegion })
+			// The name is drawn from the region generator, so the rendering draws stay as they were.
+			const separator = countrySource.regionPairSeparator
+
+			const rowBase =
+				withRegion && separator && base.region
+					? { ...base, region: chooseRegionName(base.region, separator, regionRandom) }
+					: base
+
+			const synth = renderLocaleRow(rowBase, country, { random, nativeHouseJoin, postcodeShape, withRegion })
 
 			if (!synth) {
 				skipped++

@@ -129,11 +129,30 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		// and Cornwall, left the table.
 		// FR: Corse 20, Creuse 23 and Lozère 48.
 		// DE: area 02, Upper Lusatia in eastern Sachsen.
-		// GB: Truro, Llandudno and Halifax.
-		// Each prefix has two letters and none is a prefix of another.
+		// GB: the Truro and Halifax areas, and ten districts of the Llandudno area.
+		// The whole LL area held 75% of the rendered rows naming Conwy, 74% of Wrecsam's and 67% of
+		// Sir Ddinbych's, so its districts were chosen by the method above, with the cap read for every
+		// region the v0.8.2 GB rows name, these Welsh counties carrying under 100 region rows each.
+		// No prefix is a prefix of another, and no district key is a prefix of another district.
 		FR: { postcodePrefixes: ["20", "23", "48"] },
 		DE: { postcodePrefixes: ["02"] },
-		GB: { postcodePrefixes: ["TR", "LL", "HX"] },
+		GB: {
+			postcodePrefixes: [
+				"TR",
+				"HX",
+				"LL15",
+				"LL17",
+				"LL21",
+				"LL26",
+				"LL36",
+				"LL40",
+				"LL41",
+				"LL53",
+				"LL54",
+				"LL55",
+				"LL57",
+			],
+		},
 		// Three-digit ZIP areas.
 		US: {
 			postcodePrefixes: [
