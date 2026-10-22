@@ -12,7 +12,6 @@
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
 
 import { permittedByGrant } from "#grants"
-import { RESEARCH_HANDOFF_NOTE } from "#research"
 import { StructureDetail, type StructureOperation, type StructureSource } from "#types"
 
 /**
@@ -46,6 +45,8 @@ export const DE_SOURCES: readonly StructureSource[] = [
 		detail: [StructureDetail.LoD2],
 		formats: ["CityGML"],
 		license: "de-be-lod2",
+		attribution: "Geoportal Berlin / 3D-Gebäudemodelle im Level of Detail 2 (LoD 2), dl-de/zero-2-0",
+		attributionURL: "https://gdi.berlin.de/data/a_lod2/atom/",
 		note: "Berlin's photogrammetric mesh is a different distribution, and this decision does not cover it.",
 	},
 ]
@@ -75,8 +76,19 @@ export const DE_LICENSES: readonly LicenseDecision<StructureOperation>[] = [
 	},
 	{
 		licenseID: "de-be-lod2",
-		state: LicenseReviewState.Unchecked,
-		publisherStatement: "Datenlizenz Deutschland – Zero – Version 2.0",
-		note: RESEARCH_HANDOFF_NOTE,
+		state: LicenseReviewState.Elected,
+		electedTerms: "Datenlizenz Deutschland – Zero – Version 2.0",
+		spdx: "DL-DE-ZERO-2.0",
+		retrievedCopy: "packages/structures/data/licenses/de-be-lod2.md",
+		retrievedAt: "2026-10-22",
+		electedBecause: "The publisher's Atom download feed states DL-DE Zero 2.0 for the data.",
+		operations: permittedByGrant({
+			fetch: 'DL-DE Zero 2.0: "Any use is permitted without restrictions or conditions."',
+			convert: 'DL-DE Zero 2.0 permits data to be "altered, processed and transmitted to third parties".',
+			adapt: "DL-DE Zero 2.0 permits altering, processing and combining into new datasets.",
+			redistribute: "DL-DE Zero 2.0 permits transmission to third parties without conditions.",
+			"commercial-sublicense":
+				'DL-DE Zero 2.0 permits integration "in internal and external business processes, products and applications".',
+		}),
 	},
 ]

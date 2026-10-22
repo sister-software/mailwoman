@@ -208,7 +208,8 @@ export const INTERNATIONAL_LICENSES: readonly LicenseDecision<StructureOperation
 		retrievedCopy: `${TERMS}/international-daylight.md`,
 		retrievedAt: RETRIEVED_AT,
 		electedBecause:
-			"The attribution page states the ODbL for the distribution. ESA's own WorldCover terms were not retrieved.",
+			"The attribution page states the ODbL for the distribution. Its landcover derives from ESA WorldCover 2020, " +
+			"which ESA releases under CC BY 4.0 (packages/structures/data/licenses/international-esa-worldcover.md).",
 		operations: permittedByGrant({
 			fetch: "The ODbL grants copying.",
 			convert: "The ODbL grants adapting the database.",
