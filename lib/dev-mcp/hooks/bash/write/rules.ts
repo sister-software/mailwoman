@@ -23,6 +23,7 @@ import { isAbsolute, resolvePath } from "path-ts"
  */
 const ADMITTED = new Set([
 	"awk",
+	"aws",
 	"basename",
 	"cat",
 	"column",
@@ -45,6 +46,7 @@ const ADMITTED = new Set([
 	"find",
 	"grep",
 	"head",
+	"java",
 	"jq",
 	"ls",
 	"paste",
