@@ -10,7 +10,7 @@
  *   archive was built from.
  */
 
-import { electedLicenseLabel } from "@mailwoman/core/license/decision"
+import { electedTermsLabel } from "@mailwoman/core/license/decision"
 import type { DataBOMComponent } from "mailwoman/data/bom"
 
 import { BASEMAP_INPUTS, type Basemap } from "#basemaps"
@@ -54,7 +54,7 @@ export function basemapBOMComponent(
 		if (!source) throw new Error(`basemap input ${sourceID} is not in the structure-source register`)
 
 		const decision = register.licenses.find((entry) => entry.licenseID === source.license)
-		const label = decision ? (electedLicenseLabel(decision) ?? `unelected (${decision.state})`) : "undeclared"
+		const label = decision ? (electedTermsLabel(decision) ?? `unelected (${decision.state})`) : "undeclared"
 
 		return { source, label }
 	})

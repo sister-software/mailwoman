@@ -124,7 +124,7 @@ export interface ElectedLicense<Operation extends string = string> {
 	/**
 	 * The SPDX identifier, when one applies.
 	 *
-	 * {@linkcode electedLicenseLabel} prefers this value to {@linkcode ElectedLicense.electedTerms}.
+	 * {@linkcode electedTermsLabel} prefers this value to {@linkcode ElectedLicense.electedTerms}.
 	 */
 	spdx?: string
 	/**
@@ -185,7 +185,7 @@ export type LicenseDecision<Operation extends string = string> =
  *
  * The function returns `null` until someone has elected terms for the decision.
  */
-export function electedLicenseLabel(decision: LicenseDecision): string | null {
+export function electedTermsLabel(decision: LicenseDecision): string | null {
 	if (decision.state !== LicenseReviewState.Elected) return null
 
 	return decision.spdx ?? decision.electedTerms

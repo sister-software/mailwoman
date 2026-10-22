@@ -149,7 +149,7 @@ extend-ignore-re = [
 	# OpenStreetMap's `leisure=sports_centre`, which the Protomaps basemap carries as a landuse `kind`.
 	'''\bsports_centre\b''',
 	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register.
-	'''\b[Ll]o[Dd][0-4]\b''',
+	'''\b[Ll]o[Dd][0-4]''',
 ]
 
 [default.extend-words]

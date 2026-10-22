@@ -200,7 +200,7 @@ with `license_id: notspecified` while the publisher's entry carries the grant un
 Compare the entry's `resources` against the file to be fetched to prove the two records describe one
 artifact. A portal also returns third parties' datasets about a country, and a third party's license
 is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
-`electedTerms` carry the publisher's words, because `electedLicenseLabel` feeds the share-alike
+`electedTerms` carry the publisher's words, because `electedTermsLabel` feeds the share-alike
 filter.
 
 Whether address data can be elected without a publisher's grant depends on the country's law, so each

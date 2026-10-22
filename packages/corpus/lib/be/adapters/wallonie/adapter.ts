@@ -114,7 +114,7 @@
  * The address-source register elects `Licence CC-BY 4.0, as the Service public de Wallonie states it`
  * for `be-property-building-2`, under license id
  * `unchecked-access-free-be-service-public-de-wallonie-spw`, and that decision records
- * `spdx: "CC-BY-4.0"`. `electedLicenseLabel` answers an elected decision's `spdx` before its
+ * `spdx: "CC-BY-4.0"`. `electedTermsLabel` answers an elected decision's `spdx` before its
  * `electedTerms`, so {@linkcode WALLONIE_DEFAULT_LICENSE} is the SPDX id rather than the French
  * sentence. The register's own words for what the publisher permits are use, modification into a
  * derived work, and publication of both, on condition that the sources are cited, so a model card
@@ -186,7 +186,7 @@ export const WALLONIE_COUNTRIES: readonly string[] = ["BE"]
  * Every emitted row records this license.
  *
  * The register's elected decision for `unchecked-access-free-be-service-public-de-wallonie-spw`
- * records `spdx: "CC-BY-4.0"`, and `electedLicenseLabel` answers the SPDX id when one is recorded.
+ * records `spdx: "CC-BY-4.0"`, and `electedTermsLabel` answers the SPDX id when one is recorded.
  */
 export const WALLONIE_DEFAULT_LICENSE = "CC-BY-4.0"
 

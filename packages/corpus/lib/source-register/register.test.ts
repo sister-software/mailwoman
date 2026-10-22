@@ -8,7 +8,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import {
-	electedLicenseLabel,
+	electedTermsLabel,
 	LicenseReviewState,
 	OperationPermission,
 	PermissionBasis,
@@ -189,7 +189,7 @@ describe("the committed address-source register", () => {
 		for (const [index, decision] of decisions.entries()) {
 			expect(decision, territories[index]).toBeDefined()
 			expect(decision.state, territories[index]).toBe(LicenseReviewState.Elected)
-			expect(electedLicenseLabel(decision), territories[index]).toBe("etalab-2.0")
+			expect(electedTermsLabel(decision), territories[index]).toBe("etalab-2.0")
 		}
 
 		// Each decision is reached through its own source, so no election spans two jurisdictions.
@@ -395,10 +395,10 @@ describe("auditAddressSourceRegister", () => {
 	})
 })
 
-describe("electedLicenseLabel", () => {
+describe("electedTermsLabel", () => {
 	it("answers nothing for an unchecked decision, so an unread source cannot pass a license filter", () => {
 		expect(
-			electedLicenseLabel({
+			electedTermsLabel({
 				licenseID: "unchecked-access-free",
 				state: LicenseReviewState.Unchecked,
 				publisherStatement: "Free",
@@ -409,7 +409,7 @@ describe("electedLicenseLabel", () => {
 
 	it("prefers the SPDX identifier over the publisher's wording", () => {
 		expect(
-			electedLicenseLabel({
+			electedTermsLabel({
 				licenseID: "ban-licence-ouverte",
 				state: LicenseReviewState.Elected,
 				electedTerms: "Licence Ouverte 2.0",
@@ -834,7 +834,7 @@ describe("permission by operation", () => {
 				operations: everyIngestAct,
 			}
 
-			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
+			expect(electedTermsLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
 			// The permissive half makes no statement about publishing a model.

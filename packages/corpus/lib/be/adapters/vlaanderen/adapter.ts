@@ -100,7 +100,7 @@ export const VLAANDEREN_ADAPTER_ID = "vlaanderen"
  *
  * The register's `electedTerms` for license
  * `unchecked-access-free-be-agentschap-digitaal-vlaanderen` states this value.
- * That license has no `spdx`, so `electedLicenseLabel` answers this string
+ * That license has no `spdx`, so `electedTermsLabel` answers this string
  * and the share-alike prefix filter matches it.
  */
 export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik Vlaanderen"
