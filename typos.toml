@@ -146,6 +146,10 @@ extend-ignore-re = [
 	'''Busniss centre''',
 	# Building Digital UK's UPRN-level release names this column with its British spelling.
 	'''\bbduk_recognised_premises\b''',
+	# OpenStreetMap's `leisure=sports_centre`, which the Protomaps basemap carries as a landuse `kind`.
+	'''\bsports_centre\b''',
+	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register.
+	'''\b[Ll]o[Dd][0-4]''',
 ]
 
 [default.extend-words]

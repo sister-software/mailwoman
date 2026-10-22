@@ -9,6 +9,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import type { PathBuilder } from "path-ts"
 
 import type { AlignTotals } from "#build/align-totals"
@@ -18,7 +19,7 @@ import type { AdapterRunManifest } from "#runner"
 import type { SourceRightsAdmission } from "#source-register/corpus-inputs"
 import { committedRowLicenses } from "#source-register/row-license"
 import { freezeTrainingManifest } from "#source-register/training-manifest"
-import type { LicenseDecision } from "#source-register/types"
+import type { SourceOperation } from "#source-register/types"
 import type { LicensePolicy } from "#utils/license"
 import type { CountryHoldout, SplitManifest } from "#utils/split"
 
@@ -35,7 +36,7 @@ export interface BuildManifestInputs {
 	parquetManifest: ParquetManifest
 	totals: AlignTotals
 	rights: SourceRightsAdmission
-	registerDecisions: ReadonlyMap<string, LicenseDecision>
+	registerDecisions: ReadonlyMap<string, LicenseDecision<SourceOperation>>
 	onProgress?: (stage: BuildStage, message: string) => void
 }
 

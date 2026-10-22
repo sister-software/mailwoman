@@ -9,6 +9,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { auditLicenseDecision, operationProblems, type LicenseDecision } from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { AssertedProposition } from "@mailwoman/evidence/status"
 import type { PathBuilderLike } from "path-ts"
@@ -16,8 +17,6 @@ import type { PathBuilderLike } from "path-ts"
 import {
 	BackboneState,
 	JurisdictionResearchState,
-	LicenseReviewState,
-	OperationPermission,
 	PersonalDataReading,
 	REGISTER_SECTORS,
 	SourceGeometry,
@@ -26,9 +25,6 @@ import {
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
 	type AddressSourceRegister,
-	type ElectedLicense,
-	type LicenseDecision,
-	type OperationDecision,
 } from "#source-register/types"
 import { AddressRole } from "#types"
 
@@ -51,17 +47,6 @@ const PERSONAL_DATA_READINGS = new Set<string>(Object.values(PersonalDataReading
 const ADDRESS_ROLES = new Set<string>(Object.values(AddressRole))
 
 /**
- * Returns the license label that the exclude filter in `@mailwoman/corpus/utils/license` matches by prefix.
- *
- * The function returns `null` until someone has elected terms for the decision.
- */
-export function electedLicenseLabel(decision: LicenseDecision): string | null {
-	if (decision.state !== LicenseReviewState.Elected) return null
-
-	return decision.spdx ?? decision.electedTerms
-}
-
-/**
  * Replaces generated license decisions with recorded ones that share a license id.
  *
  * The build generates an `unchecked` decision for each license and rewrites the register
@@ -71,9 +56,9 @@ export function electedLicenseLabel(decision: LicenseDecision): string | null {
  * Such a decision is a typo or refers to a removed source.
  */
 export function applyLicenseDecisions(
-	generated: readonly LicenseDecision[],
-	recorded: ReadonlyMap<string, LicenseDecision>
-): LicenseDecision[] {
+	generated: readonly LicenseDecision<SourceOperation>[],
+	recorded: ReadonlyMap<string, LicenseDecision<SourceOperation>>
+): LicenseDecision<SourceOperation>[] {
 	const known = new Set(generated.map((decision) => decision.licenseID))
 
 	for (const licenseID of recorded.keys()) {
@@ -109,29 +94,6 @@ export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
 ]
 
 /**
- * Returns the recorded permission for one operation under a license decision.
- *
- * The result is `unreviewed` when the decision is not elected or does not mention the operation.
- * The selected terms establish which terms apply.
- * Each operation still needs its own review.
- */
-export function permissionFor(decision: LicenseDecision, operation: SourceOperation): OperationDecision {
-	if (decision.state !== LicenseReviewState.Elected) {
-		return {
-			permission: OperationPermission.Unreviewed,
-			because: `the decision reads ${decision.state}, so no operation has been read against terms`,
-		}
-	}
-
-	return (
-		decision.operations?.[operation] ?? {
-			permission: OperationPermission.Unreviewed,
-			because: `the elected terms do not state whether ${operation} is permitted`,
-		}
-	)
-}
-
-/**
  * Returns every reason that a source may not enter a training corpus, or an empty array when it may.
  *
  * The function returns reasons so that callers can tell the different blockers apart.
@@ -141,24 +103,8 @@ export function ingestEligibilityProblems(
 	register: AddressSourceRegister,
 	operations: readonly SourceOperation[] = INGEST_OPERATIONS
 ): readonly string[] {
-	const problems: string[] = []
 	const decision = register.licenses.find((entry) => entry.licenseID === source.license)
-
-	if (!decision) {
-		problems.push(`license ${stringifyJSON(source.license)} is not declared in the register`)
-	} else if (decision.state !== LicenseReviewState.Elected) {
-		problems.push(
-			`license ${stringifyJSON(source.license)} is ${decision.state}, and only elected terms admit a source`
-		)
-	} else {
-		for (const operation of operations) {
-			const reading = permissionFor(decision, operation)
-
-			if (reading.permission === OperationPermission.Permitted) continue
-
-			problems.push(`the elected terms read ${reading.permission} for ${operation}: ${reading.because}`)
-		}
-	}
+	const problems = operationProblems(source.license, decision, operations)
 
 	if (source.status === SourceStatus.RetainedOriginal) {
 		problems.push("the source was carried from the earlier memo and has not been re-resolved")
@@ -290,75 +236,7 @@ function auditLicenses(register: AddressSourceRegister): string[] {
 			problems.push(`license ${named} is declared and no source points at it`)
 		}
 
-		switch (decision.state) {
-			case LicenseReviewState.Unchecked: {
-				if (!decision.publisherStatement) {
-					problems.push(`license ${named} is unchecked and records no publisher statement`)
-				}
-
-				break
-			}
-
-			case LicenseReviewState.Elected: {
-				problems.push(...auditElected(decision, named))
-
-				break
-			}
-
-			case LicenseReviewState.Refused: {
-				if (!decision.refusedBecause) {
-					problems.push(`license ${named} is refused and gives no reason`)
-				}
-
-				break
-			}
-
-			default: {
-				problems.push(`license ${named} carries an unknown review state`)
-			}
-		}
-	}
-
-	return problems
-}
-
-function auditElected(decision: ElectedLicense, named: string): string[] {
-	const problems: string[] = []
-
-	if (!decision.electedTerms) {
-		problems.push(`license ${named} is elected and names no terms`)
-	}
-
-	if (!decision.retrievedCopy) {
-		problems.push(`license ${named} is elected and names no retrieved copy`)
-	}
-
-	if (!decision.electedBecause) {
-		problems.push(`license ${named} is elected and gives no reason`)
-	}
-
-	for (const [operation, reading] of Object.entries(decision.operations ?? {})) {
-		if (!reading.because) {
-			problems.push(`license ${named} reads ${reading.permission} for ${operation} and gives no reason`)
-		}
-
-		// A permission must cite its basis in the terms so that a reviewer can check it.
-		// A refusal needs no basis.
-		if (reading.permission === OperationPermission.Permitted && !reading.basis) {
-			problems.push(`license ${named} permits ${operation} and names no basis for the permission`)
-		}
-
-		if (!(Object.values(OperationPermission) as string[]).includes(reading.permission)) {
-			problems.push(
-				`license ${named} reads an unknown permission ${stringifyJSON(reading.permission)} for ${operation}`
-			)
-		}
-
-		if (!(Object.values(SourceOperation) as string[]).includes(operation)) {
-			problems.push(
-				`license ${named} names ${stringifyJSON(operation)}, which is not an operation this repository performs`
-			)
-		}
+		problems.push(...auditLicenseDecision(decision, Object.values(SourceOperation)))
 	}
 
 	return problems

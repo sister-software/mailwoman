@@ -6,8 +6,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { LicenseDecision } from "@mailwoman/core/license/decision"
 
-import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register"
+import { ingestEligibilityProblems, readAddressSourceRegister, type SourceOperation } from "#source-register"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -49,7 +50,7 @@ export async function readSourceEligibility(): Promise<ReadonlyMap<string, reado
  *
  * An unmatched adapter label records a `null` decision rather than inventing one.
  */
-export async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision>> {
+export async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision<SourceOperation>>> {
 	const register = await readAddressSourceRegister()
 
 	return new Map(register.licenses.map((decision) => [decision.licenseID, decision]))

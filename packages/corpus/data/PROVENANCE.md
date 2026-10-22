@@ -229,7 +229,7 @@ permissive would admit a source on a sentence about price.
 
 `unchecked` is a first-class value distinct from a license reviewed and found permissive. The
 `elected` value records the reviewed case: the terms, the retrieved copy, the version, and why that grant rather than
-another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
+another. `electedTermsLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
 and it answers `undefined` for anything not elected.
 
 ## `licenses/` — the retrieved texts a decision would be read from

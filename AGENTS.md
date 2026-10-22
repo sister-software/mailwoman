@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The `packages/` directory also contains 75 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-77 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The `packages/` directory also contains 76 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+78 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-three workspaces publish to npm. `.release-it.json` defines that set, and the fourteen others are
+Sixty-three workspaces publish to npm. `.release-it.json` defines that set, and the fifteen others are
 private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
 audit refuse a tarball that ships a data file. Run the workspace check described in
 `lib/release-kit/AGENTS.md` after adding or moving a workspace.

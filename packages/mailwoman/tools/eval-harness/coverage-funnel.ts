@@ -6,10 +6,10 @@
  *   Coverage funnel that reads every source-register jurisdiction at each coverage stage, with the register supplying the denominator so jurisdictions missing from the census still appear.
  */
 
+import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRegister,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	readAddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
 

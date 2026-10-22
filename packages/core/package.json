@@ -132,6 +132,11 @@
 			"node": "./lib/license/key.ts",
 			"default": "./out/license/key.js"
 		},
+		"./license/decision": {
+			"types": "./out/license/decision.d.ts",
+			"node": "./lib/license/decision.ts",
+			"default": "./out/license/decision.js"
+		},
 		"./license/declaration": {
 			"types": "./out/license/declaration.d.ts",
 			"node": "./lib/license/declaration.ts",

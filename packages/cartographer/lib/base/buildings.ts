@@ -10,7 +10,7 @@ import type {
 	LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
-import { MailwomanBaseTileSetID } from "#base/theme"
+import { GuideMapPalette, MailwomanBaseTileSetID } from "#base/theme"
 import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
@@ -19,11 +19,20 @@ const BuildingLayerID = LayerID.bind(null, "buildings")
 /**
  * Zoom where buildings start rising.
  */
-const POP_START = 12.5
+const POP_START = 11
 /**
- * Zoom where they reach full height (Protomaps fully loaded here)
+ * Zoom where they reach full height.
  */
-const POP_END = 13
+const POP_END = 12
+
+/**
+ * Building opacity by zoom, starting with the first zoom the tiles carry buildings.
+ *
+ * Blocks stay translucent while they are small, so streets read through them,
+ * and become nearly opaque by z15.
+ * At 0.6 a tall tower seen at street zoom showed the map through its walls.
+ */
+const buildingOpacity: ExpressionSpecification = ["interpolate", ["linear"], ["zoom"], 11, 0, 11.5, 0.6, 15, 0.9]
 /**
  * Meters: tiny lift so the band clears the roof (kills z-fight)
  */
@@ -33,9 +42,14 @@ const ROOF_GAP = 0.1
  */
 const ROOF_CAP = 1
 
+/**
+ * Roof edge and footprint outline (縁取り).
+ */
+const BUILDING_EDGE = GuideMapPalette.buildingEdge
+
 const buildingHeight = (offset = 0): ExpressionSpecification => [
 	"+",
-	["coalesce", ["get", "height"], ["get", "minheight"], 10],
+	["coalesce", ["get", "height"], ["get", "min_height"], 10],
 	offset,
 ]
 
@@ -59,10 +73,12 @@ export const BuildingLayers: LayerSpecification[] = [
 	createBuildingFillStyleLayer({
 		id: BuildingLayerID("buildings-extruded"),
 
+		// Buildings are pale translucent volumes, so the streets and rail lines behind them stay legible.
 		paint: {
-			"fill-extrusion-color": "hsl(276.52deg 10.83% 10.31%)",
+			"fill-extrusion-color": GuideMapPalette.building,
+			"fill-extrusion-vertical-gradient": false,
 			"fill-extrusion-translate": [0.1, 0.1],
-			"fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 14.5, 1],
+			"fill-extrusion-opacity": buildingOpacity,
 		},
 	}),
 
@@ -74,12 +90,11 @@ export const BuildingLayers: LayerSpecification[] = [
 		"source-layer": "buildings",
 		minzoom: 10,
 		paint: {
-			// "fill-extrusion-color": "hsl(240deg 100% 80%)", // match footprint outline
-			"fill-extrusion-color": "hsl(276.52deg 13% 12.31%)",
+			"fill-extrusion-color": BUILDING_EDGE,
 
 			"fill-extrusion-vertical-gradient": false,
 			"fill-extrusion-translate-anchor": "map",
-			"fill-extrusion-opacity": 1,
+			"fill-extrusion-opacity": buildingOpacity,
 			// top of the band = full building height "fill-extrusion-height": popHeight(buildingHeight()),
 			// // base of the band = full height minus the cap thickness (clamped ≥ 0)
 			// "fill-extrusion-base": popHeight([ "max", [ "-", buildingHeight(), ROOF_CAP ], 0 ]),
@@ -93,13 +108,11 @@ export const BuildingLayers: LayerSpecification[] = [
 		type: "line",
 		source: MailwomanBaseTileSetID,
 		"source-layer": "buildings",
-		minzoom: 11,
-		filter: ["==", ["%", ["to-number", ["id"]], 2], 0],
+		minzoom: 14,
 		paint: {
-			"line-width": 1,
-			"line-color": "hsl(240deg 100% 80%)",
-			"line-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0, 20, 1],
-			"line-dasharray": [2, 3],
+			"line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 1],
+			"line-color": BUILDING_EDGE,
+			"line-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 0.8],
 		},
 	},
 
@@ -138,12 +151,13 @@ function createBuildingFillStyleLayer(fillStyleSpec: BuildingFillStyleSpec): Lay
 		"source-layer": "buildings",
 		minzoom: 10,
 		paint: {
-			...fillStyleSpec.paint,
 			"fill-extrusion-vertical-gradient": true,
 			"fill-extrusion-height": popHeight(buildingHeight(fillStyleSpec.heightOffset)),
-			"fill-extrusion-base": 0,
+			// A building part, such as an upper section of a tower, starts at its `min_height`.
+			"fill-extrusion-base": popHeight(["coalesce", ["get", "min_height"], 0]),
 			"fill-extrusion-translate-anchor": "map",
 			"fill-extrusion-opacity": 0.95,
+			...fillStyleSpec.paint,
 		},
 	}
 

@@ -10,18 +10,20 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import {
+	LicenseReviewState,
+	OperationPermission,
+	PermissionBasis,
+	type LicenseDecision,
+} from "@mailwoman/core/license/decision"
 import { describe, expect, it } from "vitest"
 
 import {
 	auditTrainingManifest,
 	freezeTrainingManifest,
-	LicenseReviewState,
-	OperationPermission,
-	PermissionBasis,
 	SourceOperation,
 	sourcesNotPermitting,
 	trainingManifestDigest,
-	type LicenseDecision,
 } from "#source-register"
 
 const elected: LicenseDecision = {

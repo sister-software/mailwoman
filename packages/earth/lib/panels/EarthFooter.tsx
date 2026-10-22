@@ -8,19 +8,39 @@
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
+import {
+	Basemap,
+	BASEMAP_INPUTS,
+	CITY_MODEL_INPUTS,
+	creditsFor,
+	HILLSHADE_INPUTS,
+} from "@mailwoman/structures/basemaps"
 import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 
+import { loadsBasemapBuild } from "#runtime/use/geocoder-runtime"
+
 /**
- * The basemap's credits belong to whoever renders the tiles.
+ * The basemap the page loads: a `?basemap=` link loads a `mailwoman/basemaps` build,
+ * and the page otherwise loads the Protomaps v4 planet build.
+ */
+const LOADED_BASEMAP = loadsBasemapBuild() ? Basemap.MailwomanBuild : Basemap.ProtomapsV4
+
+/**
+ * The credits for every source the map draws from: the loaded basemap's inputs
+ * and the hillshade's elevation tiles.
  *
- * Each source is a license obligation rather than a courtesy, so it links to the license it discharges.
+ * The structure-source register holds each credit beside the license decision it discharges,
+ * so a source added to a basemap build is credited here once its register row names it.
+ * Protomaps and MapLibre are the software that renders the map.
  */
 const BASEMAP_ATTRIBUTION = [
-	<a key="osm" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-		© OpenStreetMap contributors
-	</a>,
+	...creditsFor([...BASEMAP_INPUTS[LOADED_BASEMAP], ...HILLSHADE_INPUTS, ...CITY_MODEL_INPUTS]).map((credit) => (
+		<a key={credit.sourceID} href={credit.url} target="_blank" rel="noreferrer">
+			{credit.text}
+		</a>
+	)),
 	<a key="protomaps" href="https://protomaps.com" target="_blank" rel="noreferrer">
 		Protomaps
 	</a>,

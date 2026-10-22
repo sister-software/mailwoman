@@ -98,7 +98,7 @@
  * `be-business-legal-1`, `be-business-register-1`, `be-property-building-1` (Flanders) and
  * `be-property-building-2` (Wallonia). The word Brussels appears in the register only inside
  * Flanders' and Wallonia's own prose. Both state that Brussels publishes separately. So no license
- * decision has been elected for this publisher, `electedLicenseLabel` finds no decision to answer
+ * decision has been elected for this publisher, `electedTermsLabel` finds no decision to answer
  * with, and {@linkcode BRUSSELS_DEFAULT_LICENSE} is a label that reads as unreviewed rather than an
  * SPDX id that would read as elected.
  *

@@ -18,6 +18,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
 
 import {
 	type CorpusSourceInputs,
@@ -27,7 +28,7 @@ import {
 	indexCorpusSourceInputs,
 } from "#source-register/corpus-inputs"
 import { addressSourceRegisterPath } from "#source-register/register"
-import { type AddressSourceRegister, LicenseReviewState, type LicenseDecision } from "#source-register/types"
+import type { AddressSourceRegister } from "#source-register/types"
 
 /**
  * The SPDX prefix for a license the SPDX list omits.

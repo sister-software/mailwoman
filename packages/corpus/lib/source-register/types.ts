@@ -6,6 +6,7 @@
  *   This module defines the address-source register's types. The register has a jurisdiction table and a source table.
  */
 
+import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import type { AssertedProposition } from "@mailwoman/evidence/status"
 
 import type { AddressRole } from "#types"
@@ -212,51 +213,6 @@ export const ResearchPass = {
 export type ResearchPass = (typeof ResearchPass)[keyof typeof ResearchPass]
 
 /**
- * The review state of a source's terms.
- *
- * An `unchecked` source cannot enter a training build because its recorded label describes only access cost.
- */
-export const LicenseReviewState = {
-	/**
-	 * The publisher's terms have no review record.
-	 *
-	 * The research pass's license text is kept verbatim in
-	 * {@linkcode UncheckedLicense.publisherStatement} and grants no license.
-	 */
-	Unchecked: "unchecked",
-	/**
-	 * A reviewer read the terms, elected one grant, retrieved a copy and recorded the reason.
-	 */
-	Elected: "elected",
-	/**
-	 * A reviewer read the terms and rejected the source.
-	 * The row records the reason.
-	 */
-	Refused: "refused",
-} as const
-
-/**
- * One of the {@link LicenseReviewState} values.
- */
-export type LicenseReviewState = (typeof LicenseReviewState)[keyof typeof LicenseReviewState]
-
-/**
- * A license decision whose terms have no review record.
- */
-export interface UncheckedLicense {
-	licenseID: string
-	state: typeof LicenseReviewState.Unchecked
-	/**
-	 * The research pass's license text, verbatim.
-	 *
-	 * Most values are access labels such as `Free` or `Licensed` that make no
-	 * statement about redistribution or training.
-	 */
-	publisherStatement: string
-	note: string
-}
-
-/**
  * The acts this repository performs on a source, in pipeline order.
  *
  * A grant can permit some and stay silent on others, so license decisions record a permission per operation.
@@ -296,121 +252,6 @@ export const SourceOperation = {
  * One of the {@link SourceOperation} values.
  */
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
-
-/**
- * What a grant permits for one operation.
- *
- * `unreviewed` means the terms lack an operation-specific review.
- * Eligibility checks treat it as blocking.
- * The state stays distinct from `refused`.
- */
-export const OperationPermission = {
-	Permitted: "permitted",
-	Refused: "refused",
-	Unreviewed: "unreviewed",
-} as const
-
-/**
- * One of the {@link OperationPermission} values.
- */
-export type OperationPermission = (typeof OperationPermission)[keyof typeof OperationPermission]
-
-/**
- * The legal basis of a permission.
- *
- * Most permissions rest on a publisher grant.
- * The other values mark permissions with a different basis.
- */
-export const PermissionBasis = {
-	PublisherGrant: "publisher-grant",
-	StatutoryException: "statutory-exception",
-	OtherDocumented: "other-documented",
-} as const
-
-/**
- * One of the {@link PermissionBasis} values.
- */
-export type PermissionBasis = (typeof PermissionBasis)[keyof typeof PermissionBasis]
-
-/**
- * The permission recorded for one operation, with its basis and reason.
- */
-export interface OperationDecision {
-	permission: OperationPermission
-	/**
-	 * The audit requires a permission basis when the permission is `permitted`.
-	 */
-	basis?: PermissionBasis
-	/**
-	 * The relevant sentence in the terms, or the reason for a refusal.
-	 */
-	because: string
-}
-
-/**
- * A license decision whose terms a reviewer read and under which one grant was elected.
- */
-export interface ElectedLicense {
-	licenseID: string
-	state: typeof LicenseReviewState.Elected
-	/**
-	 * The elected terms as the publisher names them, such as `Licence Ouverte 2.0`.
-	 */
-	electedTerms: string
-	/**
-	 * The SPDX identifier, when one applies.
-	 *
-	 * `electedLicenseLabel` prefers this value to {@linkcode ElectedLicense.electedTerms}.
-	 */
-	spdx?: string
-	/**
-	 * Every grant the publisher states, where its surfaces state more than one.
-	 *
-	 * A publisher may state different terms in its dataset metadata, its download service
-	 * and its website, and it may be offering the same material under more than one license.
-	 * Creative Commons permits that.
-	 *
-	 * Where that happens, {@linkcode ElectedLicense.spdx} records the one a build filters on
-	 * and this records what the publisher said, so a later reviewer reads the conflict
-	 * rather than one reading presented as settled.
-	 *
-	 * The engineering policy elects the strictest grant for what a released corpus may include.
-	 * It does not establish which grant governs, and `electedBecause` states
-	 * the substantive ground separately.
-	 */
-	candidateGrants?: readonly string[]
-	termsVersion?: string
-	/**
-	 * The location of the retrieved copy of the terms, so later reviewers read the same text.
-	 */
-	retrievedCopy: string
-	retrievedAt?: string
-	/**
-	 * The reason for electing this grant, or a note that the source offers only one.
-	 */
-	electedBecause: string
-	/**
-	 * The permission for each reviewed operation.
-	 *
-	 * An omitted operation reads as `unreviewed`.
-	 */
-	operations?: Partial<Record<SourceOperation, OperationDecision>>
-}
-
-/**
- * A license decision whose terms a reviewer read and refused.
- */
-export interface RefusedLicense {
-	licenseID: string
-	state: typeof LicenseReviewState.Refused
-	publisherStatement?: string
-	refusedBecause: string
-}
-
-/**
- * A license decision in any review state.
- */
-export type LicenseDecision = UncheckedLicense | ElectedLicense | RefusedLicense
 
 /**
  * One jurisdiction row.
@@ -603,7 +444,7 @@ export interface AddressSourceRegister {
 	contentDigest: string
 	provenance: RegisterProvenance
 	unresolved: readonly UnresolvedField[]
-	licenses: readonly LicenseDecision[]
+	licenses: readonly LicenseDecision<SourceOperation>[]
 	jurisdictions: readonly JurisdictionRecord[]
 	sources: readonly AddressSourceRecord[]
 }

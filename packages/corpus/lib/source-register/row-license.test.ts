@@ -5,11 +5,12 @@
  * @file The license id a corpus row's `license` column holds, read from the register.
  */
 
+import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import { describe, expect, it } from "vitest"
 
 import { indexCorpusSourceInputs } from "#source-register/corpus-inputs"
 import { committedRowLicenses, createRowLicenses, decisionLicenseID } from "#source-register/row-license"
-import type { AddressSourceRegister, LicenseDecision } from "#source-register/types"
+import type { AddressSourceRegister } from "#source-register/types"
 
 const ELECTED = { licenseID: "ogl-gb", state: "elected", electedTerms: "OGL v3", spdx: "OGL-UK-3.0" } as LicenseDecision
 const UNSTATED = { licenseID: "lo-fr", state: "elected", electedTerms: "Licence Ouverte" } as LicenseDecision

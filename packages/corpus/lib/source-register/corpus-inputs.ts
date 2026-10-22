@@ -18,17 +18,17 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import type { PathBuilderLike } from "path-ts"
-
-import { permissionFor, readAddressSourceRegister } from "#source-register/register"
 import {
 	LicenseReviewState,
 	OperationPermission,
-	SourceOperation,
-	type AddressSourceRegister,
+	permissionFor,
 	type LicenseDecision,
-} from "#source-register/types"
+} from "@mailwoman/core/license/decision"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import type { PathBuilderLike } from "path-ts"
+
+import { readAddressSourceRegister } from "#source-register/register"
+import { SourceOperation, type AddressSourceRegister } from "#source-register/types"
 
 /**
  * The operations a register decision must permit before a source's rows may

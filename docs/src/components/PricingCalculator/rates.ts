@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Published list rates for forward geocoding, as the pricing calculator compares them. Each entry names the page it
+ *   Published list rates for forward geocoding, as the pricing calculator compares them. Each entry records the page it
  *   was read from and the date. `rates.test.ts` fails once the oldest reading is more than 120 days old, so a stale
  *   figure stops the test run instead of staying on the page.
  */
@@ -29,7 +29,7 @@ export interface ProviderRate {
 	 */
 	retrievedOn: string
 	/**
-	 * Requests a month billed at nothing, taken off the first band.
+	 * Requests a month billed at zero, taken off the first band.
 	 */
 	freePerMonth: number
 	/**

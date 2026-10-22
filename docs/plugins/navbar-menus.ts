@@ -14,7 +14,7 @@ import { resolvePath } from "path-ts"
 import sidebars from "../sidebars.ts"
 
 /**
- * A menu line longer than this is cut at a word and given an ellipsis.
+ * A menu line longer than this is shortened to the last whole word and given an ellipsis.
  */
 const MAX_DESCRIPTION_LENGTH = 110
 

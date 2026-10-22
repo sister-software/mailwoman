@@ -15,6 +15,8 @@
 import type React from "react"
 import { useMap } from "react-map-gl/maplibre"
 
+import { Scene3D } from "../scene/Scene3D.tsx"
+import { CameraPermalink } from "./CameraPermalink.tsx"
 import { JurisdictionInspector } from "./JurisdictionInspector.tsx"
 import { DebugControl } from "./MapDebug.tsx"
 
@@ -31,6 +33,8 @@ export const MapControls: React.FC<{ devMode: boolean }> = ({ devMode }) => {
 
 	return (
 		<>
+			<Scene3D />
+			<CameraPermalink />
 			<JurisdictionInspector map={map} />
 			{devMode ? <DebugControl map={map} /> : null}
 		</>

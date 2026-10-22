@@ -6,13 +6,13 @@
  *   `censusCoverage` keys its rows on the union of five registers, so inheriting its denominator would drop a jurisdiction that has no row there at all.
  */
 
+import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRecord,
 	type AddressSourceRegister,
 	BackboneState,
 	type JurisdictionRecord,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	ResearchPass,
 	SourceGeometry,
 	SourceStatus,

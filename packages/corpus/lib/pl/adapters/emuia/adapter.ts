@@ -80,7 +80,7 @@ export const EMUIA_COUNTRIES: readonly string[] = ["PL"]
  *
  * `unchecked-access-free-pl-g-wny-urz-d-geodezji-i-kartografii` is elected with no `spdx`
  * and no `termsVersion`, so `electedTerms` is the whole of what the publisher stated
- * and `electedLicenseLabel` returns exactly this string.
+ * and `electedTermsLabel` returns exactly this string.
  * Czechia's row is recorded the same way.
  */
 export const EMUIA_DEFAULT_LICENSE = "Brak warunków dostępu i użytkowania"
