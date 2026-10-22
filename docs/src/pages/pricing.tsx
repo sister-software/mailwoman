@@ -153,9 +153,7 @@ export default function Pricing(): ReactNode {
 						<table className={styles.compare}>
 							<thead>
 								<tr>
-									<th scope="col">
-										<span className="sr-only">Feature</span>
-									</th>
+									<th scope="col">Feature</th>
 									<th scope="col">Open source</th>
 									<th scope="col">Commercial</th>
 									<th scope="col">Enterprise</th>

@@ -1,0 +1,32 @@
+/**
+ * The hero map's marker: a magenta seal dot on a hard ring, pulsing once per stop unless motion is reduced.
+ */
+
+.marker {
+	display: block;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--mw-color-magenta);
+	border: 3px solid var(--ss-color-white);
+	box-shadow: 0 0 0 2px var(--mw-color-navy);
+	animation: drop 600ms ease-out;
+}
+
+@keyframes drop {
+	from {
+		transform: scale(2.5);
+		opacity: 0;
+	}
+
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.marker {
+		animation: none;
+	}
+}

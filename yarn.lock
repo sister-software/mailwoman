@@ -6273,6 +6273,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.64.1"
+    "@protomaps/basemaps": "npm:^5.7.2"
     "@sister.software/docusaurus-theme": "npm:^14.6.0"
     "@sister.software/fonts": "npm:^14.6.0"
     "@sister.software/theme": "npm:^14.6.0"

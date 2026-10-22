@@ -90,6 +90,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
+		"@protomaps/basemaps": "^5.7.2",
 		"@sister.software/docusaurus-theme": "^14.6.0",
 		"@sister.software/fonts": "^14.6.0",
 		"@sister.software/theme": "^14.6.0",

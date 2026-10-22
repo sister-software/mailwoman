@@ -1,133 +1,279 @@
+import BrowserOnly from "@docusaurus/BrowserOnly"
 import Link from "@docusaurus/Link"
+import { PRICE_MONTHLY } from "@mailwoman/license-worker/client/constants"
 import CodeBlock from "@theme/CodeBlock"
 import Heading from "@theme/Heading"
 import Layout from "@theme/Layout"
 import clsx from "clsx"
-import type { ReactNode } from "react"
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 
+import { RECORDED_ON, TourStops } from "../components/HeroMap/tour.ts"
 import { useSiteConfig } from "../hooks/site.ts"
 
 import styles from "./index.module.css"
 
+/**
+ * How long the tour holds each stop, flight included.
+ */
+const STOP_DURATION_MS = 7000
+
+const HeroMap = lazy(() => import("#components/HeroMap/HeroMap"))
+
+const usePrefersReducedMotion = () => {
+	const [reduced, setReduced] = useState(false)
+
+	useEffect(() => {
+		const query = globalThis.matchMedia("(prefers-reduced-motion: reduce)")
+		const update = () => setReduced(query.matches)
+
+		update()
+		query.addEventListener("change", update)
+
+		return () => query.removeEventListener("change", update)
+	}, [])
+
+	return reduced
+}
+
 function HomepageHeader(): ReactNode {
+	const [index, setIndex] = useState(0)
+	const [paused, setPaused] = useState(false)
+	const reducedMotion = usePrefersReducedMotion()
+	const stop = TourStops[index]!
+	const holding = paused || reducedMotion
+
+	useEffect(() => {
+		if (holding) return
+
+		const timer = globalThis.setTimeout(() => setIndex((current) => (current + 1) % TourStops.length), STOP_DURATION_MS)
+
+		return () => globalThis.clearTimeout(timer)
+	}, [index, holding])
+
+	const [latitude, longitude] = [stop.coordinates[1], stop.coordinates[0]]
+
 	return (
-		<header className={clsx("hero", styles.heroBanner)}>
-			<div className="container">
-				<p className={styles.heroEyebrow}>Open source · No API key · Runs in your process</p>
-				<Heading as="h1" className={styles.heroTitle}>
-					An address parser and geocoder that runs where your code runs.
-				</Heading>
-				<p className={styles.heroSubtitle}>
-					Install it from npm, load a 39.4 MB model, and turn messy address text into labeled components and coordinates
-					— with no server to call and no address leaving your infrastructure.
-				</p>
-				<div className={styles.heroButtons}>
-					<Link className="button button--primary button--lg" href="https://earth.mailwoman.ai/">
-						Try the geocoder
-					</Link>
+		<header className={styles.hero}>
+			<div className={styles.heroMap} aria-hidden="true">
+				<BrowserOnly>
+					{() => (
+						<Suspense fallback={null}>
+							<HeroMap stop={stop} reducedMotion={reducedMotion} />
+						</Suspense>
+					)}
+				</BrowserOnly>
+			</div>
+
+			<div className={clsx("container", styles.heroInner)}>
+				<div className={styles.heroPanel}>
+					<p className={styles.heroEyebrow}>Open source · No API key · Runs in your process</p>
+					<Heading as="h1" className={styles.heroTitle}>
+						Every address, resolved on your own machines.
+					</Heading>
+					<p className={styles.heroSubtitle}>
+						A neural address parser and an open-data geocoder in one npm install. Nothing leaves your network, and
+						nothing is metered.
+					</p>
+
+					<form className={styles.heroSearch} action="https://earth.mailwoman.ai/" method="get" role="search">
+						<label htmlFor="hero-query" className={styles.visuallyHidden}>
+							An address to geocode
+						</label>
+						<input
+							id="hero-query"
+							name="q"
+							type="search"
+							className={styles.heroInput}
+							placeholder={stop.query}
+							autoComplete="street-address"
+						/>
+						<button type="submit" className={clsx("button button--primary", styles.heroSubmit)}>
+							Geocode
+						</button>
+					</form>
+
+					<figure className={styles.heroResult} aria-live="polite">
+						<figcaption className={styles.heroLandmark}>
+							{stop.landmark}
+							<span className={styles.heroTier}>{stop.tier}</span>
+						</figcaption>
+						<p className={styles.heroTransform}>
+							<span className={styles.heroIn} lang={stop.lang}>
+								{stop.query}
+							</span>
+							<span className={styles.heroArrow} aria-hidden="true">
+								→
+							</span>
+							<span className={styles.heroOut}>
+								{latitude.toFixed(4)}, {longitude.toFixed(4)}
+							</span>
+						</p>
+						<div className={styles.heroControls}>
+							<div className={styles.heroDots} role="group" aria-label="Tour stops">
+								{TourStops.map((candidate, candidateIndex) => (
+									<button
+										key={candidate.query}
+										type="button"
+										className={clsx(styles.heroDot, candidateIndex === index && styles.heroDotCurrent)}
+										aria-label={candidate.landmark}
+										aria-pressed={candidateIndex === index}
+										onClick={() => setIndex(candidateIndex)}
+									/>
+								))}
+							</div>
+							{reducedMotion ? null : (
+								<button type="button" className={styles.heroPause} onClick={() => setPaused((value) => !value)}>
+									{paused ? "Resume tour" : "Pause tour"}
+								</button>
+							)}
+						</div>
+					</figure>
+					<p className={styles.heroFine}>Answers recorded from Earth, the in-browser build, on {RECORDED_ON}.</p>
 				</div>
-				{/* These values come from `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`, rounded
-				    to four decimal places. The "rooftop" label stands for its `address_point` resolution tier. */}
-				<p className={styles.heroTransform}>
-					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>
-					<span className={styles.heroArrow}>→</span>
-					<span className={styles.heroOut}>38.8977, -77.0365</span>
-					<span className={styles.heroTier}>rooftop</span>
-				</p>
 			</div>
 		</header>
 	)
 }
 
-// Each card serves one reader goal and ends in exactly one link.
-function Fork(): ReactNode {
+/**
+ * The figures behind the hero's claims, each one measured on the reference page it links to.
+ */
+function Stats(): ReactNode {
 	return (
-		<section className={styles.gallery}>
-			<div className="container">
-				<Heading as="h2" className={styles.galleryHeading}>
-					Where would you like to start?
-				</Heading>
-				<div className={clsx("row", styles.galleryRow)}>
-					<div className="col col--4">
-						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>Build with it</p>
-							<h3 className={styles.cardTitle}>Three packages and ten lines</h3>
-							<p className={styles.cardBody}>
-								Run <code>npm install</code>, load the English model, and parse your first address. Parsing works the
-								moment the install finishes — the model travels with the package, so there is nothing to configure and
-								no key to obtain.
-							</p>
-							<code className={styles.cardTransform}>
-								"apt 4b 350 5th ave new york ny 10118" → unit·house·street·city·postcode
-							</code>
-							<p className={styles.cardLinks}>
-								<Link to="/docs/developers/get-started/what-mailwoman-is">Start here →</Link>
-							</p>
-						</div>
-					</div>
-					<div className="col col--4">
-						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>What it costs</p>
-							<h3 className={styles.cardTitle}>Free, or a flat license</h3>
-							<p className={styles.cardBody}>
-								AGPL-3.0 and free to run in production. A commercial license releases you from the source-sharing
-								condition for a flat $250 a month per company. There are no seats to count and no per-address fees,
-								because the software runs on your machines and reports nothing back.
-							</p>
-							<code className={styles.cardTransform}>2M addresses/month · $250 · 20M addresses/month · $250</code>
-							<p className={styles.cardLinks}>
-								<Link to="/pricing">See the pricing →</Link>
-							</p>
-						</div>
-					</div>
-					<div className="col col--4">
-						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>See it work</p>
-							<h3 className={styles.cardTitle}>The whole engine, in a browser tab</h3>
-							<p className={styles.cardBody}>
-								The demo is the product, not a mock of it: the same model and the same resolver, downloaded once and run
-								client-side. Type an address and watch it get labeled and placed. Nothing you type is transmitted
-								anywhere.
-							</p>
-							<code className={styles.cardTransform}>
-								type an address → components, coordinate, and the source it came from
-							</code>
-							<p className={styles.cardLinks}>
-								<Link href="https://earth.mailwoman.ai/">Open Earth →</Link>
-							</p>
-						</div>
-					</div>
-					<div className="col col--4">
-						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>Make the case for it</p>
-							<h3 className={styles.cardTitle}>A flat number, not a meter</h3>
-							<p className={styles.cardBody}>
-								Metered geocoding prices every lookup, so the bill moves with your address volume — the input your team
-								controls least. A flat license fixes the number finance budgets against, whatever the volume does this
-								quarter.
-							</p>
-							<code className={styles.cardTransform}>metered: $/request · flat: $250/mo, any volume</code>
-							<p className={styles.cardLinks}>
-								<Link to="/docs/solutions/eliminate-the-per-request-bill">Read the case →</Link>
-							</p>
-						</div>
-					</div>
-					<div className="col col--4">
-						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>See the proof</p>
-							<h3 className={styles.cardTitle}>Every number ships with its command</h3>
-							<p className={styles.cardBody}>
-								Published panels against the French national address register and a Belgian sample, plus the reading
-								guide for the ways a geocoding benchmark reads better than it is. Script, inputs and result file,
-								published beside every score.
-							</p>
-							<code className={styles.cardTransform}>resolve rate ≠ accuracy · panel ≠ population</code>
-							<p className={styles.cardLinks}>
-								<Link to="/docs/resources/benchmarks">See the benchmarks →</Link>
-							</p>
-						</div>
-					</div>
+		<section className={styles.stats}>
+			<dl className={clsx("container", styles.statRow)}>
+				<div>
+					<dt>The model</dt>
+					<dd>39.4 MB</dd>
+					<p>An int8 encoder that ships inside an npm package.</p>
 				</div>
+				<div>
+					<dt>The global gazetteer</dt>
+					<dd>2.88 GB</dd>
+					<p>A download you keep, not a service you call.</p>
+				</div>
+				<div>
+					<dt>Requests to us</dt>
+					<dd>0</dd>
+					<p>The lookup runs in your process and reports nothing back.</p>
+				</div>
+				<div>
+					<dt>Commercial license</dt>
+					<dd>{PRICE_MONTHLY}</dd>
+					<p>A month, per company, at any volume.</p>
+				</div>
+			</dl>
+		</section>
+	)
+}
+
+function HowItWorks(): ReactNode {
+	return (
+		<section className={clsx("container", styles.section)}>
+			<Heading as="h2" className={styles.sectionHeading}>
+				How a lookup works
+			</Heading>
+			<ol className={styles.steps}>
+				<li>
+					<h3>Parse</h3>
+					<p>
+						A six-layer encoder labels each piece of the text: house number, street, unit, city, postcode and the rest,
+						each with a confidence. It runs on ONNX Runtime in Node or in a browser tab.
+					</p>
+					<code>"apt 4b 350 5th ave" → unit · house_number · street</code>
+				</li>
+				<li>
+					<h3>Resolve</h3>
+					<p>
+						The components resolve against a gazetteer on your own disk, built from{" "}
+						<a href="https://whosonfirst.org">Who&apos;s On First</a>, OpenAddresses and national registers, down to the
+						address point where the data has one.
+					</p>
+					<code>street + city + postcode → 40.7478, -73.9850</code>
+				</li>
+				<li>
+					<h3>Keep the receipt</h3>
+					<p>
+						Every answer names its tier and the dataset it came from, so a coarse match reads as coarse and you can
+						trace any coordinate back to its source.
+					</p>
+					<code>placetype: interpolated · precision: ±64 m</code>
+				</li>
+			</ol>
+		</section>
+	)
+}
+
+const SOLUTIONS: readonly { to: string; title: string; body: string }[] = [
+	{
+		to: "/docs/solutions/eliminate-the-per-request-bill",
+		title: "My geocoding bill grows with every customer",
+		body: "A flat license does not move when the volume does.",
+	},
+	{
+		to: "/docs/solutions/keep-addresses-inside",
+		title: "Addresses can't leave our network",
+		body: "An in-process geocode opens no socket, so there is no third-party flow to paper.",
+	},
+	{
+		to: "/docs/solutions/resolve-a-messy-file",
+		title: "I have a messy customer file",
+		body: "Parse, geocode and match in one pipeline, joined on the coordinate.",
+	},
+	{
+		to: "/docs/solutions/fleet-reverse-geocoding",
+		title: "I reverse-geocode a fleet",
+		body: "A local reverse lookup is bounded by disk and CPU, not by a quota.",
+	},
+	{
+		to: "/docs/solutions/own-what-you-look-up",
+		title: "I need to keep the results",
+		body: "A result computed on your own disk is an output you own.",
+	},
+	{
+		to: "/docs/solutions/research-and-teaching",
+		title: "I'm doing research or teaching",
+		body: "Free under the AGPL, with a declared key for every data tier.",
+	},
+]
+
+function SolutionFinder(): ReactNode {
+	return (
+		<section className={clsx("container", styles.section)}>
+			<Heading as="h2" className={styles.sectionHeading}>
+				What brings you here?
+			</Heading>
+			<div className={styles.solutions}>
+				{SOLUTIONS.map((solution) => (
+					<Link key={solution.to} to={solution.to} className={styles.solution}>
+						<strong>{solution.title}</strong>
+						<span>{solution.body}</span>
+						<span className={styles.solutionArrow} aria-hidden="true">
+							→
+						</span>
+					</Link>
+				))}
+			</div>
+		</section>
+	)
+}
+
+function PricingTeaser(): ReactNode {
+	return (
+		<section className={styles.teaser}>
+			<div className={clsx("container", styles.teaserInner)}>
+				<div>
+					<Heading as="h2" className={styles.teaserTitle}>
+						Free under the AGPL. {PRICE_MONTHLY} a month to keep your source closed.
+					</Heading>
+					<p>
+						No seats, no per-address fees, and no meter. Your thousandth lookup and your hundred-millionth cost the
+						same.
+					</p>
+				</div>
+				<Link className="button button--primary button--lg" to="/pricing">
+					See the pricing
+				</Link>
 			</div>
 		</section>
 	)
@@ -190,49 +336,6 @@ function FeaturedWork(): ReactNode {
 								loading="lazy"
 							/>
 						</Link>
-					</div>
-				</div>
-			</div>
-		</section>
-	)
-}
-
-function FeatureStrip(): ReactNode {
-	return (
-		<section className={styles.features}>
-			<div className="container">
-				<div className={clsx("row", styles.featureRow)}>
-					<div className="col col--3">
-						<h3>Neural address parser</h3>
-						<p>
-							A 6-layer encoder over a 73,143-piece SentencePiece vocabulary, quantized to int8 and executed on ONNX
-							Runtime. Emits 33 BIO labels over 16 component tags — country, region, locality, postcode, street, house
-							number, unit, venue and the rest — each with a confidence score.
-						</p>
-					</div>
-					<div className="col col--3">
-						<h3>Gazetteer-backed resolver</h3>
-						<p>
-							Parsed components resolve to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs and
-							WGS-84 coordinates over pre-indexed SQLite. It uses only <code>node:sqlite</code>, without SpatiaLite or a
-							native build step. The gazetteer is a 2.88 GB download you keep, not a service you call.
-						</p>
-					</div>
-					<div className="col col--3">
-						<h3>Node and the browser</h3>
-						<p>
-							Node 24.18 or later, and the same pipeline in a browser tab: the classifier on{" "}
-							<code>onnxruntime-web</code>, the resolver on WASM SQLite over a byte-ranged gazetteer.{" "}
-							<Link href="https://earth.mailwoman.ai/">Earth</Link> is that build, not a hosted API behind a text box.
-						</p>
-					</div>
-					<div className="col col--3">
-						<h3>Drop-in and agent surfaces</h3>
-						<p>
-							Nominatim-, Photon- and libpostal-compatible servers answer on the shapes your client code already speaks,
-							so a migration can be a hostname change. <code>@mailwoman/mcp</code> exposes parse, geocode and POI search
-							to any MCP-compatible agent over stdio.
-						</p>
 					</div>
 				</div>
 			</div>
@@ -303,10 +406,12 @@ export default function Home(): ReactNode {
 		>
 			<HomepageHeader />
 			<main>
-				<Fork />
-				<FeaturedWork />
-				<FeatureStrip />
+				<Stats />
+				<HowItWorks />
+				<SolutionFinder />
 				<QuickStart />
+				<FeaturedWork />
+				<PricingTeaser />
 			</main>
 		</Layout>
 	)
