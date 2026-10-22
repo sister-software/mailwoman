@@ -27,6 +27,7 @@ const darkFlavor = namedFlavor("dark")
  *
  * The ground is a pale warm gray (街区).
  * Atlases tint each ward a different pastel.
+ *
  * The base tiles hold only country polygons, so the ground is one color.
  *
  * Road color encodes administrative class rather than traffic: national routes (国道)
@@ -36,6 +37,7 @@ const darkFlavor = namedFlavor("dark")
  *
  * Railways are dark lines hatched with white dashes.
  * Underground lines are red dashes.
+ *
  * Municipal boundaries are a translucent red band under a dark dash-dot line.
  */
 export const GuideMapPalette = {

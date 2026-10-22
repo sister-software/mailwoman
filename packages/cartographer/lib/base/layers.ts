@@ -9,6 +9,7 @@ import type { ExpressionSpecification, LayerSpecification } from "maplibre-gl"
 
 import { BuildingLayers } from "#base/buildings"
 import { InfrastructureLayers } from "#base/infrastructure"
+import { OceanLayers } from "#base/ocean"
 import { HillshadeTileSetID } from "#base/terrain"
 import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
@@ -294,10 +295,16 @@ const OneWayArrowLayer: LayerSpecification = {
 }
 
 /**
+ * The Protomaps water fill, which the ocean layers follow.
+ */
+const WATER_FILL_LAYER_ID = "water"
+
+/**
  * The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries.
  */
 export const BaseLayers: LayerSpecification[] = [
-	...nonLabelLayers,
+	// The ocean's depth shading sits directly over the water fill, under roads and land cover drawn after it.
+	...nonLabelLayers.flatMap((layer) => (layer.id === WATER_FILL_LAYER_ID ? [layer, ...OceanLayers] : [layer])),
 	{
 		id: LayerID(MailwomanBaseTileSetID, "water-outline"),
 		type: "line",

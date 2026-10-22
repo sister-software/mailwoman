@@ -12,8 +12,9 @@ import { LayerID } from "#styles/layers"
 /**
  * Colors of utility networks, barriers and street furniture.
  *
- * Japanese street maps draw these in low contrast: thin gray lines for power and walls, and small colored
- * marks for hydrants (消火栓) and fire cisterns (防火水槽), which fire and utility maps show in red and blue.
+ * Japanese street maps draw these in low contrast: thin gray lines for power
+ * and walls, and small colored marks for hydrants (消火栓) and fire cisterns (防火水槽),
+ * which fire and utility maps show in red and blue.
  */
 export const InfrastructurePalette = {
 	power: "#8c8c8c",
