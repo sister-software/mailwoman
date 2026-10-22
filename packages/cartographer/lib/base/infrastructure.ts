@@ -29,6 +29,16 @@ export const InfrastructurePalette = {
 	cistern: "#3d7fd6",
 	defibrillator: "#2f9e5b",
 	structure: "#e6e2d8",
+	/**
+	 * Japanese post boxes are red.
+	 */
+	postBox: "#d6312b",
+	signal: "#e3a019",
+	streetLamp: "#c9b458",
+	furniture: "#9a7b5f",
+	kerb: "#b4afa5",
+	crosswalk: "#ffffff",
+	bikeLane: "#3a8fd6",
 } as const
 
 const InfrastructureLayerID = LayerID.bind(null, MailwomanBaseTileSetID)
@@ -100,6 +110,46 @@ export const InfrastructureLayers: LayerSpecification[] = [
 	},
 	{
 		...base,
+		id: InfrastructureLayerID("infrastructure-kerbs"),
+		type: "line",
+		minzoom: 17,
+		filter: ["all", isLine, kindIs("barrier"), detailIn("kerb")],
+		paint: {
+			"line-color": InfrastructurePalette.kerb,
+			"line-width": ["interpolate", ["linear"], ["zoom"], 17, 0.5, 20, 1.5],
+		},
+	},
+	{
+		// Zebra crossings: the crossing ways of the road network, striped across their direction.
+		source: MailwomanBaseTileSetID,
+		"source-layer": "roads",
+		id: InfrastructureLayerID("crosswalks"),
+		type: "line",
+		minzoom: 17,
+		filter: ["==", ["get", "kind_detail"], "crossing"],
+		paint: {
+			"line-color": InfrastructurePalette.crosswalk,
+			"line-width": ["interpolate", ["exponential", 2], ["zoom"], 17, 5, 20, 24],
+			"line-dasharray": [0.25, 0.25],
+		},
+	},
+	{
+		// A lane or track along a road, drawn as a thin blue line beside the carriageway.
+		source: MailwomanBaseTileSetID,
+		"source-layer": "roads",
+		id: InfrastructureLayerID("bike-lanes"),
+		type: "line",
+		minzoom: 15,
+		filter: ["has", "cycleway"],
+		layout: { "line-cap": "round", "line-join": "round" },
+		paint: {
+			"line-color": InfrastructurePalette.bikeLane,
+			"line-width": ["interpolate", ["linear"], ["zoom"], 15, 0.75, 19, 2],
+			"line-offset": ["interpolate", ["exponential", 2], ["zoom"], 15, 2, 19, 10],
+		},
+	},
+	{
+		...base,
 		id: InfrastructureLayerID("infrastructure-pipelines"),
 		type: "line",
 		minzoom: 14,
@@ -162,7 +212,15 @@ export const InfrastructureLayers: LayerSpecification[] = [
 		id: InfrastructureLayerID("infrastructure-street-marks"),
 		type: "circle",
 		minzoom: 16,
-		filter: ["all", isPoint, ["in", ["get", "kind"], ["literal", ["emergency", "barrier", "water", "man_made"]]]],
+		filter: [
+			"all",
+			isPoint,
+			[
+				"in",
+				["get", "kind"],
+				["literal", ["emergency", "barrier", "water", "man_made", "highway", "amenity", "leisure", "power"]],
+			],
+		],
 		paint: {
 			"circle-color": [
 				"match",
@@ -175,6 +233,18 @@ export const InfrastructureLayers: LayerSpecification[] = [
 				InfrastructurePalette.defibrillator,
 				["water_tower", "storage_tank", "pumping_station"],
 				InfrastructurePalette.waterNetwork,
+				"post_box",
+				InfrastructurePalette.postBox,
+				["traffic_signals", "stop", "give_way", "speed_camera", "traffic_mirror"],
+				InfrastructurePalette.signal,
+				"street_lamp",
+				InfrastructurePalette.streetLamp,
+				["bench", "picnic_table", "waste_basket", "recycling", "bicycle_parking", "vending_machine"],
+				InfrastructurePalette.furniture,
+				["pole", "utility_pole", "manhole"],
+				InfrastructurePalette.power,
+				["drinking_water", "telephone"],
+				InfrastructurePalette.cistern,
 				InfrastructurePalette.wall,
 			],
 			"circle-radius": ["interpolate", ["linear"], ["zoom"], 16, 1.5, 19, 3.5],
