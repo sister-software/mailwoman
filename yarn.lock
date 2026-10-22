@@ -7006,6 +7006,7 @@ __metadata:
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.14.0"
     onnxruntime-web: "npm:1.30.0"
+    pmtiles: "npm:^4.5.0"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
     react-map-gl: "npm:^8.1.3"

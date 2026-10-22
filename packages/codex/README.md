@@ -324,7 +324,7 @@ separate:
   canonical word, every _recognized_ variant, and the one _preferred_ abbreviation. Its consumers
   need precision. They are corpus synthesis recipes, the eval harness's invariance transforms, and
   formatting, since rendering `N` or `North` requires knowing which form the authority prints.
-- **The libpostal dictionaries** (`core/data/libpostal/dictionaries/`, Pelias lineage) **are
+- **The libpostal dictionaries** (`dictionaries/data/libpostal/dictionaries/`, Pelias lineage) **are
   descriptive.** They list everything people write, including forms that no authority recognizes
   (`en/directionals.txt` lists `lower`/`upper`/`central`). Their consumers need recall. They are
   evidence-lexicon curation laws, street decomposition for training gold, and the street-morphology
