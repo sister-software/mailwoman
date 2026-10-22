@@ -13,7 +13,7 @@ import { JSONSpliterator } from "spliterator"
 import { dataRootPath } from "#data-root"
 import { delimitedSource } from "#fs/delimited"
 import { pathExists } from "#fs/readers/stat"
-import { corePackagePathBuilder, repoRootPathBuilder } from "#paths"
+import { repoRootPathBuilder, workspacePathBuilder } from "#paths"
 
 /**
  * The Latin off-map test sets, one per outlier builder.
@@ -75,9 +75,11 @@ export function defaultInt8Dir(): PathBuilder {
 }
 
 /**
- * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`),
+ * The deployed placer the `mailwoman` package ships (`packages/mailwoman/data/coarse-placer`),
  * not the `$MAILWOMAN_DATA_ROOT` training output, for probes that must match the runtime.
+ *
+ * Core cannot depend on `mailwoman`, so this resolves the checkout's workspace directory.
  */
 export function shippedModelDir(): PathBuilder {
-	return corePackagePathBuilder("data", "coarse-placer")
+	return workspacePathBuilder("mailwoman", "data", "coarse-placer")
 }

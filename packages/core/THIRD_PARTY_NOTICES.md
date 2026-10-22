@@ -56,15 +56,3 @@ under `data/chromium-i18n/ssl-address/` is from Google's
 licenses. Its own terms make crediting the project recommended and linking back to the license
 required, and place its Creative Commons Zero designation on the format and structure. See
 <https://www.whosonfirst.org/docs/licenses/>.
-
-## First-party artifacts under `data/`
-
-**Coarse placer** — `data/coarse-placer/`. A multinomial logistic-regression classifier over 29
-country classes, authored by Sister Software and shipped as `weights.bin` and `meta.json`. It is
-first-party work rather than a third-party component, so no third-party license attaches to the
-artifact itself.
-
-What it was trained on is not recorded. `mailwoman placer train` builds it from rows under the data
-root, and no manifest names which rows those were. This notice says so rather than leaving the
-directory undescribed, and the gap is tracked in
-`docs/engineering/reference/artifact-rights-inventory.mdx`.

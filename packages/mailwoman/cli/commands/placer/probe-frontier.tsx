@@ -23,7 +23,7 @@ export const spec = {
 	options: {
 		model: {
 			type: "string",
-			description: "Model artifact dir (default: the deployed bundle in @mailwoman/core, core/data/coarse-placer)",
+			description: "Model artifact dir (default: the deployed placer in this package's data/coarse-placer)",
 		},
 		n: { type: "number", default: 2000, description: "Queries sampled from cities15000 (shortest first)" },
 		out: { type: "string", description: "Also write the markdown report here" },

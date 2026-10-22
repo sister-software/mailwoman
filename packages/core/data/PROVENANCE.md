@@ -3,7 +3,7 @@
 `@mailwoman/core` is installed by every consumer of Mailwoman, and its `files` array ships `data/**`
 whole. This file records the contents, the command that builds each directory, and what is unrecorded.
 
-The directory has four subdirectories, and the third-party notices describe three. `THIRD_PARTY_NOTICES.md`
+The directory has three subdirectories, and the third-party notices describe all three. `THIRD_PARTY_NOTICES.md`
 beside this file is the copy npm ships, and it states the terms. This file records the build path. That is
 a different question: what wrote the bytes, and whether a reader can check them.
 
@@ -25,7 +25,6 @@ than to this file.
 | `libpostal/`             |   825 | Vendored libpostal dictionaries, 61 language directories |
 | `chromium-i18n/`         |   253 | Google libaddressinput per-country address metadata      |
 | `internal/dictionaries/` |    34 | Curated tables this repository maintains                 |
-| `coarse-placer/`         |     2 | A trained first-party classifier                         |
 
 ### `libpostal/`
 
@@ -70,30 +69,5 @@ recommended and linking back to the license required. The text as retrieved is a
 derived them. They entered the tree in `25709e568` as part of a rename, so that commit is not their
 origin.
 
-### `coarse-placer/`
-
-`meta.json` and `weights.bin`: a multinomial logistic-regression classifier over 29 country classes
-on a 65,536-dimension hashed character-n-gram feature space, with a single temperature fitted on the
-validation split. Written by `mailwoman placer train`
-(`packages/core/tools/coarse-placer/train.ts`). It is first-party work, so no third-party license
-attaches to the artifact itself.
-
-Its training rows are assembled by `mailwoman placer build-dataset`
-(`packages/core/tools/coarse-placer/build/dataset.ts`) into
-`<repo>/data/coarse-placer/{train,val,test}.jsonl`. Those files are **not committed**, and the directory
-holds 0 tracked files. On this machine they hold 1,165,072 training rows, 145,629 each for
-validation and test, plus 11,209 in `test-latin-offmap.jsonl`. Each row is `{raw, country}` and
-has no source field, so which publisher an address came from cannot be recovered from the dataset.
-
-The builder names three inputs, all under the data root and none committed:
-
-- `corpus/versioned/v0.5.0/corpus-v0.5.0/train/*.parquet`, sampled per country because a flat sample
-  is 94% US and FR
-- `corpus/versioned/…/corpus-v0.9.2-multilocale-au/…/*.parquet`, for Australian rows
-- `overture/2026-06-17.0`, pinned as `OVERTURE_ADDRESSES_RELEASE` in `core/lib/overture-pins.ts`
-
-**Unrecorded, and the largest gap in this record:** which records trained the committed `weights.bin`.
-The builder reads a corpus version and the shipped artifact records no manifest, so the artifact
-cannot be joined to the rows behind it. It is the same gap the twelve `neural-weights-*` packages
-have, and `docs/engineering/reference/artifact-rights-inventory.mdx` tracks both. A rebuild would
-close it by freezing a manifest the way `buildCorpus` now writes `TRAINING_SOURCES.json`.
+The trained coarse-placer classifier ships from the `mailwoman` package, and
+`packages/mailwoman/data/PROVENANCE.md` records it.
