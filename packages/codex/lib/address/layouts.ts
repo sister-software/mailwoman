@@ -310,6 +310,52 @@ ${country}`,
 }
 
 /**
+ * Where a country writes the region when an address includes one and the postal layout prints none.
+ *
+ * Royal Mail and Deutsche Post need no county or Bundesland, so the GB and DE layouts above omit it.
+ * Addresses written by people often add it, and a corpus row that labels the region needs a position for it.
+ *
+ * Great Britain writes the county on its own line between the post town and the
+ * postcode (`16 Holstein Street, Preston, Lancashire, PR1 1UN`).
+ * Germany writes the Bundesland after the postcode and locality (`Hauptstraße 5, 01067 Dresden, Sachsen`).
+ */
+export const REGION_LINE_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+	GB: withSoftBreakBefore(
+		addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${postcode}
+${country}`,
+		"postcode"
+	),
+
+	DE: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${region}
+${country}`,
+}
+
+/**
+ * Returns a layout for `country` that prints the region, or `null` when the country has none.
+ *
+ * A country whose layout already prints the region answers that layout.
+ * Otherwise {@linkcode REGION_LINE_LAYOUTS} answers.
+ */
+export function regionLayoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
+	const layout = layoutForCountry(countryCode, script)
+
+	if (layout && layoutPrintsTag(layout, "region")) return layout
+
+	return REGION_LINE_LAYOUTS[countryCode?.trim().toUpperCase() ?? ""] ?? null
+}
+
+/**
  * Address systems that print the largest unit first, derived from the layouts
  * rather than listed because the layout is the statement of print order.
  *

@@ -15,6 +15,7 @@
  */
 
 import { formatAddress } from "@mailwoman/codex/address/format"
+import { mulberry32 } from "@mailwoman/core/utils"
 
 import type { CanonicalRow } from "#types"
 
@@ -86,6 +87,13 @@ export interface LocaleRenderOpts {
 	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
 	 */
 	separator?: ", " | " "
+	/**
+	 * Write the tuple's region where the country writes one (`regionLayoutForCountry` in the codex).
+	 *
+	 * The option draws no random number, so the rest of a seeded run is unchanged.
+	 * A row whose region cannot be placed or aligned renders without it.
+	 */
+	withRegion?: boolean
 }
 
 /**
@@ -147,7 +155,7 @@ function tokenPresent(raw: string, value: string): boolean {
  * with light variation (house number and postcode may be dropped).
  *
  * Returns `null` when the tuple is too thin or a component would not align to an exact span.
- * The row omits the region for alignment reliability.
+ * The row prints the tuple's region only when {@linkcode LocaleRenderOpts.withRegion} asks for it.
  */
 export function renderLocaleRow(
 	base: LocaleBaseTuple,
@@ -179,8 +187,28 @@ export function renderLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
+	// The region costs no random draw, so a row without one renders exactly as before.
+	// A region the country's layout cannot place, or that does not align, falls back to the row without it.
+	if (opts.withRegion && base.region) {
+		const withRegion = finishLocaleRow({ ...components, region: base.region }, base, country, opts)
+
+		if (withRegion) return withRegion
+	}
+
+	return finishLocaleRow(components, base, country, opts)
+}
+
+/**
+ * Render already-drawn components and check that each one aligns, drawing no random numbers.
+ */
+function finishLocaleRow(
+	components: CanonicalRow["components"],
+	base: LocaleBaseTuple,
+	country: string,
+	opts: LocaleRenderOpts
+): RenderedLocaleRow | null {
 	const separator = opts.separator ?? ", "
-	let raw = formatAddress(components, country, { separator })
+	let raw = formatAddress(components, country, { separator, withRegion: Boolean(components.region) })
 
 	if (!raw) return null
 
@@ -209,6 +237,16 @@ export function renderLocaleRow(
 	}
 
 	return { raw, components, locale: LOCALE_TAG[country] ?? country.toLowerCase() }
+}
+
+/**
+ * The generator a seeded recipe draws {@linkcode LocaleRenderOpts.withRegion} from.
+ *
+ * It is separate from the rendering generator, so choosing which rows print a region
+ * leaves every other draw of the run, and every row without a region, as it was.
+ */
+export function regionDrawRandom(seed: number): () => number {
+	return mulberry32((seed ^ 0x52_45_47_4e) >>> 0)
 }
 
 /**

@@ -28,7 +28,7 @@ import { readCountyOfPostcode } from "#gb/county"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
-import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
+import { type LocaleBaseTuple, type RenderedLocaleRow, regionDrawRandom, renderLocaleRow } from "#surfaces/locale"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
@@ -108,6 +108,12 @@ export interface LocaleCountrySource {
 	 * The publication register written to each row.
 	 */
 	register: SourceRegister
+	/**
+	 * The share of rows that write the tuple's region, drawn from {@linkcode regionDrawRandom}.
+	 *
+	 * @defaultValue 0: no row prints a region.
+	 */
+	regionFraction?: number
 	/**
 	 * The dataset and terms the row's `license` names, before the rendering order.
 	 *
@@ -201,6 +207,10 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: defaultRecipeSource("synth-gb-os-open"),
 		register: SourceRegister.OrdnanceSurveyOpenData,
 		license: "OS OpenData GB tuples (OGL-UK-3.0)",
+		// The share of rows #2676 shipped in v0.7.10: 52,103 of 786,626 train rows (6.6%) labeled the county
+		// or constituent country. The run skips a row whose text it already wrote (#2765), and a row with a
+		// region rarely repeats, so 5.7% of draws yields 6.6% of written rows.
+		regionFraction: 0.057,
 		// The adapter's rows carry no region.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
@@ -557,6 +567,10 @@ export const localeRecipe: CorpusRecipe = {
 	options: [
 		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
 		{
+			flag: "--region-fraction <f>",
+			description: "Fraction of rows that write the tuple's region. Default: the country's share (GB 0.057, else 0)",
+		},
+		{
 			flag: "--country-fraction <f>",
 			description:
 				"Fraction of rows that append an explicit country surface form (`, United Kingdom`) + a `country` component (fr-admin-split pattern). Default 0 — byte-identical to before when unset.",
@@ -570,6 +584,7 @@ export const localeRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		// Each part's sampler gets its own generator below, so this one drives rendering only.
 		const random = makeMulberry32(opts.seed)
+		const regionRandom = regionDrawRandom(opts.seed)
 		const country = (opts.country ?? "DE").toUpperCase()
 		const countrySource = COUNTRY_SOURCES[country]
 
@@ -580,6 +595,11 @@ export const localeRecipe: CorpusRecipe = {
 		}
 
 		const countryFraction = opts.countryFraction ?? 0
+		const regionFraction = opts.regionFraction ?? countrySource.regionFraction ?? 0
+
+		if (!(regionFraction >= 0 && regionFraction <= 1)) {
+			throw new Error(`--region-fraction must be in [0, 1], got ${regionFraction}`)
+		}
 
 		if (!(countryFraction >= 0 && countryFraction <= 1)) {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
@@ -636,7 +656,8 @@ export const localeRecipe: CorpusRecipe = {
 						: ("conventional" as const)
 					: undefined
 
-			const synth = renderLocaleRow(base, country, { random, nativeHouseJoin, postcodeShape })
+			const withRegion = regionFraction > 0 && regionRandom() < regionFraction
+			const synth = renderLocaleRow(base, country, { random, nativeHouseJoin, postcodeShape, withRegion })
 
 			if (!synth) {
 				skipped++

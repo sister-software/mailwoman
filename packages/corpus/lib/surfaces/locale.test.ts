@@ -246,3 +246,103 @@ describe("nativeHouseJoin (#241 — ES street→house join diversity)", () => {
 		expect(withDefaults.raw).toBe(withoutOpts.raw)
 	})
 })
+
+describe("withRegion: the region in the native order (#2676)", () => {
+	/**
+	 * The text under each aligned span, keyed by its tag.
+	 */
+	function spanTexts(row: ReturnType<typeof renderLocaleRow> & object, country: string): Record<string, string> {
+		const aligned = alignRow({ ...row, country, source: "test", source_id: "test:region" } as CanonicalRow)
+
+		if (aligned.kind !== "labeled") throw new Error(`expected a labeled row for ${row.raw}`)
+
+		const { span_starts, span_ends, span_tags } = aligned.row as unknown as {
+			span_starts: number[]
+			span_ends: number[]
+			span_tags: string[]
+		}
+
+		return Object.fromEntries(span_tags.map((tag, i) => [tag, row.raw.slice(span_starts[i], span_ends[i])]))
+	}
+
+	const PRESTON: LocaleBaseTuple = {
+		house_number: "16",
+		street: "Holstein Street",
+		locality: "Preston",
+		region: "Lancashire",
+		postcode: "PR1 1UN",
+	}
+
+	const DRESDEN: LocaleBaseTuple = {
+		house_number: "5",
+		street: "Hauptstraße",
+		locality: "Dresden",
+		region: "Sachsen",
+		postcode: "01067",
+	}
+
+	it("writes a GB county between the post town and the postcode, every span aligned", () => {
+		const row = renderLocaleRow(PRESTON, "GB", { random: keepAll, withRegion: true })!
+
+		expect(row.raw).toBe("16 Holstein Street, Preston, Lancashire, PR1 1UN")
+
+		expect(spanTexts(row, "GB")).toEqual({
+			house_number: "16",
+			street: "Holstein Street",
+			locality: "Preston",
+			region: "Lancashire",
+			postcode: "PR1 1UN",
+		})
+	})
+
+	it("writes a DE Bundesland after the postcode and locality, every span aligned", () => {
+		const row = renderGermanRow(DRESDEN, { random: keepAll, withRegion: true })!
+
+		expect(row.raw).toBe("Hauptstraße 5, 01067 Dresden, Sachsen")
+
+		expect(spanTexts(row, "DE")).toEqual({
+			street: "Hauptstraße",
+			house_number: "5",
+			postcode: "01067",
+			locality: "Dresden",
+			region: "Sachsen",
+		})
+	})
+
+	it("renders a row without a region exactly as without the option", () => {
+		for (const [base, country] of [
+			[{ ...PRESTON, region: undefined }, "GB"],
+			[{ ...DRESDEN, region: undefined }, "DE"],
+		] as const) {
+			const plain = renderLocaleRow(base, country, { random: keepAll })
+			const asked = renderLocaleRow(base, country, { random: keepAll, withRegion: true })
+
+			expect(asked).toEqual(plain)
+			expect(asked!.components.region).toBeUndefined()
+		}
+	})
+
+	it("leaves the region out when not asked, so the row is the one v0.8.0 wrote", () => {
+		const row = renderLocaleRow(PRESTON, "GB", { random: keepAll })!
+
+		expect(row.raw).toBe("16 Holstein Street, Preston, PR1 1UN")
+		expect(row.components.region).toBeUndefined()
+	})
+
+	it("draws the same random numbers with and without the region", () => {
+		let draws = 0
+
+		const counting = () => {
+			draws++
+
+			return 0.5
+		}
+
+		renderLocaleRow(PRESTON, "GB", { random: counting })
+		const without = draws
+
+		renderLocaleRow(PRESTON, "GB", { random: counting, withRegion: true })
+
+		expect(draws - without).toBe(without)
+	})
+})
