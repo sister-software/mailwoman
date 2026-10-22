@@ -27,7 +27,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { open } from "#fs/readers/stat"
 import { stringifyJSON } from "#json"
-import { resourceDictionaryPath, workspacePath } from "#paths"
+import { workspacePath } from "#paths"
 
 /**
  * Options for {@linkcode generateLanguageTypes}.
@@ -57,7 +57,8 @@ export async function generateLanguageTypes(
 	report?: (line: string) => void
 ): Promise<GenerateLanguageTypesSummary> {
 	const outfile = options.out ?? workspacePath("core", "lib", "resources", "languages", "types.gen.ts")
-	const dataSourcePath = resourceDictionaryPath("internal", "languages.csv")
+	// Core cannot depend on `@mailwoman/dictionaries`, which depends on core, so this resolves the checkout's workspace.
+	const dataSourcePath = workspacePath("dictionaries", "data", "internal", "dictionaries", "languages.csv")
 
 	const alpha2Entries = new Map<string, string[]>()
 	const alpha3bEntries = new Map<string, string[]>()

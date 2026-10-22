@@ -192,15 +192,14 @@ export class CoarsePlacer {
 	}
 
 	/**
-	 * Loads the bundled model, or the artifact in `$MAILWOMAN_COARSE_PLACER_DIR` when it is set.
+	 * Loads the artifact in `$MAILWOMAN_COARSE_PLACER_DIR` when it is set,
+	 * and the one in `defaultDir` otherwise.
+	 *
+	 * The shipped model lives in the `mailwoman` package.
+	 * Its `loadBundledCoarsePlacer` passes that package's directory.
 	 */
-	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
-
-		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
-		const { corePackagePath } = await import("#paths")
-
-		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
+	static async fromDefaultDir(defaultDir: PathBuilderLike, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
+		return CoarsePlacer.fromArtifactDir($public.MAILWOMAN_COARSE_PLACER_DIR ?? defaultDir, opts)
 	}
 
 	/**

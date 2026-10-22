@@ -233,8 +233,8 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		)
 	}
 
-	const { CoarsePlacer } = await import("@mailwoman/core/coarse-placer")
-	const placer = await CoarsePlacer.fromBundled({ abstainBelow: 0, openSet: true })
+	const { loadBundledCoarsePlacer } = await import("mailwoman/default/placer")
+	const placer = await loadBundledCoarsePlacer({ abstainBelow: 0, openSet: true })
 
 	const observations: Observation[] = []
 	const unusable: string[] = []

@@ -16,6 +16,7 @@
 		{ "path": "../core" },
 		{ "path": "../postcode" },
 		{ "path": "../codex" },
+		{ "path": "../dictionaries" },
 		{ "path": "../evidence" },
 		{ "path": "../poi-taxonomy" },
 		{ "path": "../query-shape" },

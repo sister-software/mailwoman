@@ -17,6 +17,7 @@
 				"packages/codex",
 				"packages/core",
 				"packages/corpus",
+				"packages/dictionaries",
 				"packages/dossier",
 				"packages/fastify",
 				"packages/filer",

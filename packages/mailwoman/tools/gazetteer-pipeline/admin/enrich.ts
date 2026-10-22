@@ -8,7 +8,7 @@
  *   1. Region abbreviations: WOF region records contain only the full name. `findPlace('IL')`
  *      returns no place without the abbreviation, killing the parent constraint the resolve walk
  *      depends on. The abbreviations come from the packaged chromium-i18n / libaddressinput dataset
- *      (`core/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
+ *      (`dictionaries/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
  *      `sub_names` are index-aligned. These fields supply the abbreviations.
  *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept a 2-letter
  *      region abbreviation as an exact match. Derived from the step-1 rows, so it must run after
@@ -17,7 +17,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { corePackagePathBuilder } from "@mailwoman/core/paths"
+import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
@@ -25,7 +25,7 @@ export interface EnrichAdminOptions {
 	/**
 	 * Chromium-i18n ssl-address spec dir.
 	 *
-	 * @defaultValue the dataset packaged with `@mailwoman/core`.
+	 * @defaultValue the dataset packaged with `@mailwoman/dictionaries`.
 	 */
 	specsDir?: PathBuilderLike
 }
@@ -44,7 +44,7 @@ export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,
 	opts: EnrichAdminOptions = {}
 ): Promise<EnrichAdminResult> {
-	const specsDir = PathBuilder.from(opts.specsDir ?? corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
+	const specsDir = PathBuilder.from(opts.specsDir ?? sslAddressSpecsPath())
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")
 

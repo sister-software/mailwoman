@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Smoke tests for the street-morphology FST builder. Walks the shipped libpostal dictionaries in
- *   `core/data/libpostal/dictionaries/` and asserts:
+ *   `dictionaries/data/libpostal/dictionaries/` and asserts:
  *
  *   - Build completes without error
  *   - Trie contains the canonical English/French/German affixes we expect
  *   - Variants resolve to the same PlaceEntry as their canonical
  *   - Serialize → deserialize round-trips with the new `street_affix` placetype
  */
-import { resourceDictionaryPath } from "@mailwoman/core/paths"
+import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import { describe, expect, it } from "vitest"
 
 import { deserializeFST, readFSTProvenance, serializeFST } from "#fst"

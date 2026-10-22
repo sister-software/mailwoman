@@ -5,15 +5,15 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "@mailwoman/postcode/country-formats/data"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
 import { placementInFormat, POSTCODE_LAYOUTS_PATH, postcodeSideOfAdminBlock } from "./fmt-placement.ts"
 
-const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+const specsDirectory = sslAddressSpecsPath()
 
 describe("placementInFormat", () => {
 	test.each([

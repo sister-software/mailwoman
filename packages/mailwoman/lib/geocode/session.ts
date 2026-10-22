@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -17,8 +17,8 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
-import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
@@ -28,6 +28,7 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
+import { loadBundledCoarsePlacer } from "#default/placer"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -592,7 +593,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		progress("Loading geographic priors…")
 
 		placer = options.placeCountry
-			? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
+			? await loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
 			: null
 
 		resolver = createWOFResolver(lookup)

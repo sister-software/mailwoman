@@ -6871,6 +6871,7 @@ __metadata:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/dictionaries": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
@@ -6894,6 +6895,16 @@ __metadata:
     write-excel-file: "npm:^4.1.1"
     yaml: "npm:^2.9.0"
     zod: "npm:^4.6.7"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/dictionaries@workspace:*, @mailwoman/dictionaries@workspace:packages/dictionaries":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/dictionaries@workspace:packages/dictionaries"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    path-ts: "npm:^2.5.0"
+    spliterator: "npm:^9.2.1"
   languageName: unknown
   linkType: soft
 
@@ -7652,6 +7663,7 @@ __metadata:
     "@mailwoman/ancestrie": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/dictionaries": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
@@ -22164,6 +22176,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
+    "@mailwoman/dictionaries": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/flood": "workspace:*"

@@ -25,16 +25,16 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isDirectory } from "@mailwoman/core/fs/readers/stat"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { copyPath, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { GitClient } from "@mailwoman/core/git"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { readLocalTextFile } from "#fs/readers"
-import { isDirectory } from "#fs/readers/stat"
-import { temporaryDirectory } from "#fs/temporary"
-import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
-import { GitClient } from "#git"
 import { resourceDictionaryPath } from "#paths"
-import { CommandError } from "#scripting/command"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
@@ -63,7 +63,7 @@ async function sortFileInPlace(path: PathBuilder): Promise<void> {
 /**
  * Shallow-clone libpostal and alphabetize each dictionary file.
  *
- * Install the tree at the checked-in `core/data/libpostal/dictionaries`.
+ * Install the tree at the checked-in `dictionaries/data/libpostal/dictionaries`.
  *
  * Refuses to clobber an existing tree unless `force`.
  * Zx is lazy-imported (dev-grade dependency — the pipeline convention).

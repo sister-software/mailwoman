@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev download ssl-address` — refresh the checked-in Chromium libaddressinput
- *   per-country metadata under `core/data/chromium-i18n/ssl-address/`.
+ *   per-country metadata under `dictionaries/data/chromium-i18n/ssl-address/`.
  */
 
 import { Text } from "ink"
@@ -26,7 +26,7 @@ export const spec = {
 const DevDownloadSSLAddress: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { downloadSSLAddress } = await import("@mailwoman/core/tools/download/ssl-address")
+			const { downloadSSLAddress } = await import("@mailwoman/dictionaries/sdk/ssl-address")
 
 			return downloadSSLAddress(options, (line) => console.error(line))
 		},

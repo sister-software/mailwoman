@@ -19,7 +19,7 @@ interface AddressMetadata {
 
 describe("the generated subregion table", () => {
 	it("places every libaddressinput subregion example in its own subregion", async () => {
-		const dir = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+		const dir = resolvePackageDirectory("@mailwoman/dictionaries")("data", "chromium-i18n", "ssl-address")
 		const misses: string[] = []
 		let checked = 0
 

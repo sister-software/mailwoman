@@ -23,6 +23,7 @@
 		{ "path": "../../postcode" },
 		{ "path": "../../core" },
 		{ "path": "../../corpus" },
+		{ "path": "../../dictionaries" },
 		{ "path": "../../evidence" },
 		{ "path": "../../kind-classifier" },
 		{ "path": "../../locale-hint" },

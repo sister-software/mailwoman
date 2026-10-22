@@ -10,7 +10,7 @@
  *   1. An explicit `artifactPath`, e.g. the weights-package sibling surfaced by
  *      `NeuralAddressClassifier.streetMorphologyPath`. When given, it is the only artifact probed.
  *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
- *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over core's bundled libpostal
+ *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over `@mailwoman/dictionaries`' libpostal
  *      `street_types.txt` files, kept so a missing artifact degrades to a per-process build instead
  *      of a crash.
  *
@@ -21,7 +21,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { resourceDictionaryPath } from "@mailwoman/core/paths"
+import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import type { FSTMatcher } from "#fst/matcher"
@@ -54,7 +54,7 @@ export interface LoadStreetMorphologyFSTOpts {
 	/**
 	 * Dictionaries dir for the build fallback.
 	 *
-	 * @defaultValue core's bundled libpostal dictionaries.
+	 * @defaultValue the libpostal dictionaries `@mailwoman/dictionaries` ships.
 	 */
 	dictionariesDir?: PathBuilderLike
 	/**

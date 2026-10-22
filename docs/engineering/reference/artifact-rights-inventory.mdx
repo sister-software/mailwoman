@@ -390,8 +390,10 @@ reading recorded against a page's earlier text cannot be rechecked once the text
 Measured 2026-09-21 by unpacking `@mailwoman/core@10.0.0` from the registry. Its `data/` directory
 holds four families, and the notices listed three.
 
-Each row's directory is written as the tarball stores it, under `package/data/`. In the checkout the
-same directories sit under `packages/core/data/`.
+Each row's directory is written as the tarball stores it, under `package/data/`. Core's `data/`
+directory was removed on 2026-10-22 (#2785). In the checkout, `coarse-placer/` now sits under
+`packages/mailwoman/data/`, and the other three directories sit under `packages/dictionaries/data/`.
+The paragraphs below cite those current locations.
 
 | directory in the tarball | files | listed in the notices                         |
 | ------------------------ | ----: | --------------------------------------------- |
@@ -400,15 +402,15 @@ same directories sit under `packages/core/data/`.
 | `internal/dictionaries/` |    34 | libpostal yes, Who's On First at a wrong path |
 | `coarse-placer/`         |     2 | no                                            |
 
-`packages/core/data/coarse-placer/` contains `weights.bin` and `meta.json`: a multinomial logistic-regression
+`packages/mailwoman/data/coarse-placer/` contains `weights.bin` and `meta.json`: a multinomial logistic-regression
 classifier over 29 country classes on a 65,536-dimension hashed feature space, trained by
 `mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
 At the first measurement, the repository did not record what it was trained on. The notices files described
-the third-party data beside it, the classifier lacked a model card, and `packages/core/data/` held no
+the third-party data beside it, the classifier lacked a model card, and core's `data/` directory held no
 `PROVENANCE.md`.
 
-`packages/core/data/PROVENANCE.md` now records all four directories and ships in the tarball, at
-2,208 files. It identifies the builder, `mailwoman placer build-dataset`, and its three inputs: the
+A `PROVENANCE.md` then recorded all four directories and shipped in core's tarball, at 2,208 files.
+The classifier's record now lives in `packages/mailwoman/data/PROVENANCE.md`. It identifies the builder, `mailwoman placer build-dataset`, and its three inputs: the
 `v0.5.0` corpus train extracts sampled per country, a `v0.9.2-multilocale-au` extract for Australian
 rows, and the Overture release pinned as `2026-06-17.0`. Read on this machine, the dataset is
 1,165,072 training rows, 145,629 each for validation and test, and 11,209 off-map test rows, none of
@@ -422,19 +424,19 @@ in the same way `buildCorpus` now writes `TRAINING_SOURCES.json`.
 ### Two scope limits kept `data-provenance` from finding it, and one is unstated
 
 The check reads every `data/` directory **that already contains a `PROVENANCE.md`** and reports each
-artifact the file omits. `packages/core/data/` had no such file until now, so the directory was
+artifact the file omits. Core's `data/` directory had no such file until then, so the directory was
 outside the check by construction, as the check's own header states. Four other packages have
 one: `activity-lexicon`, `corpus`, `geographic-model` and `poi-taxonomy`.
 
 The check is also **non-recursive**. Its header does not state that. It collects files whose directory
-equals the `data/` directory itself. Every artifact in `packages/core/data/` is a level down, in
+equals the `data/` directory itself. Every artifact in core's `data/` directory was a level down, in
 `libpostal/`, `chromium-i18n/`, `internal/` or `coarse-placer/`. The new record brings the
 directory into scope, but the check finds zero artifacts to list and passes. The record itself
 states this limit for readers. The check needs a separate change to become recursive.
 
 The Who's On First path was also wrong. Both notice copies sent a reader to a `whosonfirst`
 directory directly under `data/`, which holds **0 files** in the tarball. The dictionaries are three
-levels in, at `packages/core/data/internal/dictionaries/whosonfirst/`. A consumer following the
+levels in, now at `packages/dictionaries/data/internal/dictionaries/whosonfirst/`. A consumer following the
 notice to find the material found no such directory. Both copies are corrected.
 
 ### The `us` bundle records its own publisher list, and the record had the wrong majority

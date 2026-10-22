@@ -48,7 +48,7 @@ export interface ProbeFrontierOptions {
 	/**
 	 * Model artifact dir.
 	 *
-	 * @defaultValue the deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`),
+	 * @defaultValue the deployed placer the `mailwoman` package ships (`mailwoman/data/coarse-placer`),
 	 * not the `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string

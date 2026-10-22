@@ -15,6 +15,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -58,7 +59,7 @@ function postcodePrefix(fmt: string | undefined): string | null {
  */
 const PRINT_WIDTH = 120
 
-const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+const specsDirectory = sslAddressSpecsPath()
 const entries: string[] = []
 const subregions: Record<string, SubregionPostcodeSource[]> = {}
 const adminBlockSides: Record<string, PostcodeAdminBlockSide | null> = {}
@@ -130,7 +131,7 @@ for (const file of await Globerator.files("json", {
 		patternLine.replaceAll("\t", "    ").length <= PRINT_WIDTH ? [patternLine] : [`\t\tpattern:`, `\t\t\t${pattern},`]
 
 	entries.push(
-		inline.replace("\t", "    ").length <= PRINT_WIDTH
+		inline.replaceAll("\t", "    ").length <= PRINT_WIDTH
 			? inline
 			: [`\t${code}: {`, ...patternLines, ...fields.map((field) => `\t\t${field},`), `\t},`].join("\n")
 	)

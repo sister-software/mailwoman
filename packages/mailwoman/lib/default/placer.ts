@@ -12,6 +12,25 @@
  *   degrades to plain resolution and does not throw.
  */
 
+import type { CoarsePlacer, CoarsePlacerOpts } from "@mailwoman/core/coarse-placer"
+import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
+
+/**
+ * The directory of the coarse-placer artifact this package ships, `data/coarse-placer/`.
+ */
+export function bundledCoarsePlacerDir(): string {
+	return resolvePackagePathFrom(import.meta.url, "mailwoman", "data", "coarse-placer")
+}
+
+/**
+ * Loads the shipped coarse-placer, or the artifact in `$MAILWOMAN_COARSE_PLACER_DIR` when it is set.
+ */
+export async function loadBundledCoarsePlacer(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
+	const { CoarsePlacer } = await import("@mailwoman/core/coarse-placer")
+
+	return CoarsePlacer.fromDefaultDir(bundledCoarsePlacerDir(), opts)
+}
+
 /**
  * Structural shape of a place-country predictor, matching `RuntimePipelineStages["placeCountry"]`.
  */
@@ -34,15 +53,15 @@ const DEFAULT_ABSTAIN_BELOW = 0.9
 let cached: Promise<PlaceCountryFn | null> | null = null
 
 /**
- * Lazy-load and cache the coarse-placer bundled in `@mailwoman/core` as a place-country function,
- * returning `null` when the model could not be loaded so the caller proceeds with no prior.
+ * Lazy-load and cache the shipped coarse-placer as a place-country function, returning `null`
+ * when the model could not be loaded so the caller proceeds with no prior.
  */
 export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 	if (!cached) {
 		cached = (async (): Promise<PlaceCountryFn | null> => {
 			try {
-				const { CoarsePlacer, inMapPosterior } = await import("@mailwoman/core/coarse-placer")
-				const placer = await CoarsePlacer.fromBundled({ abstainBelow: DEFAULT_ABSTAIN_BELOW, openSet: true })
+				const { inMapPosterior } = await import("@mailwoman/core/coarse-placer")
+				const placer = await loadBundledCoarsePlacer({ abstainBelow: DEFAULT_ABSTAIN_BELOW, openSet: true })
 
 				return (text: string) => {
 					const p = placer.predict(text)

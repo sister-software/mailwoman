@@ -7,7 +7,7 @@
  *   shape instead of tracing nested calls.
  *
  *   The line skeletons come from libaddressinput, Google's address metadata. This repository ships the data at
- *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
+ *   `packages/dictionaries/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
  *   This repository supplies the `%A` expansion into its street tags, the line-join policy, the country line and the
  *   post-office box.
  */

@@ -76,6 +76,7 @@
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",

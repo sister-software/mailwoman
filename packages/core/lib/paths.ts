@@ -67,7 +67,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * are siblings, so both trees put this file at the same depth and one constant serves both.
  *
  * If this file moves to a different depth, update {@link PathReflection} with it.
- * A constant that counts the wrong depth resolves `core/data/` reads to a path that does not exist.
+ * A constant that counts the wrong depth resolves every repository path to a directory that does not exist.
  *
  * If a future layout change breaks that equality — moving this file to a different
  * depth under `lib/`, or pointing `outDir` somewhere that is not a sibling of
@@ -75,9 +75,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * {@link PathReflection} is the single declaration of that shared depth.
  *
  * Why not native resolution (2026-08-05 triage, still current).
- * `node:module`'s `findPackageJSON` would compute {@link CorePackageAbsolutePath} without
- * any arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the monorepo root is
- * not a package on any resolution path from here — so the arithmetic survives regardless.
+ * `node:module`'s `findPackageJSON` would compute this package's directory without any
+ * arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the monorepo root is not
+ * a package on any resolution path from here — so the arithmetic survives regardless.
  *
  * It would also break the demo bundle: this module is reachable from a bundled graph
  * (`core/resources/libpostal.ts` imports it and `@mailwoman/core/resources` is a webpack alias),
@@ -122,61 +122,6 @@ export const workspacePathBuilder = createPathBuilderResolver<RepoRootAlias>(Pac
 export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsolutePath)
 
 // #endregion
-
-/**
- * Path builder relative to the `@mailwoman/core` workspace root
- * (the directory containing `package.json` for this package).
- *
- * Two levels up in both trees — `core/lib/utils/repo.ts` and `core/out/utils/repo.js`
- * both sit under a direct child of `core/` — which is why this takes a fixed `".."` pair
- * rather than the mode-dependent third segment it used to include.
- * See the note on {@link RepoRootAbsolutePath} for why that branch is gone.
- *
- * Used to locate package-bundled assets (dictionary data) that live under the workspace root
- * rather than the repo root — so that `npm install @mailwoman/core` ships those
- * assets alongside the JS without any post-install copy step.
- * TODO: Deprecate this
- */
-const CorePackageAbsolutePath = resolvePath(__dirname, "..")
-/**
- * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves
- * the same in source and compiled trees.
- *
- * See the depth note on {@link PathReflection} before reaching across that boundary.
- */
-export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
-
-/**
- * Absolute-path-string resolver relative to the `@mailwoman/core` workspace root —
- * the string-returning sibling of {@link corePackagePathBuilder}.
- * TODO: Deprecate this
- */
-export const corePackagePath = createPathResolver<RepoRootAlias>(CorePackageAbsolutePath)
-
-export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal"
-
-/**
- * Path builder relative to a address resource dictionary directory.
- *
- * Data lives at `core/data/<resource>/dictionaries/...` so the @mailwoman/core
- * npm package ships dictionaries via its `files` glob.
- * Use {@link corePackagePathBuilder} directly for non- dictionary assets
- * (e.g. chromium-i18n/ssl-address) that don't have the `dictionaries/` subdir.
- */
-export function resourceDictionaryPathBuilder<A extends AddressResource, S extends string[]>(
-	resource: A,
-	...pathSegments: S
-) {
-	return corePackagePathBuilder("data", resource, "dictionaries", ...pathSegments)
-}
-
-/**
- * Absolute-path-string resolver for an address resource dictionary directory —
- * the string-returning sibling of {@link resourceDictionaryPathBuilder}.
- */
-export function resourceDictionaryPath<A extends AddressResource, S extends string[]>(resource: A, ...pathSegments: S) {
-	return corePackagePath("data", resource, "dictionaries", ...pathSegments)
-}
 
 /**
  * Absolute path to the test directory.

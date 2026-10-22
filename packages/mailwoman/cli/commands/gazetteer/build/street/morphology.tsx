@@ -23,7 +23,7 @@ export const spec = {
 	options: {
 		dictionaries: {
 			type: "string",
-			description: "libpostal dictionaries root (default: core's bundled data/libpostal/dictionaries)",
+			description: "libpostal dictionaries root (default: the copy @mailwoman/dictionaries ships)",
 		},
 		locales: {
 			type: "string",
