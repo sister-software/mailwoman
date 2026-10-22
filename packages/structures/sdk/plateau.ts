@@ -119,6 +119,7 @@ async function readLicenseTitle(client: PlateauClient, dataset: string): Promise
  */
 export async function readGeoidHeight(client: PlateauClient, longitude: number, latitude: number): Promise<number> {
 	const url = `${GSI_GEOID_CALC}?outputType=json&latitude=${latitude}&longitude=${longitude}`
+
 	// The service answers a busy server with `ExportData.ErrMsg` and HTTP 200, which the client's own retry never sees.
 	for (let attempt = 1; ; attempt++) {
 		const response = await client.getJSON<GeoidCalcResponse>(url)
@@ -130,7 +131,7 @@ export async function readGeoidHeight(client: PlateauClient, longitude: number, 
 			throw new ResourceError(
 				StatusCodes.BAD_GATEWAY,
 				"gsi:geoid",
-				`GSI returned no geoid height for ${latitude},${longitude}: ${JSON.stringify(response)}`
+				`GSI returned no geoid height for ${latitude},${longitude}: ${response.ExportData?.ErrMsg ?? "no OutputData"}`
 			)
 		}
 

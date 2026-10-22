@@ -89,14 +89,16 @@ const CITY_MODELS = electedPlateauTilesets(
 const CITY_MODEL_MIN_ZOOM = 15
 
 /**
- * Tileset options that lower a tileset by its geoid height along the local vertical, so a building
- * PLATEAU places above the WGS84 ellipsoid stands on MapLibre's ground at 0 m.
+ * Tileset options that lower a tileset by its geoid height along the local vertical.
  *
- * Tile3DLayer reads `loadOptions` once per tileset URL, and the cache keeps one object per tileset.
+ * A PLATEAU building placed above the WGS84 ellipsoid then stands on the map's 0 m ground.
  *
- * Tileset3D's default 32 MB cache holds fewer PLATEAU tiles than one ward's view selects.
- * It then destroys tiles that are drawn or still loading, and a destroyed tile fails to parse
- * with `assert failed: gltf`.
+ * Tile3DLayer reads `loadOptions` once per tileset URL.
+ * The cache keeps one object per tileset.
+ *
+ * Tileset3D's default 32 MB cache holds fewer PLATEAU tiles than one ward's view uses.
+ * It then destroys tiles that are drawn or still loading.
+ * A destroyed tile fails to parse with `assert failed: gltf`.
  */
 const cityModelLoadOptions = new Map<string, { tileset: CityModelTilesetOptions }>()
 
@@ -109,7 +111,8 @@ interface CityModelTilesetOptions {
 const CITY_MODEL_MEMORY_MB = 512
 
 /**
- * The screen-space error in pixels a tile may show before its children load. Tileset3D defaults to 8.
+ * The screen-space error in pixels a tile may show before its children load.
+ * Tileset3D defaults to 8.
  */
 const CITY_MODEL_SCREEN_SPACE_ERROR = 16
 
@@ -127,6 +130,7 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
 			},
 		}
+
 		cityModelLoadOptions.set(url, options)
 	}
 
