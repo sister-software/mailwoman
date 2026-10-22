@@ -6,10 +6,11 @@
  *   Reads PLATEAU VIEW's dataset catalog, the CKAN record of each building dataset, and each tileset's root extent.
  */
 
+import { setTimeout as sleep } from "node:timers/promises"
+
 import { APIClient, API_CLIENT_DEFAULTS, type APIClientConfig } from "@mailwoman/core/api"
 import { ResourceError } from "@mailwoman/core/errors"
 import { StatusCodes } from "http-status-codes"
-import { setTimeout as sleep } from "node:timers/promises"
 
 import type { PlateauTileset } from "#jp/plateau"
 

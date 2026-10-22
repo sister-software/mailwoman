@@ -12,13 +12,13 @@ import { Tile3DLayer } from "@deck.gl/geo-layers"
 import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
-import { Matrix4, Vector3 } from "@math.gl/core"
-import { Ellipsoid } from "@math.gl/geospatial"
 import { BuildingLayers } from "@mailwoman/cartographer/base/buildings"
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
 import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
+import { Matrix4, Vector3 } from "@math.gl/core"
+import { Ellipsoid } from "@math.gl/geospatial"
 import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
 import { useEffect, useMemo } from "react"
@@ -75,12 +75,10 @@ function exposeTransform(map: MapInstance): void {
  * The PLATEAU building tilesets whose CKAN record states the elected site policy.
  */
 const CITY_MODELS = electedPlateauTilesets(
-	plateauTilesets.map(
-		({ bounds: [west = 0, south = 0, east = 0, north = 0], ...tileset }): PlateauTileset => ({
-			...tileset,
-			bounds: [west, south, east, north],
-		})
-	)
+	plateauTilesets.map(({ bounds: [west = 0, south = 0, east = 0, north = 0], ...tileset }): PlateauTileset => ({
+		...tileset,
+		bounds: [west, south, east, north],
+	}))
 )
 
 /**

@@ -7,12 +7,7 @@
 		"dataset": "plateau-01100-sapporo-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bc/2e9ddc-cfe2-42fc-a91f-3bb95f97ddad/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01101_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.2483239986228,
-			43.013274059584106,
-			141.38839958257563,
-			43.08447910396806
-		],
+		"bounds": [141.2483239986228, 43.013274059584106, 141.38839958257563, 43.08447910396806],
 		"geoidHeight": 32.4463
 	},
 	{
@@ -23,12 +18,7 @@
 		"dataset": "plateau-01100-sapporo-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a3/49edb5-4014-4e04-a668-7ceae68cd91b/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01102_kita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.26753068319655,
-			43.06728544311953,
-			141.4336922851274,
-			43.18427843196736
-		],
+		"bounds": [141.26753068319655, 43.06728544311953, 141.4336922851274, 43.18427843196736],
 		"geoidHeight": 32.0868
 	},
 	{
@@ -39,12 +29,7 @@
 		"dataset": "plateau-01100-sapporo-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/76/337461-23ff-4818-8028-a607f19506bd/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01103_higashi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.34373401140147,
-			43.06846857234558,
-			141.45625738238058,
-			43.15649811106022
-		],
+		"bounds": [141.34373401140147, 43.06846857234558, 141.45625738238058, 43.15649811106022],
 		"geoidHeight": 31.8989
 	},
 	{
@@ -55,12 +40,7 @@
 		"dataset": "plateau-01100-sapporo-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3a/5d6ed7-bc7f-4dca-96d2-a0adfcbf847f/01100_sapporo-shi_city_2020_citygml_7_op_bldg_3dtiles_01107_nishi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.1930724856105,
-			43.02796823640285,
-			141.3276204731948,
-			43.11587483424249
-		],
+		"bounds": [141.1930724856105, 43.02796823640285, 141.3276204731948, 43.11587483424249],
 		"geoidHeight": 32.6946
 	},
 	{
@@ -71,12 +51,7 @@
 		"dataset": "plateau-02321-ajigasawa-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7c/84c370-a3cc-45bb-b1db-dd6e8dd4800e/02321_ajigasawa-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.18054318148805,
-			40.76875625001142,
-			140.2383522858173,
-			40.78659742524446
-		],
+		"bounds": [140.18054318148805, 40.76875625001142, 140.2383522858173, 40.78659742524446],
 		"geoidHeight": 36.9302
 	},
 	{
@@ -87,12 +62,7 @@
 		"dataset": "plateau-03201-morioka-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/34/4002b4-62c0-417a-84f8-5beff8064f88/03201_morioka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.01496078093587,
-			39.60265353330224,
-			141.20361292309354,
-			39.89853417349191
-		],
+		"bounds": [141.01496078093587, 39.60265353330224, 141.20361292309354, 39.89853417349191],
 		"geoidHeight": 41.3077
 	},
 	{
@@ -103,12 +73,7 @@
 		"dataset": "plateau-03202-miyako-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c0/52c617-05c8-4a0c-9189-c92ac3e6afdc/03202_miyako-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			141.84797054370222,
-			39.55054344249401,
-			141.98549402161422,
-			39.747806049648474
-		],
+		"bounds": [141.84797054370222, 39.55054344249401, 141.98549402161422, 39.747806049648474],
 		"geoidHeight": 39.6478
 	},
 	{
@@ -119,12 +84,7 @@
 		"dataset": "plateau-04100-sendai-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bd/e78220-9044-4dcd-9519-5ff5730e25f2/04100_sendai-shi_city_2024_citygml_1_op_bldg_3dtiles_04101_aoba-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.7242137292385,
-			38.239579361692634,
-			140.89968160236972,
-			38.32264038668055
-		],
+		"bounds": [140.7242137292385, 38.239579361692634, 140.89968160236972, 38.32264038668055],
 		"geoidHeight": 41.9766
 	},
 	{
@@ -135,12 +95,7 @@
 		"dataset": "plateau-04100-sendai-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1c/7b5b9c-e50e-47c1-a396-3d09639ae992/04100_sendai-shi_city_2024_citygml_1_op_bldg_3dtiles_04102_miyagino-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.8827170105311,
-			38.233316397796315,
-			141.04346138395172,
-			38.335591815623744
-		],
+		"bounds": [140.8827170105311, 38.233316397796315, 141.04346138395172, 38.335591815623744],
 		"geoidHeight": 41.9296
 	},
 	{
@@ -151,12 +106,7 @@
 		"dataset": "plateau-05204-odate-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5e/a60525-5c75-4962-88a4-17fb5f38a660/05204_odate-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.52615642969036,
-			40.25498865694137,
-			140.58440546644547,
-			40.30427873289768
-		],
+		"bounds": [140.52615642969036, 40.25498865694137, 140.58440546644547, 40.30427873289768],
 		"geoidHeight": 39.2617
 	},
 	{
@@ -167,12 +117,7 @@
 		"dataset": "plateau-07201-fukushima-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3f/09b9d8-5607-442a-915c-bea5dbe9e83d/07201_fukushima-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.35518322373449,
-			37.64752723098449,
-			140.533447359229,
-			37.8555646231816
-		],
+		"bounds": [140.35518322373449, 37.64752723098449, 140.533447359229, 37.8555646231816],
 		"geoidHeight": 42.5355
 	},
 	{
@@ -183,12 +128,7 @@
 		"dataset": "plateau-07203-koriyama-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f4/5cdbee-e3fe-4ab8-8eb3-f3614bb9c6db/07203_koriyama-shi_city_2020_citygml_9_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.2503626939706,
-			37.32416572196799,
-			140.44253981360603,
-			37.4954928612468
-		],
+		"bounds": [140.2503626939706, 37.32416572196799, 140.44253981360603, 37.4954928612468],
 		"geoidHeight": 42.976
 	},
 	{
@@ -199,12 +139,7 @@
 		"dataset": "plateau-07204-iwaki-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/93/fa64ee-84be-483c-8f95-00ee0a53d93c/07204_iwaki-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.72280563747987,
-			36.8575196906322,
-			141.0001625740089,
-			37.157677348807674
-		],
+		"bounds": [140.72280563747987, 36.8575196906322, 141.0001625740089, 37.157677348807674],
 		"geoidHeight": 40.7352
 	},
 	{
@@ -215,12 +150,7 @@
 		"dataset": "plateau-07205-shirakawa-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/cd/b2b8e8-a83c-44fb-9a2a-783b157b2bf7/07205_shirakawa-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.14355786794096,
-			37.02280657085547,
-			140.41274081032296,
-			37.240567096276415
-		],
+		"bounds": [140.14355786794096, 37.02280657085547, 140.41274081032296, 37.240567096276415],
 		"geoidHeight": 43.2337
 	},
 	{
@@ -231,12 +161,7 @@
 		"dataset": "plateau-07209-soma-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f2/e92a3f-12c1-49ed-b601-993653300472/07209_soma-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.6819916652501,
-			37.72155369041483,
-			141.01139445706386,
-			37.843437514906135
-		],
+		"bounds": [140.6819916652501, 37.72155369041483, 141.01139445706386, 37.843437514906135],
 		"geoidHeight": 42.6023
 	},
 	{
@@ -247,12 +172,7 @@
 		"dataset": "plateau-07212-minamisouma-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/54/9b66dc-e8da-42cf-a60a-167e8f76dafe/07212_minamisouma-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.90600400703596,
-			37.510652259007664,
-			141.03323033657756,
-			37.744157313935304
-		],
+		"bounds": [140.90600400703596, 37.510652259007664, 141.03323033657756, 37.744157313935304],
 		"geoidHeight": 42.0224
 	},
 	{
@@ -263,12 +183,7 @@
 		"dataset": "plateau-08220-tsukuba-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f6/193021-c1bd-408c-bc5d-99a36310693e/08220_tsukuba-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.99868774966615,
-			35.94757272066931,
-			140.17271147906953,
-			36.236075560193726
-		],
+		"bounds": [139.99868774966615, 35.94757272066931, 140.17271147906953, 36.236075560193726],
 		"geoidHeight": 40.1967
 	},
 	{
@@ -279,12 +194,7 @@
 		"dataset": "plateau-08234-hokota-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ac/5e377b-9fc4-480b-813d-347317e9fc15/08234_hokota-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.41802321197335,
-			36.06407114543296,
-			140.61026707562445,
-			36.27013948759036
-		],
+		"bounds": [140.41802321197335, 36.06407114543296, 140.61026707562445, 36.27013948759036],
 		"geoidHeight": 38.4485
 	},
 	{
@@ -295,12 +205,7 @@
 		"dataset": "plateau-08546-sakai-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/79/7ddbb2-81eb-4a0f-8664-f4b271eccb56/08546_sakai-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7619175990474,
-			36.06029438330602,
-			139.84979253282037,
-			36.154764237366926
-		],
+		"bounds": [139.7619175990474, 36.06029438330602, 139.84979253282037, 36.154764237366926],
 		"geoidHeight": 40.2257
 	},
 	{
@@ -311,12 +216,7 @@
 		"dataset": "plateau-09201-utsunomiya-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/37/26f560-ce23-4faf-9ce9-4d185946bc98/09201_utsunomiya-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7448797637124,
-			36.46516008805211,
-			140.01139962691488,
-			36.72538930539064
-		],
+		"bounds": [139.7448797637124, 36.46516008805211, 140.01139962691488, 36.72538930539064],
 		"geoidHeight": 42.488
 	},
 	{
@@ -327,12 +227,7 @@
 		"dataset": "plateau-10201-maebashi-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/54/feae93-0494-463a-8c08-facac83b117d/10201_maebashi-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.00236994783148,
-			36.31808239175361,
-			139.2303170605847,
-			36.560015530646645
-		],
+		"bounds": [139.00236994783148, 36.31808239175361, 139.2303170605847, 36.560015530646645],
 		"geoidHeight": 42.1716
 	},
 	{
@@ -343,12 +238,7 @@
 		"dataset": "plateau-10203-kiryu-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d1/944c32-43d7-485e-872e-6775db20d147/10203_kiryu-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.20354278351817,
-			36.36187485214153,
-			139.43488537847907,
-			36.52961674530613
-		],
+		"bounds": [139.20354278351817, 36.36187485214153, 139.43488537847907, 36.52961674530613],
 		"geoidHeight": 42.3884
 	},
 	{
@@ -359,12 +249,7 @@
 		"dataset": "plateau-10207-tatebayashi-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1b/9f9917-f468-4e13-8c18-6bd0bc1c9ea3/10207_tatebayashi-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.45869962155257,
-			36.210467539760266,
-			139.62310936188751,
-			36.28356547169668
-		],
+		"bounds": [139.45869962155257, 36.210467539760266, 139.62310936188751, 36.28356547169668],
 		"geoidHeight": 41.1544
 	},
 	{
@@ -375,12 +260,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5c/099db8-3267-4ad6-82a3-c15609e6116c/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11103_omiya-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.59587885753885,
-			35.8877677853716,
-			139.64941117676543,
-			35.92511083814956
-		],
+		"bounds": [139.59587885753885, 35.8877677853716, 139.64941117676543, 35.92511083814956],
 		"geoidHeight": 39.0082
 	},
 	{
@@ -391,12 +271,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ba/00afca-d792-4be1-833f-ab9f23de6a58/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11105_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.60424847611782,
-			35.85473467644394,
-			139.645827707872,
-			35.90233851947585
-		],
+		"bounds": [139.60424847611782, 35.85473467644394, 139.645827707872, 35.90233851947585],
 		"geoidHeight": 38.8069
 	},
 	{
@@ -407,12 +282,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/cd/fdea53-b556-4cce-b876-e662c2dce87f/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11107_urawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.6332431141639,
-			35.84676191007723,
-			139.66870934746004,
-			35.90135534915609
-		],
+		"bounds": [139.6332431141639, 35.84676191007723, 139.66870934746004, 35.90135534915609],
 		"geoidHeight": 38.6722
 	},
 	{
@@ -423,12 +293,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d1/4acc8c-697c-4b22-ae6a-97c86ee0cb6c/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11108_minami-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.61849576512472,
-			35.8286755192334,
-			139.69792811427027,
-			35.86693386249011
-		],
+		"bounds": [139.61849576512472, 35.8286755192334, 139.69792811427027, 35.86693386249011],
 		"geoidHeight": 38.4339
 	},
 	{
@@ -439,12 +304,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a6/5a84a9-17b0-4038-97c6-73be589b581a/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11109_midori-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.66132055550383,
-			35.85710587394633,
-			139.7444686912515,
-			35.91610128272976
-		],
+		"bounds": [139.66132055550383, 35.85710587394633, 139.7444686912515, 35.91610128272976],
 		"geoidHeight": 38.6101
 	},
 	{
@@ -455,12 +315,7 @@
 		"dataset": "plateau-11100-saitama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/16/9f3ac0-c566-4a2c-a210-a801d0bc9d47/11100_saitama-shi_city_2025_citygml_1_op_bldg_3dtiles_11110_iwatsuki-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.65335550898146,
-			35.88019759719886,
-			139.7572476153644,
-			36.00237483474186
-		],
+		"bounds": [139.65335550898146, 35.88019759719886, 139.7572476153644, 36.00237483474186],
 		"geoidHeight": 39.0158
 	},
 	{
@@ -471,12 +326,7 @@
 		"dataset": "plateau-11202-kumagaya-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/02/df10f5-2ec1-42be-a1d7-f087bbd47fd7/11202_kumagaya-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.290145020318,
-			36.069699432557314,
-			139.4400078625533,
-			36.25313090209747
-		],
+		"bounds": [139.290145020318, 36.069699432557314, 139.4400078625533, 36.25313090209747],
 		"geoidHeight": 41.058
 	},
 	{
@@ -487,12 +337,7 @@
 		"dataset": "plateau-11203-kawaguchi-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/03/e95f5f-9a5d-45cc-b4a8-6b9d2c34baa5/11203_kawaguchi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.67507893448442,
-			35.78318199211359,
-			139.78802786956055,
-			35.88690077108249
-		],
+		"bounds": [139.67507893448442, 35.78318199211359, 139.78802786956055, 35.88690077108249],
 		"geoidHeight": 38.0896
 	},
 	{
@@ -503,12 +348,7 @@
 		"dataset": "plateau-11207-chichibu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3d/2787d8-31eb-4f29-a527-91eedf8c8b37/11207_chichibu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.0179611595547,
-			35.95086082081191,
-			139.15399882112322,
-			36.05957151451438
-		],
+		"bounds": [139.0179611595547, 35.95086082081191, 139.15399882112322, 36.05957151451438],
 		"geoidHeight": 42.2832
 	},
 	{
@@ -519,12 +359,7 @@
 		"dataset": "plateau-11208-tokorozawa-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/fa/66dc56-0170-414d-adab-d3782d2abb47/11208_tokorozawa-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.38468124546498,
-			35.76628830789307,
-			139.54564674709368,
-			35.84241551307416
-		],
+		"bounds": [139.38468124546498, 35.76628830789307, 139.54564674709368, 35.84241551307416],
 		"geoidHeight": 39.0801
 	},
 	{
@@ -535,12 +370,7 @@
 		"dataset": "plateau-11210-kazo-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7f/3a5fda-2a59-4762-9bf2-61b6ac5112c5/11210_kazo-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.52402271829774,
-			36.07180840221671,
-			139.69922526526526,
-			36.213922569328176
-		],
+		"bounds": [139.52402271829774, 36.07180840221671, 139.69922526526526, 36.213922569328176],
 		"geoidHeight": 40.4599
 	},
 	{
@@ -551,12 +381,7 @@
 		"dataset": "plateau-11211-honjo-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/64/cd841f-5e3d-45ed-accc-13e7246f5157/11211_honjo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.06209309102175,
-			36.121175966990755,
-			139.24658182561268,
-			36.2692260072268
-		],
+		"bounds": [139.06209309102175, 36.121175966990755, 139.24658182561268, 36.2692260072268],
 		"geoidHeight": 41.829
 	},
 	{
@@ -567,12 +392,7 @@
 		"dataset": "plateau-11214-kasukabe-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e7/d84336-9651-494d-a4d0-c5913705a2f7/11214_kasukabe-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.70833854612,
-			35.93541030988003,
-			139.83021589994502,
-			36.04057763286699
-		],
+		"bounds": [139.70833854612, 35.93541030988003, 139.83021589994502, 36.04057763286699],
 		"geoidHeight": 39.2875
 	},
 	{
@@ -583,12 +403,7 @@
 		"dataset": "plateau-11215-sayama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/43/bd93b8-0b6f-451b-9db3-d5ec53342cde/11215_sayama-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.3621199263243,
-			35.81773064506945,
-			139.47721968074,
-			35.898850350182926
-		],
+		"bounds": [139.3621199263243, 35.81773064506945, 139.47721968074, 35.898850350182926],
 		"geoidHeight": 39.6993
 	},
 	{
@@ -599,12 +414,7 @@
 		"dataset": "plateau-11216-hanyu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3d/ca0268-730e-4fcf-bca6-999dfbe131db/11216_hanyu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.48838931037784,
-			36.136826099251714,
-			139.61224273869007,
-			36.205538012423
-		],
+		"bounds": [139.48838931037784, 36.136826099251714, 139.61224273869007, 36.205538012423],
 		"geoidHeight": 40.6769
 	},
 	{
@@ -615,12 +425,7 @@
 		"dataset": "plateau-11217-konosu-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/64/84eef6-241c-4b67-8919-e3f76cb11a5d/11217_konosu-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.432244091616,
-			36.03057803360302,
-			139.56979993150057,
-			36.12237265628247
-		],
+		"bounds": [139.432244091616, 36.03057803360302, 139.56979993150057, 36.12237265628247],
 		"geoidHeight": 40.3448
 	},
 	{
@@ -631,12 +436,7 @@
 		"dataset": "plateau-11218-fukaya-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6d/2e98f2-d76f-49e2-b43d-3bb15d00e521/11218_fukaya-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.18297137608062,
-			36.10491354133926,
-			139.3362630839073,
-			36.24536607743312
-		],
+		"bounds": [139.18297137608062, 36.10491354133926, 139.3362630839073, 36.24536607743312],
 		"geoidHeight": 41.4415
 	},
 	{
@@ -647,12 +447,7 @@
 		"dataset": "plateau-11219-ageo-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/8f/1d6097-2403-45bf-82a0-ac927ad883b4/11219_ageo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.53554863996987,
-			35.92585374785793,
-			139.64984348263584,
-			36.009713745851826
-		],
+		"bounds": [139.53554863996987, 35.92585374785793, 139.64984348263584, 36.009713745851826],
 		"geoidHeight": 39.4911
 	},
 	{
@@ -663,12 +458,7 @@
 		"dataset": "plateau-11221-soka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/32/ddef72-ab7d-451f-a8b9-39532d0d1cd3/11221_soka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.76374512867997,
-			35.80539959311755,
-			139.8390511302467,
-			35.87136935735011
-		],
+		"bounds": [139.76374512867997, 35.80539959311755, 139.8390511302467, 35.87136935735011],
 		"geoidHeight": 37.963
 	},
 	{
@@ -679,12 +469,7 @@
 		"dataset": "plateau-11222-koshigaya-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5e/aea3eb-4b27-4c7f-b51d-f109a7cc6455/11222_koshigaya-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7454539887616,
-			35.85496207961032,
-			139.8389280162365,
-			35.958181608757414
-		],
+		"bounds": [139.7454539887616, 35.85496207961032, 139.8389280162365, 35.958181608757414],
 		"geoidHeight": 38.6343
 	},
 	{
@@ -695,12 +480,7 @@
 		"dataset": "plateau-11223-warabi-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b5/a5a055-3428-420d-a91e-416088dd223c/11223_warabi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.66288433362448,
-			35.81373853104254,
-			139.7098853333754,
-			35.83553464942293
-		],
+		"bounds": [139.66288433362448, 35.81373853104254, 139.7098853333754, 35.83553464942293],
 		"geoidHeight": 38.1391
 	},
 	{
@@ -711,12 +491,7 @@
 		"dataset": "plateau-11225-iruma-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bc/935c10-972d-48f9-b1f2-c55600d1c957/11225_iruma-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.3169347825826,
-			35.784069433604664,
-			139.41940902053236,
-			35.86182734199549
-		],
+		"bounds": [139.3169347825826, 35.784069433604664, 139.41940902053236, 35.86182734199549],
 		"geoidHeight": 39.8877
 	},
 	{
@@ -727,12 +502,7 @@
 		"dataset": "plateau-11227-asaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e1/fcf439-a418-4ae0-8ce9-42b9e6e06a3d/11227_asaka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.57302513086265,
-			35.784512995468376,
-			139.62166184731876,
-			35.83286066903391
-		],
+		"bounds": [139.57302513086265, 35.784512995468376, 139.62166184731876, 35.83286066903391],
 		"geoidHeight": 38.3768
 	},
 	{
@@ -743,12 +513,7 @@
 		"dataset": "plateau-11228-shiki-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/8f/40970f-636d-4a9a-b0e4-5d07babe3cae/11228_shiki-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.55555059492858,
-			35.81863921129812,
-			139.605142738442,
-			35.85914032184975
-		],
+		"bounds": [139.55555059492858, 35.81863921129812, 139.605142738442, 35.85914032184975],
 		"geoidHeight": 38.7023
 	},
 	{
@@ -759,12 +524,7 @@
 		"dataset": "plateau-11229-wako-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c7/819ca9-23e6-4bb2-a2c8-5bfc56483db4/11229_wako-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.59697271525613,
-			35.766654485239165,
-			139.64609750911129,
-			35.81154570413966
-		],
+		"bounds": [139.59697271525613, 35.766654485239165, 139.64609750911129, 35.81154570413966],
 		"geoidHeight": 38.1076
 	},
 	{
@@ -775,12 +535,7 @@
 		"dataset": "plateau-11230-niiza-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b5/839b7d-e44c-409e-a50f-895e7c0218eb/11230_niiza-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.51680491444083,
-			35.75351871055941,
-			139.59072921727955,
-			35.82532680488636
-		],
+		"bounds": [139.51680491444083, 35.75351871055941, 139.59072921727955, 35.82532680488636],
 		"geoidHeight": 38.4479
 	},
 	{
@@ -791,12 +546,7 @@
 		"dataset": "plateau-11231-okegawa-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/83/4e09a2-85a0-489f-af24-a2a2a51182f7/11231_okegawa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.50725201502445,
-			35.967112946726296,
-			139.59552022715047,
-			36.040464036788144
-		],
+		"bounds": [139.50725201502445, 35.967112946726296, 139.59552022715047, 36.040464036788144],
 		"geoidHeight": 39.8384
 	},
 	{
@@ -807,12 +557,7 @@
 		"dataset": "plateau-11232-kuki-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/4e/26d5e3-c5e3-413b-856a-4fdea85ca5f1/11232_kuki-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.55870695848768,
-			36.0292945284301,
-			139.7251816198695,
-			36.143857156658356
-		],
+		"bounds": [139.55870695848768, 36.0292945284301, 139.7251816198695, 36.143857156658356],
 		"geoidHeight": 40.0805
 	},
 	{
@@ -823,12 +568,7 @@
 		"dataset": "plateau-11233-kitamoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/74/305ea8-c709-45e7-ba37-172dfeba4a39/11233_kitamoto-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.50400686188885,
-			36.001004778018086,
-			139.5642774831148,
-			36.05739172194777
-		],
+		"bounds": [139.50400686188885, 36.001004778018086, 139.5642774831148, 36.05739172194777],
 		"geoidHeight": 40.0313
 	},
 	{
@@ -839,12 +579,7 @@
 		"dataset": "plateau-11234-yashio-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b7/7984cc-a2dc-4d6b-ae07-f5dae49de761/11234_yashio-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.81161715873802,
-			35.79152909951733,
-			139.8668663071154,
-			35.85815904351467
-		],
+		"bounds": [139.81161715873802, 35.79152909951733, 139.8668663071154, 35.85815904351467],
 		"geoidHeight": 37.7632
 	},
 	{
@@ -855,12 +590,7 @@
 		"dataset": "plateau-11235-fujimi-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/59/9052d5-f7df-4494-9a9a-11d92528f1f8/11235_fujimi-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.5112800385444,
-			35.827786037187494,
-			139.58656409970604,
-			35.88730036032716
-		],
+		"bounds": [139.5112800385444, 35.827786037187494, 139.58656409970604, 35.88730036032716],
 		"geoidHeight": 39.0013
 	},
 	{
@@ -871,12 +601,7 @@
 		"dataset": "plateau-11237-misato-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e4/d97964-6768-43ef-b332-8d4b64a2a69d/11237_misato-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.84104552957598,
-			35.78138701982403,
-			139.89503747268836,
-			35.86787143029018
-		],
+		"bounds": [139.84104552957598, 35.78138701982403, 139.89503747268836, 35.86787143029018],
 		"geoidHeight": 37.7108
 	},
 	{
@@ -887,12 +612,7 @@
 		"dataset": "plateau-11238-hasuda-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a1/748f61-cd9a-497f-8336-48c5c3cf18aa/11238_hasuda-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.59071503,
-			35.96189567,
-			139.69432967,
-			36.03687701
-		],
+		"bounds": [139.59071503, 35.96189567, 139.69432967, 36.03687701],
 		"geoidHeight": 39.539
 	},
 	{
@@ -903,12 +623,7 @@
 		"dataset": "plateau-11239-sakado-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/53/b364ad-a38c-46ff-a681-fb56fef1ee22/11239_sakado-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.32440811066667,
-			35.92007087681506,
-			139.464997320457,
-			35.99565644520457
-		],
+		"bounds": [139.32440811066667, 35.92007087681506, 139.464997320457, 35.99565644520457],
 		"geoidHeight": 40.3222
 	},
 	{
@@ -919,12 +634,7 @@
 		"dataset": "plateau-11240-satte-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a8/75dfc9-49e5-49f3-82e7-3d115b76b35c/11240_satte-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.6917417078663,
-			36.0381638754532,
-			139.7878583326515,
-			36.10919922313019
-		],
+		"bounds": [139.6917417078663, 36.0381638754532, 139.7878583326515, 36.10919922313019],
 		"geoidHeight": 39.9473
 	},
 	{
@@ -935,12 +645,7 @@
 		"dataset": "plateau-11241-tsurugashima-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/34/8e409f-8ac0-4a15-aec5-cc448e9c21f3/11241_tsurugashima-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.35250308185044,
-			35.914311226983706,
-			139.4287631017239,
-			35.958198728944915
-		],
+		"bounds": [139.35250308185044, 35.914311226983706, 139.4287631017239, 35.958198728944915],
 		"geoidHeight": 40.2424
 	},
 	{
@@ -951,12 +656,7 @@
 		"dataset": "plateau-11243-yoshikawa-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/cf/804351-1ce4-4d0b-8e1b-2787271a4cdf/11243_yoshikawa-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.82890684861545,
-			35.859859509997825,
-			139.8951048194419,
-			35.939379078334994
-		],
+		"bounds": [139.82890684861545, 35.859859509997825, 139.8951048194419, 35.939379078334994],
 		"geoidHeight": 38.4991
 	},
 	{
@@ -967,12 +667,7 @@
 		"dataset": "plateau-11245-fujimino-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/51/2a04fe-750a-4685-baa0-8f5eeaaf49d7/11245_fujimino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.474689606432,
-			35.84295580556843,
-			139.55062040113717,
-			35.89203757742415
-		],
+		"bounds": [139.474689606432, 35.84295580556843, 139.55062040113717, 35.89203757742415],
 		"geoidHeight": 39.2523
 	},
 	{
@@ -983,12 +678,7 @@
 		"dataset": "plateau-11246-shiraoka-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a1/b6bcd7-548c-495b-8360-8ea1a19593a4/11246_shiraoka-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.60384082835242,
-			35.996216283084124,
-			139.71245832827842,
-			36.04727077435561
-		],
+		"bounds": [139.60384082835242, 35.996216283084124, 139.71245832827842, 36.04727077435561],
 		"geoidHeight": 39.6423
 	},
 	{
@@ -999,12 +689,7 @@
 		"dataset": "plateau-11301-ina-machi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1a/207a57-477c-463a-966e-db81727c1cd4/11301_ina-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.59141191200376,
-			35.97026987009591,
-			139.6458200517649,
-			36.026992082172164
-		],
+		"bounds": [139.59141191200376, 35.97026987009591, 139.6458200517649, 36.026992082172164],
 		"geoidHeight": 39.5961
 	},
 	{
@@ -1015,12 +700,7 @@
 		"dataset": "plateau-11324-miyoshi-machi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/20/e62c36-0e7d-44f9-8b47-dc2f4240285b/11324_miyoshi-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.4787036929285,
-			35.81466129133803,
-			139.55453029849878,
-			35.851864554634695
-		],
+		"bounds": [139.4787036929285, 35.81466129133803, 139.55453029849878, 35.851864554634695],
 		"geoidHeight": 38.992
 	},
 	{
@@ -1031,12 +711,7 @@
 		"dataset": "plateau-11326-moroyama-machi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c7/578a70-4330-4791-ac2e-c44d467655ec/11326_moroyama-machi_city_2020_citygml_10_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.26645808258522,
-			35.90203824958683,
-			139.3609153202066,
-			35.967490174733044
-		],
+		"bounds": [139.26645808258522, 35.90203824958683, 139.3609153202066, 35.967490174733044],
 		"geoidHeight": 40.8429
 	},
 	{
@@ -1047,12 +722,7 @@
 		"dataset": "plateau-11341-namegawa-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/71/a0e42d-35bd-4a6b-a8ba-b56eb708c681/11341_namegawa-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.32117594921715,
-			36.03699333465117,
-			139.3871928210952,
-			36.10340618793826
-		],
+		"bounds": [139.32117594921715, 36.03699333465117, 139.3871928210952, 36.10340618793826],
 		"geoidHeight": 41.0283
 	},
 	{
@@ -1063,12 +733,7 @@
 		"dataset": "plateau-11342-ranzan-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/31/947086-b397-4f9a-9520-b7f96b7004a4/11342_ranzan-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.28887998919092,
-			36.00908647018896,
-			139.3432711952276,
-			36.10959489701386
-		],
+		"bounds": [139.28887998919092, 36.00908647018896, 139.3432711952276, 36.10959489701386],
 		"geoidHeight": 41.222
 	},
 	{
@@ -1079,12 +744,7 @@
 		"dataset": "plateau-11343-ogawa-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/45/afdd94-40c2-40fe-84e9-c3703ed1ca8c/11343_ogawa-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.18976822050527,
-			36.01862210633194,
-			139.30780465839933,
-			36.09875874633758
-		],
+		"bounds": [139.18976822050527, 36.01862210633194, 139.30780465839933, 36.09875874633758],
 		"geoidHeight": 41.6115
 	},
 	{
@@ -1095,12 +755,7 @@
 		"dataset": "plateau-11346-kawajima-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5b/d95941-ffa9-43a3-8162-4a928352ee06/11346_kawajima-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.42473356182083,
-			35.94832562824439,
-			139.54223938468715,
-			36.01931692522025
-		],
+		"bounds": [139.42473356182083, 35.94832562824439, 139.54223938468715, 36.01931692522025],
 		"geoidHeight": 40.0057
 	},
 	{
@@ -1111,12 +766,7 @@
 		"dataset": "plateau-11347-yoshimi-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/19/a836d2-b9a3-4633-afd7-dc709dd9366b/11347_yoshimi-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.4138565376807,
-			36.0126599492523,
-			139.49945804515295,
-			36.081875530804396
-		],
+		"bounds": [139.4138565376807, 36.0126599492523, 139.49945804515295, 36.081875530804396],
 		"geoidHeight": 40.4641
 	},
 	{
@@ -1127,12 +777,7 @@
 		"dataset": "plateau-11348-hatoyama-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/30/ca6db8-3a5b-4d6c-92b5-b273d56cbfa2/11348_hatoyama-machi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.28760515578708,
-			35.9618924766477,
-			139.3762115875471,
-			36.010008132593825
-		],
+		"bounds": [139.28760515578708, 35.9618924766477, 139.3762115875471, 36.010008132593825],
 		"geoidHeight": 40.8735
 	},
 	{
@@ -1143,12 +788,7 @@
 		"dataset": "plateau-11385-kamisato-machi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/32/1200ff-e253-4f61-80ce-ec77be7d9009/11385_kamisato-machi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.09986289209974,
-			36.219049553798904,
-			139.17173219153986,
-			36.277695426502326
-		],
+		"bounds": [139.09986289209974, 36.219049553798904, 139.17173219153986, 36.277695426502326],
 		"geoidHeight": 41.789
 	},
 	{
@@ -1159,12 +799,7 @@
 		"dataset": "plateau-11408-yorii-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0f/397d85-d96a-4828-a5d0-8544281d0d25/11408_yorii-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.1385630298172,
-			36.076805045820244,
-			139.28918284807907,
-			36.17569091573009
-		],
+		"bounds": [139.1385630298172, 36.076805045820244, 139.28918284807907, 36.17569091573009],
 		"geoidHeight": 41.725
 	},
 	{
@@ -1175,12 +810,7 @@
 		"dataset": "plateau-11442-miyashiro-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0a/cf3a00-de25-4cbd-a96e-6abb670dee3f/11442_miyashiro-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.68319303777065,
-			35.99679310958275,
-			139.7527509657104,
-			36.0576274180703
-		],
+		"bounds": [139.68319303777065, 35.99679310958275, 139.7527509657104, 36.0576274180703],
 		"geoidHeight": 39.6095
 	},
 	{
@@ -1191,12 +821,7 @@
 		"dataset": "plateau-11464-sugito-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c9/582ff9-25e1-4fbf-b13f-07d93f0e72a3/11464_sugito-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.6977439320351,
-			35.999592461840926,
-			139.80576667053123,
-			36.06215825224892
-		],
+		"bounds": [139.6977439320351, 35.999592461840926, 139.80576667053123, 36.06215825224892],
 		"geoidHeight": 39.6197
 	},
 	{
@@ -1207,12 +832,7 @@
 		"dataset": "plateau-11465-matsubushi-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d6/d2e2ca-bc9d-467d-94e2-37b2a7049997/11465_matsubushi-machi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.80302187398337,
-			35.90652802040859,
-			139.84876744053597,
-			35.96684991857538
-		],
+		"bounds": [139.80302187398337, 35.90652802040859, 139.84876744053597, 35.96684991857538],
 		"geoidHeight": 38.8716
 	},
 	{
@@ -1223,12 +843,7 @@
 		"dataset": "plateau-12100-chiba-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/17/c731d0-1bd6-4aec-8885-4d06930de96a/12100_chiba-shi_city_2024_citygml_1_op_bldg_3dtiles_12101_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.08323081580357,
-			35.54286190041543,
-			140.17449423166144,
-			35.6289432455684
-		],
+		"bounds": [140.08323081580357, 35.54286190041543, 140.17449423166144, 35.6289432455684],
 		"geoidHeight": 34.6367
 	},
 	{
@@ -1239,12 +854,7 @@
 		"dataset": "plateau-12206-kisarazu-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/20/f4b73d-3fbb-483c-a9f9-6082e0cf2b99/12206_kisarazu-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.88856080966082,
-			35.3166990074766,
-			140.1280634785666,
-			35.44401865684573
-		],
+		"bounds": [139.88856080966082, 35.3166990074766, 140.1280634785666, 35.44401865684573],
 		"geoidHeight": 34.5443
 	},
 	{
@@ -1255,12 +865,7 @@
 		"dataset": "plateau-12210-mobara-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2c/2ae6c3-88b0-4774-848d-caa38fffcad2/12210_mobara-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.24519938,
-			35.38023064000001,
-			140.38131380000002,
-			35.50240558
-		],
+		"bounds": [140.24519938, 35.38023064000001, 140.38131380000002, 35.50240558],
 		"geoidHeight": 33.0807
 	},
 	{
@@ -1271,12 +876,7 @@
 		"dataset": "plateau-12217-kashiwa-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/15/9982de-48dc-4a6f-a48a-5d3d3a0ec4ea/12217_kashiwa-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.91250517939514,
-			35.78051227383162,
-			140.1101014071249,
-			35.93123449377435
-		],
+		"bounds": [139.91250517939514, 35.78051227383162, 140.1101014071249, 35.93123449377435],
 		"geoidHeight": 37.8074
 	},
 	{
@@ -1287,12 +887,7 @@
 		"dataset": "plateau-12221-yachiyo-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bf/68cbee-2c76-439d-8373-88d71d411cd5/12221_yachiyo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.06281817989938,
-			35.69209022831514,
-			140.14796371386214,
-			35.78324292511624
-		],
+		"bounds": [140.06281817989938, 35.69209022831514, 140.14796371386214, 35.78324292511624],
 		"geoidHeight": 36.173
 	},
 	{
@@ -1303,12 +898,7 @@
 		"dataset": "plateau-12347-tako-machi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7b/385f19-9367-46b8-862e-fc6b140dccce/12347_tako-machi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			140.40254783628174,
-			35.692313307308794,
-			140.48015391025714,
-			35.78641675731722
-		],
+		"bounds": [140.40254783628174, 35.692313307308794, 140.48015391025714, 35.78641675731722],
 		"geoidHeight": 34.8791
 	},
 	{
@@ -1319,12 +909,7 @@
 		"dataset": "plateau-13101-chiyoda-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/72/e900e5-938c-4376-a9de-a124b270880c/13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7301664021838,
-			35.669012960411685,
-			139.78276691189942,
-			35.70517892296438
-		],
+		"bounds": [139.7301664021838, 35.669012960411685, 139.78276691189942, 35.70517892296438],
 		"geoidHeight": 36.8412
 	},
 	{
@@ -1335,12 +920,7 @@
 		"dataset": "plateau-13102-chuo-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/92/43303e-6eb5-44ad-b65f-e21e63bdf98a/13102_chuo-ku_pref_2025_citygml_1_op_bldg_3dtiles_13102_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.75883894831256,
-			35.646273159368704,
-			139.7919775191548,
-			35.696439555867485
-		],
+		"bounds": [139.75883894831256, 35.646273159368704, 139.7919775191548, 35.696439555867485],
 		"geoidHeight": 36.6622
 	},
 	{
@@ -1351,12 +931,7 @@
 		"dataset": "plateau-13103-minato-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c7/1aabcb-eb54-4cfe-9b75-3a6458c9d29e/13103_minato-ku_pref_2025_citygml_1_op_bldg_3dtiles_13103_minato-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.70884936351112,
-			35.61883335939172,
-			139.78244157419803,
-			35.6824754735373
-		],
+		"bounds": [139.70884936351112, 35.61883335939172, 139.78244157419803, 35.6824754735373],
 		"geoidHeight": 36.6413
 	},
 	{
@@ -1367,12 +942,7 @@
 		"dataset": "plateau-13104-shinjuku-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2f/d4f9a7-13ad-43cb-b984-033803199eab/13104_shinjuku-ku_pref_2025_citygml_1_op_bldg_3dtiles_13104_shinjuku-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.67329260369,
-			35.67353091116512,
-			139.74444273900514,
-			35.72972595807238
-		],
+		"bounds": [139.67329260369, 35.67353091116512, 139.74444273900514, 35.72972595807238],
 		"geoidHeight": 37.1136
 	},
 	{
@@ -1383,12 +953,7 @@
 		"dataset": "plateau-13105-bunkyo-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ed/58552b-52fc-484b-99c0-b1313e2d717d/13105_bunkyo-ku_pref_2025_citygml_1_op_bldg_3dtiles_13105_bunkyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.71730044537605,
-			35.699572116867934,
-			139.77243795271283,
-			35.73588023895914
-		],
+		"bounds": [139.71730044537605, 35.699572116867934, 139.77243795271283, 35.73588023895914],
 		"geoidHeight": 37.1037
 	},
 	{
@@ -1399,12 +964,7 @@
 		"dataset": "plateau-13106-taito-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/89/471b74-c5ca-4673-afaa-c194d18b5c8c/13106_taito-ku_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7624129094479,
-			35.695247909937535,
-			139.80881029377855,
-			35.73159307183514
-		],
+		"bounds": [139.7624129094479, 35.695247909937535, 139.80881029377855, 35.73159307183514],
 		"geoidHeight": 36.9356
 	},
 	{
@@ -1415,12 +975,7 @@
 		"dataset": "plateau-13107-sumida-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/8a/cb11d1-af42-4a84-a63c-6c6461896e2b/13107_sumida-ku_pref_2025_citygml_1_op_bldg_3dtiles_13107_sumida-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7897220967098,
-			35.686774189403835,
-			139.83960723972402,
-			35.7424418026278
-		],
+		"bounds": [139.7897220967098, 35.686774189403835, 139.83960723972402, 35.7424418026278],
 		"geoidHeight": 36.8465
 	},
 	{
@@ -1431,12 +986,7 @@
 		"dataset": "plateau-13108-koto-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/69/e06917-ca70-4b93-810b-765fb29ce233/13108_koto-ku_pref_2025_citygml_1_op_bldg_3dtiles_13108_koto-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.770173547966,
-			35.57869547110996,
-			139.84927003361713,
-			35.707570633873495
-		],
+		"bounds": [139.770173547966, 35.57869547110996, 139.84927003361713, 35.707570633873495],
 		"geoidHeight": 36.342
 	},
 	{
@@ -1447,12 +997,7 @@
 		"dataset": "plateau-13109-shinagawa-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/be/403449-37a8-4dbb-a756-c3d4e6639f5d/13109_shinagawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13109_shinagawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.69524027632403,
-			35.58506851995807,
-			139.77354992879197,
-			35.64155157235268
-		],
+		"bounds": [139.69524027632403, 35.58506851995807, 139.77354992879197, 35.64155157235268],
 		"geoidHeight": 36.4762
 	},
 	{
@@ -1463,12 +1008,7 @@
 		"dataset": "plateau-13110-meguro-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/84/6f6772-5536-45b6-a7bd-fae36735a79a/13110_meguro-ku_pref_2025_citygml_1_op_bldg_3dtiles_13110_meguro-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.6616849671388,
-			35.60063070308843,
-			139.71772389206194,
-			35.66406469310365
-		],
+		"bounds": [139.6616849671388, 35.60063070308843, 139.71772389206194, 35.66406469310365],
 		"geoidHeight": 36.7693
 	},
 	{
@@ -1479,12 +1019,7 @@
 		"dataset": "plateau-13111-ota-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1b/e7ae85-9dbb-4b17-af10-86da7641d370/13111_ota-ku_pref_2025_citygml_1_op_bldg_3dtiles_13111_ota-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.65287957980394,
-			35.523416477544956,
-			139.8254186651312,
-			35.613097404582874
-		],
+		"bounds": [139.65287957980394, 35.523416477544956, 139.8254186651312, 35.613097404582874],
 		"geoidHeight": 36.2403
 	},
 	{
@@ -1495,12 +1030,7 @@
 		"dataset": "plateau-13112-setagaya-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1a/57c9bb-cbed-47c0-be15-bbe662eabce4/13112_setagaya-ku_pref_2025_citygml_1_op_bldg_3dtiles_13112_setagaya-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.5825213101834,
-			35.591876990908105,
-			139.6864931579987,
-			35.682842429576034
-		],
+		"bounds": [139.5825213101834, 35.591876990908105, 139.6864931579987, 35.682842429576034],
 		"geoidHeight": 37.042
 	},
 	{
@@ -1511,12 +1041,7 @@
 		"dataset": "plateau-13113-shibuya-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/4c/92c509-8082-47cb-9c0c-cab712d49dbd/13113_shibuya-ku_pref_2025_citygml_1_op_bldg_3dtiles_13113_shibuya-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.66140097352883,
-			35.641249285720896,
-			139.7237703729779,
-			35.692112061074205
-		],
+		"bounds": [139.66140097352883, 35.641249285720896, 139.7237703729779, 35.692112061074205],
 		"geoidHeight": 36.952
 	},
 	{
@@ -1527,12 +1052,7 @@
 		"dataset": "plateau-13114-nakano-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b7/d791c7-3f75-4050-b8bd-73bdc13b7b06/13114_nakano-ku_pref_2025_citygml_1_op_bldg_3dtiles_13114_nakano-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.6242776634262,
-			35.67660773696149,
-			139.6941082511968,
-			35.73552288211963
-		],
+		"bounds": [139.6242776634262, 35.67660773696149, 139.6941082511968, 35.73552288211963],
 		"geoidHeight": 37.3352
 	},
 	{
@@ -1543,12 +1063,7 @@
 		"dataset": "plateau-13115-suginami-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e2/1fef96-52b5-4de3-9431-51e020f5c02c/13115_suginami-ku_city_2025_citygml_1_op_bldg_3dtiles_13115_suginami-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.58516198543072,
-			35.66591816744591,
-			139.66752756773172,
-			35.73044628905653
-		],
+		"bounds": [139.58516198543072, 35.66591816744591, 139.66752756773172, 35.73044628905653],
 		"geoidHeight": 37.4255
 	},
 	{
@@ -1559,12 +1074,7 @@
 		"dataset": "plateau-13116-toshima-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/00/c773a5-1b08-48bc-9f65-958952afd4db/13116_toshima-ku_pref_2025_citygml_1_op_bldg_3dtiles_13116_toshima-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.67767285814747,
-			35.71243247434936,
-			139.75262979713403,
-			35.745933397356396
-		],
+		"bounds": [139.67767285814747, 35.71243247434936, 139.75262979713403, 35.745933397356396],
 		"geoidHeight": 37.2892
 	},
 	{
@@ -1575,12 +1085,7 @@
 		"dataset": "plateau-13117-kita-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/31/7809c7-4856-4b02-9667-43769ada845b/13117_kita-ku_pref_2025_citygml_1_op_bldg_3dtiles_13117_kita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.68947472006306,
-			35.73174343104307,
-			139.77066397364527,
-			35.79546024028543
-		],
+		"bounds": [139.68947472006306, 35.73174343104307, 139.77066397364527, 35.79546024028543],
 		"geoidHeight": 37.5014
 	},
 	{
@@ -1591,12 +1096,7 @@
 		"dataset": "plateau-13118-arakawa-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/14/3bfbb7-a021-4fc4-95e7-7a4f6d8c4e2a/13118_arakawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13118_arakawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.74951189995326,
-			35.72480451428423,
-			139.81344704774864,
-			35.754202806999814
-		],
+		"bounds": [139.74951189995326, 35.72480451428423, 139.81344704774864, 35.754202806999814],
 		"geoidHeight": 37.151
 	},
 	{
@@ -1607,12 +1107,7 @@
 		"dataset": "plateau-13119-itabashi-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/fa/9dd850-4b6b-4c55-b32e-081a5f23c8da/13119_itabashi-ku_pref_2025_citygml_1_op_bldg_3dtiles_13119_itabashi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.62452993287081,
-			35.73584175108889,
-			139.7227493107871,
-			35.799517087299954
-		],
+		"bounds": [139.62452993287081, 35.73584175108889, 139.7227493107871, 35.799517087299954],
 		"geoidHeight": 37.7267
 	},
 	{
@@ -1623,12 +1118,7 @@
 		"dataset": "plateau-13120-nerima-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e2/1a7f05-4810-4330-a66d-24956da0040b/13120_nerima-ku_pref_2025_citygml_1_op_bldg_3dtiles_13120_nerima-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.56303209006663,
-			35.711838545776594,
-			139.68111481511173,
-			35.779977155596214
-		],
+		"bounds": [139.56303209006663, 35.711838545776594, 139.68111481511173, 35.779977155596214],
 		"geoidHeight": 37.7713
 	},
 	{
@@ -1639,12 +1129,7 @@
 		"dataset": "plateau-13121-adachi-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/60/d9f227-68b4-41a4-a893-8b56bb826f3b/13121_adachi-ku_pref_2025_citygml_1_op_bldg_3dtiles_13121_adachi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.7366779440432,
-			35.73923594483692,
-			139.85775508221224,
-			35.81749577390411
-		],
+		"bounds": [139.7366779440432, 35.73923594483692, 139.85775508221224, 35.81749577390411],
 		"geoidHeight": 37.4218
 	},
 	{
@@ -1655,12 +1140,7 @@
 		"dataset": "plateau-13122-katsushika-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/61/269e0d-405d-47e6-a28d-b955dfef8d34/13122_katsushika-ku_pref_2025_citygml_1_op_bldg_3dtiles_13122_katsushika-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.81338840038595,
-			35.71224267640356,
-			139.89054785804635,
-			35.796635023754696
-		],
+		"bounds": [139.81338840038595, 35.71224267640356, 139.89054785804635, 35.796635023754696],
 		"geoidHeight": 37.0594
 	},
 	{
@@ -1671,12 +1151,7 @@
 		"dataset": "plateau-13123-edogawa-ku-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ca/d926ee-b9fd-44af-9643-e5f49bdf584a/13123_edogawa-ku_pref_2025_citygml_1_op_bldg_3dtiles_13123_edogawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.83371851432463,
-			35.637938786677545,
-			139.9175464798376,
-			35.75053929235064
-		],
+		"bounds": [139.83371851432463, 35.637938786677545, 139.9175464798376, 35.75053929235064],
 		"geoidHeight": 36.4681
 	},
 	{
@@ -1687,12 +1162,7 @@
 		"dataset": "plateau-13201-hachioji-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6c/e94de6-1d1c-4ac4-a175-f64cfe37e620/13201_hachioji-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.16645711138858,
-			35.598010223323776,
-			139.42986514848474,
-			35.71731851523962
-		],
+		"bounds": [139.16645711138858, 35.598010223323776, 139.42986514848474, 35.71731851523962],
 		"geoidHeight": 39.8091
 	},
 	{
@@ -1703,12 +1173,7 @@
 		"dataset": "plateau-13202-tachikawa-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/cf/66ab03-4c19-4fe0-a842-9765eed9ff3b/13202_tachikawa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.35355636210193,
-			35.683054412835496,
-			139.44608204254482,
-			35.74403045421933
-		],
+		"bounds": [139.35355636210193, 35.683054412835496, 139.44608204254482, 35.74403045421933],
 		"geoidHeight": 39.0478
 	},
 	{
@@ -1719,12 +1184,7 @@
 		"dataset": "plateau-13203-musashino-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/55/67e201-40ed-463c-b2ea-ed20861ae182/13203_musashino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.52474632059563,
-			35.69427248851353,
-			139.59546770143996,
-			35.721740727245624
-		],
+		"bounds": [139.52474632059563, 35.69427248851353, 139.59546770143996, 35.721740727245624],
 		"geoidHeight": 37.8292
 	},
 	{
@@ -1735,12 +1195,7 @@
 		"dataset": "plateau-13204-mitaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b5/3dedd3-b232-4e91-98d4-eedec649ca2f/13204_mitaka-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.52505262620159,
-			35.66001501643661,
-			139.59387271362408,
-			35.70703262771392
-		],
+		"bounds": [139.52505262620159, 35.66001501643661, 139.59387271362408, 35.70703262771392],
 		"geoidHeight": 37.6865
 	},
 	{
@@ -1751,12 +1206,7 @@
 		"dataset": "plateau-13205-ome-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d7/ec0354-0bac-48b5-8392-bdec782fd3d6/13205_ome-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.14160493111524,
-			35.75721748783349,
-			139.33018699936596,
-			35.84396238847545
-		],
+		"bounds": [139.14160493111524, 35.75721748783349, 139.33018699936596, 35.84396238847545],
 		"geoidHeight": 40.9474
 	},
 	{
@@ -1767,12 +1217,7 @@
 		"dataset": "plateau-13206-fuchu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/79/c4015c-990a-4b87-81f0-f157dfb5e014/13206_fuchu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.43078028897395,
-			35.649447204031,
-			139.52601080379455,
-			35.69958824826365
-		],
+		"bounds": [139.43078028897395, 35.649447204031, 139.52601080379455, 35.69958824826365],
 		"geoidHeight": 38.178
 	},
 	{
@@ -1783,12 +1228,7 @@
 		"dataset": "plateau-13207-akishima-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/32/d02abb-6745-4382-9bd5-c7039a076667/13207_akishima-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.33346917863565,
-			35.69151870823725,
-			139.39803194347112,
-			35.72632739770615
-		],
+		"bounds": [139.33346917863565, 35.69151870823725, 139.39803194347112, 35.72632739770615],
 		"geoidHeight": 39.3506
 	},
 	{
@@ -1799,12 +1239,7 @@
 		"dataset": "plateau-13208-chofu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d8/554eef-9fa3-4d1e-b48e-7d998daa1063/13208_chofu-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.51731452144,
-			35.63626124068919,
-			139.59325683524645,
-			35.68725101580414
-		],
+		"bounds": [139.51731452144, 35.63626124068919, 139.59325683524645, 35.68725101580414],
 		"geoidHeight": 37.5905
 	},
 	{
@@ -1815,12 +1250,7 @@
 		"dataset": "plateau-13209-machida-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/89/c1a90e-fde1-47d2-9005-5a72a502b113/13209_machida-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.27413906189375,
-			35.50125186954493,
-			139.5072925613911,
-			35.62319326479479
-		],
+		"bounds": [139.27413906189375, 35.50125186954493, 139.5072925613911, 35.62319326479479],
 		"geoidHeight": 38.5185
 	},
 	{
@@ -1831,12 +1261,7 @@
 		"dataset": "plateau-13210-koganei-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7e/9c6d68-c1f4-4032-971b-ca2faec6b962/13210_koganei-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.48458296931747,
-			35.68387274161649,
-			139.53395246924458,
-			35.7185548389017
-		],
+		"bounds": [139.48458296931747, 35.68387274161649, 139.53395246924458, 35.7185548389017],
 		"geoidHeight": 38.1042
 	},
 	{
@@ -1847,12 +1272,7 @@
 		"dataset": "plateau-13211-kodaira-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a2/d8792f-ed31-4b89-8f70-aa4f8106a5c8/13211_kodaira-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.42356734266087,
-			35.70832827477296,
-			139.5246673379525,
-			35.74606569875016
-		],
+		"bounds": [139.42356734266087, 35.70832827477296, 139.5246673379525, 35.74606569875016],
 		"geoidHeight": 38.5023
 	},
 	{
@@ -1863,12 +1283,7 @@
 		"dataset": "plateau-13212-hino-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/23/ac9ba1-07d8-4fdc-b8be-12dc07be4382/13212_hino-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.35715717653002,
-			35.639787940139925,
-			139.44052590836333,
-			35.68797987983937
-		],
+		"bounds": [139.35715717653002, 35.639787940139925, 139.44052590836333, 35.68797987983937],
 		"geoidHeight": 38.812
 	},
 	{
@@ -1879,12 +1294,7 @@
 		"dataset": "plateau-13213-higashimurayama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/db/58a178-e31c-4387-974f-3d2cf519e809/13213_higashimurayama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.44078483415294,
-			35.73440087026212,
-			139.50440154933557,
-			35.78137989347965
-		],
+		"bounds": [139.44078483415294, 35.73440087026212, 139.50440154933557, 35.78137989347965],
 		"geoidHeight": 38.7069
 	},
 	{
@@ -1895,12 +1305,7 @@
 		"dataset": "plateau-13214-kokubunji-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f3/52d198-2458-4e83-9c18-b03597089944/13214_kokubunji-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.42837935417552,
-			35.688520052548654,
-			139.4915445226637,
-			35.722902469009206
-		],
+		"bounds": [139.42837935417552, 35.688520052548654, 139.4915445226637, 35.722902469009206],
 		"geoidHeight": 38.4884
 	},
 	{
@@ -1911,12 +1316,7 @@
 		"dataset": "plateau-13215-kunitachi-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1c/784cef-3f39-4aa6-9c06-2e8d3352d5f4/13215_kunitachi-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.41803624111245,
-			35.67081570965146,
-			139.45976827436508,
-			35.70372888893489
-		],
+		"bounds": [139.41803624111245, 35.67081570965146, 139.45976827436508, 35.70372888893489],
 		"geoidHeight": 38.564
 	},
 	{
@@ -1927,12 +1327,7 @@
 		"dataset": "plateau-13218-fussa-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bb/1681ca-6e3a-49a0-866d-047c0a322188/13218_fussa-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.31576568286326,
-			35.71344728531778,
-			139.35506390917766,
-			35.75451519853247
-		],
+		"bounds": [139.31576568286326, 35.71344728531778, 139.35506390917766, 35.75451519853247],
 		"geoidHeight": 39.7614
 	},
 	{
@@ -1943,12 +1338,7 @@
 		"dataset": "plateau-13219-komae-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/15/2e27c1-3ac8-41e6-8d14-da2037bb2ee9/13219_komae-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.56288171932115,
-			35.62081124782629,
-			139.59403601861877,
-			35.65071166828973
-		],
+		"bounds": [139.56288171932115, 35.62081124782629, 139.59403601861877, 35.65071166828973],
 		"geoidHeight": 37.3208
 	},
 	{
@@ -1959,12 +1349,7 @@
 		"dataset": "plateau-13221-kiyose-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/96/182e7b-7546-4327-99c9-32a99f01bdd3/13221_kiyose-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.49589633479593,
-			35.7614495784723,
-			139.54733505951972,
-			35.806970957892155
-		],
+		"bounds": [139.49589633479593, 35.7614495784723, 139.54733505951972, 35.806970957892155],
 		"geoidHeight": 38.5889
 	},
 	{
@@ -1975,12 +1360,7 @@
 		"dataset": "plateau-13222-higashikurume-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/21/522ef3-201b-4b6f-b450-f3e6efcbd31f/13222_higashikurume-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.48667090090848,
-			35.73214908931448,
-			139.5479396525115,
-			35.77435124460329
-		],
+		"bounds": [139.48667090090848, 35.73214908931448, 139.5479396525115, 35.77435124460329],
 		"geoidHeight": 38.386
 	},
 	{
@@ -1991,12 +1371,7 @@
 		"dataset": "plateau-13224-tama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/4f/c624c0-9749-462c-be3e-e97a026e9a6e/13224_tama-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.39429484119123,
-			35.60605650398291,
-			139.47217422613937,
-			35.65638597252938
-		],
+		"bounds": [139.39429484119123, 35.60605650398291, 139.47217422613937, 35.65638597252938],
 		"geoidHeight": 38.3466
 	},
 	{
@@ -2007,12 +1382,7 @@
 		"dataset": "plateau-13225-inagi-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/9f/262536-5b1a-49e7-b1eb-25a0bd5640fb/13225_inagi-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.46402028215383,
-			35.60457751347588,
-			139.52446505905792,
-			35.6517539755966
-		],
+		"bounds": [139.46402028215383, 35.60457751347588, 139.52446505905792, 35.6517539755966],
 		"geoidHeight": 37.8361
 	},
 	{
@@ -2023,12 +1393,7 @@
 		"dataset": "plateau-13229-nishitokyo-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/79/dadaec-f220-4681-bdb9-a7b2815195cf/13229_nishitokyo-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.5168697541808,
-			35.71124591192463,
-			139.56936465763226,
-			35.761539277646975
-		],
+		"bounds": [139.5168697541808, 35.71124591192463, 139.56936465763226, 35.761539277646975],
 		"geoidHeight": 38.1126
 	},
 	{
@@ -2039,12 +1404,7 @@
 		"dataset": "plateau-14100-yokohama-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e9/5bf14f-3c10-44dc-bf08-824cf297bb26/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14101_tsurumi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.63544660254402,
-			35.449911137211345,
-			139.72409601721222,
-			35.54065324736863
-		],
+		"bounds": [139.63544660254402, 35.449911137211345, 139.72409601721222, 35.54065324736863],
 		"geoidHeight": 36.2655
 	},
 	{
@@ -2055,12 +1415,7 @@
 		"dataset": "plateau-14100-yokohama-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/75/06967a-28e7-4b1e-a952-df4a93bbf08b/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14102_kanagawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.5679616539321,
-			35.465389517490244,
-			139.66795364223543,
-			35.50627735889921
-		],
+		"bounds": [139.5679616539321, 35.465389517490244, 139.66795364223543, 35.50627735889921],
 		"geoidHeight": 36.5678
 	},
 	{
@@ -2071,12 +1426,7 @@
 		"dataset": "plateau-14100-yokohama-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/72/f0f73f-48ab-4661-a6b6-38290e2e05fb/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14103_nishi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.60308919397727,
-			35.44182246138422,
-			139.63854827790962,
-			35.47205760749441
-		],
+		"bounds": [139.60308919397727, 35.44182246138422, 139.63854827790962, 35.47205760749441],
 		"geoidHeight": 36.5053
 	},
 	{
@@ -2087,12 +1437,7 @@
 		"dataset": "plateau-14100-yokohama-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/db/a01618-1d97-4212-ba0f-4bee03df7a43/14100_yokohama-shi_city_2024_citygml_2_op_bldg_3dtiles_14104_naka-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.62171512986362,
-			35.396834177534174,
-			139.69020319148885,
-			35.457486483532094
-		],
+		"bounds": [139.62171512986362, 35.396834177534174, 139.69020319148885, 35.457486483532094],
 		"geoidHeight": 36.286
 	},
 	{
@@ -2103,12 +1448,7 @@
 		"dataset": "plateau-14130-kawasaki-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6e/2f92f1-9cb4-4759-857c-378864981e89/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14131_kawasaki-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.68798518794262,
-			35.470226641825796,
-			139.83529012723315,
-			35.541098754680185
-		],
+		"bounds": [139.68798518794262, 35.470226641825796, 139.83529012723315, 35.541098754680185],
 		"geoidHeight": 35.9156
 	},
 	{
@@ -2119,12 +1459,7 @@
 		"dataset": "plateau-14130-kawasaki-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2b/61e6e4-6a1e-4d1b-900a-87199253b2cc/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14133_nakahara-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.62656081123146,
-			35.55252357282334,
-			139.68346005325162,
-			35.59624596696443
-		],
+		"bounds": [139.62656081123146, 35.55252357282334, 139.68346005325162, 35.59624596696443],
 		"geoidHeight": 36.6451
 	},
 	{
@@ -2135,12 +1470,7 @@
 		"dataset": "plateau-14130-kawasaki-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ac/0eabf3-4155-4400-9a86-f60e15f3afb2/14130_kawasaki-shi_city_2022_citygml_4_op_bldg_3dtiles_14136_miyamae-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.52502488983933,
-			35.56459147487082,
-			139.62042201180324,
-			35.6072912383676
-		],
+		"bounds": [139.52502488983933, 35.56459147487082, 139.62042201180324, 35.6072912383676],
 		"geoidHeight": 37.129
 	},
 	{
@@ -2151,12 +1481,7 @@
 		"dataset": "plateau-14150-sagamihara-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/76/8c007d-a30d-47cd-9966-0e1676f2dff5/14150_sagamihara-shi_city_2024_citygml_1_op_bldg_3dtiles_14151_midori-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.1056062196666,
-			35.52499568750364,
-			139.3613686640144,
-			35.66005684836046
-		],
+		"bounds": [139.1056062196666, 35.52499568750364, 139.3613686640144, 35.66005684836046],
 		"geoidHeight": 40.2693
 	},
 	{
@@ -2167,12 +1492,7 @@
 		"dataset": "plateau-14150-sagamihara-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c6/d9771d-751f-4f91-a52c-c13f552a8738/14150_sagamihara-shi_city_2024_citygml_1_op_bldg_3dtiles_14152_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.3247157743843,
-			35.528753869303465,
-			139.41810445195892,
-			35.59909864480061
-		],
+		"bounds": [139.3247157743843, 35.528753869303465, 139.41810445195892, 35.59909864480061],
 		"geoidHeight": 38.7261
 	},
 	{
@@ -2183,12 +1503,7 @@
 		"dataset": "plateau-14201-yokosuka-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/33/515ab7-7967-48ff-b204-22adfb61cc6e/14201_yokosuka-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.5831145492891,
-			35.19080993941263,
-			139.74480350471651,
-			35.33005239976302
-		],
+		"bounds": [139.5831145492891, 35.19080993941263, 139.74480350471651, 35.33005239976302],
 		"geoidHeight": 36.4797
 	},
 	{
@@ -2199,12 +1514,7 @@
 		"dataset": "plateau-14204-kamakura-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0b/89cea0-eaae-40c2-9707-84c01ef3a6c9/14204_kamakura-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.48874920906292,
-			35.29980007496477,
-			139.5893030013483,
-			35.3682465847674
-		],
+		"bounds": [139.48874920906292, 35.29980007496477, 139.5893030013483, 35.3682465847674],
 		"geoidHeight": 37.015
 	},
 	{
@@ -2215,12 +1525,7 @@
 		"dataset": "plateau-14205-fujisawa-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7e/bbfbee-1716-4e29-9f3a-f02aa86942f9/14205_fujisawa-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.39360241687405,
-			35.298080202432196,
-			139.51676224913905,
-			35.42910126980288
-		],
+		"bounds": [139.39360241687405, 35.298080202432196, 139.51676224913905, 35.42910126980288],
 		"geoidHeight": 37.5238
 	},
 	{
@@ -2231,12 +1536,7 @@
 		"dataset": "plateau-14212-atsugi-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6c/cf2890-0390-44a9-88bb-443ffecb35d8/14212_atsugi-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.23074923563314,
-			35.39322570367374,
-			139.37836429187496,
-			35.52589898789192
-		],
+		"bounds": [139.23074923563314, 35.39322570367374, 139.37836429187496, 35.52589898789192],
 		"geoidHeight": 39.1808
 	},
 	{
@@ -2247,12 +1547,7 @@
 		"dataset": "plateau-15100-niigata-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/06/5712c4-c5c3-46ac-b6da-e0043532cf88/15100_niigata-shi_city_2023_citygml_2_op_bldg_3dtiles_15103_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.99822130622076,
-			37.87304325569226,
-			139.0986057504162,
-			37.94562707123597
-		],
+		"bounds": [138.99822130622076, 37.87304325569226, 139.0986057504162, 37.94562707123597],
 		"geoidHeight": 38.5799
 	},
 	{
@@ -2263,12 +1558,7 @@
 		"dataset": "plateau-15202-nagaoka-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/98/c9c4e7-4546-4294-869b-934b4edea699/15202_nagaoka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.70130211575346,
-			37.228379785127714,
-			139.0224316963232,
-			37.66441335165554
-		],
+		"bounds": [138.70130211575346, 37.228379785127714, 139.0224316963232, 37.66441335165554],
 		"geoidHeight": 39.8218
 	},
 	{
@@ -2279,12 +1569,7 @@
 		"dataset": "plateau-15204-sanjo-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6c/63b411-6b18-44ea-ae25-1a623efeb6a9/15204_sanjo-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.95318387672904,
-			37.630460907953776,
-			138.9570608185884,
-			37.63341515032562
-		],
+		"bounds": [138.95318387672904, 37.630460907953776, 138.9570608185884, 37.63341515032562],
 		"geoidHeight": 39.3033
 	},
 	{
@@ -2295,12 +1580,7 @@
 		"dataset": "plateau-15206-shibata-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ee/4d9fde-9fb8-42f5-ab76-c2c96094ab49/15206_shibata-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			139.24220245184068,
-			37.89983645454983,
-			139.37947303535336,
-			37.984812614126945
-		],
+		"bounds": [139.24220245184068, 37.89983645454983, 139.37947303535336, 37.984812614126945],
 		"geoidHeight": 39.7038
 	},
 	{
@@ -2311,12 +1591,7 @@
 		"dataset": "plateau-15222-joetsu-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b0/5eed3b-3dda-49c1-ad86-60f92024f111/15222_joetsu-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.21030159121767,
-			37.05663246478189,
-			138.40974327802095,
-			37.291977854234496
-		],
+		"bounds": [138.21030159121767, 37.05663246478189, 138.40974327802095, 37.291977854234496],
 		"geoidHeight": 39.3305
 	},
 	{
@@ -2327,12 +1602,7 @@
 		"dataset": "plateau-16202-takaoka-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/64/e75e8c-c732-4912-91a2-04d874ebb607/16202_takaoka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.84047493381163,
-			36.65699970365326,
-			137.10128807236063,
-			36.82908259808195
-		],
+		"bounds": [136.84047493381163, 36.65699970365326, 137.10128807236063, 36.82908259808195],
 		"geoidHeight": 38.0872
 	},
 	{
@@ -2343,12 +1613,7 @@
 		"dataset": "plateau-17206-kaga-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/aa/36a235-f066-4d31-861a-11cf2e25ba66/17206_kaga-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.24429897554774,
-			36.22155270848327,
-			136.41785799216314,
-			36.38281610805528
-		],
+		"bounds": [136.24429897554774, 36.22155270848327, 136.41785799216314, 36.38281610805528],
 		"geoidHeight": 37.5534
 	},
 	{
@@ -2359,12 +1624,7 @@
 		"dataset": "plateau-19201-kofu-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f2/032d31-0149-4642-9f0f-a851c0a2ad82/19201_kofu-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.5241255498152,
-			35.56192994842655,
-			138.63623549494667,
-			35.71779761829197
-		],
+		"bounds": [138.5241255498152, 35.56192994842655, 138.63623549494667, 35.71779761829197],
 		"geoidHeight": 42.6002
 	},
 	{
@@ -2375,12 +1635,7 @@
 		"dataset": "plateau-20202-matsumoto-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ac/e66991-e235-457a-9e1f-a5815154c5e8/20202_matsumoto-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.78101056413175,
-			36.128353063350595,
-			138.072007835413,
-			36.29803645205126
-		],
+		"bounds": [137.78101056413175, 36.128353063350595, 138.072007835413, 36.29803645205126],
 		"geoidHeight": 42.3229
 	},
 	{
@@ -2391,12 +1646,7 @@
 		"dataset": "plateau-20204-okaya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/81/9c3d0c-823c-400b-affc-9cf3202f003e/20204_okaya-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.00943439319494,
-			36.00965109830216,
-			138.07835545798233,
-			36.09947954557214
-		],
+		"bounds": [138.00943439319494, 36.00965109830216, 138.07835545798233, 36.09947954557214],
 		"geoidHeight": 42.978
 	},
 	{
@@ -2407,12 +1657,7 @@
 		"dataset": "plateau-20209-ina-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/32/bb1b93-7178-4797-a034-f6cea29e617b/20209_ina-shi_city_2020_citygml_8_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.8643142520174,
-			35.6962708823822,
-			138.14465610441104,
-			35.92501790588505
-		],
+		"bounds": [137.8643142520174, 35.6962708823822, 138.14465610441104, 35.92501790588505],
 		"geoidHeight": 43.4826
 	},
 	{
@@ -2423,12 +1668,7 @@
 		"dataset": "plateau-20213-iiyama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e8/f9bf89-3a90-45c3-800a-1ddc1ba398a9/20213_iiyama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.2863538490147,
-			36.80544094897689,
-			138.52671454975217,
-			37.02342009472378
-		],
+		"bounds": [138.2863538490147, 36.80544094897689, 138.52671454975217, 37.02342009472378],
 		"geoidHeight": 41.4384
 	},
 	{
@@ -2439,12 +1679,7 @@
 		"dataset": "plateau-20214-chino-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6b/4b2f80-2628-4a09-b6dd-3f2f5da20420/20214_chino-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.1228300337068,
-			35.93641376471875,
-			138.37249810409799,
-			36.11235917105521
-		],
+		"bounds": [138.1228300337068, 35.93641376471875, 138.37249810409799, 36.11235917105521],
 		"geoidHeight": 43.5995
 	},
 	{
@@ -2455,12 +1690,7 @@
 		"dataset": "plateau-20220-azumino-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/20/85b90a-4809-42bc-a248-d53a1a344dbc/20220_azumino-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.80542541941125,
-			36.237730681769115,
-			137.9813779075688,
-			36.41164308936934
-		],
+		"bounds": [137.80542541941125, 36.237730681769115, 137.9813779075688, 36.41164308936934],
 		"geoidHeight": 42.0481
 	},
 	{
@@ -2471,12 +1701,7 @@
 		"dataset": "plateau-21201-gifu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/81/c0712f-b9f1-4ac6-a23d-d981a780326b/21201_gifu-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.68050601493107,
-			35.351125597249,
-			136.88611959972437,
-			35.53532681811746
-		],
+		"bounds": [136.68050601493107, 35.351125597249, 136.88611959972437, 35.53532681811746],
 		"geoidHeight": 38.1994
 	},
 	{
@@ -2487,12 +1712,7 @@
 		"dataset": "plateau-21202-ogaki-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ef/0d06b2-d098-4b98-af40-dca31088001b/21202_ogaki-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.5426247595495,
-			35.2958663035007,
-			136.68794885670863,
-			35.40860139019938
-		],
+		"bounds": [136.5426247595495, 35.2958663035007, 136.68794885670863, 35.40860139019938],
 		"geoidHeight": 37.4948
 	},
 	{
@@ -2503,12 +1723,7 @@
 		"dataset": "plateau-21211-minokamo-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0e/8cd5ed-c243-4a73-87bf-bcd6fab7954d/21211_minokamo-shi_city_2024_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.95968542468253,
-			35.43047361229218,
-			137.08613036555985,
-			35.54497731448372
-		],
+		"bounds": [136.95968542468253, 35.43047361229218, 137.08613036555985, 35.54497731448372],
 		"geoidHeight": 39.3203
 	},
 	{
@@ -2519,12 +1734,7 @@
 		"dataset": "plateau-22100-shizuoka-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/60/0d17eb-270c-478c-b4ec-29255f61882b/22100_shizuoka-shi_city_2023_citygml_3_op_bldg_3dtiles_22101_aoi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.18165527762054,
-			34.956562417124765,
-			138.4363847818356,
-			35.32283542622199
-		],
+		"bounds": [138.18165527762054, 34.956562417124765, 138.4363847818356, 35.32283542622199],
 		"geoidHeight": 42.0042
 	},
 	{
@@ -2535,12 +1745,7 @@
 		"dataset": "plateau-22100-shizuoka-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ee/499c8c-3104-40c2-a5a3-ee09f3fc20ff/22100_shizuoka-shi_city_2023_citygml_3_op_bldg_3dtiles_22103_shimizu-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.4107696996342,
-			34.96255245186591,
-			138.63010742001094,
-			35.19419415102326
-		],
+		"bounds": [138.4107696996342, 34.96255245186591, 138.63010742001094, 35.19419415102326],
 		"geoidHeight": 40.47
 	},
 	{
@@ -2551,12 +1756,7 @@
 		"dataset": "plateau-22203-numazu-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/74/9eafc9-33b7-4cfa-8a24-207bd3efc647/22203_numazu-shi_city_2023_citygml_3_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			138.75301005465067,
-			34.94174959484204,
-			138.92182632028397,
-			35.198443629780385
-		],
+		"bounds": [138.75301005465067, 34.94174959484204, 138.92182632028397, 35.198443629780385],
 		"geoidHeight": 40.4702
 	},
 	{
@@ -2567,12 +1767,7 @@
 		"dataset": "plateau-22213-kakegawa-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3e/3dfc50-6189-4cf2-ad44-d1055d9567f3/22213_kakegawa-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.93866048160342,
-			34.643904623099424,
-			138.1019812662366,
-			34.91191568409388
-		],
+		"bounds": [137.93866048160342, 34.643904623099424, 138.1019812662366, 34.91191568409388],
 		"geoidHeight": 40.2502
 	},
 	{
@@ -2583,12 +1778,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f5/70535e-559f-4479-acee-b49051d3afb0/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23102_higashi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.90732490144157,
-			35.16951371415922,
-			136.96544991900706,
-			35.1987055955658
-		],
+		"bounds": [136.90732490144157, 35.16951371415922, 136.96544991900706, 35.1987055955658],
 		"geoidHeight": 38.3654
 	},
 	{
@@ -2599,12 +1789,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b9/bf279f-54e1-428f-b65a-ead4d5ccdf98/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23104_nishi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.85595339845105,
-			35.17112114180506,
-			136.90648986004163,
-			35.2342101769421
-		],
+		"bounds": [136.85595339845105, 35.17112114180506, 136.90648986004163, 35.2342101769421],
 		"geoidHeight": 38.1105
 	},
 	{
@@ -2615,12 +1800,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/74/4a013a-96e7-4152-b662-5d28b4801be9/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23105_nakamura-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.83072741825566,
-			35.1454901934148,
-			136.89287845953797,
-			35.19016511547671
-		],
+		"bounds": [136.83072741825566, 35.1454901934148, 136.89287845953797, 35.19016511547671],
 		"geoidHeight": 37.9714
 	},
 	{
@@ -2631,12 +1811,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/37/ca8d9a-f78f-470f-a7e6-d598b9493faf/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23106_naka-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.8920979391624,
-			35.14235088263256,
-			136.92964834013605,
-			35.186675238692274
-		],
+		"bounds": [136.8920979391624, 35.14235088263256, 136.92964834013605, 35.186675238692274],
 		"geoidHeight": 38.2125
 	},
 	{
@@ -2647,12 +1822,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/52/c5d139-a803-4bd5-84cc-4cc3be4e7069/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23110_nakagawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.79722737142458,
-			35.11139703110436,
-			136.89795057984688,
-			35.168730893922
-		],
+		"bounds": [136.79722737142458, 35.11139703110436, 136.89795057984688, 35.168730893922],
 		"geoidHeight": 37.8739
 	},
 	{
@@ -2663,12 +1833,7 @@
 		"dataset": "plateau-23100-nagoya-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/14/985308-f6cd-4fbb-b71e-ba61c9501556/23100_nagoya-shi_city_2022_citygml_4_op_bldg_3dtiles_23111_minato-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.79171073737675,
-			35.03475051995134,
-			136.91122626338583,
-			35.12667715054169
-		],
+		"bounds": [136.79171073737675, 35.03475051995134, 136.91122626338583, 35.12667715054169],
 		"geoidHeight": 37.8727
 	},
 	{
@@ -2679,12 +1844,7 @@
 		"dataset": "plateau-23201-toyohashi-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0e/267a00-1a3a-4886-ac6d-a52f2092f722/23201_toyohashi-shi_city_2024_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.30637466800567,
-			34.64915716995996,
-			137.49701120948208,
-			34.85966593939975
-		],
+		"bounds": [137.30637466800567, 34.64915716995996, 137.49701120948208, 34.85966593939975],
 		"geoidHeight": 39.6387
 	},
 	{
@@ -2695,12 +1855,7 @@
 		"dataset": "plateau-23202-okazaki-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/99/7149b5-32c8-458c-a925-512386256df2/23202_okazaki-shi_city_2020_citygml_8_op_files_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.103541481578,
-			34.86375454149777,
-			137.37807208486686,
-			35.03875601997343
-		],
+		"bounds": [137.103541481578, 34.86375454149777, 137.37807208486686, 35.03875601997343],
 		"geoidHeight": 39.9184
 	},
 	{
@@ -2711,12 +1866,7 @@
 		"dataset": "plateau-23206-kasugai-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/da/877731-11c7-4d08-a8ca-8980c6b2049e/23206_kasugai-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.92499173441968,
-			35.2176415537496,
-			137.08433297539196,
-			35.33782932612082
-		],
+		"bounds": [136.92499173441968, 35.2176415537496, 137.08433297539196, 35.33782932612082],
 		"geoidHeight": 38.8466
 	},
 	{
@@ -2727,12 +1877,7 @@
 		"dataset": "plateau-23207-toyokawa-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a9/7a1ebd-5d1b-4639-9e33-1dae40570e31/23207_toyokawa-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.2617563104959,
-			34.784603370558635,
-			137.4598311379721,
-			34.909411069793606
-		],
+		"bounds": [137.2617563104959, 34.784603370558635, 137.4598311379721, 34.909411069793606],
 		"geoidHeight": 39.9495
 	},
 	{
@@ -2743,12 +1888,7 @@
 		"dataset": "plateau-23208-tsushima-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/87/626d7d-1ea8-49b7-b15d-b3028467a2bc/23208_tsushima-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.70729194396355,
-			35.132934666917535,
-			136.78630899787714,
-			35.19979180609721
-		],
+		"bounds": [136.70729194396355, 35.132934666917535, 136.78630899787714, 35.19979180609721],
 		"geoidHeight": 37.5339
 	},
 	{
@@ -2759,12 +1899,7 @@
 		"dataset": "plateau-23211-toyota-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ed/58f29e-5e46-4525-97b3-0b0a76210777/23211_toyota-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.03949766257833,
-			34.9902370820673,
-			137.57814167629544,
-			35.28967963952229
-		],
+		"bounds": [137.03949766257833, 34.9902370820673, 137.57814167629544, 35.28967963952229],
 		"geoidHeight": 40.6852
 	},
 	{
@@ -2775,12 +1910,7 @@
 		"dataset": "plateau-23212-anjo-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/68/03ca02-952e-4eeb-8ddc-a5922509fa25/23212_anjo-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.01048702422918,
-			34.88818026503287,
-			137.12573717422802,
-			35.0099168013772
-		],
+		"bounds": [137.01048702422918, 34.88818026503287, 137.12573717422802, 35.0099168013772],
 		"geoidHeight": 38.9611
 	},
 	{
@@ -2791,12 +1921,7 @@
 		"dataset": "plateau-23230-nisshin-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7c/9a82e2-4e98-43ba-b07f-158e83524288/23230_nisshin-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			137.00105662583618,
-			35.10769668943974,
-			137.097850866762,
-			35.1686187018819
-		],
+		"bounds": [137.00105662583618, 35.10769668943974, 137.097850866762, 35.1686187018819],
 		"geoidHeight": 38.9578
 	},
 	{
@@ -2807,12 +1932,7 @@
 		"dataset": "plateau-24202-yokkaichi-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e3/7ff601-4912-41a1-bb95-8fa3fd68e9d8/24202_yokkaichi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.43208124,
-			34.90153773,
-			136.67691878,
-			35.06663032
-		],
+		"bounds": [136.43208124, 34.90153773, 136.67691878, 35.06663032],
 		"geoidHeight": 37.471
 	},
 	{
@@ -2823,12 +1943,7 @@
 		"dataset": "plateau-24203-ise-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5c/ced41f-3585-491a-83dd-335c1be60f21/24203_ise-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.63643438220967,
-			34.392681362542596,
-			136.81702397914208,
-			34.56540764553329
-		],
+		"bounds": [136.63643438220967, 34.392681362542596, 136.81702397914208, 34.56540764553329],
 		"geoidHeight": 38.9022
 	},
 	{
@@ -2839,12 +1954,7 @@
 		"dataset": "plateau-25203-nagahama-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c0/5a66f5-6a7c-4b8b-86d1-1c47a7352ed6/25203_nagahama-shi_pref_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.24062439192315,
-			35.40702901943462,
-			136.29184246840632,
-			35.442848311202106
-		],
+		"bounds": [136.24062439192315, 35.40702901943462, 136.29184246840632, 35.442848311202106],
 		"geoidHeight": 37.0999
 	},
 	{
@@ -2855,12 +1965,7 @@
 		"dataset": "plateau-25204-oumihachiman-shi-2025",
 		"licenseTitle": null,
 		"url": "https://assets.cms.plateau.reearth.io/assets/5c/487c7a-fb56-46d4-831b-3579a9b4f448/25204_oumihachiman-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			136.01893391030478,
-			35.07588279591286,
-			136.17314967370555,
-			35.20937512874833
-		],
+		"bounds": [136.01893391030478, 35.07588279591286, 136.17314967370555, 35.20937512874833],
 		"geoidHeight": 36.9301
 	},
 	{
@@ -2871,12 +1976,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e2/863a08-1305-48d4-b6cf-1ffa0559589a/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26101_kita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.71118532884603,
-			35.02226380776144,
-			135.77206246583236,
-			35.08644276048149
-		],
+		"bounds": [135.71118532884603, 35.02226380776144, 135.77206246583236, 35.08644276048149],
 		"geoidHeight": 37.4768
 	},
 	{
@@ -2887,12 +1987,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/4e/75ed90-a912-447a-8013-0868b9e91b22/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26102_kamigyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.73290850146196,
-			35.014921792133926,
-			135.7709332543619,
-			35.03918732118037
-		],
+		"bounds": [135.73290850146196, 35.014921792133926, 135.7709332543619, 35.03918732118037],
 		"geoidHeight": 37.4433
 	},
 	{
@@ -2903,12 +1998,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/39/1d59ba-57ab-46b9-8433-d8a0ee0016d9/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26103_sakyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.7543486396778,
-			35.006815135829555,
-			135.8241599345206,
-			35.09395768527534
-		],
+		"bounds": [135.7543486396778, 35.006815135829555, 135.8241599345206, 35.09395768527534],
 		"geoidHeight": 37.4209
 	},
 	{
@@ -2919,12 +2009,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1a/bba122-47e9-45f6-bf4e-f8ce0dce172f/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26104_nakagyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.7238745932038,
-			34.99632527729337,
-			135.77140898410525,
-			35.02263626159128
-		],
+		"bounds": [135.7238745932038, 34.99632527729337, 135.77140898410525, 35.02263626159128],
 		"geoidHeight": 37.4498
 	},
 	{
@@ -2935,12 +2020,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/f6/af38ee-5eae-4032-a861-fb460adecd16/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26105_higashiyama-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.76560544948012,
-			34.96989029352013,
-			135.7908552472168,
-			35.01087194328537
-		],
+		"bounds": [135.76560544948012, 34.96989029352013, 135.7908552472168, 35.01087194328537],
 		"geoidHeight": 37.467
 	},
 	{
@@ -2951,12 +2031,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1a/742b55-cd5f-460e-991c-f3b03242f2db/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26106_shimogyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.7272008381379,
-			34.98156611126986,
-			135.77113379971823,
-			35.00451417006795
-		],
+		"bounds": [135.7272008381379, 34.98156611126986, 135.77113379971823, 35.00451417006795],
 		"geoidHeight": 37.4614
 	},
 	{
@@ -2967,12 +2042,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/be/101c86-15df-431f-b0eb-6739397abd5e/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26107_minami-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.70504385317335,
-			34.94241975110286,
-			135.7673043791211,
-			34.98583819888605
-		],
+		"bounds": [135.70504385317335, 34.94241975110286, 135.7673043791211, 34.98583819888605],
 		"geoidHeight": 37.5073
 	},
 	{
@@ -2983,12 +2053,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6f/c4fa62-ac7a-4a21-9248-2326520a22d7/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26108_ukyo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.66226638722404,
-			34.98167187200368,
-			135.733014145869,
-			35.04902029534059
-		],
+		"bounds": [135.66226638722404, 34.98167187200368, 135.733014145869, 35.04902029534059],
 		"geoidHeight": 37.5012
 	},
 	{
@@ -2999,12 +2064,7 @@
 		"dataset": "plateau-26100-kyoto-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2b/2aca71-8487-41f0-ba72-1209a2cac988/26100_kyoto-shi_city_2025_citygml_1_op_bldg_3dtiles_26109_fushimi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.7037796491413,
-			34.88252512272187,
-			135.82467035153005,
-			34.97686591614982
-		],
+		"bounds": [135.7037796491413, 34.88252512272187, 135.82467035153005, 34.97686591614982],
 		"geoidHeight": 37.5865
 	},
 	{
@@ -3015,12 +2075,7 @@
 		"dataset": "plateau-26465-yosano-cho-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1b/030415-b8cc-4bee-aa21-30495201ed3c/26465_yosano-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.07777865367188,
-			35.51241077925212,
-			135.13790315956513,
-			35.54999744971778
-		],
+		"bounds": [135.07777865367188, 35.51241077925212, 135.13790315956513, 35.54999744971778],
 		"geoidHeight": 36.8659
 	},
 	{
@@ -3031,12 +2086,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0a/e022cb-aa2e-46ff-9cdb-40ba8fe9080b/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27102_miyakojima-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.5160900468455,
-			34.69133766198825,
-			135.5406556044405,
-			34.73033762361882
-		],
+		"bounds": [135.5160900468455, 34.69133766198825, 135.5406556044405, 34.73033762361882],
 		"geoidHeight": 37.6742
 	},
 	{
@@ -3047,12 +2097,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e1/c16fa3-3415-42d7-b11f-952a8cfaede6/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27104_konohana-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.3759341851459,
-			34.643419626806235,
-			135.471672879058,
-			34.696194340522915
-		],
+		"bounds": [135.3759341851459, 34.643419626806235, 135.471672879058, 34.696194340522915],
 		"geoidHeight": 37.4648
 	},
 	{
@@ -3063,12 +2108,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6d/56eabf-b0ee-4774-a92a-16e3ddb418e2/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27114_higashiyodogawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.50199970667737,
-			34.72183798876445,
-			135.5581291359238,
-			34.76830050793766
-		],
+		"bounds": [135.50199970667737, 34.72183798876445, 135.5581291359238, 34.76830050793766],
 		"geoidHeight": 37.6187
 	},
 	{
@@ -3079,12 +2119,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/71/1ce44f-d586-4897-8b89-5c5aa18e5421/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27115_higashinari-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.53039614396562,
-			34.66438599764987,
-			135.56333331572375,
-			34.68319842802662
-		],
+		"bounds": [135.53039614396562, 34.66438599764987, 135.56333331572375, 34.68319842802662],
 		"geoidHeight": 37.8185
 	},
 	{
@@ -3095,12 +2130,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/35/638788-b5ed-4c60-9d0c-3098adea6318/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27118_joto-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.5342828885692,
-			34.67800209778425,
-			135.5659330020021,
-			34.71537461168486
-		],
+		"bounds": [135.5342828885692, 34.67800209778425, 135.5659330020021, 34.71537461168486],
 		"geoidHeight": 37.7658
 	},
 	{
@@ -3111,12 +2141,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/78/81f873-7832-44f0-8afb-98a22cfa99df/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27123_yodogawa-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.44715683251965,
-			34.70962251697761,
-			135.50547140338878,
-			34.75111234753698
-		],
+		"bounds": [135.44715683251965, 34.70962251697761, 135.50547140338878, 34.75111234753698],
 		"geoidHeight": 37.4887
 	},
 	{
@@ -3127,12 +2152,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/40/e1dacb-f310-4e2b-84f0-b68ce6d43899/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27127_kita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.4770717134207,
-			34.68552795382409,
-			135.5221640029439,
-			34.72001810373488
-		],
+		"bounds": [135.4770717134207, 34.68552795382409, 135.5221640029439, 34.72001810373488],
 		"geoidHeight": 37.6032
 	},
 	{
@@ -3143,12 +2163,7 @@
 		"dataset": "plateau-27100-osaka-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ad/fc63fd-5c85-4032-92a5-a3d9d521f2cb/27100_osaka-shi_city_2025_citygml_1_op_bldg_3dtiles_27128_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.4967617793126,
-			34.66247992521129,
-			135.5360266457779,
-			34.69502708497045
-		],
+		"bounds": [135.4967617793126, 34.66247992521129, 135.5360266457779, 34.69502708497045],
 		"geoidHeight": 37.7127
 	},
 	{
@@ -3159,12 +2174,7 @@
 		"dataset": "plateau-27140-sakai-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/8d/9573ca-924e-4ee5-8920-bd76fc7ac298/27140_sakai-shi_city_2024_citygml_1_op_bldg_3dtiles_27141_sakai-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.42520236508415,
-			34.54566967231794,
-			135.50247694723757,
-			34.60566468344226
-		],
+		"bounds": [135.42520236508415, 34.54566967231794, 135.50247694723757, 34.60566468344226],
 		"geoidHeight": 37.9015
 	},
 	{
@@ -3175,12 +2185,7 @@
 		"dataset": "plateau-27140-sakai-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ac/4f6e87-3954-4f30-82aa-26ecc546614d/27140_sakai-shi_city_2024_citygml_1_op_bldg_3dtiles_27144_nishi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.40367531234818,
-			34.50024418194338,
-			135.48912562714565,
-			34.59787013494248
-		],
+		"bounds": [135.40367531234818, 34.50024418194338, 135.48912562714565, 34.59787013494248],
 		"geoidHeight": 37.9388
 	},
 	{
@@ -3191,12 +2196,7 @@
 		"dataset": "plateau-27203-toyonaka-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/90/27852c-1cdc-4fc3-9dd7-970a1ec256d6/27203_toyonaka-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.439834210852,
-			34.730853716473746,
-			135.50714459033972,
-			34.82454435923789
-		],
+		"bounds": [135.439834210852, 34.730853716473746, 135.50714459033972, 34.82454435923789],
 		"geoidHeight": 37.4682
 	},
 	{
@@ -3207,12 +2207,7 @@
 		"dataset": "plateau-27204-ikeda-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/80/1d6e63-678e-40b2-b34b-2b1e6fe3f7f4/27204_ikeda-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.41692668555172,
-			34.79095292958875,
-			135.45959451934837,
-			34.87447826062376
-		],
+		"bounds": [135.41692668555172, 34.79095292958875, 135.45959451934837, 34.87447826062376],
 		"geoidHeight": 37.4939
 	},
 	{
@@ -3223,12 +2218,7 @@
 		"dataset": "plateau-27207-takatsuki-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/84/5cab13-ff3c-45bb-8f4e-b5538f6b8666/27207_takatsuki-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.56605382046604,
-			34.78296226742116,
-			135.6696095573641,
-			34.8906043855429
-		],
+		"bounds": [135.56605382046604, 34.78296226742116, 135.6696095573641, 34.8906043855429],
 		"geoidHeight": 37.6611
 	},
 	{
@@ -3239,12 +2229,7 @@
 		"dataset": "plateau-27227-higashiosaka-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/8f/17efcb-7c70-47e4-8355-888e30111469/27227_higashiosaka-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.5571239360598,
-			34.63231608918908,
-			135.67908970883272,
-			34.70401521760074
-		],
+		"bounds": [135.5571239360598, 34.63231608918908, 135.67908970883272, 34.70401521760074],
 		"geoidHeight": 38.0977
 	},
 	{
@@ -3255,12 +2240,7 @@
 		"dataset": "plateau-28201-himeji-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2c/6dd165-06b0-40eb-bf22-76db2edb0273/28201_himeji-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.4606919958318,
-			34.64104902612326,
-			134.8090635588881,
-			35.090270245212714
-		],
+		"bounds": [134.4606919958318, 34.64104902612326, 134.8090635588881, 35.090270245212714],
 		"geoidHeight": 36.8936
 	},
 	{
@@ -3271,12 +2251,7 @@
 		"dataset": "plateau-28210-kakogawa-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b5/c2a9c6-d2df-4097-a526-e4b9dc526120/28210_kakogawa-shi_city_2020_citygml_6_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.80200144388402,
-			34.70758608262406,
-			134.93340730640057,
-			34.85144488932078
-		],
+		"bounds": [134.80200144388402, 34.70758608262406, 134.93340730640057, 34.85144488932078],
 		"geoidHeight": 36.9184
 	},
 	{
@@ -3287,12 +2262,7 @@
 		"dataset": "plateau-28215-miki-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/19/f8717e-7c11-4aed-a5a0-8e05f51dc303/28215_miki-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.9223142583939,
-			34.76018452444002,
-			135.16856866606548,
-			34.94448823744203
-		],
+		"bounds": [134.9223142583939, 34.76018452444002, 135.16856866606548, 34.94448823744203],
 		"geoidHeight": 37.0897
 	},
 	{
@@ -3303,12 +2273,7 @@
 		"dataset": "plateau-28225-asago-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/17/3f24c4-8dea-4abd-9b73-b7b58374208f/28225_asago-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.8104027112463,
-			35.28114326394272,
-			134.8788352907884,
-			35.36945909607463
-		],
+		"bounds": [134.8104027112463, 35.28114326394272, 134.8788352907884, 35.36945909607463],
 		"geoidHeight": 37.182
 	},
 	{
@@ -3319,12 +2284,7 @@
 		"dataset": "plateau-28229-tatsuno-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bc/16afde-fa0a-44e3-bf00-871c8c0e52c0/28229_tatsuno-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.42579095694077,
-			34.75634421563727,
-			134.59766622951904,
-			35.00772390815194
-		],
+		"bounds": [134.42579095694077, 34.75634421563727, 134.59766622951904, 35.00772390815194],
 		"geoidHeight": 36.9061
 	},
 	{
@@ -3335,12 +2295,7 @@
 		"dataset": "plateau-29210-kashiba-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/02/aaa9af-dc33-4b79-a17d-d96ea8b65e82/29210_kashiba-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.65636022979697,
-			34.5188716037791,
-			135.7293584592878,
-			34.57475023523634
-		],
+		"bounds": [135.65636022979697, 34.5188716037791, 135.7293584592878, 34.57475023523634],
 		"geoidHeight": 38.9933
 	},
 	{
@@ -3351,12 +2306,7 @@
 		"dataset": "plateau-29343-sango-cho-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/94/949d14-0d06-4856-beb9-12e88787f461/29343_sango-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.6507070398128,
-			34.58525108748525,
-			135.71226360961472,
-			34.61568955310959
-		],
+		"bounds": [135.6507070398128, 34.58525108748525, 135.71226360961472, 34.61568955310959],
 		"geoidHeight": 38.7385
 	},
 	{
@@ -3367,12 +2317,7 @@
 		"dataset": "plateau-30406-susami-cho-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/18/fb931d-eca6-4ad3-9393-94dab2e6a5a3/30406_susami-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			135.46804764110718,
-			33.500668567329356,
-			135.65050878650916,
-			33.619351207343854
-		],
+		"bounds": [135.46804764110718, 33.500668567329356, 135.65050878650916, 33.619351207343854],
 		"geoidHeight": 38.9686
 	},
 	{
@@ -3383,12 +2328,7 @@
 		"dataset": "plateau-31201-tottori-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b7/cc2f44-4ff1-457c-84d6-d27bd0239013/31201_tottori-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.97047915922943,
-			35.36155125466329,
-			134.29005759401846,
-			35.56181849222288
-		],
+		"bounds": [133.97047915922943, 35.36155125466329, 134.29005759401846, 35.56181849222288],
 		"geoidHeight": 36.1548
 	},
 	{
@@ -3399,12 +2339,7 @@
 		"dataset": "plateau-31202-yonago-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/93/ffd433-cf26-41d3-b7df-adbd4f806c57/31202_yonago-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.24215514219497,
-			35.37792137230621,
-			133.47924544411214,
-			35.4984593555677
-		],
+		"bounds": [133.24215514219497, 35.37792137230621, 133.47924544411214, 35.4984593555677],
 		"geoidHeight": 35.3058
 	},
 	{
@@ -3415,12 +2350,7 @@
 		"dataset": "plateau-31204-sakaiminato-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/15/df972b-4960-491f-864b-7462c2e1fea7/31204_sakaiminato-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.19853285848893,
-			35.488074634831435,
-			133.2694113093489,
-			35.55169700218172
-		],
+		"bounds": [133.19853285848893, 35.488074634831435, 133.2694113093489, 35.55169700218172],
 		"geoidHeight": 34.8688
 	},
 	{
@@ -3431,12 +2361,7 @@
 		"dataset": "plateau-31384-hiezu-son-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/03/f6ebe3-071e-4cba-9d46-861a57566e2d/31384_hiezu-son_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.37008990199493,
-			35.42962844774793,
-			133.391566622851,
-			35.455335522304715
-		],
+		"bounds": [133.37008990199493, 35.42962844774793, 133.391566622851, 35.455335522304715],
 		"geoidHeight": 35.3246
 	},
 	{
@@ -3447,12 +2372,7 @@
 		"dataset": "plateau-32201-matsue-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/24/62f07c-7f6f-4451-a458-59abf46ac547/32201_matsue-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.87511588874366,
-			35.34462861114532,
-			133.32553107641112,
-			35.60384722914187
-		],
+		"bounds": [132.87511588874366, 35.34462861114532, 133.32553107641112, 35.60384722914187],
 		"geoidHeight": 34.8611
 	},
 	{
@@ -3463,12 +2383,7 @@
 		"dataset": "plateau-32204-masuda-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/62/c23f8f-628b-4654-ad6f-28c23a279bc2/32204_masuda-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			131.76658375828632,
-			34.64242716655624,
-			131.87532743742736,
-			34.708796978184814
-		],
+		"bounds": [131.76658375828632, 34.64242716655624, 131.87532743742736, 34.708796978184814],
 		"geoidHeight": 33.1587
 	},
 	{
@@ -3479,12 +2394,7 @@
 		"dataset": "plateau-32528-okinoshima-cho-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c3/76b9e5-002d-475c-bd37-612a23bd171d/32528_okinoshima-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.28476077129486,
-			36.17124355580043,
-			133.36291638885015,
-			36.24306038935575
-		],
+		"bounds": [133.28476077129486, 36.17124355580043, 133.36291638885015, 36.24306038935575],
 		"geoidHeight": 34.1172
 	},
 	{
@@ -3495,12 +2405,7 @@
 		"dataset": "plateau-33100-okayama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/53/bdc91e-caeb-4473-aa50-ee7d4af2814e/33100_okayama-shi_city_2025_citygml_1_op_bldg_3dtiles_33101_kita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.74420756298417,
-			34.619968868673496,
-			133.99348946042832,
-			34.94880304704382
-		],
+		"bounds": [133.74420756298417, 34.619968868673496, 133.99348946042832, 34.94880304704382],
 		"geoidHeight": 36.3937
 	},
 	{
@@ -3511,12 +2416,7 @@
 		"dataset": "plateau-33202-kurashiki-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/51/430dd0-7448-4eb2-ac7e-c41b20eaebad/33202_kurashiki-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.70815733451818,
-			34.53990672131241,
-			133.84337215424938,
-			34.668741324575244
-		],
+		"bounds": [133.70815733451818, 34.53990672131241, 133.84337215424938, 34.668741324575244],
 		"geoidHeight": 36.0973
 	},
 	{
@@ -3527,12 +2427,7 @@
 		"dataset": "plateau-33203-tsuyama-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/20/7682c3-9f10-45fe-90b8-99c7ecbe74ba/33203_tsuyama-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.99759248978978,
-			35.05705155090513,
-			134.00878135066017,
-			35.06568860620346
-		],
+		"bounds": [133.99759248978978, 35.05705155090513, 134.00878135066017, 35.06568860620346],
 		"geoidHeight": 36.6989
 	},
 	{
@@ -3543,12 +2438,7 @@
 		"dataset": "plateau-33211-bizen-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3a/1a06f5-6965-43a4-95d6-ae4699b498c2/33211_bizen-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.10483640788533,
-			34.680517604575314,
-			134.3264381989786,
-			34.927943112559326
-		],
+		"bounds": [134.10483640788533, 34.680517604575314, 134.3264381989786, 34.927943112559326],
 		"geoidHeight": 36.7187
 	},
 	{
@@ -3559,12 +2449,7 @@
 		"dataset": "plateau-33423-hayashima-cho-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/0a/0550f6-c167-4bba-b02b-1b3772dad9fb/33423_hayashima-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.80230684574582,
-			34.59100251754817,
-			133.8397150574309,
-			34.62727650812795
-		],
+		"bounds": [133.80230684574582, 34.59100251754817, 133.8397150574309, 34.62727650812795],
 		"geoidHeight": 36.1401
 	},
 	{
@@ -3575,12 +2460,7 @@
 		"dataset": "plateau-34100-hiroshima-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/96/b46095-22bc-4190-b658-3ef163e36c9f/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34101_naka-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.42298515622528,
-			34.35507138157134,
-			132.47028260025303,
-			34.41415626333002
-		],
+		"bounds": [132.42298515622528, 34.35507138157134, 132.47028260025303, 34.41415626333002],
 		"geoidHeight": 33.3269
 	},
 	{
@@ -3591,12 +2471,7 @@
 		"dataset": "plateau-34100-hiroshima-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/1e/8f7e65-212f-418b-b85a-47a6e0c2eecc/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34102_higashi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.46347630002302,
-			34.3895810561475,
-			132.56800230639578,
-			34.46016218067018
-		],
+		"bounds": [132.46347630002302, 34.3895810561475, 132.56800230639578, 34.46016218067018],
 		"geoidHeight": 33.6552
 	},
 	{
@@ -3607,12 +2482,7 @@
 		"dataset": "plateau-34100-hiroshima-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a0/c32169-a6f4-4a88-9132-eb2925f4106f/34100_hiroshima-shi_city_2024_citygml_1_op_bldg_3dtiles_34103_minami-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.43986249734195,
-			34.34041483358715,
-			132.51783251169138,
-			34.40314755697152
-		],
+		"bounds": [132.43986249734195, 34.34041483358715, 132.51783251169138, 34.40314755697152],
 		"geoidHeight": 33.3669
 	},
 	{
@@ -3623,12 +2493,7 @@
 		"dataset": "plateau-34203-takehara-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/71/297a69-d8f5-4a8b-8b92-0802cb49fdd1/34203_takehara-shi_city_2023_citygml_3_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.78508349714494,
-			34.29766055471556,
-			133.0103450500446,
-			34.42994387894261
-		],
+		"bounds": [132.78508349714494, 34.29766055471556, 133.0103450500446, 34.42994387894261],
 		"geoidHeight": 34.4916
 	},
 	{
@@ -3639,12 +2504,7 @@
 		"dataset": "plateau-34207-fukuyama-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/17/bd80a1-7173-4922-8358-62aee652e174/34207_fukuyama-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.21112243437787,
-			34.33540323884567,
-			133.46608239733914,
-			34.710951807719724
-		],
+		"bounds": [133.21112243437787, 34.33540323884567, 133.46608239733914, 34.710951807719724],
 		"geoidHeight": 35.4634
 	},
 	{
@@ -3655,12 +2515,7 @@
 		"dataset": "plateau-34209-miyoshi-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/42/1f22f8-efec-4cbe-8bf6-10cc26e592af/34209_miyoshi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.811712763088,
-			34.689794398351005,
-			133.012193905395,
-			34.830629656586005
-		],
+		"bounds": [132.811712763088, 34.689794398351005, 133.012193905395, 34.830629656586005],
 		"geoidHeight": 35.0514
 	},
 	{
@@ -3671,12 +2526,7 @@
 		"dataset": "plateau-34304-kaita-cho-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/9f/0fcea8-fc4a-441d-a8cc-fd9809334774/34304_kaita-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.51919098299152,
-			34.352889633643656,
-			132.5716146316795,
-			34.385005924817534
-		],
+		"bounds": [132.51919098299152, 34.352889633643656, 132.5716146316795, 34.385005924817534],
 		"geoidHeight": 33.5978
 	},
 	{
@@ -3687,12 +2537,7 @@
 		"dataset": "plateau-35215-shunan-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6e/9b48d7-e2b3-4eff-9042-465ea51deb6c/35215_shunan-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			131.6573994223545,
-			33.97064510580289,
-			132.00722475289112,
-			34.24269354278515
-		],
+		"bounds": [131.6573994223545, 33.97064510580289, 132.00722475289112, 34.24269354278515],
 		"geoidHeight": 32.8093
 	},
 	{
@@ -3703,12 +2548,7 @@
 		"dataset": "plateau-36201-tokushima-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b2/8844ca-69b2-43d6-9098-9aeb561adbde/36201_tokushima-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.42427747333517,
-			33.95545495248125,
-			134.60498976280857,
-			34.12928966666068
-		],
+		"bounds": [134.42427747333517, 33.95545495248125, 134.60498976280857, 34.12928966666068],
 		"geoidHeight": 37.192
 	},
 	{
@@ -3719,12 +2559,7 @@
 		"dataset": "plateau-36387-minami-cho-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/3f/0cfbbd-e5e6-455c-9c79-cd2fadf17531/36387_minami-cho_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			134.5012070810032,
-			33.70410746501355,
-			134.60199572993014,
-			33.78023705804102
-		],
+		"bounds": [134.5012070810032, 33.70410746501355, 134.60199572993014, 33.78023705804102],
 		"geoidHeight": 37.1336
 	},
 	{
@@ -3735,12 +2570,7 @@
 		"dataset": "plateau-37201-takamatsu-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c5/1682ca-c3b2-42de-9827-c1fc3f75d983/37201_takamatsu-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.9246243851323,
-			34.11173766817442,
-			134.16619664899665,
-			34.43365159300023
-		],
+		"bounds": [133.9246243851323, 34.11173766817442, 134.16619664899665, 34.43365159300023],
 		"geoidHeight": 36.9336
 	},
 	{
@@ -3751,12 +2581,7 @@
 		"dataset": "plateau-38201-matsuyama-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/4c/21d834-aaaa-44d3-999b-0f11ec13063d/38201_matsuyama-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.63722640711262,
-			33.735501848586885,
-			132.8751398557756,
-			34.00948691854943
-		],
+		"bounds": [132.63722640711262, 33.735501848586885, 132.8751398557756, 34.00948691854943],
 		"geoidHeight": 33.5802
 	},
 	{
@@ -3767,12 +2592,7 @@
 		"dataset": "plateau-38203-uwajima-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d1/0bd048-467f-4d89-8ef2-339c7b4f60e1/38203_uwajima-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.47295963192067,
-			33.05173566888485,
-			132.61567917199045,
-			33.30281450296409
-		],
+		"bounds": [132.47295963192067, 33.05173566888485, 132.61567917199045, 33.30281450296409],
 		"geoidHeight": 33.4681
 	},
 	{
@@ -3783,12 +2603,7 @@
 		"dataset": "plateau-38215-toon-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d8/e50010-2a3a-4c4d-86ce-de4d63e60d62/38215_toon-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			132.8223312866739,
-			33.77050108746396,
-			132.92339316102613,
-			33.8204523874726
-		],
+		"bounds": [132.8223312866739, 33.77050108746396, 132.92339316102613, 33.8204523874726],
 		"geoidHeight": 34.5932
 	},
 	{
@@ -3799,12 +2614,7 @@
 		"dataset": "plateau-39201-kouchi-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/e3/cfc53c-b62b-4a80-a8ae-c616b2a4f354/39201_kouchi-shi_pref_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.4806264129741,
-			33.53382613449484,
-			133.56866047139326,
-			33.58224058265466
-		],
+		"bounds": [133.4806264129741, 33.53382613449484, 133.56866047139326, 33.58224058265466],
 		"geoidHeight": 36.6064
 	},
 	{
@@ -3815,12 +2625,7 @@
 		"dataset": "plateau-39203-aki-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/24/3a8987-91a7-4f2f-b48b-bc81cf09c852/39203_aki-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.8202183984079,
-			33.44725839618356,
-			133.95728724288745,
-			33.52263746048175
-		],
+		"bounds": [133.8202183984079, 33.44725839618356, 133.95728724288745, 33.52263746048175],
 		"geoidHeight": 37.1576
 	},
 	{
@@ -3831,12 +2636,7 @@
 		"dataset": "plateau-39211-konan-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/5e/35de45-9c97-4ff7-9b3e-9219f82ab182/39211_konan-shi_pref_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.6813441076953,
-			33.51597572230896,
-			133.7762034142831,
-			33.56949533361324
-		],
+		"bounds": [133.6813441076953, 33.51597572230896, 133.7762034142831, 33.56949533361324],
 		"geoidHeight": 36.9279
 	},
 	{
@@ -3847,12 +2647,7 @@
 		"dataset": "plateau-39386-ino-cho-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/2d/dd5829-0e76-4faa-96b8-eca2838179c4/39386_ino-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			133.3977850457576,
-			33.51067082778723,
-			133.47318788269305,
-			33.5737884165485
-		],
+		"bounds": [133.3977850457576, 33.51067082778723, 133.47318788269305, 33.5737884165485],
 		"geoidHeight": 36.4631
 	},
 	{
@@ -3863,12 +2658,7 @@
 		"dataset": "plateau-40100-kitakyushu-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d6/1830bb-650e-4f62-946d-0498a200d2a4/40100_kitakyushu-shi_city_2020_citygml_7_op_bldg_3dtiles_40106_kokurakita-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.84112170520154,
-			33.82479097150582,
-			130.91677352469503,
-			33.9155523561603
-		],
+		"bounds": [130.84112170520154, 33.82479097150582, 130.91677352469503, 33.9155523561603],
 		"geoidHeight": 32.7309
 	},
 	{
@@ -3879,12 +2669,7 @@
 		"dataset": "plateau-40100-kitakyushu-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/14/9d9e06-a8e9-4867-a17a-3cbb707569b3/40100_kitakyushu-shi_city_2020_citygml_7_op_bldg_3dtiles_40108_yahatahigashi-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.7791783123258,
-			33.84400695220939,
-			130.86037520788753,
-			33.88745483952167
-		],
+		"bounds": [130.7791783123258, 33.84400695220939, 130.86037520788753, 33.88745483952167],
 		"geoidHeight": 32.7331
 	},
 	{
@@ -3895,12 +2680,7 @@
 		"dataset": "plateau-40202-omuta-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/41/10ac7f-eb68-4b28-b99a-8577a3b2dacb/40202_omuta-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.39633441191694,
-			33.00136626427758,
-			130.54215831390957,
-			33.09732912944672
-		],
+		"bounds": [130.39633441191694, 33.00136626427758, 130.54215831390957, 33.09732912944672],
 		"geoidHeight": 32.8686
 	},
 	{
@@ -3911,12 +2691,7 @@
 		"dataset": "plateau-40203-kurume-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/6d/d3edcf-7793-41e1-b0ee-303bf803d751/40203_kurume-shi_city_2020_citygml_6_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.38771997918303,
-			33.224413303332284,
-			130.7314489030771,
-			33.36818052922635
-		],
+		"bounds": [130.38771997918303, 33.224413303332284, 130.7314489030771, 33.36818052922635],
 		"geoidHeight": 32.802
 	},
 	{
@@ -3927,12 +2702,7 @@
 		"dataset": "plateau-40205-iizuka-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/bc/d9826f-b23d-4c2f-b971-8bfca2da455e/40205_iizuka-shi_city_2020_citygml_9_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.56004198226555,
-			33.504591226333964,
-			130.76620545965363,
-			33.70496480854978
-		],
+		"bounds": [130.56004198226555, 33.504591226333964, 130.76620545965363, 33.70496480854978],
 		"geoidHeight": 32.8179
 	},
 	{
@@ -3943,12 +2713,7 @@
 		"dataset": "plateau-40447-chikuzen-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/71/822818-6cce-4d31-9921-ace4425dde44/40447_chikuzen-machi_city_2023_citygml_3_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.56109602436084,
-			33.40612532589587,
-			130.66386924179804,
-			33.51021001424479
-		],
+		"bounds": [130.56109602436084, 33.40612532589587, 130.66386924179804, 33.51021001424479],
 		"geoidHeight": 32.8084
 	},
 	{
@@ -3959,12 +2724,7 @@
 		"dataset": "plateau-41203-tosu-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a5/62e6ad-0957-490a-a25e-33dbe327b1a0/41203_tosu-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.4447586978823,
-			33.327043861046015,
-			130.54222270987773,
-			33.42002845747085
-		],
+		"bounds": [130.4447586978823, 33.327043861046015, 130.54222270987773, 33.42002845747085],
 		"geoidHeight": 32.759
 	},
 	{
@@ -3975,12 +2735,7 @@
 		"dataset": "plateau-41206-takeo-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/d5/80144b-7fa2-437b-84f3-3c79e27da12c/41206_takeo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			129.90259138518442,
-			33.112165080354316,
-			130.10199266652853,
-			33.28103253732189
-		],
+		"bounds": [129.90259138518442, 33.112165080354316, 130.10199266652853, 33.28103253732189],
 		"geoidHeight": 32.3695
 	},
 	{
@@ -3991,12 +2746,7 @@
 		"dataset": "plateau-41208-ogi-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/69/e693e6-26bb-445e-9edf-eacd2c24ea1a/41208_ogi-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.14065251903588,
-			33.1954390033651,
-			130.24336312492588,
-			33.335134880488134
-		],
+		"bounds": [130.14065251903588, 33.1954390033651, 130.24336312492588, 33.335134880488134],
 		"geoidHeight": 32.5521
 	},
 	{
@@ -4007,12 +2757,7 @@
 		"dataset": "plateau-41423-omachi-cho-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a6/d34c44-ec55-487f-9d9c-dabe9f2d1a26/41423_omachi-cho_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.0896904184892,
-			33.198693938442666,
-			130.13683082655913,
-			33.236768155263455
-		],
+		"bounds": [130.0896904184892, 33.198693938442666, 130.13683082655913, 33.236768155263455],
 		"geoidHeight": 32.4201
 	},
 	{
@@ -4023,12 +2768,7 @@
 		"dataset": "plateau-41424-kouhoku-machi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/93/2ee716-fce0-4e36-90f8-acb2368a173a/41424_kouhoku-machi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.12471971963967,
-			33.18761215473013,
-			130.2022946924171,
-			33.24956301452079
-		],
+		"bounds": [130.12471971963967, 33.18761215473013, 130.2022946924171, 33.24956301452079],
 		"geoidHeight": 32.4369
 	},
 	{
@@ -4039,12 +2779,7 @@
 		"dataset": "plateau-41425-shiroisi-chou-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b8/bb89f5-40a7-45f6-9874-ffaf442bc173/41425_shiroisi-chou_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.0705012633198,
-			33.113763923432245,
-			130.22970234334068,
-			33.211650600770696
-		],
+		"bounds": [130.0705012633198, 33.113763923432245, 130.22970234334068, 33.211650600770696],
 		"geoidHeight": 32.3696
 	},
 	{
@@ -4055,12 +2790,7 @@
 		"dataset": "plateau-42202-sasebo-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/ab/326ff9-0342-4df5-bf8d-7c8b072237d7/42202_sasebo-shi_city_2022_citygml_4_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			129.06446864494578,
-			33.05036603990877,
-			129.86960928129903,
-			33.341233900555736
-		],
+		"bounds": [129.06446864494578, 33.05036603990877, 129.86960928129903, 33.341233900555736],
 		"geoidHeight": 31.5505
 	},
 	{
@@ -4071,12 +2801,7 @@
 		"dataset": "plateau-42208-matsuura-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/b4/206024-3d38-4a44-b797-ed7ec0d28539/42208_matsuura-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			129.64596860851788,
-			33.32521948080524,
-			129.7932385469196,
-			33.39856361871215
-		],
+		"bounds": [129.64596860851788, 33.32521948080524, 129.7932385469196, 33.39856361871215],
 		"geoidHeight": 31.8911
 	},
 	{
@@ -4087,12 +2812,7 @@
 		"dataset": "plateau-42323-hasami-cho-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c8/27a004-09b4-4d69-bd11-9057736d339e/42323_hasami-cho_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			129.84405082272738,
-			33.10177283048195,
-			129.95476996091767,
-			33.164731213444774
-		],
+		"bounds": [129.84405082272738, 33.10177283048195, 129.95476996091767, 33.164731213444774],
 		"geoidHeight": 32.3307
 	},
 	{
@@ -4103,12 +2823,7 @@
 		"dataset": "plateau-43100-kumamoto-shi-2022",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/fb/81ab56-3852-4ebc-bdf7-d11582980d5f/43100_kumamoto-shi_city_2022_citygml_4_op_bldg_3dtiles_43101_chuo-ku_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.68598239300653,
-			32.7731960721952,
-			130.76372702445155,
-			32.823475032809945
-		],
+		"bounds": [130.68598239300653, 32.7731960721952, 130.76372702445155, 32.823475032809945],
 		"geoidHeight": 32.6898
 	},
 	{
@@ -4119,12 +2834,7 @@
 		"dataset": "plateau-43443-mashiki-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/77/29a9cb-67eb-40ba-943c-c7c1eabe58e9/43443_mashiki-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.4159233556837,
-			32.93686912410528,
-			130.52734079546912,
-			33.0113466260663
-		],
+		"bounds": [130.4159233556837, 32.93686912410528, 130.52734079546912, 33.0113466260663],
 		"geoidHeight": 32.8095
 	},
 	{
@@ -4135,12 +2845,7 @@
 		"dataset": "plateau-43206-tamana-shi-2024",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c2/a70449-c206-4962-86d5-207c571c4012/43206_tamana-shi_city_2024_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.47718673300335,
-			32.84409195311845,
-			130.6215312652235,
-			32.99504184320724
-		],
+		"bounds": [130.47718673300335, 32.84409195311845, 130.6215312652235, 32.99504184320724],
 		"geoidHeight": 32.7287
 	},
 	{
@@ -4151,12 +2856,7 @@
 		"dataset": "plateau-43213-uki-shi-2025",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/17/29fadd-44ff-42e0-a75c-62911bf18715/43213_uki-shi_city_2025_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.64970590543098,
-			32.57263106957531,
-			130.7243749847554,
-			32.67754061773053
-		],
+		"bounds": [130.64970590543098, 32.57263106957531, 130.7243749847554, 32.67754061773053],
 		"geoidHeight": 32.9434
 	},
 	{
@@ -4167,12 +2867,7 @@
 		"dataset": "plateau-43443-mashiki-machi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/a5/8c466d-6ca9-44db-8149-d0d2ddcc34a6/43443_mashiki-machi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.7780063486982,
-			32.73633730849226,
-			130.8863967500661,
-			32.8380307068146
-		],
+		"bounds": [130.7780063486982, 32.73633730849226, 130.8863967500661, 32.8380307068146],
 		"geoidHeight": 32.8986
 	},
 	{
@@ -4183,12 +2878,7 @@
 		"dataset": "plateau-44204-hita-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/7d/4dc6d3-0100-4da0-8ca6-ba984e8e3292/44204_hita-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.87499694674202,
-			33.280689534424916,
-			130.98426682345345,
-			33.37196160175037
-		],
+		"bounds": [130.87499694674202, 33.280689534424916, 130.98426682345345, 33.37196160175037],
 		"geoidHeight": 32.9526
 	},
 	{
@@ -4199,12 +2889,7 @@
 		"dataset": "plateau-44206-usuki-shi-2023",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/23/e5f42d-f5df-4fbb-b0f1-3afdcad8effa/44206_usuki-shi_city_2023_citygml_2_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			131.74057640519266,
-			33.08571875212947,
-			131.83420777481868,
-			33.1762485211839
-		],
+		"bounds": [131.74057640519266, 33.08571875212947, 131.83420777481868, 33.1762485211839],
 		"geoidHeight": 31.7202
 	},
 	{
@@ -4215,12 +2900,7 @@
 		"dataset": "plateau-46220-minamisatuma-shi-2024",
 		"licenseTitle": null,
 		"url": "https://assets.cms.plateau.reearth.io/assets/5c/54071c-21e1-4426-a952-b96610c918bf/46220_minamisatuma-shi_city_2024_citygml_1_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			130.283740100786,
-			31.40316643844347,
-			130.3416396144449,
-			31.43712755810014
-		],
+		"bounds": [130.283740100786, 31.40316643844347, 130.3416396144449, 31.43712755810014],
 		"geoidHeight": 32.3238
 	},
 	{
@@ -4231,12 +2911,7 @@
 		"dataset": "plateau-47201-naha-shi-2020",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"url": "https://assets.cms.plateau.reearth.io/assets/c7/efa2db-6f03-4eea-bb3c-d42b3a2c7af3/47201_naha-shi_city_2020_citygml_7_op_bldg_3dtiles_lod2_no_texture/tileset.json",
-		"bounds": [
-			127.63997333602609,
-			26.17650865970848,
-			127.73877037713208,
-			26.24719547583986
-		],
+		"bounds": [127.63997333602609, 26.17650865970848, 127.73877037713208, 26.24719547583986],
 		"geoidHeight": 30.826
 	}
 ]
