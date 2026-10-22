@@ -35,6 +35,9 @@
 		"deploy:dry-run": "wrangler deploy --dry-run"
 	},
 	"dependencies": {
+		"@deck.gl/core": "9.4.0",
+		"@deck.gl/mapbox": "9.4.0",
+		"@deck.gl/mesh-layers": "9.4.0",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
@@ -42,10 +45,12 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/structures": "workspace:*",
 		"@mailwoman/universe": "workspace:*",
 		"mailwoman": "workspace:*",
 		"maplibre-gl": "^6.14.0",
 		"onnxruntime-web": "1.30.0",
+		"pmtiles": "^4.5.0",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
 		"react-map-gl": "^8.1.3",

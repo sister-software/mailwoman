@@ -16,7 +16,14 @@ import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/cl
 import { useMemo } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch, searchWithQuery } from "#routes"
+import {
+	cameraFromLocation,
+	queryFromSearch,
+	Route,
+	routeForPath,
+	runtimeModeFromSearch,
+	searchWithQuery,
+} from "#routes"
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
 import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
@@ -48,10 +55,12 @@ function NotFound({ pathname }: { pathname: string }) {
  */
 function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
+	const camera = cameraFromLocation(location.pathname, location.search)
 
 	const handle = useGeocoderRuntime({
 		config: PRODUCTION_CONFIG,
-		initialCenter: initialCenter ?? DEFAULT_CENTER,
+		initialCenter: camera?.center ?? initialCenter ?? DEFAULT_CENTER,
+		initialZoom: camera?.zoom ?? undefined,
 	})
 
 	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })

@@ -8,6 +8,8 @@
  * fails visibly.
  */
 
+import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
+
 /**
  * The three views the app serves: the geocoder at `/`, the debug drawer at `/debug`,
  * and the trace page at `/trace`.
@@ -30,7 +32,7 @@ const ROUTES_BY_PATH: ReadonlyMap<string, Route> = new Map([
  * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
  */
 export function routeForPath(pathname: string): Route | null {
-	const normalized = pathname.replace(/\/+$/u, "") || "/"
+	const normalized = pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "") || "/"
 
 	return ROUTES_BY_PATH.get(normalized) ?? null
 }
@@ -56,6 +58,104 @@ export function queryFromSearch(search: string): string | null {
 	if (!value) return null
 
 	return value.trim() === "" ? null : value
+}
+
+/**
+ * The initial camera that the page URL requests.
+ */
+export interface CameraParams {
+	/**
+	 * `[lon, lat]`.
+	 */
+	center: [number, number]
+	zoom: number | null
+}
+
+/**
+ * A trailing camera segment in Google Maps' form, `/@<lat>,<lon>,<zoom>z`, with the zoom optional.
+ */
+const CAMERA_SEGMENT = /\/@(-?[\d.]+),(-?[\d.]+)(?:,([\d.]+)z)?\/?$/u
+
+/**
+ * Decimal places written for a coordinate.
+ *
+ * Seven places resolve about 1 cm, which matches Google Maps' links.
+ */
+const COORDINATE_DECIMALS = 7
+
+/**
+ * Decimal places written for a zoom level, enough for fractional zooms such as `16.5z`.
+ */
+const ZOOM_DECIMALS = 2
+
+/**
+ * The camera a path asks for, from a trailing `/@<lat>,<lon>,<zoom>z` segment.
+ *
+ * The segment follows Google Maps' order, latitude first.
+ * Returns null when the path has no segment or its coordinates are out of range.
+ */
+export function cameraFromPath(pathname: string): CameraParams | null {
+	const match = CAMERA_SEGMENT.exec(pathname)
+
+	if (!match) return null
+
+	const lat = Number(match[1])
+	const lon = Number(match[2])
+
+	if (!isValidLongitude(lon) || !isValidLatitude(lat)) return null
+
+	const zoom = match[3] ? Number(match[3]) : Number.NaN
+
+	return { center: [lon, lat], zoom: Number.isFinite(zoom) ? zoom : null }
+}
+
+/**
+ * The camera a URL asks for: the path's `/@<lat>,<lon>,<zoom>z` segment,
+ * or else the older `?center=<lon>,<lat>&zoom=<z>` parameters.
+ */
+export function cameraFromLocation(pathname: string, search: string): CameraParams | null {
+	return cameraFromPath(pathname) ?? cameraFromSearch(search)
+}
+
+/**
+ * The URL that records a camera, as `<route>/@<lat>,<lon>,<zoom>z` with the query string kept.
+ *
+ * The older `center` and `zoom` parameters are removed so the URL states one camera.
+ * It returns a string rather than writing history so the caller chooses `pushState` or `replaceState`.
+ */
+export function pathWithCamera(url: URL, center: readonly [lon: number, lat: number], zoom: number): string {
+	const next = new URL(url)
+	const route = next.pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "")
+	const [lon, lat] = center
+	const zoomText = Number(zoom.toFixed(ZOOM_DECIMALS))
+
+	next.pathname = `${route}/@${Number(lat.toFixed(COORDINATE_DECIMALS))},${Number(lon.toFixed(COORDINATE_DECIMALS))},${zoomText}z`
+	next.searchParams.delete("center")
+	next.searchParams.delete("zoom")
+
+	return `${next.pathname}${next.search}${next.hash}`
+}
+
+/**
+ * The camera a link asks for: `?center=<lon>,<lat>` with an optional `&zoom=<z>`.
+ *
+ * Returns null when `center` is absent or is not two finite numbers inside longitude and latitude range.
+ * A malformed `zoom` leaves the zoom to the app default.
+ */
+export function cameraFromSearch(search: string): CameraParams | null {
+	const params = new URLSearchParams(search)
+	const parts = params.get("center")?.split(",").map(Number)
+
+	if (parts?.length !== 2) return null
+
+	const [lon, lat] = parts as [number, number]
+
+	if (!isValidLongitude(lon) || !isValidLatitude(lat)) return null
+
+	const zoomValue = params.get("zoom")
+	const zoom = zoomValue === null ? Number.NaN : Number(zoomValue)
+
+	return { center: [lon, lat], zoom: Number.isFinite(zoom) ? zoom : null }
 }
 
 /**

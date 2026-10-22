@@ -27,6 +27,7 @@
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../../lib" },
-		{ "path": "../spatial" }
+		{ "path": "../spatial" },
+		{ "path": "../structures" }
 	]
 }

@@ -12,6 +12,7 @@
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
+import { GuideMapLight, GuideMapSky } from "@mailwoman/cartographer/base/theme"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import {
 	createJurisdictionSource,
@@ -60,10 +61,12 @@ import {
 	streetExtractURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+import { addProtocol } from "maplibre-gl"
 // The binary that `onnxruntime-web/wasm` instantiates.
 // Vite emits one file for this import and for the bundle's own reference.
 // The loader's early download is therefore the file the session would request.
 import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
+import { Protocol } from "pmtiles"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
@@ -116,6 +119,11 @@ export interface GeocoderRuntimeOptions {
 	 * Initial map center as `[lon, lat]`.
 	 */
 	initialCenter: Coordinates2D
+	/**
+	 * Initial map zoom.
+	 * Defaults to 3.
+	 */
+	initialZoom?: number
 }
 
 /**
@@ -142,11 +150,47 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
  * Every later load fetches afresh.
  */
 export function prefetchReleasesManifest(): void {
+	if (modelDisabled()) return
+
 	// The hook awaits and reports a failure, so the early promise must not report it a second time.
 	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
+/**
+ * Returns true when the page URL carries `?no-model`.
+ *
+ * Map-style work needs the basemap only, and the model download is tens of megabytes per load.
+ * With the flag the runtime receives no manifest, so it loads no release and the geocoder stays idle.
+ */
+function modelDisabled(): boolean {
+	return typeof location !== "undefined" && new URLSearchParams(location.search).has("no-model")
+}
+
+/**
+ * Returns the basemap source URL: a `pmtiles://` URL when the page URL carries
+ * `?basemap=<PMTiles URL>`, and the configured TileJSON otherwise.
+ *
+ * The parameter loads a candidate basemap build straight from its PMTiles file,
+ * before it is published through the tile worker.
+ */
+function basemapSourceURL(configured: URL): string {
+	const candidate = typeof location !== "undefined" ? new URLSearchParams(location.search).get("basemap") : null
+
+	if (!candidate) return String(configured)
+
+	if (!pmtilesProtocolRegistered) {
+		addProtocol("pmtiles", new Protocol().tile)
+		pmtilesProtocolRegistered = true
+	}
+
+	return `pmtiles://${candidate}`
+}
+
+let pmtilesProtocolRegistered = false
+
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
+	if (modelDisabled()) return Promise.resolve(null)
+
 	const early = earlyManifest
 
 	earlyManifest = null
@@ -158,7 +202,11 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
  * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
  * loaders into `useReleaseRuntime`.
  */
-export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
+export function useGeocoderRuntime({
+	config,
+	initialCenter,
+	initialZoom = 3,
+}: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqliteRuntimeBaseURL } = config
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
@@ -180,7 +228,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const mapStyle = useMemo<MapCanvasStyle>(
 		() =>
 			new StyleSpecificationComposer({
-				sources: { [MailwomanBaseTileSetID]: { type: "vector", url: String(config.basemapTileJSONURL) } },
+				sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
+				light: GuideMapLight,
+				sky: GuideMapSky,
 			}).toJSON(),
 		[config.basemapTileJSONURL]
 	)
@@ -587,7 +637,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			mapStyle,
 			overlays,
 			initialCenter: [initialCenter[0], initialCenter[1]],
-			initialZoom: 3,
+			initialZoom,
 			runParseWithBias,
 			autocomplete,
 			calibrator,
@@ -609,6 +659,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		rt.activeBackend,
 		rt.selectVersion,
 		initialCenter,
+		initialZoom,
 		runParse,
 		runParseWithBias,
 		autocomplete,
