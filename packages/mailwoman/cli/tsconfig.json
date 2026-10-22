@@ -27,6 +27,8 @@
 		{ "path": "../../coastal/sdk" },
 		{ "path": "../../core" },
 		{ "path": "../../core/tools" },
+		{ "path": "../../dictionaries" },
+		{ "path": "../../dictionaries/sdk" },
 		{ "path": "../../corpus" },
 		{ "path": "../../evidence" },
 		{ "path": "../../filer" },

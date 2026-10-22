@@ -17,8 +17,8 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
-import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"

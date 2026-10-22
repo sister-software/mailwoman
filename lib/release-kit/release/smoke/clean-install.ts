@@ -305,7 +305,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 			if (!help.includes(c)) throw new Error(`--help missing command "${c}"`)
 		}
 
-		log("[smoke] mailwoman parse (exercises bundled core/data dictionaries)…")
+		log("[smoke] mailwoman parse (exercises the installed @mailwoman/dictionaries data)…")
 
 		const out = run("node", [cli, "parse", "350 5th Ave, New York, NY 10118"], proj)
 

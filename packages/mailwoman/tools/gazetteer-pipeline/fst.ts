@@ -23,8 +23,8 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { resourceDictionaryPathBuilder } from "@mailwoman/core/paths"
 import { libpostalLineSurfaces } from "@mailwoman/core/resources/libpostal"
+import { resourceDictionaryPathBuilder } from "@mailwoman/dictionaries/paths"
 import {
 	buildFSTFromWOF,
 	fstStaleReason,

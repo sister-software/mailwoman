@@ -57,20 +57,20 @@ beside each dataset.
 ### libpostal dictionaries — MIT
 
 Address-component dictionaries from [libpostal](https://github.com/openvenues/libpostal)
-(© 2015 openvenues), under `core/data/libpostal/` and
-`core/data/internal/dictionaries/libpostal/`. License: `core/data/libpostal/LICENSE`.
+(© 2015 openvenues), under `dictionaries/data/libpostal/` and
+`dictionaries/data/internal/dictionaries/libpostal/`. License: `dictionaries/data/libpostal/LICENSE`.
 
 ### Google libaddressinput (chromium-i18n) — Apache-2.0
 
 Per-country address metadata from Google's
 [libaddressinput](https://github.com/google/libaddressinput), fetched from
-`chromium-i18n.appspot.com/ssl-address`, under `core/data/chromium-i18n/ssl-address/`.
-License: `core/data/chromium-i18n/LICENSE`.
+`chromium-i18n.appspot.com/ssl-address`, under `dictionaries/data/chromium-i18n/ssl-address/`.
+License: `dictionaries/data/chromium-i18n/LICENSE`.
 
 ### Who's On First — community/various
 
 Reference dictionaries derived from [Who's On First](https://whosonfirst.org/), under
-`core/data/internal/dictionaries/whosonfirst/`. WOF data draws on several sources with their own
+`dictionaries/data/internal/dictionaries/whosonfirst/`. WOF data draws on several sources with their own
 licenses; see the [Who's On First licenses](https://www.whosonfirst.org/docs/licenses/), archived as
 retrieved at `packages/corpus/data/licenses/whosonfirst-licenses.md`.
 

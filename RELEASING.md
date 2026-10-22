@@ -9,14 +9,15 @@ normalize, query-shape, kind-classifier, locale-hint, phrase-grouper, codex, cor
 neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, publish at one synced version
 (see Versioning policy). The core packages are:
 
-| Package                           | Workspace dir           | Notes                                                                             |
-| --------------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                  |
-| `@mailwoman/core`                 | `core/`                 | tokenization, decoder, and ~9 MB of libpostal+WOF dictionaries under `core/data/` |
-| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                       |
-| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                           |
-| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                      |
-| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                      |
+| Package                           | Workspace dir           | Notes                                                                      |
+| --------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                           |
+| `@mailwoman/core`                 | `core/`                 | tokenization and decoder                                                   |
+| `@mailwoman/dictionaries`         | `dictionaries/`         | vendored libpostal, libaddressinput and WOF reference tables under `data/` |
+| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                |
+| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                    |
+| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                               |
+| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                               |
 
 [`release-it`](https://github.com/release-it/release-it) drives the version bump + tag + publish + GitHub release. [`@release-it-plugins/workspaces`](https://github.com/release-it-plugins/workspaces) coordinates the multi-package version bump and per-package `npm publish`.
 

@@ -1,22 +1,16 @@
-# `core/data/` — what each directory holds and what wrote it
+# `dictionaries/data/` — what each directory holds and what wrote it
 
-`@mailwoman/core` is installed by every consumer of Mailwoman, and its `files` array ships `data/**`
-whole. This file records the contents, the command that builds each directory, and what is unrecorded.
+`@mailwoman/dictionaries` ships `data/**` whole through its `files` array. `mailwoman`,
+`@mailwoman/corpus` and `@mailwoman/resolver-wof-sqlite` depend on it. This file records the contents,
+the command that builds each directory, and what is unrecorded.
 
-The directory has three subdirectories, and the third-party notices describe all three. `THIRD_PARTY_NOTICES.md`
-beside this file is the copy npm ships, and it states the terms. This file records the build path. That is
-a different question: what wrote the bytes, and whether a reader can check them.
+The directory has three subdirectories, and the third-party notices describe all three.
+`THIRD_PARTY_NOTICES.md` in the package root is the copy npm ships, and it states the terms. This file
+records the build path. That is a different question: what wrote the bytes, and whether a reader can
+check them.
 
-## The `data-provenance` check does not read this file's directory
-
-The check collects files whose directory equals a `data/` directory and reports each one the
-directory's `PROVENANCE.md` does not name. It is non-recursive, and every artifact here sits a level
-down. So committing this file brings `packages/core/data/` into the check's scope, and the check then
-finds zero artifacts to name and passes.
-
-That is stated here rather than left for a reader to assume the opposite. The record is what a reader
-opens. The check does not verify it yet, and a recursive check is a change to the check rather
-than to this file.
+The `data-provenance` check reads this file and reports a file or immediate subdirectory of `data/` that
+it does not name. It does not descend into the subdirectories.
 
 ## What is here
 
@@ -29,7 +23,7 @@ than to this file.
 ### `libpostal/`
 
 Fetched by `mailwoman dev download libpostal-resources`
-(`packages/core/tools/download/libpostal-resources.ts`). Upstream is
+(`packages/dictionaries/sdk/libpostal-resources.ts`). Upstream is
 [libpostal](https://github.com/openvenues/libpostal), MIT, © 2015 openvenues, and the license text is
 vendored at `libpostal/LICENSE`.
 
@@ -39,7 +33,7 @@ vendored at `libpostal/LICENSE`.
 ### `chromium-i18n/`
 
 Fetched by `mailwoman dev download ssl-address`
-(`packages/core/tools/download/ssl-address.ts`), from
+(`packages/dictionaries/sdk/ssl-address.ts`), from
 `chromium-i18n.appspot.com/ssl-address/data/<CC>`, one file per country code. Upstream is Google's
 [libaddressinput](https://github.com/google/libaddressinput), Apache-2.0, and the license text is
 vendored at `chromium-i18n/LICENSE`.

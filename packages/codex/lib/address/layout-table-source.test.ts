@@ -10,9 +10,9 @@
  *   This test re-derives each skeleton from the dataset. It requires the committed layout to print the same fields,
  *   in the same order, with the same line breaks.
  *
- *   The test reads the dataset through `@mailwoman/core`. Production files under `lib/` cannot import core because
- *   core imports `@mailwoman/codex`. This test lives under `test/`, which application code does not import.
- *   The codex manifest therefore stays free of core.
+ *   The test locates the dataset in `@mailwoman/dictionaries` by package resolution rather than by import.
+ *   Production files under `lib/` cannot depend on that package, because it depends on core and core imports
+ *   `@mailwoman/codex`. The codex manifest therefore stays free of both.
  *
  *   The test skips eleven hand-authored countries because their layouts intentionally differ from the dataset.
  *   A separate `@mailwoman/codex` test records the reason for each difference.
@@ -93,7 +93,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 		.filter((line) => line.length)
 }
 
-const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+const specsDirectory = resolvePackageDirectory("@mailwoman/dictionaries")("data", "chromium-i18n", "ssl-address")
 
 const countryFormats = await (async () => {
 	const out = new Map<string, string | null>()

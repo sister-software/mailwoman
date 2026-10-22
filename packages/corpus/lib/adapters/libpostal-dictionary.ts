@@ -7,7 +7,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { resourceDictionaryPath } from "@mailwoman/core/paths"
+import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -17,7 +17,8 @@ import { TextSpliterator } from "spliterator"
  * so a lookup matches the canonical spelling and each abbreviation alike.
  * A line opening with `#` is a comment.
  *
- * `resourceDictionaryPath` resolves both layouts, `core/data/…` from source and the packaged `out/` tree.
+ * `resourceDictionaryPath` resolves through `@mailwoman/dictionaries`' own manifest,
+ * so a checkout and an install agree.
  *
  * The largest dictionary is 8.4 KB, and each caller loads it once per process at module load.
  */

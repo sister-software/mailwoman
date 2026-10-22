@@ -12,7 +12,7 @@
  *   { prefix: "Avenue", street: "des Champs-Élysées" } "Boulevard Voltaire" → { prefix:
  *   "Boulevard", street: "Voltaire" }
  *
- *   Sources street types from `core/data/libpostal/dictionaries/fr/street_types.txt`.
+ *   Sources street types from `dictionaries/data/libpostal/dictionaries/fr/street_types.txt`.
  */
 
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"

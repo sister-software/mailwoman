@@ -11,10 +11,11 @@
  *   name every artifact. It does not verify artifact contents.
  *
  *   Coverage names every artifact file directly in the directory and every immediate subdirectory, because each of
- *   core's four data directories is one level down and a file-only rule reports no finding about any of them.
+ *   the dictionaries package's three data directories is one level down and a file-only rule reports no finding about
+ *   any of them.
  *
  *   A subdirectory is recorded as an entry rather than traversed: requiring every file at any depth would ask
- *   `packages/core/data/PROVENANCE.md` to list 1,114 vendored dictionary files, a list that is difficult to review and keep current.
+ *   `packages/dictionaries/data/PROVENANCE.md` to list 1,112 vendored dictionary files, a list that is difficult to review and keep current.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

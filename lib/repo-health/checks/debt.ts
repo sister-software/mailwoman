@@ -426,7 +426,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// Data and records may contain real names that must remain verbatim.
-	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
+	["packages/dictionaries/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
 		"packages/corpus/fixtures/",

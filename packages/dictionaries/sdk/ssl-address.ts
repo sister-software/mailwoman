@@ -26,11 +26,11 @@
  *   - `--concurrency <n>` — parallel per-country fetches. default `8`
  */
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { APIClient, pluckResponseData } from "#api"
-import { makeDirectories, writeLocalFile } from "#fs/writers"
-import { corePackagePathBuilder } from "#paths"
+import { sslAddressSpecsPath } from "#paths"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
@@ -59,7 +59,7 @@ export interface DownloadSSLAddressOptions {
 	/**
 	 * Destination directory.
 	 *
-	 * @defaultValue the checked-in `core/data/chromium-i18n/ssl-address`.
+	 * @defaultValue the checked-in `dictionaries/data/chromium-i18n/ssl-address`.
 	 */
 	outDir?: PathBuilderLike
 	/**
@@ -101,7 +101,7 @@ export async function downloadSSLAddress(
 	options: DownloadSSLAddressOptions = {},
 	report?: (line: string) => void
 ): Promise<{ written: number; failed: number }> {
-	const outDir = PathBuilder.from(options.outDir ?? corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
+	const outDir = PathBuilder.from(options.outDir ?? sslAddressSpecsPath())
 	const concurrency = options.concurrency ?? 8
 	await makeDirectories(outDir)
 
