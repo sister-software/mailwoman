@@ -8,5 +8,6 @@
  */
 
 export * from "#basemaps"
+export * from "#bom"
 export * from "#register"
 export * from "#types"

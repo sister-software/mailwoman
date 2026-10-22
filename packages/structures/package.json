@@ -62,6 +62,9 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*"
 	},
+	"devDependencies": {
+		"mailwoman": "workspace:*"
+	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"
 	}

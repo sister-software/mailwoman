@@ -7,7 +7,8 @@
 import { LicenseReviewState, OperationPermission, PermissionBasis } from "@mailwoman/core/license/decision"
 import { describe, expect, it } from "vitest"
 
-import { BASEMAP_INPUTS, creditsFor, HILLSHADE_INPUTS } from "#basemaps"
+import { Basemap, BASEMAP_INPUTS, creditsFor, HILLSHADE_INPUTS } from "#basemaps"
+import { basemapBOMComponent } from "#bom"
 import { auditStructureRegister, publishProblems, STRUCTURE_SOURCE_REGISTER } from "#register"
 import { PUBLISH_OPERATIONS, StructureDetail, type StructureSourceRegister } from "#types"
 
@@ -80,6 +81,26 @@ describe("publishProblems", () => {
 		}
 
 		expect(publishProblems(SOURCE, register)).toHaveLength(PUBLISH_OPERATIONS.length - 1)
+	})
+})
+
+describe("basemapBOMComponent", () => {
+	it("lists every input with its elected license and credit", () => {
+		const component = basemapBOMComponent({
+			basemap: Basemap.MailwomanBuild,
+			url: "https://public.mailwoman.ai/protomaps/builds/japan-2026-10-22.pmtiles",
+			version: "2026-10-22",
+			license: "ODbL-1.0",
+		})
+
+		const licenses = Object.fromEntries(
+			component.properties.filter((p) => p.name.endsWith(":license")).map((p) => [p.name, p.value])
+		)
+
+		expect(component.licenses).toEqual([{ expression: "ODbL-1.0" }])
+		expect(Object.keys(licenses)).toHaveLength(BASEMAP_INPUTS[Basemap.MailwomanBuild].length)
+		expect(licenses["mailwoman:input:international-osm:license"]).toBe("ODbL-1.0")
+		expect(licenses["mailwoman:input:international-meta-wri-chm:license"]).toBe("CC-BY-4.0")
 	})
 })
 
