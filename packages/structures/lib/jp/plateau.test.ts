@@ -24,6 +24,7 @@ const CHIYODA: PlateauTileset = {
 	licenseTitle: PLATEAU_SITE_POLICY_LICENSE,
 	url: "https://example.test/13101/tileset.json",
 	bounds: [139.73, 35.66, 139.79, 35.71],
+	geoidHeight: 36.7,
 }
 
 describe("electedPlateauTilesets", () => {
@@ -37,6 +38,12 @@ describe("electedPlateauTilesets", () => {
 		const elected = electedPlateauTilesets(plateauTilesets as PlateauTileset[])
 
 		expect(plateauTilesetsInView(elected, [139.766, 35.681, 139.767, 35.682]).map((t) => t.cityCode)).toContain("13101")
+	})
+
+	it("records a geoid height for every committed tileset", () => {
+		const missing = plateauTilesets.filter((tileset) => !Number.isFinite(tileset.geoidHeight)).map((t) => t.url)
+
+		expect(missing).toEqual([])
 	})
 })
 
