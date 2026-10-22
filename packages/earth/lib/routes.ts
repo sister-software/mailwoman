@@ -9,6 +9,7 @@
  */
 
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
+import { wrapLongitude } from "@mailwoman/spatial/position"
 
 /**
  * The three views the app serves: the geocoder at `/`, the debug drawer at `/debug`,
@@ -136,13 +137,31 @@ export function pathWithCamera(url: URL, center: readonly [lon: number, lat: num
 	const next = new URL(url)
 	const route = next.pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "")
 	const [lon, lat] = center
-	const zoomText = Number(zoom.toFixed(ZOOM_DECIMALS))
 
-	next.pathname = `${route}/@${Number(lat.toFixed(COORDINATE_DECIMALS))},${Number(lon.toFixed(COORDINATE_DECIMALS))},${zoomText}z`
-	next.searchParams.delete("center")
-	next.searchParams.delete("zoom")
+	next.pathname = `${route}/@${decimalText(lat, COORDINATE_DECIMALS)},${decimalText(wrapLongitude(lon), COORDINATE_DECIMALS)},${decimalText(zoom, ZOOM_DECIMALS)}z`
+
+	// Deleting a parameter reserializes the whole query, which percent-encodes a URL value such as `?basemap=`.
+	if (next.searchParams.has("center") || next.searchParams.has("zoom")) {
+		next.searchParams.delete("center")
+		next.searchParams.delete("zoom")
+	}
 
 	return `${next.pathname}${next.search}${next.hash}`
+}
+
+/**
+ * A number in fixed-point notation with trailing zeroes dropped.
+ *
+ * `Number#toString` writes values below 1e-6 in exponent form, such as `1e-7`,
+ * which the camera segment cannot read.
+ */
+function decimalText(value: number, decimals: number): string {
+	const text = value
+		.toFixed(decimals)
+		.replace(/(\.\d*?)0+$/u, "$1")
+		.replace(/\.$/u, "")
+
+	return text === "-0" ? "0" : text
 }
 
 /**

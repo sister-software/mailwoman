@@ -12,7 +12,7 @@ import { Tile3DLayer } from "@deck.gl/geo-layers"
 import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
-import { BuildingLayers } from "@mailwoman/cartographer/base/buildings"
+import { BUILDING_MODELED_STATE } from "@mailwoman/cartographer/base/buildings"
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
@@ -143,10 +143,57 @@ function cityModelsInView(map: MapInstance): PlateauTileset[] {
 	return plateauTilesetsInView(CITY_MODELS, [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()])
 }
 
-function containsCenter({ bounds: [west, south, east, north] }: PlateauTileset, map: MapInstance): boolean {
-	const { lng, lat } = map.getCenter()
+function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [lng, lat]: number[]): boolean {
+	return lng! >= west && lng! <= east && lat! >= south && lat! <= north
+}
 
-	return lng >= west && lng <= east && lat >= south && lat <= north
+/**
+ * Sets the modeled state on each loaded footprint whose first vertex lies inside a
+ * drawn city model, and clears it from footprints that left one.
+ *
+ * The building layers then skip those footprints, so a city model and an
+ * extrusion never draw the same building.
+ *
+ * `marked` holds the ids currently in the modeled state.
+ */
+function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], marked: Set<string | number>): void {
+	const target = { source: MailwomanBaseTileSetID, sourceLayer: "buildings" }
+	const covered = new Set<string | number>()
+
+	if (cityModels.length) {
+		for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, { sourceLayer: "buildings" })) {
+			const { id, geometry } = feature
+
+			if (id == null || covered.has(id)) continue
+
+			const ring =
+				geometry.type === "Polygon"
+					? geometry.coordinates[0]
+					: geometry.type === "MultiPolygon"
+						? geometry.coordinates[0]?.[0]
+						: undefined
+
+			const vertex = ring?.[0]
+
+			if (vertex && cityModels.some((tileset) => containsPoint(tileset, vertex))) {
+				covered.add(id)
+			}
+		}
+	}
+
+	for (const id of marked) {
+		if (!covered.has(id)) {
+			map.setFeatureState({ ...target, id }, { [BUILDING_MODELED_STATE]: false })
+			marked.delete(id)
+		}
+	}
+
+	for (const id of covered) {
+		if (!marked.has(id)) {
+			map.setFeatureState({ ...target, id }, { [BUILDING_MODELED_STATE]: true })
+			marked.add(id)
+		}
+	}
 }
 
 /**
@@ -243,6 +290,7 @@ export const Scene3D: React.FC = () => {
 		// so a pan or a tile reload keeps the trees already drawn.
 		// The overlay redraws only when the cache changes.
 		const trees = new Map<string, TreeInstance>()
+		const modeledFootprints = new Set<string | number>()
 		let drawnSize = -1
 		let drawnCityModels: string | null = null
 		let changed = true
@@ -262,19 +310,12 @@ export const Scene3D: React.FC = () => {
 			const cityModels = cityModelsInView(map)
 			const cityModelKey = cityModels.map((tileset) => tileset.url).join(" ")
 
+			markModeledFootprints(map, cityModels, modeledFootprints)
+
 			if (!changed && drawnSize === trees.size && drawnCityModels === cityModelKey) return
 			changed = false
 			drawnSize = trees.size
 			drawnCityModels = cityModelKey
-
-			// Where a city model covers the view, it draws the buildings and the extruded footprints stay hidden.
-			const footprintVisibility = cityModels.some((tileset) => containsCenter(tileset, map)) ? "none" : "visible"
-
-			for (const layer of BuildingLayers) {
-				if (map.getLayer(layer.id) && map.getLayoutProperty(layer.id, "visibility") !== footprintVisibility) {
-					map.setLayoutProperty(layer.id, "visibility", footprintVisibility)
-				}
-			}
 
 			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
 			for (const layer of TreeLayers) {
