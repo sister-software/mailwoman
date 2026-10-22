@@ -7,7 +7,7 @@
 import { LicenseReviewState, OperationPermission, PermissionBasis } from "@mailwoman/core/license/decision"
 import { describe, expect, it } from "vitest"
 
-import { Basemap, BASEMAP_INPUTS, creditsFor, HILLSHADE_INPUTS } from "#basemaps"
+import { Basemap, BASEMAP_INPUTS, CITY_MODEL_INPUTS, creditsFor, HILLSHADE_INPUTS } from "#basemaps"
 import { basemapBOMComponent } from "#bom"
 import { auditStructureRegister, publishProblems, STRUCTURE_SOURCE_REGISTER } from "#register"
 import { PUBLISH_OPERATIONS, StructureDetail, type StructureSourceRegister } from "#types"
@@ -106,7 +106,7 @@ describe("basemapBOMComponent", () => {
 
 describe("creditsFor", () => {
 	it("returns a credit for every input of every basemap and the hillshade", () => {
-		for (const inputs of [...Object.values(BASEMAP_INPUTS), HILLSHADE_INPUTS]) {
+		for (const inputs of [...Object.values(BASEMAP_INPUTS), HILLSHADE_INPUTS, CITY_MODEL_INPUTS]) {
 			expect(creditsFor(inputs).map((credit) => credit.sourceID)).toEqual(inputs)
 		}
 	})

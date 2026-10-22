@@ -12,14 +12,15 @@ import { Tile3DLayer } from "@deck.gl/geo-layers"
 import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
+import { BuildingLayers } from "@mailwoman/cartographer/base/buildings"
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
+import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
+import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
 import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
-
-import { pageSearchParam } from "#routes"
 
 import { broadleafTreeMesh, coniferTreeMesh, tokyoSkytreeMesh, tokyoTowerMesh } from "./meshes.ts"
 
@@ -66,6 +67,30 @@ function exposeTransform(map: MapInstance): void {
 			return this._camera.transform
 		},
 	})
+}
+
+/**
+ * The PLATEAU building tilesets whose CKAN record states the elected site policy.
+ */
+const CITY_MODELS = electedPlateauTilesets(plateauTilesets as PlateauTileset[])
+
+/**
+ * The zoom from which the city models draw, where a building spans enough pixels for its roof to read.
+ */
+const CITY_MODEL_MIN_ZOOM = 15
+
+function cityModelsInView(map: MapInstance): PlateauTileset[] {
+	if (map.getZoom() < CITY_MODEL_MIN_ZOOM) return []
+
+	const bounds = map.getBounds()
+
+	return plateauTilesetsInView(CITY_MODELS, [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()])
+}
+
+function containsCenter({ bounds: [west, south, east, north] }: PlateauTileset, map: MapInstance): boolean {
+	const { lng, lat } = map.getCenter()
+
+	return lng >= west && lng <= east && lat >= south && lat <= north
 }
 
 /**
@@ -163,6 +188,7 @@ export const Scene3D: React.FC = () => {
 		// The overlay redraws only when the cache changes.
 		const trees = new Map<string, TreeInstance>()
 		let drawnSize = -1
+		let drawnCityModels: string | null = null
 		let changed = true
 
 		// Every read of the style runs once the style has loaded and `getStyle()` lists its layers.
@@ -177,9 +203,22 @@ export const Scene3D: React.FC = () => {
 				changed = pruneDistantTrees(map, trees) || changed
 			}
 
-			if (!changed && drawnSize === trees.size) return
+			const cityModels = cityModelsInView(map)
+			const cityModelKey = cityModels.map((tileset) => tileset.url).join(" ")
+
+			if (!changed && drawnSize === trees.size && drawnCityModels === cityModelKey) return
 			changed = false
 			drawnSize = trees.size
+			drawnCityModels = cityModelKey
+
+			// Where a city model covers the view, it draws the buildings and the extruded footprints stay hidden.
+			const footprintVisibility = cityModels.some((tileset) => containsCenter(tileset, map)) ? "none" : "visible"
+
+			for (const layer of BuildingLayers) {
+				if (map.getLayer(layer.id) && map.getLayoutProperty(layer.id, "visibility") !== footprintVisibility) {
+					map.setLayoutProperty(layer.id, "visibility", footprintVisibility)
+				}
+			}
 
 			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
 			for (const layer of TreeLayers) {
@@ -227,9 +266,6 @@ export const Scene3D: React.FC = () => {
 					})
 			)
 
-			// `?plateau=<tileset.json URL>` previews a 3D Tiles city model while its register decision is pending.
-			const cityModelURL = pageSearchParam("plateau")
-
 			overlay.setProps({
 				layers: [
 					treeLayer(
@@ -243,9 +279,15 @@ export const Scene3D: React.FC = () => {
 						meshes.conifer
 					),
 					...landmarkLayers,
-					...(cityModelURL
-						? [new Tile3DLayer({ id: "city-model", ...placement, data: cityModelURL, loader: Tiles3DLoader })]
-						: []),
+					...cityModels.map(
+						(tileset) =>
+							new Tile3DLayer({
+								id: `city-model-${tileset.cityCode}-${tileset.year}`,
+								...placement,
+								data: tileset.url,
+								loader: Tiles3DLoader,
+							})
+					),
 				],
 			})
 		}

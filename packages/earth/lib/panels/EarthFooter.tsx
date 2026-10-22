@@ -8,7 +8,13 @@
 
 import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
 import { MapFooter } from "@mailwoman/react/map/MapFooter"
-import { Basemap, BASEMAP_INPUTS, creditsFor, HILLSHADE_INPUTS } from "@mailwoman/structures/basemaps"
+import {
+	Basemap,
+	BASEMAP_INPUTS,
+	CITY_MODEL_INPUTS,
+	creditsFor,
+	HILLSHADE_INPUTS,
+} from "@mailwoman/structures/basemaps"
 import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
@@ -30,7 +36,7 @@ const LOADED_BASEMAP = loadsBasemapBuild() ? Basemap.MailwomanBuild : Basemap.Pr
  * Protomaps and MapLibre are the software that renders the map.
  */
 const BASEMAP_ATTRIBUTION = [
-	...creditsFor([...BASEMAP_INPUTS[LOADED_BASEMAP], ...HILLSHADE_INPUTS]).map((credit) => (
+	...creditsFor([...BASEMAP_INPUTS[LOADED_BASEMAP], ...HILLSHADE_INPUTS, ...CITY_MODEL_INPUTS]).map((credit) => (
 		<a key={credit.sourceID} href={credit.url} target="_blank" rel="noreferrer">
 			{credit.text}
 		</a>

@@ -7766,6 +7766,7 @@ __metadata:
   resolution: "@mailwoman/structures@workspace:packages/structures"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    http-status-codes: "npm:^2.3.0"
     mailwoman: "workspace:*"
   languageName: unknown
   linkType: soft

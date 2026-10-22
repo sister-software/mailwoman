@@ -33,10 +33,17 @@
 		"out/**/*.d.ts.map",
 		"README.md",
 		"lib/**/*.ts",
+		"sdk/**/*.ts",
+		"data/**/*",
 		"!**/*.test.ts"
 	],
 	"type": "module",
 	"imports": {
+		"#sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
 		"#*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -50,6 +57,12 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
+		"./data/*": "./data/*",
+		"./sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
 		"./*": {
 			"types": "./out/*.d.ts",
 			"node": "./lib/*.ts",
@@ -60,7 +73,8 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"http-status-codes": "^2.3.0"
 	},
 	"devDependencies": {
 		"mailwoman": "workspace:*"

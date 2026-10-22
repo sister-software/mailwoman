@@ -51,6 +51,11 @@ export const BASEMAP_INPUTS: Readonly<Record<Basemap, readonly string[]>> = {
 export const HILLSHADE_INPUTS: readonly string[] = ["international-terrain-tiles"]
 
 /**
+ * The register sources of the 3D city models the map draws over the basemap.
+ */
+export const CITY_MODEL_INPUTS: readonly string[] = ["jp-plateau-lod2-tilesets"]
+
+/**
  * A credit a map shows for one source: the attribution text and the page it links to.
  */
 export interface MapCredit {
