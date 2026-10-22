@@ -7,6 +7,7 @@ import Layout from "@theme/Layout"
 import clsx from "clsx"
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 
+import { CoverageTable } from "../components/CoverageTable/CoverageTable.tsx"
 import { RECORDED_ON, TourStops } from "../components/HeroMap/tour.ts"
 import { useSiteConfig } from "../hooks/site.ts"
 
@@ -200,6 +201,21 @@ function HowItWorks(): ReactNode {
 					<code>placetype: interpolated · precision: ±64 m</code>
 				</li>
 			</ol>
+		</section>
+	)
+}
+
+function Coverage(): ReactNode {
+	return (
+		<section className={clsx("container", styles.section)}>
+			<Heading as="h2" className={styles.sectionHeading}>
+				Where it resolves
+			</Heading>
+			<p className={styles.sectionLead}>
+				Every country answers at the admin tier from one download. Street data and a measured parser are country by
+				country, and this is where each one stands.
+			</p>
+			<CoverageTable />
 		</section>
 	)
 }
@@ -408,6 +424,7 @@ export default function Home(): ReactNode {
 			<main>
 				<Stats />
 				<HowItWorks />
+				<Coverage />
 				<SolutionFinder />
 				<QuickStart />
 				<FeaturedWork />

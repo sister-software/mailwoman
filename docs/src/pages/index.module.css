@@ -228,6 +228,13 @@
 	margin-bottom: 1.5rem;
 }
 
+.sectionLead {
+	max-width: 42rem;
+	margin-top: -0.75rem;
+	margin-bottom: 1.5rem;
+	color: var(--ifm-color-emphasis-800);
+}
+
 .steps {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
