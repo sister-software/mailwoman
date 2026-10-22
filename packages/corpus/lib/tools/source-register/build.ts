@@ -12,6 +12,13 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import {
+	LicenseReviewState,
+	type ElectedLicense,
+	type LicenseDecision,
+	type RefusedLicense,
+	type UncheckedLicense,
+} from "@mailwoman/core/license/decision"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -22,19 +29,14 @@ import {
 	registerContentDigest,
 	BackboneState,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	ResearchPass,
 	SourceGeometry,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
 	type AddressSourceRegister,
-	type ElectedLicense,
 	type JurisdictionRecord,
-	type LicenseDecision,
-	type RefusedLicense,
 	type RegisterSector,
-	type UncheckedLicense,
 } from "#source-register"
 import { AddressRole } from "#types"
 

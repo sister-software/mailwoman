@@ -10,6 +10,7 @@
  */
 
 export * from "#license/configured"
+export * from "#license/decision"
 export * from "#license/declaration"
 export * from "#license/docs-site"
 export * from "#license/install-id"

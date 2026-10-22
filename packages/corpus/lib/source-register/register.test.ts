@@ -7,6 +7,15 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import {
+	electedLicenseLabel,
+	LicenseReviewState,
+	OperationPermission,
+	PermissionBasis,
+	permissionFor,
+	type ElectedLicense,
+	type LicenseDecision,
+} from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { beforeAll, describe, expect, it } from "vitest"
 
@@ -14,15 +23,10 @@ import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	BackboneState,
-	electedLicenseLabel,
 	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	MODEL_RELEASE_OPERATIONS,
-	OperationPermission,
-	PermissionBasis,
-	permissionFor,
 	PersonalDataReading,
 	readAddressSourceRegister,
 	registerContentDigest,
@@ -33,8 +37,6 @@ import {
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
 	type AddressSourceRegister,
-	type ElectedLicense,
-	type LicenseDecision,
 } from "#source-register"
 import { AddressRole } from "#types"
 

@@ -12,8 +12,9 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
 
-import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
+import type { SourceOperation } from "#source-register/types"
 
 /**
  * The license label recorded for a source whose rows carry no label.
@@ -128,7 +129,7 @@ export function freezeTrainingManifest(input: {
 	builtAt: string
 	profile: string
 	rowsBySource: ReadonlyMap<string, { rows: number; license: string; licenseValues?: Record<string, number> }>
-	decisionsByLicense: ReadonlyMap<string, LicenseDecision>
+	decisionsByLicense: ReadonlyMap<string, LicenseDecision<SourceOperation>>
 	refused: ReadonlyMap<string, readonly string[]>
 }): TrainingManifest {
 	const sources: TrainingSourceRecord[] = [...input.rowsBySource.entries()]
