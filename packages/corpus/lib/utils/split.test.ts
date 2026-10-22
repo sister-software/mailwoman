@@ -14,8 +14,13 @@ import {
 	type CountryHoldout,
 	defaultHoldouts,
 	HASHED_PLACE_HOLDOUT_DIVISOR,
+	HASHED_PLACE_HOLDOUT_SHARE,
 	hashBucket,
 	hashedHoldoutPlace,
+	hashedPlacesOverCap,
+	hashSelectedPlace,
+	heldOutRegionCap,
+	HOLDOUT_CAP_MIN_ROWS,
 	type HoldoutPolicy,
 	splitForRow,
 	splitRows,
@@ -126,6 +131,60 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 		}
 
 		expect(hashBucket(`KE|locality:${heldOut[0]!.toLowerCase()}`, HASHED_PLACE_HOLDOUT_DIVISOR)).toBe(0)
+	})
+
+	it("trains on a hash-selected place over the region cap and leaves smaller places held out", () => {
+		const towns = Array.from({ length: 400 }, (_, index) => `Town ${index}`)
+		const selected = towns.filter((locality) => hashSelectedPlace("KE", { locality }) !== null)
+
+		expect(selected.length).toBeGreaterThan(2)
+
+		const [large, ...small] = selected as [string, ...string[]]
+		const cap = heldOutRegionCap(HASHED_PLACE_HOLDOUT_SHARE)
+		const regionRows = 10_000
+
+		const counts = [
+			{
+				country: "KE",
+				place: `locality:${large.toLowerCase()}`,
+				region: "nairobi",
+				rows: Math.ceil(regionRows * cap) + 1,
+			},
+			...small.map((town) => ({ country: "KE", place: `locality:${town.toLowerCase()}`, region: "nairobi", rows: 10 })),
+			// A place that is all of a region under the minimum is not checked.
+			{ country: "KE", place: `locality:${small[0]!.toLowerCase()}`, region: "lamu", rows: HOLDOUT_CAP_MIN_ROWS - 1 },
+		]
+
+		const denominators = new Map([
+			["KE|nairobi", regionRows],
+			["KE|lamu", HOLDOUT_CAP_MIN_ROWS - 1],
+		])
+
+		const table = hashedPlacesOverCap(counts, denominators)
+
+		expect(table).toEqual({ KE: [`locality:${large.toLowerCase()}`] })
+
+		const split = (locality: string, trained: Record<string, readonly string[]>) =>
+			splitForRow({ source_id: `${locality}-a`, country: "KE", components: { locality } }, defaultHoldouts(), trained)
+
+		expect(split(large, table)).toBe("train")
+		expect(split(large, {})).not.toBe("train")
+
+		for (const town of towns.filter((t) => t !== large)) {
+			expect(split(town, table)).toBe(split(town, {}))
+		}
+	})
+
+	it("bounds a held-out place's share of its region by min(0.25, max(0.05, 3 × share))", () => {
+		expect(heldOutRegionCap(0.001)).toBe(0.05)
+		expect(heldOutRegionCap(0.02)).toBeCloseTo(0.06)
+		expect(heldOutRegionCap(0.2)).toBe(0.25)
+	})
+
+	it("refuses a place whose region has no row count", () => {
+		expect(() =>
+			hashedPlacesOverCap([{ country: "KE", place: "locality:x", region: null, rows: 1 }], new Map())
+		).toThrow(/no row count for KE\|/)
 	})
 
 	it("keeps a row with no place in train", () => {
