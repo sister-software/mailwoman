@@ -6,6 +6,7 @@ import { themes as prismThemes } from "prism-react-renderer"
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
 // Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
+import { createSidebarMegaMenu } from "./plugins/navbar-menus.ts"
 
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
@@ -38,6 +39,9 @@ const buildTimeDisplay = (() => {
 
 	return `${Y}-${M}-${D} ${h}:${m} UTC`
 })()
+
+// Docusaurus loads this file as CommonJS through jiti, so `__dirname` is the docs workspace.
+const sidebarMegaMenu = createSidebarMegaMenu(__dirname)
 
 const config: Config = {
 	customFields: {
@@ -248,36 +252,65 @@ const config: Config = {
 			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.ts.
 			// Resources follows Docs (the evidence door) and Product leads Docs (the undecided visitor.
 			items: [
-				{
-					type: "docSidebar",
-					sidebarId: "product",
-					position: "left",
+				sidebarMegaMenu("product", {
 					label: "Product",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "solutions",
-					position: "left",
+					descriptions: { Product: "One engine you install rather than call." },
+					featured: {
+						eyebrow: "Try it",
+						title: "Geocode an address in your browser",
+						body: "Earth runs the whole engine client-side. Nothing you type leaves the tab.",
+						to: "https://earth.mailwoman.ai/",
+						linkLabel: "Open Earth",
+					},
+				}),
+				sidebarMegaMenu("solutions", {
 					label: "Solutions",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "developers",
-					position: "left",
+					descriptions: { Solutions: "Start from the problem in front of you." },
+					featured: {
+						eyebrow: "Pricing",
+						title: "Flat pricing, at any volume",
+						body: "Move the slider and watch which row moves.",
+						to: "/pricing",
+						linkLabel: "See the calculator",
+					},
+				}),
+				sidebarMegaMenu("developers", {
 					label: "Developers",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "resources",
-					position: "left",
+					topGroup: "Build",
+					looseLabel: "Project",
+					descriptions: {
+						"Get started": "Installed and parsing in ten minutes.",
+						Tutorials: "End-to-end walkthroughs on real data.",
+						"How-to guides": "One task, start to finish.",
+						Reference: "The APIs, the CLI and the figures.",
+						Localization: "Addresses across languages and scripts.",
+						"Postal systems": "How addresses work, country by country.",
+						Geocoding: "What a geocoder does and how it is judged.",
+						"Address intelligence": "How the model reads an address.",
+						Project: "Where the project stands and how to get help.",
+					},
+					footer: { label: "Start here", to: "/docs/developers/get-started/what-mailwoman-is" },
+					featured: {
+						eyebrow: "Featured",
+						title: "Your first ten minutes",
+						body: "Install it and geocode an address against your own disk.",
+						to: "/docs/developers/get-started/ten-minute-trial",
+					},
+				}),
+				sidebarMegaMenu("resources", {
 					label: "Resources",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "about",
-					position: "left",
+					looseLabel: "Elsewhere",
+					descriptions: {
+						Benchmarks: "Every number ships with its command.",
+						Compare: "Mailwoman beside the alternatives.",
+						OpenStreetMap: "How we credit the map data.",
+						Elsewhere: "Write-ups from the work.",
+					},
+				}),
+				sidebarMegaMenu("about", {
 					label: "About",
-				},
+					descriptions: { About: "Who makes Mailwoman and why." },
+				}),
 				{
 					// A page of its own, outside the docs.
 					to: "/pricing",
