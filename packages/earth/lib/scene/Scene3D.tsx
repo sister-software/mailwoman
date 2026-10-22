@@ -17,6 +17,8 @@ import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
 import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
+import { Matrix4, Vector3 } from "@math.gl/core"
+import { Ellipsoid } from "@math.gl/geospatial"
 import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
 import { useEffect, useMemo } from "react"
@@ -72,12 +74,66 @@ function exposeTransform(map: MapInstance): void {
 /**
  * The PLATEAU building tilesets whose CKAN record states the elected site policy.
  */
-const CITY_MODELS = electedPlateauTilesets(plateauTilesets as PlateauTileset[])
+const CITY_MODELS = electedPlateauTilesets(
+	plateauTilesets.map(({ bounds: [west = 0, south = 0, east = 0, north = 0], ...tileset }): PlateauTileset => ({
+		...tileset,
+		bounds: [west, south, east, north],
+	}))
+)
 
 /**
  * The zoom from which the city models draw, where a building spans enough pixels for its roof to read.
  */
 const CITY_MODEL_MIN_ZOOM = 15
+
+/**
+ * Tileset options that lower a tileset by its geoid height along the local vertical.
+ *
+ * A PLATEAU building placed above the WGS84 ellipsoid then stands on the map's 0 m ground.
+ *
+ * Tile3DLayer reads `loadOptions` once per tileset URL.
+ * The cache keeps one object per tileset.
+ *
+ * Tileset3D's default 32 MB cache holds fewer PLATEAU tiles than one ward's view uses.
+ * It then destroys tiles that are drawn or still loading.
+ * A destroyed tile fails to parse with `assert failed: gltf`.
+ */
+const cityModelLoadOptions = new Map<string, { tileset: CityModelTilesetOptions }>()
+
+interface CityModelTilesetOptions {
+	modelMatrix: Matrix4
+	maximumMemoryUsage: number
+	maximumScreenSpaceError: number
+}
+
+const CITY_MODEL_MEMORY_MB = 512
+
+/**
+ * The screen-space error in pixels a tile may show before its children load.
+ * Tileset3D defaults to 8.
+ */
+const CITY_MODEL_SCREEN_SPACE_ERROR = 16
+
+function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }: PlateauTileset) {
+	let options = cityModelLoadOptions.get(url)
+
+	if (!options) {
+		const up = Ellipsoid.WGS84.geodeticSurfaceNormalCartographic([(west + east) / 2, (south + north) / 2, 0])
+		const offset = new Vector3(up).scale(-geoidHeight)
+
+		options = {
+			tileset: {
+				modelMatrix: new Matrix4().translate(offset),
+				maximumMemoryUsage: CITY_MODEL_MEMORY_MB,
+				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
+			},
+		}
+
+		cityModelLoadOptions.set(url, options)
+	}
+
+	return options
+}
 
 function cityModelsInView(map: MapInstance): PlateauTileset[] {
 	if (map.getZoom() < CITY_MODEL_MIN_ZOOM) return []
@@ -286,6 +342,7 @@ export const Scene3D: React.FC = () => {
 								...placement,
 								data: tileset.url,
 								loader: Tiles3DLoader,
+								loadOptions: loadOptionsFor(tileset),
 							})
 					),
 				],

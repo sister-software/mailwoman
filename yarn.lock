@@ -6999,6 +6999,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/structures": "workspace:*"
     "@mailwoman/universe": "workspace:*"
+    "@math.gl/core": "npm:4.1.0"
+    "@math.gl/geospatial": "npm:4.1.0"
     "@playwright/test": "npm:^1.64.1"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
@@ -8078,7 +8080,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@math.gl/geospatial@npm:^4.1.0":
+"@math.gl/geospatial@npm:4.1.0, @math.gl/geospatial@npm:^4.1.0":
   version: 4.1.0
   resolution: "@math.gl/geospatial@npm:4.1.0"
   dependencies:

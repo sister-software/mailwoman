@@ -6,6 +6,8 @@
  *   Reads PLATEAU VIEW's dataset catalog, the CKAN record of each building dataset, and each tileset's root extent.
  */
 
+import { setTimeout as sleep } from "node:timers/promises"
+
 import { APIClient, API_CLIENT_DEFAULTS, type APIClientConfig } from "@mailwoman/core/api"
 import { ResourceError } from "@mailwoman/core/errors"
 import { StatusCodes } from "http-status-codes"
@@ -25,6 +27,12 @@ const CKAN_PACKAGE_SHOW = "https://www.geospatial.jp/ckan/api/3/action/package_s
  * The root bounding volume follows the `properties` summary, which runs past 4 KB in most PLATEAU tilesets.
  */
 const TILESET_HEAD_BYTES = 65_536
+
+const GSI_GEOID_CALC = "https://vldb.gsi.go.jp/sokuchi/surveycalc/geoid/calcgh/cgi/geoidcalc.pl"
+
+const GSI_BUSY_ATTEMPTS = 6
+
+const GSI_BUSY_DELAY_MS = 5000
 
 interface CatalogEntry {
 	city: string
@@ -107,6 +115,36 @@ async function readLicenseTitle(client: PlateauClient, dataset: string): Promise
  *
  * A tileset whose extent cannot be read is reported through `onSkip` and left out.
  */
+/**
+ * The geoid height in meters at a point, from GSI's geoid calculation service.
+ */
+export async function readGeoidHeight(client: PlateauClient, longitude: number, latitude: number): Promise<number> {
+	const url = `${GSI_GEOID_CALC}?outputType=json&latitude=${latitude}&longitude=${longitude}`
+
+	// The service answers a busy server with `ExportData.ErrMsg` and HTTP 200, which the client's own retry never sees.
+	for (let attempt = 1; ; attempt++) {
+		const response = await client.getJSON<GeoidCalcResponse>(url)
+		const height = Number.parseFloat(response.OutputData?.geoidHeight ?? "")
+
+		if (Number.isFinite(height)) return height
+
+		if (attempt >= GSI_BUSY_ATTEMPTS) {
+			throw new ResourceError(
+				StatusCodes.BAD_GATEWAY,
+				"gsi:geoid",
+				`GSI returned no geoid height for ${latitude},${longitude}: ${response.ExportData?.ErrMsg ?? "no OutputData"}`
+			)
+		}
+
+		await sleep(GSI_BUSY_DELAY_MS * attempt)
+	}
+}
+
+interface GeoidCalcResponse {
+	OutputData?: { geoidHeight?: string }
+	ExportData?: { ErrMsg?: string }
+}
+
 export async function readPlateauTilesets(
 	client: PlateauClient,
 	onSkip: (url: string, reason: string) => void
@@ -131,6 +169,8 @@ export async function readPlateauTilesets(
 			licenses.set(dataset, readLicenseTitle(client, dataset))
 		}
 
+		const [west, south, east, north] = bounds
+
 		tilesets.push({
 			cityCode: entry.city_code,
 			city: entry.city,
@@ -140,6 +180,7 @@ export async function readPlateauTilesets(
 			licenseTitle: dataset ? await licenses.get(dataset)! : null,
 			url: entry.url,
 			bounds,
+			geoidHeight: await readGeoidHeight(client, (west + east) / 2, (south + north) / 2),
 		})
 	}
 
