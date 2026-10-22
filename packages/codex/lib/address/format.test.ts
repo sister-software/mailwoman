@@ -397,3 +397,43 @@ describe("componentsPresentIn", () => {
 		})
 	})
 })
+
+describe("formatAddress withRegion", () => {
+	const PRESTON: ComponentDict = {
+		house_number: "16",
+		street: "Holstein Street",
+		locality: "Preston",
+		region: "Lancashire",
+		postcode: "PR1 1UN",
+	}
+
+	it("writes the GB county where the postal layout prints none, before the postcode", () => {
+		expect(formatAddress(PRESTON, "GB", { singleLine: true })).toBe("16 Holstein Street, Preston PR1 1UN")
+
+		expect(formatAddress(PRESTON, "GB", { singleLine: true, withRegion: true })).toBe(
+			"16 Holstein Street, Preston, Lancashire PR1 1UN"
+		)
+	})
+
+	it("keeps the layout of a country that already prints the region", () => {
+		const madrid: ComponentDict = {
+			street: "Calle Mayor",
+			house_number: "12",
+			locality: "Madrid",
+			region: "Madrid",
+			postcode: "28013",
+		}
+
+		expect(formatAddress(madrid, "ES", { separator: ", ", withRegion: true })).toBe(
+			formatAddress(madrid, "ES", { separator: ", " })
+		)
+	})
+
+	it("reports the region unplaced in a country with no region position", () => {
+		const row = formatAddressRow({ street: "Rue de Rivoli", locality: "Paris", region: "Île-de-France" }, "FR", {
+			withRegion: true,
+		})!
+
+		expect(row.unplaced).toContain("region")
+	})
+})

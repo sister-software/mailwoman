@@ -428,6 +428,12 @@ export interface RecipeOptions {
 	 */
 	commaFreeFraction?: number | null
 	/**
+	 * `locale` and `german`: fraction of rows that write the tuple's region.
+	 *
+	 * @defaultValue the country's share: GB 0.057, DE 0.4, 0 elsewhere
+	 */
+	regionFraction?: number | null
+	/**
 	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
 	 *
 	 * It is 0 when no admin database is readable.

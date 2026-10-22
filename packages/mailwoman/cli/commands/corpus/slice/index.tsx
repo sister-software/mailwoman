@@ -49,6 +49,9 @@ export const spec = {
 		country: stringOption("target country"),
 		"comma-free-fraction": stringOption("german: comma-free fraction"),
 		"ortsteil-fraction": stringOption("german: fraction carrying a WOF Ortsteil as dependent_locality"),
+		"region-fraction": stringOption(
+			"locale/german: fraction writing the tuple's region; default is the country's share"
+		),
 		"admin-db": stringOption("german: WOF admin database for the Ortsteil pool"),
 		"country-fraction": stringOption("explicit-country fraction"),
 		"district-as-locality": { type: "boolean", description: "Override district-as-locality mapping" },
@@ -118,6 +121,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 			country: options.country,
 			commaFreeFraction: num(options.commaFreeFraction),
 			ortsteilFraction: num(options.ortsteilFraction),
+			regionFraction: num(options.regionFraction),
 			adminDB: options.adminDB,
 			countryFraction: num(options.countryFraction),
 			districtAsLocality: options.districtAsLocality,

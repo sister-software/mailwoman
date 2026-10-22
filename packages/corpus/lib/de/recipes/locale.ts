@@ -31,8 +31,15 @@ import { RenderedRowIDs } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
-import { renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
+import { regionDrawRandom, renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
+
+/**
+ * The share of rows that write the Bundesland as `region` after the postcode and locality.
+ *
+ * It is the share the retired international order printed in v0.7.10 (`--intl-fraction` 0.4).
+ */
+const BUNDESLAND_REGION_FRACTION = 0.4
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's region column is empty for DE).
@@ -213,6 +220,10 @@ export const germanRecipe: CorpusRecipe = {
 			description: "Fraction of rows rendered with no commas (the single-line register, #1946). Default 0.3",
 		},
 		{
+			flag: "--region-fraction <f>",
+			description: "Fraction of rows that write the Bundesland as region after the locality. Default 0.4",
+		},
+		{
 			flag: "--ortsteil-fraction <f>",
 			description: "Fraction of rows carrying a WOF Ortsteil of the locality as dependent_locality. Default 0.3",
 		},
@@ -224,9 +235,11 @@ export const germanRecipe: CorpusRecipe = {
 	],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
+		const regionRandom = regionDrawRandom(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-german")
 		const commaFreeFraction = opts.commaFreeFraction ?? 0.3
 		const ortsteilFraction = opts.ortsteilFraction ?? 0.3
+		const regionFraction = opts.regionFraction ?? BUNDESLAND_REGION_FRACTION
 
 		for (const [flag, value] of [
 			["--comma-free-fraction", commaFreeFraction],
@@ -288,7 +301,8 @@ export const germanRecipe: CorpusRecipe = {
 
 			const base: LocaleBaseTuple = ortsteil ? { ...drawn, dependent_locality: ortsteil } : drawn
 			const separator = random() < commaFreeFraction ? " " : ", "
-			const synth = renderGermanRow(base, { random, separator })
+			const withRegion = regionRandom() < regionFraction
+			const synth = renderGermanRow(base, { random, separator, withRegion })
 
 			if (!synth) {
 				skipped++

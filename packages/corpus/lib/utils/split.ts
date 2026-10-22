@@ -115,9 +115,9 @@ export interface SplitManifest {
  *   because a borderline row goes to training.
  *   A country whose candidates under that bound number fewer than two takes its smallest
  *   candidates up to two, so its held-out set has groups to grade (YT, PF and NC).
- *   Taking also requires that every region with at least 100 rows loses at most
- *   `min(0.25, max(0.05, 3 × share))` of its rows, and of its rows with no postcode,
- *   where `share` is the country's v0.8.0 held-out share.
+ *   Taking also requires that every region with at least {@link HOLDOUT_CAP_MIN_ROWS}
+ *   rows loses at most {@link heldOutRegionCap}`(share)` of its rows, and of its rows
+ *   with no postcode, where `share` is the country's v0.8.0 held-out share.
  * - A locality group is held out by every spelling the v0.8.0 rows write.
  * `held-out-spans.full.test.ts` checks a built corpus against this table.
  */
@@ -129,11 +129,30 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		// and Cornwall, left the table.
 		// FR: Corse 20, Creuse 23 and Lozère 48.
 		// DE: area 02, Upper Lusatia in eastern Sachsen.
-		// GB: Truro, Llandudno and Halifax.
-		// Each prefix has two letters and none is a prefix of another.
+		// GB: the Truro and Halifax areas, and ten districts of the Llandudno area.
+		// The whole LL area held 75% of the rendered rows naming Conwy, 74% of Wrecsam's and 67% of
+		// Sir Ddinbych's, so its districts were chosen by the method above, with the cap read for every
+		// region the v0.8.2 GB rows name, these Welsh counties carrying under 100 region rows each.
+		// No prefix is a prefix of another, and no district key is a prefix of another district.
 		FR: { postcodePrefixes: ["20", "23", "48"] },
 		DE: { postcodePrefixes: ["02"] },
-		GB: { postcodePrefixes: ["TR", "LL", "HX"] },
+		GB: {
+			postcodePrefixes: [
+				"TR",
+				"HX",
+				"LL15",
+				"LL17",
+				"LL21",
+				"LL26",
+				"LL36",
+				"LL40",
+				"LL41",
+				"LL53",
+				"LL54",
+				"LL55",
+				"LL57",
+			],
+		},
 		// Three-digit ZIP areas.
 		US: {
 			postcodePrefixes: [
@@ -589,6 +608,133 @@ export const HOLDOUT_COMPONENT_TAGS: ReadonlySet<string> = new Set(["venue", "re
 export const HASHED_PLACE_HOLDOUT_DIVISOR = 50
 
 /**
+ * The held-out share the hashed holdout aims at: one place in {@link HASHED_PLACE_HOLDOUT_DIVISOR}.
+ */
+export const HASHED_PLACE_HOLDOUT_SHARE = 1 / HASHED_PLACE_HOLDOUT_DIVISOR
+
+/**
+ * A region, or a country whose rows carry no region, is checked against
+ * {@link heldOutRegionCap} only when it has at least this many rows.
+ */
+export const HOLDOUT_CAP_MIN_ROWS = 100
+
+/**
+ * The largest share of one region's rows a holdout may take, given the country's
+ * held-out share: `min(0.25, max(0.05, 3 × share))`.
+ *
+ * The declared holdouts in {@link defaultHoldouts} were chosen under this bound, and the
+ * hashed holdout trains on a place that exceeds it (see {@link hashedHoldoutTrainedPlaces}).
+ */
+export function heldOutRegionCap(share: number): number {
+	return Math.min(0.25, Math.max(0.05, 3 * share))
+}
+
+/**
+ * The rows one hash-selected place carries inside one region, or inside its country
+ * when the rows carry no region.
+ */
+export interface HashedPlaceRegionCount {
+	country: string
+	/**
+	 * The key {@link hashedHoldoutPlace} returns.
+	 */
+	place: string
+	/**
+	 * The region under `foldNFKCWhitespace`, or null for rows with no region.
+	 */
+	region: string | null
+	rows: number
+}
+
+/**
+ * Returns, per country, the hash-selected places that exceed {@link heldOutRegionCap}
+ * of {@link HASHED_PLACE_HOLDOUT_SHARE} in some region, sorted.
+ *
+ * A place's rows in a region are divided by that region's rows, and its rows with
+ * no region by the country's rows with no region.
+ * A denominator under {@link HOLDOUT_CAP_MIN_ROWS} is not checked.
+ *
+ * @param denominators Rows per `${country}|${region}`, with an empty region for rows with no region.
+ */
+export function hashedPlacesOverCap(
+	counts: Iterable<HashedPlaceRegionCount>,
+	denominators: ReadonlyMap<string, number>
+): Record<string, string[]> {
+	const cap = heldOutRegionCap(HASHED_PLACE_HOLDOUT_SHARE)
+	const over = new Map<string, Set<string>>()
+
+	for (const { country, place, region, rows } of counts) {
+		const key = `${country}|${region ?? ""}`
+		const total = denominators.get(key)
+
+		if (typeof total !== "number") throw new Error(`no row count for ${key}, the region of ${country} ${place}`)
+
+		if (total < HOLDOUT_CAP_MIN_ROWS || rows / total <= cap) continue
+
+		const places = over.get(country) ?? new Set<string>()
+
+		places.add(place)
+		over.set(country, places)
+	}
+
+	return Object.fromEntries([...over.keys()].toSorted().map((country) => [country, [...over.get(country)!].toSorted()]))
+}
+
+/**
+ * The hash-selected places trained on rather than held out, because each one exceeds
+ * {@link heldOutRegionCap} of {@link HASHED_PLACE_HOLDOUT_SHARE} of a region of at least
+ * {@link HOLDOUT_CAP_MIN_ROWS} rows (or of its country's rows with no region).
+ *
+ * {@link hashedPlacesOverCap} chose this table from the v0.8.1 rows.
+ * A place that leaves the holdout is not replaced by another, so the country's held-out
+ * share falls: a borderline row goes to training, as in {@link defaultHoldouts}.
+ *
+ * The cap bounds a place's share of a region.
+ * It leaves a place that dominates one source's held-out rows in the holdout: v0.8.1's
+ * `IN|locality:new delhi` was 0.036% of IN's rows with no region while holding every osm-in New Delhi row.
+ */
+export function hashedHoldoutTrainedPlaces(): Record<string, readonly string[]> {
+	return HASHED_HOLDOUT_TRAINED_PLACES
+}
+
+const HASHED_HOLDOUT_TRAINED_PLACES: Record<string, readonly string[]> = {
+	CN: ["locality:黄山市", "locality:黄石市"],
+	EG: ["postcode:42", "postcode:46"],
+	HT: ["locality:gonaives"],
+	IM: ["locality:douglas"],
+	MK: ["locality:драчево"],
+	SM: ["locality:città di san marino"],
+	UY: ["locality:vergara"],
+}
+
+const trainedPlaceSetCache = new WeakMap<object, Map<string, ReadonlySet<string>>>()
+
+function trainedPlaceSet(table: Record<string, readonly string[]>, country: string): ReadonlySet<string> | undefined {
+	let byCountry = trainedPlaceSetCache.get(table)
+
+	if (!byCountry) {
+		byCountry = new Map(Object.entries(table).map(([cc, places]) => [cc, new Set(places)]))
+		trainedPlaceSetCache.set(table, byCountry)
+	}
+
+	return byCountry.get(country)
+}
+
+/**
+ * Returns the place the hashed holdout selects for a row of a country without a
+ * {@link defaultHoldouts} entry, before {@link hashedHoldoutTrainedPlaces} is applied,
+ * or null when the hash does not select its place.
+ */
+export function hashSelectedPlace(
+	country: string,
+	components: Partial<Record<"venue" | "locality" | "postcode" | "region", string>>
+): string | null {
+	const place = hashedHoldoutPlace(components)
+
+	return place !== null && hashBucket(`${country}|${place}`, HASHED_PLACE_HOLDOUT_DIVISOR) === 0 ? place : null
+}
+
+/**
  * The key a row is held out by under the hashed holdout: its venue, else its locality,
  * else the first two characters of its postcode, else its region.
  *
@@ -665,7 +811,8 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components">
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
-	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
+	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
+	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces()
 ): SplitName {
 	const declared = holdouts[row.country]
 	const { region, postcode, locality } = row.components
@@ -683,9 +830,10 @@ export function splitForRow(
 	} else {
 		// A country without a declared holdout holds out whole places chosen by hash,
 		// so every country in the corpus reaches val and test.
-		const place = hashedHoldoutPlace(row.components)
+		// A place too large for its region trains.
+		const place = hashSelectedPlace(row.country, row.components)
 
-		isHeldOut = place !== null && hashBucket(`${row.country}|${place}`, HASHED_PLACE_HOLDOUT_DIVISOR) === 0
+		isHeldOut = place !== null && !trainedPlaceSet(trainedPlaces, row.country)?.has(place)
 	}
 
 	if (!isHeldOut) return "train"

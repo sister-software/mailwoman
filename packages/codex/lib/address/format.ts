@@ -8,7 +8,13 @@
  *   {@linkcode renderAddress}.
  */
 
-import { defaultScriptForCountry, layoutForCountry, lineJoinForCountry, type AddressScript } from "#address/layouts"
+import {
+	defaultScriptForCountry,
+	layoutForCountry,
+	lineJoinForCountry,
+	regionLayoutForCountry,
+	type AddressScript,
+} from "#address/layouts"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
@@ -42,6 +48,14 @@ export interface FormatAddressOptions {
 	 * A caller with the parse tree should pass the order explicitly.
 	 */
 	script?: AddressScript | null
+
+	/**
+	 * Print the region where the country writes it, even when the postal layout omits it.
+	 *
+	 * See {@linkcode regionLayoutForCountry}.
+	 * A country with no region position renders with its ordinary layout and reports the region unplaced.
+	 */
+	withRegion?: boolean
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
@@ -218,7 +232,8 @@ export function formatAddressRow(
 	// The function also avoids an order that would drop a component in this country.
 	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
-	const layout = layoutForCountry(country, script)
+
+	const layout = (opts.withRegion ? regionLayoutForCountry(country, script) : null) ?? layoutForCountry(country, script)
 
 	if (!layout) return null
 
