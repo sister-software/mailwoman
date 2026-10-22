@@ -30,6 +30,7 @@ interface TreeInstance {
 	position: [number, number]
 	height: number
 	crownDiameter: number
+	conifer: boolean
 }
 
 /**
@@ -42,7 +43,13 @@ const Landmarks = [
 	{ id: "tokyo-skytree", position: [139.8107, 35.710063] as [number, number], mesh: tokyoSkytreeMesh },
 ]
 
-const TREE_MIN_ZOOM = 15
+/**
+ * The zoom below which the overlay clears its trees.
+ *
+ * The tiles carry tree points at z15.
+ * Keeping the cached trees down to z14 lets them fade with distance when the camera zooms out across z15.
+ */
+const TREE_MIN_ZOOM = 14
 
 /**
  * Exposes MapLibre 6's camera transform as `map.transform`.
@@ -62,12 +69,13 @@ function exposeTransform(map: MapInstance): void {
 }
 
 /**
- * Reads the tree points from the tiles the map has loaded, dropping the copies that adjacent tiles repeat.
+ * Adds the tree points of the tiles the map has loaded to `cache`, keyed by position
+ * so the copies that adjacent tiles repeat collapse to one.
+ *
+ * Returns whether the cache gained a tree.
  */
-function readTrees(map: MapInstance): { broadleaf: TreeInstance[]; conifer: TreeInstance[] } {
-	const broadleaf: TreeInstance[] = []
-	const conifer: TreeInstance[] = []
-	const seen = new Set<string>()
+function addLoadedTrees(map: MapInstance, cache: Map<string, TreeInstance>): boolean {
+	let added = false
 
 	for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, {
 		sourceLayer: "trees",
@@ -76,24 +84,50 @@ function readTrees(map: MapInstance): { broadleaf: TreeInstance[]; conifer: Tree
 		if (feature.geometry.type !== "Point") continue
 		const [lon, lat] = feature.geometry.coordinates as [number, number]
 		const key = `${lon.toFixed(6)},${lat.toFixed(6)}`
-
-		if (seen.has(key)) continue
-		seen.add(key)
-
 		const height = Number(feature.properties["height"])
 		const crownDiameter = Number(feature.properties["crown_diameter"])
 
-		if (!(height > 0 && crownDiameter > 0)) continue
-		const tree = { position: [lon, lat] as [number, number], height, crownDiameter }
+		if (cache.has(key) || !(height > 0 && crownDiameter > 0)) continue
 
-		if (feature.properties["leaf_type"] === "needleleaved") {
-			conifer.push(tree)
-		} else {
-			broadleaf.push(tree)
+		cache.set(key, {
+			position: [lon, lat],
+			height,
+			crownDiameter,
+			conifer: feature.properties["leaf_type"] === "needleleaved",
+		})
+
+		added = true
+	}
+
+	return added
+}
+
+/**
+ * Removes the trees outside twice the visible bounds, keeping a margin so a short pan reuses them.
+ *
+ * Returns whether the cache lost a tree.
+ */
+function pruneDistantTrees(map: MapInstance, cache: Map<string, TreeInstance>): boolean {
+	const bounds = map.getBounds()
+	const lonMargin = (bounds.getEast() - bounds.getWest()) / 2
+	const latMargin = (bounds.getNorth() - bounds.getSouth()) / 2
+	let removed = false
+
+	for (const [key, { position }] of cache) {
+		const [lon, lat] = position
+
+		if (
+			lon < bounds.getWest() - lonMargin ||
+			lon > bounds.getEast() + lonMargin ||
+			lat < bounds.getSouth() - latMargin ||
+			lat > bounds.getNorth() + latMargin
+		) {
+			cache.delete(key)
+			removed = true
 		}
 	}
 
-	return { broadleaf, conifer }
+	return removed
 }
 
 /**
@@ -124,14 +158,28 @@ export const Scene3D: React.FC = () => {
 	useEffect(() => {
 		if (!map) return
 
-		// A layer or overlay change repaints the map, and the repaint fires `idle` again.
-		// An update whose tree set matches the last one returns early.
-		// That early return ends the cycle.
-		let lastSignature: string | null = null
+		// Trees accumulate as tiles load and leave only when they fall far outside the view,
+		// so a pan or a tile reload keeps the trees already drawn.
+		// The overlay redraws only when the cache changes.
+		const trees = new Map<string, TreeInstance>()
+		let drawnSize = -1
+		let changed = true
 
 		// Every read of the style runs once the style has loaded and `getStyle()` lists its layers.
 		const update = () => {
 			if (!map.isStyleLoaded()) return
+
+			if (map.getZoom() < TREE_MIN_ZOOM) {
+				changed ||= trees.size > 0
+				trees.clear()
+			} else {
+				changed = addLoadedTrees(map, trees) || changed
+				changed = pruneDistantTrees(map, trees) || changed
+			}
+
+			if (!changed && drawnSize === trees.size) return
+			changed = false
+			drawnSize = trees.size
 
 			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
 			for (const layer of TreeLayers) {
@@ -146,12 +194,7 @@ export const Scene3D: React.FC = () => {
 			// internal type, so each layer spreads it in from this object.
 			const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
 
-			const trees = map.getZoom() >= TREE_MIN_ZOOM ? readTrees(map) : { broadleaf: [], conifer: [] }
-			const first = trees.broadleaf[0] ?? trees.conifer[0]
-			const signature = `${trees.broadleaf.length}:${trees.conifer.length}:${first?.position.join(",") ?? ""}`
-
-			if (signature === lastSignature) return
-			lastSignature = signature
+			const cached = [...trees.values()]
 
 			const treeLayer = (id: string, data: TreeInstance[], mesh: typeof meshes.broadleaf) =>
 				new SimpleMeshLayer<TreeInstance>({
@@ -168,7 +211,6 @@ export const Scene3D: React.FC = () => {
 						return [shade, shade, shade]
 					},
 					material: { ambient: 0.6, diffuse: 0.55, shininess: 8, specularColor: [20, 20, 20] },
-					updateTriggers: { getColor: data.length },
 				})
 
 			const landmarkLayers = meshes.landmarks.map(
@@ -190,8 +232,16 @@ export const Scene3D: React.FC = () => {
 
 			overlay.setProps({
 				layers: [
-					treeLayer("trees-broadleaf", trees.broadleaf, meshes.broadleaf),
-					treeLayer("trees-conifer", trees.conifer, meshes.conifer),
+					treeLayer(
+						"trees-broadleaf",
+						cached.filter((tree) => !tree.conifer),
+						meshes.broadleaf
+					),
+					treeLayer(
+						"trees-conifer",
+						cached.filter((tree) => tree.conifer),
+						meshes.conifer
+					),
 					...landmarkLayers,
 					...(cityModelURL
 						? [new Tile3DLayer({ id: "city-model", ...placement, data: cityModelURL, loader: Tiles3DLoader })]
@@ -200,11 +250,26 @@ export const Scene3D: React.FC = () => {
 			})
 		}
 
-		update()
-		map.on("idle", update)
+		// A tile load fires `sourcedata` many times per frame, so updates run at most once per animation frame.
+		let frame = 0
+
+		const schedule = () => {
+			if (!frame) {
+				frame = requestAnimationFrame(() => {
+					frame = 0
+					update()
+				})
+			}
+		}
+
+		schedule()
+		map.on("sourcedata", schedule)
+		map.on("moveend", schedule)
 
 		return () => {
-			map.off("idle", update)
+			cancelAnimationFrame(frame)
+			map.off("sourcedata", schedule)
+			map.off("moveend", schedule)
 		}
 	}, [map, overlay, meshes])
 
