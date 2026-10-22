@@ -30,9 +30,8 @@ const darkFlavor = namedFlavor("dark")
  *
  * The base tiles hold only country polygons, so the ground is one color.
  *
- * Road color encodes administrative class rather than traffic: national routes (国道)
- * are orange, prefectural roads (都道府県道) yellow, expressways (高速道路) blue-violet,
- * and every other street white without an edge.
+ * Road color encodes administrative class: national routes (国道) are orange, prefectural roads
+ * (都道府県道) yellow, expressways (高速道路) blue-violet, and every other street a bare white line.
  * Buildings are pale gray blocks, stations red, and green space a saturated yellow-green.
  *
  * Railways are dark lines hatched with white dashes.

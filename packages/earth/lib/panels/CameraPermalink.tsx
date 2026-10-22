@@ -15,7 +15,8 @@ import { pathWithCamera } from "#routes"
 /**
  * Writes the camera into the URL after every move, so a copied address reopens the same view.
  *
- * The write uses `replaceState`, so panning does not add history entries for the back button to walk.
+ * The write uses `replaceState`, which updates the current history entry,
+ * so the back button leaves the map in one step.
  */
 export const CameraPermalink: React.FC = () => {
 	const { current: mapRef } = useMap()

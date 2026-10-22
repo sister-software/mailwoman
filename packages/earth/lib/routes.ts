@@ -38,6 +38,15 @@ export function routeForPath(pathname: string): Route | null {
 }
 
 /**
+ * The current page's value for a query parameter, or null when the page URL lacks it
+ * or the code runs outside a browser.
+ * A bare flag such as `?no-model` reads as the empty string.
+ */
+export function pageSearchParam(name: string): string | null {
+	return typeof location !== "undefined" ? new URLSearchParams(location.search).get(name) : null
+}
+
+/**
  * Which runtime the page mounts: `fake` is the canned runtime the shell smoke and the stories use.
  * Any other value or no value selects the real geocoder.
  */

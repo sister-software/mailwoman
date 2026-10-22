@@ -60,9 +60,9 @@ export interface MapCredit {
 }
 
 /**
- * The credits for a set of register sources, in the order given, without repeats.
+ * The credits for a set of register sources, one per source, in the order given.
  *
- * @throws When a source id is not in the register or its record has no attribution,
+ * @throws When a source id is missing from the register or its record lacks attribution,
  * because a map that draws a source must show a credit for it.
  */
 export function creditsFor(

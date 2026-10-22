@@ -153,7 +153,7 @@ function createBuildingFillStyleLayer(fillStyleSpec: BuildingFillStyleSpec): Lay
 		paint: {
 			"fill-extrusion-vertical-gradient": true,
 			"fill-extrusion-height": popHeight(buildingHeight(fillStyleSpec.heightOffset)),
-			// A building part, such as an upper section of a tower, starts at its `min_height` rather than the ground.
+			// A building part, such as an upper section of a tower, starts at its `min_height`.
 			"fill-extrusion-base": popHeight(["coalesce", ["get", "min_height"], 0]),
 			"fill-extrusion-translate-anchor": "map",
 			"fill-extrusion-opacity": 0.95,

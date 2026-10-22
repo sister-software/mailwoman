@@ -70,6 +70,7 @@ import { Protocol } from "pmtiles"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { pageSearchParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
@@ -163,7 +164,7 @@ export function prefetchReleasesManifest(): void {
  * With the flag the runtime receives no manifest, so it loads no release and the geocoder stays idle.
  */
 function modelDisabled(): boolean {
-	return typeof location !== "undefined" && new URLSearchParams(location.search).has("no-model")
+	return pageSearchParam("no-model") !== null
 }
 
 /**
@@ -174,7 +175,7 @@ function modelDisabled(): boolean {
  * before it is published through the tile worker.
  */
 function basemapSourceURL(configured: URL): string {
-	const candidate = basemapBuildURL()
+	const candidate = pageSearchParam("basemap")
 
 	if (!candidate) return String(configured)
 
@@ -189,19 +190,11 @@ function basemapSourceURL(configured: URL): string {
 let pmtilesProtocolRegistered = false
 
 /**
- * The `?basemap=` PMTiles URL of a `mailwoman/basemaps` build, or null
- * when the page loads the configured basemap.
- */
-function basemapBuildURL(): string | null {
-	return typeof location !== "undefined" ? new URLSearchParams(location.search).get("basemap") : null
-}
-
-/**
  * Whether the page loads a `mailwoman/basemaps` build through `?basemap=`
  * rather than the configured basemap.
  */
 export function loadsBasemapBuild(): boolean {
-	return basemapBuildURL() !== null
+	return pageSearchParam("basemap") !== null
 }
 
 /**

@@ -8,14 +8,18 @@
  */
 
 import { COORDINATE_SYSTEM } from "@deck.gl/core"
+import { Tile3DLayer } from "@deck.gl/geo-layers"
 import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
+import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
+
+import { pageSearchParam } from "#routes"
 
 import { broadleafTreeMesh, coniferTreeMesh, tokyoSkytreeMesh, tokyoTowerMesh } from "./meshes.ts"
 
@@ -44,8 +48,7 @@ const TREE_MIN_ZOOM = 15
  * Exposes MapLibre 6's camera transform as `map.transform`.
  *
  * `@deck.gl/mapbox` 9.4 reads `map.transform` for the viewport size and clip planes.
- * MapLibre 6 keeps that object at `map._camera.transform`, and the overlay
- * throws on every frame without this property.
+ * MapLibre 6 keeps that object at `map._camera.transform`, so this property points the overlay there.
  */
 function exposeTransform(map: MapInstance): void {
 	if ("transform" in map) return
@@ -126,8 +129,7 @@ export const Scene3D: React.FC = () => {
 		// That early return ends the cycle.
 		let lastSignature: string | null = null
 
-		// Every read of the style waits for it to load.
-		// Before then `getStyle()` returns no layers, and a throw here unmounts the whole app.
+		// Every read of the style runs once the style has loaded and `getStyle()` lists its layers.
 		const update = () => {
 			if (!map.isStyleLoaded()) return
 
@@ -140,8 +142,8 @@ export const Scene3D: React.FC = () => {
 
 			// Interleaved deck.gl layers join the end of MapLibre's layer list unless they name a `beforeId`.
 			// Inserting them before the first symbol layer keeps every label drawn above the meshes.
-			// `@deck.gl/mapbox` reads the prop from every layer but declares it in a type its index does not
-			// export, so it is spread in from this object rather than written as a typed layer prop.
+			// `@deck.gl/mapbox` reads the prop from every layer and declares it in an
+			// internal type, so each layer spreads it in from this object.
 			const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
 
 			const trees = map.getZoom() >= TREE_MIN_ZOOM ? readTrees(map) : { broadleaf: [], conifer: [] }
@@ -183,11 +185,17 @@ export const Scene3D: React.FC = () => {
 					})
 			)
 
+			// `?plateau=<tileset.json URL>` previews a 3D Tiles city model while its register decision is pending.
+			const cityModelURL = pageSearchParam("plateau")
+
 			overlay.setProps({
 				layers: [
 					treeLayer("trees-broadleaf", trees.broadleaf, meshes.broadleaf),
 					treeLayer("trees-conifer", trees.conifer, meshes.conifer),
 					...landmarkLayers,
+					...(cityModelURL
+						? [new Tile3DLayer({ id: "city-model", ...placement, data: cityModelURL, loader: Tiles3DLoader })]
+						: []),
 				],
 			})
 		}

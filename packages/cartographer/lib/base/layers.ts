@@ -97,7 +97,7 @@ const MAJOR_ROAD_LAYER_IDS = new Set(["roads_major", "roads_bridges_major", "roa
 /**
  * Edges of streets below the major class.
  *
- * Minor streets are white lines on the ground color with no edge at any zoom.
+ * Minor streets are bare white lines on the ground color at every zoom.
  * The contrast between white street and gray block draws the block shape.
  */
 const MINOR_EDGE_LAYER_IDS = new Set([

@@ -35,7 +35,7 @@ export const OceanPalette = {
  * The terrain tiles carry bathymetry from ETOPO1, so elevation below zero is the sea floor.
  * - `ocean-depth` colors the water by depth with a `color-relief` layer.
  *   It is transparent at zero and above, so land and inland water keep their own fills.
- * - `ocean-floor` shades the sea floor's relief at low zoom, where the land hillshade has not started.
+ * - `ocean-floor` shades the sea floor's relief up to z7, where the land hillshade takes over.
  * - `ocean-coast-glow` draws a pale blurred line along the ocean's edge.
  */
 export const OceanLayers: LayerSpecification[] = [

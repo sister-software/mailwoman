@@ -6,8 +6,8 @@
  *   The CycloneDX `data` component of a published basemap archive, built from the structure-source register.
  *
  *   The release data BOM in `mailwoman/data/bom` lists what a mailwoman release delivers. A basemap archive is served
- *   to the map rather than delivered by a release, so its component is built here, in the same shape, from the
- *   register entries of the sources the archive was built from.
+ *   to the map, so its component is built here, in the same shape, from the register entries of the sources the
+ *   archive was built from.
  */
 
 import { electedLicenseLabel } from "@mailwoman/core/license/decision"
@@ -41,8 +41,8 @@ export interface BasemapArchive {
 /**
  * The archive's `data` component, with one property per input naming its elected license and its credit.
  *
- * An input whose decision is not elected records `unelected` with its review state,
- * so the component shows the open review rather than a license nobody has read.
+ * An input whose decision is still unchecked or refused records `unelected` with
+ * its review state, so the component shows the open review.
  */
 export function basemapBOMComponent(
 	archive: BasemapArchive,
