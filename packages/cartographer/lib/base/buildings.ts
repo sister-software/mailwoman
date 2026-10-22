@@ -27,8 +27,12 @@ const POP_END = 12
 
 /**
  * Building opacity by zoom, starting with the first zoom the tiles carry buildings.
+ *
+ * Blocks stay translucent while they are small, so streets read through them,
+ * and become nearly opaque by z15.
+ * At 0.6 a tall tower seen at street zoom showed the map through its walls.
  */
-const buildingOpacity: ExpressionSpecification = ["interpolate", ["linear"], ["zoom"], 11, 0, 11.5, 0.6]
+const buildingOpacity: ExpressionSpecification = ["interpolate", ["linear"], ["zoom"], 11, 0, 11.5, 0.6, 15, 0.9]
 /**
  * Meters: tiny lift so the band clears the roof (kills z-fight)
  */
