@@ -127,7 +127,7 @@ export const INTERNATIONAL_SOURCES: readonly StructureSource[] = [
 			"(Geoscience Australia) 2017; © offene Daten Österreichs; Open Government Licence – Canada; INEGI; " +
 			"© Land Information New Zealand; © Kartverket; © Environment Agency 2015; ArcticDEM; shaded by Mailwoman",
 		attributionURL: "https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
-		note: "The tile worker serves these tiles from Cloudflare's edge cache, filling misses from `elevation-tiles-prod.s3.amazonaws.com`.",
+		note: "The hillshade layer reads these tiles directly from `elevation-tiles-prod.s3.amazonaws.com`.",
 	},
 	{
 		sourceID: "international-wikimedia-commons-models",

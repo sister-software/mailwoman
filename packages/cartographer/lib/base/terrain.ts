@@ -10,14 +10,12 @@ import { TileSetSourceID } from "#styles/sources"
 
 /**
  * Creates a raster DEM source specification for terrain data.
- *
- * The tile worker serves the AWS terrarium tiles from Cloudflare's edge cache.
  */
 export function createTerrainDEMSource(): RasterDEMSourceSpecification {
 	const terrainSource: RasterDEMSourceSpecification = {
 		type: "raster-dem",
 		encoding: "terrarium",
-		tiles: ["https://tiles.mailwoman.ai/terrain/terrarium/{z}/{x}/{y}.png"],
+		tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
 		tileSize: 256,
 		maxzoom: 15,
 	}
