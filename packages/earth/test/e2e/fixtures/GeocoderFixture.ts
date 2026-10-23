@@ -38,7 +38,9 @@ export class GeocoderFixture {
 	 * the network busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
-		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"
+		// The geocoder specs read results, so the page leaves out the deck.gl scene,
+		// which renders slowly on a software GPU.
+		const path = query ? `/?no-3d&q=${encodeURIComponent(query)}` : "/?no-3d"
 		await this.page.goto(path, { waitUntil: "domcontentloaded" })
 		await this.expectReady()
 	}

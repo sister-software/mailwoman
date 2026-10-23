@@ -7,7 +7,11 @@ test.describe("Demo — resolution cascade", () => {
 	// `submitForUpdate` waits for the result panel to replace the previous step's rows.
 	test("city resolution cascade — one page load, one step per address", async ({ demo }) => {
 		await test.step("Chicago, IL → resolves to the Chicago locality", async () => {
-			await demo.goto("Chicago, IL")
+			// A `?q=` link runs its query on load and fits the map to the result.
+			// A second submit would then be biased toward that result's view,
+			// so the query is entered on a fresh page.
+			await demo.goto()
+			await demo.setAddress("Chicago, IL")
 			await demo.submit()
 
 			const { resolved, markerCount, parsedRows } = await demo.readResult()
