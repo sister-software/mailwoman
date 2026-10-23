@@ -19,7 +19,7 @@ import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harn
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type ExpectationReading, gradeGauntletResult } from "#dev-mcp/diagnose/expectation"
-import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
+import type { Engine, EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { type InputSetRef, type ResolvedInput, resolveInputSet } from "#dev-mcp/input-sets"
 import { buildRoutedMailwomanArm } from "#dev-mcp/routed-mailwoman-arm"
 import { inputSetProvenance, type Provenance } from "#dev-mcp/tool-kit"
@@ -355,64 +355,84 @@ export function renderFanoutRow(row: Omit<FanoutRow, "rendered">): string {
 interface PreparedArm extends Disposable {
 	label: string
 	config: EngineConfig
+	/**
+	 * The arm's provenance, filled in once {@link PreparedArm.open} has run.
+	 */
 	provenance: unknown
+	/**
+	 * Acquires what the arm reads with, immediately before its pass over the rows.
+	 *
+	 * The registry keeps a few engines resident and closes the rest, so an engine acquired for
+	 * every arm up front is closed again before its rows run once the arms outnumber the residents.
+	 */
+	open(): Promise<void>
 	geocode(item: ResolvedInput): Promise<GauntletResult>
 }
 
 /**
- * Builds one warm session per arm and proves they came from one source tree.
+ * Builds one warm-session arm per spec.
+ *
+ * Each arm acquires its engine when its pass begins, and the first engine's tree
+ * fingerprint is the one every later engine must match, so arms built against
+ * different source trees are refused as they open.
+ * The warnings list fills in as arms open: two arms that resolve to one engine
+ * are one reading counted twice.
  */
-async function prepareSessionArms(
+function prepareSessionArms(
 	registry: EngineRegistryLike,
 	specs: readonly FanoutArmSpec[]
-): Promise<{ arms: PreparedArm[]; warnings: string[] }> {
-	const engines = []
-
-	for (const spec of specs) {
-		engines.push({ spec, engine: await registry.acquire(spec.config) })
-	}
-
-	const digests = [...new Set(engines.map(({ engine }) => engine.fingerprint.digest))]
-
-	if (digests.length > 1) {
-		throw new Error(
-			`mwdev_fanout: arms were built against different source trees (${digests.join(", ")}). ` +
-				"That is not a fan-out. Call mwdev_restart and re-run."
-		)
-	}
-
+): { arms: PreparedArm[]; warnings: string[] } {
 	const warnings: string[] = []
-	const byEngine = new Map<string, string[]>()
+	const opened: Array<{ label: string; engineID: string; digest: string }> = []
 
-	for (const { spec, engine } of engines) {
-		byEngine.set(engine.engineID, [...(byEngine.get(engine.engineID) ?? []), spec.label])
-	}
+	const arms = specs.map((spec): PreparedArm => {
+		let engine: Engine | null = null
 
-	for (const [engineID, labels] of byEngine) {
-		if (labels.length > 1) {
-			warnings.push(
-				`Arms ${labels.join(", ")} resolved to the same engine ${engineID}, so their readings are one reading ` +
-					"counted twice."
-			)
-		}
-	}
-
-	return {
-		warnings,
-		arms: engines.map(({ spec, engine }) => ({
+		return {
 			label: spec.label,
 			config: spec.config,
-			provenance: {
-				engine: "mailwoman:session",
-				engine_id: engine.engineID,
-				config_effective: engine.effective,
-				lexicons: engine.lexicons,
+			provenance: null,
+			async open() {
+				engine = await registry.acquire(spec.config)
+
+				const first = opened[0]
+
+				if (first && first.digest !== engine.fingerprint.digest) {
+					throw new Error(
+						`mwdev_fanout: arms were built against different source trees (${first.digest}, ` +
+							`${engine.fingerprint.digest}). That is not a fan-out. Call mwdev_restart and re-run.`
+					)
+				}
+
+				const twin = opened.find((entry) => entry.engineID === engine!.engineID)
+
+				if (twin) {
+					warnings.push(
+						`Arms ${twin.label} and ${spec.label} resolved to the same engine ${engine.engineID}, so their readings ` +
+							"are one reading counted twice."
+					)
+				}
+
+				opened.push({ label: spec.label, engineID: engine.engineID, digest: engine.fingerprint.digest })
+
+				this.provenance = {
+					engine: "mailwoman:session",
+					engine_id: engine.engineID,
+					config_effective: engine.effective,
+					lexicons: engine.lexicons,
+				}
 			},
-			geocode: async (item: ResolvedInput) => toGauntletResult((await engine.session.geocode(item.input)).result),
+			async geocode(item) {
+				if (!engine) throw new Error(`mwdev_fanout: arm ${spec.label} read a row before it was opened`)
+
+				return toGauntletResult((await engine.session.geocode(item.input)).result)
+			},
 			// The registry owns the session.
 			[Symbol.dispose]() {},
-		})),
-	}
+		}
+	})
+
+	return { arms, warnings }
 }
 
 /**
@@ -432,6 +452,8 @@ async function prepareRoutedArms(
 			label: spec.label,
 			config: spec.config,
 			provenance: arm.provenance,
+			// A routed arm holds its own sessions, so it is open from the moment it is built.
+			open: async () => {},
 			geocode: (item) => arm.geocode(item),
 			[Symbol.dispose]: () => arm[Symbol.dispose](),
 		})
@@ -511,20 +533,26 @@ export async function runFanout(
 	const { arms, warnings } =
 		executionPath === "board-routed"
 			? await prepareRoutedArms(specs, selected, deps.buildRoutedMailwomanArm ?? buildRoutedMailwomanArm)
-			: await prepareSessionArms(registry, specs)
+			: prepareSessionArms(registry, specs)
 
 	for (const arm of arms) {
 		stack.use(arm)
 	}
 
-	const rows: FanoutRow[] = []
+	// Arms outermost, each opened as its pass begins: the registry keeps a few engines resident,
+	// so an arm's engine is acquired once and stays resident for every row before the next arm opens.
+	const readingsByRow: FanoutArmReading[][] = selected.map(() => [])
 
-	for (const item of selected) {
-		const readings: FanoutArmReading[] = []
+	for (const arm of arms) {
+		await arm.open()
 
-		for (const arm of arms) {
-			readings.push(await readArm(arm, item))
+		for (const [index, item] of selected.entries()) {
+			readingsByRow[index]!.push(await readArm(arm, item))
 		}
+	}
+
+	const rows: FanoutRow[] = selected.map((item, index) => {
+		const readings = readingsByRow[index]!
 
 		const row = {
 			id: item.id,
@@ -534,8 +562,8 @@ export async function runFanout(
 			stability: readStability(readings),
 		}
 
-		rows.push({ ...row, rendered: renderFanoutRow(row) })
-	}
+		return { ...row, rendered: renderFanoutRow(row) }
+	})
 
 	const byArm: ArmTally[] = arms.map((arm, index) => {
 		const marks = rows.map((row) => row.stability.grade_pattern[index])

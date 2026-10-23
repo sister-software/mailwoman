@@ -52,6 +52,16 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 					"still cover every evaluated row. The emitted rows lead with the non-clean ones and `rows_omitted` " +
 					"says what it left out. Use for large sets where the census is the point and the row dump is not."
 			),
+		execution_path: z
+			.enum(["single-config", "board-routed"])
+			.default("single-config")
+			.describe(
+				'"single-config" runs every row through the one engine `config` describes, which is also the engine ' +
+					'the counterfactual sweep flips. "board-routed" runs each row under its country\'s weights overlay and ' +
+					"country scope, as the board does, so a GB row's lookups are scoped to GB; a row whose country has no " +
+					"overlay runs on the base weights with no country scope, each account records which engine read it, " +
+					"and the counterfactual sweep covers the base-engine rows only."
+			),
 	}),
 	handler: async (args) => runDiagnose(registry, args),
 })

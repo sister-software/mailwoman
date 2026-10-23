@@ -21,11 +21,15 @@ import {
 	collectParseFacts,
 	renderAccount,
 	collectRetrievalFacts,
+	routingFor,
+	runDiagnose,
 	SHAPE_PREDICATES,
 	type AccountInput,
 	type ExpectationReading,
 } from "#dev-mcp/diagnose"
+import type { EngineConfig } from "#dev-mcp/engine/registry"
 import { resolvedInput } from "#dev-mcp/input-sets"
+import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 /**
  * A minimal parse trace, the same skeleton `census.test.ts` uses so the two files agree on what a trace is.
@@ -795,5 +799,134 @@ describe("rows_cap", () => {
 		expect(emitted.map((row) => row.id)).toEqual(["b", "d", "a", "c"])
 		expect(emitted.slice(0, 2).map((row) => row.id)).toEqual(["b", "d"])
 		expect(Math.max(0, emitted.length - 2)).toBe(2)
+	})
+})
+
+describe("routingFor", () => {
+	it("routes a country with an overlay to its locale and a country without one to the unscoped base", () => {
+		expect(routingFor(resolvedInput({ id: "gb", input: "x", country: "GB" }), "board-routed")).toEqual({
+			country: "GB",
+			locale: "en-GB",
+			country_scope: null,
+			default_country: null,
+			engine_id: null,
+		})
+
+		expect(routingFor(resolvedInput({ id: "us", input: "x", country: "us" }), "board-routed")).toMatchObject({
+			locale: "en-US",
+			country_scope: null,
+		})
+
+		expect(
+			routingFor(resolvedInput({ id: "fr", input: "x", country: "FR", defaultCountry: "FR" }), "board-routed")
+		).toMatchObject({ locale: null, country_scope: "none", default_country: "FR" })
+	})
+
+	it("routes nothing on the single-config path or for a row without a country", () => {
+		expect(routingFor(resolvedInput({ id: "gb", input: "x", country: "GB" }), "single-config")).toBeNull()
+		expect(routingFor(resolvedInput({ id: "bare", input: "x" }), "board-routed")).toBeNull()
+	})
+})
+
+describe("runDiagnose routing", () => {
+	const LITERAL = {
+		kind: "literal" as const,
+		inputs: [
+			{ input: "Little Britain Lake, Uxbridge", lat: 51.52, lon: -0.49, country: "GB" },
+			{ input: "Rue de Rivoli, Paris", lat: 48.86, lon: 2.34, country: "FR" },
+			{ input: "Somewhere", lat: 1, lon: 2 },
+		],
+		why: "three rows, one per routing kind",
+	}
+
+	function recordingRegistry(acquired: EngineConfig[]) {
+		return stubEngineRegistry({
+			acquire: async (config) => {
+				acquired.push(config)
+
+				return stubEngine({
+					engineID: `engine:${config.locale ?? "base"}:${config.country_scope ?? "auto"}`,
+					session: {
+						geocode: async (input: string) => ({
+							result: {
+								lat: input.startsWith("Rue") ? 48.86 : input === "Somewhere" ? 1 : 51.52,
+								lon: input.startsWith("Rue") ? 2.34 : input === "Somewhere" ? 2 : -0.49,
+								resolution_tier: "admin",
+								components: {},
+								hierarchy: [],
+							},
+						}),
+					},
+				})
+			},
+		})
+	}
+
+	it("runs each row on its country's engine on the board-routed path and reports the engines", async () => {
+		const acquired: EngineConfig[] = []
+
+		const report = (await runDiagnose(recordingRegistry(acquired), {
+			inputs: LITERAL,
+			config: { candidate_db: "none" },
+			counterfactuals: false,
+			execution_path: "board-routed",
+		})) as {
+			routing: {
+				execution_path: string
+				engines: Array<{ locale: string | null; country_scope: string | null; rows: number }>
+			}
+			rows: Array<{
+				id: string
+				routing: { locale: string | null; country_scope: string | null; engine_id: string } | null
+				rendered: string
+			}>
+			summary: string
+		}
+
+		// The base engine, then one engine per routing: GB under en-GB, FR unscoped on the base weights.
+		expect(acquired.map((config) => [config.locale ?? null, config.country_scope ?? null])).toEqual([
+			[null, null],
+			["en-GB", null],
+			[null, "none"],
+		])
+
+		expect(report.routing.execution_path).toBe("board-routed")
+
+		expect(report.routing.engines).toEqual([
+			{ locale: "en-GB", country_scope: null, default_country: null, engine_id: "engine:en-GB:auto", rows: 1 },
+			{ locale: null, country_scope: "none", default_country: null, engine_id: "engine:base:none", rows: 1 },
+			{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 1 },
+		])
+
+		const byID = Object.fromEntries(report.rows.map((row) => [row.id, row]))
+
+		expect(byID["0"]!.routing).toMatchObject({ locale: "en-GB", engine_id: "engine:en-GB:auto" })
+		expect(byID["0"]!.rendered).toContain("routed en-GB")
+		expect(byID["1"]!.routing).toMatchObject({ locale: null, country_scope: "none" })
+		expect(byID["1"]!.rendered).toContain("routed base unscoped")
+		expect(byID["2"]!.routing).toBeNull()
+
+		expect(report.summary).toContain(
+			"Board-routed: 1 row(s) ran under their country's weights overlay and scope (en-GB 1), 1 ran on the base weights"
+		)
+	})
+
+	it("runs every row on the configured engine on the single-config path", async () => {
+		const acquired: EngineConfig[] = []
+
+		const report = (await runDiagnose(recordingRegistry(acquired), {
+			inputs: LITERAL,
+			config: { candidate_db: "none" },
+			counterfactuals: false,
+		})) as { routing: { execution_path: string; engines: unknown[] }; rows: Array<{ routing: unknown }> }
+
+		expect(acquired).toHaveLength(1)
+
+		expect(report.routing).toEqual({
+			execution_path: "single-config",
+			engines: [{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 3 }],
+		})
+
+		expect(report.rows.every((row) => row.routing === null)).toBe(true)
 	})
 })
