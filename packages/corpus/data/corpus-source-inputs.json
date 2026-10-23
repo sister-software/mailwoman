@@ -3473,11 +3473,17 @@
 					"registerSource": "nl-property-building-2",
 					"license": "unchecked-corpus-input-nl-kadaster",
 					"reads": "OpenAddresses nl/countrywide skeletons"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "the three most populous localities and one postcode per US state whose code is also a country code, generated into packages/corpus/lib/us/abbrev-region-samples.ts"
 				}
 			],
 			"authored": [
 				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries",
-				"the homograph table and US contrast cities in packages/corpus/lib/recipes/country-balanced.ts"
+				"the homograph table in packages/corpus/lib/recipes/country-balanced.ts",
+				"US_STATE_CODES_READ_AS_COUNTRIES in packages/corpus/lib/us/state-country-codes.ts, computed from @mailwoman/codex US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS and CountryISO2"
 			],
 			"history": [
 				{

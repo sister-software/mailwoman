@@ -86,6 +86,21 @@ export const US_STATE_ABBREVIATIONS = [
  */
 export type USStateAbbreviation = (typeof US_STATE_ABBREVIATIONS)[number]
 
+/**
+ * The five primary territories among the USPS abbreviations.
+ *
+ * Each one also holds the same code in ISO 3166-1, so `PR` names Puerto Rico
+ * whether a parser reads it as a region or as a country.
+ * A rule about state codes that collide with a different country's code leaves them out.
+ */
+export const US_TERRITORY_ABBREVIATIONS = [
+	"AS",
+	"GU",
+	"MP",
+	"PR",
+	"VI",
+] as const satisfies readonly USStateAbbreviation[]
+
 const STATE_ABBREVIATION_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
 /**
