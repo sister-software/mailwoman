@@ -19,6 +19,11 @@ const OceanLayerID = LayerID.bind(null, MailwomanBaseTileSetID)
 export const LandUnderlayTileSetID = TileSetSourceID("land-underlay")
 
 /**
+ * The zoom at which the coarse land layer stops drawing.
+ */
+const LAND_UNDERLAY_MAX_ZOOM = 6
+
+/**
  * Creates the coarse land source: Natural Earth's 1:110m land polygons, rounded to two decimal places.
  *
  * The file is 87 KB, so it arrives before the basemap tiles and the globe shows
@@ -94,10 +99,12 @@ export const OceanFloorLayers: LayerSpecification[] = [
 		},
 	},
 	// The basemap's land fill covers this layer once its tiles load.
+	// At 1:110m the coast fills in bays such as Tokyo Bay, so the layer stops at globe scale.
 	{
 		id: OceanLayerID("land-underlay"),
 		type: "fill",
 		source: LandUnderlayTileSetID,
+		maxzoom: LAND_UNDERLAY_MAX_ZOOM,
 		paint: { "fill-color": GuideMapPalette.ground },
 	},
 ]
