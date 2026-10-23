@@ -132,11 +132,19 @@ export async function installDataRouteCache(page: Page): Promise<void> {
 
 			const url = new URL(request.url())
 			const filePath = cacheFilePath(url)
+			const rangeHeader = request.headers()["range"]
 
 			try {
-				return await fulfillFromCache(route, filePath, request.headers()["range"])
+				return await fulfillFromCache(route, filePath, rangeHeader)
 			} catch {
 				// A miss (or a corrupt entry) falls through to a network fill.
+			}
+
+			// A range request on a miss goes to the network as it is.
+			// The file behind it is a multi-gigabyte database (the 2026-08-25b gazetteer is 2.9 GB),
+			// and a whole-file fill would hold it in memory and outlast the test's budget.
+			if (rangeHeader) {
+				return route.continue()
 			}
 
 			try {
@@ -147,7 +155,7 @@ export async function installDataRouteCache(page: Page): Promise<void> {
 				return route.continue()
 			}
 
-			return fulfillFromCache(route, filePath, request.headers()["range"])
+			return fulfillFromCache(route, filePath, rangeHeader)
 		})
 	}
 }

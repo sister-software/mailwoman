@@ -30,7 +30,8 @@ main[data-route] {
  * The trace workbench takes the full page: the app root is a fixed, overflow-hidden frame for the map, so this
  * element scrolls on its own and the three columns use the whole width.
  */
-.trace {
+.trace,
+.gazette {
 	height: 100%;
 	overflow: auto;
 	padding: 1.5rem;

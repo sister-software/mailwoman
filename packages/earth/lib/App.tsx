@@ -18,6 +18,7 @@ import { useMemo } from "react"
 import { PRODUCTION_CONFIG } from "#config"
 import {
 	cameraFromLocation,
+	gazettePlaceFromPath,
 	queryFromSearch,
 	Route,
 	routeForPath,
@@ -27,6 +28,7 @@ import {
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
 import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
 
+import { GazettePage } from "./explorers/Gazette/GazettePage.tsx"
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
 import { EarthFooter } from "./panels/EarthFooter.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"
@@ -136,6 +138,17 @@ export function App() {
 	const mode = runtimeModeFromSearch(location.search)
 
 	if (!route) return <NotFound pathname={location.pathname} />
+
+	// The gazette reads the gazetteer without the classifier and has no canned runtime, so it ignores the runtime mode.
+	if (route === Route.Gazette) {
+		return (
+			<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route}>
+				<div className="gazette">
+					<GazettePage config={PRODUCTION_CONFIG} query={query} place={gazettePlaceFromPath(location.pathname)} />
+				</div>
+			</main>
+		)
+	}
 
 	return (
 		<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route} data-runtime={mode}>

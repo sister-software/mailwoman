@@ -10,6 +10,8 @@ import {
 	cameraFromLocation,
 	cameraFromPath,
 	cameraFromSearch,
+	gazettePlaceFromPath,
+	gazettePlacePath,
 	pathWithCamera,
 	queryFromSearch,
 	Route,
@@ -116,6 +118,32 @@ describe("routeForPath", () => {
 	test("an unknown path is null, not the geocoder", () => {
 		expect(routeForPath("/demo")).toBeNull()
 		expect(routeForPath("/debug/extra")).toBeNull()
+	})
+
+	test("the gazette serves its search page and a place permalink, and refuses a permalink without a key", () => {
+		expect(routeForPath("/gazette")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/1880762729/london")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/1880762729")).toBeNull()
+		expect(routeForPath("/gazette/london")).toBeNull()
+	})
+})
+
+describe("gazettePlaceFromPath and gazettePlacePath", () => {
+	test("read and write a permalink, decoding the key's spaces and refusing an unsafe id", () => {
+		expect(gazettePlaceFromPath("/gazette/1880762729/london")).toEqual({ sprID: 1_880_762_729, nameKey: "london" })
+
+		expect(gazettePlaceFromPath("/gazette/85830881/little%20britain/")).toEqual({
+			sprID: 85_830_881,
+			nameKey: "little britain",
+		})
+
+		expect(gazettePlaceFromPath("/gazette")).toBeNull()
+		expect(gazettePlaceFromPath("/gazette/99999999999999999999/x")).toBeNull()
+
+		expect(gazettePlacePath({ sprID: 85_830_881, nameKey: "little britain" })).toBe(
+			"/gazette/85830881/little%20britain"
+		)
 	})
 })
 
