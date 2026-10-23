@@ -5,10 +5,9 @@
 -- names and illustrative location_id values; none match a real BSL ID.
 --
 -- The mailwoman fcc-bdc adapter expects one table the operator builds
--- from the isp-nexus BDC ETL (or any equivalent host-side script):
+-- with a host-side script:
 --   bdc_locations  ← NTIARecord, one row per BSL location_id
--- Column names match the NTIARecord field names (see
--- /srv/isp-nexus/fcc/bdc/data-collection.ts) so a CSV `.import` from the
+-- Column names match the NTIARecord field names so a CSV `.import` from the
 -- raw NTIA distribution lands in the right shape without per-column
 -- renames.
 

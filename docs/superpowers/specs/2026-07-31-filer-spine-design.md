@@ -55,10 +55,9 @@ to, and what the public record physically supports.
 | **EIN**                     | IRS                                | **Mostly not public**       | —                                                                                          | Public only via SEC cover pages and **nonprofit 990s** (which do cover several rural co-op ISPs). Do not promise EIN coverage |
 | **State CPCN / SOS entity** | 50 state registries                | Heterogeneous               | Registered agent + officer names frequently reveal family                                  | Per-state scrapers. OpenCorporates licensing is restrictive — verify before use                                               |
 
-### 3.1 Form 499 — the column vocabulary (read from Nexus, 2026-07-31)
+### 3.1 Form 499 — the column vocabulary
 
-`isp-nexus/universe/sync/fcc/universal-service.ts` already encodes the real 499 TSV column set. The
-column set is more useful than the code around it:
+The real 499 TSV column set:
 
 `form499ID · frn · lastFiledAt · usfContributor · legalNameOfCarrier · doingBusinessAs ·
 principalCommType · holdingCompany · managementCompany · hqAddress · customerInquiriesTelephone ·
@@ -69,8 +68,8 @@ Three findings change the design:
 
 1. **There are two family fields: `holdingCompany` _and_ `managementCompany`.** They differ
    in kind (ownership vs operational control), and each deserves its own typed edge instead of being collapsed into one.
-2. **`principalCommType` is a free classification signal.** The Nexus code maps it to
-   Incumbent LEC / CLEC / Interexchange / Toll Reseller. Port the mapping, because it tells you what _kind_ of
+2. **`principalCommType` is a free classification signal.** Map it to
+   Incumbent LEC / CLEC / Interexchange / Toll Reseller, because it tells you what _kind_ of
    carrier a filer is without any inference.
 3. **The DC agent must not be used for family inference.** The 499 "DC agent" is the agent for
    service of process. A handful of firms (CT Corporation, CSC, Cogency
@@ -78,12 +77,8 @@ Three findings change the design:
    produce a family edge, and it is the most likely source of false positives in this whole design.
    Record it as an attribute and never as evidence of relatedness.
 
-**Salvage verdict: take the vocabulary and the classification mapping, and rewrite the loader.** The Nexus
-implementation reads the entire TSV into memory and silently truncates short rows
-(`relax_column_count_less`). It declares `otherTradeName1` in its interface but omits it from the
-column tuple, so the field is never populated. That omission is a live bug. Its `findFilingByID` docstring
-promises recursive replacement-filing resolution with cycle handling, but the implementation is a
-plain `Map.get`. The column tuple and the `principalCommType` mapping are the parts to keep.
+**Loader requirements:** stream the TSV rather than reading it whole, and raise on short rows instead of
+silently truncating them.
 
 ## 4. Architecture
 
@@ -157,8 +152,7 @@ any synthetic corpus.
 ## 6. Phases sized for an agent night (each phase gets its own plan)
 
 - **3a — identity core (~4, absorbs 2c's registry + matcher wiring).** The `@mailwoman/filer` workspace,
-  CORES + 499 acquisition (Nexus salvage: `sync/scripts/registrations.ts` already joins BDC provider
-  CSV × 499 by FRN, per the salvage survey), crosswalk schema with provenance, authoritative edges
+  CORES + 499 acquisition (joining BDC provider CSV × 499 by FRN), crosswalk schema with provenance, authoritative edges
   only, entity clustering via `@mailwoman/match`, the `bdc_provider` sidecar finally populated, and the
   `filer_lookup` MCP tool.
 - **3b — corporate families + the matcher eval (~3).** Holding-company edges from 499, SEC EDGAR CIK

@@ -128,7 +128,7 @@
 			"owner": "Federal Communications Commission",
 			"role": "OBSERVATION",
 			"authority_basis": "The FCC publishes the locations its Broadband Data Collection reports against",
-			"access": "A SQLite database built outside this repository by isp-nexus",
+			"access": "A SQLite database built outside this repository",
 			"license": "CORPUS INPUT, TERMS UNREAD",
 			"geometry": "Y",
 			"status": "VERIFIED_CORPUS",
