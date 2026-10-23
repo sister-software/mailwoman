@@ -10,7 +10,7 @@
 
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithRetry } from "#browser-runtime/fetch"
-import { releasesManifestURL } from "#browser-runtime/resources"
+import { pairIndexBaseURL, pairIndexManifestURL, releasesManifestURL } from "#browser-runtime/resources"
 
 export interface ReleaseInfo {
 	version: string
@@ -191,4 +191,65 @@ export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> 
 	const res = await fetchWithRetry(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
 
 	return res.ok ? normalizeReleasesManifest((await res.json()) as WireReleasesManifest) : null
+}
+
+/**
+ * The manifest the publisher writes beside one pair-index generation.
+ *
+ * It lists the countries whose binaries the generation holds, so the runtime
+ * requests those files and no others.
+ */
+export interface PairIndexManifest {
+	/**
+	 * The generation, the dated directory segment the binaries live under.
+	 */
+	version: string
+	/**
+	 * Lowercase alpha-2 codes, one per `pair-index-<cc>.bin` in the generation.
+	 */
+	countries: string[]
+}
+
+function isPairIndexManifest(raw: unknown): raw is PairIndexManifest {
+	if (typeof raw !== "object" || raw === null) return false
+
+	const candidate = raw as Partial<PairIndexManifest>
+
+	return (
+		typeof candidate.version === "string" &&
+		Array.isArray(candidate.countries) &&
+		candidate.countries.every((cc) => typeof cc === "string")
+	)
+}
+
+/**
+ * Fetch the manifest of one pair-index generation.
+ *
+ * Answers `null`, with a console warning that gives the URL, when the bucket answers
+ * an error status or a body that is not a manifest.
+ * A generation without a readable manifest then loads no pair index, and the pair
+ * prior is a soft decode channel, so the classifier still loads.
+ */
+export async function fetchPairIndexManifest(version: string): Promise<PairIndexManifest | null> {
+	const url = pairIndexManifestURL(pairIndexBaseURL(version))
+	const res = await fetchWithRetry(url)
+
+	if (!res.ok) {
+		console.warn(
+			`[browser-runtime] pair-index manifest ${url} answered ${res.status} — no placetype-pair index loads for ` +
+				`generation ${version}`
+		)
+
+		return null
+	}
+
+	const raw: unknown = await res.json()
+
+	if (!isPairIndexManifest(raw)) {
+		console.warn(`[browser-runtime] pair-index manifest ${url} is not a {version, countries} document — ignored`)
+
+		return null
+	}
+
+	return { version: raw.version, countries: [...raw.countries] }
 }

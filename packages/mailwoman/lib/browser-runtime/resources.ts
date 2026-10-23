@@ -299,7 +299,7 @@ export function regionToStateSlug(region: string | null): string | null {
 /**
  * Returns the loader URL configuration shared by the primary and comparison classifiers.
  *
- * Both load every published pair index.
+ * Both load every pair index the generation's manifest lists.
  * The loader keeps each live and `selectPairIndexForText` picks per parse.
  *
  * A missing binary is skipped, so it means no prior, never a failed load.
@@ -307,7 +307,15 @@ export function regionToStateSlug(region: string | null): string | null {
 export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
-	opts: { postcodeAnchors: readonly string[]; postcodePrefixes?: readonly string[]; splitEmbeddings?: boolean }
+	opts: {
+		postcodeAnchors: readonly string[]
+		/**
+		 * The countries the pair-index generation's manifest lists, as lowercase alpha-2 codes.
+		 */
+		pairIndexCountries: readonly string[]
+		postcodePrefixes?: readonly string[]
+		splitEmbeddings?: boolean
+	}
 ) {
 	return {
 		// A split release loads the encoder and reads the embedding rows separately.
@@ -332,15 +340,9 @@ export function neuralClassifierLoadURLs(
 		// The pair indexes live on the public bucket beside every other model asset,
 		// under a dated generation: the objects ship an immutable Cache-Control,
 		// so a rebuilt index is readable only from a fresh path.
-		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)),
+		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION), opts.pairIndexCountries),
 	}
 }
-
-/**
- * Countries whose placetype-pair indexes the demo requests.
- * The demo skips missing files.
- */
-export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
 /**
  * Version of the pair-index binaries.
@@ -359,14 +361,25 @@ export function pairIndexBaseURL(version: string): string {
 }
 
 /**
+ * Returns the URL of the manifest beside one pair-index generation's binaries.
+ *
+ * The publisher writes `index.json` from the binaries it stages, so the runtime asks the bucket
+ * which countries a generation holds rather than listing them in code.
+ */
+export function pairIndexManifestURL(baseURL: string): string {
+	return `${baseURL.replace(/\/$/, "")}/index.json`
+}
+
+/**
  * Returns the per-country binary URLs under a pair-index base URL.
  *
  * @param baseURL Base URL of the binaries, with or without a trailing slash.
+ * @param countries The lowercase alpha-2 codes the generation's manifest lists.
  */
-export function pairIndexURLs(baseURL: string): string[] {
+export function pairIndexURLs(baseURL: string, countries: readonly string[]): string[] {
 	const base = baseURL.replace(/\/$/, "")
 
-	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
+	return countries.map((cc) => `${base}/pair-index-${cc}.bin`)
 }
 
 /**

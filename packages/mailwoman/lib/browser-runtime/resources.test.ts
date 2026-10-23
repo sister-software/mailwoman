@@ -20,6 +20,7 @@ import {
 	neuralClassifierLoadURLs,
 	PAIR_INDEX_VERSION,
 	pairIndexBaseURL,
+	pairIndexManifestURL,
 	pairIndexURLs,
 } from "#browser-runtime/resources"
 
@@ -28,15 +29,27 @@ describe("pair-index URL construction", () => {
 		expect(pairIndexBaseURL("2026-10-17")).toBe("https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17")
 	})
 
-	test("every shipped country gets a binary URL under the base", () => {
-		expect(pairIndexURLs(pairIndexBaseURL("2026-10-17"))).toEqual([
+	test("every country the generation's manifest lists gets a binary URL under the base", () => {
+		expect(pairIndexURLs(pairIndexBaseURL("2026-10-17"), ["gb", "nz", "us"])).toEqual([
 			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-gb.bin",
 			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-nz.bin",
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-us.bin",
 		])
 	})
 
+	test("an empty manifest requests no binary", () => {
+		expect(pairIndexURLs(pairIndexBaseURL("2026-10-17"), [])).toEqual([])
+	})
+
+	test("the manifest sits beside the binaries under the generation", () => {
+		expect(pairIndexManifestURL(pairIndexBaseURL("2026-10-17"))).toBe(
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/index.json"
+		)
+	})
+
 	test("a trailing slash on the base does not double up", () => {
-		expect(pairIndexURLs("https://x/pair-index/v1/")[0]).toBe("https://x/pair-index/v1/pair-index-gb.bin")
+		expect(pairIndexURLs("https://x/pair-index/v1/", ["gb"])[0]).toBe("https://x/pair-index/v1/pair-index-gb.bin")
+		expect(pairIndexManifestURL("https://x/pair-index/v1/")).toBe("https://x/pair-index/v1/index.json")
 	})
 
 	test("the version constant is a dated generation stamp, like its sibling artifacts", () => {
@@ -62,15 +75,18 @@ describe("the release loader owns no pair-index URL of its own", () => {
 })
 
 describe("neuralClassifierLoadURLs — one configuration for the primary and comparison loads", () => {
-	test("requests every published pair index from the versioned base", () => {
-		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchors: [] })
+	test("requests every pair index the generation's manifest lists, from the versioned base", () => {
+		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchors: [], pairIndexCountries: ["gb", "us"] })
 
-		expect(urls.pairIndexURLs).toEqual(pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)))
+		expect(urls.pairIndexURLs).toEqual(pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION), ["gb", "us"]))
 		expect(urls.postcodeBinaryURLs).toEqual([])
 	})
 
 	test("requests each postcode binary the release lists", () => {
-		const urls = neuralClassifierLoadURLs("en-US", "v1", { postcodeAnchors: ["postcode-gb.bin"] })
+		const urls = neuralClassifierLoadURLs("en-US", "v1", {
+			postcodeAnchors: ["postcode-gb.bin"],
+			pairIndexCountries: [],
+		})
 
 		expect(urls.postcodeBinaryURLs).toEqual([assetURL("en-US", "v1", "postcode-gb.bin")])
 		expect(urls.postcodePrefixURLs).toEqual([])
@@ -79,6 +95,7 @@ describe("neuralClassifierLoadURLs — one configuration for the primary and com
 	test("requests each postcode-prefix index the release lists, from the release directory", () => {
 		const urls = neuralClassifierLoadURLs("en-US", "v1", {
 			postcodeAnchors: [],
+			pairIndexCountries: [],
 			postcodePrefixes: ["postcode-prefix-us.bin"],
 		})
 
