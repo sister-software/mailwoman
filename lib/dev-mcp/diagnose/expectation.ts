@@ -7,7 +7,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
-import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
+import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
 import { caseCarriesTruth, seedToCaseTable } from "#dev-mcp/grade"
@@ -76,6 +76,21 @@ export function expectationCase(
 }
 
 /**
+ * Grade one row's gauntlet projection against whatever its corpus pinned.
+ *
+ * A routed arm answers in the gauntlet projection already, so its answer is graded as it stands.
+ */
+export function gradeGauntletResult(item: ResolvedInput, result: GauntletResult): ExpectationReading {
+	const expectation = expectationCase(item)
+
+	if (!expectation) return { source: "none", met: null, issues: [] }
+
+	const issues = checkCase(expectation.table, result)
+
+	return { source: expectation.source, met: issues.length === 0, issues }
+}
+
+/**
  * Grade one row against whatever its corpus pinned.
  *
  * Typed against the real `GeocodeResult` rather than {@link AccountInput}:
@@ -83,13 +98,7 @@ export function expectationCase(
  * A second projection makes a recorded answer disagree with the live answer it came from.
  */
 export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
-	const expectation = expectationCase(item)
-
-	if (!expectation) return { source: "none", met: null, issues: [] }
-
-	const issues = checkCase(expectation.table, toGauntletResult(result))
-
-	return { source: expectation.source, met: issues.length === 0, issues }
+	return gradeGauntletResult(item, toGauntletResult(result))
 }
 
 // #endregion

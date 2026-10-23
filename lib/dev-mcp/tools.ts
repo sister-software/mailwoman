@@ -21,6 +21,7 @@ import { daemonTool } from "#dev-mcp/tools/daemon"
 import { diagnoseTool } from "#dev-mcp/tools/diagnose"
 import { diffGeocodeTool } from "#dev-mcp/tools/diff/geocode"
 import { diffParseTool } from "#dev-mcp/tools/diff/parse"
+import { fanoutTool } from "#dev-mcp/tools/fanout"
 import { githubTools } from "#dev-mcp/tools/github"
 import { inputsTool } from "#dev-mcp/tools/inputs"
 import { interfaceTool } from "#dev-mcp/tools/interface"
@@ -52,6 +53,7 @@ const FACTORIES = [
 	postcodeTool,
 	runTool,
 	compareTool,
+	fanoutTool,
 	arcTool,
 	parseCompareTool,
 	traceTool,
