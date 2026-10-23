@@ -14,8 +14,9 @@ minify = false
 routes = [{ pattern = "tiles.mailwoman.ai", custom_domain = true }]
 
 [[r2_buckets]]
-binding = "NEXUS_ASSETS_BUCKET"
-bucket_name = "nexus-assets"
+binding = "MAILWOMAN_TILES_BUCKET"
+bucket_name = "mailwoman-tiles"
+jurisdiction = "eu"
 
 [vars]
 PMTILES_PATH = "tiles"

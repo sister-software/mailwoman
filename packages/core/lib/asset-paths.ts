@@ -49,7 +49,7 @@ export const PROTOMAPS_VERSION = "v4"
 /**
  * The prefix within the tiles bucket for Protomaps tiles.
  */
-export const PROTOMAPS_TILE_PREFIX = `protomaps/${PROTOMAPS_VERSION}`
+export const PROTOMAPS_TILE_PREFIX = "tiles"
 
 /**
  * The file name of the Protomaps planet file.

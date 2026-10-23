@@ -87,5 +87,5 @@ export interface ServerStoragePaths {
  */
 export const ServerStoragePaths = {
 	TILES_BUCKET: "mailwoman-tiles",
-	TILES_PREFIX: "protomaps/v4",
+	TILES_PREFIX: "tiles",
 } as const satisfies ServerStoragePaths

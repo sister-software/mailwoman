@@ -196,7 +196,7 @@ These are operator work, and the download route cannot run end to end before the
 for them.
 
 1. A private R2 bucket per environment for paid artifacts. The only bucket any wrangler configuration binds today is
-   the tile worker's `nexus-assets`, and the public bundle base is `https://public.mailwoman.ai/mailwoman/`.
+   the tile worker's `mailwoman-tiles`, and the public bundle base is `https://public.mailwoman.ai/mailwoman/`.
 2. S3 API credentials for that bucket, set as worker secrets, because presigning needs them and an R2 binding cannot
    presign.
 3. Three rate-limit namespaces for the declare, evaluate and download routes, following the three that exist.

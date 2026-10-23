@@ -7,7 +7,7 @@
  *   ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.ai/...).
  *
  *   The `tiles publish` command and planetary pipeline both call these functions.
- *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `protomaps/v4` per its wrangler config) and exposes
+ *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
  *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
