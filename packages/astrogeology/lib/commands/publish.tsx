@@ -12,12 +12,14 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { publicAssetsURL, publicTilesURL } from "@mailwoman/core/asset-paths"
+import { $private, $public } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 import { publishTiles, uploadToBucket } from "mailwoman/tools/tiles/publish"
-import { resolvePath } from "path-ts"
+import { resolvePath, PathBuilder } from "path-ts"
 
 import type { BuildableBodyID } from "#bodies"
 import { buildDirectory, buildOutputs } from "#build/layout"
@@ -45,11 +47,6 @@ interface Options {
 	dryRun: boolean
 }
 
-const TILES_BUCKET = "nexus-assets"
-const TILES_PREFIX = "tiles"
-const PUBLIC_BUCKET = "nexus-public"
-const TILES_ORIGIN = "https://tiles.mailwoman.ai"
-const PUBLIC_ORIGIN = "https://public.mailwoman.ai"
 const VERSION_HASH_LENGTH = 8
 
 /**
@@ -77,10 +74,10 @@ export function publishVersion(manifest: PlanetaryBuildManifest): string {
  */
 export function publishedURLs(body: BuildableBodyID, version: string) {
 	return {
-		nomenclatureTileJSON: `${TILES_ORIGIN}/${body}.json`,
-		hillshadeTileJSON: `${TILES_ORIGIN}/${body}-terrain.json`,
-		search: `${PUBLIC_ORIGIN}/planetary/${body}/${version}/search.ancestrie`,
-		manifest: `${PUBLIC_ORIGIN}/planetary/${body}/${version}/manifest.json`,
+		nomenclatureTileJSON: publicTilesURL(`${body}.json`),
+		hillshadeTileJSON: publicTilesURL(`${body}-terrain.json`),
+		search: publicAssetsURL(`planetary/${body}/${version}/search.ancestrie`),
+		manifest: publicAssetsURL(`planetary/${body}/${version}/manifest.json`),
 	}
 }
 
@@ -100,21 +97,21 @@ async function publishBody(body: BuildableBodyID, out: string | null, dryRun: bo
 			await publishTiles({
 				file: resolvePath(directory, file),
 				tileset,
-				bucket: TILES_BUCKET,
-				prefix: TILES_PREFIX,
+				bucket: $private.MAILWOMAN_TILES_BUCKET,
+				prefix: $private.MAILWOMAN_TILES_PREFIX,
 				dryRun,
 				upload: uploadWithWrangler,
 			})
 		)
 	}
 
-	const prefix = `planetary/${body}/${version}`
+	const prefix = PathBuilder.from(`planetary/${body}/${version}`)
 
 	lines.push(
 		await uploadToBucket({
 			file: resolvePath(directory, names.search),
-			bucket: PUBLIC_BUCKET,
-			key: `${prefix}/search.ancestrie`,
+			bucket: $public.MAILWOMAN_PUBLIC_BUCKET,
+			key: prefix("search.ancestrie").toString(),
 			dryRun,
 			upload: uploadWithWrangler,
 		})
@@ -123,7 +120,7 @@ async function publishBody(body: BuildableBodyID, out: string | null, dryRun: bo
 	lines.push(
 		await uploadToBucket({
 			file: resolvePath(directory, names.manifest),
-			bucket: PUBLIC_BUCKET,
+			bucket: $public.MAILWOMAN_PUBLIC_BUCKET,
 			key: `${prefix}/manifest.json`,
 			dryRun,
 			upload: uploadWithWrangler,
@@ -134,7 +131,7 @@ async function publishBody(body: BuildableBodyID, out: string | null, dryRun: bo
 
 	if (!dryRun) {
 		for (const url of Object.values(urls)) {
-			const response = await fetch(url, { method: "HEAD", redirect: "follow" })
+			const response = await fetch(url.toString(), { method: "HEAD", redirect: "follow" })
 
 			lines.push(`${response.status} ${url}`)
 		}

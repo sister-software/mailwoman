@@ -82,6 +82,7 @@ describe("publishDemoAssets", () => {
 	it("does not read credentials or invoke the transport during a dry run", async () => {
 		await using directory = await temporaryDirectory("mw-demo-assets-")
 		await writeLocalFile("{}", directory.path("releases.json"))
+
 		const upload = vi.fn()
 		const lines: string[] = []
 
@@ -93,7 +94,7 @@ describe("publishDemoAssets", () => {
 			onObject: (line) => lines.push(line),
 		})
 
-		expect(result).toMatchObject({ bucket: "nexus-public", prefix: "mailwoman", objects: 1, bytes: 2 })
+		expect(result).toMatchObject({ bucket: "mailwoman-public", prefix: "mailwoman", objects: 1, bytes: 2 })
 		expect(upload).not.toHaveBeenCalled()
 		expect(lines[0]).toContain("[dry-run] mailwoman/releases.json")
 	})

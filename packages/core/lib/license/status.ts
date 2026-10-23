@@ -17,6 +17,7 @@ import type { CacheRequestConfig } from "axios-cache-interceptor"
 
 import { APIClient, type APIClientConfig } from "#api/APIClient"
 import { $public } from "#env"
+import { DefaultWellKnown } from "#env/paths"
 import { ResourceError } from "#errors/schema"
 import type {
 	DeclarationAnswer,
@@ -29,15 +30,10 @@ import { silentLogger } from "#logging"
 import { withoutTrailingSlashes } from "#strings/format"
 
 /**
- * The license worker when `MAILWOMAN_LICENSE_URL` is unset.
- */
-const DEFAULT_LICENSE_URL = "https://license.mailwoman.ai"
-
-/**
  * The worker's origin with no trailing slash, so a route path can be appended by concatenation.
  */
 export function licenseWorkerURL(override: string | undefined = $public.MAILWOMAN_LICENSE_URL): string {
-	return withoutTrailingSlashes(override ?? DEFAULT_LICENSE_URL)
+	return withoutTrailingSlashes(override ?? DefaultWellKnown.LicenseURL)
 }
 
 /**

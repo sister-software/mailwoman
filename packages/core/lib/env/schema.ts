@@ -7,18 +7,16 @@
  *   that reads its own variables declares them beside its readers and extends these views with `liveEnv`.
  */
 
-import { object, string } from "zod"
+import { object, string, url } from "zod"
 
-import { DefaultMailwomanPaths } from "#env/paths"
+import { DefaultMailwomanPaths, DefaultWellKnown, ServerStoragePaths } from "#env/paths"
 import { blankAsAbsent } from "#env/utils"
 
 // #region Public
 
+// #region Local Storage
+
 const StorageEnvSchema = object({
-	// Platform-native application directories.
-	// Environment values override these defaults.
-	//
-	// A bare `.default()` fires only on `undefined`, so a present-but-empty variable passes validation intact.
 	MAILWOMAN_DATA_ROOT: blankAsAbsent(string().default(DefaultMailwomanPaths.data)).meta({
 		title: "Data root",
 		description: "Root directory for downloaded Mailwoman data and runtime artifacts.",
@@ -37,12 +35,20 @@ const StorageEnvSchema = object({
 	}),
 })
 
+// #endregion
+
+// #region Runtime
+
 const RuntimeEnvSchema = object({
 	MAILWOMAN_COARSE_PLACER_DIR: string().optional().meta({
 		title: "Coarse placer directory",
 		description: "Directory containing the coarse country-placement model artifacts.",
 	}),
 })
+
+// #endregion
+
+// #region License
 
 const LicenseEnvSchema = object({
 	MAILWOMAN_DOCS_URL: string().optional().meta({
@@ -63,7 +69,8 @@ const LicenseEnvSchema = object({
 	 */
 	MAILWOMAN_LICENSE_KEY: blankAsAbsent(string().min(1).optional()).meta({
 		title: "Commercial license key",
-		description: "Signed commercial license assertion used by `mailwoman doctor`; it does not change runtime behavior.",
+		description:
+			"Signed commercial license assertion used by `mailwoman doctor`. This does not change runtime behavior.",
 	}),
 	/**
 	 * The license worker's origin (`https://license.mailwoman.ai` when unset),
@@ -71,10 +78,53 @@ const LicenseEnvSchema = object({
 	 *
 	 * Pointed at a sandbox deploy or a test stub.
 	 */
-	MAILWOMAN_LICENSE_URL: blankAsAbsent(string().min(1).optional()).meta({
+	MAILWOMAN_LICENSE_URL: blankAsAbsent(url().optional()).meta({
 		title: "License service URL",
 		description: "License-service origin used by license refresh and online status checks.",
 	}),
+})
+
+// #endregion
+
+const DefaultWellKnownEnvSchema = object({
+	MAILWOMAN_PUBLIC_BUCKET: string()
+		.default(DefaultWellKnown.PublicBucket)
+		.meta({
+			title: "Public bucket",
+			description: "S3 bucket for storing public assets.",
+		})
+		.brand(DefaultWellKnown.PublicBucket),
+	MAILWOMAN_TILES_URL: url()
+		.default(DefaultWellKnown.TilesURL)
+		.meta({
+			title: "Tiles origin",
+			description: "Origin URL for serving tiles.",
+		})
+		.brand(DefaultWellKnown.TilesURL),
+	MAILWOMAN_ASSETS_URL: url()
+		.default(DefaultWellKnown.AssetsURL)
+		.meta({
+			title: "Public assets origin",
+			description: "Origin URL for serving public assets.",
+		})
+		.brand(DefaultWellKnown.AssetsURL),
+})
+
+const ServerStoragePathsEnvSchema = object({
+	MAILWOMAN_TILES_BUCKET: string()
+		.default(ServerStoragePaths.TILES_BUCKET)
+		.meta({
+			title: "Tiles bucket",
+			description: "S3 bucket for storing tiles.",
+		})
+		.brand(ServerStoragePaths.TILES_BUCKET),
+	MAILWOMAN_TILES_PREFIX: string()
+		.default(ServerStoragePaths.TILES_PREFIX)
+		.meta({
+			title: "Tiles prefix",
+			description: "Prefix within the tiles bucket.",
+		})
+		.brand(ServerStoragePaths.TILES_PREFIX),
 })
 
 /**
@@ -84,6 +134,7 @@ const LicenseEnvSchema = object({
  */
 export const PublicEnvSchema = object({
 	...StorageEnvSchema.shape,
+	...DefaultWellKnownEnvSchema.shape,
 	...RuntimeEnvSchema.shape,
 	...LicenseEnvSchema.shape,
 }).meta({
@@ -101,7 +152,9 @@ export const PublicEnvSchema = object({
  * Core reads none: this is the base every package's private view extends,
  * so a credential is declared once, beside the code that sends it.
  */
-export const PrivateEnvSchema = object({}).meta({
+export const PrivateEnvSchema = object({
+	...ServerStoragePathsEnvSchema.shape,
+}).meta({
 	title: "Private environment configuration",
 	description: "Secrets and credentials exposed through `$private`; never log their values.",
 })

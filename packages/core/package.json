@@ -581,6 +581,11 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
 		},
+		"./asset-paths": {
+			"types": "./out/asset-paths.d.ts",
+			"node": "./lib/asset-paths.ts",
+			"default": "./out/asset-paths.js"
+		},
 		"./postcode-prefix-files": {
 			"types": "./out/postcode-prefix-files.d.ts",
 			"node": "./lib/postcode-prefix-files.ts",

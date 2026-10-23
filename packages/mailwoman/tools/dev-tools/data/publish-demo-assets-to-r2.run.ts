@@ -4,17 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
- *   [--bucket nexus-public] [--prefix mailwoman] [--dry-run]
+ *   [--bucket mailwoman-public] [--prefix mailwoman] [--dry-run]
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { $public } from "#env"
 import { formatDemoAssetPublishResult, publishDemoAssets } from "#tools/release-tools/publish/demo-assets"
 
 const { values } = parseArguments({
 	options: {
 		src: { type: "string", description: "Staged asset directory mirroring the R2 layout below the prefix" },
-		bucket: { type: "string", default: "nexus-public", description: "R2 bucket" },
+		bucket: { type: "string", default: $public.MAILWOMAN_PUBLIC_BUCKET, description: "R2 bucket" },
 		prefix: { type: "string", default: "mailwoman", description: "R2 key prefix" },
 		"dry-run": { type: "boolean", default: false, description: "Validate and print objects without uploading" },
 	},

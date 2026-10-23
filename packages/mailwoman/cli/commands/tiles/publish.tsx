@@ -11,6 +11,7 @@
 import { Spinner } from "@inkjs/ui"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { $private } from "#env"
 import { publishTiles, type PublishTilesOptions } from "#tools/tiles/publish"
 
 /**
@@ -22,8 +23,8 @@ export const spec = {
 	options: {
 		file: { type: "string", required: true, description: "Path to the .pmtiles archive to upload" },
 		tileset: { type: "string", required: true, description: "Tile-set name" },
-		bucket: { type: "string", default: "nexus-assets", description: "R2 bucket" },
-		prefix: { type: "string", default: "tiles", description: "R2 key prefix" },
+		bucket: { type: "string", default: $private.MAILWOMAN_TILES_BUCKET, description: "R2 bucket" },
+		prefix: { type: "string", default: $private.MAILWOMAN_TILES_PREFIX, description: "R2 key prefix" },
 		"dry-run": { type: "boolean", default: false, description: "Print the target without uploading" },
 	},
 } as const satisfies CommandSpec
