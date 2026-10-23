@@ -9,7 +9,9 @@ import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
 	AnchorRegionLookupLike,
 	CaseNormalization,
+	ChannelPins,
 	PlacetypePairSelection,
+	SoftChannelName,
 	SpanProposerLexicon,
 	StageSource,
 	VenueHeadLexiconLike,
@@ -164,6 +166,14 @@ export interface NeuralAddressClassifierConfig {
 	localitySurfaceLexicon?: GazetteerLexicon
 
 	/**
+	 * The file each fed channel's lexicon or lookup was read from, keyed by channel name.
+	 *
+	 * The loader records these so a diagnostic can state which lexicon bytes a parse was fed.
+	 * A directly constructed classifier leaves them unset.
+	 */
+	lexiconPaths?: Partial<Record<SoftChannelName, string>>
+
+	/**
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit,
 	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
 	 * model trained with the matching `data.gazetteer_choreography`.
@@ -295,6 +305,15 @@ export interface ParseOpts {
 	 * and locality-surface lexicons because those channels help fragments and hurt full-address parses.
 	 */
 	inputMode?: "fragmented" | "formatted"
+
+	/**
+	 * Per-channel feed pins for a diagnostic parse.
+	 *
+	 * A channel pinned `off` is fed zeros in place of its built features,
+	 * the state the training curriculum paints on a share of rows.
+	 * The trace records the pins beside the channels as fed.
+	 */
+	channels?: ChannelPins
 
 	/**
 	 * The FST gazetteer matcher whose matches add emission biases.

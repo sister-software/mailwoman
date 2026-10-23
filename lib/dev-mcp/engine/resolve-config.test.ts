@@ -37,6 +37,15 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 		expect(resolved.placeCountryThreshold).toBe(0.9)
 	})
 
+	it("passes channel pins through as the session's channelPins and omits the key when none is set", () => {
+		expect(resolveConfig({}).channelPins).toBeUndefined()
+		expect(resolveConfig({ channels: {} }).channelPins).toBeUndefined()
+
+		expect(resolveConfig({ channels: { locality_surface: "off" } }).channelPins).toEqual({
+			locality_surface: "off",
+		})
+	})
+
 	it("still lets every pin override the production default", () => {
 		const resolved = resolveConfig({
 			postcode_shape_coherence: "off",

@@ -96,27 +96,32 @@ export function tokensRow(trace: GeocodeTrace | null): string {
 export function channelsRow(trace: GeocodeTrace | null): string {
 	if (!trace) return ABSENT
 
-	const { pieces, anchor, gazetteer, country } = trace.parse
+	const { pieces, anchor, gazetteer, country, streetType, localitySurface, inputMode, channelPins } = trace.parse
+	const pins = channelPins ?? {}
 
-	return fields(
-		(
-			[
-				["anchor", anchor],
-				["gazetteer", gazetteer],
-				["country", country],
-			] as const
-		).map(([name, channel]) => {
-			if (!channel) return `${name} not fed`
+	const channels = (
+		[
+			["anchor", anchor],
+			["gazetteer", gazetteer],
+			["country", country],
+			["street_type", streetType ?? null],
+			["locality_surface", localitySurface ?? null],
+		] as const
+	).map(([name, channel]) => {
+		if (!channel) return `${name} not fed`
 
-			const fired = channel.confidence
-				.map((confidence, index) => ({ confidence, piece: pieces[index]?.piece ?? `#${index}` }))
-				.filter((entry) => entry.confidence > 0)
+		const fired = channel.confidence
+			.map((confidence, index) => ({ confidence, piece: pieces[index]?.piece ?? `#${index}` }))
+			.filter((entry) => entry.confidence > 0)
 
-			const detail = fired.length ? ` [${fired.map((entry) => entry.piece.replace("▁", "")).join(" ")}]` : ""
+		const detail = fired.length ? ` [${fired.map((entry) => entry.piece.replace("▁", "")).join(" ")}]` : ""
+		// A pinned channel reads 0/n by construction, and the suffix states the pin as the cause.
+		const pin = pins[name] === "off" ? " (pinned off)" : ""
 
-			return `${name} ${fired.length}/${pieces.length}${detail}`
-		})
-	)
+		return `${name} ${fired.length}/${pieces.length}${detail}${pin}`
+	})
+
+	return fields([...channels, `mode ${inputMode ?? "fragmented"}`])
 }
 
 /**

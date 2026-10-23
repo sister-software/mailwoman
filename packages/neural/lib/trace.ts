@@ -6,6 +6,7 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import type { DecoderToken } from "@mailwoman/core/decoder"
+import type { ChannelPins, InputMode } from "@mailwoman/core/pipeline"
 
 import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
@@ -113,6 +114,38 @@ export interface NeuralParseTrace {
 	country: SoftFeatureChannel | null
 
 	/**
+	 * The street-type evidence channel as fed to the model.
+	 *
+	 * It is null when no lexicon is configured, on the character path, and in `formatted`
+	 * input mode, because that register withholds the channel.
+	 */
+	streetType: SoftFeatureChannel | null
+
+	/**
+	 * The locality-surface evidence channel as fed to the model.
+	 *
+	 * It is null when no lexicon is configured, on the character path,
+	 * in `formatted` input mode, and when the street-type lexicon matched no piece,
+	 * because the runtime builds this channel only in street context.
+	 */
+	localitySurface: SoftFeatureChannel | null
+
+	/**
+	 * The input register the decode ran under.
+	 *
+	 * The register decides whether the two evidence channels were fed.
+	 */
+	inputMode: InputMode
+
+	/**
+	 * The channel pins the caller set for this parse, empty when every channel was fed as built.
+	 *
+	 * A channel pinned `off` appears in its channel field as zeros, so a reader can
+	 * tell a pinned silence from one the lexicons produced.
+	 */
+	channelPins: ChannelPins
+
+	/**
 	 * The raw model emissions before any prior, indexed as `logits[token][label]`.
 	 */
 	logits: number[][]
@@ -172,6 +205,15 @@ export interface NeuralParseTrace {
 	 * Repair changes appear in `repairs`, and the final labels are on `tokens`.
 	 */
 	path: number[]
+
+	/**
+	 * Per piece, the decoded label's lead in `emissions` over the best other label
+	 * of the same row, index-aligned with `path`.
+	 *
+	 * A small or negative margin marks a decision one perturbation away from flipping,
+	 * where a per-token softmax can still read as confident.
+	 */
+	margins: number[]
 	decode: "viterbi" | "argmax"
 	repairs: TraceRepair[]
 

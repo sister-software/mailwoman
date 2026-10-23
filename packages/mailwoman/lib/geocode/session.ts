@@ -10,11 +10,13 @@ import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
+	type ChannelPins,
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	type InputMode,
 	type PipelineTiming,
 	type QueryKindResult,
+	type SoftChannelName,
 } from "@mailwoman/core/pipeline"
 import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -187,6 +189,14 @@ export interface GeocodeSessionOptions {
 	diagnoseUnreachable?: boolean
 
 	/**
+	 * Per-channel feed pins for the classifier's soft-feature channels, for a diagnostic session.
+	 *
+	 * A channel pinned `off` is fed zeros in place of its built features.
+	 * Unset feeds every channel as built, as every production session does.
+	 */
+	channelPins?: ChannelPins
+
+	/**
 	 * Receives initialization progress messages.
 	 */
 	onProgress?: (message: string) => void
@@ -267,6 +277,11 @@ export interface GeocodeSession extends Disposable {
 		 * The `model.onnx` path that the classifier loaded and its source, such as `package:…` or `cache:…`.
 		 */
 		weights?: { modelPath: string; source: string }
+
+		/**
+		 * The lexicon or lookup file behind each fed channel of the primary classifier, keyed by channel name.
+		 */
+		lexicons?: Partial<Record<SoftChannelName, string>>
 	}
 	geocode(input: string): Promise<GeocodeRun>
 }
@@ -638,11 +653,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
+		| "channelPins"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
 		...(anchorRegions ? { anchorRegions } : {}),
+		...(options.channelPins ? { channelPins: options.channelPins } : {}),
 		streetMorphologyPrior: settings.streetMorphologyPrior,
 		...(venueHead
 			? {
@@ -773,6 +790,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				? { streetMorphologyPath: classifier.streetMorphologyPath }
 				: {}),
 			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
+			...(Object.keys(classifier.lexiconPaths).length ? { lexicons: { ...classifier.lexiconPaths } } : {}),
 		},
 		geocode,
 		[Symbol.dispose]: dispose,

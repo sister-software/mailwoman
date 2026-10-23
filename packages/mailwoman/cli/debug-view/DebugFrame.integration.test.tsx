@@ -89,6 +89,11 @@ const TRACE = {
 		anchor: null,
 		country: null,
 		gazetteer: { features: [[], []], confidence: [0, 1] },
+		streetType: null,
+		localitySurface: null,
+		inputMode: "fragmented",
+		channelPins: {},
+		margins: [],
 		priors: [{ kind: "fst", applied: true, probePath: null, census: null, censusProbedParents: null }],
 		repairs: [],
 		tokens: [

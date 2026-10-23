@@ -6,7 +6,15 @@
 
 import { describe, expect, it } from "vitest"
 
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, perTokenArgmax, softmax, viterbi } from "#viterbi"
+import {
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
+	pathMargins,
+	perTokenArgmax,
+	softmax,
+	viterbi,
+} from "#viterbi"
 
 const NEG_INF = -1e9
 const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
@@ -299,5 +307,40 @@ describe("softmax", () => {
 		const p = softmax([1, 2, 3])
 		expect(p[0]).toBeLessThan(p[1]!)
 		expect(p[1]).toBeLessThan(p[2]!)
+	})
+})
+
+describe("pathMargins", () => {
+	it("measures each decoded label's lead over the best other label in its emission row", () => {
+		const emissions = [
+			[0.5, 4, 1],
+			[2, 0, 3],
+		]
+
+		expect(pathMargins(emissions, [1, 2])).toEqual([3, 1])
+	})
+
+	it("goes negative when the transition constraints chose a label the row's own scores rank lower", () => {
+		// Viterbi may keep `I-locality` after `B-locality` although `B-region` scores higher on the row.
+		const emissions = [[1, 5, 0, 2, 0]]
+
+		expect(pathMargins(emissions, [3])).toEqual([-3])
+	})
+
+	it("returns a zero margin for a single-label vocabulary and an empty list for an empty path", () => {
+		expect(pathMargins([[2.5]], [0])).toEqual([0])
+		expect(pathMargins([], [])).toEqual([])
+	})
+
+	it("reads the same rows the decoder read", () => {
+		const emissions = [
+			[0, 3, 0, 1, 0],
+			[0, 0, 4, 0, 0.5],
+		]
+
+		const { path } = viterbi({ emissions, transitions: buildBIOTransitionMask(LABELS) })
+
+		expect(path).toEqual([1, 2])
+		expect(pathMargins(emissions, path)).toEqual([2, 3.5])
 	})
 })

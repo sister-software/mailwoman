@@ -25,10 +25,11 @@
  * ({@link CENSUS_ALLOWLIST}).
  */
 
+import { SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
 
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { evidenceCensus, priorSignals, type ChannelReading } from "#dev-mcp/evidence"
+import { evidenceCensus, priorSignals, type EvidenceCensus } from "#dev-mcp/evidence"
 import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
 import { describeObservedRate } from "#dev-mcp/power"
 import { inputSetProvenance, provenanceFor } from "#dev-mcp/tool-kit"
@@ -57,7 +58,7 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 export interface CensusRow {
 	id: string
 	input: string
-	channels: { anchor: ChannelReading; gazetteer: ChannelReading; country: ChannelReading; silent: boolean }
+	channels: EvidenceCensus
 	priors_applied: TracePriorKind[]
 	emissions_moved: boolean
 	repairs_moved: string[]
@@ -74,7 +75,7 @@ interface ChannelTally {
 
 export interface CensusAggregate {
 	n: number
-	channels: Record<"anchor" | "gazetteer" | "country", ChannelTally>
+	channels: Record<SoftChannelName, ChannelTally>
 	/**
 	 * Per prior kind: rows where the prior record was present (L0) and rows
 	 * where its own `applied` check passed (L1).
@@ -109,7 +110,10 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 
 	const aggregate: CensusAggregate = {
 		n: rows.length,
-		channels: { anchor: channelTally(), gazetteer: channelTally(), country: channelTally() },
+		channels: Object.fromEntries(SOFT_CHANNEL_NAMES.map((name) => [name, channelTally()])) as Record<
+			SoftChannelName,
+			ChannelTally
+		>,
 		priors: Object.fromEntries(TRACE_PRIOR_KINDS.map((kind) => [kind, { l0_present: 0, l1_applied: 0 }])) as Record<
 			TracePriorKind,
 			{ l0_present: number; l1_applied: number }
@@ -131,7 +135,7 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 		const priors = priorSignals(row.parse)
 		const repairsMoved = row.parse.repairs.map((repair) => repair.pass)
 
-		for (const name of ["anchor", "gazetteer", "country"] as const) {
+		for (const name of SOFT_CHANNEL_NAMES) {
 			aggregate.channels[name][channels[name].state]++
 		}
 
