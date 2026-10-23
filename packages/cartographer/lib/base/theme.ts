@@ -200,7 +200,7 @@ export const GuideMapSky: Partial<SkySpecification> = {
  * The Mailwoman theme for Protomaps via MapLibre, following the Japanese white guide map.
  *
  * Keys follow `@protomaps/basemaps@5.x` which targets the v4 tile schema
- * (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on R2.
+ * (`["==","kind","..."]` filters), matching the planet.v4 PMTiles on R2.
  * `BaseLayers` colors major roads by class, hatches railways and draws the boundary band,
  * because a flavor sets one color per layer.
  */

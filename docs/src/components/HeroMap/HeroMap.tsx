@@ -54,7 +54,7 @@ const composeStyle = (lang: string): StyleSpecification => ({
 	sources: {
 		[SOURCE_ID]: {
 			type: "vector",
-			url: "https://tiles.mailwoman.ai/basemap-v4.json",
+			url: "https://tiles.mailwoman.ai/planet.v4.json",
 			attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>',
 		},
 	},
