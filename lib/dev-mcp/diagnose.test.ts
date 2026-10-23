@@ -137,6 +137,9 @@ function traceOf(overrides: Partial<NonNullable<AccountInput["trace"]>> = {}): N
 const NO_EXPECTATION: ExpectationReading = { source: "none", met: null, issues: [] }
 const FAILED_EXPECTATION: ExpectationReading = { source: "board_case", met: false, issues: ["coord 400km off"] }
 
+// The Who's On First placetype of a GB town such as Uxbridge, outside the locality band.
+const TOWN_PLACETYPE = "neighbourhood"
+
 const ITEM = resolvedInput({ id: "row-1", input: "Weimar, Thüringen", country: "DE" })
 
 describe("collectParseFacts — known formats against the parse", () => {
@@ -216,6 +219,14 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 		])
 
 		expect(facts.checks_fired).toEqual(["region_scope_miss", "min_score_reject"])
+	})
+
+	it("carries the unreachable-band probe's placetypes, and null when the probe did not run", () => {
+		const probed = collectRetrievalFacts([lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] })])
+		const unprobed = collectRetrievalFacts([lookup()])
+
+		expect(probed.lookups![0]!.reachable_in).toEqual([{ placetype: TOWN_PLACETYPE, n: 1 }])
+		expect(unprobed.lookups![0]!.reachable_in).toBeNull()
 	})
 })
 
@@ -303,6 +314,67 @@ describe("matchShapes", () => {
 		])
 
 		expect(matchShapes({ ...EMPTY, retrieval: retried })).not.toContain("retrieval_empty")
+	})
+
+	it("calls an empty lookup a band miss only when the probe found the key under another placetype", () => {
+		const elsewhere = {
+			...EMPTY,
+			retrieval: collectRetrievalFacts([lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] })]),
+		}
+
+		const nowhere = { ...EMPTY, retrieval: collectRetrievalFacts([lookup({ reachableIn: [] })]) }
+		const unprobed = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
+
+		// The band probe ran on a lookup that another lookup for the same span then answered.
+		const recovered = {
+			...EMPTY,
+			retrieval: collectRetrievalFacts([
+				lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] }),
+				lookup({
+					candidates: [candidate(3, "Weimar", { initial: 1 })],
+					picked: { id: 3, name: "Weimar", source: "ranked" },
+				}),
+			]),
+		}
+
+		expect(matchShapes(elsewhere)).toEqual(["retrieval_empty", "band_miss"])
+		expect(matchShapes(nowhere)).toEqual(["retrieval_empty"])
+		expect(matchShapes(unprobed)).toEqual(["retrieval_empty"])
+		expect(matchShapes(recovered)).toEqual([])
+	})
+
+	it("flags an unreachable expected component off the reachability reading alone", () => {
+		const unreachable = {
+			...EMPTY,
+			reachability: [
+				{
+					tag: "locality",
+					value: "Uxbridge",
+					band: ["locality", "borough", "localadmin"],
+					state: "unreachable" as const,
+					in_band: 0,
+					outside_band: { [TOWN_PLACETYPE]: 1 },
+				},
+			],
+		}
+
+		const reachable = {
+			...EMPTY,
+			reachability: [
+				{
+					tag: "locality",
+					value: "Slough",
+					band: ["locality", "borough", "localadmin"],
+					state: "reachable" as const,
+					in_band: 1,
+					outside_band: { region: 1 },
+				},
+			],
+		}
+
+		expect(matchShapes(unreachable)).toEqual(["expectation_unreachable"])
+		expect(matchShapes(reachable)).toEqual([])
+		expect(matchShapes({ ...EMPTY, reachability: null })).toEqual([])
 	})
 
 	it("flags a readmitted pick, and not a scope miss that resolved nothing", () => {
@@ -622,6 +694,75 @@ describe("renderAccount", () => {
 		expect(line).toContain("rank 3→1 at importance")
 		expect(line).toContain("FAILS: coord 400km off")
 		expect(line).toContain("cf locale en-US→de-DE moves 8123.4km")
+	})
+
+	it("states where an empty lookup's key lives and which expected component the band cannot reach", () => {
+		const item = resolvedInput({
+			id: "gb-vob-little-britain-lake",
+			input: "Little Britain Lake, Uxbridge",
+			country: "GB",
+		})
+
+		const bandMissed = lookup({
+			tag: "region",
+			value: "Uxbridge",
+			placetype: "region",
+			reachableIn: [
+				{ placetype: "localadmin", n: 2 },
+				{ placetype: "locality", n: 5 },
+				{ placetype: TOWN_PLACETYPE, n: 1 },
+			],
+		})
+
+		const account = assembleAccount(item, run({ trace: traceOf({ resolver: [bandMissed] }) }), FAILED_EXPECTATION, [
+			{
+				tag: "locality",
+				value: "Uxbridge",
+				band: ["locality", "borough", "localadmin"],
+				state: "unreachable",
+				in_band: 0,
+				outside_band: { [TOWN_PLACETYPE]: 1 },
+			},
+		])
+
+		const line = renderAccount(account)
+
+		expect(account.shapes).toEqual(["retrieval_empty", "band_miss", "expectation_unreachable"])
+
+		expect(line).toContain(
+			`0 candidates for region "Uxbridge" (key lives in locality ×5, localadmin ×2, ${TOWN_PLACETYPE} ×1)`
+		)
+
+		expect(line).toContain(
+			`expected locality "Uxbridge" UNREACHABLE in band [locality, borough, localadmin]: GB holds it as ${TOWN_PLACETYPE} ×1`
+		)
+	})
+
+	it("states an absent and an unprobed expected component apart from an unreachable one", () => {
+		const account = assembleAccount(ITEM, run({ trace: traceOf() }), FAILED_EXPECTATION, [
+			{
+				tag: "locality",
+				value: "Nirgendwo",
+				band: ["locality", "borough", "localadmin"],
+				state: "absent",
+				in_band: 0,
+				outside_band: {},
+			},
+			{
+				tag: "region",
+				value: "Thüringen",
+				band: ["region", "macroregion"],
+				state: "unprobed",
+				in_band: 0,
+				outside_band: {},
+			},
+		])
+
+		const line = renderAccount(account)
+
+		expect(account.shapes).toEqual(["unclassified"])
+		expect(line).toContain('expected locality "Nirgendwo" ABSENT from every placetype in DE')
+		expect(line).toContain('expected region "Thüringen" reachability UNPROBED (the row states no country)')
 	})
 })
 

@@ -87,6 +87,28 @@ describe("resolveInputSet — literal", () => {
 	it("rejects an empty set rather than measuring nothing", async () => {
 		await expect(resolveInputSet({ kind: "literal", inputs: [], why: "x" })).rejects.toThrow(/at least one input/)
 	})
+
+	it("carries a literal input's expected components as truth and folds them into the set ID", async () => {
+		const row = { input: "Little Britain Lake, Uxbridge", lat: 51.5195735, lon: -0.4897194 }
+		const components = { venue: "Little Britain Lake", locality: "Uxbridge" }
+
+		const withComponents = await resolveInputSet({
+			kind: "literal",
+			inputs: [{ ...row, country: "gb", components }],
+			why: "band",
+		})
+
+		const coordinateOnly = await resolveInputSet({ kind: "literal", inputs: [row], why: "band" })
+
+		expect(withComponents.inputs[0]).toHaveProperty("expectComponents", components)
+		expect(withComponents.inputs[0]).toHaveProperty("country", "GB")
+		expect(coordinateOnly.inputs[0]).toHaveProperty("country", null)
+		expect(withComponents.hasTruth).toMatchObject({ components: 1, coordinates: 1, none: 0 })
+		expect(withComponents.notes.join(" ")).toContain("Every row also states expected components")
+		expect(coordinateOnly.inputs[0]).toHaveProperty("expectComponents", null)
+		expect(coordinateOnly.hasTruth.components).toBe(0)
+		expect(withComponents.setID).not.toBe(coordinateOnly.setID)
+	})
 })
 
 describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
