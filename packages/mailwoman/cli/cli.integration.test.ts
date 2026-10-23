@@ -52,7 +52,8 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 		}
 
 		// Sizes read in GB at this scale.
-		expect(stdout).toMatch(/41\.3 GB/)
+		// The total moves with every extract refresh, so the shape is the pin.
+		expect(stdout).toMatch(/~\d+\.\d GB/)
 		expect(stdout).toContain(emptyDataRootPath)
 	}, 60_000)
 

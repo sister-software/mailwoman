@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PROTOMAPS_PLANET_TILESET_NAME } from "@mailwoman/core/asset-paths"
+import { PROTOMAPS_PLANET_TILESET_NAME } from "@mailwoman/core/asset-names"
 import type { LightSpecification, SkySpecification } from "@maplibre/maplibre-gl-style-spec"
 import { type Flavor, namedFlavor } from "@protomaps/basemaps"
 

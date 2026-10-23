@@ -4,6 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Path builders for Mailwoman's platform-native application directories.
+ *
+ *   The builders read the typed environment and `path-ts`, so this module is for Node callers. A bundle that
+ *   needs only a tileset name reads `asset-names.ts`, a module of string constants.
  */
 
 import { createPathBuilderResolver, type PathBuilder } from "path-ts"
@@ -40,23 +43,3 @@ export const publicTilesURL = createZodPathBuilderResolver(() => $public.MAILWOM
  * The public assets URL.
  */
 export const publicAssetsURL = createZodPathBuilderResolver(() => $public.MAILWOMAN_ASSETS_URL)
-
-/**
- * The version of the Protomaps library used for tile generation.
- */
-export const PROTOMAPS_VERSION = "v4"
-
-/**
- * The prefix within the tiles bucket for Protomaps tiles.
- */
-export const PROTOMAPS_TILE_PREFIX = "tiles"
-
-/**
- * The file name of the Protomaps planet file.
- */
-export const PROTOMAPS_PLANET_TILESET_NAME = `planet.${PROTOMAPS_VERSION}`
-
-/**
- * The file name of the Protomaps planet file.
- */
-export const PROTOMAPS_PLANET_FILE_NAME = `${PROTOMAPS_PLANET_TILESET_NAME}.pmtiles`

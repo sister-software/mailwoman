@@ -581,6 +581,11 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
 		},
+		"./asset-names": {
+			"types": "./out/asset-names.d.ts",
+			"node": "./lib/asset-names.ts",
+			"default": "./out/asset-names.js"
+		},
 		"./asset-paths": {
 			"types": "./out/asset-paths.d.ts",
 			"node": "./lib/asset-paths.ts",
