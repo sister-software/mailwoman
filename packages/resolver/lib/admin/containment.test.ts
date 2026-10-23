@@ -127,6 +127,103 @@ describe("adminContainmentVerdict — the tri-state trace stamp", () => {
 	})
 })
 
+describe("a dependent locality inside its parent (#2804)", () => {
+	/**
+	 * The district shape: locality("Manchester") wrapping dependent_locality("Didsbury").
+	 */
+	const districtTree = (): AddressTree => ({
+		raw: "Didsbury, Manchester",
+		roots: [
+			node({
+				tag: "locality",
+				value: "Manchester",
+				start: 10,
+				end: 20,
+				children: [node({ tag: "dependent_locality", value: "Didsbury", start: 0, end: 8 })],
+			}),
+		],
+	})
+
+	interface SeenQuery {
+		text: string
+		parentID?: number | string
+		parentQualifierID?: number
+	}
+
+	/**
+	 * A backend whose locality answers Manchester (id 10).
+	 *
+	 * Its dependent-locality rows hold a containment stamp only when the query set a parent qualifier.
+	 * The uncontained namesake is the more important row, so the stamp decides the pick.
+	 */
+	const makeDistrictBackend = (seen: SeenQuery[]): ResolverBackend => ({
+		async findPlace(query) {
+			seen.push({ text: query.text, parentID: query.parentID, parentQualifierID: query.parentQualifierID })
+
+			const place = (id: number, placetype: string, importance: number, contained: boolean | null): ResolvedPlace => ({
+				...EMPTY_PLACE_FIELDS,
+				id,
+				name: query.text,
+				placetype,
+				country: "GB",
+				lat: id,
+				lon: id,
+				score: 100 - id,
+				prominence: 8,
+				exactMatch: true,
+				importance,
+				containedByQualifier: contained,
+			})
+
+			if (query.text === "Manchester") return [place(10, "locality", 0.9, null)]
+
+			const stamped = typeof query.parentQualifierID === "number"
+
+			return [
+				place(21, "locality", 0.8, stamped ? false : null),
+				place(20, "neighbourhood", 0.2, stamped ? true : null),
+			]
+		},
+	})
+
+	const resolveDistrict = async (opts: ResolveOpts) => {
+		const seen: SeenQuery[] = []
+		const out = await createWOFResolver(makeDistrictBackend(seen)).resolveTree(districtTree(), opts)
+		const locality = out.roots[0]!
+		const district = locality.children[0]!
+
+		return { locality, district, seen }
+	}
+
+	it("passes the resolved parent as a containment qualifier in place of the region scope when ON", async () => {
+		const { district, seen } = await resolveDistrict({ dependentLocalityContainment: true })
+		const query = seen.find((q) => q.text === "Didsbury")
+
+		expect(query?.parentQualifierID).toBe(10)
+		expect(query?.parentID).toBeUndefined()
+		expect(district.placeID).toBe("wof:20")
+		expect(district.metadata?.["contained_by_parent"]).toBe(true)
+		expect(district.metadata?.["admin_containment"]).toBe("contained")
+	})
+
+	it("passes the qualifier by default, because the setting defaults on", async () => {
+		const { district, seen } = await resolveDistrict({})
+
+		expect(seen.find((q) => q.text === "Didsbury")?.parentQualifierID).toBe(10)
+		expect(district.placeID).toBe("wof:20")
+	})
+
+	it("keeps the region scope and the importance order when OFF, so the off arm is byte-stable", async () => {
+		const { district, seen } = await resolveDistrict({ dependentLocalityContainment: false })
+		const query = seen.find((q) => q.text === "Didsbury")
+
+		expect(query?.parentID).toBe(10)
+		expect(query?.parentQualifierID).toBeUndefined()
+		expect(district.placeID).toBe("wof:21")
+		expect(district.metadata?.["contained_by_parent"]).toBeUndefined()
+	})
+})
+
 describe("the walk's deciding site (#1729 reach interface)", () => {
 	const resolveWith = async (
 		specs: StampSpec[],

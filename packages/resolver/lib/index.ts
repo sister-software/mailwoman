@@ -53,6 +53,7 @@ export {
 	adminLadderFor,
 	adminLadderForNodes,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
+	ladderWithContainedDependentLocality,
 	mostSpecificResolved,
 	resolvedSpecificity,
 } from "#admin/winner"

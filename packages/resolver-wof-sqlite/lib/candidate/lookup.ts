@@ -67,6 +67,18 @@ type CandidateRow = Pick<
 	// Optional because older artifacts may not include `importance`.
 	Partial<Pick<CandidateTable, "importance">>
 
+/**
+ * What a containment re-rank needs beside the rows: the keys to inject contained
+ * misses from and the shape filters the initial probe applied.
+ */
+interface ContainmentOptions {
+	nameKey: NameKey
+	strippedKey: NameKey
+	shapeFilters: string[]
+	shapeParams: Array<string | number>
+	limit: number
+}
+
 const FUZZY_FETCH = 40
 
 const WORD_FUZZY_MIN = 0.85
@@ -260,23 +272,30 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Apply admin-containment re-rank: stamp containment, inject contained misses,
-	 * then partition contained-first.
+	 * Apply admin-containment re-rank for a parsed region qualifier: resolve the
+	 * qualifier's region rows, then {@linkcode #applyContainment}.
 	 */
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
 		qualifier: string,
 		country: string | null,
-		opts: {
-			nameKey: NameKey
-			strippedKey: NameKey
-			shapeFilters: string[]
-			shapeParams: Array<string | number>
-			limit: number
-		}
+		opts: ContainmentOptions
 	): Array<RankedRow<CandidateRow>> {
-		const qualifierIDs = this.#qualifierRegionIDs(qualifier, country)
+		return this.#applyContainment(rows, this.#qualifierRegionIDs(qualifier, country), opts)
+	}
 
+	/**
+	 * Stamp containment in the qualifier rows, inject contained misses, then partition contained-first.
+	 *
+	 * The qualifier rows are a parsed region's rows or one resolved parent place (#2804).
+	 * The injection reads the same name key under the shape filters and under the sub-locality placetypes,
+	 * so a dependent locality the locality band excludes re-enters the list when its parent contains it.
+	 */
+	#applyContainment(
+		rows: Array<RankedRow<CandidateRow>>,
+		qualifierIDs: ReadonlySet<number>,
+		opts: ContainmentOptions
+	): Array<RankedRow<CandidateRow>> {
 		if (!qualifierIDs.size) {
 			for (const row of rows) {
 				row.containedByQualifier = false
@@ -617,14 +636,23 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		}
 
 		// Admin-containment re-rank runs last.
+		const containmentOptions: ContainmentOptions = {
+			nameKey,
+			strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
+			shapeFilters,
+			shapeParams,
+			limit,
+		}
+
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
-			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, {
-				nameKey,
-				strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
-				shapeFilters,
-				shapeParams,
-				limit,
-			})
+			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, containmentOptions)
+		} else if (
+			typeof query.parentQualifierID === "number" &&
+			this.#ancestorsProbe &&
+			this.#wantsLocality(query.placetype)
+		) {
+			// A resolved parent qualifies by id, so no name probe runs (#2804).
+			rows = this.#applyContainment(rows, new Set([query.parentQualifierID]), containmentOptions)
 		}
 
 		const candidates = rows.map((row): PlaceCandidate => {

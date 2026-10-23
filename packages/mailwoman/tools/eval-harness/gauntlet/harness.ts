@@ -140,6 +140,11 @@ export interface GauntletResolverPins {
 	 */
 	adminContainmentRerank: SwitchPin
 	/**
+	 * A parsed dependent locality resolves inside its parent through the same sidecar
+	 * and answers the coordinate ahead of the locality (#2804).
+	 */
+	dependentLocalityContainment: SwitchPin
+	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
@@ -193,6 +198,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	postcodeCountryCoherence: "production",
 	gazetteerPrior: "production",
 	adminContainmentRerank: "production",
+	dependentLocalityContainment: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
@@ -212,6 +218,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 export function resolverPinDeps(pins: GauntletResolverPins): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
+	dependentLocalityContainment?: boolean
 	poiVenueTier?: boolean
 	spanRescoreRequireContextRemainder?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
@@ -219,6 +226,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	return {
 		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
+		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
 		...switchPinEntry("spanRescoreRequireContextRemainder", pins.spanRescoreRequireContextRemainder),
 		...(pins.spanRescoreWeakResolution === "production"

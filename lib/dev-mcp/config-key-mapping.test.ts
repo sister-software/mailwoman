@@ -40,11 +40,13 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			postcode_shape_coherence: "off",
 			postcode_containment_coherence: "off",
 			admin_containment_rerank: "on",
+			dependent_locality_containment: "on",
 			poi_venue_tier: "on",
 			capital_tier: "required",
 			variant_alias_exemption: "applied",
 			trace: true,
 			diagnose_unreachable: true,
+			channels: { anchor: "off" },
 		})
 
 		const produced = Object.keys(resolved)

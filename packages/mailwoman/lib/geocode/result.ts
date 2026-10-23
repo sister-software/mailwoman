@@ -7,7 +7,7 @@
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
-import { adminLadderForNodes } from "@mailwoman/resolver"
+import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { haversineKm, isLatLonBounds } from "@mailwoman/spatial"
 
 import { adminCoherenceField } from "#admin-coherence"
@@ -102,6 +102,24 @@ function halfDiagonalM(bbox: unknown): number | null {
 }
 
 /**
+ * The admin ladder for a tree, with a dependent locality the resolver placed inside
+ * its parent moved ahead of the locality (#2804).
+ *
+ * The resolver writes the `contained_by_parent` stamp only under its `dependentLocalityContainment`
+ * switch, so a tree without the stamp keeps the ladder as it stands.
+ */
+function adminPriorityFor(allNodes: readonly AddressNode[]): ReadonlyArray<string> {
+	const ladder = adminLadderForNodes(allNodes)
+
+	const contained = allNodes.some(
+		(n) =>
+			n.tag === "dependent_locality" && n.lat != null && n.lon != null && n.metadata?.["contained_by_parent"] === true
+	)
+
+	return contained ? ladderWithContainedDependentLocality(ladder) : ladder
+}
+
+/**
  * Projects a resolved address tree into a geocode result.
  *
  * The coordinate comes from the most precise tier present, in the order address point,
@@ -176,9 +194,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	}
 
 	if (tier === "admin") {
-		const adminPriority = adminLadderForNodes(allNodes)
-
-		for (const tag of adminPriority) {
+		for (const tag of adminPriorityFor(allNodes)) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
 
 			if (node) {

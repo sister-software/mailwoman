@@ -1063,6 +1063,27 @@ describe("Admin-containment re-rank through findPlace ( stage 2)", () => {
 		expect(hits[0]!.id).toBe(901)
 	})
 
+	test("a resolved parent qualifies by id: the contained neighborhood re-enters past the locality band (#2804)", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		// Yorkia (970) is Astorington's ancestor, so the parent id stands in for a dependent locality's resolved parent.
+		const hits = await lk.findPlace({ text: "Astorington", placetype: "locality", parentQualifierID: 970, limit: 5 })
+
+		expect(hits[0]!.id).toBe(971)
+		expect(hits[0]!.placetype).toBe("neighbourhood")
+		expect(hits[0]!.containedByQualifier).toBe(true)
+	})
+
+	test("a parent id that contains no row leaves the list as the band returned it", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const plain = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
+		const qualified = await lk.findPlace({ text: "Marwei", placetype: "locality", parentQualifierID: 400, limit: 5 })
+
+		expect(qualified.map((h) => h.id)).toEqual(plain.map((h) => h.id))
+		expect(qualified.every((h) => h.containedByQualifier === false)).toBe(true)
+	})
+
 	test("falls through to the CLOSURE rows where the interval forest cannot see the qualifier (DAG)", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 

@@ -20,6 +20,7 @@ import {
 	adminLadderFor,
 	adminLadderForNodes,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
+	ladderWithContainedDependentLocality,
 	mostSpecificResolved,
 	resolvedSpecificity,
 } from "#admin"
@@ -141,6 +142,29 @@ describe("adminLadderForNodes", () => {
 
 	it("falls back to locality-first when no postcode node is present", () => {
 		expect(adminLadderForNodes([])).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+	})
+})
+
+describe("ladderWithContainedDependentLocality", () => {
+	it("moves the dependent locality ahead of the locality and keeps every other rung in place", () => {
+		const ladder = ladderWithContainedDependentLocality(ADMIN_LADDER_LOCALITY_FIRST)
+
+		expect(leads(ladder, "dependent_locality", "locality")).toBe(true)
+		expect(leads(ladder, "locality", "municipality")).toBe(true)
+		expect([...ladder].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
+	})
+
+	it("keeps a unit-grade postcode first on the postcode-first ladder", () => {
+		const ladder = ladderWithContainedDependentLocality(ADMIN_LADDER_POSTCODE_FIRST)
+
+		expect(ladder[0]).toBe("postcode")
+		expect(leads(ladder, "dependent_locality", "locality")).toBe(true)
+	})
+
+	it("returns a ladder without both rungs as it is", () => {
+		const ladder = ["postcode", "region", "country"]
+
+		expect(ladderWithContainedDependentLocality(ladder)).toBe(ladder)
 	})
 })
 

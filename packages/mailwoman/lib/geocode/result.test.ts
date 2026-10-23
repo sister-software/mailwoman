@@ -55,6 +55,55 @@ function geocodeThrough(hit: AddressPointHit | null): ReturnType<typeof extractG
 
 const ROW = { lat: -37.137364, lon: 175.541779, localityNorm: null, postcode: null }
 
+describe("the admin ladder and a contained dependent locality (#2804)", () => {
+	const DISTRICT = "Didsbury, Manchester"
+
+	function districtTree(stamp: Record<string, unknown> | undefined): AddressTree {
+		return {
+			raw: DISTRICT,
+			roots: [
+				{
+					tag: "locality",
+					value: "Manchester",
+					start: 10,
+					end: 20,
+					confidence: 1,
+					children: [
+						{
+							tag: "dependent_locality",
+							value: "Didsbury",
+							start: 0,
+							end: 8,
+							confidence: 1,
+							children: [],
+							lat: 53.4166,
+							lon: -2.2311,
+							...(stamp ? { metadata: stamp } : {}),
+						},
+					],
+					lat: 53.4794,
+					lon: -2.2453,
+				},
+			],
+		}
+	}
+
+	it("answers the dependent locality's point when the resolver stamped it as contained", () => {
+		const result = extractGeocodeResult(DISTRICT, districtTree({ contained_by_parent: true }))
+
+		expect(result.lat).toBeCloseTo(53.4166, 4)
+		expect(result.lon).toBeCloseTo(-2.2311, 4)
+		expect(result.resolution_tier).toBe("admin")
+	})
+
+	it("answers the locality's point without the stamp, as the ladder orders today", () => {
+		const result = extractGeocodeResult(DISTRICT, districtTree(undefined))
+
+		expect(result.lat).toBeCloseTo(53.4794, 4)
+		expect(result.lon).toBeCloseTo(-2.2453, 4)
+	})
+})
+
 describe("coordinate_source", () => {
 	it("keeps an OpenStreetMap row's stamp and release", () => {
 		const result = geocodeThrough({ ...ROW, source: "openstreetmap:nz", release: "2026-08-06" })

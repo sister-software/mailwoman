@@ -147,6 +147,12 @@ export const spec = {
 			description:
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
+		"dependent-locality-containment": {
+			type: "boolean",
+			default: true,
+			description:
+				"Resolve a parsed dependent locality inside its parent and answer its point; --no-dependent-locality-containment disables it (#2804).",
+		},
 		"capital-tier": {
 			type: "string",
 			default: "auto",
@@ -232,6 +238,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
+		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
 		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
 		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,

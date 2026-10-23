@@ -61,6 +61,7 @@ export interface NodeTraceRecorder {
 		query: {
 			country?: string
 			parentID?: string | number
+			parentQualifierID?: number
 			postcode?: string | null
 			regionQualifier?: string | null
 			limit?: number
@@ -155,6 +156,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				query: {
 					country: ctx.query.country || null,
 					parentID: ctx.query.parentID ?? null,
+					parentQualifierID: ctx.query.parentQualifierID ?? null,
 					postcode: ctx.query.postcode || null,
 					regionQualifier: ctx.query.regionQualifier || null,
 					limit: ctx.query.limit ?? ctx.defaultLimit,
@@ -309,6 +311,12 @@ export interface ResolutionState {
 	 * are ordered ahead of the rest.
 	 */
 	adminContainmentRerank: boolean
+
+	/**
+	 * Whether a `dependent_locality` node's lookup passes its resolved parent as a containment
+	 * qualifier and a contained pick is stamped to answer ahead of the locality.
+	 */
+	dependentLocalityContainment: boolean
 
 	/**
 	 * The tree's first region value.
