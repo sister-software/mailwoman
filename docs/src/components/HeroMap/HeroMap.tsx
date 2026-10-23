@@ -24,6 +24,7 @@ const SOURCE_ID = "protomaps"
 
 /**
  * At desktop widths the hero panel covers the left of the map.
+ *
  * The camera pads that side, so the marker lands in the open part.
  */
 const PANEL_BREAKPOINT = 996

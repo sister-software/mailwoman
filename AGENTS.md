@@ -45,7 +45,6 @@ Use repository skills for procedures rather than copying their steps into this f
 - `wof-build` for rebuilding WOF SQLite and FST artifacts.
 - `task-intake` for implementation or training work expected to produce a PR or handoff.
 - `five-whys` when a failure's cause is not directly established.
-- `night-shift` and `morning-shift` for autonomous-shift handoff workflows.
 
 ## Read before changing behavior
 
