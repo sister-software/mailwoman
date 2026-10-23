@@ -148,6 +148,10 @@ Options:
   \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
                                               candidates; \-\-no\-admin\-containment\-rerank disables it.
                                               (default: true)
+  \-\-[no\-]dependent\-locality\-containment       Resolve a parsed dependent locality inside its parent
+                                              and answer its point;
+                                              \-\-no\-dependent\-locality\-containment disables it
+                                              (#2804). (default: true)
   \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
                                               auto (skip when the capitals reference is missing),
                                               required (fail when it is missing), or off. (default:

@@ -46,6 +46,16 @@ describe("resolverPinDeps — the pin set → geocodeAddress deps", () => {
 		expect(resolverPinDeps(pinned({ poiVenueTier: "off" }))).toEqual({ poiVenueTier: false })
 	})
 
+	it("carries the dependent-locality containment pin, ON and OFF, so the board grades #2804's two arms", () => {
+		expect(resolverPinDeps(pinned({ dependentLocalityContainment: "on" }))).toEqual({
+			dependentLocalityContainment: true,
+		})
+
+		expect(resolverPinDeps(pinned({ dependentLocalityContainment: "off" }))).toEqual({
+			dependentLocalityContainment: false,
+		})
+	})
+
 	it("emits no dep for the production pin set — production defaults stay in force", () => {
 		expect(resolverPinDeps(PRODUCTION_RESOLVER_PINS)).toEqual({})
 	})

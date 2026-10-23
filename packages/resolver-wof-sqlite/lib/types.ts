@@ -156,6 +156,14 @@ export interface FindPlaceQuery {
 	parentID?: number
 
 	/**
+	 * A resolved parent place whose containment orders the rows and admits contained sub-locality
+	 * rows the placetype filter excludes, read through the ancestors sidecar (#2804).
+	 *
+	 * It ranks rather than filters, so a query sets this or `parentID`.
+	 */
+	parentQualifierID?: number
+
+	/**
 	 * The sibling postcode for a `locality` query.
 	 *
 	 * A `postcode_locality` table adds that postcode's localities and scores them on a

@@ -53,6 +53,13 @@ export interface GeocodeCommandOptions {
 	 */
 	adminContainmentRerank: boolean
 	/**
+	 * A parsed dependent locality resolves inside its parent and answers the coordinate (#2804).
+	 * On by default.
+	 *
+	 * `--no-dependent-locality-containment` opts out.
+	 */
+	dependentLocalityContainment: boolean
+	/**
 	 * Capital-status ranking axis (`--capital-tier auto|required|off`).
 	 */
 	capitalTier: CapitalTier
@@ -88,6 +95,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		postcodeShapeCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeShapeCoherence,
 		postcodeContainmentCoherence: GEOCODE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
+		dependentLocalityContainment: GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,

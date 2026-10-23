@@ -124,6 +124,10 @@ export interface GeocodeSwitches {
 	 */
 	adminContainmentRerank: boolean
 	/**
+	 * Resolves a dependent locality inside its resolved parent and lets it answer the coordinate.
+	 */
+	dependentLocalityContainment: boolean
+	/**
 	 * Requires span-rescore recovery to leave a context remainder.
 	 */
 	spanRescoreRequireContextRemainder: boolean
@@ -151,6 +155,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	postcodeShapeCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeShapeCoherence,
 	postcodeContainmentCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
+	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
 	spanRescoreRequireContextRemainder: RESOLVE_SWITCH_DEFAULTS.spanRescoreRequireContextRemainder,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
@@ -523,6 +528,7 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"postcodeShapeCoherence",
 	"postcodeContainmentCoherence",
 	"adminContainmentRerank",
+	"dependentLocalityContainment",
 	"spanRescoreRequireContextRemainder",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]

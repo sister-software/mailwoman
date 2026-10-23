@@ -174,6 +174,13 @@ export interface GeocodeSessionOptions {
 	 */
 	adminContainmentRerank?: boolean
 
+	/**
+	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	dependentLocalityContainment?: boolean
+
 	placeCountryThreshold: number
 
 	/**
@@ -744,6 +751,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			postcodeShapeCoherence: options.postcodeShapeCoherence,
 			postcodeContainmentCoherence: options.postcodeContainmentCoherence,
 			adminContainmentRerank: options.adminContainmentRerank ?? GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
+			dependentLocalityContainment:
+				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 

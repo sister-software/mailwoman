@@ -124,6 +124,13 @@ export interface ResolverBackend {
 		fuzzyCountry?: string
 		parentID?: number | string
 		/**
+		 * A resolved parent place whose containment orders the candidates and admits
+		 * contained sub-locality rows the placetype filter excludes.
+		 *
+		 * `parentID` is a region scope filter and this is a ranking qualifier, so a query sets one of them.
+		 */
+		parentQualifierID?: number
+		/**
 		 * The postcode of a sibling, when present.
 		 */
 		postcode?: string
@@ -253,6 +260,7 @@ export interface ResolveSwitches {
 	hierarchyCompletion: boolean
 	includeAncestors: boolean
 	adminContainmentRerank: boolean
+	dependentLocalityContainment: boolean
 	diagnoseUnreachable: boolean
 }
 
@@ -274,6 +282,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	hierarchyCompletion: true,
 	includeAncestors: false,
 	adminContainmentRerank: true,
+	dependentLocalityContainment: true,
 	diagnoseUnreachable: false,
 }
 
@@ -481,6 +490,17 @@ export interface ResolveOpts {
 	 */
 	adminContainmentRerank?: boolean
 	/**
+	 * Resolves a `dependent_locality` node inside its resolved parent.
+	 *
+	 * The lookup passes the parent as a containment qualifier.
+	 * The ancestors sidecar then admits the sub-locality rows the locality band excludes.
+	 *
+	 * A pick the parent contains answers the coordinate ahead of the locality.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
+	 */
+	dependentLocalityContainment?: boolean
+	/**
 	 * Optional sink for resolver-internal trace records.
 	 */
 	traceSink?: ((record: ResolveNodeTrace) => void) | null
@@ -522,6 +542,13 @@ export interface ResolveNodeTrace {
 	query: {
 		country: string | null
 		parentID: string | number | null
+		/**
+		 * The resolved parent a dependent locality's lookup ranked by containment (#2804).
+		 *
+		 * Optional because a trace recorded before the field existed holds no such entry.
+		 * The recorder writes `null` when the lookup set no qualifier.
+		 */
+		parentQualifierID?: number | null
 		postcode: string | null
 		regionQualifier: string | null
 		limit: number

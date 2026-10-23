@@ -186,6 +186,7 @@ class WOFResolver implements Resolver {
 			includeAncestors: opts.includeAncestors,
 			// Optional admin containment rerank uses a pre-scanned region qualifier.
 			adminContainmentRerank: opts.adminContainmentRerank,
+			dependentLocalityContainment: opts.dependentLocalityContainment,
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 			localityNodePresent: false,
@@ -422,7 +423,12 @@ class WOFResolver implements Resolver {
 			if (band === probed) continue
 
 			try {
-				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: undefined })
+				const hits = await this.#backend.findPlace({
+					...query,
+					placetype: band,
+					parentID: undefined,
+					parentQualifierID: undefined,
+				})
 
 				if (hits.length) {
 					found.push({ placetype: band, n: hits.length })
@@ -459,10 +465,7 @@ class WOFResolver implements Resolver {
 			query.bias = state.bias
 		}
 
-		// Apply resolved parent scope when available.
-		if (parentResolved && typeof parentResolved.id === "number") {
-			query.parentID = parentResolved.id
-		}
+		const parentContainment = applyParentScope(query, node, parentResolved, state)
 
 		// Country scope precedence: parent -> default -> node hint -> hard country.
 		const countryHint = node.metadata?.["country_hint"]
@@ -669,7 +672,9 @@ class WOFResolver implements Resolver {
 
 		// Final containment partition.
 		// It reads the address's own qualifier and preserves the exact-match tier.
-		if (containmentEligible) {
+		const qualifierPartition = containmentEligible || parentContainment
+
+		if (qualifierPartition) {
 			ranked = partitionByContainment(
 				ranked,
 				(c) => c.containedByQualifier === true,
@@ -726,7 +731,7 @@ class WOFResolver implements Resolver {
 
 		// Trace receipts for mechanism-level observability.
 		const pickMetadata = {
-			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
+			...containmentStamps(qualifierPartition, parentContainment, ranked, top),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// Mark picks admitted outside resolved parent scope.
 			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
@@ -740,6 +745,56 @@ class WOFResolver implements Resolver {
 			alternatives: ranked.slice(1),
 			...(Object.keys(pickMetadata).length ? { metadata: pickMetadata } : {}),
 		}
+	}
+}
+
+/**
+ * Scopes a lookup to its resolved parent and reports whether the parent is a containment qualifier.
+ *
+ * A parent is a `parentID` region scope.
+ * A `dependent_locality` node under the `dependentLocalityContainment` switch passes
+ * its parent as `parentQualifierID` instead (#2804).
+ *
+ * The candidate table's region scope holds region ids, so a locality parent never satisfies it.
+ *
+ * The containment partition admits the sub-locality rows the locality band excludes.
+ */
+function applyParentScope(
+	query: Parameters<ResolverBackend["findPlace"]>[0],
+	node: AddressNode,
+	parentResolved: CoordinateOptionalPlace | null,
+	state: ResolutionState
+): boolean {
+	if (!parentResolved || typeof parentResolved.id !== "number") return false
+
+	if (state.dependentLocalityContainment && node.tag === "dependent_locality") {
+		query.parentQualifierID = parentResolved.id
+
+		return true
+	}
+
+	query.parentID = parentResolved.id
+
+	return false
+}
+
+/**
+ * The pick metadata a containment partition writes: the tri-state verdict when a qualifier was
+ * read, and `contained_by_parent` when a dependent locality's pick sits inside its parent.
+ *
+ * The geocode result's admin ladder reads the second stamp to let the pick answer ahead of the locality.
+ */
+function containmentStamps(
+	qualifierPartition: boolean,
+	parentContainment: boolean,
+	ranked: readonly ResolvedPlace[],
+	top: ResolvedPlace
+): Record<string, unknown> {
+	if (!qualifierPartition) return {}
+
+	return {
+		admin_containment: adminContainmentVerdict(ranked),
+		...(parentContainment && top.containedByQualifier === true ? { contained_by_parent: true } : {}),
 	}
 }
 

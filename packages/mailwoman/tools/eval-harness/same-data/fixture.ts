@@ -50,6 +50,7 @@ export const WITHHELD_CANDIDATE_FIELDS = [
  */
 export const SAME_DATA_RESOLVER_PINS = {
 	adminContainmentRerank: false,
+	dependentLocalityContainment: false,
 } as const satisfies ResolveOpts
 
 /**

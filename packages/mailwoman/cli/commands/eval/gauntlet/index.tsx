@@ -60,6 +60,12 @@ export const spec = {
 			default: "production",
 			description: "Pin the containment rerank",
 		},
+		"dependent-locality-containment": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the dependent-locality containment",
+		},
 		"span-rescore-require-context-remainder": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

@@ -45,6 +45,26 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
+ * The ladder with `dependent_locality` moved ahead of `locality`, for a tree whose
+ * dependent locality the resolver placed inside its parent (#2804).
+ *
+ * The postcode rung keeps its place, so a unit-grade postcode still answers first.
+ * A ladder without both rungs is returned as it is.
+ */
+export function ladderWithContainedDependentLocality(ladder: ReadonlyArray<string>): ReadonlyArray<string> {
+	const dependent = ladder.indexOf("dependent_locality")
+	const locality = ladder.indexOf("locality")
+
+	if (dependent === -1 || locality === -1 || dependent < locality) return ladder
+
+	const moved = ladder.filter((rung) => rung !== "dependent_locality")
+
+	moved.splice(moved.indexOf("locality"), 0, "dependent_locality")
+
+	return moved
+}
+
+/**
  * The resolved postcode a ladder decision reads.
  *
  * It contains the parsed span and the resolver hit.

@@ -67,6 +67,12 @@ export interface EngineConfig {
 	postcode_containment_coherence?: SwitchPin
 	admin_containment_rerank?: SwitchPin
 	/**
+	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate (#2804).
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment`
+	 */
+	dependent_locality_containment?: SwitchPin
+	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
@@ -124,6 +130,7 @@ export const EFFECTIVE_KEY_FOR = {
 	postcode_shape_coherence: "postcodeShapeCoherence",
 	postcode_containment_coherence: "postcodeContainmentCoherence",
 	admin_containment_rerank: "adminContainmentRerank",
+	dependent_locality_containment: "dependentLocalityContainment",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
 	variant_alias_exemption: "variantAliasExemption",
@@ -184,6 +191,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		adminContainmentRerank: pinnedSwitch(
 			config.admin_containment_rerank ?? "production",
 			production.adminContainmentRerank
+		),
+		dependentLocalityContainment: pinnedSwitch(
+			config.dependent_locality_containment ?? "production",
+			production.dependentLocalityContainment
 		),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,

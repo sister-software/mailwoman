@@ -66,6 +66,7 @@ const KNOB_OPTION_KINDS = {
 	hierarchyCompletion: "boolean",
 	includeAncestors: "boolean",
 	adminContainmentRerank: "boolean",
+	dependentLocalityContainment: "boolean",
 	traceSink: null,
 	diagnoseUnreachable: "boolean",
 } as const satisfies Record<keyof Required<ResolveOpts>, KnobOptionKind>
