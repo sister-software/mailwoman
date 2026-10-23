@@ -14,6 +14,8 @@ import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { isDirectory, readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { relative, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -116,6 +118,103 @@ function metadataFor(relativePath: string): Pick<DemoAssetUpload, "contentType" 
 }
 
 /**
+ * The directory whose dated generations hold the placetype-pair indexes.
+ */
+const PAIR_INDEX_DIRECTORY = "pair-index"
+
+/**
+ * The manifest beside one generation's binaries, listing the countries they cover.
+ */
+const PAIR_INDEX_MANIFEST = "index.json"
+
+const PAIR_INDEX_BINARY = /^pair-index-([a-z]{2})\.bin$/
+
+/**
+ * One manifest {@linkcode writePairIndexManifests} wrote.
+ */
+export interface PairIndexManifestWrite {
+	relativePath: string
+	version: string
+	countries: string[]
+}
+
+/**
+ * Writes `index.json` beside each staged pair-index generation that holds a binary,
+ * listing the countries those binaries cover in sorted order.
+ *
+ * The runtime reads the manifest to decide which binaries to request, so the list
+ * is derived from the staged files rather than typed anywhere.
+ * A generation directory without a binary is left as it is, so a manifest can
+ * be staged and published on its own.
+ */
+export async function writePairIndexManifests(src: PathBuilderLike): Promise<PairIndexManifestWrite[]> {
+	const root = src.toString()
+
+	const binaries = await Globerator.from(`${PAIR_INDEX_DIRECTORY}/*/*.bin`, {
+		cwd: root,
+		absolute: true,
+		onlyFiles: true,
+	}).toSorted()
+
+	const countriesByVersion = new Map<string, string[]>()
+
+	for (const file of binaries) {
+		const [, version, filename] = relative(root, file).split("\\").join("/").split("/")
+		const match = filename ? PAIR_INDEX_BINARY.exec(filename) : null
+
+		if (!version || !match) continue
+
+		const countries = countriesByVersion.get(version) ?? []
+
+		countries.push(match[1]!)
+		countriesByVersion.set(version, countries)
+	}
+
+	const written: PairIndexManifestWrite[] = []
+
+	for (const [version, unsorted] of countriesByVersion) {
+		const countries = unsorted.toSorted()
+		const relativePath = `${PAIR_INDEX_DIRECTORY}/${version}/${PAIR_INDEX_MANIFEST}`
+
+		await writeLocalTextFile(prettyJSON({ version, countries }), `${root}/${relativePath}`)
+		written.push({ relativePath, version, countries })
+	}
+
+	return written
+}
+
+/**
+ * Refuses a staged pair-index generation that lacks its manifest.
+ *
+ * The runtime requests only the binaries the manifest lists, so a generation
+ * published without one serves no pair index at all.
+ */
+function assertPairIndexManifests(relativePaths: readonly string[]): void {
+	const generations = new Set<string>()
+
+	for (const relativePath of relativePaths) {
+		const [directory, version, filename] = relativePath.split("/")
+
+		if (directory === PAIR_INDEX_DIRECTORY && version && filename) {
+			generations.add(version)
+		}
+	}
+
+	for (const version of generations) {
+		const manifest = `${PAIR_INDEX_DIRECTORY}/${version}/${PAIR_INDEX_MANIFEST}`
+
+		if (relativePaths.includes(manifest)) continue
+
+		throw new CommandError(
+			`refusing to publish ${PAIR_INDEX_DIRECTORY}/${version} without its ${PAIR_INDEX_MANIFEST}:\n` +
+				"  the runtime reads that manifest to learn which countries the generation holds, and a generation\n" +
+				"  without one serves no pair index. publishDemoAssets writes it from the staged binaries; a direct\n" +
+				"  plan needs writePairIndexManifests(src) first."
+		)
+	}
+}
+
+/**
  * Lists and validates every object before any credentials are read or bytes are uploaded.
  */
 export async function planDemoAssetUploads(src: PathBuilderLike, prefix = "mailwoman"): Promise<DemoAssetUpload[]> {
@@ -126,6 +225,8 @@ export async function planDemoAssetUploads(src: PathBuilderLike, prefix = "mailw
 	const files = await Globerator.from("**/*", { cwd: root, absolute: true, onlyFiles: true }).toSorted()
 
 	if (!files.length) throw new CommandError(`no files under ${root}`)
+
+	assertPairIndexManifests(files.map((file) => relative(root, file).split("\\").join("/")))
 
 	const uploads = await Promise.all(
 		files.map(async (file) => {
@@ -219,6 +320,11 @@ function objectLine(asset: DemoAssetUpload, dryRun: boolean): string {
 export async function publishDemoAssets(options: PublishDemoAssetsOptions): Promise<PublishDemoAssetsResult> {
 	const bucket = options.bucket ?? $public.MAILWOMAN_PUBLIC_BUCKET
 	const prefix = options.prefix ?? "mailwoman"
+
+	// The manifests are derived from the staged binaries on every publish, so a staged
+	// generation never reaches the bucket with a list that disagrees with its files.
+	await writePairIndexManifests(options.src)
+
 	const uploads = await planDemoAssetUploads(options.src, prefix)
 	const dryRun = options.dryRun ?? false
 

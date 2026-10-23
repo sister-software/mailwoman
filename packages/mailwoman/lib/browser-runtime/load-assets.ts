@@ -19,13 +19,19 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 import type { SelectPairIndex } from "#browser-runtime/classify"
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-runtime/fetch"
-import { postcodeAnchorFilesOf, postcodePrefixFilesOf, type ReleaseInfo } from "#browser-runtime/manifest"
+import {
+	fetchPairIndexManifest,
+	postcodeAnchorFilesOf,
+	postcodePrefixFilesOf,
+	type ReleaseInfo,
+} from "#browser-runtime/manifest"
 import {
 	adminGazetteerURL,
 	assetURL,
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
+	PAIR_INDEX_VERSION,
 } from "#browser-runtime/resources"
 import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
@@ -168,6 +174,10 @@ export async function loadReleaseAssets(
 		? settleOptional(loadStreetMorphologyFST(DEFAULT_LOCALE, release.version))
 		: null
 
+	// The pair-index generation's manifest lists the countries whose binaries the bucket holds.
+	// It is a small fetch that starts here and is awaited only where the URL set is built.
+	const pairIndexManifestLoad = settleOptional(fetchPairIndexManifest(PAIR_INDEX_VERSION))
+
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
 	// Each smaller asset would move the bar backwards if the loader reported it when loading began.
@@ -180,8 +190,11 @@ export async function loadReleaseAssets(
 			)
 		: fetchWithRetry
 
+	const pairIndexManifest = await pairIndexManifestLoad
+
 	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 		postcodeAnchors: postcodeAnchorFilesOf(release),
+		pairIndexCountries: pairIndexManifest?.countries ?? [],
 		postcodePrefixes: postcodePrefixFilesOf(release),
 		splitEmbeddings: release.splitEmbeddings,
 	})

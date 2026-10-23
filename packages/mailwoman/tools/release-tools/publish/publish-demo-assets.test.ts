@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { describe, expect, it, vi } from "vitest"
@@ -13,6 +14,7 @@ import {
 	MUTABLE_CACHE_CONTROL,
 	planDemoAssetUploads,
 	publishDemoAssets,
+	writePairIndexManifests,
 } from "#tools/release-tools/publish/demo-assets"
 
 describe("publishDemoAssets", () => {
@@ -77,6 +79,55 @@ describe("publishDemoAssets", () => {
 		)
 
 		expect(upload).not.toHaveBeenCalled()
+	})
+
+	it("writes each pair-index generation's manifest from its staged binaries and publishes it beside them", async () => {
+		await using directory = await temporaryDirectory("mw-demo-assets-")
+		await makeDirectories(directory.path("pair-index", "2026-10-17"))
+		await writeLocalFile("nz", directory.path("pair-index", "2026-10-17", "pair-index-nz.bin"))
+		await writeLocalFile("gb", directory.path("pair-index", "2026-10-17", "pair-index-gb.bin"))
+		await writeLocalFile("us", directory.path("pair-index", "2026-10-17", "pair-index-us.bin"))
+
+		const upload = vi.fn()
+		const result = await publishDemoAssets({ src: directory.path, upload })
+
+		const manifest = upload.mock.calls
+			.map(([asset]) => asset as { relativePath: string; contentType: string; cacheControl: string })
+			.find((asset) => asset.relativePath === "pair-index/2026-10-17/index.json")
+
+		expect(result.objects).toBe(4)
+		expect(manifest).toMatchObject({ contentType: "application/json", cacheControl: IMMUTABLE_CACHE_CONTROL })
+
+		expect(await readLocalJSONFile(directory.path("pair-index", "2026-10-17", "index.json"))).toEqual({
+			version: "2026-10-17",
+			countries: ["gb", "nz", "us"],
+		})
+	})
+
+	it("leaves a staged manifest alone when its generation holds no binary, so a manifest can ship by itself", async () => {
+		await using directory = await temporaryDirectory("mw-demo-assets-")
+		await makeDirectories(directory.path("pair-index", "2026-10-17"))
+
+		await writeLocalFile(
+			'{"version":"2026-10-17","countries":["gb"]}',
+			directory.path("pair-index", "2026-10-17", "index.json")
+		)
+
+		expect(await writePairIndexManifests(directory.path)).toEqual([])
+
+		const uploads = await planDemoAssetUploads(directory.path, "mailwoman")
+
+		expect(uploads.map((upload) => upload.relativePath)).toEqual(["pair-index/2026-10-17/index.json"])
+	})
+
+	it("refuses to plan a pair-index generation that lacks its manifest", async () => {
+		await using directory = await temporaryDirectory("mw-demo-assets-")
+		await makeDirectories(directory.path("pair-index", "2026-10-17"))
+		await writeLocalFile("gb", directory.path("pair-index", "2026-10-17", "pair-index-gb.bin"))
+
+		await expect(planDemoAssetUploads(directory.path, "mailwoman")).rejects.toThrow(
+			/pair-index\/2026-10-17 without its index\.json/
+		)
 	})
 
 	it("does not read credentials or invoke the transport during a dry run", async () => {
