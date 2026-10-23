@@ -70,7 +70,7 @@ const popHeight = (target: ExpressionSpecification): ExpressionSpecification => 
 /**
  * The feature-state key a viewer sets on a footprint that a finer 3D model draws in its place.
  *
- * A footprint with this state set extrudes to nothing and drops its outline.
+ * A footprint with this state set extrudes to zero height and drops its outline.
  */
 export const BUILDING_MODELED_STATE = "modeled"
 
