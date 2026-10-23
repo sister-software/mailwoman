@@ -8,12 +8,16 @@
  *   legend and hover card, and in developer mode the bottom-right feature-inspector {@link DebugControl}. Both
  *   are fed the underlying maplibre map handle.
  *
+ *   `?no-3d` leaves out the deck.gl scene, so the geocoder's browser tests run without the 3D overlay.
+ *
  *   The layer control is not here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
  *   layout puts it under the example chips. a MapLibre corner control cannot sit in that column.
  */
 
 import type React from "react"
 import { useMap } from "react-map-gl/maplibre"
+
+import { pageSearchParam } from "#routes"
 
 import { Scene3D } from "../scene/Scene3D.tsx"
 import { CameraPermalink } from "./CameraPermalink.tsx"
@@ -33,7 +37,7 @@ export const MapControls: React.FC<{ devMode: boolean }> = ({ devMode }) => {
 
 	return (
 		<>
-			<Scene3D />
+			{pageSearchParam("no-3d") === null ? <Scene3D /> : null}
 			<CameraPermalink />
 			<JurisdictionInspector map={map} />
 			{devMode ? <DebugControl map={map} /> : null}

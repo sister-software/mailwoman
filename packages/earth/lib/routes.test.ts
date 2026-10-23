@@ -54,6 +54,26 @@ describe("pathWithCamera", () => {
 		expect(cameraFromPath(path)).toEqual({ center: [0.7244254, 51.0716963], zoom: 9 })
 		expect(routeForPath(path)).toBe(Route.Geocoder)
 	})
+
+	test("leaves a URL-valued parameter as written", () => {
+		const url = new URL("https://earth.mailwoman.ai/@1,2,3z?basemap=https://public.mailwoman.ai/a.pmtiles")
+
+		expect(pathWithCamera(url, [2, 1], 4)).toBe("/@1,2,4z?basemap=https://public.mailwoman.ai/a.pmtiles")
+	})
+
+	test("writes a center near zero in fixed-point notation and wraps longitude, as a zoomed-out globe reports", () => {
+		const url = new URL("https://earth.mailwoman.ai/@0,0,1z?basemap=x")
+		const path = pathWithCamera(url, [-540.00000004, 0.00000012], 0.4)
+
+		expect(path).toBe("/@0.0000001,180,0.4z?basemap=x")
+
+		expect(cameraFromPath(new URL(path, "https://earth.mailwoman.ai").pathname)).toEqual({
+			center: [180, 0.0000001],
+			zoom: 0.4,
+		})
+
+		expect(pathWithCamera(new URL(`https://earth.mailwoman.ai${path}`), [1, -0.00000001], 0)).toBe("/@0,1,0z?basemap=x")
+	})
 })
 
 describe("cameraFromSearch", () => {

@@ -12,7 +12,7 @@ import { Tile3DLayer } from "@deck.gl/geo-layers"
 import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
-import { BuildingLayers } from "@mailwoman/cartographer/base/buildings"
+import { BUILDING_MODELED_STATE } from "@mailwoman/cartographer/base/buildings"
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
@@ -82,9 +82,24 @@ const CITY_MODELS = electedPlateauTilesets(
 )
 
 /**
- * The zoom from which the city models draw, where a building spans enough pixels for its roof to read.
+ * The zoom from which the city models load and start to fade in.
  */
-const CITY_MODEL_MIN_ZOOM = 15
+const CITY_MODEL_MIN_ZOOM = 14.5
+
+/**
+ * The zoom at which the city models are opaque and replace the extruded footprints they cover.
+ */
+const CITY_MODEL_OPAQUE_ZOOM = 15.5
+
+/**
+ * The city models' opacity at a zoom, in steps of 0.1 so a zoom gesture redraws
+ * the overlay at most ten times.
+ */
+function cityModelOpacity(zoom: number): number {
+	const ramp = (zoom - CITY_MODEL_MIN_ZOOM) / (CITY_MODEL_OPAQUE_ZOOM - CITY_MODEL_MIN_ZOOM)
+
+	return Math.round(Math.min(Math.max(ramp, 0), 1) * 10) / 10
+}
 
 /**
  * Tileset options that lower a tileset by its geoid height along the local vertical.
@@ -104,7 +119,16 @@ interface CityModelTilesetOptions {
 	modelMatrix: Matrix4
 	maximumMemoryUsage: number
 	maximumScreenSpaceError: number
+	maxRequests: number
 }
+
+/**
+ * Tile requests each tileset keeps in flight.
+ *
+ * Tileset3D defaults to 64.
+ * Several wards load at once, and PLATEAU's host drops connections under that many parallel requests.
+ */
+const CITY_MODEL_MAX_REQUESTS = 12
 
 const CITY_MODEL_MEMORY_MB = 512
 
@@ -126,6 +150,7 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 				modelMatrix: new Matrix4().translate(offset),
 				maximumMemoryUsage: CITY_MODEL_MEMORY_MB,
 				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
+				maxRequests: CITY_MODEL_MAX_REQUESTS,
 			},
 		}
 
@@ -135,18 +160,105 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 	return options
 }
 
-function cityModelsInView(map: MapInstance): PlateauTileset[] {
-	if (map.getZoom() < CITY_MODEL_MIN_ZOOM) return []
+/**
+ * The zoom below which the city model layers are removed.
+ */
+const CITY_MODEL_KEEP_ZOOM = 14
+
+/**
+ * The city models to keep as layers, updating `kept`, the URLs kept so far.
+ *
+ * Removing a Tile3DLayer destroys its tileset, and a tile still loading
+ * then fails with `assert failed: gltf`.
+ * A tileset joins when it enters the view at `CITY_MODEL_MIN_ZOOM`.
+ *
+ * It leaves only when the view zooms out past `CITY_MODEL_KEEP_ZOOM` or moves a full view away from it.
+ */
+function cityModelsToKeep(map: MapInstance, kept: Set<string>): PlateauTileset[] {
+	const zoom = map.getZoom()
+
+	if (zoom < CITY_MODEL_KEEP_ZOOM) {
+		kept.clear()
+
+		return []
+	}
 
 	const bounds = map.getBounds()
+	const [west, south, east, north] = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
 
-	return plateauTilesetsInView(CITY_MODELS, [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()])
+	if (zoom >= CITY_MODEL_MIN_ZOOM) {
+		for (const tileset of plateauTilesetsInView(CITY_MODELS, [west, south, east, north])) {
+			kept.add(tileset.url)
+		}
+	}
+
+	const width = east - west
+	const height = north - south
+
+	const nearby = new Set(
+		plateauTilesetsInView(CITY_MODELS, [west - width, south - height, east + width, north + height]).map((t) => t.url)
+	)
+
+	for (const url of kept) {
+		if (!nearby.has(url)) {
+			kept.delete(url)
+		}
+	}
+
+	return CITY_MODELS.filter((tileset) => kept.has(tileset.url))
 }
 
-function containsCenter({ bounds: [west, south, east, north] }: PlateauTileset, map: MapInstance): boolean {
-	const { lng, lat } = map.getCenter()
+function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [lng, lat]: number[]): boolean {
+	return lng! >= west && lng! <= east && lat! >= south && lat! <= north
+}
 
-	return lng >= west && lng <= east && lat >= south && lat <= north
+/**
+ * Sets the modeled state on each loaded footprint whose first vertex lies inside a
+ * drawn city model, and clears it from footprints that left one.
+ *
+ * The building layers then skip those footprints, so a city model and an
+ * extrusion never draw the same building.
+ *
+ * `marked` holds the ids currently in the modeled state.
+ */
+function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], marked: Set<string | number>): void {
+	const target = { source: MailwomanBaseTileSetID, sourceLayer: "buildings" }
+	const covered = new Set<string | number>()
+
+	if (cityModels.length) {
+		for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, { sourceLayer: "buildings" })) {
+			const { id, geometry } = feature
+
+			if (id == null || covered.has(id)) continue
+
+			const ring =
+				geometry.type === "Polygon"
+					? geometry.coordinates[0]
+					: geometry.type === "MultiPolygon"
+						? geometry.coordinates[0]?.[0]
+						: undefined
+
+			const vertex = ring?.[0]
+
+			if (vertex && cityModels.some((tileset) => containsPoint(tileset, vertex))) {
+				covered.add(id)
+			}
+		}
+	}
+
+	for (const id of marked) {
+		if (!covered.has(id)) {
+			map.setFeatureState({ ...target, id }, { [BUILDING_MODELED_STATE]: false })
+			marked.delete(id)
+		}
+	}
+
+	for (const id of covered) {
+		if (!marked.has(id)) {
+			map.setFeatureState({ ...target, id }, { [BUILDING_MODELED_STATE]: true })
+			marked.add(id)
+		}
+	}
 }
 
 /**
@@ -243,6 +355,8 @@ export const Scene3D: React.FC = () => {
 		// so a pan or a tile reload keeps the trees already drawn.
 		// The overlay redraws only when the cache changes.
 		const trees = new Map<string, TreeInstance>()
+		const modeledFootprints = new Set<string | number>()
+		const keptCityModels = new Set<string>()
 		let drawnSize = -1
 		let drawnCityModels: string | null = null
 		let changed = true
@@ -259,22 +373,17 @@ export const Scene3D: React.FC = () => {
 				changed = pruneDistantTrees(map, trees) || changed
 			}
 
-			const cityModels = cityModelsInView(map)
-			const cityModelKey = cityModels.map((tileset) => tileset.url).join(" ")
+			const cityModels = cityModelsToKeep(map, keptCityModels)
+			const opacity = cityModelOpacity(map.getZoom())
+			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
+
+			// While the models fade in, the footprints under them stay drawn, so the two cross-fade.
+			markModeledFootprints(map, opacity === 1 ? cityModels : [], modeledFootprints)
 
 			if (!changed && drawnSize === trees.size && drawnCityModels === cityModelKey) return
 			changed = false
 			drawnSize = trees.size
 			drawnCityModels = cityModelKey
-
-			// Where a city model covers the view, it draws the buildings and the extruded footprints stay hidden.
-			const footprintVisibility = cityModels.some((tileset) => containsCenter(tileset, map)) ? "none" : "visible"
-
-			for (const layer of BuildingLayers) {
-				if (map.getLayer(layer.id) && map.getLayoutProperty(layer.id, "visibility") !== footprintVisibility) {
-					map.setLayoutProperty(layer.id, "visibility", footprintVisibility)
-				}
-			}
 
 			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
 			for (const layer of TreeLayers) {
@@ -343,6 +452,7 @@ export const Scene3D: React.FC = () => {
 								data: tileset.url,
 								loader: Tiles3DLoader,
 								loadOptions: loadOptionsFor(tileset),
+								opacity,
 							})
 					),
 				],
@@ -361,14 +471,28 @@ export const Scene3D: React.FC = () => {
 			}
 		}
 
+		let scheduledOpacity = cityModelOpacity(map.getZoom())
+
+		// A zoom gesture redraws the overlay only when the city models' opacity crosses a step.
+		const scheduleFade = () => {
+			const opacity = cityModelOpacity(map.getZoom())
+
+			if (opacity !== scheduledOpacity) {
+				scheduledOpacity = opacity
+				schedule()
+			}
+		}
+
 		schedule()
 		map.on("sourcedata", schedule)
 		map.on("moveend", schedule)
+		map.on("zoom", scheduleFade)
 
 		return () => {
 			cancelAnimationFrame(frame)
 			map.off("sourcedata", schedule)
 			map.off("moveend", schedule)
+			map.off("zoom", scheduleFade)
 		}
 	}, [map, overlay, meshes])
 

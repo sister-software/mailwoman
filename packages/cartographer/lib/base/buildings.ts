@@ -11,7 +11,6 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 
 import { GuideMapPalette, MailwomanBaseTileSetID } from "#base/theme"
-import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
@@ -33,23 +32,25 @@ const POP_END = 12
  * At 0.6 a tall tower seen at street zoom showed the map through its walls.
  */
 const buildingOpacity: ExpressionSpecification = ["interpolate", ["linear"], ["zoom"], 11, 0, 11.5, 0.6, 15, 0.9]
+
 /**
- * Meters: tiny lift so the band clears the roof (kills z-fight)
+ * The height in meters given to a building or part whose tags state no height.
  */
-const ROOF_GAP = 0.1
-/**
- * Meters: band thickness.
- */
-const ROOF_CAP = 1
+const UNKNOWN_BUILDING_HEIGHT = 10
 
 /**
  * Roof edge and footprint outline (縁取り).
  */
 const BUILDING_EDGE = GuideMapPalette.buildingEdge
 
+/**
+ * A feature's top in meters.
+ *
+ * A part with a `min_height` and no height rises the default height above its base.
+ */
 const buildingHeight = (offset = 0): ExpressionSpecification => [
 	"+",
-	["coalesce", ["get", "height"], ["get", "min_height"], 10],
+	["coalesce", ["get", "height"], ["+", ["coalesce", ["get", "min_height"], 0], UNKNOWN_BUILDING_HEIGHT]],
 	offset,
 ]
 
@@ -67,6 +68,15 @@ const popHeight = (target: ExpressionSpecification): ExpressionSpecification => 
 ]
 
 /**
+ * The feature-state key a viewer sets on a footprint that a finer 3D model draws in its place.
+ *
+ * A footprint with this state set extrudes to zero height and drops its outline.
+ */
+export const BUILDING_MODELED_STATE = "modeled"
+
+const isModeled: ExpressionSpecification = ["boolean", ["feature-state", BUILDING_MODELED_STATE], false]
+
+/**
  * Layer definitions for building data.
  */
 export const BuildingLayers: LayerSpecification[] = [
@@ -77,31 +87,9 @@ export const BuildingLayers: LayerSpecification[] = [
 		paint: {
 			"fill-extrusion-color": GuideMapPalette.building,
 			"fill-extrusion-vertical-gradient": false,
-			"fill-extrusion-translate": [0.1, 0.1],
 			"fill-extrusion-opacity": buildingOpacity,
 		},
 	}),
-
-	// Roof-edge outline: thin extruded band sitting at the top of each building.
-	{
-		id: "basemap-buildings-roof-outline",
-		type: "fill-extrusion",
-		source: MailwomanBaseTileSetID,
-		"source-layer": "buildings",
-		minzoom: 10,
-		paint: {
-			"fill-extrusion-color": BUILDING_EDGE,
-
-			"fill-extrusion-vertical-gradient": false,
-			"fill-extrusion-translate-anchor": "map",
-			"fill-extrusion-opacity": buildingOpacity,
-			// top of the band = full building height "fill-extrusion-height": popHeight(buildingHeight()),
-			// // base of the band = full height minus the cap thickness (clamped ≥ 0)
-			// "fill-extrusion-base": popHeight([ "max", [ "-", buildingHeight(), ROOF_CAP ], 0 ]),
-			"fill-extrusion-height": popHeight(["+", buildingHeight(), ROOF_GAP, ROOF_CAP]),
-			"fill-extrusion-base": popHeight(["+", buildingHeight(), ROOF_GAP]),
-		},
-	},
 
 	{
 		id: "basemap-buildings-outline",
@@ -112,28 +100,7 @@ export const BuildingLayers: LayerSpecification[] = [
 		paint: {
 			"line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 1],
 			"line-color": BUILDING_EDGE,
-			"line-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 0.8],
-		},
-	},
-
-	{
-		id: "basemap-buildings-kind",
-		type: "symbol",
-		source: MailwomanBaseTileSetID,
-		"source-layer": "buildings",
-		minzoom: 11,
-		layout: {
-			visibility: "none",
-			"text-field": ["to-string", ["id"]],
-			"text-offset": [0, 0],
-			"text-anchor": "center",
-			"text-font": [MAP_FONT_REGULAR],
-		},
-
-		paint: {
-			"text-color": "black",
-			"text-halo-color": "red",
-			"text-halo-width": 1,
+			"line-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, ["case", isModeled, 0, 0.8]],
 		},
 	},
 ]
@@ -152,9 +119,9 @@ function createBuildingFillStyleLayer(fillStyleSpec: BuildingFillStyleSpec): Lay
 		minzoom: 10,
 		paint: {
 			"fill-extrusion-vertical-gradient": true,
-			"fill-extrusion-height": popHeight(buildingHeight(fillStyleSpec.heightOffset)),
+			"fill-extrusion-height": popHeight(["case", isModeled, 0, buildingHeight(fillStyleSpec.heightOffset)]),
 			// A building part, such as an upper section of a tower, starts at its `min_height`.
-			"fill-extrusion-base": popHeight(["coalesce", ["get", "min_height"], 0]),
+			"fill-extrusion-base": popHeight(["case", isModeled, 0, ["coalesce", ["get", "min_height"], 0]]),
 			"fill-extrusion-translate-anchor": "map",
 			"fill-extrusion-opacity": 0.95,
 			...fillStyleSpec.paint,
