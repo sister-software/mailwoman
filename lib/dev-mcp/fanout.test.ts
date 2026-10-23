@@ -16,6 +16,7 @@ import {
 	runFanout,
 	uniqueLabels,
 } from "#dev-mcp/fanout"
+import type { buildRoutedMailwomanArm } from "#dev-mcp/routed-mailwoman-arm"
 import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 const LAKE = { lat: 51.5195735, lon: -0.4897194 }
@@ -315,15 +316,17 @@ describe("runFanout", () => {
 	it("builds one routed arm per spec over the selected rows and disposes each", async () => {
 		const disposed: string[] = []
 
-		const build = vi.fn(async (config: Record<string, unknown>, inputs: readonly unknown[]) => ({
+		const build = vi.fn<typeof buildRoutedMailwomanArm>(async (config, inputs) => ({
 			provenance: {
-				engine: "mailwoman:gauntlet-routed",
-				weights_cache: config["weights_cache"] ?? null,
-				n: inputs.length,
+				engine: "mailwoman:gauntlet-routed" as const,
+				weights_cache: config.weights_cache ?? null,
+				base_model_path: "/stub/en-us/model.onnx",
+				routes: Object.fromEntries(inputs.map((input) => [input.country ?? "??", "en-US"])),
+				artifacts_by_locale: [],
 			},
 			geocode: async () =>
 				gauntletResult(
-					config["weights_cache"]
+					config.weights_cache
 						? {
 								components: { street: "Little Britain Lake", locality: "Uxbridge" },
 								street: "Little Britain Lake",
@@ -334,20 +337,27 @@ describe("runFanout", () => {
 						: { components: { locality: "Uxbridge" }, locality: "Uxbridge", ...LAKE, tier: "admin" }
 				),
 			[Symbol.dispose]: () => {
-				disposed.push(String(config["weights_cache"] ?? "production"))
+				disposed.push(config.weights_cache ?? "production")
 			},
 		}))
 
 		const report = await runFanout(
 			stubEngineRegistry(),
 			{ inputs: LITERAL, arms: [{ config: {} }, { config: { weights_cache: "/mnt/mw/candidates/v820-base" } }] },
-			{ buildRoutedMailwomanArm: build as never }
+			{ buildRoutedMailwomanArm: build }
 		)
 
 		expect(build).toHaveBeenCalledTimes(2)
 		expect(build.mock.calls[0]![1]).toHaveLength(1)
 		expect(report.provenance.execution_path).toBe("board-routed")
-		expect(report.provenance.arms[0]!.provenance).toMatchObject({ engine: "mailwoman:gauntlet-routed", n: 1 })
+
+		expect(report.provenance.arms[0]!.provenance).toMatchObject({
+			engine: "mailwoman:gauntlet-routed",
+			weights_cache: null,
+			routes: { GB: "en-US" },
+		})
+
+		expect(report.provenance.arms[1]!.provenance).toMatchObject({ weights_cache: "/mnt/mw/candidates/v820-base" })
 		expect(report.rows[0]!.stability.kind).toBe("flip")
 		// The disposable stack unwinds last-in first.
 		expect(disposed).toEqual(["/mnt/mw/candidates/v820-base", "production"])
