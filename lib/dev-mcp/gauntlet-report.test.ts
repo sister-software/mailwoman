@@ -8,6 +8,9 @@ import { describe, expect, it } from "vitest"
 
 import { parseGauntletReport, summarizeGauntletReport } from "#dev-mcp/gauntlet-report"
 
+// The Who's On First placetype GB towns are typed as, spelled as the gazetteer spells it.
+const TOWN_PLACETYPE = "neighbourhood"
+
 const STDOUT = `
 === Gauntlet · regression (352/354 counted cases pass, 203 tracked) ===
   ✗ es-op3-southeast-portopetro "Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro": coord 2.02km off
@@ -15,6 +18,9 @@ const STDOUT = `
 
 tracked (known_fail / improvement_target, non-blocking):
   ~ ad-cs-andorra-la-vella [improvement_target]: coord 235.83km off (tol 25000m)
+
+unreachable by data (1): coordinate failures whose expected admin component the candidate table holds only outside the band its tag selects
+  ◦ gb-vob-little-britain-lake [improvement_target] "Little Britain Lake, Uxbridge": expected locality "Uxbridge" UNREACHABLE in band [locality, borough, localadmin]: GB holds it as ${TOWN_PLACETYPE} ×1
 
 postcode-country coherence fired on 110/558 cases:
   · venue-nooyork-gravilliers-range "NooYork, 46/48 Rue des Gravilliers, 75003 Paris" → country scoped to FR
@@ -95,6 +101,49 @@ describe("parseGauntletReport", () => {
 	})
 })
 
+describe("the unreachable-by-data section", () => {
+	it("reads the listed rows verbatim and keeps them out of the counted failures", () => {
+		const report = parseGauntletReport(STDOUT, STDERR)
+
+		expect(report.unreachable_by_data).toEqual([
+			`gb-vob-little-britain-lake [improvement_target] "Little Britain Lake, Uxbridge": expected locality "Uxbridge" UNREACHABLE in band [locality, borough, localadmin]: GB holds it as ${TOWN_PLACETYPE} ×1`,
+		])
+
+		expect(report.unreachable_by_data_unread).toBeNull()
+		expect(report.counted_failures.every((f) => !f.includes("little-britain-lake"))).toBe(true)
+	})
+
+	it("keeps a read that found no row apart from a section that is absent", () => {
+		const read = parseGauntletReport(
+			"unreachable by data (0): coordinate failures whose expected admin component …\n",
+			""
+		)
+
+		const absent = parseGauntletReport("=== Gauntlet · regression (10/10 counted cases pass) ===\n", "")
+
+		expect(read.unreachable_by_data).toEqual([])
+		expect(absent.unreachable_by_data).toBeNull()
+		expect(absent.unparsed.some((note) => note.includes("unreachable by data"))).toBe(true)
+	})
+
+	it("records the layer's statement that the table was not read", () => {
+		const report = parseGauntletReport(
+			"unreachable by data: NOT READ (no candidate table resolved, so reachability is unknown for every row)\n",
+			""
+		)
+
+		expect(report.unreachable_by_data).toBeNull()
+		expect(report.unreachable_by_data_unread).toContain("NOT READ")
+
+		expect(
+			summarizeGauntletReport({
+				...report,
+				layers: [{ layer: "regression", counted_pass: 1, counted_total: 1, tracked: 0 }],
+			})
+		).toContain("Reachability was not read")
+	})
+})
+
 describe("summarizeGauntletReport", () => {
 	it("leads with the counted fraction, not the verdict word", () => {
 		const summary = summarizeGauntletReport(parseGauntletReport(STDOUT, STDERR))
@@ -102,6 +151,7 @@ describe("summarizeGauntletReport", () => {
 		expect(summary.startsWith("regression 352/354 counted")).toBe(true)
 		expect(summary).toContain("Verdict FAIL")
 		expect(summary).toContain("2 counted failures")
+		expect(summary).toContain("1 coordinate failure sit")
 		expect(summary).toContain("fired on 110/558")
 	})
 

@@ -40,6 +40,19 @@ export interface GauntletReport {
 	 */
 	counted_failures: string[]
 	now_passing: string[]
+	/**
+	 * The regression layer's coordinate failures whose expected admin component the
+	 * candidate table holds only outside the band its tag selects, verbatim.
+	 *
+	 * `null` means the log has no such section, as in a run that stopped early or a layer that prints none.
+	 * An empty list is a read that found no such row, and the two are kept apart.
+	 */
+	unreachable_by_data: string[] | null
+	/**
+	 * The layer's own statement that it could not read reachability, verbatim,
+	 * or `null` when it read the table or printed no section.
+	 */
+	unreachable_by_data_unread: string | null
 	unparsed: string[]
 }
 
@@ -52,11 +65,14 @@ export interface GauntletReport {
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
 const FIRING = /^postcode-country coherence fired on (\d+)\/(\d+) cases/
+const UNREACHABLE_HEADER = /^unreachable by data \((\d+)\)/
 
 const PINS_PREFIX = "[gauntlet] "
 const COUNTED_FAILURE_MARK = "✗"
 const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
+const UNREACHABLE_MARK = "◦"
+const UNREACHABLE_UNREAD_PREFIX = "unreachable by data: NOT READ"
 
 /**
 /** Parses a gauntlet run's output. The report goes to stdout and the pins line to stderr, so this reads both. */
@@ -68,6 +84,8 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		postcode_country_coherence_fired_on: null,
 		counted_failures: [],
 		now_passing: [],
+		unreachable_by_data: null,
+		unreachable_by_data_unread: null,
 		unparsed: [],
 	}
 
@@ -103,10 +121,28 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
+		if (UNREACHABLE_HEADER.test(line)) {
+			report.unreachable_by_data ??= []
+
+			continue
+		}
+
+		if (line.startsWith(UNREACHABLE_UNREAD_PREFIX)) {
+			report.unreachable_by_data_unread = line.trim()
+
+			continue
+		}
+
 		const trimmed = line.trim()
 
 		if (trimmed.startsWith(COUNTED_FAILURE_MARK)) {
 			report.counted_failures.push(trimmed.slice(COUNTED_FAILURE_MARK.length).trim())
+
+			continue
+		}
+
+		if (trimmed.startsWith(UNREACHABLE_MARK)) {
+			;(report.unreachable_by_data ??= []).push(trimmed.slice(UNREACHABLE_MARK.length).trim())
 
 			continue
 		}
@@ -155,6 +191,13 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		)
 	}
 
+	if (!report.unreachable_by_data && !report.unreachable_by_data_unread) {
+		report.unparsed.push(
+			"No `unreachable by data` section found, so whether a coordinate failure sits on an admin component the " +
+				"candidate table holds only outside its band is unknown here. The regression layer prints that section on every run."
+		)
+	}
+
 	return report
 }
 
@@ -183,5 +226,11 @@ export function summarizeGauntletReport(report: GauntletReport): string {
 			" (that pass is the only one printing a firing count — it is not a reading on whatever pin you pinned)."
 		: ""
 
-	return `${layers}. Verdict ${report.verdict ?? "ABSENT"}.${failures}${promotions}${fired}`
+	const unreachable = report.unreachable_by_data_unread
+		? ` Reachability was not read (${report.unreachable_by_data_unread}).`
+		: report.unreachable_by_data
+			? ` ${report.unreachable_by_data.length} coordinate failure${report.unreachable_by_data.length === 1 ? "" : "s"} sit on an admin component the candidate table holds only outside its band (a data condition, listed in the log).`
+			: ""
+
+	return `${layers}. Verdict ${report.verdict ?? "ABSENT"}.${failures}${promotions}${unreachable}${fired}`
 }

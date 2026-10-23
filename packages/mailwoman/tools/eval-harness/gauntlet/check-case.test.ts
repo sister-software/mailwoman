@@ -10,7 +10,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
-import { checkCase, componentOf, scriptRenderings } from "#tools/eval-harness/gauntlet/check-case"
+import { checkCase, componentOf, isCoordinateIssue, scriptRenderings } from "#tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "#tools/eval-harness/gauntlet/schema"
 
@@ -91,6 +91,14 @@ describe("the coordinate / tier / component checks", () => {
 		const c = storedCase({ expect_lat: 1, expect_lon: 1 })
 
 		expect(checkCase(c, result())).toEqual(["coord unresolved (tol 5000m)"])
+	})
+
+	it("tells its own coordinate issue apart from a component issue", () => {
+		const c = storedCase({ expect_lat: 1, expect_lon: 1, expect_components: stringifyJSON({ locality: "Uxbridge" }) })
+		const issues = checkCase(c, result({ locality: "Ruislip" }))
+
+		expect(issues.filter(isCoordinateIssue)).toEqual(["coord unresolved (tol 5000m)"])
+		expect(issues.filter((issue) => !isCoordinateIssue(issue))).toEqual(['locality "Ruislip" ≠ "Uxbridge"'])
 	})
 
 	it("fails a drifted tier", () => {

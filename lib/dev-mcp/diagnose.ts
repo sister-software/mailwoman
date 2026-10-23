@@ -24,6 +24,13 @@ import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import type { GeocodeTrace } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import {
+	candidateBandProbe,
+	type ComponentReachability,
+	describeComponentReachability,
+	describePlacetypeCounts,
+	readExpectationReachability,
+} from "mailwoman/tools/eval-harness/gauntlet/reachability"
 import { OVERLAY_LOCALE_BY_COUNTRY, routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 
 import {
@@ -35,12 +42,6 @@ import {
 	type RowCounterfactuals,
 } from "#dev-mcp/counterfactual"
 import { gradeExpectation, type ExpectationReading } from "#dev-mcp/diagnose/expectation"
-import {
-	candidateBandProbe,
-	type ComponentReachability,
-	describePlacetypeCounts,
-	readExpectationReachability,
-} from "#dev-mcp/diagnose/reachability"
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#dev-mcp/evidence"
 import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#dev-mcp/input-sets"
@@ -656,15 +657,10 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	}
 
 	for (const reading of account.expectation_reachability ?? []) {
-		if (reading.state === "unreachable") {
-			parts.push(
-				`expected ${reading.tag} "${reading.value}" UNREACHABLE in band [${reading.band?.join(", ")}]: ` +
-					`${account.country ?? "?"} holds it as ${describePlacetypeCounts(reading.outside_band)}`
-			)
-		} else if (reading.state === "absent") {
-			parts.push(`expected ${reading.tag} "${reading.value}" ABSENT from every placetype in ${account.country ?? "?"}`)
-		} else if (reading.state === "unprobed") {
-			parts.push(`expected ${reading.tag} "${reading.value}" reachability UNPROBED (the row states no country)`)
+		const condition = describeComponentReachability(reading, account.country)
+
+		if (condition) {
+			parts.push(condition)
 		}
 	}
 
