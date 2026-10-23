@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest"
 import {
 	type CandidateBandProbe,
 	describePlacetypeCounts,
-	expectedBandFor,
+	placetypeBand,
 	readExpectationReachability,
 } from "#dev-mcp/diagnose/reachability"
 
@@ -24,19 +24,19 @@ const GB_ROWS: Record<string, Record<string, number>> = {
 
 const probe: CandidateBandProbe = (value, country) => (country === "GB" ? (GB_ROWS[value.toLowerCase()] ?? {}) : {})
 
-describe("expectedBandFor", () => {
+describe("placetypeBand", () => {
 	it("maps the admin tags through the codex placetype map onto the resolver's filter groups", () => {
-		expect(expectedBandFor("locality", "GB")).toEqual(["locality", "borough", "localadmin"])
-		expect(expectedBandFor("dependent_locality", "GB")).toEqual(["locality", "borough", "localadmin"])
-		expect(expectedBandFor("region", "GB")).toEqual(["region", "macroregion"])
-		expect(expectedBandFor("subregion", "GB")).toEqual(["county", "macrocounty"])
-		expect(expectedBandFor("country", "GB")).toEqual(["country"])
+		expect(placetypeBand("locality", "GB")).toEqual(["locality", "borough", "localadmin"])
+		expect(placetypeBand("dependent_locality", "GB")).toEqual(["locality", "borough", "localadmin"])
+		expect(placetypeBand("region", "GB")).toEqual(["region", "macroregion"])
+		expect(placetypeBand("subregion", "GB")).toEqual(["county", "macrocounty"])
+		expect(placetypeBand("country", "GB")).toEqual(["country"])
 	})
 
 	it("has no band for a tag the resolver does not look up in the candidate table", () => {
-		expect(expectedBandFor("street", "GB")).toBeNull()
-		expect(expectedBandFor("venue", "GB")).toBeNull()
-		expect(expectedBandFor("postcode", "GB")).toBeNull()
+		expect(placetypeBand("street", "GB")).toBeNull()
+		expect(placetypeBand("venue", "GB")).toBeNull()
+		expect(placetypeBand("postcode", "GB")).toBeNull()
 	})
 })
 

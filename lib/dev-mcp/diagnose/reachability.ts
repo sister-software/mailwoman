@@ -30,7 +30,7 @@ const POSTCODE_PLACETYPE = "postalcode"
  * A tag the placetype map does not route to the candidate table, such as `street`,
  * `venue` or `postcode`, returns `null`.
  */
-export function expectedBandFor(tag: string, country: string | null): readonly string[] | null {
+export function placetypeBand(tag: string, country: string | null): readonly string[] | null {
 	const map: Partial<Record<string, string>> = placetypeMapForCountry(country)
 	const placetype = map[tag]
 
@@ -91,7 +91,7 @@ export function readExpectationReachability(
 	for (const [tag, value] of Object.entries(expected)) {
 		if (!value) continue
 
-		const band = expectedBandFor(tag, country)
+		const band = placetypeBand(tag, country)
 
 		if (!band) continue
 
