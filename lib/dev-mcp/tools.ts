@@ -35,6 +35,7 @@ import { rigTool } from "#dev-mcp/tools/rig"
 import { runTool } from "#dev-mcp/tools/run"
 import { runsTool } from "#dev-mcp/tools/runs"
 import { sourcesTool } from "#dev-mcp/tools/sources"
+import { supportTool } from "#dev-mcp/tools/support"
 import { symbolTool } from "#dev-mcp/tools/symbol"
 import { traceTool } from "#dev-mcp/tools/trace"
 import { vocabTool } from "#dev-mcp/tools/vocab"
@@ -62,6 +63,7 @@ const FACTORIES = [
 	constraintsTool,
 	interfaceTool,
 	diagnoseTool,
+	supportTool,
 	minimalPairsTool,
 	reliabilityTool,
 	rigTool,
