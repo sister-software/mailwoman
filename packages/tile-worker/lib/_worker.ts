@@ -15,6 +15,7 @@ import { DatabaseRetrieveRoute } from "#routes/db"
 import { GeolocateRoute } from "#routes/geolocation"
 import { HealthCheckRoute, HomeRoute } from "#routes/healthcheck"
 import { BroadbandProviderTileMetadataRoute, BroadbandProviderTileRoute } from "#routes/provider"
+import { TerrariumTileRoute } from "#routes/terrain"
 import { TIGERTileMetadataRoute, TIGERTileRoute } from "#routes/tiger"
 import { TileMetadataRoute, TileRoute } from "#routes/tile"
 import { delegateRequest, type RouteContext, type TileWorkerEnv } from "#routing"
@@ -29,6 +30,7 @@ const handler: ExportedHandler<TileWorkerEnv> = {
 			DatabaseRetrieveRoute,
 			TIGERTileMetadataRoute,
 			TIGERTileRoute,
+			TerrariumTileRoute,
 			TileMetadataRoute,
 			TileRoute,
 			BroadbandProviderTileRoute,
