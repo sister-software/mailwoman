@@ -43,8 +43,8 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete, reading the address
-	 * field's enabled state because `GeocoderControls` binds its `disabled` to `runtime.ready`;
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete and for the map to load,
+	 * reading the address field's enabled state because `GeocoderControls` binds its `disabled` to `runtime.ready`;
 	 * the options are the third argument (the second is the function's argument) and polling
 	 * is on an interval because a page the browser treats as hidden fires no animation frames,
 	 * while a load error the page reports ends the wait at once with that text.
@@ -58,7 +58,11 @@ export class GeocoderFixture {
 
 				const field = document.querySelector("#mw-pipeline-input")
 
-				return field instanceof HTMLInputElement && !field.disabled ? { ready: true } : null
+				if (!(field instanceof HTMLInputElement) || field.disabled) return null
+
+				// The page exposes the map once its style and first tiles load,
+				// and a test that moves the camera needs it.
+				return "__mailwomanMapCanvas" in globalThis ? { ready: true } : null
 			},
 			undefined,
 			{ timeout: 180_000, polling: 500 }
