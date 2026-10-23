@@ -10,7 +10,7 @@ import type { Tagged } from "type-fest"
 // #region Type Definitions
 
 /**
- * The tilesets available in the Nexus Tile API.
+ * The tilesets available in the Tile API.
  */
 export type TileSetSourceID<T extends string = string> = Tagged<string, "TileSetSourceID", T>
 

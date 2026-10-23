@@ -203,7 +203,6 @@ const SELF = "lib/repo-health/checks/doc-link-targets.ts"
  * An entry no judged doc comment spells is reported, so the register cannot outlive the prose it admits.
  */
 const EXTERNAL_DOC_NAMES: Readonly<Record<string, string>> = {
-	InferTupleMember: "@isp.nexus/core",
 	ServiceExceptionReport: "the OGC service exception report element",
 	addressNumber2ndExtension: "the INSPIRE LocatorDesignatorTypeValue codelist",
 	addressNumberExtension: "the INSPIRE LocatorDesignatorTypeValue codelist",

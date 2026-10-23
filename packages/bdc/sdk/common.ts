@@ -226,7 +226,6 @@ export interface RawBDCFile {
 	 * State or territory name.
 	 *
 	 * Loosely typed as `string`.
-	 * The Nexus original was `StateName` (via `@isp.nexus/tiger`).
 	 * Same deferral as `state_fips` above.
 	 */
 	state_name: string

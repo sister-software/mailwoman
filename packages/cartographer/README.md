@@ -1,4 +1,4 @@
-# Nexus Cartographer
+# Cartographer
 
 This package contains a collection of modules for rendering maps and spatial data.
 
