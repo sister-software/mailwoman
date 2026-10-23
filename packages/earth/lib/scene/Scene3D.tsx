@@ -119,7 +119,16 @@ interface CityModelTilesetOptions {
 	modelMatrix: Matrix4
 	maximumMemoryUsage: number
 	maximumScreenSpaceError: number
+	maxRequests: number
 }
+
+/**
+ * Tile requests each tileset keeps in flight.
+ *
+ * Tileset3D defaults to 64.
+ * Several wards load at once, and PLATEAU's host drops connections under that many parallel requests.
+ */
+const CITY_MODEL_MAX_REQUESTS = 12
 
 const CITY_MODEL_MEMORY_MB = 512
 
@@ -141,6 +150,7 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 				modelMatrix: new Matrix4().translate(offset),
 				maximumMemoryUsage: CITY_MODEL_MEMORY_MB,
 				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
+				maxRequests: CITY_MODEL_MAX_REQUESTS,
 			},
 		}
 
@@ -150,12 +160,52 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 	return options
 }
 
-function cityModelsInView(map: MapInstance): PlateauTileset[] {
-	if (map.getZoom() < CITY_MODEL_MIN_ZOOM) return []
+/**
+ * The zoom below which the city model layers are removed.
+ */
+const CITY_MODEL_KEEP_ZOOM = 14
+
+/**
+ * The city models to keep as layers, updating `kept`, the URLs kept so far.
+ *
+ * Removing a Tile3DLayer destroys its tileset, and a tile still loading
+ * then fails with `assert failed: gltf`.
+ * A tileset joins when it enters the view at `CITY_MODEL_MIN_ZOOM`.
+ *
+ * It leaves only when the view zooms out past `CITY_MODEL_KEEP_ZOOM` or moves a full view away from it.
+ */
+function cityModelsToKeep(map: MapInstance, kept: Set<string>): PlateauTileset[] {
+	const zoom = map.getZoom()
+
+	if (zoom < CITY_MODEL_KEEP_ZOOM) {
+		kept.clear()
+
+		return []
+	}
 
 	const bounds = map.getBounds()
+	const [west, south, east, north] = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
 
-	return plateauTilesetsInView(CITY_MODELS, [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()])
+	if (zoom >= CITY_MODEL_MIN_ZOOM) {
+		for (const tileset of plateauTilesetsInView(CITY_MODELS, [west, south, east, north])) {
+			kept.add(tileset.url)
+		}
+	}
+
+	const width = east - west
+	const height = north - south
+
+	const nearby = new Set(
+		plateauTilesetsInView(CITY_MODELS, [west - width, south - height, east + width, north + height]).map((t) => t.url)
+	)
+
+	for (const url of kept) {
+		if (!nearby.has(url)) {
+			kept.delete(url)
+		}
+	}
+
+	return CITY_MODELS.filter((tileset) => kept.has(tileset.url))
 }
 
 function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [lng, lat]: number[]): boolean {
@@ -306,6 +356,7 @@ export const Scene3D: React.FC = () => {
 		// The overlay redraws only when the cache changes.
 		const trees = new Map<string, TreeInstance>()
 		const modeledFootprints = new Set<string | number>()
+		const keptCityModels = new Set<string>()
 		let drawnSize = -1
 		let drawnCityModels: string | null = null
 		let changed = true
@@ -322,7 +373,7 @@ export const Scene3D: React.FC = () => {
 				changed = pruneDistantTrees(map, trees) || changed
 			}
 
-			const cityModels = cityModelsInView(map)
+			const cityModels = cityModelsToKeep(map, keptCityModels)
 			const opacity = cityModelOpacity(map.getZoom())
 			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
 

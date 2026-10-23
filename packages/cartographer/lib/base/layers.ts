@@ -252,6 +252,23 @@ const nonLabelLayers = allBaseLayers.filter((layer) => !labelLayerIDs.has(layer.
  * shows them only at z18 in italic.
  */
 function toGuideMapLabel(layer: LayerSpecification): LayerSpecification {
+	if (layer.id === "pois" && layer.type === "symbol") {
+		// The POI icon is named by the feature's kind, and the sprite has no icon
+		// for some kinds, such as `townhall`.
+		// Those kinds take the sprite's generic marker instead of an empty icon and a console warning.
+		return {
+			...layer,
+			layout: {
+				...layer.layout,
+				"icon-image": [
+					"coalesce",
+					["image", ["match", ["get", "kind"], "station", "train_station", ["get", "kind"]]],
+					["image", "townspot"],
+				],
+			},
+		}
+	}
+
 	if (layer.id !== "address_label" || layer.type !== "symbol") return layer
 
 	return {
