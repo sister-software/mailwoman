@@ -817,9 +817,15 @@ describe("routingFor", () => {
 			country_scope: null,
 		})
 
+		// The release ships fr-fr, so an FR row routes to that overlay rather than the unscoped base (#2770).
 		expect(
 			routingFor(resolvedInput({ id: "fr", input: "x", country: "FR", defaultCountry: "FR" }), "board-routed")
-		).toMatchObject({ locale: null, country_scope: "none", default_country: "FR" })
+		).toMatchObject({ locale: "fr-FR", country_scope: null, default_country: "FR" })
+
+		// ISO 3166-1 reserves ZZ for user assignment, so no release ships a package for it.
+		expect(
+			routingFor(resolvedInput({ id: "zz", input: "x", country: "ZZ", defaultCountry: "ZZ" }), "board-routed")
+		).toMatchObject({ locale: null, country_scope: "none", default_country: "ZZ" })
 	})
 
 	it("routes nothing on the single-config path or for a row without a country", () => {
@@ -834,9 +840,11 @@ describe("runDiagnose routing", () => {
 		inputs: [
 			{ input: "Little Britain Lake, Uxbridge", lat: 51.52, lon: -0.49, country: "GB" },
 			{ input: "Rue de Rivoli, Paris", lat: 48.86, lon: 2.34, country: "FR" },
+			// ISO 3166-1 reserves ZZ for user assignment, so no release ships a package for it.
+			{ input: "Nowhere", lat: 51.52, lon: -0.49, country: "ZZ" },
 			{ input: "Somewhere", lat: 1, lon: 2 },
 		],
-		why: "three rows, one per routing kind",
+		why: "four rows: two shipped overlays, one country with no package, one row with no country",
 	}
 
 	function recordingRegistry(acquired: EngineConfig[]) {
@@ -883,10 +891,11 @@ describe("runDiagnose routing", () => {
 			summary: string
 		}
 
-		// The base engine, then one engine per routing: GB under en-GB, FR unscoped on the base weights.
+		// The base engine, then one engine per routing: GB under en-GB, FR under fr-FR, ZZ unscoped on the base weights.
 		expect(acquired.map((config) => [config.locale ?? null, config.country_scope ?? null])).toEqual([
 			[null, null],
 			["en-GB", null],
+			["fr-FR", null],
 			[null, "none"],
 		])
 
@@ -894,6 +903,7 @@ describe("runDiagnose routing", () => {
 
 		expect(report.routing.engines).toEqual([
 			{ locale: "en-GB", country_scope: null, default_country: null, engine_id: "engine:en-GB:auto", rows: 1 },
+			{ locale: "fr-FR", country_scope: null, default_country: null, engine_id: "engine:fr-FR:auto", rows: 1 },
 			{ locale: null, country_scope: "none", default_country: null, engine_id: "engine:base:none", rows: 1 },
 			{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 1 },
 		])
@@ -902,12 +912,14 @@ describe("runDiagnose routing", () => {
 
 		expect(byID["0"]!.routing).toMatchObject({ locale: "en-GB", engine_id: "engine:en-GB:auto" })
 		expect(byID["0"]!.rendered).toContain("routed en-GB")
-		expect(byID["1"]!.routing).toMatchObject({ locale: null, country_scope: "none" })
-		expect(byID["1"]!.rendered).toContain("routed base unscoped")
-		expect(byID["2"]!.routing).toBeNull()
+		expect(byID["1"]!.routing).toMatchObject({ locale: "fr-FR", engine_id: "engine:fr-FR:auto" })
+		expect(byID["1"]!.rendered).toContain("routed fr-FR")
+		expect(byID["2"]!.routing).toMatchObject({ locale: null, country_scope: "none" })
+		expect(byID["2"]!.rendered).toContain("routed base unscoped")
+		expect(byID["3"]!.routing).toBeNull()
 
 		expect(report.summary).toContain(
-			"Board-routed: 1 row(s) ran under their country's weights overlay and scope (en-GB 1), 1 ran on the base weights"
+			"Board-routed: 2 row(s) ran under their country's weights overlay and scope (en-GB 1, fr-FR 1), 1 ran on the base weights"
 		)
 	})
 
@@ -924,7 +936,7 @@ describe("runDiagnose routing", () => {
 
 		expect(report.routing).toEqual({
 			execution_path: "single-config",
-			engines: [{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 3 }],
+			engines: [{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 4 }],
 		})
 
 		expect(report.rows.every((row) => row.routing === null)).toBe(true)
