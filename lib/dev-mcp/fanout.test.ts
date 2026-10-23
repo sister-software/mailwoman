@@ -313,6 +313,52 @@ describe("runFanout", () => {
 		).rejects.toThrow(/different source trees \(tree0, tree1\)/)
 	})
 
+	it("opens each session arm as its pass begins, so an arm's engine is never evicted before its rows run", async () => {
+		const events: string[] = []
+
+		const registry = stubEngineRegistry({
+			acquire: async (config) => {
+				const label = config.weights_cache ? config.weights_cache.split("/").at(-1)! : "production"
+
+				events.push(`acquire ${label}`)
+
+				return stubEngine({
+					engineID: `engine-${label}`,
+					session: {
+						geocode: async (input: string) => {
+							events.push(`${label} ${input}`)
+
+							return { result: { components: {}, lat: null, lon: null, resolution_tier: null, hierarchy: [] } }
+						},
+					},
+				})
+			},
+		})
+
+		await runFanout(
+			registry,
+			{
+				inputs: { kind: "literal", inputs: ["A", "B"], why: "two rows, three arms" },
+				arms: [{ config: {} }],
+				candidates: ["v800-p000", "v820-base"],
+				execution_path: "single-config",
+			},
+			{ dataRoot: "/mnt/mw", pathExists: async () => true }
+		)
+
+		expect(events).toEqual([
+			"acquire production",
+			"production A",
+			"production B",
+			"acquire v800-p000",
+			"v800-p000 A",
+			"v800-p000 B",
+			"acquire v820-base",
+			"v820-base A",
+			"v820-base B",
+		])
+	})
+
 	it("builds one routed arm per spec over the selected rows and disposes each", async () => {
 		const disposed: string[] = []
 

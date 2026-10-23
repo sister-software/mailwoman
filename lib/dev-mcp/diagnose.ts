@@ -24,8 +24,10 @@ import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import type { GeocodeTrace } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { OVERLAY_LOCALE_BY_COUNTRY, routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 
 import {
+	BASE_LOCALE,
 	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	runCounterfactuals,
@@ -341,6 +343,10 @@ export interface RowAccount {
 	 */
 	expectation_reachability: ComponentReachability[] | null
 	/**
+	 * The engine the row ran under on the board-routed path, or `null` on the single-config path.
+	 */
+	routing: RowRouting | null
+	/**
 	 * A coordinate arrived and the resolver trace recorded no lookup, so the account's retrieval facts are
 	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace does not cover);
 	 * reported so the empty lookup list is not read as "retrieval had no work to do".
@@ -599,6 +605,12 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 		parts.push("ABSTAINED")
 	}
 
+	if (account.routing) {
+		parts.push(
+			`routed ${account.routing.locale ?? "base"}${account.routing.country_scope === "none" ? " unscoped" : ""}`
+		)
+	}
+
 	if (account.parse?.kind) {
 		parts.push(`kind=${account.parse.kind.verdict}@${account.parse.kind.confidence.toFixed(2)}`)
 	}
@@ -805,7 +817,8 @@ export function assembleAccount(
 	item: ResolvedInput,
 	run: AccountInput,
 	expectation: ExpectationReading,
-	reachability: ComponentReachability[] | null = null
+	reachability: ComponentReachability[] | null = null,
+	routing: RowRouting | null = null
 ): Omit<RowAccount, "rendered"> {
 	const trace = run.trace
 	const parse = trace ? collectParseFacts(trace, run.result.components) : null
@@ -833,6 +846,7 @@ export function assembleAccount(
 		result,
 		expectation,
 		expectation_reachability: reachability,
+		routing,
 		resolved_without_recorded_lookup: !result.abstained && retrieval.lookups?.length === 0,
 		trace_absent_reason: trace
 			? null
@@ -840,6 +854,67 @@ export function assembleAccount(
 				"silent. Either the session refused to trace, or the loaded bundle's classifier cannot produce one.",
 		counterfactuals: null,
 	}
+}
+
+type DiagnoseExecutionPath = "single-config" | "board-routed"
+
+/**
+ * The engine a row runs under on the board-routed path.
+ *
+ * A country with a weights overlay runs under that overlay's locale.
+ * The locale also scopes the resolver to the country, as the board's routed arm does.
+ *
+ * A country without an overlay runs on the base weights with no country scope,
+ * because the base locale scopes the resolver to its own region and would misroute the row.
+ * The region the base locale declares keeps that scope.
+ *
+ * `default_country` is the board row's own resolver country when it states one.
+ */
+export interface RowRouting {
+	country: string
+	locale: string | null
+	country_scope: "none" | null
+	default_country: string | null
+	/**
+	 * The engine the registry served for this routing, filled in once the row has run.
+	 */
+	engine_id: string | null
+}
+
+/**
+ * The routing a row takes, or `null` for a row that runs on the engine `config` describes:
+ * every row on the single-config path, and a row without a country on the board-routed path.
+ */
+export function routingFor(item: ResolvedInput, executionPath: DiagnoseExecutionPath): RowRouting | null {
+	if (executionPath === "single-config") return null
+
+	const country = (item.routeCountry ?? item.country)?.toUpperCase() ?? null
+
+	if (!country) return null
+
+	const baseRegion = routeCountry({ locale: BASE_LOCALE })
+	const overlay = OVERLAY_LOCALE_BY_COUNTRY[country] ?? (country === baseRegion ? BASE_LOCALE : null)
+
+	return {
+		country,
+		locale: overlay,
+		country_scope: overlay ? null : "none",
+		default_country: item.defaultCountry ?? null,
+		engine_id: null,
+	}
+}
+
+function routingConfig(base: EngineConfig, routing: RowRouting): EngineConfig {
+	return {
+		...base,
+		...(routing.locale ? { locale: routing.locale } : {}),
+		...(routing.country_scope ? { country_scope: routing.country_scope } : {}),
+		...(routing.default_country ? { default_country: routing.default_country } : {}),
+	}
+}
+
+function routingKey(routing: RowRouting | null): string {
+	return routing ? stringifyJSON([routing.locale, routing.country_scope, routing.default_country]) : "base"
 }
 
 /**
@@ -852,11 +927,13 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const limit = args["limit"] as number | undefined
 	const rowsCap = args["rows_cap"] as number | undefined
 	const wantCounterfactuals = args["counterfactuals"] !== false
+	const executionPath = (args["execution_path"] as DiagnoseExecutionPath | null) ?? "single-config"
 
 	const set = await resolveInputSet(ref)
 	// The account uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
-	const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
+	const traced: EngineConfig = { ...config, trace: true, diagnose_unreachable: true }
+	const engine = await registry.acquire(traced)
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
 	// Reachability reads the same candidate table the engine resolves against.
@@ -873,24 +950,55 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const errors: Array<{ id: string; input: string; message: string }> = []
 	const targets: CounterfactualTarget[] = []
 
-	for (const item of selected) {
-		try {
-			const run = await engine.session.geocode(item.input)
-			const expected = item.seed?.expectComponents ?? item.expectComponents
-			const reachability = probe && expected ? readExpectationReachability(expected, item.country, probe) : null
+	// Rows are run group by group, one engine per routing, so the registry rebuilds an engine
+	// once per routing rather than once per row when rows of several countries interleave.
+	const groups = new Map<string, { routing: RowRouting | null; items: Array<{ index: number; item: ResolvedInput }> }>()
 
-			accounts.push(assembleAccount(item, run, gradeExpectation(item, run.result), reachability))
+	for (const [index, item] of selected.entries()) {
+		const routing = routingFor(item, executionPath)
+		const key = routingKey(routing)
+		const group = groups.get(key) ?? { routing, items: [] }
 
-			targets.push({
-				id: item.id,
-				input: item.input,
-				country: item.country,
-				base: { lat: run.result.lat, lon: run.result.lon, tier: run.result.resolution_tier },
-			})
-		} catch (error) {
-			errors.push({ id: item.id, input: item.input, message: (error as Error).message })
+		group.items.push({ index, item })
+		groups.set(key, group)
+	}
+
+	const ordered: Array<{ index: number; account: Omit<RowAccount, "rendered"> }> = []
+	const enginesByRouting: Array<{ routing: RowRouting | null; engine_id: string; rows: number }> = []
+
+	for (const group of groups.values()) {
+		const rowEngine = group.routing ? await registry.acquire(routingConfig(traced, group.routing)) : engine
+
+		enginesByRouting.push({ routing: group.routing, engine_id: rowEngine.engineID, rows: group.items.length })
+
+		for (const { index, item } of group.items) {
+			try {
+				const run = await rowEngine.session.geocode(item.input)
+				const expected = item.seed?.expectComponents ?? item.expectComponents
+				const reachability = probe && expected ? readExpectationReachability(expected, item.country, probe) : null
+				const routing = group.routing ? { ...group.routing, engine_id: rowEngine.engineID } : null
+
+				ordered.push({
+					index,
+					account: assembleAccount(item, run, gradeExpectation(item, run.result), reachability, routing),
+				})
+
+				// The sweep flips settings on the base engine, so a routed row's answer is no base to compare against.
+				if (!routing) {
+					targets.push({
+						id: item.id,
+						input: item.input,
+						country: item.country,
+						base: { lat: run.result.lat, lon: run.result.lon, tier: run.result.resolution_tier },
+					})
+				}
+			} catch (error) {
+				errors.push({ id: item.id, input: item.input, message: (error as Error).message })
+			}
 		}
 	}
+
+	accounts.push(...ordered.toSorted((a, b) => a.index - b.index).map((entry) => entry.account))
 
 	const narrowed = accounts.length > COUNTERFACTUAL_FULL_RUN_MAX_ROWS
 	const flipCandidates = narrowed ? accounts.filter((account) => !account.shapes.includes("clean")) : accounts
@@ -936,6 +1044,19 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const unclassified = byShape["unclassified"]?.n ?? 0
 	const blindRetrieval = rows.filter((row) => row.resolved_without_recorded_lookup).length
 	const unreachableRows = rows.filter((row) => row.shapes.includes("expectation_unreachable")).length
+	const routedRows = rows.filter((row) => row.routing?.locale).length
+	const unscopedRows = rows.filter((row) => row.routing?.country_scope === "none").length
+
+	const routingSentence =
+		executionPath === "board-routed"
+			? `Board-routed: ${routedRows} row(s) ran under their country's weights overlay and scope ` +
+				`(${enginesByRouting
+					.filter((entry) => entry.routing?.locale)
+					.map((entry) => `${entry.routing!.locale} ${entry.rows}`)
+					.join(", ")}), ${unscopedRows} ran on the base weights with no country scope because their country has ` +
+				`no overlay, and ${rows.length - routedRows - unscopedRows} had no country and ran on the configured engine. ` +
+				"The counterfactual sweep covers the configured-engine rows only."
+			: ""
 
 	const reachabilitySentence = !probe
 		? `Expected-component reachability was NOT read (${"unavailable" in candidateDB ? candidateDB.unavailable : "no candidate table"}), ` +
@@ -982,6 +1103,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 					"cannot fire on those rows, and their silence there is a coverage bound, not a finding."
 				: "",
 			reachabilitySentence,
+			routingSentence,
 			counterfactualSentence,
 		]
 			.filter((sentence) => sentence.length)
@@ -993,6 +1115,16 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		power: reading,
 		n_resolved_without_recorded_lookup: blindRetrieval,
 		n_expectation_unreachable: unreachableRows,
+		routing: {
+			execution_path: executionPath,
+			engines: enginesByRouting.map((entry) => ({
+				locale: entry.routing?.locale ?? null,
+				country_scope: entry.routing?.country_scope ?? null,
+				default_country: entry.routing?.default_country ?? null,
+				engine_id: entry.engine_id,
+				rows: entry.rows,
+			})),
+		},
 		by_shape: byShape,
 		by_shape_note:
 			"A row can match several shapes, so these counts OVERLAP and must never be summed. `n` is the whole class; " +
