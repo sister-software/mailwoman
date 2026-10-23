@@ -12,13 +12,14 @@ import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate
 import { wrapLongitude } from "@mailwoman/spatial/position"
 
 /**
- * The three views the app serves: the geocoder at `/`, the debug drawer at `/debug`,
- * and the trace page at `/trace`.
+ * The four views the app serves: the geocoder at `/`, the debug drawer at `/debug`,
+ * the trace workbench at `/trace`, and the gazetteer explorer at `/gazette`.
  */
 export const Route = {
 	Geocoder: "geocoder",
 	Debug: "debug",
 	Trace: "trace",
+	Gazette: "gazette",
 } as const
 
 export type Route = (typeof Route)[keyof typeof Route]
@@ -27,7 +28,16 @@ const ROUTES_BY_PATH: ReadonlyMap<string, Route> = new Map([
 	["/", Route.Geocoder],
 	["/debug", Route.Debug],
 	["/trace", Route.Trace],
+	["/gazette", Route.Gazette],
 ])
+
+/**
+ * A place permalink under the gazette, `/gazette/<spr_id>/<name_key>`.
+ *
+ * The path includes the key because the browser gazetteer indexes places by key first
+ * and has no index on the id by itself.
+ */
+const GAZETTE_PLACE = /^\/gazette\/(\d+)\/([^/]+)$/u
 
 /**
  * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
@@ -35,7 +45,39 @@ const ROUTES_BY_PATH: ReadonlyMap<string, Route> = new Map([
 export function routeForPath(pathname: string): Route | null {
 	const normalized = pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "") || "/"
 
+	if (GAZETTE_PLACE.test(normalized)) return Route.Gazette
+
 	return ROUTES_BY_PATH.get(normalized) ?? null
+}
+
+/**
+ * A place under the gazette: its Who's On First id and the name key it is filed under.
+ */
+export interface GazettePlaceRef {
+	sprID: number
+	nameKey: string
+}
+
+/**
+ * The place a gazette permalink names, or null for the gazette's search page or another route.
+ */
+export function gazettePlaceFromPath(pathname: string): GazettePlaceRef | null {
+	const match = GAZETTE_PLACE.exec(pathname.replace(/\/+$/u, ""))
+
+	if (!match) return null
+
+	const sprID = Number(match[1])
+
+	if (!Number.isSafeInteger(sprID)) return null
+
+	return { sprID, nameKey: decodeURIComponent(match[2]!) }
+}
+
+/**
+ * The permalink of a place under the gazette.
+ */
+export function gazettePlacePath(place: GazettePlaceRef): string {
+	return `/gazette/${place.sprID}/${encodeURIComponent(place.nameKey)}`
 }
 
 /**
