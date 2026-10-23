@@ -13,6 +13,7 @@ import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import type { PathBuilder } from "path-ts"
 
 import type { AlignTotals } from "#build/align-totals"
+import type { HoldoutCheckRecord } from "#build/holdout-check"
 import { TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildProfile, type BuildStage } from "#build/types"
 import type { ParquetManifest } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
@@ -34,6 +35,10 @@ export interface BuildManifestInputs {
 	splitCounts: SplitManifest["counts"]
 	holdouts: Record<string, CountryHoldout>
 	parquetManifest: ParquetManifest
+	/**
+	 * The receipt of the held-out span check that admitted `parquetManifest`.
+	 */
+	holdoutCheck: HoldoutCheckRecord
 	totals: AlignTotals
 	rights: SourceRightsAdmission
 	registerDecisions: ReadonlyMap<string, LicenseDecision<SourceOperation>>
@@ -92,6 +97,11 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 		skipped_adapters: inputs.skipped,
 		splits: { counts: inputs.splitCounts, holdouts: inputs.holdouts },
 		slices: { counts: inputs.parquetManifest.counts, total_rows: inputs.parquetManifest.total_rows },
+		holdout_check: {
+			checked_at: inputs.holdoutCheck.checked_at,
+			countries: inputs.holdoutCheck.countries,
+			files_read: inputs.holdoutCheck.files_read,
+		},
 		quarantine_count: totals.quarantined,
 		total_aligned_rows: totals.aligned,
 		licenses: Object.fromEntries(licenseSummary),

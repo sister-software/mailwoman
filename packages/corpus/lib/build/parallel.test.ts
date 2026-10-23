@@ -45,6 +45,7 @@ const GiB = 1024 ** 3
 const TIMESTAMP_FIELDS = new Set([
 	"built_at",
 	"builtAt",
+	"checked_at",
 	"started_at",
 	"ended_at",
 	"elapsed_ms",

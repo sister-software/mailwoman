@@ -239,6 +239,14 @@ export interface BuildCorpusManifest {
 	skipped_adapters: string[]
 	splits: { counts: SplitManifest["counts"]; holdouts: SplitManifest["holdouts"] }
 	slices: { counts: ParquetManifest["counts"]; total_rows: number }
+	/**
+	 * The held-out span check that admitted the parquet manifest: when it ran,
+	 * the declared countries it read and the files it counted.
+	 *
+	 * The full record, findings included, is `HOLDOUT_CHECK.json` beside the parquet manifest.
+	 * A build whose check found anything wrote no top-level manifest at all.
+	 */
+	holdout_check: { checked_at: string; countries: string[]; files_read: number }
 	quarantine_count: number
 	total_aligned_rows: number
 	/**

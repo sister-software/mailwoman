@@ -47,6 +47,7 @@ import {
 	type WorkerClass,
 } from "#build/budget"
 import { readRegisterDecisions } from "#build/eligibility"
+import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
 import { adapterDerivations, derivationConfig, type ResolvedBuildSettings } from "#build/settings"
 import {
@@ -605,7 +606,13 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		{ corpusVersion: opts.corpusVersion, rowsPerFile: settings.rowsPerFile }
 	)
 
-	await writeLocalJSONFile(parquetManifest, outputDir(corpusDirectoryName(opts.corpusVersion), "MANIFEST.json"))
+	// The manifest lands under the unchecked name, and the held-out span check moves it to
+	// `MANIFEST.json` once it passes, so a corpus the check refuses has no manifest a training run reads.
+	const corpusDir = outputDir(corpusDirectoryName(opts.corpusVersion))
+
+	await writeLocalJSONFile(parquetManifest, corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE))
+
+	const holdoutCheck = await admitParquetManifest({ corpusDir, holdouts, onProgress })
 
 	return await writeBuildManifests({
 		outputDir,
@@ -618,6 +625,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		splitCounts,
 		holdouts,
 		parquetManifest,
+		holdoutCheck,
 		totals,
 		rights: ctx.rights,
 		registerDecisions,

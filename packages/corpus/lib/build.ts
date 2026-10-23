@@ -21,6 +21,11 @@ import { runAlignPhase } from "#build/align"
 import { alignTotalsOf } from "#build/align-totals"
 import { planWorkerBudget } from "#build/budget"
 import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
+import {
+	admitParquetManifest,
+	stageAdmittedManifestForResume,
+	UNCHECKED_PARQUET_MANIFEST_FILE,
+} from "#build/holdout-check"
 import { acquireBuildLock } from "#build/lock"
 import { writeBuildManifests } from "#build/manifest"
 import { runParallelBuild } from "#build/parallel"
@@ -28,6 +33,7 @@ import { settlePriorWork } from "#build/prior-output"
 import { streamJSONL } from "#build/rows"
 import { adapterDerivations, derivationConfig, resolveCorpusSettings } from "#build/settings"
 import { BuildProfile, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
+import { corpusDirectoryName } from "#directory"
 import { shuffleSplitRows, SPLIT_SHUFFLE_SALT } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
 import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
@@ -198,6 +204,15 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		derivationConfig(settings, holdouts)
 	)
 
+	const corpusDir = outputDir(corpusDirectoryName(opts.corpusVersion))
+
+	if (resume) {
+		await stageAdmittedManifestForResume(corpusDir)
+	}
+
+	// The parquet writer stages its manifest under the unchecked name,
+	// and the held-out span check moves it to `MANIFEST.json` once it passes,
+	// so a corpus the check refuses has no manifest a training run reads.
 	const parquetManifest = await writeParquetSplits(
 		{ train: shuffled("train"), val: shuffled("val"), test: shuffled("test") },
 		{
@@ -206,8 +221,11 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			rowsPerFile,
 			resume,
 			derivationFor,
+			manifestPath: corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE),
 		}
 	)
+
+	const holdoutCheck = await admitParquetManifest({ corpusDir, holdouts, onProgress: opts.onProgress })
 
 	return await writeBuildManifests({
 		outputDir,
@@ -220,6 +238,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		splitCounts,
 		holdouts,
 		parquetManifest,
+		holdoutCheck,
 		totals: alignTotalsOf(align),
 		rights,
 		registerDecisions,
