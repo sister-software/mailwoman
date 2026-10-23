@@ -8,10 +8,11 @@ import { describe, expect, it } from "vitest"
 
 import {
 	type CandidateBandProbe,
+	describeComponentReachability,
 	describePlacetypeCounts,
 	placetypeBand,
 	readExpectationReachability,
-} from "#dev-mcp/diagnose/reachability"
+} from "#tools/eval-harness/gauntlet/reachability"
 
 // The GB rows `candidate.db` holds for each key, as the 2026-10-23 probe read them.
 const GB_ROWS: Record<string, Record<string, number>> = {
@@ -90,5 +91,31 @@ describe("describePlacetypeCounts", () => {
 		expect(describePlacetypeCounts({ county: 1, localadmin: 2, locality: 5 })).toBe(
 			"locality ×5, localadmin ×2, county ×1"
 		)
+	})
+})
+
+describe("describeComponentReachability", () => {
+	it("renders an unreachable reading with its band and the placetypes that hold the key", () => {
+		const [reading] = readExpectationReachability({ locality: "Uxbridge" }, "GB", probe)
+
+		expect(describeComponentReachability(reading!, "GB")).toBe(
+			`expected locality "Uxbridge" UNREACHABLE in band [locality, borough, localadmin]: GB holds it as ${describePlacetypeCounts(GB_ROWS["uxbridge"]!)}`
+		)
+	})
+
+	it("renders absent and unprobed readings, and a reachable one as null", () => {
+		const [absent] = readExpectationReachability({ locality: "Nowhere" }, "GB", probe)
+		const [unprobed] = readExpectationReachability({ locality: "Uxbridge" }, null, probe)
+		const [reachable] = readExpectationReachability({ locality: "Slough" }, "GB", probe)
+
+		expect(describeComponentReachability(absent!, "GB")).toBe(
+			'expected locality "Nowhere" ABSENT from every placetype in GB'
+		)
+
+		expect(describeComponentReachability(unprobed!, null)).toBe(
+			'expected locality "Uxbridge" reachability UNPROBED (the row states no country)'
+		)
+
+		expect(describeComponentReachability(reachable!, "GB")).toBeNull()
 	})
 })

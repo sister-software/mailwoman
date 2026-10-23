@@ -13,14 +13,26 @@
  *   The grading itself lives in `check-case.ts` (pure, unit-tested), and the freshness refusal
  *   that runs before any of it lives in `corpus-stamp.ts`.
  *
+ *   After the tracked list, the report lists the coordinate failures whose expected admin component the
+ *   candidate table holds only outside the band its tag selects (#2802). Such a row's coordinate cannot
+ *   arrive through that component under any parse, so the line states a data condition beside the grade.
+ *   The grade itself does not change: the coordinate can still arrive through another component, and
+ *   whether a parent point satisfies the row is a question only the grade answers. Reachability is read
+ *   from `reachability.ts` against the candidate table the run resolves against, so a gazetteer rebuild
+ *   moves a row off the list on its own.
+ *
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
-import { checkCase } from "#tools/eval-harness/gauntlet/check-case"
+import { resolveCandidateDBPath } from "#resolver-backend"
+import { checkCase, isCoordinateIssue } from "#tools/eval-harness/gauntlet/check-case"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
 import {
 	buildGauntletDeps,
@@ -29,6 +41,11 @@ import {
 	PRODUCTION_RESOLVER_PINS,
 	runOne,
 } from "#tools/eval-harness/gauntlet/harness"
+import {
+	candidateBandProbe,
+	describeComponentReachability,
+	readExpectationReachability,
+} from "#tools/eval-harness/gauntlet/reachability"
 import { routeCountry } from "#tools/eval-harness/gauntlet/routing"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
 import { pinnedSwitch } from "#tools/eval-harness/switch-pin"
@@ -130,7 +147,20 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 
+	// Reachability reads the candidate table the run resolves against, found as `buildGauntletDeps`
+	// finds it: `$MAILWOMAN_CANDIDATE_DB`, then the convention path under the data root.
+	// A run without one states that the section went unread rather than printing an empty list.
+	const candidateDBPath = await resolveCandidateDBPath()
+
+	using candidateDB = candidateDBPath
+		? new DatabaseClient<CandidateDatabase>(candidateDBPath, { readOnly: true })
+		: null
+
+	const probe = candidateDB ? candidateBandProbe(candidateDB) : null
+
 	const fails: string[] = [] // status=pass that failed → BLOCK
+	// Coordinate failures whose expected admin component the table holds only outside its band.
+	const unreachable: string[] = []
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
 	// Tracked cases that now pass in a locale this run graded base-only.
@@ -171,6 +201,21 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		const issues = checkCase(c, result)
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
+		if (probe && c.expect_components && issues.some(isCoordinateIssue)) {
+			const expected = tryParsingJSON<Record<string, string>>(c.expect_components)
+
+			const conditions = expected
+				? readExpectationReachability(expected, c.country, probe)
+						.filter((reading) => reading.state === "unreachable")
+						.map((reading) => describeComponentReachability(reading, c.country))
+						.filter(isPresent)
+				: []
+
+			if (conditions.length) {
+				unreachable.push(`  ◦ ${c.id} [${c.status}${ref}] "${c.input}": ${conditions.join("; ")}`)
+			}
+		}
+
 		if (c.status === "pass") {
 			counted++
 
@@ -208,6 +253,23 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		for (const t of tracked) {
 			console.log(t)
 		}
+	}
+
+	// Printed on every run, so a reader tells "read, none" from "not read".
+	// `gauntlet-report.ts` parses both forms.
+	if (probe) {
+		console.log(
+			`\nunreachable by data (${unreachable.length}): coordinate failures whose expected admin component the ` +
+				`candidate table holds only outside the band its tag selects`
+		)
+
+		for (const u of unreachable) {
+			console.log(u)
+		}
+	} else {
+		console.log(
+			`\nunreachable by data: NOT READ (no candidate table resolved, so reachability is unknown for every row)`
+		)
 	}
 
 	// Printed whenever the pass could have fired, except when it is explicitly pinned off.

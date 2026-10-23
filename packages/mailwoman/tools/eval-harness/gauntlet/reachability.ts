@@ -152,3 +152,28 @@ export function describePlacetypeCounts(counts: Readonly<PlacetypeCounts>): stri
 		.map(([placetype, n]) => `${placetype} ×${n}`)
 		.join(", ")
 }
+
+/**
+ * Renders one reading's condition in the words the regression layer and `mwdev_diagnose` both print.
+ *
+ * A reachable reading renders as `null`.
+ * The reports list conditions, and a confirmation on every reachable component would bury them.
+ */
+export function describeComponentReachability(reading: ComponentReachability, country: string | null): string | null {
+	const expected = `expected ${reading.tag} "${reading.value}"`
+	const where = country ?? "?"
+
+	switch (reading.state) {
+		case "unreachable":
+			return (
+				`${expected} UNREACHABLE in band [${reading.band?.join(", ")}]: ` +
+				`${where} holds it as ${describePlacetypeCounts(reading.outside_band)}`
+			)
+		case "absent":
+			return `${expected} ABSENT from every placetype in ${where}`
+		case "unprobed":
+			return `${expected} reachability UNPROBED (the row states no country)`
+		case "reachable":
+			return null
+	}
+}

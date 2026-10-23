@@ -19,6 +19,21 @@ import type { GauntletCaseTable } from "#tools/eval-harness/gauntlet/schema"
 export const DEFAULT_TOL_M = 5000
 
 /**
+ * The prefix of every coordinate issue {@linkcode checkCase} returns.
+ *
+ * A reader of an issue list tells a coordinate miss from a component miss by this prefix.
+ * The regression layer's unreachable-component section is one such reader, so the prefix is declared once.
+ */
+const COORDINATE_ISSUE_PREFIX = "coord "
+
+/**
+ * Whether an issue from {@linkcode checkCase} came from the coordinate check.
+ */
+export function isCoordinateIssue(issue: string): boolean {
+	return issue.startsWith(COORDINATE_ISSUE_PREFIX)
+}
+
+/**
  * Map an expect_components key to the assembled-result field it asserts.
  *
  * The ablation layer scores a deletion against this same slot, so a second copy of the
@@ -192,7 +207,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 		if (km > tolKm) {
 			issues.push(
-				`coord ${km === Infinity ? "unresolved" : `${km.toFixed(2)}km off`} (tol ${c.expect_tolerance_m ?? DEFAULT_TOL_M}m)`
+				`${COORDINATE_ISSUE_PREFIX}${km === Infinity ? "unresolved" : `${km.toFixed(2)}km off`} (tol ${c.expect_tolerance_m ?? DEFAULT_TOL_M}m)`
 			)
 		}
 	}
