@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "b986f1c8fdf3d3633781dbef6d1b2169a5c93d8d914437db3b8cf4e5a6323961",
+	"contentDigest": "d1909066617b8535f875a046508f2a493e0e2b13cc1424eaa96e07e242475b84",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
