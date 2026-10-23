@@ -65,20 +65,6 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 
 	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })
 
-	if (route === Route.Trace) {
-		return (
-			<div className="trace">
-				<LiveModelVisualizer
-					traceParse={handle.traceParse}
-					supportsTrace={handle.supportsTrace}
-					ready={handle.runtime.ready}
-					loadingProgress={handle.runtime.loading?.progress ?? null}
-					errorMessage={handle.runtime.errorMessage ?? null}
-				/>
-			</div>
-		)
-	}
-
 	return (
 		<Geocoder
 			runtime={handle.runtime}
@@ -93,6 +79,31 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			developer={route === Route.Debug}
 			onSubmitQuery={writeQueryToURL}
 		/>
+	)
+}
+
+/**
+ * The trace workbench has no map.
+ *
+ * It loads the classifier through the same runtime hook as the geocoder,
+ * so the release's assets are shared with the map page's cache, and it skips the
+ * geolocation request and the map panels the geocoder needs.
+ */
+function TracePage({ query }: { query: string | null }) {
+	const handle = useGeocoderRuntime({ config: PRODUCTION_CONFIG, initialCenter: DEFAULT_CENTER })
+
+	return (
+		<div className="trace">
+			<LiveModelVisualizer
+				traceParse={handle.traceParse}
+				supportsTrace={handle.supportsTrace}
+				ready={handle.runtime.ready}
+				loadingProgress={handle.runtime.loading?.progress ?? null}
+				errorMessage={handle.runtime.errorMessage ?? null}
+				initialText={query}
+				onTextTraced={writeQueryToURL}
+			/>
+		</div>
 	)
 }
 
@@ -128,7 +139,13 @@ export function App() {
 
 	return (
 		<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route} data-runtime={mode}>
-			{mode === "fake" ? <FakeGeocoder query={query} /> : <RealGeocoder route={route} query={query} />}
+			{mode === "fake" ? (
+				<FakeGeocoder query={query} />
+			) : route === Route.Trace ? (
+				<TracePage query={query} />
+			) : (
+				<RealGeocoder route={route} query={query} />
+			)}
 		</main>
 	)
 }

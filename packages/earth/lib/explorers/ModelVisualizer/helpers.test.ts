@@ -11,7 +11,20 @@ import type { NeuralParseTrace } from "@mailwoman/neural"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import { describe, expect, it } from "vitest"
 
-import { changedIndices, emissionColor, matrixAbsMax, pieceDisplay } from "#explorers/ModelVisualizer/helpers"
+import {
+	changedIndices,
+	coveringTokenIndex,
+	emissionColor,
+	familyOrder,
+	flipsAfterRemoval,
+	labelFamily,
+	labelHue,
+	matrixAbsMax,
+	moveTile,
+	pieceDisplay,
+	runnerUp,
+	tilesOf,
+} from "#explorers/ModelVisualizer/helpers"
 
 import fixture from "./white-house.trace.json" with { type: "json" }
 
@@ -85,5 +98,110 @@ describe("ModelVisualizer helpers", () => {
 			expect(trace.localeCountries).toBeDefined()
 			expect(trace.localeLogits).toHaveLength(trace.localeCountries!.length)
 		}
+	})
+})
+
+describe("workbench helpers (#2820)", () => {
+	it("labelFamily drops the BIO prefix so both halves of a span share one family", () => {
+		expect(labelFamily("B-locality")).toBe("locality")
+		expect(labelFamily("I-locality")).toBe("locality")
+		expect(labelFamily("O")).toBe("O")
+	})
+
+	it("familyOrder lists each family once, in label order, without O", () => {
+		expect(familyOrder(["O", "B-country", "I-country", "B-street", "I-street", "B-locality"])).toEqual([
+			"country",
+			"street",
+			"locality",
+		])
+	})
+
+	it("labelHue is one hue per family, null for O, and never repeats across the fixture's families", () => {
+		const order = familyOrder((fixture as ParseTraceLike).labels)
+
+		expect(labelHue("B-street", order)).toBe(labelHue("I-street", order))
+		expect(labelHue("O", order)).toBeNull()
+		expect(labelHue("B-unknown", order)).toBeNull()
+
+		const hues = order.map((family) => labelHue(`B-${family}`, order))
+
+		expect(new Set(hues).size).toBe(order.length)
+
+		for (const hue of hues) {
+			expect(hue).toBeGreaterThanOrEqual(0)
+			expect(hue).toBeLessThan(360)
+		}
+	})
+
+	it("tilesOf splits on any whitespace, newlines included, and keeps punctuation on its word", () => {
+		expect(tilesOf("10 Downing St,\nLondon  SW1A 2AA\n")).toEqual(["10", "Downing", "St,", "London", "SW1A", "2AA"])
+		expect(tilesOf("   ")).toEqual([])
+	})
+
+	it("moveTile moves one tile to the dropped slot and leaves the rest in order", () => {
+		expect(moveTile(["a", "b", "c", "d"], 0, 2)).toEqual(["b", "c", "a", "d"])
+		expect(moveTile(["a", "b", "c", "d"], 3, 0)).toEqual(["d", "a", "b", "c"])
+		expect(moveTile(["a", "b"], 5, 0)).toEqual(["a", "b"])
+	})
+
+	it("flipsAfterRemoval matches probe tokens to their base twins through the removed span", () => {
+		// Base: "A B C" with tokens at 0, 2, 4.
+		// The removal of "B" (offset 2, two characters with its space) leaves "A C" with C at offset 2.
+		// That offset maps back to 4.
+		const base = [
+			{ piece: "▁A", start: 0, end: 1, label: "B-venue", confidence: 1 },
+			{ piece: "▁B", start: 2, end: 3, label: "B-street", confidence: 1 },
+			{ piece: "▁C", start: 4, end: 5, label: "B-locality", confidence: 1 },
+		]
+
+		const probe = [
+			{ piece: "▁A", start: 0, end: 1, label: "B-venue", confidence: 1 },
+			{ piece: "▁C", start: 2, end: 3, label: "B-region", confidence: 1 },
+		]
+
+		expect(flipsAfterRemoval(base, probe, 2, 2)).toEqual([{ piece: "▁C", before: "B-locality", after: "B-region" }])
+
+		expect(
+			flipsAfterRemoval(
+				base,
+				base.filter((token) => token.start !== 4),
+				4,
+				2
+			)
+		).toEqual([])
+	})
+
+	it("coveringTokenIndex maps a character to the token whose span holds it, and a gap to -1", () => {
+		const tokens = [
+			{ start: 0, end: 4 },
+			{ start: 5, end: 11 },
+		]
+
+		expect(coveringTokenIndex(tokens, 0)).toBe(0)
+		expect(coveringTokenIndex(tokens, 3)).toBe(0)
+		expect(coveringTokenIndex(tokens, 4)).toBe(-1)
+		expect(coveringTokenIndex(tokens, 10)).toBe(1)
+		expect(coveringTokenIndex(tokens, 11)).toBe(-1)
+	})
+
+	it("runnerUp reads the best other unmasked label and the chosen label's lead over it", () => {
+		const labels = ["O", "B-street", "B-locality", "B-postcode"]
+
+		expect(runnerUp([0.5, 2, 1.5, -1e9], labels, 1)).toEqual({ index: 2, label: "B-locality", gap: 0.5 })
+		expect(runnerUp([-1e9, 2, -1e9, -1e9], labels, 1)).toBeNull()
+	})
+
+	it("runnerUp against the fixture never answers the chosen label or a masked cell", () => {
+		const trace = fixture as ParseTraceLike
+
+		trace.emissions.forEach((row, i) => {
+			const chosen = trace.path[i]!
+			const other = runnerUp(row, trace.labels, chosen)
+
+			if (other) {
+				expect(other.index).not.toBe(chosen)
+				expect(row[other.index]).toBeGreaterThan(-1e8)
+			}
+		})
 	})
 })

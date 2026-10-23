@@ -8,6 +8,7 @@
  *   imports on the load path.
  */
 
+import type { ChannelPins } from "@mailwoman/core/pipeline"
 import type { SoftFeatureChannel } from "@mailwoman/neural/soft-features"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
 
@@ -69,6 +70,23 @@ export interface ParseTraceLike {
 	pieces: TokenizedPiece[]
 	anchor: SoftFeatureChannel | null
 	gazetteer: SoftFeatureChannel | null
+	/**
+	 * The country, street-type and locality-surface channels as fed.
+	 *
+	 * A bundle built before the trace recorded them leaves them out, so a reader feature-detects.
+	 */
+	country?: SoftFeatureChannel | null
+	streetType?: SoftFeatureChannel | null
+	localitySurface?: SoftFeatureChannel | null
+	/**
+	 * The channel pins the caller set for this parse, empty when every channel was fed as built.
+	 */
+	channelPins?: ChannelPins
+	/**
+	 * The semi-Markov head's per-span type scores, indexed as `spanScores[token][length - 1][type]`,
+	 * or null when the model exports none.
+	 */
+	spanScores?: number[][][] | null
 	logits: number[][]
 	localeLogits: number[] | null
 	/**
@@ -82,6 +100,13 @@ export interface ParseTraceLike {
 	emissions: number[][]
 	labels: string[]
 	path: number[]
+	/**
+	 * Per piece, the decoded label's lead in `emissions` over the best other label of the row.
+	 *
+	 * A small or negative margin marks a decision one perturbation away from flipping.
+	 * A bundle built before the trace recorded margins leaves the field out.
+	 */
+	margins?: number[]
 	decode: "viterbi" | "argmax"
 	repairs: TraceRepairLike[]
 	tokens: TraceTokenLike[]
