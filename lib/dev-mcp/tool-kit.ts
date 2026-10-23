@@ -115,6 +115,22 @@ const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 			"How the point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Stratifiable, because a " +
 				"headline at 1 km lives or dies on it."
 		),
+	country: z
+		.string()
+		.length(2)
+		.optional()
+		.describe(
+			"The ISO alpha-2 country the truth lies in, as a board row states it. `mwdev_diagnose` reads the expected " +
+				"components' reachability against this country's rows; without it that reading is UNPROBED."
+		),
+	components: z
+		.record(z.string(), z.string())
+		.optional()
+		.describe(
+			"The expected components, tag to value, as a board row would state them. They are graded like a golden " +
+				"row's, and `mwdev_diagnose` reads each admin component's reachability in the candidate table, so a row " +
+				"can be checked for a band miss before it is written to a case file."
+		),
 })
 
 const LITERAL_INPUT_SCHEMA = z.union([z.string(), LITERAL_INPUT_WITH_TRUTH_SCHEMA])
