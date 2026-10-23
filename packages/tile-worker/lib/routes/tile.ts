@@ -21,7 +21,7 @@ import { WorkerRoute } from "#routing"
  * Serves a single tile from a PMTiles archive in R2, by tile set and z/x/y.
  */
 export const TileRoute = WorkerRoute.GET(
-	"/:tileSetName([a-zA-Z0-9_\\-]+)/:z(\\d+)/:x(\\d+)/:y(\\d+).:fileExtension([a-z0-9]+)",
+	"/:tileSetName([a-zA-Z0-9_\\x2E\\-]+)/:z(\\d+)/:x(\\d+)/:y(\\d+).:fileExtension([a-z0-9]+)",
 	async ({ request, params, env, ctx }) => {
 		const tileCoords = parseTileCoordParams(params)!
 
@@ -72,9 +72,13 @@ export const TileRoute = WorkerRoute.GET(
 /**
  * Serves a tile set's TileJSON metadata.
  * Clients read it before requesting tiles.
+ *
+ * A tile set name may contain dots, as `planet.v4` does.
+ * The patterns spell the dot `\x2E` because `URLPatternPathParameters` splits
+ * a pattern string on a literal dot.
  */
 export const TileMetadataRoute = WorkerRoute.GET(
-	"/:tileSetName([a-zA-Z0-9_\\-]+).json",
+	"/:tileSetName([a-zA-Z0-9_\\x2E\\-]+).json",
 	async ({ ctx, request, env, params }) => {
 		const { tileSetName } = params
 
