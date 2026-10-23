@@ -11,6 +11,7 @@
  *   `features` supplies the count because the model reads those values. `confidence` remains a separate trace field.
  */
 
+import type { ChannelPins, InputMode, SoftChannelName } from "@mailwoman/core/pipeline"
 import type { NeuralParseTrace, SoftFeatureChannel, TracePriorKind } from "@mailwoman/neural"
 
 /**
@@ -21,15 +22,27 @@ export type ChannelReading =
 	| { state: "silent"; of: number }
 	| { state: "fired"; tokens_fired: number; of: number }
 
-export interface EvidenceCensus {
-	anchor: ChannelReading
-	gazetteer: ChannelReading
-	country: ChannelReading
+/**
+ * The five channel readings, keyed by the CLI channel name.
+ */
+type ChannelReadings = Record<SoftChannelName, ChannelReading>
+
+export interface EvidenceCensus extends ChannelReadings {
 	/**
 	 * True only when at least one channel was present and every present one was silent.
 	 * A session with no channels is not starved.
 	 */
 	silent: boolean
+	/**
+	 * The input register the parse ran under; `formatted` withholds `street_type` and `locality_surface`,
+	 * so their `absent` reading under it is the register's doing rather than a missing lexicon.
+	 */
+	input_mode: InputMode
+	/**
+	 * The channels the caller pinned off.
+	 * A `silent` reading on one of them is the pin's doing.
+	 */
+	pins: ChannelPins
 }
 
 function readChannel(channel: SoftFeatureChannel | null): ChannelReading {
@@ -42,19 +55,24 @@ function readChannel(channel: SoftFeatureChannel | null): ChannelReading {
 }
 
 /**
- * Read the three evidence channels off one parse trace.
+ * Read the five evidence channels off one parse trace.
  */
 export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
-	const anchor = readChannel(parse.anchor ?? null)
-	const gazetteer = readChannel(parse.gazetteer ?? null)
-	const country = readChannel(parse.country ?? null)
-	const present = [anchor, gazetteer, country].filter((reading) => reading.state !== "absent")
+	const readings: ChannelReadings = {
+		anchor: readChannel(parse.anchor ?? null),
+		gazetteer: readChannel(parse.gazetteer ?? null),
+		country: readChannel(parse.country ?? null),
+		street_type: readChannel(parse.streetType ?? null),
+		locality_surface: readChannel(parse.localitySurface ?? null),
+	}
+
+	const present = Object.values(readings).filter((reading) => reading.state !== "absent")
 
 	return {
-		anchor,
-		gazetteer,
-		country,
+		...readings,
 		silent: present.length > 0 && present.every((reading) => reading.state === "silent"),
+		input_mode: parse.inputMode ?? "fragmented",
+		pins: parse.channelPins ?? {},
 	}
 }
 

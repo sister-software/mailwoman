@@ -350,6 +350,47 @@ export interface QueryKindResult {
 }
 
 /**
+ * The soft-feature channels a classifier feeds its encoder, in feed order.
+ *
+ * Each is a per-piece feature row times a confidence, added to the token embedding
+ * before the first transformer block: the postcode anchor, the gazetteer cue lexicon,
+ * the country-surface lexicon, the street-type lexicon and the locality-surface lexicon.
+ */
+export const SOFT_CHANNEL_NAMES = ["anchor", "gazetteer", "country", "street_type", "locality_surface"] as const
+
+/**
+ * One of {@link SOFT_CHANNEL_NAMES}.
+ */
+export type SoftChannelName = (typeof SOFT_CHANNEL_NAMES)[number]
+
+/**
+ * One channel's pin: `production` feeds the channel as built, and `off` feeds zeros in its place.
+ *
+ * A zeroed channel is the state the training curriculum paints on a share of rows,
+ * so a parse under an `off` pin reads a trained input state rather than an untrained one.
+ */
+export const ChannelPinSchema = z
+	.enum(["production", "off"])
+	.meta({ id: "ChannelPin", description: "`production` feeds the channel as built; `off` feeds zeros." })
+
+export type ChannelPin = z.infer<typeof ChannelPinSchema>
+
+/**
+ * Pins over the soft-feature channels, keyed by {@link SoftChannelName}.
+ *
+ * An unlisted channel is `production`.
+ */
+export const ChannelPinsSchema = z
+	.object(Object.fromEntries(SOFT_CHANNEL_NAMES.map((name) => [name, ChannelPinSchema.optional()])))
+	.strict()
+	.meta({
+		id: "ChannelPins",
+		description: "Per-channel feed pins; an unlisted channel is fed as built.",
+	})
+
+export type ChannelPins = Partial<Record<SoftChannelName, ChannelPin>>
+
+/**
  * The parse register.
  *
  * `fragmented` suits search input and `formatted` suits complete postal records.

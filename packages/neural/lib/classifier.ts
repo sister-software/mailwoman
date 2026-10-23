@@ -20,9 +20,12 @@ import {
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import {
+	type ChannelPins,
 	DEFAULT_CASE_NORMALIZATION,
+	type InputMode,
 	proposeSpans,
 	type ProposedSpan,
+	type SoftChannelName,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	type WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
@@ -50,7 +53,7 @@ import { repairPostcodeLabels } from "#postcode/repair"
 import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
 import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#register-boundary-repair"
 import type { SemiCRFTransitions } from "#semi-markov-decode"
-import { buildSoftFeatures, type SoftFeatureChannel, type SoftFeatures } from "#soft-features"
+import { applyChannelPins, buildSoftFeatures, type SoftFeatureChannel, type SoftFeatures } from "#soft-features"
 import { bridgePunctuationGaps } from "#span/bridge"
 import { buildSpanProposalPriors } from "#span/proposal-prior"
 import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
@@ -65,6 +68,7 @@ import {
 	buildBIOEndMask,
 	buildBIOStartMask,
 	buildBIOTransitionMask,
+	pathMargins,
 	softmax,
 	viterbi,
 } from "#viterbi"
@@ -220,6 +224,15 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * The file each fed channel's lexicon or lookup was read from, keyed by channel name.
+	 *
+	 * Empty for a directly constructed instance, because its lexicons arrived as objects.
+	 */
+	get lexiconPaths(): Readonly<Partial<Record<SoftChannelName, string>>> {
+		return this.cfg.lexiconPaths ?? {}
+	}
+
+	/**
 	 * The required channels `loadFromWeights` could not feed, so parses run with them off.
 	 *
 	 * Empty when every required channel is fed or the instance was constructed directly.
@@ -348,6 +361,10 @@ export class NeuralAddressClassifier {
 				anchor: null,
 				gazetteer: null,
 				country: null,
+				streetType: null,
+				localitySurface: null,
+				inputMode: opts?.inputMode ?? "fragmented",
+				channelPins: opts?.channels ?? {},
 				logits: [],
 				localeLogits: null,
 				spanScores: null,
@@ -358,6 +375,7 @@ export class NeuralAddressClassifier {
 				emissions: [],
 				labels,
 				path: [],
+				margins: [],
 				decode: this.decodeMode,
 				repairs: [],
 				tokens: [],
@@ -378,6 +396,10 @@ export class NeuralAddressClassifier {
 			anchor: trace.anchor,
 			gazetteer: trace.gazetteer,
 			country: trace.country,
+			streetType: trace.streetType,
+			localitySurface: trace.localitySurface,
+			inputMode: trace.inputMode,
+			channelPins: trace.channelPins,
 			logits,
 			localeLogits: trace.localeLogits,
 			// The country order travels with the logits so consumers do not hardcode it.
@@ -389,6 +411,7 @@ export class NeuralAddressClassifier {
 			emissions: trace.emissions,
 			labels,
 			path: trace.path,
+			margins: trace.margins,
 			decode: this.decodeMode,
 			repairs: trace.repairs,
 			tokens: tokens.map((t) => ({ ...t })),
@@ -419,6 +442,10 @@ export class NeuralAddressClassifier {
 			anchor: SoftFeatureChannel | null
 			gazetteer: SoftFeatureChannel | null
 			country: SoftFeatureChannel | null
+			streetType: SoftFeatureChannel | null
+			localitySurface: SoftFeatureChannel | null
+			inputMode: InputMode
+			channelPins: ChannelPins
 			localeLogits: number[] | null
 			spanScores: number[][][] | null
 			detectedSystem: SystemCode | null
@@ -426,6 +453,7 @@ export class NeuralAddressClassifier {
 			priors: TracePrior[]
 			emissions: number[][]
 			path: number[]
+			margins: number[]
 			repairs: TraceRepair[]
 		}
 	}> {
@@ -434,10 +462,11 @@ export class NeuralAddressClassifier {
 		let pieces = encoded.pieces
 		// Formatted input withholds the street-type and locality-surface channels
 		// because they help fragments and hurt full addresses.
-		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
+		const inputMode: InputMode = opts?.inputMode ?? "fragmented"
+		const evidenceOn = inputMode === "fragmented"
 
 		// The character path takes no soft-feature channels.
-		const soft: SoftFeatures = encoded.charIDs
+		const built: SoftFeatures = encoded.charIDs
 			? { anchor: null, gazetteer: null, country: null, streetType: null, localitySurface: null }
 			: buildSoftFeatures(text, pieces, {
 					postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
@@ -448,6 +477,9 @@ export class NeuralAddressClassifier {
 					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
 					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
 				})
+
+		// A diagnostic pin zeros a built channel at feed time, and the trace records the fed state.
+		const soft = applyChannelPins(built, opts?.channels)
 
 		const { logits, localeLogits, spanScores } = encoded.charIDs
 			? await this.cfg.runner.inferChars!(encoded.charIDs, encoded.attentionMask!)
@@ -814,6 +846,10 @@ export class NeuralAddressClassifier {
 							anchor: soft.anchor,
 							gazetteer: soft.gazetteer,
 							country: soft.country,
+							streetType: soft.streetType,
+							localitySurface: soft.localitySurface,
+							inputMode,
+							channelPins: opts?.channels ?? {},
 							localeLogits,
 							spanScores,
 							detectedSystem,
@@ -821,6 +857,8 @@ export class NeuralAddressClassifier {
 							priors: tracePriors!,
 							emissions,
 							path: decodedPath!,
+							// The margin reads the decoder's own path against the emissions it decoded.
+							margins: pathMargins(emissions, decodedPath!),
 							repairs: traceRepairs!,
 						},
 					}

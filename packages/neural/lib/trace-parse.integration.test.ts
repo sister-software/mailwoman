@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import type { AnchorLookup } from "#anchor-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
+import { parseGazetteerLexicon } from "#gazetteer-inference"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferResult } from "#onnx-runner"
 import type { QueryShapeLike } from "#query-shape-prior"
@@ -404,6 +405,21 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)
 	})
 
+	it("records the path margin per piece from the emissions the decoder read", async () => {
+		const tokenizer = await loadTokenizer()
+		const text = "350 5th Ave 10118"
+		const { pieces } = tokenizer.encode(text)
+		const logits = logitsWithBoost(pieces.length, 0, "B-house_number", 3)
+		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
+
+		const trace = await classifier.traceParse(text, { spanProposer: "none" })
+
+		expect(trace.margins).toHaveLength(trace.path.length)
+		// The boosted row leads every other label by its boost, and the flat rows have no lead.
+		expect(trace.margins[0]).toBe(3)
+		expect(trace.margins.slice(1).every((margin) => margin === 0)).toBe(true)
+	})
+
 	it("schema snapshot — drift forces a conscious decision", async () => {
 		const tokenizer = await loadTokenizer()
 		const text = "350 5th Ave 10118"
@@ -415,5 +431,77 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: "none" })
 
 		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../test/fixtures/trace-schema.snap.json")
+	})
+})
+
+describe("NeuralAddressClassifier.traceParse — evidence channels as fed", () => {
+	const streetTypeLexicon = parseGazetteerLexicon({
+		feature_dim: 1,
+		slots: ["street_type"],
+		bits: { street_type: 1 },
+		max_ngram: 1,
+		entries: { lake: 1 },
+		code_entries: {},
+	})
+
+	const localitySurfaceLexicon = parseGazetteerLexicon({
+		feature_dim: 2,
+		slots: ["locality", "locality_homograph"],
+		bits: { locality: 1, locality_homograph: 2 },
+		max_ngram: 2,
+		entries: { uxbridge: 3 },
+		code_entries: {},
+	})
+
+	const text = "Little Britain Lake, Uxbridge"
+
+	async function traceWith(opts: Parameters<NeuralAddressClassifier["traceParse"]>[1]) {
+		const tokenizer = await loadTokenizer()
+		const { pieces } = tokenizer.encode(text)
+		const logits = logitsWithBoost(pieces.length, 0, "B-street")
+
+		const classifier = new NeuralAddressClassifier({
+			tokenizer,
+			runner: new FakeRunner(logits),
+			streetTypeLexicon,
+			localitySurfaceLexicon,
+		})
+
+		return { trace: await classifier.traceParse(text, opts), pieces }
+	}
+
+	it("carries both evidence channels, the input mode and empty pins in fragmented mode", async () => {
+		const { trace, pieces } = await traceWith({ spanProposer: "none" })
+
+		expect(trace.inputMode).toBe("fragmented")
+		expect(trace.channelPins).toEqual({})
+		expect(trace.streetType?.confidence).toHaveLength(pieces.length)
+		expect(trace.localitySurface?.confidence).toHaveLength(pieces.length)
+
+		const lake = pieces.findIndex((p) => text.slice(p.start, p.end) === "Lake")
+		const uxbridge = pieces.findIndex((p) => text.slice(p.start, p.end).startsWith("U"))
+
+		expect(trace.streetType?.confidence[lake]).toBe(1)
+		expect(trace.localitySurface?.confidence[uxbridge]).toBe(1)
+		expect(trace.localitySurface?.features[uxbridge]).toEqual([1, 1])
+	})
+
+	it("records formatted mode with both evidence channels withheld", async () => {
+		const { trace } = await traceWith({ spanProposer: "none", inputMode: "formatted" })
+
+		expect(trace.inputMode).toBe("formatted")
+		expect(trace.streetType).toBeNull()
+		expect(trace.localitySurface).toBeNull()
+	})
+
+	it("feeds zeros for a channel pinned off and records the pin", async () => {
+		const { trace, pieces } = await traceWith({ spanProposer: "none", channels: { locality_surface: "off" } })
+
+		expect(trace.channelPins).toEqual({ locality_surface: "off" })
+		expect(trace.localitySurface).not.toBeNull()
+		expect(trace.localitySurface?.confidence).toEqual(pieces.map(() => 0))
+		expect(trace.localitySurface?.features.every((row) => row.every((value) => value === 0))).toBe(true)
+		// The other evidence channel is fed as built.
+		expect(trace.streetType?.confidence.some((value) => value === 1)).toBe(true)
 	})
 })

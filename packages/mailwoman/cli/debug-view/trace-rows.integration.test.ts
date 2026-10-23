@@ -130,6 +130,36 @@ describe("channelsRow", () => {
 		expect(row).toContain("gazetteer 1/3 [Clinton]")
 		expect(row).toContain("country not fed")
 	})
+
+	it("reports the two evidence channels, the input mode and a pin beside the three admin channels", () => {
+		const trace = traceOf({
+			streetType: { features: [[0], [0], [1]], confidence: [0, 0, 1] },
+			localitySurface: {
+				features: [
+					[0, 0],
+					[0, 0],
+					[0, 0],
+				],
+				confidence: [0, 0, 0],
+			},
+			inputMode: "fragmented",
+			channelPins: { locality_surface: "off" },
+		})
+
+		const row = channelsRow(trace)
+
+		expect(row).toContain("street_type 1/3 [Clinton]")
+		expect(row).toContain("locality_surface 0/3 (pinned off)")
+		expect(row).toContain("mode fragmented")
+	})
+
+	it("reads a withheld evidence channel as not fed and says which register withheld it", () => {
+		const row = channelsRow(traceOf({ inputMode: "formatted" }))
+
+		expect(row).toContain("street_type not fed")
+		expect(row).toContain("locality_surface not fed")
+		expect(row).toContain("mode formatted")
+	})
 })
 
 describe("decodeRow", () => {

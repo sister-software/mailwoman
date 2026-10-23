@@ -207,6 +207,13 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	venueHeadOpts?: import("@mailwoman/core/pipeline").VenueHeadPriorOpts
 	/**
+	 * Per-channel feed pins for a diagnostic parse.
+	 *
+	 * A channel pinned `off` is fed zeros.
+	 * An absent pin set feeds every channel as built.
+	 */
+	channelPins?: import("@mailwoman/core/pipeline").ChannelPins
+	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
 	classifyKind?: (
@@ -341,6 +348,7 @@ export function geocodeParseInputs(
 		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
+		| "channelPins"
 	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
@@ -375,6 +383,8 @@ export function geocodeParseInputs(
 			caseNormalization: deps.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 			queryShape,
 			inputMode,
+			// The classifier zeros each pinned channel at feed time.
+			...(deps.channelPins ? { channels: deps.channelPins } : {}),
 			// Default word-consistency enforcement.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			// The loaded priors, through the options builder every production parse path uses.

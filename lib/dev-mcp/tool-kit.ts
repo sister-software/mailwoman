@@ -6,7 +6,7 @@
 
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
+import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
@@ -30,6 +30,13 @@ export interface Provenance {
 	dirty: boolean
 	dirty_files: string[]
 	config_effective: Record<string, unknown>
+	/**
+	 * The lexicon or lookup file behind each fed channel of the engine's primary classifier, with its md5.
+	 *
+	 * An engine with no loaded lexicon lists none.
+	 * A bundle swapped under an unchanged model shows here.
+	 */
+	lexicons: Array<{ channel: string; path: string; md5: string }>
 	engine_build_ms: number
 	engine_was_warm: boolean
 	input_set: {
@@ -74,6 +81,7 @@ export function provenanceFor(
 		fingerprint: { digest: string; gitHead: string; dirtyFiles: string[] }
 		buildMs: number
 		uses: number
+		lexicons?: Array<{ channel: string; path: string; md5: string }>
 	},
 	set: ResolvedInputSet
 ): Provenance {
@@ -84,6 +92,7 @@ export function provenanceFor(
 		dirty: engine.fingerprint.dirtyFiles.length > 0,
 		dirty_files: engine.fingerprint.dirtyFiles,
 		config_effective: engine.effective,
+		lexicons: engine.lexicons ?? [],
 		engine_build_ms: engine.buildMs,
 		engine_was_warm: engine.uses > 1,
 		input_set: inputSetProvenance(set),
@@ -215,6 +224,14 @@ export const ENGINE_CONFIG_SCHEMA = z
 		poi_venue_tier: SwitchPinSchema.optional(),
 		capital_tier: z.enum(["auto", "required", "off"]).optional(),
 		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
+		channels: ChannelPinsSchema.optional().describe(
+			"Per-channel feed pins over the classifier's five soft-feature channels (anchor, gazetteer, country, " +
+				'street_type, locality_surface). A channel pinned "off" is fed zeros in place of its built features, ' +
+				"the absence state the training curriculum paints on a share of rows, so the result reads a TRAINED " +
+				"input state rather than an untrained one. The trace records the pins beside the channels as fed. " +
+				"This is the one-call form of the lexicon-ablation arms: it changes what the model is fed and no " +
+				"loaded artifact."
+		),
 	})
 	.strict()
 	.describe(
@@ -299,7 +316,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * Returns the parse trace without its large numeric matrices, keeping only each channel's confidence.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
-	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
+	const { logits, emissions, anchor, gazetteer, country, streetType, localitySurface, ...rest } = parse
 
 	void logits
 	void emissions
@@ -312,6 +329,8 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 		anchor: channel(anchor ?? null),
 		gazetteer: channel(gazetteer ?? null),
 		country: channel(country ?? null),
+		streetType: channel(streetType ?? null),
+		localitySurface: channel(localitySurface ?? null),
 		matrices_omitted:
 			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
 			"full_parse_trace: true for the raw numbers.",

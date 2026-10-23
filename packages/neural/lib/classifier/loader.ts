@@ -209,11 +209,18 @@ export async function loadClassifierFromWeights(
 	]
 
 	const lexicons: Partial<Record<(typeof lexiconChannels)[number]["channel"], GazetteerLexicon>> = {}
+	// The file behind each channel that loaded, so a trace can state which lexicon bytes were fed.
+	const lexiconPaths: Partial<Record<(typeof lexiconChannels)[number]["channel"] | "anchor", string>> = {}
+
+	if (postcodeAnchorLookup && resolved.anchorLookupPath) {
+		lexiconPaths.anchor = resolved.anchorLookupPath.path
+	}
 
 	for (const { channel, path, parse, artifactName } of lexiconChannels) {
 		if (path) {
 			try {
 				lexicons[channel] = parse(await readLocalJSONFile(path))
+				lexiconPaths[channel] = path
 			} catch (error) {
 				warnUnfedChannel(channel, `failed to parse ${path}: ${(error as Error).message}`)
 			}
@@ -299,6 +306,7 @@ export async function loadClassifierFromWeights(
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		lexiconPaths,
 		...(placetypePair ? { placetypePair } : {}),
 		...(placetypeCensus ? { placetypeCensus } : {}),
 		...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),

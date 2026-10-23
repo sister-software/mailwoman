@@ -25,6 +25,8 @@ export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipel
 export {
 	CASE_NORMALIZATIONS,
 	caseNormalizationOf,
+	ChannelPinSchema,
+	ChannelPinsSchema,
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,
@@ -39,12 +41,15 @@ export {
 	QueryIntentCodeSchema,
 	QueryIntentMarkerSchema,
 	QueryKindSchema,
+	SOFT_CHANNEL_NAMES,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "#pipeline/types"
 
 export type {
 	AddressClassifier,
 	CaseNormalization,
+	ChannelPin,
+	ChannelPins,
 	ClassifierOpts,
 	AnchorRegionAncestor,
 	AnchorRegionLookupLike,
@@ -69,6 +74,7 @@ export type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
+	SoftChannelName,
 	StageSource,
 	UserLocation,
 	VenueHeadLexiconLike,

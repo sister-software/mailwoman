@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { ChannelPins, SoftChannelName } from "@mailwoman/core/pipeline"
+
 import {
 	type AnchorLookup,
 	type AnchorSpanMode,
@@ -138,4 +140,58 @@ export function buildSoftFeatures(
 		streetType: streetType ?? null,
 		localitySurface: localitySurface ?? null,
 	}
+}
+
+/**
+ * The {@link SoftFeatures} key for each channel name.
+ */
+const CHANNEL_KEYS: Record<SoftChannelName, keyof SoftFeatures> = {
+	anchor: "anchor",
+	gazetteer: "gazetteer",
+	country: "country",
+	street_type: "streetType",
+	locality_surface: "localitySurface",
+}
+
+/**
+ * Returns a channel of the same shape with every feature and confidence set to zero.
+ */
+function zeroedChannel(channel: SoftFeatureChannel): SoftFeatureChannel {
+	return {
+		features: channel.features.map((row) => row.map(() => 0)),
+		confidence: channel.confidence.map(() => 0),
+	}
+}
+
+/**
+ * Applies per-channel feed pins to built soft features.
+ *
+ * A channel pinned `off` is replaced by zeros of the same shape.
+ * The runner then feeds the trained absence state.
+ *
+ * A channel that was never built stays `null`.
+ * A pin cannot invent a channel the classifier has no lexicon for.
+ * With no `off` pin the input object is returned as is.
+ */
+export function applyChannelPins(soft: SoftFeatures, pins: ChannelPins | undefined): SoftFeatures {
+	if (!pins) return soft
+
+	const off = (Object.entries(pins) as Array<[SoftChannelName, ChannelPins[SoftChannelName]]>).filter(
+		([, pin]) => pin === "off"
+	)
+
+	if (!off.length) return soft
+
+	const pinned: SoftFeatures = { ...soft }
+
+	for (const [name] of off) {
+		const key = CHANNEL_KEYS[name]
+		const channel = soft[key]
+
+		if (channel) {
+			pinned[key] = zeroedChannel(channel)
+		}
+	}
+
+	return pinned
 }

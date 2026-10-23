@@ -21,6 +21,7 @@ const PARSE: NeuralParseTrace = {
 	pieces: [{ piece: "▁K", id: 1, start: 0, end: 1 }],
 	tokens: [{ piece: "▁K", start: 0, end: 1, label: "B-postcode", confidence: 0.91 }],
 	path: [9],
+	margins: [0.1],
 	decode: "viterbi",
 	repairs: [],
 	labels: ["O", "B-postcode"],
@@ -32,6 +33,10 @@ const PARSE: NeuralParseTrace = {
 	anchor: { features: [[0, 0]], confidence: [0.5] },
 	gazetteer: { features: [[1, 0]], confidence: [1] },
 	country: { features: [[0, 1]], confidence: [0] },
+	streetType: { features: [[1]], confidence: [1] },
+	localitySurface: null,
+	inputMode: "fragmented",
+	channelPins: { gazetteer: "off" },
 	spanScores: null,
 }
 
@@ -44,6 +49,11 @@ describe("slimParseTrace", () => {
 		expect(slim["anchor"]).toEqual({ confidence: [0.5] })
 		expect(slim["gazetteer"]).toEqual({ confidence: [1] })
 		expect(slim["country"]).toEqual({ confidence: [0] })
+		expect(slim["streetType"]).toEqual({ confidence: [1] })
+		expect(slim["localitySurface"]).toBeNull()
+		expect(slim["inputMode"]).toBe("fragmented")
+		expect(slim["channelPins"]).toEqual({ gazetteer: "off" })
+		expect(slim["margins"]).toEqual([0.1])
 
 		expect(slim["tokens"]).toEqual(PARSE.tokens)
 		expect(slim["path"]).toEqual([9])

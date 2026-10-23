@@ -207,6 +207,31 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
+ * Measures, for each timestep, the decoded label's emission lead over the best other label in the same row.
+ *
+ * The margin is `emissions[t][path[t]] - max(emissions[t][k] for k != path[t])`.
+ * It is positive when the decoded label is also the row's own argmax, negative when the transition
+ * constraints or a prior chose a label the row ranks lower, and `0` when the row holds one label.
+ *
+ * A per-token softmax measures how peaked a row is.
+ * The margin measures how far the decision sits from flipping to its nearest competitor.
+ */
+export function pathMargins(emissions: ReadonlyArray<readonly number[]>, path: readonly number[]): number[] {
+	return path.map((label, t) => {
+		const row = emissions[t]!
+		let best = NEG_INF
+
+		for (let k = 0; k < row.length; k++) {
+			if (k !== label && row[k]! > best) {
+				best = row[k]!
+			}
+		}
+
+		return best === NEG_INF ? 0 : row[label]! - best
+	})
+}
+
+/**
  * Picks the highest-scoring label for each token independently, ignoring transitions.
  */
 export function perTokenArgmax(emissions: readonly number[][]): number[] {

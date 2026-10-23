@@ -32,6 +32,10 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		anchor: null,
 		gazetteer: null,
 		country: null,
+		streetType: null,
+		localitySurface: null,
+		inputMode: "fragmented",
+		channelPins: {},
 		localeLogits: null,
 		spanScores: null,
 		localeCountries: null,
@@ -40,6 +44,7 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		priors: [],
 		labels: ["O", "B-locality"],
 		path: [0, 1],
+		margins: [1, 1],
 		decode: "viterbi",
 		repairs: [],
 		tokens: [],
@@ -257,5 +262,39 @@ describe("aggregateCensus — the inert verdict", () => {
 		const { aggregate } = aggregateCensus(rows)
 
 		expect(aggregate.repairs).toEqual({ postcodeRepair: 1 })
+	})
+})
+
+describe("evidenceCensus — the two evidence channels", () => {
+	it("reads street_type and locality_surface beside the admin channels", () => {
+		const reading = evidenceCensus(trace({ streetType: FIRED, localitySurface: SILENT }))
+
+		expect(reading.street_type).toEqual({ state: "fired", tokens_fired: 1, of: 2 })
+		expect(reading.locality_surface).toEqual({ state: "silent", of: 2 })
+		expect(reading.anchor).toEqual({ state: "absent" })
+	})
+
+	it("is not starved when only an evidence channel fired", () => {
+		expect(evidenceCensus(trace({ gazetteer: SILENT, localitySurface: FIRED })).silent).toBe(false)
+		expect(evidenceCensus(trace({ gazetteer: SILENT, localitySurface: SILENT })).silent).toBe(true)
+	})
+
+	it("carries the input mode and the pins so a silent reading can be attributed", () => {
+		const reading = evidenceCensus(
+			trace({ inputMode: "formatted", channelPins: { locality_surface: "off" }, localitySurface: SILENT })
+		)
+
+		expect(reading.input_mode).toBe("formatted")
+		expect(reading.pins).toEqual({ locality_surface: "off" })
+	})
+
+	it("tallies all five channels in the aggregate", () => {
+		const { aggregate } = aggregateCensus([
+			{ id: "a", input: "a", parse: trace({ streetType: FIRED }) },
+			{ id: "b", input: "b", parse: trace({ localitySurface: SILENT }) },
+		])
+
+		expect(aggregate.channels.street_type).toEqual({ absent: 1, silent: 0, fired: 1 })
+		expect(aggregate.channels.locality_surface).toEqual({ absent: 1, silent: 1, fired: 0 })
 	})
 })

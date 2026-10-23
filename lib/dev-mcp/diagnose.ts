@@ -18,6 +18,7 @@
  * number about the mixture.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import type { GeocodeTrace } from "mailwoman/geocode"
@@ -100,8 +101,10 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 		`A known-format hit at confidence ≥ ${KNOWN_FORMAT_CONFIDENCE_FLOOR} covers text the parse assigned to no ` +
 		"component of the matching tag — the structural detector and the model disagree about the same characters.",
 	evidence_starved:
-		"At least one evidence channel was fed and EVERY fed channel was fed zeros, so the parse was decided by the " +
-		"token embeddings alone. Not a health verdict: a correct parse can be starved.",
+		"At least one of the five channels (anchor, gazetteer, country, street_type, locality_surface) was fed and " +
+		"EVERY fed channel was fed zeros, so the parse was decided by the token embeddings alone. A channel the " +
+		"input mode withheld or a caller pinned off counts as fed zeros; the census names both. Not a health " +
+		"verdict: a correct parse can be starved.",
 	retrieval_empty:
 		"A lookup returned zero candidates and picked nothing, and no other lookup for the same span recovered a pick " +
 		"— the deciding site had nothing to decide between.",
@@ -540,9 +543,12 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	}
 
 	if (account.evidence) {
+		const pinned = Object.keys(account.evidence.pins).length ? ` pins ${stringifyJSON(account.evidence.pins)}` : ""
+
 		parts.push(
 			`channels a:${channelMark(account.evidence.anchor)} g:${channelMark(account.evidence.gazetteer)} ` +
-				`c:${channelMark(account.evidence.country)}`
+				`c:${channelMark(account.evidence.country)} st:${channelMark(account.evidence.street_type)} ` +
+				`ls:${channelMark(account.evidence.locality_surface)} mode ${account.evidence.input_mode}${pinned}`
 		)
 	}
 
