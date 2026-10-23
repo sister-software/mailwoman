@@ -26,7 +26,7 @@ It is an **H3 hexbin** tileset. Each cell stores **two baked fog values** in `[0
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band. The finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**The tile worker serves XYZ. Client-side PMTiles is not the serving path.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.ai/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
+**The tile worker serves XYZ. Client-side PMTiles is not the serving path.** The `.pmtiles` archive lives at `mailwoman-tiles/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.ai/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
 
 The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but uses the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup. The US tiers are untouched.
 
@@ -65,11 +65,11 @@ mailwoman coverage build --states all --exclude-states AK \
 # --keep-ndjson to re-tile without re-aggregating.
 ```
 
-**2. Publish to the tile-worker bucket** (`nexus-assets`):
+**2. Publish to the tile-worker bucket** (`mailwoman-tiles`):
 
 ```bash
 set -a; . ./.env; set +a
-# nexus-assets is written by the *_PUBLIC_* R2 keys (see failure mode below):
+# mailwoman-tiles is written by the *_PUBLIC_* R2 keys (see failure mode below):
 RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \
 RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY" \
 RCLONE_S3_ENDPOINT="$RCLONE_S3_PUBLIC_ENDPOINT" \
@@ -83,9 +83,9 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 ### Credential + upload gotchas (this cost a whole session — read it)
 
-- **Which keys write `nexus-assets`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on nexus-assets** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
+- **Which keys write `mailwoman-tiles`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on mailwoman-tiles** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
 - **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone rather than wrangler.
-- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.mailwoman.ai/mailwoman/`, the `publish-demo-assets-to-r2.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
+- **`mailwoman-public` ≠ `mailwoman-tiles`.** `mailwoman-public` (`public.mailwoman.ai/mailwoman/`, the `publish-demo-assets-to-r2.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `mailwoman-tiles`. Don't put tiles in `mailwoman-public`.
 
 ## Data state + the HI/NH situation
 

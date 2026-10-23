@@ -162,7 +162,7 @@ The manifest is the reproducibility record and the input to the app's attributio
 `astrogeology publish --body moon` runs `mailwoman tiles publish --tileset moon --file …` and
 `--tileset moon-hillshade`, then fetches `https://tiles.mailwoman.ai/moon.json` and one low-zoom and
 one high-zoom tile to confirm the route answers. The bucket and prefix are the tile worker's
-(`nexus-assets`, `tiles/`).
+(`mailwoman-tiles`, `tiles/`).
 
 ### `@mailwoman/spatial`
 

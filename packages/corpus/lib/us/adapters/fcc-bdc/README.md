@@ -26,10 +26,8 @@ NTIA-conformant fields. Compared to the WOF / TIGER / BAN baseline:
 
 A SQLite database the operator pre-builds from the BDC distribution.
 The mailwoman side does **not** download the raw FCC ZIPs or parse the
-CSVs — that path lives in the upstream `isp-nexus` BDC ETL
-(`/srv/isp-nexus/sync/fcc/bdc/`) and produces the SQLite this adapter
-consumes. Operators not running isp-nexus can substitute any pipeline
-that lands a `bdc_locations` table with the schema below.
+CSVs — any external pipeline can produce the SQLite this adapter
+consumes, as long as it lands a `bdc_locations` table with the schema below.
 
 ### Expected schema
 
@@ -44,8 +42,7 @@ CREATE TABLE bdc_locations (
 );
 ```
 
-Column names mirror the upstream `NTIARecord` type
-(`isp-nexus/fcc/bdc/data-collection.ts`) so a CSV `.import` from the
+Column names mirror the NTIA record field names so a CSV `.import` from the
 raw NTIA distribution lands in the right shape without per-column
 renames. The optional `zip_suffix` column tolerates two surface forms:
 

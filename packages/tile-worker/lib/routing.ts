@@ -13,7 +13,7 @@ import { applyAccessControlAllowOrigin } from "#cors"
  * Environment bindings associated with the API service.
  */
 export interface TileWorkerEnv {
-	NEXUS_ASSETS_BUCKET: R2Bucket
+	MAILWOMAN_TILES_BUCKET: R2Bucket
 	PMTILES_PATH: string
 }
 

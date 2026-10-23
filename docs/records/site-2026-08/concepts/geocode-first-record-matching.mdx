@@ -48,7 +48,7 @@ Entity resolution projects can fail when they treat matching as one large proble
 2. **Match.** Score each candidate pair on whether both records are the same entity. This is the calibrated decision layer.
 3. **Cluster.** Pairwise scores are _not transitive_: A~B at 0.6 and B~C at 0.6 do not make A~C a match. A separate stage therefore closes pairs into canonical entities. Without it, the output entities split or merge incorrectly (Dedupe treats non-transitivity as a core concern).
 
-A **canonicalize** step runs before all three. It parses the name, sanitizes the org name, geocodes the address, and normalizes the phone and email. Most of this code is reused from the old `isp-nexus` contact, organization, and postal modules, now pointed at mailwoman's geocoder.
+A **canonicalize** step runs before all three. It parses the name, sanitizes the org name, geocodes the address, and normalizes the phone and email.
 
 ## The foundation: Fellegi-Sunter, without labels
 

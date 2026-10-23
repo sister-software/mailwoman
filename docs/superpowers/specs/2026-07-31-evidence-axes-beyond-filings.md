@@ -83,10 +83,6 @@ home" is HFC, and HFC _is_ the filed cable technology code. The divergence is in
 availability fields and not in the technology field. Encode this so that the check does not flag correct
 technology reporting as a mismatch.
 
-**Salvage:** `isp-nexus/universe/sync/experiments/pluck-att.ts` + `fcc/labels/` already implement this
-shape against AT&T (scrape → LLM extraction → Zod `BroadbandLabelSchema`). The salvage survey filed it
-under C5 pricing, but it is equally an availability-corroboration source. The same implementation serves both uses.
-
 **Constraints to respect:** these are third-party sites, so each provider's ToS and robots directives
 apply. Request volume must stay modest and identified, and results are cached with a timestamp
 because they change. We run address-level checks only for addresses a user asks about and never

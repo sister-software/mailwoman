@@ -4,7 +4,7 @@ Operator instinct, 2026-06-11: "if there's any utility in pre-tagging PO Box as 
 stage, so be it… there's some nexus of secondary address pieces — apartments, suites, units,
 levels." Written down here with the bigger shape it connects to.
 
-## The nexus is real and has one grammar
+## The nexus has one grammar
 
 PO Box 123 · Apt 4B · Suite 500 · Unit 9 · Level 12 · 3rd Floor · Private Bag 39990 · Drawer
 61547 · CMB B99 — every one is **DESIGNATOR + IDENTIFIER**: a closed-vocabulary leader (now

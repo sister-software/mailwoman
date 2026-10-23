@@ -48,7 +48,7 @@ version works where the string-first v0 imploded.
     the schema types in a shared base (a separate refactor).
 
 - **`@mailwoman/record`** (#600) — the canonicalize layer. Plain TypeScript interfaces
-  only (operator decision: **no Nexus/TypeORM/JSON-schema implementation**; use Kysely if a DB
+  only (operator decision: **no TypeORM/JSON-schema implementation**; use Kysely if a DB
   is ever needed).
   - `address.ts`: `PostalAddress` (components + canonicalKey + optional `AddressGeocode`
     - formatted), `AddressGeocode` (mirrors mailwoman `GeocodeResult`: `ResolutionTier` +
@@ -102,9 +102,7 @@ version works where the string-first v0 imploded.
 
 ## Locked decisions (don't re-litigate)
 
-1. **Home:** new workspaces in `sister-software/mailwoman` (not isp-nexus rather than a fresh
-   repo). isp-nexus holds the legacy "bones" we ported from
-   (`isp-nexus/universe/mailwoman/contacts`, `/organization`, `/postal`).
+1. **Home:** new workspaces in `sister-software/mailwoman`
 2. **Matcher v1:** classical **Fellegi-Sunter core + EM (label-free)**, with models as
    _selective_ additions — NOT model-first rather than heuristics-only. Evidence-backed.
 3. **Schema:** plain TS interfaces without ORM/JSON-schema generation. Kysely if a DB is needed.

@@ -16,16 +16,16 @@
 
 ## Pre-registered decisions (cite in commits)
 
-1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through the Nexus scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "the salvage has no bulk loader" to "no good source exists", which does not follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**. That role supplies parent and subsidiary edges. The first draft's "enrichment" framing did not anticipate them.
+1. **3a's crosswalk core is Form 499 plus the BDC provider list. CORES arrives as a bounded enrichment pass (Task 9) rather than through an HTML scraper.** _Revised 2026-07-31 after operator pushback. The first draft deferred CORES entirely. It reasoned from "there is no bulk loader" to "no good source exists", which does not follow, and the conclusion was wrong._ Research found that the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call). It returns the company name **plus parent and subsidiary names**. A Relationship-FRN endpoint is also documented in Postman. This is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b**. That role supplies parent and subsidiary edges. The first draft's "enrichment" framing did not anticipate them.
    No CORES **bulk** extract was found, because the FCC's bulk downloads cover ULS and ASR but not CORES. Per-FRN calls are acceptable here because 499 and the provider list first produce a **finite, enumerated FRN universe**. The job is bounded enrichment over a known key set rather than an open-ended crawl for discovery. Cache per FRN, rate-limit the requests, and identify the client.
    **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs and terms are unverified. `broadbandmap.fcc.gov` works with credentials, so the block is specific to these hosts. Task 9 opens with a verification step and stops if the interface differs from the documentation.
 2. **`filer.db` is not a layer-interface artifact in 3a.** It has no coordinates (ASR is 3c), and `layer_coverage` is h3-keyed with no null path. Layer-interface conformance would require coverage rows that assert no fact. The meaning-of-zero rule prohibits those rows. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at), with `LayerManifestTable`'s fields minus the spatial ones. Layer-interface conformance is deferred to 3c, when ASR structures provide coordinates and coverage becomes meaningful. **Do not geocode filer HQ addresses in 3a** to create a spatial spine.
-3. **FRN is a zero-padded 10-character branded string.** Nexus types it as `Tagged<number>`, while `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros, the same defect class as 2a's `location_id`. Provide `isFRN(value): value is FRN` with a real 10-digit check. The Nexus guard lacks that check.
+3. **FRN is a zero-padded 10-character branded string.** `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros, the same defect class as 2a's `location_id`. Provide `isFRN(value): value is FRN` with a real 10-digit check.
 4. **Entity linkage runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup**, and its threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit this only with a corporate-data model.
 5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and can be queried, but a rollup that includes them must say so. This is §4.1, and it is an acceptance check.
-6. **The graph keeps full cardinality, and `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can have multiple FRNs and conflicting holding companies. Nexus warns, overwrites and keeps the last value, and this code must not copy that. `filer.db` retains every edge. When task 8 populates `bdc_provider`, the primary FRN is the one from the most recent 499 filing date, and the schema docstring documents that rule. `brand_name` stays NULL because the provider list has no source for it.
+6. **The graph keeps full cardinality, and `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can have multiple FRNs and conflicting holding companies. Never warn, overwrite and keep the last value. `filer.db` retains every edge. When task 8 populates `bdc_provider`, the primary FRN is the one from the most recent 499 filing date, and the schema docstring documents that rule. `brand_name` stays NULL because the provider list has no source for it.
 7. **Temporal validity: `valid_from` is mandatory and `valid_to` is nullable.** In 3a the only date source is the 499 `lastFiledAt`. `valid_from` is therefore the filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
-8. **Parse by streaming rather than reading whole files.** The Nexus 499 loader reads the entire TSV into memory and silently truncates short rows (`relax_column_count_less`). The new parser streams, and a short row raises an error that identifies the file and line. Malformed input is never silently absorbed, as with 2a's `peekProviderID`.
+8. **Parse by streaming rather than reading whole files.** The parser streams, and a short row raises an error that identifies the file and line. Malformed input is never silently absorbed, as with 2a's `peekProviderID`.
 
 ## Acceptance checks (§7-3a, pre-registered — Task 7 discharges them)
 
@@ -49,7 +49,7 @@
 
 ### Task 2: FRN branded type + Form 499 parsing
 
-**Files:** Create `filer/sdk/{frn.ts,form499.ts}` + tests. Source: `/home/lab/Projects/isp-nexus/universe/sync/fcc/universal-service.ts` (columns + classification mapping only — rewrite the loader per decision 8).
+**Files:** Create `filer/sdk/{frn.ts,form499.ts}` + tests. The loader follows decision 8.
 
 **Produces:**
 
@@ -69,7 +69,7 @@ export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> 
 ```
 
 - [x] Tests first: `toFRN(1753557)` → `"0001753557"`, `isFRN("1753557")` false (not 10 chars), a fixture TSV of 3 rows parses to 3 typed rows, a short row throws naming file + line number (decision 8), and `classifyFiler` over rows with `principalCommType` containing "Incumbent"/"CLEC"/"Interexchange"/"Toll Reseller" and `usfContributor` TRUE.
-- [x] Implement. Retain both the `managementCompany` and `holdingCompany` fields, because they are different assertions (spec §3.1 finding 1). Note in the docstring that `otherTradeName1` exists in the Nexus interface but not its column tuple, and is therefore absent here by design.
+- [x] Implement. Retain both the `managementCompany` and `holdingCompany` fields, because they are different assertions (spec §3.1 finding 1).
 - [x] Commit `feat(filer): FRN branded string + streaming Form 499 parser (3a task 2, decisions 3,8)`.
 
 ### Task 3: BDC provider list parsing
@@ -256,7 +256,7 @@ MCP: add `mailwoman_filer_lookup` following the house pattern exactly: snake_cas
 The check's own terms read:
 
 ```text
-if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape
+if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to an HTML scrape
 ```
 
 No fallback was attempted, and no code was written. `broadbandmap.fcc.gov` still works with credentials, so the block is specific to these hosts rather than covering all FCC hosts.
@@ -273,7 +273,7 @@ No fallback was attempted, and no code was written. `broadbandmap.fcc.gov` still
 
 **Files:** Create `filer/sdk/cores.ts` + test. Modify `filer/sdk/build-filer.ts` to accept the enrichment as an optional input.
 
-**Step 0 is a stop check.** Before writing anything, verify that the interface exists and behaves as documented. Call `data.fcc.gov/api/frn` (the FRN Conversions GetInfo call) for known FRNs: `0001753557` (WideOpenWest Finance, LLC, from the operator's field example) and `0003768165` (Comcast). Record the real response shape, whether parent/subsidiary names are present, whether auth is required, and any published rate limit or terms. **If the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape, and do not proceed to the remaining steps.** The Akamai edge blocked the lab host on 2026-07-31. The operator may need to run this step, or it may work from a different network path.
+**Step 0 is a stop check.** Before writing anything, verify that the interface exists and behaves as documented. Call `data.fcc.gov/api/frn` (the FRN Conversions GetInfo call) for known FRNs: `0001753557` (WideOpenWest Finance, LLC, from the operator's field example) and `0003768165` (Comcast). Record the real response shape, whether parent/subsidiary names are present, whether auth is required, and any published rate limit or terms. **If the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to an HTML scrape, and do not proceed to the remaining steps.** The Akamai edge blocked the lab host on 2026-07-31. The operator may need to run this step, or it may work from a different network path.
 
 **Produces (only if Step 0 passes):**
 

@@ -16,7 +16,7 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
-const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/planet.v4.json"
 // The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
 const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
 const MAP_FONTS = { regular: "Bliss Pro Regular", bold: "Bliss Pro Medium", italic: "Bliss Pro Italic" }

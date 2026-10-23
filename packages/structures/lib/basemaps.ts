@@ -14,7 +14,7 @@ import type { StructureSourceRegister } from "#types"
  */
 export const Basemap = {
 	/**
-	 * The Protomaps v4 planet build served from `tiles.mailwoman.ai/basemap-v4.json`.
+	 * The Protomaps v4 planet build served from `tiles.mailwoman.ai/planet.v4.json`.
 	 *
 	 * Its TileJSON describes it as derived from OpenStreetMap and Natural Earth.
 	 */

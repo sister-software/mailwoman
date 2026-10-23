@@ -182,9 +182,6 @@ export type BroadbandTechnologyCodeToCategoryName = typeof BroadbandTechnologyCo
 
 /**
  * Infers the member type of a `Set`.
- *
- * Local stand-in for Nexus's `InferTupleMember` (`@isp.nexus/core`), which supports any `SetLike` shape.
- * This file only ever applies it to a real `Set`, so a narrower local type covers the one use below.
  */
 type InferSetMember<T extends ReadonlySet<unknown>> = T extends ReadonlySet<infer U> ? U : never
 

@@ -61,9 +61,3 @@ The key is never logged and never appears in a cache key or a filename. The clie
 instance-level `params` default rather than concatenating it into the URL, so what `APIClient` logs and what
 `ResourceError` interpolates is key-free. `geocodeCacheKey` then strips it before the cache key is
 built. A rotated key therefore leaves the existing cache entries usable.
-
-## Lineage
-
-Ported from the operator's isp-nexus project (`universe/mailwoman/sdk/google/`, `.../sdk/census/`). The
-domain logic was salvaged, and the plumbing was rewritten onto this repo's own implementation. Each module's
-header names what was kept, what was dropped, and why — including the defects found in the originals.

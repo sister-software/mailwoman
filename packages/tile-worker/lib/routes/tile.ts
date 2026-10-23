@@ -30,7 +30,7 @@ export const TileRoute = WorkerRoute.GET(
 		const { tileSetName, fileExtension } = params
 
 		const pm = CloudflareWorkerPMTiles.from({
-			bucket: env.NEXUS_ASSETS_BUCKET,
+			bucket: env.MAILWOMAN_TILES_BUCKET,
 			pathPrefix: env.PMTILES_PATH,
 			tileSetName,
 		})
@@ -79,7 +79,7 @@ export const TileMetadataRoute = WorkerRoute.GET(
 		const { tileSetName } = params
 
 		const pm = CloudflareWorkerPMTiles.from({
-			bucket: env.NEXUS_ASSETS_BUCKET,
+			bucket: env.MAILWOMAN_TILES_BUCKET,
 			pathPrefix: env.PMTILES_PATH,
 			tileSetName,
 		})

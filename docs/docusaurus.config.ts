@@ -144,8 +144,8 @@ const config: Config = {
 		],
 	],
 
-	// The Sister Software brand: fonts, the Infima bridge, the classic-theme restyle, footer and code blocks. Its tokens
-	// come from @mailwoman/react, the shared tokens with Mailwoman's blue product theme merged in.
+	// The Sister Software brand: fonts, the Infima bridge, the classic-theme restyle, footer and code blocks.
+	// Its tokens come from @mailwoman/react, the shared tokens with Mailwoman's blue product theme merged in.
 	themes: [
 		["@sister.software/docusaurus-theme", { tokens: "@mailwoman/react/tokens.css" }],
 		"@docusaurus/theme-mermaid",
@@ -240,7 +240,8 @@ const config: Config = {
 			},
 		},
 		navbar: {
-			// The top row of the bar hides on scroll. The category row below it stays (the shared theme).
+			// The top row of the bar hides on scroll.
+			// The category row below it stays (the shared theme).
 			hideOnScroll: true,
 			title: "Mailwoman",
 			logo: {

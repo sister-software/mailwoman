@@ -24,6 +24,7 @@ const SOURCE_ID = "protomaps"
 
 /**
  * At desktop widths the hero panel covers the left of the map.
+ *
  * The camera pads that side, so the marker lands in the open part.
  */
 const PANEL_BREAKPOINT = 996
@@ -53,7 +54,7 @@ const composeStyle = (lang: string): StyleSpecification => ({
 	sources: {
 		[SOURCE_ID]: {
 			type: "vector",
-			url: "https://tiles.mailwoman.ai/basemap-v4.json",
+			url: "https://tiles.mailwoman.ai/planet.v4.json",
 			attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>',
 		},
 	},

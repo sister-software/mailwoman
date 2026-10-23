@@ -41,6 +41,6 @@ export function createBathymetryDEMSource(): RasterDEMSourceSpecification {
 export const BathymetryTileSetID = TileSetSourceID("bathymetry")
 
 /**
- * Identifier for the Nexus terrain tileset.
+ * Identifier for the terrain tileset.
  */
 export const HillshadeTileSetID = TileSetSourceID("hillshade")

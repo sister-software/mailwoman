@@ -18,6 +18,8 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { relative, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { $public } from "#env"
+
 /**
  * The one-week browser cache applied to objects whose key identifies an immutable version.
  */
@@ -215,7 +217,7 @@ function objectLine(asset: DemoAssetUpload, dryRun: boolean): string {
  * Publishes every file below `src` while preserving the demo's cache and range-request metadata.
  */
 export async function publishDemoAssets(options: PublishDemoAssetsOptions): Promise<PublishDemoAssetsResult> {
-	const bucket = options.bucket ?? "nexus-public"
+	const bucket = options.bucket ?? $public.MAILWOMAN_PUBLIC_BUCKET
 	const prefix = options.prefix ?? "mailwoman"
 	const uploads = await planDemoAssetUploads(options.src, prefix)
 	const dryRun = options.dryRun ?? false

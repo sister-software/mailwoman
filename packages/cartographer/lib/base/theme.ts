@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { PROTOMAPS_PLANET_TILESET_NAME } from "@mailwoman/core/asset-paths"
 import type { LightSpecification, SkySpecification } from "@maplibre/maplibre-gl-style-spec"
 import { type Flavor, namedFlavor } from "@protomaps/basemaps"
 
@@ -13,11 +14,10 @@ import { TileSetSourceID } from "#styles/sources"
 /**
  * Identifier for the Mailwoman base tileset.
  *
- * Matches the R2 object basename (`nexus-assets/tiles/basemap-v4.pmtiles`).
- * `tiles.mailwoman.ai/basemap-v4.json` returns its tilejson,
- * `tiles.mailwoman.ai/basemap-v4/{z}/{x}/{y}.mvt` returns vector tiles.
+ * - `{tileset}.json` returns its tilejson,
+ * - `{tileset}/{z}/{x}/{y}.mvt` returns vector tiles.
  */
-export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
+export const MailwomanBaseTileSetID = TileSetSourceID(PROTOMAPS_PLANET_TILESET_NAME)
 
 const lightFlavor = namedFlavor("light")
 const darkFlavor = namedFlavor("dark")
@@ -200,7 +200,7 @@ export const GuideMapSky: Partial<SkySpecification> = {
  * The Mailwoman theme for Protomaps via MapLibre, following the Japanese white guide map.
  *
  * Keys follow `@protomaps/basemaps@5.x` which targets the v4 tile schema
- * (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on R2.
+ * (`["==","kind","..."]` filters), matching the planet.v4 PMTiles on R2.
  * `BaseLayers` colors major roads by class, hatches railways and draws the boundary band,
  * because a flavor sets one color per layer.
  */

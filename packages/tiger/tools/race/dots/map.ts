@@ -83,7 +83,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
 const PMTILES_VERSION = "4.4.1"
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
-const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/planet.v4.json"
 // The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
 // Cartographer depends on this package, so these values are restated here rather than imported.
 const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"

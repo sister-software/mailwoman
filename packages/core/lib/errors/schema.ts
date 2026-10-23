@@ -125,7 +125,7 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 		super(message)
 
 		this.message = message
-		this.name = urn || [status, "nexus", "isp"].join(":")
+		this.name = urn || [status, "sister.software", "mailwoman"].join(":")
 		this.status = status
 	}
 

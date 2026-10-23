@@ -350,7 +350,7 @@ The neural model emits per-token BIO labels regardless of how its output is pres
 
 **The formats require no model retraining.** They are post-processing on the BIO output, and the same neural model serves all three formats.
 
-**The isp-nexus formatter** (`isp-nexus/universe/mailwoman/postal/formatting.ts`) converts a flat object into a multi-line string for shipping-label rendering. Port it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
+**A shipping-label formatter** converts a flat object into a multi-line string for label rendering. Build it as the inverse of the JSON decoder, and build a separate `sexp→string` formatter for the S-expr path.
 
 ## Source attribution (Phase 4 — #12, deferred)
 

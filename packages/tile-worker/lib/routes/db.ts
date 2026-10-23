@@ -53,7 +53,7 @@ export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ 
 
 	const assetPath = `db/${databaseName}.${fileExtension}`
 
-	const r2ObjectBody = await env.NEXUS_ASSETS_BUCKET.get(assetPath, {
+	const r2ObjectBody = await env.MAILWOMAN_TILES_BUCKET.get(assetPath, {
 		range: { offset, length },
 		// onlyIf: { etagMatches: etag },
 	})

@@ -15,7 +15,7 @@ import { WorkerRoute } from "#routing"
 export const HomeRoute = WorkerRoute.GET("/", () => {
 	return new Response(
 		prettyJSON({
-			id: "nexus-api",
+			id: "mailwoman-tile-api",
 			timestamp: new Date().toISOString(),
 			count: CloudflareWorkerPMTiles.SharedResolvedValueCache.counter,
 		}),
