@@ -126,14 +126,29 @@ reference for this model. The file is 545,495 bytes with SHA-256
 
 ## Status
 
-| Step                                              | State                                            |
-| ------------------------------------------------- | ------------------------------------------------ |
-| Workspace registered, plan and baseline recorded  | Done on branch `mtf-workspace`                   |
-| v0.2.2 reference fixtures                         | Captured                                         |
-| `cargo` admitted by the Bash hook                 | Changed on the branch; active once it is on main |
-| Rust model loader and unigram encode with offsets | Not started                                      |
+| Step                                                                             | State                                                           |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Workspace registered, plan and baseline recorded                                 | Done                                                            |
+| v0.2.2 reference fixtures                                                        | Captured                                                        |
+| `cargo` admitted by the Bash hook                                                | Done                                                            |
+| `crates/mtf-core`: model loader, normalizer, unigram encode with offsets, decode | All 1,264 fixture rows match in IDs, pieces, offsets and decode |
+| WASM adapter and TypeScript loader                                               | Not started                                                     |
+| Compiled model format to reduce the 92 ms load                                   | Not started                                                     |
+
+Run the parity test from this directory with
+`MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
+reads `../neural-weights-en-us/tokenizer.model` and fails if that file is absent.
 
 ## Provenance
 
-Code translated or adapted from Google SentencePiece (Apache-2.0) keeps its notices in the file it lands in,
-and this section will list each such file.
+These `crates/mtf-core/src` modules port Google SentencePiece v0.2.2 (Apache-2.0, commit
+`e0cce7d37b065b5140349dbe12c6bcf6192fdd78`). Each module names its upstream file in its header.
+
+| Module          | Upstream source                                            |
+| --------------- | ---------------------------------------------------------- |
+| `normalizer.rs` | `src/normalizer.cc`                                        |
+| `unigram.rs`    | `src/unigram_model.cc` (`Model::EncodeOptimized`)          |
+| `processor.rs`  | `src/sentencepiece_processor.cc`, `src/model_interface.cc` |
+| `proto.rs`      | `src/sentencepiece_model.proto`                            |
+| `darts.rs`      | `third_party/darts_clone/darts.h`                          |
+| `utf8.rs`       | `src/util.h`, `src/util.cc`                                |
