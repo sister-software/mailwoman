@@ -1,4 +1,12 @@
-//! UTF-8 helpers with SentencePiece's exact semantics (upstream `src/util.h`, `src/util.cc`).
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Derived from Google SentencePiece v0.2.2 `src/util.h` and `src/util.cc`. Copyright 2016 Google Inc.
+// Licensed under the Apache License, Version 2.0 (`third-party/sentencepiece/LICENSE` in this
+// workspace). Modified: ported from C++ to Rust.
+
+//! UTF-8 helpers with SentencePiece's exact semantics.
 
 /// The byte length a UTF-8 lead byte announces, without validating the trailing bytes.
 ///

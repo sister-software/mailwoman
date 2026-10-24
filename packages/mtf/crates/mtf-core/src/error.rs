@@ -1,3 +1,7 @@
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+
 use std::fmt;
 
 /// A failure to load a model, encode an input, or decode a sequence of IDs.

@@ -1,4 +1,12 @@
-//! SentencePiece's normalizer with original-input alignment (upstream `src/normalizer.cc`).
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Derived from Google SentencePiece v0.2.2 `src/normalizer.cc`. Copyright 2016 Google Inc.
+// Licensed under the Apache License, Version 2.0 (`third-party/sentencepiece/LICENSE` in this
+// workspace). Modified: ported from C++ to Rust.
+
+//! SentencePiece's normalizer with original-input alignment.
 
 use crate::darts::DoubleArray;
 use crate::error::Error;

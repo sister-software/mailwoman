@@ -1,5 +1,13 @@
-//! The unigram model's piece index and optimized Viterbi search (upstream `src/unigram_model.cc`,
-//! `Model::EncodeOptimized`).
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Derived from Google SentencePiece v0.2.2 `src/unigram_model.cc` (`Model::EncodeOptimized`).
+// Copyright 2016 Google Inc. Licensed under the Apache License, Version 2.0
+// (`third-party/sentencepiece/LICENSE` in this workspace). Modified: ported from C++ to Rust, with
+// a byte trie in place of the darts-clone piece index.
+
+//! The unigram model's piece index and optimized Viterbi search.
 
 use crate::utf8;
 

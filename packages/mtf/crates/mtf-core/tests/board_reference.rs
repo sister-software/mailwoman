@@ -1,3 +1,7 @@
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+
 //! Compares every row of `test/fixtures/board-reference-v0.2.2.json` with this crate's output.
 //!
 //! The fixture records Google SentencePiece v0.2.2's IDs, pieces, UTF-8 offsets and decode output for

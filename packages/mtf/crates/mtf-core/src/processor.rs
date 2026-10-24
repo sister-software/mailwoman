@@ -1,5 +1,13 @@
-//! A loaded model with SentencePiece v0.2.2's encode and decode behavior (upstream
-//! `src/sentencepiece_processor.cc`, `src/model_interface.cc`).
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Derived from Google SentencePiece v0.2.2 `src/sentencepiece_processor.cc` and
+// `src/model_interface.cc`. Copyright 2016 Google Inc. Licensed under the Apache License,
+// Version 2.0 (`third-party/sentencepiece/LICENSE` in this workspace). Modified: ported from C++ to
+// Rust and reduced to unigram encode and decode.
+
+//! A loaded model with SentencePiece v0.2.2's encode and decode behavior.
 
 use crate::error::Error;
 use crate::normalizer::Normalizer;

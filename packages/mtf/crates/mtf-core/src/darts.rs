@@ -1,5 +1,14 @@
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Derived from darts-clone's `darts.h` as vendored in Google SentencePiece v0.2.2
+// (`third_party/darts_clone/darts.h`). Copyright (c) 2008-2011, Susumu Yata. All rights reserved.
+// Redistributed under the BSD 2-clause terms in `third-party/darts-clone/LICENSE` of this workspace.
+// Modified: the double-array prefix search was ported from C++ to Rust and bounds-checked.
+
 //! A reader for darts-clone double-array tries, the format of SentencePiece's compiled
-//! normalization map (upstream `third_party/darts_clone/darts.h`).
+//! normalization map.
 
 use crate::error::Error;
 

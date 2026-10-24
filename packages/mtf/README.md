@@ -139,16 +139,15 @@ Run the parity test from this directory with
 `MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
 reads `../neural-weights-en-us/tokenizer.model` and fails if that file is absent.
 
-## Provenance
+## License
 
-These `crates/mtf-core/src` modules port Google SentencePiece v0.2.2 (Apache-2.0, commit
-`e0cce7d37b065b5140349dbe12c6bcf6192fdd78`). Each module names its upstream file in its header.
+`@mailwoman/mtf` is licensed AGPL-3.0-only, with a commercial license available, like the rest of
+Mailwoman.
 
-| Module          | Upstream source                                            |
-| --------------- | ---------------------------------------------------------- |
-| `normalizer.rs` | `src/normalizer.cc`                                        |
-| `unigram.rs`    | `src/unigram_model.cc` (`Model::EncodeOptimized`)          |
-| `processor.rs`  | `src/sentencepiece_processor.cc`, `src/model_interface.cc` |
-| `proto.rs`      | `src/sentencepiece_model.proto`                            |
-| `darts.rs`      | `third_party/darts_clone/darts.h`                          |
-| `utf8.rs`       | `src/util.h`, `src/util.cc`                                |
+Six modules in `crates/mtf-core/src` port upstream code: five from Google SentencePiece v0.2.2
+(Apache-2.0) and `darts.rs` from darts-clone (BSD 2-clause). Each ported file keeps the upstream
+copyright notice in its header and states how it was modified. `third-party/` holds both license texts
+unchanged, and `THIRD_PARTY_NOTICES.md` maps each ported file to its upstream source. A later port from
+either project follows the same three steps: keep the upstream notice in the file header, state the
+modification, and add the file to `THIRD_PARTY_NOTICES.md`. Code written here without an upstream
+source carries only the AGPL header.

@@ -5,7 +5,9 @@ members = ["crates/mtf-core"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "AGPL-3.0-only OR LicenseRef-Commercial"
+# The crate is AGPL; the Apache-2.0 and BSD-2-Clause terms cover the ported SentencePiece and
+# darts-clone code listed in THIRD_PARTY_NOTICES.md.
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository = "https://github.com/sister-software/mailwoman"
 
 [profile.release]

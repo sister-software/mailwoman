@@ -11,6 +11,8 @@
 	},
 	"files": [
 		"README.md",
+		"THIRD_PARTY_NOTICES.md",
+		"third-party/**",
 		"!test/**"
 	],
 	"type": "module",

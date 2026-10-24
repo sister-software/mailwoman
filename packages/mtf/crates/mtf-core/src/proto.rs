@@ -1,5 +1,13 @@
-//! A reader for the SentencePiece `ModelProto` fields the unigram processor uses
-//! (upstream `src/sentencepiece_model.proto`).
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+//
+// Field numbers and defaults follow Google SentencePiece v0.2.2 `src/sentencepiece_model.proto`.
+// Copyright 2016 Google Inc. Licensed under the Apache License, Version 2.0
+// (`third-party/sentencepiece/LICENSE` in this workspace). Modified: the schema is read by a
+// hand-written Rust wire decoder instead of generated protobuf code.
+
+//! A reader for the SentencePiece `ModelProto` fields the unigram processor uses.
 //!
 //! Every field this module does not name is skipped. A field the processor would need to honor and
 //! this crate does not implement is refused in [`crate::processor`].
