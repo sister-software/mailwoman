@@ -6,8 +6,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
+import { isLargestFirstSystem, lineJoinForCountry, type AddressScript } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { classifyTokenScript } from "@mailwoman/query-shape/character-class"
+import type { ScriptCode } from "@mailwoman/query-shape/types"
 
 import type { AdapterOptions, CanonicalRow } from "#types"
 import { normalizeNameKey, type AncestorNames, type WOFRecord } from "#utils"
@@ -35,7 +37,7 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
  *
  * A country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
-function renderHierarchy(
+export function renderHierarchy(
 	components: Partial<Record<ComponentTag, string>>,
 	country: string
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } | null {
@@ -54,7 +56,30 @@ function renderHierarchy(
 
 	if (!parts.length) return null
 
-	return { raw: parts.join(lineJoinForCountry(country)), components: present }
+	return { raw: parts.join(lineJoinForCountry(country, hierarchyScript(parts))), components: present }
+}
+
+/**
+ * Scripts whose addresses join their units without a separator or with a single space.
+ */
+const CJK_SCRIPTS: ReadonlySet<ScriptCode> = new Set(["Hani", "Hira", "Kana", "Hang"])
+
+/**
+ * Chooses the join script for a hierarchy from the names being joined.
+ *
+ * A country's local join, such as China's empty separator, belongs to names written in its CJK script.
+ * A romanized or other non-CJK name joined that way runs into its neighbor (`HEBEICHAOZHITUN`).
+ *
+ * A part with no script letters, such as a number, leaves the choice to the other parts.
+ */
+function hierarchyScript(parts: readonly string[]): AddressScript {
+	const allCJK = parts.every((part) => {
+		const script = classifyTokenScript(part)
+
+		return script === "Zyyy" || CJK_SCRIPTS.has(script)
+	})
+
+	return allCJK ? "local" : "latin"
 }
 
 /**
