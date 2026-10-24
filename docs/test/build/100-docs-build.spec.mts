@@ -13,6 +13,7 @@
  *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
 import { expect, test } from "@playwright/test"
 import { resolvePath } from "path-ts"
@@ -21,11 +22,7 @@ import { TextSpliterator } from "spliterator"
 /**
  * Docs/ workspace root — this file lives at docs/test/build/.
  */
-// `__dirname`, not `import.meta.url`: Playwright transpiles these specs for a package
-// with no `"type": "module"`, so import.meta is a syntax error at load time.
-// This was masked while the whole config failed to load.
-// The file never got far enough to be parsed.
-const DOCS_ROOT = resolvePath(__dirname, "../..")
+const DOCS_ROOT = resolvePackagePath("@mailwoman/docs")
 
 // Not `childEnv` from @mailwoman/core: importing workspace TypeScript pulls Playwright's loader into
 // the module graph. It handles neither `.ts`-extension imports nor the project references behind
