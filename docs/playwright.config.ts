@@ -21,6 +21,11 @@ const env = process.env
 
 const CI = !!env.CI
 
+/**
+ * The port the search suite serves `docs/build` on. CI sets another, because a process on the lab host holds 7770.
+ */
+const SEARCH_PORT = env.DOCS_SEARCH_PORT || "7770"
+
 // oxlint-disable-next-line sister-software/no-process-globals -- the same carve-out: the selected projects are Playwright's argv
 const argv = process.argv
 
@@ -54,7 +59,7 @@ export default defineConfig({
 			name: "search",
 			testDir: "./test/e2e",
 			timeout: 30_000,
-			use: { baseURL: "http://localhost:7770" },
+			use: { baseURL: `http://localhost:${SEARCH_PORT}` },
 		},
 	],
 	// Playwright's web server is configuration-wide, and the `build` project writes `docs/build`
@@ -64,8 +69,8 @@ export default defineConfig({
 	// would serve that job's build rather than the one this run produced.
 	webServer: SEARCH_ONLY
 		? {
-				command: "yarn docusaurus serve --port 7770 --no-open",
-				url: "http://localhost:7770",
+				command: `yarn docusaurus serve --port ${SEARCH_PORT} --no-open`,
+				url: `http://localhost:${SEARCH_PORT}`,
 				reuseExistingServer: !CI,
 				timeout: 60_000,
 			}
