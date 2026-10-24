@@ -6688,6 +6688,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/api-worker@workspace:packages/api-worker":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/api-worker@workspace:packages/api-worker"
+  dependencies:
+    "@cloudflare/workers-types": "npm:^5.20261015.1"
+    hono: "npm:^4.13.13"
+    vitest: "npm:^4.1.12"
+    wrangler: "npm:^4.151.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/api@workspace:*, @mailwoman/api@workspace:packages/api":
   version: 0.0.0-use.local
   resolution: "@mailwoman/api@workspace:packages/api"
