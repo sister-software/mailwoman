@@ -38,6 +38,7 @@ test("replaceFileAtomically never leaves the destination absent to a concurrent 
 	for (let i = 0; i < 40; i++) {
 		await replaceFileAtomically(sources[i % 2]!, dest)
 	}
+
 	state.copying = false
 	await reader
 

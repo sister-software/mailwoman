@@ -288,8 +288,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Null rather than an empty list when the flag is absent:
-					// the module's own default set is the answer for "fetch what the corpus wants",
+					// Null rather than an empty list when the flag is absent: the module's
+					// own default set is the answer for "fetch what the corpus wants",
 					// and an empty array would fetch no countries while looking deliberate.
 					countries: options.countries ? extractDelimited(options.countries) : null,
 				},

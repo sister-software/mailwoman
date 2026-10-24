@@ -100,8 +100,7 @@ function isHeldOutPlace(
 }
 
 /**
- * The places of one leg, in input order and without repeats, divided by whether the split holds
- * them out.
+ * The places of one leg, in input order and without repeats, divided by whether the split holds them out.
  */
 export function partitionPlaces(
 	leg: PostalGuidelineLeg,
@@ -133,8 +132,8 @@ export function partitionPlaces(
  * Renders and aligns the rows of every leg.
  *
  * Each row's split is the one {@linkcode splitForRow} gives its place, as for every other source.
- * A leg draws a street or residence name only from places on the same side of the holdout as the
- * row's own place, so a training row never writes a held-out place's name.
+ * A leg draws a street or residence name only from places on the same side of the holdout
+ * as the row's own place, so a training row never writes a held-out place's name.
  *
  * Throws when a leg has no place or cannot reach `count` rows, rather than returning fewer.
  */

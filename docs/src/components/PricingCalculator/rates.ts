@@ -40,6 +40,7 @@ export interface ProviderRate {
 
 /**
  * The rows the calculator prices, in the order it shows them.
+ *
  * Each is a list rate, read from `sourceURL` on `retrievedOn`.
  */
 export const ProviderRates: readonly ProviderRate[] = [

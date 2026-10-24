@@ -40,7 +40,9 @@ describe("validateReleaseSpec", () => {
 			expect(req?.kind, id).toBe("capability")
 			expect(req!.select!.sources!.length, id).toBeGreaterThan(0)
 
-			for (const source of req!.select!.sources!) expect(probes.has(source), source).toBe(true)
+			for (const source of req!.select!.sources!) {
+				expect(probes.has(source), source).toBe(true)
+			}
 		}
 
 		expect(probes.has("invented-postal-guideline")).toBe(true)

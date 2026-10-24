@@ -380,9 +380,11 @@ describe("defaultHoldouts", () => {
 		expect(gb.postcodePrefixes?.slice(0, 2)).toEqual(["TR", "HX"])
 		// The LL area is held out by district rather than whole (Conwy, Wrecsam and Sir Ddinbych lie inside it).
 		expect(gb.postcodePrefixes).not.toContain("LL")
+
 		expect(gb.postcodePrefixes?.filter((prefix) => prefix.startsWith("LL")).every((p) => /^LL\d{2}$/u.test(p))).toBe(
 			true
 		)
+
 		expect(gb.regions).toBeUndefined()
 	})
 

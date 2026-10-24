@@ -750,6 +750,7 @@ function reportProvenanceClasses(spec: ReleaseRequirementSpec, rows: readonly Pa
 		const members = rows.filter(
 			(row) => row.provenance === provenance && selects(row, spec.objective.select) && !probes.has(row.source)
 		)
+
 		const byCountry = new Map<string, { rows: number; published: number; candidate: number }>()
 
 		for (const row of members) {

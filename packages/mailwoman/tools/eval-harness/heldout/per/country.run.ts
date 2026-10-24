@@ -172,8 +172,8 @@ const armScores = (key: string) =>
 		return { arm, ...(score ? withRates(score) : { rows: 0 }) }
 	})
 
-// A sampled cell's `sampled` counts every row drawn into it. Its arm scores leave out the capability-probe
-// rows, which take their own `<country>/capability` entry.
+// A sampled cell's `sampled` counts every row drawn into it.
+// Its arm scores leave out the capability-probe rows, which take their own `<country>/capability` entry.
 const capabilityCountries = [
 	...new Set(
 		[...scored[0]!.cells.keys()]
