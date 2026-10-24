@@ -76,13 +76,6 @@ const config: Config = {
 				href: "https://tiles.mailwoman.ai",
 			},
 		},
-		{
-			tagName: "link",
-			attributes: {
-				rel: "preconnect",
-				href: "https://elevation-tiles-prod.s3.amazonaws.com",
-			},
-		},
 	],
 
 	future: {
