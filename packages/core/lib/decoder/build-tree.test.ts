@@ -156,6 +156,21 @@ describe("buildAddressTree — boundary trim", () => {
 		expect(raw.slice(street.start, street.end)).toBe("Neusser Str.")
 	})
 
+	test("keeps a combining mark that ends a span", () => {
+		const raw = "नई दिल्ली 110001"
+
+		const tokens: DecoderToken[] = [
+			tok("नई", 0, 2, "B-street"),
+			tok("दिल्ली", 3, 9, "B-locality"),
+			tok("110001", 10, 16, "B-postcode"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+		const locality = findByTag(tree.roots, "locality")!
+		expect(locality.value).toBe("दिल्ली")
+		expect(raw.slice(locality.start, locality.end)).toBe("दिल्ली")
+	})
+
 	test("strips trailing comma but preserves abbreviation period", () => {
 		const raw = "Neusser Str., 12"
 
