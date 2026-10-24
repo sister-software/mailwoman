@@ -175,6 +175,7 @@
 		{ "path": "./packages/spatial/tsconfig.test.json" },
 		{ "path": "./packages/sqlite/tsconfig.test.json" },
 		{ "path": "./packages/structures/tsconfig.test.json" },
+		{ "path": "./packages/tile-worker/tsconfig.test.json" },
 		{ "path": "./packages/timezone-lookup/tsconfig.test.json" },
 		{ "path": "./packages/un-locode-lookup/tsconfig.test.json" },
 		{ "path": "./packages/variant-aliases/tsconfig.test.json" },

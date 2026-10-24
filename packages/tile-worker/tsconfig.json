@@ -13,11 +13,12 @@
 		"resolveJsonModule": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts"],
 	"references": [
 		// ---
 		{ "path": "../core" },
 		{ "path": "../spatial" },
-		{ "path": "../cartographer" }
+		{ "path": "../cartographer" },
+		{ "path": "../api-worker" }
 	]
 }

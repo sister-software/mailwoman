@@ -6,10 +6,9 @@
 
 import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
 import { ResourceError } from "@mailwoman/core/errors"
+import type { Context } from "hono"
 
-import { cacheResponse } from "#caching"
-import { applyAccessControlAllowOrigin } from "#cors"
-import { WorkerRoute } from "#routing"
+import { cacheResponse, type TileWorkerHono } from "#caching"
 
 /**
  * The AWS Open Data terrain tiles (Tilezen Joerd), in the terrarium PNG encoding.
@@ -31,30 +30,26 @@ const TERRARIUM_MAX_ZOOM = 15
  *
  * A tile's content at a z/x/y never changes, so the edge and the browser keep it for a year.
  */
-export const TerrariumTileRoute = WorkerRoute.GET(
-	"/terrain/terrarium/:z(\\d+)/:x(\\d+)/:y(\\d+).png",
-	async ({ request, params, ctx }) => {
-		const [z = -1, x = -1, y = -1] = parseTileCoordParams(params) ?? []
+export async function serveTerrariumTile(c: Context<TileWorkerHono>): Promise<Response> {
+	const { z: zParam, x: xParam, tile } = c.req.param() as { z?: string; x?: string; tile?: string }
+	const [z = -1, x = -1, y = -1] = parseTileCoordParams({ z: zParam, x: xParam, y: tile?.replace(/\.png$/, "") }) ?? []
 
-		if (z < 0 || z > TERRARIUM_MAX_ZOOM || x >= 2 ** z || y >= 2 ** z) {
-			throw ResourceError.from(400, "Invalid terrarium tile coordinates")
-		}
-
-		const upstream = await fetch(`${TERRARIUM_ORIGIN}/${z}/${x}/${y}.png`)
-
-		if (!upstream.ok) throw ResourceError.from(upstream.status, `Terrarium tile ${z}/${x}/${y} is unavailable`)
-
-		const response = new Response(upstream.body, {
-			headers: {
-				"Content-Type": "image/png",
-				"Cache-Control": "public, max-age=31536000, immutable",
-			},
-		})
-
-		applyAccessControlAllowOrigin(request, response)
-
-		cacheResponse(response, { request, ctx })
-
-		return response
+	if (z < 0 || z > TERRARIUM_MAX_ZOOM || x >= 2 ** z || y >= 2 ** z) {
+		throw ResourceError.from(400, "Invalid terrarium tile coordinates")
 	}
-)
+
+	const upstream = await fetch(`${TERRARIUM_ORIGIN}/${z}/${x}/${y}.png`)
+
+	if (!upstream.ok) throw ResourceError.from(upstream.status, `Terrarium tile ${z}/${x}/${y} is unavailable`)
+
+	const response = new Response(upstream.body, {
+		headers: {
+			"Content-Type": "image/png",
+			"Cache-Control": "public, max-age=31536000, immutable",
+		},
+	})
+
+	cacheResponse(c, response)
+
+	return response
+}

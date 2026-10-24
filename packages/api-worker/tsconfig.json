@@ -10,5 +10,6 @@
 		"customConditions": ["workerd"]
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts"]
+	"exclude": ["./out/**/*", "./**/*.test.ts"],
+	"references": [{ "path": "../core" }, { "path": "../spatial" }]
 }
