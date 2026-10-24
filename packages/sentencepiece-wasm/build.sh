@@ -65,6 +65,8 @@ ABSL_LIBS=$(find "$BUILD_DIR/third_party/abseil-cpp" -name "*.a" | sort)
 # - DISABLE_EXCEPTION_CATCHING=0: protobuf-lite + sentencepiece throw in cold error paths; without
 #   catching enabled a bad model file aborts the runtime instead of returning a status.
 # - filesystem=0: only LoadFromSerializedProto is bound — no FS use anywhere.
+# - DYNAMIC_EXECUTION=0: embind builds its call wrappers without `new Function` or `eval`. A Cloudflare Worker refuses
+#   code generation from strings, so a binding built with them fails there with `EvalError`.
 emcc "$SCRIPT_DIR/binding.cpp" \
 	-I "$SP_SRC/src" -I "$SP_SRC" -I "$SP_SRC/third_party/abseil-cpp" -I "$SP_SRC/third_party/protobuf-lite" -I "$SP_SRC/src/builtin_pb" -I "$BUILD_DIR" \
 	"$BUILD_DIR/src/libsentencepiece.a" \
@@ -78,6 +80,7 @@ emcc "$SCRIPT_DIR/binding.cpp" \
 	-sENVIRONMENT=web,webview,worker,node \
 	-sDISABLE_EXCEPTION_CATCHING=0 \
 	-sFILESYSTEM=0 \
+	-sDYNAMIC_EXECUTION=0 \
 	-o "$SCRIPT_DIR/sentencepiece.mjs"
 
 # The Node branch of the preamble imports `node:module` dynamically, behind ENVIRONMENT_IS_NODE. A browser bundler
