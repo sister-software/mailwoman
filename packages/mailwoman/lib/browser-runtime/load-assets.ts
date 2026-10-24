@@ -22,12 +22,16 @@ import { fetchWithProgress, fetchWithRetry, prefetchingFetch } from "#browser-ru
 import {
 	fetchPairIndexManifest,
 	postcodeAnchorFilesOf,
+	postcodeCentroidFilesOf,
 	postcodePrefixFilesOf,
 	type ReleaseInfo,
 } from "#browser-runtime/manifest"
+import { loadPostcodeCentroids, mergePostcodeCentroids } from "#browser-runtime/postcode-fallback"
 import {
 	adminGazetteerURL,
 	assetURL,
+	charClassifierLoadURLs,
+	isCharClassifierLoadURLs,
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
@@ -41,7 +45,10 @@ import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from 
 export interface ReleaseAssets {
 	classifier: MailwomanClassifierLike
 	/**
-	 * Postcode-anchor centroid lookup (US ZIP → real centroid), for the postcode-only dead-end fallback.
+	 * The centroid per postcode key the postcode-only dead-end fallback reads.
+	 *
+	 * It holds the classifier's postcode anchors (the release's `postcodeAnchors`, US ZIP Codes today) and
+	 * the fallback-only binaries the release lists under `postcodeCentroids`, such as Japanese postcodes.
 	 */
 	anchorLookup: Map<string, { lat: number; lon: number }> | null
 	fstMatcher: FSTMatcherLike | null
@@ -106,6 +113,13 @@ export interface LoadReleaseAssetsOptions {
 	 * Without it, onnxruntime-web requests the binary after the model has arrived.
 	 */
 	ortWASMURL?: string
+
+	/**
+	 * The bucket directory the release lives under, `en-us` by default.
+	 *
+	 * A weights family such as `cjk` publishes its releases under its own directory.
+	 */
+	locale?: string
 }
 
 /**
@@ -134,6 +148,7 @@ export async function loadReleaseAssets(
 	options: LoadReleaseAssetsOptions = {}
 ): Promise<ReleaseAssets> {
 	const gazetteer = release.hasWOFDB ? options.gazetteer : null
+	const locale = options.locale ?? DEFAULT_LOCALE
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
 
@@ -159,24 +174,35 @@ export async function loadReleaseAssets(
 			)
 		: null
 
-	const calibrationLoad = settleOptional(
-		fetchWithRetry(assetURL(DEFAULT_LOCALE, release.version, "calibration.json")).then(async (res) =>
-			// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
-			res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
-		)
-	)
+	// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
+	// An entry that declares no table skips the request, so the page logs no 404 for it.
+	const calibrationLoad =
+		release.hasCalibration === false
+			? Promise.resolve(null)
+			: settleOptional(
+					fetchWithRetry(assetURL(locale, release.version, "calibration.json")).then(async (res) =>
+						res.ok ? createCalibrator((await res.json()) as CalibrationTable) : null
+					)
+				)
 
 	// The street-context check needs both matchers, so the morphology matcher is kept only beside the FST.
 	// A release that predates the morphology artifact answers null, and the parse runs with the check off.
-	const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(DEFAULT_LOCALE, release.version)) : null
+	const fstLoad = release.hasFST ? settleOptional(loadFSTGazetteer(locale, release.version)) : null
 
-	const streetMorphologyLoad = release.hasFST
-		? settleOptional(loadStreetMorphologyFST(DEFAULT_LOCALE, release.version))
-		: null
+	const streetMorphologyLoad = release.hasFST ? settleOptional(loadStreetMorphologyFST(locale, release.version)) : null
 
 	// The pair-index generation's manifest lists the countries whose binaries the bucket holds.
 	// It is a small fetch that starts here and is awaited only where the URL set is built.
 	const pairIndexManifestLoad = settleOptional(fetchPairIndexManifest(PAIR_INDEX_VERSION))
+
+	// The fallback-only postcode binaries are small and independent of the model, so they load beside it.
+	// After a failed fetch, the fallback reads the classifier's anchors and no other binary.
+	const postcodeCentroidLoad = settleOptional(
+		loadPostcodeCentroids(
+			postcodeCentroidFilesOf(release).map((file) => assetURL(locale, release.version, file)),
+			fetchWithRetry
+		)
+	)
 
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
@@ -192,22 +218,31 @@ export async function loadReleaseAssets(
 
 	const pairIndexManifest = await pairIndexManifestLoad
 
-	const classifierURLs = neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
-		postcodeAnchors: postcodeAnchorFilesOf(release),
-		pairIndexCountries: pairIndexManifest?.countries ?? [],
-		postcodePrefixes: postcodePrefixFilesOf(release),
-		splitEmbeddings: release.splitEmbeddings,
-	})
+	// A character-encoder release reads code points through its vocabulary and ships none of
+	// the Latin family's retrieval artifacts, so its URL set is the three files of the graph.
+	const classifierURLs =
+		release.encoder === "char"
+			? charClassifierLoadURLs(locale, release.version)
+			: neuralClassifierLoadURLs(locale, release.version, {
+					postcodeAnchors: postcodeAnchorFilesOf(release),
+					pairIndexCountries: pairIndexManifest?.countries ?? [],
+					postcodePrefixes: postcodePrefixFilesOf(release),
+					splitEmbeddings: release.splitEmbeddings,
+				})
 
-	// The card, model, embedding and tokenizer URLs are known now.
+	// The card, model, embedding and vocabulary URLs are known now.
 	// Their fetches start before the loader chunk arrives.
 	// The loader reads each through `modelFetch` and reports a failure with its own message.
-	const modelFetch = prefetchingFetch(progressFetch, [
-		classifierURLs.modelCardURL,
-		classifierURLs.modelURL,
-		...("embeddings" in classifierURLs ? [classifierURLs.embeddings.hotURL] : []),
-		classifierURLs.tokenizerURL,
-	])
+	const prefetchURLs = isCharClassifierLoadURLs(classifierURLs)
+		? [classifierURLs.modelCardURL, classifierURLs.modelURL, classifierURLs.charVocabURL]
+		: [
+				classifierURLs.modelCardURL,
+				classifierURLs.modelURL,
+				...(classifierURLs.embeddings ? [classifierURLs.embeddings.hotURL] : []),
+				classifierURLs.tokenizerURL,
+			]
+
+	const modelFetch = prefetchingFetch(progressFetch, prefetchURLs)
 
 	// Dynamic so the onnxruntime-web chunk loads only when a release does.
 	// The result is narrowed to the structural classifier interface this module exposes,
@@ -283,7 +318,7 @@ export async function loadReleaseAssets(
 
 	return {
 		classifier,
-		anchorLookup: postcodeAnchorLookup ?? null,
+		anchorLookup: mergePostcodeCentroids(postcodeAnchorLookup ?? null, await postcodeCentroidLoad),
 		fstMatcher,
 		fstProvenance,
 		streetMorphologyMatcher,

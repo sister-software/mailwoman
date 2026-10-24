@@ -48,10 +48,12 @@ import {
 	resolveDualRoles,
 	runClassifyStage,
 } from "mailwoman/browser-runtime/classify"
+import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
+import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-runtime/postcode-fallback"
 import {
 	assetURL,
 	HOSTED_STREET_SLUGS,
@@ -235,6 +237,24 @@ export function useGeocoderRuntime({
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
+	// A weights family other than the base loads its own bundle on the first input written in its script.
+	// The bundle reads the base release's gazetteer through the cascade, so it loads no gazetteer of its own.
+	const familyBundles = useMemo(
+		() =>
+			new FamilyBundles<ReleaseAssets>({
+				load: (family, release) => loadReleaseAssets(release, silentAssetProgress(), { ortWASMURL, locale: family }),
+				dispose: disposeAssets,
+			}),
+		[]
+	)
+
+	useEffect(
+		() => () => {
+			void familyBundles.dispose()
+		},
+		[familyBundles]
+	)
+
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
@@ -323,21 +343,24 @@ export function useGeocoderRuntime({
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
 			const assets = rt.assets
-			const classifier = assets?.classifier
 
-			if (!classifier) throw new Error("Classifier not ready")
+			if (!assets) throw new Error("Classifier not ready")
 			hooks.onStage(0)
+
+			// An input in a character family's script is read by that family's bundle, loaded on its first input.
+			// A family whose load fails leaves the input with the base release for this parse.
+			const reader = (await familyBundles.forInput(input).catch(() => null)) ?? assets
 
 			// The classify front half: pipeline import, then query-shape/kind, then neural
 			// runPipeline, then flatten, with `onStage(1)` firing between shape and classify.
-			const { tree, nodes, kindResult, timing } = await runClassifyStage(
+			const { tree, nodes, kindResult, knownFormats, timing } = await runClassifyStage(
 				input,
 				{
-					classifier,
-					fst: assets?.fstMatcher,
-					streetMorphology: assets?.streetMorphologyMatcher,
-					selectPairIndex: assets?.selectPairIndex,
-					anchorRegions: assets?.anchorRegions,
+					classifier: reader.classifier,
+					fst: reader.fstMatcher,
+					streetMorphology: reader.streetMorphologyMatcher,
+					selectPairIndex: reader.selectPairIndex,
+					anchorRegions: reader.anchorRegions,
 				},
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
@@ -446,17 +469,21 @@ export function useGeocoderRuntime({
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
 			const tResolve = performance.now()
 
-			// Postcode-only dead end: synthesize an approximate anchor-centroid hit from `postcode-*.bin`.
-			if (!cascadeHits.length && postcodeNode?.value && assets?.anchorLookup) {
-				const anchorHit = assets.anchorLookup.get(String(postcodeNode.value).toUpperCase())
+			// Postcode-only dead end: answer the postcode's centroid from the release's postcode binaries.
+			// The keys come from the parse's postcode node and from the postcode formats the query
+			// shape read in the input, so a postcode the classifier labeled at low confidence,
+			// or under a `vague` kind, still reaches the map.
+			if (!cascadeHits.length && assets?.anchorLookup) {
+				const keys = postcodeFallbackKeys(postcodeNode?.value ? String(postcodeNode.value) : null, input, knownFormats)
+				const centroid = postcodeCentroidFor(assets.anchorLookup, keys)
 
-				if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
+				if (centroid) {
 					cascadeHits.push({
 						id: 0,
-						name: `${postcodeNode.value} (anchor centroid)`,
+						name: `${centroid.key} (anchor centroid)`,
 						placetype: "postcode",
-						lat: anchorHit.lat,
-						lon: anchorHit.lon,
+						lat: centroid.lat,
+						lon: centroid.lon,
 						score: 0,
 					} as (typeof cascadeHits)[number])
 				}
@@ -511,7 +538,15 @@ export function useGeocoderRuntime({
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, geoBias.locationRef, sqliteRuntimeBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
+		[
+			ensureStreetLookups,
+			familyBundles,
+			geoBias.locationRef,
+			sqliteRuntimeBaseURL,
+			rt.assets,
+			rt.selectedRelease,
+			rt.selectedVersion,
+		]
 	)
 
 	const runParse = useCallback(
@@ -596,7 +631,9 @@ export function useGeocoderRuntime({
 
 	const traceParse = useCallback(
 		async (input: string): Promise<ParseTraceLike | null> => {
-			const classifier = rt.assets?.classifier
+			// The trace reads the same bundle the geocode would: the input's family when it has one, else the base.
+			const reader = (await familyBundles.forInput(input).catch(() => null)) ?? rt.assets
+			const classifier = reader?.classifier
 
 			if (!classifier?.traceParse) return null
 
@@ -606,7 +643,7 @@ export function useGeocoderRuntime({
 				return null
 			}
 		},
-		[rt.assets]
+		[rt.assets, familyBundles]
 	)
 
 	const overlays = useMemo<OverlaySpec[]>(

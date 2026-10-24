@@ -141,6 +141,19 @@ test.describe("Demo — resolution cascade", () => {
 			lon: 151.2,
 			tolDeg: 0.2,
 		},
+		{
+			// The Han input loads the character family's bundle.
+			// That bundle labels the municipality 渋谷区 for the cascade.
+			// When the cascade finds no place, the postcode-only fallback answers the Who's On
+			// First centroid of 150-0043 (Dōgenzaka, Shibuya) from the release's `postcode-jp.bin`.
+			// The browser gazetteer holds no Japanese postcode rows.
+			// Both paths land inside the tolerance.
+			name: "Japanese postcode 〒150-0043 → Shibuya",
+			query: "〒150-0043 東京都渋谷区道玄坂1丁目",
+			lat: 35.657,
+			lon: 139.695,
+			tolDeg: 0.05,
+		},
 	]
 
 	// Cases with a knownFailure keep their own test so `test.fail` scopes to the one case.

@@ -88,6 +88,13 @@ export interface PublishHFOptions {
 	 * The PFX1 postcode-prefix indexes to upload beside the postcode binaries, delimited like `postcodes`.
 	 */
 	postcodePrefixes?: string
+	/**
+	 * PCB1 postcode binaries the browser's postcode-only fallback reads and the
+	 * classifier's anchor channel never does, delimited like `postcodes`.
+	 *
+	 * They are listed under `postcodeCentroids` in the release entry.
+	 */
+	postcodeCentroids?: string
 	pairIndexes?: string
 	fsts?: string
 	gazetteerLexicon?: string
@@ -138,8 +145,34 @@ async function checkRemoteFileExists(url: string) {
 }
 
 interface ReleaseManifest {
+	locale?: string
 	releases: Array<Record<string, unknown>>
 	defaultVersion?: string
+}
+
+/**
+ * The capability a browser runtime must have to load a character-encoder release.
+ */
+const CHAR_ENCODER_CAPABILITY = "char_encoder"
+
+/**
+ * The status the bucket answers for a locale that has no `releases.json` yet.
+ */
+const HTTP_NOT_FOUND = 404
+
+/**
+ * The number of code points a sealed character vocabulary indexes, the character
+ * family's counterpart of a tokenizer's vocabulary size.
+ */
+async function readCharVocabularySize(vocabularyPath: PathBuilderLike): Promise<number> {
+	const vocabulary = await readLocalJSONFile<Record<string, unknown>>(vocabularyPath)
+	const size = Object.keys(vocabulary).length
+
+	if (size === 0) {
+		fail(`${vocabularyPath} indexes no code points`)
+	}
+
+	return size
 }
 
 async function stageBinaryList(spec: string | null, label: string): Promise<string[]> {
@@ -295,6 +328,8 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	const postcodePrefixBins = await stageBinaryList(args.postcodePrefixes ?? null, "postcode-prefix index")
 
+	const postcodeCentroidBins = await stageBinaryList(args.postcodeCentroids ?? null, "postcode centroid binary")
+
 	const pairIndexBins = await stageBinaryList(args.pairIndexes ?? null, "pair-index binary")
 
 	const fstBins = await stageBinaryList(args.fsts ?? null, "FST binary")
@@ -337,6 +372,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await uploadFlatByBasename(postcodeBins, remoteBase)
 	await uploadFlatByBasename(postcodePrefixBins, remoteBase)
+	await uploadFlatByBasename(postcodeCentroidBins, remoteBase)
 	await uploadFlatByBasename(pairIndexBins, remoteBase)
 
 	await uploadFlatByBasename(fstBins, remoteBase)
@@ -423,31 +459,41 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	await verifyFlatByBasename(postcodePrefixBins, remoteBase)
 
+	await verifyFlatByBasename(postcodeCentroidBins, remoteBase)
+
 	await verifyFlatByBasename(fisherArtifacts, remoteBase)
 
 	await verifyFlatByBasename(splitEmbeddingFiles, remoteBase)
 
-	if (args.charVocab) {
-		console.error(`\n✓ ${args.version} (${args.locale}) staged as a character-path family — no releases.json entry.`)
-
-		return
-	}
-
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
 	const res = await hfClient.fetch<ReleaseManifest>({ url: releasesURL, validateStatus: () => true })
 
-	if (!isSuccessStatus(res.status)) {
-		fail(`failed to fetch ${releasesURL}`)
-	}
+	// A family's first release starts its manifest.
+	// Any other failure stops the publish so an unread manifest is never overwritten.
+	const releases: ReleaseManifest = isSuccessStatus(res.status)
+		? res.data
+		: res.status === HTTP_NOT_FOUND
+			? { locale: args.locale, defaultVersion: args.version, releases: [] }
+			: fail(`failed to fetch ${releasesURL} (HTTP ${res.status})`)
 
-	const releases = res.data
+	// A character-encoder release reads code points through its sealed vocabulary, so the browser runtime
+	// must have the character load path, and the vocabulary size stands where a tokenizer's would.
+	const encoderEntry: Record<string, unknown> = args.charVocab
+		? {
+				tokenizerVocab: await readCharVocabularySize(args.charVocab),
+				encoder: "char",
+				// The publisher uploads no calibration table for a character family, so the entry declares none.
+				hasCalibration: false,
+				requiresRuntime: [CHAR_ENCODER_CAPABILITY],
+			}
+		: { tokenizerVocab: await readTokenizerVocab(args.modelCard!) }
 
 	const newEntry: Record<string, unknown> = {
 		version: args.version,
 		label: args.label,
 		description: args.description,
 		modelSize: args.modelSize ?? ByteFormatter.formatIEC((await statPath(args.model!)).size),
-		tokenizerVocab: await readTokenizerVocab(args.modelCard!),
+		...encoderEntry,
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
 		hasWOFDB: true,
@@ -455,6 +501,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		hasAnchor: postcodeBins.length > 0,
 		postcodeAnchors: postcodeBins.map((localPath) => localPath.split("/").pop()!),
 		postcodePrefixes: postcodePrefixBins.map((localPath) => localPath.split("/").pop()!),
+		postcodeCentroids: postcodeCentroidBins.map((localPath) => localPath.split("/").pop()!),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 		splitEmbeddings: splitEmbeddingFiles.length > 0,
 	}

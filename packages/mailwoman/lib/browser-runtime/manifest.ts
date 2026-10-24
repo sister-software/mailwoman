@@ -8,6 +8,8 @@
  *   key is a string interface and a reader that drops one turns a release's gazetteer off with no error.
  */
 
+import type { FamilyEncoder } from "@mailwoman/neural/weights/families"
+
 import { DEFAULT_LOCALE } from "#browser-runtime/classify"
 import { fetchWithRetry } from "#browser-runtime/fetch"
 import { pairIndexBaseURL, pairIndexManifestURL, releasesManifestURL } from "#browser-runtime/resources"
@@ -33,6 +35,15 @@ export interface ReleaseInfo {
 	 * A release published before the field holds none.
 	 */
 	postcodePrefixes?: string[]
+	/**
+	 * PCB1 postcode binaries in the release directory that only the postcode-only fallback reads.
+	 *
+	 * An example is `postcode-jp.bin`.
+	 * The classifier's anchor channel reads `postcodeAnchors` and never these.
+	 *
+	 * A country listed here gains a centroid for a bare postcode while the model's inputs stay as trained.
+	 */
+	postcodeCentroids?: string[]
 	hasPolygons?: boolean
 	/**
 	 * Whether the release directory also holds the split model.
@@ -44,6 +55,20 @@ export interface ReleaseInfo {
 	 */
 	splitEmbeddings?: boolean
 	/**
+	 * How the release's graph reads its input.
+	 *
+	 * `sentencepiece` reads subword ids from `tokenizer.model`, and `char` reads
+	 * code points indexed by `char-vocab.json`.
+	 * An entry published before the field is a SentencePiece release.
+	 */
+	encoder?: FamilyEncoder
+	/**
+	 * Whether the release directory holds `calibration.json`, the model's held-out reliability table.
+	 *
+	 * An entry published before the field is read as holding one, because every such release shipped a table.
+	 */
+	hasCalibration?: boolean
+	/**
 	 * Runtime capabilities the release's model needs, such as `locale_hint` for a graph with that input.
 	 * A runtime lacking one cannot load the release.
 	 */
@@ -53,10 +78,13 @@ export interface ReleaseInfo {
 /**
  * The capabilities this browser runtime provides.
  *
- * A release whose `requiresRuntime` names one missing from this list is passed over
+ * A release whose `requiresRuntime` lists one missing from this list is passed over
  * when the manifest picks the default release.
+ *
+ * `char_encoder` is the character-encoder load path.
+ * A character family's release requires it.
  */
-export const BROWSER_RUNTIME_CAPABILITIES: readonly string[] = ["locale_hint"]
+export const BROWSER_RUNTIME_CAPABILITIES: readonly string[] = ["locale_hint", "char_encoder"]
 
 /**
  * Reports whether this runtime provides every capability a release requires.
@@ -93,6 +121,14 @@ export function postcodeAnchorFilesOf(
  */
 export function postcodePrefixFilesOf(release: Pick<ReleaseInfo, "postcodePrefixes"> | null): readonly string[] {
 	return release?.postcodePrefixes ?? []
+}
+
+/**
+ * The PCB1 binaries a release's postcode-only fallback reads beside the classifier's
+ * anchors, as file names in its directory.
+ */
+export function postcodeCentroidFilesOf(release: Pick<ReleaseInfo, "postcodeCentroids"> | null): readonly string[] {
+	return release?.postcodeCentroids ?? []
 }
 
 export interface ReleasesManifest {
@@ -182,13 +218,15 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 }
 
 /**
- * Fetch + normalize the demo's releases manifest.
+ * Fetch + normalize a locale's releases manifest, the base locale's by default.
  *
  * `cache: "reload"` bypasses the (immutable-Cache-Control) http cache for the version
  * pointer so a returning visitor sees a `defaultVersion` bump.
+ *
+ * A locale the bucket publishes no manifest for answers null.
  */
-export async function fetchReleasesManifest(): Promise<ReleasesManifest | null> {
-	const res = await fetchWithRetry(releasesManifestURL(DEFAULT_LOCALE), { cache: "reload" })
+export async function fetchReleasesManifest(locale: string = DEFAULT_LOCALE): Promise<ReleasesManifest | null> {
+	const res = await fetchWithRetry(releasesManifestURL(locale), { cache: "reload" })
 
 	return res.ok ? normalizeReleasesManifest((await res.json()) as WireReleasesManifest) : null
 }

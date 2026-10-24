@@ -343,7 +343,7 @@ export function neuralClassifierLoadURLs(
 		postcodePrefixes?: readonly string[]
 		splitEmbeddings?: boolean
 	}
-) {
+): NeuralClassifierLoadURLs {
 	return {
 		// A split release loads the encoder and reads the embedding rows separately.
 		// Its directory still holds `model.onnx` for runtimes that predate the split.
@@ -369,6 +369,61 @@ export function neuralClassifierLoadURLs(
 		// so a rebuilt index is readable only from a fresh path.
 		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION), opts.pairIndexCountries),
 	}
+}
+
+/**
+ * The loader URL configuration of a SentencePiece release, as {@link neuralClassifierLoadURLs} returns it.
+ *
+ * A split release sets `embeddings`, and its `modelURL` is `encoder.onnx`.
+ */
+export interface NeuralClassifierLoadURLs {
+	modelURL: string
+	embeddings?: { hotURL: string; rowsURL: string }
+	tokenizerURL: string
+	modelCardURL: string
+	gazetteerLexicon: { url: string }
+	postcodeBinaryURLs: string[]
+	postcodePrefixURLs: string[]
+	pairIndexURLs: string[]
+}
+
+/**
+ * The loader URL configuration of a character-encoder release.
+ *
+ * The graph reads code points indexed by `char-vocab.json` beside `model.onnx`, so there is no tokenizer.
+ * The character family ships no postcode binaries, prefix indexes or pair indexes,
+ * so each of those lists is empty.
+ */
+export interface CharClassifierLoadURLs {
+	modelURL: string
+	charVocabURL: string
+	modelCardURL: string
+	postcodeBinaryURLs: readonly string[]
+	postcodePrefixURLs: readonly string[]
+	pairIndexURLs: readonly string[]
+}
+
+/**
+ * Returns the loader URL configuration of a character-encoder release.
+ */
+export function charClassifierLoadURLs(locale: string, version: string): CharClassifierLoadURLs {
+	return {
+		modelURL: assetURL(locale, version, "model.onnx"),
+		charVocabURL: assetURL(locale, version, "char-vocab.json"),
+		modelCardURL: assetURL(locale, version, "model-card.json"),
+		postcodeBinaryURLs: [],
+		postcodePrefixURLs: [],
+		pairIndexURLs: [],
+	}
+}
+
+/**
+ * Reports whether a loader URL configuration is a character-encoder release's.
+ */
+export function isCharClassifierLoadURLs(
+	urls: NeuralClassifierLoadURLs | CharClassifierLoadURLs
+): urls is CharClassifierLoadURLs {
+	return "charVocabURL" in urls
 }
 
 /**

@@ -29,6 +29,11 @@ export const spec = {
 		"model-size": { type: "string", description: "Override the displayed model size" },
 		steps: { type: "number", description: "Training steps recorded in releases.json" },
 		postcodes: { type: "string", description: "Comma-separated postcode binaries" },
+		"postcode-prefixes": { type: "string", description: "Comma-separated PFX1 postcode-prefix indexes" },
+		"postcode-centroids": {
+			type: "string",
+			description: "Comma-separated postcode binaries read by the browser's postcode-only fallback alone",
+		},
 		"pair-indexes": { type: "string", description: "Comma-separated placetype-pair-index binaries" },
 		fsts: { type: "string", description: "Comma-separated per-locale FST gazetteers" },
 		"gazetteer-lexicon": { type: "string", description: "Gazetteer anchor lexicon JSON" },

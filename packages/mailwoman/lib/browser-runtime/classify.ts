@@ -16,6 +16,7 @@ import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
 import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
@@ -125,6 +126,13 @@ export interface ClassifyStageResult {
 	 * The query-shape kind hypothesis (`postcode_only` / `structured_address` / …).
 	 */
 	kindResult: ParseResult["kindResult"]
+	/**
+	 * The known formats the query shape found in the input, postcode formats among them, with their spans.
+	 *
+	 * The postcode-only fallback reads these, so a postcode the classifier labeled
+	 * at low confidence still reaches the centroid map.
+	 */
+	knownFormats: ReadonlyArray<KnownFormatHitView>
 	/**
 	 * Wall-clock timing for the two front-half stages, in ms.
 	 */
@@ -242,6 +250,7 @@ export async function runClassifyStage(
 		tree,
 		nodes: flattenTreeNodes(tree),
 		kindResult: kindResult as ParseResult["kindResult"],
+		knownFormats: queryShape.knownFormats,
 		timing: { shape: tShape - tStart, classify: tClassify - tShape },
 	}
 }
