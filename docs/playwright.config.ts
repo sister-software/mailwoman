@@ -59,12 +59,14 @@ export default defineConfig({
 	],
 	// Playwright's web server is configuration-wide, and the `build` project writes `docs/build`
 	// rather than reading it, so the server starts only when the run selects only the `search` project.
-	// A running `yarn workspace @mailwoman/docs serve` is reused.
+	// Locally a running `yarn workspace @mailwoman/docs serve` is reused.
+	// In CI the run starts its own server, because a server another job left on the shared runner host
+	// would serve that job's build rather than the one this run produced.
 	webServer: SEARCH_ONLY
 		? {
 				command: "yarn docusaurus serve --port 7770 --no-open",
 				url: "http://localhost:7770",
-				reuseExistingServer: true,
+				reuseExistingServer: !CI,
 				timeout: 60_000,
 			}
 		: undefined,
