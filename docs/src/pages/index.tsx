@@ -9,6 +9,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 
 import { CoverageTable } from "../components/CoverageTable/CoverageTable.tsx"
 import { RECORDED_ON, TourStops } from "../components/HeroMap/tour.ts"
+import { HeroSearch } from "../components/HeroSearch/HeroSearch.tsx"
 import { useSiteConfig } from "../hooks/site.ts"
 
 import styles from "./index.module.css"
@@ -76,22 +77,16 @@ function HomepageHeader(): ReactNode {
 						nothing is metered.
 					</p>
 
-					<form className={styles.heroSearch} action="https://earth.mailwoman.ai/" method="get" role="search">
-						<label htmlFor="hero-query" className={styles.visuallyHidden}>
-							An address to geocode
-						</label>
-						<input
-							id="hero-query"
-							name="q"
-							type="search"
-							className={styles.heroInput}
-							placeholder={stop.query}
-							autoComplete="street-address"
-						/>
-						<button type="submit" className={clsx("button button--primary", styles.heroSubmit)}>
-							Geocode
-						</button>
-					</form>
+					<HeroSearch
+						action="https://earth.mailwoman.ai/"
+						placeholder={stop.query}
+						classes={{
+							form: styles.heroSearch,
+							input: styles.heroInput,
+							submit: clsx("button button--primary", styles.heroSubmit),
+							label: styles.visuallyHidden,
+						}}
+					/>
 
 					<figure className={styles.heroResult} aria-live="polite">
 						<figcaption className={styles.heroLandmark}>

@@ -117,3 +117,22 @@ export const SETTLEMENT_PLACETYPES: ReadonlySet<string> = new Set(
 		(placetype) => isStrictlyFiner(placetype, "county") && isStrictlyFiner("postalcode", placetype)
 	)
 )
+
+/**
+ * The settlement placetypes below a locality, `borough` through `microhood`.
+ *
+ * A place of one of these sits inside a locality, so a label for it states that locality.
+ */
+export const SUB_LOCALITY_PLACETYPES: ReadonlySet<string> = new Set(
+	[...SETTLEMENT_PLACETYPES].filter((placetype) => isStrictlyFiner(placetype, "locality"))
+)
+
+/**
+ * The placetypes at the region rung and coarser, `region` through `planet`.
+ *
+ * These are the levels a place's parent chain states, and the levels an index keeps
+ * regardless of population: a region or a country is wanted whatever its size.
+ */
+export const REGION_AND_COARSER_PLACETYPES: ReadonlySet<string> = new Set(
+	Object.keys(PLACETYPE_SPECIFICITY).filter((placetype) => isAtLeastAsSpecific("region", placetype))
+)
