@@ -34,7 +34,6 @@
 		"@mailwoman/api-worker": "workspace:*",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/spatial": "workspace:*",
 		"hono": "^4.13.13",
 		"pmtiles": "^4.5.0"
 	},

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Hono } from "hono"
+import { type ExecutionContext as HonoExecutionContext, Hono } from "hono"
 import { describe, expect, it } from "vitest"
 
 import { createTileWorkerApp, TILE_WORKER_ROUTES } from "#app"
@@ -29,11 +29,11 @@ function memoryCache(): ResponseCache & { entries: Map<string, Response> } {
  * An execution context whose `waitUntil` drops the promise it receives,
  * for `app.request` outside the Workers runtime.
  */
-const executionContext = {
+const executionContext: HonoExecutionContext = {
 	waitUntil: () => {},
 	passThroughOnException: () => {},
 	props: {},
-} as unknown as ExecutionContext
+}
 
 /**
  * The route table with each handler replaced by one that answers its route's index and parameters.

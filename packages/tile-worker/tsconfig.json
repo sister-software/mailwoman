@@ -17,7 +17,6 @@
 	"references": [
 		// ---
 		{ "path": "../core" },
-		{ "path": "../spatial" },
 		{ "path": "../cartographer" },
 		{ "path": "../api-worker" }
 	]

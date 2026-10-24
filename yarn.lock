@@ -7831,7 +7831,6 @@ __metadata:
     "@mailwoman/api-worker": "workspace:*"
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/spatial": "workspace:*"
     hono: "npm:^4.13.13"
     pmtiles: "npm:^4.5.0"
     wrangler: "npm:^4.151.0"
