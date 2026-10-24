@@ -52,7 +52,7 @@ both in full; that is the copy a consumer of the package receives. The same text
 ### Google SentencePiece — Apache-2.0, and darts-clone — BSD 2-clause
 
 `@mailwoman/sentencepiece-wasm` ships Google [SentencePiece](https://github.com/google/sentencepiece)
-v0.2.2 compiled to WASM. `@mailwoman/mtf` ports parts of SentencePiece v0.2.2 (Copyright 2016 Google
+v0.2.2 compiled to WASM, with Google's license text as `LICENSE.sentencepiece`. `@mailwoman/mtf` ports parts of SentencePiece v0.2.2 (Copyright 2016 Google
 Inc., Apache-2.0) and of darts-clone (Copyright (c) 2008-2011 Susumu Yata, BSD 2-clause) to Rust.
 `packages/mtf/THIRD_PARTY_NOTICES.md` lists each ported file and its upstream source, and
 `packages/mtf/third-party/` holds both license texts.

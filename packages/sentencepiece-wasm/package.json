@@ -13,6 +13,7 @@
 		"sentencepiece.wasm",
 		"index.d.ts",
 		"binding.cpp",
+		"LICENSE.sentencepiece",
 		"build.sh",
 		"!test/**"
 	],
