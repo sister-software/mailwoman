@@ -88,7 +88,7 @@ describe("generate-cli-reference", () => {
 
 		expect(
 			committed,
-			"docs/articles/developers/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.ts`"
+			"docs/articles/developers/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
 		).toBe(page)
 	})
 

@@ -122,7 +122,7 @@ for the GeoJSON term when the wire format already uses it.
 ## Register by role
 
 The six roles are the ones the frontmatter interface enforces
-(`docs/scripts/docs/frontmatter/metadata.ts`). Register is a property of the role rather than of the author.
+(`docs/scripts/docs/frontmatter/metadata.mts`). Register is a property of the role rather than of the author.
 
 | Role          | Person                 | Contractions | Sentence length    | Examples                                    |
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
@@ -285,7 +285,7 @@ truths cannot tell which is current. Run `yarn lint:structure` in `docs/` after 
 
 ## How Vale enforces the mechanical subset
 
-Vale checks the token-level subset of these rules. Review and `docs/scripts/check/docs-structure.ts` enforce
+Vale checks the token-level subset of these rules. Review and `docs/scripts/check/docs-structure.mts` enforce
 the structural rules: role, section order, example discipline, and the audit above.
 
 `config/vale/styles/` holds one file per rule, and each file opens with a comment that states what the rule
@@ -338,6 +338,6 @@ One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templ
 [how-to](./page-templates/how-to.md), [reference](./page-templates/reference.md),
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
 [evidence](./page-templates/evidence.md). Each holds a frontmatter skeleton that satisfies the interface in
-`docs/scripts/docs/frontmatter/metadata.ts`, the section order for its role, the opening move, and one
+`docs/scripts/docs/frontmatter/metadata.mts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role rather than by copying a
 neighboring page.

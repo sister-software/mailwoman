@@ -6,19 +6,24 @@
  *   Checks docs frontmatter, duplicate titles, sidebar coverage, relative links and cited repository paths.
  *
  *   `--strict` applies the six-role frontmatter rules. The default applies the legacy rules. Accepted
- *   exceptions live in `docs/scripts/docs/structure-allowlist.ts`.
+ *   exceptions live in `docs/scripts/docs/structure-allowlist.mts`.
  */
 
 // CI runs this script before `yarn install`, so imports must be Node builtins or relative paths.
 // oxlint-disable-next-line typescript/no-restricted-imports -- runs before `yarn install`; see above
 import { parseArgs } from "node:util"
 
-import sidebars from "../../sidebars.ts"
-import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "../docs/frontmatter/index.ts"
-import { validatePage } from "../docs/frontmatter/metadata.ts"
-import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.ts"
-import { censusPathCitations } from "../docs/path-citations.ts"
-import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.ts"
+import sidebars from "../../sidebars.mts"
+import {
+	collectDocPages,
+	type DocPage,
+	isDelegatedWorkstream,
+	isExcludedFromBuild,
+} from "../docs/frontmatter/index.mts"
+import { validatePage } from "../docs/frontmatter/metadata.mts"
+import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.mts"
+import { censusPathCitations } from "../docs/path-citations.mts"
+import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.mts"
 
 const { values: flags } = parseArgs({
 	options: {
@@ -333,8 +338,8 @@ for (const allowance of allowedDuplicateTitles) {
 if (failureCount > 0) {
 	console.error(
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
-			`Metadata: docs/scripts/docs/frontmatter/metadata.ts · voice + section rules: ` +
-			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs/structure-allowlist.ts`
+			`Metadata: docs/scripts/docs/frontmatter/metadata.mts · voice + section rules: ` +
+			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs/structure-allowlist.mts`
 	)
 
 	process.exit(1)

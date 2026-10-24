@@ -8,12 +8,11 @@
  *   Those warnings surface during static-site generation rather than during
  *   typecheck or bundling.
  *
- *   This runs as the Playwright `build` project (see playwright.config.ts), building into a throwaway
+ *   This runs as the Playwright `build` project (see playwright.config.mts), building into a throwaway
  *   dir so it never clobbers the `build/` output the webServer produces and serves to the browser
  *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
 import { runFile } from "@mailwoman/core/process"
 import { expect, test } from "@playwright/test"
 import { resolvePath } from "path-ts"
@@ -39,8 +38,13 @@ const processEnv = process.env
  *
  * The Playwright webServer serves `build/` for the browser specs.
  * A health-check build there would clobber the served site.
+ *
+ * The directory sits inside the docs workspace because the server bundle requires
+ * its externals, such as `isomorphic-dompurify`, at render time.
+ * Node resolves them from a `node_modules` directory above the bundle.
+ * A directory under the system temp root has none above it.
  */
-const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
+const CHECK_OUT_DIR = resolvePath(DOCS_ROOT, "build-check")
 
 /**
  * Lines Docusaurus prints for build problems, as opposed to informational output.

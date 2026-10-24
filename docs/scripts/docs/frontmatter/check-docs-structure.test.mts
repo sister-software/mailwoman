@@ -7,7 +7,7 @@
  * It also excludes legacy-mode checks.
  */
 
-import { PAGE_ROLES, validatePage } from "@mailwoman/docs/scripts/docs-frontmatter-metadata"
+import { PAGE_ROLES, validatePage } from "@mailwoman/docs/scripts/docs/frontmatter/metadata"
 import { describe, expect, it } from "vitest"
 
 describe("validatePage", () => {
@@ -79,7 +79,7 @@ describe("validatePage", () => {
 
 	it("accepts a fully valid reference page", () => {
 		const failures = validatePage(
-			{ role: "reference", "source-of-truth": "docs/scripts/check/docs-structure.ts" },
+			{ role: "reference", "source-of-truth": "docs/scripts/check/docs-structure.mts" },
 			"reference/schema.mdx"
 		)
 

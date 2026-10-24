@@ -4,8 +4,9 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
  * Docs sidebars.
  * Every published document belongs to exactly one sidebar.
  *
- * Each top-level key is a section in the navbar's category row (a `docSidebar` item in `docusaurus.config.ts`), which
- * links to the sidebar's first document, so that entry is the section's landing page.
+ * Each top-level key is a section in the navbar's category row
+ * (a `docSidebar` item in `docusaurus.config.ts`), which links to the sidebar's
+ * first document, so that entry is the section's landing page.
  */
 const sidebars: SidebarsConfig = {
 	product: [

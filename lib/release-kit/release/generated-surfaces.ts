@@ -32,7 +32,7 @@ const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly stri
 		file: "packages/mailwoman/man/mailwoman.1",
 		generator: ["packages/mailwoman/out/cli/main.js", "dev", "generate", "man-page"],
 	},
-	{ file: "docs/articles/developers/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.ts"] },
+	{ file: "docs/articles/developers/reference/cli.mdx", generator: ["docs/scripts/generate-cli-reference.mts"] },
 ]
 
 export interface GeneratedSurfaceState {

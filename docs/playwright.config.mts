@@ -5,7 +5,7 @@
  * @see https://playwright.dev/docs/test-configuration
  */
 
-import { runFileSync } from "@mailwoman/core/process"
+import { findDisparatePort } from "@mailwoman/docs/scripts/find-free-port"
 import { defineConfig } from "@playwright/test"
 
 // Playwright loads this file with its own loader. The loader walks up from every import to find a tsconfig.
@@ -31,7 +31,24 @@ const projectFlags = argv.flatMap((arg, index) =>
 
 const SEARCH_ONLY = projectFlags.length > 0 && projectFlags.every((name) => name === "search")
 
-const SEARCH_PORT = SEARCH_ONLY && CI ? Number(runFileSync("yarn", ["find-free-port"])) : 7770
+/**
+ * The environment variable that carries the search server's port from the main process to the test workers.
+ *
+ * Playwright evaluates this file again in every worker process.
+ * A worker's argv holds no `--project` flag, so without the variable it would compute
+ * port 7770 and test whatever else listens there, such as a dev server.
+ *
+ * A worker inherits the main process's environment, so the port chosen here reaches it.
+ */
+const SEARCH_PORT_VARIABLE = "MAILWOMAN_DOCS_SEARCH_PORT"
+
+const SEARCH_PORT = env[SEARCH_PORT_VARIABLE]
+	? Number(env[SEARCH_PORT_VARIABLE])
+	: SEARCH_ONLY && CI
+		? await findDisparatePort()
+		: 7770
+
+env[SEARCH_PORT_VARIABLE] = String(SEARCH_PORT)
 
 const SEARCH_ORIGIN = `http://localhost:${SEARCH_PORT}`
 

@@ -112,7 +112,8 @@
 			"entry": [
 				".agents/skills/run-docs/driver.mts",
 				"docusaurus.config.ts",
-				"sidebars.ts",
+				"sidebars.mts",
+				"playwright.config.mts",
 				"plugins/**/*.ts",
 				"scripts/**/*.{ts,mts}",
 				"src/**/*.{js,ts,tsx}",

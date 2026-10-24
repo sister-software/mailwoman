@@ -10,7 +10,7 @@
  *   Run locally: `yarn workspace @mailwoman/docs freshness-report` (or `node docs/scripts/list-stale-docs.ts` from the repo root).
  */
 
-import { collectDocPages } from "./docs/frontmatter/index.ts"
+import { collectDocPages } from "./docs/frontmatter/index.mts"
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/
 

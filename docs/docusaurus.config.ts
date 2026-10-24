@@ -157,7 +157,7 @@ const config: Config = {
 				docs: {
 					path: "articles",
 					routeBasePath: "docs",
-					sidebarPath: "./sidebars.ts",
+					sidebarPath: "./sidebars.mts",
 					// Single shared tag registry (also used by the blog and the glossary plugin).
 					// Docusaurus resolves this relative to the content dir, hence the "../".
 					tags: "../tags.yml",
@@ -243,7 +243,7 @@ const config: Config = {
 				// Navy/blue alternatives ship under /img for lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
-			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.ts.
+			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.mts.
 			// Resources follows Docs (the evidence door) and Product leads Docs (the undecided visitor.
 			items: [
 				sidebarMegaMenu("product", {

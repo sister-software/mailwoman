@@ -101,10 +101,10 @@ jobs:
       # This check needs only Node built-ins, so it runs before the install. It checks
       # frontmatter, duplicate titles and orphan pages. `--strict` requires `role:` on every
       # published page. The docs workspace cannot declare type:module without breaking the
-      # Docusaurus SSR bundle, so Node warns about sidebars.ts and the flag silences that warning.
+      # Docusaurus SSR bundle, so its Node scripts are `.mts` files. Node loads those as ES modules.
       - name: Docs structure checks
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check/docs-structure.ts --strict
+        run: node docs/scripts/check/docs-structure.mts --strict
 
       - name: Enable Corepack (yarn 4)
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'

@@ -4,26 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { cfRequestToGeoFeature } from "@mailwoman/api-worker/cloudflare/geo"
 import { ResourceError } from "@mailwoman/core/errors"
 import { prettyJSON } from "@mailwoman/core/json"
-import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 
 import { applyAccessControlAllowOrigin } from "#cors"
 import { WorkerRoute } from "#routing"
-
-const CFGeolocationProperties = [
-	"country",
-	"isEUCountry",
-	"continent",
-	"city",
-	"postalCode",
-	"latitude",
-	"longitude",
-	"timezone",
-	"region",
-	"regionCode",
-	"metroCode",
-] as const satisfies Array<keyof IncomingRequestCfPropertiesGeographicInformation>
 
 /**
  * Returns the caller's approximate location from Cloudflare's request geo headers,
@@ -34,23 +20,7 @@ export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
 
 	if (!cf) throw ResourceError.from(424, "Cannot geolocate without Cloudflare data.")
 
-	const geolocation = Object.fromEntries(
-		CFGeolocationProperties.map((key) => [key, cf[key]])
-	) as IncomingRequestCfPropertiesGeographicInformation
-
-	const latitude = (geolocation.latitude ? Number.parseFloat(geolocation.latitude) : 0) || 0
-	const longitude = (geolocation.longitude ? Number.parseFloat(geolocation.longitude) : 0) || 0
-
-	const feature: GeoFeature<PointLiteral, IncomingRequestCfPropertiesGeographicInformation> = {
-		type: "Feature",
-		geometry: {
-			type: "Point",
-			coordinates: [longitude, latitude],
-		},
-		properties: geolocation,
-	}
-
-	const response = new Response(prettyJSON(feature), {
+	const response = new Response(prettyJSON(cfRequestToGeoFeature(cf)), {
 		headers: {
 			"Content-Type": "application/json",
 			"Cache-Control": `public, max-age=${60 * 60}`,

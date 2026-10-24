@@ -91,5 +91,10 @@ export function configureRuntimeWebpack(
 			extensionAlias: { ".js": [".ts", ".js"] },
 		},
 		module: { rules: [{ test: /[.]wasm$/, type: "asset/resource" }] },
+		// maplibre-gl's prebuilt bundle resolves its worker with a `require` whose argument
+		// is an expression, so webpack warns that it cannot follow the dependency.
+		// The site stages the worker itself (the runtime-assets plugin),
+		// so the warning describes no missing module.
+		ignoreWarnings: [{ module: /maplibre-gl/, message: /Critical dependency/ }],
 	}
 }
