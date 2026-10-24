@@ -1,0 +1,20 @@
+{
+	"name": "@mailwoman/mtf",
+	"version": "10.7.0",
+	"private": true,
+	"description": "Multilingual Token Framework: Mailwoman's subword tokenizer, a Rust core compiled to WASM with a TypeScript loader. It will replace @mailwoman/sentencepiece-wasm once it reproduces the shipped model's pieces and offsets.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/mtf"
+	},
+	"files": [
+		"README.md",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json"
+	}
+}

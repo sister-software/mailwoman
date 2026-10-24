@@ -519,6 +519,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"packages/mailwoman/tools/eval-harness/gauntlet/cases/gb/regression.jsonl",
 		"the Manchester case is a real venue, Gate 12",
 	],
+	[
+		"packages/mtf/test/fixtures/",
+		"tokenizer reference fixtures quote every gauntlet board input and its pieces, such as the Manchester venue Gate 12",
+	],
 	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],

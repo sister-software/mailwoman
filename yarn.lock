@@ -7250,6 +7250,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/mtf@workspace:packages/mtf":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/mtf@workspace:packages/mtf"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"

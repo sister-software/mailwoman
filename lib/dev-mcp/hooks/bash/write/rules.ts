@@ -85,6 +85,9 @@ const ADMITTED = new Set([
 	// `mkdir` creates no file content and cannot overwrite a file.
 	// Git does not track empty directories.
 	"mkdir",
+	// `cargo` builds and tests the Rust crates under `packages/mtf`.
+	// Its outputs are compiled from the crate sources into `target/`.
+	"cargo",
 	"docker",
 	"duckdb",
 	"hf",
