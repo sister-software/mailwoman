@@ -3,7 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A read-only map from strings to 32-bit integers, packed into typed arrays.
+ *   A read-only map from strings to 32-bit integers, packed into typed arrays, for the Latin SentencePiece family's
+ *   evidence lexicons.
+ *
+ *   It lives under `latn/` because its only data so far is that family's: the lexicons the `@mailwoman/neural-weights-en-us`
+ *   graph package ships for en-US, en-GB, en-AU, en-IN, en-NZ, de-DE, es-ES, fr-FR and it-IT. Keys compare as exact
+ *   UTF-8 bytes with no normalization. The painter in `#gazetteer-inference` folds case and strips punctuation before a
+ *   lookup, and that fold is what decides which languages the lexicons serve. A family in another script moves this
+ *   module to a shared home only with a parity test over that family's own lexicon.
  *
  *   A `Map<string, number>` keeps one JavaScript string and one table entry per key. For a lexicon of a few hundred
  *   thousand place names that is tens of MiB of heap. This table keeps the keys' UTF-8 bytes in one buffer, their offsets

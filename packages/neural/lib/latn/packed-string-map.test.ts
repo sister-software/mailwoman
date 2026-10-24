@@ -7,12 +7,19 @@
 import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, test } from "vitest"
 
-import { PackedStringMap } from "#packed-string-map"
-
-const ALPHABET = ["a", "b", "é", "ß", "ł", "東", "京", " ", "-", "1", "😀", "ä"]
+import { PackedStringMap } from "#latn/packed-string-map"
 
 /**
- * Builds seeded random keys from an alphabet that mixes one-, two-, three- and four-byte UTF-8 characters.
+ * Latin-script letters at each UTF-8 width the table measures: one byte (`a`), two (`é`, `ß`, `ł`, `ä`)
+ * and three (`ḁ` U+1E01, `ẞ` U+1E9E), plus the separators the lexicons' n-grams contain.
+ *
+ * The emoji is the four-byte case.
+ * It is a symbol that typed address input can contain, rather than a script the lexicons cover.
+ */
+const ALPHABET = ["a", "b", "é", "ß", "ł", "ḁ", "ẞ", " ", "-", "1", "😀", "ä"]
+
+/**
+ * Builds seeded random keys from {@link ALPHABET}.
  */
 function randomKeys(seed: number, count: number): string[] {
 	const random = mulberry32(seed)

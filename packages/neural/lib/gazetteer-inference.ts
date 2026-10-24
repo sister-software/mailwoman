@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PackedStringMap } from "#packed-string-map"
+import { PackedStringMap } from "#latn/packed-string-map"
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
