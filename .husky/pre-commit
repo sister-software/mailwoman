@@ -47,8 +47,16 @@ if [ -n "$STAGED" ]; then
 	# - oxlint errors on unsupported paths, so pass only code extensions.
 	# - Config/rules still apply when explicit paths are passed.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
+	# - oxlint exits non-zero when ignore rules exclude every path passed, such as a generated `.mjs` alone.
 	if [ -n "$CODE" ]; then
-		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix
+		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix 2>&1) || {
+			if printf '%s' "$LINT_OUT" | grep -q "No files found to lint"; then
+				echo "pre-commit: all staged code paths are oxlint-excluded — skipping lint"
+			else
+				printf '%s\n' "$LINT_OUT"
+				exit 1
+			fi
+		}
 	fi
 
 	# Formatter:
