@@ -59,6 +59,11 @@
 					"pattern": "^[a-f0-9]{64}$",
 					"description": "SHA-256 of the corpus MANIFEST.json that produced this run."
 				},
+				"tokenizer_md5": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{32}$",
+					"description": "md5 of the tokenizer.model the graded model reads, from its model card's files_md5. Scores are comparable across rows only when this field matches. Rows written before the field existed leave it out, which records the tokenizer as unrecorded."
+				},
 				"eval_set_version": {
 					"type": "string",
 					"description": "Golden-set version label, e.g. 'golden-v0.1.0'."

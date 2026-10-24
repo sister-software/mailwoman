@@ -97,6 +97,7 @@ interface Verdict {
 
 interface ModelCard {
 	training?: { corpus_version?: string; steps?: number; hardware?: string }
+	files_md5?: Record<string, string>
 }
 
 interface Ledger {
@@ -204,6 +205,13 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 	// The practiced corpus_version is the short label.
 	// The card's is a long provenance sentence.
 	const corpusVersion = (modelCard.training?.corpus_version ?? "unknown").split("=")[0]!.trim()
+	// Scores read across rows only under one tokenizer, so a row records which one it graded.
+	// A card without the digest leaves the field out rather than writing a placeholder.
+	const tokenizerMD5 = modelCard.files_md5?.["tokenizer.model"]
+
+	if (!tokenizerMD5) {
+		console.error(`! ${card} records no files_md5["tokenizer.model"]; the row leaves tokenizer_md5 out`)
+	}
 
 	const row = {
 		run_id: runID,
@@ -211,6 +219,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 		model_path: options.modelPath!,
 		corpus_version: corpusVersion,
 		corpus_sha256: "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+		...(tokenizerMD5 ? { tokenizer_md5: tokenizerMD5 } : {}),
 		eval_set_version: `promotion-eval battery (${verdict.label}): golden v0.1.2 + real-OOD + arena perturb`,
 		eval_set_sha256: "per-file, see data/eval/external",
 		trained_at: options.trainedAt ?? isoDate(),
