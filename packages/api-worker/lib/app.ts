@@ -8,13 +8,14 @@
  *   engine headers unchanged.
  */
 
+import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
 import { Hono } from "hono"
 
 import { admitRequest, type RequestLimiter } from "#admission"
 import { MAX_REQUEST_BODY_BYTES, readBoundedBody } from "#body"
 import { mailwomanCORS } from "#cors"
 import { jsonError } from "#errors"
-import { type BiasPoint, requestLocationOf, withRequestLocationBias } from "#request-bias"
+import { requestLocationOf, withRequestLocationBias } from "#request-bias"
 
 /**
  * A private service that answers the native Mailwoman API routes.
@@ -50,7 +51,7 @@ export interface APIWorkerOptions {
 	 *
 	 * @defaultValue Cloudflare's `request.cf` coordinates
 	 */
-	requestLocation?: (request: Request) => BiasPoint | null
+	requestLocation?: (request: Request) => GeocodeBiasPoint | null
 }
 
 const BACKEND_ORIGIN = "http://engine.internal"
@@ -139,7 +140,7 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 	// The raw address is never written, so the dataset can show where and how well
 	// the API answers without holding what people searched.
 
-	async function forward(request: Request, path: string, location: BiasPoint | null = null): Promise<Response> {
+	async function forward(request: Request, path: string, location: GeocodeBiasPoint | null = null): Promise<Response> {
 		const read = await readBoundedBody(request, MAX_REQUEST_BODY_BYTES)
 
 		if (!read) return jsonError(413, "request body too large")

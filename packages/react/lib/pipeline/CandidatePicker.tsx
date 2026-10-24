@@ -28,6 +28,13 @@ export interface CandidatePickerProps {
 	onSelect: (index: number) => void
 }
 
+/**
+ * The score as the row's tooltip shows it, or `unscored` when the resolver recorded none.
+ */
+function scoreLabel(score: number | null): string {
+	return score == null ? "unscored" : `score ${score.toFixed(3)}`
+}
+
 export function CandidatePicker({ candidates, selectedIndex, onSelect }: CandidatePickerProps): ReactNode {
 	return (
 		<div className="mw-candidates">
@@ -39,7 +46,7 @@ export function CandidatePicker({ candidates, selectedIndex, onSelect }: Candida
 							type="button"
 							className={cx("mw-candidates__btn", { "mw-candidates__btn--active": i === selectedIndex })}
 							onClick={() => onSelect(i)}
-							title={`${candidate.placetype} • WOF ${candidate.id} • score ${candidate.score.toFixed(3)}`}
+							title={`${candidate.placetype} • WOF ${candidate.id} • ${scoreLabel(candidate.score)}`}
 						>
 							<span className="mw-candidates__rank">#{i + 1}</span>
 							<span className="mw-candidates__name">{candidate.name}</span>
