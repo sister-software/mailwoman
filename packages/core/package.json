@@ -86,6 +86,11 @@
 			"node": "./lib/coarse-placer/coarse-placer.ts",
 			"default": "./out/coarse-placer/coarse-placer.js"
 		},
+		"./coarse-placer/fnv-hash": {
+			"types": "./out/coarse-placer/fnv-hash.d.ts",
+			"node": "./lib/coarse-placer/fnv-hash.ts",
+			"default": "./out/coarse-placer/fnv-hash.js"
+		},
 		"./crypto": {
 			"types": "./out/crypto/node.d.ts",
 			"node": "./lib/crypto/node.ts",
