@@ -120,6 +120,74 @@ function adminPriorityFor(allNodes: readonly AddressNode[]): ReadonlyArray<strin
 }
 
 /**
+ * A candidate's resolver score, or null when the resolver recorded none.
+ */
+function scoreOf(value: unknown): number | null {
+	return typeof value === "number" && Number.isFinite(value) ? value : null
+}
+
+/**
+ * The fields of a resolver alternative the candidate list reads.
+ */
+interface CandidateAlternative {
+	name?: string
+	placetype?: string
+	lat?: number
+	lon?: number
+	country?: string
+	id?: number | string
+	score?: number
+}
+
+/**
+ * The candidate list for the query's primary place: the winner first, then each runner-up
+ * at a coordinate no earlier candidate holds, rounded to four decimal places.
+ *
+ * A primary node without a coordinate answers an empty list.
+ */
+function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidates"] {
+	if (primaryNode?.lat == null || primaryNode.lon == null) return []
+
+	const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
+	const seen = new Set([coordKey(primaryNode.lat, primaryNode.lon)])
+	const metadata = primaryNode.metadata ?? {}
+
+	const candidates: GeocodeResult["candidates"] = [
+		{
+			name: (metadata["resolver_name"] as string | null)?.trim() || primaryNode.value.trim(),
+			tag: primaryNode.tag,
+			lat: primaryNode.lat,
+			lon: primaryNode.lon,
+			countryCode: (metadata["resolver_country"] as string | null)?.trim()?.toUpperCase() ?? null,
+			placeID: primaryNode.placeID || null,
+			score: scoreOf(metadata["resolver_score"]),
+		},
+	]
+
+	for (const a of (primaryNode.alternatives as ReadonlyArray<CandidateAlternative> | null) ?? []) {
+		if (a.lat == null || a.lon == null || !a.name) continue
+
+		const key = coordKey(a.lat, a.lon)
+
+		if (seen.has(key)) continue
+
+		seen.add(key)
+
+		candidates.push({
+			name: String(a.name).trim(),
+			tag: a.placetype ?? primaryNode.tag,
+			lat: a.lat,
+			lon: a.lon,
+			countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
+			placeID: a.id != null ? `wof:${a.id}` : null,
+			score: scoreOf(a.score),
+		})
+	}
+
+	return candidates
+}
+
+/**
  * Projects a resolved address tree into a geocode result.
  *
  * The coordinate comes from the most precise tier present, in the order address point,
@@ -250,49 +318,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		adminWinnerNode ? hierarchySourceNodeOf(adminWinnerNode) : lineageAnchorNode(sourceNodes)
 	)
 
-	const candidates: GeocodeResult["candidates"] = []
-
-	if (primaryNode?.lat != null) {
-		const seen = new Set<string>()
-		const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
-		seen.add(coordKey(primaryNode.lat, primaryNode.lon!))
-
-		candidates.push({
-			name: (primaryNode.metadata?.["resolver_name"] as string | null)?.trim() || primaryNode.value.trim(),
-			tag: primaryNode.tag,
-			lat: primaryNode.lat,
-			lon: primaryNode.lon!,
-			countryCode: (primaryNode.metadata?.["resolver_country"] as string | null)?.trim()?.toUpperCase() ?? null,
-			placeID: primaryNode.placeID || null,
-		})
-
-		const alts =
-			(primaryNode.alternatives as ReadonlyArray<{
-				name?: string
-				placetype?: string
-				lat?: number
-				lon?: number
-				country?: string
-				id?: number | string
-			}> | null) ?? []
-
-		for (const a of alts) {
-			if (a.lat == null || a.lon == null || !a.name) continue
-			const key = coordKey(a.lat, a.lon)
-
-			if (seen.has(key)) continue
-			seen.add(key)
-
-			candidates.push({
-				name: String(a.name).trim(),
-				tag: a.placetype ?? primaryNode.tag,
-				lat: a.lat,
-				lon: a.lon,
-				countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
-				placeID: a.id != null ? `wof:${a.id}` : null,
-			})
-		}
-	}
+	const candidates = candidatesOf(primaryNode)
 
 	const extracted: GeocodeResult = {
 		input,

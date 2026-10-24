@@ -12,6 +12,7 @@
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
+import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
@@ -163,6 +164,31 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(["address_point", "interpolated"]).toContain(body.resolution_tier)
 		expect(typeof body.lat).toBe("number")
 		expect(typeof body.lon).toBe("number")
+		expect(body).toHaveProperty("tree", null)
+	}, 60_000)
+
+	test("POST /v1/geocode: include_tree answers the spans /v1/parse decodes, beside the same coordinate", async () => {
+		const address = "3075 Hill Street, Round Rock, TX 78664"
+		const withTree = await postJSON("/v1/geocode", { address, include_tree: true })
+		const plain = await postJSON("/v1/geocode", { address })
+		const parsed = await postJSON("/v1/parse", { address })
+
+		expect(withTree.status).toBe(200)
+
+		// The geocoder adds resolver hints to node metadata, such as the region's country hint, so the spans compare.
+		const spans = (tree: unknown) =>
+			flattenTreeNodes(tree as AddressTree).map(({ tag, value, start, end, confidence }) => ({
+				tag,
+				value,
+				start,
+				end,
+				confidence,
+			}))
+
+		const body = withTree.body as { lat: number; lon: number; tree: unknown }
+
+		expect(spans(body.tree)).toEqual(spans((parsed.body as { tree: unknown }).tree))
+		expect([body.lat, body.lon]).toEqual([(plain.body as { lat: number }).lat, (plain.body as { lon: number }).lon])
 	}, 60_000)
 
 	test("GET /metrics: reflects a recorded /v1/geocode call", async () => {

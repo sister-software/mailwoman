@@ -5,12 +5,13 @@
  */
 
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
+import type { AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
-import { createMailwomanAPI, MAX_ADDRESS_LENGTH, type MailwomanAPIEngine } from "#index"
+import { createMailwomanAPI, type GeocodeInit, MAX_ADDRESS_LENGTH, type MailwomanAPIEngine } from "#index"
 import type { ParseResponse } from "#operations/parse/address"
 
 beforeEach(() => {
@@ -79,7 +80,7 @@ function fixtureGeocodeResult(
  */
 const fullEngine: MailwomanAPIEngine = {
 	parse: async (address, opts) => fixtureParseResponse(address, opts.debug),
-	geocode: async (address) => fixtureGeocodeResult(address),
+	geocode: async (address) => ({ ...fixtureGeocodeResult(address), tree: null }),
 	batch: async (addresses) => ({
 		results: addresses.map((a) => (a === "bad" ? { input: a, error: "boom" } : fixtureGeocodeResult(a))),
 	}),
@@ -197,7 +198,57 @@ test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", a
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual(fixtureGeocodeResult("1600 Pennsylvania Ave NW"))
+	expect(await res.json()).toEqual({ ...fixtureGeocodeResult("1600 Pennsylvania Ave NW"), tree: null })
+})
+
+test("POST /v1/geocode: the bias points and the tree option reach the engine, and the tree comes back", async () => {
+	const received: GeocodeInit[] = []
+	const tree: AddressTree = { raw: "Springfield", roots: [] }
+
+	const app = createMailwomanAPI({
+		geocode: async (address, init) => {
+			received.push(init)
+
+			return { ...fixtureGeocodeResult(address), tree: init.includeTree ? tree : null }
+		},
+	})
+
+	const post = async (body: object) =>
+		app.request("/v1/geocode", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: stringifyJSON(body),
+		})
+
+	const biased = await post({
+		address: "Springfield",
+		bias: [
+			{ lat: 39.8, lon: -89.65 },
+			{ lat: 42.1, lon: -72.59, weight: 0.6 },
+		],
+		include_tree: true,
+	})
+
+	expect(biased.status).toBe(200)
+	expect(((await biased.json()) as { tree: unknown }).tree).toEqual(tree)
+
+	const plain = await post({ address: "Springfield" })
+
+	expect(((await plain.json()) as { tree: unknown }).tree).toBeNull()
+
+	expect(received).toEqual([
+		{
+			inputMode: "auto",
+			bias: [
+				{ lat: 39.8, lon: -89.65 },
+				{ lat: 42.1, lon: -72.59, weight: 0.6 },
+			],
+			includeTree: true,
+		},
+		{ inputMode: "auto", bias: [], includeTree: false },
+	])
+
+	expect((await post({ address: "Springfield", bias: [{ lat: 91, lon: 0 }] })).status).toBe(400)
 })
 
 test("POST /v1/geocode and /v1/batch: an OpenStreetMap row keeps its stamp, and a non-OSM row never carries one", async () => {
@@ -206,7 +257,7 @@ test("POST /v1/geocode and /v1/batch: an OpenStreetMap row keeps its stamp, and 
 	const sourceFor = (address: string): GeocodeResult["coordinate_source"] => (address === "osm" ? osm : nad)
 
 	const app = createMailwomanAPI({
-		geocode: async (address) => fixtureGeocodeResult(address, sourceFor(address)),
+		geocode: async (address) => ({ ...fixtureGeocodeResult(address, sourceFor(address)), tree: null }),
 		batch: async (addresses) => ({ results: addresses.map((a) => fixtureGeocodeResult(a, sourceFor(a))) }),
 	})
 

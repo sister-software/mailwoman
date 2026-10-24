@@ -11,7 +11,7 @@
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import type { MailwomanAPIEngine, GeocodeCallback } from "@mailwoman/api"
+import type { GeocodeInit, MailwomanAPIEngine } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
@@ -20,7 +20,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { $public } from "mailwoman/env"
-import { deriveGeocodeRegister, geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { deriveGeocodeRegister, geocodeAddress, parseForGeocode, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
@@ -94,10 +94,31 @@ async function buildEngine() {
 				// The FTS backend falls back to US.
 				const countryScope = candidateDB ? {} : { defaultCountry: { country: "US", source: "caller" as const } }
 
-				const oneGeocode: GeocodeCallback = (address, { inputMode }) =>
-					geocodeAddress(address, { classifier, resolver, databases: extracts.for, ...countryScope, inputMode })
+				const depsFor = (
+					inputMode: GeocodeInit["inputMode"],
+					bias: GeocodeInit["bias"] = []
+				): Parameters<typeof geocodeAddress>[1] => ({
+					classifier,
+					resolver,
+					databases: extracts.for,
+					...countryScope,
+					inputMode,
+					...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+				})
 
-				engine.geocode = oneGeocode
+				const oneGeocode = (address: string, { inputMode }: Pick<GeocodeInit, "inputMode">) =>
+					geocodeAddress(address, depsFor(inputMode))
+
+				// The tree is parsed once and handed to the geocoder, so the classifier runs once per request.
+				engine.geocode = async (address, init) => {
+					const deps = depsFor(init.inputMode, init.bias)
+
+					if (!init.includeTree) return { ...(await geocodeAddress(address, deps)), tree: null }
+
+					const tree = await parseForGeocode(address, deps)
+
+					return { ...(await geocodeAddress(address, { ...deps, parsedTree: tree })), tree }
+				}
 
 				engine.batch = async (addresses, opts) => {
 					const inputs = addresses.map((a) => a.trim())
