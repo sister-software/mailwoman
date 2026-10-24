@@ -14,7 +14,7 @@ import type { TileWorkerEnv } from "#caching"
 const app = createTileWorkerApp()
 
 const handler: ExportedHandler<TileWorkerEnv> = {
-	fetch: (request, env, ctx) => app.fetch(request as unknown as Request, env, ctx),
+	fetch: (request, env, ctx) => app.fetch(request, env, ctx),
 }
 
 export default handler

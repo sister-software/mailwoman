@@ -33,6 +33,7 @@
 		"deploy:dry-run": "wrangler deploy --dry-run"
 	},
 	"dependencies": {
+		"@mailwoman/api": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"hono": "^4.13.13"

@@ -10,9 +10,11 @@
 
 import { Hono } from "hono"
 
+import { admitRequest, type RequestLimiter } from "#admission"
 import { MAX_REQUEST_BODY_BYTES, readBoundedBody } from "#body"
 import { mailwomanCORS } from "#cors"
 import { jsonError } from "#errors"
+import { type BiasPoint, requestLocationOf, withRequestLocationBias } from "#request-bias"
 
 /**
  * A private service that answers the native Mailwoman API routes.
@@ -31,10 +33,29 @@ export interface APIWorkerOptions {
 	 * @defaultValue 10 seconds
 	 */
 	deadlineMs?: number
+	/**
+	 * The per-client request budget, such as the Worker's `LIMITER` binding.
+	 * Without one, requests are unlimited.
+	 */
+	limiter?: RequestLimiter
+	/**
+	 * The budget's window in seconds, sent as `Retry-After` on a 429.
+	 * It matches the binding's `period`.
+	 *
+	 * @defaultValue 60 seconds
+	 */
+	limitPeriodSeconds?: number
+	/**
+	 * Reads a request's approximate location for the geocode bias, or null when it has none.
+	 *
+	 * @defaultValue Cloudflare's `request.cf` coordinates
+	 */
+	requestLocation?: (request: Request) => BiasPoint | null
 }
 
 const BACKEND_ORIGIN = "http://engine.internal"
 const DEFAULT_DEADLINE_MS = 10_000
+const DEFAULT_LIMIT_PERIOD_SECONDS = 60
 
 /**
  * The request headers the Worker forwards to the backend.
@@ -105,10 +126,25 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 		}
 	})
 
-	async function forward(request: Request, path: string): Promise<Response> {
-		const body = await readBoundedBody(request, MAX_REQUEST_BODY_BYTES)
+	app.use(
+		"/v1/*",
+		admitRequest({
+			...(options.limiter ? { limiter: options.limiter } : {}),
+			limitPeriodSeconds: options.limitPeriodSeconds ?? DEFAULT_LIMIT_PERIOD_SECONDS,
+		})
+	)
 
-		if (!body) return jsonError(413, "request body too large")
+	// TODO: Record each answered request to a Workers Analytics Engine dataset, `mailwoman_api_requests`,
+	// with the route, status, resolution tier, latency in milliseconds, Cloudflare colo and country.
+	// The raw address is never written, so the dataset can show where and how well
+	// the API answers without holding what people searched.
+
+	async function forward(request: Request, path: string, location: BiasPoint | null = null): Promise<Response> {
+		const read = await readBoundedBody(request, MAX_REQUEST_BODY_BYTES)
+
+		if (!read) return jsonError(413, "request body too large")
+
+		const body = location ? withRequestLocationBias(read, location) : read
 
 		const headers = new Headers()
 
@@ -138,8 +174,10 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 		}
 	}
 
+	const requestLocation = options.requestLocation ?? requestLocationOf
+
 	app.post("/v1/parse", (c) => forward(c.req.raw, "/v1/parse"))
-	app.post("/v1/geocode", (c) => forward(c.req.raw, "/v1/geocode"))
+	app.post("/v1/geocode", (c) => forward(c.req.raw, "/v1/geocode", requestLocation(c.req.raw)))
 
 	return app
 }

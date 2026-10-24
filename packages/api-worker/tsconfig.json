@@ -11,5 +11,5 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts"],
-	"references": [{ "path": "../core" }, { "path": "../spatial" }]
+	"references": [{ "path": "../core" }, { "path": "../spatial" }, { "path": "../api" }]
 }

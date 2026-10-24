@@ -47,7 +47,7 @@ export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
 	 */
 	bias: readonly GeocodeBiasPoint[]
 	/**
-	 * Whether the response carries the decoded tree.
+	 * Whether the response includes the decoded tree.
 	 * When false, `tree` is null.
 	 */
 	includeTree: boolean

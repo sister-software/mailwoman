@@ -14,7 +14,7 @@
 export const MAX_ADDRESS_LENGTH = 1024
 
 /**
- * Most bias points one geocode request may carry.
+ * Most bias points one geocode request may hold.
  *
  * A browser sends the viewport center and the device location, and the API Worker adds the
  * request's approximate location, so three points cover every caller this repository has.

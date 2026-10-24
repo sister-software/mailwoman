@@ -2,3 +2,11 @@ name = "mailwoman-api"
 main = "./lib/index.ts"
 compatibility_date = "2026-10-24"
 workers_dev = false
+
+# The per-client request budget the Worker reads as `env.LIMITER`, keyed by `CF-Connecting-IP`. A search sends one
+# geocode request, so 60 a minute admits a person typing and searching and refuses a script replaying addresses.
+# `period` must match `LIMIT_PERIOD_SECONDS` in lib/index.ts, which the Worker sends as `Retry-After`.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "2838"
+simple = { limit = 60, period = 60 }
