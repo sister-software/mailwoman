@@ -13,55 +13,87 @@ use crate::utf8;
 
 const NO_VALUE: i32 = -1;
 
+#[derive(Clone, Copy)]
 struct Node {
-	/// Child edges sorted by byte.
-	children: Vec<(u8, u32)>,
+	/// The first of this node's edges in `ByteTrie::edges`, which are sorted by byte.
+	edge_start: u32,
+	edge_count: u32,
 	value: i32,
 }
 
 /// A byte trie mapping piece strings to vocabulary IDs.
 ///
 /// It answers the same prefix queries as upstream's darts-clone index over the same keys, so the
-/// search visits candidate pieces in the same order.
+/// search visits candidate pieces in the same order. Nodes and edges live in two flat arrays, and
+/// each node's edges are contiguous.
 pub struct ByteTrie {
 	nodes: Vec<Node>,
+	/// `(byte, child node)` pairs.
+	edges: Vec<(u8, u32)>,
 }
 
 impl ByteTrie {
-	pub fn new() -> Self {
-		Self {
-			nodes: vec![Node {
-				children: Vec::new(),
-				value: NO_VALUE,
-			}],
+	/// Builds the trie, or returns the first key that occurs twice.
+	///
+	/// The keys are sorted once, and each node's subtree is then a contiguous run of them, so the
+	/// build visits every key byte once and allocates only the two arrays.
+	pub fn build(mut keys: Vec<(&[u8], i32)>) -> Result<Self, &[u8]> {
+		keys.sort_unstable_by(|a, b| a.0.cmp(b.0));
+		if let Some(pair) = keys.windows(2).find(|pair| pair[0].0 == pair[1].0) {
+			return Err(pair[0].0);
 		}
+		let mut nodes = vec![Node {
+			edge_start: 0,
+			edge_count: 0,
+			value: NO_VALUE,
+		}];
+		let mut edges = Vec::new();
+		// Each pending entry is (node index, key range, depth) for a node whose edges are unwritten.
+		let mut pending = std::collections::VecDeque::from([(0usize, 0usize, keys.len(), 0usize)]);
+		while let Some((node, mut lo, hi, depth)) = pending.pop_front() {
+			// In sorted order the key that ends at this node precedes every key that extends it.
+			if lo < hi && keys[lo].0.len() == depth {
+				nodes[node].value = keys[lo].1;
+				lo += 1;
+			}
+			nodes[node].edge_start = edges.len() as u32;
+			while lo < hi {
+				let byte = keys[lo].0[depth];
+				let mut end = lo + 1;
+				while end < hi && keys[end].0[depth] == byte {
+					end += 1;
+				}
+				let child = nodes.len();
+				nodes.push(Node {
+					edge_start: 0,
+					edge_count: 0,
+					value: NO_VALUE,
+				});
+				edges.push((byte, child as u32));
+				pending.push_back((child, lo, end, depth + 1));
+				lo = end;
+			}
+			nodes[node].edge_count = edges.len() as u32 - nodes[node].edge_start;
+		}
+		Ok(Self { nodes, edges })
 	}
 
-	pub fn insert(&mut self, key: &[u8], value: i32) {
+	/// The value stored for exactly `key`.
+	pub fn get(&self, key: &[u8]) -> Option<i32> {
 		let mut node = 0usize;
 		for &b in key {
-			node = match self.nodes[node].children.binary_search_by_key(&b, |&(c, _)| c) {
-				Ok(i) => self.nodes[node].children[i].1 as usize,
-				Err(i) => {
-					let next = self.nodes.len() as u32;
-					self.nodes.push(Node {
-						children: Vec::new(),
-						value: NO_VALUE,
-					});
-					self.nodes[node].children.insert(i, (b, next));
-					next as usize
-				}
-			};
+			node = self.child(node, b)?;
 		}
-		self.nodes[node].value = value;
+		Some(self.nodes[node].value).filter(|&v| v != NO_VALUE)
 	}
 
 	fn child(&self, node: usize, b: u8) -> Option<usize> {
-		let children = &self.nodes[node].children;
-		children
+		let n = self.nodes[node];
+		let edges = &self.edges[n.edge_start as usize..(n.edge_start + n.edge_count) as usize];
+		edges
 			.binary_search_by_key(&b, |&(c, _)| c)
 			.ok()
-			.map(|i| children[i].1 as usize)
+			.map(|i| edges[i].1 as usize)
 	}
 
 	/// The length of the longest key that is a prefix of `input`.

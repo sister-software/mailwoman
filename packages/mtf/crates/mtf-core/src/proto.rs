@@ -39,8 +39,9 @@ impl PieceType {
 	}
 }
 
-pub struct PieceProto {
-	pub piece: String,
+/// One vocabulary entry, whose text borrows from the serialized model.
+pub struct PieceProto<'a> {
+	pub piece: &'a str,
 	pub score: f32,
 	pub kind: PieceType,
 }
@@ -60,8 +61,8 @@ pub struct NormalizerSpecProto {
 	pub escape_whitespaces: bool,
 }
 
-pub struct ModelProto {
-	pub pieces: Vec<PieceProto>,
+pub struct ModelProto<'a> {
+	pub pieces: Vec<PieceProto<'a>>,
 	pub trainer_spec: TrainerSpecProto,
 	pub normalizer_spec: NormalizerSpecProto,
 	/// Whether a denormalizer spec carries a non-empty charsmap.
@@ -149,16 +150,18 @@ fn utf8(bytes: &[u8], what: &str) -> Result<String, Error> {
 	String::from_utf8(bytes.to_vec()).map_err(|_| Error::MalformedModel(format!("{what} is not UTF-8")))
 }
 
-fn parse_piece(buf: &[u8]) -> Result<PieceProto, Error> {
+fn parse_piece(buf: &[u8]) -> Result<PieceProto<'_>, Error> {
 	let mut piece = PieceProto {
-		piece: String::new(),
+		piece: "",
 		score: 0.0,
 		kind: PieceType::Normal,
 	};
 	let mut r = Reader::new(buf);
 	while let Some((field, value)) = r.next()? {
 		match (field, value) {
-			(1, Value::Len(b)) => piece.piece = utf8(b, "piece")?,
+			(1, Value::Len(b)) => {
+				piece.piece = std::str::from_utf8(b).map_err(|_| Error::MalformedModel("piece is not UTF-8".into()))?
+			}
 			(2, Value::Fixed32(bits)) => piece.score = f32::from_bits(bits),
 			(3, Value::Varint(v)) => piece.kind = PieceType::from_wire(v)?,
 			_ => {}
@@ -205,7 +208,7 @@ fn default_normalizer_spec() -> NormalizerSpecProto {
 }
 
 /// Parses serialized `ModelProto` bytes, applying the proto's declared defaults to absent fields.
-pub fn parse_model(buf: &[u8]) -> Result<ModelProto, Error> {
+pub fn parse_model(buf: &[u8]) -> Result<ModelProto<'_>, Error> {
 	let mut model = ModelProto {
 		pieces: Vec::new(),
 		trainer_spec: TrainerSpecProto {

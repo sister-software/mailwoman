@@ -34,7 +34,9 @@ pub struct EncodedPiece {
 }
 
 struct Piece {
-	text: String,
+	/// The piece's text as a byte range of `Processor::text`.
+	start: u32,
+	len: u32,
 	score: f32,
 	kind: PieceType,
 }
@@ -42,10 +44,12 @@ struct Piece {
 /// A loaded unigram model.
 pub struct Processor {
 	pieces: Vec<Piece>,
+	/// Every piece's text, concatenated in ID order.
+	text: String,
 	piece_index: ByteTrie,
 	user_defined: ByteTrie,
-	/// IDs of every piece by its text, used to find byte-fallback pieces.
-	ids: HashMap<String, u32>,
+	/// The ID `PieceToId` returns for each byte's `<0xHH>` piece, filled when byte fallback is on.
+	byte_ids: [u32; 256],
 	normalizer: Normalizer,
 	unk_id: u32,
 	unk_score: f32,
@@ -74,13 +78,16 @@ impl Processor {
 			));
 		}
 
-		let mut piece_index = ByteTrie::new();
-		let mut user_defined = ByteTrie::new();
-		let mut ids = HashMap::with_capacity(model.pieces.len());
+		// Upstream keeps two maps: normal, user-defined and unused pieces in one, and control,
+		// unknown and byte pieces in a reserved map. A text may appear once in each.
+		let mut index_keys = Vec::with_capacity(model.pieces.len());
+		let mut user_defined_keys = Vec::new();
+		let mut reserved: HashMap<&str, u32> = HashMap::new();
 		let mut unk_id = None;
 		let mut min_score = f32::MAX;
 		let mut pieces = Vec::with_capacity(model.pieces.len());
-		for (i, p) in model.pieces.into_iter().enumerate() {
+		let mut text = String::with_capacity(model.pieces.iter().map(|p| p.piece.len()).sum());
+		for (i, p) in model.pieces.iter().enumerate() {
 			let id = i as u32;
 			if p.piece.len() >= MAX_PIECE_SIZE {
 				return Err(Error::MalformedModel("piece is too long".into()));
@@ -94,43 +101,55 @@ impl Processor {
 			if !p.score.is_finite() {
 				return Err(Error::MalformedModel("score is NaN or Inf".into()));
 			}
-			if ids.insert(p.piece.clone(), id).is_some() {
-				return Err(Error::MalformedModel(format!("{} is already defined", p.piece)));
-			}
 			match p.kind {
 				PieceType::Normal | PieceType::UserDefined | PieceType::Unused => {
-					piece_index.insert(p.piece.as_bytes(), id as i32);
+					index_keys.push((p.piece.as_bytes(), id as i32));
 				}
-				PieceType::Unknown => {
-					if unk_id.replace(id).is_some() {
-						return Err(Error::MalformedModel("unk is already defined".into()));
+				PieceType::Unknown | PieceType::Control | PieceType::Byte => {
+					if reserved.insert(p.piece, id).is_some() {
+						return Err(Error::MalformedModel(format!("{} is already defined", p.piece)));
 					}
 				}
-				PieceType::Control | PieceType::Byte => {}
+			}
+			if p.kind == PieceType::Unknown && unk_id.replace(id).is_some() {
+				return Err(Error::MalformedModel("unk is already defined".into()));
 			}
 			if p.kind == PieceType::UserDefined {
-				user_defined.insert(p.piece.as_bytes(), id as i32);
+				user_defined_keys.push((p.piece.as_bytes(), id as i32));
 			}
 			if p.kind == PieceType::Normal {
 				min_score = min_score.min(p.score);
 			}
 			pieces.push(Piece {
-				text: p.piece,
+				start: text.len() as u32,
+				len: p.piece.len() as u32,
 				score: p.score,
 				kind: p.kind,
 			});
+			text.push_str(p.piece);
 		}
 		if min_score == f32::MAX {
 			min_score = 0.0;
 		}
 		let unk_id = unk_id.ok_or_else(|| Error::MalformedModel("unk is not defined".into()))?;
+		let already_defined =
+			|key: &[u8]| Error::MalformedModel(format!("{} is already defined", String::from_utf8_lossy(key)));
+		let piece_index = ByteTrie::build(index_keys).map_err(already_defined)?;
+		let user_defined = ByteTrie::build(user_defined_keys).map_err(already_defined)?;
+
+		// `PieceToId` searches the normal map before the reserved map.
+		let mut byte_ids = [unk_id; 256];
 		if model.trainer_spec.byte_fallback {
-			for b in 0..=255u8 {
-				let name = byte_piece(b);
-				match ids.get(&name) {
-					Some(&id) if pieces[id as usize].kind == PieceType::Byte => {}
-					_ => return Err(Error::MalformedModel(format!("byte piece {name} is not defined"))),
-				}
+			for (b, slot) in byte_ids.iter_mut().enumerate() {
+				let name = byte_piece(b as u8);
+				let id = match piece_index.get(name.as_bytes()) {
+					Some(id) => id as u32,
+					None => match reserved.get(name.as_str()) {
+						Some(&id) if pieces[id as usize].kind == PieceType::Byte => id,
+						_ => return Err(Error::MalformedModel(format!("byte piece {name} is not defined"))),
+					},
+				};
+				*slot = id;
 			}
 		}
 
@@ -144,9 +163,10 @@ impl Processor {
 		)?;
 		Ok(Self {
 			pieces,
+			text,
 			piece_index,
 			user_defined,
-			ids,
+			byte_ids,
 			normalizer,
 			unk_id,
 			unk_score: min_score - UNK_PENALTY,
@@ -155,6 +175,10 @@ impl Processor {
 			add_dummy_prefix: spec.add_dummy_prefix,
 			remove_extra_whitespaces: spec.remove_extra_whitespaces,
 		})
+	}
+
+	fn piece_text(&self, piece: &Piece) -> &str {
+		&self.text[piece.start as usize..(piece.start + piece.len) as usize]
 	}
 
 	/// The number of vocabulary rows.
@@ -197,7 +221,7 @@ impl Processor {
 			if is_unk && self.byte_fallback {
 				for (i, &b) in w.iter().enumerate() {
 					let piece = byte_piece(b);
-					let id = self.ids[&piece];
+					let id = self.byte_ids[b as usize];
 					let end = if i == w.len() - 1 { orig_end } else { orig_begin };
 					out.push(EncodedPiece {
 						id,
@@ -262,7 +286,7 @@ impl Processor {
 			PieceType::Unknown => return (self.unk_surface.clone(), false),
 			_ => {}
 		}
-		let mut text = piece.text.as_str();
+		let mut text = self.piece_text(piece);
 		let mut has_bos_ws = false;
 		if is_bos_ws && (self.add_dummy_prefix || self.remove_extra_whitespaces) {
 			if let Some(rest) = text.strip_prefix(SPACE_SYMBOL) {
@@ -283,7 +307,7 @@ impl Processor {
 		}
 		let mut bytes = Vec::with_capacity(ids.len());
 		for &id in ids {
-			let b = piece_byte(&self.pieces[id as usize].text)
+			let b = piece_byte(self.piece_text(&self.pieces[id as usize]))
 				.ok_or_else(|| Error::Internal(format!("byte piece {id} does not name a byte")))?;
 			bytes.push(b);
 		}

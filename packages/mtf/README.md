@@ -13,7 +13,7 @@ rollback runtime.
 ```ts
 import { MTF_WASM_URL, MTFRuntime } from "@mailwoman/mtf"
 
-// Node reads the committed binary from disk; a browser fetches the URL its bundler resolved.
+// Node reads the committed binary from disk. A browser fetches the URL its bundler resolved.
 const runtime = await MTFRuntime.instantiate(new Uint8Array(await readFile(MTF_WASM_URL)))
 using model = runtime.loadModel(tokenizerModelBytes)
 
@@ -68,7 +68,7 @@ toolchain. A repository check will rebuild it and compare hashes.
 ### Runtime interface
 
 - The caller initializes the runtime explicitly, and may supply a compiled `WebAssembly.Module` for
-  Workers. The package's import has no side effects; the WASM fetch and instantiation happen in the
+  Workers. The package's import has no side effects. The WASM fetch and instantiation happen in the
   initialization call.
 - A loaded model is a `Disposable` processor object. Its encode and decode methods are synchronous.
 - Results are ordinary JavaScript values. The caller never handles WASM vectors or pointers.
@@ -155,7 +155,8 @@ reference for this model. The file is 545,495 bytes with SHA-256
 | `crates/mtf-core`: model loader, normalizer, unigram encode with offsets, decode | All 1,264 fixture rows match in IDs, pieces, offsets and decode |
 | WASM adapter and TypeScript loader                                               | All 1,264 fixture rows match through `wasm/mtf.wasm` in Node    |
 | `MailwomanTokenizer` on `@mailwoman/mtf`                                         | Neural, mailwoman and browser suites pass                       |
-| Compiled model format to reduce the 43 ms load                                   | Not started                                                     |
+| Flat piece index and borrowed piece text in the protobuf loader                  | WASM load 31.1 ms, from 43.4 ms                                 |
+| Compiled model format                                                            | Not started                                                     |
 
 ### Runtime comparison
 
@@ -165,11 +166,13 @@ process, alternating.
 
 | Measure                      | `@mailwoman/mtf` | `@mailwoman/sentencepiece-wasm`         |
 | ---------------------------- | ---------------- | --------------------------------------- |
-| WASM binary                  | 72,670 bytes     | 625,993 bytes plus a 57,585-byte loader |
-| WASM instantiate             | 0.41 ms          | 5.77 ms                                 |
-| Model load                   | 43.4 ms          | 98.1 ms                                 |
-| Full board pass              | 13.3 ms          | 53.3 ms                                 |
-| Per-address encode p50 / p95 | 7.5 / 20.6 µs    | 34.6 / 80.1 µs                          |
+| WASM binary                  | 79,874 bytes     | 625,993 bytes plus a 57,585-byte loader |
+| WASM instantiate             | 0.41 ms          | 5.37 ms                                 |
+| Model load                   | 31.1 ms          | 91.9 ms                                 |
+| Full board pass              | 8.7 ms           | 45.0 ms                                 |
+| Per-address encode p50 / p95 | 6.1 / 15.5 µs    | 32.7 / 73.5 µs                          |
+
+Natively, the same load takes 15.2 ms (`cargo run --release --example load_profile`).
 
 Run the parity test from this directory with
 `MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
