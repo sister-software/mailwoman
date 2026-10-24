@@ -6962,6 +6962,7 @@ __metadata:
     docusaurus-plugin-glossary: "npm:^3.4.0"
     domhandler: "npm:^6.0.1"
     domutils: "npm:^4.0.2"
+    find-free-ports: "npm:^3.1.1"
     htmlparser2: "npm:^12.0.0"
     js-yaml: "npm:^5.5.0"
     mailwoman: "workspace:*"
@@ -18717,6 +18718,13 @@ __metadata:
     common-path-prefix: "npm:^3.0.0"
     pkg-dir: "npm:^7.0.0"
   checksum: 10/52a456a80deeb27daa3af6e06059b63bdb9cc4af4d845fc6d6229887e505ba913cd56000349caa60bc3aa59dacdb5b4c37903d4ba34c75102d83cab330b70d2f
+  languageName: node
+  linkType: hard
+
+"find-free-ports@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "find-free-ports@npm:3.1.1"
+  checksum: 10/c2e09a92c5c3046fa850317e96cfbacc608cd89e2e1beacdaee84370fec5dad3d97c9f76736208aeffe9ff19498dd673497c7c4ab0af8d193ad74cb2057447d1
   languageName: node
   linkType: hard
 
