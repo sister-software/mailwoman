@@ -92,6 +92,19 @@ describe("usgov-nppes adapter", () => {
 		expect(r.components.street).toContain("MAIN ST")
 	})
 
+	it("trims a padded organization name so the venue span ends on its last letter", async () => {
+		const p = await writeCSV("1000000001,2,JQM INC ,,,344 PASEO REYES DR,,ST AUGUSTINE,FL,320958464")
+		const a = createUsgovNPPESAdapter()
+		const rows = []
+
+		for await (const r of a.rows({ inputPath: p })) {
+			rows.push(r)
+		}
+
+		expect(rows[0]!.components.venue).toBe("JQM INC")
+		expect(rows[0]!.raw.startsWith("JQM INC, 344")).toBe(true)
+	})
+
 	it("emits a row for an individual provider", async () => {
 		const p = await writeCSV("1000000002,1,,SMITH,JANE,5678 OAK AVE,,PORTLAND,OR,97201")
 		const a = createUsgovNPPESAdapter()

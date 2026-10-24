@@ -96,11 +96,27 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 	return out
 }
 
+/**
+ * A historical attestation that some Who's On First names append after the name itself.
+ *
+ * `[a. 1240]` (and `[~ a. 1000]` for an approximate year) records the year a place is first attested.
+ * It is not written in an address, so a corpus row that keeps it teaches the
+ * model a locality that ends in a bracketed date.
+ */
+const ATTESTATION = /\s*\[\s*~?\s*a\.\s*\d{1,4}\s*\]/gu
+
+/**
+ * Removes historical attestations from a Who's On First name and trims the result.
+ */
+export function stripAttestation(name: string): string {
+	return name.replaceAll(ATTESTATION, "").trim()
+}
+
 function firstNonBlankString(value: unknown): string | null {
 	for (const candidate of Array.isArray(value) ? value : [value]) {
 		if (typeof candidate !== "string") continue
 
-		const normalized = candidate.trim()
+		const normalized = stripAttestation(candidate)
 
 		if (normalized) return normalized
 	}
@@ -129,9 +145,10 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 
 	if (!Number.isFinite(id)) return null
 
-	const name = props["wof:name"]
+	const rawName = props["wof:name"]
+	const name = typeof rawName === "string" ? stripAttestation(rawName) : ""
 
-	if (typeof name !== "string" || !name.trim()) return null
+	if (!name) return null
 
 	const placetype = props["wof:placetype"]
 
@@ -157,7 +174,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	return {
 		id,
 		parent_id: Number.isFinite(parent_id as number) ? (parent_id as number) : null,
-		name: name.trim(),
+		name,
 		placetype,
 		country,
 		nameVariants: extractNameVariants(props),

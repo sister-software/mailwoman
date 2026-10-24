@@ -7,7 +7,29 @@
 import { expect, test } from "vitest"
 
 import type { WOFRecord } from "#utils/wof-json"
-import { buildAncestorNameIndex, extractNameVariants, isCurrentFeature, normalizeNameKey } from "#utils/wof-json"
+import {
+	buildAncestorNameIndex,
+	extractNameVariants,
+	isCurrentFeature,
+	normalizeNameKey,
+	stripAttestation,
+} from "#utils/wof-json"
+
+test("stripAttestation removes a historical attestation and keeps other brackets", () => {
+	expect(stripAttestation("Ellessem  [a.  1240]")).toBe("Ellessem")
+	expect(stripAttestation("wirzaburg [a. 742]")).toBe("wirzaburg")
+	expect(stripAttestation("Lutterun [~ a. 1000]")).toBe("Lutterun")
+	expect(stripAttestation("Stolberg (Rhld.)")).toBe("Stolberg (Rhld.)")
+	expect(stripAttestation("[کلاوای] Minnesota")).toBe("[کلاوای] Minnesota")
+	expect(stripAttestation("[a. 1240]")).toBe("")
+})
+
+test("extractNameVariants drops a variant that is only an attestation", () => {
+	const out = extractNameVariants({ "name:deu_x_preferred": ["Grotin [a. 1479]"], "name:lat_x_variant": ["[a. 900]"] })
+
+	expect(out.get("name:deu_x_preferred")).toBe("Grotin")
+	expect(out.has("name:lat_x_variant")).toBe(false)
+})
 
 // `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope here.
 // These are the pure object→value / map→map helpers.
