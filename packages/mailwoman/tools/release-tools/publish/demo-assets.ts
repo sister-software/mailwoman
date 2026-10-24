@@ -33,7 +33,7 @@ export const IMMUTABLE_CACHE_CONTROL = "public, max-age=604800, immutable"
 export const MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
 
 const MUTABLE_FILES = new Set(["releases.json"])
-const VERSIONED_DIRECTORIES = new Set(["pair-index"])
+const VERSIONED_DIRECTORIES = new Set(["pair-index", "autocomplete"])
 
 /**
  * A versioned object path contains its directory, generation and filename.
@@ -45,6 +45,7 @@ const CONTENT_TYPES = new Map([
 	[".onnx", "application/octet-stream"],
 	[".bin", "application/octet-stream"],
 	[".model", "application/octet-stream"],
+	[".anct", "application/octet-stream"],
 	[".json", "application/json"],
 	[".js", "text/javascript"],
 	[".wasm", "application/wasm"],
@@ -54,8 +55,9 @@ const CONTENT_TYPES = new Map([
  * Extensions whose objects are always fetched whole and are therefore stored gzip-encoded.
  *
  * A database (`.db`) and an embedding row file (`.rows`) are read by HTTP range and stay identity-encoded.
+ * An autocomplete index file (`.anct`) is fetched whole by the page and compresses well.
  */
-const WHOLE_FETCH_ENCODED_EXTENSIONS = new Set([".bin", ".onnx"])
+const WHOLE_FETCH_ENCODED_EXTENSIONS = new Set([".bin", ".onnx", ".anct"])
 
 export interface DemoAssetUpload {
 	file: string

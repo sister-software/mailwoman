@@ -15,7 +15,9 @@ import {
 	isStrictlyFiner,
 	PLACETYPE_SPECIFICITY,
 	placetypeSpecificity,
+	REGION_AND_COARSER_PLACETYPES,
 	SETTLEMENT_PLACETYPES,
+	SUB_LOCALITY_PLACETYPES,
 } from "#resources/whosonfirst/placetypes/specificity"
 
 describe("SETTLEMENT_PLACETYPES", () => {
@@ -26,6 +28,28 @@ describe("SETTLEMENT_PLACETYPES", () => {
 
 		for (const placetype of ["county", "region", "country", "postalcode", "venue"]) {
 			expect(SETTLEMENT_PLACETYPES.has(placetype)).toBe(false)
+		}
+	})
+})
+
+describe("SUB_LOCALITY_PLACETYPES", () => {
+	it("holds the settlement placetypes finer than a locality and none at or above it", () => {
+		expect([...SUB_LOCALITY_PLACETYPES].toSorted()).toEqual(["borough", "macrohood", "microhood", "neighbourhood"])
+
+		for (const placetype of ["locality", "localadmin", "county", "postalcode", "venue"]) {
+			expect(SUB_LOCALITY_PLACETYPES.has(placetype)).toBe(false)
+		}
+	})
+})
+
+describe("REGION_AND_COARSER_PLACETYPES", () => {
+	it("holds the region rung and everything coarser, and no county or settlement", () => {
+		for (const placetype of ["region", "macroregion", "country", "dependency", "continent", "empire", "planet"]) {
+			expect(REGION_AND_COARSER_PLACETYPES.has(placetype)).toBe(true)
+		}
+
+		for (const placetype of ["macrocounty", "county", "localadmin", "locality", "neighbourhood"]) {
+			expect(REGION_AND_COARSER_PLACETYPES.has(placetype)).toBe(false)
 		}
 	})
 })

@@ -172,6 +172,33 @@ export function poiLayerURL(): string {
 }
 
 /**
+ * Version of the place autocomplete index, one sealed ancestrie per leading character of the folded name.
+ *
+ * Update it after publishing a generation built by `autocomplete-index.run.ts`.
+ */
+export const AUTOCOMPLETE_INDEX_VERSION = "2026-10-24c"
+
+/**
+ * The file extension of one autocomplete index file, a sealed ancestrie.
+ */
+export const AUTOCOMPLETE_INDEX_EXTENSION = ".anct"
+
+/**
+ * Returns the URL of the autocomplete index file for one leading-character partition.
+ */
+export function autocompleteIndexURL(partition: string): string {
+	return `${ASSET_BASE_URL}autocomplete/${AUTOCOMPLETE_INDEX_VERSION}/${partition}${AUTOCOMPLETE_INDEX_EXTENSION}`
+}
+
+/**
+ * Returns the URL of the autocomplete index manifest.
+ * The manifest lists the partitions the generation holds.
+ */
+export function autocompleteIndexManifestURL(): string {
+	return `${ASSET_BASE_URL}autocomplete/${AUTOCOMPLETE_INDEX_VERSION}/index.json`
+}
+
+/**
  * US state and territory slugs that have hosted street extracts.
  */
 export const HOSTED_STREET_SLUGS = new Set([
