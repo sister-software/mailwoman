@@ -9,9 +9,9 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 
+import type { GeocodeBiasPoint, GeocodeResponse } from "#operations/geocode/address"
 import type { BatchResponse } from "#operations/geocode/batch"
 import type { ParseResponse } from "#operations/parse/address"
 import type { ReloadResponse } from "#operations/reload-data"
@@ -38,9 +38,25 @@ export interface ParseInit {
 }
 
 /**
+ * Per-call options for {@link MailwomanAPIEngine.geocode}.
+ */
+export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
+	/**
+	 * Points the resolver prefers candidates near.
+	 * An empty list applies no bias.
+	 */
+	bias: readonly GeocodeBiasPoint[]
+	/**
+	 * Whether the response includes the decoded tree.
+	 * When false, `tree` is null.
+	 */
+	includeTree: boolean
+}
+
+/**
  * Geocode one address.
  */
-export type GeocodeCallback = (address: string, opts: Pick<ParseInit, "inputMode">) => Promise<GeocodeResult>
+export type GeocodeCallback = (address: string, opts: GeocodeInit) => Promise<GeocodeResponse>
 
 /**
  * The engine the native routes call.

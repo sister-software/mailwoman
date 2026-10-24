@@ -11,7 +11,7 @@
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"
 import { resolvePath } from "path-ts"
 
-import sidebars from "../sidebars.ts"
+import sidebars from "../sidebars.mts"
 
 /**
  * A menu line longer than this is shortened to the last whole word and given an ellipsis.
@@ -74,7 +74,9 @@ const firstSentence = (text: string) => {
 
 /**
  * The scalar `key: value` lines of a page's frontmatter block.
- * Docusaurus loads this file through jiti, which rejects the `import.meta` in the docs scripts' fuller parser.
+ *
+ * Docusaurus loads this file through jiti, which rejects the `import.meta` in
+ * the docs scripts' fuller parser.
  */
 const frontmatter = (source: string) => {
 	const fields = new Map<string, string>()

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the path-citation instrument (`scripts/docs/path-citations.ts`), check 5 of
- *   `check/docs-structure.ts`.
+ *   Unit tests for the path-citation instrument (`scripts/docs/path-citations.mts`), check 5 of
+ *   `check/docs-structure.mts`.
  *
  *   These tests pin the refusal boundary rather than the walk. The check's finding count is only meaningful if
  *   the classes it excludes are the ones its docstring names. A refusal that widens silently makes the count fall
@@ -17,7 +17,7 @@ import {
 	citationTarget,
 	isPointInTimeRecord,
 	refusalFor,
-} from "@mailwoman/docs/scripts/docs-path-citations"
+} from "@mailwoman/docs/scripts/docs/path-citations"
 import { describe, expect, it } from "vitest"
 
 describe("refusalFor", () => {

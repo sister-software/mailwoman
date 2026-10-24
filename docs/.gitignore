@@ -4,6 +4,8 @@
 
 # Production
 /build
+# The build-health spec's throwaway output (test/build/100-docs-build.spec.ts)
+/build-check
 
 # Runtime assets the explainers read (staged by the runtime-assets plugin or served from R2; not for git).
 /static/mailwoman/*.onnx

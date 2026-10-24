@@ -23,7 +23,11 @@ export interface ResolvedPlaceView {
 	placetype: string
 	lat: number
 	lon: number
-	score: number
+	/**
+	 * The resolver's ranking score, or null when the resolver recorded none,
+	 * as for a hosted answer's runner-up whose backend omitted it.
+	 */
+	score: number | null
 	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 	/**
 	 * How the coordinate was reached when a street-tier lookup answered: a rooftop point,

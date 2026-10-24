@@ -104,6 +104,58 @@ describe("the admin ladder and a contained dependent locality (#2804)", () => {
 	})
 })
 
+describe("candidate scores", () => {
+	const SPRINGFIELD = "Springfield"
+
+	function springfieldTree(winnerMetadata: Record<string, unknown>): AddressTree {
+		return {
+			raw: SPRINGFIELD,
+			roots: [
+				{
+					tag: "locality",
+					value: SPRINGFIELD,
+					start: 0,
+					end: 11,
+					confidence: 1,
+					children: [],
+					lat: 39.7817,
+					lon: -89.6501,
+					placeID: "wof:85940429",
+					metadata: { resolver_name: "Springfield", resolver_country: "us", ...winnerMetadata },
+					alternatives: [
+						{
+							name: "Springfield",
+							placetype: "locality",
+							lat: 42.1015,
+							lon: -72.5898,
+							country: "US",
+							id: 85_950_361,
+							score: 5.1,
+						},
+						{ name: "Springfield", placetype: "locality", lat: 37.2153, lon: -93.2982, country: "US", id: 85_948_219 },
+					],
+				} as AddressNode,
+			],
+		}
+	}
+
+	it("reads the winner's resolver score and each runner-up's own score", () => {
+		const { candidates } = extractGeocodeResult(SPRINGFIELD, springfieldTree({ resolver_score: 6.3 }))
+
+		expect(candidates.map((candidate) => [candidate.placeID, candidate.score])).toEqual([
+			["wof:85940429", 6.3],
+			["wof:85950361", 5.1],
+			["wof:85948219", null],
+		])
+	})
+
+	it("answers null for a winner whose resolver recorded no score", () => {
+		const { candidates } = extractGeocodeResult(SPRINGFIELD, springfieldTree({}))
+
+		expect(candidates[0]?.score).toBeNull()
+	})
+})
+
 describe("coordinate_source", () => {
 	it("keeps an OpenStreetMap row's stamp and release", () => {
 		const result = geocodeThrough({ ...ROW, source: "openstreetmap:nz", release: "2026-08-06" })

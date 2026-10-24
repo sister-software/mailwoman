@@ -7,12 +7,11 @@
 import { prettyJSON } from "@mailwoman/core/json"
 
 import { CloudflareWorkerPMTiles } from "#protomaps"
-import { WorkerRoute } from "#routing"
 
 /**
- * Root route — a plain identifying response, so hitting the worker's origin is not a 404.
+ * Root route: a plain identifying response, so a request to the Worker's origin answers 200.
  */
-export const HomeRoute = WorkerRoute.GET("/", () => {
+export function serveHome(): Response {
 	return new Response(
 		prettyJSON({
 			id: "mailwoman-tile-api",
@@ -25,15 +24,15 @@ export const HomeRoute = WorkerRoute.GET("/", () => {
 			},
 		}
 	)
-})
+}
 
 /**
  * Liveness probe at `/heartbeat`, used by uptime checks.
  */
-export const HealthCheckRoute = WorkerRoute.GET("/heartbeat", () => {
+export function serveHeartbeat(): Response {
 	return new Response("OK", {
 		headers: {
 			"Content-Type": "text/plain",
 		},
 	})
-})
+}

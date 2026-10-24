@@ -62,6 +62,13 @@ export const GeocodeCandidateSchema = z
 		lon: z.number(),
 		countryCode: z.string().nullable(),
 		placeID: z.string().nullable(),
+		/**
+		 * The resolver's ranking score for this candidate, larger ranking higher.
+		 *
+		 * Scores compare candidates within one answer and have no unit across answers.
+		 * The field is null when the resolver recorded no score for the candidate.
+		 */
+		score: z.number().nullable(),
 	})
 	.meta({ id: "GeocodeCandidate", description: "A ranked candidate place." })
 

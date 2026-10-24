@@ -2,10 +2,20 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   The public Hono entry point around a private native API service. The Worker admits a request, forwards the
+ *   native parse and geocode routes to the backend with a deadline, and relays the backend's status, body and
+ *   engine headers unchanged.
  */
 
+import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
 import { Hono } from "hono"
-import { cors } from "hono/cors"
+
+import { admitRequest, type RequestLimiter } from "#admission"
+import { MAX_REQUEST_BODY_BYTES, readBoundedBody } from "#body"
+import { mailwomanCORS } from "#cors"
+import { jsonError } from "#errors"
+import { requestLocationOf, withRequestLocationBias } from "#request-bias"
 
 /**
  * A private service that answers the native Mailwoman API routes.
@@ -24,28 +34,35 @@ export interface APIWorkerOptions {
 	 * @defaultValue 10 seconds
 	 */
 	deadlineMs?: number
+	/**
+	 * The per-client request budget, such as the Worker's `LIMITER` binding.
+	 * Without one, requests are unlimited.
+	 */
+	limiter?: RequestLimiter
+	/**
+	 * The budget's window in seconds, sent as `Retry-After` on a 429.
+	 * It matches the binding's `period`.
+	 *
+	 * @defaultValue 60 seconds
+	 */
+	limitPeriodSeconds?: number
+	/**
+	 * Reads a request's approximate location for the geocode bias, or null when it has none.
+	 *
+	 * @defaultValue Cloudflare's `request.cf` coordinates
+	 */
+	requestLocation?: (request: Request) => GeocodeBiasPoint | null
 }
 
 const BACKEND_ORIGIN = "http://engine.internal"
-const MAX_REQUEST_BYTES = 64 * 1024
 const DEFAULT_DEADLINE_MS = 10_000
+const DEFAULT_LIMIT_PERIOD_SECONDS = 60
 
 /**
- * The browser origins that may call the Worker.
+ * The request headers the Worker forwards to the backend.
+ * Every other header, such as a cookie, stays at the Worker.
  */
-const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
-	"https://earth.mailwoman.ai",
-	"https://mailwoman.ai",
-	"https://dev.mailwoman.ai",
-	"https://dev.mailwoman.ai:7777",
-	"https://dev.mailwoman.ai:8888",
-])
-
-const LOCALHOST_PATTERN = /^https?:\/\/(([a-z0-9]+\.)?localhost|127\.0\.0\.1)(:\d{2,5})?$/i
-
-function allowedOrigin(origin: string): string | null {
-	return ALLOWED_ORIGINS.has(origin) || LOCALHOST_PATTERN.test(origin) ? origin : null
-}
+const FORWARDED_HEADERS = ["accept", "content-type", "x-request-id"] as const
 
 /**
  * A backend that forwards to an HTTP origin, such as a `mailwoman serve` host.
@@ -58,41 +75,6 @@ export function createOriginBackend(origin: URL): APIBackend {
 			return fetch(new Request(new URL(`${pathname}${search}`, origin), request))
 		},
 	}
-}
-
-async function readRequestBody(request: Request): Promise<ArrayBuffer | null> {
-	const reader = request.body?.getReader()
-
-	if (!reader) return new ArrayBuffer(0)
-
-	const chunks: Uint8Array[] = []
-	let length = 0
-
-	while (true) {
-		const { done, value } = await reader.read()
-
-		if (done) break
-
-		length += value.byteLength
-
-		if (length > MAX_REQUEST_BYTES) {
-			await reader.cancel()
-
-			return null
-		}
-
-		chunks.push(value)
-	}
-
-	const bytes = new Uint8Array(length)
-	let offset = 0
-
-	for (const chunk of chunks) {
-		bytes.set(chunk, offset)
-		offset += chunk.byteLength
-	}
-
-	return bytes.buffer
 }
 
 /**
@@ -126,12 +108,10 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 	const app = new Hono()
 
 	app.use(
-		cors({
-			origin: allowedOrigin,
+		mailwomanCORS({
 			allowMethods: ["GET", "POST", "OPTIONS"],
 			allowHeaders: ["content-type", "accept", "x-request-id"],
 			exposeHeaders: ["server", "link"],
-			maxAge: 86_400,
 		})
 	)
 
@@ -147,14 +127,29 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 		}
 	})
 
-	async function forward(request: Request, path: string): Promise<Response> {
-		const body = await readRequestBody(request)
+	app.use(
+		"/v1/*",
+		admitRequest({
+			...(options.limiter ? { limiter: options.limiter } : {}),
+			limitPeriodSeconds: options.limitPeriodSeconds ?? DEFAULT_LIMIT_PERIOD_SECONDS,
+		})
+	)
 
-		if (!body) return Response.json({ error: "request body too large" }, { status: 413 })
+	// TODO: Record each answered request to a Workers Analytics Engine dataset, `mailwoman_api_requests`,
+	// with the route, status, resolution tier, latency in milliseconds, Cloudflare colo and country.
+	// The raw address is never written, so the dataset can show where and how well
+	// the API answers without holding what people searched.
+
+	async function forward(request: Request, path: string, location: GeocodeBiasPoint | null = null): Promise<Response> {
+		const read = await readBoundedBody(request, MAX_REQUEST_BODY_BYTES)
+
+		if (!read) return jsonError(413, "request body too large")
+
+		const body = location ? withRequestLocationBias(read, location) : read
 
 		const headers = new Headers()
 
-		for (const name of ["accept", "content-type", "x-request-id"]) {
+		for (const name of FORWARDED_HEADERS) {
 			const value = request.headers.get(name)
 
 			if (value != null) {
@@ -174,14 +169,16 @@ export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOption
 
 			return relayResponse(response)
 		} catch (error) {
-			if (isTimeout(error)) return Response.json({ error: "backend timeout" }, { status: 504 })
+			if (isTimeout(error)) return jsonError(504, "backend timeout")
 
-			return Response.json({ error: "backend unavailable" }, { status: 502 })
+			return jsonError(502, "backend unavailable")
 		}
 	}
 
+	const requestLocation = options.requestLocation ?? requestLocationOf
+
 	app.post("/v1/parse", (c) => forward(c.req.raw, "/v1/parse"))
-	app.post("/v1/geocode", (c) => forward(c.req.raw, "/v1/geocode"))
+	app.post("/v1/geocode", (c) => forward(c.req.raw, "/v1/geocode", requestLocation(c.req.raw)))
 
 	return app
 }

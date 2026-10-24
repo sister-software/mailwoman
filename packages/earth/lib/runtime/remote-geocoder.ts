@@ -8,11 +8,12 @@
  *   gazetteer database.
  */
 
-import type { ParseResponse } from "@mailwoman/api/operations/parse/address"
+import type { GeocodeBiasPoint, GeocodeResponse } from "@mailwoman/api/operations/geocode/address"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
-import type { GeocodeCandidate, GeocodeResult } from "@mailwoman/core/geocode"
+import type { GeocodeCandidate } from "@mailwoman/core/geocode"
 import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
 import type { EngineStamp } from "@mailwoman/core/license"
+import { isPresent } from "@mailwoman/core/objects"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 
 /**
@@ -54,7 +55,7 @@ async function postJSON<T>(apiURL: URL, route: string, body: unknown, signal?: A
 	if (!response.ok) {
 		const { error, detail } = parsed as { error?: string; detail?: string | null }
 
-		throw new RemoteGeocoderError(route, response.status, [error, detail].filter(Boolean).join(": ") || text)
+		throw new RemoteGeocoderError(route, response.status, [error, detail].filter(isPresent).join(": ") || text)
 	}
 
 	return parsed as T
@@ -74,7 +75,7 @@ function wofNumber(placeID: string | null): number {
 /**
  * The tiers whose coordinate comes from a register row or a computed point rather than a gazetteer place.
  */
-const NON_GAZETTEER_TIERS = new Set<GeocodeResult["resolution_tier"]>([
+const NON_GAZETTEER_TIERS = new Set<GeocodeResponse["resolution_tier"]>([
 	"address_point",
 	"interpolated",
 	"venue",
@@ -88,8 +89,7 @@ function candidateView(candidate: GeocodeCandidate): ResolvedPlaceView {
 		placetype: candidate.tag,
 		lat: candidate.lat,
 		lon: candidate.lon,
-		// The native response orders candidates without scoring them, so a runner-up shows score 0.
-		score: 0,
+		score: candidate.score,
 		bbox: null,
 		tier: null,
 		uncertaintyM: null,
@@ -98,59 +98,67 @@ function candidateView(candidate: GeocodeCandidate): ResolvedPlaceView {
 
 /**
  * Project a native geocode answer onto Earth's candidate list, with the answer's coordinate first.
+ *
+ * A gazetteer answer keeps its winning candidate's score.
+ * A street, venue or plus-code answer is a point the gazetteer did not rank, so it reads `null`.
  */
-export function candidatesFromGeocode(result: GeocodeResult): ResolvedPlaceView[] {
-	const ranked = result.candidates.map(candidateView)
+export function candidatesFromGeocode(response: GeocodeResponse): ResolvedPlaceView[] {
+	const ranked = response.candidates.map(candidateView)
 
-	if (result.lat == null || result.lon == null) return ranked
+	if (response.lat == null || response.lon == null) return ranked
 
-	const tier = result.resolution_tier
-	const street = [result.house_number, result.street].filter(Boolean).join(" ")
+	const tier = response.resolution_tier
+	const street = [response.house_number, response.street].filter(isPresent).join(" ")
 	const gazetteerAnswer = !NON_GAZETTEER_TIERS.has(tier)
-	const top = gazetteerAnswer ? result.candidates[0] : undefined
+	const top = gazetteerAnswer ? response.candidates[0] : undefined
 
 	const answer: ResolvedPlaceView = {
 		id: top ? wofNumber(top.placeID) : 0,
-		name: top?.name ?? result.entity?.name ?? (street || result.input),
+		name: top?.name ?? response.entity?.name ?? (street || response.input),
 		placetype: top?.tag ?? tier,
-		lat: result.lat,
-		lon: result.lon,
-		score: 1,
+		lat: response.lat,
+		lon: response.lon,
+		score: top?.score ?? null,
 		bbox: null,
 		tier: tier === "address_point" || tier === "interpolated" ? tier : null,
-		uncertaintyM: result.uncertainty_m,
+		uncertaintyM: response.uncertainty_m,
 	}
 
 	return [answer, ...(top ? ranked.slice(1) : ranked)]
 }
 
 /**
- * Parse and geocode one address through the hosted native API.
+ * Geocode one address through the hosted native API in one request.
  *
- * The client sends `/v1/parse` and `/v1/geocode` together.
- * The geocode response carries the coordinate and the candidates.
- *
- * It omits the decoded tree and the span offsets and confidences, which only `/v1/parse` returns.
+ * The request asks for the decoded tree, so the response holds the spans and confidences
+ * the parse view renders beside the coordinate and the candidates.
+ * `bias` holds the points the resolver prefers candidates near, such as the
+ * viewport center and the device location.
  */
 export async function remoteGeocode(
 	apiURL: URL,
 	input: string,
+	bias: readonly GeocodeBiasPoint[],
 	hooks: { onStage: (stage: number) => void },
 	signal?: AbortSignal
 ): Promise<{ result: ParseResult; engine: EngineStamp | null }> {
 	hooks.onStage(0)
 
-	const body = { address: input }
-
-	const [parsed, geocoded] = await Promise.all([
-		postJSON<Stamped<ParseResponse>>(apiURL, "/v1/parse", body, signal),
-		postJSON<Stamped<GeocodeResult>>(apiURL, "/v1/geocode", body, signal),
-	])
+	const response = await postJSON<Stamped<GeocodeResponse>>(
+		apiURL,
+		"/v1/geocode",
+		{ address: input, bias, include_tree: true },
+		signal
+	)
 
 	hooks.onStage(1)
 
-	const tree = parsed.tree as AddressTree
-	const candidates = candidatesFromGeocode(geocoded)
+	if (!response.tree) {
+		throw new RemoteGeocoderError("/v1/geocode", 200, "the response omitted the requested tree")
+	}
+
+	const tree = response.tree as AddressTree
+	const candidates = candidatesFromGeocode(response)
 
 	return {
 		result: {
@@ -171,6 +179,6 @@ export async function remoteGeocode(
 			fstProvenance: null,
 			dualRoles: null,
 		},
-		engine: geocoded.engine ?? parsed.engine ?? null,
+		engine: response.engine ?? null,
 	}
 }

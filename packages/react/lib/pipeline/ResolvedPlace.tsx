@@ -45,7 +45,7 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 					{place.lat.toFixed(4)}, {place.lon.toFixed(4)}
 				</dd>
 				<dt>score</dt>
-				<dd>{place.score.toFixed(3)}</dd>
+				<dd>{place.score == null ? "unscored" : place.score.toFixed(3)}</dd>
 			</dl>
 			{dualRoles && dualRoles.length ? (
 				<p className="mw-resolved__dual">

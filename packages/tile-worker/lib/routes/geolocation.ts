@@ -4,60 +4,30 @@
  * @author Teffen Ellis, et al.
  */
 
+import { cfRequestToGeoFeature } from "@mailwoman/api-worker/cloudflare/geo"
 import { ResourceError } from "@mailwoman/core/errors"
 import { prettyJSON } from "@mailwoman/core/json"
-import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
+import type { Context } from "hono"
 
-import { applyAccessControlAllowOrigin } from "#cors"
-import { WorkerRoute } from "#routing"
+import type { TileWorkerHono } from "#caching"
 
-const CFGeolocationProperties = [
-	"country",
-	"isEUCountry",
-	"continent",
-	"city",
-	"postalCode",
-	"latitude",
-	"longitude",
-	"timezone",
-	"region",
-	"regionCode",
-	"metroCode",
-] as const satisfies Array<keyof IncomingRequestCfPropertiesGeographicInformation>
+const ONE_HOUR_SECONDS = 60 * 60
 
 /**
  * Returns the caller's approximate location from Cloudflare's request geo headers,
  * so the map can open somewhere useful without asking for permission.
+ *
+ * Outside Cloudflare, as under a unit test, the request has no `cf` field and the route answers 424.
  */
-export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
-	const { cf } = request
+export function serveGeolocation(c: Context<TileWorkerHono>): Response {
+	const { cf } = c.req.raw
 
 	if (!cf) throw ResourceError.from(424, "Cannot geolocate without Cloudflare data.")
 
-	const geolocation = Object.fromEntries(
-		CFGeolocationProperties.map((key) => [key, cf[key]])
-	) as IncomingRequestCfPropertiesGeographicInformation
-
-	const latitude = (geolocation.latitude ? Number.parseFloat(geolocation.latitude) : 0) || 0
-	const longitude = (geolocation.longitude ? Number.parseFloat(geolocation.longitude) : 0) || 0
-
-	const feature: GeoFeature<PointLiteral, IncomingRequestCfPropertiesGeographicInformation> = {
-		type: "Feature",
-		geometry: {
-			type: "Point",
-			coordinates: [longitude, latitude],
-		},
-		properties: geolocation,
-	}
-
-	const response = new Response(prettyJSON(feature), {
+	return new Response(prettyJSON(cfRequestToGeoFeature(cf as RequestInitCfProperties)), {
 		headers: {
 			"Content-Type": "application/json",
-			"Cache-Control": `public, max-age=${60 * 60}`,
+			"Cache-Control": `public, max-age=${ONE_HOUR_SECONDS}`,
 		},
 	})
-
-	applyAccessControlAllowOrigin(request, response)
-
-	return response
-})
+}

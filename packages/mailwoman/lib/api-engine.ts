@@ -6,8 +6,9 @@
  * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
  */
 
-import type { GeocodeCallback, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
+import type { GeocodeCallback, GeocodeInit, HealthData, MailwomanAPIEngine } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
+import type { GeocodeResponse } from "@mailwoman/api/operations/geocode/address"
 import type { BatchRow } from "@mailwoman/api/operations/geocode/batch"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -26,7 +27,7 @@ import { Globerator } from "spliterator/node/fs"
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
 import type { GeocodeClassifier } from "#geocode/classifier"
-import { deriveGeocodeRegister, geocodeAddress } from "#geocode/core"
+import { deriveGeocodeRegister, geocodeAddress, type GeocodeDeps, parseForGeocode } from "#geocode/core"
 import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
@@ -152,15 +153,47 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: InputModeSelection): Promise<GeocodeResult> {
-	return geocodeAddress(address, {
+/**
+ * The geocode dependencies one request runs with: the engine's loaded stack
+ * plus the request's input mode and bias.
+ */
+function geocodeDepsFor(
+	deps: GeocodeDepsBundle,
+	inputMode: InputModeSelection,
+	bias: GeocodeInit["bias"] = []
+): GeocodeDeps {
+	return {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
 		databases: deps.databases.for,
 		...(deps.defaultCountry ? { defaultCountry: deps.defaultCountry } : {}),
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
 		inputMode,
-	})
+		...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+	}
+}
+
+function oneGeocode(deps: GeocodeDepsBundle, address: string, inputMode: InputModeSelection): Promise<GeocodeResult> {
+	return geocodeAddress(address, geocodeDepsFor(deps, inputMode))
+}
+
+/**
+ * Geocodes one address for `POST /v1/geocode`, with the request's bias.
+ *
+ * When the request asks for the tree, the address is parsed once here and the parsed
+ * tree is handed to the geocoder, so the response's tree is the one the coordinate
+ * was resolved from and the classifier runs once.
+ */
+async function geocodeForRoute(deps: GeocodeDepsBundle, address: string, init: GeocodeInit): Promise<GeocodeResponse> {
+	const geocodeDeps = geocodeDepsFor(deps, init.inputMode, init.bias)
+
+	if (!init.includeTree) {
+		return { ...(await geocodeAddress(address, geocodeDeps)), tree: null }
+	}
+
+	const tree = await parseForGeocode(address, geocodeDeps)
+
+	return { ...(await geocodeAddress(address, { ...geocodeDeps, parsedTree: tree })), tree }
 }
 
 function collectStreetTier(
@@ -265,7 +298,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	// The route already records the whole-call metric, so the engine records no extra metric here.
-	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts.inputMode)
+	const geocode: GeocodeCallback = (address, init) => geocodeForRoute(deps, address, init)
 
 	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
 	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.

@@ -5,43 +5,43 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
+import type { Context } from "hono"
 
-import { cacheResponse } from "#caching"
-import { applyAccessControlAllowOrigin } from "#cors"
+import type { TileWorkerHono } from "#caching"
 import { parseRangeHeader } from "#ranges"
-import { WorkerRoute } from "#routing"
 import { assertR2KeyMatch, assertR2ObjectBody } from "#storage"
 
 /**
- * #region Database Retrieval.
+ * A database's path segment: its name and file extension, such as `candidate.db`.
  */
-const DB_ROUTE_PATTERN = "/db/:databaseName([a-z0-9_\\-]+).:fileExtension([a-z0-9]+)"
+const DATABASE_FILE = /^([a-z0-9_-]+)\.([a-z0-9]+)$/
 
 /**
  * Serves a SQLite artifact from R2 for the browser's httpvfs reader.
  * The reader uses range requests.
+ *
+ * A `HEAD` request answers the range capability without reading R2.
+ * The responses are not cached, because each one holds a byte range of the file.
  */
-export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ request, params, env, ctx }) => {
-	const { databaseName, fileExtension } = params
+export async function serveDatabase(c: Context<TileWorkerHono>): Promise<Response> {
+	const match = DATABASE_FILE.exec(c.req.param("file") ?? "")
+	const databaseName = match?.[1]
+	const fileExtension = match?.[2]
 
 	if (!databaseName) throw ResourceError.from(400, "Missing database name")
 
 	if (!fileExtension) throw ResourceError.from(400, "Missing file extension")
 
-	if (request.method === "HEAD") {
-		const response = new Response(null, {
+	if (c.req.method === "HEAD") {
+		return new Response(null, {
 			headers: {
 				"X-Mailwoman-Request": databaseName,
 				"Accept-Ranges": "bytes",
 			},
 		})
-
-		applyAccessControlAllowOrigin(request, response)
-
-		return response
 	}
 
-	const rangeHeader = parseRangeHeader(request.headers.get("Range"))
+	const rangeHeader = parseRangeHeader(c.req.header("Range") ?? null)
 
 	if (!rangeHeader) {
 		throw ResourceError.from(400, "Missing Range header")
@@ -51,11 +51,8 @@ export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ 
 
 	console.info(`Accessing database ${databaseName}.${fileExtension}`)
 
-	const assetPath = `db/${databaseName}.${fileExtension}`
-
-	const r2ObjectBody = await env.MAILWOMAN_TILES_BUCKET.get(assetPath, {
+	const r2ObjectBody = await c.env.MAILWOMAN_TILES_BUCKET.get(`db/${databaseName}.${fileExtension}`, {
 		range: { offset, length },
-		// onlyIf: { etagMatches: etag },
 	})
 
 	assertR2KeyMatch(r2ObjectBody)
@@ -63,24 +60,13 @@ export const DatabaseRetrieveRoute = WorkerRoute.GET(DB_ROUTE_PATTERN, async ({ 
 
 	const rangeData = await r2ObjectBody.arrayBuffer()
 
-	const response = new Response(rangeData, {
-		status: 206, // Partial Content
+	return new Response(rangeData, {
+		status: 206,
 		headers: [
-			// ["Etag", r2ObjectBody.etag],
 			["Content-Type", r2ObjectBody.httpMetadata?.contentType],
 			["Cache-Control", r2ObjectBody.httpMetadata?.cacheControl],
 			["Content-Range", `bytes ${offset}-${rangeData.byteLength}/${r2ObjectBody.size}`],
 			["Expires", r2ObjectBody.httpMetadata?.cacheExpiry?.toISOString()],
 		].filter((entry): entry is [string, string] => !!entry[1]),
 	})
-
-	applyAccessControlAllowOrigin(request, response)
-
-	if (!Date.now()) {
-		cacheResponse(response, { request, ctx })
-	}
-
-	return response
-})
-
-// #endregion
+}

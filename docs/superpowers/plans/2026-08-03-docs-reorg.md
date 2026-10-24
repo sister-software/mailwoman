@@ -266,9 +266,9 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 ### Task 15: Reference door
 
-**Files:** Create `developers/reference/{library-api,cli,http-apis,component-tags,packages,runtime-flags,locales-and-tiers,footprints}.mdx`; Create `docs/scripts/generate-cli-reference.ts`.
+**Files:** Create `developers/reference/{library-api,cli,http-apis,component-tags,packages,runtime-flags,locales-and-tiers,footprints}.mdx`; Create `docs/scripts/generate-cli-reference.mts`.
 
-- _cli_ is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables, and wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.ts`.
+- _cli_ is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables, and wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.mts`.
 - _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the interface, and the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval checks. _footprints_ lists the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
 - Controlled register throughout, under STE100 rules, without narrative.
 - [ ] Generator with a vitest snapshot test → pages → build → **Commit** `docs(reference): the eight interfaces, CLI generated`.

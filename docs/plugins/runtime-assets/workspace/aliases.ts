@@ -61,7 +61,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {
 			throw new Error(
-				`runtime-assets: "${specifier}" is listed in workspace-aliases.ts but resolves to nothing. ` +
+				`runtime-assets: "${specifier}" is listed in workspace/aliases.ts but resolves to nothing. ` +
 					`Remove it, or point it at the module that replaced it.`
 			)
 		}

@@ -222,7 +222,9 @@ describe("toGauntletResult threading (nullable field)", () => {
 				in_winner_lineage: null,
 			},
 		],
-		candidates: [{ name: "Weimar", tag: "locality", lat: 29.7, lon: -96.78, countryCode: "US", placeID: null }],
+		candidates: [
+			{ name: "Weimar", tag: "locality", lat: 29.7, lon: -96.78, countryCode: "US", placeID: null, score: null },
+		],
 		postcode_country_scope: null,
 		rooftop: null,
 		coordinate_source: null,

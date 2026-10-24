@@ -123,14 +123,14 @@ export function registerMailwomanAPIRoutes(
 				return geocoderUnavailableError(c)
 			}
 
-			const { address, input_mode } = c.req.valid("json")
+			const { address, input_mode, bias, include_tree } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) return c.json({ error: "address is required", detail: null }, 400)
 			const t0 = performance.now()
 
 			return engine
-				.geocode(trimmed, { inputMode: input_mode })
+				.geocode(trimmed, { inputMode: input_mode, bias, includeTree: include_tree })
 				.then((result) => {
 					recordTimed(performance.now() - t0, result.resolution_tier)
 

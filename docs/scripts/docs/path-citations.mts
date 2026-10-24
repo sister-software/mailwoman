@@ -11,12 +11,10 @@
 // This file is imported by `check/docs-structure.ts`, which the Docs workflow runs
 // before `yarn install`, so only Node builtins can resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
-import { readFile } from "node:fs/promises"
+import { readFile, stat } from "node:fs/promises"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 /* oxlint-enable typescript/no-restricted-imports */
-
-import { pathExists } from "./exists.ts"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
@@ -167,7 +165,7 @@ export function citationTarget(text: string): string {
 
 /**
  * Count the backticked repository paths in `files` and resolve each against `repoRoot`,
- * unlike the markdown links in `./links.ts` that resolve against the citing file's directory.
+ * unlike the markdown links in `./links.mts` that resolve against the citing file's directory.
  */
 export async function censusPathCitations(
 	files: string[],
@@ -212,8 +210,9 @@ export async function censusPathCitations(
 			}
 
 			const target = citationTarget(spanText)
+			const stats = await stat(path.resolve(repoRoot, target)).catch(() => null)
 
-			if (await pathExists(path.resolve(repoRoot, target))) {
+			if (stats) {
 				census.resolved++
 
 				continue

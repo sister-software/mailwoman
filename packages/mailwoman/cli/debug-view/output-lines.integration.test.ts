@@ -57,8 +57,24 @@ const RESULT = {
 		},
 	],
 	candidates: [
-		{ name: "Portland", tag: "locality", lat: 45.5, lon: -122.6, countryCode: "US", placeID: "wof:101715829" },
-		{ name: "Portland", tag: "locality", lat: 43.66, lon: -70.25, countryCode: "US", placeID: "wof:101715745" },
+		{
+			name: "Portland",
+			tag: "locality",
+			lat: 45.5,
+			lon: -122.6,
+			countryCode: "US",
+			placeID: "wof:101715829",
+			score: 6.2,
+		},
+		{
+			name: "Portland",
+			tag: "locality",
+			lat: 43.66,
+			lon: -70.25,
+			countryCode: "US",
+			placeID: "wof:101715745",
+			score: 5.9,
+		},
 	],
 	rooftop: null,
 	coordinate_source: null,
@@ -132,7 +148,15 @@ describe("outputLines", () => {
 		const result = {
 			...RESULT,
 			candidates: [
-				{ name: "Oregon", tag: "region", lat: 43.9, lon: -120.6, countryCode: "US", placeID: "wof:85688513" },
+				{
+					name: "Oregon",
+					tag: "region",
+					lat: 43.9,
+					lon: -120.6,
+					countryCode: "US",
+					placeID: "wof:85688513",
+					score: null,
+				},
 			],
 		} as GeocodeResult
 

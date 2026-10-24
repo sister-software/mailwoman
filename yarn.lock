@@ -6688,11 +6688,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/api-worker@workspace:packages/api-worker":
+"@mailwoman/api-worker@workspace:*, @mailwoman/api-worker@workspace:packages/api-worker":
   version: 0.0.0-use.local
   resolution: "@mailwoman/api-worker@workspace:packages/api-worker"
   dependencies:
     "@cloudflare/workers-types": "npm:^5.20261015.1"
+    "@mailwoman/api": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     hono: "npm:^4.13.13"
     vitest: "npm:^4.1.12"
     wrangler: "npm:^4.151.0"
@@ -7825,9 +7828,10 @@ __metadata:
   resolution: "@mailwoman/tile-worker@workspace:packages/tile-worker"
   dependencies:
     "@cloudflare/workers-types": "npm:^5.20261015.1"
+    "@mailwoman/api-worker": "workspace:*"
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/spatial": "workspace:*"
+    hono: "npm:^4.13.13"
     pmtiles: "npm:^4.5.0"
     wrangler: "npm:^4.151.0"
   languageName: unknown

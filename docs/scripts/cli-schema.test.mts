@@ -11,7 +11,7 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { readCommands } from "./cli-schema.ts"
+import { readCommands } from "./cli-schema.mts"
 
 function commandModule(name: string): string {
 	const spec = stringifyJSON({ name, description: `The ${name} command.` })

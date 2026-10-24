@@ -104,7 +104,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			echo "pre-commit: $CLI_STALE_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1
 		fi
-		node docs/scripts/generate-cli-reference.ts
+		node docs/scripts/generate-cli-reference.mts
 		if ! git diff --quiet -- docs/articles/developers/reference/cli.mdx; then
 			echo "pre-commit: the CLI reference moved — it has been regenerated in your worktree; stage it and retry:" >&2
 			echo "  git add docs/articles/developers/reference/cli.mdx" >&2

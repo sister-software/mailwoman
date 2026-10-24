@@ -17,35 +17,15 @@
 		"./contexts/*": "./src/contexts/*.tsx",
 		"./hooks/*": "./src/hooks/*.ts",
 		"./shared/*": "./src/shared/*.ts",
-		"./plugins/runtime-assets/artifacts": {
-			"types": "./plugins/runtime-assets/artifacts.ts",
-			"node": "./plugins/runtime-assets/artifacts.ts",
-			"default": "./plugins/runtime-assets/artifacts.ts"
+		"./plugins/*": {
+			"types": "./plugins/*.ts",
+			"node": "./plugins/*.ts",
+			"default": "./plugins/*.ts"
 		},
-		"./plugins/runtime-assets/webpack-policy": {
-			"types": "./plugins/runtime-assets/webpack-policy.ts",
-			"node": "./plugins/runtime-assets/webpack-policy.ts",
-			"default": "./plugins/runtime-assets/webpack-policy.ts"
-		},
-		"./plugins/runtime-assets/workspace-aliases": {
-			"types": "./plugins/runtime-assets/workspace/aliases.ts",
-			"node": "./plugins/runtime-assets/workspace/aliases.ts",
-			"default": "./plugins/runtime-assets/workspace/aliases.ts"
-		},
-		"./scripts/docs-frontmatter-metadata": {
-			"types": "./scripts/docs/frontmatter/metadata.ts",
-			"node": "./scripts/docs/frontmatter/metadata.ts",
-			"default": "./scripts/docs/frontmatter/metadata.ts"
-		},
-		"./scripts/docs-path-citations": {
-			"types": "./scripts/docs/path-citations.ts",
-			"node": "./scripts/docs/path-citations.ts",
-			"default": "./scripts/docs/path-citations.ts"
-		},
-		"./scripts/generate-cli-reference": {
-			"types": "./scripts/generate-cli-reference.ts",
-			"node": "./scripts/generate-cli-reference.ts",
-			"default": "./scripts/generate-cli-reference.ts"
+		"./scripts/*": {
+			"types": "./scripts/*.mts",
+			"node": "./scripts/*.mts",
+			"default": "./scripts/*.mts"
 		}
 	},
 	"scripts": {
@@ -53,13 +33,12 @@
 		"build-storybook": "storybook build",
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
-		"freshness-report": "node scripts/list-stale-docs.ts",
-		"find-free-port": "node scripts/find-free-port.mjs",
+		"freshness-report": "node scripts/list-stale-docs.mts",
 		"lint:prose": "node ../config/vale/lint-prose.ts -s docs",
 		"lint:prose:fixtures": "node ../config/vale/check-rules.ts",
 		"lint:prose:vocab": "node ../config/vale/lint-prose.ts -s docs-vocab",
-		"lint:structure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check/docs-structure.ts --strict",
-		"prebuild": "node ../packages/mailwoman/out/cli/main.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli/main.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli/main.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli/main.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.ts",
+		"lint:structure": "node scripts/check/docs-structure.mts --strict",
+		"prebuild": "node ../packages/mailwoman/out/cli/main.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli/main.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli/main.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli/main.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.mts",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
 		"storybook": "storybook dev -p 6006 --no-open",

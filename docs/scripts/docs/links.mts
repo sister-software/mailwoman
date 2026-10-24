@@ -13,12 +13,10 @@
 // The Docs workflow runs `check/docs-structure.ts`, which imports this file, before `yarn install`.
 // Only Node builtins can resolve at that point.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
-import { readdir, readFile } from "node:fs/promises"
+import { readdir, readFile, stat } from "node:fs/promises"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 /* oxlint-enable typescript/no-restricted-imports */
-
-import { pathExists } from "./exists.ts"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
@@ -114,8 +112,9 @@ export async function findBrokenLinks(
 
 		for (const match of text.matchAll(RELATIVE_LINK)) {
 			const target = match[1]!
+			const stats = await stat(path.resolve(directory, target)).catch(() => null)
 
-			if (await pathExists(path.resolve(directory, target))) continue
+			if (stats) continue
 
 			let line = 1
 

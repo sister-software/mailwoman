@@ -10,7 +10,7 @@ review-by: 2026-10-14
 
 # Contribute to the docs
 
-These rules are the contributor-facing form of the documentation-architecture policy. CI enforces the structural rules with `docs/scripts/check/docs-structure.ts`, which the Docs workflow runs on every PR that touches the site. Reviewers enforce the editorial rules. Run the check locally with `yarn workspace @mailwoman/docs lint:structure`.
+These rules are the contributor-facing form of the documentation-architecture policy. CI enforces the structural rules with `docs/scripts/check/docs-structure.mts`, which the Docs workflow runs on every PR that touches the site. Reviewers enforce the editorial rules. Run the check locally with `yarn workspace @mailwoman/docs lint:structure`.
 
 ## Declare the page's role
 
@@ -66,4 +66,4 @@ A new page must answer a reader question that none of these pages covers. State 
 - an exact duplicate `title:` across the published site
 - a page reachable by URL but absent from every sidebar
 
-Deliberate exceptions live in `docs/scripts/docs/structure-allowlist.ts`, each with a reason. A quarterly workflow (`.github/workflows/docs-freshness.yml`) files one "Docs freshness sweep" issue that lists pages whose `review-by:` date has passed. The workflow skips pages without `review-by:`, so archival evidence is never flagged.
+Deliberate exceptions live in `docs/scripts/docs/structure-allowlist.mts`, each with a reason. A quarterly workflow (`.github/workflows/docs-freshness.yml`) files one "Docs freshness sweep" issue that lists pages whose `review-by:` date has passed. The workflow skips pages without `review-by:`, so archival evidence is never flagged.
