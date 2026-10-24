@@ -54,6 +54,7 @@
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
 		"freshness-report": "node scripts/list-stale-docs.ts",
+		"find-free-port": "node scripts/find-free-port.mjs",
 		"lint:prose": "node ../config/vale/lint-prose.ts -s docs",
 		"lint:prose:fixtures": "node ../config/vale/check-rules.ts",
 		"lint:prose:vocab": "node ../config/vale/lint-prose.ts -s docs-vocab",

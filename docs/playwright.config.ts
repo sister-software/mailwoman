@@ -30,19 +30,8 @@ const projectFlags = argv.flatMap((arg, index) =>
 )
 
 const SEARCH_ONLY = projectFlags.length > 0 && projectFlags.every((name) => name === "search")
-const MIN_PORT = 20_000
-const MAX_PORT = 40_000
-const startPort = Math.floor(Math.random() * (MAX_PORT - MIN_PORT + 1)) + MIN_PORT
 
-const SEARCH_PORT =
-	SEARCH_ONLY && CI
-		? Number(
-				runFileSync(process.execPath, [
-					"-e",
-					`require("find-free-ports")(1, { startPort: ${startPort}, endPort: ${MAX_PORT} }).then(([port]) => process.stdout.write(String(port)))`,
-				])
-			)
-		: 7770
+const SEARCH_PORT = SEARCH_ONLY && CI ? Number(runFileSync("yarn", ["find-free-port"])) : 7770
 
 const SEARCH_ORIGIN = `http://localhost:${SEARCH_PORT}`
 
