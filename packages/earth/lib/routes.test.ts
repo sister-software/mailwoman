@@ -13,6 +13,7 @@ import {
 	gazettePlaceFromPath,
 	gazettePlacePath,
 	pathWithCamera,
+	pathWithReadableCamera,
 	queryFromSearch,
 	Route,
 	routeForPath,
@@ -24,6 +25,22 @@ describe("cameraFromPath", () => {
 		expect(cameraFromPath("/@51.0716963,0.7244254,9z")).toEqual({ center: [0.7244254, 51.0716963], zoom: 9 })
 		expect(cameraFromPath("/debug/@35.6812,139.764,16.5z")).toEqual({ center: [139.764, 35.6812], zoom: 16.5 })
 		expect(cameraFromPath("/@-33.8688,151.2093")).toEqual({ center: [151.2093, -33.8688], zoom: null })
+	})
+
+	test("reads the percent-encoded segment the static-asset server redirects to", () => {
+		expect(cameraFromPath("/%4048.4051423%2C130.9629515%2C3.47z")).toEqual({
+			center: [130.9629515, 48.4051423],
+			zoom: 3.47,
+		})
+
+		expect(routeForPath("/debug/%4035.6812%2C139.764%2C16.5z")).toBe(Route.Debug)
+		expect(pathWithCamera(new URL("https://earth.mailwoman.ai/%4048.4%2C130.9%2C3.47z"), [1, 2], 3)).toBe("/@2,1,3z")
+
+		expect(pathWithReadableCamera(new URL("https://earth.mailwoman.ai/debug/%4048.4%2c130.9%2C3.47z?q=x"))).toBe(
+			"/debug/@48.4,130.9,3.47z?q=x"
+		)
+
+		expect(pathWithReadableCamera(new URL("https://earth.mailwoman.ai/@48.4,130.9,3.47z"))).toBeNull()
 	})
 
 	test("refuses a path without a segment or with an out-of-range latitude", () => {

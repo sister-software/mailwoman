@@ -5,6 +5,7 @@
  * @see https://playwright.dev/docs/test-configuration
  */
 
+import { runFileSync } from "@mailwoman/core/process"
 import { defineConfig } from "@playwright/test"
 
 // Playwright loads this file with its own loader. The loader walks up from every import to find a tsconfig.
@@ -30,6 +31,10 @@ const projectFlags = argv.flatMap((arg, index) =>
 
 const SEARCH_ONLY = projectFlags.length > 0 && projectFlags.every((name) => name === "search")
 
+const SEARCH_PORT = SEARCH_ONLY && CI ? Number(runFileSync("yarn", ["find-free-port"])) : 7770
+
+const SEARCH_ORIGIN = `http://localhost:${SEARCH_PORT}`
+
 export default defineConfig({
 	testDir: "./test/build",
 	forbidOnly: CI,
@@ -49,12 +54,12 @@ export default defineConfig({
 			],
 	projects: [
 		{ name: "build" },
-		// The search suite drives the production build in `docs/build`, served on 7770 by the web server below.
+		// The search suite drives the production build in `docs/build`, served by the web server below.
 		{
 			name: "search",
 			testDir: "./test/e2e",
 			timeout: 30_000,
-			use: { baseURL: "http://localhost:7770" },
+			use: { baseURL: SEARCH_ORIGIN },
 		},
 	],
 	// Playwright's web server is configuration-wide, and the `build` project writes `docs/build`
@@ -62,9 +67,9 @@ export default defineConfig({
 	// A running `yarn workspace @mailwoman/docs serve` is reused.
 	webServer: SEARCH_ONLY
 		? {
-				command: "yarn docusaurus serve --port 7770 --no-open",
-				url: "http://localhost:7770",
-				reuseExistingServer: true,
+				command: `yarn docusaurus serve --port ${SEARCH_PORT} --no-open`,
+				url: SEARCH_ORIGIN,
+				reuseExistingServer: !CI,
 				timeout: 60_000,
 			}
 		: undefined,

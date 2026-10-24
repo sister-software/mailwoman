@@ -1,0 +1,46 @@
+{
+	"name": "@mailwoman/api-worker",
+	"version": "0.0.0",
+	"private": true,
+	"description": "The Hono entry point for Mailwoman's hosted native geocoder API.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"type": "module",
+	"imports": {
+		"#*": {
+			"types": "./out/*.d.ts",
+			"workerd": "./lib/*.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./out/index.d.ts",
+			"workerd": "./lib/index.ts",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"workerd": "./lib/*.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"scripts": {
+		"test": "vitest run lib",
+		"deploy:dry-run": "wrangler deploy --dry-run"
+	},
+	"dependencies": {
+		"hono": "^4.13.13"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20261015.1",
+		"vitest": "^4.1.12",
+		"wrangler": "^4.151.0"
+	},
+	"engines": {
+		"node": "^24.22.1 || >=26.12.1"
+	}
+}

@@ -27,6 +27,12 @@ export interface EarthConfig {
 	 * This is a path on that origin, rather than a URL on the data origin.
 	 */
 	sqliteRuntimeBaseURL: string
+	/**
+	 * The hosted native API that parses and geocodes for the page, or `null` to run the model in the browser.
+	 *
+	 * `?geocoder-api=<URL>` overrides it, and `?geocoder=local` selects the browser runtime.
+	 */
+	geocoderAPIURL: URL | null
 }
 
 /**
@@ -40,4 +46,6 @@ export const PRODUCTION_CONFIG: EarthConfig = {
 	tileWorkerURL: new URL("https://tiles.mailwoman.ai/"),
 	basemapTileJSONURL: new URL("https://tiles.mailwoman.ai/planet.v4.json"),
 	sqliteRuntimeBaseURL: "/sqlite",
+	// The API Worker has no production route yet.
+	geocoderAPIURL: null,
 }

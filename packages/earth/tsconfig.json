@@ -19,6 +19,7 @@
 		"./playwright.config.ts"
 	],
 	"references": [
+		{ "path": "../api" },
 		{ "path": "../cartographer" },
 		{ "path": "../core" },
 		{ "path": "../mailwoman" },
