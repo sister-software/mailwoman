@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Convention pins for the SP 0.2.2 native-offsets runtime over `@mailwoman/sentencepiece-wasm`.
+ *   Convention pins for the native offsets the `@mailwoman/mtf` runtime reproduces from SentencePiece v0.2.2.
  *
  *   Three behaviors are pinned: a piece following a non-BMP character lands on the correct UTF-16
  *   range while the rest of the input stays aligned. A `▁`-prefixed piece's native span is trimmed

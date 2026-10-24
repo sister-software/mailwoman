@@ -212,9 +212,11 @@ const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-thr
 const SQLITE_RUNTIME_LOCATOR = await tryResolveFile("@sqlite.org/sqlite-wasm/sqlite3.wasm")
 
 /**
- * The SentencePiece wasm that `@mailwoman/sentencepiece-wasm` loads from beside its loader script.
+ * The tokenizer runtime's wasm.
+ *
+ * `MTF_WASM_URL` resolves to `../wasm/mtf.wasm` from the bundled script.
  */
-const SENTENCEPIECE_WASM_PATH = requireFromHere.resolve("@mailwoman/sentencepiece-wasm/sentencepiece.wasm")
+const MTF_WASM_PATH = requireFromHere.resolve("@mailwoman/mtf/wasm/mtf.wasm")
 const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")
 
 const haveGazetteer = SQLITE_RUNTIME_LOCATOR !== null && (await pathExists(CANDIDATE_DB_PATH))
@@ -772,11 +774,11 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 			{ body: Buffer.from(GAZETTEER_HTML), contentType: "text/html; charset=utf-8", assetClass: "sqliteRuntime" },
 		],
 		["/app.js", { body: appBundle, contentType: "text/javascript; charset=utf-8", assetClass: "runtimeJS" }],
-		// The tokenizer loader fetches its wasm from beside the bundled script, as a host must stage it.
+		// The tokenizer fetches `../wasm/mtf.wasm` relative to the bundled `/app.js`, as a host must stage it.
 		[
-			"/sentencepiece.wasm",
+			"/wasm/mtf.wasm",
 			{
-				body: await readLocalBuffer(SENTENCEPIECE_WASM_PATH),
+				body: await readLocalBuffer(MTF_WASM_PATH),
 				contentType: "application/wasm",
 				assetClass: "tokenizer",
 			},

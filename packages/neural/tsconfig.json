@@ -15,6 +15,7 @@
 		{ "path": "../postcode" },
 		{ "path": "../codex" },
 		{ "path": "../locale-hint" },
+		{ "path": "../mtf" },
 		{ "path": "../normalize" },
 		{ "path": "../query-shape" }
 	]

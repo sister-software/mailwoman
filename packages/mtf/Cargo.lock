@@ -22,6 +22,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mtf-wasm"
+version = "0.1.0"
+dependencies = [
+ "mtf-core",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"

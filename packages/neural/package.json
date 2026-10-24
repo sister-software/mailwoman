@@ -101,10 +101,10 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",
+		"@mailwoman/mtf": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
-		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.5.0",
 		"spliterator": "^9.2.1",
 		"zod": "^4.6.7"

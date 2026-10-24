@@ -1,12 +1,32 @@
 # @mailwoman/mtf
 
 The Multilingual Token Framework is Mailwoman's subword tokenizer. It is a Rust core compiled to WASM,
-with a TypeScript loader for Node, browsers and Workers. It will replace `@mailwoman/sentencepiece-wasm`,
-which is Google SentencePiece v0.2.2 built with Emscripten. Issue #2843 tracks the work.
+with a TypeScript loader for Node, browsers and Workers. `@mailwoman/neural`'s `MailwomanTokenizer` runs on
+it in place of `@mailwoman/sentencepiece-wasm`, which is Google SentencePiece v0.2.2 built with
+Emscripten. Issues #2843 and #2844 track the work.
 
-The workspace is private. It holds this plan, the stage 1 baseline and the reference fixtures. The Rust
-crates and the TypeScript loader come next, and the workspace compiles no TypeScript until the loader
-lands.
+The workspace is private. The old package stays in the tree as the rollback runtime.
+
+## Usage
+
+```ts
+import { MTF_WASM_URL, MTFRuntime } from "@mailwoman/mtf"
+
+// Node reads the committed binary from disk; a browser fetches the URL its bundler resolved.
+const runtime = await MTFRuntime.instantiate(new Uint8Array(await readFile(MTF_WASM_URL)))
+using model = runtime.loadModel(tokenizerModelBytes)
+
+const { ids, pieces, begins, ends } = model.encode("10 Downing Street, London SW1A 2AA")
+const text = model.decode(ids)
+```
+
+The package's import has no side effects, and `instantiate` performs the WASM instantiation. It also accepts a compiled
+`WebAssembly.Module`, as a Worker runtime supplies it. `begins` and `ends` are UTF-8 byte offsets into
+the input. Each result is copied out of WASM memory, so it stays valid after later calls.
+
+Rebuild the committed `wasm/mtf.wasm` with `node packages/mtf/tools/build-wasm.run.ts` from the
+repository root. With `--check`, the tool exits non-zero when a fresh build's SHA-256 differs from the
+committed file's.
 
 ## Plan
 
@@ -132,8 +152,23 @@ reference for this model. The file is 545,495 bytes with SHA-256
 | v0.2.2 reference fixtures                                                        | Captured                                                        |
 | `cargo` admitted by the Bash hook                                                | Done                                                            |
 | `crates/mtf-core`: model loader, normalizer, unigram encode with offsets, decode | All 1,264 fixture rows match in IDs, pieces, offsets and decode |
-| WASM adapter and TypeScript loader                                               | Not started                                                     |
-| Compiled model format to reduce the 92 ms load                                   | Not started                                                     |
+| WASM adapter and TypeScript loader                                               | All 1,264 fixture rows match through `wasm/mtf.wasm` in Node    |
+| `MailwomanTokenizer` on `@mailwoman/mtf`                                         | Neural, mailwoman and browser suites pass                       |
+| Compiled model format to reduce the 43 ms load                                   | Not started                                                     |
+
+### Runtime comparison
+
+Measured on 2026-10-24 on an AMD Ryzen 9 8945HS with Node v26.2.0, on the shipped `tokenizer.model` and
+the 1,264 board inputs. Each value is the median of seven rounds. Each round ran each runtime in its own
+process, alternating.
+
+| Measure                      | `@mailwoman/mtf` | `@mailwoman/sentencepiece-wasm`         |
+| ---------------------------- | ---------------- | --------------------------------------- |
+| WASM binary                  | 72,670 bytes     | 625,993 bytes plus a 57,585-byte loader |
+| WASM instantiate             | 0.41 ms          | 5.77 ms                                 |
+| Model load                   | 43.4 ms          | 98.1 ms                                 |
+| Full board pass              | 13.3 ms          | 53.3 ms                                 |
+| Per-address encode p50 / p95 | 7.5 / 20.6 µs    | 34.6 / 80.1 µs                          |
 
 Run the parity test from this directory with
 `MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
