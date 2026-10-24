@@ -57,4 +57,44 @@ describe("createAPIWorkerApp", () => {
 		expect(response.status).toBe(502)
 		expect(await response.json()).toEqual({ error: "backend unavailable" })
 	})
+
+	it("replaces the backend's CORS policy with the Worker's origin list", async () => {
+		const app = createAPIWorkerApp({
+			fetch: async () => Response.json({ ok: true }, { headers: { "Access-Control-Allow-Origin": "*" } }),
+		})
+
+		const request = (origin: string) =>
+			app.request("http://earth.test/v1/parse", {
+				method: "POST",
+				headers: { origin, "content-type": "application/json" },
+				body: '{"address":"Berlin"}',
+			})
+
+		expect((await request("https://earth.mailwoman.ai")).headers.get("access-control-allow-origin")).toBe(
+			"https://earth.mailwoman.ai"
+		)
+
+		expect((await request("https://example.com")).headers.get("access-control-allow-origin")).toBeNull()
+	})
+
+	it("answers 504 when the backend passes the deadline", async () => {
+		const app = createAPIWorkerApp(
+			{
+				fetch: (request) =>
+					new Promise((_, reject) => {
+						request.signal.addEventListener("abort", () => reject(request.signal.reason))
+					}),
+			},
+			{ deadlineMs: 10 }
+		)
+
+		const response = await app.request("http://earth.test/v1/geocode", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: '{"address":"Berlin"}',
+		})
+
+		expect(response.status).toBe(504)
+		expect(await response.json()).toEqual({ error: "backend timeout" })
+	})
 })

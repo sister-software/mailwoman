@@ -5,6 +5,7 @@
  */
 
 import { Hono } from "hono"
+import { cors } from "hono/cors"
 
 /**
  * A private service that answers the native Mailwoman API routes.
@@ -13,8 +14,51 @@ export interface APIBackend {
 	fetch(request: Request): Promise<Response>
 }
 
+/**
+ * Options for {@link createAPIWorkerApp}.
+ */
+export interface APIWorkerOptions {
+	/**
+	 * How long a backend request may take before the Worker answers 504.
+	 *
+	 * @defaultValue 10 seconds
+	 */
+	deadlineMs?: number
+}
+
 const BACKEND_ORIGIN = "http://engine.internal"
 const MAX_REQUEST_BYTES = 64 * 1024
+const DEFAULT_DEADLINE_MS = 10_000
+
+/**
+ * The browser origins that may call the Worker.
+ */
+const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
+	"https://earth.mailwoman.ai",
+	"https://mailwoman.ai",
+	"https://dev.mailwoman.ai",
+	"https://dev.mailwoman.ai:7777",
+	"https://dev.mailwoman.ai:8888",
+])
+
+const LOCALHOST_PATTERN = /^https?:\/\/(([a-z0-9]+\.)?localhost|127\.0\.0\.1)(:\d{2,5})?$/i
+
+function allowedOrigin(origin: string): string | null {
+	return ALLOWED_ORIGINS.has(origin) || LOCALHOST_PATTERN.test(origin) ? origin : null
+}
+
+/**
+ * A backend that forwards to an HTTP origin, such as a `mailwoman serve` host.
+ */
+export function createOriginBackend(origin: URL): APIBackend {
+	return {
+		fetch(request) {
+			const { pathname, search } = new URL(request.url)
+
+			return fetch(new Request(new URL(`${pathname}${search}`, origin), request))
+		},
+	}
+}
 
 async function readRequestBody(request: Request): Promise<ArrayBuffer | null> {
 	const reader = request.body?.getReader()
@@ -52,14 +96,50 @@ async function readRequestBody(request: Request): Promise<ArrayBuffer | null> {
 }
 
 /**
+ * Copy a backend response with mutable headers and without the backend's CORS policy.
+ *
+ * `mailwoman serve` answers every origin.
+ * The Worker's CORS middleware sets the public policy on the copy.
+ */
+function relayResponse(response: Response): Response {
+	const relayed = new Response(response.body, response)
+
+	// Iterate the source headers, because deleting from the headers being iterated skips entries.
+	for (const name of response.headers.keys()) {
+		if (name.startsWith("access-control-")) {
+			relayed.headers.delete(name)
+		}
+	}
+
+	return relayed
+}
+
+function isTimeout(error: unknown): boolean {
+	return error instanceof DOMException && error.name === "TimeoutError"
+}
+
+/**
  * Create the public Hono entry point around a private native API service.
  */
-export function createAPIWorkerApp(backend: APIBackend): Hono {
+export function createAPIWorkerApp(backend: APIBackend, options: APIWorkerOptions = {}): Hono {
+	const deadlineMs = options.deadlineMs ?? DEFAULT_DEADLINE_MS
 	const app = new Hono()
+
+	app.use(
+		cors({
+			origin: allowedOrigin,
+			allowMethods: ["GET", "POST", "OPTIONS"],
+			allowHeaders: ["content-type", "accept", "x-request-id"],
+			exposeHeaders: ["server", "link"],
+			maxAge: 86_400,
+		})
+	)
 
 	app.get("/health", async (c) => {
 		try {
-			const response = await backend.fetch(new Request(`${BACKEND_ORIGIN}/health`))
+			const response = await backend.fetch(
+				new Request(`${BACKEND_ORIGIN}/health`, { signal: AbortSignal.timeout(deadlineMs) })
+			)
 
 			return c.json({ worker: "ready", backend: response.ok ? "ready" : "unavailable" }, response.ok ? 200 : 503)
 		} catch {
@@ -83,8 +163,19 @@ export function createAPIWorkerApp(backend: APIBackend): Hono {
 		}
 
 		try {
-			return await backend.fetch(new Request(`${BACKEND_ORIGIN}${path}`, { method: "POST", headers, body }))
-		} catch {
+			const response = await backend.fetch(
+				new Request(`${BACKEND_ORIGIN}${path}`, {
+					method: "POST",
+					headers,
+					body,
+					signal: AbortSignal.timeout(deadlineMs),
+				})
+			)
+
+			return relayResponse(response)
+		} catch (error) {
+			if (isTimeout(error)) return Response.json({ error: "backend timeout" }, { status: 504 })
+
 			return Response.json({ error: "backend unavailable" }, { status: 502 })
 		}
 	}

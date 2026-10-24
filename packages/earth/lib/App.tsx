@@ -26,7 +26,12 @@ import {
 	searchWithQuery,
 } from "#routes"
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
-import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
+import {
+	type GeocoderRuntimeHandle,
+	type GeocoderRuntimeOptions,
+	useGeocoderRuntime,
+} from "#runtime/use/geocoder-runtime"
+import { remoteGeocoderURL, useRemoteGeocoderRuntime } from "#runtime/use/remote-geocoder-runtime"
 
 import { GazettePage } from "./explorers/Gazette/GazettePage.tsx"
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
@@ -55,16 +60,30 @@ function NotFound({ pathname }: { pathname: string }) {
  * The geolocation answer only moves the bias when it arrives, so no request
  * waits on the network before the first paint.
  */
-function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
+function useRuntimeOptions(): GeocoderRuntimeOptions {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
 	const camera = cameraFromLocation(location.pathname, location.search)
 
-	const handle = useGeocoderRuntime({
+	return {
 		config: PRODUCTION_CONFIG,
 		initialCenter: camera?.center ?? initialCenter ?? DEFAULT_CENTER,
 		initialZoom: camera?.zoom ?? undefined,
-	})
+	}
+}
 
+function LocalGeocoder({ route, query }: { route: Route; query: string | null }) {
+	const handle = useGeocoderRuntime(useRuntimeOptions())
+
+	return <GeocoderView handle={handle} route={route} query={query} />
+}
+
+function RemoteGeocoder({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
+	const handle = useRemoteGeocoderRuntime(apiURL, useRuntimeOptions())
+
+	return <GeocoderView handle={handle} route={route} query={query} />
+}
+
+function GeocoderView({ handle, route, query }: { handle: GeocoderRuntimeHandle; route: Route; query: string | null }) {
 	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })
 
 	return (
@@ -136,6 +155,7 @@ export function App() {
 	const route = routeForPath(location.pathname)
 	const query = queryFromSearch(location.search)
 	const mode = runtimeModeFromSearch(location.search)
+	const apiURL = remoteGeocoderURL(PRODUCTION_CONFIG)
 
 	if (!route) return <NotFound pathname={location.pathname} />
 
@@ -156,8 +176,10 @@ export function App() {
 				<FakeGeocoder query={query} />
 			) : route === Route.Trace ? (
 				<TracePage query={query} />
+			) : apiURL ? (
+				<RemoteGeocoder apiURL={apiURL} route={route} query={query} />
 			) : (
-				<RealGeocoder route={route} query={query} />
+				<LocalGeocoder route={route} query={query} />
 			)}
 		</main>
 	)

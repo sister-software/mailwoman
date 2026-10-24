@@ -10,11 +10,16 @@ import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&ur
 import { createRoot } from "react-dom/client"
 import { registerSW } from "virtual:pwa-register"
 
+import { PRODUCTION_CONFIG } from "#config"
 import { prefetchReleasesManifest } from "#runtime/use/geocoder-runtime"
+import { remoteGeocoderURL } from "#runtime/use/remote-geocoder-runtime"
 
 import { App } from "./App.tsx"
 
-prefetchReleasesManifest()
+// The trace page loads the classifier in either mode, and it starts its own manifest fetch.
+if (!remoteGeocoderURL(PRODUCTION_CONFIG)) {
+	prefetchReleasesManifest()
+}
 
 // MapLibre derives its default worker URL from `import.meta.url`, which a bundled build cannot answer.
 // Without an explicit worker the map composes its style and never requests a tile.

@@ -215,6 +215,53 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 }
 
 /**
+ * The composed basemap style both geocoder runtimes render.
+ */
+export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
+	return useMemo<MapCanvasStyle>(() => {
+		const style = new StyleSpecificationComposer({
+			sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
+			light: GuideMapLight,
+			sky: GuideMapSky,
+		}).toJSON()
+
+		if (loadsBasemapBuild()) return style
+
+		return {
+			...style,
+			layers: style.layers.filter(
+				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
+			),
+		}
+	}, [config.basemapTileJSONURL])
+}
+
+/**
+ * The coverage and jurisdiction overlays both geocoder runtimes offer, hidden until toggled.
+ */
+export function useEarthOverlays(config: EarthConfig): OverlaySpec[] {
+	return useMemo<OverlaySpec[]>(
+		() => [
+			{
+				id: CoverageTileSetID,
+				source: createCoverageSource(new URL(`${CoverageTileSetID}.json`, config.tileWorkerURL).href),
+				layers: CoverageLayers,
+				visible: false,
+				label: "Coverage",
+			},
+			{
+				id: JurisdictionTileSetID,
+				source: createJurisdictionSource(new URL(`${JurisdictionTileSetID}.json`, config.tileWorkerURL).href),
+				layers: JurisdictionLayers,
+				visible: false,
+				label: "Jurisdictions",
+			},
+		],
+		[config.tileWorkerURL]
+	)
+}
+
+/**
  * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
  * loaders into `useReleaseRuntime`.
  */
@@ -241,22 +288,7 @@ export function useGeocoderRuntime({
 		}
 	}, [rt.selectedVersion])
 
-	const mapStyle = useMemo<MapCanvasStyle>(() => {
-		const style = new StyleSpecificationComposer({
-			sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
-			light: GuideMapLight,
-			sky: GuideMapSky,
-		}).toJSON()
-
-		if (loadsBasemapBuild()) return style
-
-		return {
-			...style,
-			layers: style.layers.filter(
-				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
-			),
-		}
-	}, [config.basemapTileJSONURL])
+	const mapStyle = useEarthMapStyle(config)
 
 	/*
 	 * These callbacks read `rt.assets` and name it as a dependency.
@@ -609,25 +641,7 @@ export function useGeocoderRuntime({
 		[rt.assets]
 	)
 
-	const overlays = useMemo<OverlaySpec[]>(
-		() => [
-			{
-				id: CoverageTileSetID,
-				source: createCoverageSource(new URL(`${CoverageTileSetID}.json`, config.tileWorkerURL).href),
-				layers: CoverageLayers,
-				visible: false,
-				label: "Coverage",
-			},
-			{
-				id: JurisdictionTileSetID,
-				source: createJurisdictionSource(new URL(`${JurisdictionTileSetID}.json`, config.tileWorkerURL).href),
-				layers: JurisdictionLayers,
-				visible: false,
-				label: "Jurisdictions",
-			},
-		],
-		[config.tileWorkerURL]
-	)
+	const overlays = useEarthOverlays(config)
 
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),

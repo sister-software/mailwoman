@@ -7007,6 +7007,7 @@ __metadata:
     "@luma.gl/core": "npm:^9.4.2"
     "@luma.gl/engine": "npm:^9.4.2"
     "@luma.gl/shadertools": "npm:^9.4.2"
+    "@mailwoman/api": "workspace:*"
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"

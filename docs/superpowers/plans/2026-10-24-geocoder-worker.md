@@ -50,6 +50,20 @@ Earth browser ── HTTPS ──> api-worker (Hono: CORS, admission, routing, t
 - The load run shows memory, throughput, failure rate, and cost at the expected peak concurrency. Rate limiting and backend failure tests pass.
 - A rollback changes Earth to the local runtime without a Worker or backend redeploy. The same production smoke passes after rollback.
 
-## Scaffold delivered in this worktree
+## Working path on 2026-10-24
 
-The initial `packages/api-worker` package defines the Hono routing boundary, a private backend Fetch interface, and a readiness endpoint. It is intentionally absent from `.github/workflows/deploy.yml` and the deploy target registry. This boundary can be tested with a fake backend while the engine placement is measured.
+The `packages/api-worker` Worker forwards `POST /v1/parse` and `POST /v1/geocode` to an `API_BACKEND` service binding or to the `mailwoman serve` origin in `ENGINE_ORIGIN`. It applies its own CORS origin list, a 64 KiB body cap, and a 10-second backend deadline that answers 504. It remains absent from `.github/workflows/deploy.yml` and the deploy target registry.
+
+Earth selects the remote runtime when `?geocoder-api=<URL>` is present or when `EarthConfig.geocoderAPIURL` is set. `?geocoder=local` selects the browser runtime. `PRODUCTION_CONFIG.geocoderAPIURL` is `null`, so production behavior is unchanged. The remote runtime sends `/v1/parse` and `/v1/geocode` together. The geocode response supplies the coordinate and candidates. The parse response supplies the tree, span offsets, and confidences, which the geocode response omits. The engine therefore parses each address twice.
+
+**Observed locally:** `mailwoman serve` (`neural-weights-en-us` 10.7.0, one worker, 313 MB resident after boot) behind `wrangler dev` answered `1600 Pennsylvania Ave NW, Washington, DC 20500` at the `address_point` tier (38.8977, -77.0365, 1 m) in 61 ms end to end. In a built Earth page with `?geocoder-api=`, the browser requested no `releases.json`, model, FST, or gazetteer database, and the map placed the rooftop pin.
+
+The remote runtime omits these local-runtime features:
+
+- Viewport and device-location bias, because `/v1/geocode` accepts no bias.
+- FST autocomplete, because the API has no completion route.
+- Crisp admin polygons, because they read the release's `wof-polygons.db`. Candidates render as points.
+- Query kind, stage timing, dual roles, and the calibrator. The native responses carry none of them.
+- Candidate scores. The native response orders candidates without scoring them, so a runner-up shows score 0.
+
+The trace page still loads the classifier in the browser.
