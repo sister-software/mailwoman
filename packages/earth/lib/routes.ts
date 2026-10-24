@@ -125,8 +125,12 @@ export interface CameraParams {
 
 /**
  * A trailing camera segment in Google Maps' form, `/@<lat>,<lon>,<zoom>z`, with the zoom optional.
+ *
+ * The pattern also accepts `%40` and `%2C` for `@` and `,`.
+ * Cloudflare's static-asset server redirects a path that contains either character to its
+ * percent-encoded form, so a reloaded page arrives at `/%4048.4%2C130.9%2C3.47z`.
  */
-const CAMERA_SEGMENT = /\/@(-?[\d.]+),(-?[\d.]+)(?:,([\d.]+)z)?\/?$/u
+const CAMERA_SEGMENT = /\/(?:@|%40)(-?[\d.]+)(?:,|%2C)(-?[\d.]+)(?:(?:,|%2C)([\d.]+)z)?\/?$/iu
 
 /**
  * Decimal places written for a coordinate.
@@ -189,6 +193,22 @@ export function pathWithCamera(url: URL, center: readonly [lon: number, lat: num
 	}
 
 	return `${next.pathname}${next.search}${next.hash}`
+}
+
+/**
+ * The URL with a percent-encoded camera segment written with `@` and `,`, or null
+ * when the path has no encoded segment.
+ *
+ * It returns a string rather than writing history so the caller chooses `pushState` or `replaceState`.
+ */
+export function pathWithReadableCamera(url: URL): string | null {
+	const match = CAMERA_SEGMENT.exec(url.pathname)
+
+	if (!match || !/%40|%2C/iu.test(match[0])) return null
+
+	const readable = match[0].replaceAll(/%40/giu, "@").replaceAll(/%2C/giu, ",")
+
+	return `${url.pathname.slice(0, match.index)}${readable}${url.search}${url.hash}`
 }
 
 /**

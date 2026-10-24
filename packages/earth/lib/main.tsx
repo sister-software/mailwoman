@@ -10,9 +10,17 @@ import maplibreWorkerURL from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&ur
 import { createRoot } from "react-dom/client"
 import { registerSW } from "virtual:pwa-register"
 
+import { pathWithReadableCamera } from "#routes"
 import { prefetchReleasesManifest } from "#runtime/use/geocoder-runtime"
 
 import { App } from "./App.tsx"
+
+// A reload arrives at the percent-encoded camera path the static-asset server redirects to.
+const readablePath = pathWithReadableCamera(new URL(location.href))
+
+if (readablePath) {
+	history.replaceState(history.state, "", readablePath)
+}
 
 prefetchReleasesManifest()
 
