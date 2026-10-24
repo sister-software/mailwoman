@@ -164,7 +164,7 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 		// The 200 binary's anchors are present.
 		// The 404 one is absent.
 		const lookup = capturedConfig?.postcodeAnchorLookup
-		expect(lookup).toBeInstanceOf(Map)
+		expect(lookup?.size).toBe(1)
 		expect(lookup!.has("10001")).toBe(true) // US survived
 		expect(lookup!.has("10115")).toBe(false) // DE was skipped
 
@@ -201,7 +201,7 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 
 		expect(result.classifier).toBeDefined()
 		const lookup = capturedConfig?.postcodeAnchorLookup
-		expect(lookup).toBeInstanceOf(Map)
+		expect(lookup?.size).toBe(2)
 		expect(lookup!.has("10001")).toBe(true)
 		expect(lookup!.has("10115")).toBe(true)
 	})

@@ -12,7 +12,7 @@ import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, type AnchorSpanMode, anchorLookupFromPostcodes, parseAnchorLookup } from "#anchor-inference"
+import { type AnchorLookup, type AnchorSpanMode, BinaryAnchorLookup, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 
 /**
@@ -178,7 +178,7 @@ async function readModelCardObject(
  */
 export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
-		? anchorLookupFromPostcodes(new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).groups())
+		? new BinaryAnchorLookup([new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path)))])
 		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 

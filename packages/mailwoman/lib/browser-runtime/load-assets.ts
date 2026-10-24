@@ -26,7 +26,11 @@ import {
 	postcodePrefixFilesOf,
 	type ReleaseInfo,
 } from "#browser-runtime/manifest"
-import { loadPostcodeCentroids, mergePostcodeCentroids } from "#browser-runtime/postcode-fallback"
+import {
+	loadPostcodeCentroids,
+	mergePostcodeCentroids,
+	type PostcodeCentroidLookup,
+} from "#browser-runtime/postcode-fallback"
 import {
 	adminGazetteerURL,
 	assetURL,
@@ -50,7 +54,7 @@ export interface ReleaseAssets {
 	 * It holds the classifier's postcode anchors (the release's `postcodeAnchors`, US ZIP Codes today) and
 	 * the fallback-only binaries the release lists under `postcodeCentroids`, such as Japanese postcodes.
 	 */
-	anchorLookup: Map<string, { lat: number; lon: number }> | null
+	anchorLookup: PostcodeCentroidLookup | null
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenance | null
 	/**
@@ -264,7 +268,7 @@ export async function loadReleaseAssets(
 	})) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
-		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
+		postcodeAnchorLookup?: PostcodeCentroidLookup | null
 		selectPairIndexForText?: SelectPairIndex | null
 		anchorRegions?: AnchorRegionLookupLike | null
 		release?: () => Promise<void>

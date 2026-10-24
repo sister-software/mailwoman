@@ -11,7 +11,7 @@
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
-import type { PostcodeBinaryGroup } from "@mailwoman/postcode/binary-resolver"
+import type { PostcodeBinaryGroup, PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
@@ -32,7 +32,19 @@ export interface AnchorEntry {
 	lon: number
 }
 
-export type AnchorLookup = Map<string, AnchorEntry>
+/**
+ * A read-only postcode→anchor lookup.
+ *
+ * A `Map` built by {@link parseAnchorLookup} or {@link anchorLookupFromPostcodes}
+ * satisfies it, and so does {@link BinaryAnchorLookup}, which answers from the
+ * postcode binaries without copying them into objects.
+ */
+export interface AnchorLookup {
+	get(postcode: string): AnchorEntry | undefined
+	has(postcode: string): boolean
+	readonly size: number
+	keys(): Iterable<string>
+}
 
 /**
  * Builds the fixed-width anchor feature vector mirroring Python's `anchor_feature_vector`: the in-set
@@ -69,8 +81,8 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
  */
 export function parseAnchorLookup(
 	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
-): AnchorLookup {
-	const out: AnchorLookup = new Map()
+): Map<string, AnchorEntry> {
+	const out = new Map<string, AnchorEntry>()
 
 	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) {
 		out.set(pc, { posterior, lat, lon })
@@ -86,34 +98,157 @@ export function parseAnchorLookup(
  * The centroid is the mean of the group's non-zero places.
  * A postcode with no non-zero place gets `0, 0`.
  */
-export function anchorLookupFromPostcodes(groups: Iterable<PostcodeBinaryGroup>): AnchorLookup {
-	const out: AnchorLookup = new Map()
+export function anchorLookupFromPostcodes(groups: Iterable<PostcodeBinaryGroup>): Map<string, AnchorEntry> {
+	const out = new Map<string, AnchorEntry>()
 
 	for (const { postcode, places } of groups) {
-		const posterior: Record<string, number> = {}
-		let latSum = 0
-		let lonSum = 0
-		let centroidCount = 0
-
-		for (const place of places) {
-			posterior[place.country] = 1
-
-			if (place.lat !== 0 || place.lon !== 0) {
-				latSum += place.lat
-				lonSum += place.lon
-
-				centroidCount++
-			}
-		}
-
-		out.set(postcode, {
-			posterior,
-			lat: centroidCount ? latSum / centroidCount : 0,
-			lon: centroidCount ? lonSum / centroidCount : 0,
-		})
+		out.set(postcode, anchorEntryOf(places))
 	}
 
 	return out
+}
+
+/**
+ * Builds one postcode's anchor entry from its places: weight 1 per member country,
+ * and the mean of the non-zero centroids, or `0, 0` when every place is unplaced.
+ */
+function anchorEntryOf(places: PostcodeBinaryGroup["places"]): AnchorEntry {
+	const posterior: Record<string, number> = {}
+	let latSum = 0
+	let lonSum = 0
+	let centroidCount = 0
+
+	for (const place of places) {
+		posterior[place.country] = 1
+
+		if (place.lat !== 0 || place.lon !== 0) {
+			latSum += place.lat
+			lonSum += place.lon
+
+			centroidCount++
+		}
+	}
+
+	return {
+		posterior,
+		lat: centroidCount ? latSum / centroidCount : 0,
+		lon: centroidCount ? lonSum / centroidCount : 0,
+	}
+}
+
+/**
+ * Folds `entry` into `existing` as {@link mergeAnchorLookups} merges two files' entries
+ * for one postcode: the posteriors union, and a non-zero centroid replaces a `(0,0)` one
+ * or is averaged with another non-zero one.
+ */
+function foldAnchorEntry(existing: AnchorEntry, entry: AnchorEntry): void {
+	for (const country of Object.keys(entry.posterior)) {
+		existing.posterior[country] = 1
+	}
+
+	if (entry.lat !== 0 || entry.lon !== 0) {
+		if (existing.lat === 0 && existing.lon === 0) {
+			existing.lat = entry.lat
+			existing.lon = entry.lon
+		} else {
+			existing.lat = (existing.lat + entry.lat) / 2
+			existing.lon = (existing.lon + entry.lon) / 2
+		}
+	}
+}
+
+/**
+ * The largest character code a postcode binary key holds; `PostcodeBinaryResolver.lookup`
+ * masks every input character to it.
+ */
+const BINARY_KEY_CHAR_MAX = 0x7f
+
+/**
+ * Reports whether `postcode` is a key a postcode binary can hold: non-empty,
+ * with every character in `1..0x7f`.
+ *
+ * `lookup` masks each input character with `0x7f`, so without this check `Á` would
+ * match a key holding `A`, where a `Map` built from the same binary misses.
+ */
+function isBinaryKey(postcode: string): boolean {
+	if (!postcode.length) return false
+
+	for (let index = 0; index < postcode.length; index++) {
+		const code = postcode.charCodeAt(index)
+
+		if (code === 0 || code > BINARY_KEY_CHAR_MAX) return false
+	}
+
+	return true
+}
+
+/**
+ * An anchor lookup that answers from postcode binaries in place.
+ *
+ * {@link anchorLookupFromPostcodes} with {@link mergeAnchorLookups} builds one object per postcode.
+ * This lookup keeps the resolvers and builds an entry when a postcode is read,
+ * folding the files in order exactly as the merge does.
+ */
+export class BinaryAnchorLookup implements AnchorLookup {
+	readonly #resolvers: readonly PostcodeBinaryResolver[]
+	#size: number | null = null
+
+	constructor(resolvers: readonly PostcodeBinaryResolver[]) {
+		this.#resolvers = resolvers
+	}
+
+	get(postcode: string): AnchorEntry | undefined {
+		if (!isBinaryKey(postcode)) return undefined
+
+		let merged: AnchorEntry | undefined
+
+		for (const resolver of this.#resolvers) {
+			const places = resolver.lookup(postcode)
+
+			if (!places.length) continue
+
+			const entry = anchorEntryOf(places)
+
+			if (merged) {
+				foldAnchorEntry(merged, entry)
+			} else {
+				merged = entry
+			}
+		}
+
+		return merged
+	}
+
+	has(postcode: string): boolean {
+		return isBinaryKey(postcode) && this.#resolvers.some((resolver) => resolver.lookup(postcode).length > 0)
+	}
+
+	/**
+	 * Every postcode once, in file order and then key order within a file.
+	 */
+	*keys(): Generator<string> {
+		for (let index = 0; index < this.#resolvers.length; index++) {
+			for (const { postcode } of this.#resolvers[index]!.groups()) {
+				if (!this.#resolvers.slice(0, index).some((earlier) => earlier.lookup(postcode).length > 0)) {
+					yield postcode
+				}
+			}
+		}
+	}
+
+	get size(): number {
+		if (this.#size === null) {
+			let count = 0
+
+			for (const _key of this.keys()) {
+				count++
+			}
+
+			this.#size = count
+		}
+
+		return this.#size
+	}
 }
 
 /**
@@ -141,32 +276,20 @@ const GB_INWARD_LENGTH = 3
  * Merges per-binary anchor lookups by unioning the country posteriors per postcode and meaning
  * the centroids, treating a `(0,0)` centroid as a placeholder that is never averaged in.
  */
-export function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
+export function mergeAnchorLookups(
+	lookups: readonly ReadonlyMap<string, AnchorEntry>[]
+): ReadonlyMap<string, AnchorEntry> {
 	if (lookups.length === 1) return lookups[0]!
-	const merged: AnchorLookup = new Map()
+	const merged = new Map<string, AnchorEntry>()
 
 	for (const lookup of lookups) {
 		for (const [postcode, entry] of lookup) {
 			const existing = merged.get(postcode)
 
-			if (!existing) {
+			if (existing) {
+				foldAnchorEntry(existing, entry)
+			} else {
 				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
-
-				continue
-			}
-
-			for (const country of Object.keys(entry.posterior)) {
-				existing.posterior[country] = 1
-			}
-
-			if (entry.lat !== 0 || entry.lon !== 0) {
-				if (existing.lat === 0 && existing.lon === 0) {
-					existing.lat = entry.lat
-					existing.lon = entry.lon
-				} else {
-					existing.lat = (existing.lat + entry.lat) / 2
-					existing.lon = (existing.lon + entry.lon) / 2
-				}
 			}
 		}
 	}

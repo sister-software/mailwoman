@@ -11,7 +11,7 @@
  *   The map merges the classifier's anchors with the binaries a release lists for the fallback only.
  */
 
-import { anchorLookupFromPostcodes } from "@mailwoman/neural/anchor-inference"
+import { BinaryAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
@@ -19,7 +19,59 @@ import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
 /**
  * A centroid per postcode key, the map the postcode-only fallback reads.
  */
-export type PostcodeCentroidLookup = Map<string, { lat: number; lon: number }>
+export interface PostcodeCentroidLookup {
+	get(key: string): { lat: number; lon: number } | undefined
+	readonly size: number
+	keys(): Iterable<string>
+}
+
+/**
+ * Centroid lookups read in priority order: the first layer holding a key answers for it.
+ *
+ * It replaces copying every layer's entries into one `Map`.
+ */
+class LayeredCentroidLookup implements PostcodeCentroidLookup {
+	readonly #layers: readonly PostcodeCentroidLookup[]
+	#size: number | null = null
+
+	constructor(layers: readonly PostcodeCentroidLookup[]) {
+		this.#layers = layers
+	}
+
+	get(key: string): { lat: number; lon: number } | undefined {
+		for (const layer of this.#layers) {
+			const centroid = layer.get(key)
+
+			if (centroid) return centroid
+		}
+
+		return undefined
+	}
+
+	*keys(): Generator<string> {
+		for (let index = 0; index < this.#layers.length; index++) {
+			for (const key of this.#layers[index]!.keys()) {
+				if (!this.#layers.slice(0, index).some((earlier) => earlier.get(key))) {
+					yield key
+				}
+			}
+		}
+	}
+
+	get size(): number {
+		if (this.#size === null) {
+			let count = 0
+
+			for (const _key of this.keys()) {
+				count++
+			}
+
+			this.#size = count
+		}
+
+		return this.#size
+	}
+}
 
 /**
  * Punctuation or symbols at either end of a written postcode.
@@ -116,21 +168,12 @@ export async function loadPostcodeCentroids(
 				throw new Error(`postcode centroids: ${url} answered ${response.status}`)
 			}
 
-			return anchorLookupFromPostcodes(
-				new PostcodeBinaryResolver(new Uint8Array(await response.arrayBuffer())).groups()
-			)
+			return new BinaryAnchorLookup([new PostcodeBinaryResolver(new Uint8Array(await response.arrayBuffer()))])
 		})
 	)
 
-	const merged: PostcodeCentroidLookup = new Map()
-
-	for (const lookup of lookups) {
-		for (const [key, entry] of lookup) {
-			merged.set(key, { lat: entry.lat, lon: entry.lon })
-		}
-	}
-
-	return merged
+	// A later file's centroid replaces an earlier one's for a key both hold.
+	return new LayeredCentroidLookup(lookups.toReversed())
 }
 
 /**
@@ -144,11 +187,5 @@ export function mergePostcodeCentroids(
 ): PostcodeCentroidLookup | null {
 	if (!centroids?.size) return anchors
 
-	const merged: PostcodeCentroidLookup = new Map(centroids)
-
-	for (const [key, entry] of anchors ?? []) {
-		merged.set(key, entry)
-	}
-
-	return merged
+	return new LayeredCentroidLookup(anchors ? [anchors, centroids] : [centroids])
 }

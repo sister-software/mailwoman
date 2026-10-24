@@ -5,13 +5,14 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
 import { startEarly } from "@mailwoman/core/promises"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix-index"
 
 import { parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, anchorLookupFromPostcodes, mergeAnchorLookups } from "#anchor-inference"
+import { type AnchorLookup, BinaryAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier"
 import {
@@ -288,9 +289,9 @@ async function loadPostcodeAnchorLookup(
 	fetchImpl: typeof fetch
 ): Promise<AnchorLookup | null> {
 	const settled = await Promise.all(
-		urls.map(async (url): Promise<AnchorLookup | null> => {
+		urls.map(async (url): Promise<PostcodeBinaryResolver | null> => {
 			try {
-				return anchorLookupFromPostcodes(new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).groups())
+				return new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl))
 			} catch (error) {
 				console.warn(
 					`[@mailwoman/neural/web/loader] optional postcode anchor binary skipped: ${url} — ` +
@@ -303,9 +304,10 @@ async function loadPostcodeAnchorLookup(
 		})
 	)
 
-	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
+	const resolvers = settled.filter(isPresent)
 
-	return lookups.length ? mergeAnchorLookups(lookups) : null
+	// The lookup answers from the binaries in the order the URLs list them, as the merged Map did.
+	return resolvers.length ? new BinaryAnchorLookup(resolvers) : null
 }
 
 /**

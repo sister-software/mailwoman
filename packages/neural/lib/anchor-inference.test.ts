@@ -7,6 +7,8 @@
  *   Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`) or the model is
  *   fed garbage at inference. The pinned vectors fail if the TypeScript implementation drifts.
  */
+import { mulberry32 } from "@mailwoman/core/random"
+import { PostcodeBinaryResolver, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -15,14 +17,53 @@ import {
 	anchoredRegionIDs,
 	anchorFeatureVector,
 	anchorLookupFromPostcodes,
+	BinaryAnchorLookup,
 	buildAnchorFeatures,
 	countShapedOnlyKeys,
+	mergeAnchorLookups,
 	shapedKeyerObligationViolation,
 	type AnchorEntry,
 	type AnchorLookup,
 } from "#anchor-inference"
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import type { TokenizedPiece } from "#tokenizer"
+
+describe("BinaryAnchorLookup", () => {
+	it("answers every key as the merged Map of the same binaries does", () => {
+		const random = mulberry32(17)
+		const countries = ["US", "DE", "FR"]
+
+		// Three files of 3,000 records each draw from one 6,000-key space, so keys recur across files.
+		// About one record in ten is unplaced.
+		const files = countries.map((country) =>
+			serializePostcodeBinary(
+				Array.from({ length: 3000 }, () => ({
+					postcode: String(10_000 + Math.floor(random() * 6000)),
+					country,
+					lat: random() < 0.1 ? 0 : random() * 120 - 60,
+					lon: random() < 0.1 ? 0 : random() * 300 - 150,
+				}))
+			)
+		)
+
+		const resolvers = files.map((bytes) => new PostcodeBinaryResolver(bytes))
+		const reference = mergeAnchorLookups(resolvers.map((resolver) => anchorLookupFromPostcodes(resolver.groups())))
+		const lookup = new BinaryAnchorLookup(resolvers)
+
+		expect(lookup.size).toBe(reference.size)
+		expect(new Set(lookup.keys())).toEqual(new Set(reference.keys()))
+
+		for (const key of reference.keys()) {
+			expect(lookup.get(key)).toEqual(reference.get(key))
+			expect(lookup.has(key)).toBe(true)
+		}
+
+		for (const key of ["99999", "", "1000", "１００００", "10000\u0000", "Á0000"]) {
+			expect(lookup.get(key)).toBe(reference.get(key))
+			expect(lookup.has(key)).toBe(reference.has(key))
+		}
+	})
+})
 
 describe("anchorLookupFromPostcodes", () => {
 	it("weights each member country 1 and averages only the non-zero places", () => {
