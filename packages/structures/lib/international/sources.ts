@@ -125,7 +125,7 @@ export const INTERNATIONAL_SOURCES: readonly StructureSource[] = [
 		attribution:
 			"Terrain: Mapzen; USGS 3DEP, GMTED2010 and SRTM; NOAA ETOPO1; Copernicus EU-DEM; © Commonwealth of Australia " +
 			"(Geoscience Australia) 2017; © offene Daten Österreichs; Open Government Licence – Canada; INEGI; " +
-			"© Land Information New Zealand; © Kartverket; © Environment Agency 2015; ArcticDEM",
+			"© Land Information New Zealand; © Kartverket; © Environment Agency 2015; ArcticDEM; shaded by Mailwoman",
 		attributionURL: "https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
 		note: "The hillshade layer reads these tiles directly from `elevation-tiles-prod.s3.amazonaws.com`.",
 	},
@@ -235,13 +235,25 @@ export const INTERNATIONAL_LICENSES: readonly LicenseDecision<StructureOperation
 	},
 	{
 		licenseID: "international-terrain-tiles",
-		state: LicenseReviewState.Unchecked,
-		publisherStatement:
-			"Each regional input carries its own license: public domain for the USGS and NOAA data, CC BY for Australia, " +
-			"Austria, New Zealand and Norway, OGL for Canada and the United Kingdom. The document states none for EU-DEM.",
-		note:
-			`Read from ${TERMS}/international-terrain-tiles.md. The EU-DEM input states no license, so the tiles cannot ` +
-			"be elected as a whole. The map credits every listed input meanwhile.",
+		state: LicenseReviewState.Elected,
+		electedTerms:
+			"Each input's own terms: public domain (USGS, NOAA), CC BY 4.0 (Austria, Australia, New Zealand, Norway, " +
+			"ArcticDEM), the Open Government Licences of Canada and the United Kingdom, INEGI's free-use terms, and " +
+			"Delegated Regulation (EU) No 1159/2013 for EU-DEM",
+		retrievedCopy: `${TERMS}/international-terrain-tiles-inputs.md`,
+		retrievedAt: "2026-10-24",
+		electedBecause:
+			"Every input's publisher permits reproduction, adaptation and redistribution with a source credit, which the " +
+			`map gives for each input listed in ${TERMS}/international-terrain-tiles.md.`,
+		operations: permittedByGrant({
+			fetch: "The tiles are published on AWS Open Data without access constraints.",
+			convert: 'Regulation 1159/2013 Art. 7(1)(d): "adaptation, modification and combination with other data".',
+			adapt: 'OGL v3: "adapt the Information"; INEGI: "Puede adaptar y reordenar la información."',
+			redistribute: 'Regulation 1159/2013 Art. 7(1)(b): "distribution"; OGL – Canada: "publish, ... distribute".',
+			"commercial-sublicense":
+				'OGL v3: "exploit the Information commercially"; INEGI: "Puede explotar comercialmente la información". ' +
+				"Regulation 1159/2013 Art. 7 permits use worldwide without a purpose limit.",
+		}),
 	},
 	{
 		licenseID: "international-wikimedia-commons-models",
