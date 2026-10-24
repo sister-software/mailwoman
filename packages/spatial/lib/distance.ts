@@ -2,11 +2,13 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Great-circle distance utilities. This module imports geometry directly so spatial's
- *   lowest-level math never reaches back through its public barrel.
+ * @file Great-circle and segment distance math over plain numbers.
+ *
+ *   This module imports no runtime geometry class. `GeoPoint` imports h3-js. The h3-js module allocates a 32 MiB heap when
+ *   it is first evaluated, and a caller that only measures a distance must not pay for that. The object-form distances
+ *   that take a `GeoPointInput` live in `#geometries/point-distance`.
  */
 
-import { GeoPoint, type GeoPointInput } from "#geometries/point"
 import { arealPolygons } from "#geometries/polygon"
 
 /**
@@ -29,7 +31,7 @@ export type EarthRadiusUnit = "km" | "miles" | "meters"
 /**
  * Radius of the Earth in kilometers, miles and meters.
  */
-const RADII = {
+export const EARTH_RADII = {
 	km: 6371,
 	miles: 3958.8,
 	meters: 6_371_000,
@@ -40,14 +42,14 @@ export type PlanetaryBodyID = "earth" | "moon" | "mars"
 /**
  * Mean radii in kilometers.
  *
- * Earth's is the value `radii` scales to its units.
+ * Earth's is the value {@link EARTH_RADII} scales to its units.
  * The Moon's and Mars's are the IAU mean radii the usgs planetary products reference
  * (the Moon as a sphere. Mars's mean radius, its DEM being on the areoid).
  *
  * A distance on a body other than Earth is meaningless without one of these.
  */
 export const BODY_RADII_KM = {
-	earth: RADII.km,
+	earth: EARTH_RADII.km,
 	moon: 1737.4,
 	mars: 3389.5,
 } as const satisfies Record<PlanetaryBodyID, number>
@@ -63,11 +65,14 @@ export interface GreatCircleOptions {
 }
 
 /**
- * Shared great-circle math with no sentinel handling.
+ * Returns the central angle in radians between two coordinates in decimal degrees, by the haversine formula.
  *
- * `unit` selects the Earth radius.
+ * It applies no sentinel handling.
+ * Multiply by a radius from {@link EARTH_RADII} or {@link BODY_RADII_KM} for a distance.
+ *
+ * @category Position
  */
-function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, unit: EarthRadiusUnit): number {
+export function centralAngle(lat1: number, lon1: number, lat2: number, lon2: number): number {
 	const dLat = (lat2 - lat1) * ConversionFactor.DegreesToRadians
 	const dLon = (lon2 - lon1) * ConversionFactor.DegreesToRadians
 
@@ -77,46 +82,7 @@ function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, uni
 			Math.cos(lat2 * ConversionFactor.DegreesToRadians) *
 			Math.pow(Math.sin(dLon / 2), 2)
 
-	return RADII[unit] * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-/**
- * Calculate the distance between two points on the Earth's surface.
- *
- * @category Position
- * @param point1 The first point to calculate the distance from.
- * @param point2 The second point to calculate the distance to.
- * @param unit The unit of measurement to return the distance in.
- *
- * @returns The distance between the two points in the specified unit.
- */
-export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: EarthRadiusUnit = "km"): number {
-	const p1 = GeoPoint.from(point1)
-	const p2 = GeoPoint.from(point2)
-
-	if (!p1 || !p2) return Number.NaN
-
-	return greatCircle(p1.latitude, p1.longitude, p2.latitude, p2.longitude, unit)
-}
-
-/**
- * Great-circle distance on the selected body. {@link haversine} is this function on Earth.
- * A caller with a body passes it here.
- *
- * The object form's `(0, 0)` sentinel applies: a `(0, 0)` input answers `NaN`.
- *
- * @category Position
- */
-export function greatCircleDistance(
-	point1: GeoPointInput,
-	point2: GeoPointInput,
-	options: GreatCircleOptions = {}
-): number {
-	const unit = options.unit ?? "km"
-	const body = options.body ?? "earth"
-	const scale = BODY_RADII_KM[body] / BODY_RADII_KM.earth
-
-	return haversine(point1, point2, unit) * scale
+	return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 /**
@@ -125,15 +91,15 @@ export function greatCircleDistance(
  * The formula's one true home — every resolver + eval consumer of the
  * `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
  *
- * Unlike {@link haversine}, this is pure math with no Null-Island sentinel:
- * `(0, 0)` is the Gulf of Guinea — a real point rather than "missing coordinate".
- * That sentinel convention belongs to the `GeoPointInput` object form
- * (where a 0/0 input means "no coordinate"), not to a raw scalar distance.
+ * Unlike `haversine` in `#geometries/point-distance`, this is pure math with no Null-Island
+ * sentinel: `(0, 0)` is the Gulf of Guinea — a real point rather than "missing coordinate".
+ * That sentinel convention belongs to the `GeoPointInput` object form,
+ * where a 0/0 input means "no coordinate".
  *
  * @category Position
  */
 export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-	return greatCircle(aLat, aLon, bLat, bLon, "km")
+	return EARTH_RADII.km * centralAngle(aLat, aLon, bLat, bLon)
 }
 
 /**

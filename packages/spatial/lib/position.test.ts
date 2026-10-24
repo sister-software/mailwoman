@@ -6,21 +6,12 @@
 
 import { expect, test } from "vitest"
 
-import { greatCircleDistance, haversine, haversineKm } from "#index"
+import { haversineKm } from "#index"
 
-// Earth mean radius the formula uses (radii.km).
+// Earth mean radius the formula uses (EARTH_RADII.km).
 // Reference distances below are derived from it rather than looked up — so they pin
 // the exact constant + formula rather than an approximation.
 const R = 6371
-
-// `[longitude, latitude]` tuples.
-// The object form keeps the `(0, 0)` sentinel, so the equator pair starts ten degrees east of (0, 0).
-test("greatCircleDistance takes the body radius: a quarter turn on the Moon is πR/2", () => {
-	const quarter = greatCircleDistance([10, 0], [100, 0], { body: "moon" })
-
-	expect(quarter).toBeCloseTo((Math.PI * 1737.4) / 2, 3)
-	expect(greatCircleDistance([10, 0], [100, 0])).toBeCloseTo(haversine([10, 0], [100, 0]), 9)
-})
 
 test("haversineKm: a point to itself is zero", () => {
 	expect(haversineKm(40.7128, -74.006, 40.7128, -74.006)).toBe(0)

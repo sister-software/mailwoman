@@ -23,7 +23,7 @@
  *      ordering silently discarded downstream.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversineKm } from "@mailwoman/spatial/distance"
 
 /**
  * Full magnitude of the nearness term at distance 0, before decay.
