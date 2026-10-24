@@ -1,8 +1,7 @@
 {
 	"name": "@mailwoman/mtf",
 	"version": "10.7.0",
-	"private": true,
-	"description": "Multilingual Token Framework: Mailwoman's subword tokenizer, a Rust core compiled to WASM with a TypeScript loader. It will replace @mailwoman/sentencepiece-wasm once it reproduces the shipped model's pieces and offsets.",
+	"description": "Multilingual Token Framework: Mailwoman's subword tokenizer, a Rust core compiled to WASM with a TypeScript loader. It reproduces SentencePiece v0.2.2's pieces and offsets on the shipped unigram model and is the tokenizer runtime for @mailwoman/neural.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -55,6 +54,9 @@
 			"node": "./lib/*.ts",
 			"default": "./out/*.js"
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*"

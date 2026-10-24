@@ -5,7 +5,8 @@ with a TypeScript loader for Node, browsers and Workers. `@mailwoman/neural`'s `
 it in place of `@mailwoman/sentencepiece-wasm`, which is Google SentencePiece v0.2.2 built with
 Emscripten. Issues #2843 and #2844 track the work.
 
-The workspace is private. The old package stays in the tree as the rollback runtime.
+The package publishes to npm with the rest of the release. The old package stays in the tree as the
+rollback runtime.
 
 ## Usage
 
