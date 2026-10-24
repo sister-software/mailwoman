@@ -8,7 +8,7 @@ import clsx from "clsx"
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 
 import { CoverageTable } from "../components/CoverageTable/CoverageTable.tsx"
-import { RECORDED_ON, TourStops } from "../components/HeroMap/tour.ts"
+import { TourStops } from "../components/HeroMap/tour.ts"
 import { HeroSearch } from "../components/HeroSearch/HeroSearch.tsx"
 import { useSiteConfig } from "../hooks/site.ts"
 
@@ -124,7 +124,9 @@ function HomepageHeader(): ReactNode {
 							)}
 						</div>
 					</figure>
-					<p className={styles.heroFine}>Answers recorded from Earth, the in-browser build, on {RECORDED_ON}.</p>
+					<p className={styles.heroFine}>
+						This answer was recorded from Earth, the in-browser build, on {stop.recordedOn}.
+					</p>
 				</div>
 			</div>
 		</header>

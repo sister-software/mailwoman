@@ -4,15 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The home page tour: six queries and the answers Earth gave them.
- *   Each answer was recorded from `earth.mailwoman.ai/?q=<query>` on `RECORDED_ON`.
+ *   Each answer was recorded from `earth.mailwoman.ai/?q=<query>` on the stop's `recordedOn` date.
  *   The tier is the one Earth reported, coarse ones included, so the tour shows what a lookup returns today.
- *   Re-record an entry when the gazetteer or the model changes what it returns.
+ *   Re-record an entry when the gazetteer or the model changes what it returns, and update its date.
  */
-
-/**
- * The date every answer below was read from Earth.
- */
-export const RECORDED_ON = "2026-10-22"
 
 export interface TourStop {
 	/**
@@ -39,6 +34,10 @@ export interface TourStop {
 	 * The camera zoom that frames the tier: closer for an address point, wider for a city.
 	 */
 	zoom: number
+	/**
+	 * The date the answer was read from Earth, as `YYYY-MM-DD`.
+	 */
+	recordedOn: string
 }
 
 /**
@@ -52,6 +51,7 @@ export const TourStops: readonly TourStop[] = [
 		coordinates: [-73.985, 40.7478],
 		tier: "interpolated address, ±64 m",
 		zoom: 15.5,
+		recordedOn: "2026-10-22",
 	},
 	{
 		landmark: "Buckingham Palace",
@@ -60,6 +60,7 @@ export const TourStops: readonly TourStop[] = [
 		coordinates: [-0.1416, 51.501],
 		tier: "postcode",
 		zoom: 15,
+		recordedOn: "2026-10-22",
 	},
 	{
 		landmark: "Notre-Dame de Paris",
@@ -68,6 +69,7 @@ export const TourStops: readonly TourStop[] = [
 		coordinates: [2.3428, 48.8587],
 		tier: "city",
 		zoom: 12.5,
+		recordedOn: "2026-10-22",
 	},
 	{
 		landmark: "Sagrada Família",
@@ -76,14 +78,16 @@ export const TourStops: readonly TourStop[] = [
 		coordinates: [2.1531, 41.4036],
 		tier: "city",
 		zoom: 12.5,
+		recordedOn: "2026-10-22",
 	},
 	{
-		landmark: "Shibuya Station",
-		query: "Shibuya Station, Tokyo",
+		landmark: "Shibuya",
+		query: "〒150-0043 東京都渋谷区道玄坂1丁目",
 		lang: "ja",
-		coordinates: [139.7539, 35.6951],
-		tier: "city",
-		zoom: 11.5,
+		coordinates: [139.7021, 35.6586],
+		tier: "borough",
+		zoom: 13,
+		recordedOn: "2026-10-24",
 	},
 	{
 		landmark: "Space Needle",
@@ -92,5 +96,6 @@ export const TourStops: readonly TourStop[] = [
 		coordinates: [-122.3493, 47.6205],
 		tier: "address point, ≤10 m",
 		zoom: 16,
+		recordedOn: "2026-10-22",
 	},
 ]
