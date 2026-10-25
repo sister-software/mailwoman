@@ -7,7 +7,8 @@ from .corpora import CORPUS_VERSIONS
 from .plan import BUCKET, CORPUS_SOURCE_ROOT, corpus_versions
 
 
-def _prefixes(path: str) -> list[str]:
+def list_prefixes(path: str) -> list[str]:
+    """The directory names directly under `path` on the bucket, read with `rclone lsd`. Runs in a container."""
     result = subprocess.run(  # noqa: S603
         ["rclone", "lsd", f":s3:{BUCKET}/{path}"],  # noqa: S607
         capture_output=True,
@@ -28,7 +29,7 @@ def bucket_census() -> dict[str, list[str]]:
     for entry in CORPUS_VERSIONS.values():
         staged.update(corpus_versions(entry))
 
-    on_bucket = _prefixes(f"{CORPUS_SOURCE_ROOT}/")
+    on_bucket = list_prefixes(f"{CORPUS_SOURCE_ROOT}/")
     present = sorted(version for version in staged if version in set(on_bucket))
     missing = sorted(version for version in staged if version not in set(on_bucket))
     unstaged = sorted(prefix for prefix in on_bucket if prefix not in staged)

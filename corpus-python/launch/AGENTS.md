@@ -34,8 +34,47 @@ the table of what lives where.
 
 Corpus + configs + tokenizer live in Cloudflare R2 (`mailwoman-assets`) → a **container-side `rclone`**
 pulls them into the `mailwoman-training` Modal Volume (`/data`) → the training reads from the volume.
-The local `.env` holds the R2 creds (`RCLONE_S3_*`). `launch/app.py` loads it itself, so `source .env`
-before `modal run` is not required. A local `rclone` does require it.
+
+## Settings and credentials
+
+`launch/settings.py` is the one place the launcher reads configuration. It reads `.env` the way
+`packages/core/lib/env/env-file.ts` does (the working directory's file, else the main checkout's), lets the
+process environment override it, and gives each value one documented default:
+
+| Variable                                                  | Default              | Meaning                                              |
+| --------------------------------------------------------- | -------------------- | ---------------------------------------------------- |
+| `MAILWOMAN_MODAL_APP`                                     | `mailwoman-training` | the Modal app                                        |
+| `MAILWOMAN_MODAL_VOLUME`                                  | `mailwoman-training` | the training volume                                  |
+| `MAILWOMAN_VOLUME_MOUNT`                                  | `/data`              | the volume's mount in a container                    |
+| `MAILWOMAN_R2_BUCKET`                                     | `mailwoman-assets`   | the R2 bucket                                        |
+| `MAILWOMAN_MODAL_TRAIN_GPU`                               | `A100-80GB`          | the training GPU; `--gpu` overrides it per launch    |
+| `MAILWOMAN_MODAL_GRADE_GPU` / `MAILWOMAN_MODAL_EVAL_GPU`  | `A100` / `A10G`      | the grading functions' GPUs                          |
+| `MAILWOMAN_MODAL_TRAIN_RETRIES`                           | `3`                  | retries after a failed or preempted training attempt |
+| `MAILWOMAN_MODAL_R2_SECRET` / `MAILWOMAN_MODAL_HF_SECRET` | unset                | named Modal secrets                                  |
+
+The non-secret values are baked into the image with `Image.env`, so a container reads what the local
+process read. `mailwoman_train/env.py` reads `MAILWOMAN_VOLUME_MOUNT` and `MAILWOMAN_SHA256_CACHE` from
+that environment.
+
+**Credentials come from a named Modal secret.** Create it once from `.env` (operator step; it is a cloud
+resource):
+
+```bash
+set -a; source .env; set +a
+modal secret create mailwoman-r2 \
+  RCLONE_S3_PROVIDER="$RCLONE_S3_PROVIDER" RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_ACCESS_KEY_ID" \
+  RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_SECRET_ACCESS_KEY" RCLONE_S3_ENDPOINT="$RCLONE_S3_ENDPOINT" \
+  RCLONE_S3_REGION="$RCLONE_S3_REGION" RCLONE_S3_NO_CHECK_BUCKET=true
+modal secret create mailwoman-hf HF_TOKEN="$HF_TOKEN"
+```
+
+then add `MAILWOMAN_MODAL_R2_SECRET=mailwoman-r2` and `MAILWOMAN_MODAL_HF_SECRET=mailwoman-hf` to `.env`.
+Until then the fallback copies the `RCLONE_S3_*` keys from `.env` into an ephemeral secret, as before.
+Neither path raises at import, so `versions`, `debug_volume`, `run_tests` and `export_onnx` run without
+R2 credentials; `sync`, `sync_assets` and the R2 pushes raise at their start naming the missing keys.
+
+Every rclone transfer passes `--s3-no-check-bucket`. R2 answers the bucket check with `NotImplemented`,
+and `.env`'s `RCLONE_S3_NO_CHECK_BUCKET` reaches only a shell that sourced it.
 
 ## ⚠️ `modal volume put` is BLIND — never use it for the corpus
 
@@ -53,12 +92,15 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in manifest_files(data))"` must be 0.**
    _This bit us on v1.6.0: the manifest's 690 base parquet files pointed at `$MAILWOMAN_DATA_ROOT`, so on the volume
    the loader would re-root them under the overlay dir (which holds only the new recipe output) and find no base file._
-3. **Push the deltas to R2.** `set -a; source .env; set +a` then
-   `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**"`
-   (delivers the new config) and `rclone copy <overlay-dir>/ :s3:mailwoman-assets/corpus/<ver>/<corpus>/`.
-   R2 intermittently returns **501** — ride it with `--low-level-retries 30 --retries 8` (each op
-   succeeds on a retry). **Pass rclone flags inline rather than via a shell variable** — zsh doesn't word-split
-   unquoted vars, so `$FLAGS` arrives as one bogus flag.
+3. **Push the deltas to R2 with the uploader:**
+   `node packages/mailwoman/out/cli/main.js corpus upload --corpus-directory <entry> --code`. It is the one
+   writer. For a nested local entry (`<entry>/corpus-<entry>/`) it sends the inner directory to
+   `corpus/<entry>/`, the `WRAPPED` layout. `sync_assets` reads the layout back from the bucket listing:
+   `corpus/<entry>/corpus-<entry>/` is `NESTED`, anything else `WRAPPED`, and both land at
+   `/data/corpus/versioned/<entry>/corpus-<entry>/`. A flat local entry needs `sync_assets --layout flat`,
+   because the bucket cannot tell it from `WRAPPED`. When a hand-run `rclone` is unavoidable, pass
+   `--s3-no-head --s3-no-check-bucket --low-level-retries 30 --retries 8` inline (zsh does not word-split
+   an unquoted `$FLAGS`).
 4. **Add a row to `launch/corpora.py`** rather than a function. A row names its transfers with `corpus()`,
    `mirror()` and `file_into()`, the `__pycache__` directories to clear, and the paths that must exist
    afterwards — the config, the MANIFEST, your recipe output, and a re-rooted base parquet file. The base + tokenizer
@@ -74,15 +116,49 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
    mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it out of the variable
    set. A new tokenizer is a separate, intended change.
-7. **Launch the GPU train (the real spend).** Through the detached launcher, never from a shell: a
-   `modal run` is a local client whose death cancels the remote input, so a harness that kills the
-   client loses the run. The Bash guard refuses the direct spelling for that reason.
+7. **Launch the GPU train (the real spend).**
 
    ```bash
    node packages/mailwoman/tools/dev-tools/launch-detached.run.ts \
      --log <file> --cwd corpus-python \
-     -- uv run --extra dev modal run -d -m launch.train_remote --config <recipe>.yaml --resume none
+     -- uv run --extra dev modal run -d -m launch.train_remote --config <recipe>.yaml --fresh
    ```
+
+   The entry point runs `preflight` on CPU and waits for it. The preflight hashes every corpus file
+   into the volume sidecar `/data/audits/sha256-cache.json` (keyed by path, size and mtime, so a later
+   process rehashes only a changed file), runs the corpus-receipt, validation-coverage and label-support
+   audits the config declares, checks the wall-clock budget, and writes
+   `/data/audits/preflight-<key>.json`. The key digests the config's sha256 and the MANIFEST's file sha256
+   set. The GPU function verifies that receipt and refuses to start without it.
+
+   The entry point then **spawns** the GPU function and prints `function_call_id=fc-…` and a dashboard
+   link. A spawned call does not depend on the client, but the app must be detached (`-d`): without it the
+   app stops when the entry point returns. Read the call later with
+   `uv run --extra dev python -m launch.call_status fc-… [--wait <s>]`, which starts no container.
+
+   The detached launcher stays, for the preflight: that phase is a blocking `.remote()` that Modal
+   cancels when the client dies, and on a cold sha256 cache it hashes the whole corpus. The Bash guard
+   still refuses the direct spelling.
+
+   **Resume is automatic.** The GPU function runs under `modal.Retries` (`MAILWOMAN_MODAL_TRAIN_RETRIES`,
+   default 3) with `single_use_containers=True`, and every attempt resumes from the newest complete
+   `step-*` checkpoint in the run's output directory (`launch/resume.py`). `--fresh` clears that directory
+   once, in the preflight, before anything is spawned; no attempt deletes anything. `--branch-from
+   <checkpoint>` names a start point used only while the output directory holds no checkpoint. The old
+   `--resume` flag is gone; recipe headers that still spell `--resume none` mean `--fresh`, and
+   `--resume auto` is the default behavior.
+
+   **We run `modal run -d` rather than a deployed app.** A deployment would let any shell spawn training
+   by name (`modal.Function.from_name`), but it adds an operator `modal deploy` after every `launch/`
+   change, and a stale deployment would run old launcher code against a new config. The training code
+   that changes most already travels on the volume, so the ephemeral app costs nothing a deployment would
+   save. Revisit if launches need to start from somewhere without this checkout.
+
+   **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card; the default stays
+   `A100-80GB`. The probe model is small (384 hidden, 6 layers, batch 128) and likely fits a cheaper card,
+   but the wall-clock preflight's 4.25 steps/s is an A100 measurement, and a slower card can push a 60k
+   recipe past the 6 h timeout. Change the default only after measuring steps/s on the candidate card
+   with a short run and updating `MEASURED_STEPS_PER_SECOND`.
 
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
@@ -136,7 +212,12 @@ also ships configs uses `PACKAGE_AND_CONFIGS`.
 
 The Volume persists across runs (outputs under `/data/output*`). A failed train doesn't corrupt the
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
-`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts.
+`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts; the path
+is the config's `output_dir` without the `/data` mount. A run that died past its retries continues from
+its last save on a relaunch without `--fresh`.
+
+The local-mount fallback `stage_v8cjk_regs` mounts local corpora only under
+`MAILWOMAN_STAGE_LOCAL_CORPORA=1`. Every other `modal run` uploads none of them.
 
 ## After the run: the promote/no-promote check (v1.6.0-boundary-stress example)
 

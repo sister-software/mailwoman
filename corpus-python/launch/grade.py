@@ -15,12 +15,14 @@ from __future__ import annotations
 from typing import Any
 
 from .app import BUCKET, VOL_MOUNT, app, r2_secret, training_image, vol
+from .plan import STEADY
+from .settings import settings
 
 
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
-    gpu="A100",
+    gpu=settings().grade_gpu,
     timeout=3600,
     memory=32768,
 )
@@ -79,8 +81,8 @@ def eval_de(
     step: str,
     anchor_lookup: str = "",
     anchor_off: bool = False,
-    val_path: str = "/data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet",
-    tokenizer_path: str = "/data/models/tokenizer/v0.6.0-a0/tokenizer.model",
+    val_path: str = f"{VOL_MOUNT}/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet",
+    tokenizer_path: str = f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model",
     max_rows: int = 4000,
 ) -> None:
     """DE-locality readout for the anchor pilot (#239/#240): per-tag PARSER F1 on the German val for
@@ -182,7 +184,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
 
     vol.reload()
     # Pull the fixture from R2 (self-contained + re-runnable).
-    R = "--low-level-retries 30 --retries 8"
+    R = STEADY
     subprocess.run(  # noqa: S602
         f"rclone copy :s3:{BUCKET}/eval/fixtures/ban-fragments-fr.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
         shell=True,
@@ -341,7 +343,7 @@ def grade_evidence_bundle(
     from mailwoman_train.tokenizer import Tokenizer, encode_row
 
     vol.reload()
-    R = "--low-level-retries 30 --retries 8"
+    R = STEADY
     subprocess.run(  # noqa: S602
         f"rclone copy :s3:{BUCKET}/eval/fixtures/ban-fragments-fr.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
         shell=True,
@@ -529,7 +531,7 @@ def measure_exposure(config_name: str, countries: str = "", draws: int = 0, repl
 @app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
-    gpu="A10G",
+    gpu=settings().eval_gpu,
     timeout=3600,
     memory=32768,
 )

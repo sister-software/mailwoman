@@ -91,7 +91,7 @@ export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) =
 	}
 
 	const remote = `:s3:${bucket}/${key}`
-	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
+	const flags = ["--s3-no-head", "--s3-no-check-bucket", "--s3-disable-checksum", "--no-update-modtime"]
 	const result = await runProcess("rclone", ["copyto", file, remote, ...flags], { reject: false })
 
 	if (result.exitCode !== 0) {

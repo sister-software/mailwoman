@@ -116,7 +116,32 @@ def private() -> PrivateEnv:
     return PrivateEnv(deepseek_api_key=_blank_as_absent("DEEPSEEK_API_KEY"))
 
 
+#: Where the training volume mounts in a Modal container, the root of every `/data/...` path a config states.
+#: `launch/settings.py` reads the same variable with the same default and bakes it into the image.
+DEFAULT_VOLUME_MOUNT = "/data"
+
+
+@cache
+def volume_mount() -> Path:
+    """`MAILWOMAN_VOLUME_MOUNT`, or `DEFAULT_VOLUME_MOUNT`. Unlike the data root, this has a default, because
+    it names a path inside a container the launcher defines rather than a location on someone's machine.
+    """
+    return Path(_blank_as_absent("MAILWOMAN_VOLUME_MOUNT") or DEFAULT_VOLUME_MOUNT)
+
+
+@cache
+def sha256_cache_path() -> Path | None:
+    """`MAILWOMAN_SHA256_CACHE`: the sidecar that remembers per-file sha256 results across processes.
+
+    Unset means no persistent cache, which is the local default; the Modal image sets it to a file on the volume.
+    """
+    value = _blank_as_absent("MAILWOMAN_SHA256_CACHE")
+    return Path(value) if value else None
+
+
 def reset_cache() -> None:
     """Drop the cached views so a test can change the environment and read it again."""
     public.cache_clear()
     private.cache_clear()
+    volume_mount.cache_clear()
+    sha256_cache_path.cache_clear()

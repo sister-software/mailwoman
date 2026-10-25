@@ -32,6 +32,10 @@ const DEFAULT_BUCKET = "mailwoman-assets"
  * although its bytes landed (observed 2026-10-21 with `--dump headers`).
  * `--s3-no-head` skips that request, and {@linkcode R2_SIZE_CHECK} confirms the transfer afterwards.
  *
+ * R2 also answers rclone's pre-write bucket check with `NotImplemented`, failing every write.
+ * `--s3-no-check-bucket` skips it, so the transfer does not depend on `.env`
+ * setting `RCLONE_S3_NO_CHECK_BUCKET`.
+ *
  * The retry counts stay above rclone's defaults of 10 low-level and 3 high-level
  * for transient failures on a long transfer.
  * `push_artifact` in `corpus-python/launch/artifacts.py` uses the same two values.
@@ -39,7 +43,7 @@ const DEFAULT_BUCKET = "mailwoman-assets"
  * `rclone sync` compares size and modification time, so a re-run after any failure skips
  * the files that landed and re-sends only a file it was mid-way through.
  */
-const R2_TRANSFER_FLAGS = ["--s3-no-head", "--low-level-retries", "30", "--retries", "8"]
+const R2_TRANSFER_FLAGS = ["--s3-no-head", "--s3-no-check-bucket", "--low-level-retries", "30", "--retries", "8"]
 
 /**
  * The comparison that replaces rclone's skipped post-upload `HEAD`: every local

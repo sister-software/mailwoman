@@ -27,7 +27,7 @@ CONFIGS = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
     timeout=600,
 )
 def diagnose_corpus(
-    corpus_dir: str = "/data/corpus/versioned/v0.4.0/corpus-v0.4.0",
+    corpus_dir: str = f"{VOL_MOUNT}/corpus/versioned/v0.4.0/corpus-v0.4.0",
     verify_country: str = "",
     verify_source: str = "",
 ) -> None:
@@ -134,7 +134,7 @@ def diagnose_corpus(
     timeout=1800,
 )
 def country_census_raw(
-    corpus_dir: str = "/data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
+    corpus_dir: str = f"{VOL_MOUNT}/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
     rows: int = 300000,
 ) -> None:
     """Which countries the corpus CONTAINS, before any filter touches it.
@@ -222,7 +222,7 @@ def country_census_raw(
     timeout=3600,
 )
 def digit_prior(
-    corpus_dir: str = "/data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
+    corpus_dir: str = f"{VOL_MOUNT}/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment",
     config_name: str = "v3.1.0-fr-fragment.yaml",
     rows: int = 400000,
     seed: int = 42,
@@ -549,7 +549,7 @@ The cap bounds a receipt for a country whose label vocabulary turns out to be la
 )
 def locale_supply_census(
     country: str = "GB",
-    corpus_dir: str = "/data/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape",
+    corpus_dir: str = f"{VOL_MOUNT}/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape",
     splits: str = "train,val,test",
 ) -> None:
     """How much INDEPENDENT address data one country has, as opposed to its row count.

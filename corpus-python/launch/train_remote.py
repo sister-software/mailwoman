@@ -24,7 +24,7 @@ from .grade import (
 from .mean_init import mean_init
 from .stage import stage_v8cjk_regs
 from .syncs import sync, sync_assets
-from .train import _train_gpu, main, preflight_corpus_receipts
+from .train import _train_gpu, main, preflight
 from .volume import debug_volume, run_tests, versions
 
 __all__ = [
@@ -54,7 +54,7 @@ __all__ = [
     "mean_init",
     "measure_exposure",
     "piece_prior",
-    "preflight_corpus_receipts",
+    "preflight",
     "push_artifact_r2",
     "quantize_onnx",
     "run_tests",

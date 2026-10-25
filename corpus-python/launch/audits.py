@@ -174,7 +174,7 @@ def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yam
 )
 def audit_suffix_feed(
     config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml",
-    relabel_lexicon: str = "/data/gazetteer/affix-relabel-lexicon-v2.json",
+    relabel_lexicon: str = f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json",
     rows: int = 250000,
     seed: int = 1569,
 ) -> None:

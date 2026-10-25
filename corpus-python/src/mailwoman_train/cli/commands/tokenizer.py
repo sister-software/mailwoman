@@ -11,10 +11,14 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ...env import volume_mount
+
 NAME = "tokenizer"
 
-#: Where a bare version string resolves. A `--corpus` that is already a path never reaches here.
-CORPUS_VERSIONED_ROOT = Path("/data/corpus/versioned")
+
+def corpus_versioned_root() -> Path:
+    """Where a bare version string resolves, under the volume mount. A `--corpus` that is already a path never reaches here."""
+    return volume_mount() / "corpus" / "versioned"
 
 
 def add_parser(subparsers: Any) -> None:
@@ -23,7 +27,7 @@ def add_parser(subparsers: Any) -> None:
         "--corpus",
         required=True,
         help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
-        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit corpus-tree path "
+        "$MAILWOMAN_VOLUME_MOUNT/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit corpus-tree path "
         "(parent of train/, val/, test/).",
     )
     parser.add_argument(
@@ -89,7 +93,7 @@ def resolve_corpus_dir(spec: str) -> Path:
         if len(candidates) == 1 and (candidates[0] / "train").is_dir():
             return candidates[0].resolve()
     version = spec.lstrip("v")
-    candidate = CORPUS_VERSIONED_ROOT / f"v{version}" / f"corpus-v{version}"
+    candidate = corpus_versioned_root() / f"v{version}" / f"corpus-v{version}"
     if (candidate / "train").is_dir():
         return candidate
     raise FileNotFoundError(f"could not resolve --corpus={spec!r}; tried {candidate}/train and direct path forms")

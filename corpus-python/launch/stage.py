@@ -5,19 +5,22 @@ the same container-side write and commit with no bucket in between, for when the
 401 — it did on 2026-09-07, locally and from a Modal container alike. A corpus that is built and
 cannot be staged is a run that cannot start.
 
-    MAILWOMAN_DATA_ROOT=<root> modal run -m launch.train_remote::stage_v8cjk_regs
+    MAILWOMAN_STAGE_LOCAL_CORPORA=1 MAILWOMAN_DATA_ROOT=<root> modal run -m launch.train_remote::stage_v8cjk_regs
 
-The mount is read at `modal run` time, so the image below is built from whatever the local data root
-holds then. A corpus the root does not have is reported as not mounted rather than skipped silently.
+The mount is read at `modal run` time, and only when `MAILWOMAN_STAGE_LOCAL_CORPORA=1`, so every other
+launch uploads none of it. The image below is built from whatever the local data root holds then. A corpus the root does not have is reported as not mounted rather than skipped silently.
 """
 
 from __future__ import annotations
 
 import os
 
+import modal
+
 from .app import VOL_MOUNT, app, training_image, vol
 from .corpora import CORPUS_VERSIONS
 from .plan import corpus_versions
+from .settings import settings
 from .syncs import verify_staged
 
 #: The corpora this path stages, read from the row the bucket path would have transferred. A separate list
@@ -25,14 +28,20 @@ from .syncs import verify_staged
 #: corpus omitted from this list is never copied. The run later fails on a missing parquet file.
 V8CJK_REGS_CORPORA = tuple(corpus_versions(CORPUS_VERSIONS["v8cjk_regs"]))
 
-_LOCAL_DATA_ROOT = os.environ.get("MAILWOMAN_DATA_ROOT", "")
+_LOCAL_DATA_ROOT = settings().data_root or ""
 _LOCAL_CORPUS_PYTHON = os.path.join(os.path.dirname(__file__), "..")
 
-_stage_image = training_image.add_local_dir(
-    os.path.join(_LOCAL_CORPUS_PYTHON, "src"), remote_path="/staged/corpus-python/src"
-).add_local_dir(os.path.join(_LOCAL_CORPUS_PYTHON, "scripts"), remote_path="/staged/corpus-python/scripts")
+#: Whether this process mounts the local sources and corpora. Modal uploads an image's local directories on
+#: every `modal run` of the app, so mounting unconditionally sent about 465 MB of corpora with every launch.
+_MOUNT = settings().stage_local_corpora and modal.is_local()
 
-if _LOCAL_DATA_ROOT:
+_stage_image = training_image
+if _MOUNT:
+    _stage_image = _stage_image.add_local_dir(
+        os.path.join(_LOCAL_CORPUS_PYTHON, "src"), remote_path="/staged/corpus-python/src"
+    ).add_local_dir(os.path.join(_LOCAL_CORPUS_PYTHON, "scripts"), remote_path="/staged/corpus-python/scripts")
+
+if _MOUNT and _LOCAL_DATA_ROOT:
     for _name in V8CJK_REGS_CORPORA:
         _local = os.path.join(_LOCAL_DATA_ROOT, "corpus", "versioned", _name)
         if os.path.isdir(_local):
@@ -48,6 +57,11 @@ def stage_v8cjk_regs() -> None:
     """Copy the mounted local corpora and training code into the volume and commit. verify like the sync would."""
     import shutil
 
+    if not os.path.isdir("/staged/corpus-python/src"):
+        raise RuntimeError(
+            "nothing is mounted: launch with MAILWOMAN_STAGE_LOCAL_CORPORA=1 and MAILWOMAN_DATA_ROOT set, "
+            "so the image carries the local sources and corpora"
+        )
     vol.reload()
     for relative in (
         "corpus-python/src",

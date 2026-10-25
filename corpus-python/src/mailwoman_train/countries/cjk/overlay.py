@@ -43,6 +43,7 @@ from typing import Any
 import pyarrow.parquet as pq
 
 from ...corpora.builder import verify_cjk_record, write_corpus_parquet
+from ...env import volume_mount
 from ...labels import resolve_label_set
 from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ...tokenizer.char import PAD_CHAR_ID, UNK_CHAR_ID, build_char_vocab, load_char_vocab, save_char_vocab
@@ -51,7 +52,7 @@ LABEL_SET_NAME = "stage3-cjk"
 CN_SOURCE = "coarse-placer-cn-units"
 CN_REGISTER = "cn-units"
 JP_VERSION = "v8-jp-full-2026-08-04"
-DEFAULT_VOLUME_ROOT = "/data/corpus/versioned"
+DEFAULT_VOLUME_ROOT = str(volume_mount() / "corpus" / "versioned")
 
 
 def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:

@@ -4,25 +4,25 @@ Import this, never redefine it. One `modal.App` object is what makes `modal run 
 launch.train_remote::<name>` able to find a function defined in any module of this package, so a
 second app object here would produce functions that no launcher can call.
 
-The secrets read the local checkout at deploy time. The image pins the export/quant toolchain.
-The container and local process both evaluate them at import time. Each tolerates the container's
-empty environment.
+Every name, mount and GPU comes from `launch/settings.py`. Importing this module raises nothing when
+credentials are absent: a function that needs R2 calls `require_r2_env()` at its start, so `versions`,
+`debug_volume`, `run_tests` and `export_onnx` run without R2 credentials.
 """
 
 from __future__ import annotations
 
 import os
-import subprocess
 
 import modal
 
 from .plan import BUCKET, VOL_MOUNT
+from .settings import container_env, read_keys, resolve_env_file, settings
 
-app = modal.App("mailwoman-training")
+app = modal.App(settings().app_name)
 
-vol = modal.Volume.from_name("mailwoman-training")
+vol = modal.Volume.from_name(settings().volume_name)
 
-#: Where a run's artifacts land on the volume. The corpus and bucket paths live in `plan.py`.
+#: Where a run without a `/data/...`-style `output_dir` lands on the volume. The corpus and bucket paths live in `plan.py`.
 OUTPUT_DIR = f"{VOL_MOUNT}/output"
 
 __all__ = [
@@ -32,15 +32,26 @@ __all__ = [
     "app",
     "hf_secret",
     "r2_secret",
+    "require_r2_env",
     "training_image",
     "vol",
 ]
+
+#: The rclone release the image installs, and the sha256 of its linux-amd64 zip from the release's
+#: `SHA256SUMS`. The install script this replaced fetched whatever release was current at build time.
+RCLONE_VERSION = "v1.71.2"
+RCLONE_ZIP_SHA256 = "ab9fa5877cee91c64fdfd61a27028a458cf618b39259e5c371dc2ec34a12e415"
+_RCLONE_ZIP = f"rclone-{RCLONE_VERSION}-linux-amd64"
 
 training_image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("curl", "unzip")
     .run_commands(
-        "curl -sSL https://rclone.org/install.sh | bash",
+        f"curl -fsSL -o /tmp/rclone.zip https://downloads.rclone.org/{RCLONE_VERSION}/{_RCLONE_ZIP}.zip",
+        f"echo '{RCLONE_ZIP_SHA256}  /tmp/rclone.zip' | sha256sum -c -",
+        "unzip -q /tmp/rclone.zip -d /tmp",
+        f"install -m 0755 /tmp/{_RCLONE_ZIP}/rclone /usr/local/bin/rclone",
+        f"rm -rf /tmp/rclone.zip /tmp/{_RCLONE_ZIP}",
     )
     .pip_install(
         # Pinned export/quant toolchain. These five drive the ONNX graph that ships to browsers.
@@ -66,7 +77,8 @@ training_image = (
         # This dependency is floored because it only decodes a format. It does not decide token IDs
         # or graph structure. A corpus part file written by one supported version reads under another.
         "zstandard>=0.23",
-        "datasets>=2.19",
+        # The same floor as the `train` extra in the root `pyproject.toml`.
+        "datasets>=5.0.1",
         "tqdm>=4.66",
         # `mailwoman_train.env` reads it for the platform data root. No module imports it until the
         # anchor painter reaches `features/postcode_shapes.py`, so its absence surfaces mid-training
@@ -74,8 +86,11 @@ training_image = (
         "platformdirs>=4.3",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
-        "trackio",
+        # Pinned to the version `uv.lock` resolves, so an image rebuild cannot move the dashboard client.
+        "trackio==0.42.0",
     )
+    # The container reads the launch settings the local process used to define the app.
+    .env(container_env())
     # Every launcher function lives in a module of this package. Modal re-imports that module inside
     # the container. Without the package, the import raises ModuleNotFoundError before the function
     # body runs. Modal reports that import failure as a Modal fault.
@@ -94,75 +109,37 @@ R2_KEYS = (
     "RCLONE_S3_NO_CHECK_BUCKET",
 )
 
+#: The keys without which rclone cannot reach the bucket at all.
+R2_REQUIRED_KEYS = R2_KEYS[:4]
 
-def _env_file() -> str:
-    """The checkout's untracked .env, resolved so a git WORKTREE finds the main checkout's copy.
+HF_KEYS = ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN")
 
-    `.env` is untracked and lives only in the main checkout, so walking `..` from this file lands a
-    worktree on a path that does not exist. `--git-common-dir` answers the main checkout's `.git` from
-    inside any worktree. Its parent is the directory that holds `.env`. The plain relative path is
-    the fallback for a tarball or a checkout git cannot answer for.
+
+def _secret(name: str | None, keys: tuple[str, ...], required: tuple[str, ...]) -> modal.Secret:
+    """A named Modal secret when one is configured, otherwise the `.env` fallback.
+
+    The named form is the intended one: `Secret.from_name` checks ``required`` when the app starts and
+    reads nothing local. The fallback copies the local values into an ephemeral secret, and only in the
+    local process, because the container has no `.env`. It never raises: a function that needs the keys
+    calls `require_r2_env`, so a function that needs none still runs without them.
     """
-    fallback = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
-    try:
-        common = subprocess.run(  # noqa: S603
-            ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],  # noqa: S607
-            cwd=os.path.dirname(__file__),
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError):
-        return fallback
-    return os.path.join(os.path.dirname(common), ".env") if common else fallback
+    if name:
+        return modal.Secret.from_name(name, required_keys=list(required))
+    return modal.Secret.from_dict({**read_keys(keys)} if modal.is_local() else {})
 
 
-def _read_env_keys(keys: tuple[str, ...]) -> dict[str, str]:
-    """Read the keys listed in the .env file, letting os.environ override their values."""
-    env: dict[str, str] = {}
-    env_file = _env_file()
-    if os.path.isfile(env_file):
-        with open(env_file) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, _, val = line.partition("=")
-                    if key in keys:
-                        env[key] = val
-    for key in keys:
-        if key in os.environ:
-            env[key] = os.environ[key]
-    return env
+r2_secret = _secret(settings().r2_secret_name, R2_KEYS, R2_REQUIRED_KEYS)
+hf_secret = _secret(settings().hf_secret_name, HF_KEYS, ())
 
 
-def _load_r2_env() -> dict[str, str]:
-    """The R2 credentials, or a raise naming the file that did not supply them.
-
-    An empty secret is not a usable state and must not be built without an error: the container starts, rclone
-    reports `s3 provider "" not known`, and the operator reads a storage error for a missing file. So
-    the absence is reported here, where the path is known, rather than a Modal app later.
-    """
-    env = _read_env_keys(R2_KEYS)
-    missing = [key for key in R2_KEYS[:3] if not env.get(key)]
-    if missing:
-        raise RuntimeError(
-            f"no R2 credentials: {_env_file()} supplied none of {missing} and neither did the "
-            f"environment. rclone cannot reach the bucket without them."
-        )
-    return env
-
-
-# The container has no `.env` file. Build the secret from the local checkout only.
-# An unconditional secret would crash every function that does not use R2.
-# The unpacking builds the `dict[str, str | None]` that `from_dict` declares. A `dict[str, str]` has a narrower value type.
-r2_secret = modal.Secret.from_dict({**_load_r2_env()} if modal.is_local() else {})
-
-
-def _load_hf_env() -> dict[str, str]:
-    """The HF token, or no value. Absence is tolerated here and refused in `_load_r2_env` — a run
-    without R2 cannot read its corpus, while a run without this token still trains and logs to CSV.
-    """
-    return _read_env_keys(("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"))
-
-
-hf_secret = modal.Secret.from_dict({**_load_hf_env()} if modal.is_local() else {})
+def require_r2_env() -> None:
+    """Raise inside a container whose secret lacks the R2 credentials, naming where they should have come from."""
+    missing = [key for key in R2_REQUIRED_KEYS if not os.environ.get(key)]
+    if not missing:
+        return
+    source = (
+        f"the Modal secret {settings().r2_secret_name!r}"
+        if settings().r2_secret_name
+        else f"the local .env ({resolve_env_file() or 'none found'}) through the fallback secret"
+    )
+    raise RuntimeError(f"no R2 credentials: {source} supplied none of {missing}. rclone cannot reach the bucket.")

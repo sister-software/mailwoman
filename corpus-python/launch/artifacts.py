@@ -139,7 +139,7 @@ def quantize_onnx(
 def push_artifact_r2(volume_path: str, r2_subpath: str) -> None:
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
-    This copies `<volume_path>` to `:s3:mailwoman-assets/<r2_subpath>`; pull it down locally with
+    This copies `<volume_path>` to `:s3:<bucket>/<r2_subpath>`, the bucket `MAILWOMAN_R2_BUCKET` names; pull it down locally with
     `rclone copy`. The bucket is versioned, and R2 answers rclone's post-upload `HEAD ?versionId=` with 501
     every time, so the copy runs with `--s3-no-head` and a size check confirms the object afterwards.
 
@@ -153,7 +153,7 @@ def push_artifact_r2(volume_path: str, r2_subpath: str) -> None:
     if not os.path.exists(volume_path):
         raise RuntimeError(f"volume artifact not found: {volume_path}")
     dst = f":s3:{BUCKET}/{r2_subpath}"
-    cmd = f"rclone copyto '{volume_path}' '{dst}' --s3-no-head --low-level-retries 30 --retries 8 --stats-one-line"
+    cmd = f"rclone copyto '{volume_path}' '{dst}' --s3-no-head --s3-no-check-bucket --low-level-retries 30 --retries 8 --stats-one-line"
     print(f"push: {volume_path} -> {dst}")
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)  # noqa: S602
     if result.returncode != 0:

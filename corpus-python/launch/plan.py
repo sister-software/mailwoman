@@ -2,14 +2,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-BUCKET = "mailwoman-assets"
-VOL_MOUNT = "/data"
+from .settings import settings
+
+BUCKET = settings().bucket
+VOL_MOUNT = settings().volume_mount
+
+#: R2 refuses the bucket-existence check rclone makes before a write with `NotImplemented`, so every write
+#: fails until this is passed. `.env` sets `RCLONE_S3_NO_CHECK_BUCKET`, but a flag here does not depend on
+#: the container's secret carrying it.
+NO_CHECK_BUCKET = "--s3-no-check-bucket"
+
+WIDE = (
+    f"{NO_CHECK_BUCKET} --low-level-retries 30 --retries 8 --transfers 12 --checkers 24 "
+    "--stats 30s --stats-log-level NOTICE"
+)
 
 
-WIDE = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
-
-
-STEADY = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+STEADY = f"{NO_CHECK_BUCKET} --low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
 
 
 PACKAGE = ("__pycache__",)
@@ -28,6 +37,19 @@ NESTED = "nested"
 WRAPPED = "wrapped"
 
 FLAT = "flat"
+
+LAYOUTS = (NESTED, WRAPPED, FLAT)
+
+
+def detect_layout(version: str, prefixes: list[str]) -> str:
+    """The layout of `corpus/<version>/` on the bucket, read from the directory names directly under it.
+
+    `mailwoman corpus upload` sends a nested local entry's inner `corpus-<version>/` to `corpus/<version>/`,
+    which is `WRAPPED`. A hand-run `rclone copy` of the whole entry leaves `corpus-<version>/` under the key,
+    which is `NESTED`. Reading the bucket keeps one reader for both writers. `FLAT` cannot be told apart from
+    `WRAPPED` on the bucket, so it is reachable only through an explicit `--layout`.
+    """
+    return NESTED if f"corpus-{version}" in prefixes else WRAPPED
 
 
 @dataclass(frozen=True)

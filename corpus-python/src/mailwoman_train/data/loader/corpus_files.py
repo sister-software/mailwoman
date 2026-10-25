@@ -18,6 +18,9 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
+from ...env import sha256_cache_path
+from .sha256_cache import cached_sha256, record_sha256
+
 #: The retired manifest keys older corpora use for their parquet file list, newest first. Built corpora are
 #: immutable, so the reader accepts every key and the writer emits only `files`. The keys are concatenated
 #: because the repository's vocabulary checks ban both words.
@@ -51,7 +54,12 @@ def verify_file_sha256(path: Path, expected: str | None) -> None:
     key = (str(path), expected)
     if key in _VERIFIED:
         return
-    actual = file_sha256(path)
+    cache_path = sha256_cache_path()
+    actual = cached_sha256(cache_path, path) if cache_path is not None else None
+    if actual is None:
+        actual = file_sha256(path)
+        if cache_path is not None:
+            record_sha256(cache_path, path, actual)
     if actual != expected:
         raise ValueError(f"{path} hashes to sha256 {actual} and MANIFEST lists {expected}")
     _VERIFIED.add(key)

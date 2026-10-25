@@ -13,9 +13,21 @@ from __future__ import annotations
 
 import os
 
-from .app import VOL_MOUNT, app, r2_secret, training_image, vol
+from .app import VOL_MOUNT, app, r2_secret, require_r2_env, training_image, vol
+from .bucket import list_prefixes
 from .corpora import CORPUS_VERSIONS
-from .plan import WIDE, WRAPPED, Copy, Transfer, corpus, mirror, plan_sync, resolve
+from .plan import (
+    CORPUS_SOURCE_ROOT,
+    LAYOUTS,
+    WIDE,
+    Copy,
+    Transfer,
+    corpus,
+    detect_layout,
+    mirror,
+    plan_sync,
+    resolve,
+)
 
 
 def _run_transfers(transfers: list[Transfer]) -> None:
@@ -110,6 +122,7 @@ def sync(version: str = "") -> None:
         )
 
     print(f"Staging {version} from R2 (container-side)...")
+    require_r2_env()
     vol.reload()
     _run_transfers(plan.transfers)
     _clear_pycache(plan.pycache_paths)
@@ -131,16 +144,27 @@ def sync_assets(
     tokenizer: str = "",
     code: bool = True,
     extras: str = "",
+    layout: str = "",
 ) -> None:
     """Copy corpus versions, a tokenizer, the training code and extra files from R2 to the volume.
 
-    Corpus versions land in the layout that `mailwoman corpus upload` writes:
-    ``:s3:{BUCKET}/corpus/<version>/`` -> ``{VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/``.
+    Each corpus version lands at ``{VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/`` whichever way it
+    was pushed. The bucket layout is read from the listing of ``corpus/<version>/`` (`detect_layout`):
+    ``corpus/<version>/corpus-<version>/`` is `NESTED`, anything else is `WRAPPED`, the layout
+    `mailwoman corpus upload` writes. ``--layout nested|wrapped|flat`` overrides the detection, and is the
+    only way to stage `FLAT` (a flat local entry, landing at ``corpus/versioned/<version>/``).
     ``extras`` is a comma-separated list of ``<r2-path>><vol-subdir>`` pairs.
     """
+    if layout and layout not in LAYOUTS:
+        raise RuntimeError(f"--layout {layout!r} is not one of {', '.join(LAYOUTS)}")
+    require_r2_env()
     vol.reload()
 
-    copies: list[Copy] = [corpus(name.strip(), WRAPPED) for name in corpus_versions.split(",") if name.strip()]
+    copies: list[Copy] = []
+    for name in [n.strip() for n in corpus_versions.split(",") if n.strip()]:
+        chosen = layout or detect_layout(name, list_prefixes(f"{CORPUS_SOURCE_ROOT}/{name}/"))
+        print(f"corpus {name}: {chosen} layout{'' if layout else ' (detected from the bucket listing)'}")
+        copies.append(corpus(name, chosen))
 
     if tokenizer:
         copies.append(mirror(f"models/tokenizer/{tokenizer}/"))

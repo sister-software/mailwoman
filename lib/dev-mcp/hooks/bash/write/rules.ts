@@ -182,9 +182,10 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python " +
 	"-- uv run --extra dev modal run …`, " +
 	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
-	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
-	"the container mid-training. Watch the run by polling the volume for its next checkpoint rather than by holding the client " +
-	"open. A run that did die continues with `--resume auto` from its last save."
+	"does not make the client disposable during the CPU preflight, which the entry point waits on: a client that dies there " +
+	"cancels it. Once the entry point prints `function_call_id=…` the GPU call is spawned and no longer depends on the client. " +
+	"Read its state with `python -m launch.call_status <id>` or by polling the volume for its next checkpoint. A relaunch " +
+	"without `--fresh` resumes from the run's last save."
 
 /**
  * The advice for a {@link REMOVER} refusal.

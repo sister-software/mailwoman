@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ...env import volume_mount
 from ..packages_root import find_packages_root
 from ..smoke_mode import add_smoke_mode_flag, apply_smoke_mode
 
@@ -76,7 +77,7 @@ def run(args: argparse.Namespace) -> int:
     (checkpoint / "eval-report.json").write_text(json.dumps(report_to_json(report), indent=2) + "\n", encoding="utf-8")
 
     run_name = Path(cfg.train.output_dir).name
-    fp32_path = Path("/data/models/onnx") / f"model-{run_name}-fp32.onnx"
+    fp32_path = volume_mount() / "models" / "onnx" / f"model-{run_name}-fp32.onnx"
     export_to_onnx(model, fp32_path, max_length=cfg.data.max_length, pad_token_id=tokenizer.pad_id)
 
     samples = []
@@ -86,7 +87,7 @@ def run(args: argparse.Namespace) -> int:
             break
     print(f"smoke: ONNX parity {verify_parity(model, fp32_path, samples, atol=1e-4)}")
 
-    int8_path = Path("/data/models/quantized") / f"model-{run_name}-int8.onnx"
+    int8_path = volume_mount() / "models" / "quantized" / f"model-{run_name}-int8.onnx"
     quantize_dynamic_int8(fp32_path, int8_path)
     print(f"smoke: int8 → {int8_path}")
 
