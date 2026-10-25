@@ -304,17 +304,31 @@ describe("applyEntityTiers for an unresolved input with no venue span", () => {
 	it("answers the whole input from the one entity that holds its name", () => {
 		const result = unresolvedLocality()
 
-		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, poiVenueTier: true })
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, isStreetGeneric: NO_GENERICS, poiVenueTier: true })
 
 		expect(result.lat).toBe(35.65808)
 		expect(result.entity?.name).toBe("渋谷駅")
-		expect(result.locality).toBeNull()
+		expect(result.locality).toBe("渋谷駅")
+	})
+
+	it("leaves a bare street to the street parse even when a POI holds its name", () => {
+		const shop = stubLookup([{ name: "Rodeo Drive", categoryID: "shopping", lat: 34.07, lon: -118.4, country: "US" }])
+		const result = { ...unresolvedLocality(), locality: null, street: "Rodeo Drive" }
+
+		applyEntityTiers(result, [], "Rodeo Drive", [], {
+			poiLookup: shop,
+			isStreetGeneric: (token) => token === "drive",
+			poiVenueTier: true,
+		})
+
+		expect(result.lat).toBeNull()
+		expect(result.street).toBe("Rodeo Drive")
 	})
 
 	it("leaves the input unresolved when poiVenueTier is off", () => {
 		const result = unresolvedLocality()
 
-		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station })
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, isStreetGeneric: NO_GENERICS })
 
 		expect(result.lat).toBeNull()
 	})
