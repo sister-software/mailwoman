@@ -5,20 +5,12 @@
  * @file Code units: each digit run or alphanumeric code in an address, segmented as one unit (#2845).
  */
 
+import type { TextSpan } from "@mailwoman/query-shape/types"
+
 /**
- * One code unit and where it sits in the text.
+ * One code unit and its half-open UTF-16 offsets into the text.
  */
-export interface CodeUnit {
-	text: string
-	/**
-	 * The UTF-16 offset of the unit's first character.
-	 */
-	start: number
-	/**
-	 * The UTF-16 offset one past the unit's last character.
-	 */
-	end: number
-}
+export type CodeUnit = TextSpan
 
 /**
  * A run of ASCII letters and digits holding at least one digit, with a hyphen

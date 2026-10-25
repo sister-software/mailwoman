@@ -206,6 +206,8 @@ export interface BuildCandidateResult {
  * Builds the candidate lookup database from a WOF admin database and replaces any existing output.
  * The builder adds an FTS5 trigram index for fuzzy lookup.
  */
+// repo-health-ignore export-name-affix -- writes candidate.db, and the gazetteer
+// pipeline's buildCandidate runs a whole build around it
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})
 

@@ -1,6 +1,6 @@
 # v7.1.0 trains on the v0.7.1-osm-exposure corpus: v0.7.0-de-holdout plus OpenStreetMap address rows for
 # RU, CN, IN, ID, NG, PK, BD and VN from the 2026-10-02 Geofabrik extracts, clipped to each country's
-# geoBoundaries outline and routed through `corpus split-slice`.
+# geoBoundaries outline and routed through `corpus split-overlay`.
 #
 # The differences from v7.0.0-de-holdout-60k.yaml are:
 #

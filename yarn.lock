@@ -7284,6 +7284,7 @@ __metadata:
   resolution: "@mailwoman/mtf@workspace:packages/mtf"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     "@types/node": "npm:^26.6.5"
   languageName: unknown
   linkType: soft

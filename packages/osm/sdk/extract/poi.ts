@@ -193,7 +193,7 @@ export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceR
 
 	const merged: POISourceRow[] = []
 
-	const metres = (a: POISourceRow, b: POISourceRow) =>
+	const meters = (a: POISourceRow, b: POISourceRow) =>
 		haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
 
 	for (const group of groups.values()) {
@@ -208,7 +208,7 @@ export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceR
 			// The loop visits every index pushed during it, which is the single-link closure.
 			for (const member of cluster) {
 				for (let j = 0; j < group.length; j++) {
-					if (!seen.has(j) && metres(group[member]!, group[j]!) <= STATION_COMPLEX_M) {
+					if (!seen.has(j) && meters(group[member]!, group[j]!) <= STATION_COMPLEX_M) {
 						seen.add(j)
 						cluster.push(j)
 					}
@@ -224,7 +224,7 @@ export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceR
 				let cost = 0
 
 				for (const other of members) {
-					cost += metres(candidate, other)
+					cost += meters(candidate, other)
 				}
 
 				if (cost < bestCost) {
