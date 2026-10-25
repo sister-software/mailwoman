@@ -145,6 +145,17 @@ describe("US augmentations", () => {
 		expect(out.augmentation?.name).toBe("state-expand")
 	})
 
+	it("stateExpand leaves a state code inside the street unchanged", () => {
+		const out = stateExpand(
+			baseRow({
+				raw: "2348 GA HIGHWAY 32 E, WRAY, GA 317983503",
+				components: { house_number: "2348", street: "GA HIGHWAY 32 E", locality: "WRAY", region: "GA" },
+			})
+		)!
+
+		expect(out.raw).toBe("2348 GA HIGHWAY 32 E, WRAY, Georgia 317983503")
+	})
+
 	it("stateAbbreviate Oregon → OR", () => {
 		const out = stateAbbreviate(
 			baseRow({
