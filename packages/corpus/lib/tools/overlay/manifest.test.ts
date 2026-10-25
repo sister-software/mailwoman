@@ -171,7 +171,7 @@ describe("assembleOverlayManifest", () => {
 					},
 				],
 			})
-		).rejects.toThrow(/Run 'mailwoman corpus split-slice'/)
+		).rejects.toThrow(/Run 'mailwoman corpus split-overlay'/)
 	})
 
 	/**

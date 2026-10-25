@@ -413,7 +413,7 @@ meant to attribute an effect.
    diversity teaches lexical pattern-matching instead of the boundary.
 3. Overlay manifests declare lineage against a base corpus version
    (`mailwoman corpus overlay-manifest` writes one). Never hand-edit a manifest.
-4. Route every corpus overlay parquet through `mailwoman corpus split-slice`, which writes a split
+4. Route every corpus overlay parquet through `mailwoman corpus split-overlay`, which writes a split
    attribute keyed by the holdout policy's hash, then register the file and its attribute with
    `mailwoman corpus overlay-manifest --split-attribute`. If a corpus overlay is appended as a train
    file and a country's only rows of some kind come from that overlay, the country ends up with no
@@ -422,7 +422,7 @@ meant to attribute an effect.
    composed into German order, with `surface` `composed` rather than `invented`) was placed by a
    script with a hardcoded `(filename, split)` list that included a val file and no test file. DE's
    test split therefore held 36,595 rows and zero street rows, and 770 of the 3,987 `source_id`s in
-   its val file are also in train. The eight overlays routed through `split-slice` in the same corpus
+   its val file are also in train. The eight overlays routed through `split-overlay` in the same corpus
    each have a `.val.parquet` and a `.test.parquet`, and `part-gb` leaks 37 of 4,453.
 5. Train with `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
    (~1h A100). Configs live in `corpus-python/src/mailwoman_train/configs/`. Copy the latest,

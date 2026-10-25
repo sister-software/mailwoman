@@ -31,7 +31,7 @@
  * The board groups airport gates, boarding gates, gb-street-gate and gate-house-venue rows.
  * Fort Worth is a city in Texas.
  * The NPPES record lists 4004 WORTH ST, DALLAS, TX.
- * The mailwoman corpus slice command, corpus align-slice and corpus split-slice write train files.
+ * The mailwoman corpus slice command and corpus align-slice write train files.
  * The push URL holds the x-access-token user.
  */
 

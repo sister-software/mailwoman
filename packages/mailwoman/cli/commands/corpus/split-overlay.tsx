@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus split-slice --input <parquet> --out-dir <dir>` — route one overlay parquet
+ *   `mailwoman corpus split-overlay --input <parquet> --out-dir <dir>` — route one overlay parquet
  *   through the holdout policy the base build applies, writing the split attribute file that decides
  *   each row's split by `source_id`, keyed by the policy's hash.
  *
@@ -20,7 +20,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "split-slice",
+	name: "split-overlay",
 	description: "Route an overlay parquet through the corpus holdout policy.",
 	options: {
 		input: { type: "string", required: true, description: "The overlay parquet to route" },

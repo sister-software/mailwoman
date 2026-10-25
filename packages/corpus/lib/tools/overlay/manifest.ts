@@ -172,7 +172,7 @@ export interface OverlayFile {
 	parquet: string
 	source: string
 	/**
-	 * The split attribute `corpus split-slice` wrote for the file, by its name under the overlay directory.
+	 * The split attribute `corpus split-overlay` wrote for the file, by its name under the overlay directory.
 	 *
 	 * A file with an attribute sits at `<newDir>/<parquet>` and holds every split's rows,
 	 * and the attribute decides each row.
@@ -629,7 +629,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 			throw new Error(
 				`${attributePath} describes ${attribute.file.name} at sha256 ${attribute.file.sha256} with ` +
 					`${attribute.file.rows} rows, and ${local} hashes to ${entry.sha256} with ${entry.rows}. ` +
-					`Run 'mailwoman corpus split-slice' on the file the manifest adds.`
+					`Run 'mailwoman corpus split-overlay' on the file the manifest adds.`
 			)
 		}
 

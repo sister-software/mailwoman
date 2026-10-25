@@ -7,7 +7,7 @@
  *
  *   The regression board holds rows for the locales the model already served, so a corpus change that adds
  *   countries shows its gains only where the board happens to hold a row. This grader reads rows that
- *   `corpus split-slice` routed to the test split and scores every arm on the same rows. Each row is parsed
+ *   `corpus split-overlay` routed to the test split and scores every arm on the same rows. Each row is parsed
  *   with its own country as the locale hint.
  *
  *   Every arm records one outcome per row, keyed by a stable row identity, so a later step can compute paired

@@ -12,10 +12,10 @@
  *
  *   Each overlay groups under its unsplit original. In a manifest assembled before split attributes, an entry
  *   ending `.train.parquet`, `.val.parquet` or `.test.parquet` is one output of the filename route `corpus
- *   split-slice` used then, so several entries collapse to one original. This groups them and reports the
+ *   split-overlay` used then, so several entries collapse to one original. This groups them and reports the
  *   original each came from.
  *
- *   **Every original is routed, including one holding no row the policy holds out.** `split-slice` writes
+ *   **Every original is routed, including one holding no row the policy holds out.** `split-overlay` writes
  *   an attribute for every file, and one with empty held-out lists still records that the policy saw it.
  *   A hand-maintained per-file list can omit a file and silently overlap holdout with train.
  *   A complete route costs a few seconds per small file.
@@ -68,7 +68,7 @@ if (!search) throw new Error("--search <dir,dir,...> is required")
 const BASE_FILE = /^part-\d{4}\.parquet$/u
 
 /**
- * The suffix `corpus split-slice` appends.
+ * The suffix `corpus split-overlay` appends.
  * Several entries from one original share it.
  */
 const ROUTED_SUFFIX = /\.(train|val|test)\.parquet$/u
@@ -307,7 +307,7 @@ async function routedLists(
 		.map((entry) => basename(String(entry)))
 		.toSorted((a, b) => a.localeCompare(b))
 
-	// `corpus split-slice` writes one `<stem>.split.<policy hash>.json` beside each file it routed.
+	// `corpus split-overlay` writes one `<stem>.split.<policy hash>.json` beside each file it routed.
 	// Each names its parquet, so `overlay-manifest --split-attribute` takes them unpaired.
 	const splitAttribute = (await Globerator.from("*.split.*.json", { cwd: directory, onlyFiles: true }).toArray())
 		.map((entry) => basename(String(entry)))
