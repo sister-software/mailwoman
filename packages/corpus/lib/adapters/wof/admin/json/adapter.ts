@@ -39,7 +39,7 @@
  *   License: CC0. The adapter stamps every row with `CC0-1.0`.
  */
 
-import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
+import { layoutForCountry, layoutPrintsLargestFirst, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { isPresent } from "@mailwoman/core/objects"
@@ -110,12 +110,15 @@ const SERVED_NAME_LANGUAGES: readonly string[] = ["jpn", "kor", "zho", "eng", "f
 /**
  * The country whose hierarchy order and line join a language's own hierarchies are written in.
  *
- * A language official in several countries resolves only when all of them write a hierarchy
- * in the same order and with the same join, as Korean does in both Koreas.
- * The first of them in table order is returned.
+ * A language official in several countries resolves to the layout (order and join) that
+ * more than half of them write, and the first such country in table order is returned.
+ * Korean resolves in both Koreas.
  *
- * A language whose countries disagree resolves to `null`, and its hierarchies
- * take the record's own country's layout.
+ * Chinese resolves to China's unseparated largest-first layout, which China,
+ * Taiwan and Hong Kong write in Chinese script.
+ *
+ * A language whose countries have no majority layout resolves to `null`,
+ * and its hierarchies take the record's own country's layout.
  */
 export function layoutCountryForLanguage(language: string): string | null {
 	const cached = LANGUAGE_LAYOUTS.get(language)
@@ -126,11 +129,26 @@ export function layoutCountryForLanguage(language: string): string | null {
 		.filter(([, entry]) => entry.official.includes(language))
 		.map(([code]) => code)
 
-	const layouts = new Set(
-		countries.map((code) => `${isLargestFirstSystem(code)}\u0000${lineJoinForCountry(code, "local")}`)
-	)
+	// The local-script layout's order, because a language's own hierarchies are written in its script.
+	// A country whose local layout states no order (Macau, Singapore) does not vote.
+	const layoutOf = (code: string): string | null => {
+		const layout = layoutForCountry(code, "local")
+		const largestFirst = layout ? layoutPrintsLargestFirst(layout) : null
 
-	const resolved = layouts.size === 1 ? countries[0]! : null
+		return typeof largestFirst === "boolean" ? `${largestFirst}\u0000${lineJoinForCountry(code, "local")}` : null
+	}
+
+	const voters = countries.filter((code) => layoutOf(code) != null)
+	const tally = new Map<string, number>()
+
+	for (const code of voters) {
+		const layout = layoutOf(code)!
+
+		tally.set(layout, (tally.get(layout) ?? 0) + 1)
+	}
+
+	const majority = [...tally].find(([, count]) => count * 2 > voters.length)?.[0]
+	const resolved = majority ? (voters.find((code) => layoutOf(code) === majority) ?? null) : null
 
 	LANGUAGE_LAYOUTS.set(language, resolved)
 

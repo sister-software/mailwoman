@@ -177,6 +177,10 @@ describe("layoutCountryForLanguage", () => {
 	it("resolves a language every country writing it lays out the same way", () => {
 		expect(layoutCountryForLanguage("jpn")).toBe("JP")
 	})
+
+	it("resolves Chinese to the local-script layout its countries share", () => {
+		expect(layoutCountryForLanguage("zho")).toBe("CN")
+	})
 })
 
 describe("nameSlotsFor", () => {
