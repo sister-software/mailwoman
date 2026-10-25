@@ -6,7 +6,12 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { isLargestFirstSystem, lineJoinForCountry, type AddressScript } from "@mailwoman/codex/address/layouts"
+import {
+	adminRunJoinForCountry,
+	isLargestFirstSystem,
+	lineJoinForCountry,
+	type AddressScript,
+} from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { classifyTokenScript } from "@mailwoman/query-shape/character-class"
 import type { ScriptCode } from "@mailwoman/query-shape/types"
@@ -43,7 +48,7 @@ export function renderHierarchy(
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } | null {
 	const order = isLargestFirstSystem(country) ? [...HIERARCHY_ORDER].toReversed() : HIERARCHY_ORDER
 	const present: Partial<Record<ComponentTag, string>> = {}
-	const parts: string[] = []
+	const parts: Array<{ tag: ComponentTag; value: string }> = []
 
 	for (const tag of order) {
 		const value = components[tag]?.trim()
@@ -51,13 +56,34 @@ export function renderHierarchy(
 		if (!value) continue
 
 		present[tag] = value
-		parts.push(value)
+		parts.push({ tag, value })
 	}
 
 	if (!parts.length) return null
 
-	return { raw: parts.join(lineJoinForCountry(country, hierarchyScript(parts))), components: present }
+	const script = hierarchyScript(parts.map((part) => part.value))
+	const lineJoin = lineJoinForCountry(country, script)
+	const adminJoin = adminRunJoinForCountry(country, script)
+
+	// Two adjacent admin units share a line and take the admin-run join.
+	// The postcode and the country sit on lines of their own.
+	const raw = parts
+		.map((part, index) => {
+			if (!index) return part.value
+
+			const shared = ADMIN_RUN_TAGS.has(part.tag) && ADMIN_RUN_TAGS.has(parts[index - 1]!.tag)
+
+			return (shared ? adminJoin : lineJoin) + part.value
+		})
+		.join("")
+
+	return { raw, components: present }
 }
+
+/**
+ * The hierarchy tags a layout prints together on its admin line.
+ */
+const ADMIN_RUN_TAGS: ReadonlySet<ComponentTag> = new Set(["dependent_locality", "locality", "subregion", "region"])
 
 /**
  * Scripts whose addresses join their units without a separator or with a single space.
@@ -143,6 +169,19 @@ export interface NameSlotOptions {
 	 * @defaultValue `rec.name` verbatim.
 	 */
 	canonicalName?: (rec: WOFRecord) => string
+	/**
+	 * Ranks a preferred-name language for one record, lower first.
+	 *
+	 * Keys are visited in rank order, and a value two keys share goes to the first,
+	 * so the rank decides which language a shared name renders under.
+	 * Brooklyn's `name:wuu_x_preferred` and `name:zho_x_preferred` both hold 布鲁克林区,
+	 * and in source order `wuu` would claim it.
+	 *
+	 * Keys without a preferred-name language follow the ranked ones in source order.
+	 *
+	 * @defaultValue Source order.
+	 */
+	languageRank?: (language: string) => number
 }
 
 /**
@@ -175,7 +214,17 @@ export function nameSlotsFor(rec: WOFRecord, options: NameSlotOptions = {}): Nam
 	const seen = new Set<string>([canonicalSelfName])
 	const slots: NameSlot[] = [{ key: "default", value: canonicalSelfName }]
 
-	for (const [rawKey, variant] of rec.nameVariants) {
+	const rank = options.languageRank
+
+	const keyRank = (rawKey: string): number => {
+		const language = PREFERRED_KEY.exec(rawKey)?.[1]
+
+		return rank && language ? rank(language) : Number.POSITIVE_INFINITY
+	}
+
+	const entries = rank ? [...rec.nameVariants].toSorted(([a], [b]) => keyRank(a) - keyRank(b) || 0) : rec.nameVariants
+
+	for (const [rawKey, variant] of entries) {
 		const values = nameValues(variant)
 		const language = PREFERRED_KEY.exec(rawKey)?.[1]
 

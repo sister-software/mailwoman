@@ -192,9 +192,10 @@ describe("nameSlotsFor", () => {
 			})
 		)
 
-		expect(slots.map((s) => s.key)).toEqual(["default", "name-eng-x-colloquial", "name-rus-x-preferred"])
-		expect(slots.map((s) => s.value)).toEqual(["Saint Petersburg", "St. Petersburg", "Санкт-Петербург"])
-		expect(slots[2]!.language).toBe("rus")
+		// Preferred-name keys come first in language-rank order, then the other keys in source order.
+		expect(slots.map((s) => s.key)).toEqual(["default", "name-rus-x-preferred", "name-eng-x-colloquial"])
+		expect(slots.map((s) => s.value)).toEqual(["Saint Petersburg", "Санкт-Петербург", "St. Petersburg"])
+		expect(slots[1]!.language).toBe("rus")
 	})
 
 	it("emits every value of a key that holds several", () => {
@@ -230,6 +231,38 @@ describe("nameSlotsFor", () => {
 
 		expect(kept).toHaveLength(8)
 		expect(kept).toContain("eng")
+	})
+
+	it("ranks the served languages ahead of the alphabet, so Japanese stays inside the cap for a US place", () => {
+		const languages = ["ara", "azb", "aze", "bel", "ben", "bul", "cdo", "ckb", "ell", "epo", "jpn", "kor", "zho"]
+
+		const slots = nameSlotsFor(
+			rec({
+				name: "Brooklyn",
+				placetype: "borough",
+				nameVariants: new Map(languages.map((language) => [`name:${language}_x_preferred`, `B-${language}`])),
+			})
+		)
+
+		const kept = slots.map((s) => s.language).filter(isPresent)
+
+		expect(kept).toHaveLength(8)
+		expect(kept).toEqual(expect.arrayContaining(["jpn", "kor", "zho"]))
+	})
+
+	it("gives a name two languages share to the served language, so zho keeps Brooklyn's 布鲁克林区 from wuu", () => {
+		const slots = nameSlotsFor(
+			rec({
+				name: "Brooklyn",
+				placetype: "borough",
+				nameVariants: new Map([
+					["name:wuu_x_preferred", "布鲁克林区"],
+					["name:zho_x_preferred", "布鲁克林区"],
+				]),
+			})
+		)
+
+		expect(slots.find((s) => s.value === "布鲁克林区")?.language).toBe("zho")
 	})
 
 	it("uses the OpenCage-canonical country name for the default slot of a country record", () => {

@@ -93,9 +93,19 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * New York City carries a preferred name in over 200 languages, and each localized
  * hierarchy adds two rows per record, so an uncapped run multiplies the rows of
  * the best-covered places by the number of languages.
- * The record's country's official languages are chosen first, then the rest by language code.
+ * The record's country's official languages are chosen first, then `SERVED_NAME_LANGUAGES`,
+ * then the rest by language code.
  */
 const LOCALIZED_HIERARCHY_CAP = 8
+
+/**
+ * The name languages a shipped model reads, ranked after the record country's official
+ * languages when the cap chooses which localized hierarchies to render.
+ *
+ * The CJK family reads Japanese, Korean and Chinese, and the Latin family's locale packages read the rest.
+ * A language outside the list still renders when the cap leaves room, in language-code order.
+ */
+const SERVED_NAME_LANGUAGES: readonly string[] = ["jpn", "kor", "zho", "eng", "fra", "deu", "spa", "ita", "por"]
 
 /**
  * The country whose hierarchy order and line join a language's own hierarchies are written in.
@@ -315,20 +325,30 @@ function localizedVariants(
  * makes {@linkcode variantsFor} render a localized hierarchy for them.
  */
 export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
+	const official = new Set(OFFICIAL_LANGUAGES[rec.country]?.official)
+
+	// Official languages first, then the served languages in their listed order, then every other language.
+	const rank = (language: string): number => {
+		if (official.has(language)) return -1
+
+		const served = SERVED_NAME_LANGUAGES.indexOf(language)
+
+		return served === -1 ? SERVED_NAME_LANGUAGES.length : served
+	}
+
 	const slots = wofNameSlotsFor(rec, {
 		canonicalName: (record) =>
 			placetypeToTag(record.placetype) === "country"
 				? (COUNTRY_DISPLAY_NAME[record.country] ?? record.name)
 				: record.name,
+		languageRank: rank,
 	})
-
-	const official = new Set(OFFICIAL_LANGUAGES[rec.country]?.official)
 
 	const kept = new Set(
 		slots
 			.map((slot) => slot.language)
 			.filter(isPresent)
-			.toSorted((a, b) => Number(official.has(b)) - Number(official.has(a)) || a.localeCompare(b))
+			.toSorted((a, b) => rank(a) - rank(b) || a.localeCompare(b))
 			.slice(0, LOCALIZED_HIERARCHY_CAP)
 	)
 
