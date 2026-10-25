@@ -10,8 +10,8 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { isAlpha3bLanguageCode } from "#resources/languages"
 import { type Alpha2LanguageCode, type Alpha3bLanguageCode, Alpha3bToAlpha2 } from "#resources/languages/types.gen"
-import { tryWithBackoff } from "#resources/whosonfirst/backoff"
 import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
+import { tryWithBackoff } from "#utils/sleep"
 
 export interface PlacetypeDataSourceOptions<
 	P extends WhosOnFirstPlacetype = WhosOnFirstPlacetype,
