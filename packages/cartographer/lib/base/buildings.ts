@@ -68,6 +68,63 @@ const popHeight = (target: ExpressionSpecification): ExpressionSpecification => 
 ]
 
 /**
+ * How far a tagged facade or roof color moves the building color from the base tint, from 0 to 1.
+ *
+ * An OSM color can be a saturated name such as `red`.
+ * At full strength it would read as signage on the pale map.
+ */
+const TAGGED_COLOR_WEIGHT = 0.5
+
+/**
+ * A tagged `#rrggbb` color mixed toward the base building color in Lab space.
+ */
+const taggedColor = (key: "facade_color" | "roof_color"): ExpressionSpecification => [
+	"interpolate-lab",
+	["linear"],
+	TAGGED_COLOR_WEIGHT,
+	0,
+	GuideMapPalette.building,
+	1,
+	["to-color", ["get", key]],
+]
+
+/**
+ * The tint for a building's `district` index, or the base building color when the tile has no index.
+ *
+ * The tuple type requires at least one branch, so index 0's branch is written out
+ * and the rest are spread after it.
+ */
+function districtTint(): ExpressionSpecification {
+	const [first, ...rest] = GuideMapPalette.buildingDistricts
+	const branches = rest.flatMap((tint, index) => [index + 1, tint])
+
+	return [
+		"match",
+		["to-number", ["coalesce", ["get", "district"], -1]],
+		0,
+		first,
+		...branches,
+		GuideMapPalette.building,
+	]
+}
+
+/**
+ * A building's extrusion color.
+ *
+ * The tagged facade color comes first, then the roof color.
+ * A building with neither takes its district tint, and a tile built before districts
+ * existed falls back to the base building color.
+ */
+export const buildingColor: ExpressionSpecification = [
+	"case",
+	["has", "facade_color"],
+	taggedColor("facade_color"),
+	["has", "roof_color"],
+	taggedColor("roof_color"),
+	districtTint(),
+]
+
+/**
  * The feature-state key a viewer sets on a footprint that a finer 3D model draws in its place.
  *
  * A footprint with this state set extrudes to zero height and drops its outline.
@@ -85,7 +142,7 @@ export const BuildingLayers: LayerSpecification[] = [
 
 		// Buildings are pale translucent volumes, so the streets and rail lines behind them stay legible.
 		paint: {
-			"fill-extrusion-color": GuideMapPalette.building,
+			"fill-extrusion-color": buildingColor,
 			"fill-extrusion-vertical-gradient": false,
 			"fill-extrusion-opacity": buildingOpacity,
 		},

@@ -326,3 +326,206 @@ export function tokyoSkytreeMesh(): SceneMesh {
 
 	return loft(profile.map(([z, radius, roundness, color]) => ({ z, ring: section(radius, roundness), color }))).build()
 }
+
+/**
+ * The model classes the basemap's `infrastructure` layer assigns to street
+ * furniture in its `prop` attribute.
+ */
+export const StreetProp = {
+	Bench: "bench",
+	WasteBasket: "waste_basket",
+	PostBox: "post_box",
+	VendingMachine: "vending_machine",
+	Hydrant: "hydrant",
+	Bollard: "bollard",
+	Lamp: "lamp",
+	Signal: "signal",
+	Sign: "sign",
+	Mirror: "mirror",
+	Cabinet: "cabinet",
+	Pole: "pole",
+} as const
+
+export type StreetProp = (typeof StreetProp)[keyof typeof StreetProp]
+
+/**
+ * Street-furniture colors after Japanese street fixtures.
+ */
+const StreetPropPalette = {
+	steel: "#9aa0a6",
+	darkSteel: "#5f6469",
+	concrete: "#b9b6ae",
+	wood: "#a07a52",
+	postBoxRed: "#d7262a",
+	hydrantRed: "#c8312b",
+	mirrorOrange: "#ef7d1a",
+	signRed: "#d23a33",
+	signalHousing: "#4a4f55",
+	signalLamp: "#3fb27f",
+	vendingBody: "#eef1f3",
+	vendingFace: "#2f6db5",
+	lampHead: "#f3efe2",
+	basket: "#6f7f6a",
+	cabinet: "#c9cbc6",
+} as const
+
+/**
+ * An axis-aligned box from `[x0, y0, z0]` to `[x1, y1, z1]` in meters.
+ */
+function box(builder: MeshBuilder, [x0, y0, z0]: RGB, [x1, y1, z1]: RGB, color: RGB): MeshBuilder {
+	const ring: Array<[number, number]> = [
+		[x0, y0],
+		[x1, y0],
+		[x1, y1],
+		[x0, y1],
+	]
+
+	return loft(
+		[
+			{ z: z0, ring, color },
+			{ z: z1, ring, color },
+		],
+		builder
+	)
+}
+
+/**
+ * A vertical cylinder on the mesh axis from `z0` to `z1`, offset by `[x, y]`.
+ */
+function post(builder: MeshBuilder, z0: number, z1: number, radius: number, color: RGB, x = 0, y = 0): MeshBuilder {
+	const ring = regularRing(8, radius).map(([px, py]): [number, number] => [px + x, py + y])
+
+	return loft(
+		[
+			{ z: z0, ring, color },
+			{ z: z1, ring, color },
+		],
+		builder
+	)
+}
+
+/**
+ * Builds one mesh per street-prop class, in meters with z up and the prop's face toward +y.
+ *
+ * The meshes are drawn at real size, so an instance needs a position and a heading but no scale.
+ */
+export function streetPropMeshes(): Record<StreetProp, SceneMesh> {
+	const c = Object.fromEntries(Object.entries(StreetPropPalette).map(([key, hex]) => [key, hexRGB(hex)])) as Record<
+		keyof typeof StreetPropPalette,
+		RGB
+	>
+
+	const bench = new MeshBuilder()
+	box(bench, [-0.8, -0.2, 0.4], [0.8, 0.2, 0.45], c.wood)
+	box(bench, [-0.8, -0.24, 0.5], [0.8, -0.2, 0.85], c.wood)
+
+	for (const x of [-0.7, 0.7]) {
+		box(bench, [x - 0.03, -0.2, 0], [x + 0.03, 0.2, 0.4], c.darkSteel)
+	}
+
+	const wasteBasket = new MeshBuilder()
+	post(wasteBasket, 0, 0.75, 0.04, c.darkSteel)
+	box(wasteBasket, [-0.2, -0.2, 0.35], [0.2, 0.2, 0.9], c.basket)
+
+	const postBox = new MeshBuilder()
+	post(postBox, 0, 0.55, 0.08, c.postBoxRed)
+	box(postBox, [-0.25, -0.2, 0.55], [0.25, 0.2, 1.3], c.postBoxRed)
+
+	const vendingMachine = new MeshBuilder()
+	box(vendingMachine, [-0.5, -0.35, 0], [0.5, 0.35, 1.83], c.vendingBody)
+	box(vendingMachine, [-0.42, 0.35, 0.95], [0.42, 0.37, 1.7], c.vendingFace)
+
+	const hydrant = new MeshBuilder()
+	post(hydrant, 0, 0.75, 0.12, c.hydrantRed)
+	post(hydrant, 0.75, 0.85, 0.08, c.hydrantRed)
+	box(hydrant, [-0.2, -0.05, 0.45], [0.2, 0.05, 0.55], c.hydrantRed)
+
+	const bollard = new MeshBuilder()
+	post(bollard, 0, 0.8, 0.06, c.steel)
+
+	const lamp = new MeshBuilder()
+	post(lamp, 0, 5.5, 0.07, c.steel)
+	box(lamp, [-0.05, 0, 5.4], [0.05, 1.2, 5.5], c.steel)
+	box(lamp, [-0.15, 0.9, 5.25], [0.15, 1.4, 5.4], c.lampHead)
+
+	// Japanese signals hang horizontally from an arm over the carriageway.
+	const signal = new MeshBuilder()
+	post(signal, 0, 6, 0.12, c.steel)
+	box(signal, [-0.05, 0, 5.6], [0.05, 3, 5.7], c.steel)
+	box(signal, [-0.15, 1.9, 5.1], [0.05, 3.1, 5.5], c.signalHousing)
+	box(signal, [0.05, 2.75, 5.2], [0.07, 3, 5.4], c.signalLamp)
+
+	const sign = new MeshBuilder()
+	post(sign, 0, 2.3, 0.03, c.steel)
+	box(sign, [-0.3, 0.03, 1.7], [0.3, 0.05, 2.3], c.signRed)
+
+	const mirror = new MeshBuilder()
+	post(mirror, 0, 2.8, 0.04, c.mirrorOrange)
+	box(mirror, [-0.3, 0.05, 2.5], [0.3, 0.1, 3.1], c.mirrorOrange)
+
+	const cabinet = new MeshBuilder()
+	box(cabinet, [-0.4, -0.2, 0], [0.4, 0.2, 1.2], c.cabinet)
+
+	// A concrete utility pole: about 12 m, tapering from 0.2 m to 0.12 m in radius.
+	const pole = loft([
+		{ z: 0, ring: regularRing(8, 0.2), color: c.concrete },
+		{ z: 12, ring: regularRing(8, 0.12), color: c.concrete },
+	])
+
+	box(pole, [-0.9, -0.05, 10.8], [0.9, 0.05, 10.9], c.darkSteel)
+
+	return {
+		bench: bench.build(),
+		waste_basket: wasteBasket.build(),
+		post_box: postBox.build(),
+		vending_machine: vendingMachine.build(),
+		hydrant: hydrant.build(),
+		bollard: bollard.build(),
+		lamp: lamp.build(),
+		signal: signal.build(),
+		sign: sign.build(),
+		mirror: mirror.build(),
+		cabinet: cabinet.build(),
+		pole: pole.build(),
+	}
+}
+
+const COMPASS_POINTS = [
+	"N",
+	"NNE",
+	"NE",
+	"ENE",
+	"E",
+	"ESE",
+	"SE",
+	"SSE",
+	"S",
+	"SSW",
+	"SW",
+	"WSW",
+	"W",
+	"WNW",
+	"NW",
+	"NNW",
+]
+
+/**
+ * The heading in degrees clockwise from north that an OSM `direction` value states,
+ * or null when it states none.
+ *
+ * OSM records degrees (`45`) or a compass point (`NE`).
+ * A relative value such as `forward` is measured along the way the node sits on.
+ *
+ * A tile point has no way attached, so a relative value gives null.
+ */
+export function directionHeading(direction: unknown): number | null {
+	if (typeof direction !== "string") return null
+	const trimmed = direction.trim().toUpperCase()
+	const compass = COMPASS_POINTS.indexOf(trimmed)
+
+	if (compass !== -1) return compass * 22.5
+
+	if (!/^\d+(\.\d+)?$/.test(trimmed)) return null
+
+	return Number(trimmed) % 360
+}

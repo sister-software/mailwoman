@@ -137,6 +137,32 @@ export const GuideMapPalette = {
 	 */
 	building: "#f8f7f4",
 	/**
+	 * Off-white tints a building takes from its tile `district` index, 0 to 15.
+	 *
+	 * Buildings in one 128 m district cell share a tint, so a block reads as one fabric
+	 * and neighboring blocks differ.
+	 * Each tint stays within a few steps of {@link GuideMapPalette.building}
+	 * so the map keeps its pale ground.
+	 */
+	buildingDistricts: [
+		"#f8f7f4",
+		"#f6f3ee",
+		"#f4f5f2",
+		"#f7f2ec",
+		"#f2f4f5",
+		"#f8f5ef",
+		"#f3f2ef",
+		"#f6f6f1",
+		"#f5f1ed",
+		"#f1f3f1",
+		"#f8f4f1",
+		"#f4f3f6",
+		"#f7f6ef",
+		"#f2f2ee",
+		"#f6f4f3",
+		"#f3f5f3",
+	],
+	/**
 	 * 建物の縁取り: building edges.
 	 */
 	buildingEdge: "#cfccc5",
