@@ -1,0 +1,10 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build rebuilds three sources for the v0.8.4-cross-language overlay over v0.8.2 (#2845, #2846). It supersedes v0.8.3-script-joins, whose changes it carries: romanized names joined by a separator in CJK-script countries, Who's On First attestation dates stripped, and NPPES columns trimmed. It adds the wof:hierarchy ancestor walk, every name:* value, localized hierarchies per preferred-name language, the parent locality on dependent localities, and the NPPES second line as a unit span. The WOF clone carries the New York City and East Meadow name fixes (whosonfirst-data-admin-us c07d2e8701). The inputs are the ones v0.8.0-registers recorded for these adapters.",
+	"corpusVersion": "v0.8.4-cross-language",
+	"adapters": {
+		"wof-admin": { "inputPath": "src/wof-repos" },
+		"wof-postalcode": { "inputPath": "src/wof-repos" },
+		"usgov-nppes": { "inputPath": "corpus/sources/usgov-nppes/npidata_pfile_20050523-20260510.csv" }
+	}
+}
