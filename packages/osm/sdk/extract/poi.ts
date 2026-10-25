@@ -43,6 +43,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { haversineKm } from "@mailwoman/spatial/distance"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 
 import { representativePoint } from "#sdk/representative-point"
@@ -114,6 +115,176 @@ export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 	{ categoryID: "data_center", all: [["man_made", "data_center"]] },
 	{ categoryID: "data_center", all: [["telecom", "data_center"]] },
 ]
+
+/**
+ * The rail stations a `駅` or `Station` query names, under Overture's station categories
+ * so a layer built from either source reads the same.
+ *
+ * The subway and light-rail rules come before the plain station rule, because a feature
+ * matches the first rule it satisfies and a subway station also carries `railway=station`.
+ */
+export const STATION_TAG_RULES: OSMPOITagRule[] = [
+	{
+		categoryID: "metro_station",
+		all: [
+			["railway", "station"],
+			["station", "subway"],
+		],
+	},
+	{
+		categoryID: "light_rail_and_subway_station",
+		all: [
+			["railway", "station"],
+			["station", "light_rail"],
+		],
+	},
+	{ categoryID: "train_station", all: [["railway", "station"]] },
+	{ categoryID: "train_station", all: [["railway", "halt"]] },
+]
+
+/**
+ * A rule table plus the names each matched feature is written under.
+ */
+export interface OSMPOIRuleSet {
+	rules: OSMPOITagRule[]
+	/**
+	 * Tag keys the names read beyond the rule keys, such as `name:en`.
+	 */
+	nameKeys?: readonly string[]
+	/**
+	 * The strings a matched feature is written under, one row each, read from its tags and `name`.
+	 *
+	 * @defaultValue The feature's `name`.
+	 */
+	names?: (tags: Readonly<Record<string, string | undefined>>) => string[]
+	/**
+	 * Merges the rows of one real-world feature that OSM maps as several, run over the whole extract.
+	 */
+	merge?: (rows: readonly POISourceRow[]) => POISourceRow[]
+}
+
+/**
+ * The distance within which two same-name station rows are one station.
+ *
+ * OSM maps a large station as one node per operator.
+ * Shibuya Station is five `渋谷` nodes up to 300 m apart, so one station would otherwise
+ * read as five entities that no exact-name probe can choose between.
+ *
+ * In the Japan extract of 2026-08-05, 1,687 of 3,848 same-name pairs lie within 500 m,
+ * 69 within 500 m–1 km, 58 within 1–20 km and 2,034 beyond 20 km, so 1 km merges a
+ * station's nodes and keeps two stations of one name apart.
+ */
+export const STATION_COMPLEX_M = 1000
+
+/**
+ * Merges same-name rows lying within {@linkcode STATION_COMPLEX_M} of one another
+ * (single link) into the row with the least summed distance to the rest of its group.
+ *
+ * The categories of one complex merge too: Shinjuku's rail and subway nodes are one station to a query.
+ * The kept row's category stands for the complex.
+ */
+export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceRow[] {
+	const groups = new Map<string, POISourceRow[]>()
+
+	for (const row of rows) {
+		const key = row.name ?? ""
+		groups.set(key, [...(groups.get(key) ?? []), row])
+	}
+
+	const merged: POISourceRow[] = []
+
+	const metres = (a: POISourceRow, b: POISourceRow) =>
+		haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
+
+	for (const group of groups.values()) {
+		const seen = new Set<number>()
+
+		for (let i = 0; i < group.length; i++) {
+			if (seen.has(i)) continue
+
+			const cluster = [i]
+			seen.add(i)
+
+			// The loop visits every index pushed during it, which is the single-link closure.
+			for (const member of cluster) {
+				for (let j = 0; j < group.length; j++) {
+					if (!seen.has(j) && metres(group[member]!, group[j]!) <= STATION_COMPLEX_M) {
+						seen.add(j)
+						cluster.push(j)
+					}
+				}
+			}
+
+			const members = cluster.map((index) => group[index]!)
+
+			let best = members[0]!
+			let bestCost = Number.POSITIVE_INFINITY
+
+			for (const candidate of members) {
+				let cost = 0
+
+				for (const other of members) {
+					cost += metres(candidate, other)
+				}
+
+				if (cost < bestCost) {
+					best = candidate
+					bestCost = cost
+				}
+			}
+
+			merged.push(best)
+		}
+	}
+
+	return merged
+}
+
+/**
+ * The word each language appends to a station's name, keyed by the OSM `name:<language>` tag.
+ *
+ * OSM labels a station with its place's name (`name=渋谷`, `name:en=Shibuya`).
+ * A query writes the station word as well (`渋谷駅`, `Shibuya Station`).
+ */
+export const STATION_WORDS: Readonly<Record<string, string>> = {
+	"name:ja": "駅",
+	"name:ko": "역",
+	"name:zh": "站",
+	"name:en": " Station",
+}
+
+/**
+ * The strings a station is queried under: each `name:<language>` tag in
+ * {@linkcode STATION_WORDS} followed by that language's station word.
+ *
+ * A name that already ends in the word keeps it once.
+ */
+export function stationNames(tags: Readonly<Record<string, string | undefined>>): string[] {
+	const names = new Set<string>()
+
+	for (const [key, word] of Object.entries(STATION_WORDS)) {
+		const value = tags[key]?.trim()
+
+		if (!value) continue
+
+		names.add(value.endsWith(word.trim()) ? value : `${value}${word}`)
+	}
+
+	return [...names]
+}
+
+/**
+ * The rule sets the `--source osm` build selects by name.
+ */
+export const OSM_POI_RULE_SETS: Readonly<Record<string, OSMPOIRuleSet>> = {
+	telecom: { rules: TELECOM_TAG_RULES },
+	stations: {
+		rules: STATION_TAG_RULES,
+		nameKeys: Object.keys(STATION_WORDS),
+		names: stationNames,
+		merge: mergeStationComplexes,
+	},
+}
 
 /**
  * Turn a taxonomy record's scalar `osmTag` (`amenity=pharmacy`) into a single-conjunct rule table entry.
@@ -207,12 +378,17 @@ function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
  * `rules` is a public, caller-suppliable parameter, so this validates before any interpolation
  * rather than trusting the hardcoded default table's shape.
  */
-export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
+export function buildTelecomPOISQL(
+	layer: string,
+	rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES,
+	extraKeys: readonly string[] = []
+): string {
 	assertSafeTagRules(rules, "buildTelecomPOISQL")
+	assertSafeTagRules([{ all: extraKeys.map((key): [string, string] => [key, "x"]) }], "buildTelecomPOISQL")
 
-	const tagCols = distinctPredicateKeys(rules).map(
-		(key) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)} AS ${tagAlias(key)}`
-	)
+	const keys = [...new Set([...distinctPredicateKeys(rules), ...extraKeys])]
+
+	const tagCols = keys.map((key) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)} AS ${tagAlias(key)}`)
 
 	const whereGroups = rules.map(
 		(rule) =>
@@ -245,14 +421,14 @@ export function matchOSMPOITagRule(
 }
 
 /**
- * Decode one ogr2ogr GeoJSONSeq feature into a {@link POISourceRow}, or `null`
- * when it satisfies none of `rules` (the JS-side re-check) or has no usable geometry.
+ * Decode one ogr2ogr GeoJSONSeq feature into one {@link POISourceRow} per name the rule set writes it
+ * under, or none when it satisfies none of the rules (the JS-side re-check) or has no usable geometry.
  */
-function toPOISourceRow(
+export function toPOISourceRows(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
-	rules: readonly OSMPOITagRule[],
+	ruleSet: OSMPOIRuleSet,
 	tagKeys: readonly string[]
-): POISourceRow | null {
+): POISourceRow[] {
 	const p = feature.properties ?? {}
 	const tags: Record<string, string | undefined> = {}
 
@@ -262,18 +438,20 @@ function toPOISourceRow(
 		tags[key] = raw != null && raw !== "" ? String(raw) : undefined
 	}
 
-	const categoryID = matchOSMPOITagRule(tags, rules)
+	const categoryID = matchOSMPOITagRule(tags, ruleSet.rules)
 
-	if (typeof categoryID !== "number") return null
+	if (!categoryID) return []
 
 	const pt = representativePoint(feature.geometry ?? null)
 
-	if (!pt) return null
+	if (!pt) return []
 
-	const name = p["name"]
+	const rawName = p["name"]
+	const name = rawName != null && rawName !== "" ? String(rawName) : undefined
+	const names = ruleSet.names ? ruleSet.names({ ...tags, name }) : [name ?? null]
 
-	return {
-		name: name != null && name !== "" ? String(name) : null,
+	return names.map((written) => ({
+		name: written,
 		category: categoryID,
 		brandWikidata: null,
 		longitude: pt[0],
@@ -283,7 +461,7 @@ function toPOISourceRow(
 		country: "",
 		confidence: 1,
 		gersID: null,
-	}
+	}))
 }
 
 /**
@@ -291,41 +469,37 @@ function toPOISourceRow(
  *
  * Mirrors `extract.ts`'s `runLayer` process-spawn/stderr-capture/exit-code idiom exactly.
  */
-async function* runPOILayer(
-	pbfPath: string,
-	layer: string,
-	rules: readonly OSMPOITagRule[]
-): AsyncGenerator<POISourceRow> {
-	const tagKeys = distinctPredicateKeys(rules)
-	const sql = buildTelecomPOISQL(layer, rules)
+async function* runPOILayer(pbfPath: string, layer: string, ruleSet: OSMPOIRuleSet): AsyncGenerator<POISourceRow> {
+	const nameKeys = ruleSet.nameKeys ?? []
+	const tagKeys = [...new Set([...distinctPredicateKeys(ruleSet.rules), ...nameKeys])]
+	const sql = buildTelecomPOISQL(layer, ruleSet.rules, nameKeys)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
 
 	for await (const feature of ogr2ogrGeoJSONSeq<{
 		properties?: Record<string, unknown>
 		geometry?: { type?: string; coordinates?: unknown }
 	}>(args, `osm poi (${layer})`)) {
-		const row = toPOISourceRow(feature, rules, tagKeys)
-
-		if (row) {
-			yield row
-		}
+		yield* toPOISourceRows(feature, ruleSet, tagKeys)
 	}
 }
 
 /**
- * Stream every telecom-infrastructure feature matching `rules` from a PBF extract's `points` +
- * `multipolygons` layers, geometry reduced to a representative coordinate (centroid for polygons).
+ * Stream every feature matching a rule set from a PBF extract's `points` + `multipolygons`
+ * layers, geometry reduced to a representative coordinate (centroid for polygons).
  *
  * `confidence` is fixed at `1` and `gersID`/`brandWikidata` are always `null` — OSM rows have neither.
  * See the module docstring for the `country` caveat.
  *
- * @param rules [{@linkcode TELECOM_TAG_RULES}] The tag rules a feature must satisfy.
+ * @param rules [{@linkcode TELECOM_TAG_RULES}] The tag rules a feature must satisfy,
+ * or a rule set with its names.
  */
 export async function* extractOSMPOIs(
 	pbfPath: string,
-	rules: OSMPOITagRule[] = TELECOM_TAG_RULES
+	rules: OSMPOITagRule[] | OSMPOIRuleSet = TELECOM_TAG_RULES
 ): AsyncIterable<POISourceRow> {
+	const ruleSet = Array.isArray(rules) ? { rules } : rules
+
 	for (const layer of POI_LAYERS) {
-		yield* runPOILayer(pbfPath, layer, rules)
+		yield* runPOILayer(pbfPath, layer, ruleSet)
 	}
 }

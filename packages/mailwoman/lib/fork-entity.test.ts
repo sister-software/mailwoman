@@ -285,6 +285,41 @@ describe("venueAnchorRadiusM (the reach the anchor's grade allows)", () => {
 	})
 })
 
+describe("applyEntityTiers for an unresolved input with no venue span", () => {
+	const station = stubLookup([
+		{ name: "渋谷駅", categoryID: "train_station", lat: 35.65808, lon: 139.7017647, country: "JP" },
+	])
+
+	const unresolvedLocality = (): Parameters<typeof applyEntityTiers>[0] => ({
+		lat: null,
+		lon: null,
+		resolution_tier: null,
+		countryCode: null,
+		venue: null,
+		entity: null,
+		admin_coherence: null,
+		locality: "渋谷駅",
+	})
+
+	it("answers the whole input from the one entity that holds its name", () => {
+		const result = unresolvedLocality()
+
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, poiVenueTier: true })
+
+		expect(result.lat).toBe(35.65808)
+		expect(result.entity?.name).toBe("渋谷駅")
+		expect(result.locality).toBeNull()
+	})
+
+	it("leaves the input unresolved when poiVenueTier is off", () => {
+		const result = unresolvedLocality()
+
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station })
+
+		expect(result.lat).toBeNull()
+	})
+})
+
 describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 	const unplaced = (venue: string): Parameters<typeof applyEntityTiers>[0] => ({
 		lat: null,

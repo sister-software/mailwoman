@@ -458,6 +458,17 @@ export function applyEntityTiers(
 		}
 	}
 
+	// An input that still has no coordinate and no venue span takes the exact-name probe on the whole input.
+	// The kind classifier's landmark rules read Latin head nouns, so a station written `渋谷駅` parses
+	// as an unresolved locality and would otherwise never reach the POI layer that holds it.
+	if (deps.poiVenueTier === true && result.lat === null && !result.venue && deps.poiLookup) {
+		const entity = probeLandmarkEntity(parseInput, { lookup: deps.poiLookup })
+
+		if (entity) {
+			answerAsWholeInputEntity(result, entity)
+		}
+	}
+
 	if (
 		deps.poiVenueTier === true &&
 		deps.poiLookup &&

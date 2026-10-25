@@ -27,7 +27,7 @@ const CORPUS_SIZE = 1292
  * The hash covers the whole canonical row including `note`, and it also lives in every built
  * `regression.db` as the `gauntlet_meta` stamp, so any corpus edit requires a re-pin and a rebuild.
  */
-const CORPUS_HASH = "6f1bb7157131d31dd727f0354b89eb445920cf748ff55dcc17c142047b7cf37b"
+const CORPUS_HASH = "8fb4cfe2cb0d34f940a77b3c3a7ae099f7126f4848b17f27fa4549e5aa14bbf3"
 
 /**
  * The id is content-addressed rather than order-addressed, so it holds across file

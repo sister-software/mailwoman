@@ -57,6 +57,7 @@ export const spec = {
 		pbf: { type: "string", description: "OSM PBF extract" },
 		country: { type: "string", description: "OSM country" },
 		bbox: { type: "string", description: "OSM extract bounding box" },
+		rules: { type: "string", default: "telecom", description: "OSM tag-rule set: telecom or stations" },
 	},
 } as const satisfies CommandSpec
 
@@ -108,26 +109,33 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			const bbox = parseBBoxFlag(bboxFlag)
 			const out = options.out ?? poiDatabasePath(`poi-osm-${country.toLowerCase()}.db`)
 
-			console.error(`▸ extract: OSM telecom-infrastructure POIs from ${pbf} (country=${country})`)
+			// Dynamic import, required: @mailwoman/osm is an optional peer that an operator installs
+			// to opt in to OpenStreetMap data, and this dependency belongs only on the selected build
+			// path, so a top-level import breaks the whole published CLI on an install without it.
+			// The smoke test's clean-install leg is what catches it.
+			const { extractOSMPOIs, OSM_POI_RULE_SETS } = await import("@mailwoman/osm/sdk/extract/poi")
+			const rules = OSM_POI_RULE_SETS[options.rules]
+
+			if (!rules) {
+				throw new Error(`--rules must be one of ${Object.keys(OSM_POI_RULE_SETS).join(", ")}, got ${options.rules}`)
+			}
+
+			console.error(`▸ extract: OSM ${options.rules} POIs from ${pbf} (country=${country})`)
 
 			// Buffered (not streamed straight into buildPOIDatabase): telecom-infra extracts are
 			// category-sparse — a few thousand rows even for a whole country — and the array is walked
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// Dynamic import, required: @mailwoman/osm is an optional peer that an operator installs
-			// to opt in to OpenStreetMap data, and this dependency belongs only on the selected build
-			// path, so a top-level import breaks the whole published CLI on an install without it.
-			// The smoke test's clean-install leg is what catches it.
-			// The osm source branch is build-local by design.
-			// It may only resolve its SDK when a run selects it.
-			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk/extract/poi")
+			const extracted: POISourceRow[] = []
 
-			for await (const row of extractOSMPOIs(pbf)) {
+			for await (const row of extractOSMPOIs(pbf, rules)) {
 				// extractOSMPOIs yields `country: ""` (a bare OSM feature has no country property) —
 				// stamp the invocation's --country before buildPOIDatabase ever sees the row.
-				rows.push({ ...row, country })
+				extracted.push({ ...row, country })
 			}
+
+			rows.push(...(rules.merge ? rules.merge(extracted) : extracted))
 
 			console.error(`▸ build: ${out}`)
 
