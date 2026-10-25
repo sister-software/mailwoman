@@ -139,7 +139,7 @@ def quantize_onnx(
 def push_artifact_r2(volume_path: str, r2_subpath: str) -> None:
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 
-    This copies `<volume_path>` to `:s3:<bucket>/<r2_subpath>`, the bucket `MAILWOMAN_R2_BUCKET` names; pull it down locally with
+    This copies `<volume_path>` to `:s3:<bucket>/<r2_subpath>`, the bucket `MAILWOMAN_R2_BUCKET` holds. Pull it down locally with
     `rclone copy`. The bucket is versioned, and R2 answers rclone's post-upload `HEAD ?versionId=` with 501
     every time, so the copy runs with `--s3-no-head` and a size check confirms the object afterwards.
 

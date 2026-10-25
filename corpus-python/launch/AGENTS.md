@@ -145,14 +145,14 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    `step-*` checkpoint in the run's output directory (`launch/resume.py`). `--fresh` clears that directory
    once, in the preflight, before anything is spawned; no attempt deletes anything. `--branch-from
    <checkpoint>` names a start point used only while the output directory holds no checkpoint. The old
-   `--resume` flag is gone; recipe headers that still spell `--resume none` mean `--fresh`, and
-   `--resume auto` is the default behavior.
+   `--resume` flag is gone. `--resume none` is now `--fresh`, `--resume auto` is the default, and the
+   recipe headers use the new spellings.
 
    **We run `modal run -d` rather than a deployed app.** A deployment would let any shell spawn training
    by name (`modal.Function.from_name`), but it adds an operator `modal deploy` after every `launch/`
    change, and a stale deployment would run old launcher code against a new config. The training code
-   that changes most already travels on the volume, so the ephemeral app costs nothing a deployment would
-   save. Revisit if launches need to start from somewhere without this checkout.
+   that changes most already travels on the volume, so a deployment would save only the few seconds
+   an ephemeral app takes to register its functions. Revisit if launches need to start from somewhere without this checkout.
 
    **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card; the default stays
    `A100-80GB`. The probe model is small (384 hidden, 6 layers, batch 128) and likely fits a cheaper card,

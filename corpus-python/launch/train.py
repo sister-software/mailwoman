@@ -33,8 +33,8 @@ from .settings import settings
 # Training-function wall-clock budget per attempt: 21,600 s (6h) covers the 60k A100 recipe.
 # The preflight checks any recipe against the ceiling, so a config that cannot fit fails before a GPU is billed.
 TRAIN_TIMEOUT_SECONDS = 21600
-# ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The default GPU is the 80 GB card,
-# which has the same compute and more memory bandwidth, so this rate stays a conservative bound. A launch on
+# ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The default GPU is the 80 GB card. It has
+# the same compute and more memory bandwidth, so this rate stays a conservative bound. A launch on
 # a smaller `--gpu` is not covered by this measurement.
 MEASURED_STEPS_PER_SECOND = 4.25
 # Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
@@ -42,7 +42,7 @@ MEASURED_STEPS_PER_SECOND = 4.25
 TIMEOUT_HEADROOM = 1.35
 STARTUP_SHUTDOWN_OVERHEAD_SECONDS = 1800
 
-#: The audit names a receipt records. The GPU run requires the subset its config declares.
+#: The audits a receipt records, by name. The GPU run requires the subset its config declares.
 CORPUS_FILES = "corpus_files"
 CORPUS_RECEIPTS = "corpus_receipts"
 VALIDATION_COVERAGE = "validation_coverage"
@@ -192,7 +192,7 @@ def preflight(config_name: str, fresh: bool = False) -> str:
                 shutil.rmtree(paths.output_dir)
                 print(f"Fresh start: cleared {paths.output_dir}")
     finally:
-        # Reports and the sha256 cache are worth keeping whether or not an audit raised.
+        # Commit the reports and the sha256 cache whether or not an audit raised, so a rerun reuses the hashes.
         vol.commit()
     return token
 
@@ -229,7 +229,7 @@ def _train_gpu(
 
     import torch
 
-    # Fetch the latest committed volume state, including the receipt the preflight just committed.
+    # Fetch the latest committed volume state, including the receipt the preflight committed before this call.
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 

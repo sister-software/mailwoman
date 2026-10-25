@@ -4,7 +4,7 @@ Import this, never redefine it. One `modal.App` object is what makes `modal run 
 launch.train_remote::<name>` able to find a function defined in any module of this package, so a
 second app object here would produce functions that no launcher can call.
 
-Every name, mount and GPU comes from `launch/settings.py`. Importing this module raises nothing when
+Every name, mount and GPU comes from `launch/settings.py`. This module imports without error when
 credentials are absent: a function that needs R2 calls `require_r2_env()` at its start, so `versions`,
 `debug_volume`, `run_tests` and `export_onnx` run without R2 credentials.
 """
@@ -119,7 +119,7 @@ def _secret(name: str | None, keys: tuple[str, ...], required: tuple[str, ...]) 
     """A named Modal secret when one is configured, otherwise the `.env` fallback.
 
     The named form is the intended one: `Secret.from_name` checks ``required`` when the app starts and
-    reads nothing local. The fallback copies the local values into an ephemeral secret, and only in the
+    reads only Modal's stored copy. The fallback copies the local values into an ephemeral secret, and only in the
     local process, because the container has no `.env`. It never raises: a function that needs the keys
     calls `require_r2_env`, so a function that needs none still runs without them.
     """

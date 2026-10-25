@@ -1,6 +1,6 @@
 """Every value the launcher reads from the environment, read once, each with one documented default.
 
-No other module in `launch/` reads `os.environ` or names a bucket, volume, app, mount or GPU type. This is
+No other module in `launch/` reads `os.environ` or holds a bucket, volume, app, mount or GPU type literal. This is
 the launcher's counterpart of `mailwoman_train/env.py`. That module cannot serve here, because Modal
 imports `launch/` inside a container before the training package is on `sys.path`, so this file
 imports only the standard library.
@@ -9,8 +9,8 @@ The `.env` file is found the way `packages/core/lib/env/env-file.ts` finds it: a
 directory wins, otherwise the main checkout's, located through a worktree's `.git` pointer and its
 `commondir` file. No `git` subprocess runs. A key already in `os.environ` overrides the file.
 
-The container has no `.env`. `container_env()` returns the non-secret settings, which `app.py` bakes
-into the image with `Image.env`, so the container reads the same values the local process used to define
+The container has no `.env`. `container_env()` returns the non-secret settings, and `app.py` bakes them
+into the image with `Image.env`. The container then reads the same values the local process used to define
 the app. Credentials never travel that way: they go through a Modal secret.
 """
 
@@ -104,7 +104,7 @@ class LaunchSettings:
     app_name: str
     #: `MAILWOMAN_MODAL_VOLUME`. The training volume.
     volume_name: str
-    #: `MAILWOMAN_VOLUME_MOUNT`. Where the volume mounts in a container; configs state paths under it.
+    #: `MAILWOMAN_VOLUME_MOUNT`. Where the volume mounts in a container. Configs state paths under it.
     volume_mount: str
     #: `MAILWOMAN_R2_BUCKET`. The R2 bucket rclone stages from.
     bucket: str
@@ -170,7 +170,7 @@ def container_env() -> dict[str, str]:
         "MAILWOMAN_MODAL_TRAIN_RETRIES": str(current.train_retries),
         "MAILWOMAN_SHA256_CACHE": current.sha256_cache,
     }
-    # The secret names, not their contents, so the container builds the same kind of secret object.
+    # Only the secret names travel, so the container builds the same kind of secret object.
     if current.r2_secret_name:
         values["MAILWOMAN_MODAL_R2_SECRET"] = current.r2_secret_name
     if current.hf_secret_name:

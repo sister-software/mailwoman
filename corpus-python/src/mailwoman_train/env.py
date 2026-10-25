@@ -124,7 +124,7 @@ DEFAULT_VOLUME_MOUNT = "/data"
 @cache
 def volume_mount() -> Path:
     """`MAILWOMAN_VOLUME_MOUNT`, or `DEFAULT_VOLUME_MOUNT`. Unlike the data root, this has a default, because
-    it names a path inside a container the launcher defines rather than a location on someone's machine.
+    it is a path inside a container the launcher defines rather than a location on someone's machine.
     """
     return Path(_blank_as_absent("MAILWOMAN_VOLUME_MOUNT") or DEFAULT_VOLUME_MOUNT)
 
@@ -133,7 +133,7 @@ def volume_mount() -> Path:
 def sha256_cache_path() -> Path | None:
     """`MAILWOMAN_SHA256_CACHE`: the sidecar that remembers per-file sha256 results across processes.
 
-    Unset means no persistent cache, which is the local default; the Modal image sets it to a file on the volume.
+    Unset means no persistent cache, which is the local default. The Modal image sets it to a file on the volume.
     """
     value = _blank_as_absent("MAILWOMAN_SHA256_CACHE")
     return Path(value) if value else None
