@@ -90,6 +90,23 @@ after the address. The corpus already has the material: 144,581 Latin-only and 8
 attached to JP addresses through the POI layer. The board rows `jp-grouping-corner-bracket-building` and the inputs in
 the table above are the first grading set.
 
+## Code-unit arm
+
+`segmentCodeUnits` in `@mailwoman/mtf/code-units` segments each run of ASCII letters and digits that holds a digit
+as one unit, with a hyphen kept between digits (`10118-0110`, `100-0005`), and `codeUnitPattern` writes its shape
+(`SW1A` → `AA9A`). `countriesAcceptingPostcode` in `@mailwoman/postcode/country-formats` lists the countries whose
+stated syntax accepts a unit. `packages/mailwoman/tools/dev-tools/tokenizer/code-units.run.ts` measured them on
+394,097 v0.8.2 rows (469 per file across 853 files, every split):
+
+- 764,395 units; the modal row holds 2 (243,399 rows), and 28,571 rows hold none.
+- A house-number span is exactly one unit in 316,164 of 327,040 cases (96.7%), a postcode span in 323,992 of 335,124
+  (96.7%).
+- On the 640,156 single-unit house numbers and postcodes, a majority-label rule over the pattern alone labels 95.07%
+  correctly. Adding acceptance by the row country's postcode syntax and the count of accepting countries labels
+  95.93%.
+- The residual sits in two patterns: `99999` (24,289 house numbers, 263,811 postcodes) and `9999` (101,338 house
+  numbers, 5,565 postcodes). Shape cannot separate these. Their context must.
+
 The smallest test that distinguishes option 1 from the current router is the eight inputs above, parsed with the
 router change and no retraining. The CJK body with a Latin name should improve at once on the CJK family. The
 Latin-body rows should be unchanged.

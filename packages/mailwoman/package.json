@@ -231,6 +231,7 @@
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/mtf": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",

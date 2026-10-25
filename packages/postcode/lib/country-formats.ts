@@ -120,6 +120,18 @@ export function postcodePlacement(countryCode: string): PostcodeLocalityPlacemen
 }
 
 /**
+ * Every country whose stated postcode format the whole of `value` matches, in ISO 3166-1 alpha-2 order.
+ *
+ * A bare five-digit value matches dozens of countries and `SW1A 1AA` matches GB alone,
+ * so the list's size is the shape's own ambiguity.
+ */
+export function countriesAcceptingPostcode(value: string): string[] {
+	return Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
+		.toSorted()
+		.filter((code) => acceptPostcode(value, code) !== null)
+}
+
+/**
  * The postcode in `value` when the whole value has `countryCode`'s form, else null.
  *
  * The country-code prefix the layout prints (`MD-` in `MD-2001`) is removed from the value,
