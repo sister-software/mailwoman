@@ -41,7 +41,7 @@ dev = [
 	# The Modal client runs each launch's local entrypoint, which imports `mailwoman_train`.
 	# A global `modal` binary cannot see this venv, so launches run `uv run --extra dev modal run -m launch...`.
 	# Pinned to the client version the launches were made with, so a lock refresh cannot move it.
-	"modal==1.4.3",
+	"modal==1.6.2",
 ]
 train = [
 	# Train stack is pinned on purpose:
