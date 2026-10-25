@@ -17,7 +17,7 @@
 #
 # Launch with `--resume none`: 2,000 steps on an A100-40GB.
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.4-cross-language/corpus-v0.8.4-cross-language
+  corpus_dir: /data/corpus/versioned/v0.8.4-overlay/corpus-v0.8.4-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c4-split-digits
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.

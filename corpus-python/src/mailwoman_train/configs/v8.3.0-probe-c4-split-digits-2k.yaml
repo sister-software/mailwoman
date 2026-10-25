@@ -4,13 +4,13 @@
 # The vocabulary audit (docs/records/research/2026-10-09-sentencepiece-vocabulary-audit.md) left one question to a
 # training run: whether a model generalizes digit shape better from per-digit pieces (C4) or from mixed pieces (C5).
 # This arm's vocabulary is C4: unigram, 48,000 pieces, `split_digits` on, so every digit is its own piece as in the shipped vocabulary. Both are trained with the C5 recipe on the
-# v0.8.4-cross-language corpus (CJK-dominant rows excluded, codex terms seeded without numeric symbols).
+# v0.8.4-overlay corpus (CJK-dominant rows excluded, codex terms seeded without numeric symbols).
 #
 # The differences from v8.2.0-base-60k.yaml are:
 #
-# 1. `data.corpus_dir` is the v0.8.4-cross-language corpus overlay over v0.8.2, which replaces wof-admin,
-#    wof-postalcode and usgov-nppes with their rebuilt files.
-# 2. `data.tokenizer_dir` is this arm's vocabulary.
+# 1. `data.corpus_dir` is the v0.8.4-overlay corpus overlay over v0.8.2, which replaces wof-admin,
+#    wof-postalcode and usgov-nppes with their rebuilt files (732 files, 701,766,159 rows).
+# 2. `data.tokenizer_dir` is this arm's vocabulary, tokenizer.model md5 62ca54d5811f401f9a61c124864eab0b.
 # 3. `train.max_steps` is 2,000 with a 200-step warmup, an evaluation every 500 steps and a save at the end.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
 #
@@ -19,7 +19,7 @@
 #
 # Launch with `--resume none`: 2,000 steps on an A100-40GB.
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.4-cross-language/corpus-v0.8.4-cross-language
+  corpus_dir: /data/corpus/versioned/v0.8.4-overlay/corpus-v0.8.4-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c4-split-digits
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
