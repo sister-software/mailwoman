@@ -39,7 +39,10 @@
  *   License: CC0. The adapter stamps every row with `CC0-1.0`.
  */
 
+import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
+import { isPresent } from "@mailwoman/core/objects"
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
 import {
@@ -47,11 +50,12 @@ import {
 	emitWOFJSONRows,
 	LOCALE_BY_COUNTRY,
 	nameSlotsFor as wofNameSlotsFor,
+	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecord } from "#utils"
+import { buildAncestorRecordIndex, preferredName, walkFeatures, type AncestorRecords, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -84,31 +88,81 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 }
 
 /**
- * Compute the hierarchy variants for a record given its ancestry chain and the chosen `selfName`.
+ * The most localized hierarchies one record renders.
  *
- * `selfName` is the surface form to use for the record's own component
- * (locality / region / country / subregion).
- * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*`
- * localized value for variant slots.
+ * New York City carries a preferred name in over 200 languages, and each localized
+ * hierarchy adds two rows per record, so an uncapped run multiplies the rows of
+ * the best-covered places by the number of languages.
+ * The record's country's official languages are chosen first, then the rest by language code.
+ */
+const LOCALIZED_HIERARCHY_CAP = 8
+
+/**
+ * The country whose hierarchy order and line join a language's own hierarchies are written in.
  *
- * Ancestor names always come from the ancestor's canonical `wof:name`.
+ * A language official in several countries resolves only when all of them write a hierarchy
+ * in the same order and with the same join, as Korean does in both Koreas.
+ * The first of them in table order is returned.
+ *
+ * A language whose countries disagree resolves to `null`, and its hierarchies
+ * take the record's own country's layout.
+ */
+export function layoutCountryForLanguage(language: string): string | null {
+	const cached = LANGUAGE_LAYOUTS.get(language)
+
+	if (cached !== undefined) return cached
+
+	const countries = Object.entries(OFFICIAL_LANGUAGES)
+		.filter(([, entry]) => entry.official.includes(language))
+		.map(([code]) => code)
+
+	const layouts = new Set(
+		countries.map((code) => `${isLargestFirstSystem(code)}\u0000${lineJoinForCountry(code, "local")}`)
+	)
+
+	const resolved = layouts.size === 1 ? countries[0]! : null
+
+	LANGUAGE_LAYOUTS.set(language, resolved)
+
+	return resolved
+}
+
+const LANGUAGE_LAYOUTS = new Map<string, string | null>()
+
+/**
+ * Compute the hierarchy variants for a record given its ancestors and the name slot being rendered.
+ *
+ * The slot's value is the surface form of the record's own component
+ * (locality, region, country, subregion or dependent locality).
+ * The canonical `wof:name` fills the `"default"` slot and a `name:*` value fills the others.
+ *
+ * Ancestor names in these variants come from each ancestor's canonical `wof:name`.
+ * A slot that carries a language also renders that language's hierarchy from each ancestor's
+ * preferred name in the language, in the order and join of a country that writes it.
+ *
+ * The localized variants are skipped when an ancestor lacks the language.
+ *
+ * A dependent locality also renders with its parent locality (`Brooklyn, New York`),
+ * which is how such a place is written in an address.
  *
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the
  * OpenCage template produces the canonicalized form (`"United States of America"`),
  * matching the legacy SQLite adapter's behavior.
  */
-export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: string): WOFVariantSpec[] {
+export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: NameSlot): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
+
+	const selfName = slot.value
 
 	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`,
 	// `Paris, Île-de-France, France` — and several steps are not addresses at all.
 	// See `WOFVariantSpec.hierarchy`.
 	const hierarchy = true
 
-	const region = ancestry.region
-	const country = ancestry.country
+	const region = ancestry.region?.name
+	const country = ancestry.country?.name
 	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country ?? row.country
 
 	const variants: WOFVariantSpec[] = []
@@ -140,7 +194,25 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: s
 				})
 			}
 
-			return variants
+			const locality = selfTag === "dependent_locality" ? ancestry.locality?.name : undefined
+
+			if (locality) {
+				variants.push({
+					hierarchy,
+					suffix: "with-locality",
+					components: { dependent_locality: selfName, locality },
+				})
+
+				if (region) {
+					variants.push({
+						hierarchy,
+						suffix: "with-locality-region",
+						components: { dependent_locality: selfName, locality, region },
+					})
+				}
+			}
+
+			break
 		}
 
 		case "region": {
@@ -154,7 +226,7 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: s
 				})
 			}
 
-			return variants
+			break
 		}
 
 		case "country": {
@@ -172,6 +244,64 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: s
 		default:
 			return []
 	}
+
+	if (slot.language) {
+		variants.push(...localizedVariants(selfTag, selfName, ancestry, slot.language))
+	}
+
+	return variants
+}
+
+/**
+ * A record's hierarchy written entirely in one language: without and with the country.
+ *
+ * Returns no variant when the record has no ancestor to join, or when any ancestor
+ * it has lacks a preferred name in the language.
+ */
+function localizedVariants(
+	selfTag: ComponentTag,
+	selfName: string,
+	ancestry: AncestorRecords,
+	language: string
+): WOFVariantSpec[] {
+	const tags = (
+		selfTag === "dependent_locality" ? ["locality", "region"] : selfTag === "locality" ? ["region"] : []
+	) as Array<"locality" | "region">
+
+	const components: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
+
+	for (const tag of tags) {
+		const ancestor = ancestry[tag]
+
+		if (!ancestor) continue
+
+		const name = preferredName(ancestor, language)
+
+		if (!name) return []
+
+		components[tag] = name
+	}
+
+	if (Object.keys(components).length === 1) return []
+
+	const layoutCountry = layoutCountryForLanguage(language) ?? undefined
+
+	const variants: WOFVariantSpec[] = [
+		{ hierarchy: true, suffix: `localized-${language}`, components: { ...components }, layoutCountry },
+	]
+
+	const country = ancestry.country && preferredName(ancestry.country, language)
+
+	if (country) {
+		variants.push({
+			hierarchy: true,
+			suffix: `localized-${language}-country`,
+			components: { ...components, country },
+			layoutCountry,
+		})
+	}
+
+	return variants
 }
 
 /**
@@ -180,14 +310,29 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: s
  * The canonical `"default"` slot uses the OpenCage-canonical country form
  * when the record is itself a country (matches SQLite-adapter behavior);
  * every other placetype's default slot uses `wof:name` verbatim.
+ *
+ * At most {@linkcode LOCALIZED_HIERARCHY_CAP} slots keep their language, which is what
+ * makes {@linkcode variantsFor} render a localized hierarchy for them.
  */
-export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
-	return wofNameSlotsFor(rec, {
+export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
+	const slots = wofNameSlotsFor(rec, {
 		canonicalName: (record) =>
 			placetypeToTag(record.placetype) === "country"
 				? (COUNTRY_DISPLAY_NAME[record.country] ?? record.name)
 				: record.name,
 	})
+
+	const official = new Set(OFFICIAL_LANGUAGES[rec.country]?.official)
+
+	const kept = new Set(
+		slots
+			.map((slot) => slot.language)
+			.filter(isPresent)
+			.toSorted((a, b) => Number(official.has(b)) - Number(official.has(a)) || a.localeCompare(b))
+			.slice(0, LOCALIZED_HIERARCHY_CAP)
+	)
+
+	return slots.map((slot) => (slot.language && !kept.has(slot.language) ? { key: slot.key, value: slot.value } : slot))
 }
 
 /**
@@ -232,7 +377,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
+			const ancestry = buildAncestorRecordIndex(byID, placetypeToTag)
 
 			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({

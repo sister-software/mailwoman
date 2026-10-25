@@ -24,6 +24,7 @@ import {
 	emitWOFJSONRows,
 	LOCALE_BY_COUNTRY,
 	nameSlotsFor as wofNameSlotsFor,
+	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
 import { SourceRegister } from "#registers"
@@ -84,10 +85,12 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 /**
  * Builds the hierarchy variants for a postcode record, or returns an empty list for any other placetype.
  *
- * `selfName` is the postcode text for the current name slot.
+ * The slot's value is the postcode text.
  */
-export function postcodeVariantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: string): WOFVariantSpec[] {
+export function postcodeVariantsFor(row: WOFRecord, ancestry: AncestorNames, slot: NameSlot): WOFVariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
+
+	const selfName = slot.value
 
 	const locality = ancestry.locality
 	const region = ancestry.region
@@ -131,7 +134,7 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: AncestorNames, sel
  * The `default` slot holds `wof:name` unchanged.
  * The other slots hold `name:*` variants that differ from it.
  */
-export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
+export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
 	return wofNameSlotsFor(rec)
 }
 
