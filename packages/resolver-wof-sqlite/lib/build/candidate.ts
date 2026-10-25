@@ -14,6 +14,7 @@ import type { PathBuilderLike } from "path-ts"
 import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors/sidecar"
+import { stageBareAdminNames } from "#candidate/bare-admin-names"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
 import { foldExtract } from "#candidate/extract-fold"
 import { createCandidateFTS } from "#candidate/fts"
@@ -404,6 +405,16 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			stageRow,
 			tx: kdb,
 		}).toLocaleString()} country surfaces`
+	)
+
+	progress(
+		"bare-admin-names",
+		`${stageBareAdminNames({
+			attrs,
+			iso2ByID: new Map([...ccodes].map(([code, id]) => [id, code])),
+			stageRow,
+			tx: kdb,
+		}).toLocaleString()} bare admin names`
 	)
 
 	if (opts.currencyBackfill) {
