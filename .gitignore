@@ -106,6 +106,9 @@ docs/static/mailwoman/*.json
 docs/static/mailwoman/sqlite/
 docs/static/mailwoman/pair-index/
 
+# Agents
+.agents
+
 # Claude local files
 .claude/settings.local.json
 CLAUDE.local.md
