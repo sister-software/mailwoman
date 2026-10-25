@@ -9,7 +9,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from mailwoman_train.countries.cjk.foreign_places import build, cjk_share, is_foreign_cjk_row
+from mailwoman_train.countries.cjk.foreign_places import build, cjk_share, is_foreign_cjk_row, to_record
 
 
 def _row(raw: str, country: str, source_id: str, spans: list[tuple[str, str]]) -> dict[str, Any]:
@@ -71,3 +71,13 @@ def test_build_writes_train_and_val_and_leaves_test_out(tmp_path: Path) -> None:
     train = pq.read_table(tmp_path / "out" / "train" / "wof-admin-0000.parquet").to_pylist()
     assert train[0]["raw"] == "ブルックリン区ニューヨークニューヨーク州"
     assert train[0]["register"] == "wof-foreign-cjk"
+
+
+def test_to_record_moves_utf16_offsets_to_code_points() -> None:
+    # 𦑃 (U+26443) is two UTF-16 units, so the TypeScript build writes the locality span as [0, 3).
+    row = {**_row("翼𦑃", "US", "f", [("locality", "翼𦑃")]), "span_starts": [0], "span_ends": [3]}
+
+    record = to_record(row)
+
+    assert (record["span_starts"], record["span_ends"]) == ([0], [2])
+    assert record["raw"][record["span_starts"][0] : record["span_ends"][0]] == "翼𦑃"

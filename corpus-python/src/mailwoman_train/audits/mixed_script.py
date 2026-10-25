@@ -34,6 +34,7 @@ import yaml
 
 from ..data.loader import _raw_row_stream, manifest_files
 from ..data.relabel import AffixRelabelLexicon, relabel_row
+from ..tokenizer.spans import utf16_boundaries
 
 _SCRIPT_MARKERS = (
     ("LATIN", "Latin"),
@@ -93,29 +94,12 @@ def script_runs(text: str) -> list[str]:
     return runs
 
 
-def _utf16_boundaries(text: str, offsets: Iterable[int]) -> dict[int, int]:
-    """Map requested UTF-16 offsets to Python code-point indices, failing on split surrogates."""
-    wanted = set(offsets)
-    result: dict[int, int] = {}
-    units = 0
-    if 0 in wanted:
-        result[0] = 0
-    for index, char in enumerate(text, start=1):
-        units += 2 if ord(char) > 0xFFFF else 1
-        if units in wanted:
-            result[units] = index
-    missing = sorted(wanted - result.keys())
-    if missing:
-        raise ValueError(f"span offsets are not UTF-16 boundaries for {text!r}: {missing}")
-    return result
-
-
 def gold_components(row: dict[str, Any]) -> Iterator[tuple[str, str]]:
     """Yield ``(tag, surface)`` from char spans, falling back to legacy BIO token runs."""
     span_keys = ("span_starts", "span_ends", "span_tags")
     if all(key in row for key in span_keys):
         starts, ends, tags = (row[key] for key in span_keys)
-        boundaries = _utf16_boundaries(row["raw"], [*starts, *ends])
+        boundaries = utf16_boundaries(row["raw"], [*starts, *ends])
         for start, end, tag in zip(starts, ends, tags, strict=True):
             yield tag, row["raw"][boundaries[start] : boundaries[end]]
         return

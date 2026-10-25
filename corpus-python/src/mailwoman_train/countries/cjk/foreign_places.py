@@ -33,6 +33,7 @@ import pyarrow.parquet as pq
 from ...corpora.builder import CJK_LABEL_SET_NAME, verify_cjk_record, write_corpus_parquet
 from ...labels import resolve_label_set
 from ...tokenizer.char import build_char_vocab, save_char_vocab
+from ...tokenizer.spans import utf16_boundaries
 
 #: Countries whose rows the CJK family already reads from its own sources.
 CJK_COUNTRIES: frozenset[str] = frozenset({"JP", "CN", "TW", "HK", "MO", "KR", "KP"})
@@ -82,12 +83,16 @@ def foreign_rows(parquet: Path) -> Iterator[dict[str, Any]]:
 
 
 def to_record(row: dict[str, Any]) -> dict[str, Any]:
+    """The CJK-schema record of one corpus row, with its span offsets moved from UTF-16 units to code points."""
+    starts = [int(value) for value in row["span_starts"]]
+    ends = [int(value) for value in row["span_ends"]]
+    boundaries = utf16_boundaries(row["raw"], [*starts, *ends])
     return {
         "raw": row["raw"],
         "tokens": list(row["tokens"]),
         "labels": list(row["labels"]),
-        "span_starts": [int(value) for value in row["span_starts"]],
-        "span_ends": [int(value) for value in row["span_ends"]],
+        "span_starts": [boundaries[start] for start in starts],
+        "span_ends": [boundaries[end] for end in ends],
         "span_tags": list(row["span_tags"]),
         "country": row["country"],
         "source": SOURCE,
