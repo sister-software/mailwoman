@@ -1,0 +1,10 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build rebuilds three sources for the v0.8.3-script-joins overlay over v0.8.2 (#2845): wof-admin and wof-postalcode with romanized names joined by a separator in CJK-script countries (454e8d2d0) and Who's On First attestation dates stripped from names, and usgov-nppes with its columns trimmed (df025ed25). The inputs are the ones v0.8.0-registers recorded for these adapters.",
+	"corpusVersion": "v0.8.3-script-joins",
+	"adapters": {
+		"wof-admin": { "inputPath": "src/wof-repos" },
+		"wof-postalcode": { "inputPath": "src/wof-repos" },
+		"usgov-nppes": { "inputPath": "corpus/sources/usgov-nppes/npidata_pfile_20050523-20260510.csv" }
+	}
+}
