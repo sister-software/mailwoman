@@ -97,6 +97,53 @@ export interface SplitSliceResult {
 }
 
 /**
+ * This constant sets the map count for split decisions from one overlay Parquet file.
+ *
+ * A V8 `Map` holds at most 2^24 entries, and one overlay file can contain more distinct
+ * `source_id` values than that (`wof-admin` writes over 50 million rows).
+ */
+const DECISION_SHARDS = 64
+
+/**
+ * Split decisions keyed by `source_id`, spread across {@linkcode DECISION_SHARDS} maps by a string hash.
+ */
+class SplitDecisions {
+	readonly shards = Array.from({ length: DECISION_SHARDS }, () => new Map<string, SplitName>())
+
+	#shard(id: string): Map<string, SplitName> {
+		let hash = 0
+
+		for (let i = 0; i < id.length; i++) {
+			hash = (Math.imul(hash, 31) + id.charCodeAt(i)) | 0
+		}
+
+		return this.shards[(hash >>> 0) % DECISION_SHARDS]!
+	}
+
+	get(id: string): SplitName | undefined {
+		return this.#shard(id).get(id)
+	}
+
+	set(id: string, split: SplitName): void {
+		this.#shard(id).set(id, split)
+	}
+
+	idsIn(split: SplitName): string[] {
+		const ids: string[] = []
+
+		for (const shard of this.shards) {
+			for (const [id, value] of shard) {
+				if (value === split) {
+					ids.push(id)
+				}
+			}
+		}
+
+		return ids.toSorted()
+	}
+}
+
+/**
  * Decide the split of every row of one overlay parquet by the policy the base build applies,
  * and write the decision as an attribute file keyed by the policy's hash.
  *
@@ -106,7 +153,7 @@ export interface SplitSliceResult {
 export async function splitOverlaySlice(options: SplitSliceOptions): Promise<SplitSliceResult> {
 	const input = options.input.toString()
 	const holdouts = options.holdouts ?? defaultHoldouts()
-	const decided = new Map<string, SplitName>()
+	const decided = new SplitDecisions()
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let index = 0
 
@@ -132,12 +179,6 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 
 	const { policyHash, codeHash } = await splitPolicyHash(holdouts)
 
-	const heldOut = (split: SplitName) =>
-		[...decided]
-			.filter(([, value]) => value === split)
-			.map(([id]) => id)
-			.toSorted()
-
 	const name = basename(input)
 
 	const attribute: SplitAttributeFile = {
@@ -146,8 +187,8 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		policy: { holdouts, codeHash },
 		file: { name, sha256: await sha256File(input), rows: index },
 		counts,
-		val: heldOut("val"),
-		test: heldOut("test"),
+		val: decided.idsIn("val"),
+		test: decided.idsIn("test"),
 	}
 
 	const output = resolvePath(options.outputDir, splitAttributeFilename(name, policyHash))

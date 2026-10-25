@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `split-slice` — the holdout policy applied to an overlay parquet after it was written.
+ * @file These tests check the holdout policy applied to an existing overlay Parquet file.
  *
  *   The cases here are the two ways an overlay defeats a holdout. A row whose postcode the policy
  *   names must leave the train split. A row whose components cannot be read must stop the run
@@ -17,10 +17,10 @@ import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import { gbOverlayRow } from "#test-kit"
 import { readSplitAttribute, splitOfSourceID } from "#tools/overlay/split-attribute"
-import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-slice"
+import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-overlay"
 import { defaultHoldouts, type SplitName, splitForRow } from "#utils/split"
 
-const root = await temporaryDirectory("mw-split-slice-")
+const root = await temporaryDirectory("mw-split-overlay-")
 
 afterAll(() => root[Symbol.asyncDispose]())
 

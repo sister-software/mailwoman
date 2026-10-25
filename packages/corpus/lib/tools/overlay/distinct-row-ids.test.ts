@@ -13,7 +13,7 @@ import { readParquetRows } from "#parquet/readers"
 import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import { distinctRowIDs } from "#tools/overlay/distinct-row-ids"
-import { splitOverlaySlice } from "#tools/overlay/split-slice"
+import { splitOverlaySlice } from "#tools/overlay/split-overlay"
 
 const root = await temporaryDirectory("mw-distinct-row-ids-")
 
