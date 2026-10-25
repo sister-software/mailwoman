@@ -87,13 +87,24 @@ export const caseLower: Augmentation = (row) => {
 }
 
 /**
- * Drop commas from raw.
+ * Drop commas from raw and from every component, each the same way.
+ *
+ * A component that holds a comma of its own (`WAL-MART STORES EAST, LP`) has to lose it too.
+ * The aligner places a span of the component's length, so a component left one character
+ * longer than its text in raw ends its span on the space after it.
  */
 export const dropCommas: Augmentation = (row) => {
 	if (!row.raw.includes(",")) return null
-	const newRaw = row.raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
+	const strip = (text: string) => text.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
+	const components: ComponentDict = {}
 
-	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
+	for (const [tag, value] of Object.entries(row.components)) {
+		if (value) {
+			components[tag as ComponentTag] = strip(value)
+		}
+	}
+
+	return withAugmentation(row, "drop-commas", strip(row.raw), components)
 }
 
 /**

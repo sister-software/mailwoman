@@ -76,6 +76,19 @@ describe("universal augmentations", () => {
 		expect(out.augmentation?.name).toBe("drop-commas")
 	})
 
+	it("dropCommas strips a comma inside a component, so the component still matches raw", () => {
+		const out = dropCommas(
+			baseRow({
+				raw: "WAL-MART STORES EAST, LP, 1730 LINCOLN WAY E",
+				components: { venue: "WAL-MART STORES EAST, LP", house_number: "1730", street: "LINCOLN WAY E" },
+			})
+		)!
+
+		expect(out.raw).toBe("WAL-MART STORES EAST LP 1730 LINCOLN WAY E")
+		expect(out.components.venue).toBe("WAL-MART STORES EAST LP")
+		expect(out.raw).toContain(out.components.venue!)
+	})
+
 	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
 		const out = doubleSpace(
 			baseRow({
