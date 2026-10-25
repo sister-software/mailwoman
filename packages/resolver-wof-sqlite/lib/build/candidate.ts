@@ -5,6 +5,7 @@
  */
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
+import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -442,14 +443,17 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	progress("aliases", "exploding alias bags")
 
-	const { nAlias, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
+	const iso2ByCountryID = new Map([...ccodes].map(([code, id]) => [id, code]))
+
+	const { nAlias, nBare, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
 		regionPlacetypeID: ptID("region"),
 		ccID,
+		bareName: (countryID, alias) => bareAdminName(iso2ByCountryID.get(countryID) ?? "", alias),
 	})
 
 	progress(
 		"aliases",
-		`${nAlias.toLocaleString()} aliases` +
+		`${nAlias.toLocaleString()} aliases; ${nBare.toLocaleString()} bare admin aliases` +
 			(regionOfficialRefused
 				? `; ${regionOfficialRefused.toLocaleString()} region aliases refused as another region's official name`
 				: "")

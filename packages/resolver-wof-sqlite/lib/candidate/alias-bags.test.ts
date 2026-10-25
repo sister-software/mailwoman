@@ -59,7 +59,11 @@ interface Staged {
  * An in-memory source carrying only the one table pass 2 reads, plus a staging sink that
  * records calls instead of writing rows — the pass owns the loop rather than the storage.
  */
-function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
+function run(
+	rows: Array<{ id: number; alt: string | null }>,
+	attrs: Map<number, PlaceAttrs>,
+	bareName?: (countryID: number, alias: string) => string | null
+) {
 	using src = DatabaseClient.temp<WOFDatabase>()
 	using out = DatabaseClient.temp<CandidateDatabase>()
 
@@ -73,9 +77,15 @@ function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number,
 
 	const staged: Staged[] = []
 
-	const result = explodeAliasBags(src, out, attrs, (k, _a, sid, isPrimary) => {
-		staged.push({ k, sid, isPrimary })
-	})
+	const result = explodeAliasBags(
+		src,
+		out,
+		attrs,
+		(k, _a, sid, isPrimary) => {
+			staged.push({ k, sid, isPrimary })
+		},
+		bareName ? { bareName } : {}
+	)
 
 	return { ...result, staged }
 }
@@ -89,6 +99,18 @@ describe("explodeAliasBags", () => {
 		expect(staged.map((s) => s.k)).toEqual([normalizeLocalityForKey("Chi-Town"), normalizeLocalityForKey("Windy City")])
 		expect(staged.every((s) => s.isPrimary === 0)).toBe(true)
 		expect(staged.every((s) => s.sid === 200)).toBe(true)
+	})
+
+	test("stages an alias's bare form as one more alias, counted apart", () => {
+		const attrs = new Map([[1_108_739_697, place("Shibuya")]])
+
+		const { nAlias, nBare, staged } = run([{ id: 1_108_739_697, alt: bag("渋谷区") }], attrs, (_country, alias) =>
+			alias.endsWith("区") ? alias.slice(0, -1) : null
+		)
+
+		expect(nAlias).toBe(1)
+		expect(nBare).toBe(1)
+		expect(staged.map((s) => s.k)).toEqual([normalizeLocalityForKey("渋谷区"), normalizeLocalityForKey("渋谷")])
 	})
 
 	test("skips an alias that folds onto the place's own primary key", () => {
