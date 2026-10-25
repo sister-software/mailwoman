@@ -10,7 +10,7 @@
 
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/postcode/systems"
 import { describe, expect, it } from "vitest"
 

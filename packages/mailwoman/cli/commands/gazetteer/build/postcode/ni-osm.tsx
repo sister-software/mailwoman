@@ -47,7 +47,7 @@ export const spec = {
 const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
-			await import("#gazetteer/postcode/ni/osm/database")
+			await import("@mailwoman/gazetteer/tools/pipeline/postcode/ni/osm/database")
 
 		const result = await buildPostcodeNIOSM({
 			sourceDir: options.sourceDir,

@@ -14,9 +14,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
-import { stampLayerManifest } from "mailwoman/tools/gazetteer-pipeline/stamp-manifest"
 import type { PathBuilder } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 

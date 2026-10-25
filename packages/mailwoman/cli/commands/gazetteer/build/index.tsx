@@ -36,7 +36,7 @@ export const spec = {
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
-			await import("#gazetteer-pipeline")
+			await import("@mailwoman/gazetteer/tools/pipeline")
 
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 

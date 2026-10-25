@@ -123,10 +123,10 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer/pair")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("@mailwoman/gazetteer/tools/pipeline/pair")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
-		const { extractBoroughPairs } = await import("#gazetteer/borough-pairs")
-		const { extractLieuDitPairs } = await import("#gazetteer/lieudit-pairs")
+		const { extractBoroughPairs } = await import("@mailwoman/gazetteer/tools/pipeline/borough-pairs")
+		const { extractLieuDitPairs } = await import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs")
 
 		const country = options.country.toLowerCase()
 

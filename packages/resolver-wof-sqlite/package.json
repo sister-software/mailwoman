@@ -125,6 +125,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

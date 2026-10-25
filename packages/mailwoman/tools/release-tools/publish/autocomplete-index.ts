@@ -11,11 +11,11 @@
 
 import { AncestrieBuilder, type AncestrieEntry } from "@mailwoman/ancestrie"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isoSeconds } from "@mailwoman/core/utils"
 import {
 	REGION_AND_COARSER_PLACETYPES,
 	SUB_LOCALITY_PLACETYPES,
-} from "@mailwoman/core/resources/whosonfirst/specificity"
-import { isoSeconds } from "@mailwoman/core/utils"
+} from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import type { PathBuilderLike } from "path-ts"
 import { resolvePathBuilder } from "path-ts"

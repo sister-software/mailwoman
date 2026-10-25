@@ -100,6 +100,7 @@
 		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/mtf": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",

@@ -37,7 +37,7 @@ export const spec = {
 
 const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildLocaleFSTs } = await import("#gazetteer/fst")
+		const { buildLocaleFSTs } = await import("@mailwoman/gazetteer/tools/pipeline/fst")
 
 		const built = await buildLocaleFSTs({
 			locales: options.locales ? extractDelimited(options.locales) : null,

@@ -24,7 +24,7 @@ export const spec = {
 
 const GazetteerBuildNLPC6: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildNLPC6Database } = await import("#gazetteer/nl/pc6")
+		const { buildNLPC6Database } = await import("@mailwoman/gazetteer/tools/pipeline/nl/pc6")
 		const r = await buildNLPC6Database({ csvPath: options.csv, out: options.out })
 
 		return `nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`

@@ -7,7 +7,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
+import { isStrictlyFiner } from "@mailwoman/gazetteer/whosonfirst"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePath } from "path-ts"

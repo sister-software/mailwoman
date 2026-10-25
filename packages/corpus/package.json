@@ -78,6 +78,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",

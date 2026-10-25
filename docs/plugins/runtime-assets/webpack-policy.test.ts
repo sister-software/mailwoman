@@ -97,9 +97,14 @@ describe("docs webpack policy", () => {
 	test("places browser-safe leaf aliases before their Node-backed barrels", async () => {
 		const keys = Object.keys(await buildWorkspaceAliases())
 
-		expect(keys.indexOf("@mailwoman/core/resources/whosonfirst/specificity")).toBeLessThan(
-			keys.indexOf("@mailwoman/core/resources")
-		)
+		const leaf = keys.indexOf("@mailwoman/gazetteer/whosonfirst/placetypes/specificity")
+		const barrel = keys.indexOf("@mailwoman/gazetteer")
+
+		expect(leaf).not.toBe(-1)
+
+		if (barrel !== -1) {
+			expect(leaf).toBeLessThan(barrel)
+		}
 	})
 
 	test("routes both public and private neural runner specifiers to the browser implementation for SSR", async () => {

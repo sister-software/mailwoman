@@ -13,6 +13,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 
 import {
 	type CommandSpec,
@@ -23,7 +24,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer/defaults"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -46,7 +46,7 @@ export const spec = {
 
 const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
+		const { buildPostcodeGeonamesTail } = await import("@mailwoman/gazetteer/tools/pipeline")
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : null
 

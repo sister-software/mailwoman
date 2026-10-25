@@ -27,7 +27,7 @@ export const spec = {
 
 const GazetteerBuildStreetTypeLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetTypeLexicon } = await import("#gazetteer/evidence-lexicons")
+		const { buildStreetTypeLexicon } = await import("@mailwoman/gazetteer/tools/pipeline/evidence-lexicons")
 		const built = await buildStreetTypeLexicon({ output: options.out })
 
 		return `${built.path} — ${built.entries} surfaces, max_ngram=${built.maxNgram}`

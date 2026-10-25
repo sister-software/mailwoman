@@ -10,6 +10,7 @@
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../gazetteer" },
 		{ "path": "../api-kit" },
 		{ "path": "../ban" },
 		{ "path": "../codex" },

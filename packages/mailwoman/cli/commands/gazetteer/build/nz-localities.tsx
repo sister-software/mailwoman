@@ -28,7 +28,7 @@ export const spec = {
 
 const GazetteerBuildNZLocalities: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildNZLocalitiesDatabase } = await import("#gazetteer/nz/localities")
+		const { buildNZLocalitiesDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/nz/localities")
 		const r = await buildNZLocalitiesDatabase({ csvPath: options.csv, out: options.out })
 
 		return `nz-localities: ${r.inserted.toLocaleString()} locality rows (skipped ${r.skippedGroups} thin groups, source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`

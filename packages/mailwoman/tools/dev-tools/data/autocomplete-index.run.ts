@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builds a generation of the place autocomplete index into a staged directory the demo-assets publisher uploads:
+ *   Builds a generation of the place autocomplete index into a staged directory the public-bucket publisher uploads:
  *
  *   node packages/mailwoman/tools/dev-tools/data/autocomplete-index.run.ts --out <stage> --version 2026-10-24
  *   [--candidate-db <path>] [--floor 20000]
  *
- *   Then publish the stage with `publish-demo-assets-to-r2.run.ts --src <stage>` and bump
+ *   Then publish the stage with `publish-public-bucket.run.ts --src <stage>` and bump
  *   `AUTOCOMPLETE_INDEX_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`.
  */
 
@@ -20,7 +20,7 @@ import { buildAutocompleteIndex, DEFAULT_POPULATION_FLOOR } from "#tools/release
 
 const { values } = parseArguments({
 	options: {
-		out: { type: "string", description: "The staged directory the demo-assets publisher uploads" },
+		out: { type: "string", description: "The staged directory the public-bucket publisher uploads" },
 		version: { type: "string", description: "The generation, a date such as 2026-10-24" },
 		"candidate-db": { type: "string", description: "The candidate gazetteer to read; the data root's by default" },
 		floor: {

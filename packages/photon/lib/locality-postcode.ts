@@ -11,9 +11,9 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { PostcodeLocalityDatabase } from "@mailwoman/gazetteer/locality-postcode-schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PostcodeLocalityDatabase } from "mailwoman/locality-postcode-schema"
 
 /**
  * The per-country artifacts, probed in caller-country order with `intl` as the shared fallback.

@@ -8,9 +8,12 @@
  *   pairs passed straight to the builder, without touching a CSV or JSONL read path.
  */
 
+import {
+	PairIndexBuilder,
+	applyPairIndexHoldout,
+	nearestRankPercentile,
+} from "@mailwoman/gazetteer/tools/pipeline/pair"
 import { describe, expect, it } from "vitest"
-
-import { PairIndexBuilder, applyPairIndexHoldout, nearestRankPercentile } from "#gazetteer/pair"
 
 describe("PairIndexBuilder", () => {
 	it("folds CITY/DISTRICT through normalizeFSTToken and tags dependent_locality", () => {

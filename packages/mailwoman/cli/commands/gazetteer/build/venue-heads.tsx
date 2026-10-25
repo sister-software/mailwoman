@@ -41,8 +41,8 @@ export const spec = {
 
 const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { ingestPlaceNames, placeNamesPath } = await import("#gazetteer/poi/build/overture")
-		const { buildVenueHeadTable } = await import("#gazetteer/poi/build/venue-heads")
+		const { ingestPlaceNames, placeNamesPath } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
+		const { buildVenueHeadTable } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/venue-heads")
 		const log = (line: string): void => console.error(line)
 
 		if (options.fetch) {

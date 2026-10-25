@@ -32,7 +32,7 @@ export const spec = {
 
 const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCapitalsReference } = await import("#gazetteer/capitals")
+		const { buildCapitalsReference } = await import("@mailwoman/gazetteer/tools/pipeline/capitals")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 

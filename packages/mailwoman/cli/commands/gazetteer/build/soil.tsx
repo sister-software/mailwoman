@@ -17,6 +17,7 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -28,7 +29,6 @@ import {
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Res 6 matches what the POI and flood layers write, so a reader already keyed to another

@@ -6,8 +6,8 @@
  *   Repair the truncated ancestry left by the `parent_id` closure. Must run after `populateAncestors` and before the build freezes.
  */
 
-import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
-import { hierarchyAncestorsInAnyBranch } from "@mailwoman/core/resources/whosonfirst/hierarchy"
+import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"
+import { hierarchyAncestorsInAnyBranch } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

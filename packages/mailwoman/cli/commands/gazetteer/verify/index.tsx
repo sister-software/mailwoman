@@ -28,7 +28,9 @@ export const spec = {
 const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel } = await import("#gazetteer-pipeline")
+			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel } =
+				await import("@mailwoman/gazetteer/tools/pipeline")
+
 			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 			const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
@@ -49,7 +51,7 @@ const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 			if (options.fstFreshness) {
 				// Lazy: the FST module pulls the resolver and libpostal dictionaries a
 				// skipped section should not pay for.
-				const { checkAdminDerivedFSTFreshness } = await import("#gazetteer/fst")
+				const { checkAdminDerivedFSTFreshness } = await import("@mailwoman/gazetteer/tools/pipeline/fst")
 				const rows = await checkAdminDerivedFSTFreshness(dbPath)
 				const stale = rows.filter((row) => row.staleReason)
 				const missing = rows.filter((row) => !row.present)

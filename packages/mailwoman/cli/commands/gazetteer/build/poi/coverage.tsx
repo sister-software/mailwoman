@@ -21,6 +21,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
@@ -32,7 +33,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to
@@ -92,10 +92,10 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
 
-		const { buildPOIDatabase } = await import("#gazetteer/poi/build/poi")
-		const { buildExclusionCoverage } = await import("#gazetteer/poi/exclusion-coverage")
+		const { buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
+		const { buildExclusionCoverage } = await import("@mailwoman/gazetteer/tools/pipeline/poi/exclusion-coverage")
 		const { geometryBBox } = await import("@mailwoman/spatial")
-		const { readReferenceInventory } = await import("#gazetteer/poi/reference-inventory")
+		const { readReferenceInventory } = await import("@mailwoman/gazetteer/tools/pipeline/poi/reference-inventory")
 
 		const category = getPOICategory(options.category)
 

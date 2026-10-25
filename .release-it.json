@@ -22,6 +22,7 @@
 				"packages/fastify",
 				"packages/filer",
 				"packages/flood",
+				"packages/gazetteer",
 				"packages/geographic-model",
 				"packages/kind-classifier",
 				"packages/libpostal",

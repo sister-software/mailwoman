@@ -62,6 +62,7 @@
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",

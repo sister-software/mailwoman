@@ -8,9 +8,9 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
 
 /**
  * GitHub owner of the country data repositories.

@@ -11,11 +11,11 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/gazetteer"
+import { PlacetypeRoles } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
@@ -82,7 +82,7 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
-		const { generateMermaidMarkup, Placetype } = await import("@mailwoman/core")
+		const { generateMermaidMarkup, Placetype } = await import("@mailwoman/gazetteer")
 
 		if (!args[0]) {
 			throw new CommandError("Missing required positional argument: <localRepoDirectory>")

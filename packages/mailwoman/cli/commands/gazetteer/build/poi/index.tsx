@@ -24,6 +24,8 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import type { LatLonBounds } from "@mailwoman/spatial"
 
@@ -36,8 +38,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
@@ -89,8 +89,8 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const { bboxCoverageCells, buildPOIDatabase } = await import("#gazetteer/poi/build/poi")
-		const { ingestPlaces } = await import("#gazetteer/poi/build/overture")
+		const { bboxCoverageCells, buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
+		const { ingestPlaces } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
 
 		const buildSHA = resolveBuildSHA(repoRootPath())
 

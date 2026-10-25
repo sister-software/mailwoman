@@ -15,7 +15,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { agreedHierarchyAncestors } from "@mailwoman/core/resources/whosonfirst/hierarchy"
+import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

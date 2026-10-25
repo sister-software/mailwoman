@@ -9,10 +9,10 @@
  *   the canonical `candidate-global.db`.
  */
 
+import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-import { DEFAULT_CANDIDATE_OUT } from "#gazetteer/defaults"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -31,7 +31,7 @@ export const spec = {
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { promoteCandidate } = await import("#gazetteer-pipeline")
+		const { promoteCandidate } = await import("@mailwoman/gazetteer/tools/pipeline")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const root = dataRootPath()

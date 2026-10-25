@@ -369,7 +369,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		await kdb.destroy()
 
 		// The manifest is stamped on the temp file because the swap is the moment the database goes live.
-		const { buildSHA, stampLayerManifest } = await import("#gazetteer/stamp-manifest")
+		const { buildSHA, stampLayerManifest } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
 		const { repoRootPath } = await import("@mailwoman/core/paths")
 

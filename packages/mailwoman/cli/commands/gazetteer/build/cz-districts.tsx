@@ -25,7 +25,7 @@ export const spec = {
 
 const GazetteerBuildCZDistricts: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCZDistrictsDatabase } = await import("#gazetteer/cz-districts")
+		const { buildCZDistrictsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/cz-districts")
 		const r = await buildCZDistrictsDatabase({ sourcePath: options.source, out: options.out })
 
 		return `cz-districts: ${r.inserted} district rows (source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`

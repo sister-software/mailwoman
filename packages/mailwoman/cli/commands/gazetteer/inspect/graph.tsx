@@ -13,12 +13,12 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import type { PlacetypeRole } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import type { PlacetypeRole } from "@mailwoman/gazetteer"
+import { PlacetypeRoles } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
@@ -47,7 +47,7 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
-		const { generatePlacetypeGraph, Placetype } = await import("@mailwoman/core")
+		const { generatePlacetypeGraph, Placetype } = await import("@mailwoman/gazetteer")
 
 		const localRepoDirectory = PathBuilder.from(args[0])
 

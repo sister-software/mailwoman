@@ -61,7 +61,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		const { md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype")
-		const { buildPlacetypeCensus, toBaseRates } = await import("#gazetteer/placetype-census")
+		const { buildPlacetypeCensus, toBaseRates } = await import("@mailwoman/gazetteer/tools/pipeline/placetype-census")
 
 		const country = options.country.toLowerCase()
 		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")

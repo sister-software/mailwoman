@@ -12,10 +12,10 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
-import { DEFAULT_CANDIDATE_OUT } from "#gazetteer/defaults"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -45,7 +45,7 @@ export const spec = {
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
-		const { defaultGazetteerVersion, publishGazetteer } = await import("#gazetteer-pipeline")
+		const { defaultGazetteerVersion, publishGazetteer } = await import("@mailwoman/gazetteer/tools/pipeline")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)

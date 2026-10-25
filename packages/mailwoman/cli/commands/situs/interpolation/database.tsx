@@ -10,6 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
@@ -23,7 +24,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA, stampLayerManifest } from "#gazetteer/stamp-manifest"
 
 /**
  * Update when the multipliers in `interp-calibration.ts` are re-measured.

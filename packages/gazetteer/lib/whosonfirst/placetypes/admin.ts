@@ -1,0 +1,212 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { isAlpha2LanguageCode, isAlpha3bLanguageCode } from "@mailwoman/core/resources/languages"
+import {
+	type Alpha2LanguageCode,
+	type Alpha3bLanguageCode,
+	Alpha3bToAlpha2,
+} from "@mailwoman/core/resources/languages/types.gen"
+import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
+
+import type { WhosOnFirstPlacetype } from "#whosonfirst/placetypes/definition"
+
+export interface WOFBaseProperties {
+	"wof:id": number
+	"wof:name": string
+	"wof:src": string
+	"src:geom": string
+	"wof:placetype": WhosOnFirstPlacetype
+	"wof:parent_id": number
+	"wof:superseded_by"?: number[]
+	"wof:supersedes"?: number[]
+	"wof:country"?: string
+	"wof:concordances"?: Record<string, string | number>
+	/**
+	 * Every ancestor chain the place belongs to, coarsest key
+	 * first — `[{ country_id, region_id, locality_id }, …]`.
+	 *
+	 * More than one entry means the place has multiple parents.
+	 * `wof:parent_id` records that case with the `-4` sentinel.
+	 *
+	 * The keys present vary by branch, so a missing rung is absent rather than null.
+	 */
+	"wof:hierarchy"?: Array<Record<string, number>>
+	"wof:population"?: number
+	"wof:lastmodified"?: number
+	"geom:latitude"?: number
+	"geom:longitude"?: number
+	/**
+	 * The label centroid — where a human would drop the pin, distinct from the
+	 * geometry's mathematical centroid.
+	 *
+	 * The difference is territorial: France's `geom:` centroid sits in Spain (42.19, -2.74) because the
+	 * multipolygon spans the overseas territories, while `lbl:` is metropolitan France (46.71, 2.46).
+	 * Prefer `lbl:` wherever a point stands in for the place.
+	 */
+	"lbl:latitude"?: number
+	"lbl:longitude"?: number
+	/**
+	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string rather than an array.
+	 *
+	 * Read by the gazetteer ingest for the resolver's point-in-box proximity.
+	 */
+	"geom:bbox"?: string
+	"gn:population"?: number
+	"mz:is_current"?: number | string
+	"edtf:deprecated"?: string
+	"edtf:cessation"?: string
+}
+
+/**
+ * Name kinds Who's On First records per language, in descending preference.
+ *
+ * Preferred names take precedence over variants.
+ * Variants take precedence over colloquial names.
+ */
+export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
+
+export type WOFNameKind = (typeof WOFNameKinds)[number]
+
+export type LanguageSpecificKey = `name:${Alpha3bLanguageCode}_x_${WOFNameKind}`
+
+export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string | string[]>>
+
+export type WOFProperties = WOFBaseProperties & WOFLanguageProperties
+
+/**
+ * A single record from the Who's On First GeoJSON distribution.
+ */
+export type WOFFeature = GeoFeature<GeometryLiteral, WOFProperties>
+
+type LocalizedPlacetypePropMap = Map<WOFNameKind, string>
+
+export interface ParsedWOFPlacetype {
+	id: number
+	parent_id: number
+	name: string
+	src: string
+	placetype: WhosOnFirstPlacetype
+	localizedPropMap: Map<Alpha3bLanguageCode, LocalizedPlacetypePropMap>
+	country: string | null
+	latitude: number | null
+	longitude: number | null
+	population: number | null
+	concordances: Record<string, string | number> | null
+	isCurrent: boolean | null
+	isDeprecated: boolean
+	isCeased: boolean
+	isSuperseded: boolean
+	isSuperseding: boolean
+	lastmodified: number | null
+}
+
+const langPattern = new RegExp(`:([a-z0-9\\-_]{2,3})_x_(${WOFNameKinds.join("|")})`)
+
+export function parsePlacetypeSource(key: string): {
+	languageCode: Alpha3bLanguageCode | null
+	nameKind: WOFNameKind | null
+} {
+	const [, languageCode, nameKind] = (langPattern.exec(key) ?? []) as Partial<
+		[string, Alpha3bLanguageCode, WOFNameKind]
+	>
+
+	return { languageCode: languageCode ?? null, nameKind: nameKind ?? null }
+}
+
+export function pluckPlacetypeSpec({
+	"wof:id": id,
+	"wof:name": name,
+	"wof:src": wof_src,
+	"src:geom": geom_src,
+	"wof:parent_id": parent_id,
+	"wof:placetype": placetype,
+	"wof:superseded_by": superseded_by,
+	"wof:supersedes": supersedes,
+	"wof:country": country,
+	"wof:concordances": concordances,
+	"wof:hierarchy": _hierarchy,
+	"wof:population": wofPopulation,
+	"wof:lastmodified": lastmodified,
+	"geom:latitude": latitude,
+	"geom:longitude": longitude,
+	"gn:population": gnPopulation,
+	"mz:is_current": mzIsCurrent,
+	"edtf:deprecated": edtfDeprecated,
+	"edtf:cessation": edtfCessation,
+	...props
+}: WOFProperties): ParsedWOFPlacetype {
+	const localizedPropMap = new Map<Alpha3bLanguageCode, LocalizedPlacetypePropMap>()
+
+	for (const [key, value] of Object.entries(props)) {
+		if (!value) continue
+
+		if (!value || typeof value === "number") continue
+
+		const { languageCode, nameKind } = parsePlacetypeSource(key)
+
+		if (!languageCode || !nameKind) continue
+
+		let langMap = localizedPropMap.get(languageCode)
+
+		if (!langMap) {
+			langMap = new Map()
+			localizedPropMap.set(languageCode, langMap)
+		}
+
+		const firstValue = Array.isArray(value) ? value[0] : value
+
+		if (firstValue) {
+			langMap.set(nameKind, firstValue)
+		}
+	}
+
+	const src = wof_src || geom_src || "unknown"
+
+	if (!src) throw new Error(`No source found for placetype ${placetype} with ID ${id}`)
+
+	const population =
+		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : null
+
+	const isCurrent = mzIsCurrent == null ? null : mzIsCurrent !== 0 && mzIsCurrent !== "0"
+
+	return {
+		id,
+		name,
+		src,
+		parent_id,
+		placetype,
+		localizedPropMap,
+		country: country || null,
+		latitude: typeof latitude === "number" ? latitude : null,
+		longitude: typeof longitude === "number" ? longitude : null,
+		population,
+		concordances: concordances && Object.keys(concordances).length ? concordances : null,
+		isCurrent,
+		isDeprecated: !!edtfDeprecated,
+		isCeased: !!edtfCessation,
+		isSuperseded: !!(superseded_by && superseded_by.length),
+		isSuperseding: !!(supersedes && supersedes.length),
+		lastmodified: typeof lastmodified === "number" ? lastmodified : null,
+	}
+}
+
+/**
+ * Given a WhosOnFirst filename, plucks and normalizes the language code into an ISO 639-1 alpha-2 code.
+ *
+ * @deprecated
+ */
+export function pluckFileNameLanguageCode(filename: string): Alpha2LanguageCode | null {
+	const [, languageCode] = filename.match(/name:([a-z]{2,3})_\w+\.txt/) || []
+
+	if (!languageCode) return null
+
+	if (isAlpha2LanguageCode(languageCode)) return languageCode
+
+	if (isAlpha3bLanguageCode(languageCode)) return Alpha3bToAlpha2.get(languageCode) ?? null
+
+	return null
+}

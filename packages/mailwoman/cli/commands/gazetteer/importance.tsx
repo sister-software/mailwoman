@@ -28,6 +28,7 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
+import type { FanoutCandidate } from "@mailwoman/gazetteer/tools/pipeline/importance-fanout"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { countRows } from "@mailwoman/sqlite/introspection"
 import { dirname } from "path-ts"
@@ -40,7 +41,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { FanoutCandidate } from "#gazetteer/importance-fanout"
 
 /**
  * Columns a Wikidata concordance row needs before it contains a usable mapping.
@@ -74,7 +74,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const { TextSpliterator } = await import("spliterator")
 
-		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } = await import("#gazetteer/importance-fanout")
+		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } =
+			await import("@mailwoman/gazetteer/tools/pipeline/importance-fanout")
 
 		const dbPath = options.db
 		const tsvPath = options.tsv

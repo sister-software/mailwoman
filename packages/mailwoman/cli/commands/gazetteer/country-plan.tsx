@@ -19,24 +19,29 @@ import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { wofExtractPathsByName } from "@mailwoman/resolver-wof-sqlite/paths"
-
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import {
 	adminDBAvailable,
 	censusForCountry,
 	CHECKOUT_SIZE_RATIO,
 	planCountryMove,
 	servingSources,
-} from "#gazetteer/country/plan"
-import { AdminSource, countrySourceMap, sourceConflicts, sourceSentence } from "#gazetteer/country/sources"
+} from "@mailwoman/gazetteer/tools/pipeline/country/plan"
+import {
+	AdminSource,
+	countrySourceMap,
+	sourceConflicts,
+	sourceSentence,
+} from "@mailwoman/gazetteer/tools/pipeline/country/sources"
 import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
-} from "#gazetteer/defaults"
-import { addCountry, removeCountry } from "#gazetteer/recipe-edit"
-import { auditReposRoot, clonedCountries, reposSentence } from "#gazetteer/repos/audit"
+} from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { addCountry, removeCountry } from "@mailwoman/gazetteer/tools/pipeline/recipe-edit"
+import { auditReposRoot, clonedCountries, reposSentence } from "@mailwoman/gazetteer/tools/pipeline/repos/audit"
+import { wofExtractPathsByName } from "@mailwoman/resolver-wof-sqlite/paths"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 
 export const description =
 	"Report which source serves a country's admin coverage today. List every edit required to move it. " +

@@ -9,7 +9,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 
 /**

@@ -140,7 +140,11 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 
 			const destination = PathBuilder.from(requested ?? wofReposPath())
 
-			const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
+			const [{ Placetype, PLACETYPES_REPO_SOURCE }, { synchronizeRepo }] = await Promise.all([
+				import("@mailwoman/gazetteer"),
+				import("@mailwoman/core"),
+			])
+
 			const { parallelMap } = await import("spliterator")
 
 			const selection = selectRepos(await discoverRepos(), {
@@ -155,7 +159,8 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 			// A clone already on disk keeps its remotes: `synchronizeRepo` pulls in place
 			// and never rewrites a remote, so this fixes new clones only.
 			// `gazetteer repos-sync` reports and re-points the existing ones.
-			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof/repo-origin")
+			const { githubForkProbe, resolveWOFRepoOrigin } =
+				await import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin")
 
 			const resolved = await Promise.all(
 				selection.selected.map(async ({ name }) => {

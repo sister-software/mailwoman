@@ -5,6 +5,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { DEFAULT_FOLD_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
 
@@ -16,7 +17,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer/defaults"
 
 /**
  * Command specification for `gazetteer release`.
@@ -69,7 +69,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			promoteCandidate,
 			publishGazetteer,
 			resolvePostcodeDatabases,
-		} = await import("#gazetteer-pipeline")
+		} = await import("@mailwoman/gazetteer/tools/pipeline")
 
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 

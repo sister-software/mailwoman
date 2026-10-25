@@ -12,9 +12,9 @@ import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoma
 // Subpath imports from core keep each command's dependency graph small.
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
+import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"

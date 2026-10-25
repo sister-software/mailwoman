@@ -68,6 +68,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

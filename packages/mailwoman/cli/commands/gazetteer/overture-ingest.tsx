@@ -6,6 +6,7 @@
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -16,7 +17,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`

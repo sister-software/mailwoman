@@ -17,7 +17,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
+import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
 import {
 	COUNTRY_DISPLAY_NAME,

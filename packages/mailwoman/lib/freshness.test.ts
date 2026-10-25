@@ -1,13 +1,13 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { ManifestState, readFreshness } from "#freshness"
-import { stampLayerManifest } from "#gazetteer/stamp-manifest"
 
 const fixtures = new AsyncDisposableStack()
 

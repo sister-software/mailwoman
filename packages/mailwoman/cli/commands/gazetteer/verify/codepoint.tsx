@@ -46,7 +46,8 @@ const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ optio
 		const { isoDate } = await import("@mailwoman/core/utils")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const { runCodePointCheck, formatCodePointCheckReport } = await import("#gazetteer/gb/codepoint/comparison")
+		const { runCodePointCheck, formatCodePointCheckReport } =
+			await import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/comparison")
 
 		const stamp = isoDate()
 

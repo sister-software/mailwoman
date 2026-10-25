@@ -8,11 +8,11 @@
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+import type { TriageRow, TriageSummary } from "@mailwoman/gazetteer/tools/pipeline/wof/triage"
 import { Box, Text } from "ink"
 import { PathBuilder, dirname } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
-import type { TriageRow, TriageSummary } from "#gazetteer/wof/triage"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -37,7 +37,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		const { isoDate } = await import("@mailwoman/core/utils")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer/wof/triage")
+		const { CoverageVerdict, triageWOFCurrency } = await import("@mailwoman/gazetteer/tools/pipeline/wof/triage")
 
 		const adminDB = options.admin ?? wofDatabasePath("admin-global-priority.db")
 		const geonamesDir = options.geonames ?? dataRootPath("geonames")

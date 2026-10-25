@@ -19,7 +19,7 @@
  *   vocabulary would pull `node:sqlite` through `PlacetypeDataSource` into the span proposer.
  */
 
-import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
+import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
 /**
  * WOF placetypes that name a structure inside a venue rather than a place on the map,

@@ -42,7 +42,7 @@ const csv = (raw: string | null | undefined): string[] | null => (raw ? splitCou
 
 const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin } = await import("#gazetteer-pipeline")
+		const { buildAdmin } = await import("@mailwoman/gazetteer/tools/pipeline")
 
 		const result = await buildAdmin({
 			dataDir: options.data,

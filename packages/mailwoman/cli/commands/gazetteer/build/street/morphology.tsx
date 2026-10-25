@@ -39,7 +39,7 @@ export const spec = {
 
 const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
+		const { buildStreetMorphologyArtifact } = await import("@mailwoman/gazetteer/tools/pipeline/street-morphology")
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,

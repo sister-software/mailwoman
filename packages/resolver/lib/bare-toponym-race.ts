@@ -15,7 +15,7 @@ import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { loneValueNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 
 /**
  * The tree's single value-containing node when it is locality-tagged, else null.

@@ -24,6 +24,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
+import type { GBGranularity } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { NamedLatLon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -36,7 +37,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { GBGranularity } from "#gazetteer/postcode/binary"
 
 interface LocaleSource {
 	country: string
@@ -76,7 +76,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 		const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
-			await import("#gazetteer/postcode/binary")
+			await import("@mailwoman/gazetteer/tools/pipeline/postcode/binary")
 
 		const outDir = resolvePathBuilder(options.out)
 

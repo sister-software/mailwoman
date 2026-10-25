@@ -13,7 +13,7 @@ const shared = (text: string) => [{ file: "packages/corpus/lib/recipes/thing.ts"
 describe("isCountryHome", () => {
 	it("admits a country directory, a country file name and the codex", () => {
 		expect(isCountryHome("packages/corpus/lib/us/adapters/tiger/adapter.ts")).toBe(true)
-		expect(isCountryHome("packages/mailwoman/tools/gazetteer-pipeline/postcode/locality/jp.ts")).toBe(true)
+		expect(isCountryHome("packages/gazetteer/tools/pipeline/postcode/locality/jp.ts")).toBe(true)
 		expect(isCountryHome("packages/codex/lib/country.ts")).toBe(true)
 	})
 

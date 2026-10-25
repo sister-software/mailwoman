@@ -20,7 +20,7 @@ import {
 	type ResolverBackend,
 	type ResolveSwitches,
 } from "@mailwoman/core/resolver"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"

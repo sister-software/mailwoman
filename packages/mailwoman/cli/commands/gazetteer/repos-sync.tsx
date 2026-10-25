@@ -11,6 +11,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/git"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+import type { RepoSyncPlan } from "@mailwoman/gazetteer/tools/pipeline/repos/sync"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
@@ -22,7 +23,6 @@ import {
 	useCommandTask,
 	useProgressFeed,
 } from "#cli-kit"
-import type { RepoSyncPlan } from "#gazetteer/repos/sync"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -55,9 +55,12 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wofReposPath } = await import("@mailwoman/core/data-root")
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { auditReposRoot } = await import("#gazetteer/repos/audit")
-		const { applyRepoSyncPlan, planReposSync, syncSentence } = await import("#gazetteer/repos/sync")
-		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer/wof/repo-origin")
+		const { auditReposRoot } = await import("@mailwoman/gazetteer/tools/pipeline/repos/audit")
+
+		const { applyRepoSyncPlan, planReposSync, syncSentence } =
+			await import("@mailwoman/gazetteer/tools/pipeline/repos/sync")
+
+		const { githubForkProbe, UPSTREAM_ORG } = await import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin")
 
 		const root = PathBuilder.from(options.root ?? wofReposPath())
 

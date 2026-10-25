@@ -20,9 +20,9 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { JSONSpliterator } from "spliterator"
 
-import { buildSHA } from "#gazetteer/stamp-manifest"
 import {
 	createSemanticObservationRoute,
 	type SemanticObservation,

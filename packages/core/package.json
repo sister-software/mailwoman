@@ -191,30 +191,20 @@
 			"node": "./lib/resources/languages.ts",
 			"default": "./out/resources/languages.js"
 		},
-		"./resources/whosonfirst": {
-			"types": "./out/resources/whosonfirst.d.ts",
-			"node": "./lib/resources/whosonfirst.ts",
-			"default": "./out/resources/whosonfirst.js"
+		"./resources/git": {
+			"types": "./out/resources/git.d.ts",
+			"node": "./lib/resources/git.ts",
+			"default": "./out/resources/git.js"
 		},
-		"./resources/whosonfirst/hierarchy": {
-			"types": "./out/resources/whosonfirst/hierarchy.d.ts",
-			"node": "./lib/resources/whosonfirst/hierarchy.ts",
-			"default": "./out/resources/whosonfirst/hierarchy.js"
+		"./resources/languages/types.gen": {
+			"types": "./out/resources/languages/types.gen.d.ts",
+			"node": "./lib/resources/languages/types.gen.ts",
+			"default": "./out/resources/languages/types.gen.js"
 		},
 		"./resources/libpostal": {
 			"types": "./out/resources/libpostal.d.ts",
 			"node": "./lib/resources/libpostal.ts",
 			"default": "./out/resources/libpostal.js"
-		},
-		"./resources/whosonfirst/specificity": {
-			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/specificity.ts",
-			"default": "./out/resources/whosonfirst/placetypes/specificity.js"
-		},
-		"./placetypes": {
-			"types": "./out/resources/whosonfirst/placetypes/definition.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/definition.ts",
-			"default": "./out/resources/whosonfirst/placetypes/definition.js"
 		},
 		"./utils": {
 			"types": "./out/utils.d.ts",
@@ -536,16 +526,6 @@
 			"node": "./lib/policy/registry.ts",
 			"default": "./out/policy/registry.js"
 		},
-		"./resources/whosonfirst/extract-repo": {
-			"types": "./out/resources/whosonfirst/extract-repo.d.ts",
-			"node": "./lib/resources/whosonfirst/extract-repo.ts",
-			"default": "./out/resources/whosonfirst/extract-repo.js"
-		},
-		"./resources/whosonfirst/placetypes/admin": {
-			"types": "./out/resources/whosonfirst/placetypes/admin.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/admin.ts",
-			"default": "./out/resources/whosonfirst/placetypes/admin.js"
-		},
 		"./tokenization/normalizer": {
 			"types": "./out/tokenization/normalizer.d.ts",
 			"node": "./lib/tokenization/normalizer.ts",
@@ -691,8 +671,6 @@
 		"axios": "^1.20.0",
 		"axios-cache-interceptor": "^1.13.0",
 		"change-case": "^5.4.4",
-		"d3-color": "^3.1.0",
-		"d3-scale-chromatic": "^3.1.0",
 		"dom-serializer": "^3.1.1",
 		"domhandler": "^6.0.1",
 		"domutils": "^4.0.2",
@@ -714,9 +692,6 @@
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "1.5.6-r.1",
-		"@mailwoman/spatial": "workspace:*",
-		"@types/d3-color": "^3.1.3",
-		"@types/d3-scale-chromatic": "^3.1.0",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
 	}

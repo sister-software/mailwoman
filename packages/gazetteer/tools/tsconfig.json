@@ -1,0 +1,32 @@
+{
+	// The gazetteer build pipeline. It compiles to `../out/tools` beside the library's `../out`, and it references
+	// the library project because tooling imports it and the library never imports tooling.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "../out/tools",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{ "path": ".." },
+		{ "path": "../../ban" },
+		{ "path": "../../codex" },
+		{ "path": "../../core" },
+		{ "path": "../../corpus" },
+		{ "path": "../../dictionaries" },
+		{ "path": "../../evidence" },
+		{ "path": "../../match" },
+		{ "path": "../../neural" },
+		{ "path": "../../osm" },
+		{ "path": "../../poi-taxonomy" },
+		{ "path": "../../postcode" },
+		{ "path": "../../resolver" },
+		{ "path": "../../resolver-wof-sqlite" },
+		{ "path": "../../spatial" },
+		{ "path": "../../sqlite" }
+	]
+}

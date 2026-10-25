@@ -18,6 +18,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix-index"
 import { PathBuilder } from "path-ts"
 
@@ -28,7 +29,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { PostcodePrefixLevel } from "#gazetteer/postcode/prefix"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database.
@@ -118,7 +118,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
 			await import("@mailwoman/postcode/prefix-index")
 
-		const { buildPostcodePrefixIndex } = await import("#gazetteer/postcode/prefix")
+		const { buildPostcodePrefixIndex } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix")
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
