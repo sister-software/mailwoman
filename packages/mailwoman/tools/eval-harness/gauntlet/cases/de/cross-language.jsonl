@@ -1,0 +1,1 @@
+{"id":"de-cross-language-munich-ja","input":"ミュンヘン","source":"issue:2846-cross-language-2026-10-25","addressKind":"cross_language_place","country":"DE","status":"pass","expectLat":48.1374,"expectLon":11.5755,"expectToleranceM":20000,"addedAt":"2026-10-25","bugRef":"#2846","note":"Katakana Munich. Shipped 10.1.0 parsed it as ミュ / ンヘン with no result on 2026-10-24."}

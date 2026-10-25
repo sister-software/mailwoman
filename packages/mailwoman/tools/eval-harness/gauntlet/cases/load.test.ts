@@ -21,19 +21,19 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const CORPUS_SIZE = 1277
+const CORPUS_SIZE = 1292
 
 /**
  * The hash covers the whole canonical row including `note`, and it also lives in every built
  * `regression.db` as the `gauntlet_meta` stamp, so any corpus edit requires a re-pin and a rebuild.
  */
-const CORPUS_HASH = "200f1da815ab29c1395d94f2e602cd573e93b5f656151380faa84d82dd9de28b"
+const CORPUS_HASH = "6f1bb7157131d31dd727f0354b89eb445920cf748ff55dcc17c142047b7cf37b"
 
 /**
  * The id is content-addressed rather than order-addressed, so it holds across file
  * reorganization but moves when rows are added or removed.
  */
-const BOARD_ID = "gauntlet-regression@1277:3ed4f82f04f0"
+const BOARD_ID = "gauntlet-regression@1292:c5bbe4448b84"
 
 const SAMPLE = {
 	id: "xx-sample",
