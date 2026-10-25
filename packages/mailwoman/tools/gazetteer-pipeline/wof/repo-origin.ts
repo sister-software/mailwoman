@@ -21,6 +21,14 @@ export interface RepoOrigin {
 	url: string
 	source: "fork" | "upstream"
 	reason: string
+	/**
+	 * Our fork's URL whenever the fork exists, clean or diverged, and `null`
+	 * when it does not or could not be probed.
+	 *
+	 * A clone of upstream still needs this remote: a correction made in the clone
+	 * is pushed to the fork before its upstream PR.
+	 */
+	forkURL: string | null
 }
 
 /**
@@ -69,6 +77,7 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 			url: repoURL(FORK_ORG, repo),
 			source: "fork",
 			reason: `${FORK_ORG}/${repo} carries commits upstream does not — our corrections ride this remote`,
+			forkURL: repoURL(FORK_ORG, repo),
 		}
 	}
 
@@ -79,7 +88,14 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 				"while a fork does not track its parent"
 			: `no ${FORK_ORG}/${repo} fork`
 
-	return { repo, org: UPSTREAM_ORG, url: repoURL(UPSTREAM_ORG, repo), source: "upstream", reason }
+	return {
+		repo,
+		org: UPSTREAM_ORG,
+		url: repoURL(UPSTREAM_ORG, repo),
+		source: "upstream",
+		reason,
+		forkURL: state === "clean" ? repoURL(FORK_ORG, repo) : null,
+	}
 }
 
 /**

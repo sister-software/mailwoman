@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { FORK_ORG, type ForkState, resolveWOFRepoOrigin, UPSTREAM_ORG } from "#gazetteer/wof/repo-origin"
+import { FORK_ORG, type ForkState, repoURL, resolveWOFRepoOrigin, UPSTREAM_ORG } from "#gazetteer/wof/repo-origin"
 
 const states: Record<string, ForkState> = {
 	"whosonfirst-data-admin-gb": "diverged",
@@ -53,5 +53,15 @@ describe("resolveWOFRepoOrigin", () => {
 		})
 
 		expect(new Set([clean.reason, absent.reason, failed.reason]).size).toBe(3)
+	})
+
+	it("records the fork's URL whenever the fork exists, so an upstream clone can still push to it", async () => {
+		const diverged = await resolveWOFRepoOrigin("whosonfirst-data-admin-gb", probe)
+		const clean = await resolveWOFRepoOrigin("whosonfirst-data-admin-fr", probe)
+		const absent = await resolveWOFRepoOrigin("whosonfirst-data-admin-zz", probe)
+
+		expect(diverged.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-admin-gb"))
+		expect(clean.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-admin-fr"))
+		expect(absent.forkURL).toBeNull()
 	})
 })

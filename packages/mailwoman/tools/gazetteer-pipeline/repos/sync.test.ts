@@ -33,6 +33,7 @@ const forkOrigin = {
 	url: repoURL(FORK_ORG, REPO),
 	source: "fork" as const,
 	reason: "fork exists",
+	forkURL: repoURL(FORK_ORG, REPO),
 }
 
 const upstreamOrigin = {
@@ -41,6 +42,7 @@ const upstreamOrigin = {
 	url: repoURL(UPSTREAM_ORG, REPO),
 	source: "upstream" as const,
 	reason: "no fork",
+	forkURL: null,
 }
 
 const clone = (over: Partial<CloneState> = {}): CloneState => ({
@@ -200,7 +202,12 @@ describe("applyRepoSyncPlan", () => {
 		await originRepo.read(["-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", "commit", "-qm", "x"])
 
 		const directory = scratch.path("repos", UPSTREAM_ORG, REPO).toString()
-		const plan = planRepoSync({ ...forkOrigin, url: `file://${origin}` }, directory, await inspectClone(directory))
+
+		const plan = planRepoSync(
+			{ ...forkOrigin, url: `file://${origin}`, forkURL: `file://${origin}` },
+			directory,
+			await inspectClone(directory)
+		)
 
 		expect(plan.action).toBe(SyncAction.Clone)
 
@@ -213,5 +220,44 @@ describe("applyRepoSyncPlan", () => {
 		expect(await applyRepoSyncPlan(plan, { client })).toBe(`cloned ${REPO} from fork`)
 		expect(steps.length).toBeGreaterThan(0)
 		expect((await inspectClone(directory)).shallow).toBe(true)
+	})
+
+	it("gives a clone of upstream a fork remote when a clean fork exists, and leaves a correct one alone", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-fork-")
+
+		const upstream = scratch.path("upstream")
+
+		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", upstream.toString()])
+		await writeLocalTextFile("fixture\n", upstream("README"))
+
+		const upstreamRepo = new GitClient({ cwd: upstream })
+
+		await upstreamRepo.read(["add", "README"])
+
+		await upstreamRepo.read([
+			"-c",
+			"user.email=fixture@example.invalid",
+			"-c",
+			"user.name=Fixture",
+			"commit",
+			"-qm",
+			"x",
+		])
+
+		const directory = scratch.path("repos", REPO).toString()
+		const origin = { ...upstreamOrigin, url: `file://${upstream}`, forkURL: repoURL(FORK_ORG, REPO) }
+
+		await using client = new GitClient({ cwd: scratch.path })
+
+		expect(await applyRepoSyncPlan(planRepoSync(origin, directory, await inspectClone(directory)), { client })).toBe(
+			`cloned ${REPO} from upstream; added the fork remote of ${REPO} at ${repoURL(FORK_ORG, REPO)}`
+		)
+
+		expect(await client.read(["-C", directory, "remote", "get-url", "fork"])).toBe(repoURL(FORK_ORG, REPO))
+
+		const again = planRepoSync(origin, directory, await inspectClone(directory))
+
+		expect(again.action).toBe(SyncAction.UpToDate)
+		expect(await applyRepoSyncPlan(again, { client })).toBeNull()
 	})
 })

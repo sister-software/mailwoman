@@ -284,38 +284,91 @@ export async function applyRepoSyncPlan(
 	options: { client: GitClient; repoint?: boolean }
 ): Promise<string | null> {
 	const { client } = options
+	const sentences: string[] = []
 
 	if (plan.action === SyncAction.Clone) {
 		await makeDirectories(dirname(plan.directory))
 		await client.clone(plan.origin.url, plan.directory, { depth: 1 })
 
-		return `cloned ${plan.repo} from ${plan.origin.source}`
+		sentences.push(`cloned ${plan.repo} from ${plan.origin.source}`)
 	}
 
 	if (plan.action === SyncAction.FastForward) {
 		await client.read(["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 
-		return `fast-forwarded ${plan.repo}`
+		sentences.push(`fast-forwarded ${plan.repo}`)
 	}
 
-	if (plan.action === SyncAction.RepointRequired && options.repoint) {
-		// The next upstream sync would need a guess without the fork's address.
-		await client.read(["-C", plan.directory, "remote", "rename", "origin", "upstream"])
-		await client.read(["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
-		await client.start(["-C", plan.directory, "fetch", "--progress", "origin"]).result
+	const repointed = plan.action === SyncAction.RepointRequired && options.repoint
 
-		// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the
-		// next `git pull` here pulls upstream over the corrections this command preserves.
-		const branch = await client.read(["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
+	if (repointed) {
+		sentences.push(await repoint(plan, client))
+	}
 
-		if (branch && branch !== "HEAD") {
-			await client.read(["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
+	// A refused or unrepointed plan leaves its checkout untouched, remotes included.
+	const touchable =
+		plan.action === SyncAction.Clone ||
+		plan.action === SyncAction.FastForward ||
+		plan.action === SyncAction.UpToDate ||
+		repointed
+
+	if (touchable) {
+		const added = await ensureForkRemote(plan, client)
+
+		if (added) {
+			sentences.push(added)
 		}
-
-		return `re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`
 	}
 
-	return null
+	return sentences.length ? sentences.join("; ") : null
+}
+
+/**
+ * The remote name a clone gives our fork when its `origin` is upstream.
+ */
+export const FORK_REMOTE = "fork"
+
+/**
+ * Adds or corrects the `fork` remote of a clone whose fork exists.
+ *
+ * A clone made from upstream otherwise has no remote to push a correction to,
+ * and the correction then reaches neither the fork nor an upstream PR.
+ * A clone whose `origin` is the fork needs no second remote.
+ *
+ * @returns The sentence a caller reports, or `null` when the remote was already right.
+ */
+async function ensureForkRemote(plan: RepoSyncPlan, client: GitClient): Promise<string | null> {
+	const forkURL = plan.origin.forkURL
+
+	if (!forkURL || sameRemote(plan.origin.url, forkURL)) return null
+
+	const current = await client.read(["-C", plan.directory, "remote", "get-url", FORK_REMOTE]).catch(() => null)
+
+	if (sameRemote(current, forkURL)) return null
+
+	await client.read(["-C", plan.directory, "remote", current ? "set-url" : "add", FORK_REMOTE, forkURL])
+
+	return `${current ? "re-pointed" : "added"} the ${FORK_REMOTE} remote of ${plan.repo} at ${forkURL}`
+}
+
+/**
+ * Moves a clone's `origin` onto the resolved fork and keeps the previous remote as `upstream`.
+ */
+async function repoint(plan: RepoSyncPlan, client: GitClient): Promise<string> {
+	// The next upstream sync would need a guess without the fork's address.
+	await client.read(["-C", plan.directory, "remote", "rename", "origin", "upstream"])
+	await client.read(["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
+	await client.start(["-C", plan.directory, "fetch", "--progress", "origin"]).result
+
+	// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the next
+	// `git pull` here pulls upstream over the corrections this command preserves.
+	const branch = await client.read(["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
+
+	if (branch && branch !== "HEAD") {
+		await client.read(["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
+	}
+
+	return `re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`
 }
 
 /**
