@@ -12,7 +12,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "align-slice",
+	name: "align-recipe",
 	description: "Align a canonical recipe output with the current tokenizer.",
 	options: {
 		input: { type: "string", required: true, description: "Canonical jsonl input" },

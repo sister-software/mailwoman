@@ -16,6 +16,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import sentencepiece as spm
 
+from ..data.loader import manifest_files
 from .byte_fallback import detect_script, load_fixture_lines, measure_byte_fallback
 from .uds import (
     DEFAULT_USER_DEFINED_SYMBOLS,
@@ -51,7 +52,7 @@ def iter_train_files(corpus_dir: Path) -> list[Path]:
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        files = [Path(s["path"]) for s in data.get("slices", []) if s.get("split") == "train"]
+        files = [Path(s["path"]) for s in manifest_files(data) if s.get("split") == "train"]
         if files:
             return sorted(files)
     train_dir = corpus_dir / "train"

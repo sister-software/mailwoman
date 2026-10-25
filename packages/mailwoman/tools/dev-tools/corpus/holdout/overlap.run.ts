@@ -12,7 +12,7 @@
  *   Measured over `v0.6.0-register-surface` on 2026-09-28, this tool's own denominators: DE's val split holds
  *   40,918 distinct `source_id`s and 770 of them are in train (1.88%), all 770 from
  *   `part-synth-german-val.parquet`, which a hand-written list routed. Against that one file's 3,987 ids the
- *   share is 19.3%, which is the figure #2359 records. GB, routed through `corpus split-slice`, reads 37 of
+ *   share is 19.3%, which is the figure #2359 records. GB, routed through `corpus split-overlay`, reads 37 of
  *   109,096 in val (0.03%) and 31 of 109,792 in test. FR and US read 0.
  *
  *   **Why the raw-string count is a lower bound.** `base_source_id` is NULL for 4,176,539 of the 4,206,561

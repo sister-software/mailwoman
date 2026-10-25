@@ -56,7 +56,7 @@ def _corpus(tmp: Path, deletions: list[dict]) -> Path:
     corpus = tmp / "corpus"
     tiger = _write(corpus / "train" / "tiger.parquet", "tiger", 6)
     nad = _write(corpus / "train" / "nad.parquet", "usgov-nad", 4)
-    (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [tiger, nad], "deletions": deletions}))
+    (corpus / "MANIFEST.json").write_text(json.dumps({"files": [tiger, nad], "deletions": deletions}))
     return corpus
 
 

@@ -231,6 +231,7 @@
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/mtf": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
@@ -254,7 +255,7 @@
 		"onnxruntime-node": "^1.30.0",
 		"path-ts": "^2.5.0",
 		"react": "^19.3.1",
-		"spliterator": "^9.2.1",
+		"spliterator": "^9.3.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {

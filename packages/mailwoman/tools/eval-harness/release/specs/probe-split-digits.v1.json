@@ -1,0 +1,78 @@
+{
+	"schemaVersion": 3,
+	"specVersion": "probe-split-digits-1",
+	"rationale": "The #2845 split_digits probe compares two 2,000-step from-scratch arms that differ only in their vocabulary: C4 (one piece per digit) and C5 (mixed digit pieces). The question is relative, so the probe registers no absolute minimum. Its one check is the loss of the C5 arm (candidate) against the C4 arm (published) in exact parse rate on address rows from register sources that carry house numbers and postcodes. A loss above one point refuses C5. The objective reads the countries whose held-out rows both arms leave unseen.",
+	"requirements": [
+		{
+			"id": "house-number-postcode",
+			"kind": "capability",
+			"task": "Reading the house number and postcode of a register address exactly, alongside the rest of the row",
+			"metric": "exact_parse",
+			"reason": "The split_digits question is whether per-digit or mixed digit pieces read numbers better, and these sources hold most of the held-out house numbers and postcodes.",
+			"minimum": null,
+			"maxLoss": 0.01,
+			"maxLossReason": "One point of exact parse on number-bearing register rows is the smallest loss the probe treats as a vocabulary defect rather than seed noise.",
+			"select": {
+				"kinds": ["address"],
+				"sources": ["ban", "gnaf", "usgov-nad", "usgov-nppes", "rendered-de", "rendered-gb-os-open", "osm", "overture"]
+			}
+		}
+	],
+	"objective": {
+		"countries": ["FR", "GB", "DE", "IN"],
+		"select": {
+			"kinds": ["address"]
+		},
+		"minimumImprovement": null
+	},
+	"identities": {
+		"dataset": {
+			"id": null,
+			"sha256": null
+		},
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "69fbaf01c"
+		},
+		"inference": {
+			"description": "HELDOUT_INFERENCE_RULE in heldout/per/country.ts (served-locale-package): each row is parsed by the shipped Latin locale package for its country (release.config.json locales), falling back to en-us, with the row's country as localeHint; a package whose loader reports an unfed required channel is refused. The verdict records the rule and the rows each package parsed.",
+			"options": {
+				"postcodeRepair": true,
+				"localeHint": "row.country",
+				"weightsLocale": "served-locale-package"
+			}
+		},
+		"published": {
+			"description": "@mailwoman/neural-weights-en-us 10.7.0 model.onnx (int8, md5 5356ecba83e3774a5d9717277c051ac2)",
+			"sha256": "e90aeab4b07d03a5b599331c1e68aa70d37e96478151795bcdc6dabb82d9aca9"
+		},
+		"candidate": {
+			"description": "The exact release artifact's model.onnx",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": 0.95,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"rowsIndependent": false,
+		"groupingAssumption": "A row's independent unit is its group within its country: base_source_id when derived, else source_id. Rows are not declared independent, so a check that reads an ungrouped row is insufficient evidence. Limitation: structure shared across groups (one source's conventions, one place's many addresses) is not modelled. The dataset quota counts groups, not rows, against 1,000 per country.",
+		"requiredPrecision": 0.08
+	},
+	"provenance": {
+		"admitted": {
+			"minimum": ["verified_unseen", "unseen_by_candidate"],
+			"comparative": ["verified_unseen"]
+		}
+	},
+	"evaluations": {
+		"development": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-dev with one seed; used for recipe, checkpoint and seed selection."
+		},
+		"confirmation": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-confirm with a disjoint seed; read only for the release decision, every read recorded in the next spec version's rationale."
+		}
+	}
+}

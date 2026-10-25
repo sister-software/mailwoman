@@ -41,13 +41,13 @@
 #   mailwoman corpus fetch gb-os-open
 #   mailwoman corpus run gb-os-open --input $MAILWOMAN_DATA_ROOT/corpus/sources/gb-os-open \
 #     --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open
-#   mailwoman corpus slice locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
+#   mailwoman corpus recipe locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
 #     --out <dir>/rendered-gb-os-open.jsonl
 #   uv run python -m mailwoman_train.corpora.house_venue_tuples
-#   mailwoman corpus slice sub-venue --count 120000 --seed 42 --out <dir>/spliced-sub-venue-v4.jsonl
+#   mailwoman corpus recipe sub-venue --count 120000 --seed 42 --out <dir>/spliced-sub-venue-v4.jsonl
 #   mailwoman corpus migrate-recipe-outputs --files <dir>/spliced-sub-venue-v4.jsonl
-#   for each recipe output: `mailwoman corpus align-slice --corpus-version 0.7.7-no-ppd`, then
-#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`
+#   for each recipe output: `mailwoman corpus align-recipe --corpus-version 0.7.7-no-ppd`, then
+#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-overlay`
 #   per split, write `spliced-sub-venue-gbswap.<split>.parquet`: v0.7.0-de-holdout's
 #     `part-sub-venue.<split>.parquet` with its GB rows dropped, and the split's GB rows of
 #     `spliced-sub-venue-v4.<split>.parquet` placed, in file order, at the dropped rows' positions. A split with more

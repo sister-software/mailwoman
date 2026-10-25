@@ -21,13 +21,13 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
+import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { loadParsePriors, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { GEOCODE_SESSION_DEFAULTS, loadForkEntityDeps } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
@@ -686,24 +686,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
-	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
-	// optional artifact and mirroring the CLI's wiring so the board grades what production runs.
-	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
-	const poiDBPath = poiDatabasePath("poi.db")
-
-	if (await pathExists(poiDBPath)) {
-		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/poi"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
-
-		const morphology = await loadStreetMorphologyFST()
-
-		forkEntityDeps = {
-			poiLookup: new POILookup({ databasePath: poiDBPath }),
-			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
-		}
-	}
+	// The fork→entity probe's signals come from the session's own loader, so the board
+	// grades the POI layers production opens (poi.db and the stations layer beside it).
+	const { deps: forkEntityDeps } = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
 
 	/**
 	 * The one geocode call both public entry points make; `extra` is spread last so a trace sink cannot

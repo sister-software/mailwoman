@@ -36,7 +36,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { readRegisterDecisions } from "@mailwoman/corpus/build/eligibility"
 import { foldSourceLicenses, rowsBySourceFromTally } from "@mailwoman/corpus/parquet/record"
 import { freezeTrainingManifest, type TrainingManifest } from "@mailwoman/corpus/source-register"
-import { localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { dirname, resolvePath } from "path-ts"
 
 const { values } = parseArguments({
@@ -62,7 +62,7 @@ if (!values.out) throw new Error("--out is required")
 
 interface OverlayManifest {
 	corpus_version: string
-	slices: Array<{ path: string; rows: number; sha256?: string; source?: string }>
+	files: Array<{ path: string; rows: number; sha256?: string; source?: string }>
 }
 
 interface OverlayPlan {
@@ -80,8 +80,14 @@ if (!plan?.appliedAt) {
 	throw new Error(`${planPath} records no appliedAt, so when this corpus came to exist is unknown`)
 }
 
-const files = manifest.slices.map((file) => localManifestFilePath(file.path))
-const listed = manifest.slices.reduce((total, file) => total + file.rows, 0)
+const files = baseManifestFiles<(typeof manifest)["files"][number]>(manifest).map((file) =>
+	localManifestFilePath(file.path)
+)
+
+const listed = baseManifestFiles<(typeof manifest)["files"][number]>(manifest).reduce(
+	(total, file) => total + file.rows,
+	0
+)
 
 for (const file of files) {
 	if (!(await pathExists(file))) throw new Error(`${file} is listed by the manifest and absent from the data root`)
@@ -90,7 +96,11 @@ for (const file of files) {
 console.log(`${corpusVersion}: folding ${files.length} files, ${listed.toLocaleString()} rows listed`)
 
 const { tally, folded, reread } = await foldSourceLicenses(
-	manifest.slices.map((file, index) => ({ path: files[index]!, rows: file.rows, sha256: file.sha256 }))
+	baseManifestFiles<(typeof manifest)["files"][number]>(manifest).map((file, index) => ({
+		path: files[index]!,
+		rows: file.rows,
+		sha256: file.sha256,
+	}))
 )
 
 console.log(`${corpusVersion}: ${folded} files folded from their records, ${reread} re-read for want of one`)

@@ -180,7 +180,7 @@ def build(
             "Overlay: the full JP corpus referenced by volume path plus the CN organizational-unit parts written here. "
             "The loader takes each path as-is when it exists; on the volume both do."
         ),
-        "slices": entries,
+        "files": entries,
     }
     (out_dir / "MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

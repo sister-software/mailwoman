@@ -174,7 +174,7 @@ describe("readers", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
-		return manifest.slices[0]!.path
+		return manifest.files[0]!.path
 	}
 
 	it("readParquetRows returns every row, and honors a projection", async () => {
@@ -229,7 +229,7 @@ describe("writeParquetSplits", () => {
 
 		const consume = async () => {
 			for await (const _row of openParquetRowStream<ParquetRow & { missing_measurement_column: string }>(
-				m.slices[0]!.path,
+				m.files[0]!.path,
 				{ columns: ["country", "missing_measurement_column"] }
 			)) {
 			}
@@ -277,10 +277,10 @@ describe("writeParquetSplits", () => {
 
 		expect(m.total_rows).toBe(4)
 		expect(m.counts).toEqual({ train: 2, val: 1, test: 1 })
-		expect(m.slices).toHaveLength(3)
+		expect(m.files).toHaveLength(3)
 		expect(m.row_group_size).toBe(ROW_GROUP_SIZE)
 
-		const trainFile = m.slices.find((s) => s.split === "train")!
+		const trainFile = m.files.find((s) => s.split === "train")!
 		expect(trainFile.rows).toBe(2)
 		expect(trainFile.format).toBe("parquet")
 		expect(trainFile.compression).toBe(PARQUET_COMPRESSION)
@@ -300,7 +300,7 @@ describe("writeParquetSplits", () => {
 		expect(trainBack[1]!.raw).toBe("Nice")
 
 		// Round-trip the val file with an explicit locale set.
-		const valFile = m.slices.find((s) => s.split === "val")!
+		const valFile = m.files.find((s) => s.split === "val")!
 		const valBack = await readParquet(valFile.path)
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
@@ -352,7 +352,7 @@ describe("writeParquetSplits", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.5.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
-		const back = await readParquet(m.slices[0]!.path)
+		const back = await readParquet(m.files[0]!.path)
 		expect(back).toHaveLength(3)
 
 		const multi = back.find((r) => r.source_id === "t-multi")!
@@ -391,7 +391,7 @@ describe("writeParquetSplits", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile: 10 }
 		)
 
-		const trainFiles = m.slices.filter((s) => s.split === "train")
+		const trainFiles = m.files.filter((s) => s.split === "train")
 		// The manifest orders files by store path.
 		// A derivation hash decides that path, so the counts are compared as a set.
 		expect(trainFiles.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
@@ -419,7 +419,7 @@ describe("writeParquetSplits", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
-		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
+		expect(a.files[0]!.sha256).toBe(b.files[0]!.sha256)
 	})
 
 	it("rows with optional null columns round-trip through Parquet", async () => {
@@ -435,7 +435,7 @@ describe("writeParquetSplits", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
-		const back = await readParquet(m.slices[0]!.path)
+		const back = await readParquet(m.files[0]!.path)
 		expect(back).toHaveLength(2)
 		const withLocale = back.find((r) => r.source_id === "t-with")!
 		const withoutLocale = back.find((r) => r.source_id === "t-without")!
@@ -453,7 +453,7 @@ describe("writeParquetSplits", () => {
 
 		const streamed = []
 
-		for await (const row of openParquetRowStream<{ country: string; labels: string[] }>(m.slices[0]!.path, {
+		for await (const row of openParquetRowStream<{ country: string; labels: string[] }>(m.files[0]!.path, {
 			columns: ["country", "labels"],
 		})) {
 			streamed.push(row)
@@ -472,7 +472,7 @@ describe("writeParquetSplits", () => {
 		)
 
 		const streamed = await Array.fromAsync(
-			openParquetRowStream<{ source_id: string }>(m.slices[0]!.path, {
+			openParquetRowStream<{ source_id: string }>(m.files[0]!.path, {
 				columns: ["source_id"],
 				where: "source_id IN ('t-1', 't-3') AND list_contains(span_tags, 'locality')",
 			})
@@ -490,7 +490,7 @@ describe("writeParquetSplits", () => {
 		)
 
 		expect(m.counts).toEqual({ train: 1, val: 0, test: 0 })
-		expect(m.slices).toHaveLength(1)
-		expect(m.slices[0]!.split).toBe("train")
+		expect(m.files).toHaveLength(1)
+		expect(m.files[0]!.split).toBe("train")
 	})
 })

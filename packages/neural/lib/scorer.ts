@@ -556,6 +556,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...fstPathEntry(opts.fstPath),
 		...(labels ? { labels } : {}),
 		...(await addressSystemsEntry(opts.modelCardPath)),
+		...(declared.code_unit?.required ? { codeUnits: true } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(declaredSpanMode ? { postcodeAnchorSpanMode: declaredSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),

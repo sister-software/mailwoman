@@ -35,7 +35,7 @@ describe("store reachability", () => {
 		await writeLocalTextFile("{}", dead + "/data.RECORD.json")
 
 		await writeLocalJSONFile(
-			{ slices: [{ split: "train", path: live + "/data.parquet" }], deletions: [] },
+			{ files: [{ split: "train", path: live + "/data.parquet" }], deletions: [] },
 			versionManifestPath(versioned, "v0.8.0")
 		)
 

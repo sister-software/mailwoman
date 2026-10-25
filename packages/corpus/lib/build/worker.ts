@@ -181,7 +181,7 @@ async function finishedPartProblem(manifestPath: PathBuilder): Promise<string | 
 
 	if (!manifest) return (await tryStat(manifestPath)) ? `${manifestPath.toString()} is unreadable` : null
 
-	for (const part of manifest.slices) {
+	for (const part of manifest.files) {
 		const stat = await tryStat(part.path)
 
 		if (!stat) return `${manifestPath.toString()} records ${part.path}, which is missing`
@@ -287,7 +287,7 @@ async function runFinishTask(task: FinishTask, report: (message: string) => void
 		derivation: await resolveDerivation(derivation),
 		adapter: await readLocalJSONFile<AdapterRunManifest>(task.adapterManifestPath),
 		alignRanges: task.plans.map((plan) => ({ start: plan.start, end: plan.end })),
-		parts: parquet.slices,
+		parts: parquet.files,
 		sourceIDs,
 		quarantine: await Promise.all(
 			task.plans.map((plan) => recordFile(alignRangeDirectory(sourceDir, plan)("quarantine.jsonl")))

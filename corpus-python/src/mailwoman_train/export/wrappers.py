@@ -217,3 +217,45 @@ class LogitsOnlyBundleHinted(PlainOutputs):
                 locale_hint_ids=locale_hint,
             )
         )
+
+
+class LogitsOnlyBundleHintedCodeUnit(PlainOutputs):
+    """The hinted evidence bundle plus the code-unit channel (#2845), the code-unit probe arm's export."""
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        anchor_features: torch.Tensor,
+        anchor_confidence: torch.Tensor,
+        gazetteer_features: torch.Tensor,
+        gazetteer_confidence: torch.Tensor,
+        country_features: torch.Tensor,
+        country_confidence: torch.Tensor,
+        street_type_features: torch.Tensor,
+        street_type_confidence: torch.Tensor,
+        locality_surface_features: torch.Tensor,
+        locality_surface_confidence: torch.Tensor,
+        code_unit_features: torch.Tensor,
+        code_unit_confidence: torch.Tensor,
+        locale_hint: torch.Tensor,
+    ) -> Any:
+        return self._outputs(
+            self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+                country_features=country_features,
+                country_confidence=country_confidence,
+                street_type_features=street_type_features,
+                street_type_confidence=street_type_confidence,
+                locality_surface_features=locality_surface_features,
+                locality_surface_confidence=locality_surface_confidence,
+                code_unit_features=code_unit_features,
+                code_unit_confidence=code_unit_confidence,
+                locale_hint_ids=locale_hint,
+            )
+        )

@@ -208,6 +208,7 @@ def iter_encoded(
         augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
         augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
         augment_postcode_move_prob=getattr(cfg_data, "augment_postcode_move_prob", 0.0),
+        augment_grouping_prob=getattr(cfg_data, "augment_grouping_prob", 0.0),
         augment_exclude_sources=getattr(cfg_data, "augment_exclude_sources", ()),
         affix_relabel_lexicon=lexicons.affix_relabel,
     ):
@@ -248,6 +249,7 @@ def iter_encoded(
             country_lexicon=lexicons.country,
             street_type_lexicon=lexicons.street_type,
             locality_surface_lexicon=lexicons.locality_surface,
+            code_units=getattr(cfg_data, "code_unit_features", False),
             # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train from the
             # spans (encode_row builds the per-char label array from them. the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
@@ -277,4 +279,6 @@ def iter_encoded(
             street_type_confidence=enc.get("street_type_confidence"),
             locality_surface_features=enc.get("locality_surface_features"),
             locality_surface_confidence=enc.get("locality_surface_confidence"),
+            code_unit_features=enc.get("code_unit_features"),
+            code_unit_confidence=enc.get("code_unit_confidence"),
         )

@@ -78,7 +78,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^9.2.1"
+		"spliterator": "^9.3.0"
 	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"

@@ -572,6 +572,30 @@ export function conventionClaimForCountry(
 }
 
 /**
+ * How a system joins its admin units (prefecture, city, ward) when they share one line.
+ *
+ * An absent value means the system's line join.
+ * Japan prints its whole admin run unseparated (`東京都千代田区`) while its lines take
+ * a space, so the two joins differ there.
+ */
+export const ADMIN_RUN_JOINS: Readonly<Record<string, string>> = {
+	JP: "",
+}
+
+/**
+ * Returns the join between adjacent admin units on one line in the selected country and `script`.
+ *
+ * Like {@linkcode lineJoinForCountry}, a CJK join applies only to the local script.
+ */
+export function adminRunJoinForCountry(countryCode: string | null, script?: AddressScript): string {
+	const lineJoin = lineJoinForCountry(countryCode, script)
+
+	if (!countryCode || lineJoin === ", ") return lineJoin
+
+	return ADMIN_RUN_JOINS[countryCode.trim().toUpperCase()] ?? lineJoin
+}
+
+/**
  * Returns the line join for single-line output in the selected country and `script`.
  *
  * CJK joins apply only to the local script.

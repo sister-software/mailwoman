@@ -25,6 +25,8 @@ class CoarseEncoderChannels(CoarseEncoderState):
         street_type_confidence: torch.Tensor | None,
         locality_surface_features: torch.Tensor | None,
         locality_surface_confidence: torch.Tensor | None,
+        code_unit_features: torch.Tensor | None = None,
+        code_unit_confidence: torch.Tensor | None = None,
     ) -> torch.Tensor:
 
         if self.use_char_embed:
@@ -78,6 +80,8 @@ class CoarseEncoderChannels(CoarseEncoderState):
             street_type_confidence=street_type_confidence,
             locality_surface_features=locality_surface_features,
             locality_surface_confidence=locality_surface_confidence,
+            code_unit_features=code_unit_features,
+            code_unit_confidence=code_unit_confidence,
         )
 
     def _inject_channels(
@@ -94,6 +98,8 @@ class CoarseEncoderChannels(CoarseEncoderState):
         street_type_confidence: torch.Tensor | None,
         locality_surface_features: torch.Tensor | None,
         locality_surface_confidence: torch.Tensor | None,
+        code_unit_features: torch.Tensor | None = None,
+        code_unit_confidence: torch.Tensor | None = None,
     ) -> torch.Tensor:
         bsz, seq = h.shape[0], h.shape[1]
 
@@ -163,6 +169,17 @@ class CoarseEncoderChannels(CoarseEncoderState):
             features=locality_surface_features,
             confidence=locality_surface_confidence,
             feature_dim=self.locality_surface_feature_dim,
+        )
+
+        h, _ = _inject_soft_feed(
+            h,
+            name="code_unit",
+            flag="use_code_unit_anchor",
+            projection=self.code_unit_projection,
+            cue=self.code_unit_token_embedding,
+            features=code_unit_features,
+            confidence=code_unit_confidence,
+            feature_dim=self.code_unit_feature_dim,
         )
 
         embedded: torch.Tensor = self.input_dropout(self.input_ln(h))

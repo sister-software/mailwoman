@@ -458,6 +458,29 @@ export function applyEntityTiers(
 		}
 	}
 
+	// An input that still has no coordinate and no venue span takes the exact-name probe on the whole input.
+	// The kind classifier's landmark rules read Latin head nouns, so a station written `渋谷駅` parses
+	// as an unresolved locality and would otherwise never reach the POI layer that holds it.
+	// A bare street (`Rodeo Drive`) also has no coordinate, so the probe refuses an input
+	// holding a street-type word and a parse holding a street, as the fork probe does.
+	if (
+		deps.poiVenueTier === true &&
+		result.lat === null &&
+		!result.venue &&
+		!result.street &&
+		deps.poiLookup &&
+		deps.isStreetGeneric
+	) {
+		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+
+		// The entity supplies the coordinate.
+		// The parse keeps its components, because a bare `Southbank` is both a locality name
+		// and a POI name, and the reading the parse chose stays visible to the caller.
+		if (entity) {
+			applyForkEntityAnswer(result, entity, resolvedRoots)
+		}
+	}
+
 	if (
 		deps.poiVenueTier === true &&
 		deps.poiLookup &&

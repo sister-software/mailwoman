@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev lint corpus-slice --database <parquet> --stats <stats.json>` — corpus linter:
+ *   `mailwoman dev lint corpus-parquet --database <parquet> --stats <stats.json>` — corpus linter:
  *   compares a new recipe-output parquet against pre-computed corpus statistics (see `mailwoman corpus
  *   stats`) and flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on
  *   stdout. It exits 1 when any error-severity flag fires. Warnings do not fail the check.
@@ -18,7 +18,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStd
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "corpus-slice",
+	name: "corpus-parquet",
 	description: "Lint a recipe-output parquet against pre-computed corpus statistics.",
 	options: {
 		database: { type: "string", required: true, description: "The recipe-output parquet to lint" },

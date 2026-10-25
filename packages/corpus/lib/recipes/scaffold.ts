@@ -5,7 +5,7 @@
  *
  *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader and
  *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its row construction and filter. The `mailwoman corpus slice <recipe>` command
+ *   supplies only its row construction and filter. The `mailwoman corpus recipe <recipe>` command
  *   supplies the I/O.
  */
 

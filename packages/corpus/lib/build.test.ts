@@ -87,7 +87,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.adapters).toHaveLength(1)
 		expect(manifest.adapters[0]!.adapter_id).toBe("wof-admin")
 		expect(manifest.total_aligned_rows).toBeGreaterThan(0)
-		expect(manifest.slices.total_rows).toBe(manifest.total_aligned_rows)
+		expect(manifest.files.total_rows).toBe(manifest.total_aligned_rows)
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(outDir("MANIFEST.json"))
@@ -95,11 +95,11 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
-			slices: Array<{ split: string; format: string; path: string; rows: number }>
+			files: Array<{ split: string; format: string; path: string; rows: number }>
 		}>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
-		expect(corpusManifest.slices.length).toBeGreaterThanOrEqual(1)
+		expect(corpusManifest.files.length).toBeGreaterThanOrEqual(1)
 
 		const splitManifest = await readLocalJSONFile<{ corpus_version: string; holdouts: Record<string, string[]> }>(
 			outDir("splits", "SPLIT_MANIFEST.json")
@@ -108,7 +108,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(splitManifest.corpus_version).toBe("0.1.0")
 		expect(splitManifest.holdouts.US).toEqual(defaultHoldouts().US)
 
-		const trainFile = corpusManifest.slices.find((s) => s.split === "train")!
+		const trainFile = corpusManifest.files.find((s) => s.split === "train")!
 		expect(trainFile).toBeDefined()
 		expect(trainFile.format).toBe("parquet")
 		expect(trainFile.path).toMatch(/\.parquet$/)
@@ -119,7 +119,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(firstRow).toHaveProperty("augmentation")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
 
-		for (const file of corpusManifest.slices) {
+		for (const file of corpusManifest.files) {
 			const record = await readParquetRecord(file.path)
 
 			expect(file.path).toMatch(new RegExp(`/store/${record!.source}/${record!.derivationHash}/data\\.parquet$`, "u"))
@@ -416,11 +416,11 @@ describe("buildCorpus resume", () => {
 		expect(stages.some((message) => message.startsWith("resumed align after wof-admin"))).toBe(true)
 		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
 		expect(second.splits.counts).toEqual(first.splits.counts)
-		expect(second.slices.total_rows).toBe(first.slices.total_rows)
+		expect(second.files.total_rows).toBe(first.files.total_rows)
 
 		const secondParquet = await parquetManifest(outDir)
 
-		expect(secondParquet.slices.map((slice) => slice.sha256)).toEqual(firstParquet.slices.map((s) => s.sha256))
+		expect(secondParquet.files.map((file) => file.sha256)).toEqual(firstParquet.files.map((s) => s.sha256))
 		expect(await alignDigests(outDir)).toEqual(firstDigests)
 	})
 
@@ -512,7 +512,7 @@ describe("buildCorpus resume", () => {
 
 		await buildCorpus({ ...options, outputDir: outDir })
 
-		const recorded = (await parquetManifest(outDir)).slices[0]!
+		const recorded = (await parquetManifest(outDir)).files[0]!
 
 		await removeFile(recorded.path)
 		await removePath(outDir("intermediate", "align-checkpoint.json"))

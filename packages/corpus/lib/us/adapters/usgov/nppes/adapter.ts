@@ -7,8 +7,8 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -75,6 +75,26 @@ function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderL
 }
 
 /**
+ * The second practice-location line as a unit, or `null` when it holds something else.
+ *
+ * Most filled second lines open with a USPS secondary unit designator
+ * (`SUITE 200`, `STE. 4`, `APT 2B`, `DEPARTMENT OF SURGERY`) or a bare number sign (`#200`).
+ * The rest name a recipient, a building or a mail stop (`ATTN: BILLING`, `C/O …`, `MEDICAL OFFICE BUILDING`).
+ *
+ * Those are not part of the street or the unit, so the row leaves them out
+ * rather than joining them to the street span.
+ */
+export function unitLine(line: string): string | null {
+	if (!line) return null
+
+	if (/^#\s*\w/.test(line)) return line
+
+	const [first = ""] = line.split(/\s+/)
+
+	return matchLeadingDesignator(first.replace(/\.$/, "")) ? line : null
+}
+
+/**
  * Creates the NPPES adapter.
  *
  * Each row's `venue` is the organization's legal name or, for an individual provider,
@@ -134,10 +154,11 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const fullStreet = [address1, address2].filter(isPresent).join(" ")
-				const split = splitStreetLine(fullStreet)
+				const split = splitStreetLine(address1)
 
 				if (!split) continue
+
+				const unit = unitLine(address2)
 
 				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
@@ -145,6 +166,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					...(venue ? { venue } : {}),
 					...(split.house_number ? { house_number: split.house_number } : {}),
 					street: split.street,
+					...(unit ? { unit } : {}),
 					locality: city,
 					region: state.abbreviation,
 					postcode,

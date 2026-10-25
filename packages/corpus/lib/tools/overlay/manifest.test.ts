@@ -17,6 +17,7 @@ import { gbOverlayRow as gbRow, useScratchDir } from "#test-kit"
 import {
 	assembleOverlayManifest,
 	baseManifestFiles,
+	RETIRED_FILES_KEYS,
 	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
 } from "#tools/overlay/manifest"
@@ -51,10 +52,9 @@ vi.mock("#parquet/duckdb", async (importOriginal) => {
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
 /**
- * The pre-rename file-list key, spelled by concatenation because the word is banned
- * in this tree and the ratchet's baseline is zero.
+ * The oldest retired file-list key.
  */
-const PRE_RENAME_FILES_KEY = `sh${"ards"}`
+const PRE_RENAME_FILES_KEY = RETIRED_FILES_KEYS.at(-1)!
 
 /**
  * A base manifest carrying only what {@link baseManifestFiles} reads.
@@ -85,10 +85,10 @@ describe("assembleOverlayManifest", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 1, val: 0, test: 0 },
 				total_rows: 1,
-				slices: [{ split: "train", path: "/data/corpus/versioned/v0.1.0/corpus-v0.1.0/train/part-0000.parquet" }],
+				files: [{ split: "train", path: "/data/corpus/versioned/v0.1.0/corpus-v0.1.0/train/part-0000.parquet" }],
 			},
 			path
 		)
@@ -129,12 +129,12 @@ describe("assembleOverlayManifest", () => {
 		})
 
 		const written = await readLocalJSONFile<{
-			slices: Array<{ path: string; split?: string; split_attribute?: { policy_hash: string } }>
+			files: Array<{ path: string; split?: string; split_attribute?: { policy_hash: string } }>
 			counts: Record<string, number>
 			split_decided_by: { policy_hashes: string[] }
 		}>(scratch.path("MANIFEST.json").toString())
 
-		const added = written.slices.at(-1)!
+		const added = written.files.at(-1)!
 
 		expect(added.path).toBe("/data/corpus/versioned/v0.2.0/corpus-v0.2.0/part-gb-attr.parquet")
 		expect(added.split).toBeUndefined()
@@ -171,7 +171,7 @@ describe("assembleOverlayManifest", () => {
 					},
 				],
 			})
-		).rejects.toThrow(/Run 'mailwoman corpus split-slice'/)
+		).rejects.toThrow(/Run 'mailwoman corpus split-overlay'/)
 	})
 
 	/**
@@ -218,11 +218,11 @@ describe("assembleOverlayManifest", () => {
 		})
 
 		// `assembleOverlayManifest` writes the manifest rather than returning it.
-		const written = await readLocalJSONFile<{ slices: Array<{ path: string; source: string; rows: number }> }>(
+		const written = await readLocalJSONFile<{ files: Array<{ path: string; source: string; rows: number }> }>(
 			scratch.path("MANIFEST.json").toString()
 		)
 
-		const added = written.slices.filter((slice) => slice.path.endsWith("part-agrees.train.parquet"))
+		const added = written.files.filter((file) => file.path.endsWith("part-agrees.train.parquet"))
 
 		expect(added).toHaveLength(1)
 		expect(added[0]!.source).toBe("rendered-de")
@@ -241,10 +241,10 @@ describe("assembleOverlayManifest", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 15, val: 2, test: 3 },
 				total_rows: 20,
-				slices: [
+				files: [
 					{ split: "train", rows: 10, source: "wof-admin", path: `${root}/train/part-0000.parquet` },
 					{ split: "train", rows: 5, source: "rendered-gb", path: `${root}/train/part-gb.train.parquet` },
 					{ split: "val", rows: 2, source: "rendered-gb", path: `${root}/val/part-gb.val.parquet` },
@@ -269,12 +269,12 @@ describe("assembleOverlayManifest", () => {
 		})
 
 		const written = await readLocalJSONFile<{
-			slices: Array<{ path: string; source: string }>
+			files: Array<{ path: string; source: string }>
 			counts: { train: number; val: number; test: number }
 			total_rows: number
 		}>(scratch.path("MANIFEST.json").toString())
 
-		expect(written.slices.map((slice) => slice.path.split("/").at(-1))).toEqual([
+		expect(written.files.map((file) => file.path.split("/").at(-1))).toEqual([
 			"part-0000.parquet",
 			"part-gb-v2.train.parquet",
 		])
@@ -337,10 +337,10 @@ describe("assembleOverlayManifest", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 1, val: 0, test: 0 },
 				total_rows: 1,
-				slices: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
+				files: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
 			},
 			base
 		)
@@ -540,38 +540,44 @@ describe("baseManifestFiles", () => {
 
 	it("prefers the current key when a manifest carries both", () => {
 		const both = {
-			...manifestWith("slices", ["new.parquet"]),
+			...manifestWith("files", ["new.parquet"]),
 			[PRE_RENAME_FILES_KEY]: [{ path: "old.parquet" }],
 		} as Parameters<typeof baseManifestFiles>[0]
 
 		expect(baseManifestFiles(both)).toEqual([{ path: "new.parquet" }])
 	})
 
-	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array.
+	it("REFUSES a manifest that holds no file list under any key", () => {
+		// No key holds an array.
 		// The manifest makes no statement about the file count.
 		// An empty list would report a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
-		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
+		expect(() => baseManifestFiles(neither)).toThrow(/holds no file list/u)
+	})
+
+	it("reads every retired file-list key, as manifests built before each rename hold them", () => {
+		for (const key of RETIRED_FILES_KEYS) {
+			expect(baseManifestFiles(manifestWith(key, ["old.parquet"]))).toEqual([{ path: "old.parquet" }])
+		}
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` means the corpus holds no file.
+		// `files: []` means the corpus holds no file.
 		// The overlay assembler's requirement for a non-empty base lives in its own caller.
-		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
+		expect(baseManifestFiles(manifestWith("files", []))).toEqual([])
 	})
 
 	it("REFUSES a manifest that lists one path twice, after normalizing it", () => {
-		const twice = manifestWith("slices", ["/c/test/part-0000.parquet", "/c/test/./part-0000.parquet"])
+		const twice = manifestWith("files", ["/c/test/part-0000.parquet", "/c/test/./part-0000.parquet"])
 
 		expect(() => baseManifestFiles(twice)).toThrow(/lists \/c\/test\/part-0000\.parquet twice/u)
 	})
 
 	it("REFUSES a manifest that lists the same bytes under two paths", () => {
 		const sameBytes = {
-			...manifestWith("slices", []),
-			slices: [
+			...manifestWith("files", []),
+			files: [
 				{ path: "/c/v1/test/ban.parquet", sha256: "ab".repeat(32) },
 				{ path: "/c/v2/test/ban.parquet", sha256: "ab".repeat(32) },
 			],

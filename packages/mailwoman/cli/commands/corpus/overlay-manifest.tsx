@@ -45,13 +45,12 @@ export const spec = {
 			type: "string",
 			required: true,
 			description: "Parquet files to add, comma-separated",
-			deprecatedName: "slice-parquet",
 		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		"split-attribute": {
 			type: "string",
 			description:
-				"Split attribute files `corpus split-slice` wrote under --new-dir, comma-separated. Each names its parquet, which then holds every split's rows at <new-dir>/<parquet>. A parquet without one is train, at <new-dir>/train/<parquet>.",
+				"Split attribute files `corpus split-overlay` wrote under --new-dir, comma-separated. Each names its parquet, which then holds every split's rows at <new-dir>/<parquet>. A parquet without one is train, at <new-dir>/train/<parquet>.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
 		"unshippable-reason": {

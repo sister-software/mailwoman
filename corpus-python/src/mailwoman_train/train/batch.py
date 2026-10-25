@@ -52,6 +52,9 @@ def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, An
         tb["locality_surface_confidence"] = torch.tensor(
             batch["locality_surface_confidence"], dtype=torch.float32, device=device
         )
+    if "code_unit_features" in batch:
+        tb["code_unit_features"] = torch.tensor(batch["code_unit_features"], dtype=torch.float32, device=device)
+        tb["code_unit_confidence"] = torch.tensor(batch["code_unit_confidence"], dtype=torch.float32, device=device)
     # CharCNN input path (#825 / v8 CJK): (B, S, W) long char IDs — present iff data.char_mode is on.
     if "char_ids" in batch:
         tb["char_ids"] = torch.tensor(batch["char_ids"], dtype=torch.long, device=device)

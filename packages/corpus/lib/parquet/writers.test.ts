@@ -89,7 +89,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 }
 
 const fileSummary = (manifest: ParquetManifest) =>
-	manifest.slices.map((file) => `${file.source}:${file.rows}:${file.sha256}`).toSorted()
+	manifest.files.map((file) => `${file.source}:${file.rows}:${file.sha256}`).toSorted()
 
 let scratch: TemporaryDirectory
 
@@ -131,9 +131,9 @@ describe("writeParquetSplits staging", () => {
 
 		expect(converted).toHaveLength(3)
 		expect(presentAtNextConversion).toEqual([])
-		expect(manifest.slices.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
+		expect(manifest.files.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
 
-		for (const file of manifest.slices) {
+		for (const file of manifest.files) {
 			expect(await pathExists(file.path)).toBe(true)
 		}
 	})
@@ -171,7 +171,7 @@ describe("writeParquetSplits staging", () => {
 
 		const manifest = await readLocalJSONFile<ParquetManifest>(scratch.path("corpus-v0.1.0", "MANIFEST.json"))
 
-		expect(manifest.slices.map((file) => file.rows)).toEqual([10])
+		expect(manifest.files.map((file) => file.rows)).toEqual([10])
 		expect(manifest.total_rows).toBe(10)
 	})
 

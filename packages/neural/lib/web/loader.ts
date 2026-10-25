@@ -486,6 +486,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		runner,
 		...(labels ? { labels } : {}),
 		...(addressSystems ? { addressSystems } : {}),
+		...(runner.inputNames?.includes("code_unit_features") ? { codeUnits: true } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),

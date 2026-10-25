@@ -131,7 +131,7 @@ describe("buildSupportIndex and querySupport", () => {
 		await writeLocalJSONFile(
 			{
 				corpus_version: "fixture",
-				slices: [
+				files: [
 					{ path: trainFile.toString(), split: "train" },
 					{ path: testFile.toString(), split: "test" },
 				],
@@ -202,7 +202,7 @@ describe("buildSupportIndex and querySupport", () => {
 	it("refuses a manifest file that records no split", async () => {
 		const unsplit = root.path("UNSPLIT.json")
 
-		await writeLocalJSONFile({ slices: [{ path: trainFile.toString() }] }, unsplit)
+		await writeLocalJSONFile({ files: [{ path: trainFile.toString() }] }, unsplit)
 
 		await expect(
 			buildSupportIndex(unsplit.toString(), { outDir: root.path("unsplit-index").toString() })

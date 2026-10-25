@@ -1,6 +1,6 @@
 """Training-time augmentation: expand abbreviations to teach token equivalence.
 
-Eight augmentations, applied independently with configurable probability:
+Nine augmentations, applied independently with configurable probability:
 
 1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
    Teaches the model that both abbreviated and expanded directionals are the same
@@ -25,10 +25,14 @@ Eight augmentations, applied independently with configurable probability:
 8. **Postcode move** (#2750): the postcode moved to the far side of its locality-and-region
    block, from the side the country's libaddressinput layout prints it on.
 
+9. **Grouping characters** (#2845): the row wrapped in a pair, its name or country bracketed,
+   or a parenthesized note appended, each character outside every span.
+
 The modules:
 
 - `tables.py` — the surface pairs each expansion draws from.
 - `postcode_move.py` — the postcode move, its skip reasons and the layout table it reads.
+- `grouping.py` — the grouping-character pairs and the edits that insert them.
 - `splice.py` — editing a row's text and re-targeting its tokens, labels and spans.
 - `apply.py` — augmentation choices for one row. It also defines the draw order.
 """

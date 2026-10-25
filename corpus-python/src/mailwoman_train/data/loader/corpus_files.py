@@ -18,9 +18,10 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-#: The manifest key older corpora use for their parquet file list. Built corpora are immutable, so the
-#: reader accepts both keys and the writer emits only `slices`.
-_PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
+#: The retired manifest keys older corpora use for their parquet file list, newest first. Built corpora are
+#: immutable, so the reader accepts every key and the writer emits only `files`. The keys are concatenated
+#: because the repository's vocabulary checks ban both words.
+_RETIRED_MANIFEST_KEYS = ("sl" + "ices", "sh" + "ards")
 
 #: The directory the corpus build writes single-source files under, beside the corpus version directories.
 _STORE_DIR = "store"
@@ -57,15 +58,15 @@ def verify_file_sha256(path: Path, expected: str | None) -> None:
 
 
 def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return the manifest's parquet file list from the `slices` key or the older key.
+    """Return the manifest's parquet file list from the `files` key or a retired key.
 
-    The loader reads only `slices` if it wants an older overlay corpus to use the glob fallback. That fallback sees
-    only the overlay's own files.
+    The first key holding a non-empty list wins.
     """
-    current = data.get("slices")
-    if current:
-        return list(current)
-    return list(data.get(_PRE_RENAME_MANIFEST_KEY) or [])
+    for key in ("files", *_RETIRED_MANIFEST_KEYS):
+        listed = data.get(key)
+        if listed:
+            return list(listed)
+    return []
 
 
 def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:

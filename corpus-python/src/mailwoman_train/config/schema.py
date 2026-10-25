@@ -74,6 +74,14 @@ class DataConfig:
     # measures that share. Validation rows are never augmented.
     augment_postcode_move_prob: float = 0.0
 
+    # The rate at which a sampled train row adds a copy with grouping characters (#2845): the whole row wrapped in a
+    # pair, its venue or building name quoted or bracketed, its trailing country in parentheses, or a parenthesized
+    # note appended. It is an additive copy rate, like the postcode move, and validation rows are never augmented.
+    augment_grouping_prob: float = 0.0
+
+    # Compute the code-unit channel's features for every row (#2845). Requires `model.use_code_unit_anchor`.
+    code_unit_features: bool = False
+
     augment_exclude_sources: list[str] = field(default_factory=list)
 
     anchor_lookup_path: str | None = None
@@ -197,6 +205,12 @@ class ModelConfig:
     use_locality_surface_anchor: bool = False
 
     locality_surface_feature_dim: int = 2
+
+    # The code-unit channel (#2845): per-piece shape features of each digit run or alphanumeric code, read from
+    # the raw surface. `data.code_unit_features` computes them and this flag gives the model the channel.
+    use_code_unit_anchor: bool = False
+
+    code_unit_feature_dim: int = 5
 
     use_char_embed: bool = False
     char_embed_dim: int = 64

@@ -58,7 +58,7 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 			candidateDB: options.candidateDB ?? dataRootPath("db", "wof", "candidate.db").toString(),
 			adminDB: options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db").toString(),
 			corpusManifest: options.corpusManifest,
-			slicePath: (slice) => slice.replace(/^\/data\//, `${dataRoot}/`),
+			filePath: (listed) => listed.replace(/^\/data\//, `${dataRoot}/`),
 			...(options.out ? { out: options.out } : {}),
 			onProgress: log,
 		})

@@ -44,6 +44,7 @@ import type {
 } from "#classifier/options"
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
+import { codeUnitChannel } from "#code-unit-features"
 import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
 import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
@@ -488,10 +489,19 @@ export class NeuralAddressClassifier {
 					soft.anchor,
 					soft.gazetteer,
 					soft.country,
-					soft.streetType || soft.localitySurface || this.cfg.addressSystems
+					soft.streetType || soft.localitySurface || this.cfg.addressSystems || this.cfg.codeUnits
 						? {
 								streetType: soft.streetType,
 								localitySurface: soft.localitySurface,
+								// The code-unit channel reads the raw surface in every input mode.
+								...(this.cfg.codeUnits
+									? {
+											codeUnit: codeUnitChannel(
+												text,
+												pieces.map((piece) => [piece.start, piece.end] as const)
+											),
+										}
+									: {}),
 								...(this.cfg.addressSystems
 									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),

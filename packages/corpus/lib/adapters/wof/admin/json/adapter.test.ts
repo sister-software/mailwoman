@@ -1,15 +1,19 @@
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { isPresent } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
 import {
 	WOF_ADMIN_ADAPTER_ID,
 	createWOFAdminAdapter,
+	layoutCountryForLanguage,
 	nameSlotsFor,
 	variantsFor,
 } from "#adapters/wof/admin/json/adapter"
+import type { NameSlot } from "#adapters/wof/json-rows"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
+import type { WOFRecord } from "#utils"
 
 const scratch = useScratchDir("wof-admin-json")
 
@@ -17,20 +21,55 @@ const loadRows = () => readCanonicalRows(scratch.path, WOF_ADMIN_ADAPTER_ID)
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
-describe("variantsFor (pure)", () => {
-	const rec = (over: Partial<{ id: number; name: string; placetype: string; country: string }>) => ({
-		id: 1,
-		parent_id: null as number | null,
-		name: "X",
-		placetype: "locality",
-		country: "US",
-		nameVariants: new Map<string, string>(),
-		ancestors: [] as number[],
-		...over,
-	})
+type TestRecord = WOFRecord
 
+const rec = (over: Partial<TestRecord>): TestRecord => ({
+	id: 1,
+	parent_id: null,
+	name: "X",
+	placetype: "locality",
+	country: "US",
+	nameVariants: new Map(),
+	ancestors: [],
+	...over,
+})
+
+const slot = (value: string, language?: string): NameSlot =>
+	language ? { key: "k", value, language } : { key: "k", value }
+
+const newYorkCity = rec({
+	id: 85_977_539,
+	name: "New York",
+	nameVariants: new Map([
+		["name:jpn_x_preferred", "ニューヨーク"],
+		["name:kor_x_preferred", "뉴욕"],
+	]),
+})
+
+const newYorkState = rec({
+	id: 85_688_543,
+	name: "New York",
+	placetype: "region",
+	nameVariants: new Map([
+		["name:jpn_x_preferred", "ニューヨーク州"],
+		["name:kor_x_preferred", "뉴욕 주"],
+	]),
+})
+
+const unitedStates = rec({
+	id: 85_633_793,
+	name: "United States",
+	placetype: "country",
+	nameVariants: new Map([["name:jpn_x_preferred", "アメリカ合衆国"]]),
+})
+
+describe("variantsFor (pure)", () => {
 	it("locality yields 3 variants when region + country are in ancestry", () => {
-		const v = variantsFor(rec({ name: "Portland" }), { region: "Oregon", country: "United States" }, "Portland")
+		const v = variantsFor(
+			rec({ name: "Portland" }),
+			{ region: rec({ name: "Oregon", placetype: "region" }), country: unitedStates },
+			slot("Portland")
+		)
 
 		expect(v.map((x) => x.suffix)).toEqual(["self", "with-region", "with-region-country"])
 
@@ -42,7 +81,7 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		const v = variantsFor(rec({ name: "United States", placetype: "country" }), {}, "United States of America")
+		const v = variantsFor(rec({ name: "United States", placetype: "country" }), {}, slot("United States of America"))
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ country: "United States of America" })
 	})
@@ -50,8 +89,8 @@ describe("variantsFor (pure)", () => {
 	it("respects a substituted selfName for the locality component", () => {
 		const v = variantsFor(
 			rec({ name: "Saint Petersburg" }),
-			{ region: "Florida", country: "United States" },
-			"St. Petersburg"
+			{ region: rec({ name: "Florida", placetype: "region" }), country: unitedStates },
+			slot("St. Petersburg")
 		)
 
 		expect(v[0]!.components.locality).toBe("St. Petersburg")
@@ -62,45 +101,176 @@ describe("variantsFor (pure)", () => {
 	it("subregion (county) yields self only", () => {
 		const v = variantsFor(
 			rec({ name: "Multnomah County", placetype: "county" }),
-			{ region: "Oregon" },
-			"Multnomah County"
+			{ region: rec({ name: "Oregon", placetype: "region" }) },
+			slot("Multnomah County")
 		)
 
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ subregion: "Multnomah County" })
 	})
+
+	it("writes a dependent locality with its parent locality", () => {
+		const brooklyn = rec({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
+
+		const v = variantsFor(
+			brooklyn,
+			{ locality: newYorkCity, region: newYorkState, country: unitedStates },
+			slot("Brooklyn")
+		)
+
+		expect(v.find((x) => x.suffix === "with-locality")?.components).toEqual({
+			dependent_locality: "Brooklyn",
+			locality: "New York",
+		})
+
+		expect(v.find((x) => x.suffix === "with-locality-region")?.components).toEqual({
+			dependent_locality: "Brooklyn",
+			locality: "New York",
+			region: "New York",
+		})
+	})
+
+	it("renders a language's hierarchy from each ancestor's preferred name in that language", () => {
+		const brooklyn = rec({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
+
+		const v = variantsFor(
+			brooklyn,
+			{ locality: newYorkCity, region: newYorkState, country: unitedStates },
+			slot("ブルックリン区", "jpn")
+		)
+
+		const localized = v.find((x) => x.suffix === "localized-jpn")!
+
+		expect(localized.components).toEqual({
+			dependent_locality: "ブルックリン区",
+			locality: "ニューヨーク",
+			region: "ニューヨーク州",
+		})
+
+		expect(localized.layoutCountry).toBe("JP")
+		expect(v.find((x) => x.suffix === "localized-jpn-country")?.components.country).toBe("アメリカ合衆国")
+	})
+
+	it("skips a language that one of the record's ancestors lacks", () => {
+		const v = variantsFor(
+			rec({ name: "Brooklyn", placetype: "borough" }),
+			{ locality: newYorkCity, region: rec({ name: "New York", placetype: "region" }), country: unitedStates },
+			slot("ブルックリン区", "jpn")
+		)
+
+		expect(v.some((x) => x.suffix.startsWith("localized-"))).toBe(false)
+	})
+
+	it("renders a localized hierarchy without the country when the country lacks the language", () => {
+		const v = variantsFor(
+			rec({ name: "Brooklyn", placetype: "borough" }),
+			{ locality: newYorkCity, region: newYorkState, country: unitedStates },
+			slot("브루클린", "kor")
+		)
+
+		expect(v.map((x) => x.suffix)).toContain("localized-kor")
+		expect(v.map((x) => x.suffix)).not.toContain("localized-kor-country")
+	})
+})
+
+describe("layoutCountryForLanguage", () => {
+	it("resolves a language every country writing it lays out the same way", () => {
+		expect(layoutCountryForLanguage("jpn")).toBe("JP")
+	})
+
+	it("resolves Chinese to the local-script layout its countries share", () => {
+		expect(layoutCountryForLanguage("zho")).toBe("CN")
+	})
 })
 
 describe("nameSlotsFor", () => {
 	it("emits the canonical 'default' slot then one per non-duplicate name:* variant", () => {
-		const slots = nameSlotsFor({
-			id: 1,
-			parent_id: null,
-			name: "Saint Petersburg",
-			placetype: "locality",
-			country: "US",
-			nameVariants: new Map([
-				["name:eng_x_preferred", "Saint Petersburg"],
-				["name:eng_x_colloquial", "St. Petersburg"],
-				["name:rus_x_preferred", "Санкт-Петербург"],
-			]),
-			ancestors: [],
-		})
+		const slots = nameSlotsFor(
+			rec({
+				name: "Saint Petersburg",
+				nameVariants: new Map([
+					["name:eng_x_preferred", "Saint Petersburg"],
+					["name:eng_x_colloquial", "St. Petersburg"],
+					["name:rus_x_preferred", "Санкт-Петербург"],
+				]),
+			})
+		)
 
-		expect(slots.map((s) => s.key)).toEqual(["default", "name-eng-x-colloquial", "name-rus-x-preferred"])
-		expect(slots.map((s) => s.value)).toEqual(["Saint Petersburg", "St. Petersburg", "Санкт-Петербург"])
+		// Preferred-name keys come first in language-rank order, then the other keys in source order.
+		expect(slots.map((s) => s.key)).toEqual(["default", "name-rus-x-preferred", "name-eng-x-colloquial"])
+		expect(slots.map((s) => s.value)).toEqual(["Saint Petersburg", "Санкт-Петербург", "St. Petersburg"])
+		expect(slots[1]!.language).toBe("rus")
+	})
+
+	it("emits every value of a key that holds several", () => {
+		const slots = nameSlotsFor(
+			rec({
+				name: "New York",
+				nameVariants: new Map([["name:eng_x_colloquial", ["Big Apple", "Gotham", "NYC", "The Big Apple"]]]),
+			})
+		)
+
+		expect(slots.map((s) => s.key)).toEqual([
+			"default",
+			"name-eng-x-colloquial",
+			"name-eng-x-colloquial-2",
+			"name-eng-x-colloquial-3",
+			"name-eng-x-colloquial-4",
+		])
+
+		expect(slots.map((s) => s.value)).toEqual(["New York", "Big Apple", "Gotham", "NYC", "The Big Apple"])
+	})
+
+	it("keeps the language on at most eight slots, the country's official languages first", () => {
+		const languages = ["ara", "deu", "eng", "fra", "jpn", "kor", "rus", "spa", "zho", "ita"]
+
+		const slots = nameSlotsFor(
+			rec({
+				name: "New York",
+				nameVariants: new Map(languages.map((language) => [`name:${language}_x_preferred`, `NY-${language}`])),
+			})
+		)
+
+		const kept = slots.map((s) => s.language).filter(isPresent)
+
+		expect(kept).toHaveLength(8)
+		expect(kept).toContain("eng")
+	})
+
+	it("ranks the served languages ahead of the alphabet, so Japanese stays inside the cap for a US place", () => {
+		const languages = ["ara", "azb", "aze", "bel", "ben", "bul", "cdo", "ckb", "ell", "epo", "jpn", "kor", "zho"]
+
+		const slots = nameSlotsFor(
+			rec({
+				name: "Brooklyn",
+				placetype: "borough",
+				nameVariants: new Map(languages.map((language) => [`name:${language}_x_preferred`, `B-${language}`])),
+			})
+		)
+
+		const kept = slots.map((s) => s.language).filter(isPresent)
+
+		expect(kept).toHaveLength(8)
+		expect(kept).toEqual(expect.arrayContaining(["jpn", "kor", "zho"]))
+	})
+
+	it("gives a name two languages share to the served language, so zho keeps Brooklyn's 布鲁克林区 from wuu", () => {
+		const slots = nameSlotsFor(
+			rec({
+				name: "Brooklyn",
+				placetype: "borough",
+				nameVariants: new Map([
+					["name:wuu_x_preferred", "布鲁克林区"],
+					["name:zho_x_preferred", "布鲁克林区"],
+				]),
+			})
+		)
+
+		expect(slots.find((s) => s.value === "布鲁克林区")?.language).toBe("zho")
 	})
 
 	it("uses the OpenCage-canonical country name for the default slot of a country record", () => {
-		const slots = nameSlotsFor({
-			id: 100,
-			parent_id: null,
-			name: "United States",
-			placetype: "country",
-			country: "US",
-			nameVariants: new Map(),
-			ancestors: [],
-		})
+		const slots = nameSlotsFor(rec({ id: 100, name: "United States", placetype: "country" }))
 
 		expect(slots[0]!.value).toBe("United States of America")
 	})
