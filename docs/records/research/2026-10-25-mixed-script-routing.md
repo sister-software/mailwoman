@@ -49,7 +49,7 @@ examples and give no rate.
 
 | input                                                                     | family | result                                                          |
 | ------------------------------------------------------------------------- | ------ | --------------------------------------------------------------- |
-| `Four Seasons Inn 四季酒家, 684 N Spring St, Los Angeles, CA 90012`       | Latin  | correct; the venue span holds the Han name                      |
+| `Four Seasons Inn 四季酒家, 684 N Spring St, Los Angeles, CA 90012`       | Latin  | correct, with the Han name in the venue span                    |
 | `大華超級市場 Hong Kong Supermarket, 157 Hester St, New York, NY 10013`   | Latin  | correct                                                         |
 | `新宿ミロード Shinjuku Mylord, 1-1-3 Nishishinjuku, Shinjuku City, Tokyo` | Latin  | correct apart from the city                                     |
 | `東京都渋谷区道玄坂2-24-1 Shibuya Mark City`                              | Latin  | street `東京都渋谷区道玄坂2`, locality `Shibuya Mark City`      |
@@ -98,7 +98,7 @@ as one unit, with a hyphen kept between digits (`10118-0110`, `100-0005`), and `
 stated syntax accepts a unit. `packages/mailwoman/tools/dev-tools/tokenizer/code-units.run.ts` measured them on
 394,097 v0.8.2 rows (469 per file across 853 files, every split):
 
-- 764,395 units; the modal row holds 2 (243,399 rows), and 28,571 rows hold none.
+- 764,395 units. The modal row holds 2 (243,399 rows), and 28,571 rows hold none.
 - A house-number span is exactly one unit in 316,164 of 327,040 cases (96.7%), a postcode span in 323,992 of 335,124
   (96.7%).
 - On the 640,156 single-unit house numbers and postcodes, a majority-label rule over the pattern alone labels 95.07%
