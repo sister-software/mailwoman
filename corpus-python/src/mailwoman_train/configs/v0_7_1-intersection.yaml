@@ -20,7 +20,7 @@
 # >= 25% (baseline 15.2%) — i.e. the 65 intersection assertions move off 0%.
 #
 # Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_1-intersection.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_1-intersection.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

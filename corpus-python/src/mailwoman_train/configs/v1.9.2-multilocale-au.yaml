@@ -8,7 +8,7 @@
 # The corpus overlays these rows on corpus-v0.9.1-multilocale.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v1.9.2-multilocale-au.yaml --resume none
+#   modal run -d -m launch.train_remote --config v1.9.2-multilocale-au.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

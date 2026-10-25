@@ -29,7 +29,7 @@
 #
 # corpus: v0.4.10-country-bal (v0.4.5-unit-v2 base + the balanced country recipe output). Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.10-country-bal.yaml --resume none \
+#     --config v0.9.10-country-bal.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

@@ -37,7 +37,7 @@
 #
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.0-pilot-selfcond.yaml --resume none \
+#     --config v0.9.0-pilot-selfcond.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

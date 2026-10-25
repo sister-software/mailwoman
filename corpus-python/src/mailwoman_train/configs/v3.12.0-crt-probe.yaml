@@ -2,11 +2,11 @@
 # It tests whether classifier-only retraining on a frozen encoder keeps dependent_locality emission alive through 8k steps.
 # The frozen encoder rules out representation drift as a cause of any change in emission.
 #
-# The run must launch with --resume none.
+# The run must launch with --fresh.
 # A resumed run skips reinit_label_rows without raising an error.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.12.0-crt-probe.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.12.0-crt-probe.yaml --fresh
 
 data:
   # This corpus adds synth-nz, synth-es-pedania and synth-fr-lieudit to v0.14.0-gb.
@@ -160,7 +160,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3120-crt-probe-s42/checkpoints
   seed: 42
@@ -183,7 +183,7 @@ train:
   lr_schedule: constant
   gazetteer_curriculum: false
   classifier_learning_rate: 1.0e-3
-  # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
+  # These rows reset to the mean of the live rows. The reset requires init_from and --fresh.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
   # Only parameters under these prefixes train. The optimizer then holds only the classifier group.
   trainable_only_prefixes: ["classifier."]

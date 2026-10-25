@@ -5,8 +5,8 @@
 # On resume, the trainer restamps each parameter group with the learning rate from this config.
 #
 # Launch phase 1 from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.13.0-two-phase.yaml --resume none
-# Launch phase 2 with the same command and --resume auto.
+#   modal run -d -m launch.train_remote --config v3.13.0-two-phase.yaml --fresh
+# Launch phase 2 with the same command and the default resume.
 
 data:
   # This corpus adds synth-nz, synth-es-pedania and synth-fr-lieudit to v0.14.0-gb.
@@ -163,7 +163,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3130-two-phase-s42/checkpoints
   seed: 42
@@ -187,7 +187,7 @@ train:
   gazetteer_curriculum: false
   # This is the phase 2 rate. Phase 1 uses 1.0e-3.
   classifier_learning_rate: 1.0e-4
-  # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
+  # These rows reset to the mean of the live rows. The reset requires init_from and --fresh.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
   trackio_project: mailwoman
   trackio_run_name: v3.13.0-two-phase-s42

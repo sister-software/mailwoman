@@ -15,7 +15,7 @@
 # The arm is graded against the C4 arm with release/specs/probe-split-digits.v1.json, the C4 arm in the published
 # role. It changes the model's inputs, so a release would need its own from-scratch run and release verdict.
 #
-# Launch with `--resume none`: 2,000 steps on an A100-40GB.
+# Launch with `--fresh`: 2,000 steps on an A100-40GB.
 data:
   corpus_dir: /data/corpus/versioned/v0.8.4-overlay/corpus-v0.8.4-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c4-split-digits

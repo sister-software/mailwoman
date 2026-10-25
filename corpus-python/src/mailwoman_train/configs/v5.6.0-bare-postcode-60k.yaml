@@ -2,7 +2,7 @@
 #
 # Control: v5.5.0-restored-generations-60k.yaml at seed 42. This config differs from it in the corpus
 # version, one `source_reps` line and one receipt, so every difference between the two arms is the
-# added source. from scratch: no `init_from`, launched with `--resume none`.
+# added source. from scratch: no `init_from`, launched with `--fresh`.
 #
 # what is being fixed. `100 00` is a real Prague postcode. v5.3.0 read it as one. v5.4.0 and v5.5.0 read
 # `100` as a house number and `00` as a street, so the resolver is handed no postcode and returns

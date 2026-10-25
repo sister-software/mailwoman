@@ -13,7 +13,7 @@
 #
 # The coverage block keeps v8.1.0's entries, each re-checked by the validation-coverage audit on v0.8.2.
 #
-# Launch with `--resume auto`: 60,000 steps on an A100-40GB.
+# Launch with the default resume: 60,000 steps on an A100-40GB.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.8.2/corpus-v0.8.2

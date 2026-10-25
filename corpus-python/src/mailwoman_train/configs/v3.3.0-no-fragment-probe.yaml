@@ -3,7 +3,7 @@
 # Without it, the model reads such a street as a locality and the number as a postcode.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.3.0-no-fragment-probe.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.3.0-no-fragment-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
@@ -144,7 +144,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v330-no-fragment-probe-s42/checkpoints
   seed: 42

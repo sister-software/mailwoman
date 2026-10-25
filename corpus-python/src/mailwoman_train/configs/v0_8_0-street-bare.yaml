@@ -3,7 +3,7 @@
 # street name without a city or postcode tail, such as "Main St", as a street.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v0_8_0-street-bare.yaml --resume none --trackio
+#   modal run -d -m launch.train_remote --config v0_8_0-street-bare.yaml --fresh --trackio
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

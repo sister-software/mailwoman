@@ -44,7 +44,7 @@
 #    the affix-ml parquet files + the v0.4.10-country-bal `synth-country` train parquet file.)
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v1.0.0-consolidation.yaml --resume none \
+#     --config v1.0.0-consolidation.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
@@ -156,7 +156,7 @@ train:
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
-  # Run A: resume the clean consolidation step-040000 (diagnostic 041000/042000 deleted so --resume
+  # Run A: resume the clean consolidation step-040000 (diagnostic 041000/042000 deleted so the default resume
   # auto picks 040000) for 20k more steps → 60k total. Momentum + constant lr preserved.
   max_steps: 60000
   eval_every_steps: 2000

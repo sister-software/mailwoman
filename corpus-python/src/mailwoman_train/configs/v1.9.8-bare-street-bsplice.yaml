@@ -24,7 +24,7 @@
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary without a postcode anchor) ===
 # full RUN (probe green: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
 # Paris" fixed, US 4/4 tag-identical → imbalance confirmed rather than modeling deficit). Continue from the probe's
-# step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
+# step-082000 (the default resume) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
 # and ship the FR-up/US-held sweet spot. Same single variable (the fr-bare-street source) — clean attribution.
 # v1.9.3a3 (shipped v4.16.x) is verbatim below except: corpus_dir → the v0.9.4 overlay, and one new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
@@ -50,7 +50,7 @@
 # flat → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is off
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml
 data:
   # v0.9.4 overlay = v0.9.3a3's 694 parquet files verbatim (re-rooted to /data) + the 1 fr-bare-street parquet file.
   corpus_dir: /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street
@@ -185,7 +185,7 @@ train: # v1.9.7 init_from idiom (fresh optimizer over the surgery export); data 
   weight_decay: 0.01
   warmup_steps: 200
   grad_clip_norm: 1.0
-  # full RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
+  # full RUN: the default resume picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
   # Constant LR 1.5e-4. anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 12000

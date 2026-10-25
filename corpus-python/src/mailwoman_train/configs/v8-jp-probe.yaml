@@ -9,7 +9,7 @@
 #
 # The run passes when JP coordinate acceptability on the held-out board reaches 0.70.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-probe

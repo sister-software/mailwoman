@@ -5,7 +5,7 @@
 #
 # The guards are the golden set, the US comma-free board, the FR fragment board and the Norway digit board.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.6-latam-br-8k.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.6-latam-br-8k.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.14.0-latam-br/corpus-v0.14.0-latam-br
@@ -164,7 +164,7 @@ model:
   phrase_feature_dim: 10
 
 # The init_from checkpoint loads weights only, so the optimizer starts fresh.
-# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+# A resumed run skips init_from, so launch with --fresh on a fresh output_dir.
 train:
   output_dir: /data/output-v386-latam-br-s42/checkpoints
   seed: 42

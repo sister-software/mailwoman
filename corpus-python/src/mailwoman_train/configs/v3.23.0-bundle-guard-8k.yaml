@@ -4,7 +4,7 @@
 # Both the trainer and the runtime read the guard from the lexicon rules.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.23.0-bundle-guard-8k.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.23.0-bundle-guard-8k.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -160,7 +160,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3230-bundle-guard-8k-s42/checkpoints
   seed: 42

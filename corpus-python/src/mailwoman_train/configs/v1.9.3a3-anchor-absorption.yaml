@@ -11,7 +11,7 @@
 # and text with a weak locale signal.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v1.9.3a3-anchor-absorption.yaml --resume <v192-ckpt>
+#   modal run -d -m launch.train_remote --config v1.9.3a3-anchor-absorption.yaml --branch-from <v192-ckpt>
 data:
   corpus_dir: /data/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

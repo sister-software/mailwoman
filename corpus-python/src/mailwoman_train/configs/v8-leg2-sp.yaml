@@ -6,7 +6,7 @@
 #
 # This arm drops rows longer than 128 pieces, and the char-word arm caps rows at 64 word units.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-sp.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-sp.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

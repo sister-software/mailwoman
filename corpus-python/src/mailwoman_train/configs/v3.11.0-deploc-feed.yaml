@@ -2,11 +2,11 @@
 # The sources share the dependent_locality mass so that no single source dominates the stream.
 # The row re-init, the classifier learning rate and the v385 starting point match the probes.
 #
-# The run must launch with --resume none.
+# The run must launch with --fresh.
 # A resumed run skips reinit_label_rows without raising an error.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.11.0-deploc-feed.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.11.0-deploc-feed.yaml --fresh
 
 data:
   # This corpus adds synth-nz, synth-es-pedania and synth-fr-lieudit to v0.14.0-gb.
@@ -160,7 +160,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3110-deploc-feed-s42/checkpoints
   seed: 42
@@ -185,7 +185,7 @@ train:
   # The classifier trains in its own parameter group at this rate.
   # Adam's update is scale-invariant, so only a separate group can move a deeply negative row.
   classifier_learning_rate: 1.0e-3
-  # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
+  # These rows reset to the mean of the live rows. The reset requires init_from and --fresh.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
   trackio_project: mailwoman
   trackio_run_name: v3.11.0-deploc-feed-s42

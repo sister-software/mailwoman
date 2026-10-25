@@ -3,7 +3,7 @@
 # and the checkpoint in init_from has matching rows added to its token embedding table.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v1.9.7-bsplice.yaml --resume none
+#   modal run -d -m launch.train_remote --config v1.9.7-bsplice.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.9.6-slavic-anchor/corpus-v0.9.6-slavic-anchor
   tokenizer_dir: /data/models/tokenizer/v0.6.0-bsplice

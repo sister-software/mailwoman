@@ -6,7 +6,7 @@
 # The target is inputs without separator commas, such as a US or FR address with the commas removed.
 # The guards are the Norway digit board, the FR fragment board and the golden set.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.0-punct-fix-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.0-punct-fix-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
@@ -157,7 +157,7 @@ model:
   phrase_feature_dim: 10
 
 # The init_from checkpoint loads weights only, so the optimizer starts fresh.
-# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+# A resumed run skips init_from, so launch with --fresh on a fresh output_dir.
 train:
   output_dir: /data/output-v380-punct-fix-probe-s42/checkpoints
   seed: 42

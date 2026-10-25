@@ -23,7 +23,7 @@
 # guardrail must hold (not worse >1pp) + FR centroid flat. If in-source resolve is still below v1.8.0 at
 # 2-4k, kill (the order fix didn't take). Not promoted without operator GO (model swap).
 # corpus: corpus-v0.8.0 base (verbatim) + overture-multilocale 3-order overlay -> R2 -> sync_v091.
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.1-multilocale-3order.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.1-multilocale-3order.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

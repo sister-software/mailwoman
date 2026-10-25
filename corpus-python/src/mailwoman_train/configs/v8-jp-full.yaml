@@ -78,7 +78,7 @@
 #     `stage3-jp` and would be dropped wholesale.
 #
 # Launch (the operator runs this — it is recorded here rather than executed by tooling):
-#   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full.yaml --resume auto
+#   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full.yaml
 # Prerequisite: the corpus must be on the Modal volume — see the `jp_full` row in launch/corpora.py.
 
 data:

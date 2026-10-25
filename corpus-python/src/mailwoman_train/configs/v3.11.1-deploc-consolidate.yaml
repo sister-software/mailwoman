@@ -1,11 +1,11 @@
 # This run resumes v3.11.0-deploc-feed from step 8000 for 2000 more steps.
 # It lowers the classifier learning rate tenfold to reduce churn in the classifier rows.
-# The run shares output_dir with the feed run, so --resume auto continues its optimizer, scheduler and step count.
+# The run shares output_dir with the feed run, so the default resume continues its optimizer, scheduler and step count.
 # On resume, the trainer restamps each parameter group with the learning rate from this config.
 # A resumed run never re-applies reinit_label_rows.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.11.1-deploc-consolidate.yaml --resume auto
+#   modal run -d -m launch.train_remote --config v3.11.1-deploc-consolidate.yaml
 
 data:
   # This corpus adds synth-nz, synth-es-pedania and synth-fr-lieudit to v0.14.0-gb.

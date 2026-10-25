@@ -2,7 +2,7 @@
 #
 # Control: v5.6.0-bare-postcode-60k.yaml at seed 42. This config differs from it in the corpus
 # version, three `source_reps`/`source_weights` lines, one supersession, and three receipts. from
-# scratch: no `init_from`, launched with `--resume none`.
+# scratch: no `init_from`, launched with `--fresh`.
 #
 # This run has three added sources. v5.6.0 added exactly one and said so, because a single
 # added source makes every difference between the arms attributable to it. Three stays attributable

@@ -11,7 +11,7 @@
 # and the v0.4.12-consolidation corpus.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v1.1.0-relabel-consolidation.yaml --resume none
+#   modal run -d -m launch.train_remote --config v1.1.0-relabel-consolidation.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

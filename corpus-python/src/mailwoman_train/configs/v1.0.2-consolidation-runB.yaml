@@ -44,7 +44,7 @@
 #    the affix-ml parquet files + the v0.4.10-country-bal `synth-country` train parquet file.)
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v1.0.0-consolidation.yaml --resume none \
+#     --config v1.0.0-consolidation.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
@@ -153,7 +153,7 @@ train:
   # Run B: init_from the clean consolidation step-040000 (weights only, fresh optimizer) into a new dir
   # — avoids Run A's 5x-biased momentum (DeepSeek) and avoids destructive deletes of Run A's checkpoints.
   # 20k steps on the 040000 weights ≈ the "+20k → 60k" continuation. the equilibrium is set by the
-  # sampling weights rather than the optimizer init. Launch with --resume none so init_from takes effect.
+  # sampling weights rather than the optimizer init. Launch with --fresh so init_from takes effect.
   output_dir: /data/output-v101-runB-s42/checkpoints
   init_from: /data/output-v100-consolidation-s42/checkpoints/step-040000
   seed: 42

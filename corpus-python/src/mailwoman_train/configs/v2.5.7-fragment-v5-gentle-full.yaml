@@ -9,7 +9,7 @@
 #         put`, which writes what a mounted container cannot see.
 #         mailwoman corpus upload --code  &&  \
 #         cd corpus-python && modal run -m launch.train_remote::sync_assets  &&  \
-#         cd corpus-python && modal run -d -m launch.train_remote --config v2.5.7-fragment-v5-gentle-full.yaml --resume auto
+#         cd corpus-python && modal run -d -m launch.train_remote --config v2.5.7-fragment-v5-gentle-full.yaml
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

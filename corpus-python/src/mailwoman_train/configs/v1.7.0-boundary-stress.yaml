@@ -79,7 +79,7 @@
 # --corpus-version v0.6.1-boundary-stress` and stage them with `sync_assets --corpus-versions
 # v0.6.1-boundary-stress` — not `modal volume put`, which a mounted container cannot see; (2) launch.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0

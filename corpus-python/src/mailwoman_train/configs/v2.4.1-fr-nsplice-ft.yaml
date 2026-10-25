@@ -159,7 +159,7 @@ model: # Verbatim from v1.9.3a3.
   phrase_feature_dim: 10
 
 train: # #444 vocab-splice INIT_FROM FINE-TUNE (the v1.9.7/v2.1.0 idiom: fresh optimizer over the
-  # mean-init-expanded checkpoint; --resume auto on a fresh output_dir resolves to no checkpoint → honors
+  # mean-init-expanded checkpoint. The default resume on a fresh output_dir resolves to no checkpoint → honors
   # init_from, loading model weights only). Not a from-scratch run and not a resume.
   output_dir: /data/output-v241-fr-nsplice-ft-s42/checkpoints
   seed: 42

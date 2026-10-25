@@ -2,7 +2,7 @@
 # It writes to the same output_dir as v0.8.0.
 #
 # Launch it from corpus-python with:
-#   modal run -d -m launch.train_remote --config v0_8_1-street-bare-v2.yaml --resume none --trackio
+#   modal run -d -m launch.train_remote --config v0_8_1-street-bare-v2.yaml --fresh --trackio
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

@@ -25,7 +25,7 @@
 # Everything else is byte-identical to v4.2.0-base-anchor-v2.yaml. If you change that file, change
 # this one.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2-2k.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2-2k.yaml --fresh
 data:
   # v0.17.0-batch = v0.15.0-venue + two overlay parquet files (manifest chain assembled 2026-08-05):
   #   part-sub-venue.parquet  120,000 rows  source=synth-sub-venue  (#1486 — designator x per-region identifier)

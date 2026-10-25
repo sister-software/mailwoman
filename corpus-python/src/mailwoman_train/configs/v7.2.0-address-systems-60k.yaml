@@ -50,7 +50,7 @@
 #
 # 7. `train.output_dir` and `train.trackio_run_name` name the v720 run.
 #
-# The run is from scratch with `--resume none`.
+# The run is from scratch with `--fresh`.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems

@@ -36,7 +36,7 @@
 #     4-digit pieces too (widen to 100-9999, re-probe).
 #
 # Not a ship. A pass justifies an 8k. Promotion is the operator's act.
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.2-numsplice3-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.2-numsplice3-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

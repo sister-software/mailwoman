@@ -40,7 +40,7 @@
 #
 # corpus: v0.4.5-unit-v2 (same as v2 — no rebuild). Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.7-unit-v3.yaml --resume none \
+#     --config v0.9.7-unit-v3.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

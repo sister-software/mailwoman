@@ -4,7 +4,7 @@
 # The recipe excludes every street surface that the FR fragment board reserves for evaluation.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.1.0-fr-fragment.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.1.0-fr-fragment.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -142,7 +142,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v310-fr-fragment-s42/checkpoints
   seed: 42

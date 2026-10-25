@@ -44,7 +44,7 @@
 #
 # 6. `train.output_dir` and `train.trackio_run_name` name the v710 run.
 #
-# The run is from scratch with `--resume none`, because a fine-tune cannot introduce sources the base
+# The run is from scratch with `--fresh`, because a fine-tune cannot introduce sources the base
 # never saw except as an explicitly scoped additive run with its placebo in hand. The exposure curve
 # v4.15.0 is that scoped run for Russia.
 

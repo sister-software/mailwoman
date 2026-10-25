@@ -14,7 +14,7 @@
 #
 # Launch it from corpus-python with:
 #   modal run -d -m launch.train_remote \
-#     --config v0.9.3-de-regiontail.yaml --resume none \
+#     --config v0.9.3-de-regiontail.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

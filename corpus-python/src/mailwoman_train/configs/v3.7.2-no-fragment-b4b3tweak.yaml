@@ -8,7 +8,7 @@
 # The target is board 3 bare-street-hn, such as "Leppdalsvegen 1285". The guards are postcode recall on
 # bare-pc, the other Norwegian house-number classes, the FR fragment board and the golden set.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.7.2-no-fragment-b4b3tweak.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.7.2-no-fragment-b4b3tweak.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
@@ -156,7 +156,7 @@ model:
   phrase_feature_dim: 10
 
 # The init_from checkpoint loads weights only, so the optimizer starts fresh.
-# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+# A resumed run skips init_from, so launch with --fresh on a fresh output_dir.
 train:
   output_dir: /data/output-v372-no-fragment-b4b3tweak-s42/checkpoints
   seed: 42

@@ -20,7 +20,7 @@
 #
 # Launch (Trackio debut):
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0_8_0-mlm-pretrain.yaml --resume none \
+#     --config v0_8_0-mlm-pretrain.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
   # v0.3.0 (674 train parquet files), not v0.4.0 (12 synth-overlay parquet files): MLM wants broad,

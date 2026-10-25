@@ -74,7 +74,7 @@
 # v0.6.0-boundary-stress` — not `modal volume put`, which a mounted container cannot see; (2) launch.
 #
 # Launch (after the corpus build): cd corpus-python && modal run -d -m launch.train_remote \
-#   --config v1.6.0-boundary-stress.yaml --resume none
+#   --config v1.6.0-boundary-stress.yaml --fresh
 data:
   # TODO(operator): rebuild corpus with synth-boundary-stress, then set this to the new version.
   corpus_dir: /data/corpus/versioned/v0.6.0-boundary-stress/corpus-v0.6.0-boundary-stress

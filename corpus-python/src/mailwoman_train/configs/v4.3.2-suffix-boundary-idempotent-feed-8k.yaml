@@ -4,7 +4,7 @@
 # v0.17.0 feed. Same tokenizer, model geometry, trained channels and data weights as
 # v4.2.0-base-anchor-v2. This is a fresh-optimizer same-vocab fine-tune from that run's step-60000;
 # it is not a resume or an extension of the completed cosine schedule. EWC lambda 1e4 is the B11
-# calibration winner from v4.1.2. Launch exactly once with `--resume none`.
+# calibration winner from v4.1.2. Launch exactly once with `--fresh`.
 #
 # one effective change: repair the load-time target labels. The v4.3.0/v4.3.1 runs were trained after the
 # affix relabel pass corrupted an already-decomposed terminal-only street into two suffixes. The corrected

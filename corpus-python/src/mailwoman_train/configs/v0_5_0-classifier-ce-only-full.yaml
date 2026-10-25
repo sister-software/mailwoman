@@ -17,7 +17,7 @@
 #   nohup env HSA_OVERRIDE_GFX_VERSION=11.0.0 \
 #       ~/training-venv/bin/python -m mailwoman_train train \
 #           --config corpus-python/src/mailwoman_train/configs/v0_5_0-classifier-ce-only-full.yaml \
-#           --resume auto \
+#           the default resume \
 #       > logs/c-train-ce-only-full.log 2>&1 &
 
 data:

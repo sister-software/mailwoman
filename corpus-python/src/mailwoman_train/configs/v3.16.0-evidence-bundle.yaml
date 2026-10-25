@@ -3,7 +3,7 @@
 # The evidence curriculum zeroes each channel on a ramp so the model stays competent without evidence.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.16.0-evidence-bundle.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.16.0-evidence-bundle.yaml --fresh
 data:
   # This corpus adds synth-nz, synth-es-pedania and synth-fr-lieudit to v0.14.0-gb.
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc
@@ -166,7 +166,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3160-evidence-bundle-s42/checkpoints
   seed: 42

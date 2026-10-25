@@ -2,7 +2,7 @@
 #
 # The control is v5.7.0. This config matches it except for `data.corpus_dir`, which moves from
 # v0.31.0-region-code-and-unit to v0.32.0-locality-shape. Seed, steps, weights, reps targets and
-# receipts are unchanged, and the run starts from scratch with `--resume none`.
+# receipts are unchanged, and the run starts from scratch with `--fresh`.
 #
 # The corpus change: v0.32.0-locality-shape overlays v0.30.0-bare-postcode with the three sources
 # that v0.31.0 adds. Two of them are byte-identical copies. `synth-trailing-region-us` is rebuilt

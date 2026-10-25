@@ -4,11 +4,11 @@
 # The second change raises the dependent_locality class weights to 1.0.
 # The third change re-initializes the dead classifier rows and trains the classifier at a higher learning rate.
 #
-# The run must launch with --resume none.
+# The run must launch with --fresh.
 # A resumed run skips reinit_label_rows without raising an error.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.10.0-gb-probe.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.10.0-gb-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb
@@ -157,7 +157,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3100-gb-probe-b-s42/checkpoints
   seed: 42
@@ -182,7 +182,7 @@ train:
   # The classifier trains in its own parameter group at this rate.
   # Adam's update is scale-invariant, so only a separate group can move a deeply negative row.
   classifier_learning_rate: 1.0e-3
-  # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
+  # These rows reset to the mean of the live rows. The reset requires init_from and --fresh.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
   trackio_project: mailwoman
   trackio_run_name: v3.10.0-gb-probe-b-s42

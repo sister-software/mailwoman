@@ -19,7 +19,7 @@
 # no row for 74 of the 215 countries `country_weights` admits, 20 of which have no row in any split, so any
 # `*` floor (min_rows must be positive) would refuse every launch from this corpus. #2548 records the measurement.
 #
-# The run is from scratch with `--resume none`: 60,000 steps on an A100-40GB.
+# The run is from scratch with `--fresh`: 60,000 steps on an A100-40GB.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.8.1/corpus-v0.8.1

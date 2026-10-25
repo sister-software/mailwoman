@@ -59,7 +59,7 @@
 #    the affix-ml parquet files + the v0.4.10-country-bal synth-country train parquet file.)
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v1.0.0-consolidation.yaml --resume none \
+#     --config v1.0.0-consolidation.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

@@ -73,7 +73,7 @@
 # Paid Data CSV it replaces held 25,674,048 rows over 301,904 street names, 1,067,267 postcodes in 106 areas, and
 # 7,497 Scottish rows.
 #
-# The run is from scratch with `--resume none`: 60,000 steps on an A100-40GB, about 4.3 hours and $9 at the
+# The run is from scratch with `--fresh`: 60,000 steps on an A100-40GB, about 4.3 hours and $9 at the
 # training-arc protocol's from-scratch figures.
 
 data:

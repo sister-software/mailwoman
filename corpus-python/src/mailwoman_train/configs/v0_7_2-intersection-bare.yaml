@@ -20,7 +20,7 @@
 # intersections at 0.99 once it's trained on the bare format).
 #
 # Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_2-intersection-bare.yaml --resume none
+#   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_2-intersection-bare.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0

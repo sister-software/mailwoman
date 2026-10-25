@@ -4,7 +4,7 @@
 # taken true -> false, and two sources listed at zero weight so the run starts (the comment above
 # `state-ia-contractors` gives the reason, and zero is the exposure v5.7.0 gave them). Corpus version, seed, steps, every other weight, every
 # reps target and every receipt are identical. From scratch: no `init_from`, launched with
-# `--resume none`, the same shape v5.7.0 used.
+# `--fresh`, the same shape v5.7.0 used.
 #
 # Control: v5.7.0 itself. It is from-scratch at seed 42 on this corpus with the flag on, so it is this
 # arm's exact twin and no control run has to be paid for. That is the whole reason this arm is one run

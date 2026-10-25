@@ -38,7 +38,7 @@
 #   Parity postcode drops -> a 2-digit piece collides (unexpected); fall back to 100-999 (v352).
 #
 # Not a ship. A pass justifies an 8k. Promotion is the operator's act.
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.3-numsplice23-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.3-numsplice23-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment

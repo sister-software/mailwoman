@@ -32,7 +32,7 @@
 # declared them. v7.4.0 over the same venue corpus with the bare rows at a 3% share graded hold against
 # shipped 10.1.0, and its regressed rows were bare street names retagged `venue`.
 #
-# The run is from scratch with `--resume none`.
+# The run is from scratch with `--fresh`.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.7.6-venue-gb-region/corpus-v0.7.6-venue-gb-region

@@ -33,7 +33,7 @@
 #   node packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts writes
 #     packages/corpus/data/training-manifests/v0.7.9-country-gap.json
 #
-# The run is from scratch with `--resume none`: 60,000 steps on an A100-40GB, about 4.3 hours and $9 at the
+# The run is from scratch with `--fresh`: 60,000 steps on an A100-40GB, about 4.3 hours and $9 at the
 # training-arc protocol's from-scratch figures.
 
 data:

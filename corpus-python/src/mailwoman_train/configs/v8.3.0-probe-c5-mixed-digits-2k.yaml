@@ -18,7 +18,7 @@
 # The arms are graded on the house-number and postcode board rows and the held-out test split's house_number and
 # postcode spans. Do not launch before the evaluator check in the issue has returned pass on a stand-in arm.
 #
-# Launch with `--resume none`: 2,000 steps on an A100-40GB.
+# Launch with `--fresh`: 2,000 steps on an A100-40GB.
 data:
   corpus_dir: /data/corpus/versioned/v0.8.4-overlay/corpus-v0.8.4-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c5-mixed-digits

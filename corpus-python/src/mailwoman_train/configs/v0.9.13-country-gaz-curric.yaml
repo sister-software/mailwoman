@@ -6,7 +6,7 @@
 # Stage /data/gazetteer/anchor-lexicon-v1.json through R2 before launch, as v0.9.12-country-gaz.yaml
 # describes. Launch it from corpus-python with:
 #   modal run -d -m launch.train_remote \
-#     --config v0.9.13-country-gaz-curric.yaml --resume none \
+#     --config v0.9.13-country-gaz-curric.yaml --fresh \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:

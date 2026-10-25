@@ -7,7 +7,7 @@
 # The SP arm drops rows longer than 128 pieces, and this arm caps rows at 64 word units. The Latin
 # char vocab came from a 1M-row sample, so rare characters map to UNK.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-charword.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-leg2-charword.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam

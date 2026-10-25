@@ -34,7 +34,7 @@
 # 5. `data.required_corpus_receipts` adds a 1,000-draw floor for each new register and for Brazil and
 #    Mexico.
 #
-# The run starts from scratch with `--resume none`, because a fine-tune cannot learn sources that its
+# The run starts from scratch with `--fresh`, because a fine-tune cannot learn sources that its
 # base never saw. No earlier arm is a control, since they read a different corpus.
 #
 # All other weights, reps targets and the model, train and eval blocks match v5.9.0.

@@ -10,7 +10,7 @@
 # The target is board 3 bare-street-hn, where a bare street followed by a number should tag the number
 # as house_number. A 5-digit US postcode now splits as `▁9021 0`, so postcode recall is the main guard.
 #
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
@@ -154,7 +154,7 @@ model:
   phrase_feature_dim: 10
 
 # The init_from checkpoint loads weights only, so the optimizer starts fresh.
-# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+# A resumed run skips init_from, so launch with --fresh on a fresh output_dir.
 train:
   output_dir: /data/output-v350-numsplice-probe-s42/checkpoints
   seed: 42

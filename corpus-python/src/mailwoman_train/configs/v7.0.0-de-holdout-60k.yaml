@@ -23,7 +23,7 @@
 # adapter ids, and each of those 54 appears once in source_weights or source_reps. The loader rejects a
 # source without a weight, so a missing key stops the run rather than dropping rows silently.
 #
-# The run starts from scratch with `--resume none`. A fine-tune from the v6.0.0 checkpoint is not
+# The run starts from scratch with `--fresh`. A fine-tune from the v6.0.0 checkpoint is not
 # available, because no v6.0.0 run reached a checkpoint on this corpus family.
 #
 # 4. `ve-locality-postcode-region` asks for 200 draws where v6.0.0 asked for 250. Every other receipt

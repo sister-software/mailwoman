@@ -147,7 +147,7 @@ train: # v1.9.7 init_from idiom (fresh optimizer over the surgery export); data 
   weight_decay: 0.01
   warmup_steps: 200
   grad_clip_norm: 1.0
-  # full RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
+  # full RUN: the default resume picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
   # Constant LR 1.5e-4. anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 2000

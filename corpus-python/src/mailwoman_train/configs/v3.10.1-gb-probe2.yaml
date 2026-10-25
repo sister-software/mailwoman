@@ -1,11 +1,11 @@
 # This 2k probe repeats v3.10.0-gb-probe with one change: the synth-gb weight rises from 6.0 to 36.0.
 # The higher weight feeds the dependent_locality head about five times the positive rows.
 #
-# The run must launch with --resume none.
+# The run must launch with --fresh.
 # A resumed run skips reinit_label_rows without raising an error.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.10.1-gb-probe2.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.10.1-gb-probe2.yaml --fresh
 
 data:
   corpus_dir: /data/corpus/versioned/v0.14.0-gb/corpus-v0.14.0-gb
@@ -154,7 +154,7 @@ model:
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v3101-gb-probe2-s42/checkpoints
   seed: 42
@@ -179,7 +179,7 @@ train:
   # The classifier trains in its own parameter group at this rate.
   # Adam's update is scale-invariant, so only a separate group can move a deeply negative row.
   classifier_learning_rate: 1.0e-3
-  # These rows reset to the mean of the live rows. The reset requires init_from and --resume none.
+  # These rows reset to the mean of the live rows. The reset requires init_from and --fresh.
   reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"]
   trackio_project: mailwoman
   trackio_run_name: v3.10.1-gb-probe2-s42

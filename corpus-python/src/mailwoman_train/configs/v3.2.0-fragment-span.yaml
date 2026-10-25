@@ -3,7 +3,7 @@
 # All data, class weights and the encoder learning rate match v3.1.0-fr-fragment.
 #
 # Launch the run from corpus-python:
-#   modal run -d -m launch.train_remote --config v3.2.0-fragment-span.yaml --resume none
+#   modal run -d -m launch.train_remote --config v3.2.0-fragment-span.yaml --fresh
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -146,7 +146,7 @@ model:
   span_dim: 128
   max_span: 8
 
-# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+# With --fresh and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
 train:
   output_dir: /data/output-v320-fragment-span-s42/checkpoints
   seed: 42
