@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for Australia
 
-## Electing address data
+## How this repository elects address data
 
 Australian copyright requires human authorship of a compilation's expression (IceTV v Nine Network [2009] HCA 14, and Telstra v Phone Directories [2010] FCAFC 149), and Australia has no database right.
 

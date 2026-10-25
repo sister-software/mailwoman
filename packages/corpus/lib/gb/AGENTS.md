@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for United Kingdom
 
-## Electing address data
+## How this repository elects address data
 
 The United Kingdom keeps the database right of Directive 96/9/EC in domestic law through the Copyright and Rights in Databases Regulations 1997, unchanged by its withdrawal from the EU.
 

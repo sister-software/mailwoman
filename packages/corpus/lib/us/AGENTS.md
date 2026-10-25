@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for United States
 
-## Electing address data
+## How this repository elects address data
 
 The United States position is the US factual-data reading, decided by the operator on 2026-10-17.
 

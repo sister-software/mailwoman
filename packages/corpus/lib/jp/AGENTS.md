@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for Japan
 
-## Electing address data
+## How this repository elects address data
 
 The Copyright Act of Japan, Article 12-2, grants copyright in a database for creativity in its selection or systematic construction. Japan has no sui generis database right, and courts have still awarded tort damages for copying a database built with substantial investment (Tokyo District Court, 2001, the Tsubasa System case).
 

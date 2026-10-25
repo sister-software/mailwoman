@@ -32,7 +32,7 @@ The builder prints the license notice when it starts and when it finishes. The d
 records `ODbL-1.0`, the credit `© OpenStreetMap contributors`, the Geofabrik URL and SHA-256 of the extract
 it read, the snapshot date, and the repository commit that built it.
 
-Using the database for your own lookups is internal use. When you publicly use it, or a database derived
+Your own lookups with the database count as internal use. When you publicly use it, or a database derived
 from it, the ODbL's terms apply to you as the party using it:
 
 - credit "© OpenStreetMap contributors" with a link to <https://www.openstreetmap.org/copyright> where the

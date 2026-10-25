@@ -154,7 +154,7 @@ def _load_r2_env() -> dict[str, str]:
 
 # The container has no `.env` file. Build the secret from the local checkout only.
 # An unconditional secret would crash every function that does not use R2.
-# The unpacking builds the `dict[str, str | None]` that `from_dict` declares, which a `dict[str, str]` is not.
+# The unpacking builds the `dict[str, str | None]` that `from_dict` declares. A `dict[str, str]` has a narrower value type.
 r2_secret = modal.Secret.from_dict({**_load_r2_env()} if modal.is_local() else {})
 
 

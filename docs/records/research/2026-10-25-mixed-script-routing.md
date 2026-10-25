@@ -1,6 +1,6 @@
 ---
 title: Mixed Latin and CJK input — measurement and routing design
-description: How often addresses mix Latin and CJK script, how the shipped families parse them, and how to route them.
+description: Measurements of Latin and CJK script mixtures, parser results from shipped families, and routing options.
 ---
 
 # Mixed Latin and CJK input: measurement and routing design
@@ -70,7 +70,7 @@ training text by design, so Han characters outside its seeded and sampled set fa
 family's real traffic the cost is bounded by the 0.02–0.08% of names above. The CJK-country inputs, where the
 cost would be large, are the ones that should not reach the Latin family at all.
 
-## Routing design
+## Route selection design
 
 Three options were considered.
 
@@ -102,7 +102,7 @@ stated syntax accepts a unit. `packages/mailwoman/tools/dev-tools/tokenizer/code
 - A house-number span is exactly one unit in 316,164 of 327,040 cases (96.7%), a postcode span in 323,992 of 335,124
   (96.7%).
 - On the 640,156 single-unit house numbers and postcodes, a majority-label rule over the pattern alone labels 95.07%
-  correctly. Adding acceptance by the row country's postcode syntax and the count of accepting countries labels
+  correctly. Acceptance based on the row country's postcode syntax and the count of accepting countries labels
   95.93%.
 - The residual sits in two patterns: `99999` (24,289 house numbers, 263,811 postcodes) and `9999` (101,338 house
   numbers, 5,565 postcodes). Shape cannot separate these. Their context must.

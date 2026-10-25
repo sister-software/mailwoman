@@ -5,14 +5,14 @@
 #
 # The differences from v7.2.0-address-systems-60k.yaml are:
 #
-# 1. `data.corpus_dir` moves to v0.7.7-no-ppd, an overlay on v0.7.2-address-systems that replaces two sources:
+# 1. `data.corpus_dir` points to v0.7.7-no-ppd, an overlay on v0.7.2-address-systems that replaces two sources:
 #
 #      source              v0.7.2 rows (train / val / test)   GB rows from Price Paid Data    replacement
 #      rendered-gb         788,972 / 5,508 / 5,520            every row                       rendered-gb-os-open
 #      spliced-sub-venue   116,519 / 1,766 / 1,715            31,440 / 187 / 173              spliced-sub-venue
 #
 #    `rendered-gb-os-open` is the `locale` recipe's GB part reading the `gb-os-open` adapter's rows: each Code-Point
-#    Open postcode joined to its nearest named OS Open Roads link, with the street and locality from OS Open Names,
+#    Open postcode joined to its nearest OS Open Roads link, whose street and locality fields come from OS Open Names,
 #    all three under OGL v3.0, and a house number the adapter draws. `spliced-sub-venue` keeps its name. Its GB rows
 #    are replaced by GB rows rendered over house-venue-tuples-v4.jsonl, whose GB tuples come from the same adapter
 #    rows, and each new GB row takes an old GB row's position in the file. Its other 88,200 rows are v0.7.2's, in
