@@ -30,10 +30,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-import pyarrow.parquet as pq
-
 from ..config import ValidationCoverageConfig, load_config
-from ..data.loader.corpus_files import CorpusFile, _admitted_mask, corpus_split_files
+from ..data.loader.corpus_files import CorpusFile, admitted_batches, corpus_split_files
 
 #: Tags whose presence makes a row street-level. A validation row with neither measures only the
 #: admin hierarchy. That differs from parsing an address.
@@ -62,25 +60,21 @@ def scan_split(files: list[CorpusFile | Path]) -> dict[str, Any]:
 
     for entry in files:
         file = entry if isinstance(entry, CorpusFile) else CorpusFile(entry)
-        columns = COLUMNS if file.row_filter is None else [*COLUMNS, "source_id"]
-        table = pq.ParquetFile(file.path).read(columns=columns)
 
-        if file.row_filter is not None:
-            mask = _admitted_mask(table["source_id"].combine_chunks(), file.row_filter)
-            if mask is not None:
-                table = table.filter(mask)
+        # One batch at a time: a file holding every split of one source can hold tens of millions of rows, whose
+        # nested `span_tags` column arrow cannot read whole into one array.
+        for batch in admitted_batches(file, COLUMNS):
+            countries = batch.column("country").to_pylist()
+            tags = batch.column("span_tags").to_pylist()
+            sources = batch.column("source").to_pylist()
 
-        countries = table.column("country").to_pylist()
-        tags = table.column("span_tags").to_pylist()
-        sources = table.column("source").to_pylist()
+            for country, span_tags, source in zip(countries, tags, sources, strict=True):
+                key = str(country or "(none)")
+                rows[key] += 1
+                by_source[f"{key}/{source}"] += 1
 
-        for country, span_tags, source in zip(countries, tags, sources, strict=True):
-            key = str(country or "(none)")
-            rows[key] += 1
-            by_source[f"{key}/{source}"] += 1
-
-            if STREET_TAGS.intersection(span_tags or ()):
-                street_rows[key] += 1
+                if STREET_TAGS.intersection(span_tags or ()):
+                    street_rows[key] += 1
 
     return {
         "files": len(files),

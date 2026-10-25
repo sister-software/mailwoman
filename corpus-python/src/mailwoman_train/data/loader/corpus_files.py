@@ -306,13 +306,31 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
     return resolved
 
 
+_VALUE_SETS: dict[tuple[int, str], Any] = {}
+
+
+def _value_set(ids: frozenset[str], arrow_type: Any) -> Any:
+    """The Arrow array of a filter's id set, built once per set and type.
+
+    Callers ask once per row group or batch, and a split attribute's held-out set can hold hundreds of thousands
+    of ids, so rebuilding it per call would sort it once per row group. The key is the set's identity. The cache holds
+    the set itself, so the identity is never reused while the entry lives.
+    """
+    key = (id(ids), str(arrow_type))
+    cached = _VALUE_SETS.get(key)
+    if cached is None or cached[0] is not ids:
+        cached = (ids, pa.array(sorted(ids), type=arrow_type))
+        _VALUE_SETS[key] = cached
+    return cached[1]
+
+
 def _admitted_mask(source_ids: Any, row_filter: RowFilter) -> Any:
     """A boolean Arrow mask of the rows a filter admits, computed by set membership on ``source_id``."""
     mask = None
     if row_filter.keep is not None:
-        mask = pc.is_in(source_ids, value_set=pa.array(sorted(row_filter.keep), type=source_ids.type))
+        mask = pc.is_in(source_ids, value_set=_value_set(row_filter.keep, source_ids.type))
     if row_filter.drop:
-        dropped = pc.is_in(source_ids, value_set=pa.array(sorted(row_filter.drop), type=source_ids.type))
+        dropped = pc.is_in(source_ids, value_set=_value_set(row_filter.drop, source_ids.type))
         kept = pc.invert(dropped)
         mask = kept if mask is None else pc.and_(mask, kept)
     return mask
@@ -349,22 +367,26 @@ def file_source_counts(path: Path, row_filter: RowFilter | None = None) -> dict[
     A file can hold several sources because the writer splits files by row count. Arrow's `value_counts`
     performs the count without creating one Python string per row.
 
+    The count runs one record batch at a time. A file that holds every split of one source can hold tens of millions
+    of rows, and joining its `source_id` column into one array overflows Arrow's 2 GiB `string` offsets.
+
     Raises `TypeError` on a non-string cell. The known cause is a label-less ``--golden`` file was
     passed as a train file.
     """
-    if row_filter is None:
-        column = pq.ParquetFile(path).read(columns=["source"])["source"]
-    else:
-        table = pq.ParquetFile(path).read(columns=["source", "source_id"])
-        mask = _admitted_mask(table["source_id"].combine_chunks(), row_filter)
-        column = table["source"] if mask is None else table.filter(mask)["source"]
+    columns = ["source"] if row_filter is None else ["source", "source_id"]
     counts: dict[str, int] = {}
 
-    for pair in pc.value_counts(column.combine_chunks()):
-        value = pair["values"].as_py()
-        if not isinstance(value, str):
-            raise TypeError(f"source column cell is {type(value).__name__}, expected str")
-        counts[value] = pair["counts"].as_py()
+    for batch in pq.ParquetFile(path).iter_batches(columns=columns):
+        column = batch.column("source")
+        if row_filter is not None:
+            mask = _admitted_mask(batch.column("source_id"), row_filter)
+            if mask is not None:
+                column = pc.filter(column, mask)
+        for pair in pc.value_counts(column):
+            value = pair["values"].as_py()
+            if not isinstance(value, str):
+                raise TypeError(f"source column cell is {type(value).__name__}, expected str")
+            counts[value] = counts.get(value, 0) + pair["counts"].as_py()
 
     return counts
 
