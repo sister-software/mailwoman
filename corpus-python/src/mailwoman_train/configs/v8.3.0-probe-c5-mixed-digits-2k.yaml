@@ -3,14 +3,15 @@
 #
 # The vocabulary audit (docs/records/research/2026-10-09-sentencepiece-vocabulary-audit.md) left one question to a
 # training run: whether a model generalizes digit shape better from per-digit pieces (C4) or from mixed pieces (C5).
-# This arm's vocabulary is C5: unigram, 48,000 pieces, `split_digits` off, so frequent numbers become pieces of their own. Both are trained with the C5 recipe on the
-# v0.8.4-overlay corpus (CJK-dominant rows excluded, codex terms seeded without numeric symbols).
+# This arm's vocabulary is C5: unigram, 48,000 pieces, `split_digits` off, so frequent numbers become pieces of their
+# own. Both arms are trained on the v0.8.4-overlay corpus with CJK-dominant rows excluded, without user-defined symbols
+# (#2851: a seeded `▁Unit` split `United`) and with `required_chars` holding printable ASCII and address punctuation.
 #
 # The differences from v8.2.0-base-60k.yaml are:
 #
 # 1. `data.corpus_dir` is the v0.8.4-overlay corpus overlay over v0.8.2, which replaces wof-admin,
 #    wof-postalcode and usgov-nppes with their rebuilt files (732 files, 701,766,159 rows).
-# 2. `data.tokenizer_dir` is this arm's vocabulary, tokenizer.model md5 1910df91badfc2f129ba5620d15664c6.
+# 2. `data.tokenizer_dir` is this arm's vocabulary, tokenizer.model md5 8c2bb7b4ed554a397f8fa3c1ff7d811d.
 # 3. `train.max_steps` is 2,000 with a 200-step warmup, an evaluation every 500 steps and a save at the end.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
 #
