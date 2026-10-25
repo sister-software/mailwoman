@@ -133,13 +133,12 @@ export const spec = {
 		},
 		jobs: {
 			type: "number",
-			default: 1,
 			validate: (value) => Number.isInteger(value) && value > 0,
 			validationMessage: "--jobs must be a positive integer.",
 			description:
-				"Worker processes to run at once. 1 builds serially in this process; above 1 each source's adapter, " +
-				"align and parquet work runs in workers with their own heap and DuckDB limits, and a --jobs whose " +
-				"workers do not fit in host memory is refused",
+				"Worker processes to run at once (default: as many as host memory and CPUs hold). 1 builds serially " +
+				"in this process; above 1 each source's adapter, align and parquet work runs in workers with their " +
+				"own heap and DuckDB limits, and a --jobs whose workers do not fit in host memory is refused",
 		},
 		"align-range-mib": {
 			type: "number",
@@ -215,6 +214,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { defaultBuildJobs } = await import("@mailwoman/corpus/build/budget")
 		const { readBuildInputs } = await import("@mailwoman/corpus/build/inputs")
 		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
 
@@ -231,15 +231,16 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const adapters = defaultAdapterRegistry.list()
+		const jobs = options.jobs ?? defaultBuildJobs({ adapterIDs: Object.keys(adapterInputs) })
 
-		if (options.freshSources && !(options.resume && options.jobs > 1)) {
+		if (options.freshSources && !(options.resume && jobs > 1)) {
 			throw new CommandError("--fresh-sources applies to a parallel build resumed with --resume and --jobs above 1.")
 		}
 
 		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
 		// own tests run the WOF adapter against a five-kilobyte fixture under the default heap.
 		// A parallel build runs each adapter in a worker whose heap it sets, so this process needs none of it.
-		if (options.jobs <= 1) {
+		if (jobs <= 1) {
 			assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
 		}
 
@@ -257,7 +258,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : null,
 			unshippableReason: options.unshippableReason,
 			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
-			jobs: options.jobs,
+			jobs,
 			alignRangeBytes: options.alignRangeMib ? options.alignRangeMib * 1024 ** 2 : undefined,
 			freshSources: options.freshSources
 				? options.freshSources
