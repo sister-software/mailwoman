@@ -410,7 +410,6 @@ export function readVarisBuilding(record: VarisRecord, places: VarisPlaces): Var
 			locale: "lv-LV",
 			source: LV_VARIS_ADAPTER_ID,
 			source_id: `${LV_VARIS_ADAPTER_ID}-${record.KODS}`,
-			corpus_version: "",
 			license: LV_VARIS_LICENSE,
 		},
 	}
@@ -475,7 +474,7 @@ export function createVarisAdapter(): CorpusAdapter {
 			for await (const record of readVarisTable(dir(VARIS_TABLES.Building))) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const reading = readVarisBuilding(record, places)
 

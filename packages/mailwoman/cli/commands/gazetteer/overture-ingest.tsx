@@ -3,6 +3,7 @@
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -13,7 +14,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
 
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
@@ -98,7 +98,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries)
-		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
+		const limit = options.limit ? Number.parseInt(options.limit, 10) : null
 		// The default seed is fixed so that repeated samples of one release write the same rows.
 		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
 		const outRoot = PathBuilder.from(options.out ?? dataRootPath("overture"))

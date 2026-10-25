@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Samples real address tuples for one country and renders them in native or international order.
- *   It emits aligned rows. The recipe samples and renders with separate seeded generators.
+ *   Samples real address tuples for one country and renders them in the country's native order.
+ *   It emits aligned rows. The recipe samples and renders with separate seeded generators. The postcode on the far
+ *   side of the locality is the training-time `postcode_move` augmentation's job (#2750).
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -18,6 +19,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, JSONSpliterator } from "spliterator"
 
+import { RenderedRowIDs } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import { openConstituentCountryReader } from "#gb/constituent-country"
@@ -25,7 +27,7 @@ import { readCountyOfPostcode } from "#gb/county"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
-import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
+import { type LocaleBaseTuple, type RenderedLocaleRow, regionDrawRandom, renderLocaleRow } from "#surfaces/locale"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
@@ -106,9 +108,18 @@ export interface LocaleCountrySource {
 	 */
 	register: SourceRegister
 	/**
-	 * The corpus version written to each row.
+	 * The share of rows that write the tuple's region, drawn from {@linkcode regionDrawRandom}.
+	 *
+	 * @defaultValue 0: no row prints a region.
 	 */
-	corpusVersion: string
+	regionFraction?: number
+	/**
+	 * The separator between the two languages of a region name the source writes as a pair,
+	 * such as `Caerdydd - Cardiff`, read by {@linkcode chooseRegionName}.
+	 *
+	 * @defaultValue absent: the region is written as the source writes it.
+	 */
+	regionPairSeparator?: string
 	/**
 	 * The dataset and terms the row's `license` names, before the rendering order.
 	 *
@@ -128,7 +139,6 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: defaultRecipeSource("synth-german"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.4.0",
 		parts: [
 			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
 			{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
@@ -137,55 +147,46 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	FR: {
 		source: defaultRecipeSource("synth-fr"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.4.0",
 		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: defaultRecipeSource("synth-nl"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
 		source: defaultRecipeSource("synth-it"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
 	PT: {
 		source: defaultRecipeSource("synth-pt"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
 	},
 	CH: {
 		source: defaultRecipeSource("synth-ch"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
 	},
 	HR: {
 		source: defaultRecipeSource("synth-hr"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
 	},
 	SK: {
 		source: defaultRecipeSource("synth-sk"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
 	},
 	LU: {
 		source: defaultRecipeSource("synth-lu"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
 	},
 	ES: {
 		source: defaultRecipeSource("synth-es"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
 		// The raw CNIG file keeps pedanía names that the conformed OA file drops.
 		pedaniaParts: [
@@ -202,7 +203,6 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// The source has no postcodes.
 		source: defaultRecipeSource("synth-nz"),
 		register: SourceRegister.OpenAddresses,
-		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
@@ -212,8 +212,14 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// so GB rows carry a source name of their own.
 		source: defaultRecipeSource("synth-gb-os-open"),
 		register: SourceRegister.OrdnanceSurveyOpenData,
-		corpusVersion: "0.9.9",
 		license: "OS OpenData GB tuples (OGL-UK-3.0)",
+		// The share of rows #2676 shipped in v0.7.10: 52,103 of 786,626 train rows (6.6%) labeled the county
+		// or constituent country. The run skips a row whose text it already wrote (#2765), and a row with a
+		// region rarely repeats, so 5.7% of draws yields 6.6% of written rows.
+		regionFraction: 0.057,
+		// OS Open Names writes a Welsh county as `<Welsh> - <English>`, as in `Caerdydd - Cardiff`
+		// or `Gwynedd - Gwynedd`, and an address writes one of the two.
+		regionPairSeparator: " - ",
 		// The adapter's rows carry no region.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
@@ -560,16 +566,41 @@ export function resolveLocaleParts(countrySource: LocaleCountrySource, override:
 }
 
 /**
+ * The one name a row writes for a region the source writes as a pair of names joined by `separator`.
+ *
+ * Two equal halves give that name without a draw.
+ * Two different halves give one of them, chosen by one draw from `random`.
+ * A region without the separator is returned as it is.
+ */
+export function chooseRegionName(region: string, separator: string, random: () => number): string {
+	const at = region.indexOf(separator)
+
+	if (at === -1) return region
+
+	const first = region.slice(0, at).trim()
+	const second = region.slice(at + separator.length).trim()
+
+	if (!first || !second) return first || second || region
+
+	if (first === second) return first
+
+	return random() < 0.5 ? first : second
+}
+
+/**
  * The locale recipe registered with the corpus builder.
  */
 export const localeRecipe: CorpusRecipe = {
 	name: "locale",
 	description:
-		"Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples (OS OpenData for GB), both orders → renderLocaleRow",
+		"Per-locale coverage rows (DE/FR/NL/IT/ES/NZ/GB) from real OA tuples (OS OpenData for GB), native order → renderLocaleRow",
 	mode: "generate",
 	options: [
 		{ flag: "--country <cc>", description: "Target country (DE|FR|NL|IT|ES|NZ|GB). Default DE" },
-		{ flag: "--intl-fraction <f>", description: "Fraction rendered international order. Default 0.4" },
+		{
+			flag: "--region-fraction <f>",
+			description: "Fraction of rows that write the tuple's region. Default: the country's share (GB 0.057, else 0)",
+		},
 		{
 			flag: "--country-fraction <f>",
 			description:
@@ -584,6 +615,7 @@ export const localeRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		// Each part's sampler gets its own generator below, so this one drives rendering only.
 		const random = makeMulberry32(opts.seed)
+		const regionRandom = regionDrawRandom(opts.seed)
 		const country = (opts.country ?? "DE").toUpperCase()
 		const countrySource = COUNTRY_SOURCES[country]
 
@@ -593,13 +625,12 @@ export const localeRecipe: CorpusRecipe = {
 			)
 		}
 
-		const intlFraction = opts.intlFraction ?? 0.4
-
-		if (!(intlFraction >= 0 && intlFraction <= 1)) {
-			throw new Error(`--intl-fraction must be in [0, 1], got ${intlFraction}`)
-		}
-
 		const countryFraction = opts.countryFraction ?? 0
+		const regionFraction = opts.regionFraction ?? countrySource.regionFraction ?? 0
+
+		if (!(regionFraction >= 0 && regionFraction <= 1)) {
+			throw new Error(`--region-fraction must be in [0, 1], got ${regionFraction}`)
+		}
 
 		if (!(countryFraction >= 0 && countryFraction <= 1)) {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
@@ -635,10 +666,11 @@ export const localeRecipe: CorpusRecipe = {
 		let skipped = 0
 		let guard = 0
 		const N = pool.length
+		const rowIDs = new RenderedRowIDs()
 
 		while (emitted < count && guard++ < count * 6) {
 			const base = pool[Math.floor(random() * N)]!
-			const order = random() < intlFraction ? "international" : "native"
+			const order = "native"
 
 			// These draws happen only for ES and NL, so other countries' seeded output
 			// is unaffected. country-branch: the ES house-number join and the NL glued
@@ -655,7 +687,16 @@ export const localeRecipe: CorpusRecipe = {
 						: ("conventional" as const)
 					: undefined
 
-			const synth = renderLocaleRow(base, country, { random, order, nativeHouseJoin, postcodeShape })
+			const withRegion = regionFraction > 0 && regionRandom() < regionFraction
+			// The name is drawn from the region generator, so the rendering draws stay as they were.
+			const separator = countrySource.regionPairSeparator
+
+			const rowBase =
+				withRegion && separator && base.region
+					? { ...base, region: chooseRegionName(base.region, separator, regionRandom) }
+					: base
+
+			const synth = renderLocaleRow(rowBase, country, { random, nativeHouseJoin, postcodeShape, withRegion })
 
 			if (!synth) {
 				skipped++
@@ -691,12 +732,22 @@ export const localeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			const sourceID = stableSourceID(source, {
-				street: synth.components.street,
-				house_number: synth.components.house_number,
-				locality: synth.components.locality,
-				postcode: synth.components.postcode,
-			})
+			// The record is the tuple, and the text tells its renderings apart (#2765).
+			const sourceID = rowIDs.claim(
+				stableSourceID(source, {
+					street: synth.components.street,
+					house_number: synth.components.house_number,
+					locality: synth.components.locality,
+					postcode: synth.components.postcode,
+				}),
+				synth.raw
+			)
+
+			if (!sourceID) {
+				skipped++
+
+				continue
+			}
 
 			const canonical = {
 				raw: synth.raw,
@@ -705,7 +756,6 @@ export const localeRecipe: CorpusRecipe = {
 				locale: synth.locale,
 				source,
 				source_id: sourceID,
-				corpus_version: countrySource.corpusVersion,
 				license: `${countrySource.license ?? `OpenAddresses ${country} tuples`}, rendered ${order}-order — see ingest SOURCES`,
 			}
 
@@ -722,7 +772,6 @@ export const localeRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: source,
 					order,
 					base_source_id: null,
 					register: countrySource.register,

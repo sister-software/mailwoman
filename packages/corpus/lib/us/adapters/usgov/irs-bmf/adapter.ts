@@ -94,7 +94,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<IRSBMFRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const ein = record.EIN ?? ""
 				const venue = (record.NAME ?? "") || undefined
@@ -137,7 +137,6 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_IRS_BMF_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_IRS_BMF_DEFAULT_LICENSE,
 				}
 

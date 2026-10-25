@@ -99,7 +99,7 @@ export const VLAANDEREN_ADAPTER_ID = "vlaanderen"
  *
  * The register's `electedTerms` for license
  * `unchecked-access-free-be-agentschap-digitaal-vlaanderen` states this value.
- * That license has no `spdx`, so `electedLicenseLabel` answers this string
+ * That license has no `spdx`, so `electedTermsLabel` answers this string
  * and the share-alike prefix filter matches it.
  */
 export const VLAANDEREN_DEFAULT_LICENSE = "Modellicentie voor gratis hergebruik Vlaanderen"
@@ -518,7 +518,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 				for (const page of harvest.addressPages) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const pagePath = root(page.file)
 					let seen = 0
@@ -531,7 +531,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 
 						seen++
 
-						if (opts.limit !== undefined && emitted >= opts.limit) break
+						if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 						const house = houseNumberOf(address)
 
@@ -625,7 +625,6 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 							locale: "nl-BE",
 							source: VLAANDEREN_ADAPTER_ID,
 							source_id: seed ? `${VLAANDEREN_ADAPTER_ID}-${seed}` : stableSourceID(VLAANDEREN_ADAPTER_ID, aligned),
-							corpus_version: "",
 							license: VLAANDEREN_DEFAULT_LICENSE,
 						}
 
@@ -635,7 +634,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 					// A short page is a page this run could not read whole.
 					// A smaller-page read would drop its tail silently, and a harvest of
 					// 457 pages hides one missing tail.
-					const bounded = opts.limit !== undefined || Boolean(opts.signal?.aborted)
+					const bounded = opts.limit || Boolean(opts.signal?.aborted)
 
 					if (!bounded && seen !== page.numberReturned) {
 						throw new VlaanderenHarvestError(

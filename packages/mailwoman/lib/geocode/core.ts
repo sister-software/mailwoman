@@ -123,6 +123,10 @@ export interface GeocodeSwitches {
 	 */
 	adminContainmentRerank: boolean
 	/**
+	 * Resolves a dependent locality inside its resolved parent and lets it answer the coordinate.
+	 */
+	dependentLocalityContainment: boolean
+	/**
 	 * Requires span-rescore recovery to leave a context remainder.
 	 */
 	spanRescoreRequireContextRemainder: boolean
@@ -150,6 +154,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	postcodeShapeCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeShapeCoherence,
 	postcodeContainmentCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
+	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
 	spanRescoreRequireContextRemainder: RESOLVE_SWITCH_DEFAULTS.spanRescoreRequireContextRemainder,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
@@ -205,6 +210,13 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Overrides for the venue-head prior's bias scale, cap and extension.
 	 */
 	venueHeadOpts?: import("@mailwoman/core/pipeline").VenueHeadPriorOpts
+	/**
+	 * Per-channel feed pins for a diagnostic parse.
+	 *
+	 * A channel pinned `off` is fed zeros.
+	 * An absent pin set feeds every channel as built.
+	 */
+	channelPins?: import("@mailwoman/core/pipeline").ChannelPins
 	/**
 	 * Optional lexicon-aware kind classifier used for early refusal.
 	 */
@@ -340,6 +352,7 @@ export function geocodeParseInputs(
 		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
+		| "channelPins"
 	> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
@@ -374,6 +387,8 @@ export function geocodeParseInputs(
 			caseNormalization: deps.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 			queryShape,
 			inputMode,
+			// The classifier zeros each pinned channel at feed time.
+			...(deps.channelPins ? { channels: deps.channelPins } : {}),
 			// Default word-consistency enforcement.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			// The loaded priors, through the options builder every production parse path uses.
@@ -493,7 +508,7 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	if (deps.localeCountryPrior && !opts.defaultCountry) {
 		opts.localeCountryPrior = deps.localeCountryPrior
 
-		if (deps.localeCountryPriorWeight !== undefined) {
+		if (deps.localeCountryPriorWeight) {
 			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
 		}
 	}
@@ -512,6 +527,7 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"postcodeShapeCoherence",
 	"postcodeContainmentCoherence",
 	"adminContainmentRerank",
+	"dependentLocalityContainment",
 	"spanRescoreRequireContextRemainder",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
@@ -600,9 +616,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			const dominant =
 				localityValue && deps.resolver.findPlace
 					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
-					: undefined
+					: null
 
-			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
+			const dominantBearer = dominant?.country && dominant.exactMatch !== false ? dominant.country : null
 
 			const dominantDisagreesWithPlacer =
 				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
@@ -682,17 +698,17 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.interpolation = interpolation
 		// An explicit calibration overrides the artifact's own value.
 		// Otherwise a legacy database falls back to the in-code table.
-		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
+		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : null
 
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
 				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
-				: undefined
+				: null
 
 		const calibration = explicit ?? fallback
 
 		// Skip no-op calibration unless explicitly overriding artifact calibration.
-		if (calibration && (calibration !== 1 || (explicit !== undefined && interpolation.radiusCalibration != null))) {
+		if (calibration && (calibration !== 1 || (explicit && interpolation.radiusCalibration != null))) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}

@@ -10,9 +10,11 @@
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../gazetteer" },
 		{ "path": "../sqlite" },
 		{ "path": "../ancestrie" },
 		{ "path": "../core" },
+		{ "path": "../dictionaries" },
 		{ "path": "../evidence" },
 		{ "path": "../resolver" },
 		{ "path": "../spatial" }

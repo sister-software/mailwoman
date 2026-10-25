@@ -6,7 +6,7 @@ role: explanation
 
 # OpenStreetMap attribution and data licensing
 
-Mailwoman uses data from many sources, each with its own license and provenance. [OpenStreetMap](https://www.openstreetmap.org/) is one of them. We value the work of OpenStreetMap contributors and aim to make it clear **when OSM data helped train a model**, **when OSM is being used to look up an address**, and **which obligations apply to an OSM-derived database**.
+Mailwoman uses data from sources with different licenses and provenance. [OpenStreetMap](https://www.openstreetmap.org/) is one of them. We value the work of OpenStreetMap contributors and aim to make it clear **when OSM data helped train a model**, **when OSM is being used to look up an address**, and **which obligations apply to an OSM-derived database**.
 
 > **OpenStreetMap attribution**
 > © OpenStreetMap contributors. OpenStreetMap data is available under the [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). See [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright).
@@ -53,7 +53,7 @@ Our retrieval design keeps source provenance attached to the datasets and result
 
 The [OSMF Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline) expressly discusses ordinary geocoding results stored with proprietary records. It says those results generally do not trigger share-alike for the surrounding database when they are insubstantial and are not aggregated to reproduce a substantial portion of OSM.
 
-**This is not a blanket exemption for every enrichment workflow.** If you use OSM to populate, correct or systematically assemble a larger database, the nature and scale of those changes matter. Keeping independent data and OSM-derived data separate, with clear provenance, helps maintain the distinction.
+**This is not a blanket exemption for every enrichment workflow.** If you use OSM to populate, correct or systematically assemble a larger database, the nature and scale of those changes matter. Independent data and OSM-derived data remain distinguishable when each has clear provenance.
 
 ## Attribution when you operate a public service
 
@@ -65,7 +65,7 @@ This may appear in the application, API documentation, service credits or anothe
 
 Each Mailwoman HTTP surface keeps a result's `openstreetmap:<cc>` source stamp when an OSM layer you attached supplied its coordinate, and the Nominatim and Photon surfaces add the credit "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to that result. A result from any other source never carries the stamp or the credit, and a deployment without an OSM layer serves no OSM data. [HTTP APIs](../../developers/reference/http-apis.mdx#coordinate-provenance-and-the-openstreetmap-credit) lists the field each surface uses.
 
-## Sharing an OSM-derived database
+## Distribution of an OSM-derived database
 
 The [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) permits commercial use. It also contains conditions for publicly using or distributing modified OSM databases.
 
@@ -73,7 +73,7 @@ In particular, §4.6 can require an offer to provide recipients with either the 
 
 Mailwoman's licensing approach is to keep these obligations attached to the relevant **OSM-derived database** rather than claim ownership over OSM data or imply that every other dataset and application component must use the same license.
 
-Choosing to use OpenStreetMap data does not remove its license requirements, and Mailwoman's source attribution does not replace the obligations applicable to a service you operate.
+OpenStreetMap data retains its license requirements when you use it. Mailwoman's source attribution does not replace the obligations applicable to a service you operate.
 
 ## How to inspect your sources
 

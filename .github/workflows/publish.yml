@@ -326,7 +326,7 @@ jobs:
           set -euo pipefail
           # `npm install` of the mailwoman tarball resolves every workspace it depends on, and npm can
           # hold a fresh version in validation for an hour, so the step waits until the registry serves
-          # each release workspace at this version rather than mailwoman alone.
+          # each release workspace at this version rather than only the mailwoman package.
           for attempt in $(seq 1 30); do
             MISSING=$(node --input-type=module -e "
               import { readFileSync } from 'node:fs'

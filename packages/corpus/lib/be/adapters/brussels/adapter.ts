@@ -97,7 +97,7 @@
  * `be-business-legal-1`, `be-business-register-1`, `be-property-building-1` (Flanders) and
  * `be-property-building-2` (Wallonia). The word Brussels appears in the register only inside
  * Flanders' and Wallonia's own prose. Both state that Brussels publishes separately. So no license
- * decision has been elected for this publisher, `electedLicenseLabel` finds no decision to answer
+ * decision has been elected for this publisher, `electedTermsLabel` finds no decision to answer
  * with, and {@linkcode BRUSSELS_DEFAULT_LICENSE} is a label that reads as unreviewed rather than an
  * SPDX id that would read as elected.
  *
@@ -447,7 +447,7 @@ export function createBrusselsAdapter(): CorpusAdapter {
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					// `designatorsByType` leaves out a designator the publisher marked void, so a void number
 					// and an absent one both read as null and `voidDesignatorTypes` separates them below.
@@ -530,7 +530,6 @@ export function createBrusselsAdapter(): CorpusAdapter {
 						locale: "fr-BE",
 						source: BRUSSELS_ADAPTER_ID,
 						source_id: seed ? `${BRUSSELS_ADAPTER_ID}-${seed}` : stableSourceID(BRUSSELS_ADAPTER_ID, aligned),
-						corpus_version: "",
 						license: BRUSSELS_DEFAULT_LICENSE,
 					}
 

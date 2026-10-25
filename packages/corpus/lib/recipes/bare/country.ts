@@ -71,7 +71,6 @@ export const bareCountryRecipe: CorpusRecipe = {
 				locale: "und",
 				source: BARE_COUNTRY_SOURCE,
 				source_id,
-				corpus_version: "0.11.0",
 				license: "Synthetic — bare-country; surfaces from the codex country table (ISO 3166 + curated forms)",
 			}
 

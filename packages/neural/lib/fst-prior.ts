@@ -647,7 +647,7 @@ interface BiasTuning {
  * no names gives no anchor-region boost.
  */
 function surfaceIsEntryName(groups: readonly WordGroup[], entry: FSTPlaceEntryLike): boolean {
-	if (entry.name === undefined) return false
+	if (!entry.name) return false
 
 	return normalizeFSTToken(entry.name) === groups.map((group) => group.fstToken).join(" ")
 }
@@ -731,7 +731,7 @@ function applyBias(
 		const bCol = labelToCol.get(`B-${bioTag}`)
 		const iCol = labelToCol.get(`I-${bioTag}`)
 
-		if (bCol === undefined) continue
+		if (!bCol) continue
 
 		for (let k = 0; k < allPieceIndices.length; k++) {
 			const pi = allPieceIndices[k]!
@@ -747,7 +747,7 @@ function applyBias(
 			for (const label of SUPPRESS_WHEN_PLACE) {
 				const col = labelToCol.get(label)
 
-				if (col !== undefined) {
+				if (col) {
 					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -scaledSuppression)
 				}
 			}
@@ -759,7 +759,7 @@ function applyBias(
 			for (const label of ["B-locality", "I-locality"]) {
 				const col = labelToCol.get(label)
 
-				if (col !== undefined) {
+				if (col) {
 					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -biasScale * maxBias)
 				}
 			}

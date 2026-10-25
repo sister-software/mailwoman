@@ -7,8 +7,16 @@
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import type { DuckDBLimits } from "@mailwoman/corpus/parquet/duckdb"
 
-import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import {
+	isCorpusVersion,
+	positiveInteger,
+	type CommandSpec,
+	CommandTaskResult,
+	type CommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -36,13 +44,12 @@ export const spec = {
 			type: "string",
 			required: true,
 			description: "Parquet files to add, comma-separated",
-			deprecatedName: "slice-parquet",
 		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
-		split: {
+		"split-attribute": {
 			type: "string",
 			description:
-				"Split per parquet, comma-separated. Unset puts every file in train. val or test is accepted only for a file `corpus split-slice` wrote, whose name ends .val.parquet or .test.parquet.",
+				"Split attribute files `corpus split-overlay` wrote under --new-dir, comma-separated. Each names its parquet, which then holds every split's rows at <new-dir>/<parquet>. A parquet without one is train, at <new-dir>/train/<parquet>.",
 		},
 		note: { type: "string", required: true, description: "Manifest note" },
 		"unshippable-reason": {
@@ -51,21 +58,56 @@ export const spec = {
 				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
 				"local experiment. States why; the manifest records the corpus as not shippable",
 		},
+		deletions: {
+			type: "string",
+			description:
+				"A JSON file holding an array of deletions, each with a target ({path} or {source}), sourceIDs or a sourceIDsFile parquet, a reason and an issue (#<number>). The loader drops those rows by source_id.",
+		},
 		"replace-source": {
 			type: "string",
 			description:
 				"Base sources to drop, comma-separated. The base's files with each source leave the manifest and its counts, so the added files take their place.",
 		},
+		"duckdb-memory-gib": {
+			type: "number",
+			validate: (value: number) => Number.isFinite(value) && value > 0,
+			validationMessage: "--duckdb-memory-gib must be a positive number of GiB.",
+			description:
+				"Memory limit in GiB of each DuckDB connection the assembly opens. Defaults to DUCKDB_MEMORY_SHARE (a quarter) of host memory",
+		},
+		"duckdb-threads": {
+			type: "number",
+			validate: positiveInteger,
+			validationMessage: "--duckdb-threads must be a positive integer.",
+			description:
+				"Threads of each DuckDB connection the assembly opens. Defaults to DUCKDB_THREAD_SHARE (a quarter) of the host's threads",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The DuckDB limits the two `--duckdb-*` options state, in {@linkcode DuckDBLimits}'s units.
+ *
+ * An omitted option stays absent so `openDuckDB` applies its stated default.
+ */
+export function overlayDuckDBLimits(options: { duckdbMemoryGib?: number; duckdbThreads?: number }): DuckDBLimits {
+	return {
+		...(typeof options.duckdbMemoryGib === "number"
+			? { memoryLimitBytes: Math.floor(options.duckdbMemoryGib * 2 ** 30) }
+			: {}),
+		...(typeof options.duckdbThreads === "number" ? { threads: options.duckdbThreads } : {}),
+	}
+}
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools/overlay/manifest")
+		const { readDeletionRequests } = await import("@mailwoman/corpus/tools/overlay/deletions")
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
-		const splits = options.split ? extractDelimited(options.split) : []
+		const { readSplitAttribute } = await import("@mailwoman/corpus/tools/overlay/split-attribute")
+		const { resolvePath } = await import("path-ts")
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(
@@ -73,16 +115,17 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		if (splits.length && splits.length !== parquets.length) {
-			throw new CommandError(
-				`--split names ${splits.length} splits and --parquet ${parquets.length} files; give one split per file or omit the flag`
-			)
-		}
+		// Each attribute file states the parquet it describes, so the flag needs no positional pairing.
+		const attributeFor = new Map<string, string>()
 
-		const unknown = splits.filter((split) => split !== "train" && split !== "val" && split !== "test")
+		for (const name of options.splitAttribute ? extractDelimited(options.splitAttribute) : []) {
+			const attribute = await readSplitAttribute(resolvePath(options.newDir, name))
 
-		if (unknown.length) {
-			throw new CommandError(`--split takes train, val or test; got ${unknown.join(", ")}`)
+			if (!parquets.includes(attribute.file.name)) {
+				throw new CommandError(`${name} describes ${attribute.file.name}, which --parquet does not list`)
+			}
+
+			attributeFor.set(attribute.file.name, name)
 		}
 
 		await assembleOverlayManifest({
@@ -93,11 +136,13 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 			files: parquets.map((parquet, index) => ({
 				parquet,
 				source: sources[index]!,
-				split: (splits[index] ?? "train") as "train" | "val" | "test",
+				splitAttribute: attributeFor.get(parquet),
 			})),
 			note: options.note,
 			replaceSources: options.replaceSource ? extractDelimited(options.replaceSource) : [],
 			unshippableReason: options.unshippableReason,
+			deletions: options.deletions ? await readDeletionRequests(options.deletions) : [],
+			limits: overlayDuckDBLimits(options),
 		})
 
 		return "done"

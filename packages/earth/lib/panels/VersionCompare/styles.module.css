@@ -53,7 +53,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 	margin-bottom: 0.35rem;
 	text-align: center;
 }
@@ -77,13 +77,13 @@
 .compareTable td {
 	text-align: left;
 	padding: 0.25rem 0.4rem;
-	border-bottom: 1px solid var(--color-separator);
+	border-bottom: 1px solid var(--ss-color-emphasis-300);
 	vertical-align: top;
 }
 
 .compareTable th {
 	font-weight: 600;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 	font-size: 0.7rem;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
@@ -96,15 +96,15 @@
 }
 
 .tagCell {
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 	font-size: 0.75rem;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 	white-space: nowrap;
 	min-width: 6ch;
 }
 
 .valCell {
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 	font-size: 0.8rem;
 	max-width: 14ch;
 	overflow: hidden;
@@ -132,23 +132,23 @@
  */
 
 .rowPrimaryOnly td {
-	background: color-mix(in srgb, var(--color-state-danger) 6%, transparent);
+	background: color-mix(in srgb, var(--ss-color-danger) 6%, transparent);
 }
 
 .rowPrimaryOnly .tagCell {
-	color: var(--color-state-danger);
+	color: var(--ss-color-danger-contrast-foreground);
 }
 
 .rowCompareOnly td {
-	background: color-mix(in srgb, var(--color-state-success) 6%, transparent);
+	background: color-mix(in srgb, var(--ss-color-success) 6%, transparent);
 }
 
 .rowCompareOnly .tagCell {
-	color: var(--color-state-success);
+	color: var(--ss-color-success-contrast-foreground);
 }
 
 .rowTagChanged td {
-	background: color-mix(in srgb, var(--color-state-warning) 6%, transparent);
+	background: color-mix(in srgb, var(--ss-color-warning) 6%, transparent);
 }
 
 /* #endregion */
@@ -157,23 +157,23 @@
 
 .deltaUp {
 	display: inline-block;
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var(--color-state-success);
-	background: color-mix(in srgb, var(--color-state-success) 12%, transparent);
-	border-radius: var(--radius-tick);
+	color: var(--ss-color-success-contrast-foreground);
+	background: color-mix(in srgb, var(--ss-color-success) 12%, transparent);
+	border-radius: var(--ss-radius-global);
 	padding: 0 0.25rem;
 }
 
 .deltaDown {
 	display: inline-block;
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var(--color-state-danger);
-	background: color-mix(in srgb, var(--color-state-danger) 12%, transparent);
-	border-radius: var(--radius-tick);
+	color: var(--ss-color-danger-contrast-foreground);
+	background: color-mix(in srgb, var(--ss-color-danger) 12%, transparent);
+	border-radius: var(--ss-radius-global);
 	padding: 0 0.25rem;
 }
 

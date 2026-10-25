@@ -40,8 +40,8 @@ export const spec = {
 
 const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { ingestPlaceNames, placeNamesPath } = await import("#gazetteer/poi/build/overture")
-		const { buildVenueHeadTable } = await import("#gazetteer/poi/build/venue-heads")
+		const { ingestPlaceNames, placeNamesPath } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
+		const { buildVenueHeadTable } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/venue-heads")
 		const log = (line: string): void => console.error(line)
 
 		if (options.fetch) {
@@ -57,7 +57,7 @@ const GazetteerBuildVenueHeads: CommandComponent<typeof spec> = ({ options }) =>
 			candidateDB: options.candidateDB ?? dataRootPath("db", "wof", "candidate.db").toString(),
 			adminDB: options.adminDB ?? dataRootPath("db", "wof", "admin-global-priority-importance.db").toString(),
 			corpusManifest: options.corpusManifest,
-			slicePath: (slice) => slice.replace(/^\/data\//, `${dataRoot}/`),
+			filePath: (listed) => listed.replace(/^\/data\//, `${dataRoot}/`),
 			...(options.out ? { out: options.out } : {}),
 			onProgress: log,
 		})

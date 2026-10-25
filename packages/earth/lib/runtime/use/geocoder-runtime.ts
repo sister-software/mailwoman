@@ -11,6 +11,7 @@
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
+import { GuideMapLight, GuideMapSky } from "@mailwoman/cartographer/base/theme"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import {
 	createJurisdictionSource,
@@ -46,10 +47,12 @@ import {
 	resolveDualRoles,
 	runClassifyStage,
 } from "mailwoman/browser-runtime/classify"
+import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
+import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-runtime/postcode-fallback"
 import {
 	assetURL,
 	HOSTED_STREET_SLUGS,
@@ -59,13 +62,16 @@ import {
 	streetExtractURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
+import { addProtocol } from "maplibre-gl"
 // The binary that `onnxruntime-web/wasm` instantiates.
 // Vite emits one file for this import and for the bundle's own reference.
 // The loader's early download is therefore the file the session would request.
 import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
+import { Protocol } from "pmtiles"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { pageSearchParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
@@ -87,7 +93,7 @@ const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
-	interp: HTTPVFSInterpolator | undefined
+	interp: HTTPVFSInterpolator | null
 }
 
 interface CandidateExtras {
@@ -100,7 +106,7 @@ export interface GeocoderRuntimeHandle {
 	runtime: GeocoderRuntime
 	releases: ReleaseInfo[]
 	geoBias: GeoBiasControl
-	calibrator: ((raw: number) => number | null) | undefined
+	calibrator: ((raw: number) => number) | null
 	/**
 	 * Resolves `null` when the classifier bundle predates the `traceParse` hook or the trace fails.
 	 * Feature-detect via {@link supportsTrace}.
@@ -115,6 +121,11 @@ export interface GeocoderRuntimeOptions {
 	 * Initial map center as `[lon, lat]`.
 	 */
 	initialCenter: Coordinates2D
+	/**
+	 * Initial map zoom.
+	 * Defaults to 3.
+	 */
+	initialZoom?: number
 }
 
 /**
@@ -141,11 +152,62 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
  * Every later load fetches afresh.
  */
 export function prefetchReleasesManifest(): void {
+	if (modelDisabled()) return
+
 	// The hook awaits and reports a failure, so the early promise must not report it a second time.
 	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
+/**
+ * Returns true when the page URL carries `?no-model`.
+ *
+ * Map-style work needs the basemap only, and the model download is tens of megabytes per load.
+ * With the flag the runtime receives no manifest, so it loads no release and the geocoder stays idle.
+ */
+function modelDisabled(): boolean {
+	return pageSearchParam("no-model") !== null
+}
+
+/**
+ * Returns the basemap source URL: a `pmtiles://` URL when the page URL carries
+ * `?basemap=<PMTiles URL>`, and the configured TileJSON otherwise.
+ *
+ * The parameter loads a candidate basemap build straight from its PMTiles file,
+ * before it is published through the tile worker.
+ */
+function basemapSourceURL(configured: URL): string {
+	const candidate = pageSearchParam("basemap")
+
+	if (!candidate) return String(configured)
+
+	if (!pmtilesProtocolRegistered) {
+		addProtocol("pmtiles", new Protocol().tile)
+		pmtilesProtocolRegistered = true
+	}
+
+	return `pmtiles://${candidate}`
+}
+
+let pmtilesProtocolRegistered = false
+
+/**
+ * Whether the page loads a `mailwoman/basemaps` build through `?basemap=`
+ * rather than the configured basemap.
+ */
+export function loadsBasemapBuild(): boolean {
+	return pageSearchParam("basemap") !== null
+}
+
+/**
+ * Source layers only a `mailwoman/basemaps` build holds.
+ *
+ * The configured Protomaps tiles lack them, and MapLibre logs an error for every style layer that reads one.
+ */
+const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
+
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
+	if (modelDisabled()) return Promise.resolve(null)
+
 	const early = earlyManifest
 
 	earlyManifest = null
@@ -154,10 +216,61 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 }
 
 /**
+ * The composed basemap style both geocoder runtimes render.
+ */
+export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
+	return useMemo<MapCanvasStyle>(() => {
+		const style = new StyleSpecificationComposer({
+			sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
+			light: GuideMapLight,
+			sky: GuideMapSky,
+		}).toJSON()
+
+		if (loadsBasemapBuild()) return style
+
+		return {
+			...style,
+			layers: style.layers.filter(
+				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
+			),
+		}
+	}, [config.basemapTileJSONURL])
+}
+
+/**
+ * The coverage and jurisdiction overlays both geocoder runtimes offer, hidden until toggled.
+ */
+export function useEarthOverlays(config: EarthConfig): OverlaySpec[] {
+	return useMemo<OverlaySpec[]>(
+		() => [
+			{
+				id: CoverageTileSetID,
+				source: createCoverageSource(new URL(`${CoverageTileSetID}.json`, config.tileWorkerURL).href),
+				layers: CoverageLayers,
+				visible: false,
+				label: "Coverage",
+			},
+			{
+				id: JurisdictionTileSetID,
+				source: createJurisdictionSource(new URL(`${JurisdictionTileSetID}.json`, config.tileWorkerURL).href),
+				layers: JurisdictionLayers,
+				visible: false,
+				label: "Jurisdictions",
+			},
+		],
+		[config.tileWorkerURL]
+	)
+}
+
+/**
  * Build the real {@link GeocoderRuntime} by injecting the browser runtime's
  * loaders into `useReleaseRuntime`.
  */
-export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
+export function useGeocoderRuntime({
+	config,
+	initialCenter,
+	initialZoom = 3,
+}: GeocoderRuntimeOptions): GeocoderRuntimeHandle {
 	const { sqliteRuntimeBaseURL } = config
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
@@ -170,19 +283,31 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
+	// A weights family other than the base loads its own bundle on the first input written in its script.
+	// The bundle reads the base release's gazetteer through the cascade, so it loads no gazetteer of its own.
+	const familyBundles = useMemo(
+		() =>
+			new FamilyBundles<ReleaseAssets>({
+				load: (family, release) => loadReleaseAssets(release, silentAssetProgress(), { ortWASMURL, locale: family }),
+				dispose: disposeAssets,
+			}),
+		[]
+	)
+
+	useEffect(
+		() => () => {
+			void familyBundles.dispose()
+		},
+		[familyBundles]
+	)
+
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
 		}
 	}, [rt.selectedVersion])
 
-	const mapStyle = useMemo<MapCanvasStyle>(
-		() =>
-			new StyleSpecificationComposer({
-				sources: { [MailwomanBaseTileSetID]: { type: "vector", url: String(config.basemapTileJSONURL) } },
-			}).toJSON(),
-		[config.basemapTileJSONURL]
-	)
+	const mapStyle = useEarthMapStyle(config)
 
 	/*
 	 * These callbacks read `rt.assets` and name it as a dependency.
@@ -226,7 +351,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
 
-						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: undefined }
+						return { situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }), interp: null }
 					}
 
 					const [situsDB, interpDB] = await Promise.all([
@@ -249,21 +374,24 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
 			const assets = rt.assets
-			const classifier = assets?.classifier
 
-			if (!classifier) throw new Error("Classifier not ready")
+			if (!assets) throw new Error("Classifier not ready")
 			hooks.onStage(0)
+
+			// An input in a character family's script is read by that family's bundle, loaded on its first input.
+			// A family whose load fails leaves the input with the base release for this parse.
+			const reader = (await familyBundles.forInput(input).catch(() => null)) ?? assets
 
 			// The classify front half: pipeline import, then query-shape/kind, then neural
 			// runPipeline, then flatten, with `onStage(1)` firing between shape and classify.
-			const { tree, nodes, kindResult, timing } = await runClassifyStage(
+			const { tree, nodes, kindResult, knownFormats, timing } = await runClassifyStage(
 				input,
 				{
-					classifier,
-					fst: assets?.fstMatcher,
-					streetMorphology: assets?.streetMorphologyMatcher,
-					selectPairIndex: assets?.selectPairIndex,
-					anchorRegions: assets?.anchorRegions,
+					classifier: reader.classifier,
+					fst: reader.fstMatcher,
+					streetMorphology: reader.streetMorphologyMatcher,
+					selectPairIndex: reader.selectPairIndex,
+					anchorRegions: reader.anchorRegions,
 				},
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
@@ -372,17 +500,21 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
 			const tResolve = performance.now()
 
-			// Postcode-only dead end: synthesize an approximate anchor-centroid hit from `postcode-*.bin`.
-			if (!cascadeHits.length && postcodeNode?.value && assets?.anchorLookup) {
-				const anchorHit = assets.anchorLookup.get(String(postcodeNode.value).toUpperCase())
+			// Postcode-only dead end: answer the postcode's centroid from the release's postcode binaries.
+			// The keys come from the parse's postcode node and from the postcode formats the query
+			// shape read in the input, so a postcode the classifier labeled at low confidence,
+			// or under a `vague` kind, still reaches the map.
+			if (!cascadeHits.length && assets?.anchorLookup) {
+				const keys = postcodeFallbackKeys(postcodeNode?.value ? String(postcodeNode.value) : null, input, knownFormats)
+				const centroid = postcodeCentroidFor(assets.anchorLookup, keys)
 
-				if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
+				if (centroid) {
 					cascadeHits.push({
 						id: 0,
-						name: `${postcodeNode.value} (anchor centroid)`,
+						name: `${centroid.key} (anchor centroid)`,
 						placetype: "postcode",
-						lat: anchorHit.lat,
-						lon: anchorHit.lon,
+						lat: centroid.lat,
+						lon: centroid.lon,
 						score: 0,
 					} as (typeof cascadeHits)[number])
 				}
@@ -437,7 +569,15 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
-		[ensureStreetLookups, geoBias.locationRef, sqliteRuntimeBaseURL, rt.assets, rt.selectedRelease, rt.selectedVersion]
+		[
+			ensureStreetLookups,
+			familyBundles,
+			geoBias.locationRef,
+			sqliteRuntimeBaseURL,
+			rt.assets,
+			rt.selectedRelease,
+			rt.selectedVersion,
+		]
 	)
 
 	const runParse = useCallback(
@@ -486,9 +626,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			if (!place.tier && candidate.id && release?.hasPolygons && version) {
 				const cached = polygonCache.get(candidate.id)
 
-				if (cached) {
+				if (cached != null) {
 					place.geometry = cached
-				} else if (cached === undefined && !polygonInflightRef.current.has(candidate.id)) {
+				} else if (!polygonCache.has(candidate.id) && !polygonInflightRef.current.has(candidate.id)) {
 					polygonInflightRef.current.add(candidate.id)
 					const placeID = candidate.id
 
@@ -522,7 +662,9 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const traceParse = useCallback(
 		async (input: string): Promise<ParseTraceLike | null> => {
-			const classifier = rt.assets?.classifier
+			// The trace reads the same bundle the geocode would: the input's family when it has one, else the base.
+			const reader = (await familyBundles.forInput(input).catch(() => null)) ?? rt.assets
+			const classifier = reader?.classifier
 
 			if (!classifier?.traceParse) return null
 
@@ -532,28 +674,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				return null
 			}
 		},
-		[rt.assets]
+		[rt.assets, familyBundles]
 	)
 
-	const overlays = useMemo<OverlaySpec[]>(
-		() => [
-			{
-				id: CoverageTileSetID,
-				source: createCoverageSource(new URL(`${CoverageTileSetID}.json`, config.tileWorkerURL).href),
-				layers: CoverageLayers,
-				visible: false,
-				label: "Coverage",
-			},
-			{
-				id: JurisdictionTileSetID,
-				source: createJurisdictionSource(new URL(`${JurisdictionTileSetID}.json`, config.tileWorkerURL).href),
-				layers: JurisdictionLayers,
-				visible: false,
-				label: "Jurisdictions",
-			},
-		],
-		[config.tileWorkerURL]
-	)
+	const overlays = useEarthOverlays(config)
 
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
@@ -565,10 +689,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[rt.selectedRelease]
 	)
 
-	const calibrator = useMemo<((raw: number) => number | null) | undefined>(() => {
+	const calibrator = useMemo<((raw: number) => number) | null>(() => {
 		const c = rt.assets?.calibrator
 
-		return c ? (raw: number) => c(raw) : undefined
+		return c ? (raw: number) => c(raw) : null
 	}, [rt.assets])
 
 	const runtime = useMemo<GeocoderRuntime>(() => {
@@ -586,7 +710,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			mapStyle,
 			overlays,
 			initialCenter: [initialCenter[0], initialCenter[1]],
-			initialZoom: 3,
+			initialZoom,
 			runParseWithBias,
 			autocomplete,
 			calibrator,
@@ -608,6 +732,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		rt.activeBackend,
 		rt.selectVersion,
 		initialCenter,
+		initialZoom,
 		runParse,
 		runParseWithBias,
 		autocomplete,

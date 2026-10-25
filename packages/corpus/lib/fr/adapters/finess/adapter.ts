@@ -520,7 +520,6 @@ export function readFinessRecord(cells: readonly string[]): FinessReading {
 			locale: `fr-${country}`,
 			source: FR_FINESS_ADAPTER_ID,
 			source_id: stableSourceID(FR_FINESS_ADAPTER_ID, rendered.components),
-			corpus_version: "",
 			license: FR_FINESS_LICENSE,
 		},
 		trimmed,
@@ -554,7 +553,7 @@ export function createFinessAdapter(): CorpusAdapter {
 			for await (const cells of records) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const reading = readFinessRecord(cells)
 

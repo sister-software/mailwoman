@@ -8,7 +8,7 @@
 #
 # 1. `data.corpus_dir` moves to v0.7.10-gb-county. Its rendered-gb-os-open rows label a county in the region
 #    position. In v0.7.9 every GB region span was England, Scotland or Wales: 13,237 of the first 200,000 train rows
-#    carried one, with 3 distinct values. v7.9.0 then read `King's Lynn, Norfolk` and `St Margaret's Hope, Orkney`
+#    contained one, with 3 distinct values. v7.9.0 then read `King's Lynn, Norfolk` and `St Margaret's Hope, Orkney`
 #    with the county as a locality, where v7.2.0, trained on Price Paid Data's county field, read it as region.
 #    The `locale` recipe's GB part now reads OS Open Names' unit-postcode entries (`COUNTY_UNITARY`, OGL v3.0),
 #    and four in five postcodes, chosen by the postcode's characters, label that county as region. The rest, and
@@ -21,10 +21,10 @@
 #
 # Building the corpus, from the repository root:
 #
-#   mailwoman corpus slice locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
+#   mailwoman corpus recipe locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
 #     --out <dir>/rendered-gb-os-open.jsonl
-#   mailwoman corpus align-slice --corpus-version 0.7.10-gb-county, then `mailwoman dev jsonl-to-parquet`, then
-#     `mailwoman corpus split-slice`
+#   mailwoman corpus align-recipe --corpus-version 0.7.10-gb-county, then `mailwoman dev jsonl-to-parquet`, then
+#     `mailwoman corpus split-overlay`
 #   mailwoman corpus overlay-manifest --base <v0.7.9-country-gap MANIFEST.json> --replace-source rendered-gb-os-open
 #     --corpus-version 0.7.10-gb-county --split …
 #   node packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts writes

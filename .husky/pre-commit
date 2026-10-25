@@ -47,8 +47,16 @@ if [ -n "$STAGED" ]; then
 	# - oxlint errors on unsupported paths, so pass only code extensions.
 	# - Config/rules still apply when explicit paths are passed.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
+	# - oxlint exits non-zero when ignore rules exclude every path passed, such as a generated `.mjs` alone.
 	if [ -n "$CODE" ]; then
-		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix
+		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix 2>&1) || {
+			if printf '%s' "$LINT_OUT" | grep -q "No files found to lint"; then
+				echo "pre-commit: all staged code paths are oxlint-excluded — skipping lint"
+			else
+				printf '%s\n' "$LINT_OUT"
+				exit 1
+			fi
+		}
 	fi
 
 	# Formatter:
@@ -104,7 +112,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			echo "pre-commit: $CLI_STALE_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1
 		fi
-		node docs/scripts/generate-cli-reference.ts
+		node docs/scripts/generate-cli-reference.mts
 		if ! git diff --quiet -- docs/articles/developers/reference/cli.mdx; then
 			echo "pre-commit: the CLI reference moved — it has been regenerated in your worktree; stage it and retry:" >&2
 			echo "  git add docs/articles/developers/reference/cli.mdx" >&2

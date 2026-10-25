@@ -3,6 +3,7 @@
  * Assertions live in the spec files. This class performs actions and reads state.
  */
 
+import { BathymetryTileSetID, HillshadeTileSetID } from "@mailwoman/cartographer/base/terrain"
 import { expect, type Page } from "@playwright/test"
 import { TextSpliterator } from "spliterator"
 
@@ -37,16 +38,19 @@ export class GeocoderFixture {
 	 * the network busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {
-		const path = query ? `/?q=${encodeURIComponent(query)}` : "/"
+		// The geocoder specs read results, so the page leaves out the deck.gl scene,
+		// which renders slowly on a software GPU.
+		const path = query ? `/?no-3d&q=${encodeURIComponent(query)}` : "/?no-3d"
 		await this.page.goto(path, { waitUntil: "domcontentloaded" })
 		await this.expectReady()
 	}
 
 	/**
-	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete, reading the address
-	 * field's enabled state because `GeocoderControls` binds its `disabled` to `runtime.ready`;
-	 * the options are the third argument (the second is the function's argument) and polling
-	 * is on an interval because a page the browser treats as hidden fires no animation frames,
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete
+	 * and for the map to load, reading the address field's enabled state because
+	 * `GeocoderControls` binds its `disabled` to `runtime.ready`; the options are the
+	 * third argument (the second is the function's argument) and polling is on an interval
+	 * because a page the browser treats as hidden fires no animation frames,
 	 * while a load error the page reports ends the wait at once with that text.
 	 */
 	async expectReady(): Promise<void> {
@@ -58,7 +62,11 @@ export class GeocoderFixture {
 
 				const field = document.querySelector("#mw-pipeline-input")
 
-				return field instanceof HTMLInputElement && !field.disabled ? { ready: true } : null
+				if (!(field instanceof HTMLInputElement) || field.disabled) return null
+
+				// The page exposes the map once its style and first tiles load,
+				// and a test that moves the camera needs it.
+				return "__mailwomanMapCanvas" in globalThis ? { ready: true } : null
 			},
 			undefined,
 			{ timeout: 180_000, polling: 500 }
@@ -142,18 +150,32 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait out the map's response to a result or theme change (fitBounds, terrain re-wire)
-	 * by polling maplibre's own moving/loading flags instead of sleeping a fixed interval.
+	 * Wait out the map's response to a result or theme change (fitBounds, terrain re-wire) by
+	 * polling maplibre's own moving and source-loading flags instead of sleeping a fixed interval.
+	 *
+	 * The terrain sources are skipped.
+	 * They shade the map from a third-party tile host, and no assertion reads them.
 	 */
 	async waitForMapIdle(timeout = 15_000): Promise<void> {
 		await this.page.waitForFunction(
-			() => {
-				const map = (globalThis as { __mailwomanMapCanvas?: { isMoving: () => boolean; loaded: () => boolean } })
-					.__mailwomanMapCanvas
+			(skipped) => {
+				interface MapHandle {
+					isMoving: () => boolean
+					isSourceLoaded: (id: string) => boolean
+					getStyle: () => { sources?: Record<string, unknown> } | undefined
+				}
 
-				return !map || (!map.isMoving() && map.loaded())
+				const map = (globalThis as { __mailwomanMapCanvas?: MapHandle }).__mailwomanMapCanvas
+
+				if (!map) return true
+
+				if (map.isMoving()) return false
+
+				const sources = Object.keys(map.getStyle()?.sources ?? {}).filter((id) => !skipped.includes(id))
+
+				return sources.every((id) => map.isSourceLoaded(id))
 			},
-			undefined,
+			[HillshadeTileSetID, BathymetryTileSetID] as string[],
 			{ timeout, polling: 100 }
 		)
 	}

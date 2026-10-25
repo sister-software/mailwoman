@@ -137,7 +137,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<SamhsaSiteRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = composeVenue(record.name1 ?? "", record.name2 ?? null)
 				const street = joinTwoLineStreet(record.street1 ?? "", record.street2 ?? null)
@@ -178,7 +178,6 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_SAMHSA_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_SAMHSA_DEFAULT_LICENSE,
 				}
 

@@ -6,7 +6,9 @@ import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type {
 	AnchorRegionLookupLike,
 	CaseNormalization,
+	ChannelPins,
 	PlacetypePairSelection,
+	SoftChannelName,
 	SpanProposerLexicon,
 	StageSource,
 	VenueHeadLexiconLike,
@@ -31,6 +33,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
+import type { UnfedChannelReport } from "#weights/channels"
 
 /**
  * Configures a neural address classifier.
@@ -117,10 +120,15 @@ export interface NeuralAddressClassifierConfig {
 	weightsSource?: string
 
 	/**
+	 * The required channels `loadFromWeights` could not feed, empty when every required channel is fed.
+	 */
+	unfedChannels?: readonly UnfedChannelReport[]
+
+	/**
 	 * The postcode-anchor lookup for a model trained with the `anchor_features`
 	 * and `anchor_confidence` inputs.
 	 */
-	postcodeAnchorLookup?: AnchorLookup
+	postcodeAnchorLookup?: AnchorLookup | null
 
 	/**
 	 * The substrings the anchor channel looks up, read from the model card's
@@ -132,7 +140,7 @@ export interface NeuralAddressClassifierConfig {
 	 * The gazetteer lexicon for a model trained with the `gazetteer_features` and
 	 * `gazetteer_confidence` inputs, marking candidate tags such as country, region and PO box.
 	 */
-	gazetteerLexicon?: GazetteerLexicon
+	gazetteerLexicon?: GazetteerLexicon | null
 
 	/**
 	 * Country-surface lexicon for a model trained with the `country_features`
@@ -153,6 +161,14 @@ export interface NeuralAddressClassifierConfig {
 	 * inputs, withheld when `ParseOpts.inputMode` is `formatted`.
 	 */
 	localitySurfaceLexicon?: GazetteerLexicon
+
+	/**
+	 * The file each fed channel's lexicon or lookup was read from, keyed by channel name.
+	 *
+	 * The loader records these so a diagnostic can state which lexicon bytes a parse was fed.
+	 * A directly constructed classifier leaves them unset.
+	 */
+	lexiconPaths?: Partial<Record<SoftChannelName, string>>
 
 	/**
 	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit,
@@ -178,6 +194,13 @@ export interface NeuralAddressClassifierConfig {
 	 * A graph with a `locale_hint` input requires it, because the "no hint" id is a property of the model.
 	 */
 	addressSystems?: AddressSystemTable
+
+	/**
+	 * Whether the graph reads the code-unit channel (#2845), from its `code_unit_features` input.
+	 *
+	 * The channel is computed from the raw surface, so no lexicon backs it.
+	 */
+	codeUnits?: boolean
 
 	/**
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
@@ -286,6 +309,15 @@ export interface ParseOpts {
 	 * and locality-surface lexicons because those channels help fragments and hurt full-address parses.
 	 */
 	inputMode?: "fragmented" | "formatted"
+
+	/**
+	 * Per-channel feed pins for a diagnostic parse.
+	 *
+	 * A channel pinned `off` is fed zeros in place of its built features,
+	 * the state the training curriculum paints on a share of rows.
+	 * The trace records the pins beside the channels as fed.
+	 */
+	channels?: ChannelPins
 
 	/**
 	 * The FST gazetteer matcher whose matches add emission biases.

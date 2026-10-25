@@ -12,7 +12,6 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from mailwoman_train.audits.epoch_mixture import (
@@ -24,6 +23,7 @@ from mailwoman_train.audits.epoch_mixture import (
     verify_corpus_receipt_report,
 )
 from mailwoman_train.config import CorpusReceiptConfig
+from tests.corpus_fixture import write_corpus_parquet
 
 LEGACY_SCHEMA = pa.schema(
     [
@@ -66,7 +66,7 @@ def _write_corpus(tmp_path: Path) -> Path:
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
     for name, rows in (("part-big.parquet", _rows("big", 300)), ("part-small.parquet", _rows("small", 30))):
-        pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / name)
+        write_corpus_parquet(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / name)
     return corpus
 
 
@@ -220,7 +220,7 @@ def test_audit_is_deterministic_for_a_fixed_seed(tmp_path: Path) -> None:
 def test_required_receipt_matches_source_country_and_ordered_tail(tmp_path: Path) -> None:
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
-    pq.write_table(
+    write_corpus_parquet(
         pa.Table.from_pylist(_tail_rows("structured", "VE", 20), schema=LEGACY_SCHEMA),
         corpus / "train" / "structured.parquet",
     )
@@ -271,7 +271,7 @@ def test_required_receipt_rejects_malformed_bio_labels(tmp_path: Path, bad_label
     (corpus / "train").mkdir(parents=True)
     rows = _tail_rows("structured", "VE", 1)
     rows[0]["labels"][1] = bad_label
-    pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / "structured.parquet")
+    write_corpus_parquet(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / "structured.parquet")
     receipt = CorpusReceiptConfig(
         name="ve-after-locality",
         source="structured",

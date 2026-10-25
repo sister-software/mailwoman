@@ -97,6 +97,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         street_type_feature_dim=getattr(cfg.model, "street_type_feature_dim", 1),
         use_locality_surface_anchor=getattr(cfg.model, "use_locality_surface_anchor", False),
         locality_surface_feature_dim=getattr(cfg.model, "locality_surface_feature_dim", 2),
+        use_code_unit_anchor=getattr(cfg.model, "use_code_unit_anchor", False),
+        code_unit_feature_dim=getattr(cfg.model, "code_unit_feature_dim", 5),
         country_ambiguous_scale=getattr(cfg.model, "country_ambiguous_scale", 1.0),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),

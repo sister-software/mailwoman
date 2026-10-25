@@ -5,7 +5,7 @@
  *   The recipe registry. A recipe derives rows from attested data; `recipes/sources.ts` records which
  *   operation each one performs, and only the `invented-*` recipes compose a row with no real record
  *   behind it. Each recipe ({@link CorpusRecipe}) is what one root-level
- *   build script used to be. the `mailwoman corpus slice <recipe>` command dispatches to them. A new
+ *   build script used to be. the `mailwoman corpus recipe <recipe>` command dispatches to them. A new
  *   recipe is a new entry here rather than a new script.
  */
 
@@ -31,6 +31,8 @@ import { houseVenueRecipe } from "#recipes/house-venue"
 import { intersectionRecipe } from "#recipes/intersection"
 import { poBoxRecipe } from "#recipes/po/box"
 import { poBoxCedexRecipe } from "#recipes/po/box/cedex"
+import { postalGuidelineRecipe } from "#recipes/postal-guideline"
+import { postalUnitGuidelineRecipe } from "#recipes/postal-unit-guideline"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { streetRecipe } from "#recipes/street"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "#recipes/street/affix"
@@ -61,6 +63,8 @@ const RECIPES: readonly CorpusRecipe[] = [
 	houseVenueRecipe,
 	poBoxRecipe,
 	poBoxCedexRecipe,
+	postalGuidelineRecipe,
+	postalUnitGuidelineRecipe,
 	unitRecipe,
 	intersectionRecipe,
 	germanRecipe,

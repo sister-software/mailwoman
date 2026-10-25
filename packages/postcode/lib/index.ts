@@ -6,9 +6,16 @@
  *   postcode syntax, the countries a whole postcode's form implies, and the address systems that accept it.
  */
 
+export {
+	canComplete,
+	type CanCompleteOptions,
+	type PostcodeCompletionAnswer,
+	type PostcodeMembership,
+	type PostcodeSyntaxCompletion,
+} from "#completion"
+
 export { postcodeSyntax, acceptPostcode, type PostcodeSyntax } from "#country-formats"
 export { normalizePostcodeDisplay } from "#display-form"
-export { postcodeEvidence, PostcodeEvidenceKind, type PostcodeEvidence } from "#evidence"
 export { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "#postcode-format"
 
 export {

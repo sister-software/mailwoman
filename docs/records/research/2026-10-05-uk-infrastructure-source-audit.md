@@ -340,7 +340,7 @@ GOV.UK's publication page, its content item, the user guide and the files.
   Geofabrik PBF): four categories — `telecom_exchange`, `telecom_cabinet`, `tower_comms`,
   `data_center` — registered in `packages/poi-taxonomy/data/curated-overlay.json` as
   `mailwoman-infra`, build-local. The `--source osm` build branch is
-  `packages/mailwoman/tools/gazetteer-pipeline/poi/build/poi.ts`. Fixture-proven plus two real-PBF
+  `packages/gazetteer/tools/pipeline/poi/build/poi.ts`. Fixture-proven plus two real-PBF
   receipts (DC 18 rows, Vermont 103 rows, 2026-08-11, Overpass cross-checked); Vermont's bbox coverage
   included territory outside the extract polygon, the known limitation this issue names. All of it is
   reusable as-is, and a London extract would reuse this branch.

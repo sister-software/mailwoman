@@ -21,7 +21,7 @@
  *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model and the
  *   reproducibility interface.
  *
- *   Invoke via `mailwoman corpus slice translit \
+ *   Invoke via `mailwoman corpus recipe translit \
  *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl \
  *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`
@@ -32,14 +32,18 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
+import type { FileDerivation } from "#parquet/record"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
+import { baseManifestFiles } from "#tools/overlay/manifest"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
@@ -67,7 +71,7 @@ export interface TranslitOverlayOptions {
 	legacyPathPrefix?: string
 }
 
-function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): CanonicalRow {
+function toCanonicalRow(raw: Record<string, unknown>): CanonicalRow {
 	return {
 		raw: raw["raw"] as string,
 		components: raw["components"] as Record<string, string>,
@@ -75,9 +79,7 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 		locale: (raw["locale"] as string) ?? undefined,
 		source: raw["source"] as string,
 		source_id: raw["source_id"] as string,
-		corpus_version: corpusVersion,
 		license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-		recipe: raw["recipe"] as CanonicalRow["recipe"],
 		register: (raw["register"] as string | null) ?? null,
 		surface: requireSurface(raw, "translit"),
 	}
@@ -92,7 +94,8 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 async function writeOneFile(
 	rows: readonly LabeledRow[],
 	outPath: string,
-	source: string
+	source: string,
+	derivation: FileDerivation
 ): Promise<ParquetFileDescriptor> {
 	let firstSourceID = ""
 	let lastSourceID = ""
@@ -105,10 +108,9 @@ async function writeOneFile(
 		lastSourceID = row.source_id
 	}
 
-	await writeParquetFile(rows.map(rowToParquet), outPath)
+	const { sha256 } = await writeParquetFile(rows.map(rowToParquet), outPath, derivation)
 
 	const fileStat = await tryStat(outPath)
-	const sha256 = await sha256File(outPath)
 
 	return {
 		split: "train",
@@ -156,7 +158,7 @@ export async function buildTranslitOverlay(
 
 	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(options.jsonl))) {
 		totalIn++
-		const canon = toCanonicalRow(raw, corpusVersion)
+		const canon = toCanonicalRow(raw)
 		const result = alignRow(canon)
 
 		if (result.kind !== "labeled") {
@@ -178,13 +180,21 @@ export async function buildTranslitOverlay(
 
 	const newFiles: ParquetFileDescriptor[] = []
 	const sortedKeys = [...buckets.keys()].toSorted()
+	const codeHash = await moduleGraphHash([import.meta.filename])
 
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
 		// A string, because the manifest records it.
 		const outPath = trainDir(`part-translit-${slug}.parquet`).toString()
-		const descriptor = await writeOneFile(rows, outPath, source)
+
+		// The jsonl holds every script's rows, so a file's extract hash covers only the rows of its own source.
+		const descriptor = await writeOneFile(rows, outPath, source, {
+			extractHash: sha256Hex(rows.map((row) => stringifyJSON(row)).join("\n")),
+			codeHash,
+			config: { tool: "translit", source, inputSources: [source] },
+		})
+
 		newFiles.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
@@ -200,7 +210,7 @@ export async function buildTranslitOverlay(
 	// The kryptonite file already lives in the base manifest (it was written there by Thread B).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
-	const rewrittenBase = base.slices.map((file) => ({
+	const rewrittenBase = baseManifestFiles<(typeof base)["files"][number]>(base).map((file) => ({
 		...file,
 		path: canonicalizeFilePath(file.path, legacyPathPrefix, canonicalPathPrefix),
 	}))
@@ -210,9 +220,9 @@ export async function buildTranslitOverlay(
 	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: base.rows_per_slice,
+		rows_per_file: base.rows_per_file,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
-		slices: [...rewrittenBase, ...newFiles],
+		files: [...rewrittenBase, ...newFiles],
 		counts: {
 			train: base.counts.train + newTrainRows,
 			val: base.counts.val,
@@ -225,9 +235,16 @@ export async function buildTranslitOverlay(
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
-	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newFiles.length})`)
+
+	report?.(
+		`  files=${combined.files.length} (base=${baseManifestFiles<(typeof base)["files"][number]>(base).length}, added=${newFiles.length})`
+	)
+
 	report?.(`  compression=${PARQUET_COMPRESSION}`)
-	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.slices[i]!.path).length
+
+	const pathFix = rewrittenBase.filter(
+		(s, i) => s.path !== baseManifestFiles<(typeof base)["files"][number]>(base)[i]!.path
+	).length
 
 	if (pathFix > 0) {
 		report?.(`  path-canonicalized base files: ${pathFix} (legacy '${legacyPathPrefix}' → '${canonicalPathPrefix}')`)

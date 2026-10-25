@@ -176,7 +176,6 @@ describe("SynthesizeMilitaryPoBoxRow", () => {
 				source_id: `mil:${seed}`,
 
 				country: row.locale.split("-")[1] ?? "US",
-				corpus_version: "0.0.0-test",
 				license: "synthetic fixture — not distributed",
 			}
 

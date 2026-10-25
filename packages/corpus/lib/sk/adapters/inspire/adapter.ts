@@ -250,14 +250,14 @@ export function createSKInspireAdapter(): CorpusAdapter {
 			for (const documentPath of documents) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				for await (const address of streamMarkupElements(documentChunks(documentPath), "ad:Address", {
 					xml: true,
 				})) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const row = composeRow(address, referenced)
 
@@ -293,7 +293,7 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Refe
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) throw new UnresolvedComponentReferenceError(SK_INSPIRE_ADAPTER_ID, addressID, href)
 
@@ -348,7 +348,6 @@ function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, Refe
 		locale: "sk-SK",
 		source: SK_INSPIRE_ADAPTER_ID,
 		source_id: addressID ? `${SK_INSPIRE_ADAPTER_ID}-${addressID}` : stableSourceID(SK_INSPIRE_ADAPTER_ID, aligned),
-		corpus_version: "",
 		license: SK_INSPIRE_DEFAULT_LICENSE,
 	}
 }

@@ -1,30 +1,33 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
+	type ChannelPins,
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	type InputMode,
 	type PipelineTiming,
 	type QueryKindResult,
+	type SoftChannelName,
 } from "@mailwoman/core/pipeline"
 import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
-import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
+import { dirname, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
+import { loadBundledCoarsePlacer } from "#default/placer"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -168,6 +171,13 @@ export interface GeocodeSessionOptions {
 	 */
 	adminContainmentRerank?: boolean
 
+	/**
+	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	dependentLocalityContainment?: boolean
+
 	placeCountryThreshold: number
 
 	/**
@@ -181,6 +191,14 @@ export interface GeocodeSessionOptions {
 	 * leaving the result unchanged and requiring {@link trace}.
 	 */
 	diagnoseUnreachable?: boolean
+
+	/**
+	 * Per-channel feed pins for the classifier's soft-feature channels, for a diagnostic session.
+	 *
+	 * A channel pinned `off` is fed zeros in place of its built features.
+	 * Unset feeds every channel as built, as every production session does.
+	 */
+	channelPins?: ChannelPins
 
 	/**
 	 * Receives initialization progress messages.
@@ -263,6 +281,11 @@ export interface GeocodeSession extends Disposable {
 		 * The `model.onnx` path that the classifier loaded and its source, such as `package:…` or `cache:…`.
 		 */
 		weights?: { modelPath: string; source: string }
+
+		/**
+		 * The lexicon or lookup file behind each fed channel of the primary classifier, keyed by channel name.
+		 */
+		lexicons?: Partial<Record<SoftChannelName, string>>
 	}
 	geocode(input: string): Promise<GeocodeRun>
 }
@@ -395,8 +418,18 @@ export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = layerDatabasePath(options.dataRoot, "poi")
+	// The rail-station layer sits beside poi.db as its own sealed database, because it is
+	// built from OSM under a different license and tier than the Overture places in poi.db.
+	const stationsDBPath = resolvePath(dirname(poiDBPath), STATIONS_DATABASE_FILE)
+	const paths = []
 
-	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
+	for (const path of [poiDBPath, stationsDBPath]) {
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	if (options.forkEntity === false || !paths.length) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
@@ -404,16 +437,28 @@ export async function loadForkEntityDeps(
 	])
 
 	const morphology = await loadStreetMorphologyFST()
-	const poiLookup = new POILookup({ databasePath: poiDBPath })
+	const lookups = paths.map((databasePath) => new POILookup({ databasePath }))
 
 	return {
 		deps: {
-			poiLookup,
+			poiLookup: { search: (query) => lookups.flatMap((lookup) => lookup.search(query)) },
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
 		},
-		handle: poiLookup,
+		handle: {
+			[Symbol.dispose]: () => {
+				for (const lookup of lookups) {
+					lookup[Symbol.dispose]()
+				}
+			},
+		},
 	}
 }
+
+/**
+ * The file name of the rail-station POI layer, built by
+ * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
+ */
+export const STATIONS_DATABASE_FILE = "stations.db"
 
 /**
  * Loads the gazetteer, neural model and optional layers.
@@ -492,7 +537,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const capitalLevel = capitals
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
-		: undefined
+		: null
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 
@@ -589,7 +634,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		progress("Loading geographic priors…")
 
 		placer = options.placeCountry
-			? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
+			? await loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
 			: null
 
 		resolver = createWOFResolver(lookup)
@@ -634,18 +679,20 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
+		| "channelPins"
 	> = {
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
 		...(anchorRegions ? { anchorRegions } : {}),
+		...(options.channelPins ? { channelPins: options.channelPins } : {}),
 		streetMorphologyPrior: settings.streetMorphologyPrior,
 		...(venueHead
 			? {
 					venueHead,
 					venueHeadOpts: {
 						...priors.venueHeadOptsFor(venueHeadCountry),
-						...(options.venueHeadBiasScale !== undefined ? { biasScale: options.venueHeadBiasScale } : {}),
+						...(options.venueHeadBiasScale ? { biasScale: options.venueHeadBiasScale } : {}),
 					},
 				}
 			: {}),
@@ -723,6 +770,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			postcodeShapeCoherence: options.postcodeShapeCoherence,
 			postcodeContainmentCoherence: options.postcodeContainmentCoherence,
 			adminContainmentRerank: options.adminContainmentRerank ?? GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
+			dependentLocalityContainment:
+				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
@@ -769,6 +818,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				? { streetMorphologyPath: classifier.streetMorphologyPath }
 				: {}),
 			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
+			...(Object.keys(classifier.lexiconPaths).length ? { lexicons: { ...classifier.lexiconPaths } } : {}),
 		},
 		geocode,
 		[Symbol.dispose]: dispose,

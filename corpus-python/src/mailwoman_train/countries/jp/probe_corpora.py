@@ -51,6 +51,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ...corpora.builder import write_corpus_parquet
 from ...paths import data_root_path
 from ...source_rights import add_unshippable_flag, admit_sources, write_rights_record
 from ...tokenizer.char import build_char_vocab, save_char_vocab
@@ -70,6 +71,7 @@ SCHEMA = pa.schema(
         ("span_tags", pa.list_(pa.string())),
         ("country", pa.string()),
         ("source", pa.string()),
+        ("license", pa.string()),
     ]
 )
 
@@ -333,8 +335,7 @@ def write_splits(
     for split, rows in splits:
         enc = encode_rows(rows, kenall=kenall, join=join, rng=rng, postcode_fraction=postcode_fraction)
         (out_dir / split).mkdir(parents=True, exist_ok=True)
-        table = pa.Table.from_pylist(enc, schema=SCHEMA)
-        pq.write_table(table, out_dir / split / "part-0000.parquet")
+        write_corpus_parquet(enc, out_dir / split / "part-0000.parquet", context="JP probe corpus", schema=SCHEMA)
         all_o = sum(1 for e in enc if not e["span_tags"])
         if all_o:
             raise RuntimeError(f"{split}: {all_o} all-O rows — corpus build broken")

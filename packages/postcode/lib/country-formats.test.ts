@@ -3,8 +3,9 @@
 
 import { describe, expect, test } from "vitest"
 
-import { postcodeSyntax, acceptPostcode } from "#country-formats"
+import { postcodePlacement, postcodeSyntax, acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
+import { COUNTRY_POSTCODE_WRITTEN_FORMS } from "#country-formats/written-forms"
 
 describe("acceptPostcode", () => {
 	test("accepts the alphanumeric and seven-digit forms a four-to-six-digit rule refused", () => {
@@ -48,6 +49,20 @@ describe("acceptPostcode", () => {
 		expect(acceptPostcode("22162-1010", "US")).toBe("22162-1010")
 	})
 
+	test("accepts a US ZIP+4 written with no separator", () => {
+		expect(acceptPostcode("057014673", "US")).toBe("057014673")
+		expect(acceptPostcode("582014776", "US")).toBe("582014776")
+		expect(acceptPostcode("05701467", "US")).toBeNull()
+		expect(acceptPostcode("0570146731", "US")).toBeNull()
+	})
+
+	test("every written form compiles for a country libaddressinput states", () => {
+		for (const code of Object.keys(COUNTRY_POSTCODE_WRITTEN_FORMS)) {
+			expect(COUNTRY_POSTCODE_FORMAT_SOURCES[code]).toBeDefined()
+			expect(postcodeSyntax(code)?.pattern).toBeInstanceOf(RegExp)
+		}
+	})
+
 	test("removes the country-code prefix the layout prints itself", () => {
 		expect(acceptPostcode("MD-2001", "MD")).toBe("2001")
 		expect(acceptPostcode("md-2001", "md")).toBe("2001")
@@ -58,6 +73,15 @@ describe("acceptPostcode", () => {
 	test("matches nothing for a country that states no postcode", () => {
 		expect(postcodeSyntax("AE")).toBeNull()
 		expect(acceptPostcode("00000", "AE")).toBeNull()
+	})
+
+	test("reads where the layout prints the postcode relative to the locality", () => {
+		expect(postcodePlacement("fr")).toBe("before_locality")
+		expect(postcodePlacement("BR")).toBe("after_locality")
+		// Japan's layout prints no locality field, so it states no order.
+		expect(postcodePlacement("JP")).toBeNull()
+		// The UAE states no postcode at all.
+		expect(postcodePlacement("AE")).toBeNull()
 	})
 
 	test("every stated pattern compiles anchored", () => {

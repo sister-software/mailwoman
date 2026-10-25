@@ -9,6 +9,7 @@
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -19,7 +20,6 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -150,7 +150,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 				buildSHA,
 				includeLocationIDs: options.includeLocationIDs,
 				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
-				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
+				providers: options.providerListPath ? parseProviderList(options.providerListPath) : null,
 				filerDB: filerDB ?? undefined,
 				onProgress: (message) => console.error(`  [bdc] ${message}`),
 			})

@@ -116,7 +116,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 			for await (const rec of rows) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				if (rec[COL.featureClass] !== "P") continue
 
@@ -156,7 +156,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				}
 
 				for (const v of variants) {
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 					const aligned = componentsPresentIn(v.comp, v.raw)
 
 					if (!Object.keys(aligned).length) continue
@@ -171,7 +171,6 @@ export function createGeonamesAdapter(): CorpusAdapter {
 						country: cc,
 						source: GEONAMES_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: GEONAMES_DEFAULT_LICENSE,
 					}
 

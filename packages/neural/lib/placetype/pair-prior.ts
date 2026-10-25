@@ -315,7 +315,7 @@ function probeAnchoredAdjacentPair(
 function isMarkerSuppressed(
 	nonEmptyGroups: readonly WordGroup[],
 	x: CandidateWindow,
-	groupSegments?: readonly number[]
+	groupSegments?: readonly number[] | null
 ): boolean {
 	const successor = nonEmptyGroups[x.endPos + 1]
 
@@ -350,7 +350,7 @@ function writeSpanBias(
 	const bCol = labelToCol.get(`B-${tag}`)
 	const iCol = labelToCol.get(`I-${tag}`)
 
-	if (bCol === undefined) return false
+	if (!bCol) return false
 
 	for (let k = 0; k < pieceIndices.length; k++) {
 		const pi = pieceIndices[k]!
@@ -443,7 +443,7 @@ export function buildPlacetypePairPriors(
 	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "auto"
 	// Segment ids are only needed for segment/auto paths.
 	const needsSegments = probeMode === "segment" || probeMode === "auto"
-	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : undefined
+	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : null
 	// Segment path may strip trailing same-field postcode from parent key.
 	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country ?? null) : null
 
@@ -455,7 +455,7 @@ export function buildPlacetypePairPriors(
 
 	const segmentWindows = groupSegments
 		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape, leadingPostcodeShape)
-		: undefined
+		: null
 
 	// Auto mode falls back to anchored when segment mode cannot form a pair.
 	if (probeMode === "anchored" || (probeMode === "auto" && segmentWindows!.length < 2)) {
@@ -505,8 +505,8 @@ export function buildPlacetypePairPriors(
 		if (isMarkerSuppressed(nonEmptyGroups, x, groupSegments)) continue
 
 		// Segment identity-repeat rule: repeated adjacent equal segments skip identity partners.
-		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : undefined
-		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
+		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : null
+		const isIdentityRepeat = previous && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
 
 		let matchedEdge: PairEdge | null = null
 		// Keep parent window from hit for optional parent bias.

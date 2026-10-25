@@ -6,7 +6,7 @@
  *   shape instead of tracing nested calls.
  *
  *   The line skeletons come from libaddressinput, Google's address metadata. This repository ships the data at
- *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
+ *   `packages/dictionaries/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
  *   This repository supplies the `%A` expansion into its street tags, the line-join policy, the country line and the
  *   post-office box.
  */
@@ -309,6 +309,52 @@ ${country}`,
 }
 
 /**
+ * Where a country writes the region when an address includes one and the postal layout prints none.
+ *
+ * Royal Mail and Deutsche Post need no county or Bundesland, so the GB and DE layouts above omit it.
+ * Addresses written by people often add it, and a corpus row that labels the region needs a position for it.
+ *
+ * Great Britain writes the county on its own line between the post town and the
+ * postcode (`16 Holstein Street, Preston, Lancashire, PR1 1UN`).
+ * Germany writes the Bundesland after the postcode and locality (`Hauptstraße 5, 01067 Dresden, Sachsen`).
+ */
+export const REGION_LINE_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
+	GB: withSoftBreakBefore(
+		addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${postcode}
+${country}`,
+		"postcode"
+	),
+
+	DE: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${region}
+${country}`,
+}
+
+/**
+ * Returns a layout for `country` that prints the region, or `null` when the country has none.
+ *
+ * A country whose layout already prints the region answers that layout.
+ * Otherwise {@linkcode REGION_LINE_LAYOUTS} answers.
+ */
+export function regionLayoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
+	const layout = layoutForCountry(countryCode, script)
+
+	if (layout && layoutPrintsTag(layout, "region")) return layout
+
+	return REGION_LINE_LAYOUTS[countryCode?.trim().toUpperCase() ?? ""] ?? null
+}
+
+/**
  * Address systems that print the largest unit first, derived from the layouts
  * rather than listed because the layout is the statement of print order.
  *
@@ -522,6 +568,30 @@ export function conventionClaimForCountry(
 	}
 
 	return { claim, jurisdiction: code, observations }
+}
+
+/**
+ * How a system joins its admin units (prefecture, city, ward) when they share one line.
+ *
+ * An absent value means the system's line join.
+ * Japan prints its whole admin run unseparated (`東京都千代田区`) while its lines take
+ * a space, so the two joins differ there.
+ */
+export const ADMIN_RUN_JOINS: Readonly<Record<string, string>> = {
+	JP: "",
+}
+
+/**
+ * Returns the join between adjacent admin units on one line in the selected country and `script`.
+ *
+ * Like {@linkcode lineJoinForCountry}, a CJK join applies only to the local script.
+ */
+export function adminRunJoinForCountry(countryCode: string | null, script?: AddressScript): string {
+	const lineJoin = lineJoinForCountry(countryCode, script)
+
+	if (!countryCode || lineJoin === ", ") return lineJoin
+
+	return ADMIN_RUN_JOINS[countryCode.trim().toUpperCase()] ?? lineJoin
 }
 
 /**

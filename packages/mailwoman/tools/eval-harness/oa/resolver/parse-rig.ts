@@ -100,9 +100,7 @@ export async function buildParseRig(
 	const { WOFSQLitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
 
-	const postalCityAliases = postalCityAliasDB
-		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
-		: undefined
+	const postalCityAliases = postalCityAliasDB ? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB }) : null
 
 	const backend = candidateDB
 		? new WOFCandidateTableLookup({ databasePath: candidateDB })
@@ -230,7 +228,7 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		// Zero rejects every fall.
 		// This arm separates the pass's re-pick behavior from its coordinate fallback.
 		...switchPinEntry("postcodeConsistency", options.postcodeConsistency ?? "production"),
-		...(options.postcodeConsistencyMaxMoveKm !== undefined
+		...(typeof options.postcodeConsistencyMaxMoveKm === "number"
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }
 			: {}),
 		// Default-off in the library, so an unset pin leaves this eval byte-identical.

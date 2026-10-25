@@ -68,6 +68,8 @@ def build_optimizer(
                     "street_type_token_embedding",
                     "locality_surface_projection.",
                     "locality_surface_token_embedding",
+                    "code_unit_projection.",
+                    "code_unit_token_embedding",
                 ),
                 classifier_learning_rate,
                 "classifier_learning_rate",

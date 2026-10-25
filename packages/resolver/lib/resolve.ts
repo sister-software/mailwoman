@@ -9,7 +9,13 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
-import { collectNodes, type AddressNode, type AddressTree, type Interpretation } from "@mailwoman/core/decoder"
+import {
+	collectNodes,
+	isShapeExcludedPostcode,
+	type AddressNode,
+	type AddressTree,
+	type Interpretation,
+} from "@mailwoman/core/decoder"
 import {
 	type BackendCapabilityGap,
 	type DefaultCountry,
@@ -46,7 +52,7 @@ import {
 	stampPostcodeCountryScope,
 } from "#postcode/country-coherence"
 import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
-import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode/shape-coherence"
+import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
 import {
 	applyPostcodeConsistency,
 	applyRooftopConsistency,
@@ -179,6 +185,7 @@ class WOFResolver implements Resolver {
 			includeAncestors: opts.includeAncestors,
 			// Optional admin containment rerank uses a pre-scanned region qualifier.
 			adminContainmentRerank: opts.adminContainmentRerank,
+			dependentLocalityContainment: opts.dependentLocalityContainment,
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 			localityNodePresent: false,
@@ -263,9 +270,13 @@ class WOFResolver implements Resolver {
 			await applyPostcodeConsistency(newRoots, consistencyThresholdKm, opts.postcodeConsistencyMaxMoveKm)
 		}
 
+		// A register can key a borough's or neighborhood's addresses to an ancestor's name,
+		// so a miss retries the ancestors.
+		const ancestorsOf = this.#backend.ancestors?.bind(this.#backend)
+
 		// Optional exact address-point tier.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// Optional interpolation tier after exact points.
@@ -281,7 +292,7 @@ class WOFResolver implements Resolver {
 
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.
@@ -411,7 +422,12 @@ class WOFResolver implements Resolver {
 			if (band === probed) continue
 
 			try {
-				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: undefined })
+				const hits = await this.#backend.findPlace({
+					...query,
+					placetype: band,
+					parentID: undefined,
+					parentQualifierID: undefined,
+				})
 
 				if (hits.length) {
 					found.push({ placetype: band, n: hits.length })
@@ -448,10 +464,7 @@ class WOFResolver implements Resolver {
 			query.bias = state.bias
 		}
 
-		// Apply resolved parent scope when available.
-		if (parentResolved && typeof parentResolved.id === "number") {
-			query.parentID = parentResolved.id
-		}
+		const parentContainment = applyParentScope(query, node, parentResolved, state)
 
 		// Country scope precedence: parent -> default -> node hint -> hard country.
 		const countryHint = node.metadata?.["country_hint"]
@@ -462,7 +475,7 @@ class WOFResolver implements Resolver {
 		const country =
 			parentResolved?.country ??
 			defaultCountryForLookup ??
-			(typeof countryHint === "string" ? countryHint : undefined) ??
+			(typeof countryHint === "string" ? countryHint : null) ??
 			state.hardCountry
 
 		if (country) {
@@ -658,7 +671,9 @@ class WOFResolver implements Resolver {
 
 		// Final containment partition.
 		// It reads the address's own qualifier and preserves the exact-match tier.
-		if (containmentEligible) {
+		const qualifierPartition = containmentEligible || parentContainment
+
+		if (qualifierPartition) {
 			ranked = partitionByContainment(
 				ranked,
 				(c) => c.containedByQualifier === true,
@@ -715,7 +730,7 @@ class WOFResolver implements Resolver {
 
 		// Trace receipts for mechanism-level observability.
 		const pickMetadata = {
-			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
+			...containmentStamps(qualifierPartition, parentContainment, ranked, top),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// Mark picks admitted outside resolved parent scope.
 			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
@@ -733,13 +748,63 @@ class WOFResolver implements Resolver {
 }
 
 /**
+ * Scopes a lookup to its resolved parent and reports whether the parent is a containment qualifier.
+ *
+ * A parent is a `parentID` region scope.
+ * A `dependent_locality` node under the `dependentLocalityContainment` switch passes
+ * its parent as `parentQualifierID` instead (#2804).
+ *
+ * The candidate table's region scope holds region ids, so a locality parent never satisfies it.
+ *
+ * The containment partition admits the sub-locality rows the locality band excludes.
+ */
+function applyParentScope(
+	query: Parameters<ResolverBackend["findPlace"]>[0],
+	node: AddressNode,
+	parentResolved: CoordinateOptionalPlace | null,
+	state: ResolutionState
+): boolean {
+	if (!parentResolved || typeof parentResolved.id !== "number") return false
+
+	if (state.dependentLocalityContainment && node.tag === "dependent_locality") {
+		query.parentQualifierID = parentResolved.id
+
+		return true
+	}
+
+	query.parentID = parentResolved.id
+
+	return false
+}
+
+/**
+ * The pick metadata a containment partition writes: the tri-state verdict when a qualifier was
+ * read, and `contained_by_parent` when a dependent locality's pick sits inside its parent.
+ *
+ * The geocode result's admin ladder reads the second stamp to let the pick answer ahead of the locality.
+ */
+function containmentStamps(
+	qualifierPartition: boolean,
+	parentContainment: boolean,
+	ranked: readonly ResolvedPlace[],
+	top: ResolvedPlace
+): Record<string, unknown> {
+	if (!qualifierPartition) return {}
+
+	return {
+		admin_containment: adminContainmentVerdict(ranked),
+		...(parentContainment && top.containedByQualifier === true ? { contained_by_parent: true } : {}),
+	}
+}
+
+/**
  * Promote capitals and stamp `capital_promotion` when the leader changes.
  * Metadata only.
  */
 function promoteCapitalsWithReceipt<
 	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
 		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
->(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> }): T[] {
+>(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> | null }): T[] {
 	const promoted = promoteCapitals(ranked, level)
 
 	if (promoted[0] !== ranked[0]) {

@@ -128,7 +128,7 @@ class ScopedFakeBackend implements ResolverBackend {
 
 		return PLACES.filter((p) => p.name === query.text)
 			.filter((p) => !types || types.includes(p.placetype))
-			.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
+			.filter((p) => !query.parentID || p.parent_id === query.parentID)
 			.toSorted((a, b) => b.score - a.score)
 			.slice(0, query.limit ?? 5)
 	}

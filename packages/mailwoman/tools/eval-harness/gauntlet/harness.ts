@@ -20,13 +20,13 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
+import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { loadParsePriors, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { GEOCODE_SESSION_DEFAULTS, loadForkEntityDeps } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
@@ -79,7 +79,7 @@ export interface GauntletDepsOptions {
 	/**
 	 * Candidate model-card, paired with `tokenizerPath`.
 	 */
-	modelCardPath?: string
+	modelCardPath?: string | null
 	/**
 	 * Package-shaped candidate weights dir, resolved as production resolves it.
 	 */
@@ -139,6 +139,11 @@ export interface GauntletResolverPins {
 	 */
 	adminContainmentRerank: SwitchPin
 	/**
+	 * A parsed dependent locality resolves inside its parent through the same sidecar
+	 * and answers the coordinate ahead of the locality (#2804).
+	 */
+	dependentLocalityContainment: SwitchPin
+	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
@@ -192,6 +197,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	postcodeCountryCoherence: "production",
 	gazetteerPrior: "production",
 	adminContainmentRerank: "production",
+	dependentLocalityContainment: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
@@ -211,6 +217,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 export function resolverPinDeps(pins: GauntletResolverPins): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
+	dependentLocalityContainment?: boolean
 	poiVenueTier?: boolean
 	spanRescoreRequireContextRemainder?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
@@ -218,6 +225,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	return {
 		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
+		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
 		...switchPinEntry("spanRescoreRequireContextRemainder", pins.spanRescoreRequireContextRemainder),
 		...(pins.spanRescoreWeakResolution === "production"
@@ -396,7 +404,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// while a bare `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
-		: undefined
+		: null
 
 	// Stamp the model under test so a stale dev symlink is never silent.
 	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
@@ -462,7 +470,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const baseOnlyLocales = new Set<string>()
 
 	async function classifierFor(caseCountry?: string): Promise<typeof classifier> {
-		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : undefined
+		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : null
 
 		// Scorer/modelPath legacy modes have no package-shaped sibling resolution — base only.
 		if (!overlayLocale || opts.tokenizerPath || opts.modelPath) return classifier
@@ -551,7 +559,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
-		: undefined
+		: null
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// Load this module lazily, like the resolver module above.
@@ -677,24 +685,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
-	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every
-	// optional artifact and mirroring the CLI's wiring so the board grades what production runs.
-	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
-	const poiDBPath = poiDatabasePath("poi.db")
-
-	if (await pathExists(poiDBPath)) {
-		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/poi"),
-			import("@mailwoman/resolver-wof-sqlite/street"),
-		])
-
-		const morphology = await loadStreetMorphologyFST()
-
-		forkEntityDeps = {
-			poiLookup: new POILookup({ databasePath: poiDBPath }),
-			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
-		}
-	}
+	// The fork→entity probe's signals come from the session's own loader, so the board
+	// grades the POI layers production opens (poi.db and the stations layer beside it).
+	const { deps: forkEntityDeps } = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
 
 	/**
 	 * The one geocode call both public entry points make; `extra` is spread last so a trace sink cannot

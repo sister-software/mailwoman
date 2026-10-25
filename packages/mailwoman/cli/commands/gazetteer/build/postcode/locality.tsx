@@ -53,7 +53,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 		switch (options.recipe) {
 			case "base": {
 				const { buildPostcodeLocalityBase, finalizePostcodeLocality } =
-					await import("#gazetteer/postcode/locality/base")
+					await import("@mailwoman/gazetteer/tools/pipeline/postcode/locality/base")
 
 				if (options.finalize) {
 					await finalizePostcodeLocality(options.out)
@@ -74,7 +74,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 				break
 			}
 			case "jp": {
-				const { buildPostcodeLocalityJP } = await import("#gazetteer/postcode/locality/jp")
+				const { buildPostcodeLocalityJP } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/locality/jp")
 
 				await buildPostcodeLocalityJP({
 					country: options.country ?? "JP",
@@ -87,7 +87,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 				break
 			}
 			case "kr": {
-				const { buildPostcodeLocalityKR } = await import("#gazetteer/postcode/locality/kr")
+				const { buildPostcodeLocalityKR } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/locality/kr")
 
 				await buildPostcodeLocalityKR({
 					geonames: need("geonames", options.geonames),
@@ -98,7 +98,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 				break
 			}
 			case "tw": {
-				const { buildPostcodeLocalityTW } = await import("#gazetteer/postcode/locality/tw")
+				const { buildPostcodeLocalityTW } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/locality/tw")
 
 				await buildPostcodeLocalityTW({
 					postalXML: need("postal-xml", options.postalXML),

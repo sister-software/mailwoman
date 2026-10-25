@@ -444,7 +444,6 @@ export function readANACParty(party: ANACParty): ANACPartyReading {
 			locale: "it-IT",
 			source: IT_ANAC_ADAPTER_ID,
 			source_id: stableSourceID(IT_ANAC_ADAPTER_ID, aligned),
-			corpus_version: "",
 			license: IT_ANAC_LICENSE,
 		},
 	}
@@ -470,15 +469,15 @@ export function createITANACAdapter(): CorpusAdapter {
 			for (const editionPath of await anacEditionPaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				for await (const release of JSONSpliterator.fromAsync<ANACRelease>(editionPath)) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					for (const party of release.parties ?? []) {
-						if (opts.limit !== undefined && emitted >= opts.limit) break
+						if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 						const reading = readANACParty(party)
 

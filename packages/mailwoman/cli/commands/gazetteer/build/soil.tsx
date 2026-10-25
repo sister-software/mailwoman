@@ -16,6 +16,7 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -27,7 +28,6 @@ import {
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Res 6 matches what the POI and flood layers write, so a reader already keyed to another
@@ -71,12 +71,12 @@ export const spec = {
 async function runVerification(
 	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk/verify").verifySoilDatabase>[0]["client"],
-	count?: number
+	count?: number | null
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk/verify")
 	const databasePath = database.toString()
 
-	const points = sampleAgreementPoints(databasePath, count === undefined ? {} : { count })
+	const points = sampleAgreementPoints(databasePath, !count ? {} : { count })
 
 	const verified = await verifySoilDatabase({
 		databasePath,
@@ -132,7 +132,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
-				options.verifyPoints ? Number(options.verifyPoints) : undefined
+				typeof options.verifyPoints === "string" ? Number(options.verifyPoints) : null
 			)
 		}
 
@@ -217,9 +217,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		]
 
 		if (options.verify) {
-			lines.push(
-				...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : undefined))
-			)
+			lines.push(...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : null)))
 		}
 
 		return lines

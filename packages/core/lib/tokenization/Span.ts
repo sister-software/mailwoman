@@ -223,7 +223,7 @@ export class Span extends Graph<Span> {
 			}
 		}
 
-		languages.displayName = displayNames.size ? Array.from(displayNames).join(", ") : undefined
+		languages.displayName = displayNames.size ? Array.from(displayNames).join(", ") : null
 
 		return languages
 	}

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from (`mailwoman-tiles` →
- *   https://tiles.mailwoman.ai/...). The `tiles publish` command and planetary pipeline both call these functions.
+ *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from
+ *   ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.ai/...).
+ *
+ *   The `tiles publish` command and planetary pipeline both call these functions.
  *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
@@ -13,9 +15,12 @@
  *   The worker reads the object through its R2 binding, so Content-Type and
  *   Cache-Control do not matter.
  *
- *   credentials for the `mailwoman-tiles` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
- *   mailwoman-tiles); the `RCLONE_S3_PUBLIC_*` keys write mailwoman-tiles. Map them onto the on-the-fly `:s3:` remote
- *   (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`, plus secret and endpoint) before running.
+ *   Credentials for the artifacts bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets`
+ *   (403 on any other bucket).
+ *
+ *   The `RCLONE_S3_PUBLIC_*` keys write mailwoman-artifacts.
+ *   Map them onto the on-the-fly `:s3:` remote (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`,
+ *   plus secret and endpoint) before running.
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -34,7 +39,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
  *
  * @defaultValue rclone over the `RCLONE_S3_*` credentials.
  */
-export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
+export type UploadTransport = (target: Pick<UploadToBucketOptions, "file" | "bucket" | "key">) => Promise<void>
 
 export interface UploadToBucketOptions {
 	/**

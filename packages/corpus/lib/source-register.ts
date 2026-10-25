@@ -13,11 +13,9 @@ export {
 	addressSourceRegisterPath,
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
-	electedLicenseLabel,
 	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
 	MODEL_RELEASE_OPERATIONS,
-	permissionFor,
 	readAddressSourceRegister,
 	registerContentDigest,
 } from "#source-register/register"
@@ -25,9 +23,6 @@ export {
 export {
 	BackboneState,
 	JurisdictionResearchState,
-	LicenseReviewState,
-	OperationPermission,
-	PermissionBasis,
 	PersonalDataReading,
 	REGISTER_SECTORS,
 	ResearchPass,

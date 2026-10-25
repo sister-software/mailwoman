@@ -9,14 +9,15 @@ normalize, query-shape, kind-classifier, locale-hint, phrase-grouper, codex, cor
 neural-weights-en-us, neural-weights-fr-fr}`. All of them, including the model, publish at one synced version
 (see Versioning policy). The core packages are:
 
-| Package                           | Workspace dir           | Notes                                                                             |
-| --------------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                  |
-| `@mailwoman/core`                 | `core/`                 | tokenization, decoder, and ~9 MB of libpostal+WOF dictionaries under `core/data/` |
-| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                       |
-| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                           |
-| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                      |
-| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                      |
+| Package                           | Workspace dir           | Notes                                                                      |
+| --------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                           |
+| `@mailwoman/core`                 | `core/`                 | tokenization and decoder                                                   |
+| `@mailwoman/dictionaries`         | `dictionaries/`         | vendored libpostal, libaddressinput and WOF reference tables under `data/` |
+| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                |
+| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                    |
+| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                               |
+| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                               |
 
 [`release-it`](https://github.com/release-it/release-it) drives the version bump + tag + publish + GitHub release. [`@release-it-plugins/workspaces`](https://github.com/release-it-plugins/workspaces) coordinates the multi-package version bump and per-package `npm publish`.
 
@@ -162,6 +163,24 @@ A non-zero exit blocks the ship. The Gauntlet has three layers (`mailwoman/eval-
 
 The Gauntlet is not yet a `release-it` hook. Wire it into the release flow once the candidate path is
 standardized.
+
+## Release ordering for the license routes
+
+A token whose `terms` is `AGPL-3.0-only` fails the payload schema of every release before the one that
+ships the union, so the pieces land in this order:
+
+1. Release the schema: the `terms` union, the `intent`, `seq` and `install` claims, and the download
+   client in `@mailwoman/core/license`. This is the release that `mailwoman license declare`,
+   `mailwoman license evaluate` and `mailwoman setup` ship in.
+2. Deploy the worker's declaration, evaluation and download routes. The routes are inert until a
+   released CLI can adopt what they issue.
+3. Provision the private bucket and set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID` and
+   `PAID_ARTIFACTS_BUCKET` on the worker. Until then the download route answers 503 and every other
+   route runs.
+4. Publish the first paid artifact to the bucket, list it in `PAID_ARTIFACTS` in
+   `packages/license-worker/lib/artifacts/catalog.ts`, and mark its bundle `access: "licensed"` in
+   `packages/mailwoman/lib/data/bundles.ts` in the next release. A weights overlay that becomes paid
+   leaves public npm at that release, and the releases already published stay published.
 
 ## Real release
 
@@ -347,7 +366,7 @@ node resolver-wof-sqlite/out/build-candidate-cli.js \
 mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
 ln -s $MAILWOMAN_DATA_ROOT/db/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
 set -a; . ./.env; set +a
-node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src /tmp/stage --prefix mailwoman
+node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
@@ -400,16 +419,25 @@ unchanged). **A different trained model requires a separate promotion operation.
 this pipeline more than once, because the moving parts are not obvious. This section is the ordered runbook,
 first walked end to end for v4.11.0 (the v1.8.0 fr-admin-split promotion). Do the steps in order and verify each.
 
+**Release eligibility (since 2026-10-20, #2763).** A promotion needs a `pass` verdict from
+`packages/mailwoman/tools/eval-harness/release/evaluate.run.ts` for the exact `model.onnx` and the current
+release-requirement specification, as iron rule 5 of `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`
+describes. The D-rule and its FR, GB and DE veto are removed. The current specification registers no
+threshold, so every verdict is insufficient evidence and the procedure cannot approve a release yet. Until
+a specification registers replacements, the promotion eval's floors still decide as retained-pending checks
+(`docs/records/evals/2026-10-20-promotion-check-migration.md`). Report release eligibility as insufficient
+evidence, and list every measured loss against the published model with its countries and address patterns.
+
 ### Fast-path cheat sheet (lessons from the v4.15.0 promotion)
 
 Read this first. Once you know the steps, a promotion takes about 30 minutes. It involves three independent
 backends, and a promotion is not done until all three agree on one md5:
 
-| backend       | tool                               | what it feeds                                                                 |
-| ------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
-| **npm**       | `publish.yml` (CI, OIDC)           | library consumers. **Fetches the binary from HF**, so HF must be staged first |
-| **HF bucket** | `mailwoman release hf`             | the npm fetch source + HF-direct `loadFromWeights`                            |
-| **R2/demo**   | `publish-demo-assets-to-r2.run.ts` | the browser demo (reads `public.mailwoman.ai` rather than HF)                 |
+| backend       | tool                           | what it feeds                                                                 |
+| ------------- | ------------------------------ | ----------------------------------------------------------------------------- |
+| **npm**       | `publish.yml` (CI, OIDC)       | library consumers. **Fetches the binary from HF**, so HF must be staged first |
+| **HF bucket** | `mailwoman release hf`         | the npm fetch source + HF-direct `loadFromWeights`                            |
+| **R2/demo**   | `publish-public-bucket.run.ts` | the browser demo (reads `public.mailwoman.ai` rather than HF)                 |
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Each of the following notes records a trap that once cost time:
 
@@ -417,7 +445,7 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **The `neural-weights-fr-fr` card drifts silently.** release-it only touches `package.json`, so the card is not bumped automatically and its `version` and `model_lineage` go stale. It was once found stuck at `4.6.0` / "v1.5.0-fr-order" long after it had started shipping the en-us binary. Reconcile both fields in every model promotion.
 - **`release.config.json` drifts silently from the card, and copy-weights trusts the config.** The card decides _which_ model ships, but `release.config.json#weights.model` is the path that copy-weights.ts materializes from. The config must change in the same commit as the card (Step 1 items 2+3). When it does not, copy-weights materializes the superseded model and the Gauntlet grades it without warning. In #1024 the config lagged at v220 `a64ad2e6` while the v5.4.0 promotion shipped v230 `ea785a70`, which cost a bisect. **Guardrail (#1024):** the Gauntlet harness now asserts that the materialized `neural-weights-en-us/model.onnx` md5 equals the card's `files_md5["model.onnx"]` for the shipped default, and fails on a mismatch. The Gauntlet is the release `before:release` step, so a drifted config can no longer ship. #1005 fixed the dev-weights-symlink form of the same problem, and #1024 fixed the release-config form.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0), so you do not need to set it lower or re-run to check. A promotion eval that needs a lower floor gets a **new eval file** with a stated `$revision_*` reason, so floors never drift silently. The full promotion eval takes ~12–15 min, so set the floors correctly the first time.
-- **The R2 demo repoint copies the prior files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-demo-assets-to-r2.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
+- **The R2 demo repoint copies the prior files forward and overwrites two of them.** Between model versions only `model.onnx` and `model-card.json` change. The tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json` and `calibration.json` are byte-identical. The fastest path is to download all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend the entry and set `defaultVersion`), and run `publish-public-bucket.run.ts --src` once. That is ~60 MB and two commands. (The bucket is `mailwoman-public`, and the credentials are `RCLONE_S3_PUBLIC_*`.) A model that needs a browser-runtime capability, such as the `locale_hint` input 10.1.0 added, lists it in the entry's `requiresRuntime`. The browser runtime passes over a default release whose requirements it lacks, so a page still running an older bundle falls back to a release it can load (`BROWSER_RUNTIME_CAPABILITIES` in `mailwoman/browser-runtime/manifest`).
 - **The browser release set serves `encoder.onnx` plus `embeddings-hot.bin`.** From 10.1.0 the browser reads the embedding table by range from `embeddings-hot.bin` (`splitEmbeddings: true` in `releases.json`) in place of the table inside `model.onnx`, and the runner imports `onnxruntime-web/wasm`, because the asyncify wasm exceeds the Workers 25 MiB asset cap. The `.bin` objects are stored gzip on R2, and the edge cache holds identity copies until a purge or a `max-age` expiry.
 - **The npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version, but `npm pack` returns 404 and a raw tarball `curl` returns a small error JSON. That behavior comes from CDN propagation, and the publish succeeded. In the meantime, verify through `npm view … dist.unpackedSize` (a code-only package is <1 MB, and a model-bundled one is ~33 MB) and the md5 chain `$MAILWOMAN_DATA_ROOT source == HF upload == R2 staging`. Run `npm pack` again once the CDN catches up.
 - **Canonical artifact paths:** model int8 → `$MAILWOMAN_DATA_ROOT/models/quantized/model-v<NNN>-step-<step>-int8.onnx`. Tokenizer → `$MAILWOMAN_DATA_ROOT/models/tokenizer/<ver>/tokenizer.model`. FST → `$MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`). Postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`. Gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json`. The promotion eval ran against this repo copy, so use it instead of the prior bucket's copy.
@@ -490,7 +518,7 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli/main.
   --postcodes "<csv of postcode-*.bin>" --pair-indexes "<csv of pair-index-*.bin, if any locale ships one>" \
   --polygons <src>/.../wof-polygons.db --steps <step> --set-default
 
-set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <src>
+set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <src>
 ```
 
 The flag list above does not define what a release must stage, and this prose has gone stale before.
@@ -559,7 +587,7 @@ curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, bo
 #### Pair-index binaries are VERSIONED, and each rebuild gets a new generation
 
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies that the browser demo reads require a
-separate push. They reach the bucket only through `publish-demo-assets-to-r2.run.ts`, from a `--src` tree you
+separate push. They reach the bucket only through `publish-public-bucket.run.ts`, from a `--src` tree you
 assemble by hand. No other tool produces them. `publish.yml` downloads them from HF into the weights workspaces
 for the npm tarballs, and the docs runtime-assets plugin copies them into the Pages deploy for dev preview only.
 
@@ -577,13 +605,13 @@ Stage them under a generation segment:
   uploaded over the flat `mailwoman/pair-index/pair-index-<cc>.bin` keys, so Cloudflare kept serving schema-1
   bytes that the site's reader rejects. The demo lost the GB/NZ `dependent_locality` priors until a manual
   purge.
-- `publish-demo-assets-to-r2.run.ts` refuses a `--src` that puts a pair-index binary at the flat key, so the
+- `publish-public-bucket.run.ts` refuses a `--src` that puts a pair-index binary at the flat key, so the
   script enforces this rule.
 - Never upload over an existing generation either. On 2026-10-08 new bytes went to the `2026-08-05` keys, and
   Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation carries the Great Britain
   index built without HM Land Registry Price Paid Data (#2635). On 2026-10-17 the `2026-08-05` GB object and the
   flat `mailwoman/pair-index/pair-index-gb.bin` key, both built from Price Paid Data, were deleted from the
-  bucket. Deleting an object does not evict the cached copy, so a removal also needs a Cloudflare cache purge of
+  bucket. Cloudflare does not evict a cached copy when an object is deleted. A removal also needs a Cloudflare cache purge of
   each URL, which requires an API token with the Cache Purge permission.
 
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
@@ -814,7 +842,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 >
 > ```bash
 > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
-> node packages/mailwoman/tools/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
+> node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>
 > ```
 >
 > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`

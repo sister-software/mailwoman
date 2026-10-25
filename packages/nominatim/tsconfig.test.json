@@ -3,5 +3,10 @@
 	"extends": ["./tsconfig.json", "../../tsconfig.test-base.json"],
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],
-	"references": [{ "path": "./tsconfig.json" }, { "path": "./cli" }, { "path": "./tools" }]
+	"references": [
+		{ "path": "../gazetteer/tools" },
+		{ "path": "./tsconfig.json" },
+		{ "path": "./cli" },
+		{ "path": "./tools" }
+	]
 }

@@ -22,10 +22,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ....corpora.builder import MAX_FIELD_CHARS, SCHEMA, coverage_stats, muni_bucket, select_exact, water_fill
+from ....corpora.builder import (
+    MAX_FIELD_CHARS,
+    coverage_stats,
+    muni_bucket,
+    select_exact,
+    water_fill,
+    write_corpus_parquet,
+)
 from ....labels import resolve_label_set
 from ....paths import resolve_data_root_default
 from ....source_rights import add_unshippable_flag, admit_sources, write_rights_record
@@ -243,8 +249,7 @@ def write_splits(
         written = 0
         for start in range(0, len(source_rows), args.rows_per_part):
             chunk = encoder.encode(source_rows[start : start + args.rows_per_part])
-            table = pa.Table.from_pylist(chunk, schema=SCHEMA)
-            pq.write_table(table, out_dir / split / f"part-{part:04d}.parquet")
+            write_corpus_parquet(chunk, out_dir / split / f"part-{part:04d}.parquet", context="JP corpus assembly")
             part += 1
             written += len(chunk)
             # Coverage is computed on a bounded sample per part so a 2M-row build stays memory-flat.

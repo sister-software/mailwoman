@@ -14,6 +14,7 @@
  */
 
 import { formatAddress } from "@mailwoman/codex/address/format"
+import { mulberry32 } from "@mailwoman/core/utils"
 
 import type { CanonicalRow } from "#types"
 
@@ -58,13 +59,6 @@ export type RenderedGermanRow = RenderedLocaleRow
 export interface LocaleRenderOpts {
 	random?: () => number
 	/**
-	 * The order used to render the same components.
-	 *
-	 * `"native"` (default) uses the country's own template (DE → house-after-street, postcode-before-city).
-	 * `"international"` renders house-first and postcode-after-city.
-	 */
-	order?: "native" | "international"
-	/**
 	 * Postcode surface shape.
 	 *
 	 * `"conventional"` (default) canonicalizes to the country's rendered form
@@ -82,7 +76,6 @@ export interface LocaleRenderOpts {
 	 *
 	 * `"template"` (default) keeps the template's own join.
 	 * `"space"` collapses `<street>, <house_number>` → `<street> <house_number>` after rendering.
-	 * International order ignores this.
 	 */
 	nativeHouseJoin?: "template" | "space"
 	/**
@@ -91,10 +84,15 @@ export interface LocaleRenderOpts {
 	 * `", "` (default) is the template's own join.
 	 * `" "` renders the comma-free single-line register for dictation or a copy out of a
 	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
-	 *
-	 * Only native order uses this option.
 	 */
 	separator?: ", " | " "
+	/**
+	 * Write the tuple's region where the country writes one (`regionLayoutForCountry` in the codex).
+	 *
+	 * The option draws no random number, so the rest of a seeded run is unchanged.
+	 * A row whose region cannot be placed or aligned renders without it.
+	 */
+	withRegion?: boolean
 }
 
 /**
@@ -144,7 +142,7 @@ function tokenPresent(raw: string, value: string): boolean {
 	const i = raw.indexOf(value)
 	const before = raw[i - 1]
 	const after = raw[i + value.length]
-	const isDigit = (c: string | undefined) => c !== undefined && c >= "0" && c <= "9"
+	const isDigit = (c: string | undefined) => c && c >= "0" && c <= "9"
 
 	if (/^\d+$/.test(value) && (isDigit(before) || isDigit(after))) return false
 
@@ -156,13 +154,7 @@ function tokenPresent(raw: string, value: string): boolean {
  * with light variation (house number and postcode may be dropped).
  *
  * Returns `null` when the tuple is too thin or a component would not align to an exact span.
- *
- * Region handling depends on order:
- * - native omits region for alignment reliability
- * - international includes region in the tail
- *
- * Pass `opts.order: "international"` to render the same components house-first and postcode-after-city
- * instead (see {@link LocaleRenderOpts.order}), matching common feed-style layouts.
+ * The row prints the tuple's region only when {@linkcode LocaleRenderOpts.withRegion} asks for it.
  */
 export function renderLocaleRow(
 	base: LocaleBaseTuple,
@@ -170,13 +162,12 @@ export function renderLocaleRow(
 	opts: LocaleRenderOpts = {}
 ): RenderedLocaleRow | null {
 	const random = opts.random ?? Math.random
-	const order = opts.order ?? "native"
 
 	if (!base.street || !base.locality) return null
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
-	// Sub-locality is part of the address body in both orders.
+	// Sub-locality is part of the address body.
 	// If the template does not surface it verbatim, the row is dropped below.
 	if (base.dependent_locality) {
 		components.dependent_locality = base.dependent_locality
@@ -195,23 +186,33 @@ export function renderLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
-	// International order places region in the tail.
-	// Native order omits it for alignment.
-	if (order === "international" && base.region) {
-		components.region = base.region
+	// The region costs no random draw, so a row without one renders exactly as before.
+	// A region the country's layout cannot place, or that does not align, falls back to the row without it.
+	if (opts.withRegion && base.region) {
+		const withRegion = finishLocaleRow({ ...components, region: base.region }, base, country, opts)
+
+		if (withRegion) return withRegion
 	}
 
-	// Native order uses the country's template.
-	// International order uses the US template.
-	// No random draw here, keeping RNG sequence stable.
-	const renderCountry = order === "international" ? "US" : country
-	const separator = order === "native" ? (opts.separator ?? ", ") : ", "
-	let raw = formatAddress(components, renderCountry, { separator })
+	return finishLocaleRow(components, base, country, opts)
+}
+
+/**
+ * Render already-drawn components and check that each one aligns, drawing no random numbers.
+ */
+function finishLocaleRow(
+	components: CanonicalRow["components"],
+	base: LocaleBaseTuple,
+	country: string,
+	opts: LocaleRenderOpts
+): RenderedLocaleRow | null {
+	const separator = opts.separator ?? ", "
+	let raw = formatAddress(components, country, { separator, withRegion: Boolean(components.region) })
 
 	if (!raw) return null
 
-	// Optional native-order rewrite: `<street>, <hn>` -> `<street> <hn>`.
-	if (order === "native" && separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {
+	// Optional rewrite: `<street>, <hn>` -> `<street> <hn>`.
+	if (separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {
 		raw = raw.replace(
 			`${components.street}, ${components.house_number}`,
 			`${components.street} ${components.house_number}`
@@ -235,6 +236,16 @@ export function renderLocaleRow(
 	}
 
 	return { raw, components, locale: LOCALE_TAG[country] ?? country.toLowerCase() }
+}
+
+/**
+ * The generator a seeded recipe draws {@linkcode LocaleRenderOpts.withRegion} from.
+ *
+ * It is separate from the rendering generator, so choosing which rows print a region
+ * leaves every other draw of the run, and every row without a region, as it was.
+ */
+export function regionDrawRandom(seed: number): () => number {
+	return mulberry32((seed ^ 0x52_45_47_4e) >>> 0)
 }
 
 /**

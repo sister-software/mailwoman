@@ -10,11 +10,13 @@
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../gazetteer" },
 		{ "path": "../ancestrie" },
 		{ "path": "../core" },
 		{ "path": "../postcode" },
 		{ "path": "../codex" },
 		{ "path": "../locale-hint" },
+		{ "path": "../mtf" },
 		{ "path": "../normalize" },
 		{ "path": "../query-shape" }
 	]

@@ -75,7 +75,7 @@ function pairHeader(country: string, transitionBeta?: number): PairIndexHeaderIn
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-24",
-		...(transitionBeta !== undefined ? { transitionBeta } : {}),
+		...(transitionBeta ? { transitionBeta } : {}),
 	}
 }
 

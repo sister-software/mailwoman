@@ -4,7 +4,7 @@
 /**
  *   Shared scaffolding for corpus recipes: the seeded LCG PRNG, the tuple reader and
  *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its row construction and filter. The `mailwoman corpus slice <recipe>` command
+ *   supplies only its row construction and filter. The `mailwoman corpus recipe <recipe>` command
  *   supplies the I/O.
  */
 
@@ -204,7 +204,7 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
 	const seen = new Set<string>()
 
 	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		if (options.limit !== undefined && tuples.length >= options.limit) break
+		if (typeof options.limit === "number" && tuples.length >= options.limit) break
 
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
@@ -253,7 +253,6 @@ export interface CanonicalRecipeRow {
 	locale?: string
 	source: string
 	source_id: string
-	corpus_version?: string
 	license?: string
 }
 
@@ -363,14 +362,18 @@ export function requireRegister(opts: RecipeOptions, recipe: string): string {
 
 /**
  * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
- * with its recipe id and provenance as one jsonl line.
+ * with its template and provenance as one jsonl line.
+ *
+ * `template` names the recipe's template that shaped the row, such as `sg-register:block`.
+ * It is a field of the recipe output, read by the recipe's tests and audits, and not a parquet column:
+ * the row's producer is its `source`, and `augmentation` names only a row derived from a base row.
  *
  * The provenance columns are flat because the parquet schema is flat.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
 	canonical: CanonicalRecipeRow,
-	recipe: string,
+	template: string,
 	provenance: RecipeProvenance
 ): boolean {
 	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
@@ -381,7 +384,7 @@ export function alignAndWrite(
 	write(
 		stringifyJSON({
 			...aligned.row,
-			recipe,
+			template,
 			register: provenance.register,
 			surface: provenance.surface,
 			base_source_id: provenance.baseSourceID ?? null,
@@ -401,7 +404,7 @@ export interface RecipeOptions {
 	seed: number
 	variants: number
 	input?: PathBuilderLike
-	count?: number
+	count?: number | null
 	golden?: boolean
 	sourceName?: string
 	/**
@@ -411,19 +414,24 @@ export interface RecipeOptions {
 	 * A recipe that generates its rows from this repository's own tables declares its register in code.
 	 */
 	register?: string
-	houseNumberProb?: number
-	pmbRatio?: number
-	militaryRatio?: number
-	reversedFraction?: number
+	houseNumberProb?: number | null
+	pmbRatio?: number | null
+	militaryRatio?: number | null
+	reversedFraction?: number | null
 	edgesDir?: string
 	country?: string
-	intlFraction?: number
 	/**
-	 * `german`: fraction of native-order rows rendered with no commas at all.
+	 * `german`: fraction of rows rendered with no commas at all.
 	 *
 	 * @defaultValue `0.3`
 	 */
-	commaFreeFraction?: number
+	commaFreeFraction?: number | null
+	/**
+	 * `locale` and `german`: fraction of rows that write the tuple's region.
+	 *
+	 * @defaultValue the country's share: GB 0.057, DE 0.4, 0 elsewhere
+	 */
+	regionFraction?: number | null
 	/**
 	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
 	 *
@@ -431,7 +439,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.3`
 	 */
-	ortsteilFraction?: number
+	ortsteilFraction?: number | null
 	/**
 	 * `german`: the WOF admin database the Ortsteil pool is read from.
 	 *
@@ -443,7 +451,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0`
 	 */
-	countryFraction?: number
+	countryFraction?: number | null
 	/**
 	 * `locale`: tri-state override of the per-part `districtAsLocality` mapping.
 	 *
@@ -451,8 +459,8 @@ export interface RecipeOptions {
 	 * `true` or `false` forces that value on every part read this run.
 	 */
 	districtAsLocality?: boolean
-	bareProb?: number
-	hnProb?: number
+	bareProb?: number | null
+	hnProb?: number | null
 	communes?: string
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
@@ -460,7 +468,7 @@ export interface RecipeOptions {
 	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
 	 */
 	banDir?: PathBuilderLike
-	multilocaleCount?: number
+	multilocaleCount?: number | null
 	/**
 	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list.
 	 *
@@ -471,20 +479,20 @@ export interface RecipeOptions {
 	/**
 	 * `no-fragment`: share of rows that are counter-distribution (bare locality or bare postcode).
 	 */
-	counterProb?: number
+	counterProb?: number | null
 	/**
 	 * `no-fragment` knob 3: emit N copies of each street+number row whose number has >=
 	 * longNumberMinDigits digits (oversample the failing long-number class).
 	 *
 	 * @defaultValue `1` = no boost
 	 */
-	longNumberBoost?: number
+	longNumberBoost?: number | null
 	/**
 	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted.
 	 *
 	 * @defaultValue `3`
 	 */
-	longNumberMinDigits?: number
+	longNumberMinDigits?: number | null
 	/**
 	 * `sub-venue`: the sub-venue lexicon JSON.
 	 *
@@ -511,7 +519,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.3`
 	 */
-	negativeFraction?: number
+	negativeFraction?: number | null
 	/**
 	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
 	 * `category` and `country` columns.
@@ -524,7 +532,7 @@ export interface RecipeOptions {
 	 *
 	 * @defaultValue `0.5`
 	 */
-	venueRegionFraction?: number
+	venueRegionFraction?: number | null
 }
 
 /**

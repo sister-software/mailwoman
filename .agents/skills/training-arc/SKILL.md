@@ -24,7 +24,7 @@ mwdev_arc candidate=<staged candidate dir> \
 ```
 
 It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
-before reporting a regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
+before reporting a regression count, reads release eligibility from the `release_verdict` it is given, and prints the regressed ADDRESSES rather than only their number.
 A call that omits `control` or `null` does not skip the check silently. The result reports which control never ran
 and marks the number an upper bound.
 
@@ -122,11 +122,17 @@ in the run, and a salvage aimed at the final checkpoint then targets the wrong s
 
 ## Step 5 — the comparison is against the shipped model, and it is not the attribution
 
-The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
-publishing costs a user the difference from what they have today.
+The placebo is the right baseline for _attributing_ a regression. Release eligibility comes from the
+registered quality requirements instead (iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`):
 
-- net improved-minus-regressed ≥ 0 on the full regression board
-- FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
+- a release verdict from `packages/mailwoman/tools/eval-harness/release/evaluate.run.ts`, computed on paired outcomes
+  from `heldout/per/country.run.ts --dataset` over a sample frozen by `heldout/dataset/freeze.run.ts`, for this exact
+  `model.onnx` and the current spec, passed to `mwdev_arc` as `release_verdict` (`release_spec` names another
+  version). Only `pass` permits promotion. Spec v1 registers no threshold, so every verdict is
+  `insufficient_evidence` until a later spec registers them, and the report states that release eligibility is
+  insufficient evidence
+- board regressions are findings to investigate with their addresses, and FR, GB and DE hold no privilege. A
+  release report lists each accepted loss
 - the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval
   spec. Use the passed and total counts printed by the command rather than a count copied into this
   runbook

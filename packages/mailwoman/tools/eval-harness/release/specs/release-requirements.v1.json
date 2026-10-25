@@ -1,0 +1,50 @@
+{
+	"schemaVersion": 1,
+	"specVersion": "1",
+	"rationale": "First registration of the release-quality-requirements structure (D_RULE_REDESIGN confirmed 2026-10-20, issue #2763). No required country, capability, objective country set or numerical threshold is registered yet, so every evaluation against this version is insufficient evidence. Minima will be proposed with evidence once the machinery runs; the operator decides them in a later version.",
+	"requirements": [],
+	"objective": {
+		"countries": [],
+		"select": { "kinds": ["address"] },
+		"minimumImprovement": null
+	},
+	"identities": {
+		"dataset": { "id": null, "sha256": null },
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "02fec0af5"
+		},
+		"inference": {
+			"description": "NeuralAddressClassifier.parse with the row's country as localeHint, as scoreHeldoutWeights calls it",
+			"options": { "postcodeRepair": true, "localeHint": "row.country" }
+		},
+		"published": {
+			"description": "The published model's model.onnx",
+			"sha256": null
+		},
+		"candidate": {
+			"description": "The exact release artifact's model.onnx",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": null,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"groupingAssumption": "Held-out outcomes carry no grouping metadata yet, so each row is its own group; derived variants of one address or place would be treated as independent, which understates uncertainty.",
+		"resamples": 2000,
+		"seed": 2763,
+		"requiredPrecision": null
+	},
+	"provenance": { "admitted": [] },
+	"evaluations": {
+		"development": {
+			"id": null,
+			"description": "Unregistered: no versioned development evaluation collection exists yet."
+		},
+		"confirmation": {
+			"id": null,
+			"description": "Unregistered: no independent confirmation collection exists yet."
+		}
+	}
+}

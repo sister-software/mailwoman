@@ -109,7 +109,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<HRSASiteRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = record["Site Name"] ?? ""
 				const split = splitStreetLine(record["Site Address"] ?? "")
@@ -154,7 +154,6 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_HRSA_FQHC_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 				}
 

@@ -137,6 +137,8 @@ test("Composer: a composition with no overrides is the Earth style: base layers,
 
 	expect(style.sprite).toMatch(/protomaps\/sprites\/v4\/light$/u)
 	expect(Object.keys(style.sources)).toContain("hillshade")
+	// The ocean layers read bathymetry from a DEM capped at z10, the last zoom whose tiles hold sea-floor depths.
+	expect(style.sources["bathymetry"]).toMatchObject({ type: "raster-dem", encoding: "terrarium", maxzoom: 10 })
 	expect(style.layers.length).toBeGreaterThan(5)
 })
 

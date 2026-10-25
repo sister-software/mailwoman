@@ -13,7 +13,7 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
-const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/planet.v4.json"
 // The glyph mirror and its Bliss Pro stacks, as `@mailwoman/cartographer/styles/fonts` documents them.
 const GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
 const MAP_FONTS = { regular: "Bliss Pro Regular", bold: "Bliss Pro Medium", italic: "Bliss Pro Italic" }
@@ -228,7 +228,7 @@ var STYLE = ${safeJSONForScript(style)};
 var BBOX = ${safeJSONForScript(bbox)};
 
 function esc(v) {
-	if (v === null || v === undefined) return "";
+	if (v === null || !v) return "";
 	return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
@@ -246,8 +246,8 @@ function popupHTML(p) {
 		rows.push('<div><dt>sources:</dt> <span' + cls + '>' + esc(srcs.join(", ")) + '</span>'
 			+ (srcs.length >= 2 ? ' (cross-dataset link)' : '') + '</div>');
 	}
-	if (p.bucket !== null && p.bucket !== undefined) rows.push('<div><dt>bucket:</dt> ' + esc(p.bucket) + '</div>');
-	if (p.cohesion !== null && p.cohesion !== undefined) rows.push('<div><dt>cohesion:</dt> ' + esc(p.cohesion) + ' bits</div>');
+	if (p.bucket !== null && p.bucket) rows.push('<div><dt>bucket:</dt> ' + esc(p.bucket) + '</div>');
+	if (p.cohesion !== null && p.cohesion) rows.push('<div><dt>cohesion:</dt> ' + esc(p.cohesion) + ' bits</div>');
 	if (p.geocodeTier) rows.push('<div><dt>geocode tier:</dt> ' + esc(p.geocodeTier) + '</div>');
 	return '<div class="mw-popup">' + rows.join("") + '</div>';
 }

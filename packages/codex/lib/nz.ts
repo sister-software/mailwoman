@@ -9,3 +9,4 @@
 
 export * from "#nz/delivery-service"
 export * from "#nz/postcode"
+export * from "#nz/unit-type"

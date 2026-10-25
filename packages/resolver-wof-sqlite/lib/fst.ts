@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "#fst/autocomplete"
+export * from "#fst/binary-matcher"
 export * from "#fst/builder"
 export * from "#fst/deserialize-web"
 export * from "#fst/format"

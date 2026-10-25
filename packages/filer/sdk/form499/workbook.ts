@@ -6,7 +6,7 @@
  *
  *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape is not something
  *   the FCC publishes. It is what a human produced by hand-massaging this workbook, column by column, into
- *   the tuple configured for the earlier draft's `csv.parse`. Because the tuple is positional, every column had to be massaged
+ *   the tuple configured for our parser. Because the tuple is positional, every column had to be massaged
  *   exactly. That pipeline could not be reproduced from the original workbook.
  *
  *   This reads the published workbook directly: 122 columns, a real header row, 19,852 filers in the
@@ -179,7 +179,7 @@ type WorkbookRow = Record<string, XLSXCellValue | boolean>
 function cell(row: WorkbookRow, key: string): string {
 	const value = row[key]
 
-	if (value === null || value === undefined) return ""
+	if (value === null || !value) return ""
 
 	if (value instanceof Date) return isoDate(value)
 

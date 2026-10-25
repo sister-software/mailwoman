@@ -10,7 +10,7 @@
 
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/postcode/systems"
 import { describe, expect, it } from "vitest"
 
@@ -20,6 +20,7 @@ import {
 	adminLadderFor,
 	adminLadderForNodes,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
+	ladderWithContainedDependentLocality,
 	mostSpecificResolved,
 	resolvedSpecificity,
 } from "#admin"
@@ -94,7 +95,7 @@ describe("adminLadderFor", () => {
 			expect(adminLadderFor({ ...DE_PLZ, country })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		}
 
-		expect(adminLadderFor({ ...DE_PLZ, country: undefined })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor({ ...DE_PLZ, country: null })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
@@ -118,7 +119,7 @@ describe("adminLadderForNodes", () => {
 		confidence: 1,
 		children: [],
 		metadata: { resolver_name: resolverName, ...(over.country ? { resolver_country: over.country } : {}) },
-		...(over.lat === undefined ? {} : { lat: over.lat, lon: over.lon }),
+		...(over.lat == null ? {} : { lat: over.lat, lon: over.lon }),
 	})
 
 	it("finds the postcode node and reads both routes off it", () => {
@@ -141,6 +142,29 @@ describe("adminLadderForNodes", () => {
 
 	it("falls back to locality-first when no postcode node is present", () => {
 		expect(adminLadderForNodes([])).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+	})
+})
+
+describe("ladderWithContainedDependentLocality", () => {
+	it("moves the dependent locality ahead of the locality and keeps every other rung in place", () => {
+		const ladder = ladderWithContainedDependentLocality(ADMIN_LADDER_LOCALITY_FIRST)
+
+		expect(leads(ladder, "dependent_locality", "locality")).toBe(true)
+		expect(leads(ladder, "locality", "municipality")).toBe(true)
+		expect([...ladder].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
+	})
+
+	it("keeps a unit-grade postcode first on the postcode-first ladder", () => {
+		const ladder = ladderWithContainedDependentLocality(ADMIN_LADDER_POSTCODE_FIRST)
+
+		expect(ladder[0]).toBe("postcode")
+		expect(leads(ladder, "dependent_locality", "locality")).toBe(true)
+	})
+
+	it("returns a ladder without both rungs as it is", () => {
+		const ladder = ["postcode", "region", "country"]
+
+		expect(ladderWithContainedDependentLocality(ladder)).toBe(ladder)
 	})
 })
 

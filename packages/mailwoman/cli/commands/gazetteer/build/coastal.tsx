@@ -21,6 +21,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 
 import {
 	type CommandSpec,
@@ -31,7 +32,6 @@ import {
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Coverage resolution.

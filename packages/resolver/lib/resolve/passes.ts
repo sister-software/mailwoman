@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
-import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
+import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type CoincidentLocality,
 	type DefaultCountry,
@@ -17,12 +17,11 @@ import {
 	type ResolverBackend,
 	type ResolveSwitches,
 } from "@mailwoman/core/resolver"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
-import { isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 const TRACE_CANDIDATE_CAP = 10
@@ -59,6 +58,7 @@ export interface NodeTraceRecorder {
 		query: {
 			country?: string
 			parentID?: string | number
+			parentQualifierID?: number
 			postcode?: string | null
 			regionQualifier?: string | null
 			limit?: number
@@ -153,6 +153,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				query: {
 					country: ctx.query.country || null,
 					parentID: ctx.query.parentID ?? null,
+					parentQualifierID: ctx.query.parentQualifierID ?? null,
 					postcode: ctx.query.postcode || null,
 					regionQualifier: ctx.query.regionQualifier || null,
 					limit: ctx.query.limit ?? ctx.defaultLimit,
@@ -259,7 +260,7 @@ export interface ResolutionState {
 	 * The callback that receives one trace record per lookup.
 	 * The walk records no events when it is absent.
 	 */
-	traceSink?: (record: ResolveNodeTrace) => void
+	traceSink?: ((record: ResolveNodeTrace) => void) | null
 
 	/**
 	 * Whether an empty lookup re-probes the other admin bands and traces which ones hold the value.
@@ -307,6 +308,12 @@ export interface ResolutionState {
 	 * are ordered ahead of the rest.
 	 */
 	adminContainmentRerank: boolean
+
+	/**
+	 * Whether a `dependent_locality` node's lookup passes its resolved parent as a containment
+	 * qualifier and a contained pick is stamped to answer ahead of the locality.
+	 */
+	dependentLocalityContainment: boolean
 
 	/**
 	 * The tree's first region value.
@@ -441,7 +448,7 @@ async function recoverPostcodeNode(
 	roots: AddressNode[],
 	backend: ResolverBackend,
 	country: string | null,
-	traceSink?: (record: ResolveNodeTrace) => void
+	traceSink?: ((record: ResolveNodeTrace) => void) | null
 ): Promise<void> {
 	for (const n of walkNodes(roots)) {
 		if (n.tag === "postcode" && !n.placeID && n.value.trim()) {

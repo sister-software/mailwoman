@@ -148,7 +148,7 @@ async function mcpRoundTrip(
 			if (!line) continue
 
 			const message = tryParsingJSON<{ id?: number; result?: Record<string, unknown> }>(line)
-			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : undefined
+			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : null
 
 			if (resolve && message?.result) {
 				pending.delete(message.id!)

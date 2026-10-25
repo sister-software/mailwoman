@@ -157,6 +157,8 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         street_type_feature_dim: int,
         use_locality_surface_anchor: bool,
         locality_surface_feature_dim: int,
+        use_code_unit_anchor: bool = False,
+        code_unit_feature_dim: int = 5,
     ) -> None:
         """The five soft-feed channels, each a projection plus a learned cue vector.
 
@@ -182,6 +184,8 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         self.street_type_feature_dim = int(street_type_feature_dim) if use_street_type_anchor else 0
         self.use_locality_surface_anchor = use_locality_surface_anchor
         self.locality_surface_feature_dim = int(locality_surface_feature_dim) if use_locality_surface_anchor else 0
+        self.use_code_unit_anchor = use_code_unit_anchor
+        self.code_unit_feature_dim = int(code_unit_feature_dim) if use_code_unit_anchor else 0
         self.anchor_projection, self.anchor_token_embedding = soft_feed_channel(
             self.use_postcode_anchor, self.anchor_feature_dim, hidden_size
         )
@@ -203,6 +207,9 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         )
         self.locality_surface_projection, self.locality_surface_token_embedding = soft_feed_channel(
             self.use_locality_surface_anchor, self.locality_surface_feature_dim, hidden_size
+        )
+        self.code_unit_projection, self.code_unit_token_embedding = soft_feed_channel(
+            self.use_code_unit_anchor, self.code_unit_feature_dim, hidden_size
         )
 
     def _build_body(

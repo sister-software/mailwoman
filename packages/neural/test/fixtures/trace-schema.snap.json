@@ -48,6 +48,10 @@
 	"anchor": null,
 	"gazetteer": null,
 	"country": null,
+	"streetType": null,
+	"localitySurface": null,
+	"inputMode": "fragmented",
+	"channelPins": {},
 	"logits": [
 		[
 			0,
@@ -489,6 +493,15 @@
 	],
 	"path": [
 		19,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0
+	],
+	"margins": [
+		3,
 		0,
 		0,
 		0,

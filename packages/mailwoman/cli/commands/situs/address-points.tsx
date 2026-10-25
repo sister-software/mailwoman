@@ -121,7 +121,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// A national build must key with the locale its provider reads with.
 		// An unregistered country throws here instead of keying with the wrong rules.
-		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
+		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : null
 
 		const finalOut = resolvePath(
 			options.out ??
@@ -368,7 +368,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		await kdb.destroy()
 
 		// The manifest is stamped on the temp file because the swap is the moment the database goes live.
-		const { buildSHA, stampLayerManifest } = await import("#gazetteer/stamp-manifest")
+		const { buildSHA, stampLayerManifest } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
 		const { repoRootPath } = await import("@mailwoman/core/paths")
 

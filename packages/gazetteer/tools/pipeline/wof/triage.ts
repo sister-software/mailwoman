@@ -1,0 +1,419 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { resolvePath, type PathBuilderLike } from "path-ts"
+
+const TRIAGE_PLACETYPES = ["locality", "localadmin", "borough"] as const
+
+const COVER_PLACETYPES = ["locality", "localadmin", "borough", "county", "macrocounty", "region"] as const
+
+const COVERAGE_RADIUS_KM = 10
+
+/**
+ * The reason a non-current, unsuperseded record is out of the index.
+ *
+ * A record is either deprecated without a successor or marked not current without a stated reason.
+ */
+export const CurrencyClass = {
+	DeprecatedNoSuccessor: "deprecated_no_successor",
+	NotCurrentUnstated: "not_current_unstated",
+} as const
+
+/**
+ * One {@link CurrencyClass} value.
+ */
+export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
+
+/**
+ * How a live record within 10 km covers a non-current place.
+ *
+ * The verdicts are exact name and placetype, exact name in another placetype,
+ * name containment, or uncovered.
+ */
+export const CoverageVerdict = {
+	CoveredExact: "covered_exact",
+	CoveredCrossBand: "covered_cross_band",
+	CoveredContainment: "covered_containment",
+	Uncovered: "uncovered",
+} as const
+
+/**
+ * One {@link CoverageVerdict} value.
+ */
+export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerdict]
+
+/**
+ * Records whether GeoNames has a populated place of the same name within 10 km.
+ *
+ * An attested place is likely real.
+ * An unattested place may never have existed.
+ */
+export interface TriageAttestation {
+	/**
+	 * The attestation result.
+	 *
+	 * `unmeasured` means the country had no GeoNames dump to check.
+	 * `unattested` means the check ran and found no match.
+	 */
+	state: "attested" | "unattested" | "unmeasured"
+	population: number | null
+	distanceKm: number | null
+}
+
+/**
+ * The live record behind a coverage verdict.
+ */
+export interface CoveredBy {
+	id: number
+	name: string
+	placetype: string
+	distanceKm: number
+}
+
+/**
+ * Describes one non-current record with its currency class, coverage verdict and attestation.
+ */
+export interface TriageRow {
+	id: number
+	name: string
+	placetype: string
+	country: string
+	latitude: number
+	longitude: number
+
+	/**
+	 * The record's population.
+	 * A value of 0 means the gazetteer has no population for it.
+	 */
+	population: number
+	currencyClass: CurrencyClass
+	coverage: CoverageVerdict
+
+	/**
+	 * The live record that covers this place, if any.
+	 */
+	coveredBy: CoveredBy | null
+	attestation: TriageAttestation
+}
+
+/**
+ * Counts coverage verdicts for one country and currency class.
+ */
+export interface TriageSummary {
+	country: string
+	currencyClass: CurrencyClass
+	total: number
+	coveredExact: number
+	coveredCrossBand: number
+	coveredContainment: number
+	uncovered: number
+
+	/**
+	 * The number of uncovered rows that GeoNames attests.
+	 *
+	 * It is `null` when the country has no dump.
+	 * A value of 0 means the check ran and found none.
+	 */
+	uncoveredAttested: number | null
+}
+
+/**
+ * Options for {@link triageWOFCurrency}.
+ */
+export interface TriageOptions {
+	/**
+	 * The admin gazetteer database to triage, such as `admin-global-priority.db`.
+	 */
+	adminDB: PathBuilderLike
+
+	/**
+	 * The directory of per-country GeoNames `<CC>.txt` dumps.
+	 *
+	 * A country without a dump gets `unmeasured` attestations.
+	 */
+	geonamesDir?: PathBuilderLike
+
+	/**
+	 * The ISO 3166-1 alpha-2 countries to triage.
+	 *
+	 * @defaultValue every country in the database.
+	 */
+	countries?: readonly string[]
+
+	/**
+	 * Receives progress messages by phase.
+	 */
+	onProgress?: (phase: string, message: string) => void
+}
+
+/**
+ * The per-record ledger and per-country summaries from {@link triageWOFCurrency}.
+ */
+export interface TriageResult {
+	rows: TriageRow[]
+	summary: TriageSummary[]
+}
+
+interface LiveRecord {
+	id: number
+	name: string
+	placetype: string
+	key: string
+	words: Set<string>
+	lat: number
+	lon: number
+}
+
+function fold(value: string): string {
+	return value
+		.normalize("NFKD")
+		.replaceAll(/[̀-ͯ]/g, "")
+		.toLowerCase()
+		.replaceAll(/\s+/g, " ")
+		.trim()
+}
+
+function judgeCoverage(
+	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },
+	neighbours: readonly LiveRecord[]
+): { verdict: CoverageVerdict; coveredBy: CoveredBy | null } {
+	let containment: { record: LiveRecord; distanceKm: number } | null = null
+	let crossBand: { record: LiveRecord; distanceKm: number } | null = null
+
+	for (const live of neighbours) {
+		const distanceKm = haversineKm(dead.lat, dead.lon, live.lat, live.lon)
+
+		if (distanceKm > COVERAGE_RADIUS_KM) continue
+
+		if (live.key === dead.key) {
+			if (live.placetype === dead.placetype) {
+				return {
+					verdict: CoverageVerdict.CoveredExact,
+					coveredBy: { id: live.id, name: live.name, placetype: live.placetype, distanceKm },
+				}
+			}
+
+			if (!crossBand || distanceKm < crossBand.distanceKm) {
+				crossBand = { record: live, distanceKm }
+			}
+
+			continue
+		}
+
+		const contains =
+			live.key.length > 0 &&
+			(dead.key.includes(live.key) || [...live.words].every((word) => live.words.size > 0 && dead.words.has(word)))
+
+		if (contains && (!containment || distanceKm < containment.distanceKm)) {
+			containment = { record: live, distanceKm }
+		}
+	}
+
+	if (crossBand) {
+		return {
+			verdict: CoverageVerdict.CoveredCrossBand,
+			coveredBy: {
+				id: crossBand.record.id,
+				name: crossBand.record.name,
+				placetype: crossBand.record.placetype,
+				distanceKm: crossBand.distanceKm,
+			},
+		}
+	}
+
+	if (containment) {
+		return {
+			verdict: CoverageVerdict.CoveredContainment,
+			coveredBy: {
+				id: containment.record.id,
+				name: containment.record.name,
+				placetype: containment.record.placetype,
+				distanceKm: containment.distanceKm,
+			},
+		}
+	}
+
+	return { verdict: CoverageVerdict.Uncovered, coveredBy: null }
+}
+
+async function loadAttestors(
+	dumpPath: string,
+	keys: ReadonlySet<string>
+): Promise<Map<string, { lat: number; lon: number; pop: number }[]>> {
+	const out = new Map<string, { lat: number; lon: number; pop: number }[]>()
+
+	for await (const f of readUnquotedTSV(dumpPath)) {
+		if (f[6] !== "P") continue
+
+		const candidates = [fold(String(f[1] ?? "")), fold(String(f[2] ?? ""))].filter((key) => key && keys.has(key))
+
+		if (!candidates.length) continue
+
+		const row = { lat: Number(f[4]), lon: Number(f[5]), pop: Number(f[14]) || 0 }
+
+		for (const key of new Set(candidates)) {
+			const bag = out.get(key)
+
+			if (bag) {
+				bag.push(row)
+			} else {
+				out.set(key, [row])
+			}
+		}
+	}
+
+	return out
+}
+
+/**
+ * Triages the non-current locality, localadmin and borough records of an admin gazetteer.
+ *
+ * The database is opened read-only.
+ */
+export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResult> {
+	const progress = opts.onProgress ?? (() => {})
+	using db = new DatabaseClient<WOFDatabase>(opts.adminDB, { readOnly: true })
+
+	const placetypes = TRIAGE_PLACETYPES.map((pt) => `'${pt}'`).join(", ")
+
+	const countries =
+		opts.countries?.map((cc) => cc.toUpperCase()) ??
+		db
+			.prepare(
+				`SELECT DISTINCT country FROM spr WHERE country IS NOT NULL AND country != '' AND placetype IN (${placetypes})`
+			)
+			.all()
+			.map((r) => String(r["country"]))
+			.toSorted()
+
+	const coverPlacetypes = COVER_PLACETYPES.map((pt) => `'${pt}'`).join(", ")
+
+	const liveStmt = db.prepare(
+		`SELECT id, name, placetype, latitude, longitude FROM spr
+		 WHERE country = ? AND placetype IN (${coverPlacetypes}) AND is_current != 0
+		   AND latitude != 0 AND longitude != 0`
+	)
+
+	const deadStmt = db.prepare(
+		`SELECT s.id AS id, s.name AS name, s.placetype AS placetype,
+			s.latitude AS latitude, s.longitude AS longitude,
+			s.is_deprecated AS is_deprecated, COALESCE(pp.population, 0) AS population
+		 FROM spr s LEFT JOIN place_population pp ON pp.id = s.id
+		 WHERE s.country = ? AND s.placetype IN (${placetypes})
+		   AND s.is_current = 0 AND s.is_superseded = 0
+		   AND s.latitude != 0 AND s.longitude != 0`
+	)
+
+	const rows: TriageRow[] = []
+	const summary: TriageSummary[] = []
+
+	for (const country of countries) {
+		const dead = deadStmt.all(country)
+
+		if (!dead.length) continue
+
+		const live: LiveRecord[] = liveStmt
+			.all(country)
+
+			.filter((r) => String(r["name"] ?? "").trim().length)
+			.map((r) => {
+				const name = String(r["name"] ?? "")
+				const key = fold(name)
+
+				return {
+					id: Number(r["id"]),
+					name,
+					placetype: String(r["placetype"] ?? ""),
+					key,
+					words: new Set(key.split(" ").filter((value) => value.length)),
+					lat: Number(r["latitude"]),
+					lon: Number(r["longitude"]),
+				}
+			})
+
+		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length))
+		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : null
+		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : null
+
+		if (!attestors) {
+			progress("triage", `${country}: no GeoNames dump — attestation reported unmeasured`)
+		}
+
+		const countryRows: TriageRow[] = []
+
+		for (const record of dead) {
+			const name = String(record["name"] ?? "")
+			const key = fold(name)
+
+			if (!key) continue
+
+			const lat = Number(record["latitude"])
+			const lon = Number(record["longitude"])
+			const placetype = String(record["placetype"] ?? "")
+
+			const { verdict, coveredBy } = judgeCoverage(
+				{ key, words: new Set(key.split(" ").filter((value) => value.length)), lat, lon, placetype },
+				live
+			)
+
+			let attestation: TriageAttestation = { state: "unmeasured", population: null, distanceKm: null }
+
+			if (attestors) {
+				const near = (attestors.get(key) ?? [])
+					.map((g) => ({ ...g, distanceKm: haversineKm(lat, lon, g.lat, g.lon) }))
+					.filter((g) => g.distanceKm <= COVERAGE_RADIUS_KM)
+					.toSorted((a, b) => b.pop - a.pop)
+
+				attestation = near.length
+					? { state: "attested", population: near[0]!.pop, distanceKm: near[0]!.distanceKm }
+					: { state: "unattested", population: null, distanceKm: null }
+			}
+
+			countryRows.push({
+				id: Number(record["id"]),
+				name,
+				placetype,
+				country,
+				latitude: lat,
+				longitude: lon,
+				population: Number(record["population"]) || 0,
+				currencyClass: Number(record["is_deprecated"])
+					? CurrencyClass.DeprecatedNoSuccessor
+					: CurrencyClass.NotCurrentUnstated,
+				coverage: verdict,
+				coveredBy,
+				attestation,
+			})
+		}
+
+		rows.push(...countryRows)
+
+		for (const currencyClass of [CurrencyClass.DeprecatedNoSuccessor, CurrencyClass.NotCurrentUnstated]) {
+			const classRows = countryRows.filter((r) => r.currencyClass === currencyClass)
+
+			if (!classRows.length) continue
+
+			const uncovered = classRows.filter((r) => r.coverage === CoverageVerdict.Uncovered)
+
+			summary.push({
+				country,
+				currencyClass,
+				total: classRows.length,
+				coveredExact: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredExact).length,
+				coveredCrossBand: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredCrossBand).length,
+				coveredContainment: classRows.filter((r) => r.coverage === CoverageVerdict.CoveredContainment).length,
+				uncovered: uncovered.length,
+				uncoveredAttested: attestors ? uncovered.filter((r) => r.attestation.state === "attested").length : null,
+			})
+		}
+
+		progress("triage", `${country}: ${countryRows.length} non-current records judged`)
+	}
+
+	return { rows, summary }
+}

@@ -9,7 +9,7 @@
  *   A query that groups or filters by a
  *   component takes that substring in SQL instead of decoding every row in the process.
  *
- *   `holdoutComponents` in `#tools/overlay/split-slice` performs the same read in JavaScript.
+ *   `holdoutComponents` in `#tools/overlay/split-overlay` performs the same read in JavaScript.
  *   The SQL and JavaScript operations use different string indexing. The difference is described below.
  */
 

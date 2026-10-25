@@ -9,13 +9,14 @@
  *   `source` label and the split it entered, so readers can see which overlays the plan retains
  *   rather than maintained by hand.
  *
- *   Each overlay groups under its unsplit original. A manifest entry ending `.train.parquet`,
- *   `.val.parquet` or `.test.parquet` is one output of `corpus split-slice`, so several entries
- *   collapse to one original. This groups them and reports the original each came from.
+ *   Each overlay groups under its unsplit original. In a manifest assembled before split attributes, an entry
+ *   ending `.train.parquet`, `.val.parquet` or `.test.parquet` is one output of the filename route `corpus
+ *   split-overlay` used then, so several entries collapse to one original. This groups them and reports the
+ *   original each came from.
  *
- *   **Every original is routed, including one holding no row the policy holds out.** `split-slice`
- *   writes a val or test file only where rows reach it. An empty file therefore produces one train file with
- *   the same rows. A hand-maintained per-file list can omit a file and silently overlap holdout with train.
+ *   **Every original is routed, including one holding no row the policy holds out.** `split-overlay` writes
+ *   an attribute for every file, and one with empty held-out lists still records that the policy saw it.
+ *   A hand-maintained per-file list can omit a file and silently overlap holdout with train.
  *   A complete route costs a few seconds per small file.
  *
  *   An original this cannot locate is reported by name and counted. It is never dropped from the plan,
@@ -34,6 +35,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { CARRIED_SOURCES, currentSourceName } from "@mailwoman/corpus/recipes/sources"
+import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { basename, dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -66,13 +68,16 @@ if (!search) throw new Error("--search <dir,dir,...> is required")
 const BASE_FILE = /^part-\d{4}\.parquet$/u
 
 /**
- * The suffix `corpus split-slice` appends.
+ * The suffix `corpus split-overlay` appends.
  * Several entries from one original share it.
  */
 const ROUTED_SUFFIX = /\.(train|val|test)\.parquet$/u
 
-interface ManifestSlice {
-	split: string
+interface ManifestEntry {
+	/**
+	 * Absent from an entry whose `split_attribute` decides each row.
+	 */
+	split?: string
 	path: string
 	source?: string
 	rows: number
@@ -109,26 +114,29 @@ interface OverlayOriginal {
 	unsplitPath: string | null
 }
 
-const manifest = await readLocalJSONFile<{ corpus_version: string; slices: ManifestSlice[] }>(baseManifest)
-const overlays = manifest.slices.filter((slice) => !BASE_FILE.test(basename(slice.path)))
+const manifest = await readLocalJSONFile<{ corpus_version: string; files: ManifestEntry[] }>(baseManifest)
+
+const overlays = baseManifestFiles<(typeof manifest)["files"][number]>(manifest).filter(
+	(file) => !BASE_FILE.test(basename(file.path))
+)
 
 if (!overlays.length) {
-	throw new Error(`${baseManifest} records no overlay slices; every entry looks like a base part-NNNN.parquet`)
+	throw new Error(`${baseManifest} records no overlay files; every entry looks like a base part-NNNN.parquet`)
 }
 
 const grouped = new Map<string, { source: Set<string>; splits: Set<string>; rows: number }>()
 
-for (const slice of overlays) {
-	const name = basename(slice.path)
+for (const file of overlays) {
+	const name = basename(file.path)
 	const stem = name.replace(ROUTED_SUFFIX, "").replace(/\.parquet$/u, "")
 	const entry = grouped.get(stem) ?? { source: new Set<string>(), splits: new Set<string>(), rows: 0 }
 
-	if (slice.source) {
-		entry.source.add(slice.source)
+	if (file.source) {
+		entry.source.add(file.source)
 	}
 
-	entry.splits.add(slice.split)
-	entry.rows += slice.rows
+	entry.splits.add(file.split ?? "split-attribute")
+	entry.rows += file.rows
 	grouped.set(stem, entry)
 }
 
@@ -283,10 +291,10 @@ if (renamed.length) {
 }
 
 /**
- * The three comma-separated lists `overlay-manifest` takes, read from the routed files on disk.
+ * The comma-separated lists `overlay-manifest` takes, read from the routed files on disk.
  *
- * The lists are positional: `overlay-manifest` zips `--parquet`, `--source` and `--split` by index,
- * so a transposition between two of them is a file recorded under another file's source and split.
+ * `--parquet` and `--source` are positional: `overlay-manifest` zips them by index,
+ * so a transposition between the two is a file recorded under another file's source.
  *
  * These entries are derived.
  * The source comes from the plan's current spelling instead of the previous manifest.
@@ -295,14 +303,21 @@ if (renamed.length) {
  * routing decides the number of files that exist and which splits each source enters,
  * so the plan lists files it wrote and files it declined.
  */
-async function routedLists(directory: string): Promise<{ parquet: string[]; source: string[]; split: string[] }> {
+async function routedLists(
+	directory: string
+): Promise<{ parquet: string[]; source: string[]; splitAttribute: string[] }> {
 	const names = (await Globerator.from("*.parquet", { cwd: directory, onlyFiles: true }).toArray())
+		.map((entry) => basename(String(entry)))
+		.toSorted((a, b) => a.localeCompare(b))
+
+	// `corpus split-overlay` writes one `<stem>.split.<policy hash>.json` beside each file it routed.
+	// Each names its parquet, so `overlay-manifest --split-attribute` takes them unpaired.
+	const splitAttribute = (await Globerator.from("*.split.*.json", { cwd: directory, onlyFiles: true }).toArray())
 		.map((entry) => basename(String(entry)))
 		.toSorted((a, b) => a.localeCompare(b))
 
 	const parquet: string[] = []
 	const source: string[] = []
-	const split: string[] = []
 	const rejected: string[] = []
 
 	using db = await openDuckDB()
@@ -334,11 +349,10 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 
 		// The manifest records the name held by the corpus.
 		// A corpus copy drops the `.migrated` infix that marks files from an older corpus.
-		// `overlay-manifest` resolves `<newDir>/<split>/<parquet>`, so a list carrying
-		// the staged spelling resolves to a path the corpus does not have.
+		// `overlay-manifest` resolves the file under `<newDir>`, so a list carrying the
+		// staged spelling resolves to a path the corpus does not have.
 		parquet.push(name.replace(".migrated", ""))
 		source.push(label)
-		split.push(splitOf(name))
 	}
 
 	if (rejected.length) {
@@ -352,14 +366,7 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 		process.exitCode = 1
 	}
 
-	return { parquet, source, split }
-}
-
-/**
- * The split assigned to a routed filename, defaulting to `train` when the name has no suffix.
- */
-function splitOf(name: string): string {
-	return ROUTED_SUFFIX.exec(name)?.[1] ?? "train"
+	return { parquet, source, splitAttribute }
 }
 
 if (values.routed) {
@@ -372,7 +379,7 @@ if (values.routed) {
 	console.log()
 	console.log(`--source  "${lists.source.join(",")}"`)
 	console.log()
-	console.log(`--split   "${lists.split.join(",")}"`)
+	console.log(`--split-attribute "${lists.splitAttribute.join(",")}"`)
 }
 
 console.log()

@@ -40,12 +40,12 @@ export const spec = {
 
 const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
+		const { buildAnchorLookup } = await import("@mailwoman/gazetteer/tools/pipeline/anchor-lookup")
 
 		const stats = await buildAnchorLookup({
 			output: options.out,
 			zcta: options.zcta,
-			include: options.include ? extractDelimited(options.include) : undefined,
+			include: options.include ? extractDelimited(options.include) : null,
 			gbOutward: options.gbOutward,
 		})
 

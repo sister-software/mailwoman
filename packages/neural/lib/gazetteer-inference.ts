@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { PackedStringMap } from "#latn/packed-string-map"
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
@@ -31,13 +32,16 @@ export interface GazetteerLexicon {
 
 	/**
 	 * Maps a lowercased n-gram to its slot bitmask for case-insensitive matching.
+	 *
+	 * {@link parseGazetteerLexicon} fills it with a {@link PackedStringMap};
+	 * the painter reads it only through `get`.
 	 */
-	entries: Map<string, number>
+	entries: Pick<ReadonlyMap<string, number>, "get">
 
 	/**
 	 * Maps an uppercase single-word code to its slot bitmask, matched case-sensitively against the surface.
 	 */
-	codeEntries: Map<string, number>
+	codeEntries: Pick<ReadonlyMap<string, number>, "get">
 
 	/**
 	 * Whether a matched span paints no tag when a span word or its nearest non-empty
@@ -83,8 +87,8 @@ export function parseGazetteerLexicon(raw: {
 		slots: raw.slots,
 		bits: raw.bits,
 		maxNgram: raw.max_ngram,
-		entries: new Map(Object.entries(raw.entries)),
-		codeEntries: new Map(Object.entries(raw.code_entries)),
+		entries: PackedStringMap.from(raw.entries),
+		codeEntries: PackedStringMap.from(raw.code_entries),
 		digitGuard: raw.rules?.digit_guard === true,
 	}
 }

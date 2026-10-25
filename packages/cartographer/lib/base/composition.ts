@@ -5,7 +5,13 @@ import type { LayerSpecification, SourceSpecification } from "@maplibre/maplibre
 import type { LightSpecification, SkySpecification, StyleSpecification, TerrainSpecification } from "maplibre-gl"
 
 import { BaseLayers } from "#base/layers"
-import { createTerrainDEMSource, HillshadeTileSetID } from "#base/terrain"
+import { createLandUnderlaySource, LandUnderlayTileSetID } from "#base/ocean"
+import {
+	BathymetryTileSetID,
+	createBathymetryDEMSource,
+	createTerrainDEMSource,
+	HillshadeTileSetID,
+} from "#base/terrain"
 import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,
@@ -120,6 +126,13 @@ export class StyleSpecificationComposer {
 			...spec.sources,
 			// [TerrainTileSetID]: createTerrainDEMSource(),
 			...(hillshadeSource ? { [HillshadeTileSetID]: hillshadeSource } : {}),
+			// The default base layers include the ocean layers, which read the bathymetry and land underlay sources.
+			...(spec.baseLayers
+				? {}
+				: {
+						[BathymetryTileSetID]: createBathymetryDEMSource(),
+						[LandUnderlayTileSetID]: createLandUnderlaySource(),
+					}),
 		}
 
 		this.layersList = new LayerSpecificationList(spec.baseLayers ?? BaseLayers)

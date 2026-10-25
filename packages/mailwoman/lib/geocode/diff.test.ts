@@ -31,15 +31,15 @@ function tree(
 				node.placeID = placeID
 			}
 
-			if (lat !== undefined) {
+			if (lat) {
 				node.lat = lat
 			}
 
-			if (lon !== undefined) {
+			if (lon) {
 				node.lon = lon
 			}
 
-			if (candidates !== undefined) {
+			if (candidates) {
 				node.alternatives = Array.from({ length: candidates }, () => ({}))
 			}
 

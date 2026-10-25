@@ -39,3 +39,18 @@ simple = { limit = 10, period = 60 }
 name = "STATUS_LIMITER"
 namespace_id = "1003"
 simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "DECLARE_LIMITER"
+namespace_id = "1004"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "EVALUATE_LIMITER"
+namespace_id = "1005"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "DOWNLOAD_LIMITER"
+namespace_id = "1006"
+simple = { limit = 30, period = 60 }

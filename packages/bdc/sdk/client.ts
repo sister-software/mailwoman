@@ -141,7 +141,7 @@ export interface CreateBDCClientOptions {
  * Query-string parameters for {@linkcode BDCClient.get}.
  * An `undefined` value is omitted.
  */
-export type BDCQueryParams = Record<string, string | number | undefined>
+export type BDCQueryParams = Record<string, string | number | null | undefined>
 
 /**
  * Per-call overrides for {@linkcode BDCClient.get}.
@@ -227,7 +227,7 @@ function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
 	const url = new URL(`${BDC_API_BASE_URL}${path}`)
 
 	for (const [key, value] of Object.entries(params)) {
-		if (value !== undefined) {
+		if (value != null && value !== "") {
 			url.searchParams.set(key, String(value))
 		}
 	}

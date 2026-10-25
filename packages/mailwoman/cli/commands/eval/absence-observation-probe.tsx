@@ -65,7 +65,7 @@ const EvalAbsenceObservationProbe = harnessCommand(
 
 		return { receipt }
 	},
-	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : undefined) }
+	{ exitCode: () => 0, json: ({ receipt }, options) => (options.json ? receipt : null) }
 )
 
 export default EvalAbsenceObservationProbe

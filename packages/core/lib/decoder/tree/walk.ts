@@ -9,6 +9,7 @@
 
 import { isAdminHierarchyTag } from "@mailwoman/codex/component"
 
+import { isShapeExcludedPostcode } from "#decoder/excluded-span"
 import type { AddressNode } from "#decoder/types"
 
 /**
@@ -59,11 +60,7 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
  * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
-	return (
-		(node.lat != null && node.lon != null) ||
-		node.placeID !== undefined ||
-		node.metadata?.["resolution_tier"] !== undefined
-	)
+	return (node.lat != null && node.lon != null) || node.placeID != null || node.metadata?.["resolution_tier"] != null
 }
 
 /**
@@ -93,9 +90,13 @@ export function isGroundedNode(node: AddressNode): boolean {
  * Every consumer reads this list one tag at a time (`decodeAsJSON` keys the flat
  * map by tag; `extractGeocodeResult` and `plus-code-override` search it by tag),
  * so the order between two different tags is not part of the interface.
+ *
+ * A postcode span the shape check excluded is left out, so it fills no slot.
  */
 export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {
-	const inDocumentOrder = [...walkNodes(roots)]
+	const inDocumentOrder = walkNodes(roots)
+		.filter((node) => !isShapeExcludedPostcode(node))
+		.toArray()
 
 	return inDocumentOrder.toSorted((a, b) => {
 		const grounding = Number(isGroundedNode(b)) - Number(isGroundedNode(a))

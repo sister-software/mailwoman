@@ -7,7 +7,7 @@ from pathlib import Path
 import pyarrow.parquet as pq
 
 from ...tokenizer import Tokenizer, whitespace_spans
-from .corpus_files import _parquet_paths
+from .corpus_files import corpus_split_files
 from .parquet import _REQUIRED_COLUMNS
 
 
@@ -28,7 +28,9 @@ def verify_tokenizer_alignment(
 
     If invariant (1) fails this raises; (2) failed earlier when we constructed Tokenizer.
     """
-    path = _parquet_paths(corpus_dir, "train")[0]
+    # Every row a file stores must recover its whitespace tokens from `raw`, whichever split reads it,
+    # so this check reads the first train file without its manifest row filter.
+    path = corpus_split_files(corpus_dir, "train")[0].path
     pf = pq.ParquetFile(path)
     t = pf.read_row_group(0, columns=list(_REQUIRED_COLUMNS))
     raws = t["raw"]

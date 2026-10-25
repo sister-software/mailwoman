@@ -23,13 +23,18 @@ import { writeParquetSplits } from "#parquet/writers"
 import { SurfaceOrigin } from "#types"
 import type { LabeledRow } from "#types"
 
+/**
+ * The derivation every writer test passes.
+ * These tests read rows back and assert no store path.
+ */
+const FIXTURE_DERIVATION = { extractHash: "fixture", codeHash: "fixture", config: {} }
+
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",
 	components: { locality: "Paris" },
 	country: "FR",
-	source: "test",
+	source: "wof-admin",
 	source_id: "t-1",
-	corpus_version: "0.1.0",
 	license: "CC0-1.0",
 	register: "whos-on-first",
 	surface: SurfaceOrigin.Attested,
@@ -66,21 +71,21 @@ describe("rowToParquet", () => {
 	it("flattens synth + locale onto top-level columns", () => {
 		const row = labeled({
 			locale: "fr-FR",
-			recipe: { recipe: "case-upper", base_source_id: "t-1" },
+			augmentation: { name: "case-upper", base_source_id: "t-1" },
 			source_id: "t-1+case-upper",
 		})
 
 		const pq = rowToParquet(row)
 		expect(pq.locale).toBe("fr-FR")
-		expect(pq.recipe).toBe("case-upper")
+		expect(pq.augmentation).toBe("case-upper")
 		expect(pq.base_source_id).toBe("t-1")
 		expect(pq.source_id).toBe("t-1+case-upper")
 	})
 
 	it("emits null for missing optional fields", () => {
-		const pq = rowToParquet(labeled({ locale: undefined, recipe: undefined }))
+		const pq = rowToParquet(labeled({ locale: null, augmentation: null }))
 		expect(pq.locale).toBeNull()
-		expect(pq.recipe).toBeNull()
+		expect(pq.augmentation).toBeNull()
 		expect(pq.base_source_id).toBeNull()
 	})
 
@@ -108,14 +113,14 @@ describe("rowToParquet", () => {
 	})
 
 	it("throws loudly when the span triple is absent (un-migrated producer)", () => {
-		expect(() => rowToParquet(labeled({ span_starts: undefined, span_ends: undefined, span_tags: undefined }))).toThrow(
+		expect(() => rowToParquet(labeled({ span_starts: null, span_ends: null, span_tags: null }))).toThrow(
 			/missing the char-offset span triple/
 		)
 	})
 
 	it("throws loudly on a partial span triple (corrupt row, never a silent fallback)", () => {
-		expect(() => rowToParquet(labeled({ span_tags: undefined }))).toThrow(/missing the char-offset span triple/)
-		expect(() => rowToParquet(labeled({ span_starts: undefined }))).toThrow(/missing the char-offset span triple/)
+		expect(() => rowToParquet(labeled({ span_tags: null }))).toThrow(/missing the char-offset span triple/)
+		expect(() => rowToParquet(labeled({ span_starts: null }))).toThrow(/missing the char-offset span triple/)
 	})
 
 	it("throws loudly when the span arrays are not parallel", () => {
@@ -128,10 +133,10 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
-	it("marks locale / register / recipe / base_source_id optional and surface required", () => {
+	it("marks locale / register / augmentation / base_source_id optional and surface required", () => {
 		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.register!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.augmentation!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
 		// A null register means the row has no published-record identity.
 		// A non-null surface records text provenance for every row.
@@ -163,10 +168,10 @@ describe("readers", () => {
 	async function written(rows: readonly LabeledRow[]): Promise<string> {
 		const manifest = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
-		return manifest.slices[0]!.path
+		return manifest.files[0]!.path
 	}
 
 	it("readParquetRows returns every row, and honors a projection", async () => {
@@ -216,12 +221,12 @@ describe("writeParquetSplits", () => {
 	it("refuses a projection that requests a column absent from the file schema", async () => {
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-projection" })]) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
 		const consume = async () => {
 			for await (const _row of openParquetRowStream<ParquetRow & { missing_measurement_column: string }>(
-				m.slices[0]!.path,
+				m.files[0]!.path,
 				{ columns: ["country", "missing_measurement_column"] }
 			)) {
 			}
@@ -244,11 +249,10 @@ describe("writeParquetSplits", () => {
 			"locale",
 			"source",
 			"source_id",
-			"corpus_version",
 			"license",
 			"register",
 			"surface",
-			"recipe",
+			"augmentation",
 			"base_source_id",
 		])
 	})
@@ -265,15 +269,15 @@ describe("writeParquetSplits", () => {
 
 		const m = await writeParquetSplits(
 			{ train: asyncFrom(trainRows), val: asyncFrom(valRows), test: asyncFrom(testRows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile: 10 }
 		)
 
 		expect(m.total_rows).toBe(4)
 		expect(m.counts).toEqual({ train: 2, val: 1, test: 1 })
-		expect(m.slices).toHaveLength(3)
+		expect(m.files).toHaveLength(3)
 		expect(m.row_group_size).toBe(ROW_GROUP_SIZE)
 
-		const trainFile = m.slices.find((s) => s.split === "train")!
+		const trainFile = m.files.find((s) => s.split === "train")!
 		expect(trainFile.rows).toBe(2)
 		expect(trainFile.format).toBe("parquet")
 		expect(trainFile.compression).toBe(PARQUET_COMPRESSION)
@@ -293,7 +297,7 @@ describe("writeParquetSplits", () => {
 		expect(trainBack[1]!.raw).toBe("Nice")
 
 		// Round-trip the val file with an explicit locale set.
-		const valFile = m.slices.find((s) => s.split === "val")!
+		const valFile = m.files.find((s) => s.split === "val")!
 		const valBack = await readParquet(valFile.path)
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
@@ -340,8 +344,12 @@ describe("writeParquetSplits", () => {
 			}),
 		]
 
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
-		const back = await readParquet(m.slices[0]!.path)
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.5.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
+		const back = await readParquet(m.files[0]!.path)
 		expect(back).toHaveLength(3)
 
 		const multi = back.find((r) => r.source_id === "t-multi")!
@@ -362,10 +370,13 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("refuses to write rows missing the span triple (the silent-loss hazard, loudly)", async () => {
-		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
+		const rows = [labeled({ source_id: "t-1", span_starts: null, span_ends: null, span_tags: null })]
 
 		await expect(
-			writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
+			writeParquetSplits(
+				{ train: asyncFrom(rows) },
+				{ outputDir: scratch.path, corpusVersion: "0.5.0", derivationFor: () => FIXTURE_DERIVATION }
+			)
 		).rejects.toThrow(/missing the char-offset span triple/)
 	})
 
@@ -374,14 +385,13 @@ describe("writeParquetSplits", () => {
 
 		const m = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION, rowsPerFile: 10 }
 		)
 
-		const trainFiles = m.slices.filter((s) => s.split === "train")
-		expect(trainFiles).toHaveLength(3) // 10 + 10 + 5
-		expect(trainFiles[0]!.rows).toBe(10)
-		expect(trainFiles[1]!.rows).toBe(10)
-		expect(trainFiles[2]!.rows).toBe(5)
+		const trainFiles = m.files.filter((s) => s.split === "train")
+		// The manifest orders files by store path.
+		// A derivation hash decides that path, so the counts are compared as a set.
+		expect(trainFiles.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
 		expect(m.total_rows).toBe(25)
 
 		// Confirm each file is a real readable .parquet
@@ -393,10 +403,20 @@ describe("writeParquetSplits", () => {
 
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
-		const a = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const a = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
 		await removePathIfPresent(scratch.path("corpus-v0.1.0"))
-		const b = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
-		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
+
+		const b = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
+		expect(a.files[0]!.sha256).toBe(b.files[0]!.sha256)
 	})
 
 	it("rows with optional null columns round-trip through Parquet", async () => {
@@ -407,8 +427,12 @@ describe("writeParquetSplits", () => {
 			labeled({ source_id: "t-without", raw: "no locale" }),
 		]
 
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
-		const back = await readParquet(m.slices[0]!.path)
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
+		const back = await readParquet(m.files[0]!.path)
 		expect(back).toHaveLength(2)
 		const withLocale = back.find((r) => r.source_id === "t-with")!
 		const withoutLocale = back.find((r) => r.source_id === "t-without")!
@@ -418,11 +442,15 @@ describe("writeParquetSplits", () => {
 
 	it("streams projected rows without materializing the file", async () => {
 		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
-		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
 
 		const streamed = []
 
-		for await (const row of openParquetRowStream<{ country: string; labels: string[] }>(m.slices[0]!.path, {
+		for await (const row of openParquetRowStream<{ country: string; labels: string[] }>(m.files[0]!.path, {
 			columns: ["country", "labels"],
 		})) {
 			streamed.push(row)
@@ -432,16 +460,34 @@ describe("writeParquetSplits", () => {
 		expect(streamed[0]).toEqual({ country: "FR", labels: ["B-locality"] })
 	})
 
+	it("streams only the rows a where clause keeps", async () => {
+		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
+
+		const m = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
+		)
+
+		const streamed = await Array.fromAsync(
+			openParquetRowStream<{ source_id: string }>(m.files[0]!.path, {
+				columns: ["source_id"],
+				where: "source_id IN ('t-1', 't-3') AND list_contains(span_tags, 'locality')",
+			})
+		)
+
+		expect(streamed.map((row) => row.source_id).toSorted()).toEqual(["t-1", "t-3"])
+	})
+
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
 		// Only train provided.
 		// Val + test omitted entirely.
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
-			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 		)
 
 		expect(m.counts).toEqual({ train: 1, val: 0, test: 0 })
-		expect(m.slices).toHaveLength(1)
-		expect(m.slices[0]!.split).toBe("train")
+		expect(m.files).toHaveLength(1)
+		expect(m.files[0]!.split).toBe("train")
 	})
 })

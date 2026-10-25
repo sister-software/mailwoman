@@ -164,7 +164,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					if (opts.signal?.aborted) return
 
 					for (const variant of streetVariants(row)) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
+						if (typeof opts.limit === "number" && emitted >= opts.limit) return
 						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
 						if (!rendered) continue
@@ -178,7 +178,6 @@ export function createTigerAdapter(): CorpusAdapter {
 							locale: "en-US",
 							source: TIGER_ADAPTER_ID,
 							source_id: `${TIGER_ADAPTER_ID}-st-${row.linearid}-${variant.variantKey}`,
-							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
 
@@ -190,7 +189,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					if (opts.signal?.aborted) return
 
 					for (const variant of placeVariants(row)) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
+						if (typeof opts.limit === "number" && emitted >= opts.limit) return
 						const rendered = formatAddressRow(variant.components, "US", { singleLine: true })
 
 						if (!rendered) continue
@@ -204,7 +203,6 @@ export function createTigerAdapter(): CorpusAdapter {
 							locale: "en-US",
 							source: TIGER_ADAPTER_ID,
 							source_id: `${TIGER_ADAPTER_ID}-pl-${row.geoid}-${variant.variantKey}`,
-							corpus_version: "",
 							license: TIGER_DEFAULT_LICENSE,
 						}
 

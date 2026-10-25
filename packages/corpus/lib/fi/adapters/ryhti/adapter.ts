@@ -242,7 +242,7 @@ export function createRyhtiAdapter(): CorpusAdapter {
 				for await (const record of rows as AsyncIterable<RyhtiRow>) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const country = countryOfFinnishMunicipality(record.municipality_number ?? "")
 
@@ -295,7 +295,6 @@ export function createRyhtiAdapter(): CorpusAdapter {
 						locale: `${surface.language}-${country}`,
 						source: RYHTI_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: "CC-BY-4.0",
 					}
 

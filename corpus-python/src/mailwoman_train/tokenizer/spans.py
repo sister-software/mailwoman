@@ -14,6 +14,28 @@ from ..labels import collapse_label
 from ..types import PieceSpan
 
 
+def utf16_boundaries(text: str, offsets: Iterable[int]) -> dict[int, int]:
+    """Map UTF-16 offsets into ``text`` to Python code-point indices.
+
+    The TypeScript corpus build writes span offsets in UTF-16 code units, and a character outside the Basic
+    Multilingual Plane (𦑃, U+26443) takes two of them where Python counts one. Raises when an offset falls inside a
+    surrogate pair or past the end, naming the offsets that do not land on a character boundary.
+    """
+    wanted = set(offsets)
+    result: dict[int, int] = {}
+    units = 0
+    if 0 in wanted:
+        result[0] = 0
+    for index, char in enumerate(text, start=1):
+        units += 2 if ord(char) > 0xFFFF else 1
+        if units in wanted:
+            result[units] = index
+    missing = sorted(wanted - result.keys())
+    if missing:
+        raise ValueError(f"span offsets are not UTF-16 boundaries for {text!r}: {missing}")
+    return result
+
+
 def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     """Return the (char_begin, char_end) span of each whitespace token in ``raw``.
 

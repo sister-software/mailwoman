@@ -3,8 +3,6 @@
 
 /**
  * @file Tests for {@linkcode parseForm499} (streaming TSV parser) and {@linkcode classifyFiler}
- *   (the ported `principalCommType` → {@linkcode FilerClassification} mapping, the earlier draft
- *   `universal-service.ts`:164-176).
  */
 
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
@@ -34,7 +32,7 @@ describe("FORM_499_COLUMNS", () => {
 		expect(FORM_499_COLUMNS.at(-1)).toBe("dcAgentAddress")
 	})
 
-	it("does not carry otherTradeName1 — present in the earlier-draft interface but absent from its column tuple", () => {
+	it("does not carry otherTradeName1 — present in the interface but absent from its column tuple", () => {
 		expect(FORM_499_COLUMNS as readonly string[]).not.toContain("otherTradeName1")
 	})
 })

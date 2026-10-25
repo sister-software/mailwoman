@@ -77,6 +77,14 @@ interface LiteralInputWithTruth {
 	lon: number
 	tolerance_m?: number
 	truth_type?: string
+	/**
+	 * The ISO alpha-2 country the truth lies in, as a board row states it.
+	 */
+	country?: string
+	/**
+	 * The expected components, tag to value, as a board row would state them.
+	 */
+	components?: Record<string, string>
 }
 
 /**
@@ -122,7 +130,7 @@ export interface ResolvedInput {
 	 */
 	toleranceM: number | null
 	/**
-	 * The expected components of a golden or parity row.
+	 * The expected components of a golden or parity row, or of a literal input that states them.
 	 */
 	expectComponents: Record<string, string> | null
 }
@@ -330,11 +338,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		)
 	}
 
-	const { sample, drawnFrom } = await drawHoldoutSample(
-		definition,
-		n,
-		ref.seed === undefined ? undefined : mulberry32(ref.seed)
-	)
+	const { sample, drawnFrom } = await drawHoldoutSample(definition, n, !ref.seed ? undefined : mulberry32(ref.seed))
 
 	if (!sample.length) {
 		throw new Error(`input set: the ${definition.label} draw produced no rows from ${definition.file}.`)
@@ -353,7 +357,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 	)
 
 	return {
-		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
+		setID: `holdout:${source}/${n}${!ref.seed ? "" : `/seed-${ref.seed}`}`,
 		inputs,
 		n: inputs.length,
 		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
@@ -368,7 +372,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		corpusHash: null,
 		notes: [
 			`${definition.label}, ${inputs.length} rows drawn from ${drawnFrom.toLocaleString("en-US")} parseable rows.`,
-			ref.seed === undefined
+			!ref.seed
 				? "UNSEEDED — a genuinely fresh draw. Re-running this reference produces different rows, which is what makes " +
 					"it the one set the model cannot have memorized. Two arms inside a single call still see the same rows."
 				: `Seeded with ${ref.seed}, so this exact set is reproducible. That also means it can be iterated against, ` +
@@ -390,7 +394,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
-	// A literal input with coordinates can be graded.
+	// A literal input with coordinates can be graded, and one that also states components is graded on them.
 	// A bare string can only be observed.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"
@@ -402,12 +406,20 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 					truthLon: entry.lon,
 					toleranceM: entry.tolerance_m ?? null,
 					truthType: entry.truth_type ?? null,
+					country: entry.country?.toUpperCase() ?? null,
+					expectComponents: entry.components ?? null,
 				})
 	)
 
 	const graded = rows.filter((row) => row.truthLat !== null).length
-	// The digest includes the truth coordinates, so sets graded differently get different IDs.
-	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
+	const withComponents = rows.filter((row) => row.expectComponents !== null).length
+
+	// The digest includes the truth coordinates and components, so sets graded differently get different IDs.
+	const digest = rows.map(
+		(row) =>
+			`${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}\u0000` +
+			(row.expectComponents ? stringifyJSON(row.expectComponents) : "")
+	)
 
 	return {
 		setID: `literal:${sha256Hex(digest).slice(0, 12)}`,
@@ -419,7 +431,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		why: ref.why,
 		notCovered: [],
 		hasTruth: {
-			components: 0,
+			components: withComponents,
 			coordinates: graded,
 			tier: 0,
 			any: graded,
@@ -430,8 +442,12 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 			graded === 0
 				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
 				: graded === rows.length
-					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. It carries no component or ` +
-						"tier truth — a row can be right to the meter and still have parsed the wrong thing."
+					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. ` +
+						(withComponents === rows.length
+							? "Every row also states expected components, so a row that lands within tolerance but parsed the wrong " +
+								"thing fails on them."
+							: `${withComponents} of them state expected components; the rest carry no component or tier truth — a ` +
+								"row can be right to the meter and still have parsed the wrong thing.")
 					: `${graded} of ${rows.length} rows carry a truth coordinate; the rest are observed only. Read the graded ` +
 						"fraction against its own denominator, never against n.",
 			"Results from this set report their confidence bound in the summary sentence — see power.ts.",

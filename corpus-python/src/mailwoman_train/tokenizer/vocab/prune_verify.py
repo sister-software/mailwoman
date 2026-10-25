@@ -30,6 +30,7 @@ from typing import Any
 
 import numpy as np
 
+from ...data.loader import manifest_files
 from ...paths import data_root_path
 
 
@@ -38,7 +39,7 @@ def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, see
     import pyarrow.parquet as pq
 
     manifest = json.loads(Path(manifest_path).read_text())
-    files = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
+    files = [s["path"].replace(remap[0], remap[1], 1) for s in manifest_files(manifest) if s["split"] == "train"]
     rng = random.Random(seed)
     rng.shuffle(files)
     rows: list[str] = []

@@ -3,7 +3,9 @@
 The "clone + train" recipe (#480). A shipped model is reproducible from five inputs. This
 page lists exactly where each lives and the commands that consume them. The worked example
 is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
-(`evals/scores-by-version.json`) for any other version — every row records the same five.
+(`evals/scores-by-version.json`) for any other version. A row records the code, config and corpus
+version. Rows appended from 2026-10-24 also record `tokenizer_md5`, read from the model card's
+`files_md5`. Earlier rows leave the tokenizer unrecorded, so read it from that release's model card.
 
 ## The five inputs
 

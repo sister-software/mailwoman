@@ -1,7 +1,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
-import { readLibPostalSingleWordStopwords } from "@mailwoman/core/resources/libpostal"
+import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
 import { EMPTY_QUERY_SHAPE_VIEW } from "@mailwoman/query-shape"

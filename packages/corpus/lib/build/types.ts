@@ -51,6 +51,31 @@ export const BuildProfile = {
 export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
 
 /**
+ * What a build does with the work a previous build left under its output directory.
+ *
+ * No choice is implicit: a build that finds prior work and was given neither `Resume`
+ * nor `Fresh` refuses before it opens any output.
+ */
+export const PriorOutput = {
+	/**
+	 * Refuse when the output directory holds an align checkpoint, a non-empty
+	 * align output, or a finished adapter run.
+	 */
+	Refuse: "refuse",
+	/**
+	 * Reuse each finished adapter run, continue the align phase from its checkpoint,
+	 * and keep the parquet files the parquet manifest records.
+	 */
+	Resume: "resume",
+	/**
+	 * Remove the checkpoint, the align outputs and every adapter manifest, then build from the start.
+	 */
+	Fresh: "fresh",
+} as const
+
+export type PriorOutput = (typeof PriorOutput)[keyof typeof PriorOutput]
+
+/**
  * Per-invocation options for `buildCorpus`.
  */
 export interface BuildCorpusOptions {
@@ -126,7 +151,7 @@ export interface BuildCorpusOptions {
 	 * A row whose `license` starts with one is dropped at ingest.
 	 * The default excludes no prefix.
 	 */
-	excludeLicenses?: readonly RegExp[]
+	excludeLicenses?: readonly RegExp[] | null
 
 	/**
 	 * Which rows this build admits on the evidence of their license obligations.
@@ -153,6 +178,55 @@ export interface BuildCorpusOptions {
 	 * in {@linkcode BuildCorpusManifest.source_rights}.
 	 */
 	unshippableReason?: string
+
+	/**
+	 * What to do with a previous build's work under `outputDir`.
+	 *
+	 * @defaultValue {@linkcode PriorOutput.Refuse}
+	 */
+	priorOutput?: PriorOutput
+
+	/**
+	 * Worker processes the build runs at once.
+	 *
+	 * `1` runs every phase in this process, in the serial order this function has always used.
+	 * Above `1` a coordinator runs each source's adapter, align and parquet work in
+	 * worker processes, each with its own heap, DuckDB limits and temporary directory,
+	 * and assembles the same corpus from their records.
+	 *
+	 * `planWorkerBudget` refuses a value whose workers do not fit in host memory.
+	 *
+	 * @defaultValue `1`
+	 */
+	jobs?: number
+
+	/**
+	 * Host memory the worker budget is computed from.
+	 *
+	 * @defaultValue the host's total memory
+	 */
+	hostMemoryBytes?: number
+
+	/**
+	 * Canonical bytes per align range when `jobs` is above `1`.
+	 *
+	 * A source whose `canonical.jsonl` is larger is aligned in contiguous ranges by several workers.
+	 *
+	 * @defaultValue `ALIGN_RANGE_BYTES`
+	 */
+	alignRangeBytes?: number
+
+	/**
+	 * Sources whose parallel-build state is deleted before a resumed build, so they are
+	 * built again from their adapter run while every other finished source is reused.
+	 */
+	freshSources?: readonly string[]
+
+	/**
+	 * Cancels a parallel build: the coordinator stops its workers, keeps every finished
+	 * source's record for a later `--resume`, releases the output lock and rejects.
+	 */
+	signal?: AbortSignal
 }
 
 /**
@@ -164,7 +238,15 @@ export interface BuildCorpusManifest {
 	adapters: AdapterRunManifest[]
 	skipped_adapters: string[]
 	splits: { counts: SplitManifest["counts"]; holdouts: SplitManifest["holdouts"] }
-	slices: { counts: ParquetManifest["counts"]; total_rows: number }
+	files: { counts: ParquetManifest["counts"]; total_rows: number }
+	/**
+	 * The held-out span check that admitted the parquet manifest: when it ran,
+	 * the declared countries it read and the files it counted.
+	 *
+	 * The full record, findings included, is `HOLDOUT_CHECK.json` beside the parquet manifest.
+	 * A build whose check found anything wrote no top-level manifest at all.
+	 */
+	holdout_check: { checked_at: string; countries: string[]; files_read: number }
 	quarantine_count: number
 	total_aligned_rows: number
 	/**

@@ -13,6 +13,7 @@ import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address/layouts"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -163,7 +164,7 @@ function layoutSource(
 	return lines.join("\n")
 }
 
-const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+const specsDirectory = sslAddressSpecsPath()
 const entries: string[] = []
 const latinEntries: string[] = []
 const localEntries: string[] = []

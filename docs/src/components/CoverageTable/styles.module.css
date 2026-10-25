@@ -1,0 +1,79 @@
+/**
+ * The coverage table: ruled rows, check marks in the selected color, and the finest tier as a tag.
+ */
+
+.wrap {
+	overflow-x: auto;
+}
+
+.table {
+	display: table;
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+}
+
+.table tr {
+	background: none;
+	border: 0;
+}
+
+.table th,
+.table td {
+	border: 0;
+	border-bottom: 1px solid var(--ss-color-rule);
+	padding: 0.6rem 0.9rem;
+	text-align: left;
+	vertical-align: top;
+}
+
+.table thead th {
+	background: none;
+	border-bottom: 2px solid var(--ss-color-edge);
+	font-size: 0.75rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.table tbody th {
+	background: none;
+	font-weight: var(--ifm-font-weight-semibold);
+	max-width: 22rem;
+}
+
+.yes {
+	color: var(--ss-color-selected);
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.no {
+	color: var(--ifm-color-emphasis-500);
+}
+
+.tier,
+.tierFine {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	padding: 0.1rem 0.4rem;
+	border: 1px solid var(--ss-color-edge);
+	white-space: nowrap;
+}
+
+.tierFine {
+	border-color: var(--ss-color-selected);
+	background: var(--ss-color-selected);
+	color: var(--ss-color-white);
+}
+
+[data-theme="dark"] .tierFine {
+	color: var(--mw-color-navy);
+}
+
+.fine {
+	margin-top: 0.75rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-700);
+}

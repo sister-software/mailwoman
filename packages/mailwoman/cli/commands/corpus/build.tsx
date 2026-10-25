@@ -19,7 +19,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
-import { BuildProfile } from "@mailwoman/corpus/build/types"
+import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
@@ -73,7 +73,6 @@ export const spec = {
 			validate: (value) => Number.isInteger(value) && value > 0,
 			validationMessage: "--rows-per-file must be a positive integer.",
 			description: "Max rows per parquet file",
-			deprecatedName: "rows-per-slice",
 		},
 		"shuffle-window": {
 			type: "number",
@@ -117,6 +116,43 @@ export const spec = {
 				"Admit sources whose register rows lack an elected decision permitting transform and train, for a " +
 				"local experiment. States why; the corpus manifest records it as not shippable",
 		},
+		resume: {
+			type: "boolean",
+			default: false,
+			description:
+				"Continue a previous build under --out: reuse its finished adapter runs, continue align from " +
+				"align-checkpoint.json and keep the parquet files its manifest records",
+		},
+		fresh: {
+			type: "boolean",
+			default: false,
+			description:
+				"Delete a previous build's align checkpoint, align outputs and adapter manifests under --out " +
+				"and build from the start. Without --resume or --fresh, a build refuses an --out holding prior work",
+		},
+		jobs: {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--jobs must be a positive integer.",
+			description:
+				"Worker processes to run at once (default: as many as host memory and CPUs hold). 1 builds serially " +
+				"in this process; above 1 each source's adapter, align and parquet work runs in workers with their " +
+				"own heap and DuckDB limits, and a --jobs whose workers do not fit in host memory is refused",
+		},
+		"align-range-mib": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--align-range-mib must be a positive integer.",
+			description:
+				"With --jobs above 1: canonical MiB per align worker, so a larger source aligns in several byte ranges " +
+				"at once (default 2048). The ranges change which worker aligns a row and never the bytes written",
+		},
+		"fresh-sources": {
+			type: "string",
+			description:
+				"With --resume and --jobs above 1: comma-separated sources whose finished work is discarded and built " +
+				"again, while every other finished source is reused",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -132,16 +168,16 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if (!("inputPath" in value) || typeof value.inputPath !== "string") return false
 
-		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
+		if ("outputDir" in value && value.outputDir && typeof value.outputDir !== "string") return false
 
 		// Check the shape because a lower-case `nl` is still a string.
 		// The four adapters that filter per row compare it with the row's upper-case code.
 		// A lower-case value selects zero rows and reports no matches.
-		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
+		if ("country" in value && value.country && !isAlpha2CodeShape(value.country)) return false
 
 		return (
 			!("limit" in value) ||
-			value.limit === undefined ||
+			!value.limit ||
 			(typeof value.limit === "number" && Number.isInteger(value.limit) && value.limit > 0)
 		)
 	})
@@ -177,6 +213,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { defaultBuildJobs } = await import("@mailwoman/corpus/build/budget")
 		const { readBuildInputs } = await import("@mailwoman/corpus/build/inputs")
 		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
 
@@ -188,11 +225,23 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 					throw new CommandError(`--inputs ${options.inputs} could not be read as a build record: ${error.message}`)
 				})
 
+		if (options.resume && options.fresh) {
+			throw new CommandError("--resume and --fresh are opposite choices; pass one.")
+		}
+
 		const adapters = defaultAdapterRegistry.list()
+		const jobs = options.jobs ?? defaultBuildJobs({ adapterIDs: Object.keys(adapterInputs) })
+
+		if (options.freshSources && !(options.resume && jobs > 1)) {
+			throw new CommandError("--fresh-sources applies to a parallel build resumed with --resume and --jobs above 1.")
+		}
 
 		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
 		// own tests run the WOF adapter against a five-kilobyte fixture under the default heap.
-		assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
+		// A parallel build runs each adapter in a worker whose heap it sets, so this process needs none of it.
+		if (jobs <= 1) {
+			assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
+		}
 
 		const m = await buildCorpus({
 			outputDir: options.out,
@@ -205,13 +254,22 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			shuffleSeed: options.shuffleSeed,
 			profile: options.profile as BuildProfile,
 			licensePolicy: options.licensePolicy as LicensePolicy,
-			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
+			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : null,
 			unshippableReason: options.unshippableReason,
+			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
+			jobs,
+			alignRangeBytes: options.alignRangeMib ? options.alignRangeMib * 1024 ** 2 : undefined,
+			freshSources: options.freshSources
+				? options.freshSources
+						.split(",")
+						.map((source) => source.trim())
+						.filter((source) => source.length > 0)
+				: undefined,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
 		return {
-			total: m.slices.total_rows,
+			total: m.files.total_rows,
 			aligned: m.total_aligned_rows,
 			quarantined: m.quarantine_count,
 			adapters: m.adapters.length,

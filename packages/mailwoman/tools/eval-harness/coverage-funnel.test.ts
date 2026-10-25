@@ -5,13 +5,13 @@
  *   `censusCoverage` keys its rows on the union of five registers, so inheriting its denominator would drop a jurisdiction that has no row there at all.
  */
 
+import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRecord,
 	type AddressSourceRegister,
 	BackboneState,
 	type JurisdictionRecord,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	ResearchPass,
 	SourceGeometry,
 	SourceStatus,
@@ -126,7 +126,8 @@ async function funnel(overrides: Partial<Parameters<typeof readCoverageFunnel>[0
 		coverage: [US_COVERAGE, KE_COVERAGE],
 		register: testRegister(),
 		tieredCountries: ["US", "KE"],
-		protectedCountries: ["US"],
+		requiredCountries: ["US"],
+		releaseSpecVersion: "test",
 		...overrides,
 	})
 }

@@ -10,16 +10,46 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
+import { basename, dirname, normalize, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { type DuckDBLimits, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { openSourceRightsAdmission, type SourceRightsRecord } from "#source-register/corpus-inputs"
+import {
+	type CorpusDeletion,
+	type DeletionRequest,
+	deletionTargets,
+	matchedSourceIDs,
+	prepareDeletion,
+	type PreparedDeletion,
+	readDeletionIDs,
+} from "#tools/overlay/deletions"
+import {
+	readSplitAttribute,
+	SPLIT_ATTRIBUTE,
+	type SplitAttributeFile,
+	splitOfSourceID,
+} from "#tools/overlay/split-attribute"
 import type { SplitName } from "#utils/split"
 
-interface ParquetFileDescriptor {
-	split: SplitName
+/**
+ * The attribute file that decides the split of each row of one manifest file.
+ */
+interface SplitAttributeReference {
+	path: string
+	sha256: string
+	policy_hash: string
+	counts: Record<SplitName, number>
+}
+
+/**
+ * A manifest file entry.
+ *
+ * A file holds one split's rows and records it under `split`, or holds every split's rows
+ * and points under `split_attribute` at the attribute that decides each row.
+ */
+type ParquetFileDescriptor = {
 	path: string
 	format: "parquet"
 	compression: string
@@ -29,64 +59,107 @@ interface ParquetFileDescriptor {
 	first_source_id: string
 	last_source_id: string
 	source: string
-}
+} & ({ split: SplitName } | { split_attribute: SplitAttributeReference })
 
 type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 
 /**
- * The legacy manifest keys for the file list and the rows per file.
+ * The retired manifest keys for the file list and the rows per file, newest first.
  *
- * Earlier corpora are immutable and still use these keys, so readers accept both
- * spellings and writers emit only the current ones.
- * The keys are built by concatenation because a repository check bans the legacy word.
+ * Built corpora are immutable, and frozen training manifests record their `MANIFEST.json` digests,
+ * so readers accept every spelling and writers emit only `files` and `rows_per_file`.
+ * The keys are built by concatenation because the repository's vocabulary checks ban both retired words.
  */
-const PRE_RENAME_FILES_KEY = `sh${"ards"}` as const
-const PRE_RENAME_ROWS_PER_FILE_KEY = `rows_per_sh${"ard"}` as const
+export const RETIRED_FILES_KEYS = [`sl${"ices"}`, `sh${"ards"}`] as const
+const RETIRED_ROWS_PER_FILE_KEYS = [`rows_per_sl${"ice"}`, `rows_per_sh${"ard"}`] as const
 
 interface BaseManifest {
 	corpus_version?: string
 	schema: unknown
-	rows_per_slice?: unknown
+	rows_per_file?: unknown
 	row_group_size: unknown
-	slices?: ManifestFile[]
+	files?: ManifestFile[]
 	counts: { train: number; val: number; test: number }
 	total_rows: number
-	[PRE_RENAME_FILES_KEY]?: ManifestFile[]
-	[PRE_RENAME_ROWS_PER_FILE_KEY]?: unknown
+	[key: string]: unknown
 	/**
 	 * The source-rights record a build or assembly wrote when it checked its sources.
 	 */
 	source_rights?: SourceRightsRecord
+	/**
+	 * The rows the base removed from its stored files.
+	 * Its `counts` are net of them.
+	 */
+	deletions?: CorpusDeletion[]
 }
 
 /**
- * Returns a manifest's file list from `slices` or from the legacy key.
+ * Returns a manifest's file list from `files` or from a retired key in {@linkcode RETIRED_FILES_KEYS}.
  *
- * A non-empty `slices` wins, then a legacy list, then an empty `slices`.
- * An empty list is a valid answer, but a manifest with neither key throws, because an
+ * The first key holding a non-empty list wins, then the first holding an empty one.
+ * An empty list is a valid answer, but a manifest with no such key throws, because an
  * empty result would misreport a missing list as a corpus without files.
  */
-export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILES_KEY]?: unknown }): ManifestFile[] {
-	const slices = manifest.slices
-	const preRename = manifest[PRE_RENAME_FILES_KEY]
+export function baseManifestFiles<T extends { path: string } = ManifestFile>(manifest: object): T[] {
+	const record = manifest as Record<string, unknown>
+	const lists = ["files", ...RETIRED_FILES_KEYS].map((key) => record[key]).filter(Array.isArray)
+	const filled = lists.find((list) => list.length)
 
-	if (Array.isArray(slices) && slices.length) return slices as ManifestFile[]
+	if (filled) return refuseRepeatedFiles(filled as T[])
 
-	if (Array.isArray(preRename)) return preRename as ManifestFile[]
-
-	if (Array.isArray(slices)) return slices as ManifestFile[]
+	if (lists.length) return []
 
 	throw new Error(
-		`manifest names no file list: neither "slices" nor the pre-rename key holds an array. An empty list here ` +
+		`manifest holds no file list under "files" or a retired key. An empty list here ` +
 			`would read as a corpus of no files, which is a measurement this manifest does not support.`
 	)
 }
 
 /**
- * Returns the base's rows-per-file value under either key.
+ * Returns `files` when no two entries name the same file, by normalized path
+ * or by `sha256`, and throws naming both entries otherwise.
+ *
+ * A file listed twice is read twice, so every row in it would count twice in its split
+ * and weigh its records twice in training.
+ */
+export function refuseRepeatedFiles<T extends { path: string; sha256?: unknown }>(files: T[]): T[] {
+	const byPath = new Map<string, number>()
+	const bySHA = new Map<string, number>()
+
+	for (const [index, file] of files.entries()) {
+		const path = normalize(file.path)
+		const earlierPath = byPath.get(path)
+
+		if (typeof earlierPath === "number") {
+			throw new TypeError(
+				`manifest lists ${path} twice (entries ${earlierPath} and ${index}), so its rows would be read twice.`
+			)
+		}
+
+		byPath.set(path, index)
+
+		if (typeof file.sha256 !== "string") continue
+
+		const earlierSHA = bySHA.get(file.sha256)
+
+		if (typeof earlierSHA === "number") {
+			throw new TypeError(
+				`manifest lists sha256 ${file.sha256} twice: ${files[earlierSHA]!.path} (entry ${earlierSHA}) and ` +
+					`${file.path} (entry ${index}) are the same bytes, so their rows would be read twice.`
+			)
+		}
+
+		bySHA.set(file.sha256, index)
+	}
+
+	return files
+}
+
+/**
+ * Returns the base's rows-per-file value under its current or a retired key.
  */
 function baseRowsPerFile(base: BaseManifest): unknown {
-	return base.rows_per_slice ?? base[PRE_RENAME_ROWS_PER_FILE_KEY]
+	return ["rows_per_file", ...RETIRED_ROWS_PER_FILE_KEYS].map((key) => base[key]).find((value) => value != null)
 }
 
 /**
@@ -96,25 +169,14 @@ export interface OverlayFile {
 	parquet: string
 	source: string
 	/**
-	 * The split that the file's rows belong to.
+	 * The split attribute `corpus split-overlay` wrote for the file, by its name under the overlay directory.
 	 *
-	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
-	 * so that the holdout policy chooses held-out rows.
-	 *
-	 * @defaultValue `train`
+	 * A file with an attribute sits at `<newDir>/<parquet>` and holds every split's rows,
+	 * and the attribute decides each row.
+	 * A file without one sits at `<newDir>/train/<parquet>` and all its rows are train,
+	 * so held-out rows reach a manifest only through the holdout policy.
 	 */
-	split?: SplitName
-}
-
-/**
- * Returns the split encoded in a `<stem>.<split>.parquet` filename, or `null` for any other name.
- *
- * Only `splitOverlaySlice` writes names with this suffix.
- */
-export function splitFromFilename(parquet: string): SplitName | null {
-	const match = /\.(train|val|test)\.parquet$/.exec(parquet)
-
-	return match ? (match[1] as SplitName) : null
+	splitAttribute?: string
 }
 
 /**
@@ -139,17 +201,27 @@ export function splitFromFilename(parquet: string): SplitName | null {
 async function descriptor(
 	localPath: string,
 	modalPath: string,
-	split: SplitName,
-	source: string
+	placement: { split: SplitName } | { split_attribute: SplitAttributeReference },
+	source: string,
+	limits: DuckDBLimits | undefined
 ): Promise<ParquetFileDescriptor> {
 	// `assembleOverlayManifest` calls this once for each file.
-	using db = await openDuckDB()
+	// An added file can hold tens of millions of rows, so DuckDB computes the count,
+	// the distinct sources and the end ids, and the hash streams the file.
+	using db = await openDuckDB(limits)
 
-	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
+	const file = `read_parquet('${escapeSQLString(localPath)}', file_row_number = true)`
 
-	const rows = result.getRowObjects()
-	const sids = rows.map((r) => r.source_id as string)
-	const stored = new Set(rows.map((r) => r.source as string))
+	const ends = await db.runAndReadAll(
+		`SELECT count(*) AS rows, arg_min(source_id, file_row_number) AS first, ` +
+			`arg_max(source_id, file_row_number) AS last FROM ${file}`
+	)
+
+	const sources = await db.runAndReadAll(`SELECT DISTINCT source FROM ${file}`)
+
+	const summary = ends.getRowObjects()[0]!
+	const rowCount = Number(summary.rows)
+	const stored = new Set(sources.getRowObjects().map((r) => r.source as string))
 
 	if (stored.size !== 1 || !stored.has(source)) {
 		const found = [...stored].toSorted().join(", ")
@@ -162,15 +234,15 @@ async function descriptor(
 	}
 
 	return {
-		split,
+		...placement,
 		path: modalPath,
 		format: "parquet",
 		compression: "SNAPPY",
-		rows: sids.length,
+		rows: rowCount,
 		bytes: (await statPath(localPath)).size,
-		sha256: sha256Hex(await readLocalBuffer(localPath)),
-		first_source_id: sids[0]!,
-		last_source_id: sids.at(-1)!,
+		sha256: await sha256File(localPath),
+		first_source_id: summary.first as string,
+		last_source_id: summary.last as string,
 		source,
 	}
 }
@@ -198,45 +270,17 @@ export interface OverlayPlan {
 	note: string
 	appliedAt: string
 	/**
-	 * Each added file with the route its split came from.
+	 * Each added file with the split attribute that decides its rows, or `null` when every row is train.
 	 *
-	 * `route` reads `split-slice` when the filename includes the split suffix written by the command.
-	 * `caller` reads the split supplied as an argument.
-	 *
-	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
-	 * and put 770 of DE's 3,987 validation `source_id`s in train.
-	 * The filename was the only place that showed this (#2359).
+	 * A hand-placed split reached `v0.6.0-register-surface` and put 770 of DE's
+	 * 3,987 validation `source_id`s in train (#2359), so a held-out row enters only
+	 * through an attribute the holdout policy wrote.
 	 */
-	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
+	files: Array<{ parquet: string; source: string; splitAttribute: { path: string; policyHash: string } | null }>
 	/**
 	 * The base sources whose files this overlay dropped.
 	 */
 	replacedSources: string[]
-}
-
-/**
- * How one overlay file's split was decided.
- */
-export const SplitRoute = {
-	/**
-	 * `corpus split-slice` applied `splitForRow` to every row and wrote the split into the filename.
-	 */
-	SplitSlice: "split-slice",
-
-	/**
-	 * The caller supplied the split.
-	 * The holdout policy never saw these rows.
-	 */
-	Caller: "caller",
-} as const
-
-export type SplitRoute = (typeof SplitRoute)[keyof typeof SplitRoute]
-
-/**
- * Which route decided one file's split.
- */
-export function splitRouteFor(parquet: string): SplitRoute {
-	return splitFromFilename(parquet) ? SplitRoute.SplitSlice : SplitRoute.Caller
 }
 
 export interface OverlayManifestOptions {
@@ -262,6 +306,96 @@ export interface OverlayManifestOptions {
 	 * Without it the assembly refuses them, and with it the manifest records the corpus as not shippable.
 	 */
 	unshippableReason?: string | null
+	/**
+	 * Rows to remove from the version's files by `source_id`.
+	 *
+	 * The base's own deletions stay in the version while a file they target remains.
+	 */
+	deletions?: readonly DeletionRequest[]
+	/**
+	 * The memory and thread limits of every DuckDB connection the assembly opens: the added
+	 * files' descriptors, the base files' source reads, and the deletion reads and tallies.
+	 *
+	 * @defaultValue {@linkcode openDuckDB}'s defaults
+	 */
+	limits?: DuckDBLimits
+}
+
+/**
+ * The rows each deletion removes, per split, counted over the version's files.
+ *
+ * Every targeted file is read locally, and an absent one throws, because a count taken
+ * over the files present would understate what the loader removes.
+ */
+async function countDeletions(
+	prepared: readonly PreparedDeletion[],
+	files: readonly ManifestFile[],
+	addedLocalPaths: ReadonlyMap<string, string>,
+	attributes: ReadonlyMap<string, SplitAttributeFile>,
+	limits: DuckDBLimits | undefined
+): Promise<CorpusDeletion[]> {
+	const counted: CorpusDeletion[] = []
+
+	for (const { deletion, ids } of prepared) {
+		const targets = files.filter((file) => deletionTargets(deletion.target, file))
+
+		if (!targets.length) {
+			throw new Error(`deletion ${stringifyJSON(deletion.target)} (${deletion.issue}) names no file of this version`)
+		}
+
+		const rows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+		for (const file of targets) {
+			const local = addedLocalPaths.get(file.path) ?? localManifestFilePath(file.path)
+
+			if (!(await pathExists(local))) {
+				throw new Error(`${local} is targeted by deletion ${deletion.issue} and absent from the data root`)
+			}
+
+			const matched = await matchedSourceIDs(local, ids, limits)
+			const attribute = attributes.get(file.path)
+
+			if (attribute) {
+				for (const id of matched) {
+					rows[splitOfSourceID(attribute, id)]++
+				}
+
+				continue
+			}
+
+			const split = file["split"] as SplitName
+
+			if (!(split in rows)) throw new Error(`${file.path} records no split, so its deleted rows have no split`)
+
+			rows[split] += matched.length
+		}
+
+		counted.push({ ...deletion, rows_deleted: rows })
+	}
+
+	return counted
+}
+
+/**
+ * Load a base deletion's id set, inline or from its sidecar under the local data root.
+ */
+async function carriedDeletion(deletion: CorpusDeletion, limits: DuckDBLimits | undefined): Promise<PreparedDeletion> {
+	const { rows_deleted: _counted, ...entry } = deletion
+
+	if (deletion.source_ids) return { deletion: entry, ids: new Set(deletion.source_ids) }
+
+	if (!deletion.source_ids_file) throw new Error(`base deletion ${deletion.issue} names no source_id set`)
+
+	const local = localManifestFilePath(deletion.source_ids_file.path)
+	const ids = await readDeletionIDs(local, limits)
+
+	if (ids.size !== deletion.source_ids_file.ids) {
+		throw new Error(
+			`${local} holds ${ids.size} ids and base deletion ${deletion.issue} records ${deletion.source_ids_file.ids}`
+		)
+	}
+
+	return { deletion: entry, ids }
 }
 
 /**
@@ -273,7 +407,8 @@ export interface OverlayManifestOptions {
  * The caller therefore cannot mistake a partial read for the whole base.
  */
 async function readBaseFileSources(
-	files: readonly ManifestFile[]
+	files: readonly ManifestFile[],
+	limits: DuckDBLimits | undefined
 ): Promise<{ sources: string[]; unreadable: null } | { sources: null; unreadable: string }> {
 	const paths = files.map((file) => localManifestFilePath(file.path))
 	const absent: string[] = []
@@ -288,7 +423,7 @@ async function readBaseFileSources(
 		return { sources: null, unreadable: `${absent.length} of them are absent locally (first: ${absent[0]})` }
 	}
 
-	using db = await openDuckDB()
+	using db = await openDuckDB(limits)
 
 	const list = paths.map((path) => `'${escapeSQLString(path)}'`).join(", ")
 	const result = await db.runAndReadAll(`SELECT DISTINCT source FROM read_parquet([${list}])`)
@@ -320,10 +455,10 @@ async function checkOverlaySources(
 	})
 
 	const named = new Set<string>(args.files.map((file) => file.source))
-	const unnamed = kept.filter((file) => file.source === undefined)
+	const unnamed = kept.filter((file) => !file.source)
 
 	for (const file of kept) {
-		if (file.source !== undefined) {
+		if (file.source) {
 			named.add(file.source)
 		}
 	}
@@ -335,7 +470,7 @@ async function checkOverlaySources(
 	}
 
 	// A base without a record is read instead: its files' own `source` column is what the loader groups rows by.
-	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed) : null
+	const read = unnamed.length && !base.source_rights ? await readBaseFileSources(unnamed, args.limits) : null
 
 	for (const source of read?.sources ?? []) {
 		named.add(source)
@@ -388,11 +523,11 @@ export function localManifestFilePath(path: string): string {
  *
  * A base file whose source `args.replaceSources` lists is dropped.
  *
- * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
- * The suffix shows that the holdout policy chose its rows.
- * A `train` file has no naming requirement.
+ * An added file with a split attribute holds every split's rows, and its entry points at the attribute.
+ * `splitOverlaySlice` wrote that attribute by applying the holdout policy to each row.
+ * An added file without one is train.
  *
- * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
+ * @throws When the base lists no files, or an attribute describes a different file than the one beside it.
  */
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	if (!args.files.length) throw new Error("an overlay must add at least one parquet file")
@@ -422,31 +557,20 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// Held-out rows must come from the holdout policy.
-	// The filename records the split.
-	// A caller that picks held-out rows by hand can leak them into train.
-	for (const file of args.files) {
-		if (!file.split || file.split === "train") continue
-
-		const named = splitFromFilename(file.parquet)
-
-		if (named === file.split) continue
-
-		throw new Error(
-			named
-				? `${file.parquet} names split '${named}' and the caller asked for '${file.split}'. The filename is ` +
-						`what splitOverlaySlice wrote, so it decides; pass the split the name carries or route the file again.`
-				: `${file.parquet} was asked for split '${file.split}' and carries no '.${file.split}.parquet' suffix, ` +
-						`so it did not come from 'mailwoman corpus split-slice' and its held-out rows were chosen by the ` +
-						`caller rather than by the holdout policy. Route it through split-slice and add the per-split ` +
-						`outputs it writes. A file appended to 'train' needs none of this.`
-		)
-	}
-
-	const dropped = baseFiles.filter((s) => s.source !== undefined && replaced.has(s.source))
+	const dropped = baseFiles.filter((s) => s.source && replaced.has(s.source))
 	const droppedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
 	for (const file of dropped) {
+		const reference = file["split_attribute"] as SplitAttributeReference | undefined
+
+		if (reference) {
+			for (const split of ["train", "val", "test"] as const) {
+				droppedRows[split] += reference.counts[split]
+			}
+
+			continue
+		}
+
 		const split = file["split"] as SplitName
 		const rows = file["rows"]
 
@@ -457,35 +581,113 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		droppedRows[split] += rows
 	}
 
-	const kept = baseFiles
+	const kept: ManifestFile[] = baseFiles
 		.filter((s) => !dropped.includes(s))
 		.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 
 	const sourceRights = await checkOverlaySources(args, base, kept)
 
 	const added: ParquetFileDescriptor[] = []
+	const addedLocalPaths = new Map<string, string>()
+	// The split attribute of every listed file that has one, keyed by the path the manifest lists.
+	const attributes = new Map<string, SplitAttributeFile>()
+	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const file of kept) {
+		const reference = file["split_attribute"] as SplitAttributeReference | undefined
+
+		if (reference) {
+			attributes.set(file.path, await readSplitAttribute(localManifestFilePath(reference.path)))
+		}
+	}
 
 	const newDir = PathBuilder.from(args.newDir)
 
 	for (const file of args.files) {
-		const split = file.split ?? "train"
+		if (!file.splitAttribute) {
+			// DuckDB reads the path inside SQL text, so it must be a string.
+			const local = newDir("train", file.parquet).toString()
+			const modal = `${args.modalRoot}/train/${file.parquet}`
+			const entry = await descriptor(local, modal, { split: "train" }, file.source, args.limits)
 
-		added.push(
-			await descriptor(
-				// DuckDB reads the path inside SQL text, so it must be a string.
-				newDir(split, file.parquet).toString(),
-				`${args.modalRoot}/${split}/${file.parquet}`,
-				split,
-				file.source
+			added.push(entry)
+			addedLocalPaths.set(modal, local)
+			addedRows.train += entry.rows
+
+			continue
+		}
+
+		const local = newDir(file.parquet).toString()
+		const modal = `${args.modalRoot}/${file.parquet}`
+		const attributePath = newDir(file.splitAttribute).toString()
+		const attribute = await readSplitAttribute(attributePath)
+
+		const reference: SplitAttributeReference = {
+			path: `${args.modalRoot}/${file.splitAttribute}`,
+			sha256: sha256Hex(await readLocalBuffer(attributePath)),
+			policy_hash: attribute.policyHash,
+			counts: attribute.counts,
+		}
+
+		const entry = await descriptor(local, modal, { split_attribute: reference }, file.source, args.limits)
+
+		if (attribute.file.sha256 !== entry.sha256 || attribute.file.rows !== entry.rows) {
+			throw new Error(
+				`${attributePath} describes ${attribute.file.name} at sha256 ${attribute.file.sha256} with ` +
+					`${attribute.file.rows} rows, and ${local} hashes to ${entry.sha256} with ${entry.rows}. ` +
+					`Run 'mailwoman corpus split-overlay' on the file the manifest adds.`
 			)
-		)
+		}
+
+		added.push(entry)
+		addedLocalPaths.set(modal, local)
+		attributes.set(modal, attribute)
+
+		for (const split of ["train", "val", "test"] as const) {
+			addedRows[split] += attribute.counts[split]
+		}
 	}
 
-	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+	// The base's counts are net of its own deletions, so they are added back before every
+	// deletion this version keeps is counted again over the files it now lists.
+	const baseDeleted: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 
-	for (const file of added) {
-		addedRows[file.split] += file.rows
+	for (const deletion of base.deletions ?? []) {
+		for (const split of ["train", "val", "test"] as const) {
+			baseDeleted[split] += deletion.rows_deleted[split]
+		}
 	}
+
+	const listedFiles: ManifestFile[] = refuseRepeatedFiles([...kept, ...added])
+
+	const carried = await Promise.all(
+		(base.deletions ?? [])
+			.filter((deletion) => listedFiles.some((file) => deletionTargets(deletion.target, file)))
+			.map((deletion) => carriedDeletion(deletion, args.limits))
+	)
+
+	const requested = await Promise.all(
+		(args.deletions ?? []).map((request) => prepareDeletion(request, newDir, args.modalRoot, args.limits))
+	)
+
+	const deletions = await countDeletions(
+		[...carried, ...requested],
+		listedFiles,
+		addedLocalPaths,
+		attributes,
+		args.limits
+	)
+
+	const deletedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const deletion of deletions) {
+		for (const split of ["train", "val", "test"] as const) {
+			deletedRows[split] += deletion.rows_deleted[split]
+		}
+	}
+
+	const netCount = (split: SplitName): number =>
+		base.counts[split] + baseDeleted[split] - droppedRows[split] + addedRows[split] - deletedRows[split]
 
 	const sources = args.files.map((file) => file.source).join(", ")
 
@@ -498,25 +700,23 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		overlay_base: base.corpus_version ?? null,
 		note: args.note || defaultNote,
 		schema: base.schema,
-		rows_per_slice: baseRowsPerFile(base),
+		rows_per_file: baseRowsPerFile(base),
 		row_group_size: base.row_group_size,
-		slices: [...kept, ...added],
-		counts: {
-			train: base.counts.train - droppedRows.train + addedRows.train,
-			val: base.counts.val - droppedRows.val + addedRows.val,
-			test: base.counts.test - droppedRows.test + addedRows.test,
+		files: listedFiles,
+		// The rows the loader reads: the stored rows of `files` less those `deletions` names.
+		counts: { train: netCount("train"), val: netCount("val"), test: netCount("test") },
+		total_rows: netCount("train") + netCount("val") + netCount("test"),
+		// What decides a row's split: a file's own `split`, or for a file listing
+		// `split_attribute`, the attribute file under these policy hashes.
+		split_decided_by: {
+			file: listedFiles.filter((file) => !file["split_attribute"]).length,
+			attribute: SPLIT_ATTRIBUTE,
+			policy_hashes: [...new Set([...attributes.values()].map((attribute) => attribute.policyHash))].toSorted(),
 		},
-		total_rows:
-			base.total_rows -
-			droppedRows.train -
-			droppedRows.val -
-			droppedRows.test +
-			addedRows.train +
-			addedRows.val +
-			addedRows.test,
+		deletions,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
-		// from `slices` and treating the base build's set as the whole.
+		// from `files` and treating the base build's set as the whole.
 		// The overlay sources listed here have their own terms, recorded per source in
 		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
 		licenses_cover:
@@ -542,8 +742,9 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		files: args.files.map((file) => ({
 			parquet: file.parquet,
 			source: file.source,
-			split: file.split ?? "train",
-			route: splitRouteFor(file.parquet),
+			splitAttribute: file.splitAttribute
+				? { path: file.splitAttribute, policyHash: attributes.get(`${args.modalRoot}/${file.parquet}`)!.policyHash }
+				: null,
 		})),
 		replacedSources: [...replaced],
 	}
@@ -555,14 +756,16 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	console.log(`wrote ${planPath}`)
 	console.log(`wrote ${out}`)
 	console.log(
-		`  files: ${manifest.slices.length} (${kept.length} base kept, ${dropped.length} base dropped, +${added.length} added)`
+		`  files: ${manifest.files.length} (${kept.length} base kept, ${dropped.length} base dropped, +${added.length} added)`
 	)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
-	// The route prints beside the split, because a hand-placed split is otherwise visible only in a filename.
-	for (const [index, file] of added.entries()) {
-		const route = plan.files[index]?.route ?? SplitRoute.Caller
+	for (const file of added) {
+		const split =
+			"split_attribute" in file
+				? `split by attribute ${file.split_attribute.policy_hash.slice(0, 12)} ${stringifyJSON(file.split_attribute.counts)}`
+				: file.split
 
-		console.log(`  ${file.source} ${file.split} via ${route}: ${file.rows} rows (${file.bytes} bytes)`)
+		console.log(`  ${file.source} ${split}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }

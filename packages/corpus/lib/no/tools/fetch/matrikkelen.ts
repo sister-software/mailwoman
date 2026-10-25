@@ -305,7 +305,7 @@ export interface DownloadMatrikkelenOptions {
 	/**
 	 * The areas to take, defaulting to {@linkcode MATRIKKELEN_AREAS}.
 	 */
-	areas?: readonly MatrikkelenArea[]
+	areas?: readonly MatrikkelenArea[] | null
 	/**
 	 * Downloads each area even where the manifest's `last_modified` and byte counts still match.
 	 */
@@ -498,7 +498,7 @@ export interface FetchMatrikkelenOptions extends BaseFetchOptions {
 	/**
 	 * Geonorge area codes, defaulting to every area in {@linkcode MATRIKKELEN_AREAS}.
 	 */
-	areas?: readonly string[]
+	areas?: readonly string[] | null
 	force?: boolean
 	retries?: number
 	retryDelayMs?: number

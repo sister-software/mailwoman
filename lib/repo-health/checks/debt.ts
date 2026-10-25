@@ -426,7 +426,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// Data and records may contain real names that must remain verbatim.
-	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
+	["packages/dictionaries/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
 		"packages/corpus/fixtures/",
@@ -518,6 +518,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[
 		"packages/mailwoman/tools/eval-harness/gauntlet/cases/gb/regression.jsonl",
 		"the Manchester case is a real venue, Gate 12",
+	],
+	[
+		"packages/mtf/test/fixtures/",
+		"tokenizer reference fixtures quote every gauntlet board input and its pieces, such as the Manchester venue Gate 12",
 	],
 	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],

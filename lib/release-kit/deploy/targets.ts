@@ -64,7 +64,7 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		build: "",
 		body: "",
 		deployArgs: "",
-		receipt: "https://tiles.mailwoman.ai/basemap-v4.json",
+		receipt: "https://tiles.mailwoman.ai/planet.v4.json",
 	},
 	{
 		id: "license",

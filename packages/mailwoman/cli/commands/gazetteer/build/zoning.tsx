@@ -17,6 +17,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 
 import {
 	type CommandSpec,
@@ -27,7 +28,6 @@ import {
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 /**
  * Res 6 matches what the POI, flood, soil and coastal pipelines write, so a reader already keyed

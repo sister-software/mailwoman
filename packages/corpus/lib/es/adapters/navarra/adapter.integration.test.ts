@@ -96,7 +96,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("es-navarra rows against IDENA:DIRECC_Txt_D
 				const pairs = new Set(held.map((feature) => `${feature["VIA"]}\u0000${squash(feature["PORTAL"] ?? "")}`))
 				const postcodes = new Set(held.map((feature) => feature["CODPOSTAL"]))
 				const house = squash(row.components.house_number ?? "S/N")
-				const postcodeOK = row.components.postcode === undefined || postcodes.has(row.components.postcode)
+				const postcodeOK = !row.components.postcode || postcodes.has(row.components.postcode)
 
 				if (!pairs.has(`${row.components.street}\u0000${house}`) || !postcodeOK) {
 					disagreements.push(`${row.source_id}: composed ${row.raw}`)

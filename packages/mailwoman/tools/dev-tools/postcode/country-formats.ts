@@ -3,7 +3,8 @@
 
 /**
  *   Generate `@mailwoman/postcode`'s per-country postcode formats from libaddressinput's `zip` pattern and the
- *   literal its `fmt` prints ahead of `%Z` (`MD-%Z`, `AX-%Z`), so the table is derived rather than transcribed.
+ *   literal its `fmt` prints ahead of `%Z` (`MD-%Z`, `AX-%Z`) and whether `fmt` prints `%Z` before or after `%C`, so
+ *   the table is derived rather than transcribed.
  *
  *   Usage: `node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts`
  */
@@ -12,7 +13,16 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
+
+import {
+	type PostcodeAdminBlockSide,
+	placementInFormat,
+	POSTCODE_LAYOUTS_PATH,
+	postcodeSideOfAdminBlock,
+} from "./fmt-placement.ts"
 
 interface AddressMetadata {
 	readonly fmt?: string
@@ -48,9 +58,10 @@ function postcodePrefix(fmt: string | undefined): string | null {
  */
 const PRINT_WIDTH = 120
 
-const specsDirectory = resolvePackageDirectory("@mailwoman/core")("data", "chromium-i18n", "ssl-address")
+const specsDirectory = sslAddressSpecsPath()
 const entries: string[] = []
 const subregions: Record<string, SubregionPostcodeSource[]> = {}
+const adminBlockSides: Record<string, PostcodeAdminBlockSide | null> = {}
 let withoutPattern = 0
 
 for (const file of await Globerator.files("json", {
@@ -60,6 +71,13 @@ for (const file of await Globerator.files("json", {
 }).toSorted()) {
 	const code = file.replace(/\.json$/, "")
 	const metadata = await readLocalJSONFile<AddressMetadata>(specsDirectory(file))
+
+	// Every layout that prints a postcode gets an entry.
+	// Null records a layout with no `%C`.
+	// A country whose layout prints no postcode has no entry, so a reader can tell the two apart.
+	if (metadata.fmt?.includes("%Z")) {
+		adminBlockSides[code] = postcodeSideOfAdminBlock(metadata.fmt)
+	}
 
 	if (!metadata.zip) {
 		withoutPattern++
@@ -95,21 +113,26 @@ for (const file of await Globerator.files("json", {
 
 	const prefix = postcodePrefix(metadata.fmt)
 	const pattern = stringifyJSON(metadata.zip)
-	const prefixField = prefix ? `prefix: ${stringifyJSON(prefix)}` : null
-	const inline = `\t${code}: { ${[`pattern: ${pattern}`, ...(prefixField ? [prefixField] : [])].join(", ")} },`
+	const placement = placementInFormat(metadata.fmt)
+
+	const fields = [
+		...(prefix ? [`prefix: ${stringifyJSON(prefix)}`] : []),
+		...(placement ? [`postcodePlacement: ${stringifyJSON(placement)}`] : []),
+	]
+
+	const inline = `\t${code}: { ${[`pattern: ${pattern}`, ...fields].join(", ")} },`
+	const patternLine = `\t\tpattern: ${pattern},`
 
 	// The repository formatter breaks an entry wider than its print width onto one line per field,
-	// so the generator writes that form itself and the output needs no formatting pass.
+	// and breaks the pattern after its key only when the pattern line is itself too wide.
+	// The generator writes that form itself, so the output needs no formatting pass.
+	const patternLines =
+		patternLine.replaceAll("\t", "    ").length <= PRINT_WIDTH ? [patternLine] : [`\t\tpattern:`, `\t\t\t${pattern},`]
+
 	entries.push(
-		inline.replace("\t", "    ").length <= PRINT_WIDTH
+		inline.replaceAll("\t", "    ").length <= PRINT_WIDTH
 			? inline
-			: [
-					`\t${code}: {`,
-					`\t\tpattern:`,
-					`\t\t\t${pattern},`,
-					...(prefixField ? [`\t\t${prefixField},`] : []),
-					`\t},`,
-				].join("\n")
+			: [`\t${code}: {`, ...patternLines, ...fields.map((field) => `\t\t${field},`), `\t},`].join("\n")
 	)
 }
 
@@ -121,9 +144,15 @@ const emitted = `/**
  *
  *   generated — run \`node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts\` to refresh. Do not edit by hand.
  *
- *   One postcode format per country that libaddressinput states one for: its \`zip\` pattern, and the country-code
- *   prefix its \`fmt\` prints ahead of the postcode. A country absent here states no postcode.
+ *   One postcode format per country that libaddressinput states one for: its \`zip\` pattern, the country-code
+ *   prefix its \`fmt\` prints ahead of the postcode, and whether its \`fmt\` prints the postcode before or after the
+ *   locality. A country absent here states no postcode.
  */
+
+/**
+ * Where a country's layout prints the postcode relative to the locality.
+ */
+export type PostcodeLocalityPlacement = "before_locality" | "after_locality"
 
 /**
  * One country's postcode format as libaddressinput states it.
@@ -137,6 +166,11 @@ export interface CountryPostcodeFormatSource {
 	 * The literal the country's layout prints immediately before the postcode, such as \`MD-\`.
 	 */
 	readonly prefix?: string
+	/**
+	 * Whether \`fmt\` prints \`%Z\` before or after \`%C\`.
+	 * Absent when the layout prints only one of the two.
+	 */
+	readonly postcodePlacement?: PostcodeLocalityPlacement
 }
 
 /**
@@ -160,3 +194,16 @@ await writeLocalTextFile(prettyJSON(subregions), subregionsPath)
 console.log(
 	`wrote ${Object.values(subregions).flat().length} subregion prefixes for ${Object.keys(subregions).length} countries to ${subregionsPath}`
 )
+
+const layoutsPath = repoRootPathBuilder(...POSTCODE_LAYOUTS_PATH)
+
+await writeLocalTextFile(
+	prettyJSON({
+		$comment:
+			"Generated by `node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts` from libaddressinput's `fmt`. Do not edit by hand. Each country whose layout prints a postcode maps to where it prints it relative to the block its locality (%C) and region (%S) form: before, after or between. Null is a layout that prints no %C (JP, SG, GI, KY). The training-time postcode_move augmentation reads it.",
+		countries: adminBlockSides,
+	}),
+	layoutsPath
+)
+
+console.log(`wrote the postcode side of ${Object.keys(adminBlockSides).length} layouts to ${layoutsPath}`)

@@ -22,7 +22,7 @@ export const spec = {
 	options: {
 		dictionaries: {
 			type: "string",
-			description: "libpostal dictionaries root (default: core's bundled data/libpostal/dictionaries)",
+			description: "libpostal dictionaries root (default: the copy @mailwoman/dictionaries ships)",
 		},
 		locales: {
 			type: "string",
@@ -38,11 +38,11 @@ export const spec = {
 
 const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
+		const { buildStreetMorphologyArtifact } = await import("@mailwoman/gazetteer/tools/pipeline/street-morphology")
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
-			locales: options.locales ? extractDelimited(options.locales) : undefined,
+			locales: options.locales ? extractDelimited(options.locales) : null,
 			output: options.out,
 			onProgress: (line) => console.error(line),
 		})

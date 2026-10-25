@@ -8,8 +8,18 @@ below has cost a run or hours.
 
 ```bash
 cd corpus-python
-modal run -m launch.train_remote::<name> [--flag value ...]
+uv run --extra dev modal run -m launch.train_remote::<name> [--flag value ...]
 ```
+
+**Through the venv, never a global `modal`.** A function's local entrypoint imports `mailwoman_train`, which
+only the corpus-python venv holds, and the global `modal` binary cannot see that venv. The `dev` extra pins
+the Modal client (`modal==1.4.3` in the root `pyproject.toml`), so `uv run --extra dev modal …` runs the
+pinned client with `mailwoman_train` importable. The `modal volume` and `modal app` commands below read only
+the volume and the app, so the global binary runs them as well.
+
+**A change under `corpus-python/src` reaches a run only after `mailwoman corpus upload --code` and
+`sync_assets --code`,** because containers import `mailwoman_train` from the volume and mount only `launch/`
+locally.
 
 **Module mode, never a file path.** `modal run launch/train_remote.py` imports the file as a TOP-LEVEL
 module with `launch/` itself on `sys.path`, so `launch` is unimportable and every `from .x import y` in
@@ -59,7 +69,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    While a corpus is still being tried, `sync_assets --corpus-versions <name>` stages it with no row at
    all. Add the row when it becomes a run somebody will repeat.
 
-5. **Run the sync:** `modal run -m launch.train_remote::sync --version <key>`. It raises naming anything
+5. **Run the sync:** `uv run --extra dev modal run -m launch.train_remote::sync --version <key>`. It raises naming anything
    that did not land, so a clean exit is the confirmation.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
    mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it out of the variable
@@ -71,7 +81,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    ```bash
    node packages/mailwoman/tools/dev-tools/launch-detached.run.ts \
      --log <file> --cwd corpus-python \
-     -- modal run -d -m launch.train_remote --config <recipe>.yaml --resume none
+     -- uv run --extra dev modal run -d -m launch.train_remote --config <recipe>.yaml --resume none
    ```
 
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
@@ -140,11 +150,11 @@ no `crf-transitions.json`; production therefore decodes **argmax**, and a check 
 ```bash
 # (from corpus-python/)
 # 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
-modal run -m launch.train_remote::export_onnx \
+uv run --extra dev modal run -m launch.train_remote::export_onnx \
   --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
 
 # 2. Int8-quantize it (must run in the training image; local ORT trips on the dynamo graph)
-modal run -m launch.train_remote::quantize_onnx \
+uv run --extra dev modal run -m launch.train_remote::quantize_onnx \
   --fp32-path=/data/output-v160-boundary-stress-s42/model.onnx \
   --int8-path=/data/models/quantized/model-v160-step-40000-int8.onnx
 

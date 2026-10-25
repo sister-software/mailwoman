@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   SentencePiece tokenizer wrapper over `@mailwoman/sentencepiece-wasm`.
+ *   SentencePiece-model tokenizer over the `@mailwoman/mtf` WASM runtime.
  *
  *   The native offsets are UTF-8 byte positions and the decoder reads JS string (UTF-16 code-unit)
  *   ranges, so this layer converts once per encode and trims the whitespace a `▁`-prefixed piece
  *   consumes from its native span.
  */
 
-import createSentencePiece, {
-	type SentencePieceModule,
-	type SentencePieceProcessor,
-} from "@mailwoman/sentencepiece-wasm"
+import { MTF_WASM_URL, MTFRuntime, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -21,15 +18,36 @@ import type { PathBuilderLike } from "path-ts"
 export const SPACE_SENTINEL = "▁"
 
 /**
- * The WASM module instantiates once per process.
+ * The WASM runtime instantiates once per process.
  * Every tokenizer instance shares it.
  */
-let modulePromise: Promise<SentencePieceModule> | null = null
+let runtimePromise: Promise<MTFRuntime> | null = null
 
-function loadModule(): Promise<SentencePieceModule> {
-	modulePromise ??= createSentencePiece()
+/**
+ * Reads the runtime's WASM bytes from where `MTF_WASM_URL` points.
+ *
+ * A `file:` URL is read from disk, as in Node.
+ * Any other URL is fetched, as in a browser bundle whose host serves the binary
+ * at the URL the bundler resolved.
+ */
+async function readRuntimeWasm(): Promise<MTFWasmSource> {
+	if (MTF_WASM_URL.protocol === "file:") {
+		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
 
-	return modulePromise
+		return new Uint8Array(await readFile(MTF_WASM_URL))
+	}
+
+	const response = await fetch(MTF_WASM_URL)
+
+	if (!response.ok) throw new Error(`tokenizer runtime ${MTF_WASM_URL} answered ${response.status}`)
+
+	return response.arrayBuffer()
+}
+
+function loadRuntime(): Promise<MTFRuntime> {
+	runtimePromise ??= readRuntimeWasm().then((wasm) => MTFRuntime.instantiate(wasm))
+
+	return runtimePromise
 }
 
 /**
@@ -93,25 +111,20 @@ function buildByteToUTF16Map(text: string): number[] {
 const WHITESPACE_RE = /\s/
 
 export class MailwomanTokenizer {
-	private readonly processor: SentencePieceProcessor
-	private readonly module: SentencePieceModule
+	private readonly model: MTFModel
 
-	private constructor(module: SentencePieceModule, processor: SentencePieceProcessor) {
-		this.module = module
-		this.processor = processor
+	private constructor(model: MTFModel) {
+		this.model = model
 	}
 
 	private static async loadFromBytes(bytes: Uint8Array): Promise<MailwomanTokenizer> {
-		const module = await loadModule()
-		const processor = new module.SentencePieceProcessor()
-		const error = processor.loadFromSerializedProto(bytes)
+		const runtime = await loadRuntime()
 
-		if (error !== "") {
-			processor.delete()
-			throw new Error(`tokenizer.model failed to load: ${error}`)
+		try {
+			return new MailwomanTokenizer(runtime.loadModel(bytes))
+		} catch (error) {
+			throw new Error(`tokenizer.model failed to load: ${(error as Error).message}`, { cause: error })
 		}
-
-		return new MailwomanTokenizer(module, processor)
 	}
 
 	/**
@@ -154,12 +167,7 @@ export class MailwomanTokenizer {
 	 * `SentencePieceText` proto converted to UTF-16 and whitespace-trimmed.
 	 */
 	encode(text: string): EncodeResult {
-		const raw = this.processor.encodeWithOffsets(text)
-
-		if (raw.error) {
-			throw new Error(`tokenizer encode failed: ${raw.error}`)
-		}
-
+		const raw = this.model.encode(text)
 		const byteToUTF16 = buildByteToUTF16Map(text)
 		const tokenized: TokenizedPiece[] = []
 
@@ -177,23 +185,13 @@ export class MailwomanTokenizer {
 			tokenized.push({ piece, id: raw.ids[i]!, start, end })
 		}
 
-		return { pieces: tokenized, ids: raw.ids.slice() }
+		return { pieces: tokenized, ids: raw.ids }
 	}
 
 	/**
 	 * Decode a list of ids back to a string.
 	 */
 	decode(ids: number[] | Int32Array): string {
-		const vector = new this.module.IntVector()
-
-		try {
-			for (const id of ids) {
-				vector.push_back(id)
-			}
-
-			return this.processor.decodeIDs(vector)
-		} finally {
-			vector.delete()
-		}
+		return this.model.decode(ids)
 	}
 }

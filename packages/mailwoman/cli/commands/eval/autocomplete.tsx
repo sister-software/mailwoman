@@ -60,7 +60,7 @@ const EvalAutocomplete = harnessCommand(
 
 		return { report }
 	},
-	{ json: ({ report }, options) => (options.json ? report : undefined) }
+	{ json: ({ report }, options) => (options.json ? report : null) }
 )
 
 export default EvalAutocomplete

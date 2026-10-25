@@ -323,7 +323,7 @@ const streetOrderMemo = new Map<string, StreetOrder | null>()
 export function streetOrderForCountry(country: string): StreetOrder | null {
 	const memo = streetOrderMemo.get(country)
 
-	if (memo !== undefined) return memo
+	if (memo) return memo
 
 	const claim = conventionClaimForCountry(ConventionClaimID.HouseNumberPrecedesStreet, country)
 	const stances = claim?.observations.map((observation) => observation.stance) ?? []
@@ -614,7 +614,6 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 			country,
 			source: CORDIS_ADAPTER_ID,
 			source_id: stableSourceID(CORDIS_ADAPTER_ID, aligned),
-			corpus_version: "",
 			license: CORDIS_LICENSE,
 		},
 		discarded,
@@ -734,7 +733,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			"CORDIS organization files (FP7, Horizon 2020, Horizon Europe): the registered addresses of EU research-programme participants.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const requested = opts.country ? opts.country.trim().toUpperCase() : undefined
+			const requested = opts.country ? opts.country.trim().toUpperCase() : null
 			const lexicon = await loadPersonNameLexicon()
 			const written = new Set<string>()
 
@@ -748,7 +747,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			for await (const { reading } of readings) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				if ("refused" in reading) {
 					if (!requested || reading.country === requested) {

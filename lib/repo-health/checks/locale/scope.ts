@@ -106,7 +106,7 @@ export const localeScopeCheck: RepoCheck = {
 		const shipping = new Set(
 			[...shippingLocales(await readReleaseConfig(context.repoRoot))]
 				.map((locale) => locale.split("-")[1]?.toUpperCase())
-				.filter((country): country is string => country !== undefined)
+				.filter((country): country is string => typeof country === "string")
 		)
 
 		for (const country of [...shipping].toSorted()) {
@@ -150,40 +150,6 @@ export const localeScopeCheck: RepoCheck = {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message: `untieredShippingLocales names ${country}, which no longer ships a weights package — remove the entry`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-		}
-
-		for (const [country, reason] of Object.entries(scope.dRuleProtected ?? {})) {
-			if (country.startsWith("$")) continue
-
-			if (!reason) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `dRuleProtected names ${country} with an empty reason; the arc reports the reason at the moment it blocks, and "${country}" alone does not answer why`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-
-			if ((scope.tiers["1"] ?? []).includes(country)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `dRuleProtected names ${country}, which tier 1 already protects unconditionally — two sources for one fact is what this register replaced`,
-					file: REGISTER,
-					line: null,
-					details: null,
-				})
-			}
-
-			if (!tiered.has(country) && !shipping.has(country)) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					message: `dRuleProtected names ${country}, which is in no tier and ships nothing — a protection for a country the project does not cover blocks on rows that cannot exist`,
 					file: REGISTER,
 					line: null,
 					details: null,

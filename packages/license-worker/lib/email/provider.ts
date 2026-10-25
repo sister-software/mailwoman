@@ -8,6 +8,8 @@
  *   `email_state` is what keeps the window to that one crash.
  */
 
+import type { LicenseIntent } from "@mailwoman/core/license/key"
+
 export interface LicenseEmail {
 	to: string
 	licensee: string
@@ -17,9 +19,17 @@ export interface LicenseEmail {
 	expires: string
 	/**
 	 * The agreement version the license was bought under.
+	 *
 	 * The message links its page.
+	 * A declared token accepted no agreement and reads `null`.
 	 */
-	agreement: string
+	agreement: string | null
+	/**
+	 * The route that issued the token.
+	 *
+	 * A message about a token minted before intents existed has none.
+	 */
+	intent?: LicenseIntent
 	/**
 	 * Present while the plaintext refresh secret is pending.
 	 *

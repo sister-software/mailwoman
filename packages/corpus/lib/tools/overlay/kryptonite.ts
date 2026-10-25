@@ -9,7 +9,7 @@
  *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the jsonl.
  *
- *   Invoke via `mailwoman corpus slice kryptonite \
+ *   Invoke via `mailwoman corpus recipe kryptonite \
  *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl \
  *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`
@@ -19,12 +19,15 @@ import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
+import { baseManifestFiles } from "#tools/overlay/manifest"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
@@ -42,29 +45,46 @@ export interface KryptoniteOverlayOptions {
 	source?: string
 }
 
-async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
+/**
+ * Read the jsonl's rows.
+ *
+ * @throws When the rows name more than one source.
+ * The files' extract hash covers the whole jsonl, which is exact only while every
+ * row belongs to the one source those files hold.
+ */
+export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow> {
+	let first: string | null = null
+
 	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
+		const source = (raw["source"] as string) ?? "deepseek-kryptonite"
+
+		first ??= source
+
+		if (source !== first) {
+			throw new Error(
+				`${jsonl} holds rows of ${first} and ${source}. A kryptonite overlay hashes the whole jsonl as its ` +
+					`extract, so the jsonl must hold one source.`
+			)
+		}
 
 		yield {
 			raw: raw["raw"] as string,
 			components,
 			country: (raw["country"] as string) ?? "US",
 			locale: (raw["locale"] as string) ?? undefined,
-			source: (raw["source"] as string) ?? "deepseek-kryptonite",
+			source,
 			source_id: raw["source_id"] as string,
-			corpus_version: corpusVersion,
 			license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-			recipe: raw["recipe"] as CanonicalRow["recipe"],
 			register: (raw["register"] as string | null) ?? null,
 			surface: requireSurface(raw, "deepseek-kryptonite"),
 		}
 	}
 }
 
-async function* labeledRows(jsonl: string, corpusVersion: string, quarantineLog: string[]): AsyncIterable<LabeledRow> {
-	for await (const row of canonicalRows(jsonl, corpusVersion)) {
+async function* labeledRows(jsonl: string, quarantineLog: string[]): AsyncIterable<LabeledRow> {
+	for await (const row of canonicalRows(jsonl)) {
 		const result = alignRow(row)
 
 		if (result.kind === "labeled") {
@@ -93,12 +113,20 @@ export async function buildKryptoniteOverlay(
 	const quarantine: string[] = []
 
 	const newManifest = await writeParquetSplits(
-		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
-		{ outputDir: outDir, corpusVersion }
+		{ train: labeledRows(options.jsonl, quarantine) },
+		{
+			outputDir: outDir,
+			corpusVersion,
+			derivationFor: async () => ({
+				extractHash: await sha256File(options.jsonl),
+				codeHash: await moduleGraphHash([import.meta.filename]),
+				config: { tool: "kryptonite", source },
+			}),
+		}
 	)
 
 	report?.(
-		`wrote ${newManifest.total_rows} rows into ${newManifest.slices.length} parquet file(s); ` +
+		`wrote ${newManifest.total_rows} rows into ${newManifest.files.length} parquet file(s); ` +
 			`quarantined ${quarantine.length}`
 	)
 
@@ -108,23 +136,15 @@ export async function buildKryptoniteOverlay(
 		report?.(`quarantine log → ${qPath}`)
 	}
 
-	// Stamp the new file's source field for audit.ts
-	// (which prefers the descriptor's `source` over first_source_id-prefix inference).
-	// Without this, deepseek-kryptonite IDs would have to match a prefix in KNOWN_SOURCE_PREFIXES.
-	// We add it there too as a belt-and-braces.
-	for (const file of newManifest.slices) {
-		file.source = source
-	}
-
 	// Compose the final corpus-v0.4.0 manifest: every parquet file from base + the new file(s).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
 	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: base.rows_per_slice,
+		rows_per_file: base.rows_per_file,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
-		slices: [...base.slices, ...newManifest.slices],
+		files: [...baseManifestFiles<(typeof base)["files"][number]>(base), ...newManifest.files],
 		counts: {
 			train: base.counts.train + (newManifest.counts.train ?? 0),
 			val: base.counts.val,
@@ -139,6 +159,10 @@ export async function buildKryptoniteOverlay(
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
-	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newManifest.slices.length})`)
+
+	report?.(
+		`  files=${combined.files.length} (base=${baseManifestFiles<(typeof base)["files"][number]>(base).length}, added=${newManifest.files.length})`
+	)
+
 	report?.(`  compression=${PARQUET_COMPRESSION}`)
 }

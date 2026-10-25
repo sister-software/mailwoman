@@ -17,11 +17,23 @@
  * number about the mixture.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import type { GeocodeTrace } from "mailwoman/geocode"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import {
+	candidateBandProbe,
+	type ComponentReachability,
+	describeComponentReachability,
+	describePlacetypeCounts,
+	readExpectationReachability,
+} from "mailwoman/tools/eval-harness/gauntlet/reachability"
+import { OVERLAY_LOCALE_BY_COUNTRY, routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 
 import {
+	BASE_LOCALE,
 	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	runCounterfactuals,
@@ -32,6 +44,7 @@ import { gradeExpectation, type ExpectationReading } from "#dev-mcp/diagnose/exp
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#dev-mcp/evidence"
 import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#dev-mcp/input-sets"
+import { openSealedArtifact } from "#dev-mcp/lookup"
 import { describeObservedRate } from "#dev-mcp/power"
 import { inputSetProvenance, provenanceFor } from "#dev-mcp/tool-kit"
 
@@ -78,6 +91,8 @@ export const DIAGNOSE_SHAPES = [
 	"parse_shape_contradiction",
 	"evidence_starved",
 	"retrieval_empty",
+	"band_miss",
+	"expectation_unreachable",
 	"scope_miss_readmission",
 	"rank_flip",
 	"wrong_instance_detected",
@@ -99,11 +114,23 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 		`A known-format hit at confidence ≥ ${KNOWN_FORMAT_CONFIDENCE_FLOOR} covers text the parse assigned to no ` +
 		"component of the matching tag — the structural detector and the model disagree about the same characters.",
 	evidence_starved:
-		"At least one evidence channel was fed and EVERY fed channel was fed zeros, so the parse was decided by the " +
-		"token embeddings alone. Not a health verdict: a correct parse can be starved.",
+		"At least one of the five channels (anchor, gazetteer, country, street_type, locality_surface) was fed and " +
+		"EVERY fed channel was fed zeros, so the parse was decided by the token embeddings alone. A channel the " +
+		"input mode withheld or a caller pinned off counts as fed zeros; the census names both. Not a health " +
+		"verdict: a correct parse can be starved.",
 	retrieval_empty:
 		"A lookup returned zero candidates and picked nothing, and no other lookup for the same span recovered a pick " +
 		"— the deciding site had nothing to decide between.",
+	band_miss:
+		"An empty deciding lookup whose key the unreachable-band probe found in OTHER placetype bands, so the gazetteer " +
+		"holds the name and the band the parse tag selected does not. The row's rendered line names those bands. " +
+		"A wrong parse tag and a tag-to-band mapping that omits the key's placetype both produce this shape; the " +
+		"expectation reading tells them apart.",
+	expectation_unreachable:
+		"An expected admin component of this row has no candidate row in the band its tag maps to for the row's " +
+		"country, while rows of another placetype hold the value. No parse can satisfy the row through that " +
+		"component, so a coordinate miss here is a data condition before it is a model one. Read beside the " +
+		"per-component `expectation_reachability` list, which also marks values ABSENT from every placetype.",
 	scope_miss_readmission:
 		"The backend's region scope missed and its unscoped fallback produced the rows the pick came from — the " +
 		"re-admission path where a wrong-instance namesake enters.",
@@ -248,6 +275,13 @@ interface LookupFact {
 	 * The first ranking stage at which the picked candidate reached rank 1, when it did not start there.
 	 */
 	flipped_at: string | null
+	/**
+	 * The other placetype bands the unreachable-band probe found the key in, when the lookup was probed.
+	 *
+	 * `null` when the probe did not run.
+	 * An empty list is a probed key that no other band holds.
+	 */
+	reachable_in: Array<{ placetype: string; n: number }> | null
 }
 
 export interface RetrievalFacts {
@@ -301,6 +335,18 @@ export interface RowAccount {
 	result: ResultFacts
 	expectation: ExpectationReading
 	/**
+	 * Per expected admin component, whether the resolver's band for its tag holds
+	 * the value in the row's country.
+	 *
+	 * `null` when the row states no expected admin component or the candidate table was not opened.
+	 * An unread condition is reported as unread rather than as reachable.
+	 */
+	expectation_reachability: ComponentReachability[] | null
+	/**
+	 * The engine the row ran under on the board-routed path, or `null` on the single-config path.
+	 */
+	routing: RowRouting | null
+	/**
 	 * A coordinate arrived and the resolver trace recorded no lookup, so the account's retrieval facts are
 	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace does not cover);
 	 * reported so the empty lookup list is not read as "retrieval had no work to do".
@@ -346,7 +392,7 @@ export function collectParseFacts(
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
 		const expects = (COMPONENT_FOR_KNOWN_FORMAT as Record<string, string | undefined>)[hit.format] ?? null
-		const carried = expects ? components[expects] : undefined
+		const carried = expects ? components[expects] : null
 		const wanted = foldForSpanMatch(hit.span.body)
 
 		return {
@@ -354,7 +400,7 @@ export function collectParseFacts(
 			confidence: hit.confidence,
 			text: hit.span.body,
 			expects_component: expects,
-			matched: wanted.length > 0 && carried !== undefined && foldForSpanMatch(carried).includes(wanted),
+			matched: wanted.length > 0 && carried != null && foldForSpanMatch(carried).includes(wanted),
 		}
 	})
 
@@ -378,7 +424,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
-		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
+		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : null
 		// The rank vector's key order is the resolver's stage execution order,
 		// because the recorder writes one entry per stage as it runs: the first key is
 		// the backend's own order, the last the order the pick came from.
@@ -404,6 +450,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 				initialRank !== null && initialRank > 1
 					? (stages.find((stage) => pickedRow!.ranks[stage] === 1) ?? null)
 					: null,
+			reachable_in: record.reachableIn ?? null,
 		}
 	})
 
@@ -460,6 +507,11 @@ export function matchShapes(facts: {
 	evidence: EvidenceCensus | null
 	retrieval: RetrievalFacts
 	result: ResultFacts
+	/**
+	 * The row's expected-component reachability, or `null` when the row stated no
+	 * expected admin component or the candidate table was not opened.
+	 */
+	reachability?: ComponentReachability[] | null
 }): DiagnoseShape[] {
 	const shapes: DiagnoseShape[] = []
 	const lookups = facts.retrieval.lookups ?? []
@@ -488,6 +540,25 @@ export function matchShapes(facts: {
 
 	if (emptyDeciding) {
 		shapes.push("retrieval_empty")
+	}
+
+	// The band probe runs only on a lookup with zero candidates.
+	// A non-empty `reachable_in` on such a lookup is the gazetteer holding the key
+	// under a placetype the selected band excludes.
+	const bandMiss = lookups.some(
+		(lookup) =>
+			lookup.n_candidates === 0 &&
+			!lookup.picked &&
+			(lookup.reachable_in?.length ?? 0) > 0 &&
+			!lookups.some((other) => other.tag === lookup.tag && other.value === lookup.value && other.picked)
+	)
+
+	if (bandMiss) {
+		shapes.push("band_miss")
+	}
+
+	if (facts.reachability?.some((reading) => reading.state === "unreachable")) {
+		shapes.push("expectation_unreachable")
 	}
 
 	// The rule fires only when the scoped probe missed across the whole cascade and the
@@ -534,14 +605,23 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 		parts.push("ABSTAINED")
 	}
 
+	if (account.routing) {
+		parts.push(
+			`routed ${account.routing.locale ?? "base"}${account.routing.country_scope === "none" ? " unscoped" : ""}`
+		)
+	}
+
 	if (account.parse?.kind) {
 		parts.push(`kind=${account.parse.kind.verdict}@${account.parse.kind.confidence.toFixed(2)}`)
 	}
 
 	if (account.evidence) {
+		const pinned = Object.keys(account.evidence.pins).length ? ` pins ${stringifyJSON(account.evidence.pins)}` : ""
+
 		parts.push(
 			`channels a:${channelMark(account.evidence.anchor)} g:${channelMark(account.evidence.gazetteer)} ` +
-				`c:${channelMark(account.evidence.country)}`
+				`c:${channelMark(account.evidence.country)} st:${channelMark(account.evidence.street_type)} ` +
+				`ls:${channelMark(account.evidence.locality_surface)} mode ${account.evidence.input_mode}${pinned}`
 		)
 	}
 
@@ -560,7 +640,27 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	const empty = (account.retrieval.lookups ?? []).filter((lookup) => lookup.n_candidates === 0 && !lookup.picked)
 
 	if (empty.length) {
-		parts.push(`0 candidates for ${empty.map((lookup) => `${lookup.tag} "${lookup.value}"`).join(", ")}`)
+		parts.push(
+			`0 candidates for ${empty
+				.map((lookup) => {
+					const elsewhere = lookup.reachable_in?.length
+						? ` (key lives in ${describePlacetypeCounts(
+								Object.fromEntries(lookup.reachable_in.map((band) => [band.placetype, band.n]))
+							)})`
+						: ""
+
+					return `${lookup.tag} "${lookup.value}"${elsewhere}`
+				})
+				.join(", ")}`
+		)
+	}
+
+	for (const reading of account.expectation_reachability ?? []) {
+		const condition = describeComponentReachability(reading, account.country)
+
+		if (condition) {
+			parts.push(condition)
+		}
 	}
 
 	const coherence = account.result.admin_coherence
@@ -711,14 +811,16 @@ function misTaggedInVocabulary(
 export function assembleAccount(
 	item: ResolvedInput,
 	run: AccountInput,
-	expectation: ExpectationReading
+	expectation: ExpectationReading,
+	reachability: ComponentReachability[] | null = null,
+	routing: RowRouting | null = null
 ): Omit<RowAccount, "rendered"> {
 	const trace = run.trace
 	const parse = trace ? collectParseFacts(trace, run.result.components) : null
 	const evidence = trace ? evidenceCensus(trace.parse) : null
 	const retrieval = collectRetrievalFacts(trace?.resolver ?? null)
 	const result = collectResultFacts(run.result)
-	const shapes = matchShapes({ parse, evidence, retrieval, result })
+	const shapes = matchShapes({ parse, evidence, retrieval, result, reachability })
 
 	if (!shapes.length) {
 		if (expectation.met === false) {
@@ -738,6 +840,8 @@ export function assembleAccount(
 		retrieval,
 		result,
 		expectation,
+		expectation_reachability: reachability,
+		routing,
 		resolved_without_recorded_lookup: !result.abstained && retrieval.lookups?.length === 0,
 		trace_absent_reason: trace
 			? null
@@ -745,6 +849,67 @@ export function assembleAccount(
 				"silent. Either the session refused to trace, or the loaded bundle's classifier cannot produce one.",
 		counterfactuals: null,
 	}
+}
+
+type DiagnoseExecutionPath = "single-config" | "board-routed"
+
+/**
+ * The engine a row runs under on the board-routed path.
+ *
+ * A country with a weights overlay runs under that overlay's locale.
+ * The locale also scopes the resolver to the country, as the board's routed arm does.
+ *
+ * A country without an overlay runs on the base weights with no country scope,
+ * because the base locale scopes the resolver to its own region and would misroute the row.
+ * The region the base locale declares keeps that scope.
+ *
+ * `default_country` is the board row's own resolver country when it states one.
+ */
+export interface RowRouting {
+	country: string
+	locale: string | null
+	country_scope: "none" | null
+	default_country: string | null
+	/**
+	 * The engine the registry served for this routing, filled in once the row has run.
+	 */
+	engine_id: string | null
+}
+
+/**
+ * The routing a row takes, or `null` for a row that runs on the engine `config` describes:
+ * every row on the single-config path, and a row without a country on the board-routed path.
+ */
+export function routingFor(item: ResolvedInput, executionPath: DiagnoseExecutionPath): RowRouting | null {
+	if (executionPath === "single-config") return null
+
+	const country = (item.routeCountry ?? item.country)?.toUpperCase() ?? null
+
+	if (!country) return null
+
+	const baseRegion = routeCountry({ locale: BASE_LOCALE })
+	const overlay = OVERLAY_LOCALE_BY_COUNTRY[country] ?? (country === baseRegion ? BASE_LOCALE : null)
+
+	return {
+		country,
+		locale: overlay,
+		country_scope: overlay ? null : "none",
+		default_country: item.defaultCountry ?? null,
+		engine_id: null,
+	}
+}
+
+function routingConfig(base: EngineConfig, routing: RowRouting): EngineConfig {
+	return {
+		...base,
+		...(routing.locale ? { locale: routing.locale } : {}),
+		...(routing.country_scope ? { country_scope: routing.country_scope } : {}),
+		...(routing.default_country ? { default_country: routing.default_country } : {}),
+	}
+}
+
+function routingKey(routing: RowRouting | null): string {
+	return routing ? stringifyJSON([routing.locale, routing.country_scope, routing.default_country]) : "base"
 }
 
 /**
@@ -757,34 +922,78 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const limit = args["limit"] as number | undefined
 	const rowsCap = args["rows_cap"] as number | undefined
 	const wantCounterfactuals = args["counterfactuals"] !== false
+	const executionPath = (args["execution_path"] as DiagnoseExecutionPath | null) ?? "single-config"
 
 	const set = await resolveInputSet(ref)
 	// The account uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
-	const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
+	const traced: EngineConfig = { ...config, trace: true, diagnose_unreachable: true }
+	const engine = await registry.acquire(traced)
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
+
+	// Reachability reads the same candidate table the engine resolves against.
+	// A table that does not open leaves every reading `null`, and the summary states that it went unread.
+	const candidateDB = await openSealedArtifact(
+		await resolveCandidateDBPath(config.candidate_db, config.data_root ?? dataRootPath())
+	)
+
+	using candidateHandle = "db" in candidateDB ? candidateDB.db : null
+	const probe = candidateHandle ? candidateBandProbe(candidateHandle) : null
 
 	const startedAt = Date.now()
 	const accounts: Array<Omit<RowAccount, "rendered">> = []
 	const errors: Array<{ id: string; input: string; message: string }> = []
 	const targets: CounterfactualTarget[] = []
 
-	for (const item of selected) {
-		try {
-			const run = await engine.session.geocode(item.input)
+	// Rows are run group by group, one engine per routing, so the registry rebuilds an engine
+	// once per routing rather than once per row when rows of several countries interleave.
+	const groups = new Map<string, { routing: RowRouting | null; items: Array<{ index: number; item: ResolvedInput }> }>()
 
-			accounts.push(assembleAccount(item, run, gradeExpectation(item, run.result)))
+	for (const [index, item] of selected.entries()) {
+		const routing = routingFor(item, executionPath)
+		const key = routingKey(routing)
+		const group = groups.get(key) ?? { routing, items: [] }
 
-			targets.push({
-				id: item.id,
-				input: item.input,
-				country: item.country,
-				base: { lat: run.result.lat, lon: run.result.lon, tier: run.result.resolution_tier },
-			})
-		} catch (error) {
-			errors.push({ id: item.id, input: item.input, message: (error as Error).message })
+		group.items.push({ index, item })
+		groups.set(key, group)
+	}
+
+	const ordered: Array<{ index: number; account: Omit<RowAccount, "rendered"> }> = []
+	const enginesByRouting: Array<{ routing: RowRouting | null; engine_id: string; rows: number }> = []
+
+	for (const group of groups.values()) {
+		const rowEngine = group.routing ? await registry.acquire(routingConfig(traced, group.routing)) : engine
+
+		enginesByRouting.push({ routing: group.routing, engine_id: rowEngine.engineID, rows: group.items.length })
+
+		for (const { index, item } of group.items) {
+			try {
+				const run = await rowEngine.session.geocode(item.input)
+				const expected = item.seed?.expectComponents ?? item.expectComponents
+				const reachability = probe && expected ? readExpectationReachability(expected, item.country, probe) : null
+				const routing = group.routing ? { ...group.routing, engine_id: rowEngine.engineID } : null
+
+				ordered.push({
+					index,
+					account: assembleAccount(item, run, gradeExpectation(item, run.result), reachability, routing),
+				})
+
+				// The sweep flips settings on the base engine, so a routed row's answer is no base to compare against.
+				if (!routing) {
+					targets.push({
+						id: item.id,
+						input: item.input,
+						country: item.country,
+						base: { lat: run.result.lat, lon: run.result.lon, tier: run.result.resolution_tier },
+					})
+				}
+			} catch (error) {
+				errors.push({ id: item.id, input: item.input, message: (error as Error).message })
+			}
 		}
 	}
+
+	accounts.push(...ordered.toSorted((a, b) => a.index - b.index).map((entry) => entry.account))
 
 	const narrowed = accounts.length > COUNTERFACTUAL_FULL_RUN_MAX_ROWS
 	const flipCandidates = narrowed ? accounts.filter((account) => !account.shapes.includes("clean")) : accounts
@@ -829,6 +1038,29 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const unclassified = byShape["unclassified"]?.n ?? 0
 	const blindRetrieval = rows.filter((row) => row.resolved_without_recorded_lookup).length
+	const unreachableRows = rows.filter((row) => row.shapes.includes("expectation_unreachable")).length
+	const routedRows = rows.filter((row) => row.routing?.locale).length
+	const unscopedRows = rows.filter((row) => row.routing?.country_scope === "none").length
+
+	const routingSentence =
+		executionPath === "board-routed"
+			? `Board-routed: ${routedRows} row(s) ran under their country's weights overlay and scope ` +
+				`(${enginesByRouting
+					.filter((entry) => entry.routing?.locale)
+					.map((entry) => `${entry.routing!.locale} ${entry.rows}`)
+					.join(", ")}), ${unscopedRows} ran on the base weights with no country scope because their country has ` +
+				`no overlay, and ${rows.length - routedRows - unscopedRows} had no country and ran on the configured engine. ` +
+				"The counterfactual sweep covers the configured-engine rows only."
+			: ""
+
+	const reachabilitySentence = !probe
+		? `Expected-component reachability was NOT read (${"unavailable" in candidateDB ? candidateDB.unavailable : "no candidate table"}), ` +
+			"so an expected admin component the resolver's band cannot reach is UNMEASURED here, never absent."
+		: unreachableRows
+			? `${unreachableRows} row(s) expect an admin component the candidate table holds only outside the band its tag ` +
+				"selects — a data condition each row's line names. A model comparison over those rows grades the gazetteer's " +
+				"typing rather than the model."
+			: ""
 
 	const counterfactualSentence = !wantCounterfactuals
 		? "Counterfactuals were NOT run (counterfactuals: false), so no setting here is priced — a shape without one says " +
@@ -865,6 +1097,8 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 					"lookups, so a span-rescore or postcode-compound recovery answers off the record. The retrieval shapes " +
 					"cannot fire on those rows, and their silence there is a coverage bound, not a finding."
 				: "",
+			reachabilitySentence,
+			routingSentence,
 			counterfactualSentence,
 		]
 			.filter((sentence) => sentence.length)
@@ -875,6 +1109,17 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		errors,
 		power: reading,
 		n_resolved_without_recorded_lookup: blindRetrieval,
+		n_expectation_unreachable: unreachableRows,
+		routing: {
+			execution_path: executionPath,
+			engines: enginesByRouting.map((entry) => ({
+				locale: entry.routing?.locale ?? null,
+				country_scope: entry.routing?.country_scope ?? null,
+				default_country: entry.routing?.default_country ?? null,
+				engine_id: entry.engine_id,
+				rows: entry.rows,
+			})),
+		},
 		by_shape: byShape,
 		by_shape_note:
 			"A row can match several shapes, so these counts OVERLAP and must never be summed. `n` is the whole class; " +
@@ -885,7 +1130,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		elapsed_ms: Date.now() - startedAt,
 		// Under a cap the emitted rows lead with the non-clean ones and say what they left out.
 		// The aggregates are computed over every row regardless.
-		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
-		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
+		rows: !rowsCap ? emittedRows : emittedRows.slice(0, rowsCap),
+		rows_omitted: !rowsCap ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}
 }

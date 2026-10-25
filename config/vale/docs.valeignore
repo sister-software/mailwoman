@@ -7,3 +7,4 @@ THIRD_PARTY_NOTICES.md
 **/THIRD_PARTY_NOTICES.md
 CODE_OF_CONDUCT.md
 docs/src/pages/license/terms/commercial-*.mdx
+packages/structures/data/licenses/**

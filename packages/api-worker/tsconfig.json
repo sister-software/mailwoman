@@ -1,0 +1,15 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"types": ["@cloudflare/workers-types"],
+		"customConditions": ["workerd"]
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts"],
+	"references": [{ "path": "../core" }, { "path": "../spatial" }, { "path": "../api" }]
+}

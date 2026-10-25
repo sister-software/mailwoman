@@ -6,27 +6,38 @@
  *
  *   Each phase is its own module. This module defines their sequence and shared paths.
  *   It assembles the manifest from the phase reports.
+ *
+ *   With `jobs` above 1 the same phases run per source in worker processes (`#build/parallel`),
+ *   and the coordinator assembles the same files from the sources' records.
  */
 
-import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
-import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
+import { alignTotalsOf } from "#build/align-totals"
+import { planWorkerBudget } from "#build/budget"
 import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
+import {
+	admitParquetManifest,
+	stageAdmittedManifestForResume,
+	UNCHECKED_PARQUET_MANIFEST_FILE,
+} from "#build/holdout-check"
+import { acquireBuildLock } from "#build/lock"
+import { writeBuildManifests } from "#build/manifest"
+import { runParallelBuild } from "#build/parallel"
+import { settlePriorWork } from "#build/prior-output"
 import { streamJSONL } from "#build/rows"
-import { BuildProfile, TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
-import { $public } from "#env"
-import { ROWS_PER_FILE } from "#parquet/schema"
-import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
+import { adapterDerivations, derivationConfig, resolveCorpusSettings } from "#build/settings"
+import { BuildProfile, type BuildCorpusManifest, type BuildCorpusOptions } from "#build/types"
+import { corpusDirectoryName } from "#directory"
+import { shuffleSplitRows, SPLIT_SHUFFLE_SALT } from "#parquet/shuffle"
 import { writeParquetSplits } from "#parquet/writers"
 import { openSourceRightsAdmission } from "#source-register/corpus-inputs"
-import { freezeTrainingManifest } from "#source-register/training-manifest"
 import type { LabeledRow } from "#types"
-import { LicensePolicy } from "#utils/license"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
 export * from "#build/heap"
@@ -37,18 +48,23 @@ export * from "#build/types"
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
-	const synthesize = opts.synthesize ?? true
-	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
-	const shuffleWindow = opts.shuffleWindow ?? DEFAULT_SHUFFLE_WINDOW
-	const shuffleSeed = opts.shuffleSeed ?? DEFAULT_SHUFFLE_SEED
-	const profile = opts.profile ?? BuildProfile.Exploratory
-	const licensePolicy = opts.licensePolicy ?? LicensePolicy.All
+	const settings = resolveCorpusSettings(opts)
+	const { synthesize, rowsPerFile, shuffleWindow, shuffleSeed, profile, licensePolicy, resume } = settings
+	const jobs = opts.jobs ?? 1
 	const built_at = new Date().toISOString()
+
+	if (!Number.isInteger(jobs) || jobs < 1) {
+		throw new Error(`buildCorpus: jobs is ${jobs}; it is a positive integer, 1 for a serial build.`)
+	}
 
 	// The build reports heap state when it aborts with SIGABRT.
 	// These aborts arrive twelve minutes into the adapter phase.
 	const heapLimit = heapLimitBytes()
 	const configured = adapters.filter((adapter) => opts.adapterInputs[adapter.id]).map((adapter) => adapter.id)
+
+	// Refused before any work, since it depends only on the host and the configured adapters.
+	const budget =
+		jobs > 1 ? planWorkerBudget({ jobs, adapterIDs: configured, hostMemoryBytes: opts.hostMemoryBytes }) : null
 
 	opts.onProgress?.(
 		"adapter-run",
@@ -75,19 +91,61 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	await makeDirectories(outputDir, intermediateDir)
 
-	const { runs: adapterRuns, skipped } = await runAdapterPhase({
-		adapters,
-		adapterInputs: opts.adapterInputs,
-		corpusVersion: opts.corpusVersion,
-		intermediateDir,
-		onProgress: opts.onProgress,
-	})
+	// Held until this function returns or throws, so a second build into the same directory refuses.
+	await using _lock = await acquireBuildLock(outputDir)
 
 	const labeledPaths: Record<SplitName, PathBuilder> = {
 		train: intermediateDir("labeled-train.jsonl"),
 		val: intermediateDir("labeled-val.jsonl"),
 		test: intermediateDir("labeled-test.jsonl"),
 	}
+
+	const sourceIDPaths: Record<SplitName, PathBuilder> = {
+		train: intermediateDir("source-ids-train.txt"),
+		val: intermediateDir("source-ids-val.txt"),
+		test: intermediateDir("source-ids-test.txt"),
+	}
+
+	const quarantinePath = intermediateDir("quarantine.jsonl")
+	const checkpointPath = intermediateDir("align-checkpoint.json")
+
+	// Settled before any phase opens an output, because both phases overwrite unless they resume.
+	await settlePriorWork(settings.priorOutput, {
+		intermediateDir,
+		checkpointPath,
+		alignPaths: {
+			...labeledPaths,
+			quarantine: quarantinePath,
+			"source-ids-train": sourceIDPaths.train,
+			"source-ids-val": sourceIDPaths.val,
+			"source-ids-test": sourceIDPaths.test,
+		},
+		adapterIDs: configured,
+	})
+
+	// Awaited here, so the lock is released after the build settles rather than when it starts.
+	if (budget) {
+		return await runParallelBuild({
+			opts,
+			adapters: adapters.filter((adapter) => configured.includes(adapter.id)),
+			skipped: adapters.filter((adapter) => !configured.includes(adapter.id)).map((adapter) => adapter.id),
+			settings,
+			rights,
+			outputDir,
+			intermediateDir,
+			builtAt: built_at,
+			budget,
+		})
+	}
+
+	const { runs: adapterRuns, skipped } = await runAdapterPhase({
+		adapters,
+		adapterInputs: opts.adapterInputs,
+		corpusVersion: opts.corpusVersion,
+		intermediateDir,
+		resume,
+		onProgress: opts.onProgress,
+	})
 
 	const holdouts = defaultHoldouts()
 	const registerDecisions = await readRegisterDecisions()
@@ -98,12 +156,14 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		synthesize,
 		profile,
 		licensePolicy,
-		excludeLicenses: opts.excludeLicenses ?? [],
+		excludeLicenses: settings.excludeLicenses,
 		holdouts,
 		eligibility: profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null,
 		labeledPaths,
-		quarantinePath: intermediateDir("quarantine.jsonl"),
-		checkpointPath: intermediateDir("align-checkpoint.json"),
+		sourceIDPaths,
+		quarantinePath,
+		checkpointPath,
+		resume,
 		onProgress: opts.onProgress,
 	})
 
@@ -115,6 +175,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	const splitCounts = await writeSplitManifestsFromLabeledFiles({
 		labeledPaths,
+		sourceIDPaths: align.sourceIDPaths,
 		outputDir: outputDir("splits"),
 		corpusVersion: opts.corpusVersion,
 		counts: align.counts,
@@ -123,10 +184,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	opts.onProgress?.("parquet", "writing parquet files")
 
-	// Each split gets its own generator seeded from one base, so a split's row order does
-	// not depend on the number of rows the earlier splits happened to contain.
-	const shuffled = (path: PathBuilderLike, salt: number) =>
-		shuffleWithinWindow(streamJSONL<LabeledRow>(path), makeMulberry32(shuffleSeed + salt), shuffleWindow)
+	const shuffled = (split: SplitName) =>
+		shuffleSplitRows(streamJSONL<LabeledRow>(labeledPaths[split]), {
+			seed: shuffleSeed,
+			salt: SPLIT_SHUFFLE_SALT[split],
+			window: shuffleWindow,
+		})
 
 	opts.onProgress?.(
 		"parquet",
@@ -135,77 +198,50 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			: "writing rows in arrival order (shuffle window disabled)"
 	)
 
+	const derivationFor = await adapterDerivations(
+		adapters.filter((adapter) => configured.includes(adapter.id)),
+		opts.adapterInputs,
+		derivationConfig(settings, holdouts)
+	)
+
+	const corpusDir = outputDir(corpusDirectoryName(opts.corpusVersion))
+
+	if (resume) {
+		await stageAdmittedManifestForResume(corpusDir)
+	}
+
+	// The parquet writer stages its manifest under the unchecked name,
+	// and the held-out span check moves it to `MANIFEST.json` once it passes,
+	// so a corpus the check refuses has no manifest a training run reads.
 	const parquetManifest = await writeParquetSplits(
-		{
-			train: shuffled(labeledPaths.train, 0),
-			val: shuffled(labeledPaths.val, 1),
-			test: shuffled(labeledPaths.test, 2),
-		},
+		{ train: shuffled("train"), val: shuffled("val"), test: shuffled("test") },
 		{
 			outputDir,
 			corpusVersion: opts.corpusVersion,
 			rowsPerFile,
-			resume: $public.MAILWOMAN_RESUME === "1",
+			resume,
+			derivationFor,
+			manifestPath: corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE),
 		}
 	)
 
-	const licenseSummary = [...align.licenseCounts.entries()].toSorted((a, b) => b[1] - a[1])
-	const refusedValues = align.licenses.refusedValues()
-	const refusalTally = [...align.refusedByKind.entries()].map(([kind, rows]) => `${kind}=${rows}`).join(", ")
+	const holdoutCheck = await admitParquetManifest({ corpusDir, holdouts, onProgress: opts.onProgress })
 
-	opts.onProgress?.(
-		"manifest",
-		`license set: ${licenseSummary.map(([l, c]) => `${l}=${c}`).join(", ")}` +
-			` | policy ${licensePolicy}` +
-			(align.excludedByLicense > 0
-				? ` | refused ${align.excludedByLicense} rows over ${refusedValues.size} values (${refusalTally})`
-				: ` | refused 0 rows`) +
-			` | admitted ${align.admittedUnresolved} rows whose license resolves to no expression`
-	)
-
-	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
-
-	// Frozen from what this build observed rather than re-derived later, because the register moves
-	// as terms are reviewed and a re-derived record would describe a build that never happened.
-	const trainingManifest = freezeTrainingManifest({
+	return await writeBuildManifests({
+		outputDir,
 		corpusVersion: opts.corpusVersion,
 		builtAt: built_at,
 		profile,
-		rowsBySource: align.rowsBySource,
-		decisionsByLicense: registerDecisions,
-		refused: align.ineligibleSources,
+		licensePolicy,
+		adapterRuns,
+		skipped,
+		splitCounts,
+		holdouts,
+		parquetManifest,
+		holdoutCheck,
+		totals: alignTotalsOf(align),
+		rights,
+		registerDecisions,
+		onProgress: opts.onProgress,
 	})
-
-	await writeLocalJSONFile(trainingManifest, outputDir(TRAINING_MANIFEST_FILE))
-
-	const manifest: BuildCorpusManifest = {
-		corpus_version: opts.corpusVersion,
-		built_at,
-		adapters: adapterRuns,
-		skipped_adapters: skipped,
-		splits: { counts: splitCounts, holdouts },
-		slices: { counts: parquetManifest.counts, total_rows: parquetManifest.total_rows },
-		quarantine_count: align.quarantined,
-		total_aligned_rows: align.aligned,
-		licenses: Object.fromEntries(licenseSummary),
-		licenses_cover:
-			"the rows this build aligned from its adapters. An overlay parquet assembled afterwards carries its " +
-			"own licenses, and the overlay corpus's own MANIFEST.json states no license set at all, so a reader " +
-			"attributing an overlay corpus reads this set plus each overlay's own record rather than this set alone.",
-		excluded_by_license: align.excludedByLicense,
-		license_policy: licensePolicy,
-		refused_by_license_kind: Object.fromEntries(align.refusedByKind),
-		refused_license_values: Object.fromEntries(refusedValues),
-		refused_rows_by_source: Object.fromEntries(align.refusedBySource),
-		admitted_unresolved_license_rows: align.admittedUnresolved,
-		profile,
-		excluded_by_eligibility: align.excludedByEligibility,
-		ineligible_sources: Object.fromEntries(align.ineligibleSources),
-		training_manifest_digest: trainingManifest.contentDigest,
-		source_rights: rights.record(),
-	}
-
-	await writeLocalJSONFile(manifest, outputDir("MANIFEST.json"))
-
-	return manifest
 }

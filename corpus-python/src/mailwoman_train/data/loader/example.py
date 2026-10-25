@@ -40,6 +40,10 @@ class EncodedExample:
     # ``(max_length,)`` confidence, or None when no locality-surface lexicon is set.
     locality_surface_features: list[list[float]] | None = None
     locality_surface_confidence: list[float] | None = None
+    # Code-unit channel (#2845). Per-piece ``(max_length, 5)`` unit shape features + ``(max_length,)`` confidence,
+    # or None when `data.code_unit_features` is off.
+    code_unit_features: list[list[float]] | None = None
+    code_unit_confidence: list[float] | None = None
     # CharCNN input path (#825 / v8 CJK, the D1 interface). ``(max_units, max_unit_width)`` char IDs,
     # or None on the SentencePiece path. When present, ``input_ids`` is a dummy all-PAD row (the
     # model's use_char_embed branch never reads it) and attention/labels are PER unit rather than per piece.

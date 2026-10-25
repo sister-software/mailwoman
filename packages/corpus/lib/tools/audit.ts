@@ -20,6 +20,7 @@ import { basename, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { readConfigView } from "#source-register/effective-manifest"
+import { baseManifestFiles } from "#tools/overlay/manifest"
 
 /**
  * Share of the sampled mix one source may hold before the mix is flagged as dominated by it.
@@ -209,14 +210,15 @@ async function manifestScan(
 
 	if (!(await pathExists(manifestPath))) return null
 
-	const manifest = await readLocalJSONFile<{
-		slices?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
-	}>(manifestPath)
-
-	if (!Array.isArray(manifest.slices)) return null
+	const manifest = await readLocalJSONFile<object>(manifestPath)
 	const bySplit: Record<string, Record<string, number>> = {}
 
-	for (const file of manifest.slices) {
+	for (const file of baseManifestFiles<{
+		path: string
+		split: string
+		source?: string | null
+		first_source_id?: string | null
+	}>(manifest)) {
 		const split = file.split
 		const src = file.source ?? sourceFromID(file.first_source_id ?? "", knownPrefixes)
 		bySplit[split] ??= {}
@@ -248,7 +250,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	for (const src of allSources) {
 		const files = stats[src] ?? 0
 		const weight = weights[src]
-		const effective = weight !== undefined ? files * weight : 0
+		const effective = weight ? files * weight : 0
 		sampleWeights.push([src, effective])
 	}
 
@@ -348,7 +350,7 @@ function printReport(
 
 		console.log("")
 
-		const dominator = rows.find((r) => r.overweightFactor !== undefined)
+		const dominator = rows.find((r) => r.overweightFactor)
 
 		if (dominator) {
 			const factor = dominator.overweightFactor

@@ -28,18 +28,13 @@
 ## `packages/corpus/lib/shard-recipes/`) survives, because inline code is
 ## exempt — mention the artifact by its real name instead of the shorthand.
 ##
-## Three CLI commands carry the word: `mailwoman corpus slice`, `corpus align-slice` and
-## `corpus split-slice`. The slice token takes an optional `corpus ` command prefix so the match is
-## the whole command name, and `exceptions` admits exactly those three. A bare `slice` still fires.
+## No CLI command carries the word: the recipe runner is `corpus recipe`, its aligner
+## `corpus align-recipe` and the overlay router `corpus split-overlay`.
 extends: existence
 message: "'%s' is banned project shorthand — name the concrete artifact or change in plain words (the config key, the corpus recipe file, the run version, the systems compared)."
 level: error
 ignorecase: true
-exceptions:
-  - corpus slice
-  - corpus align-slice
-  - corpus split-slice
 tokens:
   - the null
   - three-leg
-  - (?:corpus (?:align-|split-)?)?slice(?:s|d)?
+  - slice(?:s|d)?

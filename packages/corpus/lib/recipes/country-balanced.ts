@@ -20,6 +20,7 @@ import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaff
 import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 import type { CanonicalRow } from "#types"
+import { usAbbrevRegions, type USAbbrevRegion } from "#us/abbrev-regions"
 import { US_SKELETON_EVAL_SOURCE, US_SKELETON_TRAIN_SOURCES } from "#us/recipes/skeleton-sources"
 import { alignRow } from "#utils"
 
@@ -292,23 +293,6 @@ const HOMOGRAPHS: readonly Homograph[] = [
 	},
 ]
 
-// A US state code that is also an ISO country code.
-interface AbbrevRegion {
-	code: string
-	localities: readonly string[]
-	postcodes: readonly string[]
-}
-
-// The paired countries are Canada, Georgia, India, Morocco, Panama and Albania.
-const ABBREV_REGIONS: readonly AbbrevRegion[] = [
-	{ code: "CA", localities: ["Los Angeles", "Sacramento", "San Diego"], postcodes: ["90012", "95814", "92101"] },
-	{ code: "GA", localities: ["Atlanta", "Savannah", "Macon"], postcodes: ["30309", "31401", "31201"] },
-	{ code: "IN", localities: ["Indianapolis", "Fort Wayne"], postcodes: ["46204", "46802"] },
-	{ code: "MA", localities: ["Boston", "Worcester"], postcodes: ["02108", "01608"] },
-	{ code: "PA", localities: ["Philadelphia", "Pittsburgh"], postcodes: ["19103", "15222"] },
-	{ code: "AL", localities: ["Birmingham", "Montgomery"], postcodes: ["35203", "36104"] },
-]
-
 const STREET_POOL: readonly string[] = [
 	"Main Street",
 	"Oak Avenue",
@@ -374,19 +358,25 @@ function renderHomograph(random: () => number): {
 
 /**
  * Renders a US address whose state code is also a country code.
+ *
+ * The locality and the postcode are drawn as a pair, so the row keeps a postcode that lies in that locality.
  */
-function renderAbbrevRegion(random: () => number): {
+function renderAbbrevRegion(
+	random: () => number,
+	regions: readonly USAbbrevRegion[]
+): {
 	fmt: string
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const a = sample(ABBREV_REGIONS, random)
+	const a = sample(regions, random)
+	const pair = Math.floor(random() * a.localities.length)
 
 	const hn = houseNo(random),
 		street = sample(STREET_POOL, random),
-		locality = sample(a.localities, random),
-		postcode = sample(a.postcodes, random)
+		locality = a.localities[pair]!,
+		postcode = a.postcodes[pair]!
 
 	return {
 		fmt: "abbrev-region",
@@ -419,6 +409,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-country")
 		const pool = await readSourcePool(opts.golden ? EVAL_SOURCE_GROUPS : SOURCE_GROUPS, count)
+		const abbrevRegions = usAbbrevRegions()
 
 		if (!pool.length) {
 			throw new Error(`No tuples — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
@@ -440,7 +431,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				rendered = h
 				rowISO2 = h.iso2
 			} else if (roll < HOMOGRAPH_FRAC + ABBREV_FRAC) {
-				const a = renderAbbrevRegion(random)
+				const a = renderAbbrevRegion(random, abbrevRegions)
 				rendered = a
 				rowISO2 = a.iso2
 			} else {
@@ -475,7 +466,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 				locale: localeTag,
 				source,
 				source_id: stableSourceID(source, components),
-				corpus_version: "0.4.0",
 				license:
 					"OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
 			}
@@ -491,7 +481,6 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			write(
 				stringifyJSON({
 					...aligned.row,
-					recipe: "country",
 					base_source_id: null,
 					register: rowRegister ?? requireRegister(opts, "country-balanced"),
 					surface: SurfaceOrigin.Composed,

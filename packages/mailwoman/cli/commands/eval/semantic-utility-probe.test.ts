@@ -1,13 +1,13 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { canonicalJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
-import { canonicalJSON } from "#tools/eval-harness/preregistration"
 import {
 	auditProbeDefinition,
 	computeProbeCounts,

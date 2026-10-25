@@ -171,6 +171,33 @@ export function poiLayerURL(): string {
 }
 
 /**
+ * Version of the place autocomplete index, one sealed ancestrie per leading character of the folded name.
+ *
+ * Update it after publishing a generation built by `autocomplete-index.run.ts`.
+ */
+export const AUTOCOMPLETE_INDEX_VERSION = "2026-10-24c"
+
+/**
+ * The file extension of one autocomplete index file, a sealed ancestrie.
+ */
+export const AUTOCOMPLETE_INDEX_EXTENSION = ".anct"
+
+/**
+ * Returns the URL of the autocomplete index file for one leading-character partition.
+ */
+export function autocompleteIndexURL(partition: string): string {
+	return `${ASSET_BASE_URL}autocomplete/${AUTOCOMPLETE_INDEX_VERSION}/${partition}${AUTOCOMPLETE_INDEX_EXTENSION}`
+}
+
+/**
+ * Returns the URL of the autocomplete index manifest.
+ * The manifest lists the partitions the generation holds.
+ */
+export function autocompleteIndexManifestURL(): string {
+	return `${ASSET_BASE_URL}autocomplete/${AUTOCOMPLETE_INDEX_VERSION}/index.json`
+}
+
+/**
  * US state and territory slugs that have hosted street extracts.
  */
 export const HOSTED_STREET_SLUGS = new Set([
@@ -298,7 +325,7 @@ export function regionToStateSlug(region: string | null): string | null {
 /**
  * Returns the loader URL configuration shared by the primary and comparison classifiers.
  *
- * Both load every published pair index.
+ * Both load every pair index the generation's manifest lists.
  * The loader keeps each live and `selectPairIndexForText` picks per parse.
  *
  * A missing binary is skipped, so it means no prior, never a failed load.
@@ -306,8 +333,16 @@ export function regionToStateSlug(region: string | null): string | null {
 export function neuralClassifierLoadURLs(
 	locale: string,
 	version: string,
-	opts: { postcodeAnchors: readonly string[]; postcodePrefixes?: readonly string[]; splitEmbeddings?: boolean }
-) {
+	opts: {
+		postcodeAnchors: readonly string[]
+		/**
+		 * The countries the pair-index generation's manifest lists, as lowercase alpha-2 codes.
+		 */
+		pairIndexCountries: readonly string[]
+		postcodePrefixes?: readonly string[]
+		splitEmbeddings?: boolean
+	}
+): NeuralClassifierLoadURLs {
 	return {
 		// A split release loads the encoder and reads the embedding rows separately.
 		// Its directory still holds `model.onnx` for runtimes that predate the split.
@@ -331,15 +366,64 @@ export function neuralClassifierLoadURLs(
 		// The pair indexes live on the public bucket beside every other model asset,
 		// under a dated generation: the objects ship an immutable Cache-Control,
 		// so a rebuilt index is readable only from a fresh path.
-		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION)),
+		pairIndexURLs: pairIndexURLs(pairIndexBaseURL(PAIR_INDEX_VERSION), opts.pairIndexCountries),
 	}
 }
 
 /**
- * Countries whose placetype-pair indexes the demo requests.
- * The demo skips missing files.
+ * The loader URL configuration of a SentencePiece release, as {@link neuralClassifierLoadURLs} returns it.
+ *
+ * A split release sets `embeddings`, and its `modelURL` is `encoder.onnx`.
  */
-export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
+export interface NeuralClassifierLoadURLs {
+	modelURL: string
+	embeddings?: { hotURL: string; rowsURL: string }
+	tokenizerURL: string
+	modelCardURL: string
+	gazetteerLexicon: { url: string }
+	postcodeBinaryURLs: string[]
+	postcodePrefixURLs: string[]
+	pairIndexURLs: string[]
+}
+
+/**
+ * The loader URL configuration of a character-encoder release.
+ *
+ * The graph reads code points indexed by `char-vocab.json` beside `model.onnx`, so there is no tokenizer.
+ * The character family ships no postcode binaries, prefix indexes or pair indexes,
+ * so each of those lists is empty.
+ */
+export interface CharClassifierLoadURLs {
+	modelURL: string
+	charVocabURL: string
+	modelCardURL: string
+	postcodeBinaryURLs: readonly string[]
+	postcodePrefixURLs: readonly string[]
+	pairIndexURLs: readonly string[]
+}
+
+/**
+ * Returns the loader URL configuration of a character-encoder release.
+ */
+export function charClassifierLoadURLs(locale: string, version: string): CharClassifierLoadURLs {
+	return {
+		modelURL: assetURL(locale, version, "model.onnx"),
+		charVocabURL: assetURL(locale, version, "char-vocab.json"),
+		modelCardURL: assetURL(locale, version, "model-card.json"),
+		postcodeBinaryURLs: [],
+		postcodePrefixURLs: [],
+		pairIndexURLs: [],
+	}
+}
+
+/**
+ * Reports whether a loader URL configuration is a character-encoder release's.
+ */
+export function isCharClassifierLoadURLs(
+	urls: NeuralClassifierLoadURLs | CharClassifierLoadURLs
+): urls is CharClassifierLoadURLs {
+	return "charVocabURL" in urls
+}
 
 /**
  * Version of the pair-index binaries.
@@ -358,14 +442,25 @@ export function pairIndexBaseURL(version: string): string {
 }
 
 /**
+ * Returns the URL of the manifest beside one pair-index generation's binaries.
+ *
+ * The publisher writes `index.json` from the binaries it stages, so the runtime asks the bucket
+ * which countries a generation holds rather than listing them in code.
+ */
+export function pairIndexManifestURL(baseURL: string): string {
+	return `${baseURL.replace(/\/$/, "")}/index.json`
+}
+
+/**
  * Returns the per-country binary URLs under a pair-index base URL.
  *
  * @param baseURL Base URL of the binaries, with or without a trailing slash.
+ * @param countries The lowercase alpha-2 codes the generation's manifest lists.
  */
-export function pairIndexURLs(baseURL: string): string[] {
+export function pairIndexURLs(baseURL: string, countries: readonly string[]): string[] {
 	const base = baseURL.replace(/\/$/, "")
 
-	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
+	return countries.map((cc) => `${base}/pair-index-${cc}.bin`)
 }
 
 /**

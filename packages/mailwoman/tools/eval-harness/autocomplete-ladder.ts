@@ -279,7 +279,7 @@ export async function runAutocompleteLadder(
 	const eligible = all.filter((row) => {
 		if (country && row.country.toUpperCase() !== country) return false
 
-		if (row.expectLat === undefined || row.expectLon === undefined) {
+		if (!row.expectLat || !row.expectLon) {
 			excluded.push({ id: row.id, reason: "no truth coordinate" })
 
 			return false
@@ -306,7 +306,7 @@ export async function runAutocompleteLadder(
 	const matcherFor = async (locale: string): Promise<FSTMatcher | null> => {
 		const cached = matchers.get(locale)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 
 		const path = `${fstDir}/${fstFileName(locale)}`
 		const matcher = (await pathExists(path)) ? deserializeFST(await readLocalBuffer(path)) : null

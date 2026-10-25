@@ -60,7 +60,7 @@ const ALLOWED_DUPLICATE_EXPORTS = new Set([
 	"packages/codex/lib/us/street/suffix.ts:StreetSuffixAbbreviationRecord,US_STREET_SUFFIX_VARIANTS",
 	"packages/core/lib/decoder/containment.ts:PARENT_OF,WESTERN_PARENT_OF",
 	"packages/corpus/lib/recipes/sub/venue.ts:buildPositiveForms,buildSubVenueForm",
-	"packages/mailwoman/tools/gazetteer-pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
+	"packages/gazetteer/tools/pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
 ])
 
 function duplicateKey(file: string, symbols: KnipSymbol[]): string {

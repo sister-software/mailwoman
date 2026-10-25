@@ -199,7 +199,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(r.probe("shoreditch", "london")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
-	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
+	it("old-binary compat: a header WITHOUT the field reads back !transitionBeta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
@@ -222,7 +222,7 @@ describe("ParentDelta header field (whole-edge default-on,)", () => {
 		expect(peekPairIndexHeader(bytes).parentDelta).toBe(5)
 	})
 
-	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
+	it("absence-tolerant: a header WITHOUT the field reads back !parentDelta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 

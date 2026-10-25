@@ -4,9 +4,90 @@ import {
 	buildTelecomPOISQL,
 	extractOSMPOIs,
 	matchOSMPOITagRule,
+	mergeStationComplexes,
+	OSM_POI_RULE_SETS,
+	STATION_TAG_RULES,
+	stationNames,
 	tagRuleFromOSMTag,
 	TELECOM_TAG_RULES,
+	toPOISourceRows,
 } from "#sdk/extract/poi"
+
+test("STATION_TAG_RULES: a subway or light-rail station takes its own category before the plain station rule", () => {
+	expect(matchOSMPOITagRule({ railway: "station", station: "subway" }, STATION_TAG_RULES)).toBe("metro_station")
+
+	expect(matchOSMPOITagRule({ railway: "station", station: "light_rail" }, STATION_TAG_RULES)).toBe(
+		"light_rail_and_subway_station"
+	)
+
+	expect(matchOSMPOITagRule({ railway: "station" }, STATION_TAG_RULES)).toBe("train_station")
+	expect(matchOSMPOITagRule({ railway: "halt" }, STATION_TAG_RULES)).toBe("train_station")
+	expect(matchOSMPOITagRule({ railway: "platform" }, STATION_TAG_RULES)).toBeNull()
+})
+
+test("toPOISourceRows: a matched feature yields a row with its string category", () => {
+	const rows = toPOISourceRows(
+		{
+			properties: { name: "NTT 局", man_made: "telephone_exchange" },
+			geometry: { type: "Point", coordinates: [139.7, 35.6] },
+		},
+		{ rules: TELECOM_TAG_RULES },
+		["man_made", "telecom"]
+	)
+
+	expect(rows).toEqual([expect.objectContaining({ name: "NTT 局", category: "telecom_exchange", latitude: 35.6 })])
+})
+
+test("toPOISourceRows: a station yields one row per language name, each with its station word", () => {
+	const rows = toPOISourceRows(
+		{
+			properties: { name: "渋谷", railway: "station", name_ja: "渋谷", name_en: "Shibuya" },
+			geometry: { type: "Point", coordinates: [139.7017647, 35.65808] },
+		},
+		OSM_POI_RULE_SETS["stations"]!,
+		["railway", "station", "name:ja", "name:en"]
+	)
+
+	expect(rows.map((row) => row.name)).toEqual(["渋谷駅", "Shibuya Station"])
+	expect(new Set(rows.map((row) => row.category))).toEqual(new Set(["train_station"]))
+})
+
+test("mergeStationComplexes: one station's nodes merge, and two stations of one name stay apart", () => {
+	const row = (name: string, latitude: number, longitude: number) => ({
+		name,
+		category: "train_station",
+		brandWikidata: null,
+		latitude,
+		longitude,
+		country: "JP",
+		confidence: 1,
+		gersID: null,
+	})
+
+	const merged = mergeStationComplexes([
+		row("渋谷駅", 35.65808, 139.7017647),
+		row("渋谷駅", 35.658999, 139.7024447),
+		row("渋谷駅", 35.6585367, 139.6991599),
+		// A second 渋谷駅 far from Tokyo.
+		row("渋谷駅", 34.827, 135.44),
+		row("新宿駅", 35.6905828, 139.6991102),
+		{ ...row("新宿駅", 35.6922273, 139.7006009), category: "metro_station" },
+	])
+
+	expect(merged.filter((r) => r.name === "渋谷駅")).toHaveLength(2)
+	expect(merged.filter((r) => r.name === "新宿駅")).toHaveLength(1)
+	expect(merged.some((r) => r.name === "渋谷駅" && r.latitude === 35.65808)).toBe(true)
+})
+
+test("stationNames: keeps a name that already ends in its station word once", () => {
+	expect(stationNames({ "name:ja": "東京駅", "name:en": "Tokyo Station" })).toEqual(["東京駅", "Tokyo Station"])
+	expect(stationNames({})).toEqual([])
+})
+
+test("STATION_TAG_RULES: every entry passes the SQL validator", () => {
+	expect(() => buildTelecomPOISQL("points", STATION_TAG_RULES)).not.toThrow()
+	expect(() => buildTelecomPOISQL("multipolygons", STATION_TAG_RULES)).not.toThrow()
+})
 
 test("TELECOM_TAG_RULES: encodes exactly the six decision-2 rules", () => {
 	expect(TELECOM_TAG_RULES).toEqual([

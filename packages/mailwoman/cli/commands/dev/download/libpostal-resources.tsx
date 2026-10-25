@@ -3,7 +3,7 @@
 
 /**
  *   `mailwoman dev download libpostal-resources` — refresh the checked-in libpostal dictionaries
- *   under `core/data/libpostal/dictionaries/` (shallow clone + code-point sort).
+ *   under `dictionaries/data/libpostal/dictionaries/` (shallow clone + code-point sort).
  */
 
 import { Text } from "ink"
@@ -27,7 +27,7 @@ export const spec = {
 
 const DevDownloadLibpostalResources: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { downloadLibpostalResources } = await import("@mailwoman/core/tools/download/libpostal-resources")
+		const { downloadLibpostalResources } = await import("@mailwoman/dictionaries/sdk/libpostal-resources")
 
 		return downloadLibpostalResources(options, (line) => console.error(line))
 	})

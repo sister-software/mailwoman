@@ -135,7 +135,8 @@ export async function migrateRecipeOutput(input: PathBuilderLike, output: PathBu
 
 		const migrated = {
 			...rest,
-			recipe: recipe ?? null,
+			// A `synth_method` is an augmentation only on a row derived from a base row, as `corpusRowFromParquet` reads it.
+			augmentation: baseSourceID ? (recipe ?? null) : null,
 			base_source_id: baseSourceID ?? null,
 			register: SourceRegister.DerivedTuples,
 			surface: surfaceForSource(source),

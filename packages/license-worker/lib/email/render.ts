@@ -11,11 +11,9 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 
-import { type EmailBlock, licenseEmailPreview, licenseEmailSections } from "#email/content"
+import { type EmailBlock, licenseEmailPreview, licenseEmailSections, licenseEmailTitle } from "#email/content"
 import type { LicenseEmail } from "#email/provider"
 import { LicenseEmailTemplate } from "#email/template"
-
-const TITLE = "Your Mailwoman commercial license"
 
 function textLines(block: EmailBlock): string[] {
 	switch (block.kind) {
@@ -36,7 +34,8 @@ function textLines(block: EmailBlock): string[] {
 }
 
 export function renderLicenseEmail(message: LicenseEmail, siteOrigin: string): string {
-	const lines: string[] = [TITLE, "=".repeat(TITLE.length), ""]
+	const title = licenseEmailTitle(message)
+	const lines: string[] = [title, "=".repeat(title.length), ""]
 
 	for (const section of licenseEmailSections(message, siteOrigin)) {
 		if (section.heading) {
@@ -54,7 +53,7 @@ export function renderLicenseEmail(message: LicenseEmail, siteOrigin: string): s
 export function renderLicenseEmailHTML(message: LicenseEmail, siteOrigin: string, from: string): string {
 	const markup = renderToStaticMarkup(
 		createElement(LicenseEmailTemplate, {
-			title: TITLE,
+			title: licenseEmailTitle(message),
 			preview: licenseEmailPreview(message),
 			sections: licenseEmailSections(message, siteOrigin),
 			from,

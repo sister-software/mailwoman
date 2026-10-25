@@ -569,7 +569,7 @@ describe("per-case overrides", () => {
 			ladder: null,
 			components: { locality: "Springfield" },
 			deleted: "region",
-			pin: undefined,
+			pin: null,
 			gz: fakeGazetteer(),
 			ablatedInput: "Springfield",
 		})

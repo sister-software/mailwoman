@@ -1,0 +1,730 @@
+{
+	"$generatedBy": "packages/mailwoman/tools/dev-tools/postcode/code-unit-syntax.run.ts",
+	"$note": "Each pattern is anchored and matched case-insensitively against a value with its prefix removed.",
+	"countries": {
+		"AC": {
+			"pattern": "^(?:(?:ASCN\\s*1ZZ))$",
+			"prefix": null
+		},
+		"AD": {
+			"pattern": "^(?:(?:AD[1-7]0\\d))$",
+			"prefix": null
+		},
+		"AF": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"AI": {
+			"pattern": "^(?:(?:(?:AI-)?2640))$",
+			"prefix": null
+		},
+		"AL": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"AM": {
+			"pattern": "^(?:(?:(?:37)?\\d{4}))$",
+			"prefix": null
+		},
+		"AR": {
+			"pattern": "^(?:(?:((?:[A-HJ-NP-Z])?\\d{4})([A-Z]{3})?))$",
+			"prefix": null
+		},
+		"AS": {
+			"pattern": "^(?:(?:(96799)(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"AT": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"AU": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"AX": {
+			"pattern": "^(?:(?:22\\d{3}))$",
+			"prefix": "AX-"
+		},
+		"AZ": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"BA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"BB": {
+			"pattern": "^(?:(?:BB\\d{5}))$",
+			"prefix": null
+		},
+		"BD": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"BE": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"BG": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"BH": {
+			"pattern": "^(?:(?:(?:^|\\b)(?:1[0-2]|[1-9])\\d{2}(?:$|\\b)))$",
+			"prefix": null
+		},
+		"BL": {
+			"pattern": "^(?:(?:9[78][01]\\d{2}))$",
+			"prefix": null
+		},
+		"BM": {
+			"pattern": "^(?:(?:[A-Z]{2}\\s*[A-Z0-9]{2}))$",
+			"prefix": null
+		},
+		"BN": {
+			"pattern": "^(?:(?:[A-Z]{2}\\s*\\d{4}))$",
+			"prefix": null
+		},
+		"BR": {
+			"pattern": "^(?:(?:\\d{5}-?\\d{3}))$",
+			"prefix": null
+		},
+		"BT": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"BY": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"CA": {
+			"pattern": "^(?:(?:[ABCEGHJKLMNPRSTVXY]\\d[ABCEGHJ-NPRSTV-Z]\\s*\\d[ABCEGHJ-NPRSTV-Z]\\d))$",
+			"prefix": null
+		},
+		"CC": {
+			"pattern": "^(?:(?:6799))$",
+			"prefix": null
+		},
+		"CH": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": "CH-"
+		},
+		"CL": {
+			"pattern": "^(?:(?:\\d{7}))$",
+			"prefix": null
+		},
+		"CN": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"CO": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"CR": {
+			"pattern": "^(?:(?:\\d{4,5}|\\d{3}-\\d{4}))$",
+			"prefix": null
+		},
+		"CU": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"CV": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"CX": {
+			"pattern": "^(?:(?:6798))$",
+			"prefix": null
+		},
+		"CY": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"CZ": {
+			"pattern": "^(?:(?:\\d{3}\\s*\\d{2}))$",
+			"prefix": null
+		},
+		"DE": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"DK": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"DO": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"DZ": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"EC": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"EE": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"EG": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"EH": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"ES": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"ET": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"FI": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": "FI-"
+		},
+		"FK": {
+			"pattern": "^(?:(?:FIQQ\\s*1ZZ))$",
+			"prefix": null
+		},
+		"FM": {
+			"pattern": "^(?:(?:(9694[1-4])(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"FO": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"FR": {
+			"pattern": "^(?:(?:\\d{2}\\s*\\d{3}))$",
+			"prefix": null
+		},
+		"GB": {
+			"pattern": "^(?:(?:GIR\\s*0AA|(?:(?:AB|AL|B|BA|BB|BD|BF|BH|BL|BN|BR|BS|BT|BX|CA|CB|CF|CH|CM|CO|CR|CT|CV|CW|DA|DD|DE|DG|DH|DL|DN|DT|DY|E|EC|EH|EN|EX|FK|FY|G|GL|GY|GU|HA|HD|HG|HP|HR|HS|HU|HX|IG|IM|IP|IV|JE|KA|KT|KW|KY|L|LA|LD|LE|LL|LN|LS|LU|M|ME|MK|ML|N|NE|NG|NN|NP|NR|NW|OL|OX|PA|PE|PH|PL|PO|PR|RG|RH|RM|S|SA|SE|SG|SK|SL|SM|SN|SO|SP|SR|SS|ST|SW|SY|TA|TD|TF|TN|TQ|TR|TS|TW|UB|W|WA|WC|WD|WF|WN|WR|WS|WV|YO|ZE)(?:\\d[\\dA-Z]?\\s*\\d[ABD-HJLN-UW-Z]{2}))|BFPO\\s*\\d{1,4}))$",
+			"prefix": null
+		},
+		"GE": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"GF": {
+			"pattern": "^(?:(?:9[78]3\\d{2}))$",
+			"prefix": null
+		},
+		"GG": {
+			"pattern": "^(?:(?:GY\\d[\\dA-Z]?\\s*\\d[ABD-HJLN-UW-Z]{2}))$",
+			"prefix": null
+		},
+		"GI": {
+			"pattern": "^(?:(?:GX11\\s*1AA))$",
+			"prefix": null
+		},
+		"GL": {
+			"pattern": "^(?:(?:39\\d{2}))$",
+			"prefix": null
+		},
+		"GN": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"GP": {
+			"pattern": "^(?:(?:9[78][01]\\d{2}))$",
+			"prefix": null
+		},
+		"GR": {
+			"pattern": "^(?:(?:\\d{3}\\s*\\d{2}))$",
+			"prefix": null
+		},
+		"GS": {
+			"pattern": "^(?:(?:SIQQ\\s*1ZZ))$",
+			"prefix": null
+		},
+		"GT": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"GU": {
+			"pattern": "^(?:(?:(969(?:[12]\\d|3[12]))(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"GW": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"HM": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"HN": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"HR": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": "HR-"
+		},
+		"HT": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"HU": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"ID": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"IE": {
+			"pattern": "^(?:(?:[\\dA-Z]{3}\\s*[\\dA-Z]{4}))$",
+			"prefix": null
+		},
+		"IL": {
+			"pattern": "^(?:(?:\\d{5}(?:\\d{2})?))$",
+			"prefix": null
+		},
+		"IM": {
+			"pattern": "^(?:(?:IM\\d[\\dA-Z]?\\s*\\d[ABD-HJLN-UW-Z]{2}))$",
+			"prefix": null
+		},
+		"IN": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"IO": {
+			"pattern": "^(?:(?:BBND\\s*1ZZ))$",
+			"prefix": null
+		},
+		"IQ": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"IR": {
+			"pattern": "^(?:(?:\\d{5}-?\\d{5}))$",
+			"prefix": null
+		},
+		"IS": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"IT": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"JE": {
+			"pattern": "^(?:(?:JE\\d[\\dA-Z]?\\s*\\d[ABD-HJLN-UW-Z]{2}))$",
+			"prefix": null
+		},
+		"JO": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"JP": {
+			"pattern": "^(?:(?:\\d{3}-?\\d{4}))$",
+			"prefix": null
+		},
+		"KE": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"KG": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"KH": {
+			"pattern": "^(?:(?:\\d{5,6}))$",
+			"prefix": null
+		},
+		"KR": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"KW": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"KY": {
+			"pattern": "^(?:(?:KY\\d-\\d{4}))$",
+			"prefix": null
+		},
+		"KZ": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"LA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"LB": {
+			"pattern": "^(?:(?:(?:\\d{4})(?:\\s*(?:\\d{4}))?))$",
+			"prefix": null
+		},
+		"LI": {
+			"pattern": "^(?:(?:948[5-9]|949[0-8]))$",
+			"prefix": "FL-"
+		},
+		"LK": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"LR": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"LS": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"LT": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": "LT-"
+		},
+		"LU": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"LV": {
+			"pattern": "^(?:(?:LV-\\d{4}))$",
+			"prefix": null
+		},
+		"MA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MC": {
+			"pattern": "^(?:(?:980\\d{2}))$",
+			"prefix": "MC-"
+		},
+		"MD": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": "MD-"
+		},
+		"ME": {
+			"pattern": "^(?:(?:8\\d{4}))$",
+			"prefix": null
+		},
+		"MF": {
+			"pattern": "^(?:(?:9[78][01]\\d{2}))$",
+			"prefix": null
+		},
+		"MG": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"MH": {
+			"pattern": "^(?:(?:(969[67]\\d)(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"MK": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"MM": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MN": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MP": {
+			"pattern": "^(?:(?:(9695[012])(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"MQ": {
+			"pattern": "^(?:(?:9[78]2\\d{2}))$",
+			"prefix": null
+		},
+		"MT": {
+			"pattern": "^(?:(?:[A-Z]{3}\\s*\\d{2,4}))$",
+			"prefix": null
+		},
+		"MU": {
+			"pattern": "^(?:(?:\\d{3}(?:\\d{2}|[A-Z]{2}\\d{3})))$",
+			"prefix": null
+		},
+		"MV": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MX": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MY": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"MZ": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"NA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"NC": {
+			"pattern": "^(?:(?:988\\d{2}))$",
+			"prefix": null
+		},
+		"NE": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"NF": {
+			"pattern": "^(?:(?:2899))$",
+			"prefix": null
+		},
+		"NG": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"NI": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"NL": {
+			"pattern": "^(?:(?:[1-9]\\d{3}\\s*(?:[A-RT-Z][A-Z]|S[BCE-RT-Z])))$",
+			"prefix": null
+		},
+		"NO": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"NP": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"NZ": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"OM": {
+			"pattern": "^(?:(?:(?:PC\\s*)?\\d{3}))$",
+			"prefix": null
+		},
+		"PE": {
+			"pattern": "^(?:(?:(?:LIMA\\s*\\d{1,2}|CALLAO\\s*0?\\d)|[0-2]\\d{4}))$",
+			"prefix": null
+		},
+		"PF": {
+			"pattern": "^(?:(?:987\\d{2}))$",
+			"prefix": null
+		},
+		"PG": {
+			"pattern": "^(?:(?:\\d{3}))$",
+			"prefix": null
+		},
+		"PH": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"PK": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"PL": {
+			"pattern": "^(?:(?:\\d{2}-\\d{3}))$",
+			"prefix": null
+		},
+		"PM": {
+			"pattern": "^(?:(?:9[78]5\\d{2}))$",
+			"prefix": null
+		},
+		"PN": {
+			"pattern": "^(?:(?:PCRN\\s*1ZZ))$",
+			"prefix": null
+		},
+		"PR": {
+			"pattern": "^(?:(?:(00[679]\\d{2})(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"PT": {
+			"pattern": "^(?:(?:\\d{4}-\\d{3}))$",
+			"prefix": null
+		},
+		"PW": {
+			"pattern": "^(?:(?:(969(?:39|40))(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"PY": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"RE": {
+			"pattern": "^(?:(?:9[78]4\\d{2}))$",
+			"prefix": null
+		},
+		"RO": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"RS": {
+			"pattern": "^(?:(?:\\d{5,6}))$",
+			"prefix": null
+		},
+		"RU": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"SA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"SD": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"SE": {
+			"pattern": "^(?:(?:\\d{3}\\s*\\d{2}))$",
+			"prefix": "SE-"
+		},
+		"SG": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"SH": {
+			"pattern": "^(?:(?:(?:ASCN|STHL)\\s*1ZZ))$",
+			"prefix": null
+		},
+		"SI": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": "SI-"
+		},
+		"SJ": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"SK": {
+			"pattern": "^(?:(?:\\d{3}\\s*\\d{2}))$",
+			"prefix": null
+		},
+		"SM": {
+			"pattern": "^(?:(?:4789\\d))$",
+			"prefix": null
+		},
+		"SN": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"SO": {
+			"pattern": "^(?:(?:[A-Z]{2}\\s*\\d{5}))$",
+			"prefix": null
+		},
+		"SV": {
+			"pattern": "^(?:(?:CP\\s*[1-3][1-7][0-2]\\d))$",
+			"prefix": null
+		},
+		"SZ": {
+			"pattern": "^(?:(?:[HLMS]\\d{3}))$",
+			"prefix": null
+		},
+		"TA": {
+			"pattern": "^(?:(?:TDCU\\s*1ZZ))$",
+			"prefix": null
+		},
+		"TC": {
+			"pattern": "^(?:(?:TKCA\\s*1ZZ))$",
+			"prefix": null
+		},
+		"TH": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"TJ": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"TM": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"TN": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"TR": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"TW": {
+			"pattern": "^(?:(?:\\d{3}(?:\\d{2,3})?))$",
+			"prefix": null
+		},
+		"TZ": {
+			"pattern": "^(?:(?:\\d{4,5}))$",
+			"prefix": null
+		},
+		"UA": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"UM": {
+			"pattern": "^(?:(?:96898))$",
+			"prefix": null
+		},
+		"US": {
+			"pattern": "^(?:(?:(\\d{5})(?:[ \\-](\\d{4}))?)|(?:\\d{5}\\d{4}))$",
+			"prefix": null
+		},
+		"UY": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		},
+		"UZ": {
+			"pattern": "^(?:(?:\\d{6}))$",
+			"prefix": null
+		},
+		"VA": {
+			"pattern": "^(?:(?:00120))$",
+			"prefix": null
+		},
+		"VC": {
+			"pattern": "^(?:(?:VC\\d{4}))$",
+			"prefix": null
+		},
+		"VE": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"VG": {
+			"pattern": "^(?:(?:VG\\d{4}))$",
+			"prefix": null
+		},
+		"VI": {
+			"pattern": "^(?:(?:(008(?:(?:[0-4]\\d)|(?:5[01])))(?:[ \\-](\\d{4}))?))$",
+			"prefix": null
+		},
+		"VN": {
+			"pattern": "^(?:(?:\\d{5}\\d?))$",
+			"prefix": null
+		},
+		"WF": {
+			"pattern": "^(?:(?:986\\d{2}))$",
+			"prefix": null
+		},
+		"XK": {
+			"pattern": "^(?:(?:[1-7]\\d{4}))$",
+			"prefix": null
+		},
+		"YT": {
+			"pattern": "^(?:(?:976\\d{2}))$",
+			"prefix": null
+		},
+		"ZA": {
+			"pattern": "^(?:(?:\\d{4}))$",
+			"prefix": null
+		},
+		"ZM": {
+			"pattern": "^(?:(?:\\d{5}))$",
+			"prefix": null
+		}
+	}
+}

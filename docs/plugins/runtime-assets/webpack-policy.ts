@@ -10,11 +10,22 @@
  *   health check rejects Node builtins on the client's static path.
  */
 
+import type { Plugin } from "@docusaurus/types"
 import { md5Hex } from "@mailwoman/core/hash"
-import type { Configuration } from "webpack"
 
 import { buildWorkspaceAliases } from "./workspace/aliases.ts"
 import { resolvePackageFile } from "./workspace/resolution.ts"
+
+/**
+ * The webpack configuration Docusaurus passes to a plugin's `configureWebpack` hook.
+ *
+ * Docusaurus pins its own webpack.
+ * The hook's signature types the docs against that copy.
+ *
+ * A direct webpack dependency resolves to a second copy as soon as the two versions differ,
+ * and the plugin's hook then fails to typecheck against the Docusaurus signature.
+ */
+type Configuration = Parameters<NonNullable<Plugin["configureWebpack"]>>[0]
 
 function hashAliases(alias: Record<string, string>): string {
 	const entries = Object.keys(alias)
@@ -80,5 +91,10 @@ export function configureRuntimeWebpack(
 			extensionAlias: { ".js": [".ts", ".js"] },
 		},
 		module: { rules: [{ test: /[.]wasm$/, type: "asset/resource" }] },
+		// maplibre-gl's prebuilt bundle resolves its worker with a `require` whose argument
+		// is an expression, so webpack warns that it cannot follow the dependency.
+		// The site stages the worker itself (the runtime-assets plugin),
+		// so the warning describes no missing module.
+		ignoreWarnings: [{ module: /maplibre-gl/, message: /Critical dependency/ }],
 	}
 }

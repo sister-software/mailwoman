@@ -9,6 +9,16 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
+import {
+	foldSourceAdminPath,
+	foldStaleness,
+	foldStalenessMessage,
+} from "@mailwoman/gazetteer/tools/pipeline/admin/fold/staleness"
+import {
+	DEFAULT_CANDIDATE_OUT,
+	DEFAULT_FOLD_COUNTRIES,
+	DEFAULT_IMPORTANCE_DB,
+} from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 
 import {
@@ -20,8 +30,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazetteer/admin/fold/staleness"
-import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer/defaults"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -63,7 +71,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
 		const { buildCandidate, DEFAULT_ADMIN_DB, foldGeonamesIntoAdmin, resolveImportanceDB, resolvePostcodeDatabases } =
-			await import("#gazetteer-pipeline")
+			await import("@mailwoman/gazetteer/tools/pipeline")
 
 		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 

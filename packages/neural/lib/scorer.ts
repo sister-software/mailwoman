@@ -313,7 +313,7 @@ async function assertConventionsRespectCapabilities(
 			const delta = cap.maskOffF1 - (cap.maskOnF1 ?? 0)
 
 			if (delta > CAPABILITY_DELTA_THRESHOLD) {
-				const maskOn = cap.maskOnF1 === undefined ? "unmeasured (assumed 0 — hard −1e9 ban)" : String(cap.maskOnF1)
+				const maskOn = !cap.maskOnF1 ? "unmeasured (assumed 0 — hard −1e9 ban)" : String(cap.maskOnF1)
 
 				fail(
 					strict,
@@ -553,6 +553,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...fstPathEntry(opts.fstPath),
 		...(labels ? { labels } : {}),
 		...(await addressSystemsEntry(opts.modelCardPath)),
+		...(declared.code_unit?.required ? { codeUnits: true } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(declaredSpanMode ? { postcodeAnchorSpanMode: declaredSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),

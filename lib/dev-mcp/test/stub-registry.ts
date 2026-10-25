@@ -59,6 +59,7 @@ export function stubEngine(overrides: StubEngineOverrides): Engine {
 		lastUsed: overrides.lastUsed ?? 0,
 		uses: overrides.uses ?? 1,
 		session: overrides.session as GeocodeSession,
+		lexicons: [],
 	}
 }
 

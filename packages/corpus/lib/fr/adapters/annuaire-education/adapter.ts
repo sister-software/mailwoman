@@ -385,7 +385,7 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 
 	const country = FR_ANNUAIRE_EDUCATION_DEPARTEMENTS.includes(departement)
 		? COUNTRY_BY_INSEE_DEPARTMENT[departement]
-		: undefined
+		: null
 
 	if (!country) return { refused: AnnuaireRefusal.NotOverseas }
 
@@ -528,7 +528,6 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 			locale: `fr-${country}`,
 			source: FR_ANNUAIRE_EDUCATION_ADAPTER_ID,
 			source_id: stableSourceID(FR_ANNUAIRE_EDUCATION_ADAPTER_ID, rendered.components),
-			corpus_version: "",
 			license: FR_ANNUAIRE_EDUCATION_LICENSE,
 		},
 		trimmed,
@@ -560,7 +559,7 @@ export function createAnnuaireEducationAdapter(): CorpusAdapter {
 			for await (const record of JSONSpliterator.fromAsync<AnnuaireRecord>(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const reading = readAnnuaireRecord(record)
 

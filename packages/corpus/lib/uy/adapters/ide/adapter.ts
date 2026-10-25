@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ide-uy`: the national address points of Uruguay, `Direcciones Geográficas del Uruguay`, which the
- * Infraestructura de Datos Espaciales (IDE) publishes on catalogodatos.gub.uy as one CSV per department.
+ * `ide-uy`: Uruguay's national address points, `Direcciones Geográficas del Uruguay`, published by the
+ * Infraestructura de Datos Espaciales (IDE) on catalogodatos.gub.uy as one CSV per department.
  *
  * The CSVs are Windows-1252 (`ORDOÑEZ` reads `ORDO\xd1EZ`), and quote a street name that holds a
  * nickname in doubled quotes (`"AVENIDA JOSE ""PEPE"" D' ELIA"`). Absent values read `N/A`.
  *
  * The adapter reads `nombre_via` as the street, `num_puerta` with `letra_puerta` as the house number,
  * `codigo_postal` as the postcode, `localidad` as the locality, `departamento` as the region and
- * `nombre_inmueble` as a venue. A census locality named `<DEPARTAMENTO> RURAL` names the department's rural
- * remainder rather than a place, so such a row keeps the department and no locality. A street the register
- * leaves unnamed carries a generated code (`UYARMQA_SN_012`) and is dropped, as is a point located only by a
- * route kilometer, which has no door number to render.
+ * `nombre_inmueble` as a venue. The census value `<DEPARTAMENTO> RURAL` represents the department's rural
+ * remainder rather than a place, so the row keeps the department and omits locality. The register assigns
+ * a generated code (`UYARMQA_SN_012`) to an unnamed street, and the adapter drops that row. It also drops a
+ * point located by a route kilometer because the record has no door number to render.
  *
- * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay, which grants adaptation and
- * commercial use and requires the note of origin to name the provider, the license and the dataset, and to
- * mention changes. Every row records that license.
+ * The IDE publishes the dataset under the Licencia de Datos Abiertos – Uruguay. The license grants adaptation
+ * and commercial use. Its note of origin must name the provider, the license and the dataset, and mention
+ * changes. Every row records that license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
@@ -30,6 +30,7 @@ import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
@@ -76,15 +77,7 @@ export interface IDEUruguayRecord {
 }
 
 const ABSENT = "N/A"
-
-/**
- * A value, or null when the IDE writes it as absent.
- */
-function present(value: string | undefined): string | null {
-	const trimmed = value?.trim() ?? ""
-
-	return trimmed && trimmed !== ABSENT ? trimmed : null
-}
+const PRESENT_OPTIONS = { absentValues: [ABSENT] } as const
 
 /**
  * The house-number suffixes `letra_puerta` holds that a door number is written with:
@@ -96,7 +89,7 @@ function present(value: string | undefined): string | null {
 const LETTER_SUFFIX = /^(?:BIS|[A-Z])$/u
 
 /**
- * A street the register leaves unnamed carries a generated code, such as `UYARMQA_SN_012`.
+ * The register assigns a generated code, such as `UYARMQA_SN_012`, to a street it leaves unnamed.
  */
 const GENERATED_STREET = /_SN_|^[A-Z0-9]+_[A-Z0-9_]+$/u
 
@@ -110,7 +103,7 @@ export function componentsForIDERecord(
 	dropped?: Pick<AdapterOptions, "dropped">
 ): CanonicalRow["components"] | null {
 	const tally = dropped ?? {}
-	const street = present(record.nombre_via)
+	const street = present(record.nombre_via, PRESENT_OPTIONS)
 
 	if (!street) {
 		countDropped(tally, "row:no-street")
@@ -124,15 +117,18 @@ export function componentsForIDERecord(
 		return null
 	}
 
-	const number = present(record.num_puerta)
+	const number = present(record.num_puerta, PRESENT_OPTIONS)
 
 	if (!number) {
-		countDropped(tally, present(record.km) ? "row:route-kilometer-without-door-number" : "row:no-door-number")
+		countDropped(
+			tally,
+			present(record.km, PRESENT_OPTIONS) ? "row:route-kilometer-without-door-number" : "row:no-door-number"
+		)
 
 		return null
 	}
 
-	const letter = present(record.letra_puerta)
+	const letter = present(record.letra_puerta, PRESENT_OPTIONS)
 	const suffix = letter && LETTER_SUFFIX.test(letter) ? letter : ""
 
 	if (letter && !suffix) {
@@ -144,7 +140,7 @@ export function componentsForIDERecord(
 		street,
 	}
 
-	const venue = present(record.nombre_inmueble)
+	const venue = present(record.nombre_inmueble, PRESENT_OPTIONS)
 
 	// A post office's distribution agent is listed under the agent's own name (`Agente` and a person's names),
 	// and a code such as `CH109` names no place, so neither becomes a venue.
@@ -156,7 +152,7 @@ export function componentsForIDERecord(
 		components.venue = venue
 	}
 
-	const postcode = present(record.codigo_postal)
+	const postcode = present(record.codigo_postal, PRESENT_OPTIONS)
 	const matched = postcode ? acceptPostcode(postcode, "UY") : null
 
 	if (matched) {
@@ -165,8 +161,8 @@ export function componentsForIDERecord(
 		countDropped(tally, "component:postcode:not-country-format")
 	}
 
-	const locality = present(record.localidad)
-	const region = present(record.departamento)
+	const locality = present(record.localidad, PRESENT_OPTIONS)
+	const region = present(record.departamento, PRESENT_OPTIONS)
 
 	if (locality && !locality.endsWith(" RURAL")) {
 		components.locality = locality
@@ -224,7 +220,7 @@ export function createIDEUruguayAdapter(): CorpusAdapter {
 				for (const record of records) {
 					if (opts.signal?.aborted) return
 
-					if (opts.limit !== undefined && emitted >= opts.limit) return
+					if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 					const components = componentsForIDERecord(record, opts)
 
@@ -257,7 +253,6 @@ export function createIDEUruguayAdapter(): CorpusAdapter {
 							lat: record.latitud ?? "",
 							lon: record.longitud ?? "",
 						}),
-						corpus_version: "",
 						license: IDE_UY_LICENSE,
 					}
 

@@ -44,7 +44,7 @@ export function candidateFromSearchRow(
 		score += weights.countryMatchBoost
 	}
 
-	if (query.parentID !== undefined) {
+	if (query.parentID) {
 		score += row.parent_id === query.parentID ? weights.directChildBoost : weights.descendantBoost
 	}
 
@@ -181,7 +181,7 @@ export function rankCandidates<DB>(
 							.map((c) => c.id as number),
 						query.text
 					)
-				: undefined
+				: null
 
 			const kind = (c: PlaceCandidate): number => {
 				if (!exactIDs.has(c.id as number)) return 0

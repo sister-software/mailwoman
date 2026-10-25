@@ -366,7 +366,7 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 				for (let i = 0; i < postcodes.length; i++) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && summary.emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && summary.emitted >= opts.limit) break
 
 					const postcode = postcodes[i]!
 
@@ -440,7 +440,6 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 						locale: "en-GB",
 						source: GB_OS_OPEN_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: GB_OS_OPEN_LICENSE,
 					}
 

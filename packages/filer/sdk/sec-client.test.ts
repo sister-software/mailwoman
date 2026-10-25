@@ -26,7 +26,7 @@ vi.mock("#env", async (importOriginal) => {
 
 	return {
 		...actual,
-		$private: { ...actual.$private, SEC_EDGAR_USER_AGENT: undefined },
+		$private: { ...actual.$private, SEC_EDGAR_USER_AGENT: null },
 	}
 })
 

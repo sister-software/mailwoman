@@ -1,0 +1,274 @@
+/**
+ * Pricing page styles. The hero sits on the rail like the home page; the tiers are windows-without-chrome, raised on
+ * the brand's hard shadow, and the commercial tier carries the selected edge.
+ */
+
+.hero {
+	padding: 4.5rem 0 7rem;
+	background: var(--ss-color-rail);
+	color: var(--ss-color-content);
+}
+
+.eyebrow {
+	margin: 0 0 0.5rem;
+	font-size: 0.8rem;
+	font-weight: var(--ifm-font-weight-bold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ss-color-selected);
+}
+
+.heroTitle {
+	font-size: 3rem;
+	letter-spacing: -0.025em;
+	margin-bottom: 1rem;
+}
+
+.heroLead {
+	max-width: 42rem;
+	font-size: 1.2rem;
+	line-height: 1.5;
+	margin: 0;
+}
+
+/* The tier cards rise out of the hero band. */
+.tiers {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1.5rem;
+	margin-top: -4.5rem;
+	align-items: stretch;
+}
+
+.tier {
+	display: flex;
+	flex-direction: column;
+	padding: 1.75rem;
+	border: 1px solid var(--ss-color-edge);
+	background: var(--ss-color-background-raised);
+	box-shadow: var(--ss-shadow-utility);
+}
+
+.tierFeatured {
+	border: 2px solid var(--ss-color-selected);
+	box-shadow: var(--ss-shadow-tile);
+}
+
+.tierName {
+	margin: 0 0 1rem;
+	font-size: 0.85rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.tierPrice {
+	margin: 0;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 2.75rem;
+	line-height: 1;
+	font-weight: var(--ifm-font-weight-bold);
+	color: var(--ifm-heading-color);
+}
+
+.tierBasis {
+	margin: 0.5rem 0 0;
+	min-height: 2.6em;
+	font-size: 0.9rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.tierAudience {
+	margin: 1rem 0;
+	padding-top: 1rem;
+	border-top: 1px solid var(--ss-color-rule);
+	font-weight: var(--ifm-font-weight-semibold);
+}
+
+.tierPoints {
+	margin: 0 0 1.5rem;
+	padding: 0;
+	list-style: none;
+}
+
+.tierPoints li {
+	position: relative;
+	padding-left: 1.5rem;
+	margin-bottom: 0.4rem;
+}
+
+.tierPoints li::before {
+	content: "✓";
+	position: absolute;
+	left: 0;
+	color: var(--ss-color-selected);
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.tierCTA {
+	margin-top: auto;
+	width: 100%;
+}
+
+.section {
+	padding-top: 5rem;
+}
+
+.sectionTitle {
+	font-size: 1.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.sectionLead {
+	max-width: 40rem;
+	font-size: 1.1rem;
+	margin-bottom: 1.5rem;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.tableWrap {
+	overflow-x: auto;
+	margin-top: 1rem;
+}
+
+.compare {
+	display: table;
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+}
+
+.compare th,
+.compare td {
+	border: 0;
+	border-bottom: 1px solid var(--ss-color-rule);
+	padding: 0.7rem 1rem;
+	text-align: left;
+	vertical-align: top;
+}
+
+.compare tr {
+	background: none;
+	border: 0;
+}
+
+.compare thead th {
+	background: none;
+	border-bottom: 2px solid var(--ss-color-edge);
+	font-size: 0.85rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.compare tbody th {
+	background: none;
+	font-weight: var(--ifm-font-weight-semibold);
+}
+
+.compare td {
+	width: 22%;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.mark {
+	font-size: 1.1rem;
+	color: var(--ss-color-selected) !important;
+}
+
+.fine {
+	margin-top: 1rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.split {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	gap: 2.5rem;
+	align-items: start;
+}
+
+.declarations {
+	margin: 0;
+	border: 1px solid var(--ss-color-edge);
+	background: var(--ss-color-background-surface);
+}
+
+.declarations > div {
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--ss-color-rule);
+}
+
+.declarations > div:last-child {
+	border-bottom: 0;
+}
+
+.declarations dt {
+	font-weight: var(--ifm-font-weight-semibold);
+}
+
+.declarations dd {
+	margin: 0.25rem 0 0;
+	overflow-x: auto;
+}
+
+.declarations code {
+	font-size: 0.8rem;
+	white-space: nowrap;
+}
+
+.lasts {
+	font-weight: normal;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.promises {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 2.5rem;
+}
+
+.promises dt {
+	margin-top: 1rem;
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.promises dd {
+	margin: 0.25rem 0 0;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.closing {
+	margin-top: 5rem;
+	padding: 4rem 0;
+	text-align: center;
+	background: var(--ss-color-rail);
+}
+
+.closingTitle {
+	font-size: 2rem;
+}
+
+.closingButtons {
+	display: flex;
+	gap: 0.75rem;
+	justify-content: center;
+	flex-wrap: wrap;
+	margin-top: 1.5rem;
+}
+
+@media (max-width: 996px) {
+	.heroTitle {
+		font-size: 2.25rem;
+	}
+
+	.tiers,
+	.split,
+	.promises {
+		grid-template-columns: 1fr;
+	}
+
+	.section {
+		padding-top: 3.5rem;
+	}
+}

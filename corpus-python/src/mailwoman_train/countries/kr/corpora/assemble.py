@@ -19,10 +19,9 @@ from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
-import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ....corpora.builder import MAX_FIELD_CHARS, SCHEMA, coverage_stats, muni_bucket, select_exact
+from ....corpora.builder import MAX_FIELD_CHARS, coverage_stats, muni_bucket, select_exact, write_corpus_parquet
 from ....corpora.builder import verify_cjk_record as verify_record
 from ....labels import resolve_label_set
 from ....paths import resolve_data_root_default
@@ -110,7 +109,7 @@ def write_label_splits(
         part = written = 0
         for start in range(0, len(source_rows), args.rows_per_part):
             chunk = [encoder.encode(row) for row in source_rows[start : start + args.rows_per_part]]
-            pq.write_table(pa.Table.from_pylist(chunk, schema=SCHEMA), out_dir / split / f"kr-part-{part:04d}.parquet")
+            write_corpus_parquet(chunk, out_dir / split / f"kr-part-{part:04d}.parquet", context="KR corpus assembly")
             part += 1
             written += len(chunk)
             stats_input.extend(chunk[: args.stats_sample_per_part])
@@ -238,8 +237,8 @@ def write_registry(
         part = 0
         for start in range(0, len(split_rows), args.rows_per_part):
             chunk = split_rows[start : start + args.rows_per_part]
-            pq.write_table(
-                pa.Table.from_pylist(chunk, schema=SCHEMA), registry_dir / split / f"kr-registry-{part:04d}.parquet"
+            write_corpus_parquet(
+                chunk, registry_dir / split / f"kr-registry-{part:04d}.parquet", context="KR registry assembly"
             )
             part += 1
         splits[split] = {

@@ -138,14 +138,14 @@ const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stro
 /**
  * Matches a `border-radius` written in raw pixels.
  *
- * Rules should use the `--radius-*` tokens instead.
+ * Rules should use the `--ss-radius-*` tokens instead.
  * Values without `px`, such as `0` and `50%`, pass.
  */
 const RAW_RADIUS = /border-radius\s*:\s*[^;}]*\d+px/u
 
 // The token that marks a glass surface and the token that its fallbacks paint instead.
-const MATERIAL_BACKGROUND = "var(--material-glass-background)"
-const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
+const MATERIAL_BACKGROUND = "var(--mw-material-glass-background)"
+const MATERIAL_FALLBACK = "var(--mw-material-glass-fallback-background)"
 
 /**
  * Returns a selector list as an order-independent key, so a fallback that lists
@@ -223,7 +223,7 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 				severity: DiagnosticSeverity.Error,
 				file,
 				line: rule.line,
-				message: `\`${rule.selector}\` sets \`border-radius\` in raw pixels. The radius scale is \`--radius-tick\`, \`--radius-tight\`, \`--radius-control\`, \`--radius-panel\` / \`--radius-sheet\` and \`--radius-pill\`; a seventh value nobody can name is how two surfaces meant to match stop matching.`,
+				message: `\`${rule.selector}\` sets \`border-radius\` in raw pixels. The radius scale is \`--ss-radius-global\` (square, the brand default), \`--ss-radius-tag\` and the editorial radii; a value nobody can name is how two surfaces meant to match stop matching.`,
 				details: null,
 			})
 		}

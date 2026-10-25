@@ -20,11 +20,15 @@ import {
 	collectParseFacts,
 	renderAccount,
 	collectRetrievalFacts,
+	routingFor,
+	runDiagnose,
 	SHAPE_PREDICATES,
 	type AccountInput,
 	type ExpectationReading,
 } from "#dev-mcp/diagnose"
+import type { EngineConfig } from "#dev-mcp/engine/registry"
 import { resolvedInput } from "#dev-mcp/input-sets"
+import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 /**
  * A minimal parse trace, the same skeleton `census.test.ts` uses so the two files agree on what a trace is.
@@ -48,6 +52,10 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		anchor: null,
 		gazetteer: null,
 		country: null,
+		streetType: null,
+		localitySurface: null,
+		inputMode: "fragmented",
+		channelPins: {},
 		localeLogits: null,
 		spanScores: null,
 		localeCountries: null,
@@ -56,6 +64,7 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		priors: [],
 		labels: ["O", "B-locality"],
 		path: [0, 1],
+		margins: [1, 1],
 		decode: "viterbi",
 		repairs: [],
 		tokens: [],
@@ -114,7 +123,7 @@ function run(overrides: Partial<AccountInput> = {}): AccountInput {
 			hierarchy: [],
 			...overrides.result,
 		},
-		...(overrides.trace === undefined ? {} : { trace: overrides.trace }),
+		...(!overrides.trace ? {} : { trace: overrides.trace }),
 	}
 }
 
@@ -130,6 +139,9 @@ function traceOf(overrides: Partial<NonNullable<AccountInput["trace"]>> = {}): N
 
 const NO_EXPECTATION: ExpectationReading = { source: "none", met: null, issues: [] }
 const FAILED_EXPECTATION: ExpectationReading = { source: "board_case", met: false, issues: ["coord 400km off"] }
+
+// The Who's On First placetype of a GB town such as Uxbridge, outside the locality band.
+const TOWN_PLACETYPE = "neighbourhood"
 
 const ITEM = resolvedInput({ id: "row-1", input: "Weimar, Thüringen", country: "DE" })
 
@@ -210,6 +222,14 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 		])
 
 		expect(facts.checks_fired).toEqual(["region_scope_miss", "min_score_reject"])
+	})
+
+	it("carries the unreachable-band probe's placetypes, and null when the probe did not run", () => {
+		const probed = collectRetrievalFacts([lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] })])
+		const unprobed = collectRetrievalFacts([lookup()])
+
+		expect(probed.lookups![0]!.reachable_in).toEqual([{ placetype: TOWN_PLACETYPE, n: 1 }])
+		expect(unprobed.lookups![0]!.reachable_in).toBeNull()
 	})
 })
 
@@ -297,6 +317,67 @@ describe("matchShapes", () => {
 		])
 
 		expect(matchShapes({ ...EMPTY, retrieval: retried })).not.toContain("retrieval_empty")
+	})
+
+	it("calls an empty lookup a band miss only when the probe found the key under another placetype", () => {
+		const elsewhere = {
+			...EMPTY,
+			retrieval: collectRetrievalFacts([lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] })]),
+		}
+
+		const nowhere = { ...EMPTY, retrieval: collectRetrievalFacts([lookup({ reachableIn: [] })]) }
+		const unprobed = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
+
+		// The band probe ran on a lookup that another lookup for the same span then answered.
+		const recovered = {
+			...EMPTY,
+			retrieval: collectRetrievalFacts([
+				lookup({ reachableIn: [{ placetype: TOWN_PLACETYPE, n: 1 }] }),
+				lookup({
+					candidates: [candidate(3, "Weimar", { initial: 1 })],
+					picked: { id: 3, name: "Weimar", source: "ranked" },
+				}),
+			]),
+		}
+
+		expect(matchShapes(elsewhere)).toEqual(["retrieval_empty", "band_miss"])
+		expect(matchShapes(nowhere)).toEqual(["retrieval_empty"])
+		expect(matchShapes(unprobed)).toEqual(["retrieval_empty"])
+		expect(matchShapes(recovered)).toEqual([])
+	})
+
+	it("flags an unreachable expected component off the reachability reading alone", () => {
+		const unreachable = {
+			...EMPTY,
+			reachability: [
+				{
+					tag: "locality",
+					value: "Uxbridge",
+					band: ["locality", "borough", "localadmin"],
+					state: "unreachable" as const,
+					in_band: 0,
+					outside_band: { [TOWN_PLACETYPE]: 1 },
+				},
+			],
+		}
+
+		const reachable = {
+			...EMPTY,
+			reachability: [
+				{
+					tag: "locality",
+					value: "Slough",
+					band: ["locality", "borough", "localadmin"],
+					state: "reachable" as const,
+					in_band: 1,
+					outside_band: { region: 1 },
+				},
+			],
+		}
+
+		expect(matchShapes(unreachable)).toEqual(["expectation_unreachable"])
+		expect(matchShapes(reachable)).toEqual([])
+		expect(matchShapes({ ...EMPTY, reachability: null })).toEqual([])
 	})
 
 	it("flags a readmitted pick, and not a scope miss that resolved nothing", () => {
@@ -617,6 +698,75 @@ describe("renderAccount", () => {
 		expect(line).toContain("FAILS: coord 400km off")
 		expect(line).toContain("cf locale en-US→de-DE moves 8123.4km")
 	})
+
+	it("states where an empty lookup's key lives and which expected component the band cannot reach", () => {
+		const item = resolvedInput({
+			id: "gb-vob-little-britain-lake",
+			input: "Little Britain Lake, Uxbridge",
+			country: "GB",
+		})
+
+		const bandMissed = lookup({
+			tag: "region",
+			value: "Uxbridge",
+			placetype: "region",
+			reachableIn: [
+				{ placetype: "localadmin", n: 2 },
+				{ placetype: "locality", n: 5 },
+				{ placetype: TOWN_PLACETYPE, n: 1 },
+			],
+		})
+
+		const account = assembleAccount(item, run({ trace: traceOf({ resolver: [bandMissed] }) }), FAILED_EXPECTATION, [
+			{
+				tag: "locality",
+				value: "Uxbridge",
+				band: ["locality", "borough", "localadmin"],
+				state: "unreachable",
+				in_band: 0,
+				outside_band: { [TOWN_PLACETYPE]: 1 },
+			},
+		])
+
+		const line = renderAccount(account)
+
+		expect(account.shapes).toEqual(["retrieval_empty", "band_miss", "expectation_unreachable"])
+
+		expect(line).toContain(
+			`0 candidates for region "Uxbridge" (key lives in locality ×5, localadmin ×2, ${TOWN_PLACETYPE} ×1)`
+		)
+
+		expect(line).toContain(
+			`expected locality "Uxbridge" UNREACHABLE in band [locality, borough, localadmin]: GB holds it as ${TOWN_PLACETYPE} ×1`
+		)
+	})
+
+	it("states an absent and an unprobed expected component apart from an unreachable one", () => {
+		const account = assembleAccount(ITEM, run({ trace: traceOf() }), FAILED_EXPECTATION, [
+			{
+				tag: "locality",
+				value: "Nirgendwo",
+				band: ["locality", "borough", "localadmin"],
+				state: "absent",
+				in_band: 0,
+				outside_band: {},
+			},
+			{
+				tag: "region",
+				value: "Thüringen",
+				band: ["region", "macroregion"],
+				state: "unprobed",
+				in_band: 0,
+				outside_band: {},
+			},
+		])
+
+		const line = renderAccount(account)
+
+		expect(account.shapes).toEqual(["unclassified"])
+		expect(line).toContain('expected locality "Nirgendwo" ABSENT from every placetype in DE')
+		expect(line).toContain('expected region "Thüringen" reachability UNPROBED (the row states no country)')
+	})
 })
 
 /**
@@ -648,5 +798,146 @@ describe("rows_cap", () => {
 		expect(emitted.map((row) => row.id)).toEqual(["b", "d", "a", "c"])
 		expect(emitted.slice(0, 2).map((row) => row.id)).toEqual(["b", "d"])
 		expect(Math.max(0, emitted.length - 2)).toBe(2)
+	})
+})
+
+describe("routingFor", () => {
+	it("routes a country with an overlay to its locale and a country without one to the unscoped base", () => {
+		expect(routingFor(resolvedInput({ id: "gb", input: "x", country: "GB" }), "board-routed")).toEqual({
+			country: "GB",
+			locale: "en-GB",
+			country_scope: null,
+			default_country: null,
+			engine_id: null,
+		})
+
+		expect(routingFor(resolvedInput({ id: "us", input: "x", country: "us" }), "board-routed")).toMatchObject({
+			locale: "en-US",
+			country_scope: null,
+		})
+
+		// The release ships fr-fr, so an FR row routes to that overlay rather than the unscoped base (#2770).
+		expect(
+			routingFor(resolvedInput({ id: "fr", input: "x", country: "FR", defaultCountry: "FR" }), "board-routed")
+		).toMatchObject({ locale: "fr-FR", country_scope: null, default_country: "FR" })
+
+		// ISO 3166-1 reserves ZZ for user assignment, so no release ships a package for it.
+		expect(
+			routingFor(resolvedInput({ id: "zz", input: "x", country: "ZZ", defaultCountry: "ZZ" }), "board-routed")
+		).toMatchObject({ locale: null, country_scope: "none", default_country: "ZZ" })
+	})
+
+	it("routes nothing on the single-config path or for a row without a country", () => {
+		expect(routingFor(resolvedInput({ id: "gb", input: "x", country: "GB" }), "single-config")).toBeNull()
+		expect(routingFor(resolvedInput({ id: "bare", input: "x" }), "board-routed")).toBeNull()
+	})
+})
+
+describe("runDiagnose routing", () => {
+	const LITERAL = {
+		kind: "literal" as const,
+		inputs: [
+			{ input: "Little Britain Lake, Uxbridge", lat: 51.52, lon: -0.49, country: "GB" },
+			{ input: "Rue de Rivoli, Paris", lat: 48.86, lon: 2.34, country: "FR" },
+			// ISO 3166-1 reserves ZZ for user assignment, so no release ships a package for it.
+			{ input: "Nowhere", lat: 51.52, lon: -0.49, country: "ZZ" },
+			{ input: "Somewhere", lat: 1, lon: 2 },
+		],
+		why: "four rows: two shipped overlays, one country with no package, one row with no country",
+	}
+
+	function recordingRegistry(acquired: EngineConfig[]) {
+		return stubEngineRegistry({
+			acquire: async (config) => {
+				acquired.push(config)
+
+				return stubEngine({
+					engineID: `engine:${config.locale ?? "base"}:${config.country_scope ?? "auto"}`,
+					session: {
+						geocode: async (input: string) => ({
+							result: {
+								lat: input.startsWith("Rue") ? 48.86 : input === "Somewhere" ? 1 : 51.52,
+								lon: input.startsWith("Rue") ? 2.34 : input === "Somewhere" ? 2 : -0.49,
+								resolution_tier: "admin",
+								components: {},
+								hierarchy: [],
+							},
+						}),
+					},
+				})
+			},
+		})
+	}
+
+	it("runs each row on its country's engine on the board-routed path and reports the engines", async () => {
+		const acquired: EngineConfig[] = []
+
+		const report = (await runDiagnose(recordingRegistry(acquired), {
+			inputs: LITERAL,
+			config: { candidate_db: "none" },
+			counterfactuals: false,
+			execution_path: "board-routed",
+		})) as {
+			routing: {
+				execution_path: string
+				engines: Array<{ locale: string | null; country_scope: string | null; rows: number }>
+			}
+			rows: Array<{
+				id: string
+				routing: { locale: string | null; country_scope: string | null; engine_id: string } | null
+				rendered: string
+			}>
+			summary: string
+		}
+
+		// The base engine, then one engine per routing: GB under en-GB, FR under fr-FR, ZZ unscoped on the base weights.
+		expect(acquired.map((config) => [config.locale ?? null, config.country_scope ?? null])).toEqual([
+			[null, null],
+			["en-GB", null],
+			["fr-FR", null],
+			[null, "none"],
+		])
+
+		expect(report.routing.execution_path).toBe("board-routed")
+
+		expect(report.routing.engines).toEqual([
+			{ locale: "en-GB", country_scope: null, default_country: null, engine_id: "engine:en-GB:auto", rows: 1 },
+			{ locale: "fr-FR", country_scope: null, default_country: null, engine_id: "engine:fr-FR:auto", rows: 1 },
+			{ locale: null, country_scope: "none", default_country: null, engine_id: "engine:base:none", rows: 1 },
+			{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 1 },
+		])
+
+		const byID = Object.fromEntries(report.rows.map((row) => [row.id, row]))
+
+		expect(byID["0"]!.routing).toMatchObject({ locale: "en-GB", engine_id: "engine:en-GB:auto" })
+		expect(byID["0"]!.rendered).toContain("routed en-GB")
+		expect(byID["1"]!.routing).toMatchObject({ locale: "fr-FR", engine_id: "engine:fr-FR:auto" })
+		expect(byID["1"]!.rendered).toContain("routed fr-FR")
+		expect(byID["2"]!.routing).toMatchObject({ locale: null, country_scope: "none" })
+		expect(byID["2"]!.rendered).toContain("routed base unscoped")
+		expect(byID["3"]!.routing).toBeNull()
+
+		expect(report.summary).toContain(
+			"Board-routed: 2 row(s) ran under their country's weights overlay and scope (en-GB 1, fr-FR 1), 1 ran on the base weights"
+		)
+	})
+
+	it("runs every row on the configured engine on the single-config path", async () => {
+		const acquired: EngineConfig[] = []
+
+		const report = (await runDiagnose(recordingRegistry(acquired), {
+			inputs: LITERAL,
+			config: { candidate_db: "none" },
+			counterfactuals: false,
+		})) as { routing: { execution_path: string; engines: unknown[] }; rows: Array<{ routing: unknown }> }
+
+		expect(acquired).toHaveLength(1)
+
+		expect(report.routing).toEqual({
+			execution_path: "single-config",
+			engines: [{ locale: null, country_scope: null, default_country: null, engine_id: "engine:base:auto", rows: 4 }],
+		})
+
+		expect(report.rows.every((row) => row.routing === null)).toBe(true)
 	})
 })

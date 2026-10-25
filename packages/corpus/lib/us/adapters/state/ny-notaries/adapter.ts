@@ -58,7 +58,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<Record<string, string>>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const holderName = record["Commission Holder Name"] ?? ""
 				const businessName = record["Business Name (if available)"] ?? ""
@@ -115,7 +115,6 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_NY_NOTARIES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 				}
 

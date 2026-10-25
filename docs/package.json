@@ -5,7 +5,6 @@
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"imports": {
-		"#docs-sub-header": "./src/components/DocsSubHeader/index.tsx",
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
 		"#contexts/*": "./src/contexts/*.tsx",
@@ -18,35 +17,15 @@
 		"./contexts/*": "./src/contexts/*.tsx",
 		"./hooks/*": "./src/hooks/*.ts",
 		"./shared/*": "./src/shared/*.ts",
-		"./plugins/runtime-assets/artifacts": {
-			"types": "./plugins/runtime-assets/artifacts.ts",
-			"node": "./plugins/runtime-assets/artifacts.ts",
-			"default": "./plugins/runtime-assets/artifacts.ts"
+		"./plugins/*": {
+			"types": "./plugins/*.ts",
+			"node": "./plugins/*.ts",
+			"default": "./plugins/*.ts"
 		},
-		"./plugins/runtime-assets/webpack-policy": {
-			"types": "./plugins/runtime-assets/webpack-policy.ts",
-			"node": "./plugins/runtime-assets/webpack-policy.ts",
-			"default": "./plugins/runtime-assets/webpack-policy.ts"
-		},
-		"./plugins/runtime-assets/workspace-aliases": {
-			"types": "./plugins/runtime-assets/workspace/aliases.ts",
-			"node": "./plugins/runtime-assets/workspace/aliases.ts",
-			"default": "./plugins/runtime-assets/workspace/aliases.ts"
-		},
-		"./scripts/docs-frontmatter-metadata": {
-			"types": "./scripts/docs/frontmatter/metadata.ts",
-			"node": "./scripts/docs/frontmatter/metadata.ts",
-			"default": "./scripts/docs/frontmatter/metadata.ts"
-		},
-		"./scripts/docs-path-citations": {
-			"types": "./scripts/docs/path-citations.ts",
-			"node": "./scripts/docs/path-citations.ts",
-			"default": "./scripts/docs/path-citations.ts"
-		},
-		"./scripts/generate-cli-reference": {
-			"types": "./scripts/generate-cli-reference.ts",
-			"node": "./scripts/generate-cli-reference.ts",
-			"default": "./scripts/generate-cli-reference.ts"
+		"./scripts/*": {
+			"types": "./scripts/*.mts",
+			"node": "./scripts/*.mts",
+			"default": "./scripts/*.mts"
 		}
 	},
 	"scripts": {
@@ -54,12 +33,12 @@
 		"build-storybook": "storybook build",
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
-		"freshness-report": "node scripts/list-stale-docs.ts",
+		"freshness-report": "node scripts/list-stale-docs.mts",
 		"lint:prose": "node ../config/vale/lint-prose.ts -s docs",
 		"lint:prose:fixtures": "node ../config/vale/check-rules.ts",
 		"lint:prose:vocab": "node ../config/vale/lint-prose.ts -s docs-vocab",
-		"lint:structure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check/docs-structure.ts --strict",
-		"prebuild": "node ../packages/mailwoman/out/cli/main.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli/main.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli/main.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli/main.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.ts",
+		"lint:structure": "node scripts/check/docs-structure.mts --strict",
+		"prebuild": "node ../packages/mailwoman/out/cli/main.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli/main.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli/main.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli/main.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.mts",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
 		"storybook": "storybook dev -p 6006 --no-open",
@@ -78,6 +57,7 @@
 		"@docusaurus/plugin-client-redirects": "^3.10.2",
 		"@docusaurus/plugin-content-docs": "^3.10.2",
 		"@docusaurus/preset-classic": "^3.10.2",
+		"@docusaurus/theme-classic": "^3.10.2",
 		"@docusaurus/theme-common": "^3.10.2",
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@mailwoman/cartographer": "workspace:*",
@@ -91,42 +71,46 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
+		"@protomaps/basemaps": "^5.7.2",
+		"@sister.software/docusaurus-theme": "^14.7.0",
+		"@sister.software/fonts": "^14.7.0",
+		"@sister.software/theme": "^14.7.0",
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.4.0",
 		"domhandler": "^6.0.1",
 		"domutils": "^4.0.2",
 		"htmlparser2": "^12.0.0",
-		"js-yaml": "^5.4.3",
+		"js-yaml": "^5.5.0",
 		"mailwoman": "workspace:*",
-		"maplibre-gl": "^6.13.0",
+		"maplibre-gl": "^6.14.0",
 		"onnxruntime-web": "1.30.0",
 		"path-ts": "^2.5.0",
 		"prism-react-renderer": "^2.4.1",
-		"react": "^19.3.0",
-		"react-dom": "^19.3.0",
-		"react-map-gl": "^8.1.3",
-		"webpack": "^5.111.1"
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1",
+		"react-map-gl": "^8.1.3"
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
 		"@mailwoman/browser": "workspace:*",
-		"@playwright/test": "^1.63.0",
-		"@storybook/addon-docs": "^10.6.1",
-		"@storybook/react-vite": "^10.6.1",
-		"@types/node": "^26.6.4",
+		"@playwright/test": "^1.64.1",
+		"@storybook/addon-docs": "^10.6.2",
+		"@storybook/react-vite": "^10.6.2",
+		"@types/node": "^26.6.5",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"@types/react-map-gl": "^6.1.10",
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitejs/plugin-react": "^6.1.2",
-		"playwright": "^1.63.0",
-		"spliterator": "^9.2.1",
-		"storybook": "^10.6.1",
+		"find-free-ports": "^3.1.1",
+		"playwright": "^1.64.1",
+		"spliterator": "^9.3.0",
+		"storybook": "^10.6.2",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"unist": "^0.0.1",
 		"unist-util-visit": "^5.1.0",
-		"vite": "^8.3.3"
+		"vite": "^8.3.4"
 	},
 	"browserslist": {
 		"production": [

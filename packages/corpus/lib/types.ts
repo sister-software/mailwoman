@@ -187,12 +187,13 @@ export interface SourceProvenance {
 	source_id: string
 
 	/**
-	 * The corpus version stamped by the runner.
-	 */
-	corpus_version: string
-
-	/**
-	 * The license label or SPDX id for this row.
+	 * The producer's statement of the terms its rows are under, such as an adapter's `defaultLicense`.
+	 *
+	 * The parquet `license` column holds a different value.
+	 * A parquet writer writes the SPDX or `LicenseRef-*` id of the source's register inputs there.
+	 *
+	 * The id comes from `#source-register/row-license`.
+	 * The writer records this statement in the file's `RECORD.json` under `licenseStatements`.
 	 *
 	 * @defaultValue the adapter's `defaultLicense`, and sources with per-record terms override it.
 	 */
@@ -200,13 +201,13 @@ export interface SourceProvenance {
 }
 
 /**
- * The recipe that produced a row and the row it was derived from.
+ * The augmentation that derived a row from a base row, and that base row.
  */
-export interface RecipeMarker {
+export interface AugmentationMarker {
 	/**
-	 * A stable recipe id, such as `"german"` or `"compose:case-perturb+typo"`.
+	 * A stable augmentation name, such as `"case-lower"` or `"compose:case-perturb+typo"`.
 	 */
-	recipe: string
+	name: string
 
 	/**
 	 * The `source_id` of the row that this row was derived from.
@@ -240,7 +241,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * The BCP-47 locale.
 	 * The runner derives it from the country when absent.
 	 */
-	locale?: string
+	locale?: string | null
 
 	/**
 	 * The role of this address.
@@ -268,9 +269,11 @@ export interface CanonicalRow extends SourceProvenance {
 	surface?: SurfaceOrigin
 
 	/**
-	 * The recipe that produced the row, when a recipe did.
+	 * The augmentation that derived the row from a base row, when one did.
+	 *
+	 * The row's producer is its `source`.
 	 */
-	recipe?: RecipeMarker
+	augmentation?: AugmentationMarker | null
 }
 
 /**
@@ -300,17 +303,17 @@ export interface LabeledRow extends CanonicalRow {
 	 * `alignRow` enforces both rules.
 	 * Older corpora and some synthesis paths omit the spans.
 	 */
-	span_starts?: readonly number[]
+	span_starts?: readonly number[] | null
 
 	/**
 	 * Exclusive end offsets, parallel to `span_starts`.
 	 */
-	span_ends?: readonly number[]
+	span_ends?: readonly number[] | null
 
 	/**
 	 * Component tags, parallel to `span_starts`.
 	 */
-	span_tags?: readonly ComponentTag[]
+	span_tags?: readonly ComponentTag[] | null
 }
 
 /**
@@ -347,7 +350,7 @@ export interface AdapterOptions {
 	/**
 	 * A soft cap on emitted rows.
 	 */
-	limit?: number
+	limit?: number | null
 
 	/**
 	 * The fraction of rows that include an explicit `country` component.
@@ -358,13 +361,13 @@ export interface AdapterOptions {
 	 * A value of `0` or no value adds no country and consumes no random draw,
 	 * so existing outputs stay identical.
 	 */
-	countryFraction?: number
+	countryFraction?: number | null
 
 	/**
 	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw.
 	 * The draw has a fixed default.
 	 */
-	seed?: number
+	seed?: number | null
 
 	/**
 	 * A cancellation signal that adapters should check at each iteration.
@@ -444,7 +447,7 @@ export interface CorpusAdapter {
 	 *
 	 * Implementations must apply `opts.country` and `opts.limit`, check `opts.signal` at each
 	 * iteration, set `source` to `this.id`, and set `license` unless a row overrides it.
-	 * They must not set `corpus_version`, which the runner stamps, or mutate rows already yielded.
+	 * They must not mutate rows already yielded.
 	 */
 	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
 }

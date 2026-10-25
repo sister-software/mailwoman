@@ -26,7 +26,6 @@ import {
 import { createIneligibilityReader } from "#build/eligibility"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
-import { $public } from "#env"
 import { flushStream, once, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
@@ -37,7 +36,7 @@ import {
 	type LicenseRefusalKind,
 	type LicenseVerdictCache,
 } from "#utils/license"
-import { splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
+import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
 
 export interface AlignPhaseOptions {
 	/**
@@ -58,8 +57,21 @@ export interface AlignPhaseOptions {
 	eligibility: ReadonlyMap<string, readonly string[]> | null
 
 	labeledPaths: Record<SplitName, PathBuilder>
+
+	/**
+	 * Where each split's `source_id` values are written, one per line in the order their rows were aligned.
+	 *
+	 * The split phase sorts these rather than parsing every labeled row again for its id.
+	 */
+	sourceIDPaths?: Record<SplitName, PathBuilder> | null
+
 	quarantinePath: PathBuilder
 	checkpointPath: PathBuilder
+
+	/**
+	 * Continue from the checkpoint at `checkpointPath` rather than writing the outputs from the start.
+	 */
+	resume: boolean
 
 	onProgress?: (stage: BuildStage, message: string) => void
 }
@@ -90,6 +102,14 @@ export interface AlignPhaseResult {
 	ineligibleSources: Map<string, readonly string[]>
 
 	/**
+	 * The source-id lists this phase wrote, or `null` when it wrote none.
+	 *
+	 * A phase resumed from a checkpoint that records no list offsets writes none,
+	 * because the rows before the checkpoint have no ids on disk.
+	 */
+	sourceIDPaths: Record<SplitName, PathBuilder> | null
+
+	/**
 	 * The license cache this phase uses.
 	 *
 	 * Its `refusedValues()` method returns every value it refused.
@@ -101,7 +121,7 @@ export interface AlignPhaseResult {
  * The mutable state of one align run.
  * The checkpoint restores and records this state.
  */
-interface AlignTally {
+export interface AlignTally {
 	aligned: number
 	quarantined: number
 	excludedByLicense: number
@@ -155,13 +175,165 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 }
 
 /**
- * Align every adapter run's rows into the four output files, writing a checkpoint at each adapter boundary.
+ * The settings an align checkpoint or completion record is written under.
  */
-export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhaseResult> {
-	const ineligibility = createIneligibilityReader(opts.eligibility)
-	const licenses = createLicenseVerdictCache(opts.licensePolicy, opts.excludeLicenses)
+export function alignSettings(
+	opts: Pick<
+		AlignPhaseOptions,
+		"corpusVersion" | "synthesize" | "licensePolicy" | "excludeLicenses" | "profile" | "holdouts"
+	>
+): AlignSettings {
+	return {
+		corpus_version: opts.corpusVersion,
+		synthesize: opts.synthesize,
+		license_policy: opts.licensePolicy,
+		exclude_licenses: opts.excludeLicenses.map((pattern) => pattern.source).toSorted(),
+		profile: opts.profile,
+		holdout_digest: sha256Hex(stringifyJSON(opts.holdouts)),
+	}
+}
 
-	const result: AlignPhaseResult = {
+/**
+ * Where one aligned row's output goes.
+ */
+export interface RowAlignerSinks {
+	/**
+	 * One labeled JSONL line for `split`, with the row's `source_id`, or `null` when the row has none.
+	 */
+	labeled: (split: SplitName, line: string, sourceID: string | null) => void
+	/**
+	 * One quarantine JSONL line.
+	 */
+	quarantine: (line: string) => void
+}
+
+export interface RowAlignerOptions {
+	synthesize: boolean
+	holdouts: Record<string, CountryHoldout>
+	licenses: LicenseVerdictCache
+	ineligibility: ReturnType<typeof createIneligibilityReader>
+	/**
+	 * The accumulators the aligner adds each row to.
+	 */
+	result: AlignPhaseResult
+	tally: AlignTally
+	sinks: RowAlignerSinks
+}
+
+/**
+ * The align phase's work on one canonical row: refusals, synthesis, alignment and the split route.
+ *
+ * Each row's output depends on that row alone.
+ * The aligner keeps only caches and sums between rows, and a later row writes the same
+ * lines whatever they hold, so a source's rows can be aligned in contiguous ranges
+ * and the ranges' outputs joined in order.
+ */
+export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) => void {
+	const { result, tally, sinks, licenses, ineligibility } = opts
+
+	const quarantine = (row: CanonicalRow, reason: string): void => {
+		sinks.quarantine(`${stringifyJSON({ row, reason })}\n`)
+	}
+
+	return (row) => {
+		result.licenseCounts.set(row.license, (result.licenseCounts.get(row.license) ?? 0) + 1)
+
+		// The license count is incremented before the drop, so the manifest's license set
+		// reflects what the corpus contained and `excluded_by_license` what was removed.
+		const verdict = licenses.read(row.license)
+
+		if (verdict.refusal) {
+			tally.excludedByLicense++
+			result.refusedByKind.set(verdict.refusal, (result.refusedByKind.get(verdict.refusal) ?? 0) + 1)
+
+			// Counted per source as well as per refusal kind, because an adapter's own `written`
+			// count records what it emitted rather than what entered the corpus.
+			// A source refused here contributed no row, and model provenance generated from model provenance
+			// generated from `adapters[].written` only would credit it with rows it did not supply.
+			result.refusedBySource.set(row.source, (result.refusedBySource.get(row.source) ?? 0) + 1)
+
+			return
+		}
+
+		// An admitted row whose license resolves to no expression entered with
+		// unknown obligations rather than with none.
+		// The manifest states the count so a consumer can tell the two apart.
+		if (!verdict.resolved) {
+			tally.admittedUnresolved++
+		}
+
+		// Eligibility runs before augmentation: a synthetic row inherits its ancestor's `source`,
+		// so refusing the ancestor here refuses everything fanned from it.
+		const ineligible = ineligibility.read(row)
+
+		if (ineligible) {
+			tally.excludedByEligibility++
+
+			quarantine(row, `source-ineligible:${ineligible.join("; ")}`)
+
+			return
+		}
+
+		// Counted after both refusals, so the frozen manifest records what a source
+		// contributed rather than what it offered.
+		const contributed = result.rowsBySource.get(row.source)
+
+		result.rowsBySource.set(row.source, { rows: (contributed?.rows ?? 0) + 1, license: row.license })
+
+		const fanned: CanonicalRow[] = [row]
+
+		if (opts.synthesize) {
+			for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country))) {
+				fanned.push(aug)
+			}
+		}
+
+		for (const r of fanned) {
+			let aligned: ReturnType<typeof alignRow>
+
+			try {
+				aligned = alignRow(r)
+			} catch (error) {
+				// No single row may crash a multi-hour build.
+				// An unknown throw is quarantined as `align-threw`, and a rise in that reason's count is a finding.
+				quarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
+
+				tally.quarantined++
+
+				continue
+			}
+
+			if (aligned.kind === "labeled") {
+				const split = splitForRow(aligned.row, opts.holdouts)
+
+				// The split phase used to parse every labeled row back for its `source_id`.
+				// The same guard it applied keeps the list identical to what that parse produced.
+				sinks.labeled(
+					split,
+					`${stringifyJSON(aligned.row)}\n`,
+					typeof aligned.row.source_id === "string" ? aligned.row.source_id : null
+				)
+
+				result.counts[split]++
+
+				tally.aligned++
+			} else {
+				quarantine(r, aligned.row.reason)
+
+				tally.quarantined++
+			}
+		}
+	}
+}
+
+/**
+ * An empty set of align accumulators.
+ */
+export function emptyAlignResult(
+	licenses: LicenseVerdictCache,
+	ineligibleSources: Map<string, readonly string[]>
+): AlignPhaseResult {
+	return {
 		aligned: 0,
 		quarantined: 0,
 		counts: { train: 0, val: 0, test: 0 },
@@ -172,28 +344,30 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		excludedByEligibility: 0,
 		refusedBySource: new Map(),
 		rowsBySource: new Map(),
-		ineligibleSources: ineligibility.refused,
+		ineligibleSources,
+		sourceIDPaths: null,
 		licenses,
 	}
+}
 
-	const settings: AlignSettings = {
-		corpus_version: opts.corpusVersion,
-		synthesize: opts.synthesize,
-		license_policy: opts.licensePolicy,
-		exclude_licenses: opts.excludeLicenses.map((pattern) => pattern.source).toSorted(),
-		profile: opts.profile,
-		holdout_digest: sha256Hex(stringifyJSON(opts.holdouts)),
-	}
+/**
+ * Align every adapter run's rows into the four output files, writing a checkpoint at each adapter boundary.
+ */
+export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhaseResult> {
+	const ineligibility = createIneligibilityReader(opts.eligibility)
+	const licenses = createLicenseVerdictCache(opts.licensePolicy, opts.excludeLicenses)
+
+	const result = emptyAlignResult(licenses, ineligibility.refused)
+	const settings = alignSettings(opts)
 
 	const paths: Record<AlignOutputName, PathBuilder> = { ...opts.labeledPaths, quarantine: opts.quarantinePath }
 
-	const checkpoint =
-		$public.MAILWOMAN_RESUME === "1"
-			? await readAlignCheckpoint(opts.checkpointPath, {
-					settings,
-					adapterOrder: opts.adapterRuns.map((run) => run.adapter_id),
-				})
-			: null
+	const checkpoint = opts.resume
+		? await readAlignCheckpoint(opts.checkpointPath, {
+				settings,
+				adapterOrder: opts.adapterRuns.map((run) => run.adapter_id),
+			})
+		: null
 
 	let tally: AlignTally = {
 		aligned: 0,
@@ -228,14 +402,60 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		? { ...checkpoint.offsets }
 		: { train: 0, val: 0, test: 0, quarantine: 0 }
 
+	// A checkpoint without list offsets predates the lists, so the rows it counts have no ids on disk.
+	const idPaths = opts.sourceIDPaths && (!checkpoint || checkpoint.source_id_offsets) ? opts.sourceIDPaths : null
+	const idOffsets: Record<SplitName, number> = { train: 0, val: 0, test: 0, ...checkpoint?.source_id_offsets }
+
+	if (idPaths && checkpoint) {
+		for (const split of SPLIT_NAMES) {
+			await truncateFile(idPaths[split], idOffsets[split])
+		}
+	}
+
+	const idStreams: Record<SplitName, WriteStream> | null = idPaths
+		? {
+				train: openWriteStream(idPaths.train, { encoding: "utf8", flags }),
+				val: openWriteStream(idPaths.val, { encoding: "utf8", flags }),
+				test: openWriteStream(idPaths.test, { encoding: "utf8", flags }),
+			}
+		: null
+
+	result.sourceIDPaths = idPaths
+
 	const writeLine = (name: AlignOutputName, line: string): void => {
 		offsets[name] += Buffer.byteLength(line, "utf8")
 		streams[name].write(line)
 	}
 
-	const quarantine = (row: CanonicalRow, reason: string): void => {
-		writeLine("quarantine", `${stringifyJSON({ row, reason })}\n`)
+	const writeSourceID = (split: SplitName, sourceID: string): void => {
+		if (!idStreams) return
+
+		const line = `${sourceID}\n`
+
+		idOffsets[split] += Buffer.byteLength(line, "utf8")
+		idStreams[split].write(line)
 	}
+
+	const allStreams = (): WriteStream[] => [...Object.values(streams), ...(idStreams ? Object.values(idStreams) : [])]
+
+	const alignOne = createRowAligner({
+		synthesize: opts.synthesize,
+		holdouts: opts.holdouts,
+		licenses,
+		ineligibility,
+		result,
+		tally,
+		sinks: {
+			labeled: (split, line, sourceID) => {
+				writeLine(split, line)
+
+				if (sourceID != null) {
+					writeSourceID(split, sourceID)
+				}
+			},
+			quarantine: (line) => writeLine("quarantine", line),
+		},
+	})
 
 	const completed = checkpoint ? [...checkpoint.completed_adapters] : []
 
@@ -245,95 +465,14 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		opts.onProgress?.("align", `aligning ${adapterRun.adapter_id}`)
 
 		for await (const row of streamJSONL<CanonicalRow>(adapterRun.jsonl_path)) {
-			result.licenseCounts.set(row.license, (result.licenseCounts.get(row.license) ?? 0) + 1)
-
-			// The license count is incremented before the drop, so the manifest's license set
-			// reflects what the corpus contained and `excluded_by_license` what was removed.
-			const verdict = licenses.read(row.license)
-
-			if (verdict.refusal) {
-				tally.excludedByLicense++
-				result.refusedByKind.set(verdict.refusal, (result.refusedByKind.get(verdict.refusal) ?? 0) + 1)
-
-				// Counted per source as well as per refusal kind, because an adapter's own
-				// `written` count records what it emitted rather than what entered the corpus.
-				// A source refused here contributed no row, and model provenance generated from model provenance
-				// generated from `adapters[].written` only would credit it with rows it did not supply.
-				result.refusedBySource.set(row.source, (result.refusedBySource.get(row.source) ?? 0) + 1)
-
-				continue
-			}
-
-			// An admitted row whose license resolves to no expression entered with
-			// unknown obligations rather than with none.
-			// The manifest states the count so a consumer can tell the two apart.
-			if (!verdict.resolved) {
-				tally.admittedUnresolved++
-			}
-
-			// Eligibility runs before augmentation: a synthetic row inherits its ancestor's `source`,
-			// so refusing the ancestor here refuses everything fanned from it.
-			const ineligible = ineligibility.read(row)
-
-			if (ineligible) {
-				tally.excludedByEligibility++
-
-				quarantine(row, `source-ineligible:${ineligible.join("; ")}`)
-
-				continue
-			}
-
-			// Counted after both refusals, so the frozen manifest records what a source
-			// contributed rather than what it offered.
-			const contributed = result.rowsBySource.get(row.source)
-
-			result.rowsBySource.set(row.source, { rows: (contributed?.rows ?? 0) + 1, license: row.license })
-
-			const fanned: CanonicalRow[] = [row]
-
-			if (opts.synthesize) {
-				for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country))) {
-					fanned.push(aug)
-				}
-			}
-
-			for (const r of fanned) {
-				let aligned: ReturnType<typeof alignRow>
-
-				try {
-					aligned = alignRow(r)
-				} catch (error) {
-					// No single row may crash a multi-hour build.
-					// An unknown throw is quarantined as `align-threw`, and a rise in
-					// that reason's count is a finding.
-					quarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
-
-					tally.quarantined++
-
-					continue
-				}
-
-				if (aligned.kind === "labeled") {
-					const split = splitForRow(aligned.row, opts.holdouts)
-
-					writeLine(split, `${stringifyJSON(aligned.row)}\n`)
-
-					result.counts[split]++
-
-					tally.aligned++
-				} else {
-					quarantine(r, aligned.row.reason)
-
-					tally.quarantined++
-				}
-			}
+			alignOne(row)
 		}
 
 		// The checkpoint is written at the adapter boundary, after the bytes it counts have reached disk.
 		// Mid-adapter recovery is unavailable.
 		// The largest adapter takes about twenty minutes to align.
 		// A row offset inside one adapter's file would still require replaying that adapter's synthesis.
-		await Promise.all(ALIGN_OUTPUTS.map((name) => flushStream(streams[name])))
+		await Promise.all(allStreams().map((stream) => flushStream(stream)))
 
 		completed.push(adapterRun.adapter_id)
 
@@ -341,6 +480,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			settings,
 			completed_adapters: [...completed],
 			offsets: { ...offsets },
+			...(idStreams ? { source_id_offsets: { ...idOffsets } } : {}),
 			counts: { ...result.counts },
 			aligned: tally.aligned,
 			quarantined: tally.quarantined,
@@ -355,11 +495,11 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		})
 	}
 
-	for (const stream of Object.values(streams)) {
+	for (const stream of allStreams()) {
 		stream.end()
 	}
 
-	await Promise.all(Object.values(streams).map((stream) => once(stream, "close")))
+	await Promise.all(allStreams().map((stream) => once(stream, "close")))
 
 	return { ...result, ...tally }
 }

@@ -4,26 +4,54 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { describe, expect, it } from "vitest"
+import { basename } from "path-ts"
+import { describe, expect, it, vi } from "vitest"
 
-import { openDuckDB } from "#parquet/duckdb"
+import { defaultDuckDBMemoryLimitBytes, defaultDuckDBThreads, type DuckDBLimits, openDuckDB } from "#parquet/duckdb"
+import { writeParquetFile } from "#parquet/writers"
 import type { SourceRightsRecord } from "#source-register/corpus-inputs"
-import { useScratchDir } from "#test-kit"
+import { gbOverlayRow as gbRow, useScratchDir } from "#test-kit"
 import {
 	assembleOverlayManifest,
 	baseManifestFiles,
+	RETIRED_FILES_KEYS,
 	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
-	splitFromFilename,
 } from "#tools/overlay/manifest"
+import { splitOverlaySlice } from "#tools/overlay/split-overlay"
+
+/**
+ * The `memory_limit` and `threads` each DuckDB connection reports back as it opens.
+ */
+const opened = vi.hoisted(() => [] as Array<{ memoryLimit: string; threads: string }>)
+
+vi.mock("#parquet/duckdb", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("#parquet/duckdb")>()
+
+	return {
+		...actual,
+		openDuckDB: async (...args: Parameters<typeof actual.openDuckDB>) => {
+			const db = await actual.openDuckDB(...args)
+
+			const result = await db.runAndReadAll(
+				"SELECT current_setting('memory_limit') AS memory_limit, current_setting('threads') AS threads"
+			)
+
+			const row = result.getRowObjectsJS()[0] as { memory_limit: unknown; threads: unknown }
+
+			opened.push({ memoryLimit: String(row.memory_limit), threads: String(row.threads) })
+
+			return db
+		},
+	}
+})
 
 const BASE_MANIFEST = "/mnt/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
 
 /**
- * The pre-rename file-list key, spelled by concatenation because the word is banned
- * in this tree and the ratchet's baseline is zero.
+ * The oldest retired file-list key.
  */
-const PRE_RENAME_FILES_KEY = `sh${"ards"}`
+const PRE_RENAME_FILES_KEY = RETIRED_FILES_KEYS.at(-1)!
 
 /**
  * A base manifest carrying only what {@link baseManifestFiles} reads.
@@ -38,20 +66,7 @@ function manifestWith(key: string, paths: readonly string[]): Parameters<typeof 
 	} as Parameters<typeof baseManifestFiles>[0]
 }
 
-describe("splitFromFilename", () => {
-	it("reads the split splitOverlaySlice encodes, and answers null for a name it did not write", () => {
-		expect(splitFromFilename("part-gb.val.parquet")).toBe("val")
-		expect(splitFromFilename("part-gb.test.parquet")).toBe("test")
-		expect(splitFromFilename("part-anchor-absorption-train.val.parquet")).toBe("val")
-
-		expect(splitFromFilename("part-synth-german-val.parquet")).toBeNull()
-		expect(splitFromFilename("part-synth-german-train.parquet")).toBeNull()
-		expect(splitFromFilename("part-0000.parquet")).toBeNull()
-		expect(splitFromFilename("val.parquet")).toBeNull()
-	})
-})
-
-describe("assembleOverlayManifest, on who chose a held-out split", () => {
+describe("assembleOverlayManifest", () => {
 	const scratch = useScratchDir("overlay-manifest")
 
 	/**
@@ -67,10 +82,10 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 1, val: 0, test: 0 },
 				total_rows: 1,
-				slices: [{ split: "train", path: "/data/corpus/versioned/v0.1.0/corpus-v0.1.0/train/part-0000.parquet" }],
+				files: [{ split: "train", path: "/data/corpus/versioned/v0.1.0/corpus-v0.1.0/train/part-0000.parquet" }],
 			},
 			path
 		)
@@ -78,40 +93,82 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		return path
 	}
 
-	const overlay = (parquet: string, split: "train" | "val" | "test") => ({
+	const overlay = (parquet: string) => ({
 		base: "",
 		newDir: scratch.path,
 		modalRoot: "/data/corpus/versioned/v0.2.0/corpus-v0.2.0",
 		version: "0.2.0",
-		files: [{ parquet, source: "syn-de", split }],
+		files: [{ parquet, source: "syn-de" }],
 		note: "",
 		// These fixtures use sources no register row permits.
 		// The source-rights tests below run without the override.
 		unshippableReason: "test fixture: overlay mechanics",
 	})
 
-	it("refuses a val split asserted for a file split-slice did not write", async () => {
+	it("adds a file with a split attribute at the overlay root and counts each split from the attribute", async () => {
 		const base = await writeBase()
+		const input = scratch.path("part-gb-attr.parquet")
 
-		await expect(assembleOverlayManifest({ ...overlay("part-synth-german-val.parquet", "val"), base })).rejects.toThrow(
-			/did not come from 'mailwoman corpus split-slice'/
+		await writeParquetFile(
+			[gbRow("gb-a", "Parc Venton Close", "Camborne", "TR14 7TT"), gbRow("gb-b", "Baker Street", "London", "NW1 6XE")],
+			input,
+			{ extractHash: "fixture", codeHash: "fixture", config: {} }
 		)
+
+		const split = await splitOverlaySlice({ input, outputDir: scratch.path })
+
+		await assembleOverlayManifest({
+			...overlay("part-gb-attr.parquet"),
+			base,
+			files: [
+				{ parquet: "part-gb-attr.parquet", source: "rendered-gb-os-open", splitAttribute: basename(split.attribute) },
+			],
+		})
+
+		const written = await readLocalJSONFile<{
+			files: Array<{ path: string; split?: string; split_attribute?: { policy_hash: string } }>
+			counts: Record<string, number>
+			split_decided_by: { policy_hashes: string[] }
+		}>(scratch.path("MANIFEST.json").toString())
+
+		const added = written.files.at(-1)!
+
+		expect(added.path).toBe("/data/corpus/versioned/v0.2.0/corpus-v0.2.0/part-gb-attr.parquet")
+		expect(added.split).toBeUndefined()
+		expect(added.split_attribute?.policy_hash).toBe(split.policyHash)
+		expect(written.split_decided_by.policy_hashes).toEqual([split.policyHash])
+
+		expect(written.counts).toEqual({
+			train: 1 + split.counts.train,
+			val: split.counts.val,
+			test: split.counts.test,
+		})
 	})
 
-	it("refuses a split that contradicts the one the filename carries", async () => {
+	it("refuses an attribute that describes other bytes than the file beside it", async () => {
 		const base = await writeBase()
+		const input = scratch.path("part-gb-stale.parquet")
+		const derivation = { extractHash: "fixture", codeHash: "fixture", config: {} }
 
-		await expect(assembleOverlayManifest({ ...overlay("part-gb.val.parquet", "test"), base })).rejects.toThrow(
-			/names split 'val' and the caller asked for 'test'/
-		)
-	})
+		await writeParquetFile([gbRow("gb-c", "Baker Street", "London", "NW1 6XE")], input, derivation)
 
-	it("lets a train file through without a routed name, since train holds nothing out", async () => {
-		const base = await writeBase()
+		const split = await splitOverlaySlice({ input, outputDir: scratch.path })
+
+		await writeParquetFile([gbRow("gb-d", "Hope Street", "Liverpool", "L1 9BP")], input, derivation)
 
 		await expect(
-			assembleOverlayManifest({ ...overlay("part-synth-german-train.parquet", "train"), base })
-		).rejects.not.toThrow(/split-slice/)
+			assembleOverlayManifest({
+				...overlay("part-gb-stale.parquet"),
+				base,
+				files: [
+					{
+						parquet: "part-gb-stale.parquet",
+						source: "rendered-gb-os-open",
+						splitAttribute: basename(split.attribute),
+					},
+				],
+			})
+		).rejects.toThrow(/Run 'mailwoman corpus split-overlay'/)
 	})
 
 	/**
@@ -140,9 +197,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		// The caller's label would make the manifest disagree with the rows the run trains on.
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "synth-german", split: "train" }],
+				files: [{ parquet, source: "synth-german" }],
 			})
 		).rejects.toThrow(/holds source "rendered-de".*asked to record "synth-german"/s)
 	})
@@ -152,17 +209,17 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-agrees.train.parquet", "rendered-de")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-de", split: "train" }],
+			files: [{ parquet, source: "rendered-de" }],
 		})
 
 		// `assembleOverlayManifest` writes the manifest rather than returning it.
-		const written = await readLocalJSONFile<{ slices: Array<{ path: string; source: string; rows: number }> }>(
+		const written = await readLocalJSONFile<{ files: Array<{ path: string; source: string; rows: number }> }>(
 			scratch.path("MANIFEST.json").toString()
 		)
 
-		const added = written.slices.filter((slice) => slice.path.endsWith("part-agrees.train.parquet"))
+		const added = written.files.filter((file) => file.path.endsWith("part-agrees.train.parquet"))
 
 		expect(added).toHaveLength(1)
 		expect(added[0]!.source).toBe("rendered-de")
@@ -181,10 +238,10 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 15, val: 2, test: 3 },
 				total_rows: 20,
-				slices: [
+				files: [
 					{ split: "train", rows: 10, source: "wof-admin", path: `${root}/train/part-0000.parquet` },
 					{ split: "train", rows: 5, source: "rendered-gb", path: `${root}/train/part-gb.train.parquet` },
 					{ split: "val", rows: 2, source: "rendered-gb", path: `${root}/val/part-gb.val.parquet` },
@@ -202,19 +259,19 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		const parquet = await writeOverlayParquet("part-gb-v2.train.parquet", "rendered-gb")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			files: [{ parquet, source: "rendered-gb" }],
 			replaceSources: ["rendered-gb"],
 		})
 
 		const written = await readLocalJSONFile<{
-			slices: Array<{ path: string; source: string }>
+			files: Array<{ path: string; source: string }>
 			counts: { train: number; val: number; test: number }
 			total_rows: number
 		}>(scratch.path("MANIFEST.json").toString())
 
-		expect(written.slices.map((slice) => slice.path.split("/").at(-1))).toEqual([
+		expect(written.files.map((file) => file.path.split("/").at(-1))).toEqual([
 			"part-0000.parquet",
 			"part-gb-v2.train.parquet",
 		])
@@ -229,9 +286,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "rendered-de", split: "train" }],
+				files: [{ parquet, source: "rendered-de" }],
 				replaceSources: ["rendered-de"],
 			})
 		).rejects.toThrow(/holds no file with source 'rendered-de'/)
@@ -243,9 +300,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "rendered-gb", split: "train" }],
+				files: [{ parquet, source: "rendered-gb" }],
 				unshippableReason: null,
 			})
 		).rejects.toThrow(/corpus source rendered-gb reads register source gb-property-building-1 .*refused/s)
@@ -259,9 +316,9 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 
 		await expect(
 			assembleOverlayManifest({
-				...overlay(parquet, "train"),
+				...overlay(parquet),
 				base,
-				files: [{ parquet, source: "ban", split: "train" }],
+				files: [{ parquet, source: "ban" }],
 				unshippableReason: null,
 			})
 		).rejects.toThrow(/cannot check the corpus sources of 1 file\(s\) of base.*absent locally/s)
@@ -277,18 +334,18 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 				corpus_version: "0.1.0",
 				schema: {},
 				row_group_size: 50_000,
-				rows_per_slice: 1_000_000,
+				rows_per_file: 1_000_000,
 				counts: { train: 1, val: 0, test: 0 },
 				total_rows: 1,
-				slices: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
+				files: [{ split: "train", rows: 1, path: scratch.path("train", baseFile).toString() }],
 			},
 			base
 		)
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "ban", split: "train" }],
+			files: [{ parquet, source: "ban" }],
 			unshippableReason: null,
 		})
 
@@ -300,14 +357,143 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 		expect(written.source_rights.sources_checked).toEqual(expect.arrayContaining(["ban", "wof-admin"]))
 	})
 
+	it("records a deletion with the rows it removes and nets them out of the split counts", async () => {
+		const base = await writeBaseWithGB()
+		const path = scratch.path("train", "part-de-del.train.parquet").toString()
+
+		await makeDirectories(scratch.path("train"))
+
+		{
+			using db = await openDuckDB()
+
+			await db.run(
+				`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
+			)
+		}
+
+		await assembleOverlayManifest({
+			...overlay("part-de-del.train.parquet"),
+			base,
+			files: [{ parquet: "part-de-del.train.parquet", source: "rendered-de" }],
+			deletions: [
+				{
+					target: { source: "rendered-de" },
+					sourceIDs: ["de-1", "de-3", "de-absent"],
+					reason: "fixture",
+					issue: "#2741",
+				},
+			],
+		})
+
+		const written = await readLocalJSONFile<{
+			counts: { train: number; val: number; test: number }
+			deletions: Array<{ source_ids: string[]; rows_deleted: Record<string, number>; issue: string }>
+		}>(scratch.path("MANIFEST.json").toString())
+
+		expect(written.deletions).toHaveLength(1)
+		expect(written.deletions[0]!.rows_deleted).toEqual({ train: 2, val: 0, test: 0 })
+		expect(written.deletions[0]!.source_ids).toEqual(["de-1", "de-3", "de-absent"])
+		// The base's 15 train rows plus 5 added, less the 2 the deletion removes.
+		expect(written.counts).toEqual({ train: 18, val: 2, test: 3 })
+	})
+
+	describe("DuckDB limits", () => {
+		/**
+		 * Assemble a version that adds a file and deletes rows from it through a sidecar,
+		 * so the descriptor read, the sidecar read and the deletion tally each open a connection.
+		 */
+		async function assembleWithDeletion(limits?: DuckDBLimits): Promise<void> {
+			const base = await writeBaseWithGB()
+			const name = "part-de-lim.train.parquet"
+			const path = scratch.path("train", name).toString()
+			const sidecar = scratch.path("delete-ids.parquet").toString()
+
+			await makeDirectories(scratch.path("train"))
+
+			{
+				using db = await openDuckDB()
+
+				await db.run(
+					`COPY (SELECT 'rendered-de' AS source, 'de-' || i AS source_id FROM range(5) t(i)) TO '${path}' (FORMAT parquet)`
+				)
+
+				await db.run(`COPY (SELECT 'de-2' AS source_id) TO '${sidecar}' (FORMAT parquet)`)
+			}
+
+			opened.length = 0
+
+			await assembleOverlayManifest({
+				...overlay(name),
+				base,
+				files: [{ parquet: name, source: "rendered-de" }],
+				deletions: [{ target: { source: "rendered-de" }, sourceIDsFile: sidecar, reason: "fixture", issue: "#2741" }],
+				limits,
+			})
+		}
+
+		it("opens every connection at the limits the caller passes", async () => {
+			await assembleWithDeletion({ memoryLimitBytes: 512 * 1024 * 1024, threads: 2 })
+
+			// The descriptor, the sidecar read and the tally.
+			expect(opened.length).toBeGreaterThanOrEqual(3)
+			expect(new Set(opened.map((setting) => setting.memoryLimit))).toEqual(new Set(["512.0 MiB"]))
+			expect(new Set(opened.map((setting) => setting.threads))).toEqual(new Set(["2"]))
+		})
+
+		it("applies openDuckDB's stated defaults when the caller passes none", async () => {
+			await assembleWithDeletion()
+
+			const threads = String(await defaultDuckDBThreads())
+			const expected = await defaultDuckDBMemoryLimitBytes()
+
+			expect(opened.length).toBeGreaterThanOrEqual(3)
+
+			for (const setting of opened) {
+				expect(setting.threads).toBe(threads)
+
+				const [value, unit] = setting.memoryLimit.split(" ")
+				const bytes = Number(value) * (unit === "GiB" ? 1024 ** 3 : unit === "MiB" ? 1024 ** 2 : 1)
+
+				// DuckDB rounds the value it reports, so the assertion is a band rather than an equality.
+				expect(bytes).toBeGreaterThan(expected * 0.9)
+				expect(bytes).toBeLessThan(expected * 1.1)
+			}
+		})
+	})
+
+	it("refuses a deletion that names no issue or no file of the version", async () => {
+		const base = await writeBaseWithGB()
+		const parquet = await writeOverlayParquet("part-de-del2.train.parquet", "rendered-de")
+
+		const args = {
+			...overlay(parquet),
+			base,
+			files: [{ parquet, source: "rendered-de" }],
+		}
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "rendered-de" }, sourceIDs: ["row-1"], reason: "fixture", issue: "2741" }],
+			})
+		).rejects.toThrow(/spell it #<number>/)
+
+		await expect(
+			assembleOverlayManifest({
+				...args,
+				deletions: [{ target: { source: "nowhere" }, sourceIDs: ["row-1"], reason: "fixture", issue: "#2741" }],
+			})
+		).rejects.toThrow(/names no file of this version/)
+	})
+
 	it("records the overlay as not shippable when the override admits an unpermitted source", async () => {
 		const base = await writeBaseWithGB()
 		const parquet = await writeOverlayParquet("part-gb-v4.train.parquet", "rendered-gb")
 
 		await assembleOverlayManifest({
-			...overlay(parquet, "train"),
+			...overlay(parquet),
 			base,
-			files: [{ parquet, source: "rendered-gb", split: "train" }],
+			files: [{ parquet, source: "rendered-gb" }],
 			replaceSources: ["rendered-gb"],
 		})
 
@@ -351,25 +537,53 @@ describe("baseManifestFiles", () => {
 
 	it("prefers the current key when a manifest carries both", () => {
 		const both = {
-			...manifestWith("slices", ["new.parquet"]),
+			...manifestWith("files", ["new.parquet"]),
 			[PRE_RENAME_FILES_KEY]: [{ path: "old.parquet" }],
 		} as Parameters<typeof baseManifestFiles>[0]
 
 		expect(baseManifestFiles(both)).toEqual([{ path: "new.parquet" }])
 	})
 
-	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array.
+	it("REFUSES a manifest that holds no file list under any key", () => {
+		// No key holds an array.
 		// The manifest makes no statement about the file count.
 		// An empty list would report a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
-		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)
+		expect(() => baseManifestFiles(neither)).toThrow(/holds no file list/u)
+	})
+
+	it("reads every retired file-list key, as manifests built before each rename hold them", () => {
+		for (const key of RETIRED_FILES_KEYS) {
+			expect(baseManifestFiles(manifestWith(key, ["old.parquet"]))).toEqual([{ path: "old.parquet" }])
+		}
 	})
 
 	it("answers an empty list for a manifest that declares one, because that is a measurement", () => {
-		// `slices: []` means the corpus holds no file.
+		// `files: []` means the corpus holds no file.
 		// The overlay assembler's requirement for a non-empty base lives in its own caller.
-		expect(baseManifestFiles(manifestWith("slices", []))).toEqual([])
+		expect(baseManifestFiles(manifestWith("files", []))).toEqual([])
+	})
+
+	it("REFUSES a manifest that lists one path twice, after normalizing it", () => {
+		const twice = manifestWith("files", ["/c/test/part-0000.parquet", "/c/test/./part-0000.parquet"])
+
+		expect(() => baseManifestFiles(twice)).toThrow(/lists \/c\/test\/part-0000\.parquet twice/u)
+	})
+
+	it("REFUSES a manifest that lists the same bytes under two paths", () => {
+		const sameBytes = {
+			...manifestWith("files", []),
+			files: [
+				{ path: "/c/v1/test/ban.parquet", sha256: "ab".repeat(32) },
+				{ path: "/c/v2/test/ban.parquet", sha256: "ab".repeat(32) },
+			],
+		} as Parameters<typeof baseManifestFiles>[0]
+
+		expect(() => baseManifestFiles(sameBytes)).toThrow(/sha256 (ab){32} twice/u)
+	})
+
+	it("refuses a repeat under the pre-rename key too", () => {
+		expect(() => baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "a.parquet"]))).toThrow(/twice/u)
 	})
 })

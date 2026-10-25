@@ -7,18 +7,37 @@ import { TileSetSourceID } from "#styles/sources"
 
 /**
  * Creates a raster DEM source specification for terrain data.
+ *
+ * The tile worker serves the AWS terrarium tiles from Cloudflare's edge cache.
  */
 export function createTerrainDEMSource(): RasterDEMSourceSpecification {
 	const terrainSource: RasterDEMSourceSpecification = {
 		type: "raster-dem",
 		encoding: "terrarium",
-		tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
+		tiles: ["https://tiles.mailwoman.ai/terrain/terrarium/{z}/{x}/{y}.png"],
 		tileSize: 256,
 		maxzoom: 15,
 	}
 
 	return terrainSource
 }
+
+/**
+ * Creates the raster DEM source the ocean layers read: the same terrarium tiles, capped at z10.
+ *
+ * The terrain tiles hold bathymetry only through z10.
+ * From z11 every ocean pixel reads 0 m, so a source that loaded z11 tiles would draw a flat sea floor.
+ *
+ * Capped at z10, MapLibre overzooms the last tiles that hold depths.
+ */
+export function createBathymetryDEMSource(): RasterDEMSourceSpecification {
+	return { ...createTerrainDEMSource(), maxzoom: 10 }
+}
+
+/**
+ * Identifier for the bathymetry source the ocean layers read.
+ */
+export const BathymetryTileSetID = TileSetSourceID("bathymetry")
 
 /**
  * Identifier for the terrain tileset.

@@ -99,6 +99,11 @@ export interface GauntletRunOptions {
 	 */
 	adminContainmentRerank?: SwitchPin
 	/**
+	 * Pin the dependent-locality containment for every layer (#2804).
+	 * @defaultValue `"production"`
+	 */
+	dependentLocalityContainment?: SwitchPin
+	/**
 	 * Pin the span-rescore requirement that a sub-span keep every word of the name.
 	 * @defaultValue `"production"`
 	 */
@@ -173,6 +178,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		postcodeCountryCoherence: options.postcodeCountryCoherence ?? "production",
 		gazetteerPrior: options.gazetteerPrior ?? "production",
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
+		dependentLocalityContainment: options.dependentLocalityContainment ?? "production",
 		spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",

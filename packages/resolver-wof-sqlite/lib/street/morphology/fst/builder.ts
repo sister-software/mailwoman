@@ -16,7 +16,7 @@
  *   Design rationale + the four-layer street-supplement architecture lives in
  *   `docs/articles/concepts/street-supplement-architecture.md`.
  *
- *   Source: `core/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is pipe-delimited
+ *   Source: `dictionaries/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is pipe-delimited
  *   surface forms with the canonical form first: avenue|av|ave|aven|avenu|avn|avnu|avnue
  *
  *   Output: an `FSTMatcher` ready to serialize via `serializeFST` to e.g.
@@ -60,7 +60,7 @@ export const REGION_ABBREVIATION_VARIANTS: ReadonlySet<string> = new Set(
 
 export interface BuildStreetMorphologyFSTOpts {
 	/**
-	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
+	 * Path to the `dictionaries/data/libpostal/dictionaries` directory containing per-locale subfolders.
 	 */
 	dictionariesDir: PathBuilderLike
 	/**
@@ -212,7 +212,7 @@ export async function buildStreetMorphologyFST(
 			const node = nodes[stateID]!
 			let next = node.edges.get(t)
 
-			if (next === undefined) {
+			if (!next) {
 				next = nodes.length
 				nodes.push({ edges: new Map(), places: [] })
 				node.edges.set(t, next)

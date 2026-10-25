@@ -64,8 +64,8 @@
 #   decompress the seven .jsonl.zst recipe outputs under $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-no-refused-oa-v1/
 #   mailwoman corpus migrate-recipe-outputs --files <affix-train, intersection-train, suffix-boundary-v2 and
 #     spliced-sub-venue-v6-no-oa .jsonl>, which writes the `recipe`, `register` and `surface` columns those four leave out
-#   for each of the nine recipe outputs: `mailwoman corpus align-slice --corpus-version 0.7.8-rights-clean`, then
-#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`
+#   for each of the nine recipe outputs: `mailwoman corpus align-recipe --corpus-version 0.7.8-rights-clean`, then
+#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-overlay`
 #   copy v0.7.7-no-ppd's three rendered-gb-os-open.<split>.parquet files
 #   copy v0.7.0-de-holdout's train/part-house-venue-intl-v27.train.parquet into train as
 #     invented-house-venue-intl-v27.parquet

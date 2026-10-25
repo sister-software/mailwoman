@@ -89,7 +89,9 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
-	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
+	// A combining mark belongs to the letter before it: the Devanagari vowel sign of `दिल्ली`
+	// and Thai tone marks are `\p{M}`, so a letters-and-digits test would trim them off a span's end.
+	const isWordChar = (i: number): boolean => /[\p{L}\p{M}\p{N}]/u.test(raw[i] ?? "")
 
 	// The start trim skips punctuation outside an abbreviation prefix.
 	// The code preserves a leading "." before a word character, a rare symmetric case.
@@ -261,7 +263,7 @@ export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: Buil
 	sortByStart(roots)
 	const tree: AddressTree = { raw, roots }
 
-	if (opts.system !== undefined) {
+	if (opts.system) {
 		tree.system = opts.system
 	}
 

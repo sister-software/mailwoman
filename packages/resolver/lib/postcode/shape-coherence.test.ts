@@ -1,11 +1,17 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import {
+	decodeAsJSON,
+	isShapeExcludedPostcode,
+	walkNodes,
+	type AddressNode,
+	type AddressTree,
+} from "@mailwoman/core/decoder"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode"
+import { applyPostcodeShapeCoherence } from "#postcode"
 import { createWOFResolver } from "#resolve"
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
@@ -97,10 +103,26 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(verdict.confirmed).toEqual(["00716"])
 		expect(roots[0]!.metadata?.["postcode_shape_countries"]).toEqual(["PR"])
 	})
+
+	it("confirms a postcode under any country whose subdivision table holds the region token", () => {
+		// `WA` is Washington and Western Australia.
+		// The AU syntax accepts `6001` where the US syntax refuses it.
+		const roots = [
+			node({ tag: "locality", value: "Perth" }),
+			node({ tag: "region", value: "WA" }),
+			postcodeNode("6001"),
+		]
+
+		const verdict = applyPostcodeShapeCoherence(roots)
+
+		expect(verdict.confirmed).toEqual(["6001"])
+		expect(tagged(roots, "postcode").map((n) => n.value)).toEqual(["6001"])
+		expect(roots[2]!.metadata?.["postcode_shape_countries"]).toEqual(["AU"])
+	})
 })
 
 describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
-	it("excludes the M-1 US spans via their region signal, retagging to house_number", () => {
+	it("excludes the M-1 US spans via their region signal, keeping the tag and stamping the span", () => {
 		const cases: Array<[string, string]> = [
 			["1600", "CA"],
 			["3080", "CA"],
@@ -114,9 +136,10 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 
 			expect(verdict.excluded).toEqual([code])
 			expect(verdict.confirmed).toEqual([])
-			const span = tagged(roots, "house_number")[0]
-			expect(span?.value).toBe(code)
-			expect(tagged(roots, "postcode")).toEqual([])
+			expect(roots[0]!.tag).toBe("postcode")
+			expect(roots[0]!.value).toBe(code)
+			expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
+			expect(tagged(roots, "house_number")).toEqual([])
 		}
 	})
 
@@ -126,7 +149,25 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		expect(verdict.excluded).toEqual(["3499"])
-		expect(tagged(roots, "house_number")[0]?.value).toBe("3499")
+		expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
+	})
+
+	it("leaves the postcode slot empty and the house number in place for an excluded span", () => {
+		// `ISLE LA MOTTE FREE PUBLIC, 2238 MAIN ST, ISLE LA MOTTE, VT`, with an extra house number span.
+		const roots = [
+			node({ tag: "house_number", value: "2238" }),
+			node({ tag: "street", value: "MAIN ST" }),
+			node({ tag: "region", value: "VT" }),
+			postcodeNode("2238"),
+		]
+
+		applyPostcodeShapeCoherence(roots)
+
+		const flat = decodeAsJSON(tree(...roots))
+
+		expect(flat.postcode).toBeUndefined()
+		expect(flat.house_number).toBe("2238")
+		expect(roots[3]!.value).toBe("2238")
 	})
 
 	it("excludes 9 synthesized US/PR 4-digit rows — the speaks-population board totals 13/13", () => {
@@ -135,7 +176,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			["2001", "CA"],
 			["3003", "TX"],
 			["4004", "FL"],
-			["5005", "WA"],
+			// `WA` also names Western Australia, whose syntax accepts four digits, so this row uses a US-only code.
+			["5005", "NJ"],
 			["6006", "CO"],
 			["7007", "OR"],
 			["8008", "AZ"],
@@ -150,7 +192,7 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			const verdict = applyPostcodeShapeCoherence(roots)
 
 			expect(verdict.excluded).toEqual([code])
-			expect(tagged(roots, "house_number")[0]?.value).toBe(code)
+			expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
 
 			excluded++
 		}
@@ -158,15 +200,68 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		expect(excluded).toBe(9)
 	})
 
-	it("letter-containing spans keep their tag and are stamped instead", () => {
+	it("letter-containing spans keep their tag and are stamped", () => {
 		const roots = [postcodeNode("SW1A 2AA"), node({ tag: "region", value: "CA" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		expect(verdict.excluded).toEqual(["SW1A 2AA"])
-		// The span is not digit-only, so it cannot be retagged to house_number and is stamped instead.
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
+	})
+})
+
+describe("applyPostcodeShapeCoherence — ZIP+4 written with no separator", () => {
+	it.each([
+		{
+			raw: "Rutland Community Health Center, 215 Stratton Rd, Rutland, VT 057014673",
+			houseNumber: "215",
+			region: "VT",
+			postcode: "057014673",
+		},
+		{
+			raw: "Spectra Health Dental Clinic, 212 S 4th St STE 101, Grand Forks, ND 582014776",
+			houseNumber: "212",
+			region: "ND",
+			postcode: "582014776",
+		},
+	])("confirms $postcode and keeps house number $houseNumber in `$raw`", ({ houseNumber, region, postcode }) => {
+		const roots = [
+			node({ tag: "house_number", value: houseNumber }),
+			node({ tag: "region", value: region }),
+			postcodeNode(postcode),
+		]
+
+		const verdict = applyPostcodeShapeCoherence(roots)
+
+		expect(verdict.confirmed).toEqual([postcode])
+		expect(verdict.excluded).toEqual([])
+
+		const flat = decodeAsJSON(tree(...roots))
+
+		expect(flat.postcode).toBe(postcode)
+		expect(flat.house_number).toBe(houseNumber)
+	})
+
+	it.each([
+		["215", "VT", "05701467"],
+		["212", "ND", "5820147760"],
+	])("never lets an excluded span overwrite house number %s", (houseNumber, region, postcode) => {
+		const roots = [
+			node({ tag: "house_number", value: houseNumber }),
+			node({ tag: "region", value: region }),
+			postcodeNode(postcode),
+		]
+
+		const verdict = applyPostcodeShapeCoherence(roots)
+
+		expect(verdict.excluded).toEqual([postcode])
+
+		const flat = decodeAsJSON(tree(...roots))
+
+		expect(flat.house_number).toBe(houseNumber)
+		expect(flat.postcode).toBeUndefined()
+		expect(tagged(roots, "house_number").map((n) => n.value)).toEqual([houseNumber])
 	})
 })
 

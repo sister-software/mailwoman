@@ -30,14 +30,15 @@ export const spec = {
 
 const GazetteerBuildTWDistricts: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildTWDistrictsDatabase } = await import("#gazetteer/tw-districts")
+		const { buildTWDistrictsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/tw-districts")
 
 		const r = await buildTWDistrictsDatabase({
 			release: options.release,
 			parquetPath: options.parquet,
 			adminPath: options.admin,
 			out: options.out,
-			threads: options.threads && /^\d+$/.test(options.threads) ? Number(options.threads) : undefined,
+			threads:
+				typeof options.threads === "string" && /^\d+$/.test(options.threads) ? Number(options.threads) : undefined,
 		})
 
 		const lines = [

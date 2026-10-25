@@ -16,6 +16,7 @@ updates:
   # - Using directory "/" updates everything.
   # - Minor + patch updates are grouped weekly.
   # - Major updates come as separate PRs.
+  # - The vitest family travels in its own group, at every update type.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -23,12 +24,45 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
+      # vitest family:
+      # - @vitest/browser-playwright and @vitest/coverage-v8 peer-require the
+      #   exact vitest version they were released with, and the Workers pool
+      #   peer-requires vitest, @vitest/runner and @vitest/snapshot.
+      # - A PR that moves one member without the others installs with Yarn's
+      #   YN0060 peer warning and fails the react browser-mode tests
+      #   (#2672, #2674).
+      # - Listed before npm-dependencies: a dependency joins the first group
+      #   whose patterns match it.
+      vitest:
+        applies-to: version-updates
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@cloudflare/vitest-pool-workers"
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
       npm-dependencies:
         applies-to: version-updates
         update-types:
           - "minor"
           - "patch"
     ignore:
+      # vitest and @vitest/*:
+      # - @mailwoman/license-worker runs under @cloudflare/vitest-pool-workers,
+      #   whose peer range is vitest ^4.1.0 (0.23.0 is the latest release).
+      # - The root and @mailwoman/react run vitest 5.
+      # - Dependabot reads the lowest installed version (4.1.x) as the current
+      #   one, so every vitest 5.x release is a major update from its point of
+      #   view, while the sibling packages installed only at the root (5.0.x)
+      #   would update as patches. Updating either half without the other
+      #   reproduces the skew above.
+      # - So: the family is bumped by hand until the pool admits vitest 5.
+      #   Then delete these two entries, move the license worker to vitest 5,
+      #   and the vitest group updates the whole family in one PR.
+      - dependency-name: "vitest"
+      - dependency-name: "@vitest/*"
       # onnxruntime packages:
       # - Bumps can change inference output.
       # - These are handled manually with eval checks.

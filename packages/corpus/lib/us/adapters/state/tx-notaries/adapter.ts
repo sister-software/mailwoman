@@ -72,7 +72,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<TxNotaryRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const rawAddress = record.Address ?? ""
 
@@ -138,7 +138,6 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_TX_NOTARIES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 				}
 

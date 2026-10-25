@@ -56,7 +56,7 @@ describe("applyAddressPoint", () => {
 
 				return query.number === "22"
 					? { lat: 48.84, lon: 2.35, source: "test", release: "r", localityNorm: null, postcode: null }
-					: undefined
+					: null
 			},
 		} as AddressPointLookup
 
@@ -79,7 +79,7 @@ describe("applyAddressPoint", () => {
 
 				return query.number === "1802"
 					? { lat: 48.84, lon: 2.35, source: "test", release: "r", localityNorm: null, postcode: null }
-					: undefined
+					: null
 			},
 		} as AddressPointLookup
 
@@ -119,7 +119,7 @@ describe("applyAddressPoint", () => {
 			subregion: "中正區",
 		})
 
-		expect(queries[0]?.locality).toBeUndefined()
-		expect(queries[0]?.postcode).toBeUndefined()
+		expect(queries[0]?.locality).toBeNull()
+		expect(queries[0]?.postcode).toBeNull()
 	})
 })

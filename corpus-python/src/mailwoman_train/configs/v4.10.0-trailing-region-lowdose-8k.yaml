@@ -12,7 +12,7 @@
 #   leading       FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"
 #   after_region  IN                     "Bengaluru, Karnataka 560038, India"
 # The recipe takes the locality from GeoNames admin2, the region from admin1 and the dependent_locality
-# from column 3. The triples come from packages/corpus/lib/tools/postcode-triples.ts.
+# from column 3. The triples come from packages/corpus/lib/tools/postcode/triples.ts.
 #
 # The country_weights map lists 134 codes, because the loader drops rows from any country missing from it.
 # Admitting a country does not change source draw shares, because country_weights filters rows inside

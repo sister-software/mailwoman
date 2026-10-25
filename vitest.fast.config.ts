@@ -3,6 +3,8 @@
  *
  * A test sits beside the module it covers, and a plain `<name>.test.ts` runs here.
  * The `.integration.test.ts` and `.full.test.ts` suffixes select the slow and full suites instead.
+ *
+ * The docs workspace has no `type: module`, so its Node scripts and their tests are `.mts` files.
  */
 import { defineConfig, mergeConfig } from "vitest/config"
 
@@ -12,7 +14,7 @@ export default mergeConfig(
 	baseConfig,
 	defineConfig({
 		test: {
-			include: ["*.{test,spec}.{ts,tsx}", "{packages/*,docs}/**/*.test.{ts,tsx}"],
+			include: ["*.{test,spec}.{ts,tsx}", "{packages/*,docs}/**/*.test.{ts,tsx}", "docs/**/*.test.mts"],
 			exclude: ["**/*.integration.test.{ts,tsx}", "**/*.full.test.{ts,tsx}"],
 		},
 	})

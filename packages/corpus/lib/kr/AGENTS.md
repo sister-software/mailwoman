@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for South Korea
 
-## Electing address data
+## How this repository elects address data
 
 The Copyright Act of the Republic of Korea, Articles 93 to 98, gives a database producer exclusive rights over reproduction and distribution of all or a substantial part of a database for five years.
 

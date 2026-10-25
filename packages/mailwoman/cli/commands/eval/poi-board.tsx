@@ -65,7 +65,7 @@ const EvalPoiBoard = harnessCommand(
 
 		return { report, exitCode }
 	},
-	{ exitCode: ({ exitCode }) => exitCode, json: ({ report }, options) => (options.json ? report : undefined) }
+	{ exitCode: ({ exitCode }) => exitCode, json: ({ report }, options) => (options.json ? report : null) }
 )
 
 export default EvalPoiBoard

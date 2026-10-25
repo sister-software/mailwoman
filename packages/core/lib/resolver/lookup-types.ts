@@ -51,8 +51,8 @@ export interface AddressPointLookup {
 	find(query: {
 		street: string
 		number: string
-		postcode?: string
-		locality?: string
+		postcode?: string | null
+		locality?: string | null
 		/**
 		 * The parse's `region` and `subregion` spans, for a register whose rows
 		 * contain neither postcode nor locality.
@@ -63,8 +63,8 @@ export interface AddressPointLookup {
 		 *
 		 * Every other reader ignores both, so the Latin path is byte-stable.
 		 */
-		region?: string
-		subregion?: string
+		region?: string | null
+		subregion?: string | null
 		/**
 		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode and locality.
 		 *

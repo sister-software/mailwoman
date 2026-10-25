@@ -226,7 +226,7 @@ def test_iter_train_files_prefers_manifest(tmp_path: Path):
         json.dumps(
             {
                 "corpus_version": "0.4.0",
-                "slices": [
+                "files": [
                     {"split": "train", "path": str(cross_version_file)},
                     {"split": "test", "path": str(corpus / "test" / "part-0000.parquet")},
                 ],
@@ -244,7 +244,7 @@ def test_iter_train_files_falls_back_to_glob_when_manifest_has_no_train_split(tm
     local = corpus / "train" / "part-0000.parquet"
     local.write_bytes(b"")
     (corpus / "MANIFEST.json").write_text(
-        json.dumps({"slices": [{"split": "test", "path": "/nowhere/test.parquet"}]}),
+        json.dumps({"files": [{"split": "test", "path": "/nowhere/test.parquet"}]}),
         encoding="utf-8",
     )
     assert iter_train_files(corpus) == [local]

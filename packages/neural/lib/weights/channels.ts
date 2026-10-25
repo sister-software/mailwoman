@@ -12,7 +12,7 @@ import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, type AnchorSpanMode, anchorLookupFromPostcodes, parseAnchorLookup } from "#anchor-inference"
+import { type AnchorLookup, type AnchorSpanMode, BinaryAnchorLookup, parseAnchorLookup } from "#anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 
 /**
@@ -69,6 +69,10 @@ export interface RequiredChannels {
 	 * See {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
 	locality_surface?: { required: boolean; lexicon?: string }
+	/**
+	 * The code-unit channel (#2845), computed from the raw surface with no lexicon.
+	 */
+	code_unit?: { required: boolean }
 }
 
 /**
@@ -178,7 +182,7 @@ async function readModelCardObject(
  */
 export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
-		? anchorLookupFromPostcodes(new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).groups())
+		? new BinaryAnchorLookup([new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path)))])
 		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 
@@ -186,6 +190,25 @@ export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: 
  * A soft-feature channel that `loadFromWeights` can find required but unfed.
  */
 export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
+
+/**
+ * One required channel that `loadFromWeights` could not feed, as the loaded classifier reports it.
+ *
+ * The console warning is deduplicated per process.
+ * This record is kept on every classifier it applies to, so a caller that must
+ * refuse a degraded parse reads it rather than the log.
+ */
+export interface UnfedChannelReport {
+	channel: UnfedChannel
+	/**
+	 * The weights package directory, or the resolution source when no directory was resolved.
+	 */
+	weightsPackage: string
+	/**
+	 * Why the channel is unfed, such as the declared file that is missing.
+	 */
+	detail: string
+}
 
 /**
  * The process-wide set of `<channel>:<package>` keys already warned about.
@@ -261,7 +284,7 @@ export async function readRequiredChannels(
 	if (!card) return null
 	const requires = card.requires
 
-	if (requires === undefined) return null
+	if (!requires) return null
 
 	if (typeof requires !== "object" || !requires || Array.isArray(requires)) {
 		throw new Error(
@@ -284,7 +307,7 @@ export async function readRequiredChannels(
 	] as const) {
 		const entry = obj[channel]
 
-		if (entry === undefined) continue
+		if (!entry) continue
 
 		if (typeof entry !== "object" || !entry || typeof (entry as { required?: unknown }).required !== "boolean") {
 			throw new Error(
@@ -298,7 +321,7 @@ export async function readRequiredChannels(
 	for (const channel of ["street_type", "locality_surface"] as const) {
 		const lexicon = (obj[channel] as { lexicon?: unknown } | undefined)?.lexicon
 
-		if (lexicon !== undefined && typeof lexicon !== "string") {
+		if (lexicon && typeof lexicon !== "string") {
 			throw new Error(
 				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}.lexicon\` — ` +
 					`expected a filename string, got ${stringifyJSON(lexicon)}.`
@@ -309,14 +332,14 @@ export async function readRequiredChannels(
 	// An unrecognized span mode would anchor the wrong spans without any error, so it throws.
 	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
 
-	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+	if (anchorSpanMode && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
 				`expected "alnum-run" or "shaped", got ${stringifyJSON(anchorSpanMode)}.`
 		)
 	}
 
-	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
+	if (obj.suppress_gazetteer_near_postcode && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
 		throw new Error(
 			`model-card.json at ${modelCardPath} has a malformed \`requires.suppress_gazetteer_near_postcode\` ` +
 				`field — expected a boolean, got ${stringifyJSON(obj.suppress_gazetteer_near_postcode)}.`
@@ -371,7 +394,7 @@ export async function readCapabilityManifest(
 	if (!card) return null
 	const capabilities = card.capabilities
 
-	if (capabilities === undefined) return null
+	if (!capabilities) return null
 
 	if (typeof capabilities !== "object" || !capabilities || Array.isArray(capabilities)) {
 		throw new Error(
@@ -467,7 +490,7 @@ export async function readLabelsFromModelCard(
 	if (!card) return null
 	const labels = card.labels
 
-	if (labels === undefined) return null
+	if (!labels) return null
 
 	if (!Array.isArray(labels) || !labels.length || !labels.every((l) => typeof l === "string")) {
 		throw new Error(

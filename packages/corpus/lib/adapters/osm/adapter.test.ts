@@ -8,10 +8,10 @@ import {
 	housenumberIsDesignator,
 	isStreetName,
 	OSM_ADAPTER_ID,
-	OSM_LICENSE,
 	sameName,
 	splitCityValue,
 } from "#adapters/osm/adapter"
+import { OSM_LICENSE } from "#adapters/osm/license"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "#utils/license"

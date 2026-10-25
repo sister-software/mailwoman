@@ -60,7 +60,7 @@ Browser clients call this server cross-origin, including the preflighted `POST /
 
 libpostal's interface returns parses and expansions. It returns no coordinate and no geocode result,
 so this server reads no address-point layer, serves no OpenStreetMap data, and carries no row
-provenance or OpenStreetMap credit. Geocoding through an attached OpenStreetMap layer happens on the
+provenance or OpenStreetMap credit. An attached OpenStreetMap layer performs geocoding on the
 native, Nominatim and Photon surfaces, whose fields the
 [HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit)
 lists.

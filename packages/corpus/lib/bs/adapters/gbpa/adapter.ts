@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `gbpa-bs`: the address points of the Grand Bahama Port Authority (GBPA), covering the City of Freeport
- * and Lucaya on Grand Bahama, which the GBPA publishes in its `GBPA/gis-datafiles` repository on GitHub.
+ * `gbpa-bs`: address points for the City of Freeport and Lucaya on Grand Bahama. The GBPA publishes
+ * them in its `GBPA/gis-datafiles` repository on GitHub.
  * The adapter reads the CSV export, `CSV/addresses.csv`.
  *
  * A Freeport address number is a block and a parcel joined by a hyphen (`8-29 Seagull Drive`), and either
@@ -25,6 +25,7 @@ import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { presentCollapsed as present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -74,12 +75,6 @@ export interface GBPAAddressRecord {
 /**
  * A value with its whitespace, including the export's embedded line breaks, collapsed, or null when empty.
  */
-function present(value: string | undefined): string | null {
-	const trimmed = value?.replaceAll(/\s+/gu, " ").trim() ?? ""
-
-	return trimmed || null
-}
-
 /**
  * A block and parcel number: alphanumeric parts joined by hyphens (`8-29`, `UU-3`, `W-A-10`, `G-3B10`, `L`).
  */
@@ -97,7 +92,8 @@ const REPEATED_NAME = /^(.+?) \1(?= |$)/u
 const TYPE_WORD_ONLY = /^(?:road|lane|drive|avenue|street|court|close|way|place|circle|terrace|crescent)$/iu
 
 /**
- * Initials and a surname alone (`J.S. Johnson`) name a person rather than a place or a business.
+ * A venue value made of initials and a surname (`J.S. Johnson`) identifies a person
+ * rather than a place or business.
  */
 const INITIALS_AND_SURNAME = /^(?:\p{Lu}\.\s*)+\p{Lu}\p{Ll}+$/u
 
@@ -146,7 +142,7 @@ export function componentsForGBPARecord(
 	if (venue && !/\p{L}{3}/u.test(venue)) {
 		countDropped(tally, "component:venue:code")
 	} else if (venue && /(\p{L})\1{3,}$/u.test(venue)) {
-		// `Bellevue Gifts & Suppliesccccc` carries a run of repeated keystrokes.
+		// `Bellevue Gifts & Suppliesccccc` ends with a run of repeated keystrokes.
 		countDropped(tally, "component:venue:malformed")
 	} else if (venue && INITIALS_AND_SURNAME.test(venue)) {
 		countDropped(tally, "component:venue:names-a-person")
@@ -203,7 +199,7 @@ export function createGBPAAdapter(): CorpusAdapter {
 			for (const record of records) {
 				if (opts.signal?.aborted) return
 
-				if (opts.limit !== undefined && emitted >= opts.limit) return
+				if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 				const components = componentsForGBPARecord(record, opts)
 
@@ -231,7 +227,6 @@ export function createGBPAAdapter(): CorpusAdapter {
 					source: GBPA_BS_ADAPTER_ID,
 					// The GBPA's own address id separates two points the rendered components cannot.
 					source_id: stableSourceIDFromParts(GBPA_BS_ADAPTER_ID, { ...aligned, add_id: record.AddID ?? "" }),
-					corpus_version: "",
 					license: GBPA_BS_LICENSE,
 				}
 

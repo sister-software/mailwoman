@@ -19,6 +19,7 @@
 		"./playwright.config.ts"
 	],
 	"references": [
+		{ "path": "../api" },
 		{ "path": "../cartographer" },
 		{ "path": "../core" },
 		{ "path": "../mailwoman" },
@@ -27,6 +28,7 @@
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../../lib" },
-		{ "path": "../spatial" }
+		{ "path": "../spatial" },
+		{ "path": "../structures" }
 	]
 }

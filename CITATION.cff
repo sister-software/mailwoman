@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: >-
+  If you use Mailwoman in research or teaching, cite the software and the version you ran.
+  The code is offered under AGPL-3.0-only or a commercial license; the reference data you
+  download carries its publishers' own terms.
+type: software
+title: Mailwoman
+abstract: >-
+  A calibrated, retrieval-augmented postal-address parser and geocoder that runs inside your
+  own process from a model file on your own disk.
+authors:
+  - family-names: Ellis
+    given-names: Teffen
+    email: teffen@sister.software
+    affiliation: Sister Software
+version: 10.7.0
+date-released: "2026-10-18"
+repository-code: https://github.com/sister-software/mailwoman
+url: https://mailwoman.ai
+license: AGPL-3.0-only
+license-url: https://mailwoman.ai/license
+keywords:
+  - address parsing
+  - geocoding
+  - sequence labeling
+  - postal addresses
+  - gazetteer

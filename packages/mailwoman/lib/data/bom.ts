@@ -165,16 +165,16 @@ function bundleComponents(
 				...property("mailwoman:tier", measuredManifest?.tier),
 				...property(
 					"mailwoman:servedBytes",
-					served?.size.status === MeasurementStatus.Measured ? served.size.contentLength : undefined
+					served?.size.status === MeasurementStatus.Measured ? served.size.contentLength : null
 				),
 				...property(
 					"mailwoman:servedBytesUnmeasured",
-					served?.size.status === MeasurementStatus.Unmeasured ? served.size.reason : undefined
+					served?.size.status === MeasurementStatus.Unmeasured ? served.size.reason : null
 				),
 				...property("mailwoman:registryBytes", artifact.approxBytes),
 				...property(
 					"mailwoman:manifestUnread",
-					manifest?.status === MeasurementStatus.Unmeasured ? manifest.reason : undefined
+					manifest?.status === MeasurementStatus.Unmeasured ? manifest.reason : null
 				),
 				...property("mailwoman:md5Sidecar", String(artifact.md5Sidecar)),
 				...property("mailwoman:stateSlug", artifact.stateSlug),
@@ -265,10 +265,10 @@ export function buildDataBOM(options: DataBOMOptions): DataBOM {
 				...property("mailwoman:bundles", Object.keys(BUNDLES).join(", ")),
 				...property("mailwoman:snapshotMeasuredAt", options.snapshot.measuredAt),
 				...property("mailwoman:dataRoot", options.inventory?.dataRoot),
-				...property("mailwoman:dataRootManifested", options.inventory ? manifested.length : undefined),
+				...property("mailwoman:dataRootManifested", options.inventory ? manifested.length : null),
 				...property(
 					"mailwoman:dataRootUnprovenanced",
-					unprovenanced === undefined
+					!unprovenanced
 						? undefined
 						: `${unprovenanced} databases under the data root carry no layer_manifest row and are not components here`
 				),

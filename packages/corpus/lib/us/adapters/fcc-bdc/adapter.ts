@@ -102,7 +102,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 				for (const row of stmt.iterate() as IterableIterator<BdcLocationRow>) {
 					if (opts.signal?.aborted) return
 
-					if (opts.limit !== undefined && emitted >= opts.limit) return
+					if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 					const split = splitStreetLine(row.address_primary ?? "")
 
@@ -138,7 +138,6 @@ export function createFccBdcAdapter(): CorpusAdapter {
 						locale: "en-US",
 						source: FCC_BDC_ADAPTER_ID,
 						source_id: `${FCC_BDC_ADAPTER_ID}-${row.location_id}`,
-						corpus_version: "",
 						license: FCC_BDC_DEFAULT_LICENSE,
 					}
 

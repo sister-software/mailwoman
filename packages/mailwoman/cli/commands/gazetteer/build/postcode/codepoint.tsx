@@ -43,7 +43,7 @@ export const spec = {
 
 const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint/database")
+		const { buildPostcodeCodePoint } = await import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/database")
 
 		const result = await buildPostcodeCodePoint({
 			sourceDir: options.sourceDir,

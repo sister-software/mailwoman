@@ -3,7 +3,7 @@
 
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
+import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
@@ -27,6 +27,13 @@ export interface Provenance {
 	dirty: boolean
 	dirty_files: string[]
 	config_effective: Record<string, unknown>
+	/**
+	 * The lexicon or lookup file behind each fed channel of the engine's primary classifier, with its md5.
+	 *
+	 * An engine with no loaded lexicon lists none.
+	 * A bundle swapped under an unchanged model shows here.
+	 */
+	lexicons: Array<{ channel: string; path: string; md5: string }>
 	engine_build_ms: number
 	engine_was_warm: boolean
 	input_set: {
@@ -71,6 +78,7 @@ export function provenanceFor(
 		fingerprint: { digest: string; gitHead: string; dirtyFiles: string[] }
 		buildMs: number
 		uses: number
+		lexicons?: Array<{ channel: string; path: string; md5: string }>
 	},
 	set: ResolvedInputSet
 ): Provenance {
@@ -81,6 +89,7 @@ export function provenanceFor(
 		dirty: engine.fingerprint.dirtyFiles.length > 0,
 		dirty_files: engine.fingerprint.dirtyFiles,
 		config_effective: engine.effective,
+		lexicons: engine.lexicons ?? [],
 		engine_build_ms: engine.buildMs,
 		engine_was_warm: engine.uses > 1,
 		input_set: inputSetProvenance(set),
@@ -102,6 +111,22 @@ const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
 		.describe(
 			"How the point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Stratifiable, because a " +
 				"headline at 1 km lives or dies on it."
+		),
+	country: z
+		.string()
+		.length(2)
+		.optional()
+		.describe(
+			"The ISO alpha-2 country the truth lies in, as a board row states it. `mwdev_diagnose` reads the expected " +
+				"components' reachability against this country's rows; without it that reading is UNPROBED."
+		),
+	components: z
+		.record(z.string(), z.string())
+		.optional()
+		.describe(
+			"The expected components, tag to value, as a board row would state them. They are graded like a golden " +
+				"row's, and `mwdev_diagnose` reads each admin component's reachability in the candidate table, so a row " +
+				"can be checked for a band miss before it is written to a case file."
 		),
 })
 
@@ -209,9 +234,18 @@ export const ENGINE_CONFIG_SCHEMA = z
 		postcode_shape_coherence: SwitchPinSchema.optional(),
 		postcode_containment_coherence: SwitchPinSchema.optional(),
 		admin_containment_rerank: SwitchPinSchema.optional(),
+		dependent_locality_containment: SwitchPinSchema.optional(),
 		poi_venue_tier: SwitchPinSchema.optional(),
 		capital_tier: z.enum(["auto", "required", "off"]).optional(),
 		variant_alias_exemption: VariantAliasExemptionSchema.optional(),
+		channels: ChannelPinsSchema.optional().describe(
+			"Per-channel feed pins over the classifier's five soft-feature channels (anchor, gazetteer, country, " +
+				'street_type, locality_surface). A channel pinned "off" is fed zeros in place of its built features, ' +
+				"the absence state the training curriculum paints on a share of rows, so the result reads a TRAINED " +
+				"input state rather than an untrained one. The trace records the pins beside the channels as fed. " +
+				"This is the one-call form of the lexicon-ablation arms: it changes what the model is fed and no " +
+				"loaded artifact."
+		),
 	})
 	.strict()
 	.describe(
@@ -247,8 +281,8 @@ export const RENDERED_DIFF_LIMIT = 40
  * Two acquired engines, or the error that prevented the comparison.
  */
 export type TwoArms =
-	| { base: Engine; candidate: Engine; error?: undefined }
-	| { base?: undefined; candidate?: undefined; error: Record<string, unknown> }
+	| { base: Engine; candidate: Engine; error?: null }
+	| { base?: null; candidate?: null; error: Record<string, unknown> }
 
 /**
  * Acquires a baseline engine and a candidate engine.
@@ -296,7 +330,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * Returns the parse trace without its large numeric matrices, keeping only each channel's confidence.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
-	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
+	const { logits, emissions, anchor, gazetteer, country, streetType, localitySurface, ...rest } = parse
 
 	void logits
 	void emissions
@@ -309,6 +343,8 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 		anchor: channel(anchor ?? null),
 		gazetteer: channel(gazetteer ?? null),
 		country: channel(country ?? null),
+		streetType: channel(streetType ?? null),
+		localitySurface: channel(localitySurface ?? null),
 		matrices_omitted:
 			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
 			"full_parse_trace: true for the raw numbers.",

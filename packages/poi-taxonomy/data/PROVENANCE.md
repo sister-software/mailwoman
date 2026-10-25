@@ -43,7 +43,7 @@ leaf). To edit the curated layer, change `curated-overlay.json` and regenerate.
 ## `brands.json` — the chain-brand table aggregated from `poi.db`
 
 Produced by `mailwoman gazetteer build poi-brands`, whose aggregation lives in
-`packages/mailwoman/tools/gazetteer-pipeline/poi/build/brands.ts`. **Do not hand-edit.** It reads a built
+`packages/gazetteer/tools/pipeline/poi/build/brands.ts`. **Do not hand-edit.** It reads a built
 `poi.db` read-only and groups its `(brand_wikidata, name)` pairs into one record per Wikidata QID,
 carrying the most frequently observed name plus the alias spellings that clear a noise floor.
 
@@ -60,7 +60,7 @@ node packages/mailwoman/out/cli/main.js gazetteer build poi-brands
 
 ## `venue-heads.json`: venue head words per country and per language
 
-Produced by `packages/mailwoman/tools/gazetteer-pipeline/poi/build/venue-heads.ts`. Do not edit it by
+Produced by `packages/gazetteer/tools/pipeline/poi/build/venue-heads.ts`. Do not edit it by
 hand. The builder compares three populations of names per country:
 
 - Venue names: the primary names of Overture places at confidence 0.85 or higher, release

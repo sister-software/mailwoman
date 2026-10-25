@@ -23,6 +23,8 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import type { LatLonBounds } from "@mailwoman/spatial"
 
@@ -35,8 +37,6 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import { DEFAULT_RELEASE } from "#gazetteer/poi/defaults"
-import { buildSHA as resolveBuildSHA } from "#gazetteer/stamp-manifest"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
@@ -56,6 +56,7 @@ export const spec = {
 		pbf: { type: "string", description: "OSM PBF extract" },
 		country: { type: "string", description: "OSM country" },
 		bbox: { type: "string", description: "OSM extract bounding box" },
+		rules: { type: "string", default: "telecom", description: "OSM tag-rule set: telecom or stations" },
 	},
 } as const satisfies CommandSpec
 
@@ -88,8 +89,8 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const { bboxCoverageCells, buildPOIDatabase } = await import("#gazetteer/poi/build/poi")
-		const { ingestPlaces } = await import("#gazetteer/poi/build/overture")
+		const { bboxCoverageCells, buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
+		const { ingestPlaces } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
 
 		const buildSHA = resolveBuildSHA(repoRootPath())
 
@@ -107,26 +108,33 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			const bbox = parseBBoxFlag(bboxFlag)
 			const out = options.out ?? poiDatabasePath(`poi-osm-${country.toLowerCase()}.db`)
 
-			console.error(`▸ extract: OSM telecom-infrastructure POIs from ${pbf} (country=${country})`)
+			// Dynamic import, required: @mailwoman/osm is an optional peer that an operator installs
+			// to opt in to OpenStreetMap data, and this dependency belongs only on the selected build
+			// path, so a top-level import breaks the whole published CLI on an install without it.
+			// The smoke test's clean-install leg is what catches it.
+			const { extractOSMPOIs, OSM_POI_RULE_SETS } = await import("@mailwoman/osm/sdk/extract/poi")
+			const rules = OSM_POI_RULE_SETS[options.rules]
+
+			if (!rules) {
+				throw new Error(`--rules must be one of ${Object.keys(OSM_POI_RULE_SETS).join(", ")}, got ${options.rules}`)
+			}
+
+			console.error(`▸ extract: OSM ${options.rules} POIs from ${pbf} (country=${country})`)
 
 			// Buffered (not streamed straight into buildPOIDatabase): telecom-infra extracts are
 			// category-sparse — a few thousand rows even for a whole country — and the array is walked
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// Dynamic import, required: @mailwoman/osm is an optional peer that an operator installs
-			// to opt in to OpenStreetMap data, and this dependency belongs only on the selected build
-			// path, so a top-level import breaks the whole published CLI on an install without it.
-			// The smoke test's clean-install leg is what catches it.
-			// The osm source branch is build-local by design.
-			// It may only resolve its SDK when a run selects it.
-			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk/extract/poi")
+			const extracted: POISourceRow[] = []
 
-			for await (const row of extractOSMPOIs(pbf)) {
+			for await (const row of extractOSMPOIs(pbf, rules)) {
 				// extractOSMPOIs yields `country: ""` (a bare OSM feature has no country property) —
 				// stamp the invocation's --country before buildPOIDatabase ever sees the row.
-				rows.push({ ...row, country })
+				extracted.push({ ...row, country })
 			}
+
+			rows.push(...(rules.merge ? rules.merge(extracted) : extracted))
 
 			console.error(`▸ build: ${out}`)
 
@@ -154,7 +162,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
-		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
+		const limit = options.limit ? Number.parseInt(options.limit, 10) : null
 		const out = options.out ?? poiDatabasePath("poi.db")
 
 		let parquetPaths: string[]

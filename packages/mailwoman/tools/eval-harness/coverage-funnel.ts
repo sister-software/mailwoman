@@ -5,10 +5,10 @@
  *   Coverage funnel that reads every source-register jurisdiction at each coverage stage, with the register supplying the denominator so jurisdictions missing from the census still appear.
  */
 
+import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRegister,
 	JurisdictionResearchState,
-	LicenseReviewState,
 	readAddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
 
@@ -49,7 +49,7 @@ export const FUNNEL_STAGES = [
 	"checking",
 	"packaged",
 	"claimed",
-	"protected",
+	"required",
 ] as const
 
 export type FunnelStage = (typeof FUNNEL_STAGES)[number]
@@ -112,10 +112,13 @@ export interface CoverageFunnelInput {
 	 */
 	tieredCountries: readonly string[]
 	/**
-	 * Countries where a designated release check fails on regression: the tier 1
-	 * and `dRuleProtected` countries.
+	 * Countries a country requirement in the release-requirement specification names.
 	 */
-	protectedCountries: readonly string[]
+	requiredCountries: readonly string[]
+	/**
+	 * The `specVersion` the required countries were read from, quoted in each stage's detail.
+	 */
+	releaseSpecVersion: string
 	/**
 	 * Path of the `audit_epoch_mixture` output, recorded in the provenance.
 	 */
@@ -144,7 +147,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 	}
 
 	const tiered = new Set(input.tieredCountries)
-	const guarded = new Set(input.protectedCountries)
+	const required = new Set(input.requiredCountries)
 
 	const rows: JurisdictionFunnelRow[] = register.jurisdictions.map((jurisdiction) => {
 		const iso2 = jurisdiction.iso2
@@ -172,7 +175,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 		// Ingestion requires a declared address role and measured coverage, while
 		// `upstreamLineage` affects linkage and plays no part in admission.
 		const withRole = sources.filter((source) => Object.keys(source.addressRoles ?? {}).length > 0)
-		const withCoverage = sources.filter((source) => source.coverage !== undefined)
+		const withCoverage = sources.filter((source) => source.coverage)
 
 		const addressRole: StageReading = !sources.length
 			? { state: StageState.Absent, detail: "no source to resolve a role for" }
@@ -257,9 +260,9 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: "named in scope.config.json tiers" }
 			: { state: StageState.Absent, detail: "no tier claims this country" }
 
-		const isProtected: StageReading = guarded.has(iso2)
-			? { state: StageState.Reached, detail: "tier 1 or dRuleProtected" }
-			: { state: StageState.Absent, detail: "no named release check protects it" }
+		const isRequired: StageReading = required.has(iso2)
+			? { state: StageState.Reached, detail: `a country requirement in release spec ${input.releaseSpecVersion}` }
+			: { state: StageState.Absent, detail: `release spec ${input.releaseSpecVersion} requires no minimum for it` }
 
 		const stages: Record<FunnelStage, StageReading> = {
 			researched,
@@ -273,7 +276,7 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			checking,
 			packaged,
 			claimed,
-			protected: isProtected,
+			required: isRequired,
 		}
 
 		return {

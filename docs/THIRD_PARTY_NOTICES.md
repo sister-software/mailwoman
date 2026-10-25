@@ -31,18 +31,18 @@ and permission notice in full, which is what the license requires accompany a co
 
 ## Data bundled in the published packages
 
-These ship inside `@mailwoman/core`, with the upstream license text vendored beside each
+These ship inside `@mailwoman/dictionaries`, with the upstream license text vendored beside each
 dataset in the package.
 
 ### libpostal
 
-`@mailwoman/core` bundles address-component dictionaries from
+`@mailwoman/dictionaries` bundles address-component dictionaries from
 [libpostal](https://github.com/openvenues/libpostal) (© 2015 openvenues), under the
 [MIT license](https://github.com/openvenues/libpostal/blob/master/LICENSE).
 
 ### Google libaddressinput
 
-`@mailwoman/core` bundles per-country address metadata from Google's
+`@mailwoman/dictionaries` bundles per-country address metadata from Google's
 [libaddressinput](https://github.com/google/libaddressinput) (the `chromium-i18n`
 `ssl-address` data), under the
 [Apache-2.0 license](https://github.com/google/libaddressinput/blob/master/LICENSE).

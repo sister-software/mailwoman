@@ -205,3 +205,86 @@ describe("createPOIBrandLookup", () => {
 		expect(injected).toEqual(node)
 	})
 })
+
+describe("lookupPOICategoryLocaleNormalized", () => {
+	const FOLDED_TABLE: POITaxonomyTable = {
+		version: "test-0.0.1",
+		overtureRelease: null,
+		categories: [hospital, telecomCabinet],
+		synonyms: [
+			// Two spellings that fold to the same phrase, one language-wide and one exact-locale.
+			{ phrase: "hôpital", categoryID: hospital.id, locales: ["fr"] },
+			{ phrase: "hõpital", categoryID: hospital.id, locales: ["fr-FR"] },
+			// A second category behind the same folded phrase.
+			{ phrase: "hópital", categoryID: telecomCabinet.id, locales: ["fr"] },
+			// An unrestricted phrase stays out of the folded index: diacritic folding admits locale-restricted synonyms only.
+			{ phrase: "crèche", categoryID: hospital.id },
+		],
+	}
+
+	it("keeps the best confidence per category and orders by confidence", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "fr-FR")).toEqual([
+			expect.objectContaining({ category: hospital, matchedPhrase: "hõpital", confidence: 0.94 }),
+			expect.objectContaining({ category: telecomCabinet, matchedPhrase: "hópital", confidence: 0.78 }),
+		])
+	})
+
+	it("keeps the first synonym in table order at equal confidence", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "fr-CA")).toEqual([
+			expect.objectContaining({ category: hospital, matchedPhrase: "hôpital", confidence: 0.78 }),
+			expect.objectContaining({ category: telecomCabinet, matchedPhrase: "hópital", confidence: 0.78 }),
+		])
+	})
+
+	it("folds no unrestricted phrase and answers an exact phrase through the exact table", () => {
+		const lookup = createPOITaxonomyLookup(FOLDED_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("creche", "fr-FR")).toEqual([])
+		expect(lookup.lookupPOICategoryLocaleNormalized("hôpital", "fr-FR")).toEqual([])
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital")).toEqual([])
+	})
+})
+
+describe("lookupPOICategoryTypo", () => {
+	const TYPO_TABLE: POITaxonomyTable = {
+		version: "test-0.0.1",
+		overtureRelease: null,
+		categories: [hospital, telecomCabinet],
+		synonyms: [
+			// Two spellings of one category, one edit apart from "clinik" at different lengths.
+			// The scan visits them in table order and the later one is the phrase it reports.
+			{ phrase: "clinick", categoryID: hospital.id },
+			{ phrase: "clinic", categoryID: hospital.id },
+			// Both one edit from "cabinett" and in two categories: the lookup abstains.
+			{ phrase: "cabinets", categoryID: hospital.id },
+			{ phrase: "cabinet", categoryID: telecomCabinet.id },
+		],
+	}
+
+	it("recovers a phrase one edit away at the same length, one shorter and one longer", () => {
+		const lookup = createPOITaxonomyLookup(TYPO_TABLE)
+
+		expect(lookup.lookupPOICategoryTypo("hospitel", "en-US")[0]?.matchedPhrase).toBe("hospital")
+		expect(lookup.lookupPOICategoryTypo("hosptal", "en-US")[0]?.matchedPhrase).toBe("hospital")
+		expect(lookup.lookupPOICategoryTypo("hospiital", "en-US")[0]?.matchedPhrase).toBe("hospital")
+	})
+
+	it("reports the later phrase in table order when two spellings of one category both match", () => {
+		const lookup = createPOITaxonomyLookup(TYPO_TABLE)
+
+		expect(lookup.lookupPOICategoryTypo("clinik", "en-US")).toEqual([
+			expect.objectContaining({ category: hospital, matchedPhrase: "clinic", confidence: 0.82 }),
+		])
+	})
+
+	it("abstains when the best edit distance reaches two categories", () => {
+		const lookup = createPOITaxonomyLookup(TYPO_TABLE)
+
+		expect(lookup.lookupPOICategoryTypo("cabinett", "en-US")).toEqual([])
+		expect(lookup.lookupPOICategoryTypo("cabinte", "en-US")[0]?.category).toBe(telecomCabinet)
+	})
+})

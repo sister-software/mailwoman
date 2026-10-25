@@ -128,8 +128,8 @@ export interface RegionDatabaseFactory {
  * One cached state's open lookups and the paths they were opened from.
  */
 export interface RegionDatabaseCacheEntry extends RegionDatabases {
-	_ap?: Disposable
-	_ip?: Disposable
+	_ap?: Disposable | null
+	_ip?: Disposable | null
 	/**
 	 * The resolved database path. {@link USStateDatabaseProvider.reload} compares it with the new path.
 	 */
@@ -204,8 +204,8 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 
 	#open(stateSlug: string): RegionDatabaseCacheEntry {
 		const { apPath, ipPath } = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
-		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
-		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
+		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : null
+		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : null
 
 		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
 	}

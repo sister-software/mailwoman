@@ -93,12 +93,12 @@ describe("stylesheet-interface", () => {
 	})
 
 	describe("a material and its fallbacks", () => {
-		const material = ".a, .b { background: var(--material-glass-background); }"
+		const material = ".a, .b { background: var(--mw-material-glass-background); }"
 
 		it("reports a fallback that names fewer surfaces than the material", () => {
 			const css = `${material}
 				@media (prefers-reduced-transparency: reduce) {
-					.a { background: var(--material-glass-fallback-background); }
+					.a { background: var(--mw-material-glass-fallback-background); }
 				}`
 
 			expect(messages(OTHER, css)).toEqual([expect.stringContaining("different set of surfaces")])
@@ -107,7 +107,7 @@ describe("stylesheet-interface", () => {
 		it("accepts a fallback naming the same surfaces in another order", () => {
 			const css = `${material}
 				@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-					.b, .a { background: var(--material-glass-fallback-background); }
+					.b, .a { background: var(--mw-material-glass-fallback-background); }
 				}`
 
 			expect(stylesheetDiagnostics(OTHER, css)).toEqual([])
@@ -116,7 +116,7 @@ describe("stylesheet-interface", () => {
 		it("ignores the fallback color used as an ordinary background", () => {
 			// The chip's hover state and a sticky sheet header both paint this token on purpose, outside any guard.
 			const css = `${material}
-				.c:hover { background: var(--material-glass-fallback-background); }`
+				.c:hover { background: var(--mw-material-glass-fallback-background); }`
 
 			expect(stylesheetDiagnostics(OTHER, css)).toEqual([])
 		})
@@ -132,7 +132,7 @@ describe("stylesheet-interface", () => {
 		})
 
 		it("accepts a radius from the scale", () => {
-			expect(stylesheetDiagnostics(OTHER, ".a { border-radius: var(--radius-tick); }")).toEqual([])
+			expect(stylesheetDiagnostics(OTHER, ".a { border-radius: var(--ss-radius-global); }")).toEqual([])
 		})
 
 		it("accepts the two lengths that are not steps on any scale", () => {

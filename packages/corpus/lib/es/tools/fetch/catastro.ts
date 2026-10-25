@@ -444,13 +444,13 @@ export interface HarvestESCatastroOptions {
 	 * A code the service document does not list is reported as a failure rather than ignored.
 	 * Without this every one of the 52 province feeds is read, at one request each.
 	 */
-	provinces?: readonly string[]
+	provinces?: readonly string[] | null
 	/**
 	 * Harvest only these five-digit municipality codes, among the provinces selected.
 	 *
 	 * A code none of the selected province feeds lists is reported as a failure.
 	 */
-	municipalities?: readonly string[]
+	municipalities?: readonly string[] | null
 	/**
 	 * Stop after this number of municipalities, counting the ones already on disk.
 	 */
@@ -522,7 +522,7 @@ async function readFeed(
  */
 function selectProvinces(
 	listed: readonly ESCatastroProvince[],
-	wanted: readonly string[] | undefined
+	wanted: readonly string[] | null | undefined
 ): { selected: readonly ESCatastroProvince[]; unknown: readonly string[] } {
 	if (!wanted) return { selected: listed, unknown: [] }
 
@@ -599,7 +599,7 @@ export async function harvestESCatastro(
 	let municipalitiesListed = 0
 	let provincesHarvested = 0
 	const failedCodes: string[] = [...provinces.unknown]
-	const requested = options.municipalities ? new Set(options.municipalities) : undefined
+	const requested = options.municipalities ? new Set(options.municipalities) : null
 	const found = new Set<string>()
 
 	const writeHarvestManifest = async (): Promise<void> => {
@@ -623,7 +623,7 @@ export async function harvestESCatastro(
 	for (const province of provinces.selected) {
 		if (signal?.aborted) break
 
-		if (options.limit !== undefined && fetched + skipped >= options.limit) break
+		if (typeof options.limit === "number" && fetched + skipped >= options.limit) break
 
 		report?.(`  province ${province.code} ${province.name}: reading ${province.provinceFeedURL}`)
 
@@ -643,7 +643,7 @@ export async function harvestESCatastro(
 		for (const dataset of municipalities) {
 			if (signal?.aborted) break
 
-			if (options.limit !== undefined && fetched + skipped >= options.limit) break
+			if (typeof options.limit === "number" && fetched + skipped >= options.limit) break
 
 			if (requested && !requested.has(dataset.code)) continue
 

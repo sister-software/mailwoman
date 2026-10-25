@@ -79,7 +79,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<IaContractorRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const businessName = record["Business Name"] ?? ""
 				const address1 = record["Address 1"] ?? ""
@@ -131,7 +131,6 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_IA_CONTRACTORS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 				}
 

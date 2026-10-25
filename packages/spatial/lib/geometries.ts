@@ -8,5 +8,6 @@
 export * from "#geometries/collection"
 export * from "#geometries/line-string"
 export * from "#geometries/point"
+export * from "#geometries/point-distance"
 export * from "#geometries/polygon"
 export * from "#geometries/ring-blob"

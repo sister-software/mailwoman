@@ -34,7 +34,7 @@ import { LicenseObligation, summarizeLicense } from "#license/obligations"
  * Whether a license value has been mapped to an expression whose obligations are recorded.
  *
  * This states what reading the string achieved.
- * `@mailwoman/corpus/source-register` exports a separate `LicenseReviewState`.
+ * `#license/decision` exports a separate `LicenseReviewState`.
  *
  * It records whether a person read and accepted a source's terms.
  * That state answers a different question about a different subject.
@@ -165,7 +165,7 @@ export function readLicenseRecord(raw: string | null | undefined): LicenseRecord
 
 	const aliased = EXPRESSION_ALIASES.get(text.trim())
 	const candidate = aliased ?? text.trim()
-	const summary = candidate ? summarizeLicense(candidate) : undefined
+	const summary = candidate ? summarizeLicense(candidate) : null
 
 	if (summary && summary.identifiers.length && !summary.unrecognized.length) {
 		return {

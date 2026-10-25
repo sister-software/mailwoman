@@ -12,12 +12,19 @@ import { dirname, relative, resolvePath, sep } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
-const vitestTestPattern = /\.test\.tsx?$/u
-const playwrightSpecPattern = /\.spec\.tsx?$/u
+const vitestTestPattern = /\.test\.(?:tsx?|mts)$/u
+const playwrightSpecPattern = /\.spec\.(?:tsx?|mts)$/u
 const moduleSourcePattern = /\.(?:ts|tsx|mts|js|mjs)$/u
 
 /**
- * Playwright suites under `test/` in a workspace that has a `playwright.config.ts`.
+ * The Playwright config files a workspace may hold, one per extension.
+ *
+ * A workspace without `type: module`, such as docs, writes its config as `.mts`.
+ */
+const playwrightConfigNames = ["playwright.config.ts", "playwright.config.mts"]
+
+/**
+ * Playwright suites under `test/` in a workspace that has a Playwright config.
  *
  * `browser` holds page specs, `build` holds a build-health project and `e2e` holds shared fixtures.
  */
@@ -51,7 +58,12 @@ export const testLayoutCheck: RepoCheck = {
 
 		for (const workspace of await readWorkspaceDirectories(root)) {
 			const workspaceRoot = resolvePath(root, workspace)
-			const runsPlaywright = await pathExists(resolvePath(workspaceRoot, "playwright.config.ts"))
+
+			const configPresence = await Promise.all(
+				playwrightConfigNames.map((name) => pathExists(resolvePath(workspaceRoot, name)))
+			)
+
+			const runsPlaywright = configPresence.some(Boolean)
 
 			for (const filePath of sources) {
 				if (!filePath.startsWith(`${workspaceRoot}/`)) continue

@@ -10,8 +10,8 @@
  * Windows-1252 (`Äussere Wiesen` reads `\xc4ussere Wiesen`), CRLF-terminated and `;`-separated, with no
  * quoting. The adapter reads `dataset.csv` from the ZIP, or from a path to the extracted CSV.
  *
- * The adapter reads `STN_NAME` as the street, `ADR_NUMBER` as the house number (it carries its own
- * lower-case letter suffix, `12c`), `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
+ * The adapter reads `STN_NAME` as the street and `ADR_NUMBER` as the house number, including its
+ * lower-case letter suffix (`12c`). It reads `ZIP_ZIP4` as the postcode and `ZIP_NAME` as the postal locality.
  * `COM_FOSNR` is the municipality's number and no column holds its name, so no region is emitted. The LI
  * layout prints no region in any case.
  *
@@ -34,6 +34,7 @@ import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
+import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import {
@@ -77,12 +78,6 @@ export interface LLVLiechtensteinRecord {
 	ZIP_NAME: string
 	STATUS: string
 	OFFICIAL: string
-}
-
-function present(value: string | undefined): string | null {
-	const trimmed = value?.trim() ?? ""
-
-	return trimmed || null
 }
 
 /**
@@ -196,7 +191,7 @@ export function createLLVLiechtensteinAdapter(): CorpusAdapter {
 			for (const record of records) {
 				if (opts.signal?.aborted) return
 
-				if (opts.limit !== undefined && emitted >= opts.limit) return
+				if (typeof opts.limit === "number" && emitted >= opts.limit) return
 
 				const components = componentsForLLVRecord(record, opts)
 
@@ -229,7 +224,6 @@ export function createLLVLiechtensteinAdapter(): CorpusAdapter {
 						...aligned,
 						egaid: record.ADR_EGAID ?? "",
 					}),
-					corpus_version: "",
 					license: LLV_LI_LICENSE,
 				}
 

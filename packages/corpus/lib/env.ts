@@ -10,11 +10,15 @@ import { z } from "zod"
 
 /**
  * Corpus build settings.
+ *
+ * Empty: whether a build resumes is the `priorOutput` option of `buildCorpus`, chosen per run.
  */
 export const PublicCorpusEnvSchema = z.object({
-	MAILWOMAN_RESUME: z.string().optional().meta({
-		title: "Build resume",
-		description: "Resume-state override used by corpus build tooling.",
+	// The corpus manifest `held-out-spans.full.test.ts` scans, or `default` for the latest base corpus.
+	MAILWOMAN_HOLDOUT_CHECK_MANIFEST: z.string().optional().meta({
+		title: "Holdout check manifest",
+		description:
+			"Corpus manifest whose region and locality spans the holdout span check counts; `default` reads the latest base corpus. Unset skips the check.",
 	}),
 })
 

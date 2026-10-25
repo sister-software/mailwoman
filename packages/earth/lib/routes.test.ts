@@ -3,7 +3,110 @@
 
 import { describe, expect, test } from "vitest"
 
-import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch } from "#routes"
+import {
+	cameraFromLocation,
+	cameraFromPath,
+	cameraFromSearch,
+	gazettePlaceFromPath,
+	gazettePlacePath,
+	pathWithCamera,
+	pathWithReadableCamera,
+	queryFromSearch,
+	Route,
+	routeForPath,
+	runtimeModeFromSearch,
+} from "#routes"
+
+describe("cameraFromPath", () => {
+	test("reads Google Maps' /@lat,lon,zoomz segment, latitude first", () => {
+		expect(cameraFromPath("/@51.0716963,0.7244254,9z")).toEqual({ center: [0.7244254, 51.0716963], zoom: 9 })
+		expect(cameraFromPath("/debug/@35.6812,139.764,16.5z")).toEqual({ center: [139.764, 35.6812], zoom: 16.5 })
+		expect(cameraFromPath("/@-33.8688,151.2093")).toEqual({ center: [151.2093, -33.8688], zoom: null })
+	})
+
+	test("reads the percent-encoded segment the static-asset server redirects to", () => {
+		expect(cameraFromPath("/%4048.4051423%2C130.9629515%2C3.47z")).toEqual({
+			center: [130.9629515, 48.4051423],
+			zoom: 3.47,
+		})
+
+		expect(routeForPath("/debug/%4035.6812%2C139.764%2C16.5z")).toBe(Route.Debug)
+		expect(pathWithCamera(new URL("https://earth.mailwoman.ai/%4048.4%2C130.9%2C3.47z"), [1, 2], 3)).toBe("/@2,1,3z")
+
+		expect(pathWithReadableCamera(new URL("https://earth.mailwoman.ai/debug/%4048.4%2c130.9%2C3.47z?q=x"))).toBe(
+			"/debug/@48.4,130.9,3.47z?q=x"
+		)
+
+		expect(pathWithReadableCamera(new URL("https://earth.mailwoman.ai/@48.4,130.9,3.47z"))).toBeNull()
+	})
+
+	test("refuses a path without a segment or with an out-of-range latitude", () => {
+		expect(cameraFromPath("/")).toBeNull()
+		expect(cameraFromPath("/@139.764,35.6812,16z")).toBeNull()
+	})
+})
+
+describe("cameraFromLocation", () => {
+	test("prefers the path segment and falls back to ?center=", () => {
+		expect(cameraFromLocation("/@51.5,-0.12,9z", "?center=139.764,35.6812")).toEqual({ center: [-0.12, 51.5], zoom: 9 })
+		expect(cameraFromLocation("/", "?center=139.764,35.6812&zoom=16")).toEqual({ center: [139.764, 35.6812], zoom: 16 })
+	})
+})
+
+describe("pathWithCamera", () => {
+	test("writes /@lat,lon,zoomz after the route, keeping the query and dropping ?center=", () => {
+		const url = new URL("https://earth.mailwoman.ai/debug/@1,2,3z?q=Tokyo&center=1,2&zoom=3")
+
+		expect(pathWithCamera(url, [0.72442541234, 51.07169634567], 9)).toBe("/debug/@51.0716963,0.7244254,9z?q=Tokyo")
+
+		expect(pathWithCamera(new URL("https://earth.mailwoman.ai/"), [139.764, 35.6812], 16.504)).toBe(
+			"/@35.6812,139.764,16.5z"
+		)
+	})
+
+	test("round-trips through cameraFromPath", () => {
+		const path = pathWithCamera(new URL("https://earth.mailwoman.ai/"), [0.7244254, 51.0716963], 9)
+
+		expect(cameraFromPath(path)).toEqual({ center: [0.7244254, 51.0716963], zoom: 9 })
+		expect(routeForPath(path)).toBe(Route.Geocoder)
+	})
+
+	test("leaves a URL-valued parameter as written", () => {
+		const url = new URL("https://earth.mailwoman.ai/@1,2,3z?basemap=https://public.mailwoman.ai/a.pmtiles")
+
+		expect(pathWithCamera(url, [2, 1], 4)).toBe("/@1,2,4z?basemap=https://public.mailwoman.ai/a.pmtiles")
+	})
+
+	test("writes a center near zero in fixed-point notation and wraps longitude, as a zoomed-out globe reports", () => {
+		const url = new URL("https://earth.mailwoman.ai/@0,0,1z?basemap=x")
+		const path = pathWithCamera(url, [-540.00000004, 0.00000012], 0.4)
+
+		expect(path).toBe("/@0.0000001,180,0.4z?basemap=x")
+
+		expect(cameraFromPath(new URL(path, "https://earth.mailwoman.ai").pathname)).toEqual({
+			center: [180, 0.0000001],
+			zoom: 0.4,
+		})
+
+		expect(pathWithCamera(new URL(`https://earth.mailwoman.ai${path}`), [1, -0.00000001], 0)).toBe("/@0,1,0z?basemap=x")
+	})
+})
+
+describe("cameraFromSearch", () => {
+	test("reads center as lon,lat and an optional zoom", () => {
+		expect(cameraFromSearch("?center=139.764,35.6812&zoom=16")).toEqual({ center: [139.764, 35.6812], zoom: 16 })
+		expect(cameraFromSearch("?center=-74.006,40.7128")).toEqual({ center: [-74.006, 40.7128], zoom: null })
+		expect(cameraFromSearch("?center=139.764,35.6812&zoom=far")).toEqual({ center: [139.764, 35.6812], zoom: null })
+	})
+
+	test("refuses a center that is missing, malformed or out of range", () => {
+		expect(cameraFromSearch("")).toBeNull()
+		expect(cameraFromSearch("?zoom=12")).toBeNull()
+		expect(cameraFromSearch("?center=139.764")).toBeNull()
+		expect(cameraFromSearch("?center=tokyo,station")).toBeNull()
+		expect(cameraFromSearch("?center=35.6812,139.764")).toBeNull()
+	})
+})
 
 describe("runtimeModeFromSearch", () => {
 	test("only ?runtime=fake selects the fake runtime", () => {
@@ -29,6 +132,32 @@ describe("routeForPath", () => {
 	test("an unknown path is null, not the geocoder", () => {
 		expect(routeForPath("/demo")).toBeNull()
 		expect(routeForPath("/debug/extra")).toBeNull()
+	})
+
+	test("the gazette serves its search page and a place permalink, and refuses a permalink without a key", () => {
+		expect(routeForPath("/gazette")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/1880762729/london")).toBe(Route.Gazette)
+		expect(routeForPath("/gazette/1880762729")).toBeNull()
+		expect(routeForPath("/gazette/london")).toBeNull()
+	})
+})
+
+describe("gazettePlaceFromPath and gazettePlacePath", () => {
+	test("read and write a permalink, decoding the key's spaces and refusing an unsafe id", () => {
+		expect(gazettePlaceFromPath("/gazette/1880762729/london")).toEqual({ sprID: 1_880_762_729, nameKey: "london" })
+
+		expect(gazettePlaceFromPath("/gazette/85830881/little%20britain/")).toEqual({
+			sprID: 85_830_881,
+			nameKey: "little britain",
+		})
+
+		expect(gazettePlaceFromPath("/gazette")).toBeNull()
+		expect(gazettePlaceFromPath("/gazette/99999999999999999999/x")).toBeNull()
+
+		expect(gazettePlacePath({ sprID: 85_830_881, nameKey: "little britain" })).toBe(
+			"/gazette/85830881/little%20britain"
+		)
 	})
 })
 

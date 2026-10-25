@@ -58,7 +58,6 @@ async function plant(options: { scope: Record<string, unknown>; locales?: string
 
 const REGISTER_MATCHING_THE_ROWS = {
 	tiers: TIER_ROWS,
-	dRuleProtected: {},
 	untieredShippingLocales: {},
 }
 
@@ -154,37 +153,5 @@ describe("localeScopeCheck", () => {
 		expect(messages).toContain(
 			"untieredShippingLocales still names DE, which the declaration now places in a tier — remove the entry"
 		)
-	})
-
-	it("reports a protection for a country tier 1 already protects", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, dRuleProtected: { US: "belt and braces" } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages).toContain(
-			"dRuleProtected names US, which tier 1 already protects unconditionally — two sources for one fact is what this register replaced"
-		)
-	})
-
-	it("reports a protection for a country the project does not cover", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, dRuleProtected: { ZZ: "a country that ships nothing" } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages.some((message) => message.startsWith("dRuleProtected names ZZ, which is in no tier"))).toBe(true)
-	})
-
-	it("reports an empty reason, because a blank string is not a reason someone can read", async () => {
-		const context = await plant({
-			scope: { ...REGISTER_MATCHING_THE_ROWS, dRuleProtected: { DE: "" } },
-		})
-
-		const messages = (await localeScopeCheck.run(context)).map((diagnostic) => diagnostic.message)
-
-		expect(messages.some((message) => message.startsWith("dRuleProtected names DE with an empty reason"))).toBe(true)
 	})
 })

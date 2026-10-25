@@ -27,7 +27,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obligations"
 import type { PathBuilder } from "path-ts"
 
-import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/adapter"
+import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/license"
 import { currentSourceName } from "#recipes/sources"
 import type { TrainingManifest } from "#source-register/training-manifest"
 

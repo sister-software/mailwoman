@@ -30,7 +30,7 @@ export interface PromotionOutputComparison {
 }
 
 function describe(value: JSONValue | undefined): string {
-	return value === undefined ? "<missing>" : stringifyJSON(value)
+	return !value ? "<missing>" : stringifyJSON(value)
 }
 
 function normalizeProvenance(text: string): string {

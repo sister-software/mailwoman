@@ -70,7 +70,7 @@ class FakeResolverBackend implements ResolverBackend {
 			.filter((p) => p.name.toLowerCase().includes(text))
 			.filter((p) => !types || types.includes(p.placetype))
 			.filter((p) => !query.country || p.country === query.country)
-			.filter((p) => query.parentID === undefined || p.parent_id === query.parentID)
+			.filter((p) => !query.parentID || p.parent_id === query.parentID)
 			.slice(0, query.limit ?? 5)
 	}
 
@@ -1161,7 +1161,7 @@ describe("ResolveTree — interpolation tier", () => {
 		const locality = result.roots.find((n) => n.tag === "locality")
 
 		expect(calls).toHaveLength(2)
-		expect(calls[0]).toMatchObject({ street: "Pollen Street", number: "620B", locality: undefined })
+		expect(calls[0]).toMatchObject({ street: "Pollen Street", number: "620B", locality: null })
 		expect(calls[1]).toMatchObject({ street: "Pollen Street", number: "620B", locality: "Thames" })
 		expect(locality?.metadata?.["span_rescore"]).toBe(true)
 

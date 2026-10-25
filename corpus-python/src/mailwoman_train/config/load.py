@@ -217,7 +217,7 @@ def load_training_config(
 
     Every admitted source must read only register rows whose decisions are elected and permit both operations
     (`source_rights.py`). `data.unshippable_reason` in the config admits the rest for a local experiment and
-    the returned record reads not shippable. Tooling that reads a config without training on it keeps
+    the returned record reads not shippable. Callers that read a config without training on it use
     :func:`load_config`.
 
     :raises SourceRightsError: naming each source, register row and missing permission.

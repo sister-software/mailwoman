@@ -15,10 +15,24 @@ import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/cl
 import { useMemo } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { queryFromSearch, Route, routeForPath, runtimeModeFromSearch, searchWithQuery } from "#routes"
+import {
+	cameraFromLocation,
+	gazettePlaceFromPath,
+	queryFromSearch,
+	Route,
+	routeForPath,
+	runtimeModeFromSearch,
+	searchWithQuery,
+} from "#routes"
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
-import { useGeocoderRuntime } from "#runtime/use/geocoder-runtime"
+import {
+	type GeocoderRuntimeHandle,
+	type GeocoderRuntimeOptions,
+	useGeocoderRuntime,
+} from "#runtime/use/geocoder-runtime"
+import { remoteGeocoderURL, useRemoteGeocoderRuntime } from "#runtime/use/remote-geocoder-runtime"
 
+import { GazettePage } from "./explorers/Gazette/GazettePage.tsx"
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
 import { EarthFooter } from "./panels/EarthFooter.tsx"
 import { useGeocoderPanels } from "./panels/GeocoderPanels.tsx"
@@ -45,29 +59,31 @@ function NotFound({ pathname }: { pathname: string }) {
  * The geolocation answer only moves the bias when it arrives, so no request
  * waits on the network before the first paint.
  */
-function RealGeocoder({ route, query }: { route: Route; query: string | null }) {
+function useRuntimeOptions(): GeocoderRuntimeOptions {
 	const initialCenter = useBrowserGeolocation(PRODUCTION_CONFIG)
+	const camera = cameraFromLocation(location.pathname, location.search)
 
-	const handle = useGeocoderRuntime({
+	return {
 		config: PRODUCTION_CONFIG,
-		initialCenter: initialCenter ?? DEFAULT_CENTER,
-	})
-
-	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })
-
-	if (route === Route.Trace) {
-		return (
-			<div className="trace">
-				<LiveModelVisualizer
-					traceParse={handle.traceParse}
-					supportsTrace={handle.supportsTrace}
-					ready={handle.runtime.ready}
-					loadingProgress={handle.runtime.loading?.progress ?? null}
-					errorMessage={handle.runtime.errorMessage ?? null}
-				/>
-			</div>
-		)
+		initialCenter: camera?.center ?? initialCenter ?? DEFAULT_CENTER,
+		initialZoom: camera?.zoom ?? undefined,
 	}
+}
+
+function LocalGeocoder({ route, query }: { route: Route; query: string | null }) {
+	const handle = useGeocoderRuntime(useRuntimeOptions())
+
+	return <GeocoderView handle={handle} route={route} query={query} />
+}
+
+function RemoteGeocoder({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
+	const handle = useRemoteGeocoderRuntime(apiURL, useRuntimeOptions())
+
+	return <GeocoderView handle={handle} route={route} query={query} />
+}
+
+function GeocoderView({ handle, route, query }: { handle: GeocoderRuntimeHandle; route: Route; query: string | null }) {
+	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })
 
 	return (
 		<Geocoder
@@ -83,6 +99,31 @@ function RealGeocoder({ route, query }: { route: Route; query: string | null }) 
 			developer={route === Route.Debug}
 			onSubmitQuery={writeQueryToURL}
 		/>
+	)
+}
+
+/**
+ * The trace workbench has no map.
+ *
+ * It loads the classifier through the same runtime hook as the geocoder,
+ * so the release's assets are shared with the map page's cache, and it skips the
+ * geolocation request and the map panels the geocoder needs.
+ */
+function TracePage({ query }: { query: string | null }) {
+	const handle = useGeocoderRuntime({ config: PRODUCTION_CONFIG, initialCenter: DEFAULT_CENTER })
+
+	return (
+		<div className="trace">
+			<LiveModelVisualizer
+				traceParse={handle.traceParse}
+				supportsTrace={handle.supportsTrace}
+				ready={handle.runtime.ready}
+				loadingProgress={handle.runtime.loading?.progress ?? null}
+				errorMessage={handle.runtime.errorMessage ?? null}
+				initialText={query}
+				onTextTraced={writeQueryToURL}
+			/>
+		</div>
 	)
 }
 
@@ -113,12 +154,32 @@ export function App() {
 	const route = routeForPath(location.pathname)
 	const query = queryFromSearch(location.search)
 	const mode = runtimeModeFromSearch(location.search)
+	const apiURL = remoteGeocoderURL(PRODUCTION_CONFIG)
 
 	if (!route) return <NotFound pathname={location.pathname} />
 
+	// The gazette reads the gazetteer without the classifier and has no canned runtime, so it ignores the runtime mode.
+	if (route === Route.Gazette) {
+		return (
+			<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route}>
+				<div className="gazette">
+					<GazettePage config={PRODUCTION_CONFIG} query={query} place={gazettePlaceFromPath(location.pathname)} />
+				</div>
+			</main>
+		)
+	}
+
 	return (
 		<main className={`${panelStyles.demoRoot} ${geocoderStyles.geocoderRoot}`} data-route={route} data-runtime={mode}>
-			{mode === "fake" ? <FakeGeocoder query={query} /> : <RealGeocoder route={route} query={query} />}
+			{mode === "fake" ? (
+				<FakeGeocoder query={query} />
+			) : route === Route.Trace ? (
+				<TracePage query={query} />
+			) : apiURL ? (
+				<RemoteGeocoder apiURL={apiURL} route={route} query={query} />
+			) : (
+				<LocalGeocoder route={route} query={query} />
+			)}
 		</main>
 	)
 }

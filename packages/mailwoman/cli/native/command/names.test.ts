@@ -7,7 +7,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { commandPathCandidates, declaredCommandName, isPrefixDirectory } from "#cli/native/command/names"
+import {
+	commandPathCandidates,
+	declaredCommandName,
+	isPrefixDirectory,
+	isPrefixDirectoryFor,
+} from "#cli/native/command/names"
 
 describe("commandPathCandidates", () => {
 	it("tries the literal spelling before any prefix directory", () => {
@@ -34,6 +39,17 @@ describe("isPrefixDirectory", () => {
 		expect(isPrefixDirectory("postcode", "postcode-codepoint")).toBe(true)
 		// `gazetteer/inspect/fst.tsx` declares `fst`, so `inspect` is a segment the user types.
 		expect(isPrefixDirectory("inspect", "fst")).toBe(false)
+	})
+})
+
+describe("isPrefixDirectoryFor", () => {
+	it("needs every declared name under the directory to carry its prefix", () => {
+		expect(isPrefixDirectoryFor("postcode", ["postcode-codepoint", "postcode-onsud"])).toBe(true)
+		expect(isPrefixDirectoryFor("inspect", ["inspect-fst", "pairs"])).toBe(false)
+	})
+
+	it("treats a directory with no commands as neither prefix nor namespace", () => {
+		expect(isPrefixDirectoryFor("shared", [])).toBe(false)
 	})
 })
 

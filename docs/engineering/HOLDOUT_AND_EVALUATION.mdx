@@ -1,0 +1,345 @@
+---
+sidebar_position: 3
+title: Held-out data and evaluation — the specification
+sidebar_label: Held-out data & evaluation
+description: How corpus rows are divided between training and evaluation, the checks that hold the division correct, what a candidate is compared against, and when a training run may start.
+---
+
+# Held-out data and evaluation — the specification
+
+**Adopted 2026-10-24** ([#2823](https://github.com/sister-software/mailwoman/issues/2823)). This page revises
+the proposal of 2026-10-22 under its review's nine acceptance criteria and writes in the four decisions the
+operator made on 2026-10-23. Section 11 lists which criterion changed which section. The evidence behind each
+rule comes from the training postmortem of 2026-10-20 to 2026-10-22. Each measurement is quoted with its
+denominator where it decides a rule.
+
+## 1. Purpose
+
+The corpus serves two jobs that compete for the same rows. Training learns address structure from rows: which
+tokens are a street, a locality, a region, a postcode, and the order each country writes them in. Evaluation
+decides whether a new model may replace the published one by scoring both on rows that show how they behave on
+addresses users will send. A row held out for evaluation is a row the model never learns from, and a row trained
+on no longer measures generalization. This page sets how rows are divided, what checks hold the division correct,
+what a candidate is compared against, and when a training run may start.
+
+## 2. Principles
+
+**P1. Training gets the data by default, and evaluation keeps the evidence its claims need.** A row is held out
+only when a registered evaluation claim needs it. Evaluation reserves the smallest sample that meets the coverage
+and precision each registered requirement states, and the remainder trains. Independent evaluation data already
+frozen stays in place until its replacement is frozen and audited. When the available rows cannot satisfy both
+jobs, the conflict is recorded in the allocation report (section 4.5) and the claim is reported as unmeasured,
+rather than either requirement being weakened in silence.
+
+Motivation: the operator's standing direction is to use the data rather than withhold it over memorization. A
+perturbation test on 2026-10-22 moved the published model's exact-parse rate by at most 0.021 when held-out rows
+were altered off its training text. This page reads that as a descriptive paired effect over the rows tested. A
+claim about memorization in general needs a controlled training comparison, and that comparison remains to be
+run.
+
+**P2. Hold out places below the region, and keep every capability's training support.** Held-out groups are
+geographic and sit below the first-level region wherever the data permits. Training keeps measured support for
+every required component role, every parent region, every script and every layout. Evaluation may introduce
+unseen lexical values where lexical generalization is the capability under test. A population for which these
+cannot hold together is reported in the allocation report, and the report is where the decision is made.
+
+Motivation: corpus v0.8.0 held out whole first-level regions. In the US those were VT, ND and WY. In ES they were
+Asturias and the Balearic Islands. In IT they were Trento and Bolzano. Kerala, Cornwall, TAS and NT were among
+the others. Those regions then had zero region spans in training, and the model relabeled them as localities.
+Measured on the US golden set, 2,324 of 2,660 rows with a region lie on VT, ND or WY. Correct rows on that subset
+fell from 1,902 to 1,821, and the remaining 336 rows scored 254 correct under both models. The `us.region` score
+fell from 89.5 to 87.8 ([#2777](https://github.com/sister-software/mailwoman/issues/2777)). Those two are
+measured scores. The registered floor at the time was 89.4.
+
+**P3. Evaluation readiness is structural first, then numerical.** Before a release-directed run, the evaluator
+runs on the published model with the dataset the run will be graded on and answers three questions apart. First,
+can every required check read enough admissible evidence under the registered rules. Second, does the published
+model meet the absolute requirements. Third, what candidate identities are still pending. The first must be yes.
+The second informs the work and does not block a candidate meant to repair a published deficiency. The third is
+recorded as pending and required before any verdict.
+
+Motivation: four from-scratch runs, about 17 GPU-hours, were trained before anyone checked that release
+specification v7 could return `pass` on this data. It could not. The candidate artifact was unregistered, and the
+comparison set for US, ES and IT was empty because the published model had trained on every row those countries
+hold in this corpus family.
+
+**P4. Measure once, cheaply, before acting, and publish the allocation.** A change to the split, the corpus or
+the recipe is measured on the CPU before it ships, and the measurement is an allocation report (section 4.5) a
+reader can inspect. A from-scratch training run is never the first measurement of a corpus change.
+
+**P5. One variable per run, a single control first, and two seeds before a corpus change is judged.** On a new
+corpus, one unchanged-recipe control is trained and graded before any sweep. That control is a first
+measurement. Replication comes from the second seed under section 7.2, where a corpus change is judged on two
+runs of the same recipe that differ by seed only.
+
+Motivation for the seed rule: v8.1.0 trained with seed 42 against seed 43 flipped 87 regression-board rows of
+1,277 and 28 blocking cases of 643, a 25-pass gap. The corpus change under test, v8.2.0 against v8.1.0 at seed 42,
+flipped 93 rows with a 35-pass gap. One seed per run cannot tell those apart. The seed-noise floor rests on one
+seed pair, so its own variance is unknown. Two runs bound it for the change at hand without claiming more.
+
+## 3. Identities
+
+The split and its audits use five identities, recorded apart because each answers a different question:
+
+1. **Row identity**, `source_id`, the key the split attribute files are applied by.
+2. **Record identity**, the part of `source_id` before its last `#`. It keeps a record's rendered variants
+   together in validation and test.
+3. **Geographic identity**, the place key a holdout selects: a postcode district, else a locality spelling folded
+   with `foldNFKCWhitespace`, with the region as context. A folded spelling merges homonymous localities and
+   separates aliases of one place. That limitation stands until places are resolved with geographic context, and
+   the allocation report lists the merged keys it finds.
+4. **Statistical group**, the unit uncertainty is estimated over, the held-out place or the frozen dataset's
+   group, never the row.
+5. **Overlap relation**, the audit of exposure to training data, by record identity and by folded text.
+
+The held-out decision reads a row's components before the record-based validation and test assignment, so a
+variant that changes the chosen key can change that earlier decision. The record-ancestry audit (section 4.4)
+checks every record's rows across train, validation and test.
+
+## 4. How rows are split, and the checks that hold the split correct
+
+Every row receives exactly one of `train`, `val` or `test`. The assignment is deterministic and depends only on
+the row's content and the split policy in `packages/corpus/lib/utils/split.ts`. The policy identity is a hash
+over the implementation, the resolved holdout tables, the normalization rules and every population-dependent
+choice, and every split record states the hash it was made under.
+
+### 4.1 The declared holdout path
+
+A country may declare small places to hold out, as postcode districts or localities. A key is a place below the
+first-level region. A region name, or a postcode prefix that covers a whole region, is not a valid key. EG
+`postcode:42` once held out 1,000 of Port Said's 1,008 rows and in effect the governorate. Keys are chosen by a
+deterministic walk over the corpus, never by hand. The walk targets the country's current held-out share and lets
+the share fall rather than adding places. No first-level region with at least `HOLDOUT_CAP_MIN_ROWS` rows may lose
+more than `heldOutRegionCap(share)`, `min(0.25, max(0.05, 3 × share))`, of its rows or of its no-postcode rows. A
+spelling that matches a region's surface form is excluded from the candidates.
+
+### 4.2 The hashed holdout path and its region cap
+
+A country without a declared list holds out one place in fifty, chosen by a hash of its key (venue, else
+locality, else postcode). The region cap applies to each hash-selected place on its own. Its rows inside one
+region are divided by that region's rows, and its rows with no region by the country's rows with no region. A
+denominator under `HOLDOUT_CAP_MIN_ROWS` is not checked. A place over `heldOutRegionCap(0.02)`, which is 0.06,
+trains instead and is not replaced. Measured on v0.8.1 this returns 9 places in 7 countries, 2,067 rows, both EG
+governorate postcodes among them.
+
+### 4.3 The source cap, sized by population
+
+A hash-selected place may hold only part of one source's held-out rows in its country. The 2026-10-22 proposal
+set that part at a flat quarter. The operator's decision of 2026-10-23 replaces the flat fraction with a ceiling
+that scales with how much of the country the place is, so a small or less important place is represented in
+proportion rather than at a fixed share.
+
+The rule's form: for a source `S` in country `C`, a hash-selected place `p` may hold at most
+`max(floor, k × share(p, C))` of `S`'s held-out rows in `C`, where `share(p, C)` is the place's population
+divided by the country's. The place's population is the Who's On First `population` of the admin place the key
+resolves to, read from the admin gazetteer. A postcode key takes the population of the locality with the most
+rows under that postcode. The country's population is `COUNTRY_POPULATION` in
+`packages/codex/lib/country/population.ts`, derived from GeoNames. A key with no population reading, or a
+country GeoNames declines to estimate, falls back to the flat quarter and is listed as unsized in the allocation
+report. A place over its ceiling trains instead and is not replaced.
+
+The two parameters, `floor` and `k`, are registered only after the allocation report in section 4.5 has been
+produced over every country for a candidate pair, with the newly returned places inspected. A threshold fitted
+to the places that failed under the flat quarter would measure that quarter's defect rather than the
+distribution. The motivating case stays: v0.8.1's draw held out `locality:new delhi`, 82% of India's held-out
+OSM rows and the only OSM training rows ending `, New Delhi`, and the model then read the city as a
+`neighbourhood` (confidence 0.94 against 0.40 to 0.80). New Delhi holds about 1.2% of India's population, so
+under any `k` below sixty-five the rule returns it to training.
+
+Known cost, accepted under P1: small countries lose most or all of their held-out rows. After the region cap and
+the flat quarter on v0.8.1, AX and TZ have 0, HT and SV 1, the Dominican Republic 3, HK and SM 6, and EG, MK and
+KG 8. None is a required country, and each is marked experimental for evaluation purposes.
+
+### 4.4 Checks that run before a manifest exists
+
+Each check below runs in the step that admits the corpus manifest, once per corpus, on the real rows, and refuses
+to admit the manifest when it fails. The parquet writer stages its manifest as `MANIFEST.unchecked.json`.
+`admitParquetManifest` in `packages/corpus/lib/build/holdout-check.ts` runs the held-out span check over it,
+writes `HOLDOUT_CHECK.json` beside it with every finding, and moves it to `MANIFEST.json` only on a pass. A
+corpus the check refuses therefore has no manifest a training run can read, and the top-level manifest records
+when the check ran, the countries it read and the files it counted.
+
+1. **Held-out span check** (`packages/corpus/lib/tools/overlay/held-out-spans.ts`). Two-sided: no train row
+   holds a declared locality or postcode prefix, and every first-level region of every declared country keeps a
+   train region-span share of at least half its country's median, over all rows and over no-postcode rows. A
+   region-name key is refused. It took 1,344 s on v0.8.1, and it now runs inside the build rather than behind an
+   environment variable.
+2. **Concentration check.** For every source with 1,000 or more rows in a country, every held-out place stays
+   under its ceiling from section 4.3, and the source keeps at least 100 held-out rows unless P1 gave them to
+   training.
+3. **Record-ancestry audit.** Every record's rows sit on one side of train against held out, and its variants
+   never straddle validation and test. Development and confirmation sets are disjoint by record group.
+4. **Policy identity.** The manifest binds the source file hashes, the row identities, the policy hash, the
+   attribute hashes and the audit results. The loader rejects a missing attribute, a duplicate assignment, a
+   mismatched source identity and an unsupported version.
+5. **Label-support floors and exposure receipts** are re-derived from each new corpus, never copied forward. A
+   label's validation floor is half its measured support rounded down, with no floor under 20 rows. An exposure
+   receipt is re-derived from the corpus's own epoch-mixture audit. A receipt copied from an older corpus fails
+   on supply the new split moved, as `fr-annuaire-education-overseas` did at 1,278 of a stale 1,300.
+
+### 4.5 The allocation report
+
+Before any training run on a new split, a report compares the proposed split with the preceding policy. For every
+affected country, source, region and required capability it shows the available rows, the retained training
+rows, the held-out records and groups, the change from the preceding policy, and the same figures over
+no-postcode rows. It lists every place a cap returned to training with its denominators, the capabilities
+recovered in training, the evaluation coverage lost, the keys found to merge homonymous places, and the unsized
+keys of section 4.3. A corpus-consistency assertion (a floor re-derived from the new corpus passes) is reported
+apart from a product-quality requirement (a required capability's supply fell against the previous corpus), so a
+reduced supply stays visible when a derived floor passes.
+
+## 5. Building a new split
+
+A split-policy change does not rebuild the corpus. The store holds every source's parsed rows as parquet, and a
+re-split writes a split-attribute file beside each parquet file and a new manifest. Measured: 853 files, 675.5
+million rows, 76 minutes on 8 workers, peak 937 MiB per worker, 391 MB of new files, against 4 h 04 min for the
+last full rebuild. The loader applies the attribute files as row filters at no measured throughput cost in that
+configuration, 21.2 batches per second on v0.8.1 against 20.6 on v0.8.0. That benchmark covers one loader and
+storage setup and does not establish equivalence under others.
+
+## 6. Evaluation
+
+### 6.1 Provenance classes
+
+Every held-out row is audited against the training corpora of both the published model and the candidate.
+`verified_unseen` sits in neither. `unseen_by_candidate` sits in the published model's training data only.
+`known_overlap` and `unknown` are admitted to no check. A minimum check admits `verified_unseen` and
+`unseen_by_candidate` rows. A comparative check admits `verified_unseen` only.
+
+### 6.2 The comparator
+
+A candidate is graded against the published package the users install: the weights npm serves under the
+`@mailwoman/neural-weights-*` version the release config states at grading time, identified by the sha256 of
+its `model.onnx`. The published model is the comparison for every gain and loss reported, and its own past
+answers do not define a minimum.
+
+### 6.3 Evaluation rows from unsampled source rows
+
+A corpus build samples a source's rows. The rows it leaves unsampled on disk are rows no training run of that
+corpus family has read. Evaluation may draw from them, under two guards read from the support index that
+`packages/mailwoman/tools/dev-tools/corpus/support-index.run.ts` writes beside a corpus manifest and
+`mwdev_support` reads: the train rows per country for each tag set, and each value's rows under its own tag and
+under every other tag.
+
+- **Variety.** The draw is stratified by tag set within each country, so the evaluation set holds every address
+  shape the country's training rows hold, in proportion to the on-disk supply rather than to the sampled corpus.
+- **Supply.** A tag set whose on-disk supply for a country is under twice the draw's share for that shape keeps
+  every row for training, and the draw takes none of it. A row drawn for evaluation is excluded from every later
+  training draw of its source, so it stays unseen. The guard keeps that exclusion from taking a country's last
+  rows of a shape.
+
+A drawn set is frozen, audited by the overlap relation against both training lineages, inspected for labels, and
+checked for representativeness against the required address forms, because newly sampled rows can
+disproportionately represent newly developed areas or improved source coverage.
+
+### 6.4 The comparison problem for US, ES and IT
+
+The published model 10.7.0 trained on v0.7.10, and that corpus's holdout leaked: 716,356 VT, ND and WY rows
+reached training, 95.3% of them as lowercased `+case-lower` variants that a case-sensitive match missed. The
+audited comparison sets for US, ES and IT lack sufficient admissible evidence against 10.7.0. Whether every row
+of those countries in this corpus family was seen is established only by a full-family scan, and the
+perturbation report's positive control left one row of 2,111 unmatched. The fix is an evaluation source outside
+both corpora, a newer snapshot of a source the adapters already read, kept only where absent from both lineages
+by id and by folded text. The operator's constraint of 2026-10-22 is unchanged: the pull is deferred, and when
+needed it is US only. ES and IT therefore remain unresolved requirements under the nine-country objective, and a
+US-only acquisition is reported as leaving them unresolved.
+
+### 6.5 Confirmation access
+
+The development set guides work. The release decision is read once, on the confirmation set. Preflight may
+inspect confirmation metadata, coverage and provenance. Baseline scoring of the published model on confirmation
+is allowed once per specification version and recorded. Only the release report reads row-level outcomes on
+confirmation. Every confirmation read is recorded in the next specification's rationale. A candidate that read
+confirmation and failed retires that set for recipe selection, and its successor is drawn and frozen before the
+next release-directed run.
+
+## 7. What a candidate is graded on, and the two-seed rule
+
+### 7.1 The grading
+
+1. **Self-control.** A staged copy of the published weights graded against the installed weights differs on 0
+   board rows.
+2. **Release requirements**, the current specification: minimum checks per required country and capability, and
+   the comparative objective against the comparator of section 6.2.
+3. **Promotion battery floors** not yet retired. A floor the published model itself misses is a conflict to
+   investigate. A scorer correction, an answer-key revision and an accepted quality reduction are three different
+   decisions, each with its own recorded reason.
+4. **The regression board** as findings. Every regressed row is explained with its address. The board's net count
+   is a finding and never a verdict, because it sits inside seed noise.
+5. **Provenance split** of every held-out rate.
+
+### 7.2 Two seeds before a corpus change is judged
+
+A corpus change is judged on two runs of the unchanged recipe on the new corpus that differ by seed only, graded
+beside the control pair on the previous corpus. The change is read as an improvement when both seeds clear the
+release objective's lower confidence bound against the comparator and the smaller of the two gains exceeds the
+control pair's own spread. A board flip count is a finding to read, never the verdict. The rule costs a second
+run per corpus change, about $9 to $12 and 3 to 5 hours on an A100 at 60,000 steps. The caveat stands in the
+specification: one seed pair measured once gives a floor whose own variance is unknown, so a result inside twice
+the measured spread is reported as unestablished rather than as a loss.
+
+## 8. When a training run launches
+
+A run launches only when all of the following hold, checked in this order:
+
+1. The corpus manifest was admitted with the checks of section 4.4 passing, and the allocation report of section
+   4.5 exists for the split.
+2. The evaluator, run on the published model under the current specification with the run's evaluation dataset,
+   answers yes to the first question of P3, and every pending candidate identity is recorded as pending.
+3. The configuration's floors and receipts were re-derived from this corpus.
+4. The corpus-receipt preflight passes on Modal's CPU before a GPU is allocated.
+5. The run has a written prediction: which checks it should move, by how much, and on which rows.
+6. When the corpus is new, the run is the single control (P5). A corpus change's second seed follows the control.
+
+A bounded diagnostic run, one that will never be graded for release, may skip items 2 and 5 and is recorded as
+diagnostic in its configuration. Runs launch with automatic resume when the checkpoint matches the same run,
+corpus, tokenizer and configuration and restores optimizer and scheduler state. A changed configuration or a
+completed learning-rate schedule requires an explicit new-run decision.
+
+## 9. Costs, as measured in October 2026
+
+| Operation                                | Cost                                     |
+| ---------------------------------------- | ---------------------------------------- |
+| Full corpus build, parallel              | 4 h 04 min CPU                           |
+| Re-split, 853 files                      | 76 min CPU, 8 workers                    |
+| Held-out span check                      | 22 to 50 min CPU, now inside the build   |
+| Held-out freeze and overlap audit        | about 3 and 2.5 min per set              |
+| 60,000-step from-scratch run             | 2.9 to 4.6 h on an A100, about $9 to $12 |
+| One candidate graded                     | about 1 h CPU                            |
+| A corpus change judged under section 7.2 | one further run, the same cost again     |
+
+## 10. Current state against this specification
+
+| Rule                                             | State on 2026-10-24                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| P2, declared keys below the region               | Done, in v0.8.1                                                          |
+| Region cap on the hashed path                    | Implemented in `split.ts`                                                |
+| Population-sized source cap (4.3)                | Specified. The parameters wait on the allocation report                  |
+| Record identity (`#` discriminator)              | Done, effective at the next build of four renderers                      |
+| Held-out span check in the manifest writer       | Done ([#2823](https://github.com/sister-software/mailwoman/issues/2823)) |
+| Concentration check and record-ancestry audit    | Specified. Measured by script so far, and a build step remains to write  |
+| Policy identity and loader rejections (4.4.4)    | Specified. Implementation open                                           |
+| Allocation report (4.5)                          | Specified. Implementation open                                           |
+| Floors and receipts re-derived per corpus        | Done by hand for v0.8.1. Automation open                                 |
+| Evaluation rows from unsampled source rows (6.3) | Specified. The first draw waits on the support index for the corpus      |
+| Fresh US evaluation source (6.4)                 | Deferred by the operator                                                 |
+| Two-seed rule (7.2)                              | Adopted. First applied to the next corpus change                         |
+| Pre-launch evaluator rule (P3)                   | An agent rule. Launcher enforcement open                                 |
+| Automatic resume by default                      | Open                                                                     |
+
+## 11. What the nine acceptance criteria changed
+
+| Criterion                                       | Where it landed                                                                                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Correct the perturbation evidence claim      | P1 reads the 0.021 result as a paired effect over the tested rows and leaves the general claim open                                     |
+| 2. Define the evaluation population and novelty | P2 states the capabilities training keeps and the lexical values evaluation may introduce                                               |
+| 3. Specify the selection algorithm completely   | Section 3 states the five identities. Sections 4.1 to 4.3 state keys, normalization, denominators, exemptions, order and the empty case |
+| 4. Produce a before/after allocation report     | Section 4.5, and 4.3's parameters wait on it                                                                                            |
+| 5. Separate consistency from product quality    | Section 4.5's last sentence and the floors rule in 4.4.5                                                                                |
+| 6. Bind the split to immutable identities       | Section 4's policy hash, 4.4.3 and 4.4.4                                                                                                |
+| 7. Preflight checks and diagnostic runs         | P3's three questions and section 8's diagnostic-run clause                                                                              |
+| 8. State the deferred acquisition's consequence | Section 6.4's last two sentences                                                                                                        |
+| 9. Confirmation access, reads and retirement    | Section 6.5                                                                                                                             |
+
+The operator's four decisions of 2026-10-23 sit in P5 and 7.2 (two seeds), 6.2 (the comparator), 6.3 (unsampled
+rows with the variety and supply guards) and 4.3 (the population-sized cap).

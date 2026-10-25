@@ -115,6 +115,7 @@ def census(
         punct_drop_prob=augment["punct_drop"],
         upper_case_prob=augment["upper_case"],
         ordinal_prob=augment["ordinal"],
+        postcode_move_prob=augment["postcode_move"],
         excluded_sources=frozenset(augment_exclude_sources),
     )
 

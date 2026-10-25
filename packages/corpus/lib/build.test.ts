@@ -4,7 +4,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { appendLocalTextFile, removeFile, removePath } from "@mailwoman/core/fs/writers"
+import { appendLocalTextFile, removeFile, removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
@@ -17,14 +17,17 @@ import {
 	assertHeapForAdapters,
 	buildCorpus,
 	BuildProfile,
+	PriorOutput,
 	RESIDENT_ADAPTER_HEAP_FLOOR_BYTES,
 	type BuildStage,
 } from "#build"
 import type { AlignCheckpoint } from "#build/checkpoint"
+import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import type { ParquetManifest } from "#parquet/writers"
 import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
+import { defaultHoldouts, writeSplitManifestsFromLabeledFiles } from "#utils/split"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
@@ -81,7 +84,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.adapters).toHaveLength(1)
 		expect(manifest.adapters[0]!.adapter_id).toBe("wof-admin")
 		expect(manifest.total_aligned_rows).toBeGreaterThan(0)
-		expect(manifest.slices.total_rows).toBe(manifest.total_aligned_rows)
+		expect(manifest.files.total_rows).toBe(manifest.total_aligned_rows)
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(outDir("MANIFEST.json"))
@@ -89,31 +92,39 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
-			slices: Array<{ split: string; format: string; path: string }>
+			files: Array<{ split: string; format: string; path: string; rows: number }>
 		}>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
-		expect(corpusManifest.slices.length).toBeGreaterThanOrEqual(1)
+		expect(corpusManifest.files.length).toBeGreaterThanOrEqual(1)
 
 		const splitManifest = await readLocalJSONFile<{ corpus_version: string; holdouts: Record<string, string[]> }>(
 			outDir("splits", "SPLIT_MANIFEST.json")
 		)
 
 		expect(splitManifest.corpus_version).toBe("0.1.0")
-		expect(splitManifest.holdouts.US).toContain("Vermont")
+		expect(splitManifest.holdouts.US).toEqual(defaultHoldouts().US)
 
-		const trainFile = corpusManifest.slices.find((s) => s.split === "train")!
+		const trainFile = corpusManifest.files.find((s) => s.split === "train")!
 		expect(trainFile).toBeDefined()
 		expect(trainFile.format).toBe("parquet")
 		expect(trainFile.path).toMatch(/\.parquet$/)
 		const firstRow = (await openParquetRowStream<ParquetRow>(trainFile.path).next()).value ?? null
 
 		expect(firstRow).not.toBeNull()
-		expect(firstRow!.corpus_version).toBe("0.1.0")
+		expect(firstRow).not.toHaveProperty("corpus_version")
+		expect(firstRow).toHaveProperty("augmentation")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)
+
+		for (const file of corpusManifest.files) {
+			const record = await readParquetRecord(file.path)
+
+			expect(file.path).toMatch(new RegExp(`/store/${record!.source}/${record!.derivationHash}/data\\.parquet$`, "u"))
+			expect(record!.rows).toBe(file.rows)
+		}
 	})
 
-	it("routes rows whose components.region is held out to val/test", async () => {
+	it("trains on Vermont admin rows, because no holdout keys on a region (#2777)", async () => {
 		const outDir = scratch.path("build")
 
 		await buildCorpus({
@@ -136,14 +147,14 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			readVermontRows(outDir("intermediate", "labeled-test.jsonl")),
 		])
 
-		const vermontHeldOut = [...valVermont, ...testVermont]
-		expect(vermontHeldOut.length).toBeGreaterThan(0)
-		expect(trainVermont).toEqual([])
+		// The fixture's Vermont rows carry no postcode, so no declared US district holds them out.
+		expect([...valVermont, ...testVermont]).toEqual([])
+		expect(trainVermont.length).toBeGreaterThan(0)
 
 		const trainIDs = new Set(await TextSpliterator.fromAsync(outDir("splits", "train.txt")).toArray())
 
-		for (const r of vermontHeldOut) {
-			expect(trainIDs.has(r.source_id)).toBe(false)
+		for (const r of trainVermont) {
+			expect(trainIDs.has(r.source_id)).toBe(true)
 		}
 	})
 
@@ -375,10 +386,6 @@ describe("buildCorpus resume", () => {
 		return named
 	}
 
-	afterEach(() => {
-		vi.unstubAllEnvs()
-	})
-
 	const parquetManifest = (outDir: PathBuilder) =>
 		readLocalJSONFile<ParquetManifest>(outDir("corpus-v0.1.0", "MANIFEST.json"))
 
@@ -396,23 +403,75 @@ describe("buildCorpus resume", () => {
 
 		const stages: string[] = []
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
 		const second = await buildCorpus({
 			...options,
 			outputDir: outDir,
+			priorOutput: PriorOutput.Resume,
 			onProgress: (_stage, message) => stages.push(message),
 		})
 
 		expect(stages.some((message) => message.startsWith("resumed align after wof-admin"))).toBe(true)
 		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
 		expect(second.splits.counts).toEqual(first.splits.counts)
-		expect(second.slices.total_rows).toBe(first.slices.total_rows)
+		expect(second.files.total_rows).toBe(first.files.total_rows)
 
 		const secondParquet = await parquetManifest(outDir)
 
-		expect(secondParquet.slices.map((slice) => slice.sha256)).toEqual(firstParquet.slices.map((s) => s.sha256))
+		expect(secondParquet.files.map((file) => file.sha256)).toEqual(firstParquet.files.map((s) => s.sha256))
 		expect(await alignDigests(outDir)).toEqual(firstDigests)
+	})
+
+	it("sorts the ids align recorded into the split files a parse of the labeled rows writes", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const checkpoint = await readLocalJSONFile<AlignCheckpoint>(outDir("intermediate", "align-checkpoint.json"))
+
+		expect(checkpoint.source_id_offsets?.train).toBe(
+			(await statPath(outDir("intermediate", "source-ids-train.txt"))).size
+		)
+
+		const reparsed = scratch.path("reparsed")
+
+		await writeSplitManifestsFromLabeledFiles({
+			labeledPaths: {
+				train: outDir("intermediate", "labeled-train.jsonl"),
+				val: outDir("intermediate", "labeled-val.jsonl"),
+				test: outDir("intermediate", "labeled-test.jsonl"),
+			},
+			outputDir: reparsed,
+			corpusVersion: "0.1.0",
+			counts: { train: 0, val: 0, test: 0 },
+		})
+
+		for (const name of ["train.txt", "val.txt", "test.txt"]) {
+			expect(await sha256File(outDir("splits", name))).toBe(await sha256File(reparsed(name)))
+		}
+
+		expect((await statPath(outDir("splits", "train.txt"))).size).toBeGreaterThan(0)
+	})
+
+	it("reads the ids from the labeled rows when the checkpoint predates the id lists", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await sha256File(outDir("splits", "train.txt"))
+		const checkpointPath = outDir("intermediate", "align-checkpoint.json")
+		const { source_id_offsets: _offsets, ...older } = await readLocalJSONFile<AlignCheckpoint>(checkpointPath)
+
+		await writeLocalJSONFile(older, checkpointPath)
+
+		for (const split of ["train", "val", "test"]) {
+			await removePath(outDir("intermediate", `source-ids-${split}.txt`))
+		}
+
+		await removePath(outDir("splits"))
+		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
+
+		expect(await sha256File(outDir("splits", "train.txt"))).toBe(before)
+		expect(await pathExists(outDir("intermediate", "source-ids-train.txt"))).toBe(false)
 	})
 
 	it("discards bytes written past the checkpoint rather than appending after them", async () => {
@@ -430,9 +489,7 @@ describe("buildCorpus resume", () => {
 
 		expect(await sha256File(trainPath)).not.toBe(before)
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await buildCorpus({ ...options, outputDir: outDir })
+		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
 
 		expect(await sha256File(trainPath)).toBe(before)
 	})
@@ -442,11 +499,9 @@ describe("buildCorpus resume", () => {
 
 		await buildCorpus({ ...options, outputDir: outDir })
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await expect(buildCorpus({ ...options, outputDir: outDir, synthesize: false })).rejects.toThrow(
-			/resume refused.*align-checkpoint\.json/s
-		)
+		await expect(
+			buildCorpus({ ...options, outputDir: outDir, synthesize: false, priorOutput: PriorOutput.Resume })
+		).rejects.toThrow(/resume refused.*align-checkpoint\.json/s)
 	})
 
 	it("refuses to resume when a recorded parquet file is no longer on disk", async () => {
@@ -454,16 +509,118 @@ describe("buildCorpus resume", () => {
 
 		await buildCorpus({ ...options, outputDir: outDir })
 
-		const recorded = (await parquetManifest(outDir)).slices[0]!
+		const recorded = (await parquetManifest(outDir)).files[0]!
 
 		await removeFile(recorded.path)
 		await removePath(outDir("intermediate", "align-checkpoint.json"))
 
-		vi.stubEnv("MAILWOMAN_RESUME", "1")
-
-		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
+		await expect(buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })).rejects.toThrow(
 			/resume refused.*no file sits at that path/s
 		)
+	})
+
+	const intermediateSizes = async (outDir: PathBuilder): Promise<Record<string, number | null>> => {
+		const sizes: Record<string, number | null> = {}
+
+		for (const name of [
+			"labeled-train.jsonl",
+			"labeled-val.jsonl",
+			"labeled-test.jsonl",
+			"quarantine.jsonl",
+			"align-checkpoint.json",
+			"wof-admin/canonical.jsonl",
+			"wof-admin/MANIFEST.json",
+		]) {
+			const path = outDir("intermediate", ...name.split("/"))
+
+			sizes[name] = (await pathExists(path)) ? (await statPath(path)).size : null
+		}
+
+		return sizes
+	}
+
+	it("refuses a rerun into an output holding a checkpoint and leaves every file as it was", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await intermediateSizes(outDir)
+		const trainDigest = await sha256File(outDir("intermediate", "labeled-train.jsonl"))
+
+		expect(before["labeled-train.jsonl"]).toBeGreaterThan(0)
+
+		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(
+			/corpus build refused.*align-checkpoint\.json records 1 aligned adapters: wof-admin.*labeled-train\.jsonl: [\d,]+ bytes.*--resume.*--fresh/s
+		)
+
+		expect(await intermediateSizes(outDir)).toEqual(before)
+		expect(await sha256File(outDir("intermediate", "labeled-train.jsonl"))).toBe(trainDigest)
+	})
+
+	it("refuses a rerun when only a finished adapter run is present", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		for (const name of ["labeled-train.jsonl", "labeled-val.jsonl", "labeled-test.jsonl", "quarantine.jsonl"]) {
+			await removePath(outDir("intermediate", name))
+		}
+
+		await removePath(outDir("intermediate", "align-checkpoint.json"))
+
+		const before = await intermediateSizes(outDir)
+
+		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(/adapter run wof-admin/)
+		expect(await intermediateSizes(outDir)).toEqual(before)
+	})
+
+	it("continues from the checkpoint on a resume rather than aligning a completed adapter again", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		const before = await intermediateSizes(outDir)
+		const stages: string[] = []
+
+		await buildCorpus({
+			...options,
+			outputDir: outDir,
+			priorOutput: PriorOutput.Resume,
+			onProgress: (_stage, message) => stages.push(message),
+		})
+
+		expect(stages.some((message) => message.startsWith("resumed wof-admin"))).toBe(true)
+		expect(stages.some((message) => message.startsWith("aligning wof-admin"))).toBe(false)
+
+		const after = await intermediateSizes(outDir)
+
+		expect(after["labeled-train.jsonl"]).toBe(before["labeled-train.jsonl"])
+		expect(after["wof-admin/canonical.jsonl"]).toBe(before["wof-admin/canonical.jsonl"])
+	})
+
+	it("deletes the prior work and builds from the start under an explicit fresh choice", async () => {
+		const outDir = scratch.path("build")
+
+		const first = await buildCorpus({ ...options, outputDir: outDir })
+		const trainPath = outDir("intermediate", "labeled-train.jsonl")
+		const digest = await sha256File(trainPath)
+
+		// Stands for rows a fresh build must not keep.
+		await appendLocalTextFile(`${stringifyJSON({ raw: "row from the earlier build" })}\n`, trainPath)
+
+		const stages: string[] = []
+
+		const second = await buildCorpus({
+			...options,
+			outputDir: outDir,
+			priorOutput: PriorOutput.Fresh,
+			onProgress: (_stage, message) => stages.push(message),
+		})
+
+		expect(stages.some((message) => message.startsWith("aligning wof-admin"))).toBe(true)
+		expect(stages.some((message) => message.startsWith("resumed"))).toBe(false)
+		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
+		expect(await sha256File(trainPath)).toBe(digest)
 	})
 })
 

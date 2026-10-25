@@ -24,6 +24,7 @@ from .wrappers import (
     LogitsOnlyAnchorGazCountry,
     LogitsOnlyBundle,
     LogitsOnlyBundleHinted,
+    LogitsOnlyBundleHintedCodeUnit,
     LogitsOnlyChar,
     LogitsOnlyGaz,
     PlainOutputs,
@@ -52,6 +53,8 @@ class Channels:
     street_type_dim: int = 0
     locality_surface: bool = False
     locality_surface_dim: int = 0
+    code_unit: bool = False
+    code_unit_dim: int = 0
     char: bool = False
     locale: bool = False
     spans: bool = False
@@ -93,6 +96,8 @@ def detect_channels(model: nn.Module) -> Channels:
         street_type_dim=int(getattr(model, "street_type_feature_dim", 0)),
         locality_surface=bool(getattr(model, "use_locality_surface_anchor", False)),
         locality_surface_dim=int(getattr(model, "locality_surface_feature_dim", 0)),
+        code_unit=bool(getattr(model, "use_code_unit_anchor", False)),
+        code_unit_dim=int(getattr(model, "code_unit_feature_dim", 0)),
         char=bool(getattr(model, "use_char_embed", False)),
         # When the model has the locale self-conditioning head, export its pooled posterior as a
         # second output ("locale_logits", shape [batch, num_locales], labels.LOCALE_COUNTRIES order).
@@ -113,6 +118,12 @@ def detect_channels(model: nn.Module) -> Channels:
 
 def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
+    # The code-unit channel has one wrapper, on the hinted bundle the probe arm trains on.
+    if channels.code_unit and not (channels.bundle and channels.locale_hint and not channels.char):
+        raise NotImplementedError(
+            "use_code_unit_anchor is only exportable on the hinted evidence bundle "
+            "(anchor + gazetteer + country + street_type + locality_surface + locale_hint)."
+        )
     # The hint input has one wrapper, on the production bundle. Any other combination would export a
     # graph without the input, and the runtime could not pass a hint the model was trained to read.
     if channels.locale_hint and not (channels.bundle and not channels.char):
@@ -190,10 +201,18 @@ def build_export_graph(
     elif channels.bundle:
         street_type = _channel_args(batch, max_length, channels.street_type_dim)
         locality_surface = _channel_args(batch, max_length, channels.locality_surface_dim)
-        module = LogitsOnlyBundleHinted(model).eval() if channels.locale_hint else LogitsOnlyBundle(model).eval()
+        if channels.code_unit:
+            module = LogitsOnlyBundleHintedCodeUnit(model).eval()
+        elif channels.locale_hint:
+            module = LogitsOnlyBundleHinted(model).eval()
+        else:
+            module = LogitsOnlyBundle(model).eval()
         args = (dummy_ids, dummy_mask, *anchor, *gaz, *country, *street_type, *locality_surface)
         input_names = ["input_ids", "attention_mask", *_named("anchor", "gazetteer", "country")]
         input_names += _named("street_type", "locality_surface")
+        if channels.code_unit:
+            args = (*args, *_channel_args(batch, max_length, channels.code_unit_dim))
+            input_names += _named("code_unit")
         dynamic_shapes = {**BASE_DYNAMIC, **{name: dict(PER_TOKEN) for name in input_names[2:]}}
         if channels.locale_hint:
             args = (*args, torch.full((batch,), channels.num_address_systems, dtype=torch.long))

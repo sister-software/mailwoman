@@ -5,17 +5,17 @@
 #
 # The differences from v7.2.0-address-systems-60k.yaml are:
 #
-# 1. `data.corpus_dir` moves to v0.7.7-no-ppd, an overlay on v0.7.2-address-systems that replaces two sources:
+# 1. `data.corpus_dir` points to v0.7.7-no-ppd, an overlay on v0.7.2-address-systems that replaces two sources:
 #
 #      source              v0.7.2 rows (train / val / test)   GB rows from Price Paid Data    replacement
 #      rendered-gb         788,972 / 5,508 / 5,520            every row                       rendered-gb-os-open
 #      spliced-sub-venue   116,519 / 1,766 / 1,715            31,440 / 187 / 173              spliced-sub-venue
 #
-#    `rendered-gb-os-open` is the `locale` recipe's GB part reading the `gb-os-open` adapter's rows: each Code-Point
-#    Open postcode joined to its nearest named OS Open Roads link, with the street and locality from OS Open Names,
-#    all three under OGL v3.0, and a house number the adapter draws. `spliced-sub-venue` keeps its name. Its GB rows
-#    are replaced by GB rows rendered over house-venue-tuples-v4.jsonl, whose GB tuples come from the same adapter
-#    rows, and each new GB row takes an old GB row's position in the file. Its other 88,200 rows are v0.7.2's, in
+#    `rendered-gb-os-open` is the `locale` recipe's GB part reading the `gb-os-open` adapter's rows. Each Code-Point
+#    Open postcode joins its nearest OS Open Roads link. OS Open Names supplies the street and locality fields.
+#    All three datasets use OGL v3.0, and the adapter draws a house number. `spliced-sub-venue` keeps its name. Its GB
+#    rows are replaced by GB rows rendered over house-venue-tuples-v4.jsonl. The GB tuples come from the same adapter
+#    rows. Each new GB row takes an old GB row's position in the file. Its other 88,200 rows are v0.7.2's, in
 #    their original order, so the GB rows stay in the first 50,000-row group. No other source in the corpus
 #    holds a Price Paid Data row: `invented-house-venue` holds no GB row, and `fragment-assay`'s 907 GB rows are
 #    locality names harvested from the base corpus's WOF spans.
@@ -28,10 +28,11 @@
 # 3. `train.output_dir` and `train.trackio_run_name` name the v770 run.
 #
 # 4. Two sources are declined at 0.0, because the loader refuses a corpus source the weights do not name.
-#    `state-tx-notaries` (v7.2.0's 1.5) reads us-professional-licensing-3, whose decision is unchecked: no Texas
-#    Secretary of State terms were found. `reviewed-postcode-tail` (v7.2.0's 0.05) reads four facts cited to the UPU
-#    addressing guide for Venezuela, whose grant names no adaptation, and to the Anzoátegui state government, whose
-#    decision is refused. The `ve-locality-postcode-region` receipt that required its rows is removed with it.
+#    `state-tx-notaries` (v7.2.0's 1.5) reads us-professional-licensing-3. Its register decision is unchecked because
+#    no Texas Secretary of State terms were found. `reviewed-postcode-tail` (v7.2.0's 0.05) reads four facts cited to
+#    the UPU addressing guide for Venezuela and the Anzoátegui state government. The UPU grant names no adaptation.
+#    The Anzoátegui decision is refused. The `ve-locality-postcode-region` receipt that required its rows is removed
+#    with the source.
 #
 # Every other key is v7.2.0's, so the comparison against the published model measures the source replacement and
 # the two declined sources of point 4.
@@ -41,18 +42,18 @@
 #   mailwoman corpus fetch gb-os-open
 #   mailwoman corpus run gb-os-open --input $MAILWOMAN_DATA_ROOT/corpus/sources/gb-os-open \
 #     --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open
-#   mailwoman corpus slice locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
+#   mailwoman corpus recipe locale --country GB --count 800000 --seed 42 --intl-fraction 0.0664 \
 #     --out <dir>/rendered-gb-os-open.jsonl
 #   uv run python -m mailwoman_train.corpora.house_venue_tuples
-#   mailwoman corpus slice sub-venue --count 120000 --seed 42 --out <dir>/spliced-sub-venue-v4.jsonl
+#   mailwoman corpus recipe sub-venue --count 120000 --seed 42 --out <dir>/spliced-sub-venue-v4.jsonl
 #   mailwoman corpus migrate-recipe-outputs --files <dir>/spliced-sub-venue-v4.jsonl
-#   for each recipe output: `mailwoman corpus align-slice --corpus-version 0.7.7-no-ppd`, then
-#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-slice`
+#   for each recipe output: `mailwoman corpus align-recipe --corpus-version 0.7.7-no-ppd`, then
+#     `mailwoman dev jsonl-to-parquet`, then `mailwoman corpus split-overlay`
 #   per split, write `spliced-sub-venue-gbswap.<split>.parquet`: v0.7.0-de-holdout's
 #     `part-sub-venue.<split>.parquet` with its GB rows dropped, and the split's GB rows of
 #     `spliced-sub-venue-v4.<split>.parquet` placed, in file order, at the dropped rows' positions. A split with more
 #     new GB rows than old appends the extra rows, and one with fewer drops the unused positions. Every row takes the
-#     v4 rows' `license` text. v0.7.2's text named Price Paid Data among the skeleton sources of every sub-venue row,
+#     v4 rows' `license` text. v0.7.2's text listed Price Paid Data among the skeleton sources of every sub-venue row,
 #     the non-GB rows included, and those rows' skeletons came from OpenAddresses, BAN and US situs data.
 #   register the per-split files with `mailwoman corpus overlay-manifest --base <v0.7.2-address-systems MANIFEST.json>
 #     --replace-source rendered-gb,spliced-sub-venue --corpus-version 0.7.7-no-ppd --split …`. The call is recorded
@@ -63,7 +64,7 @@
 # rows match v0.7.2's text.
 #
 # `--intl-fraction 0.0664` keeps v0.7.2's order mix: 53,096 of its 800,000 rendered-gb rows were international order
-# and carried a region span. The recipe's default of 0.4 would put a region span on about 318,000 GB rows, so the
+# and included a region span. The recipe's default of 0.4 would put a region span on about 318,000 GB rows, so the
 # comparison would measure that change as well as the source replacement. `migrate-recipe-outputs` writes the
 # `recipe`, `register` and `surface` columns the sub-venue recipe leaves out, as v0.7.2's overlay migration did.
 #

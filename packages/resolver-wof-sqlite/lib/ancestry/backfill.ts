@@ -5,7 +5,8 @@
  *   Repair the truncated ancestry left by the `parent_id` closure. Must run after `populateAncestors` and before the build freezes.
  */
 
-import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"
+import { hierarchyAncestorsInAnyBranch } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -58,14 +59,6 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 	await visit(PathBuilder.from(reposRoot), 0)
 
 	return roots
-}
-
-// The `aid === id` check filters out a place's own `locality_id`.
-// For a neighborhood, that id identifies a real ancestor.
-function placetypeFromKey(key: string): string | null {
-	if (!key.endsWith("_id")) return null
-
-	return key.slice(0, -3)
 }
 
 /**
@@ -140,22 +133,7 @@ export async function backfillAncestorsFromHierarchy(
 			continue
 		}
 
-		const seen = new Map<number, string>()
-
-		for (const branch of hierarchy) {
-			for (const [key, val] of Object.entries(branch)) {
-				const pt = placetypeFromKey(key)
-
-				if (!pt) continue
-				const aid = Number(val)
-
-				if (!Number.isFinite(aid) || aid <= 0 || aid === id) continue
-
-				if (!seen.has(aid)) {
-					seen.set(aid, pt)
-				}
-			}
-		}
+		const seen = hierarchyAncestorsInAnyBranch(id, hierarchy)
 
 		let present = alreadyPresent.get(id)
 

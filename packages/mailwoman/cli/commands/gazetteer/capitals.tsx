@@ -31,7 +31,7 @@ export const spec = {
 
 const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCapitalsReference } = await import("#gazetteer/capitals")
+		const { buildCapitalsReference } = await import("@mailwoman/gazetteer/tools/pipeline/capitals")
 		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
@@ -58,7 +58,7 @@ const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 		return (
 			<Box flexDirection="column">
 				{state.result.map((line, i) => (
-					<Text key={i} color={i === 0 ? "green" : undefined}>
+					<Text key={i} {...(i === 0 ? { color: "green" } : {})}>
 						{i === 0 ? "✓ wrote " : "  "}
 						{line}
 					</Text>

@@ -17,15 +17,22 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } f
 import { createHash } from "@mailwoman/core/hash"
 import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
 
 /**
  * The name of one corpus split.
  */
 export type SplitName = "train" | "val" | "test"
+
+/**
+ * The three splits, in the order a build writes them.
+ */
+export const SPLIT_NAMES: readonly SplitName[] = ["train", "val", "test"]
 
 /**
  * The component values that identify the places one country holds out.
@@ -60,6 +67,12 @@ export interface SplitOptions {
 	 * The holdout policy keyed by ISO 3166-1 alpha-2 country code.
 	 */
 	holdouts?: Record<string, CountryHoldout>
+	/**
+	 * The corpus version the manifest records.
+	 *
+	 * @defaultValue `""`
+	 */
+	corpusVersion?: string
 }
 
 /**
@@ -71,134 +84,512 @@ export interface SplitManifest {
 	test: string[]
 	holdouts: Record<string, CountryHoldout>
 	/**
-	 * The corpus version, read from the first row that has one.
+	 * The corpus version the caller named.
 	 */
 	corpus_version: string
 	counts: { train: number; val: number; test: number; total: number }
 }
 
 /**
- * Returns the default holdouts — small, peripheral places in each country.
- * A change here takes effect at the next base corpus rebuild.
+ * Returns the default holdouts: places below the first-level region in each country,
+ * keyed only by open-vocabulary values, a postcode district or a locality.
+ * A change here takes effect at the next split of the corpus.
+ *
+ * No entry keys on a region.
+ * A region's name is a region span only in rows from that region, so holding a
+ * region out removes it as a label from training, and the model then relabels it
+ * (#2777: v0.8.0 train held 0 region spans for VT, ND, WY, Asturias, Kerala and Cornwall).
+ *
+ * Holding out places inside regions takes a small part of each region it touches
+ * and leaves the test split measuring unseen places under labels the model has seen.
+ *
+ * A selection script chose the district and locality lists below from the v0.8.0 rows of each country:
+ * - Candidates are postcode districts of a fixed length (US 3, AU 3, RO 4, LV and the French
+ *   overseas jurisdictions the full postcode), or, where most rows carry no postcode,
+ *   localities grouped by spelling with accents and punctuation removed.
+ *   A locality whose spelling matches a region surface is not a candidate.
+ *   Each candidate carries at least 1% of the country's v0.8.0 held-out rows.
+ * - They are walked in the order of `hashBucket(\`${country}|${candidate}\`, 2 ** 32)`
+ *   and taken while the country's held-out rows stay at or under its v0.8.0 held-out rows,
+ *   because a borderline row goes to training.
+ *   A country whose candidates under that bound number fewer than two takes its smallest
+ *   candidates up to two, so its held-out set has groups to grade (YT, PF and NC).
+ *   Taking also requires that every region with at least {@link HOLDOUT_CAP_MIN_ROWS}
+ *   rows loses at most {@link heldOutRegionCap}`(share)` of its rows, and of its rows
+ *   with no postcode, where `share` is the country's v0.8.0 held-out share.
+ * - A locality group is held out by every spelling the v0.8.0 rows write.
+ * `held-out-spans.full.test.ts` checks a built corpus against this table.
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
-		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
-		FR: {
-			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
-			// BAN street rows have no region, so these postcode departments hold out the
-			// same three places: Corse 20, Creuse 23 and Lozère 48.
-			postcodePrefixes: ["20", "23", "48"],
-		},
-		DE: {
-			// Only `wof-admin` has a DE region, so these Länder hold out admin rows only.
-			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
-			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
-			// so the regions above match no street row.
-			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout.
-			// German postcodes have five digits, so this holdout cannot collide.
-			postcodePrefixes: ["02"],
-		},
+		// FR, DE and GB keep the postcode areas of earlier corpora, so the held-out
+		// rows already verified unseen stay unseen.
+		// Their region names, Corse, Lozère, Creuse, Saarland, Mecklenburg-Vorpommern
+		// and Cornwall, left the table.
+		// FR: Corse 20, Creuse 23 and Lozère 48.
+		// DE: area 02, Upper Lusatia in eastern Sachsen.
+		// GB: the Truro and Halifax areas, and ten districts of the Llandudno area.
+		// The whole LL area held 75% of the rendered rows naming Conwy, 74% of Wrecsam's and 67% of
+		// Sir Ddinbych's, so its districts were chosen by the method above, with the cap read for every
+		// region the v0.8.2 GB rows name, these Welsh counties carrying under 100 region rows each.
+		// No prefix is a prefix of another, and no district key is a prefix of another district.
+		FR: { postcodePrefixes: ["20", "23", "48"] },
+		DE: { postcodePrefixes: ["02"] },
 		GB: {
-			// GB street rows have no region, so the holdout matches postcode areas —
-			// Truro, Llandudno and Halifax.
-			// Each prefix has two letters and none is a prefix of another
-			// (`L` for Liverpool would also match `LL`).
-			postcodePrefixes: ["TR", "LL", "HX"],
-			// Cornwall matches the admin rows for the same place `TR` covers.
-			regions: ["Cornwall"],
-		},
-		// The eight countries below enter training through OpenStreetMap rows. Most hold no
-		// region and some no postcode, so each holdout matches its place three ways: the region an
-		// admin row holds, the postcode prefix, and the city as the OSM rows spell it. The spellings
-		// are the ones the 2026-10-02 extracts write.
-		CN: {
-			// Gansu by its province and capital, and Qinghai `81` and Tibet `85` by postcode.
-			regions: ["甘肃省", "甘肃", "Gansu"],
-			postcodePrefixes: ["81", "85"],
-			localities: ["兰州市", "兰州", "Lanzhou"],
-		},
-		IN: {
-			// Kerala.
-			// Its PIN codes run 67 to 69.
-			regions: ["Kerala"],
-			postcodePrefixes: ["67", "68", "69"],
-			localities: ["Kochi", "Kollam", "Thiruvananthapuram", "Kozhikode"],
-		},
-		ID: {
-			// Bali.
-			// Its postcodes begin `80`.
-			regions: ["Bali"],
-			postcodePrefixes: ["80"],
-			localities: ["Denpasar", "Bali"],
-		},
-		NG: {
-			// Enugu State.
-			// OSM Nigeria rows hold almost no postcode or region, so the city names supply the holdout.
-			regions: ["Enugu"],
-			localities: ["Enugu", "Nsukka"],
-		},
-		PK: {
-			// Islamabad Capital Territory, in both scripts the extract writes.
-			regions: ["Islamabad Capital Territory"],
-			postcodePrefixes: ["44"],
-			localities: ["Islamabad", "islamabad", "اسلام آباد"],
-		},
-		BD: {
-			// Chattogram, Khulna and Sylhet.
-			// Their postcodes begin 4, 9 and 3 respectively.
-			postcodePrefixes: ["40", "41", "42", "43", "90", "91", "92", "31"],
-			localities: ["Chittagong", "Chattogram", "Khulna", "Sylhet"],
-		},
-		VN: {
-			regions: ["Thành phố Cần Thơ", "Cần Thơ", "Thừa Thiên Huế"],
-			localities: ["Cần Thơ", "Thành phố Cần Thơ", "Huế", "Thành phố Huế"],
-		},
-		RU: {
-			// Primorsky Krai.
-			// Its postcodes run 690 to 692.
-			regions: ["Приморский край"],
-			postcodePrefixes: ["690", "691", "692"],
-			localities: ["Владивосток", "Уссурийск", "Находка"],
-		},
-		// Each French overseas jurisdiction is one INSEE department with one postcode range,
-		// so the BAN rows hold out by commune, spelled as BAN's `nom_commune` writes it.
-		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
-		// so neither has a place to hold out.
-		GP: { localities: ["Le Moule"] },
-		MQ: { localities: ["Le Robert", "Ducos"] },
-		GF: { localities: ["Kourou"] },
-		RE: { localities: ["Saint-Louis", "Saint-Leu"] },
-		PM: { localities: ["Miquelon-Langlade"] },
-		YT: { localities: ["Dzaoudzi", "Pamandzi"] },
-		// Tumaraa holds 1,522 of PF's 6,755 rows with a street, more than a tenth,
-		// because Pirae's 958 rows have no street name and Papeete has the remaining 5,233.
-		PF: { localities: ["Tumaraa"] },
-		NC: { localities: ["Koné", "Pouembout", "Kaala-Gomen"] },
-		LV: {
-			// Latgale's south-east: the Krāslava, Ludza, Balvi, Preiļi and Līvāni municipalities.
-			// Their postcodes begin LV-56, LV-57, LV-45 and LV-53.
-			// The state city Rēzekne lies in no municipality.
-			// The address register writes `nov.`; other sources spell the municipality out.
-			regions: [
-				"Krāslavas nov.",
-				"Ludzas nov.",
-				"Balvu nov.",
-				"Preiļu nov.",
-				"Līvānu nov.",
-				"Krāslavas novads",
-				"Ludzas novads",
-				"Balvu novads",
-				"Preiļu novads",
-				"Līvānu novads",
+			postcodePrefixes: [
+				"TR",
+				"HX",
+				"LL15",
+				"LL17",
+				"LL21",
+				"LL26",
+				"LL36",
+				"LL40",
+				"LL41",
+				"LL53",
+				"LL54",
+				"LL55",
+				"LL57",
 			],
-			postcodePrefixes: ["LV-45", "LV-53", "LV-56", "LV-57"],
-			localities: ["Rēzekne"],
+		},
+		// Three-digit ZIP areas.
+		US: {
+			postcodePrefixes: [
+				"084",
+				"156",
+				"171",
+				"172",
+				"223",
+				"317",
+				"364",
+				"450",
+				"664",
+				"683",
+				"716",
+				"734",
+				"759",
+				"763",
+				"808",
+				"881",
+			],
+		},
+		AU: {
+			postcodePrefixes: [
+				"080",
+				"083",
+				"203",
+				"248",
+				"366",
+				"375",
+				"379",
+				"397",
+				"406",
+				"467",
+				"470",
+				"523",
+				"607",
+				"628",
+				"631",
+				"640",
+				"651",
+				"733",
+			],
+		},
+		LV: {
+			postcodePrefixes: [
+				"LV-1004",
+				"LV-1023",
+				"LV-1029",
+				"LV-1057",
+				"LV-2011",
+				"LV-2012",
+				"LV-2016",
+				"LV-2105",
+				"LV-2111",
+				"LV-2119",
+				"LV-2161",
+				"LV-3001",
+				"LV-3007",
+				"LV-3145",
+				"LV-3284",
+				"LV-3456",
+				"LV-3708",
+				"LV-3933",
+				"LV-4033",
+				"LV-4245",
+				"LV-4630",
+				"LV-4838",
+				"LV-5022",
+				"LV-5070",
+				"LV-5120",
+				"LV-5202",
+				"LV-5413",
+				"LV-5414",
+				"LV-5417",
+				"LV-5418",
+				"LV-5422",
+				"LV-5449",
+				"LV-5473",
+				"LV-5481",
+				"LV-5664",
+				"LV-5674",
+			],
 		},
 		RO: {
-			// Alba 51, Hunedoara 33, Mureș 54 and Sibiu 55: a Romanian postcode's first two digits name its county.
-			regions: ["Alba", "Hunedoara", "Mureș", "Sibiu"],
-			postcodePrefixes: ["51", "33", "54", "55"],
+			postcodePrefixes: [
+				"0312",
+				"0613",
+				"0751",
+				"1070",
+				"1073",
+				"1153",
+				"1276",
+				"1300",
+				"1470",
+				"2004",
+				"2005",
+				"2173",
+				"2200",
+				"2352",
+				"2477",
+				"3102",
+				"3271",
+				"4000",
+				"4004",
+				"4073",
+				"4173",
+				"4270",
+				"4451",
+				"5004",
+				"5101",
+				"5176",
+				"5356",
+				"5475",
+				"5510",
+				"5571",
+				"6052",
+				"6170",
+				"6271",
+				"7000",
+				"7001",
+				"7005",
+				"7006",
+				"7202",
+				"7251",
+				"7254",
+				"7310",
+				"7370",
+				"7375",
+				"8004",
+				"9003",
+				"9272",
+			],
+		},
+		// Each French overseas jurisdiction's BAN rows carry a commune postcode, so these hold out communes.
+		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
+		// and Saint-Pierre-et-Miquelon's Saint-Pierre holds 2,706 of its 3,084 rows,
+		// so those three are left to the hashed holdout.
+		GP: { postcodePrefixes: ["97113", "97125", "97126", "97128", "97136"] },
+		MQ: { postcodePrefixes: ["97211", "97216", "97225", "97227", "97233"] },
+		GF: {
+			postcodePrefixes: ["97313", "97314", "97315", "97316", "97319", "97350", "97360", "97380", "97390"],
+		},
+		RE: { postcodePrefixes: ["97423", "97427", "97438", "97442", "97450"] },
+		YT: { postcodePrefixes: ["97625", "97660"] },
+		PF: { postcodePrefixes: ["98713", "98716"] },
+		NC: { postcodePrefixes: ["98817", "98820", "98859"] },
+		// The countries below carry a postcode on few rows (ES 13%, IT 6%, RU 20% and under 40% for the rest),
+		// so their holdouts are localities.
+		// ID's `<different>` and NG's `edo state` and `imo`, a placeholder and two state
+		// names written as localities, were dropped from the selection.
+		// One VN commune of Hàm Thuận was dropped too, because the repository spelling
+		// check reads its last word as a typo.
+		// CN and IN are left to the hashed holdout: their locality spans are a
+		// million village and neighborhood names with a median of about ten rows,
+		// so a declared list would need tens of thousands of entries.
+		ES: {
+			localities: [
+				"adeje",
+				"agaete",
+				"agaetė",
+				"aguimes",
+				"agüimes",
+				"alegría-dulantzi",
+				"amurrio",
+				"arafo",
+				"arico",
+				"arona",
+				"fasnia",
+				"granadilla de abona",
+				"guia de isora",
+				"guía de isora",
+				"hermigua",
+				"melgar de yuso",
+				"mogan",
+				"mogán",
+				"san bartolome de tirajana",
+				"san bartolomé de tirajana",
+				"san miguel de abona",
+				"san sebastián de la gomera",
+				"santiago del teide",
+				"tejeda",
+				"valle gran rey",
+				"vallehermoso",
+			],
+		},
+		IT: {
+			localities: [
+				"arborea",
+				"arbórea",
+				"buggerru",
+				"cabras",
+				"domusnovas",
+				"fluminimaggiore",
+				"gonnesa",
+				"guspini",
+				"gùspini",
+				"marrubiu",
+				"marrùbiu",
+				"perdaxius",
+				"porto torres",
+				"portoscuso",
+				"portotorres",
+				"san giovanni suergiu",
+				"san nicolo d'arcidano",
+				"san nicolo' d'arcidano",
+				"san nicolò d'arcidano",
+				"san nicolò d’arcidano",
+				"sant'anna arresi",
+				"sant'antioco",
+				"santa giusta",
+				"santantioco",
+				"sant’anna arresi",
+				"sant’antioco",
+				"stintino",
+				"terralba",
+			],
+		},
+		ID: {
+			localities: [
+				"balikpapan",
+				"bekasi",
+				"blega",
+				"bogor",
+				"central jakarta",
+				"depok",
+				"east jakarta",
+				"garut",
+				"jakarta utara",
+				"jimbaran",
+				"kabupaten bandung",
+				"karawang",
+				"kel. karang pamulang",
+				"kota bandung",
+				"kota batam",
+				"kota bekasi",
+				"kota malang",
+				"kota tangerang selatan",
+				"kupang",
+				"kuta",
+				"lhokseumawe",
+				"makassar",
+				"mataram",
+				"rancah",
+				"salatiga",
+				"samarinda",
+				"sidoarjo",
+				"sleman",
+				"surakarta",
+				"west jakarta",
+			],
+		},
+		PK: {
+			localities: ["faisal town", "gujrat", "multan", "اسلام آباد"],
+		},
+		VN: {
+			localities: [
+				"bien hoa",
+				"biên hòa",
+				"buon ma thuot",
+				"buôn ma thuột",
+				"dĩ an - bình dương",
+				"ha giang",
+				"ha long",
+				"hà giang",
+				"hạ long",
+				"long xuyên",
+				"mui ne",
+				"móng cái",
+				"mũi né",
+				"mỹ tho",
+				"phan rang - tháp chàm",
+				"phan rang- tháp chàm",
+				"phan rang-tháp chàm",
+				"phường 13",
+				"phường 15",
+				"phường 16",
+				"phường 2",
+				"phường 22",
+				"phường hiệp bình chánh",
+				"phường hiệp thành",
+				"phường hòa thạnh",
+				"phường thới an",
+				"phường tân quy",
+				"phường tân quý",
+				"phường đại mỗ",
+				"pleiku",
+				"q.cấu giấy",
+				"q.cầu giấy",
+				"sa pa",
+				"saigon",
+				"sapa",
+				"sài gòn",
+				"thành phố huế",
+				"thành phố hải phòng",
+				"thành phố phú quốc",
+				"thành phố thái nguyên",
+				"thành phố thủ dầu một",
+				"thành phố vũng tàu",
+				"tp. hcm",
+				"tp.hồ chí minh",
+				"tuy hoa",
+				"tuy hoà",
+				"tuy hòa",
+				"tân an",
+				"vinh",
+				"việt trì",
+				"vung tau",
+				"vũng tàu",
+				"xã lai vung",
+				"đồng hới",
+				"đồng xoài",
+			],
+		},
+		NG: {
+			localities: [
+				"ibadan",
+				"iiupeju",
+				"ilorin",
+				"isiozi-akah",
+				"kabala",
+				"korongilum",
+				"kosofe",
+				"lekki peninsula ii",
+				"lokoja",
+				"magodo",
+				"makera",
+				"mararaba",
+				"nsukka",
+				"ota",
+				"oyo town",
+				"suncity",
+				"udu",
+				"unec enugu",
+				"zaria",
+			],
+		},
+		BD: {
+			localities: [
+				", gazipur",
+				",gazipur",
+				"brahmanbaria",
+				"chandpur",
+				"chattogram",
+				"chattogram (chittagong)",
+				"chittagong",
+				"chittagong.",
+				"dhanmondi",
+				"gazipur",
+				"jamalpur",
+				"jessore",
+				"lalmatia",
+				"magura",
+				"mirpur 10",
+				"mirpur-10",
+				"mohammadpur area",
+				"narsingdi",
+				"paity",
+				"patuakhali",
+				"rajbari",
+				"rajshahi",
+				"ramganj",
+				"rangamati",
+				"sonargaon",
+				"sreemangal",
+				"terokhada khulna",
+				"tongi",
+				"uttara",
+				"uttara.",
+				"ডেমরা",
+				"মোহাম্মদপুর",
+			],
+		},
+		NZ: {
+			localities: [
+				"ashburton",
+				"auckland central",
+				"awarua plains",
+				"bell block",
+				"chartwell",
+				"christchurch",
+				"christchurch central",
+				"conical hills",
+				"dunedin",
+				"east end",
+				"east gore",
+				"east tamaki",
+				"eastern bush",
+				"glengarry",
+				"glenham",
+				"gummies bush",
+				"hamilton east",
+				"hillsborough",
+				"kaeo",
+				"kaitaia",
+				"levin",
+				"lochiel",
+				"manapouri",
+				"masterton",
+				"mataura",
+				"mossburn",
+				"new plymouth",
+				"ngaruawahia",
+				"niagara",
+				"nightcaps",
+				"otapiri gorge",
+				"otautau",
+				"papamoa",
+				"papatoetoe",
+				"pauanui",
+				"queenstown",
+				"riverton",
+				"rolleston",
+				"round hill",
+				"south hillend",
+				"southbridge",
+				"stoke",
+				"strathern",
+				"taupo",
+				"taupō",
+				"the key",
+				"tisbury",
+				"tokoroa",
+				"twizel",
+				"waikiwi",
+				"waipounamu",
+				"waitara",
+				"wallacetown",
+				"wanaka",
+				"waverley",
+				"wellington",
+				"wendon valley",
+				"westport",
+				"whitford",
+				"wyndham",
+			],
+		},
+		RU: {
+			localities: ["алатырь", "архангельск", "валевая", "дубенки", "дубёнки", "лукьяновка", "таврово", "шадринск"],
 		},
 	}
 }
@@ -214,6 +605,133 @@ export const HOLDOUT_COMPONENT_TAGS: ReadonlySet<string> = new Set(["venue", "re
  * One place in this number is held out in a country without a {@link defaultHoldouts} entry.
  */
 export const HASHED_PLACE_HOLDOUT_DIVISOR = 50
+
+/**
+ * The held-out share the hashed holdout aims at: one place in {@link HASHED_PLACE_HOLDOUT_DIVISOR}.
+ */
+export const HASHED_PLACE_HOLDOUT_SHARE = 1 / HASHED_PLACE_HOLDOUT_DIVISOR
+
+/**
+ * A region, or a country whose rows carry no region, is checked against
+ * {@link heldOutRegionCap} only when it has at least this many rows.
+ */
+export const HOLDOUT_CAP_MIN_ROWS = 100
+
+/**
+ * The largest share of one region's rows a holdout may take, given the country's
+ * held-out share: `min(0.25, max(0.05, 3 × share))`.
+ *
+ * The declared holdouts in {@link defaultHoldouts} were chosen under this bound, and the
+ * hashed holdout trains on a place that exceeds it (see {@link hashedHoldoutTrainedPlaces}).
+ */
+export function heldOutRegionCap(share: number): number {
+	return Math.min(0.25, Math.max(0.05, 3 * share))
+}
+
+/**
+ * The rows one hash-selected place carries inside one region, or inside its country
+ * when the rows carry no region.
+ */
+export interface HashedPlaceRegionCount {
+	country: string
+	/**
+	 * The key {@link hashedHoldoutPlace} returns.
+	 */
+	place: string
+	/**
+	 * The region under `foldNFKCWhitespace`, or null for rows with no region.
+	 */
+	region: string | null
+	rows: number
+}
+
+/**
+ * Returns, per country, the hash-selected places that exceed {@link heldOutRegionCap}
+ * of {@link HASHED_PLACE_HOLDOUT_SHARE} in some region, sorted.
+ *
+ * A place's rows in a region are divided by that region's rows, and its rows with
+ * no region by the country's rows with no region.
+ * A denominator under {@link HOLDOUT_CAP_MIN_ROWS} is not checked.
+ *
+ * @param denominators Rows per `${country}|${region}`, with an empty region for rows with no region.
+ */
+export function hashedPlacesOverCap(
+	counts: Iterable<HashedPlaceRegionCount>,
+	denominators: ReadonlyMap<string, number>
+): Record<string, string[]> {
+	const cap = heldOutRegionCap(HASHED_PLACE_HOLDOUT_SHARE)
+	const over = new Map<string, Set<string>>()
+
+	for (const { country, place, region, rows } of counts) {
+		const key = `${country}|${region ?? ""}`
+		const total = denominators.get(key)
+
+		if (typeof total !== "number") throw new Error(`no row count for ${key}, the region of ${country} ${place}`)
+
+		if (total < HOLDOUT_CAP_MIN_ROWS || rows / total <= cap) continue
+
+		const places = over.get(country) ?? new Set<string>()
+
+		places.add(place)
+		over.set(country, places)
+	}
+
+	return Object.fromEntries([...over.keys()].toSorted().map((country) => [country, [...over.get(country)!].toSorted()]))
+}
+
+/**
+ * The hash-selected places trained on rather than held out, because each one exceeds
+ * {@link heldOutRegionCap} of {@link HASHED_PLACE_HOLDOUT_SHARE} of a region of at least
+ * {@link HOLDOUT_CAP_MIN_ROWS} rows (or of its country's rows with no region).
+ *
+ * {@link hashedPlacesOverCap} chose this table from the v0.8.1 rows.
+ * A place that leaves the holdout is not replaced by another, so the country's held-out
+ * share falls: a borderline row goes to training, as in {@link defaultHoldouts}.
+ *
+ * The cap bounds a place's share of a region.
+ * It leaves a place that dominates one source's held-out rows in the holdout: v0.8.1's
+ * `IN|locality:new delhi` was 0.036% of IN's rows with no region while holding every osm-in New Delhi row.
+ */
+export function hashedHoldoutTrainedPlaces(): Record<string, readonly string[]> {
+	return HASHED_HOLDOUT_TRAINED_PLACES
+}
+
+const HASHED_HOLDOUT_TRAINED_PLACES: Record<string, readonly string[]> = {
+	CN: ["locality:黄山市", "locality:黄石市"],
+	EG: ["postcode:42", "postcode:46"],
+	HT: ["locality:gonaives"],
+	IM: ["locality:douglas"],
+	MK: ["locality:драчево"],
+	SM: ["locality:città di san marino"],
+	UY: ["locality:vergara"],
+}
+
+const trainedPlaceSetCache = new WeakMap<object, Map<string, ReadonlySet<string>>>()
+
+function trainedPlaceSet(table: Record<string, readonly string[]>, country: string): ReadonlySet<string> | undefined {
+	let byCountry = trainedPlaceSetCache.get(table)
+
+	if (!byCountry) {
+		byCountry = new Map(Object.entries(table).map(([cc, places]) => [cc, new Set(places)]))
+		trainedPlaceSetCache.set(table, byCountry)
+	}
+
+	return byCountry.get(country)
+}
+
+/**
+ * Returns the place the hashed holdout selects for a row of a country without a
+ * {@link defaultHoldouts} entry, before {@link hashedHoldoutTrainedPlaces} is applied,
+ * or null when the hash does not select its place.
+ */
+export function hashSelectedPlace(
+	country: string,
+	components: Partial<Record<"venue" | "locality" | "postcode" | "region", string>>
+): string | null {
+	const place = hashedHoldoutPlace(components)
+
+	return place !== null && hashBucket(`${country}|${place}`, HASHED_PLACE_HOLDOUT_DIVISOR) === 0 ? place : null
+}
 
 /**
  * The key a row is held out by under the hashed holdout: its venue, else its locality,
@@ -254,7 +772,35 @@ export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
 }
 
-type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
+interface FoldedHoldoutNames {
+	regions: ReadonlySet<string>
+	localities: ReadonlySet<string>
+}
+
+const foldedNamesCache = new WeakMap<object, FoldedHoldoutNames>()
+
+/**
+ * A policy's region and locality names under `foldNFKCWhitespace`, computed once per policy object.
+ *
+ * Sources write one place in several cases and spacings (`Asturias`, `ASTURIAS`, `Balearic  Islands`).
+ * An exact match held out one spelling and trained on the rest.
+ */
+function foldedNamesFor(declared: CountryHoldout, policy: HoldoutPolicy): FoldedHoldoutNames {
+	const cached = foldedNamesCache.get(declared)
+
+	if (cached) return cached
+
+	const names: FoldedHoldoutNames = {
+		regions: new Set((policy.regions ?? []).map(foldNFKCWhitespace)),
+		localities: new Set((policy.localities ?? []).map(foldNFKCWhitespace)),
+	}
+
+	foldedNamesCache.set(declared, names)
+
+	return names
+}
+
+type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components">
 
 /**
  * Returns the split for one row.
@@ -264,7 +810,8 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_versio
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
-	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
+	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
+	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces()
 ): SplitName {
 	const declared = holdouts[row.country]
 	const { region, postcode, locality } = row.components
@@ -272,22 +819,26 @@ export function splitForRow(
 
 	if (declared) {
 		const policy = holdoutPolicyFor(declared)
+		const folded = foldedNamesFor(declared, policy)
 
-		isHeldOut =
-			(region !== undefined && (policy.regions?.includes(region) ?? false)) ||
-			(postcode !== undefined && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
-			(locality !== undefined && (policy.localities?.includes(locality) ?? false))
+		isHeldOut = Boolean(
+			(region && folded.regions.has(foldNFKCWhitespace(region))) ||
+			(postcode && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
+			(locality && folded.localities.has(foldNFKCWhitespace(locality)))
+		)
 	} else {
 		// A country without a declared holdout holds out whole places chosen by hash,
 		// so every country in the corpus reaches val and test.
-		const place = hashedHoldoutPlace(row.components)
+		// A place too large for its region trains.
+		const place = hashSelectedPlace(row.country, row.components)
 
-		isHeldOut = place !== null && hashBucket(`${row.country}|${place}`, HASHED_PLACE_HOLDOUT_DIVISOR) === 0
+		isHeldOut = place !== null && !trainedPlaceSet(trainedPlaces, row.country)?.has(place)
 	}
 
 	if (!isHeldOut) return "train"
 
-	return hashBucket(row.source_id, 2) === 0 ? "val" : "test"
+	// The bucket is the record's, so the rendered rows of one record stay together in val or test.
+	return hashBucket(recordIDOf(row.source_id), 2) === 0 ? "val" : "test"
 }
 
 /**
@@ -301,13 +852,8 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	const train: string[] = []
 	const val: string[] = []
 	const test: string[] = []
-	let corpus_version = ""
 
 	for (const row of rows) {
-		if (!corpus_version && row.corpus_version) {
-			corpus_version = row.corpus_version
-		}
-
 		const split = splitForRow(row, holdouts)
 
 		if (split === "train") {
@@ -326,7 +872,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 		val,
 		test,
 		holdouts,
-		corpus_version,
+		corpus_version: opts.corpusVersion ?? "",
 		counts: { train: train.length, val: val.length, test: test.length, total },
 	}
 }
@@ -367,17 +913,29 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 /**
  * The `LabeledRow` fields that the split functions read.
  */
-export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
+export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "components">
 
 /**
- * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file per split.
+ * Writes the same files as `writeSplitManifests` from the rows' `source_id` values.
  *
  * `buildCorpus` calls this after its align loop partitions rows with `splitForRow`.
  * The caller passes the counts to avoid rescanning the files.
  * `sort(1)` spills to disk, so memory stays constant.
+ *
+ * Each split's ids come from the first of these the caller supplies:
+ *
+ * - `sortedSourceIDPaths`: lists already sorted by byte, merged by `sort -m`.
+ *   A build that aligned its sources apart passes each source's sorted list.
+ * - `sourceIDPaths`: one id per line in the order align wrote them, read by `sort` directly.
+ * - `labeledPaths`, the labeled JSONL itself, parsed for each row's `source_id`.
+ *   An align phase resumed from a checkpoint written before align recorded ids leaves only this.
+ *
+ * The three write the same bytes from the same rows, because each feeds `sort` the same multiset of ids.
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, PathBuilderLike>
+	sourceIDPaths?: Record<SplitName, PathBuilderLike> | null
+	sortedSourceIDPaths?: Record<SplitName, readonly PathBuilderLike[]> | null
 	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
@@ -387,9 +945,17 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
 
 	for (const split of ["train", "val", "test"] as const) {
-		const labeledPath = opts.labeledPaths[split]
 		const outPath = resolvePathBuilder(opts.outputDir, `${split}.txt`)
-		await streamSortedSourceIDs(labeledPath, outPath)
+		const sorted = opts.sortedSourceIDPaths?.[split]
+		const ids = opts.sourceIDPaths?.[split]
+
+		if (sorted) {
+			await sortLines(sorted, outPath, { merge: true })
+		} else if (ids) {
+			await sortLines([ids], outPath)
+		} else {
+			await streamSortedSourceIDs(opts.labeledPaths[split], outPath)
+		}
 	}
 
 	const total = opts.counts.train + opts.counts.val + opts.counts.test
@@ -434,19 +1000,41 @@ async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath:
 
 	await outClosed
 
+	await sortLines([unsortedPath], outPath)
+
+	await removePath(unsortedPath).catch(() => {})
+}
+
+/**
+ * Sort the lines of `inputs` by byte into `outPath` with `sort(1)`, which spills to disk.
+ *
+ * With `merge`, each input must already be sorted by byte, and `sort -m` merges them without sorting again.
+ * Duplicate lines are kept either way, and zero inputs write an empty file.
+ */
+export async function sortLines(
+	inputs: readonly PathBuilderLike[],
+	outPath: PathBuilderLike,
+	options: { merge?: boolean } = {}
+): Promise<void> {
+	if (!inputs.length) {
+		await writeLocalTextFile("", outPath)
+
+		return
+	}
+
+	const args = [...(options.merge ? ["-m"] : []), ...inputs.map((input) => input.toString()), "-o", outPath.toString()]
+
 	await new Promise<void>((resolve, reject) => {
 		// `LC_ALL=C` sorts by byte, so the order is the same on every host.
-		const proc = spawnProcess("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
+		const proc = spawnProcess("sort", args, { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
 
 		proc.on("exit", (code) => {
 			if (code === 0) {
 				resolve()
 			} else {
-				reject(new Error(`sort exited with code ${code}`))
+				reject(new Error(`sort ${args.join(" ")} exited with code ${code}`))
 			}
 		})
 	})
-
-	await removePath(unsortedPath).catch(() => {})
 }

@@ -36,7 +36,7 @@
  * `Am Stengber`, `An Hiesel` and `Um Reebou`.
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
- * `#recipes/bare/country` and `#tools/postcode-triples`.
+ * `#recipes/bare/country` and `#tools/postcode/triples`.
  * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher did not
  * tag.
  *
@@ -165,7 +165,7 @@ export function createBDAdressesAdapter(): CorpusAdapter {
 				for await (const record of rows as AsyncIterable<BDAdressesRow>) {
 					if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+					if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 					const street = (record.rue ?? "").trim()
 					const house = (record.numero ?? "").trim()
@@ -216,7 +216,6 @@ export function createBDAdressesAdapter(): CorpusAdapter {
 						locale: "und-LU",
 						source: BD_ADRESSES_ADAPTER_ID,
 						source_id: sourceID,
-						corpus_version: "",
 						license: BD_ADRESSES_DEFAULT_LICENSE,
 					}
 

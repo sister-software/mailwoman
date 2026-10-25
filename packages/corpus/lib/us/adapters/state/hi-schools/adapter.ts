@@ -111,7 +111,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 			for await (const record of readSchoolRows(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const name = schoolCellText(record.name)
 				const address = schoolCellText(record.address)
@@ -154,7 +154,6 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: STATE_HI_SCHOOLS_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 				}
 

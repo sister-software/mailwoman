@@ -13,6 +13,9 @@
 	"include": ["./**/*"],
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../../mtf" },
+		{ "path": "../../gazetteer" },
+		{ "path": "../../gazetteer/tools" },
 		{ "path": ".." },
 		// ---
 		{ "path": "../../activity-lexicon" },
@@ -23,6 +26,7 @@
 		{ "path": "../../postcode" },
 		{ "path": "../../core" },
 		{ "path": "../../corpus" },
+		{ "path": "../../dictionaries" },
 		{ "path": "../../evidence" },
 		{ "path": "../../kind-classifier" },
 		{ "path": "../../locale-hint" },

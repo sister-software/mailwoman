@@ -46,7 +46,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 		if (!nodes.length) return this
 
 		for (const node of nodes) {
-			if (node === undefined || node === null) {
+			if (!node || node === null) {
 				throw new Error("Attempted to add an undefined or null node to a sequence.")
 			}
 
@@ -66,7 +66,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	 * Delete a node from the sequence.
 	 */
 	public override delete(node: T): boolean {
-		if (node === undefined || node === null) {
+		if (!node || node === null) {
 			throw new Error("Attempted to delete an undefined or null node from a sequence.")
 		}
 

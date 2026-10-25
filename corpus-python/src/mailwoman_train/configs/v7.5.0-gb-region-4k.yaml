@@ -346,7 +346,7 @@ data:
       min_draws: 1000
       source: fragment-fr-bare-street-v22
       country: FR
-    # Corpus v0.7.5 replaces the `rendered-gb` files, which changes the file mix. The audit drew
+    # Corpus v0.7.5 replaces the `rendered-gb` files. The file mix changes, and the audit drew
     # 192 of these rows in 1,000,000.
     - name: ve-locality-postcode-region
       min_draws: 150

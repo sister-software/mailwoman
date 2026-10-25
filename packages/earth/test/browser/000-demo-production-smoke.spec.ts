@@ -8,7 +8,7 @@ import { expect, test } from "../e2e/index.ts"
 test.describe("Demo — production functional smoke @smoke", () => {
 	test("the basemap requests a vector tile (the tile worker is alive)", async ({ demo, page }) => {
 		// Tile requests run inside MapLibre's worker, so this catches a worker that fails silently.
-		const tileRequest = page.waitForRequest(/\/basemap-v4\/\d+\/\d+\/\d+\.mvt/, { timeout: 60_000 })
+		const tileRequest = page.waitForRequest(/\/planet\.v4\/\d+\/\d+\/\d+\.mvt/, { timeout: 60_000 })
 		await demo.goto()
 
 		const request = await tileRequest

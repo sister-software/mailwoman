@@ -68,13 +68,12 @@ def _row(**over) -> dict:
         "span_tags": ["house_number", "street", "locality", "region", "postcode"],
         "country": "US",
         "locale": "en-US",
-        "source": "test",
+        "source": "tiger",
         "source_id": "t-1",
-        "corpus_version": "0.5.0",
         "license": "CC0-1.0",
         "register": "us-census-tiger",
         "surface": "attested",
-        "recipe": None,
+        "augmentation": None,
         "base_source_id": None,
     }
     base.update(over)
@@ -166,3 +165,31 @@ def test_nonparallel_span_triple_fails_loudly(tmp_path: Path) -> None:
     result = _convert(tmp_path, [_row(source_id="t-skew", span_tags=["street"])])
     assert result.returncode != 0
     assert "not parallel" in result.stderr
+
+
+def test_license_column_holds_the_register_id(tmp_path: Path) -> None:
+    from mailwoman_train.source_rights import committed_source_rights
+
+    result = _convert(tmp_path, [_row(source_id="t-prose", license="TIGER/Line, public domain (US Census)")])
+    assert result.returncode == 0, result.stderr
+    table = pq.read_table(tmp_path / "rows.parquet")
+    assert table["license"].to_pylist() == [committed_source_rights().row_license("tiger")]
+
+
+def test_an_older_row_converts_to_the_current_columns(tmp_path: Path) -> None:
+    old = _row(source_id="t-1+case-lower", corpus_version="0.5.0", recipe="case-lower", base_source_id="t-1")
+    del old["augmentation"]
+    result = _convert(tmp_path, [old])
+    assert result.returncode == 0, result.stderr
+    table = pq.read_table(tmp_path / "rows.parquet")
+    assert "corpus_version" not in table.column_names
+    assert "recipe" not in table.column_names
+    assert table["augmentation"].to_pylist() == ["case-lower"]
+
+
+def test_a_source_without_a_license_id_is_refused(tmp_path: Path) -> None:
+    # `synthetic-secondary` is mapped to authored inputs only, so no register decision names its terms.
+    result = _convert(tmp_path, [_row(source="synthetic-secondary")])
+    assert result.returncode != 0
+    assert "have no license id" in result.stderr
+    assert not (tmp_path / "rows.parquet").exists()

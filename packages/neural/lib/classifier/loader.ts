@@ -25,6 +25,7 @@ import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
 import { MailwomanTokenizer } from "#tokenizer"
 import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
+import type { UnfedChannel, UnfedChannelReport } from "#weights/channels"
 
 /**
  * Loads the classifier for the caller's locale and routes inputs in another script,
@@ -141,7 +142,7 @@ export async function loadClassifierFromWeights(
 						ctxChars: resolved.encoder.ctxChars,
 					},
 				}
-			: undefined
+			: null
 
 	const [tokenizer, runner] = await Promise.all([
 		charEncoder ? undefined : MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
@@ -156,7 +157,14 @@ export async function loadClassifierFromWeights(
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
-	const warnUnfedChannel = unfedChannelWarner(`${opts.locale ?? "en-us"} (${resolved.packageDir ?? resolved.source})`)
+	const weightsPackage = String(resolved.packageDir ?? resolved.source)
+	const warnUnfed = unfedChannelWarner(`${opts.locale ?? "en-us"} (${weightsPackage})`)
+	const unfedChannels: UnfedChannelReport[] = []
+
+	const warnUnfedChannel = (channel: UnfedChannel, detail: string) => {
+		unfedChannels.push({ channel, weightsPackage, detail })
+		warnUnfed(channel, detail)
+	}
 
 	if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 		try {
@@ -198,11 +206,18 @@ export async function loadClassifierFromWeights(
 	]
 
 	const lexicons: Partial<Record<(typeof lexiconChannels)[number]["channel"], GazetteerLexicon>> = {}
+	// The file behind each channel that loaded, so a trace can state which lexicon bytes were fed.
+	const lexiconPaths: Partial<Record<(typeof lexiconChannels)[number]["channel"] | "anchor", string>> = {}
+
+	if (postcodeAnchorLookup && resolved.anchorLookupPath) {
+		lexiconPaths.anchor = resolved.anchorLookupPath.path
+	}
 
 	for (const { channel, path, parse, artifactName } of lexiconChannels) {
 		if (path) {
 			try {
 				lexicons[channel] = parse(await readLocalJSONFile(path))
+				lexiconPaths[channel] = path
 			} catch (error) {
 				warnUnfedChannel(channel, `failed to parse ${path}: ${(error as Error).message}`)
 			}
@@ -232,9 +247,7 @@ export async function loadClassifierFromWeights(
 			if (peekedHeader.country === localeCountry) {
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
-					...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
-						? {}
-						: { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
+					...(!$public.MAILWOMAN_PAIR_PARENT_DELTA ? {} : { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
 				}
 			} else {
 				console.warn(
@@ -290,6 +303,7 @@ export async function loadClassifierFromWeights(
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
+		lexiconPaths,
 		...(placetypePair ? { placetypePair } : {}),
 		...(placetypeCensus ? { placetypeCensus } : {}),
 		...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
@@ -297,6 +311,7 @@ export async function loadClassifierFromWeights(
 		...(resolved.postcodePrefixPaths ? { postcodePrefixPaths: resolved.postcodePrefixPaths } : {}),
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
+		unfedChannels,
 		suppressGazetteerNearPostcode,
 		bridgePunctuationGaps,
 		addressSystemConventions,

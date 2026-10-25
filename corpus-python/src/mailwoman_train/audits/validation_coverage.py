@@ -30,10 +30,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-import pyarrow.dataset as ds
-
 from ..config import ValidationCoverageConfig, load_config
-from ..data.loader import _parquet_paths
+from ..data.loader.corpus_files import CorpusFile, admitted_batches, corpus_split_files
 
 #: Tags whose presence makes a row street-level. A validation row with neither measures only the
 #: admin hierarchy. That differs from parsing an address.
@@ -44,8 +42,12 @@ STREET_TAGS = frozenset({"street", "house_number"})
 COLUMNS = ["country", "span_tags", "source"]
 
 
-def scan_split(files: list[Path]) -> dict[str, Any]:
-    """Count rows, street rows and sources per country over one split's parquet files."""
+def scan_split(files: list[CorpusFile | Path]) -> dict[str, Any]:
+    """Count rows, street rows and sources per country over one split's parquet files.
+
+    Each file is read through its manifest row filter, so a file split by an attribute contributes only the rows
+    of this split. A bare path reads every row of its file.
+    """
     rows: Counter[str] = Counter()
     street_rows: Counter[str] = Counter()
     by_source: Counter[str] = Counter()
@@ -56,20 +58,23 @@ def scan_split(files: list[Path]) -> dict[str, Any]:
             "validation rows, and reporting it as zero coverage would state the wrong finding."
         )
 
-    dataset = ds.dataset([str(path) for path in files], format="parquet")
+    for entry in files:
+        file = entry if isinstance(entry, CorpusFile) else CorpusFile(entry)
 
-    for batch in dataset.to_batches(columns=COLUMNS, batch_size=8192):
-        countries = batch.column("country").to_pylist()
-        tags = batch.column("span_tags").to_pylist()
-        sources = batch.column("source").to_pylist()
+        # One batch at a time: a file holding every split of one source can hold tens of millions of rows, whose
+        # nested `span_tags` column arrow cannot read whole into one array.
+        for batch in admitted_batches(file, COLUMNS):
+            countries = batch.column("country").to_pylist()
+            tags = batch.column("span_tags").to_pylist()
+            sources = batch.column("source").to_pylist()
 
-        for country, span_tags, source in zip(countries, tags, sources, strict=True):
-            key = str(country or "(none)")
-            rows[key] += 1
-            by_source[f"{key}/{source}"] += 1
+            for country, span_tags, source in zip(countries, tags, sources, strict=True):
+                key = str(country or "(none)")
+                rows[key] += 1
+                by_source[f"{key}/{source}"] += 1
 
-            if STREET_TAGS.intersection(span_tags or ()):
-                street_rows[key] += 1
+                if STREET_TAGS.intersection(span_tags or ()):
+                    street_rows[key] += 1
 
     return {
         "files": len(files),
@@ -87,7 +92,7 @@ def audit(corpus_dir: Path, splits: tuple[str, ...] = ("val", "test")) -> dict[s
     """Scan each split and report per-country row and street-row counts."""
     return {
         "corpus_dir": str(corpus_dir),
-        "splits": {split: scan_split(_parquet_paths(corpus_dir, split)) for split in splits},
+        "splits": {split: scan_split(list(corpus_split_files(corpus_dir, split))) for split in splits},
     }
 
 
@@ -123,6 +128,10 @@ class ValidationCoverageError(ValueError):
     def __init__(self, message: str, report: dict[str, Any]):
         super().__init__(message)
         self.report = report
+
+    def __reduce__(self) -> tuple[type[ValidationCoverageError], tuple[str, dict[str, Any]]]:
+        """Rebuild from the message and the report, so the error survives pickling out of a Modal function."""
+        return (type(self), (str(self.args[0]), self.report))
 
 
 #: The ``country`` of a coverage entry that applies to every country ``country_weights`` admits.

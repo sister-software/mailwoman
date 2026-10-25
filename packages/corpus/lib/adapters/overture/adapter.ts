@@ -113,7 +113,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 			for await (const line of lines) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const r = parseLine(line)
 
@@ -169,7 +169,6 @@ export function createOvertureAdapter(): CorpusAdapter {
 					country,
 					source: OVERTURE_ADAPTER_ID,
 					source_id: stableSourceID(OVERTURE_ADAPTER_ID, aligned),
-					corpus_version: "",
 					license: OVERTURE_DEFAULT_LICENSE,
 				}
 

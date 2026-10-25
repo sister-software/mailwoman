@@ -5,7 +5,7 @@
  * A resource with a display name.
  */
 export type Displayable<T> = T & {
-	displayName?: string
+	displayName?: string | null
 }
 
 /**

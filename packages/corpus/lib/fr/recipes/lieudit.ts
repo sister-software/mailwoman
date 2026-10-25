@@ -275,7 +275,6 @@ export const frLieuditRecipe: CorpusRecipe = {
 				locale: `fr-${country}`,
 				source,
 				source_id: sourceID,
-				corpus_version: "",
 				license: DEFAULT_LICENSE,
 			}
 

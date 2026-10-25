@@ -58,7 +58,7 @@ export interface SubscriptionInit {
 	/**
 	 * The expanded `latest_invoice`, as the reconciliation pass asks for it.
 	 */
-	latestInvoice?: object
+	latestInvoice?: object | null
 }
 
 export function subscriptionObject(init: SubscriptionInit) {
@@ -107,7 +107,7 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 		subscription: init.subscriptionID,
 		customer: init.customerID ?? `cus_${init.subscriptionID}`,
 		customer_details: { email: init.email, name: init.licensee },
-		consent: { terms_of_service: init.consent === undefined ? "accepted" : init.consent },
+		consent: { terms_of_service: init.consent || "accepted" },
 		metadata:
 			init.agreementVersion === null ? {} : { agreement_version: init.agreementVersion ?? "commercial-2026-10" },
 		custom_fields: [{ key: "licensee_legal_name", type: "text", text: { value: init.licensee } }],
@@ -116,7 +116,7 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 					object: "list",
 					data: [{ id: "li_1", object: "item", quantity: 1, price: { id: init.priceID, object: "price" } }],
 				}
-			: undefined,
+			: null,
 	}
 }
 

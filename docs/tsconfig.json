@@ -7,7 +7,7 @@
 // Before this it was reachable only through `yarn typecheck:docs`, so a type error in a docs asset could survive
 // every `yarn compile`.
 {
-	// NOT `"extends": "@docusaurus/tsconfig"`. Playwright loads playwright.config.ts (this folder) with
+	// NOT `"extends": "@docusaurus/tsconfig"`. Playwright loads playwright.config.mts (this folder) with
 	// its own loader, which resolves `extends` only against the config's own directory — so a hoisted
 	// dependency it cannot see fails the whole config load. Node and tsc both resolve it fine, which is
 	// why the breakage appears under Playwright alone.
@@ -45,7 +45,7 @@
 	},
 	// A composite project must list every file it pulls in. Without an `include`, the default covers .ts/.tsx only, and
 	// the trace fixture a story imports through `resolveJsonModule` is left out.
-	"include": ["./**/*.ts", "./**/*.tsx", "./**/*.json"],
+	"include": ["./**/*.ts", "./**/*.mts", "./**/*.tsx", "./**/*.json"],
 	"exclude": [".docusaurus", "build", "out", "node_modules"],
 	// Every workspace package the site imports, so `tsc -b` reads each one's source project instead of whatever its
 	// `out/` holds at the moment this project compiles.

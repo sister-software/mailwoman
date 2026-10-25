@@ -5,8 +5,10 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 
@@ -22,6 +24,7 @@ import {
 	runNativeCommand,
 	stringValue,
 } from "#cli/native/spec"
+import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 
 const debugSizePattern = /^\d+x\d+$/u
@@ -129,8 +132,8 @@ export const spec = {
 		},
 		"postcode-shape-coherence": {
 			type: "boolean",
-			default: false,
-			description: "Opt into postcode shape exclusion/demotion.",
+			default: true,
+			description: "Exclude a postcode span whose shape no named country's syntax accepts.",
 		},
 		"postcode-containment-coherence": {
 			type: "boolean",
@@ -142,6 +145,12 @@ export const spec = {
 			default: true,
 			description:
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
+		},
+		"dependent-locality-containment": {
+			type: "boolean",
+			default: true,
+			description:
+				"Resolve a parsed dependent locality inside its parent and answer its point; --no-dependent-locality-containment disables it (#2804).",
 		},
 		"capital-tier": {
 			type: "string",
@@ -228,6 +237,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
+		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
 		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
 		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
@@ -298,9 +308,29 @@ function formatText(result: GeocodeResult): string {
 	return lines.join("\n")
 }
 
+/**
+ * The ceiling this result met, read against the data root's installed bundles.
+ *
+ * A data root that cannot be read counts as one with no bundle installed,
+ * so the statement still appears and the result is still printed.
+ */
+let installedBundlesOnce: Promise<ReadonlySet<string>> | null = null
+
+async function resultCoverage(result: GeocodeResult): Promise<EngineCoverage | null> {
+	// The disk is read only when a tiered bundle covers this result's country, and once per process after that.
+	if (!ceilingCandidate(result)) return null
+
+	installedBundlesOnce ??= installedBundleNames(dataRootPath()).catch((): ReadonlySet<string> => new Set())
+
+	return precisionCeiling(result, await installedBundlesOnce)
+}
+
 async function formatResult(result: GeocodeResult, format: Format, compact: boolean): Promise<string> {
+	// The JSON-LD projection has no engine block, so it reads no coverage.
+	const coverage = format === "jsonld" ? null : await resultCoverage(result)
+
 	if (format === "text") {
-		return formatText(result)
+		return coverage ? `${formatText(result)}\n${coverageSentence(coverage)}` : formatText(result)
 	}
 
 	if (format === "jsonld") {
@@ -332,8 +362,9 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 	}
 
 	const { stamp } = await resolveEngineStamp()
+	const engine = coverage ? { ...stamp, coverage } : stamp
 
-	return compact ? stringifyJSON({ ...result, engine: stamp }) : prettyJSON({ ...result, engine: stamp }, false, 2)
+	return compact ? stringifyJSON({ ...result, engine }) : prettyJSON({ ...result, engine }, false, 2)
 }
 
 async function openSession(options: GeocodeOptions) {

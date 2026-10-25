@@ -30,6 +30,14 @@ export interface CleanOptions {
 	cachedStats?: Stats | null
 }
 
+async function cachedStatsFor(target: PathBuilderLike, options: CleanOptions): Promise<Stats | null> {
+	if (Object.hasOwn(options, "cachedStats")) {
+		return options.cachedStats ?? null
+	}
+
+	return tryStat(target)
+}
+
 function pathIsWithin(path: string, root: string): boolean {
 	const fromRoot = relative(root, path)
 
@@ -61,7 +69,7 @@ export async function cleanDirectory(directoryPath: PathBuilderLike, options: Cl
 
 	assertDirectoryIsUntracked(target, options.allowedRoots)
 
-	const stats = options.cachedStats === undefined ? await tryStat(target) : options.cachedStats
+	const stats = await cachedStatsFor(target, options)
 
 	if (!stats) {
 		if (!options.dryRun) {
@@ -89,7 +97,7 @@ export async function cleanFile(filePath: PathBuilderLike, options: CleanOptions
 
 	assertDirectoryIsUntracked(target, options.allowedRoots)
 
-	const stats = options.cachedStats === undefined ? await tryStat(target) : options.cachedStats
+	const stats = await cachedStatsFor(target, options)
 
 	if (!stats) {
 		return

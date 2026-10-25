@@ -73,6 +73,7 @@
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/nuts-lookup": "workspace:*",
@@ -85,7 +86,7 @@
 		"hono": "^4.13.13",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^9.2.1",
-		"zod": "^4.6.5"
+		"spliterator": "^9.3.0",
+		"zod": "^4.6.7"
 	}
 }

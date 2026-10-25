@@ -64,6 +64,18 @@ type CandidateRow = Pick<
 	// Optional because older artifacts may not include `importance`.
 	Partial<Pick<CandidateTable, "importance">>
 
+/**
+ * What a containment re-rank needs beside the rows: the keys to inject contained
+ * misses from and the shape filters the initial probe applied.
+ */
+interface ContainmentOptions {
+	nameKey: NameKey
+	strippedKey: NameKey
+	shapeFilters: string[]
+	shapeParams: Array<string | number>
+	limit: number
+}
+
 const FUZZY_FETCH = 40
 
 const WORD_FUZZY_MIN = 0.85
@@ -174,7 +186,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			const bandIDs = [...REGION_CLASS_PLACETYPES, "country"]
 				.map((placetype) => this.#placetypeToID.get(placetype))
-				.filter((id): id is number => id !== undefined)
+				.filter((id) => typeof id === "number")
 
 			if (bandIDs.length) {
 				this.#qualifierProbe = this.database.prepare(
@@ -216,7 +228,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		const cached = this.#intervalCache.get(sprID)
 
-		if (cached !== undefined) return cached
+		if (cached) return cached
 
 		const row = this.#intervalProbe.get(sprID) as { pre: number; post: number } | undefined
 		const label = row ? { pre: Number(row.pre), post: Number(row.post) } : null
@@ -257,23 +269,30 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Apply admin-containment re-rank: stamp containment, inject contained misses,
-	 * then partition contained-first.
+	 * Apply admin-containment re-rank for a parsed region qualifier: resolve the
+	 * qualifier's region rows, then {@linkcode #applyContainment}.
 	 */
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
 		qualifier: string,
 		country: string | null,
-		opts: {
-			nameKey: NameKey
-			strippedKey: NameKey
-			shapeFilters: string[]
-			shapeParams: Array<string | number>
-			limit: number
-		}
+		opts: ContainmentOptions
 	): Array<RankedRow<CandidateRow>> {
-		const qualifierIDs = this.#qualifierRegionIDs(qualifier, country)
+		return this.#applyContainment(rows, this.#qualifierRegionIDs(qualifier, country), opts)
+	}
 
+	/**
+	 * Stamp containment in the qualifier rows, inject contained misses, then partition contained-first.
+	 *
+	 * The qualifier rows are a parsed region's rows or one resolved parent place (#2804).
+	 * The injection reads the same name key under the shape filters and under the sub-locality placetypes,
+	 * so a dependent locality the locality band excludes re-enters the list when its parent contains it.
+	 */
+	#applyContainment(
+		rows: Array<RankedRow<CandidateRow>>,
+		qualifierIDs: ReadonlySet<number>,
+		opts: ContainmentOptions
+	): Array<RankedRow<CandidateRow>> {
 		if (!qualifierIDs.size) {
 			for (const row of rows) {
 				row.containedByQualifier = false
@@ -323,7 +342,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		// Also inject contained neighborhood-band namesakes (primary-keyed only).
 		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
 			.map((placetype) => this.#placetypeToID.get(placetype))
-			.filter((id): id is number => id !== undefined)
+			.filter((id) => typeof id === "number")
 
 		if (bandIDs.length) {
 			const bandSQL =
@@ -372,7 +391,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
 		const placetypeID = this.#placetypeToID.get("postalcode")
 
-		if (placetypeID === undefined) return null
+		if (typeof placetypeID !== "number") return null
 
 		const conds = ["name_key = ?", "placetype_id = ?"]
 		const params: Array<string | number> = [postcode.replaceAll(/\s+/g, ""), placetypeID]
@@ -380,7 +399,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		if (country) {
 			const countryID = this.#countryToID.get(country.toUpperCase())
 
-			if (countryID === undefined) return null // Unknown country in this artifact.
+			if (typeof countryID !== "number") return null // Unknown country in this artifact.
 			conds.push("country_id = ?")
 			params.push(countryID)
 		}
@@ -454,7 +473,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		if (query.country) {
 			const cid = this.#countryToID.get(query.country.toUpperCase())
 
-			if (cid === undefined) return [] // Unknown country in this artifact.
+			if (typeof cid !== "number") return [] // Unknown country in this artifact.
 			filters.push("country_id = ?")
 			filterParams.push(cid)
 		}
@@ -465,7 +484,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			const ids = expandPlacetypeFilter(want as readonly string[])
 				.map((t) => this.#placetypeToID.get(t))
-				.filter((v): v is number => v !== undefined)
+				.filter((v) => typeof v === "number")
 
 			if (!ids.length) return []
 			shapeFilters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
@@ -614,14 +633,23 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		}
 
 		// Admin-containment re-rank runs last.
+		const containmentOptions: ContainmentOptions = {
+			nameKey,
+			strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
+			shapeFilters,
+			shapeParams,
+			limit,
+		}
+
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
-			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, {
-				nameKey,
-				strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
-				shapeFilters,
-				shapeParams,
-				limit,
-			})
+			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country ?? null, containmentOptions)
+		} else if (
+			typeof query.parentQualifierID === "number" &&
+			this.#ancestorsProbe &&
+			this.#wantsLocality(query.placetype)
+		) {
+			// A resolved parent qualifies by id, so no name probe runs (#2804).
+			rows = this.#applyContainment(rows, new Set([query.parentQualifierID]), containmentOptions)
 		}
 
 		const candidates = rows.map((row): PlaceCandidate => {

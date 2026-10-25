@@ -13,7 +13,6 @@
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
-		"data/**/*",
 		"THIRD_PARTY_NOTICES.md",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
@@ -87,6 +86,11 @@
 			"node": "./lib/coarse-placer/coarse-placer.ts",
 			"default": "./out/coarse-placer/coarse-placer.js"
 		},
+		"./coarse-placer/fnv-hash": {
+			"types": "./out/coarse-placer/fnv-hash.d.ts",
+			"node": "./lib/coarse-placer/fnv-hash.ts",
+			"default": "./out/coarse-placer/fnv-hash.js"
+		},
 		"./crypto": {
 			"types": "./out/crypto/node.d.ts",
 			"node": "./lib/crypto/node.ts",
@@ -132,6 +136,21 @@
 			"node": "./lib/license/key.ts",
 			"default": "./out/license/key.js"
 		},
+		"./license/decision": {
+			"types": "./out/license/decision.d.ts",
+			"node": "./lib/license/decision.ts",
+			"default": "./out/license/decision.js"
+		},
+		"./license/declaration": {
+			"types": "./out/license/declaration.d.ts",
+			"node": "./lib/license/declaration.ts",
+			"default": "./out/license/declaration.js"
+		},
+		"./license/install-id": {
+			"types": "./out/license/install-id.d.ts",
+			"node": "./lib/license/install-id.ts",
+			"default": "./out/license/install-id.js"
+		},
 		"./license/obligations": {
 			"types": "./out/license/obligations.d.ts",
 			"node": "./lib/license/obligations.ts",
@@ -172,25 +191,20 @@
 			"node": "./lib/resources/languages.ts",
 			"default": "./out/resources/languages.js"
 		},
-		"./resources/whosonfirst": {
-			"types": "./out/resources/whosonfirst.d.ts",
-			"node": "./lib/resources/whosonfirst.ts",
-			"default": "./out/resources/whosonfirst.js"
+		"./resources/git": {
+			"types": "./out/resources/git.d.ts",
+			"node": "./lib/resources/git.ts",
+			"default": "./out/resources/git.js"
+		},
+		"./resources/languages/types.gen": {
+			"types": "./out/resources/languages/types.gen.d.ts",
+			"node": "./lib/resources/languages/types.gen.ts",
+			"default": "./out/resources/languages/types.gen.js"
 		},
 		"./resources/libpostal": {
 			"types": "./out/resources/libpostal.d.ts",
 			"node": "./lib/resources/libpostal.ts",
 			"default": "./out/resources/libpostal.js"
-		},
-		"./resources/whosonfirst/specificity": {
-			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/specificity.ts",
-			"default": "./out/resources/whosonfirst/placetypes/specificity.js"
-		},
-		"./placetypes": {
-			"types": "./out/resources/whosonfirst/placetypes/definition.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/definition.ts",
-			"default": "./out/resources/whosonfirst/placetypes/definition.js"
 		},
 		"./utils": {
 			"types": "./out/utils.d.ts",
@@ -512,16 +526,6 @@
 			"node": "./lib/policy/registry.ts",
 			"default": "./out/policy/registry.js"
 		},
-		"./resources/whosonfirst/extract-repo": {
-			"types": "./out/resources/whosonfirst/extract-repo.d.ts",
-			"node": "./lib/resources/whosonfirst/extract-repo.ts",
-			"default": "./out/resources/whosonfirst/extract-repo.js"
-		},
-		"./resources/whosonfirst/placetypes/admin": {
-			"types": "./out/resources/whosonfirst/placetypes/admin.d.ts",
-			"node": "./lib/resources/whosonfirst/placetypes/admin.ts",
-			"default": "./out/resources/whosonfirst/placetypes/admin.js"
-		},
 		"./tokenization/normalizer": {
 			"types": "./out/tokenization/normalizer.d.ts",
 			"node": "./lib/tokenization/normalizer.ts",
@@ -566,6 +570,16 @@
 			"types": "./out/data-root.d.ts",
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js"
+		},
+		"./asset-names": {
+			"types": "./out/asset-names.d.ts",
+			"node": "./lib/asset-names.ts",
+			"default": "./out/asset-names.js"
+		},
+		"./asset-paths": {
+			"types": "./out/asset-paths.d.ts",
+			"node": "./lib/asset-paths.ts",
+			"default": "./out/asset-paths.js"
 		},
 		"./postcode-prefix-files": {
 			"types": "./out/postcode-prefix-files.d.ts",
@@ -655,10 +669,8 @@
 		"adm-zip": "^0.6.1",
 		"async-init": "^1.0.0",
 		"axios": "^1.20.0",
-		"axios-cache-interceptor": "^1.12.3",
+		"axios-cache-interceptor": "^1.13.0",
 		"change-case": "^5.4.4",
-		"d3-color": "^3.1.0",
-		"d3-scale-chromatic": "^3.1.0",
 		"dom-serializer": "^3.1.1",
 		"domhandler": "^6.0.1",
 		"domutils": "^4.0.2",
@@ -667,22 +679,19 @@
 		"htmlparser2": "^12.0.0",
 		"http-status-codes": "^2.3.0",
 		"iconv-lite": "^0.7.3",
-		"isomorphic-dompurify": "^4.5.0",
+		"isomorphic-dompurify": "^4.6.0",
 		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
 		"pino": "^10.4.0",
 		"regenerate": "^1.5.0",
-		"spliterator": "^9.2.1",
+		"spliterator": "^9.3.0",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.10.0",
 		"yauzl-promise": "^4.0.0",
-		"zod": "^4.6.5"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "1.5.6-r.1",
-		"@mailwoman/spatial": "workspace:*",
-		"@types/d3-color": "^3.1.3",
-		"@types/d3-scale-chromatic": "^3.1.0",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
 	}

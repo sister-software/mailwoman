@@ -1,0 +1,52 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
+import { ResourceError } from "@mailwoman/core/errors"
+import type { Context } from "hono"
+
+import { cacheResponse, type TileWorkerHono } from "#caching"
+
+/**
+ * The AWS Open Data terrain tiles (Tilezen Joerd), in the terrarium PNG encoding.
+ */
+const TERRARIUM_ORIGIN = "https://elevation-tiles-prod.s3.amazonaws.com/terrarium"
+
+/**
+ * The deepest zoom the bucket publishes.
+ */
+const TERRARIUM_MAX_ZOOM = 15
+
+/**
+ * Serves a terrarium elevation tile by z/x/y from Cloudflare's edge cache,
+ * filling a miss from the AWS bucket.
+ *
+ * The bucket answers over HTTP/1.1 with no `Cache-Control`, so a browser opens a
+ * connection per few tiles and revalidates on revisit.
+ * Served here, the tiles share the basemap's HTTP/2 connection and edge cache.
+ *
+ * A tile's content at a z/x/y never changes, so the edge and the browser keep it for a year.
+ */
+export async function serveTerrariumTile(c: Context<TileWorkerHono>): Promise<Response> {
+	const { z: zParam, x: xParam, tile } = c.req.param() as { z?: string; x?: string; tile?: string }
+	const [z = -1, x = -1, y = -1] = parseTileCoordParams({ z: zParam, x: xParam, y: tile?.replace(/\.png$/, "") }) ?? []
+
+	if (z < 0 || z > TERRARIUM_MAX_ZOOM || x >= 2 ** z || y >= 2 ** z) {
+		throw ResourceError.from(400, "Invalid terrarium tile coordinates")
+	}
+
+	const upstream = await fetch(`${TERRARIUM_ORIGIN}/${z}/${x}/${y}.png`)
+
+	if (!upstream.ok) throw ResourceError.from(upstream.status, `Terrarium tile ${z}/${x}/${y} is unavailable`)
+
+	const response = new Response(upstream.body, {
+		headers: {
+			"Content-Type": "image/png",
+			"Cache-Control": "public, max-age=31536000, immutable",
+		},
+	})
+
+	cacheResponse(c, response)
+
+	return response
+}

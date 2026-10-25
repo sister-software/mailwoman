@@ -32,7 +32,6 @@ describe("corpus types", () => {
 			locale: "en-US",
 			source: "test-fixture",
 			source_id: "row-1",
-			corpus_version: "0.1.0",
 			license: "CC0-1.0",
 		}
 
@@ -40,7 +39,7 @@ describe("corpus types", () => {
 		expect(row.components.postcode).toBe("value for postcode")
 	})
 
-	it("the recipe marker is optional, carries recipe + base_source_id when present", () => {
+	it("the augmentation marker is optional, carries name + base_source_id when present", () => {
 		const natural: CanonicalRow = {
 			raw: "Paris",
 			components: { locality: "Paris" },
@@ -48,7 +47,6 @@ describe("corpus types", () => {
 			locale: "fr-FR",
 			source: "wof-admin",
 			source_id: "wof-101751119",
-			corpus_version: "0.1.0",
 			license: "CC0-1.0",
 		}
 
@@ -56,12 +54,12 @@ describe("corpus types", () => {
 			...natural,
 			raw: "PARIS",
 			source_id: "wof-101751119+case-upper",
-			recipe: { recipe: "case-perturb:upper", base_source_id: "wof-101751119" },
+			augmentation: { name: "case-perturb:upper", base_source_id: "wof-101751119" },
 		}
 
-		expect(natural.recipe).toBeUndefined()
-		expect(derived.recipe?.recipe).toBe("case-perturb:upper")
-		expect(derived.recipe?.base_source_id).toBe("wof-101751119")
+		expect(natural.augmentation).toBeUndefined()
+		expect(derived.augmentation?.name).toBe("case-perturb:upper")
+		expect(derived.augmentation?.base_source_id).toBe("wof-101751119")
 	})
 
 	it("register and surface answer separate questions on one row", () => {
@@ -71,7 +69,6 @@ describe("corpus types", () => {
 			country: "GB",
 			source: "rendered-gb-os-open",
 			source_id: "gb-os-open-1",
-			corpus_version: "0.9.9",
 			license: "OGL-UK-3.0",
 			register: SourceRegister.OrdnanceSurveyOpenData,
 			surface: SurfaceOrigin.Composed,
@@ -83,7 +80,6 @@ describe("corpus types", () => {
 			country: "US",
 			source: "synth-po-box",
 			source_id: "po-1",
-			corpus_version: "0.9.9",
 			license: "CC0-1.0",
 			register: null,
 			surface: SurfaceOrigin.Invented,
@@ -105,7 +101,6 @@ describe("corpus types", () => {
 			country: "US",
 			source: "state-tx-notaries",
 			source_id: "tx-1",
-			corpus_version: "0.1.0",
 			license: "US-PD",
 		}
 
@@ -124,7 +119,6 @@ describe("corpus types", () => {
 			country: "FR",
 			source: "wof-admin",
 			source_id: "wof-101751119",
-			corpus_version: "0.1.0",
 			license: "CC0-1.0",
 			tokens: ["▁Pa", "ri", "s"],
 			labels,
@@ -142,7 +136,6 @@ describe("corpus types", () => {
 				country: "FR",
 				source: "wof-admin",
 				source_id: "wof-99",
-				corpus_version: "0.1.0",
 				license: "CC0-1.0",
 			},
 			reason: "component-not-found:locality",
@@ -172,7 +165,6 @@ describe("corpus types", () => {
 					country: "FR",
 					source: "noop",
 					source_id: "noop-1",
-					corpus_version: "",
 					license: "CC0-1.0",
 				}
 			},

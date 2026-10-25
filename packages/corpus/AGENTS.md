@@ -108,7 +108,7 @@ the gap shows in the register rather than hiding as an absence. Add both entries
 adapter, recipe, carried overlay or Python builder, before any build reads the source. The
 `corpus-source-inputs` repository check reports an emitted source the table does not map.
 
-`buildCorpus`, `corpus overlay-manifest`, `corpus slice`, every Python corpus builder, the `train` command
+`buildCorpus`, `corpus overlay-manifest`, `corpus recipe`, every Python corpus builder, the `train` command
 and the Modal launcher's local entry point refuse a source unless each register source it reads carries an
 elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
 source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,
@@ -136,12 +136,32 @@ the precedent.
 ## Base corpus build cost
 
 A base corpus build,
-`mailwoman corpus build --inputs "$(cat $MAILWOMAN_DATA_ROOT/corpus/build-logs/v0.5.0-inputs.json)"`,
-takes about 11.5 hours for roughly 680 M rows, and that inputs file is the only record of the 11
-adapters and their input paths. Budget a day, run the build in the background with
-`--max-old-space-size=12288`, and smoke-build two small adapters first to prove a schema change end to
-end. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
+`mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
+takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
+input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in the background with
+`NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
+change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
+`--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and
+peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
 `rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
+
+A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
+adapter `MANIFEST.json`, and names each file with its size. To continue an interrupted build, rerun
+the same command with `--resume`:
+`mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json --out <out> --resume`.
+It reuses each finished adapter run, truncates the align outputs to the checkpoint's offsets and
+aligns the remaining adapters, and keeps the parquet files the parquet manifest records. `--fresh`
+deletes that work and builds from the start. A build without one of the two flags deletes no file.
+
+`--jobs K` above 1 runs each source's adapter, align and parquet work in worker processes
+(`lib/build/parallel.ts`) and writes the same parquet, split and manifest bytes as `--jobs 1`; only
+the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root, and
+`planWorkerBudget` in `lib/build/budget.ts` refuses a K whose workers do not fit in host memory.
+A source is reused under `--resume` only through its `intermediate/sources/<id>/SOURCE_COMPLETE.json`,
+re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources alone. A parallel build
+writes no top-level `labeled-*.jsonl`: each source's labeled rows stay under its own state directory.
+A lock directory, `.corpus-build.lock` under `--out`, refuses a second build of the same output in
+either mode.
 
 ## License election
 
@@ -180,7 +200,7 @@ with `license_id: notspecified` while the publisher's entry carries the grant un
 Compare the entry's `resources` against the file to be fetched to prove the two records describe one
 artifact. A portal also returns third parties' datasets about a country, and a third party's license
 is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
-`electedTerms` carry the publisher's words, because `electedLicenseLabel` feeds the share-alike
+`electedTerms` carry the publisher's words, because `electedTermsLabel` feeds the share-alike
 filter.
 
 Whether address data can be elected without a publisher's grant depends on the country's law, so each

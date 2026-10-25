@@ -120,10 +120,10 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer/pair")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("@mailwoman/gazetteer/tools/pipeline/pair")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
-		const { extractBoroughPairs } = await import("#gazetteer/borough-pairs")
-		const { extractLieuDitPairs } = await import("#gazetteer/lieudit-pairs")
+		const { extractBoroughPairs } = await import("@mailwoman/gazetteer/tools/pipeline/borough-pairs")
+		const { extractLieuDitPairs } = await import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs")
 
 		const country = options.country.toLowerCase()
 
@@ -259,8 +259,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			foldVersion: 1,
 			sourceMD5s,
 			buildDate: new Date().toISOString(),
-			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
-			...(options.parentDelta !== undefined ? { parentDelta: options.parentDelta } : {}),
+			...(options.transitionBeta ? { transitionBeta: options.transitionBeta } : {}),
+			...(options.parentDelta ? { parentDelta: options.parentDelta } : {}),
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
@@ -312,13 +312,13 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			options.holdoutFraction > 0
 				? `HOLDOUT: withheld ${heldOut.length.toLocaleString()}/${preHoldoutCount.toLocaleString()} pairs ` +
 					`(fraction=${options.holdoutFraction}, seed=${options.holdoutSeed}) — ${entries.length.toLocaleString()} pairs written`
-				: undefined
+				: null
 
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
 			`header: delta=${options.delta}` +
-				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
-				(options.parentDelta !== undefined ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
+				(options.transitionBeta ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
+				(options.parentDelta ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),

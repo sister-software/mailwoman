@@ -88,7 +88,6 @@ export const streetRecipe: CorpusRecipe = {
 							postcode: tuple.postcode,
 							country: tuple.country,
 						}),
-						corpus_version: "0.4.0",
 						license: "Synthetic — public-domain street name + tuple combination",
 					},
 					"street-decomp",

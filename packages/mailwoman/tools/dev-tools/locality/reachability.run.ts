@@ -101,7 +101,7 @@ async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 		.where("name_key", "=", key)
 		.executeTakeFirst()
 
-	return row !== undefined
+	return row != null
 }
 
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})

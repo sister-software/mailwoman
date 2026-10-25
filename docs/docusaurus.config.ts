@@ -6,6 +6,7 @@ import { themes as prismThemes } from "prism-react-renderer"
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
 // Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
+import { createSidebarMegaMenu } from "./plugins/navbar-menus.ts"
 
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
@@ -39,6 +40,9 @@ const buildTimeDisplay = (() => {
 	return `${Y}-${M}-${D} ${h}:${m} UTC`
 })()
 
+// Docusaurus loads this file as CommonJS through jiti, so `__dirname` is the docs workspace.
+const sidebarMegaMenu = createSidebarMegaMenu(__dirname)
+
 const config: Config = {
 	customFields: {
 		buildCommit: gitHash,
@@ -60,41 +64,16 @@ const config: Config = {
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
+				// Map label glyphs (SDF ranges) still load from here.
+				// The page faces come from @sister.software/fonts.
 				href: "https://public.mailwoman.ai",
 			},
 		},
-		// The four faces that paint above the fold, preloaded.
-		// Without them the font chain measured ~1.57 s to first font byte on a warm cache.
-		// Any other face still loads lazily.
-		...(
-			[
-				"BlissPro/WOFF2/BlissPro-Latin.woff2",
-				"BlissPro/WOFF2/BlissPro-Medium-Latin.woff2",
-				"BlissPro/WOFF2/BlissPro-Bold-Latin.woff2",
-				"FiraCode/WOFF2/FiraCode-VF.woff2",
-			] as const
-		).map((file) => ({
-			tagName: "link",
-			attributes: {
-				rel: "preload",
-				as: "font",
-				type: "font/woff2",
-				crossorigin: "anonymous",
-				href: `https://public.mailwoman.ai/fonts/${file}`,
-			},
-		})),
 		{
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
 				href: "https://tiles.mailwoman.ai",
-			},
-		},
-		{
-			tagName: "link",
-			attributes: {
-				rel: "preconnect",
-				href: "https://elevation-tiles-prod.s3.amazonaws.com",
 			},
 		},
 	],
@@ -134,8 +113,8 @@ const config: Config = {
 			{
 				redirects: [
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
-					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses.
-					{ from: "/pricing", to: "/docs/pricing" },
+					// Pricing moved out of the docs to a page of its own.
+					{ from: "/docs/pricing", to: "/pricing" },
 					// The license page is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },
 				],
@@ -158,7 +137,12 @@ const config: Config = {
 		],
 	],
 
-	themes: ["@docusaurus/theme-mermaid"],
+	// The Sister Software brand: fonts, the Infima bridge, the classic-theme restyle, footer and code blocks.
+	// Its tokens come from @mailwoman/react, the shared tokens with Mailwoman's blue product theme merged in.
+	themes: [
+		["@sister.software/docusaurus-theme", { tokens: "@mailwoman/react/tokens.css" }],
+		"@docusaurus/theme-mermaid",
+	],
 
 	markdown: {
 		mermaid: true,
@@ -173,7 +157,7 @@ const config: Config = {
 				docs: {
 					path: "articles",
 					routeBasePath: "docs",
-					sidebarPath: "./sidebars.ts",
+					sidebarPath: "./sidebars.mts",
 					// Single shared tag registry (also used by the blog and the glossary plugin).
 					// Docusaurus resolves this relative to the content dir, hence the "../".
 					tags: "../tags.yml",
@@ -227,18 +211,7 @@ const config: Config = {
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
-					customCss: [
-						"./src/css/fonts/BlissPro.css",
-						"./src/css/fonts/FiraCode.css",
-						"./src/css/theme-light.css",
-						"./src/css/theme-dark.css",
-						"./src/css/markdown.css",
-						"./src/css/sidebar.css",
-						"./src/css/docs-subheader.css",
-						"./src/css/toc-mobile.css",
-						"./src/css/mermaid.css",
-						"./src/css/custom.css",
-					],
+					customCss: ["./src/css/mermaid.css", "./src/css/custom.css"],
 				},
 			} satisfies Preset.Options,
 		],
@@ -254,12 +227,15 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Fira Code Web", monospace',
+				fontFamily: '"Go Mono Web", "Go Mono Fallback", monospace',
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
-				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
+				themeVariables: { primaryColor: "#ffffff", lineColor: "#373d40" },
 			},
 		},
 		navbar: {
+			// The top row of the bar hides on scroll.
+			// The category row below it stays (the shared theme).
+			hideOnScroll: true,
 			title: "Mailwoman",
 			logo: {
 				alt: "Mailwoman 〒 hanko seal",
@@ -267,43 +243,71 @@ const config: Config = {
 				// Navy/blue alternatives ship under /img for lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
-			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.ts.
+			// The doors, in reading order; `docSidebar` items point at sidebar ids declared in sidebars.mts.
 			// Resources follows Docs (the evidence door) and Product leads Docs (the undecided visitor.
 			items: [
-				{
-					type: "docSidebar",
-					sidebarId: "product",
-					position: "left",
+				sidebarMegaMenu("product", {
 					label: "Product",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "solutions",
-					position: "left",
+					descriptions: { Product: "One engine you install rather than call." },
+					featured: {
+						eyebrow: "Try it",
+						title: "Geocode an address in your browser",
+						body: "Earth runs the whole engine client-side. Nothing you type leaves the tab.",
+						to: "https://earth.mailwoman.ai/",
+						linkLabel: "Open Earth",
+					},
+				}),
+				sidebarMegaMenu("solutions", {
 					label: "Solutions",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "developers",
-					position: "left",
+					descriptions: { Solutions: "Start from the problem in front of you." },
+					featured: {
+						eyebrow: "Pricing",
+						title: "Flat pricing, at any volume",
+						body: "Move the slider and watch which row moves.",
+						to: "/pricing",
+						linkLabel: "See the calculator",
+					},
+				}),
+				sidebarMegaMenu("developers", {
 					label: "Developers",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "resources",
-					position: "left",
+					topGroup: "Build",
+					looseLabel: "Project",
+					descriptions: {
+						"Get started": "Installed and parsing in ten minutes.",
+						Tutorials: "End-to-end walkthroughs on real data.",
+						"How-to guides": "One task, start to finish.",
+						Reference: "The APIs, the CLI and the figures.",
+						Localization: "Addresses across languages and scripts.",
+						"Postal systems": "How addresses work, country by country.",
+						Geocoding: "What a geocoder does and how it is judged.",
+						"Address intelligence": "How the model reads an address.",
+						Project: "Where the project stands and how to get help.",
+					},
+					footer: { label: "Start here", to: "/docs/developers/get-started/what-mailwoman-is" },
+					featured: {
+						eyebrow: "Featured",
+						title: "Your first ten minutes",
+						body: "Install it and geocode an address against your own disk.",
+						to: "/docs/developers/get-started/ten-minute-trial",
+					},
+				}),
+				sidebarMegaMenu("resources", {
 					label: "Resources",
-				},
-				{
-					type: "docSidebar",
-					sidebarId: "about",
-					position: "left",
+					looseLabel: "Elsewhere",
+					descriptions: {
+						Benchmarks: "Every number ships with its command.",
+						Compare: "Mailwoman beside the alternatives.",
+						OpenStreetMap: "How we credit the map data.",
+						Elsewhere: "Write-ups from the work.",
+					},
+				}),
+				sidebarMegaMenu("about", {
 					label: "About",
-				},
+					descriptions: { About: "Who makes Mailwoman and why." },
+				}),
 				{
-					// Direct doc link rather than a sidebar: pricing lives in the `about` sidebar
-					// for nav-tree membership, but a reader looking for the price wants one click.
-					to: "/docs/pricing",
+					// A page of its own, outside the docs.
+					to: "/pricing",
 					label: "Pricing",
 					position: "left",
 				},
@@ -318,11 +322,12 @@ const config: Config = {
 					href: "https://github.com/sister-software/mailwoman",
 					label: "GitHub",
 					position: "right",
+					// A utility key with the GitHub mark (the shared theme's classic.css).
+					className: "navbar__item--github",
 				},
 			],
 		},
 		footer: {
-			style: "dark",
 			links: [
 				{
 					title: "Try it",
@@ -336,7 +341,7 @@ const config: Config = {
 				{
 					title: "More",
 					items: [
-						{ label: "Pricing", to: "/docs/pricing" },
+						{ label: "Pricing", to: "/pricing" },
 						{ label: "License", to: "/license" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
@@ -367,8 +372,8 @@ const config: Config = {
 			copyright: `© ${new Date().getFullYear()} Nirrius LLC, DBA Sister Software.`,
 		},
 		prism: {
-			theme: prismThemes.github,
-			darkTheme: prismThemes.dracula,
+			// The brand's framed dark code block in both themes (okaidia on --ss-color-code-bg).
+			theme: { ...prismThemes.okaidia, plain: { ...prismThemes.okaidia.plain, backgroundColor: "#272823" } },
 		},
 	} satisfies Preset.ThemeConfig,
 }

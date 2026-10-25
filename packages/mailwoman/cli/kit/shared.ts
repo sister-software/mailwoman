@@ -11,9 +11,9 @@ import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoma
 // Subpath imports from core keep each command's dependency graph small.
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
+import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"
@@ -155,14 +155,13 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
 		)
 	)
 
-	const summary =
-		verdict === undefined
-			? null
-			: h(
-					Text,
-					{ color: verdict ? "green" : "red" },
-					`${verdict ? "PASS" : "FAIL"} (${checks.filter((c) => c.ok).length}/${checks.length} checks)`
-				)
+	const summary = !verdict
+		? null
+		: h(
+				Text,
+				{ color: verdict ? "green" : "red" },
+				`${verdict ? "PASS" : "FAIL"} (${checks.filter((c) => c.ok).length}/${checks.length} checks)`
+			)
 
 	return h(Box, { flexDirection: "column" }, ...lines, summary)
 }
@@ -216,7 +215,7 @@ export interface CommandTaskResultProps<T> {
  */
 export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
 	if (state.status === "running") {
-		if (running === undefined || running === null) return null
+		if (!running || running === null) return null
 
 		return typeof running === "string" ? h(Text, null, running) : h(Fragment, null, running)
 	}
@@ -244,7 +243,7 @@ export function CommandSummaryLines({ lines }: { lines: readonly string[] }): Re
 		Box,
 		{ flexDirection: "column" },
 		lines.map((line, index) =>
-			h(Text, { key: index, color: index === 0 ? "green" : undefined }, index === 0 ? "✓ " : "  ", line)
+			h(Text, { key: index, ...(index === 0 ? { color: "green" } : {}) }, index === 0 ? "✓ " : "  ", line)
 		)
 	)
 }

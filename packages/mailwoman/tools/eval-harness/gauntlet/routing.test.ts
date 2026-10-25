@@ -1,3 +1,4 @@
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -6,6 +7,9 @@ import {
 	overlayLocale,
 	routeCountry,
 } from "#tools/eval-harness/gauntlet/routing"
+
+// ISO 3166-1 reserves ZZ for user assignment, so no release ever ships a package for it.
+const UNSHIPPED_COUNTRY = "ZZ"
 
 describe("board overlay routing", () => {
 	it("uses an explicit locale region before the truth country", () => {
@@ -25,8 +29,41 @@ describe("board overlay routing", () => {
 			expect(overlayLocale(country)).toBe(locale)
 		}
 
-		expect(overlayLocale("FR")).toBe("en-US")
+		expect(overlayLocale(UNSHIPPED_COUNTRY)).toBe("en-US")
 		expect(overlayLocale(null)).toBe("en-US")
+	})
+
+	it("routes every country whose Latin-graph package the release ships, in BCP 47 casing (#2770)", async () => {
+		const { locales } = await readReleaseConfig()
+		const shipped = weightsPackageByCountry({ locales })
+		const baseRegion = routeCountry({ locale: "en-US" })
+
+		expect(baseRegion).not.toBeNull()
+		expect(shipped.has(baseRegion!)).toBe(true)
+		shipped.delete(baseRegion!)
+
+		expect(Object.keys(OVERLAY_LOCALE_BY_COUNTRY).toSorted()).toEqual([...shipped.keys()].toSorted())
+
+		for (const [country, locale] of shipped) {
+			expect(OVERLAY_LOCALE_BY_COUNTRY[country]).toBe(Intl.getCanonicalLocales(locale)[0])
+			expect(routeCountry({ locale: OVERLAY_LOCALE_BY_COUNTRY[country] })).toBe(country)
+		}
+	})
+
+	it("keeps the base locale's country and the character-path families on the base package", async () => {
+		const { locales, charWeights } = await readReleaseConfig()
+		const latin = weightsPackageByCountry({ locales })
+		const baseRegion = routeCountry({ locale: "en-US" })!
+
+		expect(OVERLAY_LOCALE_BY_COUNTRY[baseRegion]).toBeUndefined()
+		expect(overlayLocale(baseRegion)).toBe("en-US")
+
+		for (const country of weightsPackageByCountry({ locales: [], charWeights }).keys()) {
+			if (latin.has(country)) continue
+
+			expect(OVERLAY_LOCALE_BY_COUNTRY[country]).toBeUndefined()
+			expect(overlayLocale(country)).toBe("en-US")
+		}
 	})
 })
 
@@ -41,10 +78,10 @@ describe("gradedBaseOnly (#2223)", () => {
 	})
 
 	it("clears a country that declares no overlay, because the base package IS its production path", () => {
-		// FR routes through en-US by design.
+		// A country with no shipped package routes through en-US by design.
 		// A base-only result would withhold a promote suggestion the run is entitled to make.
 		// This predicate serves the opposite purpose.
-		expect(gradedBaseOnly("FR", new Set(["en-GB", "es-ES"]))).toBe(false)
+		expect(gradedBaseOnly(UNSHIPPED_COUNTRY, new Set(["en-GB", "es-ES"]))).toBe(false)
 		expect(gradedBaseOnly(null, new Set(["en-GB"]))).toBe(false)
 	})
 

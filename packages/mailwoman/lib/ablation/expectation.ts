@@ -217,11 +217,11 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
 	const measured = bboxRadiusKm(place)
 	const floor = RUNG_RADIUS_FLOOR_KM[place.placetype]
 
-	if (measured != null && (floor === undefined || measured >= floor)) {
+	if (measured != null && (!floor || measured >= floor)) {
 		return { radiusKM: measured, radiusSource: "bbox" }
 	}
 
-	if (floor === undefined) return null
+	if (!floor) return null
 
 	return { radiusKM: floor, radiusSource: "placetype-floor" }
 }
@@ -399,10 +399,10 @@ export function deriveExpectedRung(
 	const unevaluable = [
 		remaining["venue"]?.trim(),
 		remaining["street"]?.trim(),
-		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : undefined,
-		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : undefined,
+		regionName && !regionPlace ? `region "${regionName}" (unresolved)` : null,
+		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : null,
 		// Untyped words still in input.
-		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : undefined,
+		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : null,
 	].filter((entry) => entry != null && entry.length)
 
 	const declineToConstrain = (why: string): ExpectedRung => ({
@@ -743,7 +743,7 @@ export function expectFor(input: {
 	ladder: AblationLadder | null
 	components: Record<string, string>
 	deleted: string
-	pin: string | undefined
+	pin: string | null | undefined
 	gz: AblationGazetteerProbe
 	/**
 	 * Variant input text, used only for residual word extraction.

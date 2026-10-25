@@ -380,7 +380,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 				sourceSpec.path,
 				sourceSpec.delimiter ? { delimiter: sourceSpec.delimiter } : {}
 			)) {
-				if (sourceSpec.limit !== undefined && read >= sourceSpec.limit) break
+				if (sourceSpec.limit && read >= sourceSpec.limit) break
 
 				read++
 				yield row
@@ -405,7 +405,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		trainEM: options.trainEm,
 		threshold: options.threshold,
 		learnedScorer: false,
-		...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+		...(options.maxBlockSize ? { maxBlockSize: options.maxBlockSize } : {}),
 	})
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
@@ -479,7 +479,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const result = resolveEntities(records, {
 		trainEM: options.trainEm,
 		threshold: options.threshold,
-		...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+		...(options.maxBlockSize ? { maxBlockSize: options.maxBlockSize } : {}),
 	})
 
 	const geojson = toGeoJSON(result.entities)

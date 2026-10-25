@@ -17,13 +17,13 @@
  *   membership for the finer call.
  */
 
-import type { SystemCode } from "@mailwoman/codex/address/system-code"
+import type { SystemCode } from "@mailwoman/codex/address/system/code"
 import { normalizeAuPostcode } from "@mailwoman/codex/au"
 import { normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { normalizePLZ } from "@mailwoman/codex/de"
 import { normalizeCodigoPostal } from "@mailwoman/codex/es"
 import { normalizeCodePostal } from "@mailwoman/codex/fr"
-import { normalizeUkPostcode } from "@mailwoman/codex/gb"
+import { normalizeUkPostcode, UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { normalizeCAP } from "@mailwoman/codex/it"
 import { normalizeJpPostalCode } from "@mailwoman/codex/jp"
 import { normalizeNZPostcode } from "@mailwoman/codex/nz"
@@ -103,9 +103,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  */
 export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	/^\d{4}\s?[A-Z]{2}$/i,
-	// Restated from `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN so this module stays dependency-free
-	// within the package (the address-system modules import this, never the reverse).
-	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
+	UK_POSTCODE_PATTERN,
 	// Rural forward sortation areas have a `0` in second position.
 	// `[1-9]` excludes them.
 	/^[A-Z][1-9][A-Z]\s?\d[A-Z]\d$/i,

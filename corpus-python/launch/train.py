@@ -18,7 +18,8 @@ from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 # `_required_train_seconds` preflights any recipe against the ceiling inside train(), so a config
 # that cannot fit fails before the run starts rather than at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
-# ~4.25 optimizer steps/s at batch 128 on the A100.
+# ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The function now requests the 80 GB card.
+# That card has the same compute and more memory bandwidth. This rate therefore stays a conservative preflight bound.
 MEASURED_STEPS_PER_SECOND = 4.25
 # Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
 # batches) plus a flat allowance for startup/shutdown outside the step loop.
@@ -87,7 +88,10 @@ def preflight_corpus_receipts(config_name: str) -> str:
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
-    gpu="A100",
+    gpu="A100-80GB",
+    # The loader streams in this process (`num_workers` is unread), so extra cores serve pyarrow decoding and
+    # torch's CPU threads. The reservation guarantees them rather than relying on burst capacity.
+    cpu=8.0,
     timeout=TRAIN_TIMEOUT_SECONDS,
     memory=32768,
 )
@@ -98,7 +102,7 @@ def _train_gpu(
     trackio_space: str = "",
     corpus_receipt_token: str = "",
 ) -> None:
-    """Run the CE-only classifier training on an A100.
+    """Run the CE-only classifier training on an A100 80 GB.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
     to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
@@ -141,16 +145,21 @@ def _train_gpu(
 
     cfg = load_config(config_path)
 
-    # Verify the corpus the config points at exists on the volume. The data loader reads
-    # cfg.data.corpus_dir, so fail loud here if it is missing.
-    train_dir = os.path.join(cfg.data.corpus_dir, "train")
-    if not os.path.isdir(train_dir):
+    # Verify the corpus the config points at is on the volume through the loader's own file list, so this
+    # check reads the same manifest, re-rooting and split attributes the training will. A corpus whose files sit
+    # at its root beside split-attribute files has no `train/` directory, so a directory check refuses it.
+    from pathlib import Path as _Path
+
+    from mailwoman_train.data.loader.corpus_files import corpus_split_files
+
+    try:
+        train_files = corpus_split_files(_Path(cfg.data.corpus_dir), "train")
+    except FileNotFoundError as error:
         raise RuntimeError(
-            f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
+            f"Corpus not found under cfg.data.corpus_dir={cfg.data.corpus_dir}: {error}. "
             "Stage it first: `modal run -m launch.train_remote::sync --version <name>`."
-        )
-    file_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {cfg.data.corpus_dir} ({file_count} train parquet files)")
+        ) from error
+    print(f"Corpus: {cfg.data.corpus_dir} ({len(train_files)} train parquet files)")
 
     if cfg.data.required_corpus_receipts:
         from pathlib import Path

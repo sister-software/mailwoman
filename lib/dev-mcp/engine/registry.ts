@@ -6,8 +6,9 @@
  */
 
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { type ChannelPins, SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
 import {
 	type CapitalTier,
 	createGeocodeCommandOptions,
@@ -65,6 +66,12 @@ export interface EngineConfig {
 	postcode_containment_coherence?: SwitchPin
 	admin_containment_rerank?: SwitchPin
 	/**
+	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate (#2804).
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment`
+	 */
+	dependent_locality_containment?: SwitchPin
+	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
@@ -89,6 +96,13 @@ export interface EngineConfig {
 	 * Rechecks failed lookups against other administrative bands for diagnosis.
 	 */
 	diagnose_unreachable?: boolean
+	/**
+	 * Per-channel feed pins for the classifier's five soft-feature channels.
+	 *
+	 * A channel pinned `off` is fed zeros in place of its built features, the trained absence state.
+	 * Unset feeds every channel as built.
+	 */
+	channels?: ChannelPins
 }
 
 /**
@@ -115,11 +129,13 @@ export const EFFECTIVE_KEY_FOR = {
 	postcode_shape_coherence: "postcodeShapeCoherence",
 	postcode_containment_coherence: "postcodeContainmentCoherence",
 	admin_containment_rerank: "adminContainmentRerank",
+	dependent_locality_containment: "dependentLocalityContainment",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
 	variant_alias_exemption: "variantAliasExemption",
 	trace: "trace",
 	diagnose_unreachable: "diagnoseUnreachable",
+	channels: "channelPins",
 } as const satisfies Record<keyof EngineConfig, string>
 
 /**
@@ -175,6 +191,10 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 			config.admin_containment_rerank ?? "production",
 			production.adminContainmentRerank
 		),
+		dependentLocalityContainment: pinnedSwitch(
+			config.dependent_locality_containment ?? "production",
+			production.dependentLocalityContainment
+		),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,
 		variantAliasExemption: config.variant_alias_exemption ?? production.variantAliasExemption,
@@ -185,6 +205,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		...(config.weights_cache ? { weightsCacheRoot: config.weights_cache } : {}),
 		...(config.trace ? { trace: true } : {}),
 		...(config.diagnose_unreachable ? { diagnoseUnreachable: true } : {}),
+		...(config.channels && Object.keys(config.channels).length ? { channelPins: config.channels } : {}),
 	}
 }
 
@@ -232,6 +253,40 @@ export interface Engine {
 	buildMs: number
 	lastUsed: number
 	uses: number
+	/**
+	 * The lexicon or lookup file behind each fed channel, with its md5, read once when the engine is built.
+	 *
+	 * Two engines whose channel bytes differ then differ visibly in provenance.
+	 * Without this list, a swapped lexicon under an unchanged model would stay hidden.
+	 */
+	lexicons: LexiconIdentity[]
+}
+
+/**
+ * One channel's artifact identity.
+ */
+interface LexiconIdentity {
+	channel: SoftChannelName
+	path: string
+	md5: string
+}
+
+/**
+ * Reads the identity of each lexicon the session's classifier loaded.
+ */
+async function lexiconIdentities(session: GeocodeSession): Promise<LexiconIdentity[]> {
+	const paths = session.artifacts.lexicons ?? {}
+	const identities: LexiconIdentity[] = []
+
+	for (const channel of SOFT_CHANNEL_NAMES) {
+		const path = paths[channel]
+
+		if (path) {
+			identities.push({ channel, path, md5: await md5File(path) })
+		}
+	}
+
+	return identities
 }
 
 /**
@@ -346,6 +401,8 @@ export class EngineRegistry implements EngineRegistryLike {
 		const startedAt = Date.now()
 		const session = await createGeocodeSession(effective)
 
+		const lexicons = await lexiconIdentities(session)
+
 		const engine: Engine = {
 			engineID: id,
 			session,
@@ -354,6 +411,7 @@ export class EngineRegistry implements EngineRegistryLike {
 			buildMs: Date.now() - startedAt,
 			lastUsed: Date.now(),
 			uses: 1,
+			lexicons,
 		}
 
 		this.#engines.set(id, engine)

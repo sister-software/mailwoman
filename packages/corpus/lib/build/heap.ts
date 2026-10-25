@@ -16,6 +16,13 @@
 const RESIDENT_RECORD_ADAPTERS: ReadonlySet<string> = new Set(["wof-admin", "wof-postalcode"])
 
 /**
+ * Whether `adapterID`'s run holds every source record resident before yielding a row.
+ */
+export function isResidentRecordAdapter(adapterID: string): boolean {
+	return RESIDENT_RECORD_ADAPTERS.has(adapterID)
+}
+
+/**
  * The heap a build needs before a resident-record adapter may run, in bytes.
  *
  * At Node's 4 GB default both WOF adapters abort with SIGABRT, `wof-admin` at 4,085 MB after 722 seconds.

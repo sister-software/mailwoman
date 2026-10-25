@@ -23,7 +23,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
  * before the expected collision count passes 1.
  * An adapter above that extends the prefix.
  */
-export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
+export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string | null>>): string {
 	return stableSourceIDFromParts(adapterID, components)
 }
 
@@ -36,7 +36,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  */
 export function stableSourceIDFromParts(
 	adapterID: string,
-	parts: Readonly<Record<string, string | undefined>>
+	parts: Readonly<Record<string, string | null | undefined>>
 ): string {
 	const sortedKeys = Object.keys(parts).toSorted()
 	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")

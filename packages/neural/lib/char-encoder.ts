@@ -151,7 +151,7 @@ export type EncoderDescriptor =
 export function encoderDescriptorFromCard(card: Record<string, unknown> | null, source: string): EncoderDescriptor {
 	const encoder = card?.encoder
 
-	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
+	if (!encoder || encoder === "sentencepiece") return { kind: "sentencepiece" }
 
 	if (encoder !== "char") {
 		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${stringifyJSON(encoder)}`)

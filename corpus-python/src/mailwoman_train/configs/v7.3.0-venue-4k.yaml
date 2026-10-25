@@ -4,7 +4,7 @@
 # Fisher, learning rate 1e-5, 4,000 steps at batch 128 (512,000 samples). `source_reps` are the v7.2.0
 # values divided by 15 (60,000 / 4,000 steps), so every source's derived weight equals the base run's and the
 # mixture is the base's. The receipts are unchanged because the audit epoch is 1,000,000 rows regardless of steps.
-# The corpus is 0.7.3-venue, the 0.7.2 corpus plus two train files from `mailwoman corpus slice venue`:
+# The corpus is 0.7.3-venue, the 0.7.2 corpus plus two train files from `mailwoman corpus recipe venue`:
 # 532012 `spliced-venue-locality` rows and 474821 `fragment-venue-bare` rows over 27 countries.
 # The two sources share 5% of the run's draws (25600 of 512000) in proportion to their rows, and
 # each has a receipt at 90% of its expected draws over the 1,000,000-row audit epoch. The inherited receipts

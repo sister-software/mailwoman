@@ -32,6 +32,20 @@ export interface LicenseWorkerBindings {
 	CLAIM_LIMITER: RateLimit
 	REFRESH_LIMITER: RateLimit
 	STATUS_LIMITER: RateLimit
+	DECLARE_LIMITER: RateLimit
+	EVALUATE_LIMITER: RateLimit
+	DOWNLOAD_LIMITER: RateLimit
+	/**
+	 * The S3 API credentials, endpoint and private bucket that presign paid-artifact downloads.
+	 *
+	 * The two secrets arrive through `wrangler secret put`, and the download route
+	 * answers 503 while any of the four is missing.
+	 * Every other route runs without them.
+	 */
+	R2_ACCESS_KEY_ID?: string
+	R2_SECRET_ACCESS_KEY?: string
+	R2_S3_ENDPOINT?: string
+	PAID_ARTIFACTS_BUCKET?: string
 }
 
 const notPlaceholder = z

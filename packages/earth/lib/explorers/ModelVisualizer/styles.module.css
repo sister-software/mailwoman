@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	font-size: var(--font-size-footnote);
+	font-size: var(--mw-font-size-footnote);
 }
 
 /*
@@ -11,26 +11,46 @@
  */
 .traceForm {
 	display: flex;
+	flex-direction: column;
 	gap: 0.5rem;
+	width: min(100%, 56rem);
+	margin: 0 auto;
+}
+
+/*
+ * The field is a textarea so a pasted postal block keeps its lines. It grows with the line count up to the
+ * rows the component sets, and the visitor can pull it taller.
+ */
+.traceInput {
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0.6rem 0.85rem;
+	font: inherit;
+	font-family: var(--ss-font-family-base);
+	font-size: var(--mw-font-size-body);
+	line-height: 1.45;
+	color: var(--ss-color-content);
+	background: var(--ss-color-emphasis-100);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
+	resize: vertical;
+}
+
+.traceMeta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
 	align-items: center;
 }
 
-.traceInput {
-	flex: 1;
-	min-width: 0;
-	box-sizing: border-box;
-	padding: 0.5rem 0.75rem;
-	font: inherit;
-	font-family: var(--font-family-text);
-	color: var(--control-foreground);
-	background: var(--control-background);
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-control);
+.traceMeta .traceHint {
+	flex: 1 1 20rem;
 }
 
 .traceInput:focus-visible,
 .traceButton:focus-visible {
-	outline: 2px solid var(--color-selection);
+	outline: 2px solid var(--ss-color-primary);
 	outline-offset: 1px;
 }
 
@@ -38,12 +58,12 @@
 	flex: 0 0 auto;
 	padding: 0.5rem 1rem;
 	font: inherit;
-	font-family: var(--font-family-text);
-	font-weight: var(--font-weight-medium);
-	color: var(--color-accent-contrast);
-	background: var(--color-accent);
+	font-family: var(--ss-font-family-base);
+	font-weight: var(--ss-font-weight-semibold);
+	color: var(--ss-color-content-inverse);
+	background: var(--ss-color-primary);
 	border: 0;
-	border-radius: var(--radius-control);
+	border-radius: var(--ss-radius-global);
 	cursor: pointer;
 }
 
@@ -54,16 +74,16 @@
 
 .traceTitle {
 	margin: 0;
-	font-family: var(--font-family-display);
-	font-size: var(--font-size-title);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-primary);
+	font-family: var(--ss-font-family-heading);
+	font-size: var(--mw-font-size-title);
+	font-weight: var(--ss-font-weight-bold);
+	color: var(--ss-color-content);
 }
 
 .traceHint {
 	margin: 0;
-	color: var(--color-text-tertiary);
-	font-size: var(--font-size-caption);
+	color: var(--ss-color-emphasis-600);
+	font-size: var(--mw-font-size-caption);
 }
 
 .header {
@@ -83,11 +103,11 @@
 }
 
 .chip {
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-pill);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-tag);
 	padding: 0.05rem 0.55rem;
 	font-size: 0.72rem;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .bandTitle {
@@ -101,9 +121,9 @@
 	font-size: 0.72rem;
 	cursor: pointer;
 	background: none;
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-tight);
-	color: var(--color-text-secondary);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
+	color: var(--ss-color-content-secondary);
 }
 
 .ribbon {
@@ -113,9 +133,9 @@
 }
 
 .piece {
-	font-family: var(--font-family-code);
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-tight);
+	font-family: var(--ss-font-family-monospace);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
 	padding: 0.1rem 0.35rem;
 }
 
@@ -129,20 +149,20 @@
 .channelName {
 	width: 5.5rem;
 	font-size: 0.72rem;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .channelCell {
 	width: 1.1rem;
 	height: 0.8rem;
-	border-radius: var(--radius-tick);
-	background: var(--color-accent);
+	border-radius: var(--ss-radius-global);
+	background: var(--ss-color-primary);
 }
 
 .notFed {
 	font-size: 0.72rem;
 	font-style: italic;
-	color: var(--color-text-tertiary);
+	color: var(--ss-color-emphasis-600);
 }
 
 .heatmapScroll {
@@ -160,19 +180,19 @@
 	text-align: right;
 	padding-right: 0.4rem;
 	white-space: nowrap;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .cell {
 	width: 1.1rem;
 	min-width: 1.1rem;
 	height: 0.75rem;
-	border: 1px solid var(--color-background-sunken);
+	border: 1px solid var(--ss-color-background-surface);
 	padding: 0;
 }
 
 .pathCell {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--ss-color-primary);
 	outline-offset: -2px;
 }
 
@@ -181,8 +201,8 @@
 		45deg,
 		transparent,
 		transparent 2px,
-		var(--control-border) 2px,
-		var(--control-border) 3px
+		var(--ss-color-emphasis-300) 2px,
+		var(--ss-color-emphasis-300) 3px
 	);
 }
 
@@ -190,15 +210,15 @@
 .repairLine {
 	margin: 0.35rem 0 0;
 	font-size: 0.72rem;
-	color: var(--color-text-secondary);
+	color: var(--ss-color-content-secondary);
 }
 
 .decoded {
 	position: relative;
 	display: inline-flex;
 	flex-direction: column;
-	border: 1px solid var(--control-border);
-	border-radius: var(--radius-tight);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
 	padding: 0.1rem 0.35rem 0.25rem;
 	overflow: hidden;
 }
@@ -208,12 +228,12 @@
 }
 
 .decodedPiece {
-	font-family: var(--font-family-code);
+	font-family: var(--ss-font-family-monospace);
 }
 
 .decodedLabel {
 	font-size: 0.62rem;
-	color: var(--color-accent);
+	color: var(--ss-color-primary);
 }
 
 .confidenceBar {
@@ -221,7 +241,7 @@
 	bottom: 0;
 	left: 0;
 	height: 3px;
-	background: var(--color-accent);
+	background: var(--ss-color-primary);
 }
 
 .gauge {
@@ -242,8 +262,8 @@
 
 .gaugeBar {
 	width: 100%;
-	background: var(--color-accent);
-	border-radius: var(--radius-tick) var(--radius-tick) 0 0;
+	background: var(--ss-color-primary);
+	border-radius: var(--ss-radius-global) var(--ss-radius-global) 0 0;
 }
 
 .gaugeLabel {
@@ -252,5 +272,198 @@
 
 .empty {
 	font-style: italic;
-	color: var(--color-text-tertiary);
+	color: var(--ss-color-emphasis-600);
+}
+
+/*
+ * The workbench: the field across the top, then three columns over the full page width. The middle column
+ * holds the bands and takes the largest share; the outer columns hold the tiles and the readings. Below
+ * tablet width the columns stack.
+ */
+.workbench {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	font-size: var(--mw-font-size-footnote);
+}
+
+.columns {
+	display: grid;
+	grid-template-columns: minmax(16rem, 1fr) minmax(0, 2.4fr) minmax(18rem, 1fr);
+	gap: 1.5rem;
+	align-items: start;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	min-width: 0;
+}
+
+@media (max-width: 64rem) {
+	.columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/*
+ * The tile board. A tile is one word of the input; its border deepens with the count of labels elsewhere that
+ * flipped when the probe removed it.
+ */
+.tileBoard {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.tileRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.tile {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15rem;
+	padding: 0.2rem 0.3rem;
+	background: var(--ss-color-emphasis-100);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
+	cursor: grab;
+	user-select: none;
+}
+
+.tile[data-dragging] {
+	opacity: 0.5;
+}
+
+.tile[data-flips="1"] {
+	border-color: hsl(40 80% 50%);
+}
+
+.tile[data-flips="2"] {
+	border-color: hsl(20 85% 50%);
+}
+
+.tile[data-flips="3"] {
+	border-color: hsl(0 85% 50%);
+	border-width: 2px;
+}
+
+.tileWord {
+	font-family: var(--ss-font-family-monospace);
+	padding: 0 0.2rem;
+}
+
+.tileCount {
+	font-size: 0.65rem;
+	padding: 0 0.3rem;
+	border-radius: 999px;
+	background: var(--ss-color-emphasis-300);
+}
+
+.tileButton {
+	padding: 0 0.25rem;
+	font: inherit;
+	line-height: 1;
+	color: var(--ss-color-emphasis-600);
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+}
+
+.tileButton:disabled {
+	opacity: 0.3;
+	cursor: default;
+}
+
+.tileButton:hover:not(:disabled) {
+	color: var(--ss-color-content);
+}
+
+.tileActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.tileReset {
+	padding: 0.5rem 1rem;
+	font: inherit;
+	font-family: var(--ss-font-family-base);
+	color: var(--ss-color-content);
+	background: var(--ss-color-emphasis-200);
+	border: 0;
+	border-radius: var(--ss-radius-global);
+	cursor: pointer;
+}
+
+.traceStatus {
+	margin: 0;
+	color: var(--ss-color-emphasis-600);
+}
+
+/*
+ * The character band: one cell per character, the token's label family as the hue and its confidence as the
+ * strength. Spaces keep their width so the cells line up with the text as typed.
+ */
+.charBand {
+	display: flex;
+	flex-wrap: wrap;
+	font-family: var(--ss-font-family-monospace);
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+.char {
+	display: inline-block;
+	min-width: 0.65em;
+	text-align: center;
+	border-radius: 2px;
+}
+
+.char[data-o] {
+	color: var(--ss-color-emphasis-600);
+}
+
+/* A newline in the traced text ends the band's line, as it does in the field. */
+.charBreak {
+	flex-basis: 100%;
+	height: 0;
+}
+
+.readings {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.metadata {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 0.25rem 0.75rem;
+	margin: 0;
+}
+
+.metadata dt {
+	color: var(--ss-color-emphasis-600);
+}
+
+.metadata dd {
+	margin: 0;
+}
+
+.readingHint {
+	margin: 0;
+	color: var(--ss-color-emphasis-600);
+}
+
+.readingList {
+	margin: 0;
+	padding-left: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
 }

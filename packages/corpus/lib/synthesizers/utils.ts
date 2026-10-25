@@ -30,7 +30,7 @@ export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
 /**
- * Build an augmented row with its `RecipeMarker`.
+ * Build an augmented row with its `AugmentationMarker`.
  */
 function withAugmentation(
 	source: CanonicalRow,
@@ -38,14 +38,14 @@ function withAugmentation(
 	newRaw: string,
 	newComponents: ComponentDict
 ): CanonicalRow {
-	const baseID = source.recipe?.base_source_id ?? source.source_id
+	const baseID = source.augmentation?.base_source_id ?? source.source_id
 
 	return {
 		...source,
 		raw: newRaw,
 		components: newComponents,
 		source_id: `${source.source_id}+${method}`,
-		recipe: { recipe: method, base_source_id: baseID },
+		augmentation: { name: method, base_source_id: baseID },
 	}
 }
 
@@ -86,13 +86,24 @@ export const caseLower: Augmentation = (row) => {
 }
 
 /**
- * Drop commas from raw.
+ * Drop commas from raw and from every component, each the same way.
+ *
+ * A component that holds a comma of its own (`WAL-MART STORES EAST, LP`) has to lose it too.
+ * The aligner places a span of the component's length, so a component left one character
+ * longer than its text in raw ends its span on the space after it.
  */
 export const dropCommas: Augmentation = (row) => {
 	if (!row.raw.includes(",")) return null
-	const newRaw = row.raw.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
+	const strip = (text: string) => text.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
+	const components: ComponentDict = {}
 
-	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
+	for (const [tag, value] of Object.entries(row.components)) {
+		if (value) {
+			components[tag as ComponentTag] = strip(value)
+		}
+	}
+
+	return withAugmentation(row, "drop-commas", strip(row.raw), components)
 }
 
 /**
@@ -307,6 +318,22 @@ const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
 /**
  * Expand state abbreviation to full name.
  */
+/**
+ * Replace the last whole-word occurrence of `region` in `raw`, or return null when it does not occur.
+ *
+ * The region follows the street and the locality in every US rendering,
+ * so the last occurrence is the region's.
+ * An earlier one belongs to another component (`GA HIGHWAY 32 E`), which keeps its text,
+ * and replacing it would move that component's span off its text.
+ */
+function replaceRegionWord(raw: string, region: string, replacement: string): string | null {
+	const match = [...raw.matchAll(new RegExp(`\\b${region}\\b`, "g"))].at(-1)
+
+	if (!match) return null
+
+	return raw.slice(0, match.index) + replacement + raw.slice(match.index + region.length)
+}
+
 export const stateExpand: Augmentation = (row) => {
 	// country-branch: the state, directional, street-suffix, unit and ZIP+4
 	// augmentations below read US vocabulary tables.
@@ -319,11 +346,9 @@ export const stateExpand: Augmentation = (row) => {
 	const full = STATE_ABBR_TO_NAME[region]
 
 	if (!full) return null
-	// Replace exact word matches only.
-	const re = new RegExp(`\\b${region}\\b`, "g")
+	const newRaw = replaceRegionWord(row.raw, region, full)
 
-	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), full)
+	if (!newRaw) return null
 	const newComponents: ComponentDict = { ...row.components, region: full }
 
 	return withAugmentation(row, "state-expand", newRaw, newComponents)
@@ -341,10 +366,9 @@ export const stateAbbreviate: Augmentation = (row) => {
 	const abbr = STATE_NAME_TO_ABBR[region]
 
 	if (!abbr) return null
-	const re = new RegExp(`\\b${region}\\b`, "g")
+	const newRaw = replaceRegionWord(row.raw, region, abbr)
 
-	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${region}\\b`, "g"), abbr)
+	if (!newRaw) return null
 	const newComponents: ComponentDict = { ...row.components, region: abbr }
 
 	return withAugmentation(row, "state-abbreviate", newRaw, newComponents)
@@ -694,7 +718,7 @@ export function tieredNumber(random: () => number, bands: readonly TieredNumberB
 	let chosen = bands.at(-1)!
 
 	for (const band of bands) {
-		if (band.cutoff === undefined || r < band.cutoff) {
+		if (!band.cutoff || r < band.cutoff) {
 			chosen = band
 
 			break
@@ -829,7 +853,7 @@ export function composeAdversarialRow(
 		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
 	]
 
-	const baseSourceID = address.recipe?.base_source_id ?? address.source_id
+	const baseSourceID = address.augmentation?.base_source_id ?? address.source_id
 	const method = `compose:${options.pattern}`
 
 	const composed: LabeledRow = {
@@ -839,9 +863,8 @@ export function composeAdversarialRow(
 		locale: address.locale,
 		source: address.source,
 		source_id: `${address.source_id}+${method}`,
-		corpus_version: address.corpus_version,
 		license: address.license,
-		recipe: { recipe: method, base_source_id: baseSourceID },
+		augmentation: { name: method, base_source_id: baseSourceID },
 		tokens,
 		labels,
 		span_starts: spans.map((s) => s.start),

@@ -35,11 +35,11 @@ export const spec = {
 
 const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
+		const { buildLocalitySurfaceLexicon } = await import("@mailwoman/gazetteer/tools/pipeline/evidence-lexicons")
 
 		const built = await buildLocalitySurfaceLexicon({
-			countries: options.countries ? extractDelimited(options.countries) : undefined,
-			placetypes: options.placetypes ? extractDelimited(options.placetypes) : undefined,
+			countries: options.countries ? extractDelimited(options.countries) : null,
+			placetypes: options.placetypes ? extractDelimited(options.placetypes) : null,
 			dbPath: options.db,
 			output: options.out,
 			onProgress: (line) => console.error(line),

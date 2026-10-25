@@ -1,0 +1,145 @@
+/**
+ * The pricing calculator. A key-colored panel holding the controls over a plain table; the Mailwoman row is the one
+ * on the selected color so the constant reads as the answer.
+ */
+
+.calculator {
+	border: 1px solid var(--ss-color-edge);
+	background: var(--ss-color-background-raised);
+	box-shadow: var(--ss-shadow-utility);
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: 0.5rem 1rem;
+	padding: 1.25rem 1.5rem;
+	background: var(--ss-color-key);
+	border-bottom: 1px solid var(--ss-color-edge);
+}
+
+.label {
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.number {
+	width: 12ch;
+	font: inherit;
+	font-family: var(--ifm-font-family-monospace);
+	text-align: right;
+	padding: 0.3rem 0.5rem;
+	border: 1px solid var(--ss-color-key-edge);
+	background: var(--ss-color-background-raised);
+	color: var(--ss-color-content);
+}
+
+.range {
+	grid-column: 1 / -1;
+	width: 100%;
+	accent-color: var(--ss-color-selected);
+}
+
+.scale {
+	grid-column: 1 / -1;
+	display: flex;
+	justify-content: space-between;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.table {
+	display: table;
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+}
+
+.table th,
+.table td {
+	border: 0;
+	border-bottom: 1px solid var(--ss-color-rule);
+	padding: 0.75rem 1.5rem;
+	text-align: left;
+	vertical-align: top;
+	font-weight: inherit;
+}
+
+.table thead th {
+	font-size: 0.75rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ifm-color-emphasis-700);
+	background: none;
+}
+
+.table tr {
+	background: none;
+	border: 0;
+}
+
+/* Infima paints every th as a header cell; the row labels here are body text. */
+.table tbody th {
+	background: none;
+}
+
+.ours th,
+.ours td {
+	background: var(--ss-color-selected) !important;
+	color: inherit;
+}
+
+.provider {
+	display: block;
+	font-weight: var(--ifm-font-weight-semibold);
+}
+
+.product {
+	display: block;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.amount {
+	text-align: right !important;
+	white-space: nowrap;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 1.15rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.ours {
+	background: var(--ss-color-selected) !important;
+	color: var(--ss-color-white, #fff);
+}
+
+/* The night selected color is a light blue, so the row's text turns to the seal's navy. */
+[data-theme="dark"] .ours {
+	color: var(--mw-color-navy);
+}
+
+.ours .product,
+.ours .amount {
+	color: inherit;
+}
+
+.ours .amount {
+	font-weight: var(--ifm-font-weight-bold);
+}
+
+.fine {
+	margin: 0;
+	padding: 1rem 1.5rem;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+@media (max-width: 600px) {
+	.controls,
+	.table th,
+	.table td,
+	.fine {
+		padding-inline: 1rem;
+	}
+}

@@ -24,8 +24,8 @@
 # $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-country-gap-v2/ and then -v1/ (skipping a name v2 already built, and
 # matrikkelen-sj):
 #
-#   mailwoman corpus align-slice --corpus-version 0.7.9-country-gap, then `mailwoman dev jsonl-to-parquet`, then
-#     `mailwoman corpus split-slice`
+#   mailwoman corpus align-recipe --corpus-version 0.7.9-country-gap, then `mailwoman dev jsonl-to-parquet`, then
+#     `mailwoman corpus split-overlay`
 #   register the files with `mailwoman corpus overlay-manifest --base <v0.7.8-rights-clean MANIFEST.json>
 #     --corpus-version 0.7.9-country-gap --split …`, with each file's source taken from its rows. The call is recorded
 #     in OVERLAY_PLAN.json beside the corpus's MANIFEST.json under the data root. The assembly checked 176 sources and

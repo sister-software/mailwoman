@@ -22,13 +22,14 @@
  *   ODbL: the rows inherit OpenStreetMap's share-alike license. A corpus build run under
  *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
- *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
+ *   Run: mailwoman corpus recipe pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
+import { componentsForOSMRow, sameName } from "#adapters/osm/adapter"
+import { OSM_LICENSE } from "#adapters/osm/license"
 import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
@@ -148,7 +149,7 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 			for await (const tuple of readTuples(opts.input)) {
 				read++
 
-				if (opts.count !== undefined && emitted >= opts.count) break
+				if (opts.count && emitted >= opts.count) break
 
 				const components = componentsForOSMRow(tuple as Parameters<typeof componentsForOSMRow>[0], country)
 				const rendering = components ? renderSouthAsiaRegister(components, random) : null
@@ -177,7 +178,6 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						locale,
 						source: sourceName,
 						source_id: recipeSourceID(sourceName, { raw: rendering.raw }),
-						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},
 					`${name}:${rendering.register}`,

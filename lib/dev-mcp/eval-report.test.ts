@@ -16,7 +16,7 @@ afterAll(() => fixtures.disposeAsync())
 async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuilder> {
 	const dir = fixtures.use(await temporaryDirectory("mwdev-eval-report-")).path
 
-	if (verdict !== undefined) {
+	if (verdict) {
 		await writeLocalJSONFile(verdict, dir("verdict.json"))
 	}
 
@@ -57,7 +57,7 @@ describe("readEvalReport", () => {
 				verdict: "FAIL",
 				results: {
 					"us.street": { floor: 80.4, actual: 78, pass: false },
-					"nl.postcode": { floor: 99, actual: undefined, pass: false },
+					"nl.postcode": { floor: 99, actual: null, pass: false },
 				},
 			}),
 			"",
@@ -139,7 +139,7 @@ describe("summarizeEvalReport", () => {
 
 	it("says UNRECORDED rather than guessing when the artifact is unknown", async () => {
 		const summary = summarizeEvalReport(
-			await readEvalReport(await outDir({ ...PASSING, graded_artifact: undefined }), "", "")
+			await readEvalReport(await outDir({ ...PASSING, graded_artifact: null }), "", "")
 		)
 
 		expect(summary).toContain("UNRECORDED")
@@ -153,7 +153,7 @@ describe("summarizeEvalReport", () => {
 					verdict: "FAIL",
 					results: {
 						"us.street": { floor: 80.4, actual: 78, pass: false },
-						"nl.postcode": { floor: 99, actual: undefined, pass: false },
+						"nl.postcode": { floor: 99, actual: null, pass: false },
 					},
 				}),
 				"",

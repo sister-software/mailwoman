@@ -231,7 +231,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 			for (const documentPath of await documentPaths(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				// The published document writes 300,318 referenced features ahead of its first address
 				// and held 0 of 345,309 measured, so the driver's holding list stays empty here.
@@ -243,7 +243,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 					// One string per feature rather than its subtree.
 					index: referencedValue,
 					compose: (address, referenced, final) => composeRow(address, referenced, { final }),
-					limit: opts.limit === undefined ? undefined : opts.limit - emitted,
+					limit: typeof opts.limit !== "number" ? undefined : opts.limit - emitted,
 					signal: opts.signal,
 				})) {
 					yield row
@@ -279,7 +279,7 @@ function composeRow(
 
 	for (const href of componentHrefs(address)) {
 		const key = componentJoinKey(href)
-		const feature = key ? referenced.get(key) : undefined
+		const feature = key ? referenced.get(key) : null
 
 		if (!feature) {
 			if (!options.final) return "deferred"
@@ -335,7 +335,6 @@ function composeRow(
 		locale: "nl-NL",
 		source: NL_KADASTER_ADAPTER_ID,
 		source_id: addressID ? `${NL_KADASTER_ADAPTER_ID}-${addressID}` : stableSourceID(NL_KADASTER_ADAPTER_ID, aligned),
-		corpus_version: "",
 		license: NL_KADASTER_DEFAULT_LICENSE,
 	}
 }

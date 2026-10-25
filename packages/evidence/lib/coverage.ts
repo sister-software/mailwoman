@@ -93,7 +93,7 @@ export interface RequireExclusionInput {
 	 * The layer's coverage row for this cell; `undefined` means the cell is absent from
 	 * `layer_coverage`, which is unknown and never a zero-completeness record.
 	 */
-	cell: { basis?: CoverageBasis | null } | undefined
+	cell: { basis?: CoverageBasis | null } | null | undefined
 	/**
 	 * Identity of the fold this probe folded its key with, derived with {@link foldIdentity} rather than
 	 * a hand-written label, because three packages export a `foldName` that computes different answers.

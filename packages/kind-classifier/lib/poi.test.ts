@@ -463,6 +463,21 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 	})
 })
 
+/**
+ * The lexicon phrases one `matchPOISubject` scan of `text` queries, in order.
+ */
+function matchPOISubjectCalls(text: string, lookup: POIPhraseLookup): string[] {
+	const calls: string[] = []
+
+	matchPOISubject(text, LOCALE.locale, (phrase, locale) => {
+		calls.push(phrase)
+
+		return lookup(phrase, locale)
+	})
+
+	return calls
+}
+
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
@@ -479,6 +494,29 @@ describe("createKindClassifier with a poi lexicon", () => {
 		const result = await classify(input("hospital near Springfield IL"), shape(), LOCALE)
 		expect(result.kind).toBe("poi_query")
 	})
+
+	it.each(["hospital", "hospital near Springfield IL", "Empire State Building"])(
+		"queries the lexicon once per subject scan for %j",
+		async (text) => {
+			// The two POI scorers and the marker builder read one subject match.
+			// Each lexicon query that misses the exact table scans a phrase index,
+			// so a repeated scan is the classifier's dominant cost.
+			const calls: string[] = []
+
+			const counting: POIPhraseLookup = (phrase, locale) => {
+				calls.push(phrase)
+
+				return LOOKUP(phrase, locale)
+			}
+
+			const expected = matchPOISubjectCalls(text, counting)
+			calls.length = 0
+
+			await createKindClassifier({ poiLexicon: counting })(input(text), shape(), LOCALE)
+
+			expect(calls).toEqual(expected)
+		}
+	)
 
 	it("does NOT claim a venue-led full address (house-number remainder)", async () => {
 		const result = await classify(

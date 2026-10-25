@@ -1,0 +1,85 @@
+{
+	"name": "@mailwoman/structures",
+	"version": "10.7.0",
+	"private": true,
+	"description": "Building footprints, 3D building models, landmark models and tree heights, with a license decision for each publisher",
+	"keywords": [
+		"3d-buildings",
+		"citygml",
+		"landmarks",
+		"license",
+		"plateau"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/structures"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"lib/**/*.ts",
+		"sdk/**/*.ts",
+		"data/**/*",
+		"!**/*.test.ts"
+	],
+	"type": "module",
+	"imports": {
+		"#sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./out/index.d.ts",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./data/*": "./data/*",
+		"./sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"http-status-codes": "^2.3.0"
+	},
+	"devDependencies": {
+		"mailwoman": "workspace:*"
+	},
+	"engines": {
+		"node": "^24.22.1 || >=26.12.1"
+	}
+}

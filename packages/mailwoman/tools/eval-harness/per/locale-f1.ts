@@ -157,7 +157,10 @@ interface GoldenRow {
  * Which mode applies is decided per row from the golden dir's own manifest
  * (see {@linkcode readStreetConvention}), never from a flag someone has to remember.
  */
-function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStreetParts = true): Record<string, string> {
+export function foldToComponents(
+	flat: Partial<Record<ComponentTag, string>>,
+	foldStreetParts = true
+): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
 
@@ -242,7 +245,10 @@ async function readStreetConvention(goldenDir: string): Promise<Record<string, s
 	return {}
 }
 
-function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
+/**
+ * Whether every tag in either record holds the same normalized text in both.
+ */
+export function componentsMatchExactly(pred: Record<string, string>, gold: Record<string, string>): boolean {
 	const keys = new Set([...Object.keys(pred), ...Object.keys(gold)])
 
 	for (const k of keys) if (normalizeComponent(pred[k]) !== normalizeComponent(gold[k])) return false
@@ -338,7 +344,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 	let exact = 0
 
 	for (let i = 0; i < rows.length; i++)
-		if (exactMatch(preds[i]!, rows[i]!.components)) {
+		if (componentsMatchExactly(preds[i]!, rows[i]!.components)) {
 			exact++
 		}
 
@@ -437,14 +443,14 @@ export async function perLocaleF1(
 		const postcodeAnchorLookup =
 			anchorLookupPath && (await pathExists(anchorLookupPath))
 				? parseAnchorLookup(await readLocalJSONFile(anchorLookupPath))
-				: undefined
+				: null
 
 		// Fed so a gazetteer-trained model gets its clues.
 		// Harmless for older models, since the runner skips inputs the ONNX lacks.
 		const gazetteerLexicon =
 			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
-				: undefined
+				: null
 
 		reportError(
 			`Anchor:     ${postcodeAnchorLookup ? `${anchorLookupPath} (${postcodeAnchorLookup.size} codes)` : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${anchorLookupPath})`}`

@@ -6,11 +6,11 @@ import random
 from pathlib import Path
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 
 from mailwoman_train.audits.epoch_mixture import audit_mixture
 from mailwoman_train.data.emit import EmitPolicy, emit_row
 from mailwoman_train.data.loader import iter_rows
+from tests.corpus_fixture import write_corpus_parquet
 
 SCHEMA = pa.schema(
     [
@@ -46,7 +46,7 @@ def _write_corpus(tmp_path: Path) -> Path:
         (f"part-{EXCLUDED}.parquet", _rows(EXCLUDED, 64)),
         (f"part-{AUGMENTED}.parquet", _rows(AUGMENTED, 64)),
     ):
-        pq.write_table(pa.Table.from_pylist(rows, schema=SCHEMA), corpus / "train" / name)
+        write_corpus_parquet(pa.Table.from_pylist(rows, schema=SCHEMA), corpus / "train" / name)
     return corpus
 
 

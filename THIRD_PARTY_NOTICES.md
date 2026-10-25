@@ -49,6 +49,14 @@ both in full; that is the copy a consumer of the package receives. The same text
 > DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+### Google SentencePiece — Apache-2.0, and darts-clone — BSD 2-clause
+
+`@mailwoman/sentencepiece-wasm` ships Google [SentencePiece](https://github.com/google/sentencepiece)
+v0.2.2 compiled to WASM, with Google's license text as `LICENSE.sentencepiece`. `@mailwoman/mtf` ports parts of SentencePiece v0.2.2 (Copyright 2016 Google
+Inc., Apache-2.0) and of darts-clone (Copyright (c) 2008-2011 Susumu Yata, BSD 2-clause) to Rust.
+`packages/mtf/THIRD_PARTY_NOTICES.md` lists each ported file and its upstream source, and
+`packages/mtf/third-party/` holds both license texts.
+
 ## Data bundled in the published packages
 
 These ship inside `@mailwoman/core` (under `data/`), with the upstream license text vendored
@@ -57,20 +65,20 @@ beside each dataset.
 ### libpostal dictionaries — MIT
 
 Address-component dictionaries from [libpostal](https://github.com/openvenues/libpostal)
-(© 2015 openvenues), under `core/data/libpostal/` and
-`core/data/internal/dictionaries/libpostal/`. License: `core/data/libpostal/LICENSE`.
+(© 2015 openvenues), under `dictionaries/data/libpostal/` and
+`dictionaries/data/internal/dictionaries/libpostal/`. License: `dictionaries/data/libpostal/LICENSE`.
 
 ### Google libaddressinput (chromium-i18n) — Apache-2.0
 
 Per-country address metadata from Google's
 [libaddressinput](https://github.com/google/libaddressinput), fetched from
-`chromium-i18n.appspot.com/ssl-address`, under `core/data/chromium-i18n/ssl-address/`.
-License: `core/data/chromium-i18n/LICENSE`.
+`chromium-i18n.appspot.com/ssl-address`, under `dictionaries/data/chromium-i18n/ssl-address/`.
+License: `dictionaries/data/chromium-i18n/LICENSE`.
 
 ### Who's On First — community/various
 
 Reference dictionaries derived from [Who's On First](https://whosonfirst.org/), under
-`core/data/internal/dictionaries/whosonfirst/`. WOF data draws on several sources with their own
+`dictionaries/data/internal/dictionaries/whosonfirst/`. WOF data draws on several sources with their own
 licenses; see the [Who's On First licenses](https://www.whosonfirst.org/docs/licenses/), archived as
 retrieved at `packages/corpus/data/licenses/whosonfirst-licenses.md`.
 

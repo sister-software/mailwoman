@@ -137,7 +137,7 @@ export function readString(
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
-	if (value === undefined) {
+	if (value == null) {
 		if (required) {
 			add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 		}
@@ -169,7 +169,7 @@ export function readBoolean(
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
-	if (value === undefined) {
+	if (value == null) {
 		add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 
 		return null
@@ -194,7 +194,7 @@ export function readArray(
 	const value = container[key]
 	const fieldPath = `${path}.${key}`
 
-	if (value === undefined) {
+	if (value == null) {
 		if (required) {
 			add(issues, fieldPath, ValidationIssueCode.MissingField, `\`${key}\` is required`)
 		}
@@ -259,7 +259,7 @@ export function readVocabularyValue<T extends string>(
 
 	const match = allowed.find((candidate) => candidate === value)
 
-	if (match === undefined) {
+	if (match == null) {
 		add(issues, `${path}.${key}`, code, `\`${value}\` is not one of ${listVocabulary(allowed)}`)
 	}
 
@@ -283,7 +283,7 @@ export function readVocabularyArray<T extends string>(
 	for (const [index, value] of values.entries()) {
 		const match = allowed.find((candidate) => candidate === value)
 
-		if (match === undefined) {
+		if (match == null) {
 			add(issues, `${path}.${key}[${index}]`, code, `\`${value}\` is not one of ${listVocabulary(allowed)}`)
 
 			continue

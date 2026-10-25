@@ -119,6 +119,6 @@ export function groupPredicateFromMap<ID>(groupOf: ReadonlyMap<ID, string>): (a:
 	return (a, b) => {
 		const groupA = groupOf.get(a)
 
-		return groupA !== undefined && groupA === groupOf.get(b)
+		return Boolean(groupA && groupA === groupOf.get(b))
 	}
 }

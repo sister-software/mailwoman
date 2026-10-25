@@ -6,8 +6,8 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -74,6 +74,26 @@ function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderL
 }
 
 /**
+ * The second practice-location line as a unit, or `null` when it holds something else.
+ *
+ * Most filled second lines open with a USPS secondary unit designator
+ * (`SUITE 200`, `STE. 4`, `APT 2B`, `DEPARTMENT OF SURGERY`) or a bare number sign (`#200`).
+ * The rest name a recipient, a building or a mail stop (`ATTN: BILLING`, `C/O …`, `MEDICAL OFFICE BUILDING`).
+ *
+ * Those are not part of the street or the unit, so the row leaves them out
+ * rather than joining them to the street span.
+ */
+export function unitLine(line: string): string | null {
+	if (!line) return null
+
+	if (/^#\s*\w/.test(line)) return line
+
+	const [first = ""] = line.split(/\s+/)
+
+	return matchLeadingDesignator(first.replace(/\.$/, "")) ? line : null
+}
+
+/**
  * Creates the NPPES adapter.
  *
  * Each row's `venue` is the organization's legal name or, for an individual provider,
@@ -105,18 +125,21 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 			for await (const record of rows as AsyncIterable<NPPESRow>) {
 				if (opts.signal?.aborted) break
 
-				if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
-				const npi = record.NPI ?? ""
-				const orgName = record["Provider Organization Name (Legal Business Name)"] ?? ""
-				const lastName = record["Provider Last Name (Legal Name)"] ?? ""
-				const firstName = record["Provider First Name"] ?? ""
+				// NPPES pads some values with trailing spaces (`… CENTER LLC `),
+				// and a padded value renders into a span that ends on the space.
+				const column = (name: keyof NPPESRow) => (record[name] ?? "").trim()
+				const npi = column("NPI")
+				const orgName = column("Provider Organization Name (Legal Business Name)")
+				const lastName = column("Provider Last Name (Legal Name)")
+				const firstName = column("Provider First Name")
 
-				const address1 = record["Provider First Line Business Practice Location Address"] ?? ""
-				const address2 = record["Provider Second Line Business Practice Location Address"] ?? ""
-				const city = record["Provider Business Practice Location Address City Name"] ?? ""
-				const stateRaw = record["Provider Business Practice Location Address State Name"] ?? ""
-				const postcode = record["Provider Business Practice Location Address Postal Code"] ?? ""
+				const address1 = column("Provider First Line Business Practice Location Address")
+				const address2 = column("Provider Second Line Business Practice Location Address")
+				const city = column("Provider Business Practice Location Address City Name")
+				const stateRaw = column("Provider Business Practice Location Address State Name")
+				const postcode = column("Provider Business Practice Location Address Postal Code")
 
 				// The first record's keys reveal a renamed column before the filters below drop every row.
 				if (!checkedHeader) {
@@ -130,10 +153,11 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const fullStreet = [address1, address2].filter(isPresent).join(" ")
-				const split = splitStreetLine(fullStreet)
+				const split = splitStreetLine(address1)
 
 				if (!split) continue
+
+				const unit = unitLine(address2)
 
 				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
@@ -141,6 +165,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					...(venue ? { venue } : {}),
 					...(split.house_number ? { house_number: split.house_number } : {}),
 					street: split.street,
+					...(unit ? { unit } : {}),
 					locality: city,
 					region: state.abbreviation,
 					postcode,
@@ -163,7 +188,6 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					locale: "en-US",
 					source: USGOV_NPPES_ADAPTER_ID,
 					source_id: sourceID,
-					corpus_version: "",
 					license: USGOV_NPPES_DEFAULT_LICENSE,
 				}
 

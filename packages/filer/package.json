@@ -94,10 +94,10 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
-		"read-excel-file": "^9.3.10",
-		"spliterator": "^9.2.1",
+		"read-excel-file": "^9.3.12",
+		"spliterator": "^9.3.0",
 		"type-fest": "^5.10.0",
-		"zod": "^4.6.5"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"dom-serializer": "^3.1.1",
@@ -107,6 +107,6 @@
 		"write-excel-file": "^4.1.1"
 	},
 	"engines": {
-		"node": ">=24.18.0"
+		"node": "^24.22.1 || >=26.12.1"
 	}
 }

@@ -286,7 +286,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					allowlist_reason: verdict.reason,
 					exit_code: finished.exitCode,
 					stdout: finished.stdout,
-					...(parsed === undefined ? {} : { stdout_json: parsed }),
+					...(!parsed ? {} : { stdout_json: parsed }),
 					stderr: finished.stderr,
 					compiled_tree: { newest_compiled: freshness.newestCompiled?.path ?? null },
 					note:

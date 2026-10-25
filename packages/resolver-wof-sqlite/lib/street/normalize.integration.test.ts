@@ -137,6 +137,13 @@ describe("streetKeyVariants", () => {
 		expect(streetKeyVariants("St Pauls Pl")).toEqual(["st pauls place", "saint pauls place"])
 	})
 
+	it("probes a numbered street with and without its ordinal suffix", () => {
+		expect(streetKeyVariants("48th St")).toEqual(["48th street", "48 street"])
+		expect(streetKeyVariants("48 St")).toEqual(["48 street", "48th street"])
+		expect(streetKeyVariants("West 11 Street")).toEqual(["west 11 street", "west 11th street"])
+		expect(streetKeyVariants("US Route 9")).toEqual(["us route 9"])
+	})
+
 	it("never touches a street genuinely named with a type word", () => {
 		expect(streetKeyVariants("Street Road")).toEqual(["street road"])
 		expect(streetKeyVariants("Broadway")).toEqual(["broadway"])

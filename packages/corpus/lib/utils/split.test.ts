@@ -11,8 +11,13 @@ import {
 	type CountryHoldout,
 	defaultHoldouts,
 	HASHED_PLACE_HOLDOUT_DIVISOR,
+	HASHED_PLACE_HOLDOUT_SHARE,
 	hashBucket,
 	hashedHoldoutPlace,
+	hashedPlacesOverCap,
+	hashSelectedPlace,
+	heldOutRegionCap,
+	HOLDOUT_CAP_MIN_ROWS,
 	type HoldoutPolicy,
 	splitForRow,
 	splitRows,
@@ -23,7 +28,6 @@ import {
 interface MinRow {
 	source_id: string
 	country: string
-	corpus_version: string
 	components: { region?: string; postcode?: string; locality?: string; street?: string; house_number?: string }
 }
 
@@ -49,7 +53,6 @@ interface SplitManifestOnDisk {
 const row = (id: string, country: string, region?: string): MinRow => ({
 	source_id: id,
 	country,
-	corpus_version: "0.1.0",
 	components: region ? { region } : {},
 })
 
@@ -127,6 +130,60 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 		expect(hashBucket(`KE|locality:${heldOut[0]!.toLowerCase()}`, HASHED_PLACE_HOLDOUT_DIVISOR)).toBe(0)
 	})
 
+	it("trains on a hash-selected place over the region cap and leaves smaller places held out", () => {
+		const towns = Array.from({ length: 400 }, (_, index) => `Town ${index}`)
+		const selected = towns.filter((locality) => hashSelectedPlace("KE", { locality }) !== null)
+
+		expect(selected.length).toBeGreaterThan(2)
+
+		const [large, ...small] = selected as [string, ...string[]]
+		const cap = heldOutRegionCap(HASHED_PLACE_HOLDOUT_SHARE)
+		const regionRows = 10_000
+
+		const counts = [
+			{
+				country: "KE",
+				place: `locality:${large.toLowerCase()}`,
+				region: "nairobi",
+				rows: Math.ceil(regionRows * cap) + 1,
+			},
+			...small.map((town) => ({ country: "KE", place: `locality:${town.toLowerCase()}`, region: "nairobi", rows: 10 })),
+			// A place that is all of a region under the minimum is not checked.
+			{ country: "KE", place: `locality:${small[0]!.toLowerCase()}`, region: "lamu", rows: HOLDOUT_CAP_MIN_ROWS - 1 },
+		]
+
+		const denominators = new Map([
+			["KE|nairobi", regionRows],
+			["KE|lamu", HOLDOUT_CAP_MIN_ROWS - 1],
+		])
+
+		const table = hashedPlacesOverCap(counts, denominators)
+
+		expect(table).toEqual({ KE: [`locality:${large.toLowerCase()}`] })
+
+		const split = (locality: string, trained: Record<string, readonly string[]>) =>
+			splitForRow({ source_id: `${locality}-a`, country: "KE", components: { locality } }, defaultHoldouts(), trained)
+
+		expect(split(large, table)).toBe("train")
+		expect(split(large, {})).not.toBe("train")
+
+		for (const town of towns.filter((t) => t !== large)) {
+			expect(split(town, table)).toBe(split(town, {}))
+		}
+	})
+
+	it("bounds a held-out place's share of its region by min(0.25, max(0.05, 3 × share))", () => {
+		expect(heldOutRegionCap(0.001)).toBe(0.05)
+		expect(heldOutRegionCap(0.02)).toBeCloseTo(0.06)
+		expect(heldOutRegionCap(0.2)).toBe(0.25)
+	})
+
+	it("refuses a place whose region has no row count", () => {
+		expect(() =>
+			hashedPlacesOverCap([{ country: "KE", place: "locality:x", region: null, rows: 1 }], new Map())
+		).toThrow(/no row count for KE\|/)
+	})
+
 	it("keeps a row with no place in train", () => {
 		expect(splitForRow({ source_id: "x", country: "KE", components: { street: "Moi Avenue" } })).toBe("train")
 	})
@@ -136,47 +193,27 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 	})
 })
 
-describe("splitRows — locality holdout", () => {
-	it("Vermont rows go to val/test, others to train (US)", () => {
+describe("splitRows — place holdout below the region", () => {
+	it("holds out US rows in a declared ZIP area and trains on the rest of the same state (#2777)", () => {
+		// 084 is Atlantic City in New Jersey. 077 and 085 are other New Jersey areas.
 		const rows: MinRow[] = [
-			row("us-1", "US", "Oregon"),
-			row("us-2", "US", "Vermont"),
-			row("us-3", "US", "Wyoming"),
-			row("us-4", "US", "California"),
-			row("us-5", "US", "North Dakota"),
-			row("us-6", "US", "Texas"),
+			{ ...row("us-1", "US", "NJ"), components: { region: "NJ", postcode: "08401" } },
+			{ ...row("us-2", "US", "NJ"), components: { region: "NJ", postcode: "07701" } },
+			{ ...row("us-3", "US", "NJ"), components: { region: "NJ", postcode: "08540" } },
 		]
 
 		const m = splitRows(rows)
-		expect(m.train).toEqual(expect.arrayContaining(["us-1", "us-4", "us-6"]))
-		expect(m.train).not.toContain("us-2")
-		expect(m.train).not.toContain("us-3")
-		expect(m.train).not.toContain("us-5")
-		const heldOut = [...m.val, ...m.test].toSorted()
-		expect(heldOut).toEqual(["us-2", "us-3", "us-5"])
-		expect(m.counts.total).toBe(6)
-	})
 
-	it("Corse / Lozère / Creuse rows go to val/test (FR)", () => {
-		const rows: MinRow[] = [
-			row("fr-1", "FR", "Île-de-France"),
-			row("fr-2", "FR", "Corse"),
-			row("fr-3", "FR", "Lozère"),
-			row("fr-4", "FR", "Creuse"),
-			row("fr-5", "FR", "Auvergne-Rhône-Alpes"),
-		]
-
-		const m = splitRows(rows)
-		const heldOut = [...m.val, ...m.test].toSorted()
-		expect(heldOut).toEqual(["fr-2", "fr-3", "fr-4"])
-		expect(m.train).toEqual(expect.arrayContaining(["fr-1", "fr-5"]))
-	})
-
-	it("recognizes alpha-2 region codes in holdouts (VT / WY / ND)", () => {
-		const rows: MinRow[] = [row("us-1", "US", "VT"), row("us-2", "US", "OR")]
-		const m = splitRows(rows)
 		expect([...m.val, ...m.test]).toEqual(["us-1"])
-		expect(m.train).toEqual(["us-2"])
+		expect(m.train.toSorted()).toEqual(["us-2", "us-3"])
+	})
+
+	it("trains on a row of any region that carries no held-out place, including the regions held out before", () => {
+		const rows: MinRow[] = ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND", "Texas"].map((region, index) =>
+			row(`us-${index}`, "US", region)
+		)
+
+		expect(splitRows(rows).train).toHaveLength(rows.length)
 	})
 
 	it("rows without a region land in train (no holdout match)", () => {
@@ -193,9 +230,12 @@ describe("splitRows — locality holdout", () => {
 	})
 
 	it("a held-out row's bucket is stable across reruns", () => {
+		const holdouts = { US: ["Vermont", "Wyoming"] }
 		const rows: MinRow[] = [row("us-1", "US", "Vermont"), row("us-2", "US", "Vermont"), row("us-3", "US", "Wyoming")]
-		const m1 = splitRows(rows)
-		const m2 = splitRows(rows)
+		const m1 = splitRows(rows, { holdouts })
+		const m2 = splitRows(rows, { holdouts })
+
+		expect(m1.val.length + m1.test.length).toBe(3)
 
 		expect(m1.val).toEqual(m2.val)
 		expect(m1.test).toEqual(m2.test)
@@ -203,20 +243,33 @@ describe("splitRows — locality holdout", () => {
 })
 
 describe("defaultHoldouts", () => {
-	it("returns US + FR sets at minimum", () => {
-		const d = defaultHoldouts()
-
-		expect(d.US).toContain("Vermont")
-		expect(d.US).toContain("Wyoming")
-		expect(d.US).toContain("North Dakota")
-		expect(regionsOf(d.FR)).toContain("Corse")
-		expect(regionsOf(d.FR)).toContain("Creuse")
+	it("keys no country on a region, a closed-vocabulary label (#2777)", () => {
+		// A region's name is a region span only in rows from that region, so a region key removes the label from training.
+		for (const [country, holdout] of Object.entries(defaultHoldouts())) {
+			expect(Array.isArray(holdout), country).toBe(false)
+			expect(regionsOf(holdout), country).toEqual([])
+		}
 	})
 
-	it("declares a holdout for every country the decoder-exposure config admits through OSM", () => {
-		// A country admitted to train with no holdout has zero val and zero test rows by construction,
-		// and a model would then be described as evaluated on a country it was never evaluated on.
-		for (const country of ["RU", "CN", "IN", "ID", "NG", "PK", "BD", "VN"]) {
+	it("declares a holdout for every OSM country the decoder-exposure config admits, or leaves it to the hashed one", () => {
+		// A country admitted to train with no holdout would have zero val and zero test rows.
+		// CN and IN reach val and test through the hashed place holdout, because their
+		// locality spans are too many and too small to list.
+		expect(defaultHoldouts()["CN"]).toBeUndefined()
+		expect(defaultHoldouts()["IN"]).toBeUndefined()
+
+		const villages = Array.from({ length: 400 }, (_, index) => `Village ${index}`)
+
+		for (const country of ["CN", "IN"]) {
+			expect(
+				villages.some(
+					(locality) => splitForRow({ source_id: `${country}-1`, country, components: { locality } }) !== "train"
+				),
+				country
+			).toBe(true)
+		}
+
+		for (const country of ["RU", "ID", "NG", "PK", "BD", "VN"]) {
 			const policy = policyOf(defaultHoldouts()[country])
 
 			expect(
@@ -227,7 +280,11 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("declares a holdout for every French overseas jurisdiction with more than one commune, and for Romania", () => {
-		for (const country of ["GP", "MQ", "GF", "RE", "PM", "YT", "PF", "NC", "RO"]) {
+		// PM is left to the hashed holdout: neither of its two communes can be held out
+		// without removing a name from training or taking most of its rows.
+		expect(defaultHoldouts()["PM"]).toBeUndefined()
+
+		for (const country of ["GP", "MQ", "GF", "RE", "YT", "PF", "NC", "RO"]) {
 			const policy = policyOf(defaultHoldouts()[country])
 
 			expect(
@@ -237,27 +294,77 @@ describe("defaultHoldouts", () => {
 		}
 	})
 
-	it("holds out a BAN overseas row by its commune and a Romanian row by its county's postcode prefix", () => {
-		const moule = { source_id: "ban-1", country: "GP", components: { street: "Rue Saint-Jean", locality: "Le Moule" } }
-		const ro = { source_id: "ro-1", country: "RO", components: { street: "REPUBLICII", postcode: "515400" } }
+	it("holds out a BAN overseas row by its commune postcode and a Romanian row by a postcode district", () => {
+		const gp = { source_id: "ban-1", country: "GP", components: { street: "Rue Saint-Jean", postcode: "97128" } }
+		const ro = { source_id: "ro-1", country: "RO", components: { street: "REPUBLICII", postcode: "700115" } }
 
-		expect(splitForRow(moule)).not.toBe("train")
-		expect(splitForRow({ ...moule, components: { street: "Rue Frébault", locality: "Pointe-à-Pitre" } })).toBe("train")
+		expect(splitForRow(gp)).not.toBe("train")
+		expect(splitForRow({ ...gp, components: { street: "Rue Frébault", postcode: "97110" } })).toBe("train")
 		expect(splitForRow(ro)).not.toBe("train")
 		expect(splitForRow({ ...ro, components: { street: "UNIRII", postcode: "200000" } })).toBe("train")
 	})
 
-	it("holds out an OSM street row by its city when it carries neither region nor postcode", () => {
-		const enugu = { source_id: "osm-1", country: "NG", components: { street: "Ogui Road", locality: "Enugu" } }
+	it("holds out a case or spacing variant of a held-out locality", () => {
+		const variants: [country: string, components: MinRow["components"]][] = [
+			["VN", { locality: "Vũng Tàu" }],
+			["VN", { locality: "PLEIKU" }],
+			["IT", { locality: "Sant'Antioco" }],
+			["NZ", { locality: " Dunedin " }],
+		]
 
-		expect(splitForRow(enugu)).not.toBe("train")
-		expect(splitForRow({ ...enugu, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
+		for (const [country, components] of variants) {
+			expect(
+				splitForRow({ source_id: `${country}-v`, country, components }),
+				`${country} ${components.region ?? components.locality}`
+			).not.toBe("train")
+		}
+
+		expect(splitForRow({ source_id: "VN-v", country: "VN", components: { locality: "Vũng" } })).toBe("train")
 	})
 
-	it("names the three French departments by postcode prefix as well as by region", () => {
-		// The same three places, in the component BAN emits.
-		// Corse 20, Creuse 23, Lozère 48.
+	it("holds out ES, IT, AU and NZ places inside a region, and trains on every row that names the region", () => {
+		// A region key, or a postcode prefix that covers a whole region, removed `Illes Balears`,
+		// `Principado de Asturias`, `Trento` and `TAS` from training as region labels (#2777).
+		for (const region of ["Illes Balears", "Principado de Asturias", "Trento", "Bolzano/Bozen", "TAS", "NT"]) {
+			for (const country of ["ES", "IT", "AU"]) {
+				expect(splitForRow({ source_id: `${country}-r`, country, components: { region } }), region).toBe("train")
+			}
+		}
+
+		const cases: [country: string, held: MinRow["components"], kept: MinRow["components"]][] = [
+			[
+				"ES",
+				{ locality: "Adeje", region: "Santa Cruz de Tenerife" },
+				{ locality: "La Laguna", region: "Santa Cruz de Tenerife" },
+			],
+			// The provinces held out whole before, by postcode 07 and 33, now train.
+			["ES", { postcode: "38640", locality: "Arona" }, { postcode: "07001", locality: "Palma" }],
+			["ES", { postcode: "38640", locality: "Arona" }, { postcode: "33003", locality: "Oviedo" }],
+			["IT", { locality: "Cabras", region: "OR" }, { locality: "Oristano", region: "OR" }],
+			["AU", { postcode: "7330", region: "TAS" }, { postcode: "7000", region: "TAS" }],
+			["AU", { postcode: "0800", region: "NT" }, { postcode: "0810", region: "NT" }],
+			["NZ", { locality: "Dunedin" }, { locality: "Invercargill" }],
+		]
+
+		for (const [country, held, kept] of cases) {
+			expect(splitForRow({ source_id: `${country}-1`, country, components: held }), country).not.toBe("train")
+			expect(splitForRow({ source_id: `${country}-1`, country, components: kept }), country).toBe("train")
+		}
+	})
+
+	it("holds out an OSM street row by its city when it carries neither region nor postcode", () => {
+		const nsukka = { source_id: "osm-1", country: "NG", components: { street: "Ogui Road", locality: "Nsukka" } }
+
+		expect(splitForRow(nsukka)).not.toBe("train")
+		expect(splitForRow({ ...nsukka, components: { street: "Ogui Road", locality: "Enugu" } })).toBe("train")
+		expect(splitForRow({ ...nsukka, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
+	})
+
+	it("keeps the FR, DE and GB postcode areas, so held-out rows already verified unseen stay unseen", () => {
+		// FR: Corse 20, Creuse 23, Lozère 48.
+		// DE: Upper Lusatia 02.
 		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
+		expect(policyOf(defaultHoldouts().DE).postcodePrefixes).toEqual(["02"])
 	})
 
 	it("names GB by postcode area, since a GB street row carries no region", () => {
@@ -267,18 +374,25 @@ describe("defaultHoldouts", () => {
 		// The `split.ts` comment records the evidence used to set these prefixes.
 		const gb = policyOf(defaultHoldouts().GB)
 
-		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
-		expect(gb.regions).toEqual(["Cornwall"])
+		expect(gb.postcodePrefixes?.slice(0, 2)).toEqual(["TR", "HX"])
+		// The LL area is held out by district rather than whole (Conwy, Wrecsam and Sir Ddinbych lie inside it).
+		expect(gb.postcodePrefixes).not.toContain("LL")
+
+		expect(gb.postcodePrefixes?.filter((prefix) => prefix.startsWith("LL")).every((p) => /^LL\d{2}$/u.test(p))).toBe(
+			true
+		)
+
+		expect(gb.regions).toBeUndefined()
 	})
 
-	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
+	it("gives every GB prefix at least two letters, so one area cannot swallow another", () => {
 		// `L` is Liverpool and `LL` is Llandudno.
 		// A one-letter prefix uses `startsWith`, so `L` would match Liverpool and Llandudno.
 		// That would exceed the reviewed holdout size.
 		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
 
 		for (const prefix of prefixes) {
-			expect(prefix).toHaveLength(2)
+			expect(prefix).toMatch(/^[A-Z]{2}(\d{2})?$/u)
 		}
 
 		for (const prefix of prefixes) {
@@ -299,7 +413,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	const banRow = (id: string, postcode: string): MinRow => ({
 		source_id: id,
 		country: "FR",
-		corpus_version: "0.1.0",
 		components: { postcode, locality: "Ajaccio", street: "Cours Napoléon", house_number: "12" },
 	})
 
@@ -317,8 +430,8 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(banRow("ban-aisne", "02000"))).toBe("train")
 	})
 
-	it("still holds out a wof-admin row by its region, with no postcode present", () => {
-		expect(splitForRow(row("wof-corse", "FR", "Corse"))).not.toBe("train")
+	it("trains on a wof-admin row that names a held-out department as its region, with no postcode present", () => {
+		expect(splitForRow(row("wof-corse", "FR", "Corse"))).toBe("train")
 	})
 
 	it("reads a bare array as a region list, which is what every manifest built before this carries", () => {
@@ -331,12 +444,13 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		const gbRow = (id: string, postcode: string): MinRow => ({
 			source_id: id,
 			country: "GB",
-			corpus_version: "0.1.0",
 			components: { postcode, locality: "Truro", street: "Lemon Street", house_number: "12" },
 		})
 
 		expect(splitForRow(gbRow("gb-truro", "TR1 2LS"))).not.toBe("train")
-		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-bangor", "LL57 2DG"))).not.toBe("train")
+		// The LL area is held out by district, so Llandudno's LL30 trains.
+		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).toBe("train")
 		expect(splitForRow(gbRow("gb-halifax", "HX1 1UG"))).not.toBe("train")
 
 		expect(splitForRow(gbRow("gb-london", "SW1A 1AA"))).toBe("train")
@@ -345,14 +459,12 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
 	})
 
-	it("names DE by postcode area as well as by region, since its street source emits neither Land", () => {
-		// `synth-german` supplies every DE street row.
-		// In `v0.6.0-register-surface`, it emits exactly two region values: `Sachsen` and `Berlin`.
-		// The region list reaches only `wof-admin` rows.
-		// Prefix `02` reaches the street rows.
+	it("names DE by postcode area only", () => {
+		// `synth-german` supplies every DE street row, and prefix `02` reaches them.
+		// The Land names Saarland and Mecklenburg-Vorpommern are not keys (#2777).
 		const de = policyOf(defaultHoldouts().DE)
 
-		expect(de.regions).toEqual(["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"])
+		expect(de.regions).toBeUndefined()
 		expect(de.postcodePrefixes).toEqual(["02"])
 	})
 
@@ -361,7 +473,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		const deRow = (id: string, postcode: string): MinRow => ({
 			source_id: id,
 			country: "DE",
-			corpus_version: "0.1.0",
 			components: { postcode, locality: "Görlitz", street: "Berliner Straße", house_number: "14" },
 		})
 
@@ -378,18 +489,16 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(deRow("de-berlin", "13469"))).toBe("train")
 	})
 
-	it("holds out a DE admin row by its Land, which carries no postcode", () => {
-		// `wof-admin` is the only DE source carrying a region and it emits no postcode,
-		// so the region list is what reaches it.
+	it("trains on a DE admin row of any Land, which carries no postcode", () => {
+		// `wof-admin` is the only DE source carrying a region and it emits no postcode.
 		const adminRow = (id: string, region: string): MinRow => ({
 			source_id: id,
 			country: "DE",
-			corpus_version: "0.1.0",
 			components: { region, locality: "Saarbrücken" },
 		})
 
-		expect(splitForRow(adminRow("de-sl", "Saarland"))).not.toBe("train")
-		expect(splitForRow(adminRow("de-mv", "Mecklenburg-Vorpommern"))).not.toBe("train")
+		expect(splitForRow(adminRow("de-sl", "Saarland"))).toBe("train")
+		expect(splitForRow(adminRow("de-mv", "Mecklenburg-Vorpommern"))).toBe("train")
 		expect(splitForRow(adminRow("de-sn", "Sachsen"))).toBe("train")
 	})
 
@@ -404,7 +513,15 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 
 describe("writeSplitManifests", () => {
 	it("writes train/val/test txt files + SPLIT_MANIFEST.json", async () => {
-		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
+		const m = splitRows(
+			[
+				{ ...row("us-1", "US", "NJ"), components: { region: "NJ", postcode: "08401" } },
+				row("us-2", "US", "Oregon"),
+				{ ...row("fr-1", "FR"), components: { postcode: "20000" } },
+			],
+			{ corpusVersion: "0.1.0" }
+		)
+
 		await writeSplitManifests(m, scratch.path)
 
 		const train = await readLocalTextFile(scratch.path("train.txt"))
@@ -413,7 +530,7 @@ describe("writeSplitManifests", () => {
 		expect(train.trim()).toBe("us-2")
 		expect(summary.counts.total).toBe(3)
 		expect(summary.corpus_version).toBe("0.1.0")
-		expect(summary.holdouts.US).toContain("Vermont")
+		expect(summary.holdouts.US).toEqual(defaultHoldouts().US)
 	})
 
 	it("manifests are sorted (diff-friendly) and reproducible", async () => {
@@ -513,7 +630,7 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			counts: { train: 3, val: 2, test: 1, total: 6 },
 		})
 
-		expect(summary.holdouts.US).toContain("Vermont")
+		expect(summary.holdouts.US).toEqual(defaultHoldouts().US)
 	})
 
 	it("handles an empty per-split file (no source_ids → empty .txt)", async () => {

@@ -37,7 +37,7 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ..source_rights import add_unshippable_flag, admit_sources, write_rights_record
+from ..source_rights import add_unshippable_flag, admit_sources, stamp_row_licenses, write_rights_record
 
 SEED = 20260714
 
@@ -213,7 +213,9 @@ def main() -> None:
             hist[t] = hist.get(t, 0) + 1
 
     args.out_parquet.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pylist(rows), args.out_parquet)
+    pq.write_table(
+        pa.Table.from_pylist(stamp_row_licenses(rows, context="synthetic-secondary build")), args.out_parquet
+    )
 
     args.out_dev.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out_dev, "w", encoding="utf-8") as fh:

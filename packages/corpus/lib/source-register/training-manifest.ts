@@ -11,13 +11,17 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
 
-import { LicenseReviewState, type LicenseDecision, type SourceOperation } from "#source-register/types"
+import type { SourceOperation } from "#source-register/types"
 
 /**
  * The license label recorded for a source whose rows carry no label.
  *
- * A recipe can write rows with an empty `license` column.
+ * A recipe in a corpus built before #2741 could write rows with an empty `license` column.
+ * A current writer stamps the register's id and refuses a source that has none,
+ * so only an older file reaches this label.
+ *
  * An empty string in the record would read as a source that carries no terms,
  * and `summarizeLicense` would find no identifier in it and report no obligation.
  *
@@ -124,7 +128,7 @@ export function freezeTrainingManifest(input: {
 	builtAt: string
 	profile: string
 	rowsBySource: ReadonlyMap<string, { rows: number; license: string; licenseValues?: Record<string, number> }>
-	decisionsByLicense: ReadonlyMap<string, LicenseDecision>
+	decisionsByLicense: ReadonlyMap<string, LicenseDecision<SourceOperation>>
 	refused: ReadonlyMap<string, readonly string[]>
 }): TrainingManifest {
 	const sources: TrainingSourceRecord[] = [...input.rowsBySource.entries()]

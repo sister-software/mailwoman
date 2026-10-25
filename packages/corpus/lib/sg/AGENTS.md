@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for Singapore
 
-## Electing address data
+## How this repository elects address data
 
 Singapore grants copyright in a compilation only for human authorship in its selection or arrangement (Global Yellow Pages v Promedia Directories [2017] SGCA 28), and Singapore has no database right.
 

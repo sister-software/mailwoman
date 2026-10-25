@@ -106,8 +106,8 @@ export function observeC4Boundaries(
 	pieces: ReadonlyArray<CharRange>,
 	phraseProposals: ReadonlyArray<PhraseProposal>,
 	shape: QueryShape,
-	registryMatches?: ReadonlyArray<FSTAcceptedMatch>,
-	streetAffixMatches?: ReadonlyArray<FSTAcceptedMatch>
+	registryMatches?: ReadonlyArray<FSTAcceptedMatch> | null,
+	streetAffixMatches?: ReadonlyArray<FSTAcceptedMatch> | null
 ): C4BoundaryReceipt[] {
 	const ordered = spans.toSorted((a, b) => a.start - b.start || a.end - b.end)
 	const receipts: C4BoundaryReceipt[] = []

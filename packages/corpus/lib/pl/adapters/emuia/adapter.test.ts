@@ -50,7 +50,7 @@ describe("emuia adapter against fixture sample.xml", () => {
 		await run()
 
 		const rows = await readCanonicalRows(scratch.path, EMUIA_ADAPTER_ID)
-		const onStreet = rows.filter((r) => r.components.street !== undefined)
+		const onStreet = rows.filter((r) => r.components.street)
 
 		expect(onStreet).toHaveLength(5)
 		expect(onStreet.every((r) => r.components.street === "1 Maja")).toBe(true)
@@ -66,7 +66,7 @@ describe("emuia adapter against fixture sample.xml", () => {
 		await run()
 
 		const rows = await readCanonicalRows(scratch.path, EMUIA_ADAPTER_ID)
-		const streetless = rows.filter((r) => r.components.street === undefined)
+		const streetless = rows.filter((r) => !r.components.street)
 
 		expect(streetless).toHaveLength(5)
 		expect(streetless.every((r) => typeof r.components.house_number === "string")).toBe(true)

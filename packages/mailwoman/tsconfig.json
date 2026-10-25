@@ -24,6 +24,7 @@
 		{ "path": "../core" },
 		{ "path": "../postcode" },
 		{ "path": "../core/tools" },
+		{ "path": "../dictionaries" },
 		{ "path": "../filer" },
 		{ "path": "../filer/sdk" },
 		{ "path": "../filer/tools" },

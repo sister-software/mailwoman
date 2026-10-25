@@ -7,7 +7,7 @@ import type { Tagged } from "type-fest"
 // #region Type Definitions
 
 /**
- * The tilesets available in the tile API.
+ * The tilesets available in the Tile API.
  */
 export type TileSetSourceID<T extends string = string> = Tagged<string, "TileSetSourceID", T>
 

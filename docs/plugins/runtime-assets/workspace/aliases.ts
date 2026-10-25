@@ -58,7 +58,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {
 			throw new Error(
-				`runtime-assets: "${specifier}" is listed in workspace-aliases.ts but resolves to nothing. ` +
+				`runtime-assets: "${specifier}" is listed in workspace/aliases.ts but resolves to nothing. ` +
 					`Remove it, or point it at the module that replaced it.`
 			)
 		}
@@ -71,11 +71,11 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	}
 
 	// File aliases precede directory aliases, because webpack matches aliases in insertion
-	// order and the narrow `core/resources/whosonfirst/specificity` leaf must win
-	// before the broader `core/resources` barrel.
+	// order and the narrow `gazetteer/whosonfirst/placetypes/specificity` leaf must win
+	// before the broader `gazetteer` barrel.
 	setAlias(
-		"@mailwoman/core/resources/whosonfirst/specificity",
-		await resolvePackageFile("@mailwoman/core", "resources/whosonfirst/placetypes/specificity")
+		"@mailwoman/gazetteer/whosonfirst/placetypes/specificity",
+		await resolvePackageFile("@mailwoman/gazetteer", "whosonfirst/placetypes/specificity")
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {

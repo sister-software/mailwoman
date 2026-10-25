@@ -42,6 +42,9 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"out/**/*.json",
+		"data/coarse-placer/*",
+		"data/published-bundles.json",
+		"data/PROVENANCE.md",
 		"tools/eval-harness/specs/*.json",
 		"tools/eval-harness/baselines.json",
 		"tools/eval-harness/gauntlet/cases/*/*.jsonl",
@@ -112,20 +115,10 @@
 			"node": "./cli/doctor.ts",
 			"default": "./out/cli/doctor.js"
 		},
-		"#gazetteer/*": {
-			"types": "./out/tools/gazetteer-pipeline/*.d.ts",
-			"node": "./tools/gazetteer-pipeline/*.ts",
-			"default": "./out/tools/gazetteer-pipeline/*.js"
-		},
 		"#cli-kit": {
 			"types": "./out/cli/kit.d.ts",
 			"node": "./cli/kit.ts",
 			"default": "./out/cli/kit.js"
-		},
-		"#gazetteer-pipeline": {
-			"types": "./out/tools/gazetteer-pipeline.d.ts",
-			"node": "./tools/gazetteer-pipeline.ts",
-			"default": "./out/tools/gazetteer-pipeline.js"
 		},
 		"#index": {
 			"types": "./out/index.d.ts",
@@ -215,11 +208,10 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1147.0",
-		"@aws-sdk/lib-storage": "^3.1147.0",
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
 		"@mailwoman/activity-lexicon": "workspace:*",
+		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
@@ -229,14 +221,17 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/flood": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/mtf": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
@@ -259,9 +254,9 @@
 		"kysely": "^0.29.6",
 		"onnxruntime-node": "^1.30.0",
 		"path-ts": "^2.5.0",
-		"react": "^19.3.0",
-		"spliterator": "^9.2.1",
-		"zod": "^4.6.5"
+		"react": "^19.3.1",
+		"spliterator": "^9.3.0",
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
@@ -292,6 +287,6 @@
 		"@mailwoman/tiger": "workspace:*"
 	},
 	"engines": {
-		"node": ">=24.18.0"
+		"node": "^24.22.1 || >=26.12.1"
 	}
 }

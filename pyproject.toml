@@ -33,11 +33,15 @@ dev = [
 	# - verify_toolchain fails if another `uvx ruff@<version>` pin appears.
 	# - `mypy` and `bandit` use floor pins (exacts come from uv.lock).
 	"pytest>=9.1.1",
-	"ruff==0.17.0",
+	"ruff==0.17.1",
 	"mypy>=1.15",
 	"bandit>=1.8",
 	# PyYAML is untyped upstream; the stub package keeps `mypy --strict` honest about our code.
 	"types-PyYAML>=6.0.12",
+	# The Modal client runs each launch's local entrypoint, which imports `mailwoman_train`.
+	# A global `modal` binary cannot see this venv, so launches run `uv run --extra dev modal run -m launch...`.
+	# Pinned to the client version the launches were made with, so a lock refresh cannot move it.
+	"modal==1.4.3",
 ]
 train = [
 	# Train stack is pinned on purpose:
@@ -79,12 +83,14 @@ where = ["corpus-python/src"]
 # Package data shipped with modules:
 # - `py.typed`: exposes type hints to downstream users.
 # - `features/postcode-shapes.json`: required by `features/postcode_shapes.py`.
+# - `data/augment/postcode-layouts.json`: required by `data/augment/postcode_move.py`.
 # - Missing these in wheel can fail import-time behavior.
 [tool.setuptools.package-data]
 mailwoman_train = [
 	"py.typed",
 	"address_systems.json",
 	"features/postcode-shapes.json",
+	"data/augment/postcode-layouts.json",
 	"exposure/floors.json",
 	"configs/*.yaml",
 ]
@@ -134,7 +140,7 @@ ignore_missing_imports = true
 module = ["sentencepiece.sentencepiece_model_pb2"]
 follow_imports = "skip"
 
-# Modal SDK is available in `modal run` environments, not local default env.
+# The Modal SDK is in the `dev` extra; a base install without it still type-checks.
 # Without it, decorators become `Any` and trigger cascading untyped-decorator noise.
 # Keep checks meaningful by ignoring missing `modal` imports and relaxing decorators in `launch.*`.
 [[tool.mypy.overrides]]

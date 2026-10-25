@@ -31,19 +31,28 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 	it("names the three drifted values so the incident stays legible", () => {
 		const resolved = resolveConfig({})
 
-		expect(resolved.postcodeShapeCoherence).toBe(false)
+		expect(resolved.postcodeShapeCoherence).toBe(true)
 		expect(resolved.postcodeContainmentCoherence).toBe(false)
 		expect(resolved.placeCountryThreshold).toBe(0.9)
 	})
 
+	it("passes channel pins through as the session's channelPins and omits the key when none is set", () => {
+		expect(resolveConfig({}).channelPins).toBeUndefined()
+		expect(resolveConfig({ channels: {} }).channelPins).toBeUndefined()
+
+		expect(resolveConfig({ channels: { locality_surface: "off" } }).channelPins).toEqual({
+			locality_surface: "off",
+		})
+	})
+
 	it("still lets every pin override the production default", () => {
 		const resolved = resolveConfig({
-			postcode_shape_coherence: "on",
+			postcode_shape_coherence: "off",
 			place_country_threshold: 0.5,
 			admin_containment_rerank: "off",
 		})
 
-		expect(resolved.postcodeShapeCoherence).toBe(true)
+		expect(resolved.postcodeShapeCoherence).toBe(false)
 		expect(resolved.placeCountryThreshold).toBe(0.5)
 		expect(resolved.adminContainmentRerank).toBe(false)
 	})

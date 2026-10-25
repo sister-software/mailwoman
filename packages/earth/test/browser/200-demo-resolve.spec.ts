@@ -7,7 +7,11 @@ test.describe("Demo — resolution cascade", () => {
 	// `submitForUpdate` waits for the result panel to replace the previous step's rows.
 	test("city resolution cascade — one page load, one step per address", async ({ demo }) => {
 		await test.step("Chicago, IL → resolves to the Chicago locality", async () => {
-			await demo.goto("Chicago, IL")
+			// A `?q=` link runs its query on load and fits the map to the result.
+			// A second submit would then be biased toward that result's view,
+			// so the query is entered on a fresh page.
+			await demo.goto()
+			await demo.setAddress("Chicago, IL")
 			await demo.submit()
 
 			const { resolved, markerCount, parsedRows } = await demo.readResult()
@@ -136,6 +140,19 @@ test.describe("Demo — resolution cascade", () => {
 			lat: -33.85,
 			lon: 151.2,
 			tolDeg: 0.2,
+		},
+		{
+			// The Han input loads the character family's bundle.
+			// That bundle labels the municipality 渋谷区 for the cascade.
+			// When the cascade finds no place, the postcode-only fallback answers the Who's On
+			// First centroid of 150-0043 (Dōgenzaka, Shibuya) from the release's `postcode-jp.bin`.
+			// The browser gazetteer holds no Japanese postcode rows.
+			// Both paths land inside the tolerance.
+			name: "Japanese postcode 〒150-0043 → Shibuya",
+			query: "〒150-0043 東京都渋谷区道玄坂1丁目",
+			lat: 35.657,
+			lon: 139.695,
+			tolDeg: 0.05,
 		},
 	]
 

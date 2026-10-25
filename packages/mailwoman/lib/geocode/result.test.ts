@@ -55,6 +55,107 @@ function geocodeThrough(hit: AddressPointHit | null): ReturnType<typeof extractG
 
 const ROW = { lat: -37.137364, lon: 175.541779, localityNorm: null, postcode: null }
 
+describe("the admin ladder and a contained dependent locality (#2804)", () => {
+	const DISTRICT = "Didsbury, Manchester"
+
+	function districtTree(stamp: Record<string, unknown> | undefined): AddressTree {
+		return {
+			raw: DISTRICT,
+			roots: [
+				{
+					tag: "locality",
+					value: "Manchester",
+					start: 10,
+					end: 20,
+					confidence: 1,
+					children: [
+						{
+							tag: "dependent_locality",
+							value: "Didsbury",
+							start: 0,
+							end: 8,
+							confidence: 1,
+							children: [],
+							lat: 53.4166,
+							lon: -2.2311,
+							...(stamp ? { metadata: stamp } : {}),
+						},
+					],
+					lat: 53.4794,
+					lon: -2.2453,
+				},
+			],
+		}
+	}
+
+	it("answers the dependent locality's point when the resolver stamped it as contained", () => {
+		const result = extractGeocodeResult(DISTRICT, districtTree({ contained_by_parent: true }))
+
+		expect(result.lat).toBeCloseTo(53.4166, 4)
+		expect(result.lon).toBeCloseTo(-2.2311, 4)
+		expect(result.resolution_tier).toBe("admin")
+	})
+
+	it("answers the locality's point without the stamp, as the ladder orders today", () => {
+		const result = extractGeocodeResult(DISTRICT, districtTree(undefined))
+
+		expect(result.lat).toBeCloseTo(53.4794, 4)
+		expect(result.lon).toBeCloseTo(-2.2453, 4)
+	})
+})
+
+describe("candidate scores", () => {
+	const SPRINGFIELD = "Springfield"
+
+	function springfieldTree(winnerMetadata: Record<string, unknown>): AddressTree {
+		return {
+			raw: SPRINGFIELD,
+			roots: [
+				{
+					tag: "locality",
+					value: SPRINGFIELD,
+					start: 0,
+					end: 11,
+					confidence: 1,
+					children: [],
+					lat: 39.7817,
+					lon: -89.6501,
+					placeID: "wof:85940429",
+					metadata: { resolver_name: "Springfield", resolver_country: "us", ...winnerMetadata },
+					alternatives: [
+						{
+							name: "Springfield",
+							placetype: "locality",
+							lat: 42.1015,
+							lon: -72.5898,
+							country: "US",
+							id: 85_950_361,
+							score: 5.1,
+						},
+						{ name: "Springfield", placetype: "locality", lat: 37.2153, lon: -93.2982, country: "US", id: 85_948_219 },
+					],
+				} as AddressNode,
+			],
+		}
+	}
+
+	it("reads the winner's resolver score and each runner-up's own score", () => {
+		const { candidates } = extractGeocodeResult(SPRINGFIELD, springfieldTree({ resolver_score: 6.3 }))
+
+		expect(candidates.map((candidate) => [candidate.placeID, candidate.score])).toEqual([
+			["wof:85940429", 6.3],
+			["wof:85950361", 5.1],
+			["wof:85948219", null],
+		])
+	})
+
+	it("answers null for a winner whose resolver recorded no score", () => {
+		const { candidates } = extractGeocodeResult(SPRINGFIELD, springfieldTree({}))
+
+		expect(candidates[0]?.score).toBeNull()
+	})
+})
+
 describe("coordinate_source", () => {
 	it("keeps an OpenStreetMap row's stamp and release", () => {
 		const result = geocodeThrough({ ...ROW, source: "openstreetmap:nz", release: "2026-08-06" })
