@@ -226,37 +226,49 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  *
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
+ *
+ * Files are read `fsConcurrency()` at a time, the filesystem fan-out libuv services,
+ * and records are yielded in glob order.
+ * The adapters deduplicate surface strings first-come, so a completion-order walk would change
+ * which record claims a shared name from one build to the next.
  */
 export async function* walkFeatures(
 	repoDir: PathBuilderLike,
 	opts: { signal?: AbortSignal } = {}
 ): AsyncIterable<WOFRecord> {
-	for await (const filePath of Globerator.from("**/*.geojson", {
+	const paths = Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		absolute: true,
 		exclude: ["**/*-alt-*.geojson"],
 		// Bundle repositories can expose their data through a link.
 		followSymlinks: true,
 		signal: opts.signal,
-	})) {
-		let text: string
+	})
 
-		try {
-			text = await readLocalTextFile(filePath)
-		} catch {
-			continue
-		}
+	const records = paths.parallelMap(readFeatureRecord, { ordered: true, signal: opts.signal })
 
-		const parsed = tryParsingJSON<WOFFeature>(text)
-
-		if (!parsed) continue
-
-		const rec = recordFromFeature(parsed)
-
+	for await (const rec of records) {
 		if (rec) {
 			yield rec
 		}
 	}
+}
+
+/**
+ * The record one GeoJSON file holds, or `null` when the file is unreadable, malformed or skipped.
+ */
+async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
+	let text: string
+
+	try {
+		text = await readLocalTextFile(filePath)
+	} catch {
+		return null
+	}
+
+	const parsed = tryParsingJSON<WOFFeature>(text)
+
+	return parsed ? recordFromFeature(parsed) : null
 }
 
 /**
