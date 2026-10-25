@@ -67,6 +67,7 @@ class EmitPolicy:
     upper_case_prob: float = 0.0
     ordinal_prob: float = 0.0
     postcode_move_prob: float = 0.0
+    grouping_prob: float = 0.0
     excluded_sources: frozenset[str] = field(default_factory=frozenset)
     postcode_move_excluded_sources: frozenset[str] = POSTCODE_MOVE_EXCLUDED_SOURCES
     relabel_lexicon: AffixRelabelLexicon | None = None
@@ -86,6 +87,7 @@ class EmitPolicy:
                 self.upper_case_prob,
                 self.ordinal_prob,
                 self.postcode_move_prob,
+                self.grouping_prob,
             )
         )
 
@@ -114,6 +116,7 @@ def emit_row(row: dict[str, Any], rng: random.Random, policy: EmitPolicy) -> Ite
             policy.ordinal_prob,
             0.0 if row["source"] in policy.postcode_move_excluded_sources else policy.postcode_move_prob,
             policy.postcode_move_outcomes,
+            policy.grouping_prob,
         ):
             if policy.relabel_lexicon is not None:
                 augmented = {**augmented, "labels": list(augmented["labels"])}

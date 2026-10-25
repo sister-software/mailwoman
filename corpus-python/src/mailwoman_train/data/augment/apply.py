@@ -13,6 +13,7 @@ from collections import Counter
 from collections.abc import Iterator
 from typing import Any
 
+from .grouping import group_row
 from .postcode_move import move_postcode
 from .splice import drop_separator_punct, glue_region_postcode, lowercase_row, splice_expansion, upper_case_row
 from .tables import _STREET_FAMILY_LABELS, DIRECTIONALS, ORDINAL_STREETS, US_STATES
@@ -30,6 +31,7 @@ def augment_row(
     ordinal_prob: float = 0.0,
     postcode_move_prob: float = 0.0,
     postcode_move_outcomes: Counter[str] | None = None,
+    grouping_prob: float = 0.0,
 ) -> Iterator[dict[str, Any]]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -123,3 +125,11 @@ def augment_row(
             postcode_move_outcomes[reason or "moved"] += 1
         if moved is not None:
             yield moved
+
+    # Grouping characters (#2845): a copy wrapped in a pair, with a name or the country bracketed, or with a
+    # parenthesized note appended. Drawn after the postcode move, behind the prob guard, so every earlier config keeps
+    # its stream.
+    if grouping_prob > 0 and rng.random() < grouping_prob:
+        grouped = group_row(row, rng)
+        if grouped is not None:
+            yield grouped

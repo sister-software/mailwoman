@@ -40,6 +40,7 @@ class TrainOnlyPolicy:
     upper_case_prob: float = 0.0
     ordinal_prob: float = 0.0
     postcode_move_prob: float = 0.0
+    grouping_prob: float = 0.0
     relabel_lexicon: AffixRelabelLexicon | None = None
 
     @property
@@ -53,6 +54,7 @@ class TrainOnlyPolicy:
             self.upper_case_prob,
             self.ordinal_prob,
             self.postcode_move_prob,
+            self.grouping_prob,
         )
 
 
@@ -95,6 +97,7 @@ def iter_rows(
     augment_upper_case_prob: float = 0.0,
     augment_ordinal_prob: float = 0.0,
     augment_postcode_move_prob: float = 0.0,
+    augment_grouping_prob: float = 0.0,
     augment_exclude_sources: Sequence[str] = (),
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
@@ -142,6 +145,7 @@ def iter_rows(
             upper_case_prob=augment_upper_case_prob,
             ordinal_prob=augment_ordinal_prob,
             postcode_move_prob=augment_postcode_move_prob,
+            grouping_prob=augment_grouping_prob,
             relabel_lexicon=affix_relabel_lexicon,
         ),
     )
@@ -190,6 +194,7 @@ def iter_rows(
         upper_case_prob=policy.upper_case_prob,
         ordinal_prob=policy.ordinal_prob,
         postcode_move_prob=policy.postcode_move_prob,
+        grouping_prob=policy.grouping_prob,
         excluded_sources=frozenset(augment_exclude_sources),
         relabel_lexicon=policy.relabel_lexicon,
     )
