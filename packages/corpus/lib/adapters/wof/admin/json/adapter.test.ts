@@ -25,6 +25,7 @@ describe("variantsFor (pure)", () => {
 		placetype: "locality",
 		country: "US",
 		nameVariants: new Map<string, string>(),
+		ancestors: [] as number[],
 		...over,
 	})
 
@@ -83,6 +84,7 @@ describe("nameSlotsFor", () => {
 				["name:eng_x_colloquial", "St. Petersburg"],
 				["name:rus_x_preferred", "Санкт-Петербург"],
 			]),
+			ancestors: [],
 		})
 
 		expect(slots.map((s) => s.key)).toEqual(["default", "name-eng-x-colloquial", "name-rus-x-preferred"])
@@ -97,6 +99,7 @@ describe("nameSlotsFor", () => {
 			placetype: "country",
 			country: "US",
 			nameVariants: new Map(),
+			ancestors: [],
 		})
 
 		expect(slots[0]!.value).toBe("United States of America")

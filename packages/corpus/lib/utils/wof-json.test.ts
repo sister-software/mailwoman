@@ -103,9 +103,34 @@ test("normalizeNameKey: both ':' and '_' become '-' for source_id safety", () =>
 
 // These cases cover buildAncestorNameIndex's pure record-map-to-name-map transform.
 
-function rec(id: number, parent_id: number | null, name = `n${id}`, placetype = "locality"): WOFRecord {
-	return { id, parent_id, name, placetype, country: "US", nameVariants: new Map() }
+function rec(
+	id: number,
+	parent_id: number | null,
+	name = `n${id}`,
+	placetype = "locality",
+	ancestors: number[] = []
+): WOFRecord {
+	return { id, parent_id, name, placetype, country: "US", nameVariants: new Map(), ancestors }
 }
+
+test("buildAncestorNameIndex reads wof:hierarchy ancestors for a record whose parent is -4", () => {
+	// Brooklyn sits under New York City, and New York City's parent_id is -4.
+	// The hierarchy lists the region and country the parent chain cannot reach.
+	const byID = new Map<number, WOFRecord>([
+		[85_633_793, rec(85_633_793, null, "United States", "country")],
+		[85_688_543, rec(85_688_543, 85_633_793, "New York", "region")],
+		[85_977_539, rec(85_977_539, -4, "New York", "locality", [85_688_543, 85_633_793])],
+		[421_205_765, rec(421_205_765, 85_977_539, "Brooklyn", "borough", [85_977_539, 85_688_543, 85_633_793])],
+	])
+
+	expect(buildAncestorNameIndex(byID, tagOf).get(421_205_765)).toEqual({
+		locality: "New York",
+		region: "New York",
+		country: "United States",
+	})
+
+	expect(buildAncestorNameIndex(byID, tagOf).get(85_977_539)).toEqual({ region: "New York", country: "United States" })
+})
 
 /**
  * The placetype-to-tag map the adapters pass, reduced to the three tags the index resolves.

@@ -15,6 +15,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { agreedHierarchyAncestors } from "@mailwoman/core/resources/whosonfirst/hierarchy"
 import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -56,6 +57,15 @@ export interface WOFRecord {
 	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
+	/**
+	 * Ancestor ids from `wof:hierarchy`, nearest level first, keeping only the levels on
+	 * which every hierarchy the record lists agrees.
+	 *
+	 * New York City lists five hierarchies, one per county, so its county is left out
+	 * and its region and country stay.
+	 * Empty when the record lists no hierarchy, in which case the parent chain answers.
+	 */
+	ancestors: readonly number[]
 }
 
 /**
@@ -178,6 +188,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 		placetype,
 		country,
 		nameVariants: extractNameVariants(props),
+		ancestors: agreedHierarchyAncestors(id, props["wof:hierarchy"]),
 	}
 }
 
@@ -282,6 +293,22 @@ export function buildAncestorNameIndex(
 
 	for (const [id, rec] of byID) {
 		const names: AncestorNames = {}
+
+		// `wof:hierarchy` names every ancestor level directly, including for a record whose parent is -4.
+		for (const ancestorID of rec.ancestors) {
+			const ancestor = byID.get(ancestorID)
+
+			if (!ancestor) continue
+
+			const tag = tagOf(ancestor.placetype)
+
+			for (const wanted of ANCESTOR_NAME_TAGS) {
+				if (tag === wanted && !names[wanted]) {
+					names[wanted] = ancestor.name
+				}
+			}
+		}
+
 		const guard = new Set<number>([id])
 		let cur: number | null = rec.parent_id
 

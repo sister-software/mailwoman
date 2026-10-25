@@ -196,6 +196,11 @@
 			"node": "./lib/resources/whosonfirst.ts",
 			"default": "./out/resources/whosonfirst.js"
 		},
+		"./resources/whosonfirst/hierarchy": {
+			"types": "./out/resources/whosonfirst/hierarchy.d.ts",
+			"node": "./lib/resources/whosonfirst/hierarchy.ts",
+			"default": "./out/resources/whosonfirst/hierarchy.js"
+		},
 		"./resources/libpostal": {
 			"types": "./out/resources/libpostal.d.ts",
 			"node": "./lib/resources/libpostal.ts",

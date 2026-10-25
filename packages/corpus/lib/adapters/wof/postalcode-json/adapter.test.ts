@@ -30,6 +30,7 @@ describe("postcodeVariantsFor (pure)", () => {
 		placetype: "postalcode",
 		country: "US",
 		nameVariants: new Map<string, string>(),
+		ancestors: [] as number[],
 		...over,
 	})
 
