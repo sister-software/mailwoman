@@ -126,9 +126,14 @@ export function postcodePlacement(countryCode: string): PostcodeLocalityPlacemen
  * so the list's size is the shape's own ambiguity.
  */
 export function countriesAcceptingPostcode(value: string): string[] {
-	return Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
-		.toSorted()
-		.filter((code) => acceptPostcode(value, code) !== null)
+	return postcodeSyntaxCountries().filter((code) => acceptPostcode(value, code) !== null)
+}
+
+/**
+ * Every country whose postcode format libaddressinput states, in ISO 3166-1 alpha-2 order.
+ */
+export function postcodeSyntaxCountries(): string[] {
+	return Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES).toSorted()
 }
 
 /**

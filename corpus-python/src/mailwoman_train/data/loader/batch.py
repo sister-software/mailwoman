@@ -48,6 +48,9 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
     if batch and batch[0].locality_surface_features is not None:
         out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
         out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
+    if batch and batch[0].code_unit_features is not None:
+        out["code_unit_features"] = [ex.code_unit_features for ex in batch]
+        out["code_unit_confidence"] = [ex.code_unit_confidence for ex in batch]
     # CharCNN input path (#825 / v8 CJK): same presence interface — set iff char_mode != "off".
     if batch and batch[0].char_ids is not None:
         out["char_ids"] = [ex.char_ids for ex in batch]

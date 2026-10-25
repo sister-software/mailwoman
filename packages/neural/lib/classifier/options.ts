@@ -199,6 +199,13 @@ export interface NeuralAddressClassifierConfig {
 	addressSystems?: AddressSystemTable
 
 	/**
+	 * Whether the graph reads the code-unit channel (#2845), from its `code_unit_features` input.
+	 *
+	 * The channel is computed from the raw surface, so no lexicon backs it.
+	 */
+	codeUnits?: boolean
+
+	/**
 	 * Whether to merge adjacent same-tag spans separated only by short punctuation.
 	 *
 	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
