@@ -32,7 +32,7 @@ from typing import Any
 
 import yaml
 
-from ..data.loader import _raw_row_stream
+from ..data.loader import _raw_row_stream, manifest_files
 from ..data.relabel import AffixRelabelLexicon, relabel_row
 
 _SCRIPT_MARKERS = (
@@ -247,7 +247,7 @@ def main() -> None:
         manifest_path = corpus_dir / "MANIFEST.json"
         if mappings and manifest_path.exists():
             manifest = json.loads(manifest_path.read_text())
-            for entry in manifest.get("slices", []):
+            for entry in manifest_files(manifest):
                 entry["path"] = _remap(entry["path"], mappings)
             stream_dir = Path(temp)
             (stream_dir / "MANIFEST.json").write_text(json.dumps(manifest))

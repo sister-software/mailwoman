@@ -114,7 +114,7 @@ describe("countHoldoutSpans", () => {
 
 		await writeLocalJSONFile(
 			{
-				slices: [
+				files: [
 					{ path: trainFile.toString(), split: "train" },
 					{ path: testFile.toString(), split: "test" },
 					{ path: mixedFile.toString(), split_attribute: { path: split.attribute } },
@@ -149,7 +149,7 @@ describe("countHoldoutSpans", () => {
 	it("refuses a manifest file that records no split", async () => {
 		const manifest = root.path("UNSPLIT.json")
 
-		await writeLocalJSONFile({ slices: [{ path: root.path("train.parquet").toString() }] }, manifest)
+		await writeLocalJSONFile({ files: [{ path: root.path("train.parquet").toString() }] }, manifest)
 
 		await expect(countHoldoutSpans(manifest.toString(), HOLDOUTS)).rejects.toThrow(/neither a split/)
 	})

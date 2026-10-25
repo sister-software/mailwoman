@@ -10,6 +10,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
+import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
@@ -59,12 +60,15 @@ export async function readMixtureFiles(
 ): Promise<MixtureFiles> {
 	const manifestPath = PathBuilder.from(corpusDirectory)("MANIFEST.json")
 	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
-	const entries = manifest.slices.filter((entry) => entry.split === split)
+
+	const entries = baseManifestFiles<(typeof manifest)["files"][number]>(manifest).filter(
+		(entry) => entry.split === split
+	)
 
 	if (!entries.length) {
 		throw new Error(
 			`${manifestPath} records no ${split} split — it carries ` +
-				`${[...new Set(manifest.slices.map((entry) => entry.split))].toSorted().join(", ")}.`
+				`${[...new Set(baseManifestFiles<(typeof manifest)["files"][number]>(manifest).map((entry) => entry.split))].toSorted().join(", ")}.`
 		)
 	}
 

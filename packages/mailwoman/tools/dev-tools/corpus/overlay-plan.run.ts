@@ -36,6 +36,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { CARRIED_SOURCES, currentSourceName } from "@mailwoman/corpus/recipes/sources"
+import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { basename, dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -73,7 +74,7 @@ const BASE_FILE = /^part-\d{4}\.parquet$/u
  */
 const ROUTED_SUFFIX = /\.(train|val|test)\.parquet$/u
 
-interface ManifestSlice {
+interface ManifestEntry {
 	/**
 	 * Absent from an entry whose `split_attribute` decides each row.
 	 */
@@ -114,26 +115,29 @@ interface OverlayOriginal {
 	unsplitPath: string | null
 }
 
-const manifest = await readLocalJSONFile<{ corpus_version: string; slices: ManifestSlice[] }>(baseManifest)
-const overlays = manifest.slices.filter((slice) => !BASE_FILE.test(basename(slice.path)))
+const manifest = await readLocalJSONFile<{ corpus_version: string; files: ManifestEntry[] }>(baseManifest)
+
+const overlays = baseManifestFiles<(typeof manifest)["files"][number]>(manifest).filter(
+	(file) => !BASE_FILE.test(basename(file.path))
+)
 
 if (!overlays.length) {
-	throw new Error(`${baseManifest} records no overlay slices; every entry looks like a base part-NNNN.parquet`)
+	throw new Error(`${baseManifest} records no overlay files; every entry looks like a base part-NNNN.parquet`)
 }
 
 const grouped = new Map<string, { source: Set<string>; splits: Set<string>; rows: number }>()
 
-for (const slice of overlays) {
-	const name = basename(slice.path)
+for (const file of overlays) {
+	const name = basename(file.path)
 	const stem = name.replace(ROUTED_SUFFIX, "").replace(/\.parquet$/u, "")
 	const entry = grouped.get(stem) ?? { source: new Set<string>(), splits: new Set<string>(), rows: 0 }
 
-	if (slice.source) {
-		entry.source.add(slice.source)
+	if (file.source) {
+		entry.source.add(file.source)
 	}
 
-	entry.splits.add(slice.split ?? "split-attribute")
-	entry.rows += slice.rows
+	entry.splits.add(file.split ?? "split-attribute")
+	entry.rows += file.rows
 	grouped.set(stem, entry)
 }
 

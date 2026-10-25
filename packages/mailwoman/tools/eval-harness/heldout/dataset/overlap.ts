@@ -241,7 +241,7 @@ export async function auditHeldoutOverlap(input: {
 	for (const manifestPath of input.corpora) {
 		const manifest = await readLocalJSONFile<{
 			corpus_version?: unknown
-			slices?: unknown
+			files?: unknown
 		}>(manifestPath)
 
 		const corpusVersion = typeof manifest.corpus_version === "string" ? manifest.corpus_version : null

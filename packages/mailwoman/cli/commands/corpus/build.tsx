@@ -74,7 +74,6 @@ export const spec = {
 			validate: (value) => Number.isInteger(value) && value > 0,
 			validationMessage: "--rows-per-file must be a positive integer.",
 			description: "Max rows per parquet file",
-			deprecatedName: "rows-per-slice",
 		},
 		"shuffle-window": {
 			type: "number",
@@ -270,7 +269,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		})
 
 		return {
-			total: m.slices.total_rows,
+			total: m.files.total_rows,
 			aligned: m.total_aligned_rows,
 			quarantined: m.quarantine_count,
 			adapters: m.adapters.length,

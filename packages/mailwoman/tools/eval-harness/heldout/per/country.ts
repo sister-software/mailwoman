@@ -28,6 +28,7 @@ import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
+import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -359,7 +360,7 @@ export async function sampleHeldoutRows(
 	rule: HeldoutSamplingRule
 }> {
 	const manifest = await readLocalJSONFile<{
-		slices: Array<{
+		files: Array<{
 			path: string
 			split?: string
 			split_attribute?: { path?: unknown; sha256?: unknown; counts?: { test?: unknown } }
@@ -371,27 +372,29 @@ export async function sampleHeldoutRows(
 	// Only the attribute's `test` ids are read from it.
 	const attributeTestIDs: Array<{ file: string; ids: string[] }> = []
 
-	const unlisted = skipFiles.filter((path) => !manifest.slices.some((slice) => slice.path === path))
+	const unlisted = skipFiles.filter(
+		(path) => !baseManifestFiles<(typeof manifest)["files"][number]>(manifest).some((file) => file.path === path)
+	)
 
 	if (unlisted.length) throw new Error(`${manifestPath.toString()} lists no file ${unlisted.join(", ")} to skip`)
 
-	for (const slice of manifest.slices) {
-		if (skipFiles.includes(slice.path)) continue
+	for (const entry of baseManifestFiles<(typeof manifest)["files"][number]>(manifest)) {
+		if (skipFiles.includes(entry.path)) continue
 
-		const file = slice.path.replace(/^\/data/u, pathRoot)
+		const file = entry.path.replace(/^\/data/u, pathRoot)
 
-		if (slice.split === "test") {
+		if (entry.split === "test") {
 			files.push(file)
 
 			continue
 		}
 
-		const reference = slice.split_attribute
+		const reference = entry.split_attribute
 
 		if (!reference) continue
 
 		if (typeof reference.path !== "string" || typeof reference.sha256 !== "string") {
-			throw new TypeError(`${manifestPath.toString()} file ${slice.path} names an incomplete split attribute`)
+			throw new TypeError(`${manifestPath.toString()} file ${entry.path} names an incomplete split attribute`)
 		}
 
 		const attributePath = reference.path.replace(/^\/data/u, pathRoot)

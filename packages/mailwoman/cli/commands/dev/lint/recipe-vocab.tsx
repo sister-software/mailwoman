@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev lint slice-vocab --parquet <recipe-output.parquet>` is the base-consistency lint,
+ *   `mailwoman dev lint recipe-vocab --parquet <recipe-output.parquet>` is the base-consistency lint,
  *   country-scoped (v2). It flags any token a synthetic recipe output labels one tag while the base
  *   corpus dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix
  *   against the base "street") are surfaced separately. The loader's affix-relabel handles them.
@@ -21,14 +21,13 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "slice-vocab",
+	name: "recipe-vocab",
 	description: "Lint a synthetic recipe output against base-corpus token labels.",
 	options: {
 		parquet: {
 			type: "string",
 			required: true,
 			description: "The recipe-output parquet to lint",
-			deprecatedName: "slice",
 		},
 		"base-version": { type: "string", default: "v0.5.0", description: "Base corpus version" },
 		"base-root": { type: "string", description: "Base corpus root (default $MAILWOMAN_DATA_ROOT/corpus/versioned)" },

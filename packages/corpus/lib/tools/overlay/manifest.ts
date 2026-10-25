@@ -65,25 +65,24 @@ type ParquetFileDescriptor = {
 type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 
 /**
- * The legacy manifest keys for the file list and the rows per file.
+ * The retired manifest keys for the file list and the rows per file, newest first.
  *
- * Earlier corpora are immutable and still use these keys, so readers accept both
- * spellings and writers emit only the current ones.
- * The keys are built by concatenation because a repository check bans the legacy word.
+ * Built corpora are immutable, and frozen training manifests record their `MANIFEST.json` digests,
+ * so readers accept every spelling and writers emit only `files` and `rows_per_file`.
+ * The keys are built by concatenation because the repository's vocabulary checks ban both retired words.
  */
-const PRE_RENAME_FILES_KEY = `sh${"ards"}` as const
-const PRE_RENAME_ROWS_PER_FILE_KEY = `rows_per_sh${"ard"}` as const
+export const RETIRED_FILES_KEYS = [`sl${"ices"}`, `sh${"ards"}`] as const
+const RETIRED_ROWS_PER_FILE_KEYS = [`rows_per_sl${"ice"}`, `rows_per_sh${"ard"}`] as const
 
 interface BaseManifest {
 	corpus_version?: string
 	schema: unknown
-	rows_per_slice?: unknown
+	rows_per_file?: unknown
 	row_group_size: unknown
-	slices?: ManifestFile[]
+	files?: ManifestFile[]
 	counts: { train: number; val: number; test: number }
 	total_rows: number
-	[PRE_RENAME_FILES_KEY]?: ManifestFile[]
-	[PRE_RENAME_ROWS_PER_FILE_KEY]?: unknown
+	[key: string]: unknown
 	/**
 	 * The source-rights record a build or assembly wrote when it checked its sources.
 	 */
@@ -96,24 +95,23 @@ interface BaseManifest {
 }
 
 /**
- * Returns a manifest's file list from `slices` or from the legacy key.
+ * Returns a manifest's file list from `files` or from a retired key in {@linkcode RETIRED_FILES_KEYS}.
  *
- * A non-empty `slices` wins, then a legacy list, then an empty `slices`.
- * An empty list is a valid answer, but a manifest with neither key throws, because an
+ * The first key holding a non-empty list wins, then the first holding an empty one.
+ * An empty list is a valid answer, but a manifest with no such key throws, because an
  * empty result would misreport a missing list as a corpus without files.
  */
-export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILES_KEY]?: unknown }): ManifestFile[] {
-	const slices = manifest.slices
-	const preRename = manifest[PRE_RENAME_FILES_KEY]
+export function baseManifestFiles<T extends { path: string } = ManifestFile>(manifest: object): T[] {
+	const record = manifest as Record<string, unknown>
+	const lists = ["files", ...RETIRED_FILES_KEYS].map((key) => record[key]).filter(Array.isArray)
+	const filled = lists.find((list) => list.length)
 
-	if (Array.isArray(slices) && slices.length) return refuseRepeatedFiles(slices as ManifestFile[])
+	if (filled) return refuseRepeatedFiles(filled as T[])
 
-	if (Array.isArray(preRename)) return refuseRepeatedFiles(preRename as ManifestFile[])
-
-	if (Array.isArray(slices)) return slices as ManifestFile[]
+	if (lists.length) return []
 
 	throw new Error(
-		`manifest names no file list: neither "slices" nor the pre-rename key holds an array. An empty list here ` +
+		`manifest holds no file list under "files" or a retired key. An empty list here ` +
 			`would read as a corpus of no files, which is a measurement this manifest does not support.`
 	)
 }
@@ -159,10 +157,10 @@ export function refuseRepeatedFiles<T extends { path: string; sha256?: unknown }
 }
 
 /**
- * Returns the base's rows-per-file value under either key.
+ * Returns the base's rows-per-file value under its current or a retired key.
  */
 function baseRowsPerFile(base: BaseManifest): unknown {
-	return base.rows_per_slice ?? base[PRE_RENAME_ROWS_PER_FILE_KEY]
+	return ["rows_per_file", ...RETIRED_ROWS_PER_FILE_KEYS].map((key) => base[key]).find((value) => value != null)
 }
 
 /**
@@ -694,10 +692,10 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		overlay_base: base.corpus_version ?? null,
 		note: args.note || defaultNote,
 		schema: base.schema,
-		rows_per_slice: baseRowsPerFile(base),
+		rows_per_file: baseRowsPerFile(base),
 		row_group_size: base.row_group_size,
-		slices: listedFiles,
-		// The rows the loader reads: the stored rows of `slices` less those `deletions` names.
+		files: listedFiles,
+		// The rows the loader reads: the stored rows of `files` less those `deletions` names.
 		counts: { train: netCount("train"), val: netCount("val"), test: netCount("test") },
 		total_rows: netCount("train") + netCount("val") + netCount("test"),
 		// What decides a row's split: a file's own `split`, or for a file listing
@@ -710,7 +708,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		deletions,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
-		// from `slices` and treating the base build's set as the whole.
+		// from `files` and treating the base build's set as the whole.
 		// The overlay sources listed here have their own terms, recorded per source in
 		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
 		licenses_cover:
@@ -750,7 +748,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	console.log(`wrote ${planPath}`)
 	console.log(`wrote ${out}`)
 	console.log(
-		`  files: ${manifest.slices.length} (${kept.length} base kept, ${dropped.length} base dropped, +${added.length} added)`
+		`  files: ${manifest.files.length} (${kept.length} base kept, ${dropped.length} base dropped, +${added.length} added)`
 	)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 

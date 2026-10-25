@@ -44,6 +44,7 @@ import type { FileDerivation } from "#parquet/record"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
+import { baseManifestFiles } from "#tools/overlay/manifest"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
@@ -210,7 +211,7 @@ export async function buildTranslitOverlay(
 	// The kryptonite file already lives in the base manifest (it was written there by Thread B).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
-	const rewrittenBase = base.slices.map((file) => ({
+	const rewrittenBase = baseManifestFiles<(typeof base)["files"][number]>(base).map((file) => ({
 		...file,
 		path: canonicalizeFilePath(file.path, legacyPathPrefix, canonicalPathPrefix),
 	}))
@@ -220,9 +221,9 @@ export async function buildTranslitOverlay(
 	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: base.rows_per_slice,
+		rows_per_file: base.rows_per_file,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
-		slices: [...rewrittenBase, ...newFiles],
+		files: [...rewrittenBase, ...newFiles],
 		counts: {
 			train: base.counts.train + newTrainRows,
 			val: base.counts.val,
@@ -235,9 +236,16 @@ export async function buildTranslitOverlay(
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
-	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newFiles.length})`)
+
+	report?.(
+		`  files=${combined.files.length} (base=${baseManifestFiles<(typeof base)["files"][number]>(base).length}, added=${newFiles.length})`
+	)
+
 	report?.(`  compression=${PARQUET_COMPRESSION}`)
-	const pathFix = rewrittenBase.filter((s, i) => s.path !== base.slices[i]!.path).length
+
+	const pathFix = rewrittenBase.filter(
+		(s, i) => s.path !== baseManifestFiles<(typeof base)["files"][number]>(base)[i]!.path
+	).length
 
 	if (pathFix > 0) {
 		report?.(`  path-canonicalized base files: ${pathFix} (legacy '${legacyPathPrefix}' → '${canonicalPathPrefix}')`)

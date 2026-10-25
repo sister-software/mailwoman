@@ -202,7 +202,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 
 				// The manifest key has two live spellings on disk, so the test accepts either
 				// rather than skipping on the ones it cannot name.
-								const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
+								const entries = (manifest["files"] ?? manifest["sh" + "ards"]) as
 			| Array<{ split?: string; path: string }>
 			| undefined
 
@@ -217,7 +217,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 
 				// Only the one file under the current key: spreading the manifest would leave
 				// its full list in place and the census would read all of it.
-				await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], slices: one }, scratch)
+				await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], files: one }, scratch)
 
 		const census = await buildCorpusCensus(scratch)
 
@@ -236,7 +236,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		await writeLocalJSONFile(
 			{
 				corpus_version: "v0.0.0-absent",
-				slices: [{ split: "train", path: "/data/corpus/versioned/v0.0.0-absent/nothing-here-00000.parquet" }],
+				files: [{ split: "train", path: "/data/corpus/versioned/v0.0.0-absent/nothing-here-00000.parquet" }],
 			},
 			scratch
 		)
@@ -254,7 +254,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 		for (const version of ["v0.9.9-one", "v0.26.0-two"]) {
 			const manifest = versionedRoot(version, `corpus-${version}`, "MANIFEST.json").toString()
 
-			await writeLocalJSONFile({ corpus_version: version, slices: [] }, manifest)
+			await writeLocalJSONFile({ corpus_version: version, files: [] }, manifest)
 			paths.push(manifest)
 		}
 
@@ -279,7 +279,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 				await using directory = await temporaryDirectory("mw-census-none-")
 		const scratch = directory.path("MANIFEST.json")
 
-		await writeLocalJSONFile({ corpus_version: "v0.0.0-empty", slices: [] }, scratch)
+		await writeLocalJSONFile({ corpus_version: "v0.0.0-empty", files: [] }, scratch)
 
 		const census = await buildCorpusCensus(scratch)
 

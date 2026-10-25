@@ -138,12 +138,12 @@ describe("writeParquetSplits", () => {
 		)
 
 		// ban train 7 rows → 4 + 3, wof-admin train 7 → 4 + 3, tiger 1, and one file per source in val.
-		expect(manifest.slices).toHaveLength(7)
+		expect(manifest.files).toHaveLength(7)
 		expect(manifest.total_rows).toBe(rows.train.length + rows.val.length)
 
 		const hashes = new Set<string>()
 
-		for (const file of manifest.slices) {
+		for (const file of manifest.files) {
 			expect(file.path).toBe(scratch.path("store", file.source!, file.derivation_hash!, "data.parquet").toString())
 			hashes.add(file.derivation_hash!)
 
@@ -163,7 +163,7 @@ describe("writeParquetSplits", () => {
 			expect([...sources.keys()]).toEqual([file.source])
 		}
 
-		expect(hashes.size).toBe(manifest.slices.length)
+		expect(hashes.size).toBe(manifest.files.length)
 	})
 
 	it("keeps a file whose store path already holds the same bytes", async () => {
@@ -179,8 +179,8 @@ describe("writeParquetSplits", () => {
 		const first = await writeParquetSplits({ train: asyncFrom(rows.train) }, options)
 		const second = await writeParquetSplits({ train: asyncFrom(rows.train) }, options)
 
-		expect(second.slices.map((file) => [file.path, file.sha256])).toEqual(
-			first.slices.map((file) => [file.path, file.sha256])
+		expect(second.files.map((file) => [file.path, file.sha256])).toEqual(
+			first.files.map((file) => [file.path, file.sha256])
 		)
 	})
 
@@ -232,7 +232,7 @@ describe("foldSourceLicenses", () => {
 		}
 
 		const listed = [
-			...manifest.slices.map((file) => ({ path: file.path, rows: file.rows, sha256: file.sha256 })),
+			...manifest.files.map((file) => ({ path: file.path, rows: file.rows, sha256: file.sha256 })),
 			{ path: overlay, rows: 3 },
 			{ path: legacy, rows: 3 },
 		]
@@ -240,7 +240,7 @@ describe("foldSourceLicenses", () => {
 		const folded = await foldSourceLicenses(listed)
 		const reread = await readSourceLicenseTally(listed.map((file) => file.path))
 
-		expect(folded.folded).toBe(manifest.slices.length)
+		expect(folded.folded).toBe(manifest.files.length)
 		expect(folded.reread).toBe(2)
 		expect(rowsBySourceFromTally(folded.tally)).toEqual(rowsBySourceFromTally(reread))
 
@@ -267,7 +267,7 @@ describe("foldSourceLicenses", () => {
 		)
 
 		const licenses = await committedRowLicenses()
-		const banFile = manifest.slices.find((file) => file.source === "ban")!
+		const banFile = manifest.files.find((file) => file.source === "ban")!
 		const record = (await readParquetRecord(banFile.path))!
 
 		expect(record.licenseValues).toEqual({ [licenses.licenseOf("ban")!]: 7 })

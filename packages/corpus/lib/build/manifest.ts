@@ -96,7 +96,7 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 		adapters: inputs.adapterRuns,
 		skipped_adapters: inputs.skipped,
 		splits: { counts: inputs.splitCounts, holdouts: inputs.holdouts },
-		slices: { counts: inputs.parquetManifest.counts, total_rows: inputs.parquetManifest.total_rows },
+		files: { counts: inputs.parquetManifest.counts, total_rows: inputs.parquetManifest.total_rows },
 		holdout_check: {
 			checked_at: inputs.holdoutCheck.checked_at,
 			countries: inputs.holdoutCheck.countries,

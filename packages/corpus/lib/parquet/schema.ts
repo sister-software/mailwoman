@@ -25,7 +25,7 @@ export const ROW_GROUP_SIZE = 50_000
  * A file is closed here rather than grown, because `writeParquetFile` materializes
  * one Arrow table and Arrow's list builder raises before a whole source fits:
  * 4,228,212 rows raised where 1,603,143 wrote.
- * The manifest records the value in force as `rows_per_slice`.
+ * The manifest records the value in force as `rows_per_file`.
  */
 export const ROWS_PER_FILE = 1_000_000
 

@@ -236,9 +236,9 @@ export async function writeParquetFile(
 /**
  * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split.
  *
- * The `slices` key it sits under is the wire interface the Python loader reads
- * (`manifest_files` in `corpus_files.py`, with its pre-rename fallback); every corpus
- * on disk includes it, so the key name is not the writer's to change.
+ * The writer lists them under `files`.
+ * Corpora written earlier list them under a retired key, so every reader goes through
+ * `baseManifestFiles` here or `manifest_files` in `corpus_files.py`, which accept each spelling.
  */
 export interface ParquetFileDescriptor {
 	split: SplitName
@@ -269,9 +269,9 @@ export interface ParquetFileDescriptor {
 export interface ParquetManifest {
 	corpus_version: string
 	schema: readonly string[]
-	rows_per_slice: number
+	rows_per_file: number
 	row_group_size: number
-	slices: ParquetFileDescriptor[]
+	files: ParquetFileDescriptor[]
 	counts: Record<SplitName, number>
 	total_rows: number
 }
@@ -377,9 +377,9 @@ export function parquetManifestOf(
 	return {
 		corpus_version: opts.corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: opts.rowsPerFile,
+		rows_per_file: opts.rowsPerFile,
 		row_group_size: ROW_GROUP_SIZE,
-		slices: files.toSorted((a, b) =>
+		files: files.toSorted((a, b) =>
 			a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)
 		),
 		counts,
@@ -728,7 +728,7 @@ async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<
 
 	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
 
-	for (const file of manifest.slices) {
+	for (const file of manifest.files) {
 		if (!file.source) {
 			throw new Error(
 				`resume refused: ${manifestPath.toString()} records ${file.path} with no source, so it was written ` +
@@ -753,5 +753,5 @@ async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<
 		}
 	}
 
-	return [...manifest.slices]
+	return [...manifest.files]
 }

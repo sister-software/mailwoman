@@ -133,7 +133,7 @@ def test_build_writes_the_overlay_with_the_jp_parts_referenced_by_volume_path(tm
     )
 
     manifest = json.loads((out / "MANIFEST.json").read_text(encoding="utf-8"))
-    paths = [entry["path"] for entry in manifest["slices"]]
+    paths = [entry["path"] for entry in manifest["files"]]
     assert "/data/corpus/versioned/v8-jp-full-2026-08-04/train/part-0000.parquet" in paths
     assert "/data/corpus/versioned/v8-cjk-test/train/cn-units-0000.parquet" in paths
     assert manifest["base_corpus_version"] == "v8-jp-full-2026-08-04"
@@ -213,7 +213,7 @@ def test_an_extra_corpus_is_referenced_by_volume_path_and_folded_into_the_vocabu
     )
 
     manifest = json.loads((out / "MANIFEST.json").read_text(encoding="utf-8"))
-    kr_entries = [entry for entry in manifest["slices"] if entry["source"] == "juso-kr"]
+    kr_entries = [entry for entry in manifest["files"] if entry["source"] == "juso-kr"]
     assert [entry["path"] for entry in kr_entries] == [
         "/data/corpus/versioned/v8-kr-2026-09-06/train/kr-part-0000.parquet",
         "/data/corpus/versioned/v8-kr-2026-09-06/val/kr-part-0000.parquet",

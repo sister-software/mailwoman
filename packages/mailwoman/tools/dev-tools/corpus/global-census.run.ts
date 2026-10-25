@@ -83,7 +83,7 @@ interface ManifestShape {
 	corpus_version?: string
 	counts?: Record<string, number>
 	total_rows?: number
-	slices?: unknown
+	files?: unknown
 }
 
 const manifest = await readLocalJSONFile<ManifestShape>(values.manifest)
@@ -198,7 +198,7 @@ function readDeficits(
 	}
 }
 
-const files = baseManifestFiles(manifest as { slices?: unknown })
+const files = baseManifestFiles(manifest as { files?: unknown })
 	.filter((file) => wantedSplits.has(String(file.split)) && file.path)
 	.map((file) => ({ split: String(file.split), path: localManifestFilePath(file.path) }))
 

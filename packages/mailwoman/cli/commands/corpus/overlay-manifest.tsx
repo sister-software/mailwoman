@@ -45,7 +45,6 @@ export const spec = {
 			type: "string",
 			required: true,
 			description: "Parquet files to add, comma-separated",
-			deprecatedName: "slice-parquet",
 		},
 		source: { type: "string", required: true, description: "Source label per parquet, comma-separated" },
 		"split-attribute": {

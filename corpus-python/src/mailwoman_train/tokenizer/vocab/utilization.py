@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ...data.loader import manifest_files
 from ...paths import data_root_path
 
 _SP = None
@@ -69,7 +70,7 @@ def main() -> None:
 
     manifest = json.loads(Path(args.manifest).read_text())
     src, dst = args.data_root_remap.split(":", 1)
-    files = [s["path"].replace(src, dst, 1) for s in manifest["slices"] if s["split"] == "train"]
+    files = [s["path"].replace(src, dst, 1) for s in manifest_files(manifest) if s["split"] == "train"]
     missing = [s for s in files if not os.path.exists(s)]
 
     if missing:

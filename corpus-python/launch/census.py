@@ -55,7 +55,9 @@ def diagnose_corpus(
 
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        train_files = [s for s in data.get("slices", []) if s.get("split") == "train"]
+        from mailwoman_train.data.loader import manifest_files
+
+        train_files = [s for s in manifest_files(data) if s.get("split") == "train"]
         print(f"MANIFEST: {len(train_files)} train parquet files, {sum(s['rows'] for s in train_files):,} rows")
 
         existing = sum(1 for s in train_files if Path(s["path"]).exists())

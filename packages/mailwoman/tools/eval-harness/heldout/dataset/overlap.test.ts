@@ -79,7 +79,7 @@ async function writeCorpus(name: string, corpusVersion: string | null, trainRows
 	await writeLocalJSONFile(
 		{
 			...(corpusVersion ? { corpus_version: corpusVersion } : {}),
-			slices: [
+			files: [
 				{
 					path: `/data/${name}/train/part-0.parquet`,
 					split: "train",
@@ -200,7 +200,7 @@ describe("auditHeldoutOverlap", () => {
 		await writeLocalJSONFile(
 			{
 				corpus_version: "v-ubc-candidate",
-				slices: [{ path: "/data/ubc-candidate/train/part-0.parquet", split: "train", rows: trainRows, sha256: "t" }],
+				files: [{ path: "/data/ubc-candidate/train/part-0.parquet", split: "train", rows: trainRows, sha256: "t" }],
 			},
 			candidateCorpus
 		)
@@ -305,7 +305,7 @@ describe("auditHeldoutOverlap", () => {
 		await writeLocalJSONFile(
 			{
 				corpus_version: "v-missing",
-				slices: [{ path: "/data/missing/train/gone.parquet", split: "train", rows: 1 }],
+				files: [{ path: "/data/missing/train/gone.parquet", split: "train", rows: 1 }],
 			},
 			manifest
 		)

@@ -33,7 +33,7 @@ async function writeFixtureCorpus(name: string, valuesSQL: string, columns: stri
 	const file = directory.path(name, "test", "part-0.parquet").toString()
 	const manifest = directory.path(name, "MANIFEST.json").toString()
 
-	await writeLocalJSONFile({ slices: [{ path: `/data/${name}/test/part-0.parquet`, split: "test" }] }, manifest)
+	await writeLocalJSONFile({ files: [{ path: `/data/${name}/test/part-0.parquet`, split: "test" }] }, manifest)
 
 	await makeDirectories(directory.path(name, "test"))
 
@@ -139,7 +139,7 @@ describe("sampleHeldoutRows grouping", () => {
 
 		await writeLocalJSONFile(
 			{
-				slices: [
+				files: [
 					{
 						path: "/data/attributed/test/part-0.parquet",
 						split_attribute: { path: "/data/attributed/part.split.json", sha256: await sha256File(attribute) },
