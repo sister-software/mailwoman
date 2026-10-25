@@ -227,7 +227,8 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
  *
- * Files are read `fsConcurrency()` at a time, the filesystem fan-out libuv services,
+ * Files are read as many at a time as libuv's threadpool services
+ * (spliterator's default for parallelMap, 4 unless UV_THREADPOOL_SIZE says otherwise),
  * and records are yielded in glob order.
  * The adapters deduplicate surface strings first-come, so a completion-order walk would change
  * which record claims a shared name from one build to the next.
