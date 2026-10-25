@@ -68,7 +68,7 @@ Every entry point is a `mailwoman` command. This package has no `scripts/` direc
 
 ```bash
 # Build one recipe's output
-mailwoman corpus slice boundary-stress --count 10000 --out /tmp/boundary-stress.jsonl
+mailwoman corpus recipe boundary-stress --count 10000 --out /tmp/boundary-stress.jsonl
 
 # Acquire a source named in the fetch registry
 mailwoman corpus fetch geonames-postal

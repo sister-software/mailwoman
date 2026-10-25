@@ -25,7 +25,7 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * (which couples to a base manifest and writes parquet directly).
  * Output goes to jsonl so it joins the same jsonl-to-parquet path every other overlay uses.
  *
- * Usage: mailwoman corpus align-slice\ --input /path/canonical-kryptonite.jsonl\
+ * Usage: mailwoman corpus align-recipe\ --input /path/canonical-kryptonite.jsonl\
  * --out /tmp/kryptonite-labeled.jsonl
  */
 import { alignRow } from "#utils"

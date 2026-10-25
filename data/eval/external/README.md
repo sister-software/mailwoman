@@ -233,7 +233,7 @@ tuples by the `locale` recipe's `--golden` mode
 Rebuild:
 
 ```bash
-mailwoman corpus slice locale --country ES --count 1500 --seed 7 --golden \
+mailwoman corpus recipe locale --country ES --count 1500 --seed 7 --golden \
   --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
 ```
 

@@ -20,7 +20,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * Bare `mailwoman corpus slice` stays the recipe runner despite the subcommands in this directory.
+ * Bare `mailwoman corpus recipe` stays the recipe runner despite the subcommands in this directory.
  */
 export const isDefault = true
 
@@ -28,7 +28,7 @@ export const isDefault = true
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
-	name: "slice",
+	name: "recipe",
 	description: "Run a corpus recipe and write its output",
 	positionals: [{ name: "recipe", description: "Recipe name" }],
 	options: {
@@ -84,7 +84,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 				"recipes:",
 				...listRecipes().map((r) => `  ${r.name.padEnd(20)} [${r.mode}] ${r.description}`),
 				"",
-				"usage: mailwoman corpus slice <recipe> --out <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
+				"usage: mailwoman corpus recipe <recipe> --out <out.jsonl> [--input <tuples.jsonl> | --count N] [--seed N]",
 			]
 		}
 
@@ -92,7 +92,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 		const recipe = getRecipe(name)
 
 		if (!recipe) {
-			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus slice --list\`.`)
+			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus recipe --list\`.`)
 		}
 
 		if (!options.out) throw new CommandError("--out <out.jsonl> required")

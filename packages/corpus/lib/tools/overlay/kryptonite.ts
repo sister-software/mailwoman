@@ -10,7 +10,7 @@
  *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the jsonl.
  *
- *   Invoke via `mailwoman corpus slice kryptonite \
+ *   Invoke via `mailwoman corpus recipe kryptonite \
  *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl \
  *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`

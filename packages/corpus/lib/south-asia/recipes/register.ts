@@ -23,7 +23,7 @@
  *   ODbL: the rows inherit OpenStreetMap's share-alike license. A corpus build run under
  *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
- *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
+ *   Run: mailwoman corpus recipe pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

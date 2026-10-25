@@ -22,7 +22,7 @@
  *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model and the
  *   reproducibility interface.
  *
- *   Invoke via `mailwoman corpus slice translit \
+ *   Invoke via `mailwoman corpus recipe translit \
  *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl \
  *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`

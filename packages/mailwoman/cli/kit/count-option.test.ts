@@ -11,7 +11,7 @@ import { countOption } from "#cli-kit"
 describe("countOption", () => {
 	it("reads ZERO as zero, which `Number(raw) || fallback` cannot", () => {
 		// The whole reason this helper exists.
-		// `corpus slice --variants 0` asks a recipe to emit its self-contained rows
+		// `corpus recipe --variants 0` asks a recipe to emit its self-contained rows
 		// and none of its tuple-driven ones.
 		// The falsy-zero idiom answered the fallback and the po-box military recipe output came out
 		// at 10,558 rows against the 5,279 requested, every one extra beyond the requested total.
