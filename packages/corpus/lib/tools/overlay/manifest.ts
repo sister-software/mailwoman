@@ -11,7 +11,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, normalize, PathBuilder, type PathBuilderLike } from "path-ts"
 
@@ -207,13 +207,22 @@ async function descriptor(
 	limits: DuckDBLimits | undefined
 ): Promise<ParquetFileDescriptor> {
 	// `assembleOverlayManifest` calls this once for each file.
+	// An added file can hold tens of millions of rows, so DuckDB computes the count,
+	// the distinct sources and the end ids, and the hash streams the file.
 	using db = await openDuckDB(limits)
 
-	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
+	const file = `read_parquet('${escapeSQLString(localPath)}', file_row_number = true)`
 
-	const rows = result.getRowObjects()
-	const sids = rows.map((r) => r.source_id as string)
-	const stored = new Set(rows.map((r) => r.source as string))
+	const ends = await db.runAndReadAll(
+		`SELECT count(*) AS rows, arg_min(source_id, file_row_number) AS first, ` +
+			`arg_max(source_id, file_row_number) AS last FROM ${file}`
+	)
+
+	const sources = await db.runAndReadAll(`SELECT DISTINCT source FROM ${file}`)
+
+	const summary = ends.getRowObjects()[0]!
+	const rowCount = Number(summary.rows)
+	const stored = new Set(sources.getRowObjects().map((r) => r.source as string))
 
 	if (stored.size !== 1 || !stored.has(source)) {
 		const found = [...stored].toSorted().join(", ")
@@ -230,11 +239,11 @@ async function descriptor(
 		path: modalPath,
 		format: "parquet",
 		compression: "SNAPPY",
-		rows: sids.length,
+		rows: rowCount,
 		bytes: (await statPath(localPath)).size,
-		sha256: sha256Hex(await readLocalBuffer(localPath)),
-		first_source_id: sids[0]!,
-		last_source_id: sids.at(-1)!,
+		sha256: await sha256File(localPath),
+		first_source_id: summary.first as string,
+		last_source_id: summary.last as string,
 		source,
 	}
 }
