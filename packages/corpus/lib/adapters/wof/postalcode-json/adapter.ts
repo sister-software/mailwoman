@@ -65,7 +65,7 @@ function regionSurface(country: string, name: string): string {
  * and the ancestor placetypes the variants use.
  * The admin adapter keeps its own mapping.
  */
-function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
+function postcodePlacetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
 	switch (placetype) {
 		case "country":
 		case "nation":
@@ -88,7 +88,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * The slot's value is the postcode text.
  */
 export function postcodeVariantsFor(row: WOFRecord, ancestry: AncestorNames, slot: NameSlot): WOFVariantSpec[] {
-	if (placetypeToTag(row.placetype) !== "postcode") return []
+	if (postcodePlacetypeToTag(row.placetype) !== "postcode") return []
 
 	const selfName = slot.value
 
@@ -165,18 +165,18 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 
 				if (opts.country && rec.country !== opts.country) continue
 
-				if (!placetypeToTag(rec.placetype)) continue
+				if (!postcodePlacetypeToTag(rec.placetype)) continue
 				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
+			const ancestry = buildAncestorNameIndex(byID, postcodePlacetypeToTag)
 
 			// The adapter read admin records so postcode ancestry resolves.
 			// The index above now holds the three ancestor names read by each postcode variant.
 			// Their removal here releases every admin record's `nameVariants` map before the emit pass.
 			// `shouldEmit` skipped those records anyway.
 			for (const [id, record] of byID) {
-				if (placetypeToTag(record.placetype) !== "postcode") {
+				if (postcodePlacetypeToTag(record.placetype) !== "postcode") {
 					byID.delete(id)
 				}
 			}
@@ -187,7 +187,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				adapterOptions: opts,
 				adapterID: WOF_POSTALCODE_ADAPTER_ID,
 				localeByCountry: LOCALE_BY_COUNTRY,
-				shouldEmit: (record) => placetypeToTag(record.placetype) === "postcode",
+				shouldEmit: (record) => postcodePlacetypeToTag(record.placetype) === "postcode",
 				nameSlotsFor,
 				variantsFor: postcodeVariantsFor,
 			})
