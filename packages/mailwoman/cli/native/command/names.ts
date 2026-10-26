@@ -10,12 +10,29 @@
  */
 
 /**
+ * The spelling a typed command segment has: a lowercase letter, then letters, digits and single hyphens.
+ */
+const COMMAND_SEGMENT = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
+
+/**
+ * The most hyphens whose directory readings are tried.
+ * A longer segment is tried only as spelled.
+ */
+const MAX_SPLIT_HYPHENS = 6
+
+/**
  * Every filesystem path a command segment can name, fewest splits first —
  * `postcode-codepoint` answers `["postcode-codepoint"]` and `["postcode", "codepoint"]` —
  * with the literal spelling tried before any directory reading.
  */
 export function commandPathCandidates(segment: string): string[][] {
+	// An address such as `100% Banco` or `1-2-3-4-5-6-7-8` arrives here as the first positional of `parse`.
+	// Only a lowercase name can be a command, and its hyphen readings grow as 2^hyphens.
+	if (!COMMAND_SEGMENT.test(segment)) return []
+
 	const parts = segment.split("-")
+
+	if (parts.length - 1 > MAX_SPLIT_HYPHENS) return [[segment]]
 	const candidates: string[][] = []
 
 	// One bit per hyphen: set makes a directory boundary, clear keeps the hyphen in the segment.

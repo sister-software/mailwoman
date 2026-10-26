@@ -31,6 +31,16 @@ describe("commandPathCandidates", () => {
 	it("leaves a name with no hyphen alone", () => {
 		expect(commandPathCandidates("parse")).toEqual([["parse"]])
 	})
+
+	it("offers no path for an argument that cannot be a command name", () => {
+		expect(commandPathCandidates("100% Banco, 48V6+GJC, Barcelona 6001")).toEqual([])
+		expect(commandPathCandidates("1-2-3")).toEqual([])
+		expect(commandPathCandidates("Parse")).toEqual([])
+	})
+
+	it("tries a segment with many hyphens only as spelled", () => {
+		expect(commandPathCandidates("a-b-c-d-e-f-g-h")).toEqual([["a-b-c-d-e-f-g-h"]])
+	})
 })
 
 describe("isPrefixDirectory", () => {
