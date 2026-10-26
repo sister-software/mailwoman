@@ -205,15 +205,29 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 				? Number(parentRaw)
 				: null
 
+	// A record with no location keeps its own name and none of its ancestors.
+	const located = !isAtOrigin(props)
+
 	return {
 		id,
-		parent_id: Number.isFinite(parent_id as number) ? (parent_id as number) : null,
+		parent_id: located && Number.isFinite(parent_id as number) ? (parent_id as number) : null,
 		name,
 		placetype,
 		country,
 		nameVariants: extractNameVariants(props),
-		ancestors: agreedHierarchyAncestors(id, props["wof:hierarchy"]),
+		ancestors: located ? agreedHierarchyAncestors(id, props["wof:hierarchy"]) : [],
 	}
+}
+
+/**
+ * Whether a WOF record's representative point is exactly latitude 0, longitude 0,
+ * the value WOF writes for a record that has no geometry.
+ *
+ * The parent of such a record was not found by location, and it is often wrong: WOF parents 347 Spanish
+ * postcodes from every province, Soria's `42002` among them, to the one village of Melgar de Yuso.
+ */
+export function isAtOrigin(props: Record<string, unknown>): boolean {
+	return props["geom:latitude"] === 0 && props["geom:longitude"] === 0
 }
 
 /**

@@ -4,16 +4,62 @@
  * @author Teffen Ellis, et al.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { expect, test } from "vitest"
 
+import { useScratchDir } from "#test-kit"
 import type { WOFRecord } from "#utils/wof-json"
 import {
 	buildAncestorNameIndex,
 	extractNameVariants,
+	isAtOrigin,
 	isCurrentFeature,
 	normalizeNameKey,
+	readFeatureRecord,
 	stripAttestation,
 } from "#utils/wof-json"
+
+const scratch = useScratchDir("wof-json")
+
+const postcodeFeature = (latitude: number, longitude: number) => ({
+	type: "Feature",
+	id: 554_853_827,
+	properties: {
+		"wof:id": 554_853_827,
+		"wof:name": "42002",
+		"wof:placetype": "postalcode",
+		"wof:country": "ES",
+		"wof:parent_id": "101904227",
+		"wof:hierarchy": [{ locality_id: 101_904_227, region_id: 85_682_715, country_id: 85_633_129 }],
+		"geom:latitude": latitude,
+		"geom:longitude": longitude,
+	},
+})
+
+test("a record at latitude 0, longitude 0 keeps its name and drops its parent and ancestors", async () => {
+	const path = scratch.path("554853827.geojson")
+
+	await writeLocalJSONFile(postcodeFeature(0, 0), path)
+
+	expect(await readFeatureRecord(path.toString())).toMatchObject({ name: "42002", parent_id: null, ancestors: [] })
+})
+
+test("a located record keeps its parent and ancestors", async () => {
+	const path = scratch.path("554853827.geojson")
+
+	await writeLocalJSONFile(postcodeFeature(41.76, -2.47), path)
+
+	const record = await readFeatureRecord(path.toString())
+
+	expect(record?.parent_id).toBe(101_904_227)
+	expect(record?.ancestors).toContain(85_682_715)
+})
+
+test("isAtOrigin is true only when both coordinates are exactly 0", () => {
+	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 0 })).toBe(true)
+	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 9.2 })).toBe(false)
+	expect(isAtOrigin({})).toBe(false)
+})
 
 test("stripAttestation removes a historical attestation and keeps other brackets", () => {
 	expect(stripAttestation("Ellessem  [a.  1240]")).toBe("Ellessem")
