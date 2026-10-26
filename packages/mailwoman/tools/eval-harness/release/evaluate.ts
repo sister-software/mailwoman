@@ -55,6 +55,7 @@
  *   is insufficient evidence. None of these is ever read as zero loss or a pass.
  */
 
+import type { ReachabilityCensus } from "#tools/eval-harness/heldout/dataset/reachability"
 import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tools/eval-harness/heldout/per/country"
 import { clopperPearson, studentTUpperQuantile } from "#tools/eval-harness/release/bounds"
 import {
@@ -168,6 +169,12 @@ export interface ProvenanceClassReport {
 	qCandidate: number | null
 }
 
+/**
+ * The part of a reachability census the verdict reads: the candidate's tokenizer
+ * and its count of gold edges at a character-class change that fall inside a piece.
+ */
+export type VocabularyCensusReading = Pick<ReachabilityCensus, "unreachableAtClassChange"> & { tokenizer: string }
+
 export interface ReleaseVerdict {
 	specVersion: string
 	outcome: ReleaseOutcome
@@ -178,7 +185,10 @@ export interface ReleaseVerdict {
 	 * The inference rule that produced the outcomes, as the held-out report records it,
 	 * and how many rows each weights locale package parsed.
 	 */
-	inference: { rule: string | null; rowsByWeightsLocale: Record<string, number> }
+	inference: {
+		rule: string | null
+		rowsByWeightsLocale: Record<string, number>
+	}
 	statistics: {
 		confidenceLevel: number | null
 		method: MultipleComparisonMethod
@@ -355,7 +365,13 @@ function rateBound(units: readonly Unit[], tail: number): RateBound | null {
 
 	const { lower, upper } = clopperPearson(p * effectiveRows, effectiveRows, tail)
 
-	return { estimate: p, publishedEstimate: published / n, lower, upper, effectiveRows }
+	return {
+		estimate: p,
+		publishedEstimate: published / n,
+		lower,
+		upper,
+		effectiveRows,
+	}
 }
 
 interface DifferenceStratum {
@@ -471,9 +487,24 @@ export function evaluateReleaseSpec(
 	spec: ReleaseRequirementSpec,
 	pairedRows: readonly PairedRow[],
 	artifacts: { published: string; candidate: string },
-	inference: { rule: string | null }
+	inference: { rule: string | null },
+	reachability: VocabularyCensusReading | null = null
 ): ReleaseVerdict {
 	const globalReasons: string[] = []
+	let vocabularyFails = false
+
+	if (spec.vocabulary) {
+		if (!reachability) {
+			globalReasons.push("the spec limits the vocabulary, and no reachability census of the candidate was given")
+		} else if (reachability.unreachableAtClassChange > spec.vocabulary.maximumUnreachableEdges) {
+			vocabularyFails = true
+
+			globalReasons.push(
+				`${reachability.tokenizer} leaves ${reachability.unreachableAtClassChange} gold edges at a character-class change ` +
+					`inside a piece; the spec permits ${spec.vocabulary.maximumUnreachableEdges}`
+			)
+		}
+	}
 
 	for (const arm of ["published", "candidate"] as const) {
 		const registered = spec.identities[arm].sha256
@@ -640,7 +671,11 @@ export function evaluateReleaseSpec(
 			}
 		} else if (!plan.missingCountries.length && plan.strata.length) {
 			const bound = differenceBound(
-				plan.strata.map((s) => ({ label: s.label, weight: s.weight, units: independentUnits(rows, s.indices) })),
+				plan.strata.map((s) => ({
+					label: s.label,
+					weight: s.weight,
+					units: independentUnits(rows, s.indices),
+				})),
 				percentile ?? 0.025
 			)
 
@@ -699,7 +734,7 @@ export function evaluateReleaseSpec(
 		}
 	})
 
-	const anyFail = checks.some((check) => check.outcome === ReleaseOutcome.Fail)
+	const anyFail = vocabularyFails || checks.some((check) => check.outcome === ReleaseOutcome.Fail)
 	const allPass = checks.every((check) => check.outcome === ReleaseOutcome.Pass)
 
 	const outcome = anyFail

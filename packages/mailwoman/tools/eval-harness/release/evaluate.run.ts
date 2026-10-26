@@ -21,7 +21,12 @@ import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
 
-import { evaluateReleaseSpec, type OutcomeRow, pairOutcomes } from "#tools/eval-harness/release/evaluate"
+import {
+	evaluateReleaseSpec,
+	type OutcomeRow,
+	pairOutcomes,
+	type VocabularyCensusReading,
+} from "#tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({
@@ -41,6 +46,16 @@ const { values } = parseArguments({
 		"candidate-arm": {
 			type: "string",
 			description: "The report arm holding the release candidate",
+		},
+		reachability: {
+			type: "string",
+			description:
+				"A reachability census report (heldout/dataset/reachability.run.ts) holding the candidate's tokenizer, " +
+				"for a spec that limits the vocabulary",
+		},
+		"candidate-tokenizer": {
+			type: "string",
+			description: "Which census in --reachability is the candidate's, by its tokenizer path",
 		},
 		out: { type: "string", description: "Where to write the verdict" },
 	},
@@ -78,7 +93,25 @@ const artifacts = {
 	candidate: await sha256File(resolvePath(values["candidate-arm"], "model.onnx")),
 }
 
-const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule })
+let reachability: VocabularyCensusReading | null = null
+
+if (values.reachability) {
+	if (!values["candidate-tokenizer"]) throw new Error("--reachability needs --candidate-tokenizer")
+
+	const census = await readLocalJSONFile<{
+		censuses?: VocabularyCensusReading[]
+	}>(values.reachability)
+
+	const entry = census.censuses?.find((c) => c.tokenizer === values["candidate-tokenizer"])
+
+	if (!entry || typeof entry.unreachableAtClassChange !== "number") {
+		throw new Error(`${values.reachability} holds no census for ${values["candidate-tokenizer"]}`)
+	}
+
+	reachability = entry
+}
+
+const verdict = evaluateReleaseSpec(spec, paired, artifacts, { rule: inferenceRule }, reachability)
 
 await writeLocalJSONFile({ spec: values.spec, report: values.report, ...verdict }, values.out)
 

@@ -53,7 +53,12 @@ const baseSpec = (overrides: Partial<ReleaseRequirementSpec> = {}): ReleaseRequi
 			groupingAssumption: "test",
 			requiredPrecision: null,
 		},
-		provenance: { admitted: { minimum: ["verified_unseen", "unseen_by_candidate"], comparative: ["verified_unseen"] } },
+		provenance: {
+			admitted: {
+				minimum: ["verified_unseen", "unseen_by_candidate"],
+				comparative: ["verified_unseen"],
+			},
+		},
 		evaluations: {
 			development: { id: null, description: "d" },
 			confirmation: { id: null, description: "c" },
@@ -173,7 +178,10 @@ describe("evaluateReleaseSpec", () => {
 					metric: "exact_parse",
 					reason: "test",
 					minimum: 0.5,
-					select: { kinds: ["address"], sources: ["invented-postal-unit-guideline"] },
+					select: {
+						kinds: ["address"],
+						sources: ["invented-postal-unit-guideline"],
+					},
 				},
 			],
 		})
@@ -216,7 +224,10 @@ describe("evaluateReleaseSpec", () => {
 
 	it("lets minimum checks read rows unseen by the candidate while comparative checks read only rows unseen by both", () => {
 		const unseenByCandidate = (rows: PairedRow[]) =>
-			rows.map((row) => ({ ...row, provenance: "unseen_by_candidate" as const }))
+			rows.map((row) => ({
+				...row,
+				provenance: "unseen_by_candidate" as const,
+			}))
 
 		const spec = baseSpec({
 			requirements: [
@@ -268,7 +279,10 @@ describe("evaluateReleaseSpec", () => {
 		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)]
 		const recorded = evaluate(baseSpec(), rows, artifacts)
 
-		expect(recorded.inference).toEqual({ rule: "test rule", rowsByWeightsLocale: { "en-us": 800 } })
+		expect(recorded.inference).toEqual({
+			rule: "test rule",
+			rowsByWeightsLocale: { "en-us": 800 },
+		})
 
 		const unrecorded = evaluate(baseSpec(), rows, artifacts, { rule: null })
 
@@ -283,6 +297,31 @@ describe("evaluateReleaseSpec", () => {
 
 		expect(noLocale.outcome).toBe(ReleaseOutcome.Insufficient)
 		expect(noLocale.inference.rowsByWeightsLocale).toEqual({ unrecorded: 800 })
+	})
+
+	it("fails a candidate whose vocabulary leaves an edge inside a piece, and withholds pass without a census", () => {
+		const spec = baseSpec({
+			vocabulary: { maximumUnreachableEdges: 0, reason: "test" },
+		})
+
+		const rows = [...rowsFor("US", 400, 300, 380), ...rowsFor("FR", 400, 300, 380)]
+
+		const census = (unreachableAtClassChange: number) => ({
+			tokenizer: "c6.model",
+			unreachableAtClassChange,
+		})
+
+		expect(evaluateReleaseSpec(spec, rows, artifacts, INFERENCE, census(0)).outcome).toBe(ReleaseOutcome.Pass)
+		expect(evaluateReleaseSpec(spec, rows, artifacts, INFERENCE, census(3)).outcome).toBe(ReleaseOutcome.Fail)
+		expect(evaluateReleaseSpec(spec, rows, artifacts, INFERENCE).outcome).toBe(ReleaseOutcome.Insufficient)
+	})
+
+	it("refuses a vocabulary limit that is not a non-negative integer", () => {
+		expect(() =>
+			baseSpec({
+				vocabulary: { maximumUnreachableEdges: 0.5, reason: "test" },
+			})
+		).toThrow(/maximumUnreachableEdges/u)
 	})
 
 	it("is deterministic", () => {
@@ -322,7 +361,11 @@ describe("small and degenerate samples", () => {
 	})
 
 	it("gives a sample with no discordant pair a non-zero width and does not pass it", () => {
-		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: 0 } })
+		const spec = baseSpec({
+			requirements: [],
+			objective: { countries: ["US"], minimumImprovement: 0 },
+		})
+
 		const verdict = evaluate(spec, rowsFor("US", 20, 15, 15, grouped), artifacts)
 		const objective = check(verdict, "objective")
 
@@ -333,7 +376,11 @@ describe("small and degenerate samples", () => {
 	})
 
 	it("decides a degenerate difference once the sample is large", () => {
-		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.05 } })
+		const spec = baseSpec({
+			requirements: [],
+			objective: { countries: ["US"], minimumImprovement: -0.05 },
+		})
+
 		const verdict = evaluate(spec, rowsFor("US", 4000, 3000, 3000, grouped), artifacts)
 		const objective = check(verdict, "objective")
 
@@ -343,7 +390,10 @@ describe("small and degenerate samples", () => {
 	})
 
 	it("reports a stratum of one unit as insufficient rather than zero width", () => {
-		const spec = baseSpec({ requirements: [], objective: { countries: ["US"], minimumImprovement: -0.5 } })
+		const spec = baseSpec({
+			requirements: [],
+			objective: { countries: ["US"], minimumImprovement: -0.5 },
+		})
 
 		const verdict = evaluate(
 			spec,
@@ -395,7 +445,11 @@ describe("grouping", () => {
 	it("widens a rate's bounds when variants share a group", () => {
 		// Groups of five identical rows: 400 rows make 80 independent units.
 		const rows = rowsFor("US", 400, 300, 300, (i) => `g${Math.floor(i / 5)}`)
-		const spec = baseSpec({ objective: { countries: ["US"], minimumImprovement: -1 } })
+
+		const spec = baseSpec({
+			objective: { countries: ["US"], minimumImprovement: -1 },
+		})
+
 		const groupedUS = check(evaluate(notIndependent(spec), rows, artifacts), "us")
 
 		const independentUS = check(

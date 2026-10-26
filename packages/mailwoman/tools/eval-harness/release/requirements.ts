@@ -185,12 +185,24 @@ export interface ReleaseRequirementSpec {
 		 * A comparison needs rows neither model trained on, so each listed class
 		 * must also be listed under `minimum`.
 		 */
-		admitted: { minimum: HeldoutProvenance[]; comparative: HeldoutProvenance[] }
+		admitted: {
+			minimum: HeldoutProvenance[]
+			comparative: HeldoutProvenance[]
+		}
 	}
 	evaluations: {
 		development: { id: string | null; description: string }
 		confirmation: { id: string | null; description: string }
 	}
+	/**
+	 * A limit on the candidate vocabulary, read from a reachability census
+	 * (`heldout/dataset/reachability.run.ts`) of the candidate's `tokenizer.model`.
+	 *
+	 * `maximumUnreachableEdges` bounds the gold edges at a character-class change that fall inside one piece.
+	 * Such an edge is outside every output the model can produce, so the registered
+	 * value is zero rather than a fitted one.
+	 */
+	vocabulary?: { maximumUnreachableEdges: number; reason: string }
 }
 
 /**
@@ -480,6 +492,17 @@ function assertReleaseSpec(input: unknown, source: string): asserts input is Rel
 
 		nullableString(evaluation.id, `$.evaluations.${which}.id`)
 		string(evaluation.description, `$.evaluations.${which}.description`)
+	}
+
+	if (root.vocabulary !== undefined) {
+		const vocabulary = object(root.vocabulary, "$.vocabulary")
+		const maximum = vocabulary.maximumUnreachableEdges
+
+		if (typeof maximum !== "number" || !Number.isInteger(maximum) || maximum < 0) {
+			fail("$.vocabulary.maximumUnreachableEdges", "must be a non-negative integer")
+		}
+
+		string(vocabulary.reason, "$.vocabulary.reason")
 	}
 }
 
