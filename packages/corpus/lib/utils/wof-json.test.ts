@@ -7,6 +7,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { expect, test } from "vitest"
 
+import { openDuckDB } from "#parquet/duckdb"
 import { useScratchDir } from "#test-kit"
 import type { WOFRecord } from "#utils/wof-json"
 import {
@@ -17,6 +18,7 @@ import {
 	normalizeNameKey,
 	readFeatureRecord,
 	stripAttestation,
+	wofNameSlotSQL,
 } from "#utils/wof-json"
 
 const scratch = useScratchDir("wof-json")
@@ -262,4 +264,29 @@ test("buildAncestorNameIndex: a county names the subregion, and a placetype outs
 		subregion: "Multnomah County",
 		region: "Oregon",
 	})
+})
+
+test("wofNameSlotSQL reads the slot kind and language back out of a WOF source_id", async () => {
+	using db = await openDuckDB()
+	const slot = wofNameSlotSQL("id")
+
+	const ids = [
+		"wof-admin-1276372421-name-rus-x-preferred-with-region-country+case-lower",
+		"wof-admin-1327470253-name-und-x-variant-2-with-region+drop-commas",
+		"wof-admin-1729836481-default-with-locality-region-form+drop-commas",
+		`wof-admin-85887851-${normalizeNameKey("name:zho_hant_x_colloquial")}-self`,
+	]
+
+	const values = ids.map((id) => `('${id}')`).join(", ")
+
+	const result = await db.runAndReadAll(
+		`SELECT ${slot.kind} AS kind, ${slot.language} AS language FROM (VALUES ${values}) t(id)`
+	)
+
+	expect(result.getRowObjects()).toEqual([
+		{ kind: "preferred", language: "rus" },
+		{ kind: "variant", language: "und" },
+		{ kind: "default", language: "default" },
+		{ kind: "colloquial", language: "zho" },
+	])
 })

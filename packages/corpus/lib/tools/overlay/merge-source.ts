@@ -20,6 +20,7 @@ import { corpusRowFromParquet, type ParquetRow, ROWS_PER_FILE } from "#parquet/s
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { openParquetRowStream, readParquetSQL } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
+import { wofNameSlotSQL } from "#utils/wof-json"
 
 /**
  * Options for {@link mergeSourceFiles}.
@@ -50,6 +51,15 @@ export interface MergeSourceOptions {
 	 */
 	rowsPerCountry?: number
 	/**
+	 * Keep the first rows of every cell before the per-country fill, so a rare structure
+	 * reaches the sample however many rows its country has.
+	 *
+	 * With a floor, `rowsPerCountry` is exact: each country keeps its floor rows,
+	 * then the rest of its rows in hash order up to `rowsPerCountry`.
+	 * Without `rowsPerCountry`, each country keeps its floor rows alone.
+	 */
+	cellFloor?: CellFloor
+	/**
 	 * The shuffle seed.
 	 *
 	 * The default matches the corpus writer's seed.
@@ -64,6 +74,46 @@ export interface MergeSourceOptions {
 	 */
 	rowsPerFile?: number
 }
+
+/**
+ * The rows every cell keeps in a {@link mergeSourceFiles} sample.
+ */
+export interface CellFloor {
+	/**
+	 * Rows each cell keeps, chosen in hash order.
+	 * A cell with fewer rows keeps them all.
+	 */
+	rows: number
+	/**
+	 * SQL expressions over a row's columns.
+	 *
+	 * Each one splits every country's rows into cells, and a row is kept
+	 * when it is among the first `rows` of any of its cells.
+	 */
+	keys: readonly string[]
+}
+
+/**
+ * The components a row's `B-` labels open, in order, such as `locality region country`.
+ *
+ * The order carries the rendered record's placetype, the levels beside it and their order.
+ */
+export const LABEL_ORDER_SQL = `array_to_string(list_transform(list_filter(labels, x -> x LIKE 'B-%'), x -> substr(x, 3)), ' ')`
+
+const STRUCTURE_SQL = `${LABEL_ORDER_SQL} || '|' || coalesce(augmentation, '')`
+const WOF_SLOT = wofNameSlotSQL()
+
+/**
+ * The named cell keys a {@link CellFloor} can be built from.
+ *
+ * `structure` is the label order and the surface augmentation, for any source.
+ * `wof-name-slot` adds the WOF name slot's kind to that structure,
+ * and keys a second cell by the slot's language.
+ */
+export const CELL_KEYS = {
+	structure: [STRUCTURE_SQL],
+	"wof-name-slot": [`${STRUCTURE_SQL} || '|' || ${WOF_SLOT.kind}`, WOF_SLOT.language],
+} as const satisfies Record<string, readonly string[]>
 
 /**
  * The files that {@link mergeSourceFiles} wrote and the row counts they hold.
@@ -135,6 +185,46 @@ async function* readSample(
 
 	const where = kept.length ? `CASE country ${kept.join(" ")} ELSE true END` : undefined
 
+	yield* readInOrder(inputs, where, seed)
+}
+
+/**
+ * The `source_id` values a {@link CellFloor} sample keeps, as a subquery over the inputs.
+ *
+ * Within each country a row is a floor row when it is among the first `floor.rows`
+ * of any of its cells in hash order.
+ * The country then keeps its floor rows and, in hash order, its other rows until it holds `fill` rows.
+ */
+export function cellFloorSQL(inputs: readonly PathBuilderLike[], floor: CellFloor, fill: number, seed: number): string {
+	if (!floor.keys.length) throw new Error("a cell floor needs at least one cell key")
+
+	const hash = `hash(source_id || '${seed}')`
+	const ranks = floor.keys.map((key, i) => `row_number() OVER (PARTITION BY country, ${key} ORDER BY ${hash}) AS r${i}`)
+	const inFloor = floor.keys.map((_, i) => `r${i} <= ${floor.rows}`).join(" OR ")
+
+	return (
+		`SELECT source_id FROM (` +
+		`SELECT source_id, is_floor, row_number() OVER (PARTITION BY country ORDER BY is_floor DESC, h) AS country_rank FROM (` +
+		`SELECT source_id, country, h, (${inFloor}) AS is_floor FROM (` +
+		`SELECT source_id, country, ${hash} AS h, ${ranks.join(", ")} FROM ${readParquetSQL(inputs)}))) ` +
+		`WHERE is_floor OR country_rank <= ${fill}`
+	)
+}
+
+async function* readFloorSample(
+	inputs: readonly PathBuilderLike[],
+	floor: CellFloor,
+	fill: number,
+	seed: number
+): AsyncGenerator<ParquetRow> {
+	yield* readInOrder(inputs, `source_id IN (${cellFloorSQL(inputs, floor, fill, seed)})`, seed)
+}
+
+async function* readInOrder(
+	inputs: readonly PathBuilderLike[],
+	where: string | undefined,
+	seed: number
+): AsyncGenerator<ParquetRow> {
 	for await (const raw of openParquetRowStream<Record<string, unknown>>(inputs, {
 		where,
 		orderBy: `hash(source_id || '${seed + 1}')`,
@@ -188,6 +278,7 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 				seed,
 				windowSize,
 				rowsPerCountry: options.rowsPerCountry ?? null,
+				cellFloor: options.cellFloor ?? null,
 				rowsPerFile,
 				part: outputs.length,
 			},
@@ -197,8 +288,9 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 		pending = []
 	}
 
-	const ordered =
-		typeof options.rowsPerCountry === "number"
+	const ordered = options.cellFloor
+		? readFloorSample(options.inputs, options.cellFloor, options.rowsPerCountry ?? 0, seed)
+		: typeof options.rowsPerCountry === "number"
 			? readSample(options.inputs, options.rowsPerCountry, seed)
 			: shuffleWithinWindow(readAll(options.inputs), random, windowSize)
 

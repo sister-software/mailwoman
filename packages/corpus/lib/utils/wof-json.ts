@@ -168,6 +168,28 @@ export function normalizeNameKey(rawKey: string): string {
 }
 
 /**
+ * DuckDB expressions that read a WOF row's name slot back out of its `source_id`.
+ *
+ * A WOF `source_id` is `<adapter>-<record id>-<slot key>-<variant suffix>`.
+ * The slot key is `default` or a {@linkcode normalizeNameKey} form such as
+ * `name-rus-x-preferred` or `name-und-x-variant-2`.
+ *
+ * `kind` is `default` or the part after `-x-` (`preferred`, `variant`, `colloquial`…),
+ * and `unmarked` for a `name-<language>` key without one.
+ * `language` is `default` or the key's ISO 639 code.
+ */
+export function wofNameSlotSQL(sourceID = "source_id"): { kind: string; language: string } {
+	const named = `regexp_matches(${sourceID}, '-[0-9]+-name-')`
+
+	return {
+		kind:
+			`CASE WHEN ${named} THEN coalesce(nullif(regexp_extract(${sourceID}, ` +
+			`'-[0-9]+-name-[a-z]+(?:-[A-Za-z0-9]+)*?-x-([a-z]+)', 1), ''), 'unmarked') ELSE 'default' END`,
+		language: `CASE WHEN ${named} THEN regexp_extract(${sourceID}, '-[0-9]+-name-([a-z]+)', 1) ELSE 'default' END`,
+	}
+}
+
+/**
  * Parse a single GeoJSON feature; `null` means skip this row for any reason.
  */
 function recordFromFeature(feature: WOFFeature): WOFRecord | null {

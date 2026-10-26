@@ -31,24 +31,49 @@ export const spec = {
 			type: "number",
 			description: "Keep at most this many rows per country, written in one hash order across every input",
 		},
+		"cell-floor": {
+			type: "number",
+			description:
+				"Keep this many rows of every cell before the per-country fill, so a rare structure reaches the sample",
+		},
+		"cell-keys": {
+			type: "string",
+			description: "Cell key sets for --cell-floor, comma-separated: structure, wof-name-slot. Defaults to structure",
+		},
 		seed: { type: "number", description: "Shuffle seed. Defaults to the corpus writer's own" },
 	},
 } as const satisfies CommandSpec
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mergeSourceFiles } = await import("@mailwoman/corpus/tools/overlay/merge-source")
+		const { CELL_KEYS, mergeSourceFiles } = await import("@mailwoman/corpus/tools/overlay/merge-source")
 		const inputs = extractDelimited(options.inputs)
+		const sampled = typeof options.rowsPerCountry === "number" || typeof options.cellFloor === "number"
 
-		if (inputs.length < 2 && typeof options.rowsPerCountry !== "number") {
+		if (inputs.length < 2 && !sampled) {
 			throw new CommandError(`--inputs names ${inputs.length} file; merging takes two or more`)
 		}
+
+		const keyNames = options.cellKeys ? extractDelimited(options.cellKeys) : ["structure"]
+		const unknown = keyNames.filter((name) => !Object.hasOwn(CELL_KEYS, name))
+
+		if (unknown.length) {
+			throw new CommandError(
+				`--cell-keys: unknown key set ${unknown.join(", ")}; known: ${Object.keys(CELL_KEYS).join(", ")}`
+			)
+		}
+
+		const cellFloor =
+			typeof options.cellFloor === "number"
+				? { rows: options.cellFloor, keys: keyNames.flatMap((name) => CELL_KEYS[name as keyof typeof CELL_KEYS]) }
+				: undefined
 
 		return mergeSourceFiles({
 			inputs,
 			output: options.out,
 			windowSize: options.window,
 			rowsPerCountry: options.rowsPerCountry,
+			cellFloor,
 			seed: options.seed,
 		})
 	})
