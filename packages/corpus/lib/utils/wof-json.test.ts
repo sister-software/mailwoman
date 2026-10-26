@@ -200,15 +200,20 @@ test("buildAncestorNameIndex: a cycle is broken rather than looping forever", ()
 	expect(index.get(2)).toEqual({ region: "Oregon" })
 })
 
-test("buildAncestorNameIndex: a placetype outside the three tags contributes no name", () => {
-	// 3 → 2 (county maps to `subregion`) → 1 (region).
+test("buildAncestorNameIndex: a county names the subregion, and a placetype outside the tags contributes no name", () => {
+	// 4 → 3 (campus, which maps to no tag) → 2 (county maps to `subregion`) → 1 (region).
 	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, null, "Oregon", "region")],
 		[2, rec(2, 1, "Multnomah County", "county")],
-		[3, rec(3, 2, "Portland", "locality")],
+		[3, rec(3, 2, "Reed College", "campus")],
+		[4, rec(4, 3, "Portland", "locality")],
 	])
 
-	expect(
-		buildAncestorNameIndex(byID, (placetype) => (placetype === "county" ? "subregion" : placetype)).get(3)
-	).toEqual({ region: "Oregon" })
+	const countyAndCampusTag = (placetype: string) =>
+		placetype === "county" ? "subregion" : placetype === "campus" ? null : placetype
+
+	expect(buildAncestorNameIndex(byID, countyAndCampusTag).get(4)).toEqual({
+		subregion: "Multnomah County",
+		region: "Oregon",
+	})
 })

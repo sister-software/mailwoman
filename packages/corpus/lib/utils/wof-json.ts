@@ -257,8 +257,10 @@ export async function* walkFeatures(
 
 /**
  * The record one GeoJSON file holds, or `null` when the file is unreadable, malformed or skipped.
+ *
+ * {@linkcode walkFeatures} reads every file through this, and so does the single-record explorer.
  */
-async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
+export async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
 	let text: string
 
 	try {
@@ -275,12 +277,11 @@ async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
 /**
  * The component tags a variant builder looks an ancestor up by.
  *
- * Measured over both adapters on 2026-09-28: `variantsFor` reads the nearest `region`
- * and `country` ancestor, `postcodeVariantsFor` reads the nearest `locality`, `region` and `country`,
- * and each one reads the ancestor's `placetype` to classify it and its `name` to use it.
- * No caller reads an ancestor's `nameVariants`, `id`, `parent_id` or `country`.
+ * `variantsFor` reads the nearest `locality`, `subregion` (county), `region`
+ * and `country` ancestor, with its localized and colloquial names.
+ * `postcodeVariantsFor` reads the nearest `locality`, `region` and `country`.
  */
-export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
+export const ANCESTOR_NAME_TAGS = ["locality", "subregion", "region", "country"] as const
 
 /**
  * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
@@ -295,7 +296,7 @@ export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], 
  *
  * The predecessor index held one array of record references per record, so a run over the 13,274,691
  * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
- * This holds at most three strings per record instead.
+ * This holds at most four strings per record instead.
  *
  * Each string is the same object the ancestor already holds, so the index costs
  * one small object per record without copying a name.

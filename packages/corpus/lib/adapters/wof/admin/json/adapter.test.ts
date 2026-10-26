@@ -63,6 +63,64 @@ const unitedStates = rec({
 	nameVariants: new Map([["name:jpn_x_preferred", "アメリカ合衆国"]]),
 })
 
+describe("variantsFor, structural chains of the canonical and colloquial names", () => {
+	const kingsCounty = rec({ id: 102_082_361, name: "Kings County", placetype: "county" })
+	const brooklyn = rec({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
+	const ancestry = { locality: newYorkCity, subregion: kingsCounty, region: newYorkState, country: unitedStates }
+	const defaultSlot: NameSlot = { key: "default", value: "Brooklyn" }
+
+	it("renders the name alone and with every ordered subset of its four ancestor levels", () => {
+		const suffixes = new Set(variantsFor(brooklyn, ancestry, defaultSlot).map((v) => v.suffix))
+
+		expect(suffixes).toContain("self")
+		expect(suffixes).toContain("with-locality-subregion-region-country")
+		expect(suffixes).toContain("with-subregion")
+		expect([...suffixes].filter((suffix) => !suffix.endsWith("-form"))).toHaveLength(16)
+	})
+
+	it("writes each level canonically, and once more in another of its forms", () => {
+		const variants = variantsFor(brooklyn, ancestry, defaultSlot)
+		const regionCountry = variants.find((v) => v.suffix === "with-region-country")!
+		const regionCountryForm = variants.find((v) => v.suffix === "with-region-country-form")!
+
+		expect(regionCountry.components).toEqual({
+			dependent_locality: "Brooklyn",
+			region: "New York",
+			country: "United States of America",
+		})
+
+		// The US writes its regions as libaddressinput codes, and the codex lists the country's other surfaces.
+		expect(regionCountryForm.components.region).toBe("NY")
+		expect(["United States", "USA", "US", "U.S.A.", "U.S.", "America"]).toContain(regionCountryForm.components.country)
+	})
+
+	it("gives a region no code where the country's addresses write region names", () => {
+		const paris = rec({ id: 101_751_119, name: "Paris", country: "FR" })
+		const ileDeFrance = rec({ id: 85_683_497, name: "Île-de-France", placetype: "region", country: "FR" })
+		const variants = variantsFor(paris, { region: ileDeFrance }, { key: "default", value: "Paris" })
+
+		expect(variants.map((v) => v.suffix)).toEqual(["self", "with-region"])
+	})
+
+	it("leaves out a county that carries the record's own name", () => {
+		const paris = rec({ id: 101_751_119, name: "Paris", country: "FR" })
+		const parisCounty = rec({ id: 102_068_177, name: "Paris", placetype: "county", country: "FR" })
+		const variants = variantsFor(paris, { subregion: parisCounty }, { key: "default", value: "Paris" })
+
+		expect(variants.map((v) => v.suffix)).toEqual(["self"])
+	})
+
+	it("writes an ancestor in its colloquial names", () => {
+		const nyc = rec({ ...newYorkCity, nameVariants: new Map([["name:eng_x_colloquial", ["NYC", "Big Apple"]]]) })
+
+		const forms = variantsFor(brooklyn, { locality: nyc }, defaultSlot)
+			.filter((v) => v.suffix === "with-locality-form")
+			.map((v) => v.components.locality)
+
+		expect(["NYC", "Big Apple"]).toContain(forms[0])
+	})
+})
+
 describe("variantsFor (pure)", () => {
 	it("locality yields 3 variants when region + country are in ancestry", () => {
 		const v = variantsFor(

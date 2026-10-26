@@ -41,10 +41,13 @@
 
 import { layoutForCountry, layoutPrintsLargestFirst, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { countrySurfaceForms } from "@mailwoman/codex/country/country"
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
+import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { isPresent } from "@mailwoman/core/objects"
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
+import { regionCodeFor } from "#adapters/wof/admin/json/region-codes"
 import {
 	COUNTRY_DISPLAY_NAME,
 	emitWOFJSONRows,
@@ -55,7 +58,14 @@ import {
 } from "#adapters/wof/json-rows"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { buildAncestorRecordIndex, preferredName, walkFeatures, type AncestorRecords, type WOFRecord } from "#utils"
+import {
+	buildAncestorRecordIndex,
+	nameValues,
+	preferredName,
+	walkFeatures,
+	type AncestorRecords,
+	type WOFRecord,
+} from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -63,7 +73,7 @@ import { buildAncestorRecordIndex, preferredName, walkFeatures, type AncestorRec
  * Per-adapter deliberately (the postalcode adapter has its own): each table is a record
  * filter for its adapter's emission set rather than a shared vocabulary.
  */
-function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
+export function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | null {
 	switch (placetype) {
 		case "country":
 		case "nation":
@@ -93,8 +103,8 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * New York City carries a preferred name in over 200 languages, and each localized
  * hierarchy adds two rows per record, so an uncapped run multiplies the rows of
  * the best-covered places by the number of languages.
- * The record's country's official languages are chosen first, then `SERVED_NAME_LANGUAGES`,
- * then the rest by language code.
+ * The record's country's official languages and `SERVED_NAME_LANGUAGES` always keep their
+ * hierarchies, and the rest, by language code, fill whatever of the cap those leave.
  */
 const LOCALIZED_HIERARCHY_CAP = 8
 
@@ -183,6 +193,16 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: Nam
 	if (!selfTag) return []
 
 	const selfName = slot.value
+
+	if (isStructuralSlot(slot) && CHAIN_LEVELS[selfTag]) {
+		const variants = structuralVariants(row, selfTag, selfName, ancestry)
+
+		if (slot.language) {
+			variants.push(...localizedVariants(selfTag, selfName, ancestry, slot.language))
+		}
+
+		return variants
+	}
 
 	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`,
 	// `Paris, Île-de-France, France` — and several steps are not addresses at all.
@@ -281,6 +301,143 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: Nam
 }
 
 /**
+ * An ancestor level a record's chain can include.
+ */
+type ChainLevel = "locality" | "subregion" | "region" | "country"
+
+/**
+ * The ancestor levels each record's chain can include, nearest first.
+ *
+ * A dependent locality such as Brooklyn is written inside its locality, county,
+ * region and country (`Brooklyn, Kings County, New York, USA`).
+ * A country is written alone.
+ */
+const CHAIN_LEVELS: Partial<Record<ComponentTag, readonly ChainLevel[]>> = {
+	dependent_locality: ["locality", "subregion", "region", "country"],
+	locality: ["subregion", "region", "country"],
+	subregion: ["region", "country"],
+	region: ["country"],
+}
+
+/**
+ * Whether a slot renders every structural chain.
+ *
+ * The canonical name and each colloquial name (`NYC`, `Big Apple`) do.
+ * Every other name renders the three chains a localized or variant name needs,
+ * which keeps a record with names in two hundred languages to a few hundred rows.
+ */
+function isStructuralSlot(slot: NameSlot): boolean {
+	return slot.key === "default" || slot.key.includes("_x_colloquial")
+}
+
+/**
+ * The forms one ancestor level is written in, its canonical form first.
+ *
+ * - A country is written in its OpenCage-canonical display name, then each
+ *   surface form the codex lists for it (`United States`, `USA`, `US`, `U.S.A.`),
+ *   or its own `wof:name` when the codex lists none.
+ * - A region is written in its name, then in the code the country's addresses
+ *   write for it (`NY`), from libaddressinput.
+ *   A country whose addresses write region names gets no code.
+ * - Every level adds its colloquial names in English and in the country's official languages (`NYC`).
+ */
+function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): string[] {
+	const forms: string[] = []
+
+	const add = (value: string | null | undefined) => {
+		const trimmed = value?.trim()
+
+		if (trimmed && !forms.includes(trimmed)) {
+			forms.push(trimmed)
+		}
+	}
+
+	if (level === "country") {
+		add(COUNTRY_DISPLAY_NAME[ancestor.country] ?? ancestor.name)
+
+		const curated = countrySurfaceForms(ancestor.country)
+
+		if (curated.length) {
+			curated.forEach(add)
+		} else {
+			add(ancestor.name)
+		}
+	} else {
+		add(ancestor.name)
+	}
+
+	if (level === "region") {
+		add(regionCodeFor(country, ancestor.name))
+	}
+
+	for (const language of ["eng", ...(OFFICIAL_LANGUAGES[country]?.official ?? [])]) {
+		nameValues(ancestor.nameVariants.get(`name:${language}_x_colloquial`)).forEach(add)
+	}
+
+	return forms
+}
+
+/**
+ * Every chain a record's name can be written in: the name alone, then the name
+ * with each ordered subset of its ancestor levels.
+ *
+ * Each chain is rendered once in every level's canonical form.
+ * A chain with a level that has other forms is rendered once more, each such level taking
+ * one of its other forms, chosen by a hash of the record id and the chain.
+ *
+ * Across all the records of a country every form appears, while each record adds at most two rows per chain.
+ *
+ * A county is left out of a chain when it carries the record's own name or its locality's,
+ * because `Paris, Paris` repeats one place rather than naming two levels.
+ */
+function structuralVariants(
+	row: WOFRecord,
+	selfTag: ComponentTag,
+	selfName: string,
+	ancestry: AncestorRecords
+): WOFVariantSpec[] {
+	const levels = (CHAIN_LEVELS[selfTag] ?? []).filter((level) => {
+		const ancestor = ancestry[level]
+
+		if (!ancestor) return false
+
+		return level !== "subregion" || (ancestor.name !== selfName && ancestor.name !== ancestry.locality?.name)
+	})
+
+	const forms = new Map(levels.map((level) => [level, levelForms(level, ancestry[level]!, row.country)]))
+	const variants: WOFVariantSpec[] = []
+
+	for (let mask = 0; mask < 1 << levels.length; mask++) {
+		const subset = levels.filter((_, i) => mask & (1 << i))
+		const suffix = subset.length ? `with-${subset.join("-")}` : "self"
+		const canonical: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
+		const alternate: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
+		let differs = false
+
+		for (const level of subset) {
+			const levelForm = forms.get(level)!
+
+			canonical[level] = levelForm[0]
+
+			if (levelForm.length > 1) {
+				alternate[level] = levelForm[1 + (hashFNV1a(`${row.id}:${mask}:${level}`) % (levelForm.length - 1))]
+				differs = true
+			} else {
+				alternate[level] = levelForm[0]
+			}
+		}
+
+		variants.push({ hierarchy: true, suffix, components: canonical })
+
+		if (differs) {
+			variants.push({ hierarchy: true, suffix: `${suffix}-form`, components: alternate })
+		}
+	}
+
+	return variants
+}
+
+/**
  * A record's hierarchy written entirely in one language: without and with the country.
  *
  * Returns no variant when the record has no ancestor to join, or when any ancestor
@@ -339,8 +496,9 @@ function localizedVariants(
  * when the record is itself a country (matches SQLite-adapter behavior);
  * every other placetype's default slot uses `wof:name` verbatim.
  *
- * At most {@linkcode LOCALIZED_HIERARCHY_CAP} slots keep their language, which is what
- * makes {@linkcode variantsFor} render a localized hierarchy for them.
+ * The official and served languages keep their language, and other languages keep
+ * theirs within {@linkcode LOCALIZED_HIERARCHY_CAP}.
+ * A kept language is what makes {@linkcode variantsFor} render a localized hierarchy for a slot.
  */
 export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
 	const official = new Set(OFFICIAL_LANGUAGES[rec.country]?.official)
@@ -362,13 +520,15 @@ export function nameSlotsFor(rec: WOFRecord): NameSlot[] {
 		languageRank: rank,
 	})
 
-	const kept = new Set(
-		slots
-			.map((slot) => slot.language)
-			.filter(isPresent)
-			.toSorted((a, b) => rank(a) - rank(b) || a.localeCompare(b))
-			.slice(0, LOCALIZED_HIERARCHY_CAP)
-	)
+	const ranked = slots
+		.map((slot) => slot.language)
+		.filter(isPresent)
+		.toSorted((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+
+	// Every official and served language keeps its hierarchy, and other languages fill the cap's remaining room.
+	const required = ranked.filter((language) => rank(language) < SERVED_NAME_LANGUAGES.length)
+	const others = ranked.filter((language) => !required.includes(language))
+	const kept = new Set([...required, ...others.slice(0, Math.max(LOCALIZED_HIERARCHY_CAP - required.length, 0))])
 
 	return slots.map((slot) => (slot.language && !kept.has(slot.language) ? { key: slot.key, value: slot.value } : slot))
 }
