@@ -43,12 +43,12 @@
 			}
 		},
 		"published": {
-			"description": "@mailwoman/neural-weights-en-us 10.7.0 model.onnx (int8, md5 5356ecba83e3774a5d9717277c051ac2)",
-			"sha256": "e90aeab4b07d03a5b599331c1e68aa70d37e96478151795bcdc6dabb82d9aca9"
+			"description": "The C4 arm: v8.3.0-probe-c4-split-digits-2k step 2000, int8 model.onnx (md5 1355be501a1dfba8aa588f6cd3218091), tokenizer md5 2dbd7d35dae89336dcf7c3fb9e578269",
+			"sha256": "3a2ddfd20eb52b5da8e5cc7be39fe0b26200a712ee4e28fffa5130422e5fbd78"
 		},
 		"candidate": {
-			"description": "The exact release artifact's model.onnx",
-			"sha256": null
+			"description": "The C5 arm: v8.3.0-probe-c5-mixed-digits-2k step 2000, int8 model.onnx (md5 272f605f858d5468f4de06f03ab1e575), tokenizer md5 8c2bb7b4ed554a397f8fa3c1ff7d811d",
+			"sha256": "d6efef3f1095f4745f34cdd9d2cc22c09c096cb188c78856756eb0cac0ab0b31"
 		}
 	},
 	"statistics": {

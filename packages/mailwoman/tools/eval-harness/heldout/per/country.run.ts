@@ -87,6 +87,12 @@ const { values } = parseArguments({
 			type: "string",
 			description: "Where to write the per-country report",
 		},
+		"skip-file": {
+			type: "string",
+			description:
+				"Manifest file paths to leave out of the sample, comma-separated, exactly as the manifest lists them. " +
+				"The report records each one, so a sample drawn without a file says so.",
+		},
 		spec: {
 			type: "string",
 			default: CURRENT_RELEASE_SPEC,
@@ -138,7 +144,15 @@ const { rows, counts, dataset } = values.dataset
 			},
 		}))
 	: {
-			...(await sampleHeldoutRows(values.manifest!, Number(values["per-country"]), values["path-root"])),
+			...(await sampleHeldoutRows(
+				values.manifest!,
+				Number(values["per-country"]),
+				values["path-root"],
+				null,
+				{},
+				null,
+				values["skip-file"] ? values["skip-file"].split(",").map((path) => path.trim()) : []
+			)),
 			dataset: null,
 		}
 
