@@ -27,6 +27,10 @@ export const spec = {
 		inputs: { type: "string", required: true, description: "Parquet files to merge, comma-separated" },
 		out: { type: "string", required: true, description: "The merged parquet file to write" },
 		window: { type: "number", description: "Rows held in memory while shuffling" },
+		"rows-per-country": {
+			type: "number",
+			description: "Keep at most this many rows per country, written in one hash order across every input",
+		},
 		seed: { type: "number", description: "Shuffle seed. Defaults to the corpus writer's own" },
 	},
 } as const satisfies CommandSpec
@@ -36,11 +40,17 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 		const { mergeSourceFiles } = await import("@mailwoman/corpus/tools/overlay/merge-source")
 		const inputs = extractDelimited(options.inputs)
 
-		if (inputs.length < 2) {
+		if (inputs.length < 2 && typeof options.rowsPerCountry !== "number") {
 			throw new CommandError(`--inputs names ${inputs.length} file; merging takes two or more`)
 		}
 
-		return mergeSourceFiles({ inputs, output: options.out, windowSize: options.window, seed: options.seed })
+		return mergeSourceFiles({
+			inputs,
+			output: options.out,
+			windowSize: options.window,
+			rowsPerCountry: options.rowsPerCountry,
+			seed: options.seed,
+		})
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

@@ -1,8 +1,9 @@
 # v8.3.0-base-c6-60k is the base on the C6 vocabulary (#2853), trained after the Who's On First address-structure
 # primer (#2854). It is v8.2.0-base-60k.yaml with these differences:
 #
-# 1. `data.corpus_dir` is the v0.8.5-overlay: the v0.8.4-overlay over v0.8.2 with wof-admin rendering every
-#    structural chain of a record's canonical and colloquial names (v0.8.5-wof-structure).
+# 1. `data.corpus_dir` is the v0.8.5-overlay: the v0.8.4-overlay over v0.8.2 with wof-admin and wof-postalcode
+#    rebuilt over every Who's On First repository (v0.8.5-wof-structure, v0.8.5-wof-postalcode), each a
+#    country-capped sample of its build in hash order.
 # 2. `data.tokenizer_dir` is the C6 vocabulary, tokenizer.model md5 5a1759ca2a384ab7fe1ac2166399106c: unigram, 48,000
 #    pieces, `split_digits` on, and every punctuation and symbol character as a single-character piece, so no gold edge
 #    at a character-class change falls inside a piece (0 of 317,878 over heldout-dev-v0.8.0).
@@ -11,7 +12,7 @@
 #    epoch. At weight 2.0 each drew about 0.72% (7,059 and 7,297 of the probe audit's 1,000,000 draws). Together they
 #    lower every other source's share by about 7%, which keeps the address-system receipts, set at 90% of each source's
 #    expected draws, satisfied.
-# 5. `train.init_from` is the primer's final checkpoint (v8.3.0-primer-wof-10k.yaml). Under `--fresh` it loads the
+# 5. `train.init_from` is the primer's final checkpoint (v8.3.0-primer-wof-30k.yaml). Under `--fresh` it loads the
 #    weights only, and the optimizer, warmup and schedule start over.
 # 6. `train.output_dir` and `train.trackio_run_name` name the run.
 #
@@ -634,7 +635,7 @@ model:
 
 train:
   output_dir: /data/output-v830-base-c6-60k-s42/checkpoints
-  init_from: /data/output-v830-primer-wof-10k-s42/checkpoints/step-010000
+  init_from: /data/output-v830-primer-wof-30k-s42/checkpoints/step-030000
   seed: 42
   batch_size: 128
   eval_batch_size: 128

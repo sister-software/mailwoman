@@ -1,4 +1,4 @@
-# v8.3.0-primer-wof-10k is the address-structure primer (#2854): a from-scratch run on the Who's On First sources alone,
+# v8.3.0-primer-wof-30k is the address-structure primer (#2854): a from-scratch run on the Who's On First sources alone,
 # whose final checkpoint v8.3.0-base-c6-60k.yaml starts from. It teaches how an address's admin levels nest, the
 # order each country and language writes them in, and each level's written forms, before the corpus teaches the rest.
 #
@@ -10,10 +10,13 @@
 #    leave out, so the run reads these two.
 # 3. The corpus receipts, validation coverage floors and label support floors are left out: they require street,
 #    venue and address-system rows, which the two sources do not hold. `source_reps` is left out with them.
-# 4. `train.max_steps` is 10,000 with a 500-step warmup, an evaluation every 1,000 steps and a save every 5,000.
+# 4. `train.max_steps` is 30,000 with a 500-step warmup, an evaluation every 1,000 steps and a save every 5,000.
+#    At 128 rows a step the run reads 3,840,000 rows. The overlay's wof-admin and wof-postalcode files are
+#    country-capped samples of their builds in hash order, so each row group the loader reads is a sample of the whole
+#    file rather than a run of neighboring records.
 # 5. `train.output_dir` and `train.trackio_run_name` name the run.
 #
-# Launch with `--fresh`: 10,000 steps on an A100-40GB.
+# Launch with `--fresh`: 30,000 steps on an A100-40GB.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.8.5-overlay/corpus-v0.8.5-overlay
@@ -135,7 +138,7 @@ model:
   phrase_feature_dim: 10
 
 train:
-  output_dir: /data/output-v830-primer-wof-10k-s42/checkpoints
+  output_dir: /data/output-v830-primer-wof-30k-s42/checkpoints
   seed: 42
   batch_size: 128
   eval_batch_size: 128
@@ -144,7 +147,7 @@ train:
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 10000
+  max_steps: 30000
   eval_every_steps: 1000
   save_every_steps: 5000
   log_every_steps: 100
@@ -157,7 +160,7 @@ train:
   evidence_noise_prob: 0.15
   fisher_capture: false
   trackio_project: mailwoman
-  trackio_run_name: v830-primer-wof-10k-s42
+  trackio_run_name: v830-primer-wof-30k-s42
 
 eval:
   golden_dir: /data/eval/golden/v0.1.3

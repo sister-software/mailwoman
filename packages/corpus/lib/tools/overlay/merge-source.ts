@@ -15,8 +15,10 @@ import type { PathBuilderLike } from "path-ts"
 
 import { moduleGraphHash } from "#build/code-hash"
 import { openCorpusRowStream } from "#parquet/corpus-rows"
-import { type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { corpusRowFromParquet, type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
+import { openParquetRowStream, readParquetSQL } from "#parquet/streams"
 import { writeParquetFile } from "#parquet/writers"
 
 /**
@@ -38,6 +40,15 @@ export interface MergeSourceOptions {
 	 * @defaultValue the corpus writer's window.
 	 */
 	windowSize?: number
+	/**
+	 * Keep at most this many rows of each country, chosen by a hash of each row's `source_id`,
+	 * and write the kept rows of every input in one hash order rather than through the window.
+	 *
+	 * A build writes a source's rows in record order, so the 250,000-row window mixes a few thousand
+	 * neighboring records, and a training draw that reads one row group sees one stretch of one country.
+	 * The hash order makes every row group a sample of the whole selection.
+	 */
+	rowsPerCountry?: number
 	/**
 	 * The shuffle seed.
 	 *
@@ -81,6 +92,57 @@ async function* readAll(inputs: readonly PathBuilderLike[]): AsyncGenerator<Parq
 	}
 }
 
+async function countRowsByCountry(
+	inputs: readonly PathBuilderLike[]
+): Promise<Array<{ country: string; rows: number }>> {
+	using db = await openDuckDB()
+
+	const result = await db.runAndReadAll(
+		`SELECT country, count(*) AS rows FROM ${readParquetSQL(inputs)} GROUP BY country`
+	)
+
+	return (result.getRowObjects() as Array<{ country: unknown; rows: unknown }>).map((row) => ({
+		country: String(row.country),
+		rows: Number(row.rows),
+	}))
+}
+
+/**
+ * The hash buckets a row's `source_id` falls in, for choosing a fraction of a country's rows.
+ */
+const SAMPLE_BUCKETS = 1_000_000
+
+/**
+ * Reads at most `rowsPerCountry` rows of each country across every input, in an order set by `seed`.
+ *
+ * A country with more rows keeps the rows whose `source_id` hashes into its share
+ * of the buckets, so it keeps about `rowsPerCountry` of them.
+ */
+async function* readSample(
+	inputs: readonly PathBuilderLike[],
+	rowsPerCountry: number,
+	seed: number
+): AsyncGenerator<ParquetRow> {
+	const counts = await countRowsByCountry(inputs)
+
+	const kept = counts
+		.filter(({ rows }) => rows > rowsPerCountry)
+		.map(({ country, rows }) => {
+			const buckets = Math.ceil((rowsPerCountry / rows) * SAMPLE_BUCKETS)
+
+			return `WHEN '${escapeSQLString(country)}' THEN hash(source_id || '${seed}') % ${SAMPLE_BUCKETS} < ${buckets}`
+		})
+
+	const where = kept.length ? `CASE country ${kept.join(" ")} ELSE true END` : undefined
+
+	for await (const raw of openParquetRowStream<Record<string, unknown>>(inputs, {
+		where,
+		orderBy: `hash(source_id || '${seed + 1}')`,
+	})) {
+		yield corpusRowFromParquet(raw)
+	}
+}
+
 /**
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
@@ -121,14 +183,26 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 		await writeParquetFile(pending, output, {
 			extractHash,
 			codeHash,
-			config: { tool: "merge-source", seed, windowSize, rowsPerFile, part: outputs.length },
+			config: {
+				tool: "merge-source",
+				seed,
+				windowSize,
+				rowsPerCountry: options.rowsPerCountry ?? null,
+				rowsPerFile,
+				part: outputs.length,
+			},
 		})
 
 		outputs.push(output)
 		pending = []
 	}
 
-	for await (const row of shuffleWithinWindow(readAll(options.inputs), random, windowSize)) {
+	const ordered =
+		typeof options.rowsPerCountry === "number"
+			? readSample(options.inputs, options.rowsPerCountry, seed)
+			: shuffleWithinWindow(readAll(options.inputs), random, windowSize)
+
+	for await (const row of ordered) {
 		pending.push(row)
 
 		rows++

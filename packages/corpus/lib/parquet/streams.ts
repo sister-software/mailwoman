@@ -73,6 +73,12 @@ export interface ParquetRowStreamOptions {
 	 */
 	where?: string
 	/**
+	 * A DuckDB `ORDER BY` expression, interpolated as written.
+	 *
+	 * Without one, rows arrive in file order.
+	 */
+	orderBy?: string
+	/**
 	 * The memory and thread limits of the connection the stream opens.
 	 *
 	 * @defaultValue {@linkcode openDuckDB}'s defaults
@@ -81,24 +87,34 @@ export interface ParquetRowStreamOptions {
 }
 
 /**
- * Open a row stream over a local parquet file, yielding rows in DuckDB-managed chunks.
+ * The `read_parquet` call over one local parquet file or several, read as one table.
+ */
+export function readParquetSQL(path: PathBuilderLike | readonly PathBuilderLike[]): string {
+	const paths = (Array.isArray(path) ? path : [path]).map((each) => `'${escapeSQLString(each.toString())}'`)
+
+	return `read_parquet([${paths.join(", ")}])`
+}
+
+/**
+ * Open a row stream over one local parquet file or several, yielding rows in DuckDB-managed chunks.
  *
- * DuckDB opens the path itself and exposes its DataChunks through `fetchChunk()`.
+ * DuckDB opens the paths itself and exposes its DataChunks through `fetchChunk()`.
  * Rows are converted and yielded one chunk at a time, so neither the complete Parquet file
  * nor the complete result set is copied into JavaScript memory.
  */
 export async function* openParquetRowStream<T>(
-	path: PathBuilderLike,
+	path: PathBuilderLike | readonly PathBuilderLike[],
 	options: ParquetRowStreamOptions = {}
 ): AsyncGenerator<T> {
-	const { columns, limit, where, limits } = options
+	const { columns, limit, where, orderBy, limits } = options
 	// Disposed when this generator finishes or a consumer abandons it,
 	// since `for await` calls `.return()` on break.
 	using db = await openDuckDB(limits)
 	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
 	const limitClause = typeof limit !== "number" ? "" : ` LIMIT ${validateRowLimit(limit)}`
 	const whereClause = where ? ` WHERE ${where}` : ""
-	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path.toString())}')${whereClause}${limitClause}`
+	const orderClause = orderBy ? ` ORDER BY ${orderBy}` : ""
+	const sql = `SELECT ${projection} FROM ${readParquetSQL(path)}${whereClause}${orderClause}${limitClause}`
 
 	try {
 		const stream = await db.stream(sql)
