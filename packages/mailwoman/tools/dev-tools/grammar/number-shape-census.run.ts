@@ -13,10 +13,10 @@
  *   `#09-71`, matches the whole value.
  *   It reads `unit`.
  *
- * A firing is explained when the expected component carries the tag the detector reads,
+ * A firing is explained when the expected component has the tag the detector reads,
  * and falsely flagged otherwise.
- * The census reads no model output, so it grades each detector against the board's
- * truth alone, as `docs/engineering/reference/decoder-grammar.mdx` §5 requires
+ * The census reads no model output, so it grades each detector against the board's expected
+ * components only, as `docs/engineering/reference/decoder-grammar.mdx` §5 requires
  * before a detector becomes a decode-time term.
  *
  * It also records each value's class-run signature (`D5`, `D2-D3`, `A1D1 D1A2`).

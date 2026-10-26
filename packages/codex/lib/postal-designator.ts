@@ -118,7 +118,7 @@ export type DesignatorClass = (typeof DESIGNATOR_CLASS)[DesignatorConcept]
  * - `prefix`: before the value, as in `APT 4` and `Postfach 1234`.
  * - `suffix`: after the value, as in `305号室` and `12/F`.
  * - `infix`: between two values, as the hyphen in Singapore's `#12-04` separates floor from unit.
- * - `standalone`: carries no value, as in `Poste restante` and `near me`.
+ * - `standalone`: marks no value, as in `Poste restante` and `near me`.
  */
 export type DesignatorPosition = "prefix" | "suffix" | "infix" | "standalone"
 

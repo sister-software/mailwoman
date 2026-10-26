@@ -8,7 +8,7 @@
  *   Singapore and Malaysia write a unit as `#<floor>-<unit>`, so `#09-71` is unit 71 on the ninth floor. The
  *   United States writes `# 402` for a unit whose type is unstated. Each row records the countries whose
  *   operators publish its form, and rows are ordered most specific first, so `#09-71` matches the floor-unit
- *   row before the bare-hash row could take `#09` alone.
+ *   row, and the bare-hash row never claims its first three characters.
  */
 
 /**

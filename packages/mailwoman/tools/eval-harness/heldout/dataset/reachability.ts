@@ -98,7 +98,7 @@ const WHITESPACE = /\s/u
 /**
  * Returns each piece's character range with its leading whitespace removed.
  *
- * A piece that opens a word carries the space before it, and an edge at the
+ * A piece that opens a word starts at the space before it, and an edge at the
  * first letter of that word is reachable.
  */
 function pieceRanges(tokenizer: CensusTokenizer, text: string): { start: number; end: number; piece: string }[] {
@@ -116,7 +116,7 @@ function pieceRanges(tokenizer: CensusTokenizer, text: string): { start: number;
 /**
  * Counts the gold edges of `rows` that fall strictly inside a piece of `tokenizer`.
  *
- * @param maxExamples How many unreachable edges to keep with their row for the report.
+ * @param maxExamples The count of unreachable edges kept with their row for the report.
  */
 export function censusReachability(
 	rows: readonly HeldoutRow[],

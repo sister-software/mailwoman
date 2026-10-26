@@ -14,6 +14,8 @@ extend-exclude = [
 	"packages/mailwoman/tools/eval-harness/conformance/*.jsonl",
 	"packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json",
 	"packages/codex/lib/us/street-suffix.json",
+	# Postal designators spelled as each country's operator writes them: `Blok`, `lok.`, `Chambre`.
+	"packages/codex/lib/*/designators.ts",
 	"packages/poi-taxonomy/data/",
 	"THIRD_PARTY_NOTICES.md",
 	# Address datasets, frozen evaluations, and published provenance retain source spelling.
