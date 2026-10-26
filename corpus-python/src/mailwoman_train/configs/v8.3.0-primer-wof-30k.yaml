@@ -6,8 +6,8 @@
 #
 # 1. `data.corpus_dir` is the v0.8.5-overlay, whose wof-admin renders every structural chain of a record's canonical
 #    and colloquial names (v0.8.5-wof-structure).
-# 2. `data.source_weights` names wof-admin and wof-postalcode only. The loader drops every source a config's weights
-#    leave out, so the run reads these two.
+# 2. `data.source_weights` gives wof-admin 2.0 and wof-postalcode 1.0, and every other overlay source 0.0, so the run
+#    reads these two.
 # 3. The corpus receipts, validation coverage floors and label support floors are left out: they require street,
 #    venue and address-system rows, which the two sources do not hold. `source_reps` is left out with them.
 # 4. `train.max_steps` is 30,000 with a 500-step warmup, an evaluation every 1,000 steps and a save every 5,000.
@@ -45,9 +45,40 @@ data:
       VC: 1.0, VE: 1.0, VG: 1.0, VI: 1.0, VN: 1.0, VU: 1.0, WF: 1.0, YT: 1.0, ZA: 1.0, ZM: 1.0, ZW: 1.0,
     }
   # The admin hierarchy is the primer's subject, and the postcode rows place a postcode inside it.
+  # The loader refuses a corpus source the weights leave out, so every other source is declined at 0.0.
   source_weights:
-    wof-admin: 2.0
-    wof-postalcode: 1.0
+    {
+      wof-admin: 2.0, wof-postalcode: 1.0, adressur-fo: 0.0, ads: 0.0, ban: 0.0, ban-bl: 0.0, ban-gf: 0.0,
+      ban-gp: 0.0, ban-mf: 0.0, ban-mq: 0.0, ban-nc: 0.0, ban-pf: 0.0, ban-pm: 0.0, ban-re: 0.0, ban-yt: 0.0,
+      bsp-gu: 0.0, codex-bare-postcode: 0.0, cordis: 0.0, deepseek-kryptonite: 0.0,
+      fr-annuaire-education-overseas: 0.0, fr-finess-overseas: 0.0, fragment-assay: 0.0, fragment-fr: 0.0,
+      fragment-fr-bare-street: 0.0, fragment-fr-bare-street-v22: 0.0, fragment-no: 0.0, gbpa-bs: 0.0, gleif-lei: 0.0,
+      gnaf: 0.0, ide-uy: 0.0, invented-anchor-absorption: 0.0, invented-house-venue: 0.0, invented-intersection: 0.0,
+      invented-po-box-cedex: 0.0, invented-po-box-military: 0.0, invented-postal-guideline: 0.0,
+      invented-postal-unit-guideline: 0.0, landregistry-im: 0.0, llv-li: 0.0, lv-varis: 0.0, opendata-az: 0.0,
+      osm: 0.0, osm-ae: 0.0, osm-al: 0.0, osm-am: 0.0, osm-ao: 0.0, osm-ar: 0.0, osm-aw: 0.0, osm-az: 0.0,
+      osm-ba: 0.0, osm-bb: 0.0, osm-bd: 0.0, osm-bh: 0.0, osm-bm: 0.0, osm-bn: 0.0, osm-bs: 0.0, osm-bt: 0.0,
+      osm-bw: 0.0, osm-by: 0.0, osm-bz: 0.0, osm-cd: 0.0, osm-ci: 0.0, osm-cl: 0.0, osm-cn: 0.0, osm-co: 0.0,
+      osm-cr: 0.0, osm-cu: 0.0, osm-cw: 0.0, osm-do: 0.0, osm-dz: 0.0, osm-ec: 0.0, osm-eg: 0.0, osm-ge: 0.0,
+      osm-gg: 0.0, osm-gh: 0.0, osm-gl: 0.0, osm-gt: 0.0, osm-hk: 0.0, osm-ht: 0.0, osm-id: 0.0, osm-in: 0.0,
+      osm-iq: 0.0, osm-ir: 0.0, osm-je: 0.0, osm-jm: 0.0, osm-jo: 0.0, osm-ke: 0.0, osm-kg: 0.0, osm-kh: 0.0,
+      osm-kw: 0.0, osm-kz: 0.0, osm-lb: 0.0, osm-lk: 0.0, osm-lr: 0.0, osm-ma: 0.0, osm-md: 0.0, osm-me: 0.0,
+      osm-mg: 0.0, osm-mk: 0.0, osm-mm: 0.0, osm-mn: 0.0, osm-mo: 0.0, osm-mt: 0.0, osm-mv: 0.0, osm-my: 0.0,
+      osm-mz: 0.0, osm-na: 0.0, osm-ng: 0.0, osm-np: 0.0, osm-om: 0.0, osm-pa: 0.0, osm-pe: 0.0, osm-pf: 0.0,
+      osm-ph: 0.0, osm-pk: 0.0, osm-pr: 0.0, osm-py: 0.0, osm-qa: 0.0, osm-rs: 0.0, osm-ru: 0.0, osm-rw: 0.0,
+      osm-sa: 0.0, osm-sm: 0.0, osm-sn: 0.0, osm-sr: 0.0, osm-sv: 0.0, osm-th: 0.0, osm-tj: 0.0, osm-tm: 0.0,
+      osm-tn: 0.0, osm-tt: 0.0, osm-tz: 0.0, osm-ua: 0.0, osm-ug: 0.0, osm-uz: 0.0, osm-ve: 0.0, osm-vi: 0.0,
+      osm-vn: 0.0, osm-zm: 0.0, osm-zw: 0.0, overture: 0.0, overture-latam: 0.0, rendered-bd-register: 0.0,
+      rendered-ch: 0.0, rendered-cz-pcfirst-preposition: 0.0, rendered-cz-pcfirst-preposition-v21: 0.0,
+      rendered-de: 0.0, rendered-fr-admin-split: 0.0, rendered-fr-order: 0.0, rendered-gb-os-open: 0.0,
+      rendered-hr: 0.0, rendered-lu: 0.0, rendered-nl-postcode: 0.0, rendered-no-street-led: 0.0,
+      rendered-pk-register: 0.0, rendered-pt: 0.0, rendered-sg-register: 0.0, rendered-si-bare-village: 0.0,
+      rendered-sk: 0.0, ro-retea-scolara: 0.0, ryhti-ax: 0.0, spliced-affix: 0.0, spliced-country: 0.0,
+      spliced-sub-venue: 0.0, spliced-suffix-boundary: 0.0, spliced-trailing-region-ca-bare: 0.0,
+      spliced-trailing-region-es-v28: 0.0, spliced-trailing-region-us: 0.0, spliced-unit: 0.0, spliced-unit-v30: 0.0,
+      state-ia-contractors: 0.0, state-ny-notaries: 0.0, state-tx-notaries: 0.0, tiger: 0.0, usgov-hrsa-fqhc: 0.0,
+      usgov-imls-pls: 0.0, usgov-nad: 0.0, usgov-nppes: 0.0,
+    }
   train_rows_per_epoch: 1000000
   val_rows: 24576
   coarse_filter: true
