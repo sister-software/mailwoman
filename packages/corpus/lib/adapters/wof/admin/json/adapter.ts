@@ -339,7 +339,8 @@ function isStructuralSlot(slot: NameSlot): boolean {
  * - A region is written in its name, then in the code the country's addresses
  *   write for it (`NY`), from libaddressinput.
  *   A country whose addresses write region names gets no code.
- * - Every level adds its colloquial names in English and in the country's official languages (`NYC`).
+ * - Every level below the country adds its colloquial names in English
+ *   and in the country's official languages (`NYC`).
  */
 function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): string[] {
 	const forms: string[] = []
@@ -369,6 +370,10 @@ function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): st
 	if (level === "region") {
 		add(regionCodeFor(country, ancestor.name))
 	}
+
+	// A country's curated surface forms are the forms addresses write.
+	// Its colloquial names are historical or poetic (France's `Gallia`), so a country takes none of them.
+	if (level === "country") return forms
 
 	for (const language of ["eng", ...(OFFICIAL_LANGUAGES[country]?.official ?? [])]) {
 		nameValues(ancestor.nameVariants.get(`name:${language}_x_colloquial`)).forEach(add)

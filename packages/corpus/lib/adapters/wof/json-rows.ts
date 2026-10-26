@@ -13,6 +13,7 @@ import {
 	type AddressScript,
 } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { isPresent } from "@mailwoman/core/objects"
 import { classifyTokenScript } from "@mailwoman/query-shape/character-class"
 import type { ScriptCode } from "@mailwoman/query-shape/types"
 
@@ -46,7 +47,10 @@ export function renderHierarchy(
 	components: Partial<Record<ComponentTag, string>>,
 	country: string
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } | null {
-	const order = isLargestFirstSystem(country) ? [...HIERARCHY_ORDER].toReversed() : HIERARCHY_ORDER
+	const script = hierarchyScript(Object.values(components).filter(isPresent))
+	// A largest-first country writes its own script largest first and a romanized address
+	// smallest first: `東京都渋谷区` against `Shibuya, Tokyo, Japan`.
+	const order = isLargestFirstSystem(country, script) ? [...HIERARCHY_ORDER].toReversed() : HIERARCHY_ORDER
 	const present: Partial<Record<ComponentTag, string>> = {}
 	const parts: Array<{ tag: ComponentTag; value: string }> = []
 
@@ -61,7 +65,6 @@ export function renderHierarchy(
 
 	if (!parts.length) return null
 
-	const script = hierarchyScript(parts.map((part) => part.value))
 	const lineJoin = lineJoinForCountry(country, script)
 	const adminJoin = adminRunJoinForCountry(country, script)
 
