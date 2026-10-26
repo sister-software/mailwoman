@@ -1,0 +1,96 @@
+{
+	"schemaVersion": 3,
+	"specVersion": "probe-isolated-punctuation-1",
+	"rationale": "The #2853 vocabulary probe compares two 2,000-step from-scratch arms that differ only in their vocabulary: C4 (one piece per digit, published) and C6 (C4 plus every punctuation and symbol character as a single-character piece, candidate). The question is relative, so the probe registers no absolute minimum. C6 must leave no gold edge at a character-class change inside a piece, and must lose at most one point of exact parse against C4 on two populations: register rows that carry house numbers and postcodes, and rows that carry venue names, whose punctuation (`S.A.`, `@cosme`, `B.indulged`) C6 now splits into pieces of its own.",
+	"requirements": [
+		{
+			"id": "house-number-postcode",
+			"kind": "capability",
+			"task": "Reading the house number and postcode of a register address exactly, alongside the rest of the row",
+			"metric": "exact_parse",
+			"reason": "Isolating punctuation changes how a hyphenated or prefixed postcode (`HR-23211`, `59-916`) and a house-number range reach the model, and these sources hold most of the held-out house numbers and postcodes.",
+			"minimum": null,
+			"maxLoss": 0.01,
+			"maxLossReason": "One point of exact parse is the smallest loss the probe treats as a vocabulary defect rather than seed noise, as in probe-split-digits-1.",
+			"select": {
+				"kinds": ["address"],
+				"sources": ["ban", "gnaf", "usgov-nad", "usgov-nppes", "rendered-de", "rendered-gb-os-open", "osm"]
+			}
+		},
+		{
+			"id": "venue-names",
+			"kind": "capability",
+			"task": "Reading an address that leads with a venue or organization name exactly",
+			"metric": "exact_parse",
+			"reason": "Venue and organization names carry punctuation that belongs to the name (`EMPRENDIMIENTOS FLUVIALES S.A.`), and C6 splits each mark into its own piece.",
+			"minimum": null,
+			"maxLoss": 0.01,
+			"maxLossReason": "One point of exact parse, as for the house-number and postcode check.",
+			"select": {
+				"kinds": ["address"],
+				"sources": ["overture", "gleif-lei", "invented-house-venue", "spliced-sub-venue"]
+			}
+		}
+	],
+	"objective": {
+		"countries": ["FR", "GB", "DE", "IN"],
+		"select": {
+			"kinds": ["address"]
+		},
+		"minimumImprovement": null
+	},
+	"identities": {
+		"dataset": {
+			"id": null,
+			"sha256": null
+		},
+		"scorer": {
+			"id": "packages/mailwoman/tools/eval-harness/score/exact-parse.ts",
+			"revision": "69fbaf01c"
+		},
+		"inference": {
+			"description": "HELDOUT_INFERENCE_RULE in heldout/per/country.ts (served-locale-package): each row is parsed by the shipped Latin locale package for its country (release.config.json locales), falling back to en-us, with the row's country as localeHint; a package whose loader reports an unfed required channel is refused. The verdict records the rule and the rows each package parsed.",
+			"options": {
+				"postcodeRepair": true,
+				"localeHint": "row.country",
+				"weightsLocale": "served-locale-package"
+			}
+		},
+		"published": {
+			"description": "The C4 arm: v8.3.0-probe-c4-split-digits-2k step 2000, int8 model.onnx (md5 1355be501a1dfba8aa588f6cd3218091), tokenizer md5 2dbd7d35dae89336dcf7c3fb9e578269",
+			"sha256": "3a2ddfd20eb52b5da8e5cc7be39fe0b26200a712ee4e28fffa5130422e5fbd78"
+		},
+		"candidate": {
+			"description": "The C6 arm: v8.3.0-probe-c6-isolated-punctuation-2k step 2000, int8 model.onnx, tokenizer md5 5a1759ca2a384ab7fe1ac2166399106c",
+			"sha256": null
+		}
+	},
+	"statistics": {
+		"confidenceLevel": 0.95,
+		"multipleComparison": "bonferroni",
+		"samplingUnit": "group",
+		"rowsIndependent": false,
+		"groupingAssumption": "A row's independent unit is its group within its country: base_source_id when derived, else source_id. Rows are not declared independent, so a check that reads an ungrouped row is insufficient evidence. Limitation: structure shared across groups (one source's conventions, one place's many addresses) is not modelled. The dataset quota counts groups, not rows, against 1,000 per country.",
+		"requiredPrecision": 0.08
+	},
+	"provenance": {
+		"admitted": {
+			"minimum": ["verified_unseen", "unseen_by_candidate"],
+			"comparative": ["verified_unseen"]
+		}
+	},
+	"evaluations": {
+		"development": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-dev with one seed; used for recipe, checkpoint and seed selection."
+		},
+		"confirmation": {
+			"id": null,
+			"description": "Unregistered: freeze heldout-<corpus>-confirm with a disjoint seed; read only for the release decision, every read recorded in the next spec version's rationale."
+		}
+	},
+	"vocabulary": {
+		"maximumUnreachableEdges": 0,
+		"reason": "A gold edge at a character-class change that falls inside a piece is outside every output the model can produce, so the limit is zero rather than a fitted value."
+	}
+}
