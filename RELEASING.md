@@ -611,7 +611,7 @@ Stage them under a generation segment:
   Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation carries the Great Britain
   index built without HM Land Registry Price Paid Data (#2635). On 2026-10-17 the `2026-08-05` GB object and the
   flat `mailwoman/pair-index/pair-index-gb.bin` key, both built from Price Paid Data, were deleted from the
-  bucket. Deleting an object does not evict the cached copy, so a removal also needs a Cloudflare cache purge of
+  bucket. Cloudflare does not evict a cached copy when an object is deleted. A removal also needs a Cloudflare cache purge of
   each URL, which requires an API token with the Cache Purge permission.
 
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install

@@ -73,6 +73,10 @@ class CoarseEncoderState(nn.Module):
     locality_surface_feature_dim: int
     locality_surface_projection: nn.Linear | None
     locality_surface_token_embedding: nn.Parameter | None
+    use_code_unit_anchor: bool
+    code_unit_feature_dim: int
+    code_unit_projection: nn.Linear | None
+    code_unit_token_embedding: nn.Parameter | None
 
     use_crf: bool
     label_smoothing: float

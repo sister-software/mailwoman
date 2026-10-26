@@ -10,6 +10,7 @@
  */
 
 import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
+import { CODE_UNIT_FEATURE_DIM } from "#code-unit-features"
 import { COUNTRY_FEATURE_DIM } from "#country-inference"
 import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 import type { RequiredChannels } from "#weights/channels"
@@ -28,6 +29,10 @@ export interface InferChannel {
 export interface InferEvidenceChannels {
 	streetType?: InferChannel | null
 	localitySurface?: InferChannel | null
+	/**
+	 * The code-unit channel (#2845), fed only to a graph that declares `code_unit_features`.
+	 */
+	codeUnit?: InferChannel | null
 	/**
 	 * The address-system id for a graph with a `locale_hint` input.
 	 *
@@ -224,6 +229,12 @@ export function packSoftChannelFeeds(
 			absentDim: LOCALITY_SURFACE_FEATURE_DIM,
 			suppliedEmptyDim: LOCALITY_SURFACE_FEATURE_DIM,
 		},
+		{
+			prefix: "code_unit",
+			channel: evidence?.codeUnit,
+			absentDim: CODE_UNIT_FEATURE_DIM,
+			suppliedEmptyDim: CODE_UNIT_FEATURE_DIM,
+		},
 	] as const
 
 	const entries: Array<[string, PackedFeed]> = []
@@ -356,5 +367,6 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
 		...(names.has("country_features") ? { country: { required: true } } : {}),
 		...(names.has("street_type_features") ? { street_type: { required: true } } : {}),
 		...(names.has("locality_surface_features") ? { locality_surface: { required: true } } : {}),
+		...(names.has("code_unit_features") ? { code_unit: { required: true } } : {}),
 	}
 }

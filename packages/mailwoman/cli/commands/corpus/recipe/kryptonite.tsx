@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus slice kryptonite` — build a parquet file from the DeepSeek-generated
+ *   `mailwoman corpus recipe kryptonite` — build a parquet file from the DeepSeek-generated
  *   kryptonite jsonl and emit the combined corpus manifest (the base parquet files + the new one). See
  *   docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the reproducibility interface.
  */

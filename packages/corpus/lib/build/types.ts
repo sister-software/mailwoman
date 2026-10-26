@@ -238,7 +238,7 @@ export interface BuildCorpusManifest {
 	adapters: AdapterRunManifest[]
 	skipped_adapters: string[]
 	splits: { counts: SplitManifest["counts"]; holdouts: SplitManifest["holdouts"] }
-	slices: { counts: ParquetManifest["counts"]; total_rows: number }
+	files: { counts: ParquetManifest["counts"]; total_rows: number }
 	/**
 	 * The held-out span check that admitted the parquet manifest: when it ran,
 	 * the declared countries it read and the files it counted.

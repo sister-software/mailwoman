@@ -50,7 +50,7 @@ Earth browser ── HTTPS ──> api-worker (Hono: CORS, admission, routing, t
 - The load run shows memory, throughput, failure rate, and cost at the expected peak concurrency. Rate limiting and backend failure tests pass.
 - A rollback changes Earth to the local runtime without a Worker or backend redeploy. The same production smoke passes after rollback.
 
-## Working path on 2026-10-24
+## Implementation path on 2026-10-24
 
 The `packages/api-worker` Worker forwards `POST /v1/parse` and `POST /v1/geocode` to an `API_BACKEND` service binding or to the `mailwoman serve` origin in `ENGINE_ORIGIN`. It applies its own CORS origin list, a 64 KiB body cap, and a 10-second backend deadline that answers 504. It remains absent from `.github/workflows/deploy.yml` and the deploy target registry.
 

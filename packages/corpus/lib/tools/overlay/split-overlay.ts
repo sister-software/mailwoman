@@ -102,37 +102,37 @@ export interface SplitSliceResult {
  * A V8 `Map` holds at most 2^24 entries, and one overlay file can contain more distinct
  * `source_id` values than that (`wof-admin` writes over 50 million rows).
  */
-const DECISION_SHARDS = 64
+const DECISION_MAP_COUNT = 64
 
 /**
- * Split decisions keyed by `source_id`, spread across {@linkcode DECISION_SHARDS} maps by a string hash.
+ * Split decisions keyed by `source_id`, spread across {@linkcode DECISION_MAP_COUNT} maps by a string hash.
  */
 class SplitDecisions {
-	readonly shards = Array.from({ length: DECISION_SHARDS }, () => new Map<string, SplitName>())
+	readonly maps = Array.from({ length: DECISION_MAP_COUNT }, () => new Map<string, SplitName>())
 
-	#shard(id: string): Map<string, SplitName> {
+	#mapFor(id: string): Map<string, SplitName> {
 		let hash = 0
 
 		for (let i = 0; i < id.length; i++) {
 			hash = (Math.imul(hash, 31) + id.charCodeAt(i)) | 0
 		}
 
-		return this.shards[(hash >>> 0) % DECISION_SHARDS]!
+		return this.maps[(hash >>> 0) % DECISION_MAP_COUNT]!
 	}
 
 	get(id: string): SplitName | undefined {
-		return this.#shard(id).get(id)
+		return this.#mapFor(id).get(id)
 	}
 
 	set(id: string, split: SplitName): void {
-		this.#shard(id).set(id, split)
+		this.#mapFor(id).set(id, split)
 	}
 
 	idsIn(split: SplitName): string[] {
 		const ids: string[] = []
 
-		for (const shard of this.shards) {
-			for (const [id, value] of shard) {
+		for (const map of this.maps) {
+			for (const [id, value] of map) {
 				if (value === split) {
 					ids.push(id)
 				}

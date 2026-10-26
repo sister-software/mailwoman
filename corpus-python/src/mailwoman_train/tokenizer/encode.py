@@ -19,6 +19,7 @@ from .anchors import (
     realign_anchor_to_pieces_from_spans,
     realign_anchor_to_pieces_shaped,
 )
+from .code_units import CODE_UNIT_FEATURE_DIM, code_unit_features
 from .spans import realign_labels_to_pieces, realign_spans_to_pieces
 
 #: A row's char-offset span triple, once it is known to be whole.
@@ -107,6 +108,7 @@ def encode_row(
     country_lexicon: Any = None,
     street_type_lexicon: Any = None,
     locality_surface_lexicon: Any = None,
+    code_units: bool = False,
     span_starts: Sequence[int] | None = None,
     span_ends: Sequence[int] | None = None,
     span_tags: Sequence[str] | None = None,
@@ -203,4 +205,9 @@ def encode_row(
         # painted from the RAW surface. Same lexicon schema as the gazetteer → same generic realign.
         painted = realign_gazetteer_to_pieces(raw, list(spans), locality_surface_lexicon)
         put("locality_surface", painted, locality_surface_lexicon.feature_dim)
+
+    if code_units:
+        # Code-unit channel (#2845): every piece of a digit run or alphanumeric code carries the code's shape,
+        # computed from the raw surface as the inference feed computes it.
+        put("code_unit", code_unit_features(raw, list(spans)), CODE_UNIT_FEATURE_DIM)
     return out

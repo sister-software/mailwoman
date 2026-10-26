@@ -229,6 +229,30 @@ def test_the_address_system_head_adds_an_output(tmp_path) -> None:
     assert _graph_output_names(path) == ["logits", "locale_logits", "address_system_logits"]
 
 
+def test_the_code_unit_channel_reaches_the_hinted_bundle_graph(tmp_path) -> None:
+    """The code-unit probe arm (#2845) feeds its channel by name, before the locale hint."""
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(**BUNDLE_FLAGS, use_locale_hint=True, num_address_systems=7, use_code_unit_anchor=True)
+    path = export_to_onnx(model, tmp_path / "code-unit.onnx", max_length=SEQ)
+    assert _graph_input_names(path) == (
+        BASE_INPUTS
+        + ANCHOR_INPUTS
+        + GAZ_INPUTS
+        + COUNTRY_INPUTS
+        + BUNDLE_INPUTS
+        + ["code_unit_features", "code_unit_confidence", "locale_hint"]
+    )
+
+
+def test_the_code_unit_channel_off_the_hinted_bundle_refuses_to_export(tmp_path) -> None:
+    from mailwoman_train.export.onnx import export_to_onnx
+
+    model = _model(**BUNDLE_FLAGS, use_code_unit_anchor=True)
+    with pytest.raises(NotImplementedError, match="use_code_unit_anchor"):
+        export_to_onnx(model, tmp_path / "code-unit-unhinted.onnx", max_length=SEQ)
+
+
 def test_a_locale_hint_off_the_bundle_refuses_to_export(tmp_path) -> None:
     from mailwoman_train.export.onnx import export_to_onnx
 

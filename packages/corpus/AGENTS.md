@@ -108,7 +108,7 @@ the gap shows in the register rather than hiding as an absence. Add both entries
 adapter, recipe, carried overlay or Python builder, before any build reads the source. The
 `corpus-source-inputs` repository check reports an emitted source the table does not map.
 
-`buildCorpus`, `corpus overlay-manifest`, `corpus slice`, every Python corpus builder, the `train` command
+`buildCorpus`, `corpus overlay-manifest`, `corpus recipe`, every Python corpus builder, the `train` command
 and the Modal launcher's local entry point refuse a source unless each register source it reads carries an
 elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
 source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,

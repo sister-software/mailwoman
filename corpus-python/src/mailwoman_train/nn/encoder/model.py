@@ -64,6 +64,8 @@ class MailwomanCoarseEncoder(
         street_type_feature_dim: int = 1,
         use_locality_surface_anchor: bool = False,
         locality_surface_feature_dim: int = 2,
+        use_code_unit_anchor: bool = False,
+        code_unit_feature_dim: int = 5,
         use_affix_head: bool = False,
         use_deploc_head: bool = False,
         use_conventions_loss_mask: bool = False,
@@ -124,6 +126,8 @@ class MailwomanCoarseEncoder(
             street_type_feature_dim=street_type_feature_dim,
             use_locality_surface_anchor=use_locality_surface_anchor,
             locality_surface_feature_dim=locality_surface_feature_dim,
+            use_code_unit_anchor=use_code_unit_anchor,
+            code_unit_feature_dim=code_unit_feature_dim,
         )
         self._build_body(
             hidden_size=hidden_size,
@@ -182,6 +186,8 @@ class MailwomanCoarseEncoder(
         street_type_confidence: torch.Tensor | None = None,
         locality_surface_features: torch.Tensor | None = None,
         locality_surface_confidence: torch.Tensor | None = None,
+        code_unit_features: torch.Tensor | None = None,
+        code_unit_confidence: torch.Tensor | None = None,
         char_ids: torch.Tensor | None = None,
         address_system_ids: torch.Tensor | None = None,
         locale_hint_ids: torch.Tensor | None = None,
@@ -200,6 +206,8 @@ class MailwomanCoarseEncoder(
             street_type_confidence=street_type_confidence,
             locality_surface_features=locality_surface_features,
             locality_surface_confidence=locality_surface_confidence,
+            code_unit_features=code_unit_features,
+            code_unit_confidence=code_unit_confidence,
         )
         h = self._apply_locale_hint(h, locale_hint_ids=locale_hint_ids, address_system_ids=address_system_ids)
         bsz, seq = h.shape[0], h.shape[1]

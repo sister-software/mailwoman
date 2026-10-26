@@ -15,7 +15,7 @@ also uses. The operations are `StructureOperation`: `fetch`, `convert`, `adapt`,
 `commercial-sublicense`. A published layer needs all five, because every viewer's browser downloads the adapted
 geometry.
 
-## Electing a decision
+## How to elect a decision
 
 The rules in `packages/corpus/AGENTS.md` under "License election" apply here. In particular, a grant permits only
 what it states, and an omission is recorded as `unreviewed` rather than read as permission.

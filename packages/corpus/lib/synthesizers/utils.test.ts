@@ -76,6 +76,19 @@ describe("universal augmentations", () => {
 		expect(out.augmentation?.name).toBe("drop-commas")
 	})
 
+	it("dropCommas strips a comma inside a component, so the component still matches raw", () => {
+		const out = dropCommas(
+			baseRow({
+				raw: "WAL-MART STORES EAST, LP, 1730 LINCOLN WAY E",
+				components: { venue: "WAL-MART STORES EAST, LP", house_number: "1730", street: "LINCOLN WAY E" },
+			})
+		)!
+
+		expect(out.raw).toBe("WAL-MART STORES EAST LP 1730 LINCOLN WAY E")
+		expect(out.components.venue).toBe("WAL-MART STORES EAST LP")
+		expect(out.raw).toContain(out.components.venue!)
+	})
+
 	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
 		const out = doubleSpace(
 			baseRow({
@@ -130,6 +143,17 @@ describe("US augmentations", () => {
 		expect(out.raw).toBe("Portland, Oregon 97214")
 		expect(out.components.region).toBe("Oregon")
 		expect(out.augmentation?.name).toBe("state-expand")
+	})
+
+	it("stateExpand leaves a state code inside the street unchanged", () => {
+		const out = stateExpand(
+			baseRow({
+				raw: "2348 GA HIGHWAY 32 E, WRAY, GA 317983503",
+				components: { house_number: "2348", street: "GA HIGHWAY 32 E", locality: "WRAY", region: "GA" },
+			})
+		)!
+
+		expect(out.raw).toBe("2348 GA HIGHWAY 32 E, WRAY, Georgia 317983503")
 	})
 
 	it("stateAbbreviate Oregon → OR", () => {

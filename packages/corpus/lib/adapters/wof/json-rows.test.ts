@@ -25,4 +25,18 @@ describe("renderHierarchy", () => {
 	it("keeps the comma join in a Latin-script country", () => {
 		expect(renderHierarchy({ locality: "Paris", region: "Île-de-France" }, "FR")?.raw).toBe("Paris, Île-de-France")
 	})
+
+	it("runs Japan's admin units together and gives the country its own line", () => {
+		const components = { dependent_locality: "ブルックリン区", locality: "ニューヨーク", region: "ニューヨーク州" }
+
+		expect(renderHierarchy(components, "JP")?.raw).toBe("ニューヨーク州ニューヨークブルックリン区")
+
+		expect(renderHierarchy({ ...components, country: "アメリカ" }, "JP")?.raw).toBe(
+			"アメリカ ニューヨーク州ニューヨークブルックリン区"
+		)
+	})
+
+	it("keeps Korea's spaced admin units", () => {
+		expect(renderHierarchy({ dependent_locality: "브루클린", region: "뉴욕 주" }, "KR")?.raw).toBe("뉴욕 주 브루클린")
+	})
 })

@@ -72,7 +72,7 @@
 		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"spliterator": "^9.2.1"
+		"spliterator": "^9.3.0"
 	},
 	"devDependencies": {
 		"path-ts": "^2.5.0"

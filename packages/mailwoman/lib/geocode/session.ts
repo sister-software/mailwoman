@@ -26,7 +26,7 @@ import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseT
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
+import { dirname, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
@@ -421,8 +421,18 @@ export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = layerDatabasePath(options.dataRoot, "poi")
+	// The rail-station layer sits beside poi.db as its own sealed database, because it is
+	// built from OSM under a different license and tier than the Overture places in poi.db.
+	const stationsDBPath = resolvePath(dirname(poiDBPath), STATIONS_DATABASE_FILE)
+	const paths = []
 
-	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
+	for (const path of [poiDBPath, stationsDBPath]) {
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	if (options.forkEntity === false || !paths.length) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
@@ -430,16 +440,28 @@ export async function loadForkEntityDeps(
 	])
 
 	const morphology = await loadStreetMorphologyFST()
-	const poiLookup = new POILookup({ databasePath: poiDBPath })
+	const lookups = paths.map((databasePath) => new POILookup({ databasePath }))
 
 	return {
 		deps: {
-			poiLookup,
+			poiLookup: { search: (query) => lookups.flatMap((lookup) => lookup.search(query)) },
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
 		},
-		handle: poiLookup,
+		handle: {
+			[Symbol.dispose]: () => {
+				for (const lookup of lookups) {
+					lookup[Symbol.dispose]()
+				}
+			},
+		},
 	}
 }
+
+/**
+ * The file name of the rail-station POI layer, built by
+ * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
+ */
+export const STATIONS_DATABASE_FILE = "stations.db"
 
 /**
  * Loads the gazetteer, neural model and optional layers.

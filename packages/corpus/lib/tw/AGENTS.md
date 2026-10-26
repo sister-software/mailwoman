@@ -1,6 +1,6 @@
 # AGENTS.md — corpus sources for Taiwan
 
-## Electing address data
+## How this repository elects address data
 
 This repository has adopted no factual-data reading for Taiwan. Its rows are elected only on the publisher's own grant, read as `../../AGENTS.md` "License election" describes.
 

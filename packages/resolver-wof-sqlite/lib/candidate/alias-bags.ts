@@ -61,9 +61,20 @@ export function explodeAliasBags(
 	out: DatabaseClient<CandidateDatabase>,
 	attrs: Map<number, PlaceAttrs>,
 	stageRow: StageRow,
-	opts: { regionPlacetypeID?: number; ccID?: (code: string | null) => number } = {}
-): { nAlias: number; keyCounts: Map<number, number>; regionOfficialRefused: number } {
+	opts: {
+		regionPlacetypeID?: number
+		ccID?: (code: string | null) => number
+		/**
+		 * The bare form of an alias in its place's country, staged as one more alias: `渋谷` for the alias `渋谷区`.
+		 *
+		 * A Japanese place's primary name is romanized, so its suffixed name reaches
+		 * the candidate only as an alias.
+		 */
+		bareName?: (countryID: number, alias: string) => string | null
+	} = {}
+): { nAlias: number; nBare: number; keyCounts: Map<number, number>; regionOfficialRefused: number } {
 	let nAlias = 0
+	let nBare = 0
 	let regionOfficialRefused = 0
 	const keyCounts = new Map<number, number>()
 
@@ -87,24 +98,31 @@ export function explodeAliasBags(
 		// includes surrounding whitespace and the last one is empty.
 		// `normalizeLocalityForKey` folds both away.
 		for (const piece of alt.split(ALIAS_SEPARATOR)) {
-			const k = normalizeLocalityForKey(piece)
+			const bare = opts.bareName?.(a.cid, piece.trim())
+			const keys = [normalizeLocalityForKey(piece), bare ? normalizeLocalityForKey(bare) : ""]
 
-			if (!k || seen.has(k)) continue
-			seen.add(k)
+			for (const [position, k] of keys.entries()) {
+				if (!k || seen.has(k)) continue
+				seen.add(k)
 
-			if (isRegion) {
-				const holder = official.get(`${a.cid}\0${k}`)
+				if (isRegion) {
+					const holder = official.get(`${a.cid}\0${k}`)
 
-				if (typeof holder === "number" && holder !== id) {
-					regionOfficialRefused++
+					if (typeof holder === "number" && holder !== id) {
+						regionOfficialRefused++
 
-					continue
+						continue
+					}
+				}
+
+				stageRow(k, a, id, 0)
+
+				if (position) {
+					nBare++
+				} else {
+					nAlias++
 				}
 			}
-
-			stageRow(k, a, id, 0)
-
-			nAlias++
 		}
 
 		keyCounts.set(id, seen.size)
@@ -112,5 +130,5 @@ export function explodeAliasBags(
 
 	out.exec("COMMIT")
 
-	return { nAlias, keyCounts, regionOfficialRefused }
+	return { nAlias, nBare, keyCounts, regionOfficialRefused }
 }

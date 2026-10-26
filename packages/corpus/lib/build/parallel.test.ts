@@ -103,7 +103,7 @@ async function snapshot(outDir: PathBuilder): Promise<Record<string, unknown>> {
 	const corpusManifest = parseJSONStrict<ParquetManifest>(corpusManifestText)
 	const parquet: Record<string, unknown> = {}
 
-	for (const file of corpusManifest.slices) {
+	for (const file of corpusManifest.files) {
 		const key = file.path.replace(outDir.toString(), "<out>")
 
 		parquet[key] = {
@@ -276,20 +276,20 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		const partOf = async (path: string): Promise<number> =>
 			((await readParquetRecord(path))!.derivation.config as { part: number }).part
 
-		const train = manifest.slices.filter((slice) => slice.split === "train")
-		const parts = await Promise.all(train.map((slice) => partOf(slice.path)))
+		const train = manifest.files.filter((file) => file.split === "train")
+		const parts = await Promise.all(train.map((file) => partOf(file.path)))
 		const last = train[parts.indexOf(Math.max(...parts))]!
-		const kept = train.filter((slice) => slice !== last)
+		const kept = train.filter((file) => file !== last)
 
 		expect(kept.length).toBeGreaterThan(0)
 
 		await removePath(banDir(SOURCE_RECORD_FILE))
 
-		for (const removed of manifest.slices.filter((slice) => !kept.includes(slice))) {
+		for (const removed of manifest.files.filter((file) => !kept.includes(file))) {
 			await removePath(removed.path)
 		}
 
-		await writeLocalJSONFile({ ...manifest, slices: kept }, banDir(SOURCE_PARQUET_MANIFEST_FILE))
+		await writeLocalJSONFile({ ...manifest, files: kept }, banDir(SOURCE_PARQUET_MANIFEST_FILE))
 		await writeLocalTextFile("partial bytes", `${last.path}.partial.1.deadbeef`)
 
 		const messages: string[] = []

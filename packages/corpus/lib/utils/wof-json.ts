@@ -51,12 +51,16 @@ export interface WOFRecord {
 	 * Localized name variants from `name:*` properties.
 	 *
 	 * Keys are the raw `name:eng_x_preferred` form.
-	 * Values are the first non-empty string from the underlying array, because WOF
-	 * stores variants as arrays even when only one form is present.
+	 * A key whose array holds one distinct value maps to that string, and a key with several
+	 * maps to all of them in source order: New York City's `name:eng_x_colloquial` lists
+	 * Big Apple, Gotham and NYC. {@linkcode nameValues} reads either shape.
+	 *
+	 * The single-value case stays a string because an admin run holds over 13 million
+	 * records resident, and almost every key carries one value.
 	 *
 	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
-	nameVariants: Map<string, string>
+	nameVariants: Map<string, string | readonly string[]>
 	/**
 	 * Ancestor ids from `wof:hierarchy`, nearest level first, keeping only the levels on
 	 * which every hierarchy the record lists agrees.
@@ -83,27 +87,43 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 }
 
 /**
- * Pull `name:*` localized variants off a WOF feature's properties, lifting the first
- * non-empty string from the array WOF stores them in (`["Saint Petersburg"]`);
- * Multiple-value variants are rare, and most of them are historical aliases.
- *
- * This function keeps them together.
- * An adapter that needs separate values can iterate the underlying array.
+ * Pull `name:*` localized variants off a WOF feature's properties, keeping every distinct non-blank
+ * value of the array WOF stores them in (`["Saint Petersburg"]`), with attestations removed.
  */
-export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
-	const out = new Map<string, string>()
+export function extractNameVariants(props: Record<string, unknown>): Map<string, string | readonly string[]> {
+	const out = new Map<string, string | readonly string[]>()
 
 	for (const [key, value] of Object.entries(props)) {
 		if (!key.startsWith("name:")) continue
 
-		const candidate = firstNonBlankString(value)
+		const values = nonBlankStrings(value)
 
-		if (candidate) {
-			out.set(key, candidate)
+		if (values.length === 1) {
+			out.set(key, values[0]!)
+		} else if (values.length) {
+			out.set(key, values)
 		}
 	}
 
 	return out
+}
+
+/**
+ * Every value one `name:*` key holds, in source order.
+ */
+export function nameValues(value: string | readonly string[] | undefined): readonly string[] {
+	if (value == null) return []
+
+	return typeof value === "string" ? [value] : value
+}
+
+/**
+ * The first `name:<language>_x_preferred` value of a record, or `null` when the record has none.
+ *
+ * `language` is the ISO 639-3 code WOF keys its names by (`jpn`, `kor`).
+ */
+export function preferredName(record: WOFRecord, language: string): string | null {
+	return nameValues(record.nameVariants.get(`name:${language}_x_preferred`))[0] ?? null
 }
 
 /**
@@ -122,16 +142,20 @@ export function stripAttestation(name: string): string {
 	return name.replaceAll(ATTESTATION, "").trim()
 }
 
-function firstNonBlankString(value: unknown): string | null {
+function nonBlankStrings(value: unknown): string[] {
+	const out: string[] = []
+
 	for (const candidate of Array.isArray(value) ? value : [value]) {
 		if (typeof candidate !== "string") continue
 
 		const normalized = stripAttestation(candidate)
 
-		if (normalized) return normalized
+		if (normalized && !out.includes(normalized)) {
+			out.push(normalized)
+		}
 	}
 
-	return null
+	return out
 }
 
 /**
@@ -202,37 +226,50 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  *
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
+ *
+ * Files are read as many at a time as libuv's threadpool services
+ * (spliterator's default for parallelMap, 4 unless UV_THREADPOOL_SIZE says otherwise),
+ * and records are yielded in glob order.
+ * The adapters deduplicate surface strings first-come, so a completion-order walk would change
+ * which record claims a shared name from one build to the next.
  */
 export async function* walkFeatures(
 	repoDir: PathBuilderLike,
 	opts: { signal?: AbortSignal } = {}
 ): AsyncIterable<WOFRecord> {
-	for await (const filePath of Globerator.from("**/*.geojson", {
+	const paths = Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		absolute: true,
 		exclude: ["**/*-alt-*.geojson"],
 		// Bundle repositories can expose their data through a link.
 		followSymlinks: true,
 		signal: opts.signal,
-	})) {
-		let text: string
+	})
 
-		try {
-			text = await readLocalTextFile(filePath)
-		} catch {
-			continue
-		}
+	const records = paths.parallelMap(readFeatureRecord, { ordered: true, signal: opts.signal })
 
-		const parsed = tryParsingJSON<WOFFeature>(text)
-
-		if (!parsed) continue
-
-		const rec = recordFromFeature(parsed)
-
+	for await (const rec of records) {
 		if (rec) {
 			yield rec
 		}
 	}
+}
+
+/**
+ * The record one GeoJSON file holds, or `null` when the file is unreadable, malformed or skipped.
+ */
+async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
+	let text: string
+
+	try {
+		text = await readLocalTextFile(filePath)
+	} catch {
+		return null
+	}
+
+	const parsed = tryParsingJSON<WOFFeature>(text)
+
+	return parsed ? recordFromFeature(parsed) : null
 }
 
 /**
@@ -273,7 +310,43 @@ export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], 
 export type AncestorNameIndex = Map<number, AncestorNames>
 
 /**
- * Resolves {@linkcode AncestorNameIndex} from a record index.
+ * The nearest ancestor record per tag in {@linkcode ANCESTOR_NAME_TAGS}.
+ *
+ * The admin adapter reads an ancestor's localized names from it.
+ * Each value is a record the index already holds, so it copies no name.
+ */
+export type AncestorRecords = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], WOFRecord>>
+
+/**
+ * Resolves {@linkcode AncestorNameIndex} from a record index, keeping each ancestor's `wof:name`.
+ *
+ * `wof-postalcode` uses it so that it can release every admin record once the index is built.
+ */
+export function buildAncestorNameIndex(
+	byID: ReadonlyMap<number, WOFRecord>,
+	tagOf: (placetype: string) => string | null | undefined
+): AncestorNameIndex {
+	const index: AncestorNameIndex = new Map()
+
+	for (const [id, records] of buildAncestorRecordIndex(byID, tagOf)) {
+		const names: AncestorNames = {}
+
+		for (const tag of ANCESTOR_NAME_TAGS) {
+			const name = records[tag]?.name
+
+			if (name) {
+				names[tag] = name
+			}
+		}
+
+		index.set(id, names)
+	}
+
+	return index
+}
+
+/**
+ * Resolves the nearest ancestor record per tag for every record in `byID`.
  *
  * `tagOf` maps a WOF placetype to a component tag, or returns a value outside
  * {@linkcode ANCESTOR_NAME_TAGS} for a placetype no builder looks up.
@@ -285,14 +358,14 @@ export type AncestorNameIndex = Map<number, AncestorNames>
  *
  * A record whose ancestors are absent resolves the tags it can reach rather than failing.
  */
-export function buildAncestorNameIndex(
+export function buildAncestorRecordIndex(
 	byID: ReadonlyMap<number, WOFRecord>,
 	tagOf: (placetype: string) => string | null | undefined
-): AncestorNameIndex {
-	const index: AncestorNameIndex = new Map()
+): Map<number, AncestorRecords> {
+	const index = new Map<number, AncestorRecords>()
 
 	for (const [id, rec] of byID) {
-		const names: AncestorNames = {}
+		const names: AncestorRecords = {}
 
 		// `wof:hierarchy` names every ancestor level directly, including for a record whose parent is -4.
 		for (const ancestorID of rec.ancestors) {
@@ -304,7 +377,7 @@ export function buildAncestorNameIndex(
 
 			for (const wanted of ANCESTOR_NAME_TAGS) {
 				if (tag === wanted && !names[wanted]) {
-					names[wanted] = ancestor.name
+					names[wanted] = ancestor
 				}
 			}
 		}
@@ -323,7 +396,7 @@ export function buildAncestorNameIndex(
 
 			for (const wanted of ANCESTOR_NAME_TAGS) {
 				if (tag === wanted && !names[wanted]) {
-					names[wanted] = parent.name
+					names[wanted] = parent
 				}
 			}
 

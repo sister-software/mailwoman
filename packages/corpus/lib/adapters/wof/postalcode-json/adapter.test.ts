@@ -38,7 +38,7 @@ describe("postcodeVariantsFor (pure)", () => {
 		const v = postcodeVariantsFor(
 			rec({ name: "97214" }),
 			{ locality: "Portland", region: "Oregon", country: "United States" },
-			"97214"
+			{ key: "default", value: "97214" }
 		)
 
 		expect(v.map((x) => x.suffix)).toEqual([
@@ -58,13 +58,13 @@ describe("postcodeVariantsFor (pure)", () => {
 	})
 
 	it("postcode without locality yields self only", () => {
-		const v = postcodeVariantsFor(rec({ name: "12345" }), {}, "12345")
+		const v = postcodeVariantsFor(rec({ name: "12345" }), {}, { key: "default", value: "12345" })
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ postcode: "12345" })
 	})
 
 	it("skips non-postcode placetypes", () => {
-		const v = postcodeVariantsFor(rec({ placetype: "locality" }), {}, "X")
+		const v = postcodeVariantsFor(rec({ placetype: "locality" }), {}, { key: "default", value: "X" })
 		expect(v).toEqual([])
 	})
 })

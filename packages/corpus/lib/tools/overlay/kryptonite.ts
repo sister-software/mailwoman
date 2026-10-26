@@ -10,7 +10,7 @@
  *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the jsonl.
  *
- *   Invoke via `mailwoman corpus slice kryptonite \
+ *   Invoke via `mailwoman corpus recipe kryptonite \
  *   --jsonl /data/corpus/versioned/v0.4.0/kryptonite/canonical-kryptonite.jsonl \
  *   --base-manifest /data/corpus/versioned/v0.3.0/corpus-v0.3.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`
@@ -28,6 +28,7 @@ import { moduleGraphHash } from "#build/code-hash"
 import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
+import { baseManifestFiles } from "#tools/overlay/manifest"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
@@ -126,7 +127,7 @@ export async function buildKryptoniteOverlay(
 	)
 
 	report?.(
-		`wrote ${newManifest.total_rows} rows into ${newManifest.slices.length} parquet file(s); ` +
+		`wrote ${newManifest.total_rows} rows into ${newManifest.files.length} parquet file(s); ` +
 			`quarantined ${quarantine.length}`
 	)
 
@@ -142,9 +143,9 @@ export async function buildKryptoniteOverlay(
 	const combined: ParquetManifest = {
 		corpus_version: corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_slice: base.rows_per_slice,
+		rows_per_file: base.rows_per_file,
 		row_group_size: base.row_group_size ?? ROW_GROUP_SIZE,
-		slices: [...base.slices, ...newManifest.slices],
+		files: [...baseManifestFiles<(typeof base)["files"][number]>(base), ...newManifest.files],
 		counts: {
 			train: base.counts.train + (newManifest.counts.train ?? 0),
 			val: base.counts.val,
@@ -159,6 +160,10 @@ export async function buildKryptoniteOverlay(
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
-	report?.(`  files=${combined.slices.length} (base=${base.slices.length}, added=${newManifest.slices.length})`)
+
+	report?.(
+		`  files=${combined.files.length} (base=${baseManifestFiles<(typeof base)["files"][number]>(base).length}, added=${newManifest.files.length})`
+	)
+
 	report?.(`  compression=${PARQUET_COMPRESSION}`)
 }

@@ -52,6 +52,6 @@
 		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
-		"spliterator": "^9.2.1"
+		"spliterator": "^9.3.0"
 	}
 }

@@ -69,6 +69,10 @@ export interface RequiredChannels {
 	 * See {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
 	locality_surface?: { required: boolean; lexicon?: string }
+	/**
+	 * The code-unit channel (#2845), computed from the raw surface with no lexicon.
+	 */
+	code_unit?: { required: boolean }
 }
 
 /**

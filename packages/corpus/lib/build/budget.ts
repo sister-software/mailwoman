@@ -14,7 +14,7 @@
  *   adapter phase, 0.48 GiB in align and 4.39 GiB in the parquet phase of a serial build holding every source.
  */
 
-import { totalMemoryBytes } from "@mailwoman/core/utils/system"
+import { availableParallelism, totalMemoryBytes } from "@mailwoman/core/utils/system"
 
 import { isResidentRecordAdapter } from "#build/heap"
 
@@ -94,6 +94,25 @@ export interface WorkerBudget {
 }
 
 const gib = (bytes: number): string => `${(bytes / GiB).toFixed(1)} GiB`
+
+/**
+ * The `--jobs` a build takes when none is given: the most standard workers the
+ * host's budget holds, capped at the host's CPU count.
+ *
+ * Returns 1, a serial build, when fewer than two workers fit or when a configured resident
+ * adapter would not fit in a worker alone, which {@linkcode planWorkerBudget} refuses.
+ */
+export function defaultBuildJobs(opts: { adapterIDs: readonly string[]; hostMemoryBytes?: number }): number {
+	const hostMemoryBytes = opts.hostMemoryBytes ?? totalMemoryBytes()
+	const budgetBytes = hostMemoryBytes - HOST_RESERVE_BYTES
+
+	const residentFits =
+		!opts.adapterIDs.some(isResidentRecordAdapter) || workerReservationBytes("resident") <= budgetBytes
+
+	const fits = Math.min(availableParallelism(), Math.floor(budgetBytes / workerReservationBytes("standard")))
+
+	return residentFits && fits >= 2 ? fits : 1
+}
 
 /**
  * Check that `jobs` standard workers fit in the host's budget, and that a resident adapter fits alone.

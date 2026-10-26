@@ -30,6 +30,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type {
 	VenueHeadBiases,
@@ -423,7 +424,7 @@ export interface BuildVenueHeadOptions {
 	/**
 	 * Rewrites a manifest file path to a local path.
 	 */
-	slicePath?: (path: string) => string
+	filePath?: (path: string) => string
 	/**
 	 * Output path.
 	 * Defaults to the package's `data/venue-heads.json`.
@@ -541,12 +542,15 @@ export async function buildVenueHeadTable(
 		}
 	)
 
-	const manifest = parseJSONStrict<{ slices: { split: string; path: string }[] }>(
+	const manifest = parseJSONStrict<{ files: { split: string; path: string }[] }>(
 		await readLocalTextFile(opts.corpusManifest)
 	)
 
-	const slicePath = opts.slicePath ?? ((path: string) => path)
-	const files = manifest.slices.filter((s) => s.split === "train").map((s) => `'${slicePath(s.path)}'`)
+	const filePath = opts.filePath ?? ((path: string) => path)
+
+	const files = baseManifestFiles<(typeof manifest)["files"][number]>(manifest)
+		.filter((s) => s.split === "train")
+		.map((s) => `'${filePath(s.path)}'`)
 
 	// Span offsets count UTF-16 code units and DuckDB's substring counts code points.
 	// The two agree on every row without a character outside the Basic Multilingual

@@ -59,7 +59,7 @@ def _corpus(tmp: Path, *, deletions: list[dict] | None = None, stale: bool = Fal
             "counts": attribute["counts"],
         },
     }
-    (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [entry], "deletions": deletions or []}))
+    (corpus / "MANIFEST.json").write_text(json.dumps({"files": [entry], "deletions": deletions or []}))
     return corpus
 
 

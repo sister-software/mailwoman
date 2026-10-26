@@ -5,6 +5,7 @@
  */
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
+import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -14,6 +15,7 @@ import type { PathBuilderLike } from "path-ts"
 import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors/sidecar"
+import { stageBareAdminNames } from "#candidate/bare-admin-names"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
 import { foldExtract } from "#candidate/extract-fold"
 import { createCandidateFTS } from "#candidate/fts"
@@ -205,6 +207,8 @@ export interface BuildCandidateResult {
  * Builds the candidate lookup database from a WOF admin database and replaces any existing output.
  * The builder adds an FTS5 trigram index for fuzzy lookup.
  */
+// repo-health-ignore export-name-affix -- writes candidate.db, and the gazetteer
+// pipeline's buildCandidate runs a whole build around it
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})
 
@@ -406,6 +410,16 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}).toLocaleString()} country surfaces`
 	)
 
+	progress(
+		"bare-admin-names",
+		`${stageBareAdminNames({
+			attrs,
+			iso2ByID: new Map([...ccodes].map(([code, id]) => [id, code])),
+			stageRow,
+			tx: kdb,
+		}).toLocaleString()} bare admin names`
+	)
+
 	if (opts.currencyBackfill) {
 		const nBackfill = await resurrectCurrencyHoles({
 			src,
@@ -429,14 +443,17 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	progress("aliases", "exploding alias bags")
 
-	const { nAlias, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
+	const iso2ByCountryID = new Map([...ccodes].map(([code, id]) => [id, code]))
+
+	const { nAlias, nBare, keyCounts, regionOfficialRefused } = explodeAliasBags(src, kdb, attrs, stageRow, {
 		regionPlacetypeID: ptID("region"),
 		ccID,
+		bareName: (countryID, alias) => bareAdminName(iso2ByCountryID.get(countryID) ?? "", alias),
 	})
 
 	progress(
 		"aliases",
-		`${nAlias.toLocaleString()} aliases` +
+		`${nAlias.toLocaleString()} aliases; ${nBare.toLocaleString()} bare admin aliases` +
 			(regionOfficialRefused
 				? `; ${regionOfficialRefused.toLocaleString()} region aliases refused as another region's official name`
 				: "")

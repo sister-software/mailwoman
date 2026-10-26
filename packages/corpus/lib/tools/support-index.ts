@@ -272,7 +272,7 @@ export async function buildSupportIndex(
 	const manifest = await readLocalJSONFile<{
 		corpus_version?: string
 		deletions?: CorpusDeletion[]
-		slices?: unknown
+		files?: unknown
 	}>(manifestPath)
 
 	const files = baseManifestFiles(manifest)

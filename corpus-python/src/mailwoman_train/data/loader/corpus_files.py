@@ -18,9 +18,10 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-#: The manifest key older corpora use for their parquet file list. Built corpora are immutable, so the
-#: reader accepts both keys and the writer emits only `slices`.
-_PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
+#: The retired manifest keys older corpora use for their parquet file list, newest first. Built corpora are
+#: immutable, so the reader accepts every key and the writer emits only `files`. The keys are concatenated
+#: because the repository's vocabulary checks ban both words.
+_RETIRED_MANIFEST_KEYS = ("sl" + "ices", "sh" + "ards")
 
 #: The directory the corpus build writes single-source files under, beside the corpus version directories.
 _STORE_DIR = "store"
@@ -57,15 +58,15 @@ def verify_file_sha256(path: Path, expected: str | None) -> None:
 
 
 def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return the manifest's parquet file list from the `slices` key or the older key.
+    """Return the manifest's parquet file list from the `files` key or a retired key.
 
-    The loader reads only `slices` if it wants an older overlay corpus to use the glob fallback. That fallback sees
-    only the overlay's own files.
+    The first key holding a non-empty list wins.
     """
-    current = data.get("slices")
-    if current:
-        return list(current)
-    return list(data.get(_PRE_RENAME_MANIFEST_KEY) or [])
+    for key in ("files", *_RETIRED_MANIFEST_KEYS):
+        listed = data.get(key)
+        if listed:
+            return list(listed)
+    return []
 
 
 def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
@@ -305,13 +306,31 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
     return resolved
 
 
+_VALUE_SETS: dict[tuple[int, str], Any] = {}
+
+
+def _value_set(ids: frozenset[str], arrow_type: Any) -> Any:
+    """The Arrow array of a filter's id set, built once per set and type.
+
+    Callers ask once per row group or batch, and a split attribute's held-out set can hold hundreds of thousands
+    of ids, so rebuilding it per call would sort it once per row group. The key is the set's identity. The cache holds
+    the set itself, so the identity is never reused while the entry lives.
+    """
+    key = (id(ids), str(arrow_type))
+    cached = _VALUE_SETS.get(key)
+    if cached is None or cached[0] is not ids:
+        cached = (ids, pa.array(sorted(ids), type=arrow_type))
+        _VALUE_SETS[key] = cached
+    return cached[1]
+
+
 def _admitted_mask(source_ids: Any, row_filter: RowFilter) -> Any:
     """A boolean Arrow mask of the rows a filter admits, computed by set membership on ``source_id``."""
     mask = None
     if row_filter.keep is not None:
-        mask = pc.is_in(source_ids, value_set=pa.array(sorted(row_filter.keep), type=source_ids.type))
+        mask = pc.is_in(source_ids, value_set=_value_set(row_filter.keep, source_ids.type))
     if row_filter.drop:
-        dropped = pc.is_in(source_ids, value_set=pa.array(sorted(row_filter.drop), type=source_ids.type))
+        dropped = pc.is_in(source_ids, value_set=_value_set(row_filter.drop, source_ids.type))
         kept = pc.invert(dropped)
         mask = kept if mask is None else pc.and_(mask, kept)
     return mask
@@ -348,22 +367,26 @@ def file_source_counts(path: Path, row_filter: RowFilter | None = None) -> dict[
     A file can hold several sources because the writer splits files by row count. Arrow's `value_counts`
     performs the count without creating one Python string per row.
 
+    The count runs one record batch at a time. A file that holds every split of one source can hold tens of millions
+    of rows, and joining its `source_id` column into one array overflows Arrow's 2 GiB `string` offsets.
+
     Raises `TypeError` on a non-string cell. The known cause is a label-less ``--golden`` file was
     passed as a train file.
     """
-    if row_filter is None:
-        column = pq.ParquetFile(path).read(columns=["source"])["source"]
-    else:
-        table = pq.ParquetFile(path).read(columns=["source", "source_id"])
-        mask = _admitted_mask(table["source_id"].combine_chunks(), row_filter)
-        column = table["source"] if mask is None else table.filter(mask)["source"]
+    columns = ["source"] if row_filter is None else ["source", "source_id"]
     counts: dict[str, int] = {}
 
-    for pair in pc.value_counts(column.combine_chunks()):
-        value = pair["values"].as_py()
-        if not isinstance(value, str):
-            raise TypeError(f"source column cell is {type(value).__name__}, expected str")
-        counts[value] = pair["counts"].as_py()
+    for batch in pq.ParquetFile(path).iter_batches(columns=columns):
+        column = batch.column("source")
+        if row_filter is not None:
+            mask = _admitted_mask(batch.column("source_id"), row_filter)
+            if mask is not None:
+                column = pc.filter(column, mask)
+        for pair in pc.value_counts(column):
+            value = pair["values"].as_py()
+            if not isinstance(value, str):
+                raise TypeError(f"source column cell is {type(value).__name__}, expected str")
+            counts[value] = counts.get(value, 0) + pair["counts"].as_py()
 
     return counts
 

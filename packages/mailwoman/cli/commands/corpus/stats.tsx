@@ -19,13 +19,12 @@ export const spec = {
 			type: "string",
 			required: true,
 			description: "Comma-separated parquet file paths or a directory",
-			deprecatedName: "slices",
+			deprecatedName: "files",
 		},
 		out: { type: "string", required: true, description: "Output corpus-stats.json path", deprecatedName: "output" },
 		"limit-per-file": {
 			type: "number",
 			description: "Row cap per parquet file (debug)",
-			deprecatedName: "limit-per-slice",
 		},
 	},
 } as const satisfies CommandSpec

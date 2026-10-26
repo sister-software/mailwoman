@@ -71,7 +71,7 @@ async function stageCorpus(name: string, trainRows: ParquetRow[], testRows: Parq
 
 	await writeLocalJSONFile(
 		{
-			slices: [
+			files: [
 				{ path: trainFile.toString(), split: "train" },
 				{ path: testFile.toString(), split: "test" },
 			],

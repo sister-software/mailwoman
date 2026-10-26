@@ -27,7 +27,7 @@ export const spec = {
 		base: {
 			type: "string",
 			required: true,
-			description: "MANIFEST.json of the base corpus; its slices are skipped",
+			description: "MANIFEST.json of the base corpus; its files are skipped",
 		},
 	},
 } as const satisfies CommandSpec
@@ -55,7 +55,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 		const baseHashes = new Set((await readHashedFiles(options.base)).map((file) => file.sha256))
 		const overlays = corpusFiles.filter((file) => !baseHashes.has(file.sha256))
 
-		console.log(`${overlays.length} overlay slices, ${corpusFiles.length - overlays.length} base slices`)
+		console.log(`${overlays.length} overlay files, ${corpusFiles.length - overlays.length} base files`)
 
 		const refused: string[] = []
 
