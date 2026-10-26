@@ -540,7 +540,8 @@ data:
     # must not contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000
-  val_rows: 4096
+  # The validation draw is sized to hold the venue and country rows the label floors above require.
+  val_rows: 24576
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
