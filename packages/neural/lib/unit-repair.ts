@@ -13,6 +13,7 @@
  *   Opt-in through `ParseOpts.unitRepair`.
  */
 
+import { UNIT_SHAPES } from "@mailwoman/codex/unit-shapes"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {
@@ -51,8 +52,8 @@ const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
 			"gi"
 		),
 	},
-	// Bare hash plus identifier, a common US secondary-unit form.
-	{ label: "hash", re: /#\s*\d{1,5}[A-Za-z]?\b/g },
+	// Symbol-shaped identifiers such as Singapore's `#09-71` and the US `# 402`.
+	...UNIT_SHAPES.map((shape) => ({ label: shape.label, re: new RegExp(shape.pattern, "gu") })),
 ]
 
 const UNIT_B = "B-unit" as DecoderToken["label"]
