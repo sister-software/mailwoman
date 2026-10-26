@@ -92,7 +92,8 @@ describe("exploreWOFRecord", () => {
 		const japanese = exploration.slots.find(({ slot }) => slot.key === "name-jpn-x-preferred")!
 
 		expect(japanese.slot.language).toBe("jpn")
-		expect(japanese.rows.some((row) => row.suffix.startsWith("localized-jpn"))).toBe(true)
+		expect(japanese.rows.some((row) => row.suffix !== "self")).toBe(true)
+		expect(japanese.rows.every((row) => !Object.values(row.components).includes("New York"))).toBe(true)
 	})
 
 	it("reports an ancestor whose file is absent instead of dropping it silently", async () => {

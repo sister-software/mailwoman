@@ -174,11 +174,9 @@ const LANGUAGE_LAYOUTS = new Map<string, string | null>()
  * (locality, region, country, subregion or dependent locality).
  * The canonical `wof:name` fills the `"default"` slot and a `name:*` value fills the others.
  *
- * Ancestor names in these variants come from each ancestor's canonical `wof:name`.
- * A slot that carries a language also renders that language's hierarchy from each ancestor's
- * preferred name in the language, in the order and join of a country that writes it.
- *
- * The localized variants are skipped when an ancestor lacks the language.
+ * A slot that carries a language renders only chains written in that
+ * language ({@linkcode localizedVariants}).
+ * Every other slot takes its ancestor names from each ancestor's canonical `wof:name`.
  *
  * A dependent locality also renders with its parent locality (`Brooklyn, New York`),
  * which is how such a place is written in an address.
@@ -194,14 +192,12 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: Nam
 
 	const selfName = slot.value
 
+	if (CHAIN_LEVELS[selfTag] && slot.language) {
+		return localizedVariants(row, selfTag, selfName, ancestry, slot.language)
+	}
+
 	if (isStructuralSlot(slot) && CHAIN_LEVELS[selfTag]) {
-		const variants = structuralVariants(row, selfTag, selfName, ancestry)
-
-		if (slot.language) {
-			variants.push(...localizedVariants(selfTag, selfName, ancestry, slot.language))
-		}
-
-		return variants
+		return structuralVariants(row, selfTag, selfName, ancestry)
 	}
 
 	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`,
@@ -291,10 +287,6 @@ export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: Nam
 
 		default:
 			return []
-	}
-
-	if (slot.language) {
-		variants.push(...localizedVariants(selfTag, selfName, ancestry, slot.language))
 	}
 
 	return variants
@@ -394,26 +386,51 @@ function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): st
  *
  * A county is left out of a chain when it carries the record's own name or its locality's,
  * because `Paris, Paris` repeats one place rather than naming two levels.
+ *
+ * With a `language`, every level is written in its ancestor's preferred name in that
+ * language, in one form, and a level whose ancestor has no such name is left out,
+ * so a chain never mixes `東京` with `Japan`.
+ * `keep` selects which subsets of the levels are rendered.
  */
 function structuralVariants(
 	row: WOFRecord,
 	selfTag: ComponentTag,
 	selfName: string,
-	ancestry: AncestorRecords
+	ancestry: AncestorRecords,
+	localized?: {
+		language: string
+		layoutCountry?: string
+		keep?: (subset: readonly ChainLevel[], levels: readonly ChainLevel[]) => boolean
+	}
 ): WOFVariantSpec[] {
+	const nameOf = (ancestor: WOFRecord) => (localized ? preferredName(ancestor, localized.language) : ancestor.name)
+
 	const levels = (CHAIN_LEVELS[selfTag] ?? []).filter((level) => {
 		const ancestor = ancestry[level]
 
 		if (!ancestor) return false
 
-		return level !== "subregion" || (ancestor.name !== selfName && ancestor.name !== ancestry.locality?.name)
+		const name = nameOf(ancestor)
+
+		if (!name) return false
+
+		return level !== "subregion" || (name !== selfName && name !== (ancestry.locality && nameOf(ancestry.locality)))
 	})
 
-	const forms = new Map(levels.map((level) => [level, levelForms(level, ancestry[level]!, row.country)]))
+	const forms = new Map(
+		levels.map((level) => [
+			level,
+			localized ? [nameOf(ancestry[level]!)!] : levelForms(level, ancestry[level]!, row.country),
+		])
+	)
+
 	const variants: WOFVariantSpec[] = []
 
 	for (let mask = 0; mask < 1 << levels.length; mask++) {
 		const subset = levels.filter((_, i) => mask & (1 << i))
+
+		if (localized?.keep && !localized.keep(subset, levels)) continue
+
 		const suffix = subset.length ? `with-${subset.join("-")}` : "self"
 		const canonical: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
 		const alternate: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
@@ -432,10 +449,12 @@ function structuralVariants(
 			}
 		}
 
-		variants.push({ hierarchy: true, suffix, components: canonical })
+		const layoutCountry = localized?.layoutCountry
+
+		variants.push({ hierarchy: true, suffix, components: canonical, layoutCountry })
 
 		if (differs) {
-			variants.push({ hierarchy: true, suffix: `${suffix}-form`, components: alternate })
+			variants.push({ hierarchy: true, suffix: `${suffix}-form`, components: alternate, layoutCountry })
 		}
 	}
 
@@ -443,55 +462,33 @@ function structuralVariants(
 }
 
 /**
- * A record's hierarchy written entirely in one language: without and with the country.
+ * A record's chains written entirely in one language.
  *
- * Returns no variant when the record has no ancestor to join, or when any ancestor
- * it has lacks a preferred name in the language.
+ * A language official in the record's country renders every ordered subset of the levels,
+ * in the country's own order and join: `Zürich, Zürich, Schweiz` in German.
+ * Any other language renders the name alone, with every level but the country, and with every
+ * level, in the order and join of the countries that write that language: `日本東京` in Japanese.
  */
 function localizedVariants(
+	row: WOFRecord,
 	selfTag: ComponentTag,
 	selfName: string,
 	ancestry: AncestorRecords,
 	language: string
 ): WOFVariantSpec[] {
-	const tags = (
-		selfTag === "dependent_locality" ? ["locality", "region"] : selfTag === "locality" ? ["region"] : []
-	) as Array<"locality" | "region">
-
-	const components: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }
-
-	for (const tag of tags) {
-		const ancestor = ancestry[tag]
-
-		if (!ancestor) continue
-
-		const name = preferredName(ancestor, language)
-
-		if (!name) return []
-
-		components[tag] = name
+	if (OFFICIAL_LANGUAGES[row.country]?.official.includes(language)) {
+		return structuralVariants(row, selfTag, selfName, ancestry, { language })
 	}
 
-	if (Object.keys(components).length === 1) return []
+	return structuralVariants(row, selfTag, selfName, ancestry, {
+		language,
+		layoutCountry: layoutCountryForLanguage(language) ?? undefined,
+		keep: (subset, levels) => {
+			const below = levels.filter((level) => level !== "country")
 
-	const layoutCountry = layoutCountryForLanguage(language) ?? undefined
-
-	const variants: WOFVariantSpec[] = [
-		{ hierarchy: true, suffix: `localized-${language}`, components: { ...components }, layoutCountry },
-	]
-
-	const country = ancestry.country && preferredName(ancestry.country, language)
-
-	if (country) {
-		variants.push({
-			hierarchy: true,
-			suffix: `localized-${language}-country`,
-			components: { ...components, country },
-			layoutCountry,
-		})
-	}
-
-	return variants
+			return !subset.length || subset.length === levels.length || subset.join() === below.join()
+		},
+	})
 }
 
 /**

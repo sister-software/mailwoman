@@ -49,7 +49,8 @@ const formatComponents = (components: Record<string, string | undefined>): strin
 
 const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { exploreWOFRecord, augmentExploredRow } = await import("@mailwoman/corpus/adapters/wof/admin/json/explore")
+		const { exploreWOFRecord, augmentExploredRow, findWOFFeaturePath, listWOFRepos } =
+			await import("@mailwoman/corpus/adapters/wof/admin/json/explore")
 
 		const lines: string[] = []
 		const query = args[0].trim()
@@ -87,9 +88,19 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 				.execute()
 
 			const seen = new Set<number>()
-			const places = matches.filter((match) => !seen.has(match.id) && seen.add(match.id)).slice(0, options.limit)
+			const unique = matches.filter((match) => !seen.has(match.id) && seen.add(match.id))
 
-			if (!places.length) throw new Error(`No candidate.db row has the name "${query}"`)
+			if (!unique.length) throw new Error(`No candidate.db row has the name "${query}"`)
+
+			// candidate.db also holds places from other gazetteers, whose ids have no Who's On First file to read.
+			const reposRoot = options.reposRoot ?? undefined
+			const repos = await listWOFRepos(reposRoot)
+			const backed = await Promise.all(unique.map((match) => findWOFFeaturePath(match.id, reposRoot, repos)))
+			const places = unique.filter((_, index) => backed[index]).slice(0, options.limit)
+
+			if (!places.length) {
+				throw new Error(`None of the ${unique.length} candidate.db places named "${query}" has a Who's On First file`)
+			}
 
 			if (options.pick > places.length) {
 				throw new Error(`--pick ${options.pick} is past the ${places.length} matches for "${query}"`)

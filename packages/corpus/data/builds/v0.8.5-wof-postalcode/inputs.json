@@ -1,0 +1,8 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build rebuilds wof-postalcode for the v0.8.5-overlay (#2854), whose shared hierarchy renderer now writes romanized chains in largest-first countries smallest first. It runs apart from v0.8.5-wof-structure so the two adapters' record indexes are not resident together.",
+	"corpusVersion": "v0.8.5-wof-postalcode",
+	"adapters": {
+		"wof-postalcode": { "inputPath": "src/wof-repos" }
+	}
+}

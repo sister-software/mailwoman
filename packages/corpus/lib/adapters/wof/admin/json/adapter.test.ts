@@ -197,26 +197,80 @@ describe("variantsFor (pure)", () => {
 			slot("ブルックリン区", "jpn")
 		)
 
-		const localized = v.find((x) => x.suffix === "localized-jpn")!
+		expect(v.map((x) => x.suffix)).toEqual(["self", "with-locality-region", "with-locality-region-country"])
 
-		expect(localized.components).toEqual({
+		const local = v.find((x) => x.suffix === "with-locality-region")!
+
+		expect(local.components).toEqual({
 			dependent_locality: "ブルックリン区",
 			locality: "ニューヨーク",
 			region: "ニューヨーク州",
 		})
 
-		expect(localized.layoutCountry).toBe("JP")
-		expect(v.find((x) => x.suffix === "localized-jpn-country")?.components.country).toBe("アメリカ合衆国")
+		expect(local.layoutCountry).toBe("JP")
+		expect(v.find((x) => x.suffix === "with-locality-region-country")?.components.country).toBe("アメリカ合衆国")
 	})
 
-	it("skips a language that one of the record's ancestors lacks", () => {
+	it("leaves out an ancestor that lacks the language rather than writing its name in another", () => {
 		const v = variantsFor(
 			rec({ name: "Brooklyn", placetype: "borough" }),
 			{ locality: newYorkCity, region: rec({ name: "New York", placetype: "region" }), country: unitedStates },
 			slot("ブルックリン区", "jpn")
 		)
 
-		expect(v.some((x) => x.suffix.startsWith("localized-"))).toBe(false)
+		expect(v.map((x) => x.components)).toContainEqual({
+			dependent_locality: "ブルックリン区",
+			locality: "ニューヨーク",
+			country: "アメリカ合衆国",
+		})
+
+		expect(v.some((x) => Object.values(x.components).includes("New York"))).toBe(false)
+	})
+
+	it("writes a region in its own language with its country", () => {
+		const japan = rec({
+			name: "Japan",
+			placetype: "country",
+			country: "JP",
+			nameVariants: new Map([["name:jpn_x_preferred", "日本"]]),
+		})
+
+		const v = variantsFor(
+			rec({ name: "Tokyo", placetype: "region", country: "JP" }),
+			{ country: japan },
+			slot("東京都", "jpn")
+		)
+
+		expect(v.map((x) => x.components)).toEqual([{ region: "東京都" }, { region: "東京都", country: "日本" }])
+	})
+
+	it("renders every ordered subset of the levels in a language the country writes", () => {
+		const german = (name: string) => new Map([["name:deu_x_preferred", name]])
+
+		const v = variantsFor(
+			rec({ name: "Zürich", placetype: "locality", country: "CH" }),
+			{
+				subregion: rec({
+					name: "Bezirk Zürich",
+					placetype: "county",
+					country: "CH",
+					nameVariants: german("Bezirk Zürich"),
+				}),
+				region: rec({ name: "Zurich", placetype: "region", country: "CH", nameVariants: german("Zürich") }),
+				country: rec({ name: "Switzerland", placetype: "country", country: "CH", nameVariants: german("Schweiz") }),
+			},
+			slot("Zürich", "deu")
+		)
+
+		expect(v).toHaveLength(8)
+
+		expect(v.find((x) => x.suffix === "with-region-country")?.components).toEqual({
+			locality: "Zürich",
+			region: "Zürich",
+			country: "Schweiz",
+		})
+
+		expect(v.every((x) => x.layoutCountry === undefined)).toBe(true)
 	})
 
 	it("renders a localized hierarchy without the country when the country lacks the language", () => {
@@ -226,8 +280,8 @@ describe("variantsFor (pure)", () => {
 			slot("브루클린", "kor")
 		)
 
-		expect(v.map((x) => x.suffix)).toContain("localized-kor")
-		expect(v.map((x) => x.suffix)).not.toContain("localized-kor-country")
+		expect(v.map((x) => x.suffix)).toContain("with-locality-region")
+		expect(v.some((x) => x.components.country)).toBe(false)
 	})
 })
 
