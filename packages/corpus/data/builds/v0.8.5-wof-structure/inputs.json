@@ -1,0 +1,8 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build rebuilds wof-admin for the v0.8.5-overlay over v0.8.4-overlay (#2854). The canonical and colloquial names of each record render every ordered subset of their locality, county, region and country ancestors, each level in its canonical form and in one rotating alternate: the country's codex surface forms, the libaddressinput region code, and colloquial names. The input is the WOF clone v0.8.4-cross-language read.",
+	"corpusVersion": "v0.8.5-wof-structure",
+	"adapters": {
+		"wof-admin": { "inputPath": "src/wof-repos" }
+	}
+}
