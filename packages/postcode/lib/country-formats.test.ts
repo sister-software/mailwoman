@@ -73,6 +73,20 @@ describe("acceptPostcode", () => {
 		expect(acceptPostcode("AX-22100", "AX")).toBe("22100")
 	})
 
+	test("removes the prefixes libaddressinput declares or prints as a postal mark", () => {
+		expect(acceptPostcode("〒817-1521", "JP")).toBe("817-1521")
+		expect(acceptPostcode("〒 817-1521", "JP")).toBe("817-1521")
+		expect(acceptPostcode("817-1521", "JP")).toBe("817-1521")
+		expect(acceptPostcode("L-4750", "LU")).toBe("4750")
+		expect(acceptPostcode("FO100", "FO")).toBe("100")
+		expect(acceptPostcode("HT6110", "HT")).toBe("6110")
+		expect(acceptPostcode("AZ 1000", "AZ")).toBe("1000")
+	})
+
+	test("leaves Puerto Rico's region code unprefixed, since the layout prints it after the city", () => {
+		expect(postcodeSyntax("PR")?.prefix).toBeNull()
+	})
+
 	test("matches nothing for a country that states no postcode", () => {
 		expect(postcodeSyntax("AE")).toBeNull()
 		expect(acceptPostcode("00000", "AE")).toBeNull()

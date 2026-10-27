@@ -27,6 +27,7 @@ import {
 
 interface AddressMetadata {
 	readonly fmt?: string
+	readonly postprefix?: string
 	readonly zip?: string
 	readonly sub_keys?: string
 	readonly sub_isoids?: string
@@ -43,13 +44,28 @@ interface SubregionPostcodeSource {
 }
 
 /**
- * The country-code prefix a `fmt` prints immediately before `%Z`, such as `MD-` in `MD-%Z %C`.
+ * The literal a layout prints immediately before `%Z` as part of the written postcode,
+ * such as `MD-` in `MD-%Z %C`, `L-` in Luxembourg's `L-%Z %C` or `〒` in Japan's `〒%Z`.
  *
- * Only a two-letter code joined by a hyphen counts.
- * `%C PR %Z` prints a region code with spaces around it, and that region code is not part of the postcode.
+ * libaddressinput's `postprefix` counts when `fmt` prints it at the start of a line.
+ * Puerto Rico declares `postprefix: "PR "` but prints it after the city (`%C PR %Z`),
+ * where it is the region code.
+ *
+ * Without a declared prefix, a two-letter code joined by a hyphen counts, and
+ * so does a postal symbol such as `〒`.
  */
-function postcodePrefix(fmt: string | undefined): string | null {
-	const match = fmt?.match(/(?:^|%n|%[A-Z]|\s)([A-Z]{2}-)%Z/u)
+function postcodePrefix(metadata: AddressMetadata): string | null {
+	const fmt = metadata.fmt
+
+	if (!fmt) return null
+
+	const declared = metadata.postprefix
+
+	if (declared && new RegExp(`(?:^|%n)${declared.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}%Z`, "u").test(fmt)) {
+		return declared
+	}
+
+	const match = fmt.match(/(?:^|%n|%[A-Z]|\s)([A-Z]{2}-|\p{So})%Z/u)
 
 	return match ? match[1]! : null
 }
@@ -112,7 +128,7 @@ for (const file of await Globerator.files("json", {
 		}
 	}
 
-	const prefix = postcodePrefix(metadata.fmt)
+	const prefix = postcodePrefix(metadata)
 	const pattern = stringifyJSON(metadata.zip)
 	const placement = placementInFormat(metadata.fmt)
 
