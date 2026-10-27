@@ -6,8 +6,10 @@
 #    rows against 7.5% at 15.0 and 7.5. Over 90,000 steps at 128 rows that is 4.42 M WOF rows and 7.10 M others,
 #    the rows arm A reads (3.84 M in the primer, then 0.58 M WOF and 7.10 M others in the base), so the arms
 #    differ in when WOF is read and not in how much of each source is read.
-# 4. Every `min_draws` receipt is two thirds of the base's, rounded down, because every other source's share
-#    of an audited epoch falls to (1 - 0.383) / (1 - 0.075) = 0.667 of its share in the base.
+# 4. Every `min_draws` receipt is 0.6 of the base's, rounded down. Every source but WOF draws 0.67 of its base share
+#    of an audited epoch, and the base sets each floor at 90% of expected draws, so 0.6 = 0.9 x 0.67 keeps each
+#    receipt at about 81% of the source's expected draws here. At two thirds of the counts the base's margin was
+#    smaller than the spread of a small source: ban-bl, 5,545 rows, drew 452 and 435 against a floor of 453.
 # 5. `data.val_rows` is 36,864, 1.5 times the base's, so the label and country floors keep their rows.
 # 6. `train.seed` is 43, and `train.output_dir` and `train.trackio_run_name` name the run.
 #
@@ -255,7 +257,7 @@ data:
   required_corpus_receipts:
     # Each receipt stops the run when the epoch-mixture audit draws fewer matching rows than `min_draws`.
     - name: us-city-state-postcode
-      min_draws: 333
+      min_draws: 300
       source: spliced-trailing-region-us
       country: US
       component_sequence:
@@ -263,169 +265,169 @@ data:
         - region
         - postcode
     - name: ca-region-code-tail
-      min_draws: 666
+      min_draws: 600
       source: spliced-trailing-region-ca-bare
       country: CA
     - name: us-secondary-unit-current-generation
-      min_draws: 1333
+      min_draws: 1200
       source: spliced-unit-v30
       country: US
     - name: bare-postcode-czech
-      min_draws: 166
+      min_draws: 150
       source: codex-bare-postcode
       country: CZ
     - name: cz-postcode-first-current-generation
-      min_draws: 666
+      min_draws: 600
       source: rendered-cz-pcfirst-preposition-v21
       country: CZ
     - name: fr-bare-street-current-generation
-      min_draws: 666
+      min_draws: 600
       source: fragment-fr-bare-street-v22
       country: FR
     - name: sg-registers
-      min_draws: 666
+      min_draws: 600
       source: rendered-sg-register
       country: SG
     - name: pk-house-line
-      min_draws: 666
+      min_draws: 600
       source: rendered-pk-register
       country: PK
     - name: bd-trailing-postcode
-      min_draws: 333
+      min_draws: 300
       source: rendered-bd-register
       country: BD
     - name: es-trailing-region-local-surfaces
-      min_draws: 333
+      min_draws: 300
       source: spliced-trailing-region-es-v28
       country: ES
     - name: us-military-po-box
-      min_draws: 333
+      min_draws: 300
       source: invented-po-box-military
       country: US
     # GB rows come from OS OpenData now. rendered-gb drew 24,314 of the 1,000,000 audited rows at weight 6.0, and this
     # floor sits at the same 1,000 as the other rendered locales.
     - name: gb-os-open-rows
-      min_draws: 666
+      min_draws: 600
       source: rendered-gb-os-open
       country: GB
     - name: pt-native-order
-      min_draws: 666
+      min_draws: 600
       source: rendered-pt
       country: PT
     - name: ch-native-order
-      min_draws: 666
+      min_draws: 600
       source: rendered-ch
       country: CH
     - name: hr-native-order
-      min_draws: 666
+      min_draws: 600
       source: rendered-hr
       country: HR
     - name: sk-native-order
-      min_draws: 666
+      min_draws: 600
       source: rendered-sk
       country: SK
     - name: lu-native-order
-      min_draws: 666
+      min_draws: 600
       source: rendered-lu
       country: LU
     - name: br-overture-rooftops
-      min_draws: 666
+      min_draws: 600
       source: overture-latam
       country: BR
     - name: mx-overture-rooftops
-      min_draws: 666
+      min_draws: 600
       source: overture-latam
       country: MX
     # The OSM receipts copied from v7.1.0.
     - name: osm-ru-exposure
-      min_draws: 31186
+      min_draws: 28068
       source: osm-ru
       country: RU
     - name: osm-in-exposure
-      min_draws: 8046
+      min_draws: 7242
       source: osm-in
       country: IN
     - name: osm-id-exposure
-      min_draws: 8280
+      min_draws: 7452
       source: osm-id
       country: ID
     - name: osm-ng-exposure
-      min_draws: 2093
+      min_draws: 1884
       source: osm-ng
       country: NG
     - name: osm-vn-exposure
-      min_draws: 5346
+      min_draws: 4812
       source: osm-vn
       country: VN
     - name: osm-pk-exposure
-      min_draws: 6206
+      min_draws: 5586
       source: osm-pk
       country: PK
     - name: osm-bd-exposure
-      min_draws: 1733
+      min_draws: 1560
       source: osm-bd
       country: BD
     # The address-system sources, each at 90% of its expected draws over the 1,000,000-row epoch, rounded down to
     # a multiple of 10. The draws are the v0.8.2 epoch-mixture audit's, run locally on the re-rooted manifest.
     - name: ban-gp-exposure
-      min_draws: 1780
+      min_draws: 1602
       source: ban-gp
       country: GP
     - name: ban-mq-exposure
-      min_draws: 1466
+      min_draws: 1320
       source: ban-mq
       country: MQ
     - name: ban-re-exposure
-      min_draws: 1953
+      min_draws: 1758
       source: ban-re
       country: RE
     - name: ban-gf-exposure
-      min_draws: 1246
+      min_draws: 1122
       source: ban-gf
       country: GF
     - name: ban-yt-exposure
-      min_draws: 1020
+      min_draws: 918
       source: ban-yt
       country: YT
     - name: ban-nc-exposure
-      min_draws: 1126
+      min_draws: 1014
       source: ban-nc
       country: NC
     - name: ban-pm-exposure
-      min_draws: 486
+      min_draws: 438
       source: ban-pm
       country: PM
     - name: ban-bl-exposure
-      min_draws: 453
+      min_draws: 408
       source: ban-bl
       country: BL
     - name: ban-mf-exposure
-      min_draws: 560
+      min_draws: 504
       source: ban-mf
       country: MF
     - name: ban-pf-exposure
-      min_draws: 533
+      min_draws: 480
       source: ban-pf
       country: PF
     - name: ro-retea-scolara-exposure
-      min_draws: 2433
+      min_draws: 2190
       source: ro-retea-scolara
       country: RO
     - name: lv-varis-exposure
-      min_draws: 3846
+      min_draws: 3462
       source: lv-varis
       country: LV
     - name: cordis-exposure
-      min_draws: 4446
+      min_draws: 4002
       source: cordis
     - name: fr-finess-overseas-exposure
-      min_draws: 686
+      min_draws: 618
       source: fr-finess-overseas
     - name: fr-annuaire-education-overseas-exposure
-      min_draws: 760
+      min_draws: 684
       source: fr-annuaire-education-overseas
     - name: gleif-lei-exposure
-      min_draws: 15586
+      min_draws: 14028
       source: gleif-lei
     # #2750. The move copies a train row whose postcode sits on its layout's native side of the locality-and-region
     # block, so these four receipts floor that native population in the D-rule locales. They match the drawn row
@@ -433,28 +435,28 @@ data:
     # source's share of a 1,000,000-row epoch rather than fitted to an audit. A shortfall stops the run for a
     # diagnosis, and the floor stays where it is.
     - name: us-native-locality-region-postcode
-      min_draws: 6666
+      min_draws: 6000
       country: US
       component_sequence:
         - locality
         - region
         - postcode
     - name: fr-native-postcode-locality
-      min_draws: 6666
+      min_draws: 6000
       source: ban
       country: FR
       component_sequence:
         - postcode
         - locality
     - name: de-native-postcode-locality
-      min_draws: 666
+      min_draws: 600
       source: rendered-de
       country: DE
       component_sequence:
         - postcode
         - locality
     - name: gb-native-locality-postcode
-      min_draws: 333
+      min_draws: 300
       source: rendered-gb-os-open
       country: GB
       component_sequence:
@@ -464,15 +466,15 @@ data:
     # fr-order variants A, B and D, and nl-postcode orders 1 and 2. The move skips gnaf and the CZ pcfirst sources.
     # These floor their presence so a rebuild that dropped one is caught before a GPU is allocated.
     - name: au-gnaf-rows
-      min_draws: 666
+      min_draws: 600
       source: gnaf
       country: AU
     - name: fr-order-kept-variants
-      min_draws: 666
+      min_draws: 600
       source: rendered-fr-order
       country: FR
     - name: nl-postcode-rows
-      min_draws: 666
+      min_draws: 600
       source: rendered-nl-postcode
       country: NL
   required_validation_coverage:
