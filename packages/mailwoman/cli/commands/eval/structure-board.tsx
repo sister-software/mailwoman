@@ -8,6 +8,8 @@
  *   confidence intervals per class and per minimal pair. Informational: always exits 0.
  */
 
+import { caseNormalizationOf } from "@mailwoman/core/pipeline"
+
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 
 export const description = "Held-out structure board — unseen orders, query shapes, pairs and typos with CIs (#2857)"
@@ -26,6 +28,11 @@ export const spec = {
 		},
 		fixtures: { type: "string", description: "Fixture JSONL override (default: the held-out structure board)" },
 		klass: { type: "string", description: "Score only one class (e.g. relation-pair) for a fast loop" },
+		"case-normalization": {
+			type: "string",
+			choices: ["title-case", "preserve"],
+			description: "Pin case handling. Omitted, the library default applies",
+		},
 		"rows-out": {
 			type: "string",
 			description: "Write one JSONL line per graded row, for comparing arms by cell and pair",
@@ -46,6 +53,7 @@ const EvalStructureBoard = harnessCommand(
 				fixturesPath: options.fixtures,
 				klass: options.klass,
 				rowsOut: options.rowsOut,
+				caseNormalization: caseNormalizationOf(options.caseNormalization),
 			})
 		).exitCode
 	},

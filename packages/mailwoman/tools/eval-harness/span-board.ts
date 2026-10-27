@@ -10,7 +10,7 @@
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import { type CaseNormalization, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
@@ -103,6 +103,11 @@ export interface SpanBoardOptions {
 	 * A JSONL file that receives one `{id, klass, pair, cell, ok, got}` line per graded row.
 	 */
 	rowsOut?: string
+	/**
+	 * How the parser treats the input's case.
+	 * Omitted, the library default applies.
+	 */
+	caseNormalization?: CaseNormalization
 }
 
 export interface SpanBoardResult {
@@ -148,7 +153,12 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 
 	for await (const fixture of fixtures) {
 		fixtureCount++
-		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
+
+		const tree = await classifier.parse(fixture.input, {
+			...productionParseOptions(fixture.input),
+			...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
+		})
+
 		const { ok, got } = spec.grade(fixture, flattenNodes(tree.roots))
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
 
