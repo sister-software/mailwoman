@@ -30,9 +30,10 @@ from .app import VOL_MOUNT, app, hf_secret, training_image, vol
 from .resume import check_clearable, resolve_run_paths, resume_point
 from .settings import settings
 
-# Training-function wall-clock budget per attempt: 21,600 s (6h) covers the 60k A100 recipe.
-# The preflight checks any recipe against the ceiling, so a config that cannot fit fails before a GPU is billed.
-TRAIN_TIMEOUT_SECONDS = 21600
+# Training-function wall-clock budget per attempt: 32,400 s (9h) covers a 90k A100 recipe, which the estimate below
+# puts at about 30,400 s. The preflight checks any recipe against the ceiling, so a config that cannot fit fails before
+# a GPU is billed.
+TRAIN_TIMEOUT_SECONDS = 32400
 # ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The default GPU is the 80 GB card. It has
 # the same compute and more memory bandwidth, so this rate stays a conservative bound. A launch on
 # a smaller `--gpu` is not covered by this measurement.

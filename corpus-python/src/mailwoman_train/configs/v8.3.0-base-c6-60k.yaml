@@ -1,9 +1,9 @@
 # v8.3.0-base-c6-60k is the base on the C6 vocabulary (#2853), trained after the Who's On First address-structure
 # primer (#2854). It is v8.2.0-base-60k.yaml with these differences:
 #
-# 1. `data.corpus_dir` is the v0.8.5-overlay: the v0.8.4-overlay over v0.8.2 with wof-admin and wof-postalcode
-#    rebuilt over every Who's On First repository (v0.8.5-wof-structure, v0.8.5-wof-postalcode), each a
-#    country-capped sample of its build in hash order.
+# 1. `data.corpus_dir` is the v0.8.7-overlay: the v0.8.5-overlay with wof-admin and wof-postalcode sampled by
+#    structure cell before rendering (v0.8.6-wof-structure, v0.8.6-wof-postalcode), with the 30 tag orders of the
+#    held-out structure board kept out (#2857). `augment_exclude_sources` leaves both WOF sources unaugmented.
 # 2. `data.tokenizer_dir` is the C6 vocabulary, tokenizer.model md5 5a1759ca2a384ab7fe1ac2166399106c: unigram, 48,000
 #    pieces, `split_digits` on, and every punctuation and symbol character as a single-character piece, so no gold edge
 #    at a character-class change falls inside a piece (0 of 317,878 over heldout-dev-v0.8.0).
@@ -23,7 +23,7 @@
 # Launch with `--fresh`: 60,000 steps on an A100-40GB.
 
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.5-overlay/corpus-v0.8.5-overlay
+  corpus_dir: /data/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c6-isolated-punctuation
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
@@ -542,6 +542,10 @@ data:
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
     # must not contain.
     - codex-bare-postcode
+    # On WOF rows the region and directional rewrites expand a word inside a place name (`AL MANĀMAH` to
+    # `Alabama MANĀMAH`) under the original label, and the build already renders a `drop-commas` variant.
+    - wof-admin
+    - wof-postalcode
   train_rows_per_epoch: 1000000
   # The validation draw is sized to hold the venue and country rows the label floors above require.
   val_rows: 24576

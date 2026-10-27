@@ -4,7 +4,8 @@
 #
 # It is v8.3.0-base-c6-60k.yaml with these differences:
 #
-# 1. `data.corpus_dir` is the v0.8.5-overlay, whose wof-admin renders every structural chain of a record's canonical
+# 1. `data.corpus_dir` is the v0.8.7-overlay, whose wof-admin and wof-postalcode are sampled by structure cell before
+#    rendering, with the 30 tag orders of the held-out structure board kept out (#2857). Its wof-admin renders every structural chain of a record's canonical
 #    and colloquial names (v0.8.5-wof-structure).
 # 2. `data.source_weights` gives wof-admin 2.0 and wof-postalcode 1.0, and every other overlay source 0.0, so the run
 #    reads these two.
@@ -19,7 +20,7 @@
 # Launch with `--fresh`: 30,000 steps on an A100-40GB.
 
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.5-overlay/corpus-v0.8.5-overlay
+  corpus_dir: /data/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c6-isolated-punctuation
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
@@ -82,11 +83,14 @@ data:
   train_rows_per_epoch: 1000000
   val_rows: 24576
   coarse_filter: true
-  augment_directional_prob: 0.3
-  augment_region_prob: 0.3
-  augment_glue_prob: 0.25
-  augment_ordinal_prob: 0.3
-  augment_punct_drop_prob: 0.3
+  # The run reads only the two WOF sources. On their rows the region and directional rewrites expand a word inside a
+  # place name (`AL MANĀMAH` to `Alabama MANĀMAH`, `S.A.R.` to `South.A.R.`) under the original label, glue and
+  # ordinal change no row, and punctuation drop repeats the build's `drop-commas` variant, so every augmentation is off.
+  augment_directional_prob: 0.0
+  augment_region_prob: 0.0
+  augment_glue_prob: 0.0
+  augment_ordinal_prob: 0.0
+  augment_punct_drop_prob: 0.0
   augment_postcode_move_prob: 0.0
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
