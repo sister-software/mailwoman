@@ -100,7 +100,10 @@ export interface SpanBoardOptions {
 	 */
 	klass?: string
 	/**
-	 * A JSONL file that receives one `{id, klass, pair, cell, ok, got}` line per graded row.
+	 * A JSONL file that receives one `{id, klass, pair, cell, ok, got, confidence}` line per graded row.
+	 *
+	 * `confidence` is the lowest confidence among the parse's spans, or `null` for a parse
+	 * with no span, so a reader can compare the parser's confidence with the row's outcome.
 	 */
 	rowsOut?: string
 	/**
@@ -148,7 +151,17 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	const tally = new Map<string, { hit: number; total: number; misses: Array<Fixture & { got: string }> }>()
 	const pairs = new Map<string, boolean>()
 	const cells = new Map<string, { hit: number; total: number }>()
-	const graded: Array<{ id: string; klass: string; pair?: string; cell?: string; ok: boolean; got: string }> = []
+
+	const graded: Array<{
+		id: string
+		klass: string
+		pair?: string
+		cell?: string
+		ok: boolean
+		got: string
+		confidence: number | null
+	}> = []
+
 	let fixtureCount = 0
 
 	for await (const fixture of fixtures) {
@@ -159,11 +172,22 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 			...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
 		})
 
-		const { ok, got } = spec.grade(fixture, flattenNodes(tree.roots))
+		const nodes = flattenNodes(tree.roots)
+		const { ok, got } = spec.grade(fixture, nodes)
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
 
 		if (options.rowsOut) {
-			graded.push({ id: fixture.id, klass: fixture.klass, pair: fixture.pair, cell: fixture.cell, ok, got })
+			const confidences = nodes.map((n) => n.confidence).filter((c) => typeof c === "number")
+
+			graded.push({
+				id: fixture.id,
+				klass: fixture.klass,
+				pair: fixture.pair,
+				cell: fixture.cell,
+				ok,
+				got,
+				confidence: confidences.length ? Math.min(...confidences) : null,
+			})
 		}
 
 		if (fixture.pair) {
