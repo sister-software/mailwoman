@@ -57,6 +57,9 @@ test("walkFeaturesCached yields the walk's records, then the same records from t
 
 	await writeLocalJSONFile(feature(2, "Queens County"), repo, "data/2.geojson")
 
-	expect(await wofRecordCachePath(repo, cache)).not.toBe(cacheFile)
-	expect((await Array.fromAsync(walkFeaturesCached(repo, { cacheDir: cache })))[1]!.name).toBe("Queens County")
+	// extractFingerprint computes a path's digest once per process, so the edited repo is read through another spelling.
+	const edited = `${repo.toString()}/.`
+
+	expect(await wofRecordCachePath(edited, cache)).not.toBe(cacheFile)
+	expect((await Array.fromAsync(walkFeaturesCached(edited, { cacheDir: cache })))[1]!.name).toBe("Queens County")
 })

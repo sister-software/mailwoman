@@ -23,11 +23,13 @@
 import { readLocalJSONFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
+import { gitHead, workingTreeStatus } from "@mailwoman/core/git"
 import { createHash, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { isPresent } from "@mailwoman/core/objects"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
+import { AsyncSequence } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
@@ -175,50 +177,112 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
  * A digest of an extract on disk.
  *
  * A file is hashed whole.
- * A directory is described by its listing, one `relative path, size, mtime` line per file,
- * because an adapter directory such as Who's On First's repositories holds over 100 GB
- * and hashing it would add hours to a build.
+ * A git checkout in the directory is described by its relative path, its HEAD commit and its
+ * `git status --porcelain` lines, which change with a commit, an edit, a new file or a deletion.
  *
- * The listing changes when a file is added, removed, resized or rewritten.
+ * Every other file is described by a `relative path, size, mtime` line, which changes
+ * when the file is added, removed, resized or rewritten.
+ *
+ * Hashing content would add hours to a build: Who's On First's 273 checkouts hold over 100 GB,
+ * and listing and stat'ing their files took over 28 minutes before running out of a 4 GB heap.
+ * A directory with no checkout gives the same digest as a listing read file by file.
+ *
+ * A process computes each path's digest once: the WOF record cache
+ * and the build's extract hash both read it.
  */
-export async function extractFingerprint(path: PathBuilderLike): Promise<string> {
+export function extractFingerprint(path: PathBuilderLike): Promise<string> {
+	const key = path.toString()
+	let digest = fingerprints.get(key)
+
+	if (!digest) {
+		fingerprints.set(key, (digest = computeFingerprint(path)))
+		digest.catch(() => fingerprints.delete(key))
+	}
+
+	return digest
+}
+
+/**
+ * The git and stat calls {@linkcode extractFingerprint} keeps in flight.
+ *
+ * `git status` on one WOF checkout takes about 5 s and spends most of it waiting on the drive.
+ */
+const FINGERPRINT_CONCURRENCY = 16
+
+const fingerprints = new Map<string, Promise<string>>()
+
+async function computeFingerprint(path: PathBuilderLike): Promise<string> {
 	if (await isFile(path)) return sha256File(path)
 
-	const names = await Globerator.from("**/*", { cwd: path.toString(), absolute: false }).toArray()
+	const checkouts = await gitCheckouts(path)
 	const hash = createHash("sha256")
 
-	for (const name of names.toSorted()) {
-		const stat = await statPath(resolvePath(path, name))
+	const states = await AsyncSequence.from<string>(checkouts)
+		.parallelMap(
+			async (checkout) => {
+				const dir = resolvePath(path, checkout)
 
-		if (!stat.isFile()) continue
+				return `${checkout}\t${await gitHead(dir)}\n${(await workingTreeStatus(dir)).join("\n")}\n`
+			},
+			{ concurrency: FINGERPRINT_CONCURRENCY, ordered: true }
+		)
+		.toArray()
 
-		hash.update(`${name}\t${stat.size}\t${stat.mtimeMs}\n`)
+	for (const state of states) {
+		hash.update(state)
+	}
+
+	if (checkouts.includes(".")) return hash.digest("hex")
+
+	const exclude = checkouts.flatMap((checkout) => [checkout, `${checkout}/**`])
+
+	const lines = await Globerator.from("**/*", { cwd: path.toString(), absolute: false, exclude })
+		.parallelMap(
+			async (name) => {
+				const stat = await statPath(resolvePath(path, name))
+
+				return stat.isFile() ? ([name, `${name}\t${stat.size}\t${stat.mtimeMs}\n`] as const) : null
+			},
+			{ concurrency: FINGERPRINT_CONCURRENCY }
+		)
+		.toArray()
+
+	const files = lines.filter(isPresent).toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+
+	for (const [, line] of files) {
+		hash.update(line)
 	}
 
 	return hash.digest("hex")
 }
 
 /**
- * The HEAD commit of each git checkout in `path` and its immediate subdirectories, keyed by the
- * checkout's path relative to `path`, or `undefined` for a file or a directory holding no checkout.
+ * The git checkouts in `path` and its immediate subdirectories, as sorted paths
+ * relative to `path`, with `.` for `path` itself.
  *
  * The WOF input holds its checkouts one or two levels down: `whosonfirst-data-admin-us`
  * and `whosonfirst-data/whosonfirst-data-admin-gb`.
  */
-export async function inputRevisions(path: PathBuilderLike): Promise<Record<string, string> | undefined> {
-	if (await isFile(path)) return undefined
-
+async function gitCheckouts(path: PathBuilderLike): Promise<string[]> {
 	const markers = await Globerator.from(["*/.git", "*/*/.git", ".git"], {
 		cwd: path.toString(),
 		absolute: false,
 		onlyFiles: false,
 	}).toArray()
 
+	return markers.map((marker) => dirname(marker)).toSorted()
+}
+
+/**
+ * The HEAD commit of each git checkout in `path` and its immediate subdirectories, keyed by the
+ * checkout's path relative to `path`, or `undefined` for a file or a directory holding no checkout.
+ */
+export async function inputRevisions(path: PathBuilderLike): Promise<Record<string, string> | undefined> {
+	if (await isFile(path)) return undefined
+
 	const revisions: Record<string, string> = {}
 
-	for (const marker of markers.toSorted()) {
-		const checkout = dirname(marker) === "." ? "." : dirname(marker)
-
+	for (const checkout of await gitCheckouts(path)) {
 		revisions[checkout] = await gitHead(resolvePath(path, checkout))
 	}
 

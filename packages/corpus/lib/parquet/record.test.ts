@@ -18,6 +18,7 @@ import {
 	addToTally,
 	derivationHash,
 	type DerivationInputs,
+	extractFingerprint,
 	foldSourceLicenses,
 	inputRevisions,
 	readParquetRecord,
@@ -391,3 +392,41 @@ describe("inputRevisions", () => {
 		expect(await inputRevisions(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))).toBeUndefined()
 	})
 })
+
+describe("extractFingerprint over git checkouts", () => {
+	it("changes with an untracked file and again with its commit", async () => {
+		const identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+		const root = scratch.path("wof-repos")
+		const cwd = scratch.path("wof-repos", "whosonfirst-data-admin-us")
+
+		await writeLocalJSONFile({ id: 1 }, cwd, "data/1.geojson")
+		gitSync(["init", "--quiet"], { cwd })
+		gitSync(["add", "."], { cwd })
+		gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "fixture"], { cwd })
+
+		const clean = await computeFingerprintFresh(root)
+
+		await writeLocalJSONFile({ id: 2 }, cwd, "data/2.geojson")
+
+		const untracked = await computeFingerprintFresh(root)
+
+		gitSync(["add", "."], { cwd })
+		gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "second"], { cwd })
+
+		const committed = await computeFingerprintFresh(root)
+
+		expect(new Set([clean, untracked, committed]).size).toBe(3)
+	})
+})
+
+/**
+ * {@linkcode extractFingerprint} memoizes by path, so each reading here uses a
+ * fresh path string for the same directory.
+ */
+let freshCount = 0
+
+async function computeFingerprintFresh(root: { toString(): string }): Promise<string> {
+	freshCount++
+
+	return extractFingerprint(`${root.toString()}${"/.".repeat(freshCount)}`)
+}
