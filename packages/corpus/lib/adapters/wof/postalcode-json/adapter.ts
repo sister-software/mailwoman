@@ -197,7 +197,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				sampler,
 			})
 
-			await sampler?.writeCounts()
+			await sampler?.writeOutputs()
 		},
 	}
 }

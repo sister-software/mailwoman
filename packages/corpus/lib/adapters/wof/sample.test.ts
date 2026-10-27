@@ -114,6 +114,27 @@ describe("RowSampler", () => {
 		expect(keptWith(7)).not.toEqual(keptWith(8))
 	})
 
+	it("emits no row of a held-out cell, and holds at most heldOutPerCell of its rows out instead", () => {
+		const sampler = new RowSampler({
+			cellFloor: 3,
+			rowsPerCountry: 50,
+			holdOutCells: ["US|locality|preferred"],
+			heldOutPerCell: 2,
+		})
+
+		for (const r of rows) {
+			sampler.observe(r, r)
+		}
+
+		const kept = [...sampler.kept()]
+		const heldOut = [...sampler.heldOut()]
+
+		expect(kept.some((r) => r.slotKey === "name-fin-x-preferred")).toBe(false)
+		expect(heldOut).toHaveLength(2)
+		expect(heldOut.every((r) => r.slotKey === "name-fin-x-preferred")).toBe(true)
+		expect(sampler.cellCounts.get("US|locality|preferred|fin")).toBe(4)
+	})
+
 	it("keeps in one pass the rows a second pass over the final thresholds would keep, in observed order", () => {
 		const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, seed: 11 })
 

@@ -9,7 +9,42 @@
 				"cellFloor": 5,
 				"rowsPerCountry": 2500,
 				"seed": 20260922,
-				"countsFile": "corpus/versioned/v0.8.6-wof-structure/cell-counts.json"
+				"countsFile": "corpus/versioned/v0.8.6-wof-structure/cell-counts.json",
+				"$holdOutCells-note": "30 structure cells across 20 countries, kept out of every training arm for the structure test of #2857 step 5. Each shares its tags with a kept cell of its country, so its names still train in other orders and slots.",
+				"holdOutCells": [
+					"CN|subregion country|preferred",
+					"CN|dependent_locality locality|variant",
+					"MM|country locality|preferred",
+					"MM|locality country|variant",
+					"JO|locality region country|variant",
+					"JO|country region locality|preferred",
+					"BY|country region locality|preferred",
+					"BY|locality country|variant",
+					"AT|country locality|preferred",
+					"AT|dependent_locality subregion region|default",
+					"CM|region country|variant",
+					"CM|country region locality|preferred",
+					"PY|region country|variant",
+					"PY|country region locality|preferred",
+					"KH|locality region|variant",
+					"KH|country region locality|preferred",
+					"SD|region country|variant",
+					"SD|country locality|preferred",
+					"MZ|country region subregion|preferred",
+					"MZ|locality region|variant",
+					"GH|region country|variant",
+					"KR|dependent_locality locality region|variant",
+					"BI|region country|variant",
+					"SI|locality region|variant",
+					"GR|dependent_locality region country|variant",
+					"TH|country region|preferred",
+					"GA|locality region|variant",
+					"TN|region country|variant",
+					"PS|dependent_locality locality subregion region country|preferred",
+					"ET|country region locality|preferred"
+				],
+				"heldOutFile": "corpus/versioned/v0.8.6-wof-structure/held-out-cells.jsonl",
+				"heldOutPerCell": 20
 			}
 		}
 	}

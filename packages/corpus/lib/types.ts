@@ -431,6 +431,25 @@ export interface RowSample {
 	 * Relative paths resolve against the data root.
 	 */
 	countsFile?: string
+	/**
+	 * Structure cells kept out of the emitted rows, in the adapter's cell-key form,
+	 * for a held-out test of whether a model learned structure.
+	 *
+	 * Their rows are never emitted.
+	 * Up to `heldOutPerCell` of each cell's lowest-hash rows are written to `heldOutFile` instead.
+	 */
+	holdOutCells?: readonly string[]
+	/**
+	 * A JSONL file the held-out cells' rows are written to.
+	 * Relative paths resolve against the data root.
+	 */
+	heldOutFile?: string
+	/**
+	 * Rows written per held-out cell.
+	 *
+	 * @defaultValue 20
+	 */
+	heldOutPerCell?: number
 }
 
 /**

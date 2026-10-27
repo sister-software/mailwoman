@@ -8,7 +8,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 
 import { canonicalDedupKey } from "#adapters/dedup-key"
 import type { CanonicalRow, RowSample } from "#types"
@@ -188,6 +188,9 @@ export class RowSampler<T = SampledRow> {
 	readonly #language = new Map<string, LowestValues>()
 	readonly #country = new Map<string, LowestValues>()
 	readonly #candidates = new Map<string, Candidate<T>>()
+	readonly #holdOut: ReadonlySet<string>
+	readonly #heldOut = new Map<string, LowestValues>()
+	readonly #heldOutCandidates = new Map<string, Candidate<T>>()
 	/**
 	 * Renderable rows per full cell, `country|tag order|kind|language`.
 	 */
@@ -195,6 +198,7 @@ export class RowSampler<T = SampledRow> {
 
 	constructor(sample: RowSample) {
 		this.#sample = sample
+		this.#holdOut = new Set(sample.holdOutCells)
 	}
 
 	/**
@@ -238,6 +242,16 @@ export class RowSampler<T = SampledRow> {
 			return values.add(hash, text)
 		}
 
+		this.cellCounts.set(cell, (this.cellCounts.get(cell) ?? 0) + 1)
+
+		if (this.#holdOut.has(structure)) {
+			if (lowest(this.#heldOut, structure, this.#sample.heldOutPerCell ?? 20)) {
+				this.#heldOutCandidates.set(row.sourceID, { payload, hash, structure, language, country: row.country })
+			}
+
+			return
+		}
+
 		const held = [
 			lowest(this.#structure, structure, floor),
 			lowest(this.#language, language, floor),
@@ -247,8 +261,18 @@ export class RowSampler<T = SampledRow> {
 		if (held) {
 			this.#candidates.set(row.sourceID, { payload, hash, structure, language, country: row.country })
 		}
+	}
 
-		this.cellCounts.set(cell, (this.cellCounts.get(cell) ?? 0) + 1)
+	/**
+	 * The payloads of the held-out cells' rows, at most `heldOutPerCell` per cell,
+	 * in the order they were observed.
+	 */
+	*heldOut(): Generator<T> {
+		for (const candidate of this.#heldOutCandidates.values()) {
+			if (candidate.hash <= (this.#heldOut.get(candidate.structure)?.threshold ?? -1)) {
+				yield candidate.payload
+			}
+		}
 	}
 
 	/**
@@ -267,13 +291,19 @@ export class RowSampler<T = SampledRow> {
 	}
 
 	/**
-	 * Writes {@linkcode RowSampler.cellCounts} to the sample's `countsFile`, when it names one.
+	 * Writes {@linkcode RowSampler.cellCounts} to the sample's `countsFile`
+	 * and {@linkcode RowSampler.heldOut} to its `heldOutFile`, each when the sample names one.
 	 */
-	async writeCounts(): Promise<void> {
-		const file = this.#sample.countsFile
+	async writeOutputs(): Promise<void> {
+		const resolve = (file: string) => (file.startsWith("/") ? file : dataRootPath(file))
+		const { countsFile, heldOutFile } = this.#sample
 
-		if (!file) return
+		if (countsFile) {
+			await writeLocalJSONFile(Object.fromEntries(this.cellCounts), resolve(countsFile))
+		}
 
-		await writeLocalJSONFile(Object.fromEntries(this.cellCounts), file.startsWith("/") ? file : dataRootPath(file))
+		if (heldOutFile) {
+			await writeLocalJSONLFile([...this.heldOut()], resolve(heldOutFile))
+		}
 	}
 }

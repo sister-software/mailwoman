@@ -587,7 +587,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				sampler,
 			})
 
-			await sampler?.writeCounts()
+			await sampler?.writeOutputs()
 		},
 	}
 }
