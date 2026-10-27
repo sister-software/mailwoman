@@ -51,6 +51,22 @@ describe("renderedTagOrder", () => {
 
 		expect(renderedTagOrder("日本 東京", { region: "東京", country: "日本" })).toBe("country region")
 	})
+
+	it("orders a region named inside its locality's name by the region's own span, as the aligner does", () => {
+		const raw = "ہیرسبرک، شمالی کیرولائنا, کاباریس کاؤنٹی، شمالی کیرولینا, شمالی کیرولائنا"
+
+		expect(
+			renderedTagOrder(raw, {
+				locality: "ہیرسبرک، شمالی کیرولائنا",
+				subregion: "کاباریس کاؤنٹی، شمالی کیرولینا",
+				region: "شمالی کیرولائنا",
+			})
+		).toBe("locality subregion region")
+	})
+
+	it("returns null for a row whose component the aligner cannot place", () => {
+		expect(renderedTagOrder("Brooklyn", { locality: "Brooklyn", region: "New York" })).toBeNull()
+	})
 })
 
 describe("RowSampler", () => {

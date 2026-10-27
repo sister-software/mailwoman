@@ -10,7 +10,9 @@ import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
-import type { RowSample } from "#types"
+import { canonicalDedupKey } from "#adapters/dedup-key"
+import type { CanonicalRow, RowSample } from "#types"
+import { locateComponentSpans } from "#utils/align"
 import { parseWOFSlotKey } from "#utils/wof-json"
 
 /**
@@ -124,17 +126,21 @@ export class LowestValues {
 }
 
 /**
- * The tags of a rendered row in the order its text shows them, such as `locality region country`.
+ * The tags of a rendered row in the order the aligner places them, such as `locality region country`,
+ * or `null` when the aligner cannot place a component and would quarantine the row.
  *
- * The training rows' label-start order is the same sequence, so the sampler's structure
- * cell matches the cell the coverage ledger reads from the labels.
+ * The order comes from {@linkcode locateComponentSpans}, the aligner's own span search,
+ * so a region named inside its locality's name (`ہیرسبرک، شمالی کیرولائنا` before `شمالی کیرولائنا`)
+ * is ordered by its own span, the way the training row's spans order it.
  */
-export function renderedTagOrder(raw: string, components: Partial<Record<ComponentTag, string>>): string {
-	return (Object.entries(components) as Array<[ComponentTag, string]>)
-		.map(([tag, value]) => ({ tag, at: raw.indexOf(value) }))
-		.toSorted((a, b) => a.at - b.at)
-		.map(({ tag }) => tag)
-		.join(" ")
+export function renderedTagOrder(raw: string, components: Partial<Record<ComponentTag, string>>): string | null {
+	const normalized = Object.fromEntries(
+		Object.entries(components).map(([tag, value]) => [tag, value?.normalize("NFC")])
+	) as Partial<Record<ComponentTag, string>>
+
+	const located = locateComponentSpans(raw.normalize("NFC"), normalized)
+
+	return "spans" in located ? located.spans.map((span) => span.tag).join(" ") : null
 }
 
 /**
@@ -170,9 +176,15 @@ export class RowSampler {
 		this.#sample = sample
 	}
 
-	#keys(row: SampledRow): { hash: number; structure: string; language: string; cell: string } {
+	/**
+	 * The row's hash and cells, or `null` for a row the aligner would quarantine,
+	 * which the sampler neither counts nor keeps.
+	 */
+	#keys(row: SampledRow): { hash: number; structure: string; language: string; cell: string } | null {
 		const { kind, language } = parseWOFSlotKey(row.slotKey)
 		const order = renderedTagOrder(row.raw, row.components)
+
+		if (order === null) return null
 
 		return {
 			hash: hashFNV1a(row.sourceID, this.#sample.seed ?? 2_166_136_261),
@@ -183,9 +195,17 @@ export class RowSampler {
 	}
 
 	observe(row: SampledRow): void {
-		const { hash, structure, language, cell } = this.#keys(row)
+		const keys = this.#keys(row)
+
+		if (!keys) return
+
+		const { hash, structure, language, cell } = keys
 		const floor = this.#sample.cellFloor
-		const text = hashFNV1a(row.raw)
+
+		// The runner drops a row whose dedup key repeats an emitted row's, so the floor counts distinct keys.
+		const text = hashFNV1a(
+			canonicalDedupKey({ raw: row.raw, components: row.components, country: row.country } as CanonicalRow)
+		)
 
 		const lowest = (map: Map<string, LowestValues>, key: string, count: number) => {
 			let values = map.get(key)
@@ -215,7 +235,11 @@ export class RowSampler {
 	}
 
 	keeps(row: SampledRow): boolean {
-		const { hash, structure, language } = this.#keys(row)
+		const keys = this.#keys(row)
+
+		if (!keys) return false
+
+		const { hash, structure, language } = keys
 
 		return (
 			hash <= (this.#structure.get(structure)?.threshold ?? -1) ||

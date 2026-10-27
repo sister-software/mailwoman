@@ -88,6 +88,58 @@ export interface ComponentSpan {
 }
 
 /**
+ * The char spans of a row's components in `raw`, sorted by start, or the quarantine
+ * reason when a component cannot be placed.
+ *
+ * `raw` and the component values must already be NFC-normalized.
+ *
+ * {@linkcode alignRow} labels a row from these spans, and the WOF sampler keys a
+ * row's structure cell by their order, so both read a component that occurs inside
+ * another (a region named inside its locality's name) the same way.
+ */
+export function locateComponentSpans(
+	raw: string,
+	components: CanonicalRow["components"],
+	opts: Pick<AlignOptions, "maxEditDistance" | "caseInsensitive"> = {}
+): { spans: ComponentSpan[] } | { reason: string } {
+	const maxEditDistance = opts.maxEditDistance ?? 2
+	const caseInsensitive = opts.caseInsensitive ?? true
+	const spans: ComponentSpan[] = []
+	const claimed: Array<[number, number]> = []
+
+	const haystack = caseInsensitive ? raw.toLowerCase() : raw
+
+	// Longest value first: a short component must not claim a word that a longer,
+	// more specific component owns.
+	// Emit order is unaffected, since spans are re-sorted by start below.
+	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
+		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
+	)
+
+	for (const [tag, value] of entries) {
+		if (!value) continue
+
+		const needle = caseInsensitive ? value.toLowerCase() : value
+		const span = locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
+
+		if (!span) return { reason: `component-not-found:${tag}` }
+
+		// An out-of-bounds offset can never be a valid char span, so quarantine the row
+		// rather than crash assertSpanInvariants and take down a multi-hour build.
+		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
+			return { reason: `span-out-of-bounds:${tag}` }
+		}
+
+		spans.push({ tag, start: span.start, end: span.end })
+		claimed.push([span.start, span.end])
+	}
+
+	spans.sort((a, b) => a.start - b.start)
+
+	return { spans }
+}
+
+/**
  * Align a single row.
  */
 export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentResult {
@@ -110,45 +162,14 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		}
 	}
 
-	const componentSpans: ComponentSpan[] = []
-	const claimed: Array<[number, number]> = []
+	const located = locateComponentSpans(raw, components, { maxEditDistance, caseInsensitive })
 
-	const haystack = caseInsensitive ? raw.toLowerCase() : raw
-
-	// Longest value first: a short component must not claim a word that a longer,
-	// more specific component owns.
-	// Emit order is unaffected, since spans are re-sorted by start below.
-	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
-		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
-	)
-
-	for (const [tag, value] of entries) {
-		if (!value) continue
-
-		const needle = caseInsensitive ? value.toLowerCase() : value
-		const span = locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
-
-		if (!span) {
-			return {
-				kind: "quarantined",
-				row: { row, reason: `component-not-found:${tag}` },
-			}
-		}
-
-		// An out-of-bounds offset can never be a valid char span, so quarantine the row
-		// rather than crash assertSpanInvariants and take down a multi-hour build.
-		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
-			return {
-				kind: "quarantined",
-				row: { row, reason: `span-out-of-bounds:${tag}` },
-			}
-		}
-
-		componentSpans.push({ tag, start: span.start, end: span.end })
-		claimed.push([span.start, span.end])
+	if ("reason" in located) {
+		return { kind: "quarantined", row: { row, reason: located.reason } }
 	}
 
-	componentSpans.sort((a, b) => a.start - b.start)
+	const componentSpans = located.spans
+
 	assertSpanInvariants(componentSpans, { ...row, raw })
 	const tokens = tokenizer.tokenize(raw)
 	const labels = labelTokens(tokens, componentSpans)
