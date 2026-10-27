@@ -87,6 +87,16 @@ def export_onnx(
         sidecar.write_text(_json.dumps(transitions, indent=2) + "\n", encoding="utf-8")
         print(f"span transitions sidecar: {sidecar}")
 
+    # The trainer writes its corpus record beside the checkpoints. A copy beside the model ties the export to its corpus.
+    from mailwoman_train.train.corpus_record import CORPUS_RECORD_FILE
+
+    corpus_record = ck_dir.parent / CORPUS_RECORD_FILE
+    if corpus_record.is_file():
+        (out_path.parent / CORPUS_RECORD_FILE).write_bytes(corpus_record.read_bytes())
+        print(f"corpus record: {out_path.parent / CORPUS_RECORD_FILE}")
+    else:
+        print(f"no corpus record at {corpus_record}; the run predates it")
+
     vol.commit()
     print("Committed to volume.")
 

@@ -13,7 +13,7 @@ import { canonicalJSON } from "@mailwoman/core/json"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
 import { BuildProfile, PriorOutput, type BuildCorpusOptions } from "#build/types"
-import { extractFingerprint, type FileDerivation, inputRevisions } from "#parquet/record"
+import { extractFingerprint, type FileDerivation, inputCheckouts } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW } from "#parquet/shuffle"
 import type { AdapterOptions, CorpusAdapter } from "#types"
@@ -129,13 +129,11 @@ export async function adapterDerivations(
 			throw new Error(`buildCorpus: rows of ${source} reached the parquet phase and no configured adapter has that id`)
 		}
 
-		const revisions = await inputRevisions(options.inputPath)
-
 		return {
 			extractHash: await adapterExtractHash(options),
 			codeHash,
 			config,
-			...(revisions ? { inputRevisions: revisions } : {}),
+			...(await inputCheckouts(options.inputPath)),
 		}
 	}
 }

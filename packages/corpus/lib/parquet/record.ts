@@ -76,6 +76,11 @@ export interface DerivationInputs {
 	 * They tell a reader which commits the rows were built from.
 	 */
 	inputRevisions?: Record<string, string>
+	/**
+	 * The `git status --porcelain` line count of each checkout in {@linkcode inputRevisions}:
+	 * the files whose state at build time no commit records.
+	 */
+	inputUncommittedFiles?: Record<string, number>
 }
 
 /**
@@ -93,6 +98,10 @@ export interface FileDerivation {
 	 * See {@linkcode DerivationInputs.inputRevisions}.
 	 */
 	inputRevisions?: Record<string, string>
+	/**
+	 * See {@linkcode DerivationInputs.inputUncommittedFiles}.
+	 */
+	inputUncommittedFiles?: Record<string, number>
 }
 
 /**
@@ -170,6 +179,7 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
 		config: derivation.config,
 		builderVersion: await corpusBuilderVersion(),
 		...(derivation.inputRevisions ? { inputRevisions: derivation.inputRevisions } : {}),
+		...(derivation.inputUncommittedFiles ? { inputUncommittedFiles: derivation.inputUncommittedFiles } : {}),
 	}
 }
 
@@ -211,26 +221,59 @@ const FINGERPRINT_CONCURRENCY = 16
 
 const fingerprints = new Map<string, Promise<string>>()
 
+/**
+ * One git checkout's state: its path relative to the input, its HEAD commit
+ * and its `git status --porcelain` lines.
+ */
+export interface CheckoutState {
+	checkout: string
+	head: string
+	status: string[]
+}
+
+const checkoutStatesByPath = new Map<string, Promise<CheckoutState[]>>()
+
+/**
+ * The state of each git checkout in `path` and its immediate subdirectories, sorted by relative path.
+ *
+ * A process reads each path once, so the fingerprint and the record's {@linkcode inputCheckouts} agree.
+ */
+export function inputCheckoutStates(path: PathBuilderLike): Promise<CheckoutState[]> {
+	const key = path.toString()
+	let states = checkoutStatesByPath.get(key)
+
+	if (!states) {
+		states = gitCheckouts(path).then((checkouts) =>
+			AsyncSequence.from<string>(checkouts)
+				.parallelMap(
+					async (checkout) => {
+						const dir = resolvePath(path, checkout)
+
+						return { checkout, head: await gitHead(dir), status: await workingTreeStatus(dir) }
+					},
+					{ concurrency: FINGERPRINT_CONCURRENCY, ordered: true }
+				)
+				.toArray()
+		)
+
+		checkoutStatesByPath.set(key, states)
+		states.catch(() => checkoutStatesByPath.delete(key))
+	}
+
+	return states
+}
+
 async function computeFingerprint(path: PathBuilderLike): Promise<string> {
 	if (await isFile(path)) return sha256File(path)
 
-	const checkouts = await gitCheckouts(path)
+	const states = await inputCheckoutStates(path)
 	const hash = createHash("sha256")
 
-	const states = await AsyncSequence.from<string>(checkouts)
-		.parallelMap(
-			async (checkout) => {
-				const dir = resolvePath(path, checkout)
-
-				return `${checkout}\t${await gitHead(dir)}\n${(await workingTreeStatus(dir)).join("\n")}\n`
-			},
-			{ concurrency: FINGERPRINT_CONCURRENCY, ordered: true }
-		)
-		.toArray()
-
-	for (const state of states) {
-		hash.update(state)
+	for (const { checkout, head, status } of states) {
+		hash.update(`${checkout}\t${head}\n${status.join("\n")}\n`)
 	}
+
+	const checkouts = states.map((state) => state.checkout)
 
 	if (checkouts.includes(".")) return hash.digest("hex")
 
@@ -274,19 +317,69 @@ async function gitCheckouts(path: PathBuilderLike): Promise<string[]> {
 }
 
 /**
- * The HEAD commit of each git checkout in `path` and its immediate subdirectories, keyed by the
- * checkout's path relative to `path`, or `undefined` for a file or a directory holding no checkout.
+ * The derivation fields that record the git checkouts an input directory holds.
  */
-export async function inputRevisions(path: PathBuilderLike): Promise<Record<string, string> | undefined> {
+export type InputCheckouts = Required<Pick<FileDerivation, "inputRevisions" | "inputUncommittedFiles">>
+
+/**
+ * The HEAD commit and uncommitted-file count of each git checkout in `path`
+ * and its immediate subdirectories, keyed by the checkout's path relative to `path`,
+ * or `undefined` for a file or a directory holding no checkout.
+ */
+export async function inputCheckouts(path: PathBuilderLike): Promise<InputCheckouts | undefined> {
 	if (await isFile(path)) return undefined
 
-	const revisions: Record<string, string> = {}
+	const states = await inputCheckoutStates(path)
 
-	for (const checkout of await gitCheckouts(path)) {
-		revisions[checkout] = await gitHead(resolvePath(path, checkout))
+	if (!states.length) return undefined
+
+	return {
+		inputRevisions: Object.fromEntries(states.map((state) => [state.checkout, state.head])),
+		inputUncommittedFiles: Object.fromEntries(states.map((state) => [state.checkout, state.status.length])),
+	}
+}
+
+/**
+ * The checkout fields shared by every input record, so a file merged from them
+ * records the commits its rows came from.
+ *
+ * @returns `undefined` when any input record lacks the commits, since the merged
+ * file's rows would then come partly from unrecorded commits.
+ * @throws When two inputs record different commits or uncommitted counts for one checkout.
+ */
+export function mergeInputCheckouts(
+	records: ReadonlyArray<Pick<DerivationInputs, "inputRevisions" | "inputUncommittedFiles"> | null>
+): InputCheckouts | undefined {
+	const merged: InputCheckouts = { inputRevisions: {}, inputUncommittedFiles: {} }
+
+	for (const record of records) {
+		if (!record?.inputRevisions) return undefined
+
+		for (const [checkout, head] of Object.entries(record.inputRevisions)) {
+			const uncommitted = record.inputUncommittedFiles?.[checkout]
+			const seen = merged.inputRevisions[checkout]
+
+			if (typeof seen === "string" && seen !== head) {
+				throw new Error(`mergeInputCheckouts: inputs record ${checkout} at both ${seen} and ${head}`)
+			}
+
+			const seenUncommitted = merged.inputUncommittedFiles[checkout]
+
+			if (typeof seenUncommitted === "number" && typeof uncommitted === "number" && seenUncommitted !== uncommitted) {
+				throw new Error(
+					`mergeInputCheckouts: inputs record ${checkout} with ${seenUncommitted} and ${uncommitted} uncommitted files`
+				)
+			}
+
+			merged.inputRevisions[checkout] = head
+
+			if (typeof uncommitted === "number") {
+				merged.inputUncommittedFiles[checkout] = uncommitted
+			}
+		}
 	}
 
-	return Object.keys(revisions).length ? revisions : undefined
+	return Object.keys(merged.inputRevisions).length ? merged : undefined
 }
 
 /**

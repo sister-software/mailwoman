@@ -16,6 +16,7 @@ import type { PathBuilderLike } from "path-ts"
 import { moduleGraphHash } from "#build/code-hash"
 import { openCorpusRowStream } from "#parquet/corpus-rows"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { mergeInputCheckouts, readParquetRecord } from "#parquet/record"
 import { corpusRowFromParquet, type ParquetRow, ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW, shuffleWithinWindow } from "#parquet/shuffle"
 import { openParquetRowStream, readParquetSQL } from "#parquet/streams"
@@ -237,6 +238,8 @@ async function* readInOrder(
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
  * Each written file gets a record beside it, whose extract hash covers every input's sha256 in order.
+ * The record keeps the checkout commits its inputs' records share, and records none
+ * when any input lacks them.
  *
  * @throws When the inputs contain more than one `source`, because a manifest
  * entry records one source per file.
@@ -258,6 +261,8 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 
 	const extractHash = sha256Hex(inputDigests.join("\n"))
 	const codeHash = await moduleGraphHash([import.meta.filename])
+	const records = await Promise.all(inputs.map((input) => readParquetRecord(input)))
+	const checkouts = mergeInputCheckouts(records.map((record) => record?.derivation ?? null))
 
 	const byCountry: Record<string, number> = {}
 	const bySource: Record<string, number> = {}
@@ -282,6 +287,7 @@ export async function mergeSourceFiles(options: MergeSourceOptions): Promise<Mer
 				rowsPerFile,
 				part: outputs.length,
 			},
+			...checkouts,
 		})
 
 		outputs.push(output)

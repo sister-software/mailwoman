@@ -20,7 +20,8 @@ import {
 	type DerivationInputs,
 	extractFingerprint,
 	foldSourceLicenses,
-	inputRevisions,
+	inputCheckouts,
+	mergeInputCheckouts,
 	readParquetRecord,
 	readSourceLicenseTally,
 	recordPathFor,
@@ -52,7 +53,10 @@ describe("derivationHash", () => {
 	it("changes when any one of its four inputs changes", () => {
 		const base = derivationHash(BASE)
 
-		const changed: Record<Exclude<keyof DerivationInputs, "inputRevisions">, DerivationInputs> = {
+		const changed: Record<
+			Exclude<keyof DerivationInputs, "inputRevisions" | "inputUncommittedFiles">,
+			DerivationInputs
+		> = {
 			extractHash: { ...BASE, extractHash: "c".repeat(64) },
 			codeHash: { ...BASE, codeHash: "d".repeat(64) },
 			config: { ...BASE, config: { ...(BASE.config as object), shuffleSeed: 2 } },
@@ -373,8 +377,8 @@ describe("writeParquetSplits", () => {
 	})
 })
 
-describe("inputRevisions", () => {
-	it("records the HEAD of each checkout one or two levels below the input, keyed by its relative path", async () => {
+describe("inputCheckouts", () => {
+	it("records the HEAD and uncommitted-file count of each checkout one or two levels below the input", async () => {
 		const identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
 		const heads: Record<string, string> = {}
 
@@ -388,8 +392,35 @@ describe("inputRevisions", () => {
 			heads[checkout] = gitSync(["rev-parse", "HEAD"], { cwd })
 		}
 
-		expect(await inputRevisions(scratch.path)).toEqual(heads)
-		expect(await inputRevisions(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))).toBeUndefined()
+		await writeLocalJSONFile({ id: 2 }, scratch.path("whosonfirst-data-admin-us"), "data/2.geojson")
+
+		expect(await inputCheckouts(scratch.path)).toEqual({
+			inputRevisions: heads,
+			inputUncommittedFiles: { "whosonfirst-data-admin-us": 1, "whosonfirst-data/whosonfirst-data-admin-gb": 0 },
+		})
+
+		expect(await inputCheckouts(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))).toBeUndefined()
+	})
+})
+
+describe("mergeInputCheckouts", () => {
+	const record = (head: string, uncommitted = 0) => ({
+		inputRevisions: { "whosonfirst-data-admin-us": head },
+		inputUncommittedFiles: { "whosonfirst-data-admin-us": uncommitted },
+	})
+
+	it("keeps the commits every input records", () => {
+		expect(mergeInputCheckouts([record("a1"), record("a1")])).toEqual(record("a1"))
+	})
+
+	it("records no commits when one input lacks them", () => {
+		expect(mergeInputCheckouts([record("a1"), null])).toBeUndefined()
+		expect(mergeInputCheckouts([record("a1"), {}])).toBeUndefined()
+	})
+
+	it("refuses inputs built from different commits of one checkout", () => {
+		expect(() => mergeInputCheckouts([record("a1"), record("b2")])).toThrow(/at both a1 and b2/u)
+		expect(() => mergeInputCheckouts([record("a1", 0), record("a1", 3)])).toThrow(/0 and 3 uncommitted/u)
 	})
 })
 

@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest"
 
 import { openCorpusRowStream } from "#parquet/corpus-rows"
+import { type FileDerivation, readParquetRecord } from "#parquet/record"
 import { rowToParquet } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import { useScratchDir } from "#test-kit"
@@ -32,7 +33,7 @@ const labeled = (country: string, index: number, tag: "locality" | "region" = "l
 	span_tags: [tag],
 })
 
-const writeCountry = async (country: string, rows: number, regionRows = 0) => {
+const writeCountry = async (country: string, rows: number, regionRows = 0, checkouts: Partial<FileDerivation> = {}) => {
 	const path = scratch.path(`${country}.parquet`)
 
 	await writeParquetFile(
@@ -41,11 +42,26 @@ const writeCountry = async (country: string, rows: number, regionRows = 0) => {
 			...Array.from({ length: regionRows }, (_, index) => rowToParquet(labeled(country, index, "region"))),
 		],
 		path,
-		{ extractHash: "fixture", codeHash: "fixture", config: {} }
+		{ extractHash: "fixture", codeHash: "fixture", config: {}, ...checkouts }
 	)
 
 	return path
 }
+
+describe("mergeSourceFiles records", () => {
+	it("keep the checkout commits the input records share", async () => {
+		const checkouts = {
+			inputRevisions: { "whosonfirst-data-admin-us": "6596d83ab02" },
+			inputUncommittedFiles: { "whosonfirst-data-admin-us": 0 },
+		}
+
+		const inputs = [await writeCountry("US", 10, 0, checkouts), await writeCountry("CH", 10, 0, checkouts)]
+		const result = await mergeSourceFiles({ inputs, output: scratch.path("recorded.parquet") })
+		const record = await readParquetRecord(result.outputs[0]!)
+
+		expect(record?.derivation).toMatchObject(checkouts)
+	})
+})
 
 describe("mergeSourceFiles with rowsPerCountry", () => {
 	it("caps the larger country near the cap, keeps the smaller one whole, and mixes the record order", async () => {

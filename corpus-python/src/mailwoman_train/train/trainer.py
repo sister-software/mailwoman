@@ -26,6 +26,7 @@ from ..tokenizer import Tokenizer
 from .batch import to_tensor_batch
 from .callbacks import default_callbacks
 from .checkpoint import find_latest_checkpoint
+from .corpus_record import write_corpus_record
 from .loop import run_training_loop
 from .setup import (
     apply_freezes,
@@ -139,6 +140,7 @@ def train(
         print(format_derivation(derived_reps), flush=True)
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    write_corpus_record(cfg.data.corpus_dir, output_dir)
     if cfg.data.unshippable_reason is not None:
         # The launcher checked the config's sources where the register is readable. A run admitted under the
         # override says so beside its checkpoints, where a packaging step reads it.
