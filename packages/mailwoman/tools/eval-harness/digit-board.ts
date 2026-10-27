@@ -13,6 +13,7 @@ import {
 	type SpanBoardFixture,
 	type SpanBoardOptions,
 	type SpanBoardResult,
+	tagText,
 } from "#tools/eval-harness/span-board"
 
 /**
@@ -35,16 +36,6 @@ export interface DigitFixture extends SpanBoardFixture {
 export type DigitBoardOptions = SpanBoardOptions
 
 export type DigitBoardResult = SpanBoardResult
-
-/**
- * Joins the values of every node with the given tag in input order.
- */
-const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
-	nodes
-		.filter((n) => n.tag === tag)
-		.toSorted((a, b) => a.start - b.start)
-		.map((n) => n.value)
-		.join(" ")
 
 /**
  * Runs the digit board against its fixtures.

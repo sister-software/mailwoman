@@ -63,6 +63,24 @@ export interface SpanBoardFixture {
 	expect: Record<string, string[]>
 	surface: string | null
 	source: string
+	/**
+	 * The minimal pair the row belongs to.
+	 *
+	 * A board with paired rows also reports, per class, the share of pairs whose rows all passed,
+	 * since a parser that labels both sides of a pair the same way passes half the rows.
+	 */
+	pair?: string
+}
+
+/**
+ * Joins the values of every node with the given tag in input order.
+ */
+export function tagText(nodes: ReadonlyArray<{ tag: string; value: string; start: number }>, tag: string): string {
+	return nodes
+		.filter((n) => n.tag === tag)
+		.toSorted((a, b) => a.start - b.start)
+		.map((n) => n.value)
+		.join(" ")
 }
 
 export interface SpanBoardOptions {
@@ -111,6 +129,7 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	})
 
 	const tally = new Map<string, { hit: number; total: number; misses: Array<Fixture & { got: string }> }>()
+	const pairs = new Map<string, boolean>()
 	let fixtureCount = 0
 
 	for await (const fixture of fixtures) {
@@ -118,6 +137,12 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 		const { ok, got } = spec.grade(fixture, flattenNodes(tree.roots))
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
+
+		if (fixture.pair) {
+			const key = `${fixture.klass}\u0000${fixture.pair}`
+
+			pairs.set(key, (pairs.get(key) ?? true) && ok)
+		}
 
 		bucket.total++
 
@@ -157,6 +182,33 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	console.log(
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
+
+	if (pairs.size) {
+		const byClass = new Map<string, { hit: number; total: number }>()
+
+		for (const [key, ok] of pairs) {
+			const klass = key.slice(0, key.indexOf("\u0000"))
+			const bucket = byClass.get(klass) ?? { hit: 0, total: 0 }
+
+			bucket.total++
+
+			if (ok) {
+				bucket.hit++
+			}
+
+			byClass.set(klass, bucket)
+		}
+
+		console.log(`\n  pairs (every row of the pair passed)`)
+
+		for (const [klass, bucket] of [...byClass].toSorted()) {
+			const ci = wilson(bucket.hit, bucket.total)
+
+			console.log(
+				`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${(bucket.hit / bucket.total).toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
+			)
+		}
+	}
 
 	for (const [klass, bucket] of [...tally].toSorted()) {
 		if (!bucket.misses.length) continue
