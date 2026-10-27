@@ -22,6 +22,22 @@ describe("LowestValues", () => {
 		expect(values.threshold).toBe(4)
 	})
 
+	it("counts a repeated text once, so the threshold covers that many distinct texts", () => {
+		const values = new LowestValues(3)
+
+		for (const [value, text] of [
+			[1, 10],
+			[2, 10],
+			[3, 11],
+			[4, 12],
+			[5, 13],
+		] as const) {
+			values.add(value, text)
+		}
+
+		expect(values.threshold).toBe(4)
+	})
+
 	it("passes no value when it holds none", () => {
 		expect(new LowestValues(0).threshold).toBe(Number.NEGATIVE_INFINITY)
 	})

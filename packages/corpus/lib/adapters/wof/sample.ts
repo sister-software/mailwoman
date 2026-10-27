@@ -16,37 +16,83 @@ import { parseWOFSlotKey } from "#utils/wof-json"
 /**
  * The `count` lowest numbers seen, held in a max-heap so each new number costs
  * one comparison once the heap is full.
+ *
+ * A number added with a `text` that a held number already carries is skipped,
+ * so the held numbers stand for `count` distinct texts.
+ * The build drops a row whose text repeats an emitted row, and a floor counted over
+ * repeated texts would lose those rows after sampling.
  */
 export class LowestValues {
 	readonly #count: number
 	readonly #heap: number[] = []
+	readonly #texts: Array<number | undefined> = []
+	readonly #held = new Set<number>()
 
 	constructor(count: number) {
 		this.#count = count
 	}
 
-	add(value: number): void {
+	add(value: number, text?: number): void {
 		const heap = this.#heap
+
+		if (typeof text === "number" && this.#held.has(text)) return
 
 		if (heap.length < this.#count) {
 			heap.push(value)
-
-			for (let i = heap.length - 1; i > 0;) {
-				const parent = (i - 1) >> 1
-
-				if (heap[parent]! >= heap[i]!) break
-				;[heap[parent], heap[i]] = [heap[i]!, heap[parent]!]
-				i = parent
-			}
+			this.#texts.push(text)
+			this.#hold(text)
+			this.#siftUp(heap.length - 1)
 
 			return
 		}
 
 		if (!this.#count || value >= heap[0]!) return
 
+		this.#release(this.#texts[0])
 		heap[0] = value
+		this.#texts[0] = text
+		this.#hold(text)
+		this.#siftDown(0)
+	}
 
-		for (let i = 0; ;) {
+	#hold(text: number | undefined): void {
+		if (typeof text === "number") {
+			this.#held.add(text)
+		}
+	}
+
+	#release(text: number | undefined): void {
+		if (typeof text === "number") {
+			this.#held.delete(text)
+		}
+	}
+
+	#swap(a: number, b: number): void {
+		const heap = this.#heap
+
+		const texts = this.#texts
+
+		;[heap[a], heap[b]] = [heap[b]!, heap[a]!]
+		;[texts[a], texts[b]] = [texts[b], texts[a]]
+	}
+
+	#siftUp(start: number): void {
+		const heap = this.#heap
+
+		for (let i = start; i > 0;) {
+			const parent = (i - 1) >> 1
+
+			if (heap[parent]! >= heap[i]!) break
+
+			this.#swap(parent, i)
+			i = parent
+		}
+	}
+
+	#siftDown(start: number): void {
+		const heap = this.#heap
+
+		for (let i = start; ;) {
 			const left = 2 * i + 1
 			const right = left + 1
 			let largest = i
@@ -60,7 +106,8 @@ export class LowestValues {
 			}
 
 			if (largest === i) break
-			;[heap[largest], heap[i]] = [heap[i]!, heap[largest]!]
+
+			this.#swap(largest, i)
 			i = largest
 		}
 	}
@@ -138,6 +185,7 @@ export class RowSampler {
 	observe(row: SampledRow): void {
 		const { hash, structure, language, cell } = this.#keys(row)
 		const floor = this.#sample.cellFloor
+		const text = hashFNV1a(row.raw)
 
 		const lowest = (map: Map<string, LowestValues>, key: string, count: number) => {
 			let values = map.get(key)
@@ -146,7 +194,7 @@ export class RowSampler {
 				map.set(key, (values = new LowestValues(count)))
 			}
 
-			values.add(hash)
+			values.add(hash, text)
 		}
 
 		lowest(this.#structure, structure, floor)
