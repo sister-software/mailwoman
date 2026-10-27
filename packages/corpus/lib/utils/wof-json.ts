@@ -13,8 +13,9 @@
  * active"), so an `is_current = 1` filter silently emits zero rows from the real corpus.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -208,7 +209,7 @@ export function wofNameSlotSQL(sourceID = "source_id"): { kind: string; language
 /**
  * Parse a single GeoJSON feature; `null` means skip this row for any reason.
  */
-function recordFromFeature(feature: WOFFeature): WOFRecord | null {
+export function recordFromFeature(feature: WOFFeature, refutedParents: ReadonlySet<number>): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
 	const props = feature.properties
 
@@ -243,18 +244,38 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 				? Number(parentRaw)
 				: null
 
-	// A record with no location keeps its own name and none of its ancestors.
-	const located = !isAtOrigin(props)
+	// A record with no location, or whose point lies in another parent's polygon,
+	// keeps its own name and none of its ancestors.
+	const placed = !isAtOrigin(props) && !refutedParents.has(id)
 
 	return {
 		id,
-		parent_id: located && Number.isFinite(parent_id as number) ? (parent_id as number) : null,
+		parent_id: placed && Number.isFinite(parent_id as number) ? (parent_id as number) : null,
 		name,
 		placetype,
 		country,
 		nameVariants: extractNameVariants(props),
-		ancestors: located ? agreedHierarchyAncestors(id, props["wof:hierarchy"]) : [],
+		ancestors: placed ? agreedHierarchyAncestors(id, props["wof:hierarchy"]) : [],
 	}
+}
+
+/**
+ * The committed list of WOF records whose point lies over 1 km outside their parent's
+ * polygon and inside another polygon of the parent's placetype.
+ */
+export const REFUTED_PARENTS_PATH = resolveModulePath("@mailwoman/corpus/data/wof-refuted-parents.json")
+
+let refutedParentIDs: Promise<ReadonlySet<number>> | undefined
+
+/**
+ * The ids in {@linkcode REFUTED_PARENTS_PATH}, read once per process.
+ */
+export function readRefutedParentIDs(): Promise<ReadonlySet<number>> {
+	refutedParentIDs ??= readLocalJSONFile<{ records: Array<{ id: number }> }>(REFUTED_PARENTS_PATH).then(
+		(file) => new Set(file.records.map((record) => record.id))
+	)
+
+	return refutedParentIDs
 }
 
 /**
@@ -323,7 +344,7 @@ export async function readFeatureRecord(filePath: string): Promise<WOFRecord | n
 
 	const parsed = tryParsingJSON<WOFFeature>(text)
 
-	return parsed ? recordFromFeature(parsed) : null
+	return parsed ? recordFromFeature(parsed, await readRefutedParentIDs()) : null
 }
 
 /**

@@ -1,0 +1,4256 @@
+{
+	"description": "WOF records whose representative point lies over 1 km outside the polygon of their wof:parent_id and inside another polygon of the parent's placetype. The corpus keeps each record's name and gives it no parent and no ancestors. distance_m is the distance from the point to the parent polygon; inside_id is the polygon that holds the point.",
+	"checked": "WOF admin GeoJSON checkouts of 2026-10-26, point in polygon against each parent's geometry",
+	"records": [
+		{
+			"id": 85632685,
+			"name": "Russia",
+			"placetype": "country",
+			"parent_id": 102191581,
+			"parent_name": "Europe",
+			"distance_m": 1471044,
+			"inside_id": 102191569,
+			"inside_name": "Asia"
+		},
+		{
+			"id": 85681265,
+			"name": "Baykonur lease in Qyzylorda",
+			"placetype": "region",
+			"parent_id": 85632685,
+			"parent_name": "Russia",
+			"distance_m": 556524,
+			"inside_id": 85632307,
+			"inside_name": "Kazakhstan"
+		},
+		{
+			"id": 85682183,
+			"name": "Andean Southern Ice Field (Campo de Hielo Sur)",
+			"placetype": "region",
+			"parent_id": 85633057,
+			"parent_name": "Chile",
+			"distance_m": 12661,
+			"inside_id": 85632505,
+			"inside_name": "Argentina"
+		},
+		{
+			"id": 85796835,
+			"name": "Bruzzano",
+			"placetype": "neighbourhood",
+			"parent_id": 101757765,
+			"parent_name": "Cormano",
+			"distance_m": 1027,
+			"inside_id": 101752703,
+			"inside_name": "Milano"
+		},
+		{
+			"id": 85797269,
+			"name": "D'Ekker",
+			"placetype": "neighbourhood",
+			"parent_id": 101754579,
+			"parent_name": "Veldhoven",
+			"distance_m": 1307,
+			"inside_id": 101758611,
+			"inside_name": "Oerle"
+		},
+		{
+			"id": 85797453,
+			"name": "Hogenkamp",
+			"placetype": "neighbourhood",
+			"parent_id": 1158805787,
+			"parent_name": "Diezerpoort",
+			"distance_m": 1574,
+			"inside_id": 1158805805,
+			"inside_name": "Berkum"
+		},
+		{
+			"id": 85797461,
+			"name": "Dorp",
+			"placetype": "neighbourhood",
+			"parent_id": 1158831797,
+			"parent_name": "Hoek van Holland",
+			"distance_m": 22282,
+			"inside_id": 1108805721,
+			"inside_name": "IJsselmonde"
+		},
+		{
+			"id": 85797847,
+			"name": "Industrieterrein Kraaiven",
+			"placetype": "neighbourhood",
+			"parent_id": 1158801791,
+			"parent_name": "Noord",
+			"distance_m": 1746,
+			"inside_id": 1158801783,
+			"inside_name": "Reeshof"
+		},
+		{
+			"id": 85798091,
+			"name": "Noord-Hofland",
+			"placetype": "neighbourhood",
+			"parent_id": 101754713,
+			"parent_name": "Voorschoten",
+			"distance_m": 1411,
+			"inside_id": 101751833,
+			"inside_name": "Leiden"
+		},
+		{
+			"id": 85798309,
+			"name": "Platvoet",
+			"placetype": "neighbourhood",
+			"parent_id": 1158804467,
+			"parent_name": "Borgele en Platvoet",
+			"distance_m": 1140,
+			"inside_id": 1158804473,
+			"inside_name": "Keizerslanden"
+		},
+		{
+			"id": 85798343,
+			"name": "Quirijnstok",
+			"placetype": "neighbourhood",
+			"parent_id": 1158801791,
+			"parent_name": "Noord",
+			"distance_m": 1805,
+			"inside_id": 1158801785,
+			"inside_name": "Oud-Zuid"
+		},
+		{
+			"id": 85798545,
+			"name": "Ugchelen",
+			"placetype": "neighbourhood",
+			"parent_id": 1158783437,
+			"parent_name": "Ugchelen",
+			"distance_m": 33904,
+			"inside_id": 101808663,
+			"inside_name": "Doetinchem"
+		},
+		{
+			"id": 85811627,
+			"name": "Coconut Grove",
+			"placetype": "neighbourhood",
+			"parent_id": 85933643,
+			"parent_name": "Coral Gables",
+			"distance_m": 2406,
+			"inside_id": 85933669,
+			"inside_name": "Miami"
+		},
+		{
+			"id": 85816733,
+			"name": "East St Johns",
+			"placetype": "neighbourhood",
+			"parent_id": 101730071,
+			"parent_name": "Vancouver",
+			"distance_m": 5040,
+			"inside_id": 101715829,
+			"inside_name": "Portland"
+		},
+		{
+			"id": 85817027,
+			"name": "Eastland Heights",
+			"placetype": "neighbourhood",
+			"parent_id": 85974799,
+			"parent_name": "North Las Vegas",
+			"distance_m": 1198,
+			"inside_id": 85974801,
+			"inside_name": "Las Vegas"
+		},
+		{
+			"id": 85818893,
+			"name": "Faloma",
+			"placetype": "neighbourhood",
+			"parent_id": 101730071,
+			"parent_name": "Vancouver",
+			"distance_m": 1807,
+			"inside_id": 101715829,
+			"inside_name": "Portland"
+		},
+		{
+			"id": 85821295,
+			"name": "Genoa",
+			"placetype": "neighbourhood",
+			"parent_id": 101726105,
+			"parent_name": "Pasadena",
+			"distance_m": 1708,
+			"inside_id": 101725629,
+			"inside_name": "Houston"
+		},
+		{
+			"id": 85822831,
+			"name": "Green Hills",
+			"placetype": "neighbourhood",
+			"parent_id": 101723173,
+			"parent_name": "Oak Hill",
+			"distance_m": 3087,
+			"inside_id": 101723183,
+			"inside_name": "Nashville"
+		},
+		{
+			"id": 85826219,
+			"name": "Hope Farm",
+			"placetype": "neighbourhood",
+			"parent_id": 85981141,
+			"parent_name": "Mount Holly",
+			"distance_m": 1586,
+			"inside_id": 85981333,
+			"inside_name": "Charlotte"
+		},
+		{
+			"id": 85832807,
+			"name": "Maryvale",
+			"placetype": "neighbourhood",
+			"parent_id": 85917463,
+			"parent_name": "Tolleson",
+			"distance_m": 3292,
+			"inside_id": 85917479,
+			"inside_name": "Phoenix"
+		},
+		{
+			"id": 85837927,
+			"name": "North Portland",
+			"placetype": "neighbourhood",
+			"parent_id": 101730071,
+			"parent_name": "Vancouver",
+			"distance_m": 4412,
+			"inside_id": 101715829,
+			"inside_name": "Portland"
+		},
+		{
+			"id": 85843909,
+			"name": "Rayon City",
+			"placetype": "neighbourhood",
+			"parent_id": 101723169,
+			"parent_name": "Hendersonville",
+			"distance_m": 2699,
+			"inside_id": 101723183,
+			"inside_name": "Nashville"
+		},
+		{
+			"id": 85844251,
+			"name": "Reigate",
+			"placetype": "neighbourhood",
+			"parent_id": 85981327,
+			"parent_name": "Stallings",
+			"distance_m": 1256,
+			"inside_id": 85981325,
+			"inside_name": "Mint Hill"
+		},
+		{
+			"id": 85845181,
+			"name": "Riverview Terrace",
+			"placetype": "neighbourhood",
+			"parent_id": 101721299,
+			"parent_name": "St. Andrews",
+			"distance_m": 1103,
+			"inside_id": 101720793,
+			"inside_name": "Columbia"
+		},
+		{
+			"id": 85845309,
+			"name": "Robla",
+			"placetype": "neighbourhood",
+			"parent_id": 85926887,
+			"parent_name": "Rio Linda",
+			"distance_m": 1528,
+			"inside_id": 85922845,
+			"inside_name": "Sacramento"
+		},
+		{
+			"id": 85845685,
+			"name": "Rolling Acres",
+			"placetype": "neighbourhood",
+			"parent_id": 85981161,
+			"parent_name": "Harrisburg",
+			"distance_m": 2186,
+			"inside_id": 85981333,
+			"inside_name": "Charlotte"
+		},
+		{
+			"id": 85848469,
+			"name": "Shirksville",
+			"placetype": "neighbourhood",
+			"parent_id": 101719383,
+			"parent_name": "Fredericksburg",
+			"distance_m": 1349,
+			"inside_id": 1729440501,
+			"inside_name": "Bethel"
+		},
+		{
+			"id": 85862749,
+			"name": "San Martino",
+			"placetype": "neighbourhood",
+			"parent_id": 101757801,
+			"parent_name": "Sesto Ulteriano",
+			"distance_m": 6445,
+			"inside_id": 101752703,
+			"inside_name": "Milano"
+		},
+		{
+			"id": 85862755,
+			"name": "Gratosoglio",
+			"placetype": "neighbourhood",
+			"parent_id": 101757809,
+			"parent_name": "Rozzano",
+			"distance_m": 1292,
+			"inside_id": 101752703,
+			"inside_name": "Milano"
+		},
+		{
+			"id": 85866019,
+			"name": "Westlake and Olympic",
+			"placetype": "neighbourhood",
+			"parent_id": 85922529,
+			"parent_name": "Daly City",
+			"distance_m": 1335,
+			"inside_id": 85922583,
+			"inside_name": "San Francisco"
+		},
+		{
+			"id": 85866135,
+			"name": "East Carrollton",
+			"placetype": "neighbourhood",
+			"parent_id": 85948759,
+			"parent_name": "Bridge City",
+			"distance_m": 1306,
+			"inside_id": 85948111,
+			"inside_name": "New Orleans"
+		},
+		{
+			"id": 85866203,
+			"name": "Silverado Ranch",
+			"placetype": "neighbourhood",
+			"parent_id": 85974803,
+			"parent_name": "Henderson",
+			"distance_m": 1865,
+			"inside_id": 85975035,
+			"inside_name": "Paradise"
+		},
+		{
+			"id": 85866855,
+			"name": "Downtown",
+			"placetype": "neighbourhood",
+			"parent_id": 85922413,
+			"parent_name": "West Sacramento",
+			"distance_m": 1279,
+			"inside_id": 85922845,
+			"inside_name": "Sacramento"
+		},
+		{
+			"id": 85866869,
+			"name": "University Hills",
+			"placetype": "neighbourhood",
+			"parent_id": 1108750025,
+			"parent_name": "Northwest",
+			"distance_m": 6820,
+			"inside_id": 1108750035,
+			"inside_name": "Southeast"
+		},
+		{
+			"id": 85866887,
+			"name": "Rosemont",
+			"placetype": "neighbourhood",
+			"parent_id": 85934153,
+			"parent_name": "Fern Park",
+			"distance_m": 2316,
+			"inside_id": 85933119,
+			"inside_name": "Maitland"
+		},
+		{
+			"id": 85867135,
+			"name": "Northeast Portland",
+			"placetype": "neighbourhood",
+			"parent_id": 101730071,
+			"parent_name": "Vancouver",
+			"distance_m": 4169,
+			"inside_id": 101715829,
+			"inside_name": "Portland"
+		},
+		{
+			"id": 85868407,
+			"name": "Fort Logan",
+			"placetype": "neighbourhood",
+			"parent_id": 1108750025,
+			"parent_name": "Northwest",
+			"distance_m": 9048,
+			"inside_id": 1108750033,
+			"inside_name": "Southwest"
+		},
+		{
+			"id": 85869155,
+			"name": "Cahuenga Pass",
+			"placetype": "neighbourhood",
+			"parent_id": 85923691,
+			"parent_name": "Burbank",
+			"distance_m": 1698,
+			"inside_id": 85923517,
+			"inside_name": "Los Angeles"
+		},
+		{
+			"id": 85869653,
+			"name": "Silver Creek Valley",
+			"placetype": "neighbourhood",
+			"parent_id": 1108782545,
+			"parent_name": "South San Jose",
+			"distance_m": 2122,
+			"inside_id": 1108782555,
+			"inside_name": "East San Jose"
+		},
+		{
+			"id": 85870059,
+			"name": "Hawkins Point",
+			"placetype": "neighbourhood",
+			"parent_id": 85950183,
+			"parent_name": "Edgemere",
+			"distance_m": 2571,
+			"inside_id": 85949461,
+			"inside_name": "Baltimore"
+		},
+		{
+			"id": 85870473,
+			"name": "Mountain Creek",
+			"placetype": "neighbourhood",
+			"parent_id": 101724539,
+			"parent_name": "Cedar Hill",
+			"distance_m": 3777,
+			"inside_id": 101724385,
+			"inside_name": "Dallas"
+		},
+		{
+			"id": 85870787,
+			"name": "Balmoral",
+			"placetype": "neighbourhood",
+			"parent_id": 101722649,
+			"parent_name": "Germantown",
+			"distance_m": 2443,
+			"inside_id": 101722645,
+			"inside_name": "Memphis"
+		},
+		{
+			"id": 85871075,
+			"name": "Stone Oak-Sonterra",
+			"placetype": "neighbourhood",
+			"parent_id": 101726193,
+			"parent_name": "Timberwood Park",
+			"distance_m": 3932,
+			"inside_id": 101724653,
+			"inside_name": "San Antonio"
+		},
+		{
+			"id": 85871249,
+			"name": "Bear Valley",
+			"placetype": "neighbourhood",
+			"parent_id": 1108750025,
+			"parent_name": "Northwest",
+			"distance_m": 7191,
+			"inside_id": 1108750033,
+			"inside_name": "Southwest"
+		},
+		{
+			"id": 85871263,
+			"name": "Mar Lee",
+			"placetype": "neighbourhood",
+			"parent_id": 1108750025,
+			"parent_name": "Northwest",
+			"distance_m": 3941,
+			"inside_id": 1108750033,
+			"inside_name": "Southwest"
+		},
+		{
+			"id": 85872203,
+			"name": "Alkali Flat",
+			"placetype": "neighbourhood",
+			"parent_id": 85922413,
+			"parent_name": "West Sacramento",
+			"distance_m": 1276,
+			"inside_id": 85922845,
+			"inside_name": "Sacramento"
+		},
+		{
+			"id": 85873259,
+			"name": "Temple Crest",
+			"placetype": "neighbourhood",
+			"parent_id": 85931783,
+			"parent_name": "Temple Terrace",
+			"distance_m": 1564,
+			"inside_id": 85931789,
+			"inside_name": "Tampa"
+		},
+		{
+			"id": 85878255,
+			"name": "Northpark",
+			"placetype": "neighbourhood",
+			"parent_id": 85923035,
+			"parent_name": "Tustin",
+			"distance_m": 1191,
+			"inside_id": 85923131,
+			"inside_name": "Irvine"
+		},
+		{
+			"id": 85882395,
+			"name": "Northeastern San Diego",
+			"placetype": "neighbourhood",
+			"parent_id": 85922233,
+			"parent_name": "Poway",
+			"distance_m": 2625,
+			"inside_id": 85922227,
+			"inside_name": "San Diego"
+		},
+		{
+			"id": 85887487,
+			"name": "Anderson",
+			"placetype": "neighbourhood",
+			"parent_id": 1108782545,
+			"parent_name": "South San Jose",
+			"distance_m": 5132,
+			"inside_id": 1108782547,
+			"inside_name": "West San Jose"
+		},
+		{
+			"id": 85889289,
+			"name": "Center Lake",
+			"placetype": "neighbourhood",
+			"parent_id": 85934505,
+			"parent_name": "Buenaventura Lakes",
+			"distance_m": 1927,
+			"inside_id": 85935315,
+			"inside_name": "Meadow Woods"
+		},
+		{
+			"id": 85893405,
+			"name": "Southeast",
+			"placetype": "neighbourhood",
+			"parent_id": 101723097,
+			"parent_name": "Brentwood",
+			"distance_m": 3787,
+			"inside_id": 101723183,
+			"inside_name": "Nashville"
+		},
+		{
+			"id": 85893779,
+			"name": "Research Forest",
+			"placetype": "neighbourhood",
+			"parent_id": 101725651,
+			"parent_name": "Shenandoah",
+			"distance_m": 1038,
+			"inside_id": 101727415,
+			"inside_name": "The Woodlands"
+		},
+		{
+			"id": 85893783,
+			"name": "Spring Branch",
+			"placetype": "neighbourhood",
+			"parent_id": 101726123,
+			"parent_name": "Jersey Village",
+			"distance_m": 7466,
+			"inside_id": 101725629,
+			"inside_name": "Houston"
+		},
+		{
+			"id": 85896915,
+			"name": "Rhodes Ranch",
+			"placetype": "neighbourhood",
+			"parent_id": 85975017,
+			"parent_name": "Enterprise",
+			"distance_m": 1080,
+			"inside_id": 85975041,
+			"inside_name": "Spring Valley"
+		},
+		{
+			"id": 85896921,
+			"name": "Southeast Las Vegas",
+			"placetype": "neighbourhood",
+			"parent_id": 85975045,
+			"parent_name": "Sunrise Manor",
+			"distance_m": 1364,
+			"inside_id": 85975035,
+			"inside_name": "Paradise"
+		},
+		{
+			"id": 85897321,
+			"name": "Bent Tree",
+			"placetype": "neighbourhood",
+			"parent_id": 101724385,
+			"parent_name": "Dallas",
+			"distance_m": 1153,
+			"inside_id": 101725671,
+			"inside_name": "Addison"
+		},
+		{
+			"id": 85897379,
+			"name": "Marine Creek",
+			"placetype": "neighbourhood",
+			"parent_id": 101723705,
+			"parent_name": "Saginaw",
+			"distance_m": 2669,
+			"inside_id": 101724443,
+			"inside_name": "Fort Worth"
+		},
+		{
+			"id": 85897385,
+			"name": "North Fort Worth",
+			"placetype": "neighbourhood",
+			"parent_id": 101723647,
+			"parent_name": "North Richland Hills",
+			"distance_m": 5928,
+			"inside_id": 101724443,
+			"inside_name": "Fort Worth"
+		},
+		{
+			"id": 85897403,
+			"name": "West Fort Worth",
+			"placetype": "neighbourhood",
+			"parent_id": 101723633,
+			"parent_name": "Westworth Village",
+			"distance_m": 4175,
+			"inside_id": 101724443,
+			"inside_name": "Fort Worth"
+		},
+		{
+			"id": 85898239,
+			"name": "Topčidersko Brdo",
+			"placetype": "neighbourhood",
+			"parent_id": 101913173,
+			"parent_name": "Zemun",
+			"distance_m": 1644,
+			"inside_id": 101914163,
+			"inside_name": "Zemun"
+		},
+		{
+			"id": 85899797,
+			"name": "Neustadt",
+			"placetype": "neighbourhood",
+			"parent_id": 101847261,
+			"parent_name": "Schönwalde-Glien",
+			"distance_m": 6855,
+			"inside_id": 101748799,
+			"inside_name": "Berlin"
+		},
+		{
+			"id": 85901021,
+			"name": "Zbraslav",
+			"placetype": "neighbourhood",
+			"parent_id": 101825641,
+			"parent_name": "Vrané nad Vltavou",
+			"distance_m": 2132,
+			"inside_id": 101825227,
+			"inside_name": "Zbraslav"
+		},
+		{
+			"id": 85901051,
+			"name": "Arpadfold",
+			"placetype": "neighbourhood",
+			"parent_id": 101754545,
+			"parent_name": "Csömör",
+			"distance_m": 1671,
+			"inside_id": 101751703,
+			"inside_name": "Budapest"
+		},
+		{
+			"id": 85904583,
+			"name": "Quarto di Sopra",
+			"placetype": "neighbourhood",
+			"parent_id": 101837213,
+			"parent_name": "Villanova",
+			"distance_m": 1392,
+			"inside_id": 101752665,
+			"inside_name": "Bologna"
+		},
+		{
+			"id": 85905025,
+			"name": "Lido",
+			"placetype": "neighbourhood",
+			"parent_id": 101752689,
+			"parent_name": "Venezia",
+			"distance_m": 1383,
+			"inside_id": 101795209,
+			"inside_name": "Lido"
+		},
+		{
+			"id": 85919793,
+			"name": "Cherokee Village",
+			"placetype": "locality",
+			"parent_id": 102082507,
+			"parent_name": "Fulton",
+			"distance_m": 1518,
+			"inside_id": 102083267,
+			"inside_name": "Sharp"
+		},
+		{
+			"id": 101752559,
+			"name": "San Giorgio a Cremano",
+			"placetype": "locality",
+			"parent_id": 404465137,
+			"parent_name": "San Giorgio A Cremano",
+			"distance_m": 1463,
+			"inside_id": 404465119,
+			"inside_name": "Portici"
+		},
+		{
+			"id": 101755867,
+			"name": "Gronsveld",
+			"placetype": "locality",
+			"parent_id": 1158805871,
+			"parent_name": "Eijsden-Margraten",
+			"distance_m": 1135,
+			"inside_id": 404474495,
+			"inside_name": "Maastricht"
+		},
+		{
+			"id": 101757669,
+			"name": "Castagna",
+			"placetype": "locality",
+			"parent_id": 404458501,
+			"parent_name": "Serra Riccò",
+			"distance_m": 12068,
+			"inside_id": 404471975,
+			"inside_name": "Genova"
+		},
+		{
+			"id": 101797575,
+			"name": "Cantagrillo - Casalguidi",
+			"placetype": "locality",
+			"parent_id": 404472719,
+			"parent_name": "Pistoia",
+			"distance_m": 1586,
+			"inside_id": 404472731,
+			"inside_name": "Serravalle Pistoiese"
+		},
+		{
+			"id": 101807431,
+			"name": "Oudega",
+			"placetype": "locality",
+			"parent_id": 1141960737,
+			"parent_name": "De Fryske Marren",
+			"distance_m": 15099,
+			"inside_id": 404473791,
+			"inside_name": "Smallingerland"
+		},
+		{
+			"id": 101808507,
+			"name": "Heerjansdam",
+			"placetype": "locality",
+			"parent_id": 404474291,
+			"parent_name": "Zwijndrecht",
+			"distance_m": 1265,
+			"inside_id": 404474149,
+			"inside_name": "Barendrecht"
+		},
+		{
+			"id": 101836963,
+			"name": "Matigge",
+			"placetype": "locality",
+			"parent_id": 404458185,
+			"parent_name": "Trevi",
+			"distance_m": 1225,
+			"inside_id": 404458105,
+			"inside_name": "Foligno"
+		},
+		{
+			"id": 101837779,
+			"name": "Tonsel",
+			"placetype": "locality",
+			"parent_id": 404473899,
+			"parent_name": "Ermelo",
+			"distance_m": 1273,
+			"inside_id": 404473907,
+			"inside_name": "Harderwijk"
+		},
+		{
+			"id": 101838245,
+			"name": "Torretta",
+			"placetype": "locality",
+			"parent_id": 404465075,
+			"parent_name": "Torretta",
+			"distance_m": 1583,
+			"inside_id": 404464961,
+			"inside_name": "Carini"
+		},
+		{
+			"id": 101839277,
+			"name": "Simpelveld",
+			"placetype": "locality",
+			"parent_id": 404474519,
+			"parent_name": "Simpelveld",
+			"distance_m": 1087,
+			"inside_id": 404474485,
+			"inside_name": "Heerlen"
+		},
+		{
+			"id": 101853941,
+			"name": "Bulle",
+			"placetype": "locality",
+			"parent_id": 404568309,
+			"parent_name": "Gruyères",
+			"distance_m": 2660,
+			"inside_id": 404568447,
+			"inside_name": "Bulle"
+		},
+		{
+			"id": 101855271,
+			"name": "Veere",
+			"placetype": "locality",
+			"parent_id": 404474333,
+			"parent_name": "Veere",
+			"distance_m": 30263,
+			"inside_id": 404474329,
+			"inside_name": "Terneuzen"
+		},
+		{
+			"id": 101923087,
+			"name": "Khirbet Tawil ash Shih",
+			"placetype": "locality",
+			"parent_id": 1091912955,
+			"parent_name": "Hebron",
+			"distance_m": 95834,
+			"inside_id": 1091912973,
+			"inside_name": "Jenin"
+		},
+		{
+			"id": 102024409,
+			"name": "Thung Wa",
+			"placetype": "locality",
+			"parent_id": 85678595,
+			"parent_name": "Satun",
+			"distance_m": 2050,
+			"inside_id": 85678609,
+			"inside_name": "Trang"
+		},
+		{
+			"id": 102024865,
+			"name": "Sam Ngam",
+			"placetype": "locality",
+			"parent_id": 85678715,
+			"parent_name": "Nakhon Sawan",
+			"distance_m": 28466,
+			"inside_id": 85678669,
+			"inside_name": "Phichit"
+		},
+		{
+			"id": 102025199,
+			"name": "Muang Sam Sip",
+			"placetype": "locality",
+			"parent_id": 85678783,
+			"parent_name": "Ubon Ratchathani",
+			"distance_m": 1904,
+			"inside_id": 85678789,
+			"inside_name": "Amnat Charoen"
+		},
+		{
+			"id": 102026057,
+			"name": "Si Somdet",
+			"placetype": "locality",
+			"parent_id": 85678845,
+			"parent_name": "Roi Et",
+			"distance_m": 1885,
+			"inside_id": 85678835,
+			"inside_name": "Maha Sarakham"
+		},
+		{
+			"id": 102026093,
+			"name": "Phu Sing",
+			"placetype": "locality",
+			"parent_id": 85678849,
+			"parent_name": "Surin",
+			"distance_m": 1067,
+			"inside_id": 85678779,
+			"inside_name": "Sisaket"
+		},
+		{
+			"id": 102027777,
+			"name": "Suzhou",
+			"placetype": "locality",
+			"parent_id": 890515879,
+			"parent_name": "Suzhou",
+			"distance_m": 365507,
+			"inside_id": 890514507,
+			"inside_name": "Suzhou"
+		},
+		{
+			"id": 102029043,
+			"name": "Payyannur",
+			"placetype": "locality",
+			"parent_id": 890503071,
+			"parent_name": "Kannur",
+			"distance_m": 1915,
+			"inside_id": 890510745,
+			"inside_name": "Kasaragod"
+		},
+		{
+			"id": 102030355,
+			"name": "Digha",
+			"placetype": "locality",
+			"parent_id": 1108696089,
+			"parent_name": "Purba Medinipur",
+			"distance_m": 4058,
+			"inside_id": 890510953,
+			"inside_name": "Baleshwar"
+		},
+		{
+			"id": 102047361,
+			"name": "Europe/Simferopol",
+			"placetype": "timezone",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 71939,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 102047397,
+			"name": "Asia/Tashkent",
+			"placetype": "timezone",
+			"parent_id": 85632513,
+			"parent_name": "Tajikistan",
+			"distance_m": 62060,
+			"inside_id": 85632645,
+			"inside_name": "Uzbekistan"
+		},
+		{
+			"id": 102047669,
+			"name": "Asia/Ho_Chi_Minh",
+			"placetype": "timezone",
+			"parent_id": 85632241,
+			"parent_name": "Laos",
+			"distance_m": 143582,
+			"inside_id": 85632763,
+			"inside_name": "Vietnam"
+		},
+		{
+			"id": 102048001,
+			"name": "Africa/Mogadishu",
+			"placetype": "timezone",
+			"parent_id": 85632257,
+			"parent_name": "Ethiopia",
+			"distance_m": 185324,
+			"inside_id": 85632379,
+			"inside_name": "Somalia"
+		},
+		{
+			"id": 102048027,
+			"name": "America/Adak",
+			"placetype": "timezone",
+			"parent_id": 85633041,
+			"parent_name": "Canada",
+			"distance_m": 1838043,
+			"inside_id": 85633793,
+			"inside_name": "United States"
+		},
+		{
+			"id": 102074889,
+			"name": "San Lucas",
+			"placetype": "county",
+			"parent_id": 85686517,
+			"parent_name": "Guerrero",
+			"distance_m": 4414,
+			"inside_id": 85686595,
+			"inside_name": "Michoacán de Ocampo"
+		},
+		{
+			"id": 102076261,
+			"name": "Coicoyán de las Flores",
+			"placetype": "county",
+			"parent_id": 85686517,
+			"parent_name": "Guerrero",
+			"distance_m": 3120,
+			"inside_id": 85686623,
+			"inside_name": "Oaxaca"
+		},
+		{
+			"id": 102530539,
+			"name": "Sac City Municipal Airport",
+			"placetype": "campus",
+			"parent_id": 85688713,
+			"parent_name": "Iowa",
+			"distance_m": 8656426,
+			"inside_id": 85670727,
+			"inside_name": "Skikda"
+		},
+		{
+			"id": 102530541,
+			"name": "Robert Sibley Airport",
+			"placetype": "campus",
+			"parent_id": 85688701,
+			"parent_name": "Tennessee",
+			"distance_m": 7042411,
+			"inside_id": 85687305,
+			"inside_name": "Warmińsko-Mazurskie"
+		},
+		{
+			"id": 102530627,
+			"name": "Robinson Army Airfield",
+			"placetype": "campus",
+			"parent_id": 85688549,
+			"parent_name": "Arkansas",
+			"distance_m": 7606113,
+			"inside_id": 85682571,
+			"inside_name": "Bavaria"
+		},
+		{
+			"id": 102531189,
+			"name": "Denver International Airport",
+			"placetype": "campus",
+			"parent_id": 1108750025,
+			"parent_name": "Northwest",
+			"distance_m": 24194,
+			"inside_id": 1108750055,
+			"inside_name": "Northeast"
+		},
+		{
+			"id": 102533739,
+			"name": "Mankato Airport",
+			"placetype": "campus",
+			"parent_id": 85688555,
+			"parent_name": "Kansas",
+			"distance_m": 14065834,
+			"inside_id": 85673847,
+			"inside_name": "Mokhotlong"
+		},
+		{
+			"id": 102534033,
+			"name": "Houston County Airport",
+			"placetype": "campus",
+			"parent_id": 85688727,
+			"parent_name": "Minnesota",
+			"distance_m": 3566128,
+			"inside_id": 85688573,
+			"inside_name": "Alaska"
+		},
+		{
+			"id": 102536225,
+			"name": "San Felipe Airport",
+			"placetype": "campus",
+			"parent_id": 85686549,
+			"parent_name": "Sonora",
+			"distance_m": 85234,
+			"inside_id": 85686541,
+			"inside_name": "Baja California"
+		},
+		{
+			"id": 102546007,
+			"name": "Almirante Padilla Airport",
+			"placetype": "campus",
+			"parent_id": 85670147,
+			"parent_name": "La Guajira",
+			"distance_m": 5276660,
+			"inside_id": 85680343,
+			"inside_name": "Rocha"
+		},
+		{
+			"id": 102549193,
+			"name": "Zwickau Airport",
+			"placetype": "campus",
+			"parent_id": 101841937,
+			"parent_name": "Wilkau-Haßlau",
+			"distance_m": 4040,
+			"inside_id": 101748603,
+			"inside_name": "Zwickau"
+		},
+		{
+			"id": 102549607,
+			"name": "Cottbus Airport",
+			"placetype": "campus",
+			"parent_id": 101748763,
+			"parent_name": "Cottbus",
+			"distance_m": 9614,
+			"inside_id": 101821151,
+			"inside_name": "Jänschwalde"
+		},
+		{
+			"id": 102552069,
+			"name": "Bandara Udara Internasional Soekarno-Hatta",
+			"placetype": "campus",
+			"parent_id": 102020713,
+			"parent_name": "Cengkareng",
+			"distance_m": 5416,
+			"inside_id": 102018849,
+			"inside_name": "Tangerang"
+		},
+		{
+			"id": 102552551,
+			"name": "Lobito Sw Airport",
+			"placetype": "campus",
+			"parent_id": 85667691,
+			"parent_name": "Benguela",
+			"distance_m": 9853611,
+			"inside_id": 85669159,
+			"inside_name": "Cat Island"
+		},
+		{
+			"id": 102552689,
+			"name": "Oryahovitsa Airport",
+			"placetype": "campus",
+			"parent_id": 85681783,
+			"parent_name": "Stara Zagora",
+			"distance_m": 38140,
+			"inside_id": 85681829,
+			"inside_name": "Veliko Turnovo"
+		},
+		{
+			"id": 102552693,
+			"name": "Pleven Airport",
+			"placetype": "campus",
+			"parent_id": 85681779,
+			"parent_name": "Plovdiv",
+			"distance_m": 73135,
+			"inside_id": 85681835,
+			"inside_name": "Pleven"
+		},
+		{
+			"id": 102552697,
+			"name": "Targovishte Airport",
+			"placetype": "campus",
+			"parent_id": 85681779,
+			"parent_name": "Plovdiv",
+			"distance_m": 150947,
+			"inside_id": 85681839,
+			"inside_name": "Turgovishte"
+		},
+		{
+			"id": 102553081,
+			"name": "Talknafjordur Airport",
+			"placetype": "campus",
+			"parent_id": 85672529,
+			"parent_name": "Vesturland",
+			"distance_m": 81857,
+			"inside_id": 85672497,
+			"inside_name": "Vestfirðir"
+		},
+		{
+			"id": 102553105,
+			"name": "Borgarfjordur Eystri Airport",
+			"placetype": "campus",
+			"parent_id": 85672529,
+			"parent_name": "Vesturland",
+			"distance_m": 283688,
+			"inside_id": 85672501,
+			"inside_name": "Austurland"
+		},
+		{
+			"id": 102555593,
+			"name": "Luxembourg Airport",
+			"placetype": "campus",
+			"parent_id": 101751765,
+			"parent_name": "Luxembourg",
+			"distance_m": 1652,
+			"inside_id": 101753075,
+			"inside_name": "Niederanven"
+		},
+		{
+			"id": 102555983,
+			"name": "Dibrugarh Airport",
+			"placetype": "campus",
+			"parent_id": 102030359,
+			"parent_name": "Dibrugarh",
+			"distance_m": 7115,
+			"inside_id": 1830123561,
+			"inside_name": "Miripathar Gaon"
+		},
+		{
+			"id": 404461019,
+			"name": "Porto Recanati",
+			"placetype": "localadmin",
+			"parent_id": 85685379,
+			"parent_name": "Ancona",
+			"distance_m": 1464,
+			"inside_id": 85685383,
+			"inside_name": "Macerata"
+		},
+		{
+			"id": 404462247,
+			"name": "Rocca Di Botte",
+			"placetype": "localadmin",
+			"parent_id": 85685461,
+			"parent_name": "Rome",
+			"distance_m": 1403,
+			"inside_id": 85685505,
+			"inside_name": "L'Aquila"
+		},
+		{
+			"id": 404463775,
+			"name": "Pian Di Sco",
+			"placetype": "localadmin",
+			"parent_id": 85685407,
+			"parent_name": "Firenze",
+			"distance_m": 1067,
+			"inside_id": 85685423,
+			"inside_name": "Arezzo"
+		},
+		{
+			"id": 404466707,
+			"name": "Rosolini",
+			"placetype": "localadmin",
+			"parent_id": 85685621,
+			"parent_name": "Ragusa",
+			"distance_m": 1997,
+			"inside_id": 85685627,
+			"inside_name": "Siracusa"
+		},
+		{
+			"id": 404470425,
+			"name": "Taglio Di Po",
+			"placetype": "localadmin",
+			"parent_id": 85685359,
+			"parent_name": "Ferrara",
+			"distance_m": 6384,
+			"inside_id": 85685313,
+			"inside_name": "Rovigo"
+		},
+		{
+			"id": 420782181,
+			"name": "R. K. Puram",
+			"placetype": "neighbourhood",
+			"parent_id": 102029189,
+			"parent_name": "New Delhi",
+			"distance_m": 2106,
+			"inside_id": 102030425,
+			"inside_name": "Delhi"
+		},
+		{
+			"id": 420782183,
+			"name": "Press Enclave",
+			"placetype": "neighbourhood",
+			"parent_id": 102029189,
+			"parent_name": "New Delhi",
+			"distance_m": 5619,
+			"inside_id": 102030425,
+			"inside_name": "Delhi"
+		},
+		{
+			"id": 420782185,
+			"name": "Ramakrishnapuram",
+			"placetype": "neighbourhood",
+			"parent_id": 102029189,
+			"parent_name": "New Delhi",
+			"distance_m": 2765,
+			"inside_id": 102030425,
+			"inside_name": "Delhi"
+		},
+		{
+			"id": 420782187,
+			"name": "Dwarka",
+			"placetype": "neighbourhood",
+			"parent_id": 102029189,
+			"parent_name": "New Delhi",
+			"distance_m": 12332,
+			"inside_id": 102030425,
+			"inside_name": "Delhi"
+		},
+		{
+			"id": 421174399,
+			"name": "القاهرة",
+			"placetype": "locality",
+			"parent_id": 1092016929,
+			"parent_name": "El-Azbakeyah",
+			"distance_m": 6830,
+			"inside_id": 1092022823,
+			"inside_name": "Nasr City"
+		},
+		{
+			"id": 421176809,
+			"name": "Thành Phố Hồ Chí Minh",
+			"placetype": "locality",
+			"parent_id": 1108782041,
+			"parent_name": "Quan 8",
+			"distance_m": 3077,
+			"inside_id": 1108782007,
+			"inside_name": "Quan 1"
+		},
+		{
+			"id": 421178455,
+			"name": "Muscat",
+			"placetype": "locality",
+			"parent_id": 421185635,
+			"parent_name": "Muscat",
+			"distance_m": 9368,
+			"inside_id": 1108721095,
+			"inside_name": "Mutrah"
+		},
+		{
+			"id": 421182301,
+			"name": "Sri Jayewardenepura-Kotte",
+			"placetype": "locality",
+			"parent_id": 1092059875,
+			"parent_name": "Kaduwela",
+			"distance_m": 1553,
+			"inside_id": 1092066319,
+			"inside_name": "Sri Jayawardanapura Kotte"
+		},
+		{
+			"id": 421186515,
+			"name": "Kingston",
+			"placetype": "locality",
+			"parent_id": 85672609,
+			"parent_name": "Saint Andrew",
+			"distance_m": 1053,
+			"inside_id": 85672587,
+			"inside_name": "Kingston"
+		},
+		{
+			"id": 421200905,
+			"name": "Alexandria",
+			"placetype": "locality",
+			"parent_id": 1092015183,
+			"parent_name": "Bab Sharqy",
+			"distance_m": 1443,
+			"inside_id": 1092024943,
+			"inside_name": "Sidy Gaber"
+		},
+		{
+			"id": 890437279,
+			"name": "Hong Kong",
+			"placetype": "locality",
+			"parent_id": 85671775,
+			"parent_name": "Central and Western",
+			"distance_m": 9297,
+			"inside_id": 85671823,
+			"inside_name": "Kwai Tsing"
+		},
+		{
+			"id": 890444289,
+			"name": "Zaria",
+			"placetype": "locality",
+			"parent_id": 1108564315,
+			"parent_name": "Sabon-Gari",
+			"distance_m": 2148,
+			"inside_id": 1108564559,
+			"inside_name": "Zaria"
+		},
+		{
+			"id": 890465855,
+			"name": "Khao Suan Kwang",
+			"placetype": "county",
+			"parent_id": 85678739,
+			"parent_name": "Bangkok",
+			"distance_m": 390385,
+			"inside_id": 85678827,
+			"inside_name": "Khon Kaen"
+		},
+		{
+			"id": 890465923,
+			"name": "Phanom",
+			"placetype": "county",
+			"parent_id": 85678849,
+			"parent_name": "Surin",
+			"distance_m": 792751,
+			"inside_id": 85678581,
+			"inside_name": "Surat Thani"
+		},
+		{
+			"id": 890465959,
+			"name": "Don Muang",
+			"placetype": "county",
+			"parent_id": 85678617,
+			"parent_name": "Chiang Rai",
+			"distance_m": 579777,
+			"inside_id": 85678739,
+			"inside_name": "Bangkok"
+		},
+		{
+			"id": 890465983,
+			"name": "Wang Muang",
+			"placetype": "county",
+			"parent_id": 85678735,
+			"parent_name": "Saraburi",
+			"distance_m": 1639,
+			"inside_id": 85678701,
+			"inside_name": "Lopburi"
+		},
+		{
+			"id": 890466015,
+			"name": "Bang Lamung",
+			"placetype": "county",
+			"parent_id": 85678625,
+			"parent_name": "Lampang",
+			"distance_m": 507200,
+			"inside_id": 85678795,
+			"inside_name": "Chonburi"
+		},
+		{
+			"id": 890466353,
+			"name": "Uthai",
+			"placetype": "county",
+			"parent_id": 85678689,
+			"parent_name": "Uthai Thani",
+			"distance_m": 121942,
+			"inside_id": 85678721,
+			"inside_name": "Phra Nakhon Si Ayutthaya"
+		},
+		{
+			"id": 890466725,
+			"name": "Muang Phichit",
+			"placetype": "county",
+			"parent_id": 85678647,
+			"parent_name": "Phitsanulok",
+			"distance_m": 8838,
+			"inside_id": 85678669,
+			"inside_name": "Phichit"
+		},
+		{
+			"id": 890466789,
+			"name": "Muak Lek",
+			"placetype": "county",
+			"parent_id": 85678841,
+			"parent_name": "Nakhon Ratchasima",
+			"distance_m": 8435,
+			"inside_id": 85678701,
+			"inside_name": "Lopburi"
+		},
+		{
+			"id": 890466875,
+			"name": "Suk Samran",
+			"placetype": "county",
+			"parent_id": 85678573,
+			"parent_name": "Phang Nga",
+			"distance_m": 49228,
+			"inside_id": 85678577,
+			"inside_name": "Ranong"
+		},
+		{
+			"id": 890466955,
+			"name": "Muang Surin",
+			"placetype": "county",
+			"parent_id": 85678845,
+			"parent_name": "Roi Et",
+			"distance_m": 61938,
+			"inside_id": 85678849,
+			"inside_name": "Surin"
+		},
+		{
+			"id": 890507227,
+			"name": "Kottagudem",
+			"placetype": "locality",
+			"parent_id": 1108696081,
+			"parent_name": "Hugli",
+			"distance_m": 940999,
+			"inside_id": 890509771,
+			"inside_name": "Khammam"
+		},
+		{
+			"id": 1092022979,
+			"name": "",
+			"placetype": "county",
+			"parent_id": 85671047,
+			"parent_name": "Al Jizah",
+			"distance_m": 3767,
+			"inside_id": 85671037,
+			"inside_name": "Al Fayyum"
+		},
+		{
+			"id": 1108712257,
+			"name": "Larchwood",
+			"placetype": "microhood",
+			"parent_id": 85835463,
+			"parent_name": "Mount Auburn",
+			"distance_m": 1405,
+			"inside_id": 1108712243,
+			"inside_name": "Avon Hill"
+		},
+		{
+			"id": 1108810211,
+			"name": "Düppel",
+			"placetype": "microhood",
+			"parent_id": 420784341,
+			"parent_name": "Nikolassee",
+			"distance_m": 1024,
+			"inside_id": 420784343,
+			"inside_name": "Zehlendorf"
+		},
+		{
+			"id": 1108947363,
+			"name": "Scheidt",
+			"placetype": "neighbourhood",
+			"parent_id": 101748649,
+			"parent_name": "Solingen",
+			"distance_m": 4066,
+			"inside_id": 101748657,
+			"inside_name": "Wuppertal"
+		},
+		{
+			"id": 1125294125,
+			"name": "Kolbudy",
+			"placetype": "localadmin",
+			"parent_id": 102080213,
+			"parent_name": "Gdański",
+			"distance_m": 3187,
+			"inside_id": 102080225,
+			"inside_name": "Gdańsk"
+		},
+		{
+			"id": 1125326541,
+			"name": "Wicko",
+			"placetype": "localadmin",
+			"parent_id": 102080263,
+			"parent_name": "Lęborski",
+			"distance_m": 3259,
+			"inside_id": 102080255,
+			"inside_name": "Słupski"
+		},
+		{
+			"id": 1125326867,
+			"name": "Świętochłowice",
+			"placetype": "localadmin",
+			"parent_id": 102079507,
+			"parent_name": "Świętochłowice",
+			"distance_m": 1059,
+			"inside_id": 102079515,
+			"inside_name": "Chorzów"
+		},
+		{
+			"id": 1125358943,
+			"name": "Zawonia",
+			"placetype": "localadmin",
+			"parent_id": 102079733,
+			"parent_name": "Trzebnicki",
+			"distance_m": 1039,
+			"inside_id": 102079685,
+			"inside_name": "Wrocławski"
+		},
+		{
+			"id": 1125362003,
+			"name": "Gmina Łazy",
+			"placetype": "localadmin",
+			"parent_id": 102079613,
+			"parent_name": "Zawierciański",
+			"distance_m": 1054,
+			"inside_id": 102079551,
+			"inside_name": "Dąbrowa Górnicza"
+		},
+		{
+			"id": 1125364395,
+			"name": "Marcinowice",
+			"placetype": "localadmin",
+			"parent_id": 102079625,
+			"parent_name": "Świdnicki",
+			"distance_m": 1206,
+			"inside_id": 102079685,
+			"inside_name": "Wrocławski"
+		},
+		{
+			"id": 1125366317,
+			"name": "Zielonki",
+			"placetype": "localadmin",
+			"parent_id": 102079541,
+			"parent_name": "Krakowski",
+			"distance_m": 1595,
+			"inside_id": 102079481,
+			"inside_name": "Kraków"
+		},
+		{
+			"id": 1125376369,
+			"name": "Gródek nad Dunajcem",
+			"placetype": "localadmin",
+			"parent_id": 102079425,
+			"parent_name": "Nowosądecki",
+			"distance_m": 4496,
+			"inside_id": 102079407,
+			"inside_name": "Nowotarski"
+		},
+		{
+			"id": 1125385589,
+			"name": "Osie",
+			"placetype": "localadmin",
+			"parent_id": 102080137,
+			"parent_name": "Świecki",
+			"distance_m": 2213,
+			"inside_id": 102080183,
+			"inside_name": "Starogardzki"
+		},
+		{
+			"id": 1125387913,
+			"name": "Głusk",
+			"placetype": "localadmin",
+			"parent_id": 102079795,
+			"parent_name": "Lubelski",
+			"distance_m": 2519,
+			"inside_id": 102079775,
+			"inside_name": "Lublin"
+		},
+		{
+			"id": 1125396357,
+			"name": "Gmina Tarnów",
+			"placetype": "localadmin",
+			"parent_id": 102079491,
+			"parent_name": "Tarnów",
+			"distance_m": 2832,
+			"inside_id": 102079535,
+			"inside_name": "Tarnowski"
+		},
+		{
+			"id": 1125398959,
+			"name": "Raszyn",
+			"placetype": "localadmin",
+			"parent_id": 102079919,
+			"parent_name": "Pruszkowski",
+			"distance_m": 1208,
+			"inside_id": 102079951,
+			"inside_name": "M. St. Warszawa"
+		},
+		{
+			"id": 1125399461,
+			"name": "Gietrzwałd",
+			"placetype": "localadmin",
+			"parent_id": 102080207,
+			"parent_name": "Olsztyński",
+			"distance_m": 5333,
+			"inside_id": 102080197,
+			"inside_name": "Ostródzki"
+		},
+		{
+			"id": 1125771537,
+			"name": "Wildegg",
+			"placetype": "locality",
+			"parent_id": 404570705,
+			"parent_name": "Möriken-Wildegg",
+			"distance_m": 2834,
+			"inside_id": 404571891,
+			"inside_name": "Staufen"
+		},
+		{
+			"id": 1125781267,
+			"name": "Les Acacias",
+			"placetype": "locality",
+			"parent_id": 404328283,
+			"parent_name": "Genève",
+			"distance_m": 1105,
+			"inside_id": 404328701,
+			"inside_name": "Lancy"
+		},
+		{
+			"id": 1125791431,
+			"name": "Bettmeralp",
+			"placetype": "locality",
+			"parent_id": 1394254083,
+			"parent_name": "Naters",
+			"distance_m": 2382,
+			"inside_id": 1394254141,
+			"inside_name": "Bettmeralp"
+		},
+		{
+			"id": 1125796485,
+			"name": "Zwischenflüh",
+			"placetype": "locality",
+			"parent_id": 404567761,
+			"parent_name": "Diemtigen",
+			"distance_m": 20536,
+			"inside_id": 404567735,
+			"inside_name": "Lauterbrunnen"
+		},
+		{
+			"id": 1125800139,
+			"name": "Ponte Capriasca",
+			"placetype": "locality",
+			"parent_id": 404573227,
+			"parent_name": "Ponte Capriasca",
+			"distance_m": 1250,
+			"inside_id": 404573567,
+			"inside_name": "Capriasca"
+		},
+		{
+			"id": 1125814589,
+			"name": "Vollèges",
+			"placetype": "locality",
+			"parent_id": 404568717,
+			"parent_name": "Vollèges",
+			"distance_m": 2364,
+			"inside_id": 404567697,
+			"inside_name": "Bagnes"
+		},
+		{
+			"id": 1125824147,
+			"name": "Cornaux",
+			"placetype": "locality",
+			"parent_id": 404571367,
+			"parent_name": "Cornaux",
+			"distance_m": 4364,
+			"inside_id": 404569857,
+			"inside_name": "Enges"
+		},
+		{
+			"id": 1125829947,
+			"name": "Hauptwil",
+			"placetype": "locality",
+			"parent_id": 404569203,
+			"parent_name": "Hauptwil-Gottshaus",
+			"distance_m": 1464,
+			"inside_id": 404568255,
+			"inside_name": "Waldkirch"
+		},
+		{
+			"id": 1125842735,
+			"name": "Rütihof",
+			"placetype": "locality",
+			"parent_id": 404569209,
+			"parent_name": "Baden",
+			"distance_m": 29320,
+			"inside_id": 404569663,
+			"inside_name": "Herrliberg"
+		},
+		{
+			"id": 1125850585,
+			"name": "Raron",
+			"placetype": "locality",
+			"parent_id": 404568275,
+			"parent_name": "Raron",
+			"distance_m": 43315,
+			"inside_id": 404568899,
+			"inside_name": "Isérables"
+		},
+		{
+			"id": 1125878797,
+			"name": "Wil",
+			"placetype": "locality",
+			"parent_id": 404568087,
+			"parent_name": "Kirchberg",
+			"distance_m": 1928,
+			"inside_id": 1394254055,
+			"inside_name": "Wil"
+		},
+		{
+			"id": 1125883219,
+			"name": "Madonna del Piano",
+			"placetype": "locality",
+			"parent_id": 404571523,
+			"parent_name": "Croglio",
+			"distance_m": 1835,
+			"inside_id": 404467433,
+			"inside_name": "Cadegliano-Viconago"
+		},
+		{
+			"id": 1125921701,
+			"name": "Tiefencastel",
+			"placetype": "locality",
+			"parent_id": 404568091,
+			"parent_name": "Vaz/Obervaz",
+			"distance_m": 4329,
+			"inside_id": 1394254159,
+			"inside_name": "Albula/Alvra"
+		},
+		{
+			"id": 1125930793,
+			"name": "Valzeina",
+			"placetype": "locality",
+			"parent_id": 404568085,
+			"parent_name": "Trimmis",
+			"distance_m": 2383,
+			"inside_id": 404568077,
+			"inside_name": "Grüsch"
+		},
+		{
+			"id": 1125931513,
+			"name": "Oberhofen",
+			"placetype": "locality",
+			"parent_id": 404568551,
+			"parent_name": "Mettauertal",
+			"distance_m": 53708,
+			"inside_id": 404568377,
+			"inside_name": "Turbenthal"
+		},
+		{
+			"id": 1125935133,
+			"name": "Ennetbürgen",
+			"placetype": "locality",
+			"parent_id": 404328291,
+			"parent_name": "Ennetbürgen",
+			"distance_m": 3357,
+			"inside_id": 404328301,
+			"inside_name": "Stansstad"
+		},
+		{
+			"id": 1125939113,
+			"name": "Innertkirchen",
+			"placetype": "locality",
+			"parent_id": 404567713,
+			"parent_name": "Guttannen",
+			"distance_m": 3944,
+			"inside_id": 1394254003,
+			"inside_name": "Innertkirchen"
+		},
+		{
+			"id": 1125960563,
+			"name": "Hemmiken",
+			"placetype": "locality",
+			"parent_id": 404571973,
+			"parent_name": "Hemmiken",
+			"distance_m": 2069,
+			"inside_id": 404569811,
+			"inside_name": "Gelterkinden"
+		},
+		{
+			"id": 1125976971,
+			"name": "Ettenhausen",
+			"placetype": "locality",
+			"parent_id": 404568605,
+			"parent_name": "Aadorf",
+			"distance_m": 16415,
+			"inside_id": 404568793,
+			"inside_name": "Wetzikon"
+		},
+		{
+			"id": 1125979591,
+			"name": "Mont-Soleil",
+			"placetype": "locality",
+			"parent_id": 404568449,
+			"parent_name": "Sonvilier",
+			"distance_m": 1692,
+			"inside_id": 404568571,
+			"inside_name": "Saint-Imier"
+		},
+		{
+			"id": 1125996979,
+			"name": "Buchen",
+			"placetype": "locality",
+			"parent_id": 404568725,
+			"parent_name": "Horrenbach-Buchen",
+			"distance_m": 19777,
+			"inside_id": 404567735,
+			"inside_name": "Lauterbrunnen"
+		},
+		{
+			"id": 1126004579,
+			"name": "Rickenbach",
+			"placetype": "locality",
+			"parent_id": 404328451,
+			"parent_name": "Rickenbach",
+			"distance_m": 17133,
+			"inside_id": 404571245,
+			"inside_name": "Ottenbach"
+		},
+		{
+			"id": 1126014799,
+			"name": "La Tour-de-Trême",
+			"placetype": "locality",
+			"parent_id": 404571463,
+			"parent_name": "Le Pâquier",
+			"distance_m": 1092,
+			"inside_id": 404568447,
+			"inside_name": "Bulle"
+		},
+		{
+			"id": 1126016139,
+			"name": "Thalheim",
+			"placetype": "locality",
+			"parent_id": 404569787,
+			"parent_name": "Thalheim",
+			"distance_m": 49994,
+			"inside_id": 404570767,
+			"inside_name": "Thalheim an der Thur"
+		},
+		{
+			"id": 1126049645,
+			"name": "Berzona",
+			"placetype": "locality",
+			"parent_id": 1394254145,
+			"parent_name": "Onsernone",
+			"distance_m": 11781,
+			"inside_id": 404568443,
+			"inside_name": "Vogorno"
+		},
+		{
+			"id": 1126065703,
+			"name": "Bayfair",
+			"placetype": "neighbourhood",
+			"parent_id": 101914325,
+			"parent_name": "Tauranga",
+			"distance_m": 3378,
+			"inside_id": 101915581,
+			"inside_name": "Mt Maunganui"
+		},
+		{
+			"id": 1126074361,
+			"name": "Sector 5",
+			"placetype": "neighbourhood",
+			"parent_id": 102030563,
+			"parent_name": "Chandigarh",
+			"distance_m": 1865,
+			"inside_id": 1511203483,
+			"inside_name": "Panchkula"
+		},
+		{
+			"id": 1126075495,
+			"name": "Badarpur Extension",
+			"placetype": "neighbourhood",
+			"parent_id": 102029189,
+			"parent_name": "New Delhi",
+			"distance_m": 12672,
+			"inside_id": 102030425,
+			"inside_name": "Delhi"
+		},
+		{
+			"id": 1126096131,
+			"name": "Fernbrook",
+			"placetype": "neighbourhood",
+			"parent_id": 101914699,
+			"parent_name": "Oamaru",
+			"distance_m": 2698,
+			"inside_id": 1729338875,
+			"inside_name": "Oamaru North"
+		},
+		{
+			"id": 1126110869,
+			"name": "Brunnen",
+			"placetype": "locality",
+			"parent_id": 404568795,
+			"parent_name": "Ingenbohl",
+			"distance_m": 20367,
+			"inside_id": 1394254109,
+			"inside_name": "Horgen"
+		},
+		{
+			"id": 1141909261,
+			"name": "Mzuzu",
+			"placetype": "locality",
+			"parent_id": 85675015,
+			"parent_name": "Mzimba",
+			"distance_m": 3259,
+			"inside_id": 1108784759,
+			"inside_name": "Mzuzu City"
+		},
+		{
+			"id": 1141960493,
+			"name": "Nes",
+			"placetype": "locality",
+			"parent_id": 404473755,
+			"parent_name": "Dongeradeel",
+			"distance_m": 8958,
+			"inside_id": 404473759,
+			"inside_name": "Ameland"
+		},
+		{
+			"id": 1158792029,
+			"name": "Nieuweroord",
+			"placetype": "locality",
+			"parent_id": 404474649,
+			"parent_name": "Midden-Drenthe",
+			"distance_m": 1038,
+			"inside_id": 404473811,
+			"inside_name": "Hoogeveen"
+		},
+		{
+			"id": 1209008911,
+			"name": "Moussamba",
+			"placetype": "locality",
+			"parent_id": 85632407,
+			"parent_name": "Gabon",
+			"distance_m": 5173,
+			"inside_id": 85632541,
+			"inside_name": "Republic of Congo"
+		},
+		{
+			"id": 1209014089,
+			"name": "Brifa",
+			"placetype": "locality",
+			"parent_id": 85632413,
+			"parent_name": "Syria",
+			"distance_m": 8898,
+			"inside_id": 85632393,
+			"inside_name": "Turkey"
+		},
+		{
+			"id": 1209014259,
+			"name": "Barki",
+			"placetype": "locality",
+			"parent_id": 85632469,
+			"parent_name": "India",
+			"distance_m": 8099,
+			"inside_id": 85632659,
+			"inside_name": "Pakistan"
+		},
+		{
+			"id": 1209019173,
+			"name": "Anungom",
+			"placetype": "locality",
+			"parent_id": 85632287,
+			"parent_name": "Equatorial Guinea",
+			"distance_m": 7098,
+			"inside_id": 85632407,
+			"inside_name": "Gabon"
+		},
+		{
+			"id": 1209022797,
+			"name": "Tang Mo",
+			"placetype": "locality",
+			"parent_id": 85632763,
+			"parent_name": "Vietnam",
+			"distance_m": 2872,
+			"inside_id": 85632695,
+			"inside_name": "China"
+		},
+		{
+			"id": 1209028101,
+			"name": "Kanna",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 1246,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209040723,
+			"name": "Akoumenai",
+			"placetype": "locality",
+			"parent_id": 85671195,
+			"parent_name": "French Guiana",
+			"distance_m": 1651,
+			"inside_id": 85681891,
+			"inside_name": "Amapa"
+		},
+		{
+			"id": 1209042921,
+			"name": "Bussy",
+			"placetype": "locality",
+			"parent_id": 1394254193,
+			"parent_name": "Estavayer",
+			"distance_m": 32106,
+			"inside_id": 404572107,
+			"inside_name": "Bussy-Chardonney"
+		},
+		{
+			"id": 1209062755,
+			"name": "Darre",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 64242,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209062777,
+			"name": "Guumays",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 160456,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209064907,
+			"name": "Fardhiddin",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 4700,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209065401,
+			"name": "Zolotaya Balka (3 otd.)",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 166926,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209071157,
+			"name": "Biyadhanane",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 420184,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209074997,
+			"name": "Ceel Dameer",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 29674,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209076827,
+			"name": "Shenggeri",
+			"placetype": "locality",
+			"parent_id": 85632695,
+			"parent_name": "China",
+			"distance_m": 1416,
+			"inside_id": 85632171,
+			"inside_name": "Bhutan"
+		},
+		{
+			"id": 1209081391,
+			"name": "Inadadan",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 209684,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209083549,
+			"name": "Kashtanovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 46177,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209083551,
+			"name": "Frunze",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 50543,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209086503,
+			"name": "Cerro de Pena",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 1757,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209089507,
+			"name": "Zham Kou'an",
+			"placetype": "locality",
+			"parent_id": 85632695,
+			"parent_name": "China",
+			"distance_m": 5528,
+			"inside_id": 85632465,
+			"inside_name": "Nepal"
+		},
+		{
+			"id": 1209093341,
+			"name": "Kolangaldagabe",
+			"placetype": "locality",
+			"parent_id": 85632213,
+			"parent_name": "Burkina Faso",
+			"distance_m": 1351,
+			"inside_id": 85632269,
+			"inside_name": "Niger"
+		},
+		{
+			"id": 1209094253,
+			"name": "Nezhinskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 26156,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209095275,
+			"name": "Las Delicias",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 2353,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209096849,
+			"name": "Misundu",
+			"placetype": "locality",
+			"parent_id": 85632559,
+			"parent_name": "Zambia",
+			"distance_m": 1104,
+			"inside_id": 85632643,
+			"inside_name": "Democratic Republic of the Congo"
+		},
+		{
+			"id": 1209101305,
+			"name": "El Carmen",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 4795,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209107933,
+			"name": "Mankaka",
+			"placetype": "locality",
+			"parent_id": 85632559,
+			"parent_name": "Zambia",
+			"distance_m": 2711,
+			"inside_id": 85632383,
+			"inside_name": "Malawi"
+		},
+		{
+			"id": 1209112333,
+			"name": "Irandou",
+			"placetype": "locality",
+			"parent_id": 85632407,
+			"parent_name": "Gabon",
+			"distance_m": 3455,
+			"inside_id": 85632541,
+			"inside_name": "Republic of Congo"
+		},
+		{
+			"id": 1209115029,
+			"name": "Kriram",
+			"placetype": "locality",
+			"parent_id": 85632269,
+			"parent_name": "Niger",
+			"distance_m": 3159,
+			"inside_id": 85632325,
+			"inside_name": "Chad"
+		},
+		{
+			"id": 1209116467,
+			"name": "Zlokukane",
+			"placetype": "locality",
+			"parent_id": 85633755,
+			"parent_name": "Serbia",
+			"distance_m": 3883,
+			"inside_id": 85632373,
+			"inside_name": "North Macedonia"
+		},
+		{
+			"id": 1209116659,
+			"name": "Naam",
+			"placetype": "locality",
+			"parent_id": 85632751,
+			"parent_name": "Sudan",
+			"distance_m": 403652,
+			"inside_id": 85632657,
+			"inside_name": "South Sudan"
+		},
+		{
+			"id": 1209172989,
+			"name": "Abdul Chadar",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 599017,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209175959,
+			"name": "Xuunshaley",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 492669,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209176725,
+			"name": "War Cimraan",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 227375,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209178987,
+			"name": "Dacawalay",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 426823,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209188315,
+			"name": "Tuur Qaylo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 530344,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209188725,
+			"name": "Alaalacadka",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 429136,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209188735,
+			"name": "Malowle",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 441252,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209188803,
+			"name": "Nasiyeh Kado",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 466941,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209189475,
+			"name": "Yeyle",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 162868,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209191465,
+			"name": "Shangungu",
+			"placetype": "locality",
+			"parent_id": 85632643,
+			"parent_name": "Democratic Republic of the Congo",
+			"distance_m": 7850,
+			"inside_id": 85632303,
+			"inside_name": "Rwanda"
+		},
+		{
+			"id": 1209191709,
+			"name": "Podgornoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 86162,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209191711,
+			"name": "Lebedinka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 47478,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194715,
+			"name": "Shchyolkino",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 75825,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194717,
+			"name": "Kiparisnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 137094,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194723,
+			"name": "Kolomenskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 50811,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194725,
+			"name": "Kopani",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 10609,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194727,
+			"name": "Otradnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 151190,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209194729,
+			"name": "Shishkino",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 78506,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209202579,
+			"name": "Kizilovoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 125366,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209203701,
+			"name": "Las Marias",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 4445,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209224869,
+			"name": "Bulawn",
+			"placetype": "locality",
+			"parent_id": 85632189,
+			"parent_name": "Ghana",
+			"distance_m": 1049,
+			"inside_id": 85632449,
+			"inside_name": "Ivory Coast"
+		},
+		{
+			"id": 1209229021,
+			"name": "Hudiara",
+			"placetype": "locality",
+			"parent_id": 85632469,
+			"parent_name": "India",
+			"distance_m": 4678,
+			"inside_id": 85632659,
+			"inside_name": "Pakistan"
+		},
+		{
+			"id": 1209232389,
+			"name": "Colonia San Francisco",
+			"placetype": "locality",
+			"parent_id": 85632355,
+			"parent_name": "Paraguay",
+			"distance_m": 62386,
+			"inside_id": 85633009,
+			"inside_name": "Brazil"
+		},
+		{
+			"id": 1209259433,
+			"name": "Na Hao",
+			"placetype": "locality",
+			"parent_id": 85632763,
+			"parent_name": "Vietnam",
+			"distance_m": 1595,
+			"inside_id": 85632241,
+			"inside_name": "Laos"
+		},
+		{
+			"id": 1209276065,
+			"name": "Arabsiyo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 461626,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209278825,
+			"name": "Geed Diqsi",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 499896,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209278901,
+			"name": "Podgornoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 169794,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209279233,
+			"name": "Illinta Dhexe",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 457247,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209279245,
+			"name": "Gon Weyne",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 402200,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209284859,
+			"name": "Katingan",
+			"placetype": "locality",
+			"parent_id": 85632347,
+			"parent_name": "Papua New Guinea",
+			"distance_m": 3122231,
+			"inside_id": 85632203,
+			"inside_name": "Indonesia"
+		},
+		{
+			"id": 1209288513,
+			"name": "Dabacaddo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 501809,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209288981,
+			"name": "Dayer Gal",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 355687,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209291331,
+			"name": "Nischu",
+			"placetype": "locality",
+			"parent_id": 85632469,
+			"parent_name": "India",
+			"distance_m": 15860,
+			"inside_id": 85632695,
+			"inside_name": "China"
+		},
+		{
+			"id": 1209291667,
+			"name": "Huluul",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 236983,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209291773,
+			"name": "Barabanovo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 99755,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209291775,
+			"name": "Zolotoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 93893,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209294761,
+			"name": "Strepetovo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 60264,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209294767,
+			"name": "Plodorodnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 43763,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209302473,
+			"name": "Verkhnekurgannoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 91176,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209302483,
+			"name": "Serovo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 52819,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209302603,
+			"name": "Peny",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 61091,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209302639,
+			"name": "Azovskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 81073,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209302697,
+			"name": "Nadezhdino",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 8327,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209303629,
+			"name": "La Tortuga",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 4409,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209309023,
+			"name": "Chenkeng",
+			"placetype": "locality",
+			"parent_id": 85632695,
+			"parent_name": "China",
+			"distance_m": 11912,
+			"inside_id": 85632403,
+			"inside_name": "Taiwan"
+		},
+		{
+			"id": 1209314113,
+			"name": "Sundar Singhwala",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 12309,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209314317,
+			"name": "Lakkha Singhwala",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 1678,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209325145,
+			"name": "Zalambessa",
+			"placetype": "locality",
+			"parent_id": 85632781,
+			"parent_name": "Eritrea",
+			"distance_m": 1761,
+			"inside_id": 85632257,
+			"inside_name": "Ethiopia"
+		},
+		{
+			"id": 1209328945,
+			"name": "Ban A Hi",
+			"placetype": "locality",
+			"parent_id": 85632293,
+			"parent_name": "Thailand",
+			"distance_m": 2101,
+			"inside_id": 85632241,
+			"inside_name": "Laos"
+		},
+		{
+			"id": 1209332505,
+			"name": "Belahia",
+			"placetype": "locality",
+			"parent_id": 85632465,
+			"parent_name": "Nepal",
+			"distance_m": 14358,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209332929,
+			"name": "Edchera",
+			"placetype": "locality",
+			"parent_id": 85632217,
+			"parent_name": "Western Sahara",
+			"distance_m": 172348,
+			"inside_id": 85632693,
+			"inside_name": "Morocco"
+		},
+		{
+			"id": 1209334517,
+			"name": "Sitio El Aguacate",
+			"placetype": "locality",
+			"parent_id": 85632545,
+			"parent_name": "El Salvador",
+			"distance_m": 2703,
+			"inside_id": 85632323,
+			"inside_name": "Honduras"
+		},
+		{
+			"id": 1209365529,
+			"name": "Katanga Premiere",
+			"placetype": "locality",
+			"parent_id": 85632643,
+			"parent_name": "Democratic Republic of the Congo",
+			"distance_m": 1554,
+			"inside_id": 85632559,
+			"inside_name": "Zambia"
+		},
+		{
+			"id": 1209376745,
+			"name": "Abaarso",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 446425,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209379231,
+			"name": "Gorayacowl",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 519292,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209379651,
+			"name": "Bacado",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 434850,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209383759,
+			"name": "Bari",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 77994,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209392185,
+			"name": "Snezhnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 54253,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209392187,
+			"name": "Radostnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 84933,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209394961,
+			"name": "Bandar Jedid",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 160621,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209395159,
+			"name": "Yagoomas",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 193886,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209395203,
+			"name": "Zadornoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 49373,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209398657,
+			"name": "Divisadero",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 6765,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209400477,
+			"name": "El Paraiso",
+			"placetype": "locality",
+			"parent_id": 85632545,
+			"parent_name": "El Salvador",
+			"distance_m": 4063,
+			"inside_id": 85632323,
+			"inside_name": "Honduras"
+		},
+		{
+			"id": 1209402741,
+			"name": "Shirokoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 89326,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209402931,
+			"name": "Tarasovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 29728,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209403867,
+			"name": "El Matasano",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 4409,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209420399,
+			"name": "Malianwali Basti",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 3902,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209424513,
+			"name": "Segue",
+			"placetype": "locality",
+			"parent_id": 85632679,
+			"parent_name": "Mauritania",
+			"distance_m": 35018,
+			"inside_id": 85632553,
+			"inside_name": "Mali"
+		},
+		{
+			"id": 1209424739,
+			"name": "Hir",
+			"placetype": "locality",
+			"parent_id": 85632469,
+			"parent_name": "India",
+			"distance_m": 7605,
+			"inside_id": 85632659,
+			"inside_name": "Pakistan"
+		},
+		{
+			"id": 1209433161,
+			"name": "Icondo",
+			"placetype": "locality",
+			"parent_id": 85632287,
+			"parent_name": "Equatorial Guinea",
+			"distance_m": 4518,
+			"inside_id": 85632407,
+			"inside_name": "Gabon"
+		},
+		{
+			"id": 1209470775,
+			"name": "Zenteno",
+			"placetype": "locality",
+			"parent_id": 85632355,
+			"parent_name": "Paraguay",
+			"distance_m": 5342,
+			"inside_id": 85632505,
+			"inside_name": "Argentina"
+		},
+		{
+			"id": 1209471295,
+			"name": "Lemba",
+			"placetype": "locality",
+			"parent_id": 85632643,
+			"parent_name": "Democratic Republic of the Congo",
+			"distance_m": 1214,
+			"inside_id": 85632281,
+			"inside_name": "Angola"
+		},
+		{
+			"id": 1209471355,
+			"name": "Gowsaweyne",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 177190,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209473385,
+			"name": "Deylo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 71252,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209480029,
+			"name": "Gaban Hurudo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 453243,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209488999,
+			"name": "Tomcang",
+			"placetype": "locality",
+			"parent_id": 85632695,
+			"parent_name": "China",
+			"distance_m": 2610,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209492551,
+			"name": "Perevalovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 86588,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209492555,
+			"name": "Blizhnegorodskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 34512,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209492559,
+			"name": "Danilovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 147937,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209495495,
+			"name": "Belaya Skala",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 78268,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209495497,
+			"name": "Levadki",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 120330,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503085,
+			"name": "Dneprovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 27203,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503117,
+			"name": "Mar'yanovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 56516,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503119,
+			"name": "Yelenovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 85868,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503149,
+			"name": "Lekarstvennoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 122925,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503193,
+			"name": "Mnogovodnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 19154,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503209,
+			"name": "Donskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 96764,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209503255,
+			"name": "Nikolayevka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 118839,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209514709,
+			"name": "Chak Megha Wiran",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 7137,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209520421,
+			"name": "Chitambi",
+			"placetype": "locality",
+			"parent_id": 85632559,
+			"parent_name": "Zambia",
+			"distance_m": 7752,
+			"inside_id": 85632227,
+			"inside_name": "Tanzania"
+		},
+		{
+			"id": 1209520931,
+			"name": "Ahmad Dhandi",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 7001,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209521775,
+			"name": "Idemba",
+			"placetype": "locality",
+			"parent_id": 85632407,
+			"parent_name": "Gabon",
+			"distance_m": 2869,
+			"inside_id": 85632541,
+			"inside_name": "Republic of Congo"
+		},
+		{
+			"id": 1209529633,
+			"name": "Sianga",
+			"placetype": "locality",
+			"parent_id": 85632559,
+			"parent_name": "Zambia",
+			"distance_m": 3859,
+			"inside_id": 85632281,
+			"inside_name": "Angola"
+		},
+		{
+			"id": 1209529807,
+			"name": "Puerto Torocua",
+			"placetype": "locality",
+			"parent_id": 85632355,
+			"parent_name": "Paraguay",
+			"distance_m": 1215,
+			"inside_id": 85632505,
+			"inside_name": "Argentina"
+		},
+		{
+			"id": 1209531089,
+			"name": "Ka Pay Hai",
+			"placetype": "locality",
+			"parent_id": 85632763,
+			"parent_name": "Vietnam",
+			"distance_m": 2210,
+			"inside_id": 85632241,
+			"inside_name": "Laos"
+		},
+		{
+			"id": 1209533327,
+			"name": "Shangombo",
+			"placetype": "locality",
+			"parent_id": 85632559,
+			"parent_name": "Zambia",
+			"distance_m": 2024,
+			"inside_id": 85632281,
+			"inside_name": "Angola"
+		},
+		{
+			"id": 1209562603,
+			"name": "Stari Most",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 1690,
+			"inside_id": 85632395,
+			"inside_name": "Belarus"
+		},
+		{
+			"id": 1209571891,
+			"name": "Jable",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 291602,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209573931,
+			"name": "Dhanaan Qawlood",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 34960,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209577357,
+			"name": "Dhalanya Dhuux",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 455114,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209577377,
+			"name": "Shabeelley",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 465435,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209578077,
+			"name": "Duur-Cad",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 316622,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209579967,
+			"name": "Weeraar",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 546813,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209580009,
+			"name": "Warabood",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 600479,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209590007,
+			"name": "Boocda Kabaab",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 486378,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209590773,
+			"name": "Haro-Shiikh",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 355970,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209594499,
+			"name": "Ogneupornyy",
+			"placetype": "locality",
+			"parent_id": 85632685,
+			"parent_name": "Russia",
+			"distance_m": 1543,
+			"inside_id": 85632307,
+			"inside_name": "Kazakhstan"
+		},
+		{
+			"id": 1209595703,
+			"name": "Shaumyan",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 73877,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209599041,
+			"name": "El Callejon",
+			"placetype": "locality",
+			"parent_id": 85632323,
+			"parent_name": "Honduras",
+			"distance_m": 3815,
+			"inside_id": 85632545,
+			"inside_name": "El Salvador"
+		},
+		{
+			"id": 1209601117,
+			"name": "De Cano",
+			"placetype": "locality",
+			"parent_id": 85633293,
+			"parent_name": "Mexico",
+			"distance_m": 1425,
+			"inside_id": 85633793,
+			"inside_name": "United States"
+		},
+		{
+			"id": 1209602135,
+			"name": "Locala",
+			"placetype": "locality",
+			"parent_id": 85632261,
+			"parent_name": "Ecuador",
+			"distance_m": 2161,
+			"inside_id": 85632521,
+			"inside_name": "Peru"
+		},
+		{
+			"id": 1209602265,
+			"name": "Daloh",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 179046,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209603187,
+			"name": "Arbuzovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 37003,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209603229,
+			"name": "Kholodovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 78190,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209603239,
+			"name": "Dokuchayevo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 66769,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209603291,
+			"name": "Chernovo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 64181,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209603341,
+			"name": "Mityurino",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 18587,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209631981,
+			"name": "Ban Takhian Phao",
+			"placetype": "locality",
+			"parent_id": 85632293,
+			"parent_name": "Thailand",
+			"distance_m": 1968,
+			"inside_id": 85632739,
+			"inside_name": "Malaysia"
+		},
+		{
+			"id": 1209633205,
+			"name": "Changwat Ubon Ratchathani",
+			"placetype": "locality",
+			"parent_id": 85632293,
+			"parent_name": "Thailand",
+			"distance_m": 5915,
+			"inside_id": 85632359,
+			"inside_name": "Cambodia"
+		},
+		{
+			"id": 1209633639,
+			"name": "Samlat el Hafad",
+			"placetype": "locality",
+			"parent_id": 85632217,
+			"parent_name": "Western Sahara",
+			"distance_m": 116836,
+			"inside_id": 85632693,
+			"inside_name": "Morocco"
+		},
+		{
+			"id": 1209638515,
+			"name": "Awan",
+			"placetype": "locality",
+			"parent_id": 85632659,
+			"parent_name": "Pakistan",
+			"distance_m": 5738,
+			"inside_id": 85632469,
+			"inside_name": "India"
+		},
+		{
+			"id": 1209669733,
+			"name": "Quitovaquita",
+			"placetype": "locality",
+			"parent_id": 85633293,
+			"parent_name": "Mexico",
+			"distance_m": 1045,
+			"inside_id": 85633793,
+			"inside_name": "United States"
+		},
+		{
+			"id": 1209673703,
+			"name": "Nasroddin Kalay",
+			"placetype": "locality",
+			"parent_id": 85632229,
+			"parent_name": "Afghanistan",
+			"distance_m": 7555,
+			"inside_id": 85632659,
+			"inside_name": "Pakistan"
+		},
+		{
+			"id": 1209673961,
+			"name": "Laas Magugle",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 79759,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209673983,
+			"name": "Karin Dabayl Weyn",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 45151,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209677411,
+			"name": "Geli-Darxumo",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 376386,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209678141,
+			"name": "Ilma Shiikh",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 302937,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209678155,
+			"name": "Bixinduule",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 394289,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209680537,
+			"name": "Wabioh",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 470448,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209690447,
+			"name": "Teysa",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 460512,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209691137,
+			"name": "Huddis",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 377035,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209691219,
+			"name": "Beli Adaax",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 244002,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209691221,
+			"name": "Kundulah",
+			"placetype": "locality",
+			"parent_id": 85632379,
+			"parent_name": "Somalia",
+			"distance_m": 272103,
+			"inside_id": 85632733,
+			"inside_name": "Somaliland"
+		},
+		{
+			"id": 1209693253,
+			"name": "Kubanskoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 109404,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209693255,
+			"name": "Mostovoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 143483,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209693259,
+			"name": "Iskra",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 77649,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209693261,
+			"name": "Vysokoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 146968,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209693265,
+			"name": "Mashyno",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 67347,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209696169,
+			"name": "Suvorovo",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 144234,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209696171,
+			"name": "Divnoye",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 78677,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209696175,
+			"name": "Klinovka",
+			"placetype": "locality",
+			"parent_id": 85633805,
+			"parent_name": "Ukraine",
+			"distance_m": 116967,
+			"inside_id": 85632685,
+			"inside_name": "Russia"
+		},
+		{
+			"id": 1209835241,
+			"name": "Greenleaf",
+			"placetype": "locality",
+			"parent_id": 404509999,
+			"parent_name": "Ellsworth Township",
+			"distance_m": 5235,
+			"inside_id": 404512399,
+			"inside_name": "Greenleaf Township"
+		},
+		{
+			"id": 1209851027,
+			"name": "Ozenx-Montestrucq",
+			"placetype": "locality",
+			"parent_id": 404414933,
+			"parent_name": "Laa-Mondrans",
+			"distance_m": 2488,
+			"inside_id": 404366117,
+			"inside_name": "Ozenx-Montestrucq"
+		},
+		{
+			"id": 1226002429,
+			"name": "Beauvilliers",
+			"placetype": "locality",
+			"parent_id": 404409111,
+			"parent_name": "Epiais",
+			"distance_m": 1274,
+			"inside_id": 404402293,
+			"inside_name": "Beauvilliers"
+		},
+		{
+			"id": 1226260909,
+			"name": "Sandy Ground",
+			"placetype": "locality",
+			"parent_id": 85678229,
+			"parent_name": "Sint Maarten",
+			"distance_m": 1131,
+			"inside_id": 85632737,
+			"inside_name": "Saint Martin"
+		},
+		{
+			"id": 1242708823,
+			"name": "Wattenwil",
+			"placetype": "locality",
+			"parent_id": 404568955,
+			"parent_name": "Wattenwil",
+			"distance_m": 18419,
+			"inside_id": 404568563,
+			"inside_name": "Worb"
+		},
+		{
+			"id": 1242809405,
+			"name": "Skiti Prodromou",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 20784,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1243103185,
+			"name": "Skiti Xenofontos",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 7577,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1243208461,
+			"name": "Kastos",
+			"placetype": "locality",
+			"parent_id": 85684701,
+			"parent_name": "East Macedonia and Thrace",
+			"distance_m": 355801,
+			"inside_id": 85684693,
+			"inside_name": "Ionian Islands"
+		},
+		{
+			"id": 1243355159,
+			"name": "Casole",
+			"placetype": "locality",
+			"parent_id": 85677199,
+			"parent_name": "Borgo Maggiore",
+			"distance_m": 1393,
+			"inside_id": 85677205,
+			"inside_name": "San Marino"
+		},
+		{
+			"id": 1259517381,
+			"name": "Vogelsang",
+			"placetype": "locality",
+			"parent_id": 404571025,
+			"parent_name": "Gebenstorf",
+			"distance_m": 38688,
+			"inside_id": 404569475,
+			"inside_name": "Neunforn"
+		},
+		{
+			"id": 1259520143,
+			"name": "Kollbrunn",
+			"placetype": "locality",
+			"parent_id": 404569139,
+			"parent_name": "Zell",
+			"distance_m": 18394,
+			"inside_id": 1394254219,
+			"inside_name": "Stammheim"
+		},
+		{
+			"id": 1259614903,
+			"name": "Skiti Agiou Andreou",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 4849,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1259913637,
+			"name": "Skiti Profitou Iliou",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 2631,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1276157837,
+			"name": "Niedergampel",
+			"placetype": "locality",
+			"parent_id": 1394253979,
+			"parent_name": "Leuk",
+			"distance_m": 1157,
+			"inside_id": 404568475,
+			"inside_name": "Gampel-Bratsch"
+		},
+		{
+			"id": 1276600147,
+			"name": "Vacognes-Neuilly",
+			"placetype": "locality",
+			"parent_id": 404428285,
+			"parent_name": "Maisoncelles-Sur-Ajon",
+			"distance_m": 1064,
+			"inside_id": 404407843,
+			"inside_name": "Vacognes-Neuilly"
+		},
+		{
+			"id": 1277138165,
+			"name": "Sainte-Genevieve",
+			"placetype": "locality",
+			"parent_id": 404369399,
+			"parent_name": "Sommery",
+			"distance_m": 1114,
+			"inside_id": 404365345,
+			"inside_name": "Sainte-Genevieve"
+		},
+		{
+			"id": 1292933215,
+			"name": "Villeneuve",
+			"placetype": "locality",
+			"parent_id": 404425257,
+			"parent_name": "Saint-Ciers-De-Canesse",
+			"distance_m": 1200,
+			"inside_id": 404395295,
+			"inside_name": "Villeneuve"
+		},
+		{
+			"id": 1292941869,
+			"name": "Wald",
+			"placetype": "locality",
+			"parent_id": 404328563,
+			"parent_name": "Wald",
+			"distance_m": 33926,
+			"inside_id": 404568087,
+			"inside_name": "Kirchberg"
+		},
+		{
+			"id": 1293324161,
+			"name": "Monoxilitai",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 5369,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1293338731,
+			"name": "Ally",
+			"placetype": "locality",
+			"parent_id": 404399029,
+			"parent_name": "Escorailles",
+			"distance_m": 1221,
+			"inside_id": 404366779,
+			"inside_name": "Ally"
+		},
+		{
+			"id": 1310077097,
+			"name": "Ar Rifa` al Gharbi",
+			"placetype": "locality",
+			"parent_id": 85669043,
+			"parent_name": "Northern",
+			"distance_m": 1118,
+			"inside_id": 85669039,
+			"inside_name": "Southern"
+		},
+		{
+			"id": 1310339957,
+			"name": "Ammouliani",
+			"placetype": "locality",
+			"parent_id": 85684701,
+			"parent_name": "East Macedonia and Thrace",
+			"distance_m": 44247,
+			"inside_id": 85684637,
+			"inside_name": "Central Macedonia"
+		},
+		{
+			"id": 1310441505,
+			"name": "Thivais",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 4717,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1326464367,
+			"name": "Skiti Kafsokalyvion",
+			"placetype": "locality",
+			"parent_id": 85684637,
+			"parent_name": "Central Macedonia",
+			"distance_m": 20754,
+			"inside_id": 1360666039,
+			"inside_name": "Mount Athos"
+		},
+		{
+			"id": 1326779025,
+			"name": "Chatillon",
+			"placetype": "locality",
+			"parent_id": 404354827,
+			"parent_name": "Noyant-D'Allier",
+			"distance_m": 1119,
+			"inside_id": 404350077,
+			"inside_name": "Chatillon"
+		},
+		{
+			"id": 1326861223,
+			"name": "Forel",
+			"placetype": "locality",
+			"parent_id": 1394254193,
+			"parent_name": "Estavayer",
+			"distance_m": 3082,
+			"inside_id": 1394253987,
+			"inside_name": "Lucens"
+		},
+		{
+			"id": 1343377689,
+			"name": "Cailungo",
+			"placetype": "locality",
+			"parent_id": 85677215,
+			"parent_name": "Domagnano",
+			"distance_m": 1163,
+			"inside_id": 85677199,
+			"inside_name": "Borgo Maggiore"
+		},
+		{
+			"id": 1343795825,
+			"name": "Niederwil",
+			"placetype": "locality",
+			"parent_id": 404570875,
+			"parent_name": "Niederwil",
+			"distance_m": 17542,
+			"inside_id": 404328451,
+			"inside_name": "Rickenbach"
+		},
+		{
+			"id": 1343798329,
+			"name": "Buch",
+			"placetype": "locality",
+			"parent_id": 404328767,
+			"parent_name": "Buch",
+			"distance_m": 20441,
+			"inside_id": 1394254087,
+			"inside_name": "Wiesendangen"
+		},
+		{
+			"id": 1360697451,
+			"name": "Saint-Martin-du-Var",
+			"placetype": "neighbourhood",
+			"parent_id": 404410213,
+			"parent_name": "La Roquette-Sur-Var",
+			"distance_m": 1487,
+			"inside_id": 404389157,
+			"inside_name": "Saint-Martin-Du-Var"
+		},
+		{
+			"id": 1360697475,
+			"name": "Noizay",
+			"placetype": "neighbourhood",
+			"parent_id": 404376815,
+			"parent_name": "Lussault-Sur-Loire",
+			"distance_m": 2657,
+			"inside_id": 404370839,
+			"inside_name": "Noizay"
+		},
+		{
+			"id": 1360697483,
+			"name": "Saint-Gobain",
+			"placetype": "neighbourhood",
+			"parent_id": 404418551,
+			"parent_name": "Saint-Nicolas-Aux-Bois",
+			"distance_m": 3275,
+			"inside_id": 404364887,
+			"inside_name": "Saint-Gobain"
+		},
+		{
+			"id": 1360697485,
+			"name": "Saint-Léonard",
+			"placetype": "neighbourhood",
+			"parent_id": 404348727,
+			"parent_name": "La Houssiere",
+			"distance_m": 3475,
+			"inside_id": 404367807,
+			"inside_name": "Saint-Leonard"
+		},
+		{
+			"id": 1360697491,
+			"name": "Voiron",
+			"placetype": "neighbourhood",
+			"parent_id": 404362335,
+			"parent_name": "Saint-Nicolas-De-Macherin",
+			"distance_m": 2960,
+			"inside_id": 404348075,
+			"inside_name": "Voiron"
+		},
+		{
+			"id": 1360697511,
+			"name": "Sainte-Croix-en-Plaine",
+			"placetype": "neighbourhood",
+			"parent_id": 404418335,
+			"parent_name": "Logelheim",
+			"distance_m": 1501,
+			"inside_id": 1159321829,
+			"inside_name": "Sainte-Croix-en-Plaine"
+		},
+		{
+			"id": 1360697515,
+			"name": "Doullens",
+			"placetype": "neighbourhood",
+			"parent_id": 404427805,
+			"parent_name": "Authieule",
+			"distance_m": 1035,
+			"inside_id": 404425033,
+			"inside_name": "Terramesnil"
+		},
+		{
+			"id": 1360697519,
+			"name": "Rue",
+			"placetype": "neighbourhood",
+			"parent_id": 404406289,
+			"parent_name": "Arry",
+			"distance_m": 1572,
+			"inside_id": 404374855,
+			"inside_name": "Rue"
+		},
+		{
+			"id": 1360697523,
+			"name": "Beaune",
+			"placetype": "neighbourhood",
+			"parent_id": 404407919,
+			"parent_name": "Levernois",
+			"distance_m": 2633,
+			"inside_id": 404404313,
+			"inside_name": "Beaune"
+		},
+		{
+			"id": 1360697551,
+			"name": "Izaourt",
+			"placetype": "neighbourhood",
+			"parent_id": 404398907,
+			"parent_name": "Sarp",
+			"distance_m": 1159,
+			"inside_id": 404409205,
+			"inside_name": "Loures-Barousse"
+		},
+		{
+			"id": 1360697561,
+			"name": "Saint-Cergues",
+			"placetype": "neighbourhood",
+			"parent_id": 404372237,
+			"parent_name": "Juvigny",
+			"distance_m": 1793,
+			"inside_id": 404414159,
+			"inside_name": "Saint-Cergues"
+		},
+		{
+			"id": 1360697595,
+			"name": "Oberbronn",
+			"placetype": "neighbourhood",
+			"parent_id": 404387437,
+			"parent_name": "Zinswiller",
+			"distance_m": 2672,
+			"inside_id": 404348185,
+			"inside_name": "Oberbronn"
+		},
+		{
+			"id": 1360697597,
+			"name": "Marlenheim",
+			"placetype": "neighbourhood",
+			"parent_id": 404425005,
+			"parent_name": "Wangen",
+			"distance_m": 1211,
+			"inside_id": 404364207,
+			"inside_name": "Marlenheim"
+		},
+		{
+			"id": 1360697601,
+			"name": "Gannat",
+			"placetype": "neighbourhood",
+			"parent_id": 404376667,
+			"parent_name": "Poezat",
+			"distance_m": 2439,
+			"inside_id": 404352667,
+			"inside_name": "Gannat"
+		},
+		{
+			"id": 1360697609,
+			"name": "Meroux",
+			"placetype": "neighbourhood",
+			"parent_id": 404382313,
+			"parent_name": "Moval",
+			"distance_m": 1079,
+			"inside_id": 404369841,
+			"inside_name": "Meroux"
+		},
+		{
+			"id": 1360697621,
+			"name": "La Croix-en-Brie",
+			"placetype": "neighbourhood",
+			"parent_id": 404410079,
+			"parent_name": "Chateaubleau",
+			"distance_m": 1868,
+			"inside_id": 404349861,
+			"inside_name": "La Croix-En-Brie"
+		},
+		{
+			"id": 1360697635,
+			"name": "Clères",
+			"placetype": "neighbourhood",
+			"parent_id": 404386635,
+			"parent_name": "Anceaumeville",
+			"distance_m": 3946,
+			"inside_id": 404424263,
+			"inside_name": "Cleres"
+		},
+		{
+			"id": 1360697637,
+			"name": "Auxonne",
+			"placetype": "neighbourhood",
+			"parent_id": 404377997,
+			"parent_name": "Tillenay",
+			"distance_m": 1425,
+			"inside_id": 404420005,
+			"inside_name": "Auxonne"
+		},
+		{
+			"id": 1360697653,
+			"name": "Messy",
+			"placetype": "neighbourhood",
+			"parent_id": 404373085,
+			"parent_name": "Gressy",
+			"distance_m": 1680,
+			"inside_id": 404408921,
+			"inside_name": "Messy"
+		},
+		{
+			"id": 1360697659,
+			"name": "Courdimanche",
+			"placetype": "neighbourhood",
+			"parent_id": 404418815,
+			"parent_name": "Boisemont",
+			"distance_m": 1384,
+			"inside_id": 404365087,
+			"inside_name": "Courdimanche"
+		},
+		{
+			"id": 1360697673,
+			"name": "Vénéjan",
+			"placetype": "neighbourhood",
+			"parent_id": 404379343,
+			"parent_name": "Saint-Etienne-Des-Sorts",
+			"distance_m": 2280,
+			"inside_id": 404381631,
+			"inside_name": "Venejan"
+		},
+		{
+			"id": 1360697683,
+			"name": "Saint-Laurent-du-Pont",
+			"placetype": "neighbourhood",
+			"parent_id": 404357857,
+			"parent_name": "Saint-Joseph-De-Riviere",
+			"distance_m": 2356,
+			"inside_id": 404349781,
+			"inside_name": "Saint-Laurent-Du-Pont"
+		},
+		{
+			"id": 1360697717,
+			"name": "Benney",
+			"placetype": "neighbourhood",
+			"parent_id": 404349577,
+			"parent_name": "Lemainville",
+			"distance_m": 1319,
+			"inside_id": 404351105,
+			"inside_name": "Benney"
+		},
+		{
+			"id": 1360697723,
+			"name": "Le Cateau-Cambrésis",
+			"placetype": "neighbourhood",
+			"parent_id": 404363441,
+			"parent_name": "Reumont",
+			"distance_m": 3747,
+			"inside_id": 404398831,
+			"inside_name": "Le Cateau-Cambresis"
+		},
+		{
+			"id": 1360697731,
+			"name": "Roeux",
+			"placetype": "neighbourhood",
+			"parent_id": 404403539,
+			"parent_name": "Pelves",
+			"distance_m": 1259,
+			"inside_id": 404422789,
+			"inside_name": "Roeux"
+		},
+		{
+			"id": 1360697747,
+			"name": "Mézidon-Canon",
+			"placetype": "neighbourhood",
+			"parent_id": 404376763,
+			"parent_name": "Ouezy",
+			"distance_m": 2048,
+			"inside_id": 404369313,
+			"inside_name": "Monteille"
+		},
+		{
+			"id": 1360697757,
+			"name": "Molliens-au-Bois",
+			"placetype": "neighbourhood",
+			"parent_id": 404428543,
+			"parent_name": "Pierregot",
+			"distance_m": 1147,
+			"inside_id": 404377131,
+			"inside_name": "Molliens-Au-Bois"
+		},
+		{
+			"id": 1361025847,
+			"name": "Najran",
+			"placetype": "locality",
+			"parent_id": 1108720595,
+			"parent_name": "Al-Kharj",
+			"distance_m": 708676,
+			"inside_id": 1108720731,
+			"inside_name": "Najran"
+		},
+		{
+			"id": 1377004279,
+			"name": "Canberra",
+			"placetype": "locality",
+			"parent_id": 404549959,
+			"parent_name": "City",
+			"distance_m": 1398,
+			"inside_id": 404550097,
+			"inside_name": "Parkes"
+		},
+		{
+			"id": 1762721421,
+			"name": "Shinagawa",
+			"placetype": "borough",
+			"parent_id": 102031307,
+			"parent_name": "Tokyo",
+			"distance_m": 2635,
+			"inside_id": 102031379,
+			"inside_name": "Shinagawa-ku"
+		},
+		{
+			"id": 1762721427,
+			"name": "Setagaya",
+			"placetype": "borough",
+			"parent_id": 102031307,
+			"parent_name": "Tokyo",
+			"distance_m": 1955,
+			"inside_id": 102031397,
+			"inside_name": "Setagaya"
+		},
+		{
+			"id": 1779794981,
+			"name": "Yarrabilba",
+			"placetype": "locality",
+			"parent_id": 102048451,
+			"parent_name": "Townsville",
+			"distance_m": 1077918,
+			"inside_id": 102048665,
+			"inside_name": "Logan"
+		}
+	]
+}

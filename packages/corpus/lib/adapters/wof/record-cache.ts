@@ -18,7 +18,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { extractFingerprint } from "#parquet/record"
-import { walkFeatures, type WOFRecord } from "#utils/wof-json"
+import { REFUTED_PARENTS_PATH, walkFeatures, type WOFRecord } from "#utils/wof-json"
 
 /**
  * A {@link WOFRecord} as one cache line: `nameVariants` as entries, since a `Map` has no JSON form.
@@ -34,14 +34,15 @@ interface CachedRecord extends Omit<WOFRecord, "nameVariants"> {
 const PARSER_MODULE = import.meta.resolve("#utils/wof-json")
 
 /**
- * The cache file for `repoDir`: its {@linkcode extractFingerprint}, which lists every
- * file's path, size and modification time, and the sha256 of the parser module.
+ * The cache file for `repoDir`: its {@linkcode extractFingerprint}, which lists every file's path, size
+ * and modification time, the sha256 of the parser module and the sha256 of the refuted-parent list.
  *
- * A commit, an uncommitted edit or a parser change gives a new key.
+ * A commit, an uncommitted edit, a parser change or a list change gives a new key.
  */
 export async function wofRecordCachePath(repoDir: PathBuilderLike, cacheDir: PathBuilderLike): Promise<string> {
 	const parser = await sha256File(fileURLToPath(PARSER_MODULE))
-	const key = sha256Hex(`${await extractFingerprint(repoDir)}\n${parser}`)
+	const refuted = await sha256File(REFUTED_PARENTS_PATH)
+	const key = sha256Hex(`${await extractFingerprint(repoDir)}\n${parser}\n${refuted}`)
 
 	return resolvePathBuilder(cacheDir, `${key}.jsonl`).toString()
 }

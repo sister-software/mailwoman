@@ -659,6 +659,19 @@ source published the facts under CC0 or another open-data license. The recipe cr
 case, punctuation, accent, country-tail, and left-context forms while keeping each reviewed
 postcode-to-place join unchanged.
 
+## `wof-refuted-parents.json` — WOF records whose point lies in another parent's polygon (#2857)
+
+The list comes from a point-in-polygon check of every live WOF admin record in the local GeoJSON
+checkouts of 2026-10-26: 5,292,951 records were tested and 3,639 have a point outside their parent's
+polygon. The file keeps the 425 whose point lies over 1 km outside the parent polygon and inside another
+polygon of the parent's placetype. The 2,676 within 1 km of the parent and the 538 inside no polygon of
+that placetype are coastline and boundary simplification and stay as published. `readFeatureRecord`
+gives a listed record no parent and no ancestors, as it does a record at latitude 0, longitude 0.
+
+The check's scripts and its full failure table are not committed. A rerun walks every
+`whosonfirst-data-admin-*` checkout, takes each record's `lbl:*` point (else `geom:*`), and tests it
+against the parent's polygon by even-odd ray casting.
+
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 
 The vocabulary a corpus recipe (and eventually the span proposer) reads to recognize `Terminal 5`,

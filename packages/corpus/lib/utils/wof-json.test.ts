@@ -9,7 +9,7 @@ import { expect, test } from "vitest"
 
 import { openDuckDB } from "#parquet/duckdb"
 import { useScratchDir } from "#test-kit"
-import type { WOFRecord } from "#utils/wof-json"
+import type { WOFFeature, WOFRecord } from "#utils/wof-json"
 import {
 	buildAncestorNameIndex,
 	extractNameVariants,
@@ -18,6 +18,8 @@ import {
 	normalizeNameKey,
 	parseWOFSlotKey,
 	readFeatureRecord,
+	readRefutedParentIDs,
+	recordFromFeature,
 	stripAttestation,
 	wofNameSlotSQL,
 } from "#utils/wof-json"
@@ -62,6 +64,28 @@ test("isAtOrigin is true only when both coordinates are exactly 0", () => {
 	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 0 })).toBe(true)
 	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 9.2 })).toBe(false)
 	expect(isAtOrigin({})).toBe(false)
+})
+
+test("recordFromFeature gives a refuted record no parent and no ancestors and keeps its name", async () => {
+	const refuted = await readRefutedParentIDs()
+	const [id] = refuted
+
+	const feature: WOFFeature = {
+		type: "Feature",
+		id,
+		properties: {
+			"wof:name": "Somewhere",
+			"wof:placetype": "locality",
+			"wof:country": "XY",
+			"wof:parent_id": 7,
+			"wof:hierarchy": [{ locality_id: id, region_id: 7, country_id: 8 }],
+			"geom:latitude": 1,
+			"geom:longitude": 1,
+		},
+	}
+
+	expect(recordFromFeature(feature, refuted)).toMatchObject({ id, name: "Somewhere", parent_id: null, ancestors: [] })
+	expect(recordFromFeature(feature, new Set())?.parent_id).toBe(7)
 })
 
 test("stripAttestation removes a historical attestation and keeps other brackets", () => {
