@@ -54,7 +54,9 @@ data:
     # Header, point 4.
     wof-admin: 15.0
     wof-postalcode: 7.5
-    ban: 3.0
+    # 3.3 rather than 3.0: at 3.0, with the WOF weights of the header's point 4, ban drew 9,989 of 1,000,000 audited
+    # rows on the v0.8.7-overlay, under the fr-native-postcode-locality floor of 10,000.
+    ban: 3.3
     tiger: 4.0
     usgov-nppes: 2.0
     usgov-hrsa-fqhc: 2.0
