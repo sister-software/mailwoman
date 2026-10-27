@@ -24,12 +24,13 @@ export interface CategoryMatch {
 	 */
 	confidence: number
 	/**
-	 * What put the phrase in the index: a curated synonym row, or the category's own id
-	 * or label spelled as a phrase.
+	 * What put the phrase in the index: a curated synonym row, the category's own id or label
+	 * spelled as a phrase, or the label without its trailing `restaurant`, `store` or `shop`.
 	 *
 	 * At equal confidence a synonym outranks an identity phrase.
+	 * A short-label phrase matches only when no synonym or identity phrase does.
 	 */
-	phraseSource: "synonym" | "identity"
+	phraseSource: "synonym" | "identity" | "short-label"
 }
 
 export interface POITaxonomyLookup {
@@ -69,6 +70,11 @@ interface PositionedPhrase {
  * Below five characters, one edit changes too much of the signal to infer a category safely.
  */
 const MIN_TYPO_LENGTH = 5
+
+/**
+ * The trailing label words a short-label phrase drops: `sushi restaurant` is also reached as `sushi`.
+ */
+const SHORT_LABEL_HEADS: ReadonlySet<string> = new Set(["restaurant", "store", "shop"])
 
 /**
  * Builds the matching core over an in-memory {@link POITaxonomyTable}.
@@ -112,6 +118,26 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 				phraseSource: "synonym",
 				...(synonym.locales ? { locales: synonym.locales } : {}),
 			})
+		}
+	})
+
+	/**
+	 * Each category label of two or more words whose last word is in {@linkcode SHORT_LABEL_HEADS},
+	 * keyed by the label without that word, when the shortened phrase is absent from `byPhrase`.
+	 *
+	 * The typo and locale-normalized lookups never read it.
+	 */
+	const byShortLabel: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = createPhraseIndex<PhraseEntry>((add) => {
+		for (const category of table.categories) {
+			const words = category.label.toLowerCase().split(/\s+/)
+
+			if (words.length < 2 || !SHORT_LABEL_HEADS.has(words.at(-1)!)) continue
+
+			const phrase = words.slice(0, -1).join(" ")
+
+			if (!byPhrase.has(phrase)) {
+				add(phrase, { category, phrase, phraseSource: "short-label" })
+			}
 		}
 	})
 
@@ -178,7 +204,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 
 		if (!norm) return []
 
-		const entries = byPhrase.get(norm)
+		const entries = byPhrase.get(norm) ?? byShortLabel.get(norm)
 
 		if (!entries || !entries.length) return []
 

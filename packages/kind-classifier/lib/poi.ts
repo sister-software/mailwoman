@@ -33,8 +33,12 @@ export interface POIPhraseMatch {
 	confidence: number
 	/**
 	 * How the phrase matched, or `null` when the lookup does not report it.
+	 *
+	 * `short_label` is a category label without its trailing `restaurant`, `store` or `shop`
+	 * (`sushi`). {@linkcode matchPOISubject} accepts it only as a subject followed by an anchor.
+	 * Such a phrase can also be a place name: `sushi`, `rice` and `german` all name WOF places.
 	 */
-	mechanism: "exact" | "locale_normalized" | "typo" | null
+	mechanism: "exact" | "locale_normalized" | "typo" | "short_label" | null
 	/**
 	 * The phrase the lookup received, or `null` when the lookup does not report it.
 	 */
@@ -124,7 +128,7 @@ export interface POISubjectMatch {
 }
 
 /**
- * Anchor separator between subject and place: comma, or near/in/at/around/to —
+ * Anchor separator between subject and place: comma, or near/in/at/around/to/by/on,
  * scanned left-to-right until a prefix hits the lexicon.
  *
  * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded
@@ -140,7 +144,7 @@ export interface POISubjectMatch {
  * The leading quantifier only shifted the match start within a whitespace run, while the retained
  * trailing greedy quantifier keeps the match end and thus `matchAll`'s lastIndex identical.
  */
-const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
+const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to|by|on)\s+/gi
 
 /**
  * Longest subject accepted, in tokens: eight covers compound taxonomy phrases
@@ -177,7 +181,7 @@ export function matchPOISubject(text: string, locale: string | null, lookup: POI
 
 	if (!trimmed) return null
 
-	const whole = lookup(trimmed, locale ?? undefined)
+	const whole = lookup(trimmed, locale ?? undefined).filter((hit) => hit.mechanism !== "short_label")
 
 	if (whole.length) {
 		const matches = reachedMatches(whole)

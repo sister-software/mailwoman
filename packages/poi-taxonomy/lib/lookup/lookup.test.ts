@@ -66,6 +66,20 @@ describe("lookupPOICategory", () => {
 	it("returns [] for unknown phrases", () => {
 		expect(lookupPOICategory("flux capacitor depot")).toEqual([])
 	})
+
+	it("reaches a label without its trailing restaurant, store or shop as a short-label phrase", () => {
+		expect(lookupPOICategory("sushi")[0]).toMatchObject({
+			category: { id: "sushi_restaurant" },
+			phraseSource: "short-label",
+		})
+
+		expect(lookupPOICategory("fish and chips")[0]?.category.id).toBe("fish_and_chips_restaurant")
+	})
+
+	it("prefers a synonym or identity phrase over a short-label phrase", () => {
+		// `coffee shop` would shorten to `coffee`, which the curated synonym table already maps to `cafe`.
+		expect(lookupPOICategory("coffee")[0]).toMatchObject({ category: { id: "cafe" }, phraseSource: "synonym" })
+	})
 })
 
 describe("lookupPOICategoryLocaleNormalized over the shipped table", () => {

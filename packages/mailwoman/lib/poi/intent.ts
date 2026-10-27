@@ -117,7 +117,7 @@ function lookupPOIPhrase(phrase: string, locale: string | undefined, leadingStop
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
-			mechanism: "exact",
+			mechanism: m.phraseSource === "short-label" ? "short_label" : "exact",
 			inputPhrase: phrase,
 			wikidata: null,
 			reading: "preference",

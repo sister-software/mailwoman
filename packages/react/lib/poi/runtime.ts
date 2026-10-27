@@ -34,7 +34,7 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 				categoryID: match.category.id,
 				matchedPhrase: match.matchedPhrase,
 				confidence: match.confidence,
-				mechanism: "exact",
+				mechanism: match.phraseSource === "short-label" ? "short_label" : "exact",
 				inputPhrase: phrase,
 				wikidata: null,
 				reading: "preference",

@@ -432,7 +432,7 @@ export function deriveInputMode(selection: InputModeSelection, kind: QueryKind):
 /**
  * The relation between a POI subject and its anchor, as the query phrased it.
  */
-export const POISpatialRelationSchema = z.enum(["comma", "near", "in", "at", "around", "to"])
+export const POISpatialRelationSchema = z.enum(["comma", "near", "in", "at", "around", "to", "by", "on"])
 
 export type POISpatialRelation = z.infer<typeof POISpatialRelationSchema>
 
