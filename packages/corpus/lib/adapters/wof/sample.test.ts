@@ -87,10 +87,10 @@ describe("RowSampler", () => {
 		const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50 })
 
 		for (const r of rows) {
-			sampler.observe(r)
+			sampler.observe(r, r)
 		}
 
-		const kept = rows.filter((r) => sampler.keeps(r))
+		const kept = [...sampler.kept()]
 		const finnish = kept.filter((r) => r.slotKey === "name-fin-x-preferred")
 
 		expect(finnish.length).toBeGreaterThanOrEqual(3)
@@ -104,13 +104,27 @@ describe("RowSampler", () => {
 			const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, seed })
 
 			for (const r of rows) {
-				sampler.observe(r)
+				sampler.observe(r, r)
 			}
 
-			return rows.filter((r) => sampler.keeps(r)).map((r) => r.sourceID)
+			return [...sampler.kept()].map((r) => r.sourceID)
 		}
 
 		expect(keptWith(7)).toEqual(keptWith(7))
 		expect(keptWith(7)).not.toEqual(keptWith(8))
+	})
+
+	it("keeps in one pass the rows a second pass over the final thresholds would keep, in observed order", () => {
+		const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, seed: 11 })
+
+		for (const r of rows) {
+			sampler.observe(r, r)
+		}
+
+		const kept = [...sampler.kept()].map((r) => r.sourceID)
+		const order = rows.map((r) => r.sourceID)
+
+		expect(kept).toEqual(order.filter((id) => kept.includes(id)))
+		expect(kept.length).toBeGreaterThanOrEqual(50)
 	})
 })

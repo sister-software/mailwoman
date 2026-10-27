@@ -263,10 +263,10 @@ interface EmitWOFJSONRowsOptions<A extends object> {
 	/**
 	 * Chooses the rows to emit when the adapter options carry a sample.
 	 *
-	 * The emitter renders every row once into it, then renders them again and emits the ones it keeps.
+	 * The emitter renders every row once into it, then emits the rows it keeps, in WOF-id order.
 	 * The caller reads its cell counts afterwards.
 	 */
-	sampler?: RowSampler
+	sampler?: RowSampler<CanonicalRow>
 }
 
 /**
@@ -291,14 +291,20 @@ export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptio
 
 	if (sampler) {
 		for (const { row, slotKey } of renderWOFRows(options)) {
-			sampler.observe(sampledRow(row, slotKey))
+			sampler.observe(sampledRow(row, slotKey), row)
 		}
 	}
 
-	for (const { row, slotKey } of renderWOFRows(options)) {
-		if (typeof limit === "number" && emitted >= limit) return
+	const rows = sampler
+		? sampler.kept()
+		: (function* () {
+				for (const { row } of renderWOFRows(options)) {
+					yield row
+				}
+			})()
 
-		if (sampler && !sampler.keeps(sampledRow(row, slotKey))) continue
+	for (const row of rows) {
+		if (typeof limit === "number" && emitted >= limit) return
 
 		yield row
 

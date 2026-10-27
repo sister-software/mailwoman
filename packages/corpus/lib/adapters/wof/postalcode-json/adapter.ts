@@ -183,7 +183,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				}
 			}
 
-			const sampler = opts.sample ? new RowSampler(opts.sample) : undefined
+			const sampler = opts.sample ? new RowSampler<CanonicalRow>(opts.sample) : undefined
 
 			yield* emitWOFJSONRows({
 				records: byID,

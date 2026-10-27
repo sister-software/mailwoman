@@ -573,7 +573,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			}
 
 			const ancestry = buildAncestorRecordIndex(byID, placetypeToTag)
-			const sampler = opts.sample ? new RowSampler(opts.sample) : undefined
+			const sampler = opts.sample ? new RowSampler<CanonicalRow>(opts.sample) : undefined
 
 			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({

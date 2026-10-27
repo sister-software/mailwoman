@@ -34,10 +34,13 @@ export class LowestValues {
 		this.#count = count
 	}
 
-	add(value: number, text?: number): void {
+	/**
+	 * Adds `value`, and returns whether it is now held.
+	 */
+	add(value: number, text?: number): boolean {
 		const heap = this.#heap
 
-		if (typeof text === "number" && this.#held.has(text)) return
+		if (typeof text === "number" && this.#held.has(text)) return false
 
 		if (heap.length < this.#count) {
 			heap.push(value)
@@ -45,16 +48,18 @@ export class LowestValues {
 			this.#hold(text)
 			this.#siftUp(heap.length - 1)
 
-			return
+			return true
 		}
 
-		if (!this.#count || value >= heap[0]!) return
+		if (!this.#count || value >= heap[0]!) return false
 
 		this.#release(this.#texts[0])
 		heap[0] = value
 		this.#texts[0] = text
 		this.#hold(text)
 		this.#siftDown(0)
+
+		return true
 	}
 
 	#hold(text: number | undefined): void {
@@ -155,18 +160,34 @@ export interface SampledRow {
 }
 
 /**
- * Picks the rows a {@link RowSample} keeps, and counts every cell it saw.
+ * A row the sampler holds as a candidate, with the cells it was keyed by.
+ */
+interface Candidate<T> {
+	payload: T
+	hash: number
+	structure: string
+	language: string
+	country: string
+}
+
+/**
+ * Picks the rows a {@link RowSample} keeps, and counts every cell it saw, in one pass.
  *
- * Call {@linkcode RowSampler.observe} on every renderable row, then
- * {@linkcode RowSampler.keeps} on each row again.
+ * Call {@linkcode RowSampler.observe} on every renderable row with the value to
+ * emit for it, then read {@linkcode RowSampler.kept}.
  * A row is kept when its hash is at or below the threshold of its structure cell
  * (country, tag order, name-slot kind), of its language cell (country, name-slot language) or of its country.
+ *
+ * The sampler holds a row while one of its cells' heaps holds its hash.
+ * A heap of k values filled in random hash order admits about k ln(n / k) of its n rows
+ * over the pass, so the held rows stay a small multiple of the kept ones.
  */
-export class RowSampler {
+export class RowSampler<T = SampledRow> {
 	readonly #sample: RowSample
 	readonly #structure = new Map<string, LowestValues>()
 	readonly #language = new Map<string, LowestValues>()
 	readonly #country = new Map<string, LowestValues>()
+	readonly #candidates = new Map<string, Candidate<T>>()
 	/**
 	 * Renderable rows per full cell, `country|tag order|kind|language`.
 	 */
@@ -194,7 +215,7 @@ export class RowSampler {
 		}
 	}
 
-	observe(row: SampledRow): void {
+	observe(row: SampledRow, payload: T): void {
 		const keys = this.#keys(row)
 
 		if (!keys) return
@@ -207,20 +228,42 @@ export class RowSampler {
 			canonicalDedupKey({ raw: row.raw, components: row.components, country: row.country } as CanonicalRow)
 		)
 
-		const lowest = (map: Map<string, LowestValues>, key: string, count: number) => {
+		const lowest = (map: Map<string, LowestValues>, key: string, count: number): boolean => {
 			let values = map.get(key)
 
 			if (!values) {
 				map.set(key, (values = new LowestValues(count)))
 			}
 
-			values.add(hash, text)
+			return values.add(hash, text)
 		}
 
-		lowest(this.#structure, structure, floor)
-		lowest(this.#language, language, floor)
-		lowest(this.#country, row.country, this.#sample.rowsPerCountry)
+		const held = [
+			lowest(this.#structure, structure, floor),
+			lowest(this.#language, language, floor),
+			lowest(this.#country, row.country, this.#sample.rowsPerCountry),
+		].some(Boolean)
+
+		if (held) {
+			this.#candidates.set(row.sourceID, { payload, hash, structure, language, country: row.country })
+		}
+
 		this.cellCounts.set(cell, (this.cellCounts.get(cell) ?? 0) + 1)
+	}
+
+	/**
+	 * The payloads of the kept rows, in the order they were observed.
+	 */
+	*kept(): Generator<T> {
+		for (const candidate of this.#candidates.values()) {
+			if (
+				candidate.hash <= (this.#structure.get(candidate.structure)?.threshold ?? -1) ||
+				candidate.hash <= (this.#language.get(candidate.language)?.threshold ?? -1) ||
+				candidate.hash <= (this.#country.get(candidate.country)?.threshold ?? -1)
+			) {
+				yield candidate.payload
+			}
+		}
 	}
 
 	/**
@@ -232,19 +275,5 @@ export class RowSampler {
 		if (!file) return
 
 		await writeLocalJSONFile(Object.fromEntries(this.cellCounts), file.startsWith("/") ? file : dataRootPath(file))
-	}
-
-	keeps(row: SampledRow): boolean {
-		const keys = this.#keys(row)
-
-		if (!keys) return false
-
-		const { hash, structure, language } = keys
-
-		return (
-			hash <= (this.#structure.get(structure)?.threshold ?? -1) ||
-			hash <= (this.#language.get(language)?.threshold ?? -1) ||
-			hash <= (this.#country.get(row.country)?.threshold ?? -1)
-		)
 	}
 }
