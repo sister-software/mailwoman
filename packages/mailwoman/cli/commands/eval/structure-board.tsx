@@ -26,6 +26,10 @@ export const spec = {
 		},
 		fixtures: { type: "string", description: "Fixture JSONL override (default: the held-out structure board)" },
 		klass: { type: "string", description: "Score only one class (e.g. relation-pair) for a fast loop" },
+		"rows-out": {
+			type: "string",
+			description: "Write one JSONL line per graded row, for comparing arms by cell and pair",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -41,6 +45,7 @@ const EvalStructureBoard = harnessCommand(
 				weightsCacheRoot: options.weightsCache,
 				fixturesPath: options.fixtures,
 				klass: options.klass,
+				rowsOut: options.rowsOut,
 			})
 		).exitCode
 	},

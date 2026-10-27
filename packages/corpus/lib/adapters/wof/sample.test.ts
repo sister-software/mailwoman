@@ -135,6 +135,59 @@ describe("RowSampler", () => {
 		expect(sampler.cellCounts.get("US|locality|preferred|fin")).toBe(4)
 	})
 
+	it("holds a whole order out under every name-slot kind when the entry names only country and order", () => {
+		const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, holdOutCells: ["US|locality"] })
+
+		for (const r of rows) {
+			sampler.observe(r, r)
+		}
+
+		expect([...sampler.kept()]).toHaveLength(0)
+		expect([...sampler.heldOut()]).toHaveLength(20)
+	})
+
+	it("leaves out a held-out row whose case-folded text matches a kept row", () => {
+		const sample = { cellFloor: 3, rowsPerCountry: 50, holdOutCells: ["US|locality|preferred"], heldOutPerCell: 5 }
+		const first = new RowSampler(sample)
+
+		for (const r of rows) {
+			first.observe(r, r)
+		}
+
+		const keptRow = [...first.kept()][0]!
+		// A preferred-slot row sharing a kept row's text, under a hash low enough to be held out.
+		const twin = { ...keptRow, sourceID: "twin", slotKey: "name-fin-x-preferred", raw: keptRow.raw.toUpperCase() }
+		const sampler = new RowSampler(sample)
+
+		for (const r of [...rows, twin]) {
+			sampler.observe(r, r)
+		}
+
+		const heldOut = [...sampler.heldOut()]
+
+		expect(heldOut.some((r) => r.sourceID === "twin")).toBe(false)
+		expect(heldOut).toHaveLength(4)
+	})
+
+	it("writes comparison rows from a kept cell that the sample does not emit", () => {
+		const sampler = new RowSampler({
+			cellFloor: 3,
+			rowsPerCountry: 50,
+			compareCells: ["US|locality|default"],
+			heldOutPerCell: 10,
+		})
+
+		for (const r of rows) {
+			sampler.observe(r, r)
+		}
+
+		const kept = new Set([...sampler.kept()].map((r) => r.sourceID))
+		const comparison = [...sampler.comparison()]
+
+		expect(comparison).toHaveLength(10)
+		expect(comparison.every((r) => !kept.has(r.sourceID) && r.slotKey === "default")).toBe(true)
+	})
+
 	it("keeps in one pass the rows a second pass over the final thresholds would keep, in observed order", () => {
 		const sampler = new RowSampler({ cellFloor: 3, rowsPerCountry: 50, seed: 11 })
 

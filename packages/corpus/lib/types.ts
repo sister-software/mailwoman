@@ -432,13 +432,29 @@ export interface RowSample {
 	 */
 	countsFile?: string
 	/**
-	 * Structure cells kept out of the emitted rows, in the adapter's cell-key form,
-	 * for a held-out test of whether a model learned structure.
+	 * Cells kept out of the emitted rows, for a held-out test of whether a model learned structure.
 	 *
+	 * An entry is a structure cell in the adapter's cell-key form (`country|tag order|kind`),
+	 * or `country|tag order`, which holds that order out under every name-slot kind.
 	 * Their rows are never emitted.
-	 * Up to `heldOutPerCell` of each cell's lowest-hash rows are written to `heldOutFile` instead.
+	 *
+	 * Up to `heldOutPerCell` of each entry's lowest-hash rows are written to `heldOutFile`
+	 * instead, leaving out a row whose case-folded text matches an emitted row's.
 	 */
 	holdOutCells?: readonly string[]
+	/**
+	 * Cells, in the same forms as `holdOutCells`, that stay in training and also supply a
+	 * comparison set: up to `heldOutPerCell` rows per entry that the sample does not emit,
+	 * and whose case-folded text matches no emitted row's, written to `comparisonFile`.
+	 *
+	 * A model's score on these rows is its score on a trained structure with unseen rows.
+	 */
+	compareCells?: readonly string[]
+	/**
+	 * A JSONL file the comparison rows are written to.
+	 * Relative paths resolve against the data root.
+	 */
+	comparisonFile?: string
 	/**
 	 * A JSONL file the held-out cells' rows are written to.
 	 * Relative paths resolve against the data root.

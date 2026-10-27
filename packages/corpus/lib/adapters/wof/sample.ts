@@ -168,6 +168,14 @@ interface Candidate<T> {
 	structure: string
 	language: string
 	country: string
+	/**
+	 * Hash of the row's case-folded text, which the held-out and comparison sets check against the kept rows.
+	 */
+	raw: number
+	/**
+	 * The `holdOutCells` or `compareCells` entry the row matched.
+	 */
+	group?: string
 }
 
 /**
@@ -191,6 +199,10 @@ export class RowSampler<T = SampledRow> {
 	readonly #holdOut: ReadonlySet<string>
 	readonly #heldOut = new Map<string, LowestValues>()
 	readonly #heldOutCandidates = new Map<string, Candidate<T>>()
+	readonly #compare: ReadonlySet<string>
+	readonly #comparison = new Map<string, LowestValues>()
+	readonly #comparisonCandidates = new Map<string, Candidate<T> & { order: number }>()
+	#keptRaws: Set<number> | null = null
 	/**
 	 * Renderable rows per full cell, `country|tag order|kind|language`.
 	 */
@@ -199,13 +211,18 @@ export class RowSampler<T = SampledRow> {
 	constructor(sample: RowSample) {
 		this.#sample = sample
 		this.#holdOut = new Set(sample.holdOutCells)
+		this.#compare = new Set(sample.compareCells)
+	}
+
+	get #perCell(): number {
+		return this.#sample.heldOutPerCell ?? 20
 	}
 
 	/**
 	 * The row's hash and cells, or `null` for a row the aligner would quarantine,
 	 * which the sampler neither counts nor keeps.
 	 */
-	#keys(row: SampledRow): { hash: number; structure: string; language: string; cell: string } | null {
+	#keys(row: SampledRow): { hash: number; structure: string; order: string; language: string; cell: string } | null {
 		const { kind, language } = parseWOFSlotKey(row.slotKey)
 		const order = renderedTagOrder(row.raw, row.components)
 
@@ -214,6 +231,7 @@ export class RowSampler<T = SampledRow> {
 		return {
 			hash: hashFNV1a(row.sourceID, this.#sample.seed ?? 2_166_136_261),
 			structure: `${row.country}|${order}|${kind}`,
+			order: `${row.country}|${order}`,
 			language: `${row.country}|${language}`,
 			cell: `${row.country}|${order}|${kind}|${language}`,
 		}
@@ -224,7 +242,8 @@ export class RowSampler<T = SampledRow> {
 
 		if (!keys) return
 
-		const { hash, structure, language, cell } = keys
+		const { hash, structure, order, language, cell } = keys
+		const raw = hashFNV1a(row.raw.normalize("NFC").toLowerCase())
 		const floor = this.#sample.cellFloor
 
 		// The runner drops a row whose dedup key repeats an emitted row's, so the floor counts distinct keys.
@@ -244,9 +263,13 @@ export class RowSampler<T = SampledRow> {
 
 		this.cellCounts.set(cell, (this.cellCounts.get(cell) ?? 0) + 1)
 
-		if (this.#holdOut.has(structure)) {
-			if (lowest(this.#heldOut, structure, this.#sample.heldOutPerCell ?? 20)) {
-				this.#heldOutCandidates.set(row.sourceID, { payload, hash, structure, language, country: row.country })
+		const base = { payload, hash, structure, language, country: row.country, raw }
+		const heldOutGroup = [structure, order].find((key) => this.#holdOut.has(key))
+
+		if (heldOutGroup) {
+			// Held-out rows are over-collected so that rows whose text matches a kept row can be left out.
+			if (lowest(this.#heldOut, heldOutGroup, this.#perCell * 2)) {
+				this.#heldOutCandidates.set(row.sourceID, { ...base, group: heldOutGroup })
 			}
 
 			return
@@ -259,20 +282,92 @@ export class RowSampler<T = SampledRow> {
 		].some(Boolean)
 
 		if (held) {
-			this.#candidates.set(row.sourceID, { payload, hash, structure, language, country: row.country })
+			this.#candidates.set(row.sourceID, base)
+		}
+
+		const compareGroup = [structure, order].find((key) => this.#compare.has(key))
+
+		if (compareGroup) {
+			// A second hash orders the comparison rows independently of the keep order, so its lowest rows are mostly unkept.
+			const second = hashFNV1a(row.sourceID, (this.#sample.seed ?? 2_166_136_261) ^ 0x9e_37_79_b9)
+			let values = this.#comparison.get(compareGroup)
+
+			if (!values) {
+				this.#comparison.set(compareGroup, (values = new LowestValues(this.#perCell * 4)))
+			}
+
+			if (values.add(second, text)) {
+				this.#comparisonCandidates.set(row.sourceID, { ...base, group: compareGroup, order: second })
+			}
+		}
+	}
+
+	#isKept(candidate: Candidate<T>): boolean {
+		return (
+			candidate.hash <= (this.#structure.get(candidate.structure)?.threshold ?? -1) ||
+			candidate.hash <= (this.#language.get(candidate.language)?.threshold ?? -1) ||
+			candidate.hash <= (this.#country.get(candidate.country)?.threshold ?? -1)
+		)
+	}
+
+	/**
+	 * Case-folded text hashes of every kept row, computed once the pass is over.
+	 */
+	#keptRawHashes(): Set<number> {
+		this.#keptRaws ??= new Set([...this.#candidates.values()].filter((c) => this.#isKept(c)).map((c) => c.raw))
+
+		return this.#keptRaws
+	}
+
+	/**
+	 * Up to `heldOutPerCell` payloads per group from the candidates `admit` accepts,
+	 * lowest `rank` first, yielded in the order they were observed.
+	 */
+	*#perGroup<C extends Candidate<T>>(
+		candidates: Iterable<C>,
+		admit: (candidate: C) => boolean,
+		rank: (candidate: C) => number
+	): Generator<T> {
+		const keptRaws = this.#keptRawHashes()
+		const admitted = [...candidates].filter((c) => admit(c) && !keptRaws.has(c.raw))
+		const chosen = new Set<C>()
+		const byGroup = Map.groupBy(admitted, (c) => c.group!)
+
+		for (const group of byGroup.values()) {
+			for (const c of group.toSorted((a, b) => rank(a) - rank(b)).slice(0, this.#perCell)) {
+				chosen.add(c)
+			}
+		}
+
+		for (const c of admitted) {
+			if (chosen.has(c)) {
+				yield c.payload
+			}
 		}
 	}
 
 	/**
-	 * The payloads of the held-out cells' rows, at most `heldOutPerCell` per cell,
-	 * in the order they were observed.
+	 * The payloads of the held-out rows, at most `heldOutPerCell` per `holdOutCells` entry,
+	 * none with the case-folded text of a kept row, in the order they were observed.
 	 */
-	*heldOut(): Generator<T> {
-		for (const candidate of this.#heldOutCandidates.values()) {
-			if (candidate.hash <= (this.#heldOut.get(candidate.structure)?.threshold ?? -1)) {
-				yield candidate.payload
-			}
-		}
+	heldOut(): Generator<T> {
+		return this.#perGroup(
+			this.#heldOutCandidates.values(),
+			(c) => c.hash <= (this.#heldOut.get(c.group!)?.threshold ?? -1),
+			(c) => c.hash
+		)
+	}
+
+	/**
+	 * The payloads of unkept rows from `compareCells`, at most `heldOutPerCell` per entry,
+	 * none with the case-folded text of a kept row, in the order they were observed.
+	 */
+	comparison(): Generator<T> {
+		return this.#perGroup(
+			this.#comparisonCandidates.values(),
+			(c) => !this.#isKept(c) && c.order <= (this.#comparison.get(c.group!)?.threshold ?? -1),
+			(c) => c.order
+		)
 	}
 
 	/**
@@ -280,23 +375,24 @@ export class RowSampler<T = SampledRow> {
 	 */
 	*kept(): Generator<T> {
 		for (const candidate of this.#candidates.values()) {
-			if (
-				candidate.hash <= (this.#structure.get(candidate.structure)?.threshold ?? -1) ||
-				candidate.hash <= (this.#language.get(candidate.language)?.threshold ?? -1) ||
-				candidate.hash <= (this.#country.get(candidate.country)?.threshold ?? -1)
-			) {
+			if (this.#isKept(candidate)) {
 				yield candidate.payload
 			}
 		}
 	}
 
 	/**
-	 * Writes {@linkcode RowSampler.cellCounts} to the sample's `countsFile`
-	 * and {@linkcode RowSampler.heldOut} to its `heldOutFile`, each when the sample names one.
+	 * Writes {@linkcode RowSampler.cellCounts} to the sample's `countsFile` and
+	 * {@linkcode RowSampler.heldOut} to its `heldOutFile`, and {@linkcode RowSampler.comparison}
+	 * to its `comparisonFile`, each when the sample names one.
 	 */
 	async writeOutputs(): Promise<void> {
 		const resolve = (file: string) => (file.startsWith("/") ? file : dataRootPath(file))
-		const { countsFile, heldOutFile } = this.#sample
+		const { countsFile, heldOutFile, comparisonFile } = this.#sample
+
+		if (comparisonFile) {
+			await writeLocalJSONLFile([...this.comparison()], resolve(comparisonFile))
+		}
 
 		if (countsFile) {
 			await writeLocalJSONFile(Object.fromEntries(this.cellCounts), resolve(countsFile))

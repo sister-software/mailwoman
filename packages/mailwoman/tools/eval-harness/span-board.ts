@@ -8,6 +8,7 @@
  *   Each board owns grading and headers. It also owns miss rendering. The shared frame keeps remaining behavior consistent.
  */
 
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -70,6 +71,13 @@ export interface SpanBoardFixture {
 	 * since a parser that labels both sides of a pair the same way passes half the rows.
 	 */
 	pair?: string
+	/**
+	 * The structure cell the row was drawn from.
+	 *
+	 * A board with cells also reports each cell's rate, since rows of one cell share
+	 * a structure and are not independent evidence.
+	 */
+	cell?: string
 }
 
 /**
@@ -91,6 +99,10 @@ export interface SpanBoardOptions {
 	 * Restrict to one class (e.g. `bare-street`) for a fast iteration loop.
 	 */
 	klass?: string
+	/**
+	 * A JSONL file that receives one `{id, klass, pair, cell, ok, got}` line per graded row.
+	 */
+	rowsOut?: string
 }
 
 export interface SpanBoardResult {
@@ -130,6 +142,8 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 
 	const tally = new Map<string, { hit: number; total: number; misses: Array<Fixture & { got: string }> }>()
 	const pairs = new Map<string, boolean>()
+	const cells = new Map<string, { hit: number; total: number }>()
+	const graded: Array<{ id: string; klass: string; pair?: string; cell?: string; ok: boolean; got: string }> = []
 	let fixtureCount = 0
 
 	for await (const fixture of fixtures) {
@@ -138,10 +152,25 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 		const { ok, got } = spec.grade(fixture, flattenNodes(tree.roots))
 		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
 
+		if (options.rowsOut) {
+			graded.push({ id: fixture.id, klass: fixture.klass, pair: fixture.pair, cell: fixture.cell, ok, got })
+		}
+
 		if (fixture.pair) {
 			const key = `${fixture.klass}\u0000${fixture.pair}`
 
 			pairs.set(key, (pairs.get(key) ?? true) && ok)
+		}
+
+		if (fixture.cell) {
+			const cell = cells.get(fixture.cell) ?? { hit: 0, total: 0 }
+
+			cell.total++
+
+			if (ok) {
+				cell.hit++
+			}
+			cells.set(fixture.cell, cell)
 		}
 
 		bucket.total++
@@ -182,6 +211,22 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 	console.log(
 		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
 	)
+
+	if (options.rowsOut) {
+		await writeLocalJSONLFile(graded, options.rowsOut)
+	}
+
+	if (cells.size) {
+		console.log(`\n  cells`)
+
+		for (const [cell, bucket] of [...cells].toSorted()) {
+			const ci = wilson(bucket.hit, bucket.total)
+
+			console.log(
+				`  ${cell.padEnd(56)} ${String(bucket.total).padStart(4)}   ${(bucket.hit / bucket.total).toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
+			)
+		}
+	}
 
 	if (pairs.size) {
 		const byClass = new Map<string, { hit: number; total: number }>()
