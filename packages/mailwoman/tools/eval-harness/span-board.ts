@@ -170,6 +170,7 @@ export async function runSpanBoard<Fixture extends SpanBoardFixture>(
 			if (ok) {
 				cell.hit++
 			}
+
 			cells.set(fixture.cell, cell)
 		}
 
