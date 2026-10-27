@@ -167,6 +167,22 @@ export function normalizeNameKey(rawKey: string): string {
 	return rawKey.replaceAll(/[:_]/g, "-")
 }
 
+const SLOT_KEY = /^name-([a-z]+)(?:-[A-Za-z0-9]+)*?(?:-x-([a-z]+))?(?:-[0-9]+)?$/
+
+/**
+ * The kind and language of a WOF name-slot key, the TypeScript twin of {@linkcode wofNameSlotSQL}.
+ *
+ * `default` reads as kind and language `default`; `name-rus-x-preferred-2` as `preferred`
+ * and `rus`; a `name-<language>` key without `-x-` as kind `unmarked`.
+ */
+export function parseWOFSlotKey(key: string): { kind: string; language: string } {
+	const match = SLOT_KEY.exec(key)
+
+	if (!match) return { kind: "default", language: "default" }
+
+	return { kind: match[2] ?? "unmarked", language: match[1]! }
+}
+
 /**
  * DuckDB expressions that read a WOF row's name slot back out of its `source_id`.
  *

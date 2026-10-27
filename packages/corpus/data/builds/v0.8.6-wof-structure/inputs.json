@@ -1,0 +1,16 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build samples wof-admin for the v0.8.6-overlay (#2857). The adapter renders every name, chain and order of v0.8.5-wof-structure, and keeps a row when its hash is among the 5 lowest of its structure cell (country, tag order, name-slot kind) or of its language cell (country, name-slot language), or among the 2,500 lowest of its country. cell-counts.json beside the build counts every renderable row per cell. The WOF checkouts carry the 1,593 name fixes of whosonfirst-data/whosonfirst-data#2276.",
+	"corpusVersion": "v0.8.6-wof-structure",
+	"adapters": {
+		"wof-admin": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 2500,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.6-wof-structure/cell-counts.json"
+			}
+		}
+	}
+}

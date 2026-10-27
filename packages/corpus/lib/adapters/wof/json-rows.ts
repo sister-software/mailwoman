@@ -17,6 +17,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { classifyTokenScript } from "@mailwoman/query-shape/character-class"
 import type { ScriptCode } from "@mailwoman/query-shape/types"
 
+import type { RowSampler, SampledRow } from "#adapters/wof/sample"
 import type { AdapterOptions, CanonicalRow } from "#types"
 import { nameValues, normalizeNameKey, type WOFRecord } from "#utils"
 
@@ -259,6 +260,13 @@ interface EmitWOFJSONRowsOptions<A extends object> {
 	shouldEmit?: (record: WOFRecord) => boolean
 	nameSlotsFor: (record: WOFRecord) => NameSlot[]
 	variantsFor: (record: WOFRecord, ancestry: A, slot: NameSlot) => WOFVariantSpec[]
+	/**
+	 * Chooses the rows to emit when the adapter options carry a sample.
+	 *
+	 * The emitter renders every row once into it, then renders them again and emits the ones it keeps.
+	 * The caller reads its cell counts afterwards.
+	 */
+	sampler?: RowSampler
 }
 
 /**
@@ -277,6 +285,37 @@ const NO_ANCESTORS = Object.freeze({})
  * while the row keeps the record's own country.
  */
 export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptions<A>): Generator<CanonicalRow> {
+	const { adapterOptions, sampler } = options
+	const limit = adapterOptions.limit
+	let emitted = 0
+
+	if (sampler) {
+		for (const { row, slotKey } of renderWOFRows(options)) {
+			sampler.observe(sampledRow(row, slotKey))
+		}
+	}
+
+	for (const { row, slotKey } of renderWOFRows(options)) {
+		if (typeof limit === "number" && emitted >= limit) return
+
+		if (sampler && !sampler.keeps(sampledRow(row, slotKey))) continue
+
+		yield row
+
+		emitted++
+	}
+}
+
+function sampledRow(row: CanonicalRow, slotKey: string): SampledRow {
+	return { sourceID: row.source_id, country: row.country, slotKey, raw: row.raw, components: row.components }
+}
+
+/**
+ * Every row the records render, in WOF-id order, each with the name-slot key it came from.
+ */
+function* renderWOFRows<A extends object>(
+	options: EmitWOFJSONRowsOptions<A>
+): Generator<{ row: CanonicalRow; slotKey: string }> {
 	const {
 		records,
 		ancestry,
@@ -288,8 +327,6 @@ export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptio
 		variantsFor,
 	} = options
 
-	let emitted = 0
-
 	for (const id of [...records.keys()].toSorted((a, b) => a - b)) {
 		if (adapterOptions.signal?.aborted) return
 		const record = records.get(id)!
@@ -298,8 +335,6 @@ export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptio
 
 		for (const slot of slotsForRecord(record)) {
 			for (const variant of variantsFor(record, ancestry.get(id) ?? (NO_ANCESTORS as A), slot)) {
-				if (typeof adapterOptions.limit === "number" && emitted >= adapterOptions.limit) return
-
 				const rendered = variant.hierarchy
 					? renderHierarchy(variant.components, variant.layoutCountry ?? record.country)
 					: formatAddressRow(variant.components, record.country, { singleLine: true })
@@ -309,16 +344,17 @@ export function* emitWOFJSONRows<A extends object>(options: EmitWOFJSONRowsOptio
 				const { raw, components } = rendered
 
 				yield {
-					raw,
-					components,
-					country: record.country,
-					locale: localeByCountry[record.country],
-					source: adapterID,
-					source_id: `${adapterID}-${record.id}-${slot.key}-${variant.suffix}`,
-					license: "CC0-1.0",
+					slotKey: slot.key,
+					row: {
+						raw,
+						components,
+						country: record.country,
+						locale: localeByCountry[record.country],
+						source: adapterID,
+						source_id: `${adapterID}-${record.id}-${slot.key}-${variant.suffix}`,
+						license: "CC0-1.0",
+					},
 				}
-
-				emitted++
 			}
 		}
 	}

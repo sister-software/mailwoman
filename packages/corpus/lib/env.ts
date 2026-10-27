@@ -21,6 +21,12 @@ export const PublicCorpusEnvSchema = z.object({
 		description:
 			"Corpus manifest whose region and locality spans the holdout span check counts; `default` reads the latest base corpus. Unset skips the check.",
 	}),
+	// The directory the WOF adapters keep parsed records in between builds (`adapters/wof/record-cache.ts`).
+	MAILWOMAN_WOF_RECORD_CACHE: z.string().optional().meta({
+		title: "WOF record cache",
+		description:
+			"Directory where the WOF adapters keep the records parsed from the GeoJSON checkouts, keyed by every file's path, size and modification time; a relative path resolves against the data root. Unset parses the GeoJSON on every build.",
+	}),
 })
 
 /**

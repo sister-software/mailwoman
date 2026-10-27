@@ -13,7 +13,7 @@ import { canonicalJSON } from "@mailwoman/core/json"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
 import { BuildProfile, PriorOutput, type BuildCorpusOptions } from "#build/types"
-import { extractFingerprint, type FileDerivation } from "#parquet/record"
+import { extractFingerprint, type FileDerivation, inputRevisions } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW } from "#parquet/shuffle"
 import type { AdapterOptions, CorpusAdapter } from "#types"
@@ -107,9 +107,21 @@ export async function adapterDerivations(
 		Object.fromEntries([...modules].map(([id, module]) => [id, [BUILD_MODULE, module]]))
 	)
 
+	const derived = new Map<string, Promise<FileDerivation>>()
+
 	return Object.assign(derivationOf, { modules })
 
-	async function derivationOf(source: string): Promise<FileDerivation> {
+	function derivationOf(source: string): Promise<FileDerivation> {
+		let derivation = derived.get(source)
+
+		if (!derivation) {
+			derived.set(source, (derivation = derive(source)))
+		}
+
+		return derivation
+	}
+
+	async function derive(source: string): Promise<FileDerivation> {
 		const options = adapterInputs[source]
 		const codeHash = codeHashes.get(source)
 
@@ -117,6 +129,13 @@ export async function adapterDerivations(
 			throw new Error(`buildCorpus: rows of ${source} reached the parquet phase and no configured adapter has that id`)
 		}
 
-		return { extractHash: await adapterExtractHash(options), codeHash, config }
+		const revisions = await inputRevisions(options.inputPath)
+
+		return {
+			extractHash: await adapterExtractHash(options),
+			codeHash,
+			config,
+			...(revisions ? { inputRevisions: revisions } : {}),
+		}
 	}
 }

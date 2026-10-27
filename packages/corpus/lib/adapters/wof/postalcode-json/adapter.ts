@@ -27,10 +27,12 @@ import {
 	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
+import { walkFeaturesCached } from "#adapters/wof/record-cache"
+import { RowSampler } from "#adapters/wof/sample"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
-import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecord } from "#utils"
+import { buildAncestorNameIndex, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * Maps a lowercase US state name to its USPS code.
@@ -160,7 +162,7 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			// The index keeps admin records as well as postcodes so that postcode ancestry resolves.
 			const byID = new Map<number, WOFRecord>()
 
-			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
+			for await (const rec of walkFeaturesCached(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
 
 				if (opts.country && rec.country !== opts.country) continue
@@ -181,6 +183,8 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				}
 			}
 
+			const sampler = opts.sample ? new RowSampler(opts.sample) : undefined
+
 			yield* emitWOFJSONRows({
 				records: byID,
 				ancestry,
@@ -190,7 +194,10 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				shouldEmit: (record) => postcodePlacetypeToTag(record.placetype) === "postcode",
 				nameSlotsFor,
 				variantsFor: postcodeVariantsFor,
+				sampler,
 			})
+
+			await sampler?.writeCounts()
 		},
 	}
 }

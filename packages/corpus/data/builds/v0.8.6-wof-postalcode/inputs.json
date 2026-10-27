@@ -1,0 +1,16 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "This build samples wof-postalcode for the v0.8.6-overlay (#2857). The adapter keeps a row when its hash is among the 5 lowest of its structure cell (country, tag order, name-slot kind) or of its language cell, or among the 90,000 lowest of its country. cell-counts.json beside the build counts every renderable row per cell.",
+	"corpusVersion": "v0.8.6-wof-postalcode",
+	"adapters": {
+		"wof-postalcode": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 90000,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.6-wof-postalcode/cell-counts.json"
+			}
+		}
+	}
+}

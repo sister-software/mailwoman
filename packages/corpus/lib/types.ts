@@ -371,6 +371,15 @@ export interface AdapterOptions {
 	seed?: number | null
 
 	/**
+	 * Rows to keep, chosen by structure cell before rendering, for an adapter
+	 * that can enumerate its rows twice.
+	 *
+	 * The WOF adapters read it.
+	 * Every other adapter renders all of its rows.
+	 */
+	sample?: RowSample | null
+
+	/**
 	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
@@ -390,6 +399,38 @@ export interface AdapterOptions {
 	 * The manifest records that as an empty object rather than as zero drops of a specific kind.
 	 */
 	dropped?: Map<string, number>
+}
+
+/**
+ * The rows an adapter keeps out of everything it could render.
+ *
+ * A row is kept when its hash is among the `cellFloor` lowest of its structure cell
+ * or of its language cell, or among the `rowsPerCountry` lowest of its country.
+ * The adapter defines the cells.
+ */
+export interface RowSample {
+	/**
+	 * Rows each cell keeps.
+	 * A cell with fewer rows keeps them all.
+	 */
+	cellFloor: number
+	/**
+	 * Rows each country keeps in hash order, beside its floor rows.
+	 */
+	rowsPerCountry: number
+	/**
+	 * The hash seed.
+	 *
+	 * Two builds with the same seed and inputs keep the same rows.
+	 */
+	seed?: number
+	/**
+	 * A JSON file to write every cell's renderable row count to, keyed by the adapter's cell key.
+	 *
+	 * The coverage of a sample is read against these counts, so the full set of rows never has to be built.
+	 * Relative paths resolve against the data root.
+	 */
+	countsFile?: string
 }
 
 /**

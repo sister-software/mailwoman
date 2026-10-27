@@ -56,16 +56,11 @@ import {
 	type NameSlot,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
+import { walkFeaturesCached } from "#adapters/wof/record-cache"
+import { RowSampler } from "#adapters/wof/sample"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import {
-	buildAncestorRecordIndex,
-	nameValues,
-	preferredName,
-	walkFeatures,
-	type AncestorRecords,
-	type WOFRecord,
-} from "#utils"
+import { buildAncestorRecordIndex, nameValues, preferredName, type AncestorRecords, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -568,7 +563,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			// The ancestors of a same-country record live in the same admin repo.
 			const byID = new Map<number, WOFRecord>()
 
-			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {
+			for await (const rec of walkFeaturesCached(opts.inputPath, { signal: opts.signal })) {
 				if (opts.signal?.aborted) return
 
 				if (opts.country && rec.country !== opts.country) continue
@@ -578,6 +573,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			}
 
 			const ancestry = buildAncestorRecordIndex(byID, placetypeToTag)
+			const sampler = opts.sample ? new RowSampler(opts.sample) : undefined
 
 			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({
@@ -588,7 +584,10 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				localeByCountry: LOCALE_BY_COUNTRY,
 				nameSlotsFor,
 				variantsFor,
+				sampler,
 			})
+
+			await sampler?.writeCounts()
 		},
 	}
 }

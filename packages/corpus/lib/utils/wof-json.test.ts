@@ -16,6 +16,7 @@ import {
 	isAtOrigin,
 	isCurrentFeature,
 	normalizeNameKey,
+	parseWOFSlotKey,
 	readFeatureRecord,
 	stripAttestation,
 	wofNameSlotSQL,
@@ -289,4 +290,25 @@ test("wofNameSlotSQL reads the slot kind and language back out of a WOF source_i
 		{ kind: "default", language: "default" },
 		{ kind: "colloquial", language: "zho" },
 	])
+})
+
+test("parseWOFSlotKey reads a slot key the way wofNameSlotSQL reads it from a source_id", async () => {
+	using db = await openDuckDB()
+	const slot = wofNameSlotSQL("id")
+
+	const keys = [
+		"default",
+		"name-rus-x-preferred",
+		"name-und-x-variant-2",
+		normalizeNameKey("name:zho_hant_x_colloquial"),
+		"name-eng",
+	]
+
+	const values = keys.map((key) => `('wof-admin-85887851-${key}-self')`).join(", ")
+
+	const result = await db.runAndReadAll(
+		`SELECT ${slot.kind} AS kind, ${slot.language} AS language FROM (VALUES ${values}) t(id)`
+	)
+
+	expect(keys.map(parseWOFSlotKey)).toEqual(result.getRowObjects())
 })

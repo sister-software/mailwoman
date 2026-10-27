@@ -23,6 +23,7 @@
 import { readLocalJSONFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { gitHead } from "@mailwoman/core/git"
 import { createHash, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -66,6 +67,13 @@ export interface DerivationInputs {
 	 * The `@mailwoman/corpus` version that wrote the file.
 	 */
 	builderVersion: string
+	/**
+	 * The HEAD commit of each git checkout the input directory holds, keyed by its path relative to the input.
+	 *
+	 * `extractHash` already changes with any input file, so the derivation hash leaves these out.
+	 * They tell a reader which commits the rows were built from.
+	 */
+	inputRevisions?: Record<string, string>
 }
 
 /**
@@ -79,6 +87,10 @@ export interface FileDerivation {
 	 */
 	codeHash: string
 	config: Record<string, unknown>
+	/**
+	 * See {@linkcode DerivationInputs.inputRevisions}.
+	 */
+	inputRevisions?: Record<string, string>
 }
 
 /**
@@ -155,6 +167,7 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
 		codeHash: derivation.codeHash,
 		config: derivation.config,
 		builderVersion: await corpusBuilderVersion(),
+		...(derivation.inputRevisions ? { inputRevisions: derivation.inputRevisions } : {}),
 	}
 }
 
@@ -183,6 +196,33 @@ export async function extractFingerprint(path: PathBuilderLike): Promise<string>
 	}
 
 	return hash.digest("hex")
+}
+
+/**
+ * The HEAD commit of each git checkout in `path` and its immediate subdirectories, keyed by the
+ * checkout's path relative to `path`, or `undefined` for a file or a directory holding no checkout.
+ *
+ * The WOF input holds its checkouts one or two levels down: `whosonfirst-data-admin-us`
+ * and `whosonfirst-data/whosonfirst-data-admin-gb`.
+ */
+export async function inputRevisions(path: PathBuilderLike): Promise<Record<string, string> | undefined> {
+	if (await isFile(path)) return undefined
+
+	const markers = await Globerator.from(["*/.git", "*/*/.git", ".git"], {
+		cwd: path.toString(),
+		absolute: false,
+		onlyFiles: false,
+	}).toArray()
+
+	const revisions: Record<string, string> = {}
+
+	for (const marker of markers.toSorted()) {
+		const checkout = dirname(marker) === "." ? "." : dirname(marker)
+
+		revisions[checkout] = await gitHead(resolvePath(path, checkout))
+	}
+
+	return Object.keys(revisions).length ? revisions : undefined
 }
 
 /**

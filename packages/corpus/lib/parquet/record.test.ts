@@ -8,6 +8,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, removeFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
 import { sha256File } from "@mailwoman/core/hash"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -18,6 +19,7 @@ import {
 	derivationHash,
 	type DerivationInputs,
 	foldSourceLicenses,
+	inputRevisions,
 	readParquetRecord,
 	readSourceLicenseTally,
 	recordPathFor,
@@ -49,7 +51,7 @@ describe("derivationHash", () => {
 	it("changes when any one of its four inputs changes", () => {
 		const base = derivationHash(BASE)
 
-		const changed: Record<keyof DerivationInputs, DerivationInputs> = {
+		const changed: Record<Exclude<keyof DerivationInputs, "inputRevisions">, DerivationInputs> = {
 			extractHash: { ...BASE, extractHash: "c".repeat(64) },
 			codeHash: { ...BASE, codeHash: "d".repeat(64) },
 			config: { ...BASE, config: { ...(BASE.config as object), shuffleSeed: 2 } },
@@ -59,6 +61,12 @@ describe("derivationHash", () => {
 		for (const [input, inputs] of Object.entries(changed)) {
 			expect(derivationHash(inputs), input).not.toBe(base)
 		}
+	})
+
+	it("leaves the input revisions out, since the extract hash already covers the input's content", () => {
+		expect(derivationHash({ ...BASE, inputRevisions: { "whosonfirst-data-admin-us": "6596d83ab02" } })).toBe(
+			derivationHash(BASE)
+		)
 	})
 
 	it("changes with each per-file config field the writer adds", () => {
@@ -361,5 +369,25 @@ describe("writeParquetSplits", () => {
 				{ outputDir: scratch.path, corpusVersion: "0.1.0", derivationFor: () => FIXTURE_DERIVATION }
 			)
 		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
+	})
+})
+
+describe("inputRevisions", () => {
+	it("records the HEAD of each checkout one or two levels below the input, keyed by its relative path", async () => {
+		const identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+		const heads: Record<string, string> = {}
+
+		for (const checkout of ["whosonfirst-data-admin-us", "whosonfirst-data/whosonfirst-data-admin-gb"]) {
+			const cwd = scratch.path(checkout)
+
+			await writeLocalJSONFile({ id: 1 }, cwd, "data/1.geojson")
+			gitSync(["init", "--quiet"], { cwd })
+			gitSync(["add", "."], { cwd })
+			gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "fixture"], { cwd })
+			heads[checkout] = gitSync(["rev-parse", "HEAD"], { cwd })
+		}
+
+		expect(await inputRevisions(scratch.path)).toEqual(heads)
+		expect(await inputRevisions(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))).toBeUndefined()
 	})
 })
