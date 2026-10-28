@@ -56,7 +56,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 		expect(row.components.venue).toBe("Mountain Plains Counseling Services - Catholic Charities of Wyoming")
 	})
 
-	it("joins street1 + street2 with ', ' for two-line addresses", async () => {
+	it("labels a designator second line as the unit", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -66,12 +66,10 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0001")!
-		expect(row.components.street).toBe("SW Madison St, Suite 300")
-		expect(row.components.house_number).toBe("500")
+		expect(row.components).toMatchObject({ house_number: "500", street: "SW Madison St", unit: "Suite 300" })
 	})
 
-	it("preserves narrative sub-tenant designators verbatim in street", async () => {
-		// "Suite C, behind main building" is the samhsa-specific adversarial training signal.
+	it("keeps a narrative second line that opens with a designator verbatim as the unit, and drops one without", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -81,9 +79,11 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0003")!
-		expect(row.components.street).toContain("Elmwood Ave")
-		expect(row.components.street).toContain("Suite C")
-		expect(row.components.street).toContain("behind main building")
+		expect(row.components).toMatchObject({ street: "Elmwood Ave", unit: "Suite C, behind main building" })
+
+		const floor = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0002")!
+		expect(floor.components).toMatchObject({ street: "Capitol Ave" })
+		expect(floor.components.unit).toBeUndefined()
 	})
 
 	it("kryptonite case: 'Buffalo Treatment Services' + 'Buffalo NY' aligns to disjoint spans", async () => {
@@ -120,7 +120,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 		expect(row.components.street).toBe("Bell Blvd")
 	})
 
-	it("PO Box surface form preserved verbatim in street", async () => {
+	it("labels a whole-line PO Box as po_box", async () => {
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -131,7 +131,8 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-samhsa-treatment-locator-SR0007")!
 		expect(row.components.house_number).toBeUndefined()
-		expect(row.components.street).toBe("PO Box 5678")
+		expect(row.components.street).toBeUndefined()
+		expect(row.components.po_box).toBe("PO Box 5678")
 	})
 
 	it("uses name2 as fallback venue when name1 is empty", async () => {

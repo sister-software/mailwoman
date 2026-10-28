@@ -14,11 +14,10 @@
  *   enough human + system hands to accumulate the suite-designator + sub-tenant chaos ("Suite C,
  *   behind main building") that pure gazetteer data does not.
  *
- *   samhsa's two-line address shape is the key adapter-specific concern. `street1` typically contains
- *   the canonical postal address (`"123 Main St"`); `street2` contains the suite / unit / "second
- *   floor" surface form. The adapter joins them with `", "` into a single `street` component (Phase
- *   1 keeps `unit` as a deferred slot since the OpenCage template doesn't have a clean rendering
- *   for it). Operators wanting a different join policy can subclass the factory.
+ *   samhsa writes an address on two lines. `street1` holds the postal street line (`"123 Main St"`)
+ *   and `street2` the suite or floor (`"Suite 300"`). `splitUSStreetLine` splits `street1`, and
+ *   `unitLine` keeps `street2` as the `unit` when it opens with a USPS designator, the labels every US
+ *   register adapter writes for those forms.
  *
  *   Column names below match the canonical samhsa Behavioral Health Treatment Services Locator CSV
  *   export header. Operators substituting a closely-related extract should rename columns to match.
@@ -29,13 +28,14 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine, unitLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -69,26 +69,6 @@ interface SamhsaSiteRow {
 	 * Falls back to `stableSourceID` derived from components when missing.
 	 */
 	frid?: string
-}
-
-/**
- * Join the samhsa two-line street: primary street + optional secondary line
- * (suite / unit / floor / "behind main building") on `", "`.
- *
- * The combined value is the `street` component surface form.
- * Phase 1 does not break this out into the `unit` component — see the file-level comment.
- */
-function joinTwoLineStreet(street1: string, street2: string | null): string {
-	const s1 = street1.trim()
-	const s2 = (street2 ?? "").trim()
-
-	if (!s1 && !s2) return ""
-
-	if (!s2) return s1
-
-	if (!s1) return s2
-
-	return `${s1}, ${s2}`
 }
 
 /**
@@ -141,13 +121,16 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = composeVenue(record.name1 ?? "", record.name2 ?? null)
-				const street = joinTwoLineStreet(record.street1 ?? "", record.street2 ?? null)
-				const split = splitStreetLine(street)
+				const line = splitUSStreetLine(record.street1 ?? "")
+				// A unit on the first line comes before one on the second, the order the publisher wrote them.
+				// A second line that opens with no designator, such as `2nd Floor`, stays out of the row.
+				const firstUnit = line && "street" in line ? line.unit : undefined
+				const unit = [firstUnit, unitLine(record.street2 ?? "")].filter(isPresent).join(" ")
 				const city = record.city ?? ""
 				const stateAbbr = record.state ?? ""
 				const postcode = record.zip ?? ""
 
-				if (!venue || !split || !city || !postcode) continue
+				if (!venue || !line || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
 
 				if (!state) continue
@@ -155,8 +138,8 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				// venue first — same kryptonite-defending insertion order as HRSA.
 				const components: CanonicalRow["components"] = {
 					venue,
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
+					...(unit ? { unit } : {}),
 					locality: city,
 					region: state.abbreviation,
 					postcode,

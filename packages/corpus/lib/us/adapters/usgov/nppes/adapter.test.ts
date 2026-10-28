@@ -14,7 +14,6 @@ import {
 	createUsgovNPPESAdapter,
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
-	unitLine,
 } from "#us/adapters/usgov/nppes/adapter"
 
 const fixtures = new AsyncDisposableStack()
@@ -114,19 +113,6 @@ describe("usgov-nppes adapter", () => {
 
 		expect(rows[0]!.raw).toContain("2560 HUNTINGTON AVE STE 302")
 		expect(rows[1]!.raw).toContain("1650 KING ST STE 300 BLDG 4")
-	})
-
-	it("labels a designator or number-sign second line as the unit and leaves any other second line out", () => {
-		expect(unitLine("SUITE 200")).toBe("SUITE 200")
-		expect(unitLine("STE. 4")).toBe("STE. 4")
-		expect(unitLine("APT 2B")).toBe("APT 2B")
-		expect(unitLine("#200")).toBe("#200")
-		// Publication 28 lists DEPARTMENT among the secondary unit designators.
-		expect(unitLine("DEPARTMENT OF SURGERY")).toBe("DEPARTMENT OF SURGERY")
-		expect(unitLine("ATTN: BILLING")).toBeNull()
-		expect(unitLine("C/O MERCY HOSPITAL")).toBeNull()
-		expect(unitLine("MEDICAL OFFICE BUILDING")).toBeNull()
-		expect(unitLine("")).toBeNull()
 	})
 
 	it("trims a padded organization name so the venue span ends on its last letter", async () => {

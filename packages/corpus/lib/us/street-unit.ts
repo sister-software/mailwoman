@@ -6,7 +6,7 @@
  */
 
 import { matchPOBox } from "@mailwoman/codex/us/po-box"
-import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
+import { isUnitDesignatorToken, matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
 
 import { splitStreetLine } from "#adapters/street-line"
 
@@ -16,6 +16,28 @@ import { splitStreetLine } from "#adapters/street-line"
 export interface StreetWithUnit {
 	street: string
 	unit: string
+}
+
+/**
+ * A register's second address line as a unit, or `null` when it holds something else.
+ *
+ * Most filled second lines open with a USPS secondary unit designator
+ * (`SUITE 200`, `STE. 4`, `APT 2B`, `DEPARTMENT OF SURGERY`) or a bare number sign (`#200`).
+ * The rest name a recipient, a building or a mail stop (`ATTN: BILLING`, `C/O …`, `MEDICAL OFFICE BUILDING`).
+ *
+ * A caller leaves those out of the row rather than joining them to the street span,
+ * because they belong to neither the street nor the unit.
+ */
+export function unitLine(line: string): string | null {
+	const trimmed = line.trim()
+
+	if (!trimmed) return null
+
+	if (/^#\s*\w/u.test(trimmed)) return trimmed
+
+	const [first = ""] = trimmed.split(/\s+/u)
+
+	return matchLeadingDesignator(first.replace(/[.,]$/u, "")) ? trimmed : null
 }
 
 /**
