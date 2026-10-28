@@ -18,7 +18,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from ...env import sha256_cache_path
+from ...env import sha256_cache_path, volume_path_on_host
 from .sha256_cache import cached_sha256, record_sha256
 
 #: The retired manifest keys older corpora use for their parquet file list, newest first. Built corpora are
@@ -135,14 +135,21 @@ class CorpusFile:
 
 
 def _resolve_sidecar(raw: str, corpus_dir: Path, directory: str) -> Path:
-    """Resolve a sidecar path the manifest lists, as-is or under ``corpus_dir/<directory>``, or raise."""
+    """Resolve a sidecar path the manifest lists, as-is, under the data root's copy of the volume mount, or under
+    ``corpus_dir/<directory>``, or raise."""
     path = Path(raw)
     if path.exists():
         return path
+    mirrored = volume_path_on_host(path)
+    if mirrored is not None and mirrored.exists():
+        return mirrored
     cand = corpus_dir / directory / path.name
     if cand.exists():
         return cand
-    raise FileNotFoundError(f"MANIFEST lists sidecar {raw}, absent as-is and under {corpus_dir / directory}")
+    raise FileNotFoundError(
+        f"MANIFEST lists sidecar {raw}, absent as-is, under the data root's copy of the volume mount, "
+        f"and under {corpus_dir / directory}"
+    )
 
 
 def _read_id_column(path: Path) -> frozenset[str]:
@@ -287,6 +294,12 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
         if raw.exists():
             resolved.append((raw, s))
             continue
+        # A path under the Modal volume mount points at a file the host's mirror of the volume holds at the same place.
+        mirrored = volume_path_on_host(raw)
+        if mirrored is not None and mirrored.exists():
+            resolved.append((mirrored, s))
+            rerooted += 1
+            continue
         # An attributed file sits at the root of the corpus directory that adds it.
         cand = (corpus_dir / raw.name if (corpus_dir / raw.name).exists() else None) if attributed else None
         cand = cand or _reroot(raw, corpus_dir, split)
@@ -300,7 +313,7 @@ def _manifest_split_entries(data: dict[str, Any], corpus_dir: Path, split: str) 
     if missing:
         raise FileNotFoundError(
             f"MANIFEST declares {declared} '{split}' parquet files but {len(missing)} are unresolvable "
-            f"(as-is AND re-rooted under {corpus_dir}):\n  "
+            f"(as-is, under the data root's copy of the volume mount, AND re-rooted under {corpus_dir}):\n  "
             + "\n  ".join(missing[:10])
             + ("\n  ..." if len(missing) > 10 else "")
         )

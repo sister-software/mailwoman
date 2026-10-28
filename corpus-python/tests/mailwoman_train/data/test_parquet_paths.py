@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from mailwoman_train.data.loader import _parquet_paths, manifest_files
-from mailwoman_train.data.loader.corpus_files import _RETIRED_MANIFEST_KEYS
+from mailwoman_train.data.loader.corpus_files import _RETIRED_MANIFEST_KEYS, _resolve_sidecar
 
 _OLDEST_KEY = _RETIRED_MANIFEST_KEYS[-1]
 
@@ -48,6 +48,55 @@ def test_rerooting_still_works(tmp_path: Path) -> None:
     stale = "/build-machine/corpus/train/part-0000.parquet"
     (corpus / "MANIFEST.json").write_text(json.dumps({"files": [{"split": "train", "sha256": X_SHA, "path": stale}]}))
     assert _parquet_paths(corpus, "train") == [part]
+
+
+def test_volume_mount_path_resolves_under_the_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # A store file named under Modal's volume mount sits in another corpus version's directory, which the corpus-relative
+    # re-root cannot find. The host keeps the volume's tree under the data root.
+    corpus = _mk(tmp_path / "data-root" / "corpus" / "versioned" / "v2-overlay", [])
+    store_file = tmp_path / "data-root" / "corpus" / "versioned" / "v1-store" / "store" / "nad" / "abc" / "data.parquet"
+    store_file.parent.mkdir(parents=True)
+    store_file.write_bytes(b"x")
+    # The volume mount keeps its default, `/data`.
+    monkeypatch.setenv("MAILWOMAN_DATA_ROOT", str(tmp_path / "data-root"))
+    (corpus / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "files": [
+                    {
+                        "split": "train",
+                        "sha256": X_SHA,
+                        "path": "/data/corpus/versioned/v1-store/store/nad/abc/data.parquet",
+                    }
+                ]
+            }
+        )
+    )
+    assert _parquet_paths(corpus, "train") == [store_file]
+
+
+def test_volume_mount_sidecar_resolves_under_the_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # A split-attribute sidecar of a base corpus sits in that corpus's directory, beside no file of the overlay.
+    sidecar = tmp_path / "corpus" / "versioned" / "v1" / "corpus-v1" / "attributes" / "nad" / "abc" / "data.split.json"
+    sidecar.parent.mkdir(parents=True)
+    sidecar.write_text("{}")
+    monkeypatch.setenv("MAILWOMAN_DATA_ROOT", str(tmp_path))
+    raw = "/data/corpus/versioned/v1/corpus-v1/attributes/nad/abc/data.split.json"
+    assert _resolve_sidecar(raw, tmp_path / "overlay", "attributes") == sidecar
+
+
+def test_volume_mount_path_without_a_data_root_stays_unresolvable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    corpus = _mk(tmp_path, [])
+    monkeypatch.delenv("MAILWOMAN_DATA_ROOT", raising=False)
+    (corpus / "MANIFEST.json").write_text(
+        json.dumps(
+            {"files": [{"split": "train", "sha256": X_SHA, "path": "/data/elsewhere/store/nad/abc/data.parquet"}]}
+        )
+    )
+    with pytest.raises(FileNotFoundError, match="1 are unresolvable"):
+        _parquet_paths(corpus, "train")
 
 
 def test_partial_resolution_raises_with_missing_list(tmp_path: Path) -> None:

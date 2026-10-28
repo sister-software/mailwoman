@@ -129,6 +129,21 @@ def volume_mount() -> Path:
     return Path(_blank_as_absent("MAILWOMAN_VOLUME_MOUNT") or DEFAULT_VOLUME_MOUNT)
 
 
+def volume_path_on_host(path: Path) -> Path | None:
+    """The host copy of a path under the volume mount, or `None` when it has none.
+
+    A manifest built on Modal lists files under the volume mount (`/data/corpus/...`). A machine that holds a mirror of
+    the volume at `$MAILWOMAN_DATA_ROOT` keeps the same tree there, so the path's part below the mount is joined under
+    the data root. A path outside the mount, or an unset data root, has no host copy.
+    """
+    root = _blank_as_absent("MAILWOMAN_DATA_ROOT")
+
+    if root is None or not path.is_relative_to(volume_mount()):
+        return None
+
+    return Path(root) / path.relative_to(volume_mount())
+
+
 @cache
 def sha256_cache_path() -> Path | None:
     """`MAILWOMAN_SHA256_CACHE`: the sidecar that remembers per-file sha256 results across processes.
