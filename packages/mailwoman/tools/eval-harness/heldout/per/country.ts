@@ -604,7 +604,8 @@ export async function scoreHeldoutArm(
 	parse: (row: HeldoutRow) => Promise<AddressTree>,
 	history?: ProvenanceHistory,
 	weightsLocaleFor?: (row: HeldoutRow) => string,
-	capabilitySources: ReadonlySet<string> = new Set()
+	capabilitySources: ReadonlySet<string> = new Set(),
+	onRow?: (scored: number, total: number) => void
 ): Promise<HeldoutArmResult> {
 	const outcomes: HeldoutRowOutcome[] = []
 	const cells = new Map<string, CountryScore>()
@@ -612,6 +613,8 @@ export async function scoreHeldoutArm(
 
 	for (const row of rows) {
 		const outcome = scoreHeldoutRow(row, await parse(row), history)
+
+		onRow?.(outcomes.length + 1, rows.length)
 
 		if (weightsLocaleFor) {
 			outcome.weightsLocale = weightsLocaleFor(row)
@@ -744,6 +747,10 @@ export async function scoreHeldoutWeights(
 		 * Sources totaled in a country's capability cell, as {@linkcode scoreHeldoutArm} takes them.
 		 */
 		capabilitySources?: ReadonlySet<string>
+		/**
+		 * Called after each row with the rows scored so far and the total, for progress reporting.
+		 */
+		onRow?: (scored: number, total: number) => void
 	} = {}
 ): Promise<HeldoutArmResult> {
 	const packages = options.packages ?? (await readHeldoutLocalePackages())
@@ -785,6 +792,7 @@ export async function scoreHeldoutWeights(
 			}),
 		history,
 		localeFor,
-		options.capabilitySources
+		options.capabilitySources,
+		options.onRow
 	)
 }

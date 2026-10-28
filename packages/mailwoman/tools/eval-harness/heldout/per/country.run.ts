@@ -163,10 +163,23 @@ const scored: HeldoutArmResult[] = []
 const packages = await readHeldoutLocalePackages()
 const capabilitySources = capabilityProbeSources(await readReleaseSpec(values.spec))
 
-for (const arm of arms) {
-	console.error(`scoring ${arm}`)
+for (const [index, arm] of arms.entries()) {
+	console.error(`scoring arm ${index + 1} of ${arms.length}: ${arm}`)
 
-	scored.push(await scoreHeldoutWeights(rows, arm, history, { packages, capabilitySources }))
+	const started = performance.now()
+
+	const onRow = (done: number, total: number) => {
+		if (done % 1000 && done !== total) return
+		const seconds = (performance.now() - started) / 1000
+		const remaining = ((total - done) * seconds) / done
+
+		console.error(
+			`  ${done}/${total} rows, ${(done / seconds).toFixed(1)} rows/s, ` +
+				`${Math.round(seconds / 60)} min elapsed, about ${Math.round(remaining / 60)} min left in this arm`
+		)
+	}
+
+	scored.push(await scoreHeldoutWeights(rows, arm, history, { packages, capabilitySources, onRow }))
 }
 
 assertPairedArms(scored)
