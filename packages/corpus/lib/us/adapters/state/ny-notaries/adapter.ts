@@ -19,10 +19,10 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -79,16 +79,15 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 				if (!state) continue
 
 				const fullAddress = [address1, address2].filter(isPresent).join(" ")
-				const split = splitStreetLine(fullAddress)
+				const line = splitUSStreetLine(fullAddress)
 
-				if (!split) continue
+				if (!line) continue
 
 				const venue = businessName || holderName || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					postcode: zip,

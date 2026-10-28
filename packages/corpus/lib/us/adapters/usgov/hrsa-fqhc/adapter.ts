@@ -32,10 +32,10 @@ import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -71,21 +71,12 @@ interface HRSASiteRow {
 }
 
 /**
- * Split a "123 Main St Suite 4" surface form into `(house_number, street)`.
+ * Creates the HRSA adapter.
  *
- * The regex tolerates one trailing letter on the number (`"123A Main St"`)
- * and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
- *
- * Suite / Apt / Unit designators stay on `street`.
- * Mailwoman's `unit` component exists.
- *
- * The address formatter has no clean slot for it.
- * HRSA addresses also keep the suite in the street column.
- *
- * The intact surface form in `street` keeps the adversarial training signal
- * (the model learns that a trailing "Suite 4" is part of the road line in this distribution).
+ * HRSA writes a site's suite at the end of its one address column (`1401 Atlantic Ave STE 2100`).
+ * `splitUSStreetLine` moves it into `unit` and a whole-line PO box into `po_box`,
+ * the labels every US register adapter writes for those forms.
  */
-
 export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_HRSA_FQHC_ADAPTER_ID,
@@ -113,12 +104,12 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = record["Site Name"] ?? ""
-				const split = splitStreetLine(record["Site Address"] ?? "")
+				const line = splitUSStreetLine(record["Site Address"] ?? "")
 				const city = record["Site City"] ?? ""
 				const stateAbbr = record["Site State Abbreviation"] ?? ""
 				const postcode = record["Site Postal Code"] ?? ""
 
-				if (!venue || !split || !city || !postcode) continue
+				if (!venue || !line || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
 
 				if (!state) continue
@@ -129,8 +120,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 				// otherwise mis-labels the venue's "Buffalo" as locality.
 				const components: CanonicalRow["components"] = {
 					venue,
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					postcode,

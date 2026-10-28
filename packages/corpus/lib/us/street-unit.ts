@@ -5,7 +5,10 @@
  * @file Splits a secondary unit written at the end of a US street line, such as `KING ST STE 300`.
  */
 
+import { matchPOBox } from "@mailwoman/codex/us/po-box"
 import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
+
+import { splitStreetLine } from "#adapters/street-line"
 
 /**
  * A street line with its trailing secondary unit separated.
@@ -13,6 +16,39 @@ import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
 export interface StreetWithUnit {
 	street: string
 	unit: string
+}
+
+/**
+ * The address components written on one US street line: a PO box, or a house number, street and unit.
+ */
+export type USStreetLineComponents = { po_box: string } | { house_number?: string; street: string; unit?: string }
+
+/**
+ * Splits one US street line, as a register writes it, into its address components.
+ *
+ * A whole line that is a box designator and an identifier holding a digit
+ * (`PO BOX 846`, `P.O. Box 10240`) becomes `po_box`.
+ * The digit requirement keeps a street such as `BOX ELDER RD` a street.
+ *
+ * Any other line takes the house number off its start with `splitStreetLine`
+ * and a secondary unit off its end with {@linkcode splitTrailingUnit}.
+ *
+ * @returns `null` for a blank line.
+ */
+export function splitUSStreetLine(line: string): USStreetLineComponents | null {
+	const box = matchPOBox(line)
+
+	if (box && /\d/u.test(box.id)) return { po_box: line.trim() }
+	const split = splitStreetLine(line)
+
+	if (!split) return null
+	const trailing = splitTrailingUnit(split.street)
+
+	return {
+		...(split.house_number ? { house_number: split.house_number } : {}),
+		street: trailing?.street ?? split.street,
+		...(trailing ? { unit: trailing.unit } : {}),
+	}
 }
 
 /**
@@ -56,7 +92,7 @@ function splitLastUnit(line: string): StreetWithUnit | null {
 	const tokens = line.trim().split(/\s+/u)
 
 	const at = (start: number) => ({
-		street: tokens.slice(0, start).join(" ").replace(/,$/u, ""),
+		street: tokens.slice(0, start).join(" ").replace(/\s*,$/u, ""),
 		unit: tokens.slice(start).join(" "),
 	})
 

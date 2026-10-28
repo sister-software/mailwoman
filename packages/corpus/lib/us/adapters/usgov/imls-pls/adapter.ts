@@ -23,10 +23,10 @@ import { CSVSpliterator } from "spliterator"
 
 import { rawTextDiscriminator, rowSourceID } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -88,14 +88,13 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const split = splitStreetLine(address)
+				const line = splitUSStreetLine(address)
 
-				if (!split) continue
+				if (!line) continue
 
 				const components: CanonicalRow["components"] = {
 					venue: libName,
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					postcode: zip,

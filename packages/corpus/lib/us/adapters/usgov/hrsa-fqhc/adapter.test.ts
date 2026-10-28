@@ -99,7 +99,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		expect(result.row.labels[buffaloIndices[1]!]).toBe("B-locality")
 	})
 
-	it("preserves Suite designators on the street component (no separate unit slot)", async () => {
+	it("splits a trailing Suite off the street into unit, with or without a comma", async () => {
 		await runAdapter({
 			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -108,11 +108,18 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		})
 
 		const rows = await loadRows()
-		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00002")!
-		expect(row.components.street).toBe("SE Hawthorne Blvd Suite 200")
+		const bare = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00002")!
+		expect(bare.components).toMatchObject({ house_number: "456", street: "SE Hawthorne Blvd", unit: "Suite 200" })
+		expect(bare.raw).toContain("Suite 200")
+
+		const comma = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00003")!
+		expect(comma.components).toMatchObject({ house_number: "789", street: "N Capitol Ave", unit: "Suite 102" })
+
+		const plain = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00001")!
+		expect(plain.components.unit).toBeUndefined()
 	})
 
-	it("PO Box surface form preserved verbatim in street (no false house-number split)", async () => {
+	it("labels a whole-line PO Box as po_box, with no house number or street", async () => {
 		await runAdapter({
 			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
@@ -123,7 +130,8 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		const rows = await loadRows()
 		const row = rows.find((r) => r.source_id === "usgov-hrsa-fqhc-H80CS00007")!
 		expect(row.components.house_number).toBeUndefined()
-		expect(row.components.street).toBe("PO Box 1234")
+		expect(row.components.street).toBeUndefined()
+		expect(row.components.po_box).toBe("PO Box 1234")
 	})
 
 	it("hyphenated NYC-style house number splits cleanly", async () => {

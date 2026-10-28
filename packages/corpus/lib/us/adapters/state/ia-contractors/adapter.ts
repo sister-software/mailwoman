@@ -23,14 +23,13 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -44,11 +43,17 @@ export const STATE_IA_CONTRACTORS_ADAPTER_ID = "state-ia-contractors"
  */
 export const STATE_IA_CONTRACTORS_DEFAULT_LICENSE = "Public Domain"
 
+/**
+ * The columns of an Iowa registration the adapter reads.
+ *
+ * `Address 2` is left out because Iowa fills it with the city, state and ZIP line
+ * (`CORAL GABLES FL 33134`) that `City`, `State` and `Zip Code` already hold.
+ * An adapter that joins it onto `Address 1` labels that line as street.
+ */
 interface IaContractorRow {
 	"Registration #": string
 	"Business Name": string
 	"Address 1": string
-	"Address 2": string
 	City: string
 	State: string
 	"Zip Code": string
@@ -84,7 +89,6 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				const businessName = record["Business Name"] ?? ""
 				const address1 = record["Address 1"] ?? ""
-				const address2 = record["Address 2"] ?? ""
 				const city = record.City ?? ""
 				const stateAbbr = record.State ?? ""
 				const zip = record["Zip Code"] ?? ""
@@ -95,17 +99,15 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const fullAddress = [address1, address2].filter(isPresent).join(" ")
-				const split = splitStreetLine(fullAddress)
+				const line = splitUSStreetLine(address1)
 
-				if (!split) continue
+				if (!line) continue
 
 				const venue = businessName || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					postcode: zip,

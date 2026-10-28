@@ -20,10 +20,10 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitUSStreetLine } from "#us/street-unit"
 
 /**
  * Registry id for this adapter.
@@ -105,16 +105,15 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (!streetPortion) continue
 
-				const split = splitStreetLine(streetPortion)
+				const line = splitUSStreetLine(streetPortion)
 
-				if (!split) continue
+				if (!line) continue
 
 				const venue = formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
-					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					...line,
 					locality: city,
 					region: state.abbreviation,
 					...(zip ? { postcode: zip } : {}),

@@ -54,14 +54,18 @@ quarantine venue.
 - `usgov-hrsa-fqhc-<Site ID>` when the CSV row has a Site ID
 - `usgov-hrsa-fqhc-<content-hash>` otherwise (via `stableSourceId`)
 
-The adapter splits `Site Address` into `(house_number, street)`:
+The adapter splits `Site Address` with `splitUSStreetLine` (`lib/us/street-unit.ts`):
 
 - `"123 Main St"` → `{ house_number: "123", street: "Main St" }`
 - `"40-12 Bell Blvd"` → `{ house_number: "40-12", street: "Bell Blvd" }`
-- `"PO Box 1234"` → `{ street: "PO Box 1234" }` (no house number)
+- `"PO Box 1234"` → `{ po_box: "PO Box 1234" }`
 
-Suite / floor / unit designators stay on `street` (no separate `unit`
-slot for Phase 1. See the file-level comment in `adapter.ts`).
+A secondary unit at the end of the line moves to `unit` through
+`splitTrailingUnit` (`lib/us/street-unit.ts`), the same split the
+`usgov-nppes` adapter applies:
+
+- `"456 SE Hawthorne Blvd Suite 200"` → `{ house_number: "456", street: "SE Hawthorne Blvd", unit: "Suite 200" }`
+- `"789 N Capitol Ave, Suite 102"` → `{ house_number: "789", street: "N Capitol Ave", unit: "Suite 102" }`
 
 ## Raw line shape
 
@@ -104,7 +108,7 @@ country value is rejected with a clear error.
 `fixtures/usgov-hrsa-fqhc/sample.csv` — 10 hand-crafted rows covering:
 
 - Standard urban addresses with venue prefix
-- Suite designators on street
+- A suite at the end of the line, bare and after a comma, split into `unit`
 - Saint / honorific prefixes (`"St. Vincent's Outreach Clinic"`,
   `"Saint Mary's FQHC"`)
 - Quoted multi-word venues with commas

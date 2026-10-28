@@ -7,7 +7,36 @@
 
 import { describe, expect, it } from "vitest"
 
-import { splitTrailingUnit } from "#us/street-unit"
+import { splitTrailingUnit, splitUSStreetLine } from "#us/street-unit"
+
+describe("splitUSStreetLine", () => {
+	it("labels a whole-line box with a numbered identifier as po_box", () => {
+		expect(splitUSStreetLine("PO BOX 846")).toEqual({ po_box: "PO BOX 846" })
+		expect(splitUSStreetLine(" P.O. Box 10240 ")).toEqual({ po_box: "P.O. Box 10240" })
+		expect(splitUSStreetLine("P O BOX 190")).toEqual({ po_box: "P O BOX 190" })
+	})
+
+	it("keeps a street whose first word is Box", () => {
+		expect(splitUSStreetLine("BOX ELDER RD")).toEqual({ street: "BOX ELDER RD" })
+	})
+
+	it("splits the house number and a trailing unit off a street line", () => {
+		expect(splitUSStreetLine("2560 HUNTINGTON AVE STE 302")).toEqual({
+			house_number: "2560",
+			street: "HUNTINGTON AVE",
+			unit: "STE 302",
+		})
+
+		expect(splitUSStreetLine("101 N Greenville Ave , Suite C")).toEqual({
+			house_number: "101",
+			street: "N Greenville Ave",
+			unit: "Suite C",
+		})
+
+		expect(splitUSStreetLine("123 Main St")).toEqual({ house_number: "123", street: "Main St" })
+		expect(splitUSStreetLine("  ")).toBeNull()
+	})
+})
 
 describe("splitTrailingUnit", () => {
 	it("splits a designator and its identifier off the end of the street", () => {
