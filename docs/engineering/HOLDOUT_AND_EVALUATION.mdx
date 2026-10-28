@@ -274,7 +274,7 @@ A corpus change is judged on two runs of the unchanged recipe on the new corpus 
 beside the control pair on the previous corpus. The change is read as an improvement when both seeds clear the
 release objective's lower confidence bound against the comparator and the smaller of the two gains exceeds the
 control pair's own spread. A board flip count is a finding to read, never the verdict. The rule costs a second
-run per corpus change, about $9 to $12 and 3 to 5 hours on an A100 at 60,000 steps. The caveat stands in the
+run per corpus change, about $17 to $23 and 6 to 8 hours on an A100 at 60,000 steps (section 9). The caveat stands in the
 specification: one seed pair measured once gives a floor whose own variance is unknown, so a result inside twice
 the measured spread is reported as unestablished rather than as a loss.
 
@@ -298,15 +298,21 @@ completed learning-rate schedule requires an explicit new-run decision.
 
 ## 9. Costs, as measured in October 2026
 
-| Operation                                | Cost                                     |
-| ---------------------------------------- | ---------------------------------------- |
-| Full corpus build, parallel              | 4 h 04 min CPU                           |
-| Re-split, 853 files                      | 76 min CPU, 8 workers                    |
-| Held-out span check                      | 22 to 50 min CPU, now inside the build   |
-| Held-out freeze and overlap audit        | about 3 and 2.5 min per set              |
-| 60,000-step from-scratch run             | 2.9 to 4.6 h on an A100, about $9 to $12 |
-| One candidate graded                     | about 1 h CPU                            |
-| A corpus change judged under section 7.2 | one further run, the same cost again     |
+| Operation                                | Cost                                   |
+| ---------------------------------------- | -------------------------------------- |
+| Full corpus build, parallel              | 4 h 04 min CPU                         |
+| Re-split, 853 files                      | 76 min CPU, 8 workers                  |
+| Held-out span check                      | 22 to 50 min CPU, now inside the build |
+| Held-out freeze and overlap audit        | about 3 and 2.5 min per set            |
+| 60,000-step from-scratch run             | 6 to 8 h on an A100, about $17 to $23  |
+| One candidate graded                     | about 1 h CPU                          |
+| A corpus change judged under section 7.2 | one further run, the same cost again   |
+
+The run figures are the October 2026 observations, CPU and memory included. The training step runs at about
+5.5 steps/s on an A100 between validation passes. The median of 18.2 s per 100 steps is from the arm B seed 42
+run's `train_log.csv`. Before `d7ea0f5a9` each validation pass took a median of 355 s, and a 90,000-step run
+spent 4.4 of about 9 h in its 44 passes. The validation cache in `train/validation.py` encodes the draw once, so
+later runs spend about one pass of that time.
 
 ## 10. Current state against this specification
 
