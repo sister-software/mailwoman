@@ -18,8 +18,15 @@ import React, { useEffect, useState } from "react"
 import { type CommandComponent, type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
 import { declareAction, evaluateAction, spec as licenseSpec } from "#cli/native/commands/license"
 import { parseCommand } from "#cli/native/spec"
-import { parseSample, type SetupChecks, SetupRoute, setupSummary, type TierRow, tiersFor } from "#cli/setup/plan"
-import { installedBundleNames } from "#data/ceiling"
+import {
+	parseSample,
+	readInstalledTiers,
+	type SetupChecks,
+	SetupRoute,
+	setupSummary,
+	type TierRow,
+	tiersFor,
+} from "#cli/setup/plan"
 import { mailwomanCLIPath } from "#metadata"
 
 /**
@@ -53,13 +60,7 @@ interface SetupReport {
 async function runChecks(countries: readonly string[]): Promise<SetupReport> {
 	const dataRoot = dataRootPath()
 	const configRoot = configRootPath()
-	let installed: ReadonlySet<string>
-
-	try {
-		installed = await installedBundleNames(dataRoot)
-	} catch {
-		installed = new Set()
-	}
+	const installed = await readInstalledTiers(dataRoot)
 
 	return {
 		checks: {

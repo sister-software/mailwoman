@@ -4,9 +4,17 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode, makeDirectories } from "@mailwoman/core/fs/writers"
 import { describe, expect, it } from "vitest"
 
-import { SETUP_SAMPLE_ADDRESS, setupSummary, tiersFor } from "#cli/setup/plan"
+import {
+	InstallationReadError,
+	readInstalledTiers,
+	SETUP_SAMPLE_ADDRESS,
+	setupSummary,
+	tiersFor,
+} from "#cli/setup/plan"
 import type { DataBundle } from "#data/bundles"
 
 const candidate: DataBundle = {
@@ -113,5 +121,45 @@ describe("setupSummary", () => {
 		)
 
 		expect(lines).toContain("Parsed: failed (no weights)")
+	})
+})
+
+describe("readInstalledTiers", () => {
+	it("names the path the failed system call reports", async () => {
+		const failure = Object.assign(new Error("EACCES: permission denied, stat '/data/db/wof/candidate.db'"), {
+			code: "EACCES",
+			path: "/data/db/wof/candidate.db",
+		})
+
+		const read = readInstalledTiers("/data", () => Promise.reject(failure))
+
+		await expect(read).rejects.toThrow(InstallationReadError)
+
+		await expect(read).rejects.toThrow(
+			"setup could not read the installation at /data/db/wof/candidate.db: EACCES: permission denied"
+		)
+	})
+
+	it("names the data root when the failure reports no path", async () => {
+		await expect(readInstalledTiers("/data", () => Promise.reject(new Error("bad manifest")))).rejects.toThrow(
+			"setup could not read the installation at /data: bad manifest"
+		)
+	})
+
+	// A process running as root reads a mode-000 directory, so the case cannot fail there.
+	it.skipIf(process.getuid?.() === 0)("reports an unreadable data root instead of an empty installation", async () => {
+		await using root = await temporaryDirectory("mw-setup-unreadable-")
+		const locked = root.path("db", "wof")
+
+		await makeDirectories(locked)
+		await changeMode(locked, 0o000)
+
+		try {
+			await expect(readInstalledTiers(root.path)).rejects.toThrow(
+				`setup could not read the installation at ${locked("candidate.db")}`
+			)
+		} finally {
+			await changeMode(locked, 0o755)
+		}
 	})
 })

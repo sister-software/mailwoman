@@ -10,11 +10,51 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { BUNDLES, type DataBundle } from "#data/bundles"
+import { installedBundleNames } from "#data/ceiling"
 import { licenseRouteLines } from "#data/licensed"
+
+/**
+ * The installation inventory could not be read, naming the input that failed.
+ */
+export class InstallationReadError extends CommandError {
+	readonly path: string
+
+	constructor(path: string, cause: unknown) {
+		const message = cause instanceof Error ? cause.message : String(cause)
+
+		super(`setup could not read the installation at ${path}: ${message}`, { cause })
+		this.name = "InstallationReadError"
+		this.path = path
+	}
+}
+
+/**
+ * The bundles installed under `dataRoot`.
+ *
+ * A failure to read the installation is an error naming the unreadable path:
+ * the system call's own path when it reports one, and the data root otherwise.
+ * An empty installation in place of the failure would print every tier as not installed,
+ * a report about an installation setup never read.
+ *
+ * @throws {@link InstallationReadError} when the inventory cannot be read.
+ */
+export async function readInstalledTiers(
+	dataRoot: PathBuilderLike,
+	read: (dataRoot: PathBuilderLike) => Promise<ReadonlySet<string>> = installedBundleNames
+): Promise<ReadonlySet<string>> {
+	try {
+		return await read(dataRoot)
+	} catch (error) {
+		const path = (error as { path?: unknown } | null)?.path
+
+		throw new InstallationReadError(typeof path === "string" ? path : dataRoot.toString(), error)
+	}
+}
 
 /**
  * The address the first parse runs on.
