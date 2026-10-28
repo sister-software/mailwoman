@@ -12,12 +12,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pyarrow as pa
+import pytest
 import torch
 
 from mailwoman_train.config import load_config
 from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
+from mailwoman_train.train import validation
 from mailwoman_train.train.trainer import _eval_val
 from tests import paths
 from tests.corpus_fixture import write_corpus_parquet
@@ -51,7 +53,8 @@ ROWS = [
 ]
 
 
-def test_eval_val_runs_without_a_tokenizer_on_the_char_path(tmp_path: Path) -> None:
+def _char_probe(tmp_path: Path, batch_size: int = len(ROWS)):  # type: ignore[no-untyped-def]
+    """The shipped char probe config over a two-row corpus, and a model built from it."""
     corpus = tmp_path / "corpus"
     for split in ("train", "val"):
         (corpus / split).mkdir(parents=True)
@@ -65,14 +68,49 @@ def test_eval_val_runs_without_a_tokenizer_on_the_char_path(tmp_path: Path) -> N
     cfg.data.corpus_dir = str(corpus)
     cfg.data.char_vocab_path = str(vocab_path)
     cfg.data.val_rows = len(ROWS)
-    cfg.train.eval_batch_size = len(ROWS)
-
+    cfg.train.eval_batch_size = batch_size
     model = build_model(cfg, vocab_size=2, pad_token_id=0, char_vocab_size=len(vocab))
+    return cfg, model
+
+
+def test_eval_val_runs_without_a_tokenizer_on_the_char_path(tmp_path: Path) -> None:
+    cfg, model = _char_probe(tmp_path)
     metrics = _eval_val(cfg, None, model, torch.device("cpu"), max_rows=len(ROWS))
 
     assert metrics["val_rows"] == len(ROWS)
     assert "macro_f1" in metrics
     assert metrics["val_loss"] == metrics["val_loss"]  # not NaN
+
+
+def test_a_cached_validation_draw_replays_the_same_batches_and_metrics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg, model = _char_probe(tmp_path, batch_size=1)
+    device = torch.device("cpu")
+    uncached = _eval_val(cfg, None, model, device, max_rows=len(ROWS))
+
+    encodes = 0
+    real = validation.iter_batches
+
+    def counting(*args, **kwargs):  # type: ignore[no-untyped-def]
+        nonlocal encodes
+        encodes += 1
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(validation, "iter_batches", counting)
+    draw = validation.ValidationDraw()
+    first = _eval_val(cfg, None, model, device, max_rows=len(ROWS), draw=draw)
+    second = _eval_val(cfg, None, model, device, max_rows=len(ROWS), draw=draw)
+
+    # The draw is encoded once and replayed, and every evaluation reports what an uncached one does.
+    assert encodes == 1
+    assert first == second == uncached
+    fresh = validation.validation_batches(cfg, None, len(ROWS))
+    cached = draw.batches(cfg, None, len(ROWS))
+    assert len(cached) == len(fresh) == len(ROWS)
+    for a, b in zip(cached, fresh, strict=True):
+        assert a.keys() == b.keys()
+        assert all(torch.equal(a[name], b[name]) for name in a)
 
 
 def test_eval_csv_row_has_one_cell_per_label_set_tag() -> None:

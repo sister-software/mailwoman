@@ -9,6 +9,7 @@ model.
 
 from __future__ import annotations
 
+import functools
 import json
 import random
 import time
@@ -17,13 +18,12 @@ from pathlib import Path
 import torch
 
 from ..config import Config
-from ..data.loader import IGNORE_INDEX, iter_batches
+from ..data.loader import IGNORE_INDEX
 from ..data.source_reps import format_derivation, resolve_config_reps
 from ..evaluation.metrics import cross_pollution, per_locale_tag_f1, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
 from ..tokenizer import Tokenizer
-from .batch import to_tensor_batch
 from .callbacks import default_callbacks
 from .checkpoint import find_latest_checkpoint
 from .corpus_record import write_corpus_record
@@ -38,6 +38,7 @@ from .setup import (
     restore_training_state,
 )
 from .state import TrainState
+from .validation import ValidationDraw, to_device, validation_batches
 
 
 def _set_seed(seed: int) -> None:
@@ -54,10 +55,13 @@ def _eval_val(
     model: torch.nn.Module,
     device: torch.device,
     max_rows: int | None,
+    draw: ValidationDraw | None = None,
 ) -> dict[str, float]:
     """Evaluate the validation set and return mean loss, token-level macro F1 and cross-pollution regression.
 
     Include auxiliary locale-head accuracy when self-conditioning is on.
+
+    ``draw`` holds the encoded validation batches between evaluations. Without one, the draw is encoded for this call.
 
     ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
     that refuses a None tokenizer here would stop every char-mode run at its first eval."""
@@ -69,15 +73,11 @@ def _eval_val(
     all_locale_ids: list[torch.Tensor] = []
     all_locale_preds: list[torch.Tensor] = []
     rows_seen = 0
-    for batch in iter_batches(
-        cfg,
-        tokenizer,
-        split="val",
-        batch_size=cfg.train.eval_batch_size,
-        seed=cfg.train.seed + 1,
-        row_limit=max_rows,
-    ):
-        tb = to_tensor_batch(batch, device)
+    batches = (
+        draw.batches(cfg, tokenizer, max_rows) if draw is not None else validation_batches(cfg, tokenizer, max_rows)
+    )
+    for batch in batches:
+        tb = to_device(batch, device)
         out = model(**tb)
         loss_total += float(out.loss.detach().cpu())
         seen_batches += 1
@@ -192,7 +192,7 @@ def train(
             resume_step=resume_step,
             precision=precision,
             regularizers=regularizers,
-            evaluate=_eval_val,
+            evaluate=functools.partial(_eval_val, draw=ValidationDraw()),
         )
     finally:
         # A crashed run still closes its CSV and tracker, so the partial metrics survive.
