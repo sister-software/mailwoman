@@ -23,6 +23,8 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
+import spliterator
+
 from ..countries.fr import tuples as fr_tuples
 from ..countries.gb import tuples as gb_tuples
 from ..countries.us import tuples as us_tuples
@@ -58,14 +60,10 @@ def carried_tuples(path: Path, code: str) -> Iterator[dict[str, Any]]:
     """
     country = code.upper()
     found = 0
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not line.strip():
-                continue
-            tup = json.loads(line)
-            if tup.get("country") == country:
-                found += 1
-                yield tup
+    for tup in spliterator.read_jsonl(path):
+        if tup.get("country") == country:
+            found += 1
+            yield tup
     if not found:
         raise ValueError(f"{path} holds no {country} tuple to carry")
 

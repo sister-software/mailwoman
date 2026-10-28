@@ -73,10 +73,10 @@ training_image = (
         "pyarrow>=15",
         "pyyaml>=6",
         "numpy>=1.26,<3",
-        # The corpus is stored zstd-compressed at rest, so the loader imports this to read it.
-        # This dependency is floored because it only decodes a format. It does not decide token IDs
-        # or graph structure. A corpus part file written by one supported version reads under another.
-        "zstandard>=0.23",
+        # The JSONL and CSV reader (imported as `spliterator`), which also decompresses zstd parts.
+        # Floored because it only reads formats. It does not decide token IDs or graph structure.
+        # The same floor as the root `pyproject.toml`.
+        "sister-software-spliterator>=10.1.1",
         # The same floor as the `train` extra in the root `pyproject.toml`.
         "datasets>=5.0.1",
         "tqdm>=4.66",

@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import spliterator
 
 from ..paths import repo_root_path
 
@@ -62,7 +63,7 @@ def main() -> int:
     centers = np.array([b["center"] for b in bins])
     cals = np.array([b["calibrated"] for b in bins])
 
-    recs = [json.loads(line) for line in Path(args.conf).read_text().splitlines() if line.strip()]
+    recs = list(spliterator.read_jsonl(Path(args.conf)))
     conf = np.array([r["conf"] for r in recs], dtype=float)
     correct = np.array([1.0 if r["correct"] else 0.0 for r in recs], dtype=float)
 

@@ -23,13 +23,14 @@ are different facts and the report never writes one for the other.
 
 from __future__ import annotations
 
-import json
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
+
+import spliterator
 
 from ..address_systems import address_system_id, address_system_table
 from ..labels import IGNORE_INDEX
@@ -98,10 +99,8 @@ class StageCounter:
 
 def count_canonical_jsonl(path: Path, stage: str = "canonical_rows") -> StageCounter:
     counter = StageCounter(stage)
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                counter.add_canonical(json.loads(line))
+    for record in spliterator.read_jsonl(path):
+        counter.add_canonical(record)
     return counter
 
 

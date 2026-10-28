@@ -19,8 +19,6 @@ has a 〒 prefix.
 
 from __future__ import annotations
 
-import csv
-import io
 import re
 import zipfile
 from collections import Counter
@@ -30,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 import pyarrow.parquet as pq
+import spliterator
 
 from .text import JP_PREFECTURES, normalize_name, split_street
 
@@ -119,12 +118,15 @@ class CorporateRow:
 
 
 def iter_corporate_rows(zip_path: Path) -> Iterator[CorporateRow]:
-    """Stream the nationwide CSV out of its zip: one row per corporation with a domestic address."""
+    """Stream the nationwide CSV out of its zip: one row per corporation with a domestic address.
+
+    Cells are trimmed. On the 2026-08-31 file that changes only 33 company names with a trailing U+3000. The address
+    fields this module aligns are unchanged.
+    """
     with zipfile.ZipFile(zip_path) as archive:
         member = next(info.filename for info in archive.infolist() if info.filename.endswith(".csv"))
         with archive.open(member) as raw:
-            text = io.TextIOWrapper(raw, encoding="utf-8-sig", newline="")
-            for row in csv.reader(text):
+            for row in spliterator.read_csv(raw, header=False):
                 if len(row) <= COL_POSTCODE:
                     continue
                 prefecture, municipality, street = row[COL_PREFECTURE], row[COL_MUNICIPALITY], row[COL_STREET]

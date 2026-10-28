@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import spliterator
 
 from ..paths import repo_root_path
 
@@ -423,7 +424,7 @@ def render_report(args: argparse.Namespace, fit: Fit) -> str:
 def main() -> None:
     """Fit the calibrator, then write the lookup table and the report."""
     args = parse_args()
-    records = [json.loads(line) for line in Path(args.conf).read_text().splitlines() if line.strip()]
+    records = list(spliterator.read_jsonl(Path(args.conf)))
     fit = fit_and_measure(records, bins=args.bins, ece_bins=args.ece_bins, seed=args.seed)
 
     out_path = Path(args.out)

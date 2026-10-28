@@ -7,13 +7,13 @@ from `SEED` plus a per-collector suffix, so one collector's sampling does not sh
 
 from __future__ import annotations
 
-import csv
 import glob as globlib
 import random
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 import pyarrow.parquet as pq
+import spliterator
 
 # locale dir -> (ISO country, BCP locale, trailing-number?)
 OA_LOCALES: dict[str, tuple[str, str, bool]] = {
@@ -121,25 +121,24 @@ LocaleParts = tuple[
 
 
 def _oa_records(csv_paths: list[Path]) -> Iterator[AddressRecord]:
+    """Rows are read as arrays and the header matched case-insensitively, so a file's column order and spelling of
+    `STREET`/`street` do not matter. Cells arrive trimmed, and invalid UTF-8 becomes U+FFFD."""
     for csv_path in csv_paths:
-        with open(csv_path, newline="", encoding="utf-8", errors="replace") as fh:
-            reader = csv.DictReader(fh)
-            cols = {c.upper(): c for c in reader.fieldnames or []}
-            street_col, number_col = cols.get("STREET"), cols.get("NUMBER")
-            city_col = cols.get("CITY")
-            unit_col, postcode_col = cols.get("UNIT"), cols.get("POSTCODE")
+        rows = spliterator.read_csv(csv_path, header=False)
+        header = next(rows, None)
+        cols = {name.upper(): index for index, name in enumerate(header or [])}
+        street_col = cols.get("STREET")
 
-            if not street_col:
-                continue
+        if street_col is None:
+            continue
 
-            for row in reader:
-                yield (
-                    (row.get(street_col) or "").strip(),
-                    (row.get(number_col) or "").strip() if number_col else "",
-                    (row.get(city_col) or "").strip() if city_col else "",
-                    (row.get(postcode_col) or "").strip() if postcode_col else "",
-                    (row.get(unit_col) or "").strip() if unit_col else "",
-                )
+        picked = (street_col, cols.get("NUMBER"), cols.get("CITY"), cols.get("POSTCODE"), cols.get("UNIT"))
+
+        for row in rows:
+            street, number, city, postcode, unit = (
+                row[index] if index is not None and index < len(row) else "" for index in picked
+            )
+            yield street, number, city, postcode, unit
 
 
 def _collect_parts(records: Iterable[AddressRecord], rng_key: str, cap: int) -> LocaleParts:
@@ -205,22 +204,15 @@ def _ryhti_records(path: Path) -> Iterator[AddressRecord]:
     `address_fin` is the published rendering (`Vuorijärventie 216`), so the house number is the text after the street
     name rather than a value assembled from the number-part columns. A row without a Finnish street name is skipped.
     """
-    with open(path, newline="", encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
-            street = (row.get("address_name_fin") or "").strip()
-            rendered = (row.get("address_fin") or "").strip()
+    for row in spliterator.read_csv(path):
+        street = row.get("address_name_fin") or ""
+        rendered = row.get("address_fin") or ""
 
-            if not street:
-                continue
+        if not street:
+            continue
 
-            number = rendered[len(street) :].strip() if rendered.startswith(street + " ") else ""
-            yield (
-                street,
-                number,
-                (row.get("postal_office_fin") or "").strip(),
-                (row.get("postal_code") or "").strip(),
-                "",
-            )
+        number = rendered[len(street) :].strip() if rendered.startswith(street + " ") else ""
+        yield street, number, row.get("postal_office_fin") or "", row.get("postal_code") or "", ""
 
 
 def collect_ryhti_pairs(path: Path, cap: int) -> LocaleParts:

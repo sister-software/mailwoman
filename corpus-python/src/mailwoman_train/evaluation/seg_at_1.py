@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 import sentencepiece as spm
+import spliterator
 import torch
 
 from ..labels import ID_TO_LABEL
@@ -54,7 +54,7 @@ def main() -> int:
     if not model.use_span_scorer:
         raise SystemExit("checkpoint has no span scorer — wrong checkpoint?")
 
-    rows = [json.loads(line) for line in args.fixtures.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = list(spliterator.read_jsonl(args.fixtures))
     rows = [r for r in rows if not r.get("dropped") and r.get("expect", {}).get("street")]
 
     token_hit = seg_hit = 0

@@ -12,6 +12,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+import spliterator
+
 from ...labels import resolve_label_set
 from ...paths import data_root_path
 from .score import ACCEPT_KM, CHECK, RESOLVE_TAGS, score_board
@@ -167,7 +169,7 @@ def main() -> None:
         ids: list[int] = out.logits[0].argmax(-1).tolist()
         return ids
 
-    rows = [json.loads(ln) for ln in Path(args.board).read_text().splitlines() if ln.strip()]
+    rows = list(spliterator.read_jsonl(Path(args.board)))
     with torch.no_grad():
         result = score_board(
             rows,

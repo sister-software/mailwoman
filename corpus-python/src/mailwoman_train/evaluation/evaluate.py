@@ -18,12 +18,12 @@ strings.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import spliterator
 import torch
 
 from ..config import Config
@@ -43,20 +43,15 @@ class GoldenEntry:
 def load_golden_dir(golden_dir: Path) -> list[GoldenEntry]:
     entries: list[GoldenEntry] = []
     for jsonl_path in sorted(golden_dir.glob("*.jsonl")):
-        with jsonl_path.open("r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                obj = json.loads(line)
-                entries.append(
-                    GoldenEntry(
-                        raw=obj["raw"],
-                        components={k: v for k, v in obj["components"].items()},
-                        country=obj["country"],
-                        notes=obj.get("notes", ""),
-                    )
+        for obj in spliterator.read_jsonl(jsonl_path):
+            entries.append(
+                GoldenEntry(
+                    raw=obj["raw"],
+                    components={k: v for k, v in obj["components"].items()},
+                    country=obj["country"],
+                    notes=obj.get("notes", ""),
                 )
+            )
     return entries
 
 

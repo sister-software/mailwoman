@@ -23,8 +23,9 @@ Exits non-zero when a JSONL file paints zero rows (``--allow-zero`` to survey in
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
+
+import spliterator
 
 from ..data.loader import load_anchor_lookup
 from ..features.postcode_shapes import collect_matches
@@ -40,33 +41,26 @@ def count_painted_rows(
     """Walk one JSONL recipe output and count rows by what the painter does to them."""
     stats = {"rows": 0, "shaped": 0, "painted": 0, "spans": 0, "spans_hit": 0, "gold_postcode": 0}
     zero = [0.0] * ANCHOR_FEATURE_DIM
-    with jsonl.open(encoding="utf-8") as fh:
-        for line in fh:
-            if limit is not None and stats["rows"] >= limit:
-                break
-            line = line.strip()
-            if not line:
-                continue
-            row = json.loads(line)
-            raw = row.get("raw") or ""
-            stats["rows"] += 1
-            if (row.get("components") or {}).get("postcode"):
-                stats["gold_postcode"] += 1
+    for row in spliterator.read_jsonl(jsonl, take=limit):
+        raw = row.get("raw") or ""
+        stats["rows"] += 1
+        if (row.get("components") or {}).get("postcode"):
+            stats["gold_postcode"] += 1
 
-            matches = collect_matches(raw)
-            if matches:
-                stats["shaped"] += 1
-            stats["spans"] += len(matches)
+        matches = collect_matches(raw)
+        if matches:
+            stats["shaped"] += 1
+        stats["spans"] += len(matches)
 
-            char_feat: list[list[float]] = [zero] * len(raw)
-            char_conf: list[float] = [0.0] * len(raw)
-            for m in matches:
-                before = sum(char_conf)
-                _paint_anchor_chars(raw, m.start, m.end, lookup, char_feat, char_conf)
-                if sum(char_conf) > before:
-                    stats["spans_hit"] += 1
-            if any(char_conf):
-                stats["painted"] += 1
+        char_feat: list[list[float]] = [zero] * len(raw)
+        char_conf: list[float] = [0.0] * len(raw)
+        for m in matches:
+            before = sum(char_conf)
+            _paint_anchor_chars(raw, m.start, m.end, lookup, char_feat, char_conf)
+            if sum(char_conf) > before:
+                stats["spans_hit"] += 1
+        if any(char_conf):
+            stats["painted"] += 1
     return stats
 
 
