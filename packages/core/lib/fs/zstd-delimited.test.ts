@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The reader must return the same rows for compressed and uncompressed delimited files. This lets the corpus be stored as `.zst`.
+ *   spliterator decompresses by magic bytes and reads `part.jsonl.zst` when asked for `part.jsonl`, so a path is the
+ *   whole source description. These tests pin the behavior the corpus build depends on.
  */
 
 import { resolvePath } from "path-ts"
@@ -11,7 +13,6 @@ import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { unzstd, zstd } from "#fs/compression"
-import { delimitedSource, preferCompressed, ZSTD_EXTENSION } from "#fs/delimited"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "#fs/writers"
 import { stringifyJSON } from "#json"
@@ -31,60 +32,59 @@ const ROWS: Row[] = Array.from({ length: 5000 }, (_, i) => ({
 let scratch: TemporaryDirectory
 let plain = ""
 let compressed = ""
+let onlyCompressed = ""
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("zstd-delimited-")
 	plain = resolvePath(scratch.path, "part-0000.jsonl")
-	compressed = `${plain}${ZSTD_EXTENSION}`
+	compressed = `${plain}.zst`
+	onlyCompressed = resolvePath(scratch.path, "part-0001.jsonl")
 
 	const text = ROWS.map((row) => stringifyJSON(row)).join("\n") + "\n"
 
 	await writeLocalTextFile(text, plain)
 	await writeLocalFile(zstd(text), compressed)
+	await writeLocalFile(zstd(text), `${onlyCompressed}.zst`)
 })
 
 afterAll(async () => {
 	await scratch[Symbol.asyncDispose]()
 })
 
-describe("delimitedSource", () => {
-	it("returns an uncompressed path untouched, so the spliterator does its own segmented open", () => {
-		expect(delimitedSource(plain)).toBe(plain)
-	})
+const readRows = (path: string, init?: { preferCompressed?: boolean }) =>
+	JSONSpliterator.fromAsync<Row>(path, init).toArray()
 
-	it("returns a stream for a .zst path", () => {
-		const source = delimitedSource(compressed)
-
-		expect(typeof source).not.toBe("string")
-		expect(typeof (source as AsyncIterable<Uint8Array>)[Symbol.asyncIterator]).toBe("function")
-	})
-
+describe("a compressed corpus part", () => {
 	it("reads the same rows compressed as uncompressed", async () => {
-		const read = async (path: string) => {
-			const out: Row[] = []
-
-			for await (const row of JSONSpliterator.fromAsync<Row>(delimitedSource(path))) {
-				out.push(row)
-			}
-
-			return out
-		}
-
-		const fromPlain = await read(plain)
-		const fromCompressed = await read(compressed)
+		const fromPlain = await readRows(plain, { preferCompressed: false })
+		const fromCompressed = await readRows(compressed)
 
 		expect(fromPlain).toHaveLength(ROWS.length)
 		expect(fromCompressed).toEqual(fromPlain)
 	})
 
 	it("streams text rows from a compressed source too", async () => {
-		let lines = 0
+		expect(await TextSpliterator.countAsync(compressed)).toBe(ROWS.length)
+	})
 
-		for await (const _line of TextSpliterator.fromAsync(delimitedSource(compressed))) {
-			lines++
-		}
+	// A two-pass reader such as `readUnquotedTSVChecked` counts a file and then reads it.
+	// Each pass reopens the path, so a compressed file reads in full both times.
+	it("survives two sequential passes", async () => {
+		expect(await TextSpliterator.countAsync(compressed)).toBe(ROWS.length)
+		expect(await readRows(compressed)).toHaveLength(ROWS.length)
+	})
+})
 
-		expect(lines).toBe(ROWS.length)
+describe("the compressed-sibling lookup", () => {
+	it("reads the .zst sibling of a plain name that has not been written", async () => {
+		expect(await readRows(onlyCompressed)).toEqual(ROWS)
+	})
+
+	it("prefers the .zst sibling over the plain file", async () => {
+		// Both copies hold the same rows here, so the read cannot tell them apart.
+		// The opt-out proves the plain file is readable on its own and the default does not depend on it.
+		expect(await readRows(plain)).toEqual(ROWS)
+		expect(await readRows(plain, { preferCompressed: false })).toEqual(ROWS)
 	})
 })
 
@@ -99,70 +99,5 @@ describe("zstd round-trip", () => {
 		const payload = new TextEncoder().encode(ROWS.map((r) => stringifyJSON(r)).join("\n"))
 
 		expect(zstd(payload).byteLength).toBeLessThan(payload.byteLength / 10)
-	})
-})
-
-describe("the count-then-read shape", () => {
-	// `readUnquotedTSVChecked` counts a file and then reads it, passing the same path twice.
-	// With a hoisted stream the second pass sees an exhausted iterator and reads no bytes.
-	// The function reports the unread rows as swallowed rows.
-	it("survives two sequential passes when the source is built per call", async () => {
-		const count = async (path: string) => {
-			let n = 0
-
-			for await (const _ of TextSpliterator.fromAsync(delimitedSource(path))) {
-				n++
-			}
-
-			return n
-		}
-
-		expect(await count(compressed)).toBe(ROWS.length)
-		expect(await count(compressed)).toBe(ROWS.length)
-	})
-
-	it("demonstrates why a hoisted stream must not be reused", async () => {
-		const hoisted = delimitedSource(compressed)
-
-		let first = 0
-
-		for await (const _ of TextSpliterator.fromAsync(hoisted)) {
-			first++
-		}
-
-		let second = 0
-
-		for await (const _ of TextSpliterator.fromAsync(hoisted)) {
-			second++
-		}
-
-		expect(first).toBe(ROWS.length)
-		expect(second).toBe(0)
-	})
-})
-
-describe("preferCompressed", () => {
-	it("answers with the .zst sibling when one exists", async () => {
-		expect((await preferCompressed(plain)).toString()).toBe(compressed)
-	})
-
-	it("answers with the plain path when no sibling exists", async () => {
-		const absent = resolvePath(scratch.path, "no-such-part.jsonl")
-
-		expect((await preferCompressed(absent)).toString()).toBe(absent)
-	})
-
-	it("is idempotent on a path that is already compressed", async () => {
-		expect((await preferCompressed(compressed)).toString()).toBe(compressed)
-	})
-
-	it("closes the loop: ask for the plain name, read the compressed rows", async () => {
-		const rows: Row[] = []
-
-		for await (const row of JSONSpliterator.fromAsync<Row>(delimitedSource(await preferCompressed(plain)))) {
-			rows.push(row)
-		}
-
-		expect(rows).toHaveLength(ROWS.length)
 	})
 })

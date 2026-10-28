@@ -63,7 +63,8 @@ export function gnafHoldoutKey(street: string, locality: string, postcode: strin
 type Row = Record<string, string | number | undefined>
 
 async function* psvObjects(path: string): AsyncIterable<Row> {
-	yield* PSVSpliterator.fromAsync(path) as AsyncIterable<Row>
+	// G-NAF headers are upper snake case (`STREET_LOCALITY_PID`); the lookups below read them lowercased.
+	yield* PSVSpliterator.fromAsync(path, { normalizeKeys: true }) as AsyncIterable<Row>
 }
 
 /**

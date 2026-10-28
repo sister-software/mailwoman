@@ -14,7 +14,6 @@
  * The writer would silently drop the character-offset labels if it wrote that row. Fail loudly and report the row number.
  */
 
-import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -136,7 +135,7 @@ export async function jsonlToParquet(
 	// TextSpliterator rather than JSONSpliterator, so a malformed line is reported by its number.
 	// The reader trims each line (a trailing \r included); `skipEmpty: false` keeps
 	// blank lines so `lineNo` matches the file.
-	for await (const line of TextSpliterator.fromAsync(delimitedSource(options.input), { skipEmpty: false })) {
+	for await (const line of TextSpliterator.fromAsync(options.input, { skipEmpty: false })) {
 		lineNo++
 
 		if (!line) continue

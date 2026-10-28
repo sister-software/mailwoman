@@ -13,7 +13,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { TextSpliterator } from "spliterator"
+import { TextSpliterator, UnterminatedQuoteError } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 import {
@@ -326,20 +326,35 @@ describe("parseBDUKRelease refusals", () => {
 		)
 	})
 
-	test("an unclosed quote that joins lines throws rather than reading short", async () => {
+	test("an unclosed quote throws in the reader rather than reading short", async () => {
 		const text = await readFixture()
 
-		// A quote opened mid-row joins the next lines into a record wider than the header.
 		expect(() => parseBDUKRelease(withCell(text, 4, "lot_name", '"Devon & Somerset'), SAMPLE, ["postcode"])).toThrow(
-			`${SAMPLE} line 4 has 9 columns where the header has 28.`
+			UnterminatedQuoteError
+		)
+	})
+
+	// A quote that opens on one line and closes on a later one is not an error to
+	// the reader: it joins the lines into one record.
+	// Only the width check and the record count tell that read from a shorter file.
+	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {
+		const text = await readFixture()
+		const lastColumn = "bduk_hubs_supplier"
+
+		// Opened mid-row and closed in the next row's last column, the joined record ends at
+		// `lot_name`: its columns up to the quote, then one cell holding the rest of both lines.
+		const narrow = withCell(withCell(text, 4, "lot_name", '"Devon & Somerset'), 5, lastColumn, 'Openreach"')
+		const narrowWidth = linesOf(text)[0]!.split(",").indexOf("lot_name") + 1
+
+		expect(() => parseBDUKRelease(narrow, SAMPLE, ["postcode"])).toThrow(
+			`${SAMPLE} line 4 has ${narrowWidth} columns where the header has 28.`
 		)
 
-		// A quote opened in the last column keeps the joined record's width, and only the line count shows the loss.
+		// Opened and closed in the last column, the joined record keeps its width, and only the line count shows the loss.
 		const unquoted = `${linesOf(text).slice(0, 8).join("\n")}\n`
+		const joined = withCell(withCell(unquoted, 7, lastColumn, '"'), 8, lastColumn, 'Openreach"')
 
-		expect(() => parseBDUKRelease(withCell(unquoted, 7, "bduk_hubs_supplier", '"'), SAMPLE, ["postcode"])).toThrow(
-			`${SAMPLE}: read 6 records from 7 data lines.`
-		)
+		expect(() => parseBDUKRelease(joined, SAMPLE, ["postcode"])).toThrow(`${SAMPLE}: read 6 records from 7 data lines.`)
 	})
 
 	test("an empty file, a repeated header label and a name that states no OMR month throw", async () => {

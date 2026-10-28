@@ -111,7 +111,7 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  * An `async function*` wrapper would cost an async frame per row and remove those ops.
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
-	return CSVSpliterator.fromAsync<CSVRecord>(source).map(withoutLineBreaks)
+	return CSVSpliterator.fromAsync<CSVRecord>(source, { normalizeKeys: true }).map(withoutLineBreaks)
 }
 
 /**

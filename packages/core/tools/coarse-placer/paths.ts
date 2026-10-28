@@ -11,7 +11,6 @@ import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { dataRootPath } from "#data-root"
-import { delimitedSource } from "#fs/delimited"
 import { pathExists } from "#fs/readers/stat"
 import { repoRootPathBuilder, workspacePathBuilder } from "#paths"
 
@@ -39,7 +38,7 @@ export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<
 
 		present.push(file)
 
-		for await (const row of JSONSpliterator.fromAsync<T>(delimitedSource(path))) {
+		for await (const row of JSONSpliterator.fromAsync<T>(path)) {
 			rows.push({ ...row, sourceFile: file })
 		}
 	}

@@ -12,7 +12,6 @@
  * the model already trained on.
  */
 
-import { delimitedSource, preferCompressed } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { createHash } from "@mailwoman/core/hash"
@@ -988,9 +987,7 @@ async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath:
 	// A malformed row throws out of the loop.
 	// The `finally` block still closes the write stream.
 	try {
-		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(
-			delimitedSource(await preferCompressed(labeledJsonlPath))
-		)) {
+		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(labeledJsonlPath)) {
 			if (typeof obj.source_id === "string") {
 				out.write(`${obj.source_id}\n`)
 			}

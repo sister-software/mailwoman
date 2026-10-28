@@ -95,7 +95,7 @@
 		"kysely": "^0.29.6",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.12",
-		"spliterator": "^9.3.0",
+		"spliterator": "^10.1.1",
 		"type-fest": "^5.10.0",
 		"zod": "^4.6.7"
 	},

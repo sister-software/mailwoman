@@ -4,34 +4,34 @@
  * @author Teffen Ellis, et al.
  * @file Reads a delimited file whose `"` is an ordinary character.
  *
- *   `CSVSpliteratorInit.enableQuoteHandling` defaults to true.
  *   A quote-aware reader over unquoted input still returns rows.
  *   It joins every line between one `"` and the next into one record.
  *   The caller then sees a shorter file and reads a smaller dataset.
  *   Downstream counts cannot distinguish this result from a small source file.
  *
  *   The GeoNames country dumps are unquoted TSV and contain `"` in place names (`Ovrag Kyzylak"on`).
+ *   Since spliterator 10, `TSVSpliterator` reads `"` as data by default, and a quote left open at the end of
+ *   the input throws. These readers still pass `enableQuoteHandling: false` so their contract does not rest
+ *   on a default.
  *
  *   A quote-aware reader of CSV text indexes its header with {@linkcode headerColumnIndex} and passes its
- *   record count to {@linkcode checkRecordCount}. A quote that never closes shortens that read in the same way.
+ *   record count to {@linkcode checkRecordCount}. A quote that opens and closes across lines shortens that
+ *   read without an error, so the count check still applies.
+ *
+ *   Compressed sources are read as given: spliterator decompresses zstd and gzip by their magic bytes, and
+ *   reads a path's `.zst` sibling in its place when that exists.
  */
-
-import { createReadStream } from "node:fs"
 
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
-import type { AsyncDataResource } from "spliterator"
-
-import { zstdDecompressor } from "#fs/compression"
-import { tryStat } from "#fs/readers/stat"
 
 /**
  * Stream the records of an unquoted tab-separated file, for any source whose `"` is literal.
  *
  * The GeoNames dumps and every register that writes plain TSV are such sources.
  *
- * A source that quotes its fields, such as a spreadsheet export or a register that
- * escapes delimiters, should use `TSVSpliterator` with its default settings.
+ * A source that quotes its fields, such as a spreadsheet export or a register that escapes
+ * delimiters, should use `TSVSpliterator` with `enableQuoteHandling: true`.
  * State that choice where the source is read.
  */
 export function readUnquotedTSV(path: PathBuilderLike): AsyncIterable<string[]> {
@@ -108,54 +108,12 @@ export function headerColumnIndex(file: string, header: readonly string[]): Map<
  *
  * The first non-empty line of `text` is its header, and each later non-empty line is a data line.
  *
- * A quote-aware reader joins every line after a quote that never closes into one record.
- * The read then answers short with no other sign, so a reader of quoted text compares the two counts.
+ * A quote that never closes now throws in the reader.
+ * A quote that opens on one line and closes on a later one still joins those lines into one record
+ * and answers short with no other sign, so a reader of quoted text compares the two counts.
  */
 export function checkRecordCount(file: string, text: string, records: number): void {
 	const dataLines = TextSpliterator.from(text).toArray().length - 1
 
 	if (records !== dataLines) throw new Error(`${file}: read ${records} records from ${dataLines} data lines.`)
-}
-
-/**
- * The extension that marks a delimited file as zstd-compressed at rest.
- */
-export const ZSTD_EXTENSION = ".zst"
-
-/**
- * A byte source for a delimited file, transparently decompressing a `.zst` input.
- *
- * Call this inline at each read.
- * The function returns an uncompressed path unchanged.
- *
- * Each spliterator opens that path independently.
- * That lets {@linkcode readUnquotedTSVChecked} count a file and then read it.
- *
- * A compressed file becomes a single stream.
- * The reader cannot reuse that stream across two passes: it yields the rows once
- * and no rows the second time.
- *
- * A compressed source is not seekable, so it cannot be segmented for parallel readers.
- * Every reader in this repository consumes a corpus part file as one stream.
- * The function buffers no bytes in either case.
- */
-export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
-	if (!path.toString().endsWith(ZSTD_EXTENSION)) return path
-
-	return createReadStream(path.toString()).pipe(zstdDecompressor())
-}
-
-/**
- * The path a delimited file is read from, preferring a `.zst` sibling when one exists,
- * so a corpus can be converted one part file at a time: a reader asks for `part-0000.jsonl`
- * and gets the compressed copy if the conversion has reached it, the plain one if it has not.
- */
-export async function preferCompressed(path: PathBuilderLike): Promise<PathBuilderLike> {
-	const plain = path.toString()
-
-	if (plain.endsWith(ZSTD_EXTENSION)) return path
-
-	const compressed = `${plain}${ZSTD_EXTENSION}`
-
-	return (await tryStat(compressed)) ? compressed : path
 }

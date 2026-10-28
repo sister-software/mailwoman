@@ -16,7 +16,6 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -56,7 +55,7 @@ export interface KryptoniteOverlayOptions {
 export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow> {
 	let first: string | null = null
 
-	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(jsonl)) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 		const source = (raw["source"] as string) ?? "deepseek-kryptonite"

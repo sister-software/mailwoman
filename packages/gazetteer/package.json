@@ -93,7 +93,7 @@
 		"kysely": "^0.29.6",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^9.3.0"
+		"spliterator": "^10.1.1"
 	},
 	"devDependencies": {
 		"@types/d3-color": "^3.1.3",

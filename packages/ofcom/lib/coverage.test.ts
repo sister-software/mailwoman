@@ -14,7 +14,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { TextSpliterator } from "spliterator"
+import { TextSpliterator, UnterminatedQuoteError } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 import {
@@ -277,11 +277,23 @@ describe("parseOfcomCoverage refusals", () => {
 		)
 	})
 
-	test("an unclosed quote that joins lines throws rather than reading short", async () => {
+	test("an unclosed quote throws in the reader rather than reading short", async () => {
 		const text = await readLocalTextFile(fixture(POSTCODE_ALL))
 		const broken = withCell(text, 3, columnOf(text, "postcode area"), '"CR')
 
 		expect(() => parseOfcomCoverage(broken, POSTCODE_ALL, [OfcomCoverageField.GigabitPercent])).toThrow(
+			UnterminatedQuoteError
+		)
+	})
+
+	// A quote closed on a later line is not an error to the reader: it joins the lines into one
+	// record of the header's width, and only the record count tells that read from a shorter file.
+	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {
+		const text = await readLocalTextFile(fixture(POSTCODE_ALL))
+		const column = columnOf(text, "postcode area")
+		const joined = withCell(withCell(text, 3, column, '"CR'), 4, column, 'CR"')
+
+		expect(() => parseOfcomCoverage(joined, POSTCODE_ALL, [OfcomCoverageField.GigabitPercent])).toThrow(
 			/read 2 records from 3 data lines/
 		)
 	})
