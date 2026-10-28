@@ -11,11 +11,12 @@ any row whose source id and license are not the adapter's, and refuses any input
 
 from __future__ import annotations
 
-import json
 import random
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
+
+import spliterator
 
 from ...paths import data_root_path
 
@@ -49,39 +50,36 @@ def iter_tuples(count: int, rng: random.Random, path: Path | None = None) -> Ite
         )
     reservoir: list[dict[str, Any]] = []
     seen = 0
-    with rows_path.open(encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            if not line.strip():
-                continue
-            row = json.loads(line)
-            if row.get("source") != SOURCE or row.get("license") != LICENSE:
-                raise RefusedGBTupleSource(
-                    f"{rows_path}:{line_number} has source {row.get('source')!r} and license "
-                    f"{row.get('license')!r}; GB tuples accept {SOURCE} rows under {LICENSE} only."
-                )
-            components = row.get("components") or {}
-            number = (components.get("house_number") or "").strip()
-            street = (components.get("street") or "").strip()
-            locality = (components.get("locality") or "").strip()
-            postcode = (components.get("postcode") or "").strip()
-            if not (number and street and locality and postcode):
-                continue
-            tup = {
-                "locality": locality,
-                "region": "",
-                "postcode": postcode,
-                "country": "GB",
-                "street": street,
-                "houseNumber": number,
-                "source": SOURCE,
-                "sourceID": row.get("source_id"),
-            }
-            seen += 1
-            if len(reservoir) < count:
-                reservoir.append(tup)
-            else:
-                index = rng.randrange(seen)
-                if index < count:
-                    reservoir[index] = tup
+    # A `.zst` sibling of the canonical file is read in its place, as the TypeScript side reads it.
+    for row_number, row in enumerate(spliterator.read_jsonl(rows_path)):
+        if row.get("source") != SOURCE or row.get("license") != LICENSE:
+            raise RefusedGBTupleSource(
+                f"{rows_path} row {row_number} has source {row.get('source')!r} and license "
+                f"{row.get('license')!r}; GB tuples accept {SOURCE} rows under {LICENSE} only."
+            )
+        components = row.get("components") or {}
+        number = (components.get("house_number") or "").strip()
+        street = (components.get("street") or "").strip()
+        locality = (components.get("locality") or "").strip()
+        postcode = (components.get("postcode") or "").strip()
+        if not (number and street and locality and postcode):
+            continue
+        tup = {
+            "locality": locality,
+            "region": "",
+            "postcode": postcode,
+            "country": "GB",
+            "street": street,
+            "houseNumber": number,
+            "source": SOURCE,
+            "sourceID": row.get("source_id"),
+        }
+        seen += 1
+        if len(reservoir) < count:
+            reservoir.append(tup)
+        else:
+            index = rng.randrange(seen)
+            if index < count:
+                reservoir[index] = tup
     rng.shuffle(reservoir)
     yield from reservoir

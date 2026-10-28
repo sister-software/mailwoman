@@ -15,11 +15,11 @@ dependencies = [
 	# - Otherwise, one side cannot find files written by the other.
 	# - See: `mailwoman_train/env.py`.
 	"platformdirs>=4.3",
-	# zstd is required:
-	# - Corpus parts are stored zstd-compressed at rest (~20-25x).
-	# - Python 3.12 lacks stdlib `compression.zstd` (arrives in 3.14), so this is not optional.
-	# - TS side uses `node:zlib` (zstd supported since Node 22.15).
-	"zstandard>=0.23",
+	# The JSONL and CSV reader, shared with the TypeScript side:
+	# - Same defaults, trimming, quote rules and errors as the `spliterator` npm package the corpus build reads with.
+	# - Decompresses zstd and gzip by magic bytes, and reads `part.jsonl.zst` when asked for `part.jsonl`.
+	# - Imported as `spliterator`; the PyPI name `spliterator` belongs to an unrelated project.
+	"sister-software-spliterator>=10.1.1",
 ]
 
 # Why extras:

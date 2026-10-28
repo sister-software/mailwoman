@@ -7,7 +7,6 @@ construction — asserted by ``verify_source_identical``, not hoped. This does n
 from __future__ import annotations
 
 import argparse
-import csv
 import glob
 import json
 import random
@@ -15,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import sentencepiece as spm
+import spliterator
 from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 
 # Fixed sample size and seed keep the corpus and spliced vocab reproducible.
@@ -49,25 +49,21 @@ def build_slavic_corpus(
     extra_repeat: int = 10,
 ) -> int:
     """Stream the OpenAddresses STREET/CITY columns for ``locales`` into a deduped SP-training corpus, returning the line count written."""
-    csv.field_size_limit(10**7)
     lines: set[str] = set()
     for cc in locales:
         for f in glob.glob(str(oa_root / cc / "*.csv")):
             try:
-                with open(f, newline="", encoding="utf-8") as fh:
-                    reader = csv.DictReader(fh)
-                    for i, row in enumerate(reader):
-                        street = (row.get("STREET") or "").strip()
-                        city = (row.get("CITY") or "").strip()
-                        if street:
-                            lines.add(street)
-                        if city:
-                            lines.add(city)
-                        if street and city:
-                            lines.add(f"{street} {city}")
-                        if i > per_file_cap:
-                            break
-            except (OSError, csv.Error):
+                # The cap admits two rows past `per_file_cap`, as the loop this replaced did before it broke.
+                for row in spliterator.read_csv(f, take=per_file_cap + 2):
+                    street = row.get("STREET") or ""
+                    city = row.get("CITY") or ""
+                    if street:
+                        lines.add(street)
+                    if city:
+                        lines.add(city)
+                    if street and city:
+                        lines.add(f"{street} {city}")
+            except (OSError, spliterator.SpliteratorError):
                 continue
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)

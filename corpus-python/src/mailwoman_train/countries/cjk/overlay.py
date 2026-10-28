@@ -36,11 +36,12 @@ from __future__ import annotations
 import argparse
 import json
 from collections import Counter
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
 import pyarrow.parquet as pq
+import spliterator
 
 from ...corpora.builder import verify_cjk_record, write_corpus_parquet
 from ...env import volume_mount
@@ -53,14 +54,6 @@ CN_SOURCE = "coarse-placer-cn-units"
 CN_REGISTER = "cn-units"
 JP_VERSION = "v8-jp-full-2026-08-04"
 DEFAULT_VOLUME_ROOT = str(volume_mount() / "corpus" / "versioned")
-
-
-def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if line:
-                yield json.loads(line)
 
 
 def to_cn_record(row: dict[str, Any]) -> dict[str, Any]:
@@ -117,7 +110,7 @@ def build(
     counts: dict[str, int] = {}
     tag_counts: Counter[str] = Counter()
     for split, source in (("train", cn_train), ("val", cn_val)):
-        records = [to_cn_record(row) for row in read_jsonl(source)]
+        records = [to_cn_record(row) for row in spliterator.read_jsonl(source)]
         for record in records:
             verify_cjk_record(record, tag_set)
             tag_counts.update(record["span_tags"])
@@ -126,7 +119,7 @@ def build(
         write_corpus_parquet(records, out_dir / split / "cn-units-0000.parquet", context="CJK overlay build")
         counts[split] = len(records)
 
-    board = [to_cn_record(row) for row in read_jsonl(cn_test)]
+    board = [to_cn_record(row) for row in spliterator.read_jsonl(cn_test)]
     for record in board:
         verify_cjk_record(record, tag_set)
     with (out_dir / "cn-board.jsonl").open("w", encoding="utf-8") as handle:

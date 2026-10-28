@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import re
 import unicodedata
 from collections import Counter
@@ -10,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pyarrow.parquet as pq
+import spliterator
 
 from ...text.normalize import ascii_digits, normalize_text
 
@@ -83,13 +83,12 @@ class RegisterRow:
 
 def iter_register_rows(source_dir: Path) -> Iterator[RegisterRow]:
     for path in sorted(source_dir.glob("*.csv")):
-        with path.open(encoding="utf-8-sig", newline="") as handle:
-            for row in csv.DictReader(handle):
-                address = (row.get("公司地址") or row.get("商業地址") or row.get("地址") or "").strip()
-                tax = (row.get("營業地址（財政資訊中心匯入）") or "").strip()
-                name = (row.get("公司名稱") or row.get("商業名稱") or "").strip()
-                if address or tax:
-                    yield RegisterRow(name=name, address=address, tax_address=tax)
+        for row in spliterator.read_csv(path):
+            address = row.get("公司地址") or row.get("商業地址") or row.get("地址") or ""
+            tax = row.get("營業地址（財政資訊中心匯入）") or ""
+            name = row.get("公司名稱") or row.get("商業名稱") or ""
+            if address or tax:
+                yield RegisterRow(name=name, address=address, tax_address=tax)
 
 
 @dataclass
