@@ -209,5 +209,6 @@ def encode_row(
     if code_units:
         # Code-unit channel (#2845): every piece of a digit run or alphanumeric code carries the code's shape,
         # computed from the raw surface as the inference feed computes it.
-        put("code_unit", code_unit_features(raw, list(spans)), CODE_UNIT_FEATURE_DIM)
+        piece_ranges = [(s.char_begin, s.char_end) for s in spans]
+        put("code_unit", code_unit_features(raw, piece_ranges), CODE_UNIT_FEATURE_DIM)
     return out
