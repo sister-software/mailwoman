@@ -49,6 +49,20 @@ export interface CIScope {
 }
 
 /**
+ * The paths the `mailwoman_mtf` Python extension builds from.
+ *
+ * The training loader imports the extension, so a change to a crate source, manifest
+ * or the lockfile changes what the Python suite tests.
+ */
+const PYTHON_EXTENSION_INPUTS = [
+	"packages/mtf/crates/",
+	"packages/mtf/Cargo.toml",
+	"packages/mtf/Cargo.lock",
+	"packages/mtf/rustfmt.toml",
+	"packages/mtf/rust-toolchain.toml",
+]
+
+/**
  * Finds the workspace containing a repository-relative path.
  */
 function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIWorkspace | null {
@@ -189,7 +203,11 @@ export function selectCIScope(
 	for (const file of changed) {
 		const owner = workspaceForFile(file, workspaces)
 
-		if (file.startsWith("corpus-python/") || file.endsWith(".py")) {
+		if (
+			file.startsWith("corpus-python/") ||
+			file.endsWith(".py") ||
+			PYTHON_EXTENSION_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))
+		) {
 			python = true
 		}
 

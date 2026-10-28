@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/mtf-core", "crates/mtf-wasm"]
+members = ["crates/mtf-core", "crates/mtf-wasm", "crates/mtf-channels", "crates/mtf-py"]
 
 [workspace.package]
 version = "0.1.0"
@@ -15,3 +15,10 @@ opt-level = "s"
 lto = true
 codegen-units = 1
 panic = "abort"
+
+# The profile the `mailwoman_mtf` Python extension is built with. A panic must unwind so PyO3 raises it as a Python
+# exception: under the release profile's `panic = "abort"` a Rust panic would end the training process.
+[profile.py]
+inherits = "release"
+opt-level = 3
+panic = "unwind"

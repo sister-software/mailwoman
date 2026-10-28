@@ -21,4 +21,4 @@ mod unigram;
 mod utf8;
 
 pub use error::Error;
-pub use processor::{EncodedPiece, Processor};
+pub use processor::{EncodedPiece, Processor, SpecialIDs};
