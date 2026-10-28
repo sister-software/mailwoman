@@ -5,7 +5,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { changeMode, makeDirectories } from "@mailwoman/core/fs/writers"
+import { changeMode, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -143,6 +143,17 @@ describe("readInstalledTiers", () => {
 	it("names the data root when the failure reports no path", async () => {
 		await expect(readInstalledTiers("/data", () => Promise.reject(new Error("bad manifest")))).rejects.toThrow(
 			"setup could not read the installation at /data: bad manifest"
+		)
+	})
+
+	it("names a malformed release manifest instead of reading the installation as unpinned", async () => {
+		await using root = await temporaryDirectory("mw-setup-manifest-")
+		const manifest = root.path("releases.json")
+
+		await writeLocalTextFile("{ not json", manifest)
+
+		await expect(readInstalledTiers(root.path)).rejects.toThrow(
+			`setup could not read the installation at ${manifest}: ${manifest} is unreadable (corrupt)`
 		)
 	})
 

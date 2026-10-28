@@ -14,11 +14,12 @@
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { JSONParseError, stringifyJSON } from "@mailwoman/core/json"
+import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { PathBuilder, PathBuilderLike } from "path-ts"
+import { resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { BundleArtifact } from "#data/bundles"
 
@@ -30,25 +31,47 @@ export type DataReleaseManifest = Record<string, string>
 /**
  * Read `<dataRoot>/releases.json`.
  *
- * @returns Null (legacy mode) when absent or malformed.
+ * A manifest that exists and cannot be read, parsed, or interpreted is an error naming its path.
+ * Legacy mode in its place would serve the unversioned databases while the
+ * operator believes a pin is in force.
+ *
+ * @returns Null (legacy mode) when the file is absent or pins no family.
+ * @throws {@link UnreadableArtifactError} when the file exists and cannot be read,
+ * or holds anything but an object of family names to non-empty version strings.
  */
 export async function readReleaseManifest(dataRoot: PathBuilderLike): Promise<DataReleaseManifest | null> {
+	const path = resolvePathBuilder(dataRoot, "releases.json").toString()
+	let raw: unknown
+
 	try {
-		const raw = tryParsingJSON(await readLocalTextFile(dataRoot, "releases.json"))
+		raw = await tryReadLocalJSONFile<unknown>(path)
+	} catch (error) {
+		const reason = error instanceof JSONParseError ? UnreadableReason.Corrupt : UnreadableReason.Unopenable
 
-		if (!raw || typeof raw !== "object") return null
-		const out: DataReleaseManifest = {}
+		throw new UnreadableArtifactError(path, reason, (error as Error).message, { cause: error })
+	}
 
-		for (const [family, version] of Object.entries(raw as Record<string, unknown>)) {
-			if (typeof version === "string" && version) {
-				out[family] = version
-			}
+	if (raw == null) return null
+
+	if (typeof raw !== "object" || Array.isArray(raw)) {
+		throw new UnreadableArtifactError(path, UnreadableReason.Corrupt, "expected an object of family to version")
+	}
+
+	const out: DataReleaseManifest = {}
+
+	for (const [family, version] of Object.entries(raw)) {
+		if (typeof version !== "string" || !version) {
+			throw new UnreadableArtifactError(
+				path,
+				UnreadableReason.Corrupt,
+				`family ${family} pins ${stringifyJSON(version)}, not a version string`
+			)
 		}
 
-		return Object.keys(out).length ? out : null
-	} catch {
-		return null
+		out[family] = version
 	}
+
+	return Object.keys(out).length ? out : null
 }
 
 /**

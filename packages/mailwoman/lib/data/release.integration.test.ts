@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data switchover: manifest read and path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
+ *   Versioned data switchover: path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -12,7 +12,7 @@ import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { readReleaseManifest, resolveDatabasePath } from "#data"
+import { resolveDatabasePath } from "#data"
 import { USStateDatabaseProvider } from "#geocode"
 
 const fixtures = new AsyncDisposableStack()
@@ -61,26 +61,6 @@ async function dirEnsure(d: PathBuilder): Promise<PathBuilder> {
 
 	return d
 }
-
-describe("readReleaseManifest", () => {
-	test("reads a valid manifest; null for absent or malformed", async () => {
-		const root = tmp()
-		expect(await readReleaseManifest(await root)).toBeNull()
-
-		await writeLocalJSONFile(
-			{ "address-points": "2026-05-20.0", interpolation: "TIGER2023" },
-			(await root)("releases.json")
-		)
-
-		expect(await readReleaseManifest(await root)).toEqual({
-			"address-points": "2026-05-20.0",
-			interpolation: "TIGER2023",
-		})
-
-		await writeLocalTextFile("{ not json", (await root)("releases.json"))
-		expect(await readReleaseManifest(await root)).toBeNull()
-	})
-})
 
 describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {

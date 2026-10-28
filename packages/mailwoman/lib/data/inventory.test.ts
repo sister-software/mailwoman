@@ -10,7 +10,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { changeMode, createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
@@ -143,6 +143,28 @@ describe("takeInventory — the four states stay distinct", () => {
 
 		expect(report.entries.map((entry) => entry.path)).toEqual(["db/wof/candidate.db"])
 		expect(report.maxDepth).toBeGreaterThanOrEqual(3)
+	})
+
+	it("reports a data root that does not exist as holding no databases", async () => {
+		const root = await dataRoot()
+
+		expect((await takeInventory({ dataRoot: root("absent") })).entries).toEqual([])
+	})
+
+	// A process running as root reads a mode-000 directory, so the case cannot fail there.
+	it.skipIf(process.getuid?.() === 0)("names a directory it cannot read instead of omitting it", async () => {
+		const root = await dataRoot()
+		const locked = root("db", "wof")
+
+		await makeDirectories(locked)
+		bare(locked("candidate.db"))
+		await changeMode(locked, 0o000)
+
+		try {
+			await expect(takeInventory({ dataRoot: root })).rejects.toThrow(`EACCES: permission denied, opendir '${locked}'`)
+		} finally {
+			await changeMode(locked, 0o755)
+		}
 	})
 })
 

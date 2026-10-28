@@ -26,11 +26,12 @@ import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseT
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { dirname, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
+import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
 import { loadBundledCoarsePlacer } from "#default/placer"
+import { openBANRegionDatabases } from "#geocode/ban-layers"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -564,22 +565,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const backendsOpenedAt = performance.now()
 	progress("Loading optional data providers…")
 
-	let nationalDatabases: ((country: string) => RegionDatabases) | null = null
-
-	try {
-		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
-		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePathBuilder(options.dataRoot))).for
-	} catch {
-		nationalDatabases = null
-	}
-
+	const banDatabases = (await openBANRegionDatabases(options.dataRoot)).for
 	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot))
-	const banDatabases = nationalDatabases
 
-	nationalDatabases = (country: string): RegionDatabases => {
-		const ban = banDatabases?.(country)
+	const nationalDatabases = (country: string): RegionDatabases => {
+		const ban = banDatabases(country)
 
-		return ban?.addressPoints || ban?.streetCentroids ? ban : overtureProvider.for(country)
+		return ban.addressPoints || ban.streetCentroids ? ban : overtureProvider.for(country)
 	}
 
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.

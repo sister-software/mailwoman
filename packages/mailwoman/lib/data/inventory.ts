@@ -185,6 +185,8 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
  * Foreign roots are not descended into at all.
  *
  * The inventory records each row and its name at lower cost.
+ *
+ * @throws The system error, naming the directory, when a directory exists and cannot be read.
  */
 async function findDatabases(
 	dataRoot: PathBuilder,
@@ -200,10 +202,13 @@ async function findDatabases(
 
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
-		} catch {
-			// An unreadable directory is not a finding about provenance.
-			// Skip it rather than fail the report.
-			return
+		} catch (error) {
+			// A directory that does not exist holds no databases.
+			// Any other failure leaves the walk unable to say what the directory holds,
+			// and the system error names it.
+			if ((error as { code?: unknown } | null)?.code === "ENOENT") return
+
+			throw error
 		}
 
 		for (const entry of entries) {
