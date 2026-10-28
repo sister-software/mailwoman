@@ -95,6 +95,27 @@ describe("usgov-nppes adapter", () => {
 		expect(r.raw).toContain("1234 MAIN ST SUITE 200")
 	})
 
+	it("labels a unit written on the first line as the unit, ahead of a second-line unit", async () => {
+		const p = await writeCSV(
+			"1000000002,1,,MCEWAN,JENNIFER,2560 HUNTINGTON AVE STE 302,,ALEXANDRIA,VA,223031448",
+			"1000000003,2,METRO HEALTH SYSTEM,,,1650 KING ST STE 300,BLDG 4,ALEXANDRIA,VA,22314"
+		)
+
+		const rows = []
+
+		for await (const r of createUsgovNPPESAdapter().rows({ inputPath: p })) {
+			rows.push(r)
+		}
+
+		expect(rows.map((r) => [r.components.street, r.components.unit])).toEqual([
+			["HUNTINGTON AVE", "STE 302"],
+			["KING ST", "STE 300 BLDG 4"],
+		])
+
+		expect(rows[0]!.raw).toContain("2560 HUNTINGTON AVE STE 302")
+		expect(rows[1]!.raw).toContain("1650 KING ST STE 300 BLDG 4")
+	})
+
 	it("labels a designator or number-sign second line as the unit and leaves any other second line out", () => {
 		expect(unitLine("SUITE 200")).toBe("SUITE 200")
 		expect(unitLine("STE. 4")).toBe("STE. 4")

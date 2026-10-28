@@ -9,6 +9,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -18,6 +19,7 @@ import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitTrailingUnit } from "#us/street-unit"
 
 /**
  * The adapter stamps this id on every emitted row.
@@ -158,14 +160,18 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const unit = unitLine(address2)
+				// A unit written on the first line (`2560 HUNTINGTON AVE STE 302`) is split off the street,
+				// and one on the second line follows it, so the rendered row keeps the publisher's order.
+				const trailing = splitTrailingUnit(split.street)
+				const street = trailing?.street ?? split.street
+				const unit = [trailing?.unit, unitLine(address2)].filter(isPresent).join(" ")
 
 				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
 					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					street,
 					...(unit ? { unit } : {}),
 					locality: city,
 					region: state.abbreviation,
