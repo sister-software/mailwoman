@@ -5,6 +5,7 @@
  */
 
 import { bareBIOTag } from "@mailwoman/codex/component"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { softmax } from "@mailwoman/neural/viterbi"
 
 import type { GeocodeTrace } from "#geocode/session"
@@ -153,6 +154,62 @@ export function decodeRow(trace: GeocodeTrace | null): string {
 		`priors ${applied.length ? applied.join(",") : ABSENT}`,
 		`repairs ${repairs.length ? repairs.map((repair) => repair.pass).join(",") : ABSENT}`,
 	])
+}
+
+function signed(value: number): string {
+	return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`
+}
+
+function changeList(changes: ReadonlyArray<{ text: string; from: string; to: string }>): string {
+	return changes.map((change) => `${change.text.replace("▁", "")} ${change.from}→${change.to}`).join(" ")
+}
+
+/**
+ * The nonzero objective terms of a margin, largest first.
+ */
+function termBreakdown(values: Readonly<Record<string, number>>): string {
+	const terms = Object.entries(values)
+		.filter(([, value]) => value !== 0)
+		.toSorted((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+
+	return terms.length ? terms.map(([term, value]) => `${term} ${signed(value)}`).join(", ") : "no term differs"
+}
+
+/**
+ * One row per decoded span: the runner-up reading that labels the span differently
+ * and the margin to it split by objective term, followed by one row per applied prior
+ * with what it added to the decoded reading and the labels that change without it.
+ */
+export function explanationRows(trace: GeocodeTrace | null): string[] {
+	if (!trace?.parse.explanation) return [`runner-up: ${ABSENT} no decode explanation in this trace`]
+
+	const { explanation, pieces } = trace.parse
+
+	const spanRows = explanation.spans.map((span) => {
+		// A lone word-start piece covers no characters, so the row prints the pieces instead of an empty string.
+		const surface = span.text.trim()
+			? stringifyJSON(span.text)
+			: `pieces ${stringifyJSON(
+					pieces
+						.slice(span.pieceStart, span.pieceEnd)
+						.map((piece) => piece.piece)
+						.join("")
+				)}`
+
+		const decoded = `${span.tag} ${surface}`
+
+		if (!span.runnerUp || span.margin == null || !span.termMargins) return `runner-up ${decoded}: no alternative label`
+
+		return `runner-up ${decoded}: [${changeList(span.runnerUp.changes)}] margin ${span.margin.toFixed(2)} = ${termBreakdown(span.termMargins)}`
+	})
+
+	const ledgerRows = explanation.ledger.map((entry) => {
+		const changed = entry.changes.length ? `without it: ${changeList(entry.changes)}` : "without it: no label changes"
+
+		return `ledger ${entry.prior}: ${signed(entry.decodedPathContribution)} on the decoded reading, ${entry.cells.length} cells; ${changed}`
+	})
+
+	return [...spanRows, ...ledgerRows]
 }
 
 // #endregion

@@ -46,6 +46,7 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		path: [0, 1],
 		margins: [1, 1],
 		decode: "viterbi",
+		explanation: null,
 		repairs: [],
 		tokens: [],
 		...overrides,

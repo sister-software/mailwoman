@@ -7,7 +7,14 @@
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/cli/debug-view/trace-rows"
+import {
+	channelsRow,
+	decodeRow,
+	explanationRows,
+	localeHeadRow,
+	systemRow,
+	tokensRow,
+} from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
@@ -333,7 +340,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * Returns the parse trace without its large numeric matrices, keeping only each channel's confidence.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
-	const { logits, emissions, anchor, gazetteer, country, streetType, localitySurface, ...rest } = parse
+	const { logits, emissions, anchor, gazetteer, country, streetType, localitySurface, explanation, ...rest } = parse
 
 	void logits
 	void emissions
@@ -348,9 +355,16 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 		country: channel(country ?? null),
 		streetType: channel(streetType ?? null),
 		localitySurface: channel(localitySurface ?? null),
+		// Each ledger entry's per-cell deltas form a matrix, so the slim trace keeps their count.
+		explanation: explanation
+			? {
+					...explanation,
+					ledger: explanation.ledger.map(({ cells, ...entry }) => ({ ...entry, cellCount: cells.length })),
+				}
+			: null,
 		matrices_omitted:
-			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
-			"full_parse_trace: true for the raw numbers.",
+			"logits, emissions, per-channel feature matrices and the ledger's per-cell prior deltas omitted " +
+			"(thousands of floats) — pass full_parse_trace: true for the raw numbers.",
 	}
 }
 
@@ -422,6 +436,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
+			...explanationRows(run.trace),
 			...intentAdvisoryRow(run),
 			...droppedRow(run),
 			...resolverRows(run.trace),

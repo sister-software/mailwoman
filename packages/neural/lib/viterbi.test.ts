@@ -14,6 +14,7 @@ import {
 	perTokenArgmax,
 	softmax,
 	viterbi,
+	viterbiPathTerms,
 } from "#viterbi"
 
 const NEG_INF = -1e9
@@ -342,5 +343,39 @@ describe("pathMargins", () => {
 
 		expect(path).toEqual([1, 2])
 		expect(pathMargins(emissions, path)).toEqual([2, 3.5])
+	})
+})
+
+describe("viterbiPathTerms", () => {
+	it("splits the decoded path's score into parts that sum to the score viterbi returns", () => {
+		const input = {
+			emissions: [
+				[1, 2, 0.5, 0, 0.25],
+				[0.5, 0.1, 3, 1, 0],
+				[2, 0, 0, 1.5, 1],
+			],
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: [0.1, 0.2, NEG_INF, 0.3, NEG_INF],
+			endTransitions: [0.5, 0, 0.25, 0, 0],
+			transitionAdjustments: [
+				{ timestep: 2, toLabel: 3, bonus: 0.5 },
+				// The larger of two bonuses on one cell applies, as in viterbi.
+				{ timestep: 2, toLabel: 3, bonus: 2 },
+			],
+		}
+
+		const { path, score } = viterbi(input)
+		const parts = viterbiPathTerms(input, path)
+
+		expect(LABELS[path[2]!]).toBe("B-region")
+		expect(parts.adjustments).toBe(2)
+		expect(parts.emissions + parts.transitions + parts.adjustments).toBeCloseTo(score, 12)
+	})
+
+	it("scores a path viterbi did not choose", () => {
+		const input = { emissions: [[1, 0, 0, 0, 0]], transitions: buildBIOTransitionMask(LABELS) }
+
+		expect(viterbiPathTerms(input, [3])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
+		expect(viterbiPathTerms(input, [])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
 	})
 })

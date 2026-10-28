@@ -510,6 +510,110 @@
 		0
 	],
 	"decode": "viterbi",
+	"explanation": {
+		"decoderScore": 3,
+		"decodedTerms": {
+			"logits": 3,
+			"queryShape": 0,
+			"fst": 0,
+			"streetMorphology": 0,
+			"spanProposer": 0,
+			"venueHead": 0,
+			"placetypePair": 0,
+			"placetypePairTransitions": 0,
+			"conventionsMask": 0,
+			"transitions": 0
+		},
+		"spans": [
+			{
+				"pieceStart": 0,
+				"pieceEnd": 1,
+				"start": 0,
+				"end": 3,
+				"text": "350",
+				"tag": "house_number",
+				"labels": [
+					"B-house_number"
+				],
+				"runnerUp": {
+					"labels": [
+						"O"
+					],
+					"changes": [
+						{
+							"piece": 0,
+							"text": "▁350",
+							"from": "B-house_number",
+							"to": "O"
+						}
+					],
+					"total": 0
+				},
+				"margin": 3,
+				"termMargins": {
+					"logits": 3,
+					"queryShape": 0,
+					"fst": 0,
+					"streetMorphology": 0,
+					"spanProposer": 0,
+					"venueHead": 0,
+					"placetypePair": 0,
+					"placetypePairTransitions": 0,
+					"conventionsMask": 0,
+					"transitions": 0
+				}
+			},
+			{
+				"pieceStart": 1,
+				"pieceEnd": 7,
+				"start": 4,
+				"end": 17,
+				"text": "5th Ave 10118",
+				"tag": "O",
+				"labels": [
+					"O",
+					"O",
+					"O",
+					"O",
+					"O",
+					"O"
+				],
+				"runnerUp": {
+					"labels": [
+						"B-country",
+						"O",
+						"O",
+						"O",
+						"O",
+						"O"
+					],
+					"changes": [
+						{
+							"piece": 1,
+							"text": "▁5",
+							"from": "O",
+							"to": "B-country"
+						}
+					],
+					"total": 3
+				},
+				"margin": 0,
+				"termMargins": {
+					"logits": 0,
+					"queryShape": 0,
+					"fst": 0,
+					"streetMorphology": 0,
+					"spanProposer": 0,
+					"venueHead": 0,
+					"placetypePair": 0,
+					"placetypePairTransitions": 0,
+					"conventionsMask": 0,
+					"transitions": 0
+				}
+			}
+		],
+		"ledger": []
+	},
 	"repairs": [],
 	"tokens": [
 		{

@@ -10,7 +10,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { describe, expect, test } from "vitest"
 
-import { resolveProposalOverlaps } from "#decoder/resolve-proposal-overlaps"
+import { resolveProposalOverlaps, type ProposalOverlapDecision } from "#decoder/resolve-proposal-overlaps"
 import { Span } from "#tokenization"
 import type { ClassificationProposal } from "#types"
 
@@ -143,5 +143,58 @@ describe("resolveProposalOverlaps — coherence invariant", () => {
 		])
 
 		expect(noOverlaps(out)).toBe(true)
+	})
+})
+
+describe("resolveProposalOverlaps — decision record", () => {
+	const describeDecisions = (decisions: readonly ProposalOverlapDecision[]): string[] =>
+		decisions.map(
+			(d) =>
+				`${d.dropped.component}[${d.dropped.span.start},${d.dropped.span.end}] lost to ` +
+				`${d.kept.component}[${d.kept.span.start},${d.kept.span.end}] by ${d.rule}`
+		)
+
+	test("names the kept proposal and the ranking key for every dropped proposal", () => {
+		const decisions: ProposalOverlapDecision[] = []
+
+		const out = resolveProposalOverlaps(
+			[p("street", "350 5th Ave", 0, 0.9), p("house_number", "350", 0, 0.9), p("street", "5th Ave", 4, 0.9)],
+			decisions
+		)
+
+		expect(describeDecisions(decisions)).toEqual(["street[0,11] lost to house_number[0,3] by shorterSpan"])
+		expect(out).toHaveLength(2)
+	})
+
+	test("records the confidence, start-position and tie rules", () => {
+		const decisions: ProposalOverlapDecision[] = []
+
+		resolveProposalOverlaps(
+			[
+				p("locality", "abcde", 0, 0.7),
+				p("region", "defgh", 3, 0.9),
+				p("postcode", "xyz", 20, 0.5),
+				p("unit", "yza", 21, 0.5),
+				p("country", "qq", 30, 0.4),
+				p("region", "qq", 30, 0.4),
+			],
+			decisions
+		)
+
+		expect(describeDecisions(decisions)).toEqual([
+			"locality[0,5] lost to region[3,8] by confidence",
+			"unit[21,24] lost to postcode[20,23] by earlierStart",
+			"region[30,32] lost to country[30,32] by tie",
+		])
+	})
+
+	test("returns the same selection with and without a decision record", () => {
+		const proposals = [
+			p("street", "350 5th Ave", 0, 0.95),
+			p("house_number", "350", 0, 0.7),
+			p("street", "5th Ave", 4, 0.7),
+		]
+
+		expect(resolveProposalOverlaps(proposals, [])).toEqual(resolveProposalOverlaps(proposals))
 	})
 })

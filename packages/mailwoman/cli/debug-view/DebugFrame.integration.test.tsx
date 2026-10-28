@@ -111,6 +111,7 @@ const TRACE = {
 		channelPins: {},
 		margins: [],
 		priors: [{ kind: "fst", applied: true, probePath: null, census: null, censusProbedParents: null }],
+		explanation: null,
 		repairs: [],
 		tokens: [
 			{ piece: "▁3215", start: 0, end: 4, label: "B-house_number", confidence: 0.91 },

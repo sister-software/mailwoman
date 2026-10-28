@@ -51,10 +51,22 @@ The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Out
   `en-us` overlay ships neither `crf-transitions.json` nor `semi-crf-transitions.json`
   (verified 2026-08-24).
 - After the argmax, several steps run outside the objective: local repairs (word-consistency heal,
-  postcode consistency), greedy overlap resolution (`resolve-proposal-overlaps.ts`, by descending
-  confidence and then shorter span first), tree assembly under `PARENT_OF` (`build-tree.ts`), and
+  postcode consistency), tree assembly under `PARENT_OF` (`build-tree.ts`), and
   `validate-tree.ts`'s two checks (illegal-edge, stranded-dependent). These steps are checks and
   local rewrites. They cannot move the decode to a different global optimum.
+- Greedy overlap resolution (`resolve-proposal-overlaps.ts`, by descending confidence and then
+  shorter span first) was built for the proposal arbitration path, and no parse path calls it
+  (checked 2026-10-28). A BIO decode yields disjoint spans by construction. A caller that passes a
+  decision list receives each dropped proposal, the kept proposal it overlapped, and the ranking key
+  that decided.
+
+`traceParse` itemizes this objective in `NeuralParseTrace.explanation`. For each decoded span it
+reports the highest-scoring reading that labels the span differently, and the margin to that reading
+split into the logits, each emission prior, the placetype-pair transition bonus, the conventions
+mask and the transitions. For each applied prior it reports what the prior added to the decoded
+reading and which labels change when the prior alone is removed. The terms are the matrices the
+decoder summed, and the explanation refuses to report when they do not reproduce the decoder's
+emission matrix and path.
 
 **Consequence, provable from the form.** Every term has arity ≤ 2 over adjacent tokens, and the
 arity-2 terms are 0 or −∞ almost everywhere. Consider two parses that differ only in the label of

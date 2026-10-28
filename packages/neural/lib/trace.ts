@@ -8,6 +8,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import type { ChannelPins, InputMode } from "@mailwoman/core/pipeline"
 
+import type { DecodeExplanation } from "#decode-explanation"
 import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
 import type { TokenizedPiece } from "#tokenizer"
@@ -215,6 +216,15 @@ export interface NeuralParseTrace {
 	 */
 	margins: number[]
 	decode: "viterbi" | "argmax"
+
+	/**
+	 * The decoded path explained by the objective the decoder summed: per span,
+	 * the best reading that labels the span differently and the margin to it split by term,
+	 * and per applied prior, what it added and which spans it changed.
+	 *
+	 * It explains `path`, before repairs, and is null for empty input.
+	 */
+	explanation: DecodeExplanation | null
 	repairs: TraceRepair[]
 
 	/**

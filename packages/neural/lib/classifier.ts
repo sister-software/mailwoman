@@ -45,6 +45,12 @@ import type {
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { codeUnitChannel } from "#code-unit-features"
+import {
+	explainDecode,
+	type DecodeExplanation,
+	type DecodeObjective,
+	type EmissionPriorTerm,
+} from "#decode-explanation"
 import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
 import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
@@ -378,6 +384,7 @@ export class NeuralAddressClassifier {
 				path: [],
 				margins: [],
 				decode: this.decodeMode,
+				explanation: null,
 				repairs: [],
 				tokens: [],
 			}
@@ -414,6 +421,7 @@ export class NeuralAddressClassifier {
 			path: trace.path,
 			margins: trace.margins,
 			decode: this.decodeMode,
+			explanation: trace.explanation,
 			repairs: trace.repairs,
 			tokens: tokens.map((t) => ({ ...t })),
 		}
@@ -455,6 +463,7 @@ export class NeuralAddressClassifier {
 			emissions: number[][]
 			path: number[]
 			margins: number[]
+			explanation: DecodeExplanation
 			repairs: TraceRepair[]
 		}
 	}> {
@@ -520,6 +529,8 @@ export class NeuralAddressClassifier {
 		// These lists are null when not tracing so a plain parse allocates no trace arrays.
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
+		// The emission priors in the order they are added, kept only when tracing for the decode explanation.
+		const traceEmissionPriors: DecodeObjective["emissionPriors"][number][] | null = trace ? [] : null
 
 		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
 			if (!traceRepairs) return
@@ -557,7 +568,17 @@ export class NeuralAddressClassifier {
 				})
 			: null
 
-		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
+		let emissions = logits
+
+		// Each emission prior is added in this order, and a traced parse also keeps the matrix for the decode explanation.
+		const addPrior = (term: EmissionPriorTerm, matrix: number[][]): void => {
+			emissions = addEmissionMatrix(emissions, matrix)
+			traceEmissionPriors?.push({ term, matrix })
+		}
+
+		if (queryShapePrior) {
+			addPrior("queryShape", queryShapePrior)
+		}
 
 		tracePriors?.push(untracedPrior("queryShape", Boolean(queryShapePrior && matrixHasBias(queryShapePrior))))
 
@@ -590,7 +611,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (fstPrior) {
-			emissions = addEmissionMatrix(emissions, fstPrior)
+			addPrior("fst", fstPrior)
 		}
 
 		tracePriors?.push(untracedPrior("fst", Boolean(fstPrior && matrixHasBias(fstPrior))))
@@ -606,7 +627,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (morphologyPrior) {
-			emissions = addEmissionMatrix(emissions, morphologyPrior)
+			addPrior("streetMorphology", morphologyPrior)
 		}
 
 		tracePriors?.push(untracedPrior("streetMorphology", Boolean(morphologyPrior && matrixHasBias(morphologyPrior))))
@@ -616,7 +637,7 @@ export class NeuralAddressClassifier {
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
 		if (proposerCfg && spanProposals.length) {
-			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
+			addPrior("spanProposer", buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 
 		tracePriors?.push(untracedPrior("spanProposer", spanProposals.length > 0))
@@ -631,7 +652,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (venueHeadPrior) {
-			emissions = addEmissionMatrix(emissions, venueHeadPrior)
+			addPrior("venueHead", venueHeadPrior)
 		}
 
 		tracePriors?.push(untracedPrior("venueHead", Boolean(venueHeadPrior && matrixHasBias(venueHeadPrior))))
@@ -675,7 +696,7 @@ export class NeuralAddressClassifier {
 		const placetypePairPrior = placetypePairResult?.matrix
 
 		if (placetypePairPrior) {
-			emissions = addEmissionMatrix(emissions, placetypePairPrior)
+			addPrior("placetypePair", placetypePairPrior)
 		}
 
 		// Transition adjustments are converted from label names to label indices,
@@ -711,6 +732,7 @@ export class NeuralAddressClassifier {
 		// Forbidden tags get an emission of -1e9 (log 0), and the mask copies the matrix
 		// because `emissions` may alias `logits`.
 		let conventionsMaskApplied = false
+		let maskedLabels: Set<number> | null = null
 
 		if (conventions?.forbiddenTags?.length) {
 			const forbidden = new Set<number>()
@@ -730,13 +752,14 @@ export class NeuralAddressClassifier {
 
 			if (forbidden.size) {
 				conventionsMaskApplied = true
+				maskedLabels = forbidden
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
 		}
 
 		tracePriors?.push(untracedPrior("conventionsMask", conventionsMaskApplied))
 
-		let labelIndices =
+		const viterbiResult =
 			this.decodeMode === "viterbi"
 				? viterbi({
 						emissions,
@@ -746,11 +769,36 @@ export class NeuralAddressClassifier {
 						// Argmax decoding has no transitions, so it ignores the placetype-pair
 						// prior's per-position transition bonuses.
 						...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
-					}).path
-				: emissions.map((row) => argmaxWithConfidence(row).idx)
+					})
+				: null
+
+		let labelIndices = viterbiResult ? viterbiResult.path : emissions.map((row) => argmaxWithConfidence(row).idx)
 
 		// The trace records the decoder's path before the word-consistency repair changes it.
 		const decodedPath = trace ? [...labelIndices] : null
+
+		// The explanation reads the quantities this decode summed, and only a traced parse computes it.
+		const explanation =
+			traceEmissionPriors && decodedPath
+				? explainDecode({
+						objective: {
+							decode: this.decodeMode,
+							logits,
+							emissionPriors: traceEmissionPriors,
+							maskedLabels,
+							transitions: this.transitions,
+							startTransitions: this.startTransitions,
+							endTransitions: this.endTransitions,
+							transitionAdjustments: pairTransitionAdjustments,
+						},
+						emissions,
+						path: decodedPath,
+						viterbiScore: viterbiResult?.score ?? null,
+						labels: this.labels,
+						pieces,
+						text,
+					})
+				: null
 
 		// The word-consistency repair gives all pieces of one whitespace-delimited word the
 		// same tag, chosen by a confidence-weighted vote over the emissions.
@@ -869,6 +917,7 @@ export class NeuralAddressClassifier {
 							path: decodedPath!,
 							// The margin reads the decoder's own path against the emissions it decoded.
 							margins: pathMargins(emissions, decodedPath!),
+							explanation: explanation!,
 							repairs: traceRepairs!,
 						},
 					}

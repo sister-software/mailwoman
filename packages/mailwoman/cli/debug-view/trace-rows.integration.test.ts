@@ -8,7 +8,15 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ABSENT, channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#cli/debug-view/trace-rows"
+import {
+	ABSENT,
+	channelsRow,
+	decodeRow,
+	explanationRows,
+	localeHeadRow,
+	systemRow,
+	tokensRow,
+} from "#cli/debug-view/trace-rows"
 import type { GeocodeTrace } from "#geocode"
 
 const TEXT = "3215 SE Clinton St"
@@ -175,5 +183,69 @@ describe("decodeRow", () => {
 		})
 
 		expect(decodeRow(trace)).toContain("repairs wordConsistency")
+	})
+})
+
+describe("explanationRows", () => {
+	const zeroTerms = {
+		logits: 0,
+		queryShape: 0,
+		fst: 0,
+		streetMorphology: 0,
+		spanProposer: 0,
+		venueHead: 0,
+		placetypePair: 0,
+		placetypePairTransitions: 0,
+		conventionsMask: 0,
+		transitions: 0,
+	}
+
+	it("reports its absence when the trace carries no explanation", () => {
+		expect(explanationRows(traceOf({ explanation: null }))).toEqual([
+			`runner-up: ${ABSENT} no decode explanation in this trace`,
+		])
+	})
+
+	it("names each span's runner-up with its nonzero term margins and each prior's ledger entry", () => {
+		const trace = traceOf({
+			explanation: {
+				decoderScore: 4,
+				decodedTerms: { ...zeroTerms, logits: 3, fst: 1 },
+				spans: [
+					{
+						pieceStart: 2,
+						pieceEnd: 3,
+						start: 8,
+						end: 15,
+						text: "Clinton",
+						tag: "street",
+						labels: ["B-street"],
+						runnerUp: {
+							labels: ["B-locality"],
+							changes: [{ piece: 2, text: "▁Clinton", from: "B-street", to: "B-locality" }],
+							total: 2.5,
+						},
+						margin: 1.5,
+						termMargins: { ...zeroTerms, logits: -0.5, fst: 2 },
+					},
+				],
+				ledger: [
+					{
+						prior: "fst",
+						cells: [{ piece: 2, label: "B-street", delta: 1 }],
+						transitionBonuses: [],
+						decodedPathContribution: 1,
+						changes: [{ piece: 2, text: "▁Clinton", from: "B-street", to: "B-locality" }],
+						changedSpans: [0],
+						totalWithout: 3.2,
+					},
+				],
+			},
+		})
+
+		expect(explanationRows(trace)).toEqual([
+			'runner-up street "Clinton": [Clinton B-street→B-locality] margin 1.50 = fst +2.00, logits -0.50',
+			"ledger fst: +1.00 on the decoded reading, 1 cells; without it: Clinton B-street→B-locality",
+		])
 	})
 })

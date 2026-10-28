@@ -57,7 +57,10 @@ function isValidTransition(from: string, to: string): boolean {
 	return true
 }
 
-interface ViterbiTransitionAdjustment {
+/**
+ * A bonus added to the transition into label `toLabel` at timestep `timestep`.
+ */
+export interface ViterbiTransitionAdjustment {
 	timestep: number
 
 	toLabel: number
@@ -128,25 +131,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
-	let adjustAt: Map<number, Map<number, number>> | null = null
-
-	if (input.transitionAdjustments?.length) {
-		adjustAt = new Map()
-
-		for (const adj of input.transitionAdjustments) {
-			let byLabel = adjustAt.get(adj.timestep)
-
-			if (!byLabel) {
-				byLabel = new Map()
-				adjustAt.set(adj.timestep, byLabel)
-			}
-
-			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
-		}
-	}
-
 	const dp: number[][] = []
 	const back: number[][] = []
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
 
 	const firstAdjust = adjustAt?.get(0)
 	const first = new Array<number>(numLabels)
@@ -204,6 +191,80 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	}
 
 	return { path, score: bestEndScore }
+}
+
+/**
+ * Indexes transition adjustments by timestep and label, keeping the largest bonus
+ * where several target the same cell, or returns `null` when there are none.
+ */
+function adjustmentLookup(adjustments: ViterbiInput["transitionAdjustments"]): Map<number, Map<number, number>> | null {
+	if (!adjustments?.length) return null
+
+	const adjustAt = new Map<number, Map<number, number>>()
+
+	for (const adj of adjustments) {
+		let byLabel = adjustAt.get(adj.timestep)
+
+		if (!byLabel) {
+			byLabel = new Map()
+			adjustAt.set(adj.timestep, byLabel)
+		}
+
+		byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
+	}
+
+	return adjustAt
+}
+
+/**
+ * The three parts of a path's score under one {@link ViterbiInput}.
+ */
+export interface ViterbiPathTerms {
+	/**
+	 * The sum of `emissions[t][path[t]]`.
+	 */
+	emissions: number
+
+	/**
+	 * The start transition into the first label, every pairwise transition,
+	 * and the end transition out of the last label.
+	 */
+	transitions: number
+
+	/**
+	 * The sum of the transition adjustments the path collects, under the
+	 * largest-bonus rule {@link viterbi} applies.
+	 */
+	adjustments: number
+}
+
+/**
+ * Scores any label path under the objective {@link viterbi} maximizes,
+ * split into its emission, transition and adjustment parts.
+ *
+ * For the path {@link viterbi} returns, the three parts sum to its `score`.
+ */
+export function viterbiPathTerms(input: ViterbiInput, path: readonly number[]): ViterbiPathTerms {
+	const T = path.length
+
+	if (T === 0) return { emissions: 0, transitions: 0, adjustments: 0 }
+
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
+	let emissions = 0
+	let transitions = (input.startTransitions?.[path[0]!] ?? 0) + (input.endTransitions?.[path[T - 1]!] ?? 0)
+	let adjustments = 0
+
+	for (let t = 0; t < T; t++) {
+		const label = path[t]!
+		emissions += input.emissions[t]![label]!
+		adjustments += adjustAt?.get(t)?.get(label) ?? 0
+
+		if (t > 0) {
+			transitions += input.transitions[path[t - 1]!]![label]!
+		}
+	}
+
+	return { emissions, transitions, adjustments }
 }
 
 /**

@@ -38,6 +38,33 @@ const PARSE: NeuralParseTrace = {
 	inputMode: "fragmented",
 	channelPins: { gazetteer: "off" },
 	spanScores: null,
+	explanation: {
+		decoderScore: 0.4,
+		decodedTerms: {
+			logits: 0.2,
+			queryShape: 0.2,
+			fst: 0,
+			streetMorphology: 0,
+			spanProposer: 0,
+			venueHead: 0,
+			placetypePair: 0,
+			placetypePairTransitions: 0,
+			conventionsMask: 0,
+			transitions: 0,
+		},
+		spans: [],
+		ledger: [
+			{
+				prior: "queryShape",
+				cells: [{ piece: 0, label: "B-postcode", delta: 0.2 }],
+				transitionBonuses: [],
+				decodedPathContribution: 0.2,
+				changes: [],
+				changedSpans: [],
+				totalWithout: 0.3,
+			},
+		],
+	},
 }
 
 describe("slimParseTrace", () => {
@@ -59,5 +86,14 @@ describe("slimParseTrace", () => {
 		expect(slim["path"]).toEqual([9])
 		expect(slim["localeLogits"]).toEqual([1.5, -0.2])
 		expect(String(slim["matrices_omitted"])).toContain("full_parse_trace")
+	})
+
+	it("keeps the decode explanation and replaces each ledger entry's cells with their count", () => {
+		const slim = slimParseTrace(PARSE)
+		const explanation = slim["explanation"] as { decoderScore: number; ledger: Array<Record<string, unknown>> }
+
+		expect(explanation.decoderScore).toBe(0.4)
+		expect(explanation.ledger[0]).toMatchObject({ prior: "queryShape", cellCount: 1, decodedPathContribution: 0.2 })
+		expect(explanation.ledger[0]!["cells"]).toBeUndefined()
 	})
 })
