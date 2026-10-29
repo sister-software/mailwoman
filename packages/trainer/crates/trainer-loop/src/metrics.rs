@@ -69,7 +69,10 @@ pub fn token_f1(preds: &[i64], labels: &[i64], bio_labels: &[String]) -> Metrics
 		let support = |c: usize| tp[c] + fn_[c];
 		let pred = |c: usize| tp[c] + fp[c];
 		let fps = |c: usize| fp[c];
-		out.insert(format!("support_tag.{tag}"), (sum(b, &support) + sum(i, &support)) as f64);
+		out.insert(
+			format!("support_tag.{tag}"),
+			(sum(b, &support) + sum(i, &support)) as f64,
+		);
 		out.insert(format!("pred_tag.{tag}"), (sum(b, &pred) + sum(i, &pred)) as f64);
 		out.insert(format!("fp_tag.{tag}"), (sum(b, &fps) + sum(i, &fps)) as f64);
 	}

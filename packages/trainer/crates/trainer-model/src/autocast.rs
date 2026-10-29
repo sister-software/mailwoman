@@ -124,9 +124,8 @@ impl Autocast {
 		let code = device_code(device);
 		let mut prev = (0, 0, 0);
 		// SAFETY: the shim writes three ints through the pointers and touches no other memory.
-		let status = unsafe {
-			trainer_autocast_enter(code, i32::from(enabled), dtype, &mut prev.0, &mut prev.1, &mut prev.2)
-		};
+		let status =
+			unsafe { trainer_autocast_enter(code, i32::from(enabled), dtype, &mut prev.0, &mut prev.1, &mut prev.2) };
 		if status != 0 {
 			return Err(fail!("libtorch refused to change autocast on {device:?}"));
 		}

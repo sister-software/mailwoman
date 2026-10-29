@@ -200,6 +200,65 @@ fn read_entry(archive: &mut zip::ZipArchive<std::fs::File>, name: &str) -> Resul
 	Ok(bytes)
 }
 
+/// The state dict of a checkpoint directory: `model.safetensors`, which the Rust trainer writes, or the Python
+/// trainer's `pytorch_model.bin`.
+pub fn read_checkpoint(dir: &Path) -> Result<StateDict> {
+	let safetensors = dir.join("model.safetensors");
+	if safetensors.is_file() {
+		return read_safetensors(&safetensors);
+	}
+	read_state_dict(&dir.join("pytorch_model.bin"))
+}
+
+/// Reads every tensor of a safetensors file, widening `F32`, `BF16` and `F16` to float32. The order is the file's
+/// header order, which `safetensors` sorts by offset.
+pub fn read_safetensors(path: &Path) -> Result<StateDict> {
+	let bytes = std::fs::read(path).map_err(|error| fail!("{}: {error}", path.display()))?;
+	let file = safetensors::SafeTensors::deserialize(&bytes)
+		.map_err(|error| fail!("{} is not a safetensors file: {error}", path.display()))?;
+	let mut state = StateDict::default();
+	let mut names: Vec<(usize, String)> = file
+		.tensors()
+		.into_iter()
+		.map(|(name, view)| (view.data().as_ptr() as usize, name))
+		.collect();
+	names.sort();
+	for (_, name) in names {
+		let view = file
+			.tensor(&name)
+			.map_err(|error| fail!("{}: {error}", path.display()))?;
+		let raw = view.data();
+		let data = match view.dtype() {
+			safetensors::Dtype::F32 => Some(
+				raw.chunks_exact(4)
+					.map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+					.collect(),
+			),
+			safetensors::Dtype::BF16 => Some(
+				raw.chunks_exact(2)
+					.map(|c| f32::from_bits(u32::from(u16::from_le_bytes([c[0], c[1]])) << 16))
+					.collect(),
+			),
+			_ => None,
+		};
+		let storage = match view.dtype() {
+			safetensors::Dtype::F32 => "FloatStorage".to_owned(),
+			safetensors::Dtype::BF16 => "BFloat16Storage".to_owned(),
+			other => format!("{other:?}"),
+		};
+		state.order.push(name.clone());
+		state.tensors.insert(
+			name,
+			Tensor {
+				storage,
+				shape: view.shape().to_vec(),
+				data,
+			},
+		);
+	}
+	Ok(state)
+}
+
 /// Reads every tensor of the state dict at `path`.
 pub fn read_state_dict(path: &Path) -> Result<StateDict> {
 	let file = std::fs::File::open(path).map_err(|error| fail!("{}: {error}", path.display()))?;

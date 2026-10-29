@@ -33,7 +33,9 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	};
 	let encoder = RunEncoder::build(run, &files)?;
 	if run.char_mode()? != "off" {
-		return Err(fail!("the MLM objective reads SentencePiece ids; data.char_mode must be off"));
+		return Err(fail!(
+			"the MLM objective reads SentencePiece ids; data.char_mode must be off"
+		));
 	}
 	let mask_token_id = encoder.unk_id;
 	let device = device();

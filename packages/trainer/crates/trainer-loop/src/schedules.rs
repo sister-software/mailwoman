@@ -29,9 +29,8 @@ impl Schedule {
 			}),
 			"constant" => Ok(Self::Constant { warmup_steps }),
 			"linear_cooldown" => Ok(Self::LinearCooldown {
-				cooldown_start: cooldown_start.ok_or_else(|| {
-					fail!("train.lr_schedule='linear_cooldown' requires train.cooldown_start_step")
-				})?,
+				cooldown_start: cooldown_start
+					.ok_or_else(|| fail!("train.lr_schedule='linear_cooldown' requires train.cooldown_start_step"))?,
 				max_steps,
 			}),
 			other => Err(fail!(

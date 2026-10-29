@@ -1,7 +1,7 @@
 //! `trainer-export`: the Python-free ONNX export and int8 quantization.
 //!
 //! - `export-onnx --checkpoint <dir> --output <model.onnx>`: the opset-17 float32 graph of a checkpoint directory
-//!   (`config.json` and `pytorch_model.bin`).
+//!   (`config.json` beside `model.safetensors` or `pytorch_model.bin`).
 //! - `quantize --input <model.onnx> --output <model-int8.onnx>`: `quantize_dynamic(QInt8)`'s int8 graph.
 //! - `tensors --checkpoint <dir>`: each state-dict tensor's name, storage type and shape, one per line.
 //! - `diff-initializers --left <a.onnx> --right <b.onnx>`: the initializers the two graphs share by name, with the
@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use prost::Message;
-use trainer_export::checkpoint::read_state_dict;
+use trainer_export::checkpoint::read_checkpoint;
 use trainer_export::export::export_checkpoint;
 use trainer_export::onnx::tensor_proto::DataType;
 use trainer_export::onnx::ModelProto;
@@ -134,7 +134,7 @@ fn run(args: &[String]) -> Result<bool> {
 			write_model(&model, Path::new(required(&flags, "output")?))?;
 		}
 		"tensors" => {
-			let state = read_state_dict(&Path::new(required(&flags, "checkpoint")?).join("pytorch_model.bin"))?;
+			let state = read_checkpoint(Path::new(required(&flags, "checkpoint")?))?;
 			for name in &state.order {
 				let tensor = &state.tensors[name];
 				println!("{name}\t{}\t{:?}", tensor.storage, tensor.shape);

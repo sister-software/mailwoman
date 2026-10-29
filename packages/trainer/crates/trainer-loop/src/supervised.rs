@@ -48,7 +48,10 @@ pub fn resolve_precision(run: &RunConfig, device: Device, autocast_on_cpu: bool)
 			autocast: Some(Kind::BFloat16),
 			accum,
 		}),
-		(Some(k), Device::Cpu) if autocast_on_cpu => Ok(Precision { autocast: Some(k), accum }),
+		(Some(k), Device::Cpu) if autocast_on_cpu => Ok(Precision {
+			autocast: Some(k),
+			accum,
+		}),
 		(Some(_), Device::Cpu) => Ok(Precision { autocast: None, accum }),
 		(Some(k), _) => Err(fail!(
 			"train.precision={precision:?} on {device:?} casts the parameters to {k:?} in the Python trainer, \
@@ -146,7 +149,9 @@ pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 			let _ = p.set_requires_grad(n.starts_with("affix_head"));
 		}
 		if !params.iter().any(|(_, p)| p.requires_grad()) {
-			return Err(fail!("freeze_encoder=True but no affix_head params found — set model.use_affix_head: true"));
+			return Err(fail!(
+				"freeze_encoder=True but no affix_head params found — set model.use_affix_head: true"
+			));
 		}
 	}
 	if freeze_tokens {
@@ -158,7 +163,9 @@ pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 			}
 		}
 		if frozen == 0 {
-			return Err(fail!("freeze_token_embeddings=True but no token_embeddings params found"));
+			return Err(fail!(
+				"freeze_token_embeddings=True but no token_embeddings params found"
+			));
 		}
 	}
 	let prefixes = run.train_strings("trainable_only_prefixes")?;
@@ -277,7 +284,14 @@ impl ValidationDraw {
 		Self { batches: None }
 	}
 
-	fn batches(&mut self, sampler: &SamplerConfig, encoder: &RunEncoder, seed: i128, rows: Option<u64>, batch_size: usize) -> Result<&[TensorBatch]> {
+	fn batches(
+		&mut self,
+		sampler: &SamplerConfig,
+		encoder: &RunEncoder,
+		seed: i128,
+		rows: Option<u64>,
+		batch_size: usize,
+	) -> Result<&[TensorBatch]> {
 		if self.batches.is_none() {
 			let mut s = Sampler::open(sampler, "val", seed, rows)?;
 			let mut out = Vec::new();
@@ -312,12 +326,16 @@ pub fn evaluate(
 	for batch in batches {
 		let b = batch.to_device(device);
 		let out = tch::no_grad(|| model.forward(&b.inputs()))?;
-		let loss = out.loss.ok_or_else(|| fail!("the validation forward returned no loss"))?;
+		let loss = out
+			.loss
+			.ok_or_else(|| fail!("the validation forward returned no loss"))?;
 		loss_total += loss.double_value(&[]);
 		seen += 1;
 		rows += b.rows();
 		seq = b.labels.size()[1] as usize;
-		preds.extend(Vec::<i64>::try_from(out.logits.argmax(-1, false).to_device(Device::Cpu).view([-1]))?);
+		preds.extend(Vec::<i64>::try_from(
+			out.logits.argmax(-1, false).to_device(Device::Cpu).view([-1]),
+		)?);
 		golds.extend(Vec::<i64>::try_from(b.labels.to_device(Device::Cpu).view([-1]))?);
 		locale_ids.extend(Vec::<i64>::try_from(batch.locale_ids.view([-1]))?);
 		if let Some(ll) = out.locale_logits {
@@ -336,7 +354,14 @@ pub fn evaluate(
 	m.insert("val_loss".into(), loss_total / seen as f64);
 	m.insert("val_rows".into(), rows as f64);
 	m.extend(cross_pollution(&preds, &golds, seq, Some(&locale_ids), labels, locales));
-	m.extend(per_locale_tag_f1(&preds, &golds, seq, Some(&locale_ids), labels, locales));
+	m.extend(per_locale_tag_f1(
+		&preds,
+		&golds,
+		seq,
+		Some(&locale_ids),
+		labels,
+		locales,
+	));
 	if has_locale_logits {
 		let valid: Vec<usize> = (0..locale_ids.len()).filter(|&i| locale_ids[i] != -100).collect();
 		if !valid.is_empty() {
@@ -367,7 +392,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let files = options.files.clone().unwrap_or_else(DataFiles::discover);
 	let output_dir = run.output_dir()?;
 	std::fs::create_dir_all(&output_dir)?;
-	let corpus_dir = run.data_str("corpus_dir")?.ok_or_else(|| fail!("data.corpus_dir is empty"))?;
+	let corpus_dir = run
+		.data_str("corpus_dir")?
+		.ok_or_else(|| fail!("data.corpus_dir is empty"))?;
 	write_corpus_record(&corpus_dir, &output_dir)?;
 	if let Some(reason) = run.data_str("unshippable_reason")? {
 		std::fs::write(
@@ -385,7 +412,10 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let device = device();
 	let mut model = load_or_build_model(run, &encoder, resume_from.as_deref())?;
 	model.to_device(device);
-	println!("device={device:?} param_count={}", crate::callbacks::grouped(model.store.parameter_count()));
+	println!(
+		"device={device:?} param_count={}",
+		crate::callbacks::grouped(model.store.parameter_count())
+	);
 	apply_freezes(run, &model)?;
 	let (mut optim, mut scheduler, live) = build_optimization(run, &model)?;
 	println!("lr_schedule={}", run.train_str("lr_schedule")?);
@@ -412,12 +442,27 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			.filter(|s| !s.is_empty())
 			.map(str::to_owned)
 			.unwrap_or(run.train_str("init_from")?);
-		let fisher_path = run.train.get("ewc_fisher_path").and_then(Value::as_str).unwrap_or_default();
+		let fisher_path = run
+			.train
+			.get("ewc_fisher_path")
+			.and_then(Value::as_str)
+			.unwrap_or_default();
 		if fisher_path.is_empty() || reference.is_empty() {
-			return Err(fail!("train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from"));
+			return Err(fail!(
+				"train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from"
+			));
 		}
-		let e = EwcPenalty::new(Path::new(fisher_path), Path::new(&reference), run.train_f64("ewc_lambda")?, device)?;
-		println!("[ewc] λ={}, {} params braked against {reference}", run.train_f64("ewc_lambda")?, e.covered_params);
+		let e = EwcPenalty::new(
+			Path::new(fisher_path),
+			Path::new(&reference),
+			run.train_f64("ewc_lambda")?,
+			device,
+		)?;
+		println!(
+			"[ewc] λ={}, {} params braked against {reference}",
+			run.train_f64("ewc_lambda")?,
+			e.covered_params
+		);
 		Some(e)
 	} else {
 		None
@@ -555,7 +600,10 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	if let Some(f) = &fisher {
 		let mut meta = serde_json::Map::new();
 		meta.insert("captured_at_step".into(), step.into());
-		meta.insert("window_last_n_steps".into(), run.train_i64("fisher_capture_last_n_steps")?.into());
+		meta.insert(
+			"window_last_n_steps".into(),
+			run.train_i64("fisher_capture_last_n_steps")?.into(),
+		);
 		meta.insert("corpus_dir".into(), corpus_dir.clone().into());
 		meta.insert("seed".into(), seed.into());
 		meta.insert("output_dir".into(), output_dir.display().to_string().into());

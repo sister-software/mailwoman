@@ -114,8 +114,14 @@ impl AdamW {
 	pub fn save(&self, dir: &Path) -> Result<()> {
 		let mut tensors = Vec::new();
 		for (name, s) in &self.state {
-			tensors.push((format!("{name}.exp_avg"), s.exp_avg.detach().to_device(tch::Device::Cpu)));
-			tensors.push((format!("{name}.exp_avg_sq"), s.exp_avg_sq.detach().to_device(tch::Device::Cpu)));
+			tensors.push((
+				format!("{name}.exp_avg"),
+				s.exp_avg.detach().to_device(tch::Device::Cpu),
+			));
+			tensors.push((
+				format!("{name}.exp_avg_sq"),
+				s.exp_avg_sq.detach().to_device(tch::Device::Cpu),
+			));
 			tensors.push((format!("{name}.step"), s.step.shallow_clone()));
 		}
 		Tensor::write_safetensors(&tensors, dir.join("optimizer.safetensors"))?;

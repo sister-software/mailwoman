@@ -108,7 +108,9 @@ impl RunConfig {
 		if v.is_null() {
 			return Ok(None);
 		}
-		v.as_i64().map(Some).ok_or_else(|| fail!("data.{key} is not an integer"))
+		v.as_i64()
+			.map(Some)
+			.ok_or_else(|| fail!("data.{key} is not an integer"))
 	}
 
 	pub fn train_f64(&self, key: &str) -> Result<f64> {
@@ -136,7 +138,9 @@ impl RunConfig {
 		if v.is_null() {
 			return Ok(None);
 		}
-		v.as_i64().map(Some).ok_or_else(|| fail!("train.{key} is not an integer"))
+		v.as_i64()
+			.map(Some)
+			.ok_or_else(|| fail!("train.{key} is not an integer"))
 	}
 
 	pub fn train_bool(&self, key: &str) -> Result<bool> {
@@ -146,7 +150,10 @@ impl RunConfig {
 	}
 
 	pub fn train_str(&self, key: &str) -> Result<String> {
-		Ok(field(&self.train, "train", key)?.as_str().unwrap_or_default().to_owned())
+		Ok(field(&self.train, "train", key)?
+			.as_str()
+			.unwrap_or_default()
+			.to_owned())
 	}
 
 	pub fn train_strings(&self, key: &str) -> Result<Vec<String>> {
@@ -154,7 +161,11 @@ impl RunConfig {
 			.as_array()
 			.ok_or_else(|| fail!("train.{key} is not a list"))?
 			.iter()
-			.map(|v| v.as_str().map(str::to_owned).ok_or_else(|| fail!("train.{key} holds {v}")))
+			.map(|v| {
+				v.as_str()
+					.map(str::to_owned)
+					.ok_or_else(|| fail!("train.{key} holds {v}"))
+			})
 			.collect()
 	}
 
@@ -186,7 +197,9 @@ impl RunConfig {
 			other => return Err(fail!("--set names an unknown section {other:?}")),
 		};
 		if !target.contains_key(attr) {
-			return Err(fail!("--set names {name}.{attr}, which the resolved config does not hold"));
+			return Err(fail!(
+				"--set names {name}.{attr}, which the resolved config does not hold"
+			));
 		}
 		target.insert(attr.to_owned(), parsed.clone());
 		if let Some(section) = self.config.get_mut(name).and_then(Value::as_object_mut) {
@@ -275,7 +288,9 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 		None
 	} else {
 		if !["word", "char"].contains(&char_mode.as_str()) {
-			return Err(fail!("unknown data.char_mode {char_mode:?} (expected off | word | char)"));
+			return Err(fail!(
+				"unknown data.char_mode {char_mode:?} (expected off | word | char)"
+			));
 		}
 		Some(CharConfig {
 			mode: char_mode,
@@ -300,7 +315,10 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 		})
 	});
 	Ok(SamplerConfig {
-		corpus_dir: PathBuf::from(run.data_str("corpus_dir")?.ok_or_else(|| fail!("data.corpus_dir is empty"))?),
+		corpus_dir: PathBuf::from(
+			run.data_str("corpus_dir")?
+				.ok_or_else(|| fail!("data.corpus_dir is empty"))?,
+		),
 		country_weights: weights(field(d, "data", "country_weights")?, "data.country_weights")?
 			.ok_or_else(|| fail!("data.country_weights is null"))?,
 		source_weights: weights(field(d, "data", "source_weights")?, "data.source_weights")?,

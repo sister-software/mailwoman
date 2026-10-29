@@ -7,10 +7,12 @@ use std::path::PathBuf;
 
 fn main() {
 	println!("cargo:rerun-if-changed=csrc/autocast.cpp");
-	let lib = PathBuf::from(
-		std::env::var("DEP_TCH_LIBTORCH_LIB").expect("torch-sys reports the libtorch library directory"),
-	);
-	let root = lib.parent().expect("the libtorch library directory has a parent").to_path_buf();
+	let lib =
+		PathBuf::from(std::env::var("DEP_TCH_LIBTORCH_LIB").expect("torch-sys reports the libtorch library directory"));
+	let root = lib
+		.parent()
+		.expect("the libtorch library directory has a parent")
+		.to_path_buf();
 	cc::Build::new()
 		.cpp(true)
 		.pic(true)
