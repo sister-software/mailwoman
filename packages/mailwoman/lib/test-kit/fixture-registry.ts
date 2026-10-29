@@ -11,7 +11,19 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { md5Hex } from "@mailwoman/core/hash"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
+import {
+	type ArtifactManifest,
+	ArtifactFormat,
+	artifactIDFromSHA256,
+	artifactSetID,
+	type LayerInstallation,
+	type LayerInstallationID,
+	layerInstallationID,
+	type SelectionEntry,
+	ServingRole,
+} from "@mailwoman/core/layers"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -23,7 +35,9 @@ import {
 	type StreetSegmentDatabase,
 } from "@mailwoman/resolver-wof-sqlite/street/segment-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, relative } from "path-ts"
+
+import { catalogPaths, writeInstallation, writeRecordAtomically } from "#data/catalog"
 
 /**
  * A static object store with HEAD, ranged GET, per-object ETags and injected failures.
@@ -163,6 +177,68 @@ export async function writeFixtureAddressPoints(path: PathBuilderLike): Promise<
 		null,
 		null
 	)
+}
+
+/**
+ * Install one artifact of `bytes` as `role` under `dataRoot`: its file, manifest and installation record.
+ *
+ * A candidate is unscoped.
+ * Every other role is scoped to the District of Columbia and keyed by US streets.
+ *
+ * @returns The selection entry that selects it, and its path.
+ */
+export async function installFixtureArtifact(
+	dataRoot: PathBuilderLike,
+	role: ServingRole,
+	fileName: string,
+	bytes: string
+): Promise<{ entry: SelectionEntry; path: string; installationID: LayerInstallationID }> {
+	const root = dataRoot.toString()
+	const id = artifactIDFromSHA256(sha256Hex(bytes))
+	const directory = catalogPaths(root).artifactDirectory(role, id)
+	const path = directory(fileName).toString()
+	const unscoped = role === ServingRole.Candidate
+
+	const manifest: ArtifactManifest = {
+		id,
+		role,
+		format: ArtifactFormat.SQLite,
+		schemaVersion: 1,
+		bytes: Buffer.byteLength(bytes),
+		normalization: unscoped ? null : { algorithm: "street-key", version: "1", locale: "us" },
+		scope: unscoped ? { countries: [], subdivisions: null } : { countries: ["US"], subdivisions: ["US-DC"] },
+		observedCountries: null,
+		coverageEvidence: false,
+		sources: [{ publisher: "fixture", release: null, url: null, sha256: null, md5: null }],
+		recipe: null,
+		builderSHA: null,
+		license: "CC0-1.0",
+		createdAt: "2026-10-29T00:00:00Z",
+	}
+
+	await writeLocalTextFile(bytes, path)
+	await writeRecordAtomically(manifest, directory("manifest.json"))
+
+	const set = artifactSetID([{ artifactID: id, role, schemaVersion: 1 }])
+	const origin = { kind: "published" as const, entry: role, release: fileName }
+
+	const installation: LayerInstallation = {
+		id: layerInstallationID(set, origin),
+		artifactSet: set,
+		origin,
+		artifacts: [{ artifactID: id, role, path: relative(root, path) }],
+		installedAt: "2026-10-29T00:00:00Z",
+	}
+
+	await writeInstallation(root, installation)
+
+	const scope = unscoped ? { country: null, subdivision: null } : { country: "US", subdivision: "US-DC" }
+
+	return {
+		entry: { role, scope, order: [{ installationID: installation.id, artifactID: id }] },
+		path,
+		installationID: installation.id,
+	}
 }
 
 /**
