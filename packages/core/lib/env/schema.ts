@@ -147,10 +147,13 @@ export const PublicEnvSchema = object({
 // #region Private
 
 /**
- * Secrets core reads, exposed via `$private`.
+ * Settings core keeps out of `$public`, exposed via `$private`.
  *
- * Core reads none: this is the base every package's private view extends,
- * so a credential is declared once, beside the code that sends it.
+ * Core holds the tiles bucket and its key prefix here, so the bucket name stays out of the public view.
+ * It holds no credential.
+ *
+ * This is the base every package's private view extends, so a credential is
+ * declared once, beside the code that sends it.
  */
 export const PrivateEnvSchema = object({
 	...ServerStoragePathsEnvSchema.shape,

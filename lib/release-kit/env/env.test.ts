@@ -36,6 +36,7 @@ test("release credentials stay private and package-owned", () => {
 	expect($private.RELEASE_IT_WORKSPACES_OTP).toBe("123456")
 	expect($private.HF_BUCKET_RESOLVE_URL).toBe("https://huggingface.co/buckets/sister-software/mailwoman/resolve/")
 	expect(Object.keys($public)).not.toContain("RELEASE_IT_WORKSPACES_OTP")
-	expect(Object.keys(corePrivate)).toEqual([])
+	expect(Object.keys(corePrivate)).not.toContain("RELEASE_IT_WORKSPACES_OTP")
+	expect(Object.keys(corePrivate)).not.toContain("HF_BUCKET_RESOLVE_URL")
 	expect(Object.keys(corePublic)).not.toContain("MAILWOMAN_PUBLISH_MODEL")
 })
