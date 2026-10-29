@@ -37,8 +37,9 @@ from ..nn.encoder import build_model, force_math_sdpa, model_param_count
 from ..observability.trackio import init_tracker
 from ..optim.schedules import build_scheduler
 from ..tokenizer import Tokenizer
-from .batch import precision_to_dtype, to_tensor_batch
+from .batch import to_tensor_batch
 from .checkpoint import find_latest_checkpoint, save_checkpoint
+from .setup import Precision, resolve_precision
 
 
 @torch.no_grad()
@@ -91,9 +92,6 @@ def load_pretrain_model(cfg: Config, tokenizer: Tokenizer, device: torch.device,
     else:
         model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
     model.to(device)
-    amp_dtype = precision_to_dtype(cfg.train.precision, device)
-    if amp_dtype is not None and device.type == "cuda":
-        model.to(dtype=amp_dtype)  # explicit cast rather than autocast (gfx1103 hang — see train.py)
     return model
 
 
@@ -132,6 +130,7 @@ def run_pretrain_loop(
     output_dir: Path,
     resume_step: int,
     mask_token_id: int,
+    precision: Precision,
 ) -> None:
     """Step the MLM objective to ``cfg.train.max_steps``, logging, evaluating and checkpointing.
 
@@ -180,9 +179,10 @@ def run_pretrain_loop(
                 generator=gen,
             )
             optim.zero_grad(set_to_none=True)
-            out = model.forward_mlm(
-                input_ids=masked.to(device), attention_mask=tb["attention_mask"], mlm_labels=labels.to(device)
-            )
+            with torch.autocast(device_type=device.type, dtype=precision.amp_dtype, enabled=precision.use_amp_autocast):
+                out = model.forward_mlm(
+                    input_ids=masked.to(device), attention_mask=tb["attention_mask"], mlm_labels=labels.to(device)
+                )
             loss: Any = out.loss
             if loss is None:
                 raise RuntimeError("forward_mlm returned no loss")
@@ -243,6 +243,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = load_pretrain_model(cfg, tokenizer, device, resume_path)
+    precision = resolve_precision(cfg, model, device)
     print(
         f"[pretrain] device={device} params={model_param_count(model):,} "
         f"objective=mlm mask_prob={cfg.train.mlm_mask_prob} mask_token_id={mask_token_id}"
@@ -266,6 +267,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             output_dir=output_dir,
             resume_step=resume_step,
             mask_token_id=mask_token_id,
+            precision=precision,
         )
     finally:
         tracker.finish()

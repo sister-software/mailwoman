@@ -175,11 +175,23 @@ def build_optimization(cfg: Config, model: nn.Module) -> Optimization:
 
 
 def resolve_precision(cfg: Config, model: nn.Module, device: torch.device) -> Precision:
-    amp_dtype = precision_to_dtype(cfg.train.precision, device)
-    if amp_dtype is not None and device.type == "cuda":
-        model.to(dtype=amp_dtype)
+    """Choose how the configured precision reaches the model, casting the model in place when it must.
 
-    return Precision(amp_dtype, use_amp_autocast=False, accum=max(1, int(cfg.train.grad_accum_steps)))
+    bf16 on an NVIDIA device keeps the parameters and the optimizer state in fp32 and runs the forward and backward
+    passes under `torch.autocast`. bf16 parameters hold 8 mantissa bits. An AdamW update below half the bf16
+    spacing at a weight's magnitude then rounds to no change. Late in a cosine schedule, almost every update does.
+
+    fp16, and bf16 on a ROCm device, cast the parameters instead. fp16 autocast needs a gradient scaler the loop does
+    not have. The ROCm cast is the lab recipe in `corpus-python/README.md`.
+    """
+    amp_dtype = precision_to_dtype(cfg.train.precision, device)
+    accum = max(1, int(cfg.train.grad_accum_steps))
+    if amp_dtype is None or device.type != "cuda":
+        return Precision(amp_dtype, use_amp_autocast=False, accum=accum)
+    if amp_dtype == torch.bfloat16 and torch.version.hip is None:
+        return Precision(amp_dtype, use_amp_autocast=True, accum=accum)
+    model.to(dtype=amp_dtype)
+    return Precision(amp_dtype, use_amp_autocast=False, accum=accum)
 
 
 def restore_training_state(cfg: Config, resume_from: str | Path | None, optimization: Optimization) -> int:
