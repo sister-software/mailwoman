@@ -611,13 +611,14 @@ Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `c
 
 **Observed**, lab host, branch `feat/2874-corpus-builders-2`, the same comparison as the table above.
 
-| Python module                     | TypeScript port                                                    | Result                                                                                                                                                                                                                                                                                       |
-| --------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `countries/cjk/overlay.py`        | `lib/cjk/overlay.ts`, `lib/tools/cjk-overlay.run.ts`               | over `v8-jp-full-2026-08-04`, the 151 `cn-units` rows and four extra corpora (the KR, TW, KR-registry and TW-registry corpora): both parts, the board, vocabulary, manifest, report and rights record equal                                                                                  |
-| `countries/cjk/foreign_places.py` | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                                                                                                         |
-| `countries/jp/probe_corpora.py`   | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced; over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal                                                                                           |
-| `corpora/fragment/`               | `lib/recipes/fragment-assay/`, `lib/tools/fragment-assay.run.ts`   | `fragment-build-reference.json` reproduced; on the lab data at the default cap (13 OpenAddresses locales, Ryhti, the v0.5.0 harvest), 216,570 train rows and the 24,063-row dev file equal, schema included, with the snapshot's surfaces; with the codex's, 2,000 NZ rows differ, see below |
-| `countries/de/fragment_board.py`  | `lib/de/fragment-board.ts`, `lib/tools/de-fragment-board.run.ts`   | over all of Overture-DE and `locality-surface-lexicon-v7.json` with the defaults, both write the committed `overture-fragments-de.jsonl` (2,404 rows, `4292479b…`) and `overture-fragments-de.surfaces.txt` (2,293 surfaces, `ca6a1538…`) byte for byte                                      |
+| Python module                             | TypeScript port                                                    | Result                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `countries/cjk/overlay.py`                | `lib/cjk/overlay.ts`, `lib/tools/cjk-overlay.run.ts`               | over `v8-jp-full-2026-08-04`, the 151 `cn-units` rows and four extra corpora (the KR, TW, KR-registry and TW-registry corpora): both parts, the board, vocabulary, manifest, report and rights record equal                                                                                  |
+| `countries/cjk/foreign_places.py`         | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                                                                                                         |
+| `countries/jp/probe_corpora.py`           | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced; over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal                                                                                           |
+| `corpora/fragment/`                       | `lib/recipes/fragment-assay/`, `lib/tools/fragment-assay.run.ts`   | `fragment-build-reference.json` reproduced; on the lab data at the default cap (13 OpenAddresses locales, Ryhti, the v0.5.0 harvest), 216,570 train rows and the 24,063-row dev file equal, schema included, with the snapshot's surfaces; with the codex's, 2,000 NZ rows differ, see below |
+| `countries/de/fragment_board.py`          | `lib/de/fragment-board.ts`, `lib/tools/de-fragment-board.run.ts`   | over all of Overture-DE and `locality-surface-lexicon-v7.json` with the defaults, both write the committed `overture-fragments-de.jsonl` (2,404 rows, `4292479b…`) and `overture-fragments-de.surfaces.txt` (2,293 surfaces, `ca6a1538…`) byte for byte                                      |
+| `corpora/deepseek/` (deterministic parts) | `lib/recipes/deepseek/{prompts,batches}.ts`                        | `deepseek-reference.json`, recorded from the Python module with no request made, reproduced: prompt text and tables, batch plans and ids, both row builders, the response parser and the validator                                                                                           |
 
 Classified differences (**decided**):
 
@@ -646,7 +647,16 @@ Deleted: `countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpor
 `countries/de/fragment_board.py`, `data/country-surfaces.json`, `packages/mailwoman/tools/dev-tools/codex/export-country-surfaces.ts` and their tests.
 `countries/cjk/staging.py` stays with the launcher.
 
-Not ported yet: `corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
+The DE board is under `packages/corpus/lib/de/` rather than the `eval-harness/de/` path the table in §3 lists, because
+its one-country rules and its parquet reader belong to the corpus package. It writes the eval fixture where it was.
+
+The DeepSeek request path stays in Python: `client.py` (the HTTP call and its retry), `run.py` (the checkpointed
+concurrent runner and its sink) and the two workers in `transliteration.py` and `kryptonite.py`, with `cli.py` and
+`test_deepseek_interface.py`. It calls a paid API, so it moves when a test can drive it through a recorded transport,
+and the TypeScript halves are its prompts and ids until then. Python's `json.loads` accepts `NaN` and `Infinity` in a
+completion line, which `JSON.parse` drops.
+
+Not ported yet: `corpora/{builder,sample_raws}.py` and the DeepSeek request path.
 
 ### Phase 3 — The Rust sampler and character path
 

@@ -1,0 +1,72 @@
+{
+	"README": [
+		"The deterministic outputs of corpus-python/src/mailwoman_train/corpora/deepseek/, recorded on 2026-10-29",
+		"with no request made. Each *_digest is the SHA-256 of a string, or of json.dumps(value, ensure_ascii=False)",
+		"with the default separators. The seeds and cases are the ones lib/recipes/deepseek/batches.test.ts builds."
+	],
+	"translit_system": "5611e25b315c7dac020f62c8f0d32d13b97484b25990790c21f0a50c2d9abebf",
+	"kryptonite_system": "a87143349faf8644566994fea1c5f1cc0f7ab083caf832ca0c445a9074954307",
+	"kryptonite_user_template": "e52a3dcc550f286796e370a5a0b355bc7e1f81c9789a8d3318daa25a9fd473ea",
+	"translit_scripts": "c205b596b16cd3dc2e882611bdd871dad07767efc44aaabf0cb8045a478f47e2",
+	"kryptonite_categories": "f2f4d68ac9b11ff2631d0246e7053e8b3d03680121b10091f35a980a478b567e",
+	"translit_prompt": "f3a28640b1e18d09a050c90a091e55de5d06f4f6a0266eecef7ec2589d751212",
+	"kryptonite_prompts": "f238b99a8e8f465c3aad4f0918183a3cafac2fa324b6afc3d49f2fd3e217814e",
+	"translit_plan": [
+		["translit-cyrl-f9f2cedf899da917", "cyrl", 2],
+		["translit-cyrl-8dae6d78cee23b61", "cyrl", 1],
+		["translit-jpan-7b8b8773aa01d3b2", "jpan", 2],
+		["translit-jpan-2642914d47559ff7", "jpan", 1],
+		["translit-hans-b85d2bb415bf1c9b", "hans", 2],
+		["translit-hans-d861f18a13a4994a", "hans", 1],
+		["translit-hang-37c045b594290904", "hang", 2],
+		["translit-hang-00a518760f6e861a", "hang", 1],
+		["translit-armn-6f4e4c7d5cf8f272", "armn", 2],
+		["translit-armn-215c56bf301375e9", "armn", 1]
+	],
+	"kryptonite_plan": { "batches": 162, "digest": "4d72f8131bdb17e6e5cf24b7110c14231662e09e07baefa83b3d61e8d160fca9" },
+	"small_plan_ids": [
+		"43acf4df8a1e47c9",
+		"2b491b75c4d03827",
+		"61bc29ecfce8757b",
+		"c95255dc0d87c332",
+		"a7c9457857e60130",
+		"fc988b14e057cefb",
+		"9c0dda3ee09721f9",
+		"ce5ee71b5f412dbc"
+	],
+	"translit_row": "bc2567e20e5c5dcb65d0f84a5eb692fe7081c7036db01583087c415b99557599",
+	"kryptonite_row": "1d9e6253cfcc6b17c39bb7b2826b08fc09590f4072ff750c36abc35364d85e52",
+	"parsed": [
+		[
+			{ "i": 0, "raw": "a" },
+			{ "i": 1, "raw": "b" }
+		],
+		[{ "i": 0, "raw": "a" }],
+		[],
+		[],
+		[
+			{ "i": 0, "raw": "a" },
+			{ "i": 2, "raw": "ü" }
+		]
+	],
+	"validations": [
+		[true, null],
+		[false, "no-components"],
+		[false, "empty-component:street"],
+		[false, "not-in-raw:street"],
+		[false, "raw-length"],
+		[true, null],
+		[false, "empty-component:street"]
+	],
+	"emitted": [
+		["deepseek-kryptonite"],
+		[
+			"deepseek-translit-cyrl",
+			"deepseek-translit-jpan",
+			"deepseek-translit-hans",
+			"deepseek-translit-hang",
+			"deepseek-translit-armn"
+		],
+		["deepseek-translit-hang"]
+	]
+}
