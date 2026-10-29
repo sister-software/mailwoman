@@ -269,15 +269,36 @@ export async function freezeOSMSuites(input: {
 	const files = extracts.map((lineage) => lineage.extract.path)
 	const sampledByShape = new Map<OSMSuiteShape, OSMSuiteRow[]>()
 	const union = new Map<string, OSMSuiteRow>()
+	/**
+	 * Rows dropped per shape because an earlier country's extract held the same identity.
+	 *
+	 * The adapter's `source_id` digests the rendered components and not the country, so one address
+	 * rendered alike from two overlapping extracts is one row, kept from the first file read.
+	 */
+	const crossCountryDuplicates: Partial<Record<OSMSuiteShape, number>> = {}
 
 	for (const shape of Object.values(OSMSuiteShape)) {
-		const sampled = input.collected.flatMap((collected) => collected.sampled[shape] ?? [])
+		const seen = new Set<string>()
+		const sampled: OSMSuiteRow[] = []
+
+		for (const row of input.collected.flatMap((collected) => collected.sampled[shape] ?? [])) {
+			const id = heldoutRowID(row)
+
+			if (seen.has(id)) {
+				crossCountryDuplicates[shape] = (crossCountryDuplicates[shape] ?? 0) + 1
+
+				continue
+			}
+
+			seen.add(id)
+			sampled.push(row)
+
+			if (!union.has(id)) {
+				union.set(id, row)
+			}
+		}
 
 		sampledByShape.set(shape, sampled)
-
-		for (const row of sampled) {
-			union.set(heldoutRowID(row), row)
-		}
 	}
 
 	const unionRows = [...union.values()]
@@ -376,6 +397,7 @@ export async function freezeOSMSuites(input: {
 					audit,
 				},
 				sampled: sampled.length,
+				crossCountryDuplicates: crossCountryDuplicates[shape] ?? 0,
 				kept: kept.length,
 			},
 			lineagePath
