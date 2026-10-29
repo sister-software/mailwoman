@@ -505,6 +505,7 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                           | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
 | `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
 | `exposure/release_check.py`             | `release-check.run.ts`                                              | `preflight` and `completed` findings byte-equal, exit status equal                    |
+| `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed-script.run.ts`      | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
 
 Classified differences (**decided**):
 
@@ -532,7 +533,15 @@ Classified differences (**decided**):
   writes the labels in their first appearance, in piece order, and every count is equal.
 - `suffix_feed.run` and `mixed_script` pass `data.source_weights` without folding in `source_reps`, so on a config
   with `source_reps`, such as C6, the Python stream refuses 130 unweighted sources. The port reads the weights the
-  trainer samples. Given the folded weights, the Python `audit_feed` writes the port's bytes.
+  trainer samples. Given the folded weights, the Python `audit_feed` writes the port's bytes. The same holds for
+  `mixed_script`: unchanged, it stops on C6 with `ValueError: 130 source(s) in the 'train' split are absent from
+source_weights`. Its `main` given `resolve_config_reps`'s weights (200,000 rows, seed 1569, the committed
+  `data/gazetteer/affix-relabel-lexicon-v2.json`, because the lexicon path in the host copy of the config does not
+  exist on the host) writes the port's bytes. It took 254 s, including a `mailwoman_mtf` rebuild, and the port took 40 s. The
+  port reads letter scripts from the generated `LETTER_SCRIPT` table through `mtf-node`. That table is
+  `character_script` evaluated at every scalar value (0 of 1,112,064 differ from the audit's function), so the
+  rule's NFKD fallback is part of the table. The port drops `--path-prefix`, because the addon re-roots a volume
+  path to `$MAILWOMAN_DATA_ROOT` itself.
 - `epoch_mixture`'s requested shares divide by Python 3.12's compensated `sum()`. The port uses
   `@mailwoman/core/numeric`'s `pySum`, which reproduces it, because a running sum differs in the last bit.
 - The calibration split is NumPy's `default_rng(20260607).permutation(n)`, recorded in
@@ -545,12 +554,11 @@ Classified differences (**decided**):
   has no Node runtime. Those four modules and their tests are deleted when the launcher moves (Phase 7).
 
 Deleted: `launch/audits.py`, `audits/{opening_token,region_code_token,comma_segment_number,suffix_feed,config_keys}.py`,
-`calibration/`, `exposure/{cli,__main__,release_check}.py` with `test_exposure_release_check.py`, and their tests.
-`exposure/floors.json` moved to `packages/mailwoman/tools/training/exposure/`. Not ported yet:
-`audits/mixed_script.py` (it names scripts by Unicode character names, which Node does not carry),
-`exposure/grade.py` (it runs a PyTorch checkpoint), `exposure/report.py` and `exposure/phenomena.py` (ported, kept
-for the trainer's in-loop counter and `grade.py`), and `evaluation/` with the JP probe board (both run a PyTorch
-checkpoint, so they move with the trainer or onto exported ONNX models).
+`calibration/`, `exposure/{cli,__main__,release_check}.py`, `audits/mixed_script.py`, the `measure_exposure` Modal
+function, and their tests. `exposure/floors.json` moved to `packages/mailwoman/tools/training/exposure/`. Ported but
+kept: `exposure/report.py` and `exposure/phenomena.py`, for the trainer's in-loop counter and `exposure/grade.py`.
+Not ported yet: `exposure/grade.py` and `evaluation/` with the JP probe board (each runs a PyTorch checkpoint, so they
+move with the trainer or onto exported ONNX models).
 
 ### Phase 3 — The Rust sampler and character path
 
