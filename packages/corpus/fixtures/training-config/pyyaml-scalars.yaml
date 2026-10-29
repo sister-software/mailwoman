@@ -7,7 +7,7 @@ data:
   max_unit_width: 010
   coarse_filter: off
   gazetteer_choreography: Yes
-  code_unit_features: NO
+  code_unit_features: No
   augment_case_prob: 5e-4
   augment_glue_prob: .5
   augment_ordinal_prob: 1.
