@@ -62,8 +62,8 @@ The non-secret values are baked into the image with `Image.env`, so a container 
 process read. `mailwoman_train/env.py` reads `MAILWOMAN_VOLUME_MOUNT` and `MAILWOMAN_SHA256_CACHE` from
 that environment.
 
-**Credentials come from a named Modal secret.** Create it once from `.env` (operator step; it is a cloud
-resource):
+**Credentials come from a named Modal secret.** Create it once from `.env`. This is an operator step,
+because a secret is a cloud resource:
 
 ```bash
 set -a; source .env; set +a
@@ -149,7 +149,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    **Resume is automatic.** The GPU function runs under `modal.Retries` (`MAILWOMAN_MODAL_TRAIN_RETRIES`,
    default 3) with `single_use_containers=True`, and every attempt resumes from the newest complete
    `step-*` checkpoint in the run's output directory (`launch/resume.py`). `--fresh` clears that directory
-   once, in the preflight, before anything is spawned; no attempt deletes anything. `--branch-from
+   once, in the preflight, before anything is spawned. No attempt deletes anything. `--branch-from
    <checkpoint>` names a start point used only while the output directory holds no checkpoint. The old
    `--resume` flag is gone. `--resume none` is now `--fresh`, `--resume auto` is the default, and the
    recipe headers use the new spellings.
@@ -160,7 +160,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    that changes most already travels on the volume, so a deployment would save only the few seconds
    an ephemeral app takes to register its functions. Revisit if launches need to start from somewhere without this checkout.
 
-   **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card; the default stays
+   **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card. The default stays
    `A100-80GB`. The probe model is small (384 hidden, 6 layers, batch 128) and likely fits a cheaper card,
    but the wall-clock preflight's 4.25 steps/s is an A100 measurement, and a slower card can push a 60k
    recipe past the 6 h timeout. Change the default only after measuring steps/s on the candidate card
@@ -218,7 +218,7 @@ also ships configs uses `PACKAGE_AND_CONFIGS`.
 
 The Volume persists across runs (outputs under `/data/output*`). A failed train doesn't corrupt the
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
-`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts; the path
+`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts. The path
 is the config's `output_dir` without the `/data` mount. A run that died past its retries continues from
 its last save on a relaunch without `--fresh`.
 
