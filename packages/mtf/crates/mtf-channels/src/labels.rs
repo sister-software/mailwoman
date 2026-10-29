@@ -111,7 +111,7 @@ pub fn whitespace_spans(raw: &[char], tokens: &[Vec<char>]) -> Result<Vec<(usize
 }
 
 /// `str.find(needle, start)` over code points.
-pub(crate) fn find(haystack: &[char], needle: &[char], start: usize) -> Option<usize> {
+pub fn find(haystack: &[char], needle: &[char], start: usize) -> Option<usize> {
 	if start > haystack.len() {
 		return None;
 	}
