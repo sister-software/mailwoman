@@ -13,6 +13,7 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
 import type { PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
+import { isNationalAddressPointArtifact } from "#geocode/osm-layers"
 
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["tw", "zh"],
@@ -233,11 +234,13 @@ export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<
 
 		for (const cc of supportedOvertureCountries()) {
 			// The national Overture countries and the BAN countries are disjoint today (it, es, tw and fr),
-			// so a selection entry for one of these countries lists its Overture database alone.
-			const selected = await catalog.firstPath(ServingRole.AddressPoints, {
-				country: cc.toUpperCase(),
-				subdivision: null,
-			})
+			// so a selection entry for one of these countries lists its Overture database first.
+			// An OpenStreetMap build in the same entry is the OpenStreetMap tier's, consulted after this one.
+			const selected = await catalog.firstPath(
+				ServingRole.AddressPoints,
+				{ country: cc.toUpperCase(), subdivision: null },
+				isNationalAddressPointArtifact
+			)
 
 			if (selected) {
 				this.#selected.set(cc, selected)

@@ -187,24 +187,46 @@ shared readers, on 2026-10-29.
 | `observeArtifactTerms`, `probeRemote` (pull) | Retired: moved into the planner and `readRemoteIdentity`                      |
 | `@mailwoman/osm/address-point-schema`        | Retired: moved to `@mailwoman/resolver-wof-sqlite/address/point/spine-schema` |
 
-## Readers that do not read the selection yet
+## Every reader on the selection
 
-The national Overture provider and the four overlays read the selection. Overture reads the first
-selected address-point source for each of its countries (`it`, `es`, `tw`). Its countries and the BAN
-country (`fr`) are disjoint, so no selection entry lists both, and the session still consults BAN before
-Overture. Each overlay has its own role (`flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`,
-`zoning-overlay`), read unscoped. `selection-parity.integration.test.ts` compares Overture on fixed
-bytes (empty difference list) and each overlay's selected file against its conventional one.
+Each reader below consults the selection after its explicit pins and before its conventional path. A
+reader whose role has no selection entry reads exactly the file it read before.
+`lib/geocode/selection-parity.integration.test.ts` reads the same bytes from the conventional path and
+from an installed, selected artifact, and every difference list it records is empty.
 
-The rail-station database stays beside the conventional `poi.db` path. No published bundle carries it,
-so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+| Reader                                       | Role and scope                                                                                | Compared on fixed bytes                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| BAN (`ban-layers.ts`)                        | `address-points`, `street-centroids`, per country                                             | 8 queries, 3 answered                                           |
+| National Overture (`national-overture.ts`)   | `address-points`, per country (`it`, `es`, `tw`)                                              | 5 queries                                                       |
+| OpenStreetMap extracts (`osm-layers.ts`)     | `address-points`, per country, built by the OSM recipe                                        | 5 queries, 3 answered                                           |
+| Nominatim and Photon (`serving-layers.ts`)   | BAN, then the OpenStreetMap tier, from one generation                                         | 8 BAN and 5 OpenStreetMap queries                               |
+| WOF extract set (`existingWOFDatabasePaths`) | `wof-extract`, unscoped, every installed source in order                                      | the attached paths and their SHA-256, and 5 lookups, 3 answered |
+| Autocomplete (`resolveFSTPath`)              | `gazetteer-fst`, `US`                                                                         | 6 prefixes, 5 answered                                          |
+| Parse priors (`fst-layers.ts`)               | `gazetteer-fst` per locale country, `street-morphology`                                       | 4 walks of each FST                                             |
+| POI and the four overlays (`layer-paths.ts`) | `poi`, `flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`, `zoning-overlay`, unscoped | the selected file's path and SHA-256                            |
 
-These still resolve their conventional paths only, and stay on them until each is migrated with a
-comparison on fixed artifact bytes:
+Three providers serve the address-point role: BAN, national Overture and the OpenStreetMap tier. One
+selection entry may list sources of more than one of them. A national provider reads the entry's first
+source that the OpenStreetMap recipe did not build (`isNationalAddressPointArtifact`), and the
+OpenStreetMap tier reads the first one it did build (`isOSMBuiltArtifact`, the manifest's `recipe`). The
+session still consults the national tier first and the OpenStreetMap tier only when the national tier has
+no database for the country, which is the order the two had when each read its own file.
 
-- the OpenStreetMap extract provider (`osm-layers.ts`, `layer-paths.ts`), whose regional files carry
-  several countries and no registry entry;
-- the WOF extract set (`resolveWOFDatabasePaths`), the street-centroid databases and the FST with its
-  pair index;
-- the Nominatim and Photon entry points and autocomplete, whose data paths have not yet been traced to
-  the selection or compared on fixed artifact bytes.
+The WOF lookup names each attached schema after its file and routes placetypes by that name, so an
+installed WOF extract keeps its conventional file name (`admin-global-priority.db`, `postalcode-us.db`).
+Unlike the other roles, every installed source of the WOF entry is attached, because the conventional
+set was attached whole.
+
+The geocode session, the gauntlet harness, and the Nominatim and Photon servers each read one
+generation (`LayerCatalog.read`) and pass it to every reader they open.
+
+Still on their conventional paths, with the reason:
+
+- The rail-station database stays beside the conventional `poi.db` path. No published bundle carries it,
+  so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+- The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
+  `@mailwoman/neural`, which reads no data-root records.
+- The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
+  data root, and read the files beside its weights.
+- A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
+  for that country needs a locale scope the selection does not have.

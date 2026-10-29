@@ -33,6 +33,7 @@ import { resolverDefaultCountry } from "#country-scope"
 import { LayerCatalog } from "#data/catalog"
 import { holdSelectionLease } from "#data/retention"
 import { loadBundledCoarsePlacer } from "#default/placer"
+import { $public } from "#env"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
@@ -41,6 +42,7 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode/core"
+import { selectedParsePriorArtifacts, selectedStreetMorphologyPath } from "#geocode/fst-layers"
 import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
@@ -296,8 +298,14 @@ export interface GeocodeSession extends Disposable {
 	geocode(input: string): Promise<GeocodeRun>
 }
 
-async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
-	const paths = await existingWOFDatabasePaths(resolveWOFDatabasePaths(options.resolveDB, options.dataRoot))
+async function resolveWOFPath(
+	options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">,
+	catalog: LayerCatalog
+): Promise<string[]> {
+	// A pinned list (`--resolve-db` or `$MAILWOMAN_WOF_DB`) is read as given.
+	// Otherwise the active selection's WOF extracts, else the conventional set.
+	const pinned = options.resolveDB || $public.MAILWOMAN_WOF_DB ? resolveWOFDatabasePaths(options.resolveDB) : null
+	const paths = await existingWOFDatabasePaths(pinned, options.dataRoot, catalog)
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -443,7 +451,9 @@ export async function loadForkEntityDeps(
 		import("@mailwoman/resolver-wof-sqlite/street"),
 	])
 
-	const morphology = await loadStreetMorphologyFST()
+	// The street-morphology FST the active selection lists, else the loader's own data-root default.
+	const streetMorphologyPath = await selectedStreetMorphologyPath(options.dataRoot)
+	const morphology = await loadStreetMorphologyFST(streetMorphologyPath ? { artifactPath: streetMorphologyPath } : {})
 	const lookups = paths.map((databasePath) => new POILookup({ databasePath }))
 
 	return {
@@ -482,11 +492,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// A session reading an active selection holds a lease on its generation,
 	// so a prune keeps those artifacts until the session is disposed.
 	// A data root with no selection takes no lease and receives no write.
-	const generation = (await LayerCatalog.read(options.dataRoot)).generation
+	// Every reader below takes this one snapshot, so the session reads one generation throughout.
+	const catalog = await LayerCatalog.read(options.dataRoot)
+	const generation = catalog.generation
 	const lease = generation ? await holdSelectionLease(options.dataRoot, generation) : null
 
-	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot)
-	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
+	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot, catalog)
+	const wofPath = candidateDB ? [] : await resolveWOFPath(options, catalog)
 	const pathsResolvedAt = performance.now()
 
 	progress("Loading neural model…")
@@ -509,8 +521,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const classifier = routed.primary
 
 	const { loadParsePriors } = await import("#geocode/parse-priors")
+	// The FSTs the active selection lists, else the files beside the weights.
+	const priorArtifacts = await selectedParsePriorArtifacts(classifier, options.locale, options.dataRoot, catalog)
 
-	const priors = await loadParsePriors(classifier, {
+	const priors = await loadParsePriors(priorArtifacts, {
 		gazetteerPrior: settings.gazetteerPrior,
 		venueHeadPrior: settings.venueHeadPrior,
 		label: `locale ${options.locale}`,
@@ -574,8 +588,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const backendsOpenedAt = performance.now()
 	progress("Loading optional data providers…")
 
-	const banDatabases = (await openBANRegionDatabases(options.dataRoot)).for
-	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot))
+	const banDatabases = (await openBANRegionDatabases(options.dataRoot, catalog)).for
+	const overtureProvider = await OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), catalog)
 
 	const nationalDatabases = (country: string): RegionDatabases => {
 		const ban = banDatabases(country)
@@ -584,7 +598,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
-	const osmProvider = await openOSMRegionDatabases(options.dataRoot)
+	const osmProvider = await openOSMRegionDatabases(options.dataRoot, catalog)
 
 	const optionalProvidersLoadedAt = performance.now()
 
@@ -818,9 +832,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		initTiming,
 
 		artifacts: {
-			...(fst && classifier.fstPath ? { fstPath: classifier.fstPath } : {}),
-			...(streetMorphology && classifier.streetMorphologyPath
-				? { streetMorphologyPath: classifier.streetMorphologyPath }
+			...(fst && priorArtifacts.fstPath ? { fstPath: priorArtifacts.fstPath } : {}),
+			...(streetMorphology && priorArtifacts.streetMorphologyPath
+				? { streetMorphologyPath: priorArtifacts.streetMorphologyPath }
 				: {}),
 			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
 			...(Object.keys(classifier.lexiconPaths).length ? { lexicons: { ...classifier.lexiconPaths } } : {}),

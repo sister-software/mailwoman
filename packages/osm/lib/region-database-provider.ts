@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The OSM rooftop extract provider, the injection point the geocode cascade consults for the opt-in
- *   international precision tier. Given a data root, it opens `osm/address-points-<cc>-<cc>.db`
- *   with the country's street-normalization locale. Probe-side keying then matches the extract the
+ *   international precision tier. Given a data root, it opens the extract the caller's active selection
+ *   names for a country, else `osm/address-points-<cc>-<cc>.db`, with the country's street-normalization locale. Probe-side keying then matches the extract the
  *   builder wrote. The provider caches the open handle per country. Wire its bound `for` into
  *   `GeocodeDeps.osmExtracts`.
  *
@@ -46,6 +46,15 @@ export type OSMExtractAdmission = (manifest: LayerManifest, path: string) => voi
  */
 export interface OSMRegionDatabaseProviderOptions {
 	admit?: OSMExtractAdmission
+	/**
+	 * Lowercase alpha-2 country to the extract path an installation selected for it.
+	 *
+	 * A country listed here reads that file in place of its conventional
+	 * `address-points-<cc>-<cc>.db`, and every other country reads the conventional path.
+	 * The caller reads the selection, because the selection's records belong to
+	 * the package that installs data.
+	 */
+	selected?: ReadonlyMap<string, string>
 }
 
 /**
@@ -70,11 +79,13 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	 */
 	readonly #onDisk = new Set<string>()
 	readonly #admit: OSMExtractAdmission | undefined
+	readonly #selected: ReadonlyMap<string, string>
 	#warmPromise?: Promise<void>
 
 	constructor(dataRoot: PathBuilder, options: OSMRegionDatabaseProviderOptions = {}) {
 		this.#dataRoot = dataRoot
 		this.#admit = options.admit
+		this.#selected = options.selected ?? new Map()
 	}
 
 	/**
@@ -95,8 +106,11 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 		return provider
 	}
 
-	#addressPointsPath(countryCode: string): PathBuilder {
-		return osmDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}-${countryCode}.db`)
+	#addressPointsPath(countryCode: string): string {
+		return (
+			this.#selected.get(countryCode) ??
+			osmDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}-${countryCode}.db`).toString()
+		)
 	}
 
 	/**
@@ -109,7 +123,7 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 
 	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedOSMCountries()) {
-			const path = this.#addressPointsPath(cc).toString()
+			const path = this.#addressPointsPath(cc)
 
 			if (!(await pathExists(path))) continue
 
@@ -139,7 +153,7 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 
 		// Only countries with a registered street locale and an on-disk extract, never key with the wrong rules.
 		if (supportedOSMCountries().includes(cc)) {
-			const path = this.#addressPointsPath(cc).toString()
+			const path = this.#addressPointsPath(cc)
 
 			if (this.#onDisk.has(path)) {
 				// The rooftop builder stores `addr:suburb` before `addr:city`, so a stored locality can be part of a place.

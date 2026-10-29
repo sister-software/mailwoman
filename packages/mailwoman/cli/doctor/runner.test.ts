@@ -24,7 +24,7 @@ function healthyDeps(): DoctorDeps {
 		dataRoot: () => ({ path: "/data", fromEnv: true }),
 		envCandidatePath: async () => "/data/wof/candidate.db",
 		conventionCandidatePath: async () => "/data/wof/candidate.db",
-		wofExtractPaths: () => ["/data/wof/admin.db"],
+		wofExtractPaths: async () => ["/data/wof/admin.db"],
 		poiPath: async () => "/data/poi/poi.db",
 		readLayerIdentity: async () => ({
 			name: "poi",

@@ -285,15 +285,23 @@ export class LayerCatalog {
 	/**
 	 * The first selected source's file for a role and scope, or `null` when none is installed.
 	 *
-	 * @throws {@link UnreadableArtifactError} when the first installed source is unreadable.
+	 * @param accept Reads only the sources whose manifest it accepts, so two
+	 * providers of one role, such as a national register and an OpenStreetMap build,
+	 * each read their own sources in the entry's order.
+	 * Absent, every source is read.
+	 * @throws {@link UnreadableArtifactError} when an installed source before the answer is unreadable.
 	 */
-	async firstPath(role: ServingRole, scope: SelectionScope): Promise<string | null> {
+	async firstPath(
+		role: ServingRole,
+		scope: SelectionScope,
+		accept?: (manifest: ArtifactManifest) => boolean
+	): Promise<string | null> {
 		if (!this.selection) return null
 
 		for (const source of selectedSources(this.selection, role, scope)) {
 			const found = await this.#resolveSource(source)
 
-			if (found) return found.path
+			if (found && (!accept || accept(found.manifest))) return found.path
 		}
 
 		return null

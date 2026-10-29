@@ -136,6 +136,12 @@ export const ServingRole = {
 	 * The street-morphology FST and the files built with it.
 	 */
 	StreetMorphology: "street-morphology",
+	/**
+	 * The per-locale gazetteer FST the parse prior and autocomplete read, such as `fst-en-us.bin`.
+	 *
+	 * An entry is scoped to the country of the locale the FST was built for.
+	 */
+	GazetteerFST: "gazetteer-fst",
 } as const
 
 export type ServingRole = (typeof ServingRole)[keyof typeof ServingRole]
@@ -223,6 +229,7 @@ export const ROLE_REQUIREMENTS: Readonly<Record<ServingRole, RoleRequirement>> =
 		normalization: NormalizationRequirement.NotApplicable,
 		formats: [ArtifactFormat.FST, ArtifactFormat.PairIndex, ArtifactFormat.JSON],
 	},
+	[ServingRole.GazetteerFST]: { normalization: NormalizationRequirement.NotApplicable, formats: [ArtifactFormat.FST] },
 }
 
 /**
@@ -344,6 +351,75 @@ export interface ArtifactManifest {
 	 */
 	license: string
 	createdAt: string
+	/**
+	 * How a local build derived the artifact from its sources: the policy it applied,
+	 * the geometry it clipped to and the rows it kept.
+	 *
+	 * Absent for a published artifact.
+	 * Its builder recorded no derivation.
+	 */
+	derivation?: ArtifactDerivation
+}
+
+/**
+ * How a build derived one artifact from its inputs, beyond the inputs
+ * {@link ArtifactManifest.sources} lists.
+ *
+ * One regional input can yield several artifacts, one per country.
+ * Each records its own derivation, so two countries derived from one input can be told apart.
+ */
+export interface ArtifactDerivation {
+	/**
+	 * The extraction policy the build applied, by name and version.
+	 */
+	policy: { name: string; version: number }
+	/**
+	 * The geometry the build kept rows inside, or `null` when it kept every row of the input.
+	 */
+	clipping: {
+		/**
+		 * The publisher's name for the geometry, such as `geoBoundaries gbOpen ADM0 DEU`.
+		 */
+		description: string
+		/**
+		 * The geometry file's SHA-256 as 64 lowercase hex characters.
+		 */
+		sha256: string
+	} | null
+	/**
+	 * The row filter, stated in words, such as `addr:housenumber and addr:street present`.
+	 */
+	filter: string
+	/**
+	 * Counts the build observed, such as rows read and rows kept.
+	 */
+	counts: Readonly<Record<string, number>>
+}
+
+function derivationProblems(derivation: ArtifactDerivation | undefined): string[] {
+	if (derivation === undefined) return []
+
+	const problems: string[] = []
+
+	if (!derivation.policy?.name || !Number.isSafeInteger(derivation.policy.version)) {
+		problems.push("derivation.policy must name the policy and its integer version")
+	}
+
+	if (derivation.clipping === undefined) {
+		problems.push("derivation.clipping is missing; write null when the build kept every row")
+	} else if (derivation.clipping && !SHA256_HEX.test(derivation.clipping.sha256)) {
+		problems.push("derivation.clipping.sha256 is not 64 lowercase hex characters")
+	}
+
+	if (!derivation.filter) {
+		problems.push("derivation.filter is missing")
+	}
+
+	if (!derivation.counts || typeof derivation.counts !== "object") {
+		problems.push("derivation.counts is missing")
+	}
+
+	return problems
 }
 
 /**
@@ -484,6 +560,8 @@ export function artifactManifestProblems(manifest: Partial<ArtifactManifest>): s
 	if (!manifest.createdAt) {
 		problems.push("createdAt is missing")
 	}
+
+	problems.push(...derivationProblems(manifest.derivation))
 
 	return problems
 }

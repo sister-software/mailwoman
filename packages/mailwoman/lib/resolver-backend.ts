@@ -37,12 +37,14 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
  *
  * A data root without `active.json` resolves as it did before the selection existed.
  *
+ * @param catalog One reading of the active selection, read from `dataRoot` when omitted.
  * @throws {@link UnreadableArtifactError} when the selection or the selected
  * candidate exists and cannot be read.
  */
 export async function resolveCandidateDBPath(
 	explicit?: string | null,
-	dataRoot: PathBuilderLike = dataRootPath()
+	dataRoot: PathBuilderLike = dataRootPath(),
+	catalog?: LayerCatalog
 ): Promise<string | null> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
@@ -50,8 +52,8 @@ export async function resolveCandidateDBPath(
 
 	if (pinned) return (await pathExists(pinned)) ? pinned : null
 
-	const catalog = await LayerCatalog.read(dataRoot)
-	const selected = await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	const selected = await snapshot.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
 
 	if (selected) return selected
 
@@ -250,10 +252,44 @@ export async function loadCapitalIndex(opts: {
 }
 
 /**
- * Returns the paths from `explicit`, or the default WOF set, that exist on disk.
+ * The installed WOF extracts the active selection lists, in its order, or `null` when it lists none.
+ *
+ * @throws {@link UnreadableArtifactError} when the selection or a selected extract cannot be read.
  */
-export async function existingWOFDatabasePaths(explicit?: readonly string[] | null): Promise<string[]> {
-	const candidates = explicit ?? wofExtractPaths()
+export async function selectedWOFExtracts(
+	dataRoot: PathBuilderLike = dataRootPath(),
+	catalog?: LayerCatalog
+): Promise<string[] | null> {
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	const selected = await snapshot.resolve(ServingRole.WOFExtract, { country: null, subdivision: null })
+
+	return selected.length ? selected.map((source) => source.path) : null
+}
+
+/**
+ * Returns the paths from `explicit`, or the default WOF set, that exist on disk.
+ *
+ * Without `explicit`, the WOF extracts the active selection lists are the set, in the selection's order.
+ * The extracts are attached together rather than consulted one at a time, so every installed
+ * source of the entry is returned and a missing one is skipped, as a missing conventional file is.
+ *
+ * A data root whose selection lists no WOF extract reads the conventional set.
+ *
+ * @param catalog One reading of the active selection, read from `dataRoot` when omitted.
+ * @throws {@link UnreadableArtifactError} when the selection or a selected extract cannot be read.
+ */
+export async function existingWOFDatabasePaths(
+	explicit?: readonly string[] | null,
+	dataRoot: PathBuilderLike = dataRootPath(),
+	catalog?: LayerCatalog
+): Promise<string[]> {
+	if (!explicit) {
+		const selected = await selectedWOFExtracts(dataRoot, catalog)
+
+		if (selected) return selected
+	}
+
+	const candidates = explicit ?? wofExtractPaths(dataRoot)
 	const existing: string[] = []
 
 	for (const databasePath of candidates) {

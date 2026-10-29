@@ -1,110 +1,17 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { autocomplete, type FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { resolveFSTPath, runAutocomplete } from "#autocomplete-core"
-
-interface FixturePlace {
-	wofID: number
-	placetype: PlacetypeID
-	name: string
-	referential: number
-	parentChain: number[]
-}
-
-interface FSTNodeInternal {
-	edges: Map<string, number>
-	places: FixtureEntry[]
-}
-
-type FixtureEntry = FixturePlace & {
-	lat: number
-	lon: number
-	encyclopedic: number | null
-	crossCountryBranches: number | null
-}
-
-function buildFixtureMatcher(places: FixturePlace[]): FSTMatcher {
-	const entries: FixtureEntry[] = places.map((p) => ({
-		...p,
-		lat: 0,
-		lon: 0,
-		encyclopedic: null,
-		crossCountryBranches: null,
-	}))
-
-	const nodes: FSTNodeInternal[] = [{ edges: new Map(), places: [] }]
-
-	for (const entry of entries) {
-		const tokens = normalizeTokens(entry.name)
-
-		if (!tokens.length) continue
-		let stateID = 0
-
-		for (const t of tokens) {
-			const node = nodes[stateID]!
-			let next = node.edges.get(t)
-
-			if (!next) {
-				next = nodes.length
-				nodes.push({ edges: new Map(), places: [] })
-				node.edges.set(t, next)
-			}
-
-			stateID = next
-		}
-
-		const node = nodes[stateID]!
-
-		if (!node.places.some((p) => p.wofID === entry.wofID)) {
-			node.places.push(entry)
-		}
-	}
-
-	return FSTMatcher.fromNodes(nodes)
-}
-
-const FIXTURE_PLACES: FixturePlace[] = [
-	{
-		wofID: 85_977_539,
-		placetype: "locality",
-		name: "New York City",
-		referential: 0.9,
-		parentChain: [85_688_543, 85_633_793],
-	},
-	{ wofID: 85_688_543, placetype: "region", name: "New York", referential: 0.75, parentChain: [85_633_793] },
-	{
-		wofID: 85_935_903,
-		placetype: "locality",
-		name: "New Orleans",
-		referential: 0.6,
-		parentChain: [85_688_481, 85_633_793],
-	},
-	{
-		wofID: 85_922_583,
-		placetype: "locality",
-		name: "San Francisco",
-		referential: 0.85,
-		parentChain: [102_087_579, 85_633_793],
-	},
-	{
-		wofID: 85_919_487,
-		placetype: "locality",
-		name: "San Jose",
-		referential: 0.5,
-		parentChain: [102_087_579, 85_633_793],
-	},
-	{ wofID: 85_633_793, placetype: "country", name: "United States", referential: 0.99, parentChain: [] },
-]
+import { buildFixtureFST, FIXTURE_FST_PLACES } from "#test-kit/fst-fixture"
 
 let fixtureMatcher: FSTMatcher
 let fixtureBinPath: string
 
 beforeAll(async () => {
-	fixtureMatcher = buildFixtureMatcher(FIXTURE_PLACES)
+	fixtureMatcher = buildFixtureFST(FIXTURE_FST_PLACES)
 
 	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = tempRootPath(`mailwoman-fst-fixture-${Date.now()}.bin`)
@@ -219,35 +126,40 @@ describe("runAutocomplete — disk round-trip", () => {
 })
 
 describe("resolveFSTPath", () => {
-	it("returns the explicit path when given one", () => {
-		expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
+	// A data root with no active selection, so the default is the conventional path under it.
+	const emptyRoot = tempRootPath(`mailwoman-fst-root-${Date.now()}`)
+
+	it("returns the explicit path when given one", async () => {
+		expect(await resolveFSTPath("/explicit/path.bin", emptyRoot)).toBe("/explicit/path.bin")
 	})
 
-	it("falls back to the application data directory when no explicit path and no env var", () => {
+	it("falls back to the application data directory when no explicit path, env var or selection", async () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
-			expect(resolveFSTPath().toString()).toBe(wofDatabasePath("fst-per-locale", "fst-en-us.bin").toString())
+			expect((await resolveFSTPath(undefined, emptyRoot)).toString()).toBe(
+				wofDatabaseRoot(emptyRoot)("fst-per-locale", "fst-en-us.bin").toString()
+			)
 		} finally {
 			vi.unstubAllEnvs()
 		}
 	})
 
-	it("prefers $MAILWOMAN_FST_BIN over the application data directory", () => {
+	it("prefers $MAILWOMAN_FST_BIN over the application data directory", async () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
-			expect(resolveFSTPath()).toBe("/env/path.bin")
+			expect(await resolveFSTPath(undefined, emptyRoot)).toBe("/env/path.bin")
 		} finally {
 			vi.unstubAllEnvs()
 		}
 	})
 
-	it("explicit path takes precedence over env var", () => {
+	it("explicit path takes precedence over env var", async () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
-			expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
+			expect(await resolveFSTPath("/explicit/path.bin", emptyRoot)).toBe("/explicit/path.bin")
 		} finally {
 			vi.unstubAllEnvs()
 		}

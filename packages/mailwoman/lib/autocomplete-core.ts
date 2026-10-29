@@ -6,22 +6,42 @@
  * Framework-free FST autocomplete shared by CLI and library-facing adapters.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
 import { $public } from "#env"
+import { selectedGazetteerFSTPath } from "#geocode/fst-layers"
 
 /**
- * Resolves the FST artifact from an explicit flag, environment, or the application data directory.
+ * The locale whose gazetteer FST autocomplete reads.
+ */
+const AUTOCOMPLETE_LOCALE = "en-US"
+
+/**
+ * Resolves the FST artifact from an explicit flag, then the environment, then the `en-US`
+ * gazetteer FST the active selection lists, then the application data directory.
  *
  * The filename is lowercase on both halves of the locale tag because that is what the
  * builder writes (`gazetteer-pipeline/fst.ts`'s artifact list).
+ *
+ * @throws {@link UnreadableArtifactError} when the selection or the selected FST cannot be read.
  */
-export function resolveFSTPath(explicitPath?: string): PathBuilderLike {
-	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? wofDatabasePath("fst-per-locale", "fst-en-us.bin")
+export async function resolveFSTPath(
+	explicitPath?: string,
+	dataRoot: PathBuilderLike = dataRootPath()
+): Promise<PathBuilderLike> {
+	const pinned = explicitPath ?? $public.MAILWOMAN_FST_BIN
+
+	if (pinned) return pinned
+
+	return (
+		(await selectedGazetteerFSTPath(AUTOCOMPLETE_LOCALE, dataRoot)) ??
+		wofDatabaseRoot(dataRoot)("fst-per-locale", "fst-en-us.bin")
+	)
 }
 
 /**

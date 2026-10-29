@@ -38,6 +38,7 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	situs: "Builds the US rooftop address-point and interpolation databases.",
 	tiger: "Processes US Census TIGER/Line road and boundary data.",
 	tiles: "Publishes vector tiles to the demo map's bucket.",
+	train: "Resolves the training configurations the model trainer reads.",
 	wof: "Prepares and inspects the Who's On First gazetteer source tree.",
 }
 

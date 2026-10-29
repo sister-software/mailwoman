@@ -219,6 +219,10 @@ export async function installFixtureArtifact(
 		entryScope?: SelectionEntry["scope"]
 		locale?: string
 		format?: ArtifactManifest["format"]
+		/**
+		 * The recipe recorded as having built the artifact, `null` by default.
+		 */
+		recipe?: string | null
 	} = {}
 ): Promise<{ entry: SelectionEntry; path: string; installationID: LayerInstallationID }> {
 	const root = dataRoot.toString()
@@ -241,7 +245,7 @@ export async function installFixtureArtifact(
 		observedCountries: null,
 		coverageEvidence: false,
 		sources: [{ publisher: "fixture", release: null, url: null, sha256: null, md5: null }],
-		recipe: null,
+		recipe: options.recipe ?? null,
 		builderSHA: null,
 		license: "CC0-1.0",
 		createdAt: "2026-10-29T00:00:00Z",
