@@ -8,6 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { asPythonFloat } from "@mailwoman/core/strings/python-json"
+import type { PathBuilderLike } from "path-ts"
 import { expect, test } from "vitest"
 
 import {
@@ -19,7 +20,7 @@ import {
 	writePreflightReceipt,
 } from "./receipt.ts"
 
-async function corpus(directory: string, files: Array<{ path: string; sha256?: string }>, indent = 0) {
+async function corpus(directory: PathBuilderLike, files: Array<{ path: string; sha256?: string }>, indent = 0) {
 	const config = `${directory}/config.yaml`
 
 	await writeLocalTextFile("data:\n  corpus_dir: x\n", config)
