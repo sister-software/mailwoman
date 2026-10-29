@@ -33,14 +33,14 @@ import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
-import {
-	createOSMAddressPointIndexes,
-	createOSMAddressPointTables,
-	OSM_ADDRESS_H3_RESOLUTION,
-	OSM_ADDRESS_POINT_COLUMNS,
-	type OSMAddressPointDatabase,
-} from "@mailwoman/osm/address-point-schema"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
+import {
+	createSpineAddressPointIndexes,
+	createSpineAddressPointTables,
+	ADDRESS_POINT_H3_RESOLUTION,
+	SPINE_ADDRESS_POINT_COLUMNS,
+	type SpineAddressPointDatabase,
+} from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -199,14 +199,14 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	}
 
 	{
-		using kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
+		using kdb = new DatabaseClient<SpineAddressPointDatabase>(tmp)
 
 		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-		await createOSMAddressPointTables(kdb)
+		await createSpineAddressPointTables(kdb)
 
 		const insert = kdb.prepare(
-			`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
+			`INSERT INTO address_point VALUES (${SPINE_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
 
 		const BATCH = 50_000
@@ -309,7 +309,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 
 				const locality = localities.get(r["LOCALITY_PID"] ?? "")
 				const [lon, lat] = geo
-				const h3Cell = shortCellToInt(latLngToCell(lat, lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
+				const h3Cell = shortCellToInt(latLngToCell(lat, lon, ADDRESS_POINT_H3_RESOLUTION) as H3Cell)
 
 				insert.run(
 					streetNorm,
@@ -344,7 +344,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 		log(`[gnaf] indexing…`)
 
 		await createAddressPointIndexes(kdb)
-		await createOSMAddressPointIndexes(kdb)
+		await createSpineAddressPointIndexes(kdb)
 
 		await writeLayerManifest(kdb, {
 			name: "gnaf-address-points-au-au",
@@ -358,7 +358,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 			buildCmd: "mailwoman gazetteer build gnaf-rooftop",
 			buildSHA: options.buildSHA,
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
-			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+			spineKeys: { h3: { column: "h3_cell", resolution: ADDRESS_POINT_H3_RESOLUTION } },
 			createdAt: options.createdAt,
 			sourceRecords: null,
 		})

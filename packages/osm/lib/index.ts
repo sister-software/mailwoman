@@ -8,6 +8,5 @@
  *   this package.
  */
 
-export * from "#address-point-schema"
 export * from "#region-database-provider"
 export * from "#street-locale"

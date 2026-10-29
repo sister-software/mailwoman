@@ -18,8 +18,8 @@ import { anchorLookupFromPostcodes } from "@mailwoman/neural/anchor-inference"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import type { OSMAddressPointDatabase } from "@mailwoman/osm/address-point-schema"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import type { SpineAddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -190,7 +190,7 @@ export async function frParseRecall(
 
 	const rows: FRRow[] = args.fromDB
 		? (() => {
-				const db = new DatabaseClient<OSMAddressPointDatabase>(`${dataRootPath()}/osm/address-points-fr-fr.db`, {
+				const db = new DatabaseClient<SpineAddressPointDatabase>(`${dataRootPath()}/osm/address-points-fr-fr.db`, {
 					readOnly: true,
 				})
 
