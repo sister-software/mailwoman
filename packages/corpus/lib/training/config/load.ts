@@ -9,10 +9,12 @@
  *   The merge and coercion reproduce `corpus-python/src/mailwoman_train/config/load.py`. A known key replaces the
  *   default and an unknown key is refused with its dotted path and file. A numeric string converts only under a
  *   field annotated exactly `int` or `float`. The three held-out floor lists are validated with the Python
- *   loader's messages. The resolver then refuses three things the Python loader admits: a non-string
- *   `country_weights` key, which `DataConfig.__post_init__` refuses only at construction and so never sees a
- *   loaded YAML; a value whose type its field does not declare; and a mapping key that a JSON object cannot keep
- *   in its YAML position.
+ *   loader's messages.
+ *
+ *   The resolver then refuses three values the Python loader admits. The first is a non-string
+ *   `country_weights` key. `DataConfig.__post_init__` refuses it only at construction, and a loaded YAML is
+ *   merged after construction. The second is a value whose type its field does not declare. The third is a
+ *   mapping key that a JSON object reader would move out of its YAML position.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -81,7 +83,10 @@ export interface ConfigInstance {
 	values: Map<string, ConfigValue>
 }
 
-export type ConfigValue = PythonValue | ConfigInstance
+/**
+ * A field's value: a YAML value, a nested section, or a floor list's entries.
+ */
+export type ConfigValue = PythonValue | ConfigInstance | ConfigInstance[]
 
 function isInstance(value: ConfigValue | undefined): value is ConfigInstance {
 	return typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Map)
@@ -416,7 +421,7 @@ function coerceField(dst: ConfigInstance, key: string, value: PythonValue, conte
 
 		validateCorpusReceipts(receipts)
 
-		return receipts as unknown as PythonValue
+		return receipts
 	}
 
 	if (isData && key === "required_validation_coverage") {
@@ -424,7 +429,7 @@ function coerceField(dst: ConfigInstance, key: string, value: PythonValue, conte
 
 		validateValidationCoverage(entries)
 
-		return entries as unknown as PythonValue
+		return entries
 	}
 
 	if (isData && key === "required_validation_label_support") {
@@ -432,7 +437,7 @@ function coerceField(dst: ConfigInstance, key: string, value: PythonValue, conte
 
 		validateLabelSupport(floors)
 
-		return floors as unknown as PythonValue
+		return floors
 	}
 
 	if (isData && key === "country_weights" && value instanceof Map) {

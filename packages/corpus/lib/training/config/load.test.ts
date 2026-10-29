@@ -73,7 +73,7 @@ describe("readTrainingConfigText", () => {
 	})
 
 	it("refuses an unknown top-level section", () => {
-		expect(refusal("trian:\n  max_steps: 10\n").message).toContain("trian")
+		expect(refusal("trainer:\n  max_steps: 10\n").message).toContain("Config has no field 'trainer'")
 	})
 
 	it("merges known keys and leaves every other field at its default", () => {
