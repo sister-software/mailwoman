@@ -1,0 +1,15 @@
+{
+	// The build and maintenance root. It compiles to `../out/tools` beside the library's `../out`, and it references
+	// the library project because tooling imports it and the library never imports tooling.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "../out/tools",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [{ "path": ".." }, { "path": "../../core" }]
+}

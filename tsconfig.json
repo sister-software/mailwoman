@@ -123,6 +123,7 @@
 		{ "path": "./packages/map-tui/cli" },
 		{ "path": "./packages/mtf" },
 		{ "path": "./packages/mtf/tools" },
+		{ "path": "./packages/neural/tools" },
 		{ "path": "./packages/mtf/tsconfig.test.json" },
 		{ "path": "./packages/gazetteer" },
 		{ "path": "./packages/gazetteer/tools" },

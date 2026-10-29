@@ -22,6 +22,7 @@ mod error;
 #[cfg(feature = "finders")]
 pub mod finders;
 pub mod gazetteer;
+pub mod label_schema;
 pub mod labels;
 pub mod python_text;
 

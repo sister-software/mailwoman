@@ -15,12 +15,18 @@
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
+		"tools/**/*.ts",
 		"!**/*.test.ts",
 		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
+		"#tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
 		"#postcode": {
 			"types": "./out/postcode.d.ts",
 			"node": "./lib/postcode.ts",
@@ -86,6 +92,11 @@
 			"browser": "./out/onnx/runner/browser.js",
 			"node": "./lib/onnx/runner.ts",
 			"default": "./out/onnx/runner.js"
+		},
+		"./tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
 		},
 		"./*": {
 			"types": "./out/*.d.ts",
