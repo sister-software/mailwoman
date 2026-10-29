@@ -142,6 +142,16 @@ line from the release when the variable was required. This variable has no effec
 [Runtime flags](../reference/runtime-flags.mdx#environment-variables) describes what the variable is
 still used for: pointing at a copy stored elsewhere, or `none` to pin the older backend.
 
+:::note[Unreleased change]
+
+From the release after 10.7.0, `data pull candidate` installs the gazetteer under
+`<data-root>/db/candidate/<sha256>/`, selects it in `<data-root>/active.json`, and prints no `export`
+line. `mailwoman data status` lists the selected file, and the
+[layer installation reference](../../../engineering/reference/layer-installation.mdx) describes the
+layout. A file already at `<data-root>/db/wof/candidate.db` keeps working.
+
+:::
+
 Geocode a US address:
 
 ```bash
