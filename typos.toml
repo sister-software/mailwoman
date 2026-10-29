@@ -207,6 +207,12 @@ adress = "adress"
 universite = "universite"
 # Cantonese romanization in Hong Kong street names (`祐民街 Yau Man Street`).
 yau = "yau"
+# Hong Kong's `Hung Hom` and the retailer `Clas Ohlson` in battery address examples, and the attribution method
+# TRAK and the journal iJIST cited in the 2026-10-28 training report.
+hom = "hom"
+clas = "clas"
+trak = "trak"
+jist = "jist"
 
 [default.extend-identifiers]
 # Standard codes, dependency names, and existing API identifiers retain their spelling.

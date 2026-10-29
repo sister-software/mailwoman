@@ -13,6 +13,15 @@ touches the model. The concepts behind it are documented elsewhere
 [Negative space](../records/site-2026-08/concepts/negative-space-coverage.mdx)). This page lists the
 steps to follow.
 
+[Training diagnosis and explainable decoding](../records/research/2026-10-28-training-diagnosis-and-explainable-decoding.md)
+attributes the October 2026 candidates' mixed results to training-process causes and sets the plan of #2869. Read it
+before comparing two training arms. A comparison uses three instruments from it:
+
+- the comparison battery, `packages/mailwoman/tools/eval-harness/battery/battery.run.ts`;
+- the [label convention](./reference/label-convention.mdx) its rows are scored against;
+- the rule for when a shorter screen run decides, in
+  [`HOLDOUT_AND_EVALUATION.mdx` §7.3](./HOLDOUT_AND_EVALUATION.mdx#73-when-a-screen-run-decides).
+
 ## The iron rules
 
 1. **Build a real-OOD eval before training.** Build (or find) the held-out real-world eval for your
