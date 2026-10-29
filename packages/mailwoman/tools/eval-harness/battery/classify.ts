@@ -10,7 +10,7 @@
  *   1. `word-split`: a predicted span starts or ends between two letters or two digits of one word, as when shipped
  *      reads `კოჯორი` as `კ`, `ო`, `ჯო`, `რი`. The tokenizer or the vocabulary cannot keep the word whole.
  *   2. `designator`: the error involves a unit. An expected unit is missed or split, or the parse holds a unit the
- *      address does not have (`Snorres gate 2` read with unit `gate`, `STE 302` read as street `… 302` with unit `ste`).
+ *      address does not have (`STE 302` read as street `… 302` with unit `ste`).
  *   3. `number-boundary`: the house number or postcode is misread, as a number read as a postcode
  *      (`1130 Babək prospekti`), or a number joined to the street (`Allee 6`).
  *   4. `venue`: the venue is missed, split, or read as another field (`Fito Club` read as locality).
