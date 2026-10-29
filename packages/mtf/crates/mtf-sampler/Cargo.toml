@@ -1,15 +1,37 @@
 [package]
 name = "mtf-sampler"
-description = "Mailwoman's training-row sampler: the CPython-compatible generator the sampler's draws require, and the row and batch streams built on it."
+description = "Mailwoman's training-row sampler: the corpus reader, the source mixture, augmentation and relabeling, the character path, and the row and batch streams built on a CPython-compatible generator."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [dependencies]
-# CPython seeds a generator from a string through the string's SHA-512 digest.
+mtf-core = { path = "../mtf-core" }
+mtf-channels = { path = "../mtf-channels" }
+# CPython seeds a generator from a string through the string's SHA-512 digest, and the loader verifies each corpus
+# file against its manifest's SHA-256.
 sha2 = "0.10"
+serde = { version = "1", features = ["derive"] }
+# `float_roundtrip` parses every decimal to the double Python's `json` produces, so a configured weight is the same
+# double in both languages.
+serde_json = { version = "1", features = ["float_roundtrip"] }
+parquet = { version = "60", default-features = false, features = [
+	"arrow",
+	"snap",
+	"zstd",
+	"lz4",
+	"flate2-zlib-rs",
+	"brotli",
+	"simdutf8",
+] }
+arrow-array = "60"
+arrow-buffer = "60"
+arrow-schema = "60"
+arrow-select = "60"
+# The held-out id sets hold millions of strings and every train row of a filtered file is tested against them while
+# the sources are indexed, so the sets hash with FxHash rather than SipHash.
+rustc-hash = "2"
 
 [dev-dependencies]
-# `float_roundtrip` parses each recorded `random()` value to the exact double CPython printed.
-serde_json = { version = "1", features = ["float_roundtrip"] }
+tempfile = "3"
