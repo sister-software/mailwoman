@@ -54,15 +54,17 @@ from ..train.batch import to_tensor_batch
 #: The version of the record layout. `verify` refuses a record of another version.
 RECORD_FORMAT = 1
 
-#: The tensors every row has, in the order the digest table lists them.
-BASE_TENSORS = ("input_ids", "attention_mask", "labels", "locale_ids", "address_system_ids")
+#: The tensors a row may have, in the order the digest table lists them. `char_ids` is present only on the char path.
+BASE_TENSORS = ("input_ids", "attention_mask", "labels", "locale_ids", "address_system_ids", "char_ids")
 
 #: The channels the loader may emit, in the encoder's block order.
 CHANNELS = ("anchor", "gazetteer", "country", "street_type", "locality_surface", "code_unit")
 
-#: Every `data` field naming a file or directory the encoding reads.
+#: Every `data` field naming a file or directory the encoding reads. The char path reads `char_vocab_path` and no
+#: tokenizer, so `input_hashes` leaves `tokenizer_dir` out when `char_mode` is on.
 INPUT_FIELDS = (
     "tokenizer_dir",
+    "char_vocab_path",
     "anchor_lookup_path",
     "gazetteer_lexicon_path",
     "country_lexicon_path",
@@ -112,6 +114,11 @@ def prepare_config(config_path: Path, overrides: list[str]) -> Config:
     return cfg
 
 
+def char_path(cfg: Config) -> bool:
+    """Whether the config encodes on the char path, which builds no SentencePiece tokenizer."""
+    return getattr(cfg.data, "char_mode", "off") != "off"
+
+
 def _sha256(path: Path) -> str:
     if not path.is_file():
         raise FileNotFoundError(f"encoder parity: requested input {path} is not a readable file")
@@ -124,7 +131,7 @@ def input_hashes(cfg: Config) -> dict[str, dict[str, str]]:
     data = cfg.data
     for attribute in INPUT_FIELDS:
         value = getattr(data, attribute, None)
-        if not value:
+        if not value or (attribute == "tokenizer_dir" and char_path(cfg)):
             continue
         path = Path(value) / "tokenizer.model" if attribute == "tokenizer_dir" else Path(value)
         out[attribute] = {"path": str(path), "sha256": _sha256(path)}
@@ -158,17 +165,19 @@ def _source_revision() -> str:
     return completed.stdout.strip()
 
 
-def runtime() -> dict[str, str]:
-    """The interpreter and library versions an encoding depends on."""
-    import sentencepiece
-
-    return {
+def runtime(cfg: Config) -> dict[str, str]:
+    """The interpreter and library versions an encoding depends on. The char path depends on no SentencePiece."""
+    versions = {
         "python": platform.python_version(),
         "unicode": unicodedata.unidata_version,
         "numpy": np.__version__,
         "torch": torch.__version__,
-        "sentencepiece": sentencepiece.__version__,
     }
+    if not char_path(cfg):
+        import sentencepiece
+
+        versions["sentencepiece"] = sentencepiece.__version__
+    return versions
 
 
 def row_identity(row: dict[str, Any]) -> str:
@@ -186,12 +195,6 @@ def row_identity(row: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(material, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _drop_spans(rows: Iterator[dict[str, Any]]) -> Iterator[dict[str, Any]]:
-    """The sampled rows without their span triple, so the encoder takes the token-label path."""
-    for row in rows:
-        yield {key: value for key, value in row.items() if key not in ("span_starts", "span_ends", "span_tags")}
-
-
 def open_batches(
     cfg: Config,
     *,
@@ -207,18 +210,22 @@ def open_batches(
     from ..data.loader import encode as encode_module
     from ..tokenizer import Tokenizer
 
-    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
-    encoder = encode_module.build_row_encoder(cfg.data, tokenizer)
-    # The sampler `iter_sampled_rows` reads, replaced for the token-label arm by one that drops the span triple.
-    sampler = getattr(encode_module, "iter_rows")  # noqa: B009
-    if drop_spans:
-        setattr(encode_module, "iter_rows", lambda *a, **k: _drop_spans(sampler(*a, **k)))  # noqa: B010
-    try:
-        yield from batch_module.iter_batches(
-            cfg, encoder, split=split, batch_size=batch_size, seed=seed, row_limit=rows, observer=observer
-        )
-    finally:
-        setattr(encode_module, "iter_rows", sampler)  # noqa: B010
+    encoder = (
+        None
+        if char_path(cfg)
+        else encode_module.build_row_encoder(cfg.data, Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model"))
+    )
+    # The token-label arm drops each row's span triple before the astral check, as the sampler's `drop_spans` does.
+    yield from batch_module.iter_batches(
+        cfg,
+        encoder,
+        split=split,
+        batch_size=batch_size,
+        seed=seed,
+        row_limit=rows,
+        observer=observer,
+        drop_spans=drop_spans,
+    )
 
 
 def _tensor_names(batch: dict[str, Any]) -> list[str]:
@@ -305,7 +312,7 @@ def capture(
         "config": {"path": str(config_path), "sha256": _sha256(config_path), "overrides": overrides},
         "config_snapshot": _config_snapshot(cfg),
         "inputs": inputs,
-        "runtime": runtime(),
+        "runtime": runtime(cfg),
         "split": split,
         "seed": seed,
         "requested_rows": rows,

@@ -14,7 +14,6 @@ split contains. This audit asks what the trainer's draw contains. The draw is a 
 from __future__ import annotations
 
 import json
-import random
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
@@ -61,7 +60,7 @@ def count_label_rows(
     bio = resolve_label_set(getattr(cfg.data, "label_set", "stage3")).bio_labels
     rows_with: Counter[str] = Counter()
     total = 0
-    for example in iter_encoded(cfg.data, tokenizer, split=split, rng=random.Random(seed), row_limit=row_limit):
+    for example in iter_encoded(cfg.data, tokenizer, split=split, seed=seed, row_limit=row_limit):
         total += 1
         rows_with.update(head_labels(example.labels, bio))
     return total, rows_with

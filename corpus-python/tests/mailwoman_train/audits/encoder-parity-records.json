@@ -1,10 +1,1434 @@
 {
 	"README": [
-		"The parity records #2870 captured from the Python training encoder, and their verification against the Rust",
-		"encoder. The records themselves, with per-row tensor digests and arrays, are under",
-		"$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/; docs/engineering/reference/training-row-encoder.mdx describes them."
+		"The parity records captured from the Python training loader: nine from the Python encoder (#2870) and six from the",
+		"Python sampler with the Rust encoder (#2874). `verified` is each record's verification against the Rust encoder,",
+		"`verified_rust_sampler` its verification against the Rust sampler. The records themselves, with per-row tensor",
+		"digests and arrays, are under $MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/;",
+		"docs/engineering/reference/training-row-encoder.mdx describes them."
 	],
 	"records": {
+		"aug-grouping-2k": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8.3.0-base-c6-90k-mixed-s42.yaml",
+				"sha256": "f6800e47ec1c27d89e5dc39ec512e0a1bd3470a1cdbe108934b2f515f917f58d",
+				"overrides": [
+					"data.anchor_lookup_path=/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"data.gazetteer_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"data.country_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"data.affix_relabel_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"data.street_type_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"data.locality_surface_lexicon_path=/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"data.augment_grouping_prob=0.05"
+				]
+			},
+			"inputs": {
+				"tokenizer_dir": {
+					"path": "/mnt/mw/models/tokenizer/v0.10.0-c6-isolated-punctuation/tokenizer.model",
+					"sha256": "78fca7a90ea3741aea9f4ae86dd7014303453d65aa92d5d01dd6cc9afff78aa4"
+				},
+				"anchor_lookup_path": {
+					"path": "/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"sha256": "d47bedac5b646d9f2e9317bd4fc8f98a28502aada7eac37d9743a354264d0607"
+				},
+				"gazetteer_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"sha256": "58bae147900d439c6fb95a2710482448c74b10aba6d417defe44a41feac53dc6"
+				},
+				"country_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"sha256": "254e074c9afa2da628e9ebabb4d3486774aebd8591de5c2ecdee8a6f6a567c39"
+				},
+				"street_type_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"sha256": "2f124dd506ecf46c5f39b5669b50dc04687a381ac0233acdfb4312d599463bbe"
+				},
+				"locality_surface_lexicon_path": {
+					"path": "/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"sha256": "a62e21ebffc9616d4a0236c24cebabcb1a7a249174cb53bc965c1fd9f166a1c6"
+				},
+				"affix_relabel_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"sha256": "9f2f26298d1ce1ce57c424fedd5aebcaa60d529735ca8ac741826f6fbcf9a1d3"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130",
+				"sentencepiece": "0.2.2"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 1990,
+			"batch_size": 128,
+			"drop_spans": false,
+			"emitted_rows": 1990,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"anchor_features": {
+					"dtype": "float32",
+					"row_shape": [128, 11]
+				},
+				"anchor_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"gazetteer_features": {
+					"dtype": "float32",
+					"row_shape": [128, 5]
+				},
+				"gazetteer_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"country_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"country_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"street_type_features": {
+					"dtype": "float32",
+					"row_shape": [128, 1]
+				},
+				"street_type_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"locality_surface_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"locality_surface_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				}
+			},
+			"channels": {
+				"anchor": {
+					"rows": 1990,
+					"rows_with_nonzero_feature": 644,
+					"rows_with_nonzero_confidence": 644,
+					"feature_elements": 2801920,
+					"nonzero_feature_elements": 11853,
+					"confidence_elements": 254720,
+					"nonzero_confidence_elements": 3261
+				},
+				"gazetteer": {
+					"rows": 1990,
+					"rows_with_nonzero_feature": 486,
+					"rows_with_nonzero_confidence": 486,
+					"feature_elements": 1273600,
+					"nonzero_feature_elements": 951,
+					"confidence_elements": 254720,
+					"nonzero_confidence_elements": 889
+				},
+				"country": {
+					"rows": 1990,
+					"rows_with_nonzero_feature": 280,
+					"rows_with_nonzero_confidence": 280,
+					"feature_elements": 509440,
+					"nonzero_feature_elements": 643,
+					"confidence_elements": 254720,
+					"nonzero_confidence_elements": 603
+				},
+				"street_type": {
+					"rows": 1990,
+					"rows_with_nonzero_feature": 400,
+					"rows_with_nonzero_confidence": 400,
+					"feature_elements": 254720,
+					"nonzero_feature_elements": 526,
+					"confidence_elements": 254720,
+					"nonzero_confidence_elements": 526
+				},
+				"locality_surface": {
+					"rows": 1990,
+					"rows_with_nonzero_feature": 459,
+					"rows_with_nonzero_confidence": 459,
+					"feature_elements": 509440,
+					"nonzero_feature_elements": 1847,
+					"confidence_elements": 254720,
+					"nonzero_confidence_elements": 1137
+				}
+			},
+			"rows_by_country": {
+				"AE": 3,
+				"AF": 3,
+				"AG": 1,
+				"AM": 2,
+				"AR": 14,
+				"AT": 3,
+				"AU": 50,
+				"AW": 1,
+				"AZ": 1,
+				"BA": 3,
+				"BB": 1,
+				"BD": 19,
+				"BE": 6,
+				"BF": 2,
+				"BG": 1,
+				"BH": 2,
+				"BI": 4,
+				"BJ": 3,
+				"BL": 2,
+				"BM": 2,
+				"BN": 1,
+				"BQ": 1,
+				"BR": 15,
+				"BS": 2,
+				"BT": 4,
+				"BW": 1,
+				"BY": 7,
+				"BZ": 2,
+				"CA": 15,
+				"CF": 6,
+				"CG": 4,
+				"CH": 28,
+				"CI": 1,
+				"CL": 4,
+				"CN": 4,
+				"CO": 2,
+				"CR": 1,
+				"CU": 4,
+				"CV": 1,
+				"CZ": 58,
+				"DE": 45,
+				"DJ": 3,
+				"DK": 6,
+				"DM": 1,
+				"DO": 5,
+				"EC": 7,
+				"EE": 20,
+				"EG": 12,
+				"ER": 3,
+				"ES": 13,
+				"ET": 2,
+				"FI": 4,
+				"FO": 1,
+				"FR": 165,
+				"GB": 133,
+				"GD": 2,
+				"GE": 6,
+				"GF": 2,
+				"GG": 4,
+				"GH": 1,
+				"GL": 1,
+				"GM": 1,
+				"GP": 9,
+				"GR": 3,
+				"GT": 2,
+				"GU": 2,
+				"GW": 1,
+				"HK": 3,
+				"HN": 2,
+				"HR": 35,
+				"HT": 3,
+				"HU": 6,
+				"ID": 19,
+				"IE": 2,
+				"IL": 3,
+				"IM": 1,
+				"IN": 36,
+				"IQ": 2,
+				"IR": 6,
+				"IT": 7,
+				"JM": 3,
+				"JO": 2,
+				"JP": 37,
+				"KG": 2,
+				"KH": 3,
+				"KM": 3,
+				"KN": 1,
+				"KR": 1,
+				"KW": 4,
+				"KZ": 3,
+				"LA": 5,
+				"LB": 4,
+				"LC": 1,
+				"LI": 1,
+				"LK": 4,
+				"LR": 1,
+				"LS": 4,
+				"LT": 1,
+				"LU": 34,
+				"LV": 6,
+				"MA": 3,
+				"MC": 1,
+				"MD": 13,
+				"ME": 2,
+				"MF": 2,
+				"MG": 3,
+				"MK": 1,
+				"ML": 3,
+				"MN": 2,
+				"MO": 2,
+				"MQ": 6,
+				"MS": 1,
+				"MT": 1,
+				"MU": 5,
+				"MV": 2,
+				"MW": 2,
+				"MX": 20,
+				"MY": 7,
+				"MZ": 3,
+				"NC": 2,
+				"NE": 2,
+				"NG": 7,
+				"NL": 105,
+				"NO": 40,
+				"NP": 5,
+				"NZ": 6,
+				"OM": 1,
+				"PA": 1,
+				"PE": 2,
+				"PF": 2,
+				"PG": 4,
+				"PH": 4,
+				"PK": 42,
+				"PL": 5,
+				"PM": 2,
+				"PR": 3,
+				"PT": 42,
+				"QA": 5,
+				"RE": 6,
+				"RO": 12,
+				"RS": 5,
+				"RU": 84,
+				"RW": 5,
+				"SA": 2,
+				"SB": 2,
+				"SC": 2,
+				"SD": 4,
+				"SE": 4,
+				"SG": 26,
+				"SH": 1,
+				"SI": 51,
+				"SK": 62,
+				"SM": 2,
+				"SN": 5,
+				"SO": 1,
+				"SR": 3,
+				"SV": 1,
+				"SX": 1,
+				"SZ": 2,
+				"TH": 4,
+				"TJ": 2,
+				"TM": 3,
+				"TN": 3,
+				"TR": 7,
+				"TT": 6,
+				"TW": 2,
+				"TZ": 3,
+				"UA": 3,
+				"UG": 2,
+				"US": 295,
+				"UY": 5,
+				"UZ": 3,
+				"VC": 1,
+				"VE": 1,
+				"VN": 18,
+				"VU": 1,
+				"YT": 4,
+				"ZA": 2,
+				"ZM": 1,
+				"ZW": 1
+			},
+			"rows_with_spans": 1990,
+			"batches": 16,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 1990,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
+		"aug-grouping-p50-250": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8.3.0-base-c6-90k-mixed-s42.yaml",
+				"sha256": "f6800e47ec1c27d89e5dc39ec512e0a1bd3470a1cdbe108934b2f515f917f58d",
+				"overrides": [
+					"data.anchor_lookup_path=/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"data.gazetteer_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"data.country_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"data.affix_relabel_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"data.street_type_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"data.locality_surface_lexicon_path=/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"data.augment_grouping_prob=0.5"
+				]
+			},
+			"inputs": {
+				"tokenizer_dir": {
+					"path": "/mnt/mw/models/tokenizer/v0.10.0-c6-isolated-punctuation/tokenizer.model",
+					"sha256": "78fca7a90ea3741aea9f4ae86dd7014303453d65aa92d5d01dd6cc9afff78aa4"
+				},
+				"anchor_lookup_path": {
+					"path": "/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"sha256": "d47bedac5b646d9f2e9317bd4fc8f98a28502aada7eac37d9743a354264d0607"
+				},
+				"gazetteer_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"sha256": "58bae147900d439c6fb95a2710482448c74b10aba6d417defe44a41feac53dc6"
+				},
+				"country_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"sha256": "254e074c9afa2da628e9ebabb4d3486774aebd8591de5c2ecdee8a6f6a567c39"
+				},
+				"street_type_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"sha256": "2f124dd506ecf46c5f39b5669b50dc04687a381ac0233acdfb4312d599463bbe"
+				},
+				"locality_surface_lexicon_path": {
+					"path": "/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"sha256": "a62e21ebffc9616d4a0236c24cebabcb1a7a249174cb53bc965c1fd9f166a1c6"
+				},
+				"affix_relabel_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"sha256": "9f2f26298d1ce1ce57c424fedd5aebcaa60d529735ca8ac741826f6fbcf9a1d3"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130",
+				"sentencepiece": "0.2.2"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 250,
+			"batch_size": 128,
+			"drop_spans": false,
+			"emitted_rows": 250,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"anchor_features": {
+					"dtype": "float32",
+					"row_shape": [128, 11]
+				},
+				"anchor_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"gazetteer_features": {
+					"dtype": "float32",
+					"row_shape": [128, 5]
+				},
+				"gazetteer_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"country_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"country_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"street_type_features": {
+					"dtype": "float32",
+					"row_shape": [128, 1]
+				},
+				"street_type_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"locality_surface_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"locality_surface_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				}
+			},
+			"channels": {
+				"anchor": {
+					"rows": 250,
+					"rows_with_nonzero_feature": 88,
+					"rows_with_nonzero_confidence": 88,
+					"feature_elements": 352000,
+					"nonzero_feature_elements": 1610,
+					"confidence_elements": 32000,
+					"nonzero_confidence_elements": 465
+				},
+				"gazetteer": {
+					"rows": 250,
+					"rows_with_nonzero_feature": 64,
+					"rows_with_nonzero_confidence": 64,
+					"feature_elements": 160000,
+					"nonzero_feature_elements": 109,
+					"confidence_elements": 32000,
+					"nonzero_confidence_elements": 103
+				},
+				"country": {
+					"rows": 250,
+					"rows_with_nonzero_feature": 44,
+					"rows_with_nonzero_confidence": 44,
+					"feature_elements": 64000,
+					"nonzero_feature_elements": 75,
+					"confidence_elements": 32000,
+					"nonzero_confidence_elements": 72
+				},
+				"street_type": {
+					"rows": 250,
+					"rows_with_nonzero_feature": 55,
+					"rows_with_nonzero_confidence": 55,
+					"feature_elements": 32000,
+					"nonzero_feature_elements": 63,
+					"confidence_elements": 32000,
+					"nonzero_confidence_elements": 63
+				},
+				"locality_surface": {
+					"rows": 250,
+					"rows_with_nonzero_feature": 62,
+					"rows_with_nonzero_confidence": 62,
+					"feature_elements": 64000,
+					"nonzero_feature_elements": 238,
+					"confidence_elements": 32000,
+					"nonzero_confidence_elements": 130
+				}
+			},
+			"rows_by_country": {
+				"AF": 1,
+				"AR": 5,
+				"AT": 2,
+				"AU": 1,
+				"BA": 1,
+				"BG": 1,
+				"BR": 3,
+				"CA": 3,
+				"CG": 1,
+				"CH": 3,
+				"CN": 1,
+				"CR": 1,
+				"CZ": 12,
+				"DE": 2,
+				"EC": 1,
+				"EE": 1,
+				"ER": 1,
+				"ES": 5,
+				"FR": 21,
+				"GB": 13,
+				"GD": 1,
+				"GE": 1,
+				"HK": 1,
+				"HR": 4,
+				"HU": 1,
+				"IL": 1,
+				"IN": 5,
+				"IQ": 1,
+				"JP": 5,
+				"KH": 1,
+				"KZ": 1,
+				"LA": 1,
+				"LI": 1,
+				"LU": 5,
+				"LV": 2,
+				"MD": 1,
+				"ML": 1,
+				"MN": 1,
+				"MX": 2,
+				"MY": 1,
+				"NA": 1,
+				"NC": 1,
+				"NL": 20,
+				"NO": 7,
+				"NP": 1,
+				"NZ": 1,
+				"PE": 3,
+				"PH": 1,
+				"PK": 7,
+				"PL": 2,
+				"PT": 11,
+				"QA": 2,
+				"RE": 1,
+				"RS": 1,
+				"RU": 8,
+				"RW": 1,
+				"SB": 2,
+				"SG": 4,
+				"SI": 9,
+				"SK": 9,
+				"SV": 2,
+				"SZ": 1,
+				"TH": 1,
+				"TR": 1,
+				"UG": 1,
+				"US": 32,
+				"UY": 2,
+				"ZA": 1,
+				"ZM": 1
+			},
+			"rows_with_spans": 250,
+			"batches": 2,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 250,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
+		"aug-postcode-move-5k": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8.3.0-base-c6-90k-mixed-s42.yaml",
+				"sha256": "f6800e47ec1c27d89e5dc39ec512e0a1bd3470a1cdbe108934b2f515f917f58d",
+				"overrides": [
+					"data.anchor_lookup_path=/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"data.gazetteer_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"data.country_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"data.affix_relabel_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"data.street_type_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"data.locality_surface_lexicon_path=/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"data.augment_postcode_move_prob=0.5"
+				]
+			},
+			"inputs": {
+				"tokenizer_dir": {
+					"path": "/mnt/mw/models/tokenizer/v0.10.0-c6-isolated-punctuation/tokenizer.model",
+					"sha256": "78fca7a90ea3741aea9f4ae86dd7014303453d65aa92d5d01dd6cc9afff78aa4"
+				},
+				"anchor_lookup_path": {
+					"path": "/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"sha256": "d47bedac5b646d9f2e9317bd4fc8f98a28502aada7eac37d9743a354264d0607"
+				},
+				"gazetteer_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"sha256": "58bae147900d439c6fb95a2710482448c74b10aba6d417defe44a41feac53dc6"
+				},
+				"country_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"sha256": "254e074c9afa2da628e9ebabb4d3486774aebd8591de5c2ecdee8a6f6a567c39"
+				},
+				"street_type_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"sha256": "2f124dd506ecf46c5f39b5669b50dc04687a381ac0233acdfb4312d599463bbe"
+				},
+				"locality_surface_lexicon_path": {
+					"path": "/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"sha256": "a62e21ebffc9616d4a0236c24cebabcb1a7a249174cb53bc965c1fd9f166a1c6"
+				},
+				"affix_relabel_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"sha256": "9f2f26298d1ce1ce57c424fedd5aebcaa60d529735ca8ac741826f6fbcf9a1d3"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130",
+				"sentencepiece": "0.2.2"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 5000,
+			"batch_size": 128,
+			"drop_spans": false,
+			"emitted_rows": 4999,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"anchor_features": {
+					"dtype": "float32",
+					"row_shape": [128, 11]
+				},
+				"anchor_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"gazetteer_features": {
+					"dtype": "float32",
+					"row_shape": [128, 5]
+				},
+				"gazetteer_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"country_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"country_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"street_type_features": {
+					"dtype": "float32",
+					"row_shape": [128, 1]
+				},
+				"street_type_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"locality_surface_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"locality_surface_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				}
+			},
+			"channels": {
+				"anchor": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1720,
+					"rows_with_nonzero_confidence": 1720,
+					"feature_elements": 7038592,
+					"nonzero_feature_elements": 31925,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 8760
+				},
+				"gazetteer": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1217,
+					"rows_with_nonzero_confidence": 1217,
+					"feature_elements": 3199360,
+					"nonzero_feature_elements": 2419,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 2181
+				},
+				"country": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 696,
+					"rows_with_nonzero_confidence": 696,
+					"feature_elements": 1279744,
+					"nonzero_feature_elements": 1597,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 1451
+				},
+				"street_type": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 951,
+					"rows_with_nonzero_confidence": 951,
+					"feature_elements": 639872,
+					"nonzero_feature_elements": 1237,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 1237
+				},
+				"locality_surface": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1108,
+					"rows_with_nonzero_confidence": 1108,
+					"feature_elements": 1279744,
+					"nonzero_feature_elements": 4357,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 2669
+				}
+			},
+			"rows_by_country": {
+				"AD": 2,
+				"AE": 13,
+				"AF": 3,
+				"AG": 4,
+				"AL": 2,
+				"AM": 7,
+				"AO": 4,
+				"AR": 49,
+				"AT": 9,
+				"AU": 107,
+				"AW": 2,
+				"AZ": 10,
+				"BA": 10,
+				"BB": 5,
+				"BD": 29,
+				"BE": 20,
+				"BF": 8,
+				"BG": 1,
+				"BH": 6,
+				"BI": 6,
+				"BJ": 5,
+				"BL": 5,
+				"BM": 4,
+				"BN": 3,
+				"BQ": 1,
+				"BR": 41,
+				"BS": 4,
+				"BT": 6,
+				"BW": 6,
+				"BY": 20,
+				"BZ": 3,
+				"CA": 73,
+				"CD": 2,
+				"CF": 9,
+				"CG": 9,
+				"CH": 77,
+				"CI": 2,
+				"CL": 15,
+				"CN": 8,
+				"CO": 13,
+				"CR": 4,
+				"CU": 11,
+				"CV": 4,
+				"CW": 2,
+				"CY": 3,
+				"CZ": 121,
+				"DE": 146,
+				"DJ": 3,
+				"DK": 12,
+				"DM": 4,
+				"DO": 5,
+				"DZ": 8,
+				"EC": 10,
+				"EE": 42,
+				"EG": 28,
+				"ER": 6,
+				"ES": 31,
+				"ET": 9,
+				"FI": 8,
+				"FM": 6,
+				"FO": 3,
+				"FR": 453,
+				"GB": 358,
+				"GD": 4,
+				"GE": 12,
+				"GF": 7,
+				"GG": 7,
+				"GH": 7,
+				"GL": 4,
+				"GM": 5,
+				"GN": 7,
+				"GP": 25,
+				"GR": 11,
+				"GT": 6,
+				"GU": 3,
+				"GW": 5,
+				"HK": 4,
+				"HN": 5,
+				"HR": 75,
+				"HT": 6,
+				"HU": 7,
+				"ID": 52,
+				"IE": 6,
+				"IL": 5,
+				"IM": 2,
+				"IN": 70,
+				"IQ": 6,
+				"IR": 8,
+				"IS": 2,
+				"IT": 27,
+				"JE": 2,
+				"JM": 6,
+				"JO": 12,
+				"JP": 80,
+				"KE": 4,
+				"KG": 8,
+				"KH": 3,
+				"KM": 3,
+				"KN": 4,
+				"KR": 7,
+				"KW": 5,
+				"KY": 1,
+				"KZ": 8,
+				"LA": 7,
+				"LB": 8,
+				"LC": 5,
+				"LI": 3,
+				"LK": 6,
+				"LR": 4,
+				"LS": 4,
+				"LT": 3,
+				"LU": 87,
+				"LV": 22,
+				"MA": 10,
+				"MC": 1,
+				"MD": 28,
+				"ME": 6,
+				"MF": 6,
+				"MG": 5,
+				"MH": 1,
+				"MK": 6,
+				"ML": 3,
+				"MM": 2,
+				"MN": 7,
+				"MO": 3,
+				"MQ": 18,
+				"MS": 4,
+				"MT": 6,
+				"MU": 9,
+				"MV": 3,
+				"MW": 3,
+				"MX": 36,
+				"MY": 14,
+				"MZ": 8,
+				"NA": 3,
+				"NC": 13,
+				"NE": 4,
+				"NG": 19,
+				"NI": 3,
+				"NL": 258,
+				"NO": 100,
+				"NP": 11,
+				"NZ": 11,
+				"OM": 3,
+				"PA": 4,
+				"PE": 7,
+				"PF": 4,
+				"PG": 7,
+				"PH": 12,
+				"PK": 84,
+				"PL": 16,
+				"PM": 3,
+				"PR": 3,
+				"PT": 114,
+				"PY": 1,
+				"QA": 6,
+				"RE": 25,
+				"RO": 38,
+				"RS": 20,
+				"RU": 193,
+				"RW": 6,
+				"SA": 4,
+				"SB": 6,
+				"SC": 5,
+				"SD": 7,
+				"SE": 8,
+				"SG": 59,
+				"SH": 1,
+				"SI": 166,
+				"SK": 140,
+				"SM": 3,
+				"SN": 5,
+				"SO": 3,
+				"SR": 7,
+				"SV": 7,
+				"SX": 4,
+				"SZ": 2,
+				"TH": 12,
+				"TJ": 8,
+				"TM": 5,
+				"TN": 6,
+				"TR": 8,
+				"TT": 4,
+				"TW": 3,
+				"TZ": 10,
+				"UA": 10,
+				"UG": 4,
+				"US": 717,
+				"UY": 13,
+				"UZ": 5,
+				"VE": 4,
+				"VG": 2,
+				"VI": 1,
+				"VN": 36,
+				"VU": 3,
+				"WF": 1,
+				"YT": 10,
+				"ZA": 6,
+				"ZM": 4,
+				"ZW": 3
+			},
+			"rows_with_spans": 4999,
+			"batches": 40,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
+		"aug-splice-5k": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8.3.0-base-c6-90k-mixed-s42.yaml",
+				"sha256": "f6800e47ec1c27d89e5dc39ec512e0a1bd3470a1cdbe108934b2f515f917f58d",
+				"overrides": [
+					"data.anchor_lookup_path=/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"data.gazetteer_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"data.country_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"data.affix_relabel_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"data.street_type_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"data.locality_surface_lexicon_path=/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"data.augment_case_prob=0.3",
+					"data.augment_upper_case_prob=0.3"
+				]
+			},
+			"inputs": {
+				"tokenizer_dir": {
+					"path": "/mnt/mw/models/tokenizer/v0.10.0-c6-isolated-punctuation/tokenizer.model",
+					"sha256": "78fca7a90ea3741aea9f4ae86dd7014303453d65aa92d5d01dd6cc9afff78aa4"
+				},
+				"anchor_lookup_path": {
+					"path": "/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"sha256": "d47bedac5b646d9f2e9317bd4fc8f98a28502aada7eac37d9743a354264d0607"
+				},
+				"gazetteer_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"sha256": "58bae147900d439c6fb95a2710482448c74b10aba6d417defe44a41feac53dc6"
+				},
+				"country_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"sha256": "254e074c9afa2da628e9ebabb4d3486774aebd8591de5c2ecdee8a6f6a567c39"
+				},
+				"street_type_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"sha256": "2f124dd506ecf46c5f39b5669b50dc04687a381ac0233acdfb4312d599463bbe"
+				},
+				"locality_surface_lexicon_path": {
+					"path": "/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"sha256": "a62e21ebffc9616d4a0236c24cebabcb1a7a249174cb53bc965c1fd9f166a1c6"
+				},
+				"affix_relabel_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"sha256": "9f2f26298d1ce1ce57c424fedd5aebcaa60d529735ca8ac741826f6fbcf9a1d3"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130",
+				"sentencepiece": "0.2.2"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 5000,
+			"batch_size": 128,
+			"drop_spans": false,
+			"emitted_rows": 4999,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"anchor_features": {
+					"dtype": "float32",
+					"row_shape": [128, 11]
+				},
+				"anchor_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"gazetteer_features": {
+					"dtype": "float32",
+					"row_shape": [128, 5]
+				},
+				"gazetteer_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"country_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"country_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"street_type_features": {
+					"dtype": "float32",
+					"row_shape": [128, 1]
+				},
+				"street_type_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"locality_surface_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"locality_surface_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				}
+			},
+			"channels": {
+				"anchor": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1579,
+					"rows_with_nonzero_confidence": 1579,
+					"feature_elements": 7038592,
+					"nonzero_feature_elements": 29368,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 8071
+				},
+				"gazetteer": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1116,
+					"rows_with_nonzero_confidence": 1116,
+					"feature_elements": 3199360,
+					"nonzero_feature_elements": 2314,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 2078
+				},
+				"country": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 668,
+					"rows_with_nonzero_confidence": 668,
+					"feature_elements": 1279744,
+					"nonzero_feature_elements": 1561,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 1426
+				},
+				"street_type": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1136,
+					"rows_with_nonzero_confidence": 1136,
+					"feature_elements": 639872,
+					"nonzero_feature_elements": 1453,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 1453
+				},
+				"locality_surface": {
+					"rows": 4999,
+					"rows_with_nonzero_feature": 1079,
+					"rows_with_nonzero_confidence": 1079,
+					"feature_elements": 1279744,
+					"nonzero_feature_elements": 4354,
+					"confidence_elements": 639872,
+					"nonzero_confidence_elements": 2735
+				}
+			},
+			"rows_by_country": {
+				"AE": 7,
+				"AF": 4,
+				"AG": 3,
+				"AI": 1,
+				"AL": 4,
+				"AM": 6,
+				"AO": 1,
+				"AR": 35,
+				"AS": 1,
+				"AT": 11,
+				"AU": 138,
+				"AW": 4,
+				"AX": 1,
+				"AZ": 5,
+				"BA": 5,
+				"BB": 5,
+				"BD": 29,
+				"BE": 17,
+				"BF": 4,
+				"BG": 3,
+				"BH": 5,
+				"BI": 1,
+				"BJ": 4,
+				"BL": 5,
+				"BM": 1,
+				"BN": 5,
+				"BQ": 1,
+				"BR": 41,
+				"BS": 4,
+				"BT": 4,
+				"BW": 5,
+				"BY": 15,
+				"BZ": 1,
+				"CA": 57,
+				"CD": 5,
+				"CF": 7,
+				"CG": 5,
+				"CH": 97,
+				"CL": 19,
+				"CN": 8,
+				"CO": 10,
+				"CR": 5,
+				"CU": 6,
+				"CV": 4,
+				"CW": 5,
+				"CY": 3,
+				"CZ": 221,
+				"DE": 95,
+				"DJ": 4,
+				"DK": 9,
+				"DM": 4,
+				"DO": 4,
+				"DZ": 5,
+				"EC": 9,
+				"EE": 37,
+				"EG": 19,
+				"ER": 5,
+				"ES": 40,
+				"ET": 7,
+				"FI": 6,
+				"FM": 4,
+				"FO": 3,
+				"FR": 565,
+				"GB": 351,
+				"GD": 3,
+				"GE": 11,
+				"GF": 14,
+				"GG": 5,
+				"GH": 6,
+				"GL": 5,
+				"GN": 3,
+				"GP": 19,
+				"GR": 8,
+				"GT": 7,
+				"GW": 3,
+				"HK": 8,
+				"HN": 5,
+				"HR": 73,
+				"HT": 5,
+				"HU": 4,
+				"ID": 56,
+				"IE": 9,
+				"IL": 4,
+				"IM": 1,
+				"IN": 101,
+				"IQ": 6,
+				"IR": 9,
+				"IS": 1,
+				"IT": 31,
+				"JE": 1,
+				"JM": 6,
+				"JO": 5,
+				"JP": 81,
+				"KE": 3,
+				"KG": 6,
+				"KH": 5,
+				"KM": 1,
+				"KN": 5,
+				"KR": 5,
+				"KW": 6,
+				"KZ": 16,
+				"LA": 3,
+				"LB": 6,
+				"LC": 4,
+				"LI": 3,
+				"LK": 6,
+				"LR": 5,
+				"LS": 6,
+				"LT": 1,
+				"LU": 97,
+				"LV": 21,
+				"MA": 5,
+				"MC": 2,
+				"MD": 23,
+				"ME": 6,
+				"MF": 3,
+				"MG": 6,
+				"MK": 7,
+				"ML": 5,
+				"MM": 5,
+				"MN": 3,
+				"MO": 1,
+				"MQ": 9,
+				"MS": 1,
+				"MT": 4,
+				"MU": 4,
+				"MV": 1,
+				"MW": 4,
+				"MX": 36,
+				"MY": 10,
+				"MZ": 5,
+				"NA": 5,
+				"NC": 9,
+				"NE": 4,
+				"NG": 10,
+				"NI": 1,
+				"NL": 256,
+				"NO": 123,
+				"NP": 11,
+				"NZ": 19,
+				"OM": 5,
+				"PA": 3,
+				"PE": 3,
+				"PF": 18,
+				"PG": 7,
+				"PH": 10,
+				"PK": 97,
+				"PL": 13,
+				"PM": 3,
+				"PR": 2,
+				"PT": 96,
+				"PY": 4,
+				"QA": 7,
+				"RE": 15,
+				"RO": 30,
+				"RS": 27,
+				"RU": 170,
+				"RW": 6,
+				"SA": 4,
+				"SB": 5,
+				"SC": 4,
+				"SD": 2,
+				"SE": 7,
+				"SG": 68,
+				"SH": 2,
+				"SI": 178,
+				"SK": 105,
+				"SM": 4,
+				"SN": 5,
+				"SO": 3,
+				"SR": 5,
+				"ST": 2,
+				"SV": 6,
+				"SX": 4,
+				"SZ": 2,
+				"TH": 6,
+				"TJ": 5,
+				"TM": 9,
+				"TN": 2,
+				"TO": 1,
+				"TR": 4,
+				"TT": 10,
+				"TW": 3,
+				"TZ": 7,
+				"UA": 6,
+				"UG": 5,
+				"US": 650,
+				"UY": 14,
+				"UZ": 9,
+				"VA": 3,
+				"VC": 1,
+				"VE": 4,
+				"VI": 2,
+				"VN": 44,
+				"VU": 4,
+				"WF": 1,
+				"YT": 11,
+				"ZA": 6,
+				"ZM": 5,
+				"ZW": 3
+			},
+			"rows_with_spans": 4999,
+			"batches": 40,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
 		"c6-channel-free-5k": {
 			"format": 1,
 			"source_revision": "1115bbe3fc36e2ab89d6723792427c5aa451bbf0",
@@ -311,6 +1735,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-gold-spans-5k": {
@@ -766,6 +2198,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-gold-tokens-5k": {
@@ -1221,6 +2661,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 5000,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-max-length-16-5k": {
@@ -1676,6 +3124,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-no-choreography-5k": {
@@ -2131,6 +3587,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 4999,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-train-2k": {
@@ -2560,6 +4024,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 2000,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-train-50k": {
@@ -3025,6 +4497,14 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 49989,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"c6-val-36864": {
@@ -3438,6 +4918,96 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 31951,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
+		"char-v8-cjk-regs-5k": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8-cjk-regs.yaml",
+				"sha256": "7a43e88bd442323e2e2876a114a29c5943cb7ab9e7a884686833d53f493e5448",
+				"overrides": ["data.corpus_dir=/mnt/mw/audits/port-parity/corpora/v8-cjk-regs-2026-09-08-sealed"]
+			},
+			"inputs": {
+				"char_vocab_path": {
+					"path": "/mnt/mw/corpus/versioned/v8-cjk-regs-2026-09-08/char-vocab-cjk.json",
+					"sha256": "73e051035c351aa9829f28220573d21368fc93244ad5316da218de3531ca0941"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/audits/port-parity/corpora/v8-cjk-regs-2026-09-08-sealed/MANIFEST.json",
+					"sha256": "b44b9841c858938794ac1146b15e5dd6cf735864abd1d0cbf33618e796814151"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 5000,
+			"batch_size": 256,
+			"drop_spans": false,
+			"emitted_rows": 5000,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [96]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [96]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [96]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"char_ids": {
+					"dtype": "int64",
+					"row_shape": [96, 7]
+				}
+			},
+			"channels": {},
+			"rows_by_country": {
+				"CN": 99,
+				"JP": 2097,
+				"KR": 1439,
+				"TW": 1365
+			},
+			"rows_with_spans": 5000,
+			"batches": 20,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 5000,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		},
 		"code-unit-train-5k": {
@@ -3821,6 +5391,412 @@
 						"differing_rows": 0
 					}
 				}
+			},
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 5000,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
+			}
+		},
+		"relabel-5k": {
+			"format": 1,
+			"source_revision": "553606715e2a107ab27fe0e6f17923d5faf5145e",
+			"config": {
+				"file": "v8.3.0-base-c6-90k-mixed-s42.yaml",
+				"sha256": "f6800e47ec1c27d89e5dc39ec512e0a1bd3470a1cdbe108934b2f515f917f58d",
+				"overrides": [
+					"data.anchor_lookup_path=/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"data.gazetteer_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"data.country_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"data.affix_relabel_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"data.street_type_lexicon_path=/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"data.locality_surface_lexicon_path=/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"data.augment_directional_prob=0.0",
+					"data.augment_region_prob=0.0",
+					"data.augment_glue_prob=0.0",
+					"data.augment_ordinal_prob=0.0",
+					"data.augment_punct_drop_prob=0.0"
+				]
+			},
+			"inputs": {
+				"tokenizer_dir": {
+					"path": "/mnt/mw/models/tokenizer/v0.10.0-c6-isolated-punctuation/tokenizer.model",
+					"sha256": "78fca7a90ea3741aea9f4ae86dd7014303453d65aa92d5d01dd6cc9afff78aa4"
+				},
+				"anchor_lookup_path": {
+					"path": "/mnt/mw/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json",
+					"sha256": "d47bedac5b646d9f2e9317bd4fc8f98a28502aada7eac37d9743a354264d0607"
+				},
+				"gazetteer_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/anchor-lexicon-v1.json",
+					"sha256": "58bae147900d439c6fb95a2710482448c74b10aba6d417defe44a41feac53dc6"
+				},
+				"country_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/country-surface-lexicon-v1.json",
+					"sha256": "254e074c9afa2da628e9ebabb4d3486774aebd8591de5c2ecdee8a6f6a567c39"
+				},
+				"street_type_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/street-type-lexicon-v3.json",
+					"sha256": "2f124dd506ecf46c5f39b5669b50dc04687a381ac0233acdfb4312d599463bbe"
+				},
+				"locality_surface_lexicon_path": {
+					"path": "/mnt/mw/gazetteer/locality-surface-lexicon-v7.json",
+					"sha256": "a62e21ebffc9616d4a0236c24cebabcb1a7a249174cb53bc965c1fd9f166a1c6"
+				},
+				"affix_relabel_lexicon_path": {
+					"path": "/home/lab/Projects/mailwoman/data/gazetteer/affix-relabel-lexicon-v2.json",
+					"sha256": "9f2f26298d1ce1ce57c424fedd5aebcaa60d529735ca8ac741826f6fbcf9a1d3"
+				},
+				"features/postcode-shapes.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/features/postcode-shapes.json",
+					"sha256": "54a755345ba6287ccb930f9d6bb2fb6df8a8d30abd9d4d8a194185a7ba941cea"
+				},
+				"data/postcode-syntax.json": {
+					"path": "/home/lab/Projects/mailwoman/.claude/worktrees/agent-a7bd38d0a898c30fb/corpus-python/src/mailwoman_train/data/postcode-syntax.json",
+					"sha256": "342bdf53479b303d1d274ca7e71b6283b8b3f55307be6bfd0478d8c8e467a700"
+				},
+				"corpus_manifest": {
+					"path": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d"
+				}
+			},
+			"runtime": {
+				"python": "3.12.3",
+				"unicode": "15.0.0",
+				"numpy": "2.5.3",
+				"torch": "2.12.0+cu130",
+				"sentencepiece": "0.2.2"
+			},
+			"split": "train",
+			"seed": 43,
+			"requested_rows": 5000,
+			"batch_size": 128,
+			"drop_spans": false,
+			"emitted_rows": 5000,
+			"tensors": {
+				"input_ids": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"attention_mask": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"labels": {
+					"dtype": "int64",
+					"row_shape": [128]
+				},
+				"locale_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"address_system_ids": {
+					"dtype": "int64",
+					"row_shape": []
+				},
+				"anchor_features": {
+					"dtype": "float32",
+					"row_shape": [128, 11]
+				},
+				"anchor_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"gazetteer_features": {
+					"dtype": "float32",
+					"row_shape": [128, 5]
+				},
+				"gazetteer_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"country_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"country_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"street_type_features": {
+					"dtype": "float32",
+					"row_shape": [128, 1]
+				},
+				"street_type_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				},
+				"locality_surface_features": {
+					"dtype": "float32",
+					"row_shape": [128, 2]
+				},
+				"locality_surface_confidence": {
+					"dtype": "float32",
+					"row_shape": [128]
+				}
+			},
+			"channels": {
+				"anchor": {
+					"rows": 5000,
+					"rows_with_nonzero_feature": 1573,
+					"rows_with_nonzero_confidence": 1573,
+					"feature_elements": 7040000,
+					"nonzero_feature_elements": 29023,
+					"confidence_elements": 640000,
+					"nonzero_confidence_elements": 7971
+				},
+				"gazetteer": {
+					"rows": 5000,
+					"rows_with_nonzero_feature": 1218,
+					"rows_with_nonzero_confidence": 1218,
+					"feature_elements": 3200000,
+					"nonzero_feature_elements": 2544,
+					"confidence_elements": 640000,
+					"nonzero_confidence_elements": 2410
+				},
+				"country": {
+					"rows": 5000,
+					"rows_with_nonzero_feature": 802,
+					"rows_with_nonzero_confidence": 802,
+					"feature_elements": 1280000,
+					"nonzero_feature_elements": 1906,
+					"confidence_elements": 640000,
+					"nonzero_confidence_elements": 1813
+				},
+				"street_type": {
+					"rows": 5000,
+					"rows_with_nonzero_feature": 948,
+					"rows_with_nonzero_confidence": 948,
+					"feature_elements": 640000,
+					"nonzero_feature_elements": 1175,
+					"confidence_elements": 640000,
+					"nonzero_confidence_elements": 1175
+				},
+				"locality_surface": {
+					"rows": 5000,
+					"rows_with_nonzero_feature": 1102,
+					"rows_with_nonzero_confidence": 1102,
+					"feature_elements": 1280000,
+					"nonzero_feature_elements": 4475,
+					"confidence_elements": 640000,
+					"nonzero_confidence_elements": 2747
+				}
+			},
+			"rows_by_country": {
+				"AD": 1,
+				"AE": 13,
+				"AF": 5,
+				"AG": 5,
+				"AI": 1,
+				"AL": 4,
+				"AM": 10,
+				"AO": 7,
+				"AR": 38,
+				"AT": 7,
+				"AU": 100,
+				"AW": 4,
+				"AX": 3,
+				"AZ": 10,
+				"BA": 11,
+				"BB": 4,
+				"BD": 20,
+				"BE": 11,
+				"BF": 11,
+				"BG": 5,
+				"BH": 4,
+				"BI": 8,
+				"BJ": 10,
+				"BL": 2,
+				"BM": 2,
+				"BN": 4,
+				"BQ": 2,
+				"BR": 25,
+				"BS": 6,
+				"BT": 10,
+				"BW": 4,
+				"BY": 18,
+				"BZ": 10,
+				"CA": 50,
+				"CD": 4,
+				"CF": 7,
+				"CG": 8,
+				"CH": 73,
+				"CI": 8,
+				"CL": 14,
+				"CN": 10,
+				"CO": 8,
+				"CR": 10,
+				"CU": 5,
+				"CV": 6,
+				"CW": 1,
+				"CY": 6,
+				"CZ": 135,
+				"DE": 106,
+				"DJ": 6,
+				"DK": 12,
+				"DM": 5,
+				"DO": 9,
+				"DZ": 7,
+				"EC": 7,
+				"EE": 35,
+				"EG": 27,
+				"ER": 4,
+				"ES": 41,
+				"ET": 13,
+				"FI": 15,
+				"FM": 1,
+				"FO": 3,
+				"FR": 490,
+				"GB": 365,
+				"GD": 7,
+				"GE": 12,
+				"GF": 14,
+				"GG": 10,
+				"GH": 11,
+				"GL": 4,
+				"GM": 7,
+				"GN": 5,
+				"GP": 23,
+				"GR": 8,
+				"GT": 9,
+				"GU": 1,
+				"GW": 4,
+				"HK": 1,
+				"HN": 5,
+				"HR": 64,
+				"HT": 7,
+				"HU": 11,
+				"ID": 44,
+				"IE": 9,
+				"IL": 6,
+				"IM": 8,
+				"IN": 67,
+				"IQ": 14,
+				"IR": 10,
+				"IT": 24,
+				"JM": 7,
+				"JO": 5,
+				"JP": 109,
+				"KE": 6,
+				"KG": 4,
+				"KH": 7,
+				"KM": 2,
+				"KN": 2,
+				"KR": 4,
+				"KW": 7,
+				"KY": 1,
+				"KZ": 13,
+				"LA": 8,
+				"LB": 13,
+				"LC": 2,
+				"LI": 2,
+				"LK": 5,
+				"LR": 6,
+				"LS": 6,
+				"LT": 6,
+				"LU": 78,
+				"LV": 29,
+				"MA": 10,
+				"MC": 1,
+				"MD": 23,
+				"ME": 7,
+				"MF": 6,
+				"MG": 11,
+				"MK": 6,
+				"ML": 7,
+				"MM": 5,
+				"MN": 7,
+				"MO": 3,
+				"MQ": 10,
+				"MS": 1,
+				"MT": 8,
+				"MU": 9,
+				"MV": 4,
+				"MW": 1,
+				"MX": 37,
+				"MY": 15,
+				"MZ": 8,
+				"NA": 4,
+				"NC": 13,
+				"NE": 6,
+				"NG": 21,
+				"NI": 4,
+				"NL": 299,
+				"NO": 135,
+				"NP": 10,
+				"NZ": 22,
+				"OM": 7,
+				"PA": 4,
+				"PE": 16,
+				"PF": 5,
+				"PG": 8,
+				"PH": 9,
+				"PK": 80,
+				"PL": 18,
+				"PM": 6,
+				"PR": 4,
+				"PT": 91,
+				"PY": 3,
+				"QA": 6,
+				"RE": 25,
+				"RO": 21,
+				"RS": 21,
+				"RU": 181,
+				"RW": 9,
+				"SA": 10,
+				"SB": 5,
+				"SC": 2,
+				"SD": 5,
+				"SE": 7,
+				"SG": 60,
+				"SH": 2,
+				"SI": 143,
+				"SK": 114,
+				"SM": 7,
+				"SN": 10,
+				"SO": 1,
+				"SR": 11,
+				"ST": 3,
+				"SV": 7,
+				"SX": 7,
+				"SZ": 5,
+				"TC": 1,
+				"TH": 8,
+				"TJ": 10,
+				"TM": 8,
+				"TN": 9,
+				"TR": 12,
+				"TT": 17,
+				"TW": 5,
+				"TZ": 13,
+				"UA": 11,
+				"UG": 9,
+				"US": 607,
+				"UY": 20,
+				"UZ": 12,
+				"VA": 2,
+				"VC": 5,
+				"VE": 3,
+				"VI": 3,
+				"VN": 31,
+				"VU": 6,
+				"YT": 5,
+				"ZA": 9,
+				"ZM": 8,
+				"ZW": 7
+			},
+			"rows_with_spans": 5000,
+			"batches": 40,
+			"verified_rust_sampler": {
+				"equal": true,
+				"emitted_rows": 5000,
+				"differing_rows": 0,
+				"structural": [],
+				"changed_inputs": [],
+				"first_mismatch": null
 			}
 		}
 	}

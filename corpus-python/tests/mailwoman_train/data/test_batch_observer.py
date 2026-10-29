@@ -1,21 +1,19 @@
 """The batch observer sees a batch's rows only after the consumer has asked for the next batch.
 
-`iter_batches` hands each batch of sampled rows to the row encoder. These tests replace the sampler with a fixed row
-list and the encoder with one that records the rows it was given, so the order of encoder calls, yielded batches and
-observer events can be asserted together, along with the row-limit, final partial batch, epoch restart and resume
-behavior the training loop relies on.
+`iter_batches` hands each batch of sampled rows to the row encoder. These tests replace the Rust sampler with a fixed
+row list and the encoder with one that records the rows it was given, so the order of encoder calls, yielded batches
+and observer events can be asserted together, along with the row-limit and final partial batch behavior the training
+loop relies on. The `seed + epoch` reopening, the resume skip and the empty-epoch refusal belong to the Rust stream and
+are tested in `packages/mtf/crates/mtf-sampler/tests/sampler_stream.rs`.
 """
 
 from __future__ import annotations
 
-import itertools
-import random
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
 
 import numpy as np
-import pytest
 
 from mailwoman_train.data.loader import batch as batch_module
 from mailwoman_train.labels import locale_id
@@ -37,20 +35,30 @@ class RecordingEncoder:
         return {"input_ids": ids, "attention_mask": np.ones_like(ids), "labels": np.zeros_like(ids)}
 
 
-def sampled(rows: list[dict[str, Any]]) -> Any:
-    """A stand-in for `iter_sampled_rows` that honors the row limit."""
+def sampler(rows: list[dict[str, Any]]) -> Any:
+    """A stand-in for `mailwoman_mtf.Sampler` over `rows` that honors the row limit."""
 
-    def fake(_cfg: Any, _split: str, *, rng: random.Random, row_limit: int | None = None, observer: Any = None) -> Any:
-        for i, row in enumerate(rows):
-            if row_limit is not None and i >= row_limit:
-                return
-            yield row
+    class FakeSampler:
+        def __init__(self, _config: str, _split: str, _seed: int, row_limit: int | None = None) -> None:
+            self.rows = list(rows if row_limit is None else rows[:row_limit])
 
-    return fake
+        def next_rows(self, count: int) -> list[dict[str, Any]]:
+            batch, self.rows = self.rows[:count], self.rows[count:]
+            return batch
+
+    return FakeSampler
 
 
 def config() -> Any:
     return SimpleNamespace(data=SimpleNamespace(char_mode="off", label_set="stage3"))
+
+
+def patched(rows: list[dict[str, Any]]) -> Any:
+    return mock.patch.multiple(
+        batch_module,
+        sampler_config=lambda *_a, **_k: "{}",
+        mailwoman_mtf=SimpleNamespace(Sampler=sampler(rows), CHANNEL_NAMES=[]),
+    )
 
 
 def run(events: Events, *, batch_size: int, row_limit: int | None = None, seed: int = 0) -> Any:
@@ -75,7 +83,7 @@ def observed(events: Events) -> list[str]:
 
 def test_an_abandoned_batch_is_never_observed() -> None:
     events: Events = []
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(ROWS)):
+    with patched(ROWS):
         stream = run(events, batch_size=2)
         assert ids(next(stream)) == [0, 1]
         assert events == [("encode", ["0 Main St", "1 Main St"])]
@@ -91,7 +99,7 @@ def test_an_abandoned_batch_is_never_observed() -> None:
 
 def test_the_final_partial_batch_is_yielded_and_observed_once_the_stream_ends() -> None:
     events: Events = []
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(ROWS)):
+    with patched(ROWS):
         assert [ids(b) for b in run(events, batch_size=2)] == [[0, 1], [2, 3], [4]]
     assert observed(events) == [row["raw"] for row in ROWS]
     assert events[-2:] == [("encode", ["4 Main St"]), ("observe", ["4 Main St"])]
@@ -99,67 +107,14 @@ def test_the_final_partial_batch_is_yielded_and_observed_once_the_stream_ends() 
 
 def test_the_row_limit_bounds_the_rows_encoded() -> None:
     events: Events = []
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(ROWS)):
+    with patched(ROWS):
         assert [ids(b) for b in run(events, batch_size=2, row_limit=3)] == [[0, 1], [2]]
     assert sum(len(e[1]) for e in events if e[0] == "encode") == 3
 
 
 def test_locale_ids_follow_row_order() -> None:
     rows = [{"raw": "1 rue de Rivoli", "country": "FR"}, {"raw": "2 Main St", "country": "US"}]
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(rows)):
+    with patched(rows):
         batch = next(run([], batch_size=2))
     assert batch["locale_ids"] == [locale_id("FR"), locale_id("US")]
     assert len(batch["address_system_ids"]) == 2
-
-
-def seeded(_cfg: Any, _split: str, *, rng: random.Random, row_limit: int | None = None, observer: Any = None) -> Any:
-    """A stand-in for `iter_sampled_rows` whose row order depends on the generator it is given."""
-    order = list(range(len(ROWS)))
-    rng.shuffle(order)
-    for i in order:
-        yield ROWS[i]
-
-
-def training_stream(events: Events, *, skip_batches: int, batch_size: int = 2) -> Any:
-    return batch_module.iter_training_batches(
-        config(),
-        RecordingEncoder(events),  # type: ignore[arg-type]
-        batch_size=batch_size,
-        seed=42,
-        skip_batches=skip_batches,
-        observer=lambda row: events.append(("observe", [row["raw"]])),
-    )
-
-
-def test_each_epoch_reopens_the_stream_with_seed_plus_epoch() -> None:
-    with mock.patch.object(batch_module, "iter_sampled_rows", seeded):
-        stream = training_stream([], skip_batches=0, batch_size=len(ROWS))
-        first, second = ids(next(stream)), ids(next(stream))
-        assert first == ids(next(run([], batch_size=len(ROWS), seed=43)))
-        assert second == ids(next(run([], batch_size=len(ROWS), seed=44)))
-    assert first != second
-    assert sorted(first) == sorted(second) == list(range(len(ROWS)))
-
-
-def test_a_resumed_stream_continues_with_the_batch_an_uninterrupted_stream_reads_next() -> None:
-    """Five rows in batches of two make three batches per epoch, so the skips cross epoch boundaries."""
-    with mock.patch.object(batch_module, "iter_sampled_rows", seeded):
-        uninterrupted = [ids(b) for b in itertools.islice(training_stream([], skip_batches=0), 14)]
-        for consumed in range(8):
-            resumed = [ids(b) for b in itertools.islice(training_stream([], skip_batches=consumed), 6)]
-            assert resumed == uninterrupted[consumed : consumed + 6], consumed
-
-
-def test_skipped_batches_are_neither_encoded_nor_observed() -> None:
-    events: Events = []
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(ROWS)):
-        stream = training_stream(events, skip_batches=2)
-        assert ids(next(stream)) == [4]
-        assert events == [("encode", ["4 Main St"])]
-
-
-def test_a_train_split_without_rows_raises_rather_than_looping() -> None:
-    with mock.patch.object(batch_module, "iter_sampled_rows", sampled([])):
-        stream = training_stream([], skip_batches=0)
-        with pytest.raises(ValueError, match="yielded no rows in epoch 1"):
-            next(stream)

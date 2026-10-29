@@ -28,6 +28,8 @@ cache-keys = [
 	{ file = "../mtf-core/src/**/*.rs" },
 	{ file = "../mtf-channels/Cargo.toml" },
 	{ file = "../mtf-channels/src/**/*.rs" },
+	{ file = "../mtf-sampler/Cargo.toml" },
+	{ file = "../mtf-sampler/src/**/*.rs" },
 	{ file = "../../Cargo.toml" },
 	{ file = "../../Cargo.lock" },
 ]

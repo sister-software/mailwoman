@@ -1,51 +1,22 @@
-"""Stream parquet rows into encoded tensors for Phase 2 training.
+"""Stream sampled corpus rows into encoded tensors for training.
 
-Reads ``corpus-v0.1.0`` parquet files with PyArrow's lazy, memory-stable row-group iterator.
-Filters and weights rows according to the YAML config. Encodes each batch of rows through the Rust row
-encoder (`mailwoman_mtf.RowEncoder`), which tokenizes them, projects the BIO labels and paints the channels.
-Yields ``(input_ids, attention_mask, labels)`` arrays and the configured channels in a batched shape.
+The trainer's rows come from the Rust sampler in `packages/mtf/crates/mtf-sampler`, through `mailwoman_mtf.Sampler` and
+`mailwoman_mtf.TrainingBatches`. It lists each split from its manifest, verifies every file's sha256, indexes the train
+files by source, draws each row's source from the `source_weights` multinomial, mixes rows in a shuffle buffer, and
+augments and relabels train rows. Every stage draws from one generator that reproduces CPython's `random.Random`, so the
+rows equal the ones the Python sampler drew for the same seed; the encoder-parity records in
+`docs/engineering/reference/training-row-encoder.mdx` verify that. The row encoder (`mailwoman_mtf.RowEncoder`) or the
+char encoder (`mailwoman_mtf.CharEncoder`) encodes each batch.
 
-Why PyArrow + a generator and not ``datasets.load_dataset('parquet', streaming=True)``?
+The modules:
 
-- ``datasets`` would work. the row-group iterator path here is fewer moving parts, gives us
-  direct per-row column projection (we never materialize ``tokens`` for rows we drop), and
-  keeps the train loop deterministic for a fixed seed without the HF dataset shuffle buffer
-  semantics.
-- The data loader is the hot path on a CPU-bound train run. ad-hoc streaming is fine.
-
-Per Phase 2 §2:
-
-- Lazy + streaming + memory-stable: row-group iteration, never reads a full parquet file.
-- Stratified sampling: ``country_weights`` are renormalized probabilities. rows are accepted
-  with probability proportional to their country's weight relative to the max.
-- Length filter: rows whose SP tokenization exceeds ``max_length`` are dropped.
-- Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
-  match (see ``verify_tokenizer_alignment``).
-
-v0.5.0 char-offset labels (#519): parquet files whose schema has
-``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
-augmentations (which re-target it. see ``augment.py``) and the #511 relabel pass (char
-arithmetic. see ``relabel.py``) into the row encoder, which builds the per-char label array from
-the spans. Frozen pre-v0.5.0 files have no span columns and use the legacy token path. A
-file with a partial column set, or a null span value in a span-schema file, is corrupt and
-raises loudly — never a silent fallback.
-
-The modules, in the order a row travels them:
-
-- `corpus_files.py` — parquet files for each split and row counts per source.
-- `parquet.py` — reading rows out of one file, shuffled, with the per-row filters applied.
-- `mixture.py` — sampling across sources so the observed mix matches `source_weights`.
-- `stream.py` — the shuffle buffer plus the train-only policy and augmentation step.
-- `encode.py` — the sampled rows, the Rust row encoder's construction, and the char path.
-- `batch.py` — the batch the trainer feeds the model, encoded by the row encoder or stacked by `collate`.
+- `encode.py` — the sampler's configuration, the sampled rows, and the encoders' construction.
+- `batch.py` — the batch the trainer feeds the model, and the endless training stream.
 - `example.py` — the fields of an encoded row.
 - `verify.py` — the corpus/tokenizer compatibility check a run makes before it starts.
-
-EVERY STAGE DRAWS FROM ONE `random.Random`. File order, row-group order, row order, the
-country-acceptance test, the source multinomial, the shuffle buffer and each augmentation share
-the caller's stream, so adding, dropping or reordering a draw anywhere reshuffles the corpus a
-seeded run trains on. `tests/mailwoman_train/data/test_loader_split_parity.py` pins the emitted
-sequence for exactly that reason.
+- `corpus_files.py`, `parquet.py` and `mixture.py` — the Python reader the audits under `audits/` still call
+  through `_raw_row_stream`, `admitted_batches` and `corpus_split_files`. They go when those audits move to
+  TypeScript or onto the Rust sampler.
 
 The underscore names below are re-exported because the audits and the census read them through
 `mailwoman_train.data.loader`, which is the import path every caller uses.
@@ -65,10 +36,9 @@ from .corpus_files import (
     source_row_counts,
 )
 from .corpus_files import _parquet_paths as _parquet_paths
-from .encode import build_row_encoder, iter_encoded, iter_sampled_rows
+from .encode import build_row_encoder, iter_encoded, iter_rows, iter_sampled_rows
 from .example import EncodedExample
 from .mixture import _raw_row_stream as _raw_row_stream
-from .stream import iter_rows
 from .verify import verify_tokenizer_alignment
 
 __all__ = [

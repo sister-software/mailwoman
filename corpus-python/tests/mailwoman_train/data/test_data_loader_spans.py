@@ -2,8 +2,8 @@
 
 Pins the loader-side interface:
 
-1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` returns it,
-   ``iter_encoded`` hands it to ``encode_row``. The encoder trains from the spans.
+1. Rows from a span-schema parquet file stream the triple end-to-end through the Rust sampler — ``iter_rows``
+   returns it, ``iter_encoded`` hands it to the row encoder. The encoder trains from the spans.
 2. Frozen pre-v0.5.0 files (no span columns) ride the legacy token path: no span keys appear.
 3. Corruption is loud, never a silent fallback: a file with a partial span-column set raises,
    A null span value inside a span-schema file also raises and includes the row identifier.
@@ -11,7 +11,7 @@ Pins the loader-side interface:
 
 from __future__ import annotations
 
-import random
+import json
 from pathlib import Path
 
 import pyarrow as pa
@@ -95,7 +95,7 @@ def _iter(corpus: Path) -> list[dict]:
         iter_rows(
             corpus,
             "train",
-            rng=random.Random(0),
+            seed=0,
             country_weights={"US": 1.0},
             coarse_filter=False,
             shuffle_buffer=4,
@@ -156,7 +156,7 @@ def test_positive_weight_for_absent_source_raises(tmp_path: Path) -> None:
             iter_rows(
                 corpus,
                 "train",
-                rng=random.Random(0),
+                seed=0,
                 country_weights={"US": 1.0},
                 source_weights={"test": 1.0, "missing": 2.0},
                 coarse_filter=False,
@@ -170,7 +170,7 @@ def test_zero_weight_for_absent_source_is_allowed(tmp_path: Path) -> None:
         iter_rows(
             corpus,
             "train",
-            rng=random.Random(0),
+            seed=0,
             country_weights={"US": 1.0},
             source_weights={"test": 1.0, "missing": 0.0},
             coarse_filter=False,
@@ -186,7 +186,7 @@ def test_training_source_inventory_is_not_required_in_validation_split(tmp_path:
         iter_rows(
             corpus,
             "val",
-            rng=random.Random(0),
+            seed=0,
             country_weights={"US": 1.0},
             source_weights={"test": 1.0, "train-only-source": 2.0},
             coarse_filter=False,
@@ -198,8 +198,6 @@ def test_training_source_inventory_is_not_required_in_validation_split(tmp_path:
 def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Path) -> None:
     """The mutation-upstream hazard, pinned at the loader level: with the directional expansion
     and the #511 relabel both on, every emitted row's spans must address its own raw."""
-    from mailwoman_train.data.relabel import AffixRelabelLexicon
-
     corpus = _write_corpus(
         tmp_path,
         [
@@ -213,21 +211,26 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
             )
         ],
     )
-    lex = AffixRelabelLexicon(
-        directionals={"se": "SE", "southeast": "SE"},
-        suffixes={"st": "STREET", "street": "STREET"},
-        version="test",
+    lexicon = tmp_path / "affix-lexicon.json"
+    lexicon.write_text(
+        json.dumps(
+            {
+                "directionals": {"se": "SE", "southeast": "SE"},
+                "suffixes": {"st": "STREET", "street": "STREET"},
+                "version": "test",
+            }
+        )
     )
     rows = list(
         iter_rows(
             corpus,
             "train",
-            rng=random.Random(0),
+            seed=0,
             country_weights={"US": 1.0},
             coarse_filter=False,
             shuffle_buffer=4,
-            augment_directional_prob=1.0,
-            affix_relabel_lexicon=lex,
+            augment={"directional": 1.0},
+            affix_relabel_lexicon_path=str(lexicon),
         )
     )
     assert len(rows) == 2  # original + expanded copy

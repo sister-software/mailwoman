@@ -75,11 +75,11 @@ def test_audit_emitted_count_matches_the_loader_for_an_excluded_source(tmp_path:
         iter_rows(
             corpus,
             "train",
-            rng=random.Random(0),
+            seed=0,
             country_weights={"US": 1.0},
             source_weights={EXCLUDED: 1.0, AUGMENTED: 1.0},
             coarse_filter=False,
-            augment_upper_case_prob=1.0,
+            augment={"upper_case": 1.0},
             augment_exclude_sources=[EXCLUDED],
             shuffle_buffer=1,
             row_limit=draws,
