@@ -570,7 +570,11 @@ export async function executeInstallation(
 
 	if (entries.length && !cancelled) {
 		try {
-			selection = await replaceActiveSelection(plan.dataRoot, { basedOn: plan.basedOnGeneration, set: entries }, now)
+			selection = await replaceActiveSelection(
+				plan.dataRoot,
+				{ basedOn: plan.basedOnGeneration, set: entries },
+				{ now }
+			)
 		} catch (error) {
 			activationError = `${error instanceof Error ? error.message : String(error)}. The previous selection stays in force, and the next pull selects the installed artifacts`
 

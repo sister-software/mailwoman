@@ -431,8 +431,10 @@ async function assertSelectedFilesInstalled(
 export async function replaceActiveSelection(
 	dataRoot: PathBuilderLike,
 	change: SelectionChange,
-	now: () => Date = () => new Date()
+	options: SelectionWriteOptions = {}
 ): Promise<ActiveSelection> {
+	const now = options.now ?? (() => new Date())
+	const writeRecord = options.writeRecord ?? writeRecordAtomically
 	const root = resolvePath(dataRoot.toString())
 	const paths = catalogPaths(root)
 
@@ -467,10 +469,24 @@ export async function replaceActiveSelection(
 	assertActiveSelection(next, installations)
 	await assertSelectedFilesInstalled(root, next, installations)
 
-	await writeRecordAtomically(next, paths.selectionHistory(`${next.generation}.json`))
-	await writeRecordAtomically(next, paths.activeSelection)
+	await writeRecord(next, paths.selectionHistory(`${next.generation}.json`))
+	await writeRecord(next, paths.activeSelection)
 
 	return next
+}
+
+/**
+ * How a selection replacement stamps and writes its records.
+ */
+export interface SelectionWriteOptions {
+	now?: () => Date
+	/**
+	 * Writes one record atomically.
+	 *
+	 * Defaults to {@link writeRecordAtomically}.
+	 * A test passes a writer that fails on `active.json` to check that the previous generation survives.
+	 */
+	writeRecord?: (record: unknown, destination: PathBuilderLike) => Promise<void>
 }
 
 /**
@@ -486,7 +502,7 @@ export async function replaceActiveSelection(
 export async function activateInstallation(
 	dataRoot: PathBuilderLike,
 	installationID: LayerInstallationID,
-	now: () => Date = () => new Date()
+	options: SelectionWriteOptions = {}
 ): Promise<ActiveSelection> {
 	const root = resolvePath(dataRoot.toString())
 	const installation = (await readInstallations(root)).find((candidate) => candidate.id === installationID)
@@ -521,7 +537,7 @@ export async function activateInstallation(
 
 	const current = await readActiveSelection(root)
 
-	return replaceActiveSelection(root, { basedOn: current?.generation ?? null, set }, now)
+	return replaceActiveSelection(root, { basedOn: current?.generation ?? null, set }, options)
 }
 
 /**
@@ -532,7 +548,7 @@ export async function activateInstallation(
  */
 export async function rollbackActiveSelection(
 	dataRoot: PathBuilderLike,
-	now: () => Date = () => new Date()
+	options: SelectionWriteOptions = {}
 ): Promise<ActiveSelection> {
 	const root = resolvePath(dataRoot.toString())
 	const current = await readActiveSelection(root)
@@ -552,5 +568,5 @@ export async function rollbackActiveSelection(
 	}
 
 	// Entries the previous generation lacked are cleared by restoring its list whole.
-	return replaceActiveSelection(root, { basedOn: current.generation, set: previous.entries, replaceAll: true }, now)
+	return replaceActiveSelection(root, { basedOn: current.generation, set: previous.entries, replaceAll: true }, options)
 }

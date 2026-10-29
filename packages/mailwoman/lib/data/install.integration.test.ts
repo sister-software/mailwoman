@@ -28,7 +28,7 @@ import { ArtifactOutcome, executeInstallation, type InstallationResult } from "#
 import { takeInventory } from "#data/inventory"
 import { planInstallation, PlannedAction, type InstallationRequest } from "#data/plan"
 import { readInstallationState } from "#data/state"
-import { USStateDatabaseProvider } from "#geocode/regions"
+import { type RegionDatabaseFactory, USStateDatabaseProvider } from "#geocode/regions"
 import { resolveCandidateDBPath } from "#resolver-backend"
 import {
 	FIXTURE_DC_POINT,
@@ -162,10 +162,7 @@ async function pull(bundles: string[], only?: string): Promise<InstallationResul
 
 const DC_QUERY = { street: FIXTURE_DC_STREET, number: "1275", postcode: "20004", bbox: null }
 
-const factory = {
-	AddressPointSqliteLookup: AddressPointSqliteLookup as unknown as new (path: string) => AddressPointSqliteLookup,
-	StreetInterpolator,
-}
+const factory: RegionDatabaseFactory = { AddressPointSqliteLookup, StreetInterpolator }
 
 describe("the published installation path", () => {
 	it("plans without writing anything, then installs the candidate into an immutable location and selects it", async () => {

@@ -126,14 +126,14 @@ export class FixtureRegistry implements AsyncDisposable {
 			return
 		}
 
-		const cut = this.interruptAfter.get(key)
+		const sentBeforeDrop = this.interruptAfter.get(key)
 
 		response.writeHead(200, { ...headers, "content-length": object.body.length })
 
-		if (cut != null) {
+		if (sentBeforeDrop != null) {
 			this.interruptAfter.delete(key)
 			// The delay lets the client read the bytes before the connection drops mid-body.
-			response.write(object.body.subarray(0, cut), () => setTimeout(() => response.destroy(), 100))
+			response.write(object.body.subarray(0, sentBeforeDrop), () => setTimeout(() => response.destroy(), 100))
 
 			return
 		}

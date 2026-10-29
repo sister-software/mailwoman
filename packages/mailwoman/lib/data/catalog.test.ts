@@ -10,7 +10,8 @@ import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import * as writers from "@mailwoman/core/fs/writers"
 import { type ActiveSelection, ServingRole, UnreadableArtifactError } from "@mailwoman/core/layers"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import type { PathBuilderLike } from "path-ts"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
 	activateInstallation,
@@ -19,10 +20,9 @@ import {
 	readActiveSelection,
 	replaceActiveSelection,
 	rollbackActiveSelection,
+	writeRecordAtomically,
 } from "#data/catalog"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
-
-vi.mock("@mailwoman/core/fs/writers", { spy: true })
 
 let scratch: TemporaryDirectory
 
@@ -31,7 +31,6 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-	vi.restoreAllMocks()
 	await scratch[Symbol.asyncDispose]()
 })
 
@@ -104,21 +103,17 @@ describe("replaceActiveSelection", () => {
 
 		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
 
-		const actual = await vi.importActual<typeof writers>("@mailwoman/core/fs/writers")
+		// The history copy is written.
+		// The write onto active.json fails.
+		const writeRecord = async (record: unknown, destination: PathBuilderLike) => {
+			if (destination.toString().endsWith("active.json")) throw new Error("injected rename failure")
 
-		vi.mocked(writers.movePath).mockImplementationOnce(async (source, destination) =>
-			actual.movePath(source, destination)
-		)
+			await writeRecordAtomically(record, destination)
+		}
 
-		// The first rename writes the history copy.
-		// The second, onto active.json, fails.
-		vi.mocked(writers.movePath).mockImplementationOnce(async () => {
-			throw new Error("injected rename failure")
-		})
-
-		await expect(replaceActiveSelection(scratch.path, { basedOn: 1, set: [dc.entry] })).rejects.toThrow(
-			/injected rename failure/u
-		)
+		await expect(
+			replaceActiveSelection(scratch.path, { basedOn: 1, set: [dc.entry] }, { writeRecord })
+		).rejects.toThrow(/injected rename failure/u)
 
 		const after = await readActiveSelection(scratch.path)
 
