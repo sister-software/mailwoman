@@ -41,6 +41,7 @@ import {
 	type CounterfactualTarget,
 	type RowCounterfactuals,
 } from "#dev-mcp/counterfactual"
+import { runConstraintAccountForArgs } from "#dev-mcp/diagnose/constraints"
 import { gradeExpectation, type ExpectationReading } from "#dev-mcp/diagnose/expectation"
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#dev-mcp/evidence"
@@ -918,6 +919,8 @@ function routingKey(routing: RowRouting | null): string {
  * Then run the counterfactual sweep and aggregate by shape.
  */
 export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
+	if (args["account"] === "constraints") return runConstraintAccountForArgs(args)
+
 	const ref = (args["inputs"] as InputSetRef | null) ?? { kind: "board" }
 	const config = (args["config"] as EngineConfig | null) ?? {}
 	const limit = args["limit"] as number | undefined

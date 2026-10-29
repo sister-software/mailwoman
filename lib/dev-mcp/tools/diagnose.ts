@@ -24,8 +24,29 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 		`mechanism-state shapes (${DIAGNOSE_SHAPES.join(", ")}) by TRANSPARENT stage-fact predicates, and the ` +
 		"result says so: this is uncalibrated v1, every predicate ships beside its count, and a row that fails " +
 		"its expectation while matching no shape is reported `unclassified` rather than forced into the nearest " +
-		"one. Aggregation is BY SHAPE with each class's n, never by raw row count.",
+		"one. Aggregation is BY SHAPE with each class's n, never by raw row count. " +
+		'`account: "constraints"` is a second account: it parses each row as the held-out battery grades it ' +
+		"(NeuralAddressClassifier.parse with postcodeRepair and the row's country, on the locale package the held-out " +
+		"rule names, from `config.weights_cache` when set), and reports whether the decode violates C4 or C6 of " +
+		"decoder-grammar.mdx §5, with the span, the runner-up and the decoder's term margins behind each violation. " +
+		"It reads `rows` when given, otherwise `inputs`, ignores every other config pin, and changes no decode.",
 	inputSchema: z.object({
+		account: z
+			.enum(["mechanism", "constraints"])
+			.default("mechanism")
+			.describe('"mechanism" is the per-row mechanism account; "constraints" is the C4/C6 constraint account.'),
+		rows: z
+			.array(
+				z.object({
+					id: z.string().optional(),
+					input: z.string().min(1),
+					country: z.string().length(2).optional(),
+					expected: z.string().optional().describe("Echoed beside the observed reading; nothing is graded."),
+				})
+			)
+			.min(1)
+			.optional()
+			.describe('Rows for `account: "constraints"`, each with the country the battery passes as its locale hint.'),
 		inputs: INPUT_SET_SCHEMA.optional(),
 		config: ENGINE_CONFIG_SCHEMA.optional(),
 		counterfactuals: z

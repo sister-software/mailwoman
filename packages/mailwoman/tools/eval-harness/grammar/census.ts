@@ -28,22 +28,75 @@ export interface C6Violation {
 }
 
 /**
- * C6: report a decoded boundary when a longer accepted registry surface covers it and a proper nested
- * accepted surface exactly aligns with either adjacent decoded span under the same component tag.
+ * The indices of outside pieces whose text is empty or whitespace.
+ *
+ * The tokenizer can emit a bare `▁` piece before a digit or a script change.
+ * The decoder labels it `O`, which leaves a one-piece gap between two spans written next
+ * to each other. {@linkcode adjacentSpanPairs} treats such a gap as no gap.
  */
-export function detectC6Violations(
+export function blankOutsidePieces(
+	tokens: ReadonlyArray<Pick<DecoderToken, "start" | "end"> & { label: string }>,
+	text: string
+): Set<number> {
+	const blank = new Set<number>()
+
+	for (const [index, token] of tokens.entries()) {
+		if (token.label === "O" && !text.slice(token.start, token.end).trim()) {
+			blank.add(index)
+		}
+	}
+
+	return blank
+}
+
+/**
+ * Each pair of decoded spans whose gap holds only blank outside pieces, in input order.
+ */
+export function adjacentSpanPairs(
 	spans: ReadonlyArray<CensusSpan>,
-	matches: ReadonlyArray<FSTAcceptedMatch>
-): C6Violation[] {
+	blankPieces: ReadonlySet<number> = new Set()
+): Array<[left: CensusSpan, right: CensusSpan]> {
 	const ordered = spans.toSorted((a, b) => a.start - b.start || a.end - b.end)
-	const violations: C6Violation[] = []
+	const pairs: Array<[CensusSpan, CensusSpan]> = []
 
 	for (let index = 1; index < ordered.length; index++) {
 		const left = ordered[index - 1]!
 		const right = ordered[index]!
 
-		if (left.end !== right.start) continue
-		const boundary = left.end
+		if (left.end > right.start) continue
+
+		let gapIsBlank = true
+
+		for (let piece = left.end; piece < right.start; piece++) {
+			if (!blankPieces.has(piece)) {
+				gapIsBlank = false
+			}
+		}
+
+		if (gapIsBlank) {
+			pairs.push([left, right])
+		}
+	}
+
+	return pairs
+}
+
+/**
+ * C6: report a decoded boundary when a longer accepted registry surface covers it and a proper nested
+ * accepted surface exactly aligns with either adjacent decoded span under the same component tag.
+ *
+ * The boundary is the right span's first piece.
+ * Spans separated only by `blankPieces` count as adjacent.
+ */
+export function detectC6Violations(
+	spans: ReadonlyArray<CensusSpan>,
+	matches: ReadonlyArray<FSTAcceptedMatch>,
+	blankPieces: ReadonlySet<number> = new Set()
+): C6Violation[] {
+	const violations: C6Violation[] = []
+
+	for (const [left, right] of adjacentSpanPairs(spans, blankPieces)) {
+		const boundary = right.start
 
 		for (const covering of matches) {
 			if (!(covering.startPiece < boundary && boundary < covering.endPiece)) continue
@@ -146,7 +199,7 @@ export function gradeBoundaryTruth(boundary: number, truth: ReadonlyArray<Locate
 /**
  * Convert final BIO tokens to piece-index spans, the coordinate system used by {@link FSTAcceptedMatch}.
  */
-export function spansFromBIO(tokens: ReadonlyArray<DecoderToken>): CensusSpan[] {
+export function spansFromBIO(tokens: ReadonlyArray<{ label: string }>): CensusSpan[] {
 	const spans: CensusSpan[] = []
 
 	for (let index = 0; index < tokens.length; index++) {

@@ -176,13 +176,21 @@ coherence record applies the same rule to the resolver-side checker.
 | C1  | spans disjoint, uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                               |
 | C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                              |
 | C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                                |
-| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                                   |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector built** (below) — the grouper computes the units and does not bind the decode                                                                     |
 | C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system/conventions.ts` is the natural home, but templates are not yet stated as machine-readable sequences |
-| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                                 |
+| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector built** (below) — walks the FST for covering entries over every decoded boundary                                                                  |
 
 The proposed instrument is a constraint-violation census over the board, built as an extension of
 `mwdev_diagnose`'s mechanism accounts. Every board failure would then record the predicate(s) it
 violates, and the taxonomy would come from evaluation instead of from arguments over examples.
+
+The C4 and C6 detectors run as `mwdev_diagnose` with `account: "constraints"`. The account parses
+each row as the held-out battery grades it and reports, for each violation, both adjacent spans'
+runner-up readings and term margins from `NeuralParseTrace.explanation`. The predicates live in
+`packages/mailwoman/tools/eval-harness/grammar/census/constraints.ts`. The account reads C4 twice:
+once with a phrase-grouper proposal as the phrase, as the table states, and once with the comma-free
+segment as the phrase. The second reading exists because the grouper proposes no phrase across some
+multi-word names, such as `Өтеген батыр`. Neither detector binds the decode.
 
 **How the convention mask is selected.** The address system that selects a mask is resolved from
 data, either the admin FST parent chain or the exported locale and address-system head, and the

@@ -8,7 +8,6 @@
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
@@ -22,6 +21,7 @@ import {
 	observeC4Boundaries,
 	summarizeC4FeatureVectors,
 } from "#tools/eval-harness/grammar/census/c4"
+import { findConstraintRegistryMatches } from "#tools/eval-harness/grammar/census/constraints"
 
 const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
 const cases = await loadRegressionCases()
@@ -51,12 +51,10 @@ try {
 		const decodedText = diagnostic.trace.text
 		const shape = computeQueryShape(decodedText)
 		const proposals = groupPhrasesSync({ raw: decodedText, normalized: decodedText }, shape)
-		const registryMatches = diagnostic.fst ? findFSTAcceptedMatches(diagnostic.fst, diagnostic.trace.pieces) : null
-		const streetAffixMatches = streetMorphology
-			? findFSTAcceptedMatches(streetMorphology.matcher, diagnostic.trace.pieces).filter((match) =>
-					match.entries.some((entry) => entry.placetype === "street_affix")
-				)
-			: null
+		const { registry: registryMatches, streetAffix: streetAffixMatches } = findConstraintRegistryMatches(
+			diagnostic.trace.pieces,
+			{ fst: diagnostic.fst ?? null, streetMorphology: streetMorphology?.matcher ?? null }
+		)
 		const truth = locateUniqueComponentTruth(decodedText, row.expectComponents ?? {})
 		const boundaries = observeC4Boundaries(
 			spansFromBIO(diagnostic.trace.tokens),

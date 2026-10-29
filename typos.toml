@@ -94,6 +94,8 @@ extend-ignore-re = [
 	'''Church of the Holy Sepulchre''',
 	'''Viet Nam|Valles Marineris''',
 	'''Courrier d'Entreprise''',
+	# A quoted SentencePiece piece, which carries the `▁` word marker and is tokenizer output rather than a word.
+	'''"▁[^"]*"''',
 	# Postal-guideline citations in the codex: La Poste's division name, Poste Italiane's document code, and
 	# sentences quoted from the La Poste and Deutsche Post guidelines.
 	'''Branche Services-Courrier-Colis''',
