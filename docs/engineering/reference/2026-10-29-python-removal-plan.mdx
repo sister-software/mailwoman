@@ -300,7 +300,7 @@ run. None runs as part of this plan's commit.
 
 | Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Spend                                                     |
 | --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | image build on Modal: **spend** (approval). Lab CPU: none |
+| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size. **Result (observed 2026-10-29):** no `tch` release links 2.12, so `tch` 0.26.0 and libtorch 2.13.0 run against a torch 2.13.0 reference; the block, AdamW and the schedule are bit-identical on the lab CPU; the CUDA image was not built. See §4.2                                                                                                                                                                                                                                                                                                                                                                                                     | image build on Modal: **spend** (approval). Lab CPU: none |
 | F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element; the iOS device check was not run. See §4.1                                                                                                                                                                                                             | none                                                      |
 | F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies. **Passed 2026-10-29** (§2.1): `c6-train-2k` at 0 differing rows, RSS 1,955 → 1,988 MB from 10k to 90k rows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | none                                                      |
 | F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded | CPU Sandbox minutes: **spend** (approval)                 |
@@ -376,6 +376,41 @@ What does not match, and why:
 
 The Rust export took 0.49 s and 0.57 s with peak RSS 246 MB and 322 MB, and quantization 0.48 s and 0.64 s. The Python
 export was not timed. The shipped artifacts and the Python export path are unchanged.
+
+### 4.2 F1 result: `tch` and libtorch on the lab CPU
+
+Observed on 2026-10-29 on the lab host (Ryzen 9 8945HS, AVX-512, `torch.backends.cpu.get_cpu_capability()` =
+`AVX512`).
+
+**Version.** No `tch` release links libtorch 2.12: `tch` 0.24.0 pins 2.11.0 and 0.26.0 pins 2.13.0 (`torch-sys`'s
+`TORCH_VERSION`, observed in both crates), and there is no 0.25 release on crates.io. **Decided:** the Rust trainer uses
+`tch` 0.26.0 with libtorch 2.13.0, and the Python reference for every comparison runs on `torch==2.13.0+cpu` in a
+separate environment, so the language comparison is same-runtime. The repository pin stays `torch==2.12.0` until the
+upgrade is made as its own change with its own export and runtime checks (§3.3).
+
+**Download and build.** `libtorch-shared-with-deps-2.13.0+cpu.zip` is 126,385,248 bytes (SHA-256
+`edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e`) and 479 MB unpacked; it downloaded in 63 s. The
+build reads it from `LIBTORCH`. A cold release build of `trainer-cli` into an empty target directory (164 crates,
+including `torch-sys`'s C++ wrapper and the shim, with the crate sources already downloaded) took 1 min 24 s at
+`cargo -j 4` and a host load average of 5.7; the `trainer` binary is 17.6 MB and links the libtorch shared objects at
+run time (`LD_LIBRARY_PATH` or an rpath).
+
+**What `tch` does not expose.** `trainer-model/csrc/autocast.cpp` is a C++ shim compiled against the same headers. It
+provides per-device autocast (`tch::autocast` switches CUDA only), `torch.is_grad_enabled()` for the
+`MultiheadAttention` fast-path choice, `grad = None` for `zero_grad(set_to_none=True)` (AdamW skips a parameter without
+a gradient, so a zero gradient would decay it), `linalg_vector_norm` for `clip_grad_norm_`, and a private CPU
+generator for the MLM mask.
+
+**Block, optimizer and schedule.** `python -m mailwoman_train.audits.trainer_parity f1` builds one `EncoderBlock`
+(384 hidden, 6 heads, 1,536 intermediate) from seed 0, runs it in eval mode with and without gradients (the fast path
+`torch._native_multi_head_attention` and the slow path through `scaled_dot_product_attention`), backpropagates a fixed
+cotangent, and takes three train-mode AdamW steps (lr 5e-4, weight decay 0.01) with `clip_grad_norm_(1.0)` under the
+cosine `LambdaLR` (warmup 2, max 10). `trainer parity f1` repeats it in Rust at the same thread count. Every tensor is
+bit-identical: the construction draws, both eval paths, the dropout masks, every gradient, every AdamW update, the
+rates and the clip norms (0 difference on every element). `trainer-loop/tests/f1_block.rs` runs the same check in CI
+on a 32-hidden fixture under the §3.3 tolerances.
+
+The CUDA image build was not run; it needs the operator's spend approval.
 
 ## 5. Phases
 
@@ -556,6 +591,79 @@ remnants. `env.py` and `paths.py` ← everything remaining.
 - Verification: §3.3 stages 1–7 on the lab host, and stage 8 after approval.
 - Deletion: `nn/`, `train/`, `optim/`, `cli/commands/{train,smoke}.py`, `observability/`, their tests, and the
   `trackio` pin. `export/` stays until Phase 6.
+
+#### Phase 5 status (2026-10-29)
+
+**Built.** `packages/trainer/crates/trainer-model` (the encoder, its channels, heads, CRF, CharCNN, losses, the
+autocast shim, and safetensors checkpoints with a `pytorch_model.bin` converter), `trainer-loop` (the supervised and
+MLM loops over `mtf-sampler`'s `TrainingBatches`, the curricula, `mask_tokens`, AdamW on torch's single-tensor CPU path,
+`clip_grad_norm_`, the three schedules and the resume restamp, Fisher capture and EWC, the metrics, and the console,
+CSV and checkpoint callbacks) and `trainer-cli` (the `trainer` binary). The trainer reads the resolved config
+`mailwoman train config resolve` writes. A checkpoint is `step-XXXXXX/` with `model.safetensors`, `config.json`,
+`optimizer.safetensors`, `optimizer.json`, `scheduler.json` and, written last, `training_state.json`.
+
+**Not built (decided, refused by name):** the semi-Markov span scorer, the conventions loss mask, the fp16 and ROCm
+parameter casts, the Trackio mirror (the plan replaces it with a CSV uploader), the realized-exposure report
+(`exposure/report.py` moves in Phase 2), and the corpus/tokenizer alignment smoke check (`verify_tokenizer_alignment`).
+
+**Reference.** `mailwoman_train.audits.trainer_parity` writes the reference under
+`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/`. The configuration is a lab copy of `v8.3.0-probe-code-unit-2k` (host
+lexicon paths, the probe's `source_reps` folded into fixed weights at its own 2,000 × 128 run length, batch 8, 200
+steps, warmup 20, fp32, Fisher over the last 50 steps), and a lab copy of `v8-cjk-regs` on the sealed corpus for the
+char path. Every Python reference ran under `torch==2.13.0+cpu`, CPython 3.12.3, 4 threads.
+
+The 200-step reference run itself, from scratch, was reproduced by `trainer train` on the same config: every
+`train_log.csv` loss, rate and eval cell is equal, the step-200 weights are equal on all 115 tensors, and the Fisher
+artifact is equal on all 112 arrays (0 difference on every element). Construction from the seed draws the same
+initial weights because the Rust constructors issue the Python constructors' `uniform_` and `normal_` calls in order.
+
+**§3.3 stages 1–6, per matrix cell** (`trainer parity stages`, 2 saved batches of 8 rows, train-mode passes from a
+fixed generator state, curricula at step 120 of 200). Stage 0 compares the batches the Rust sampler and encoder build
+with the Python loader's. Each entry is the largest absolute difference over every compared element of that stage.
+
+| Cell                                              | 0   | Construction | 1   | 2–3 (eval, train) | 4 (eval, train) | 5   | 6   |
+| ------------------------------------------------- | --- | ------------ | --- | ----------------- | --------------- | --- | --- |
+| supervised, all channels, CRF built, CRF weight 0 | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| supervised, CRF loss weight 0.1                   | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| supervised without the CRF                        | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| each channel alone (6 cells)                      | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| supervised, bf16 CPU autocast                     | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| CRF loss weight 0.1, bf16 autocast                | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| `grad_accum_steps` 4                              | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| MLM                                               | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| MLM, bf16 autocast                                | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| char path (`v8-cjk-regs`, `stage3-cjk`)           | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| char path, `grad_accum_steps` 4, bf16 autocast    | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+
+The plan's tolerances (1e-5 relative forward and loss, 1e-4 relative gradients, 1e-6 absolute updates) are met with
+no difference at all. Two findings on the way, both in the comparison rather than the trainer: the first Rust pass ran
+at libtorch's default 8 threads against the reference's 4. That moved the char path's logits by up to 2.4e-5 relative
+and its convolution gradients by up to 3.8e-6 absolute, and one LayerNorm bias gradient by 1.46e-4 relative, which
+failed 3 of the 16 cells on gradients (the other 13 stayed inside the tolerances). At 4 threads every cell is equal, so the thread count is part of a record. And
+the first MLM capture applied the supervised curricula in its train-mode pass, which the MLM loop does not; the
+corrected capture is the one above. Stage 6 also checks that `find_latest_checkpoint` passes over a later
+`step-*` directory without `training_state.json`.
+
+**Stage 7.** 2,000 CPU steps from the reference checkpoint (`train.init_from` the step-200 checkpoint, warmup 200,
+batch 8 from the Rust sampler through `mtf-py` on the Python side and directly on the Rust side, eval every 1,000,
+Fisher over the last 200 steps, 4 threads). The `train_log.csv` loss column is equal at all 200 logged steps (largest
+relative difference 0, against 1e-3), and so is every other cell except `wall_seconds`: the rates and both eval rows
+(`val_loss` 1.3204 and 1.0784, macro F1 0.6087 and 0.6814 on 234 validation rows). The step-2000 weights (115 tensors)
+and the Fisher artifact (112 arrays) are equal on every element. Python took 945 s and Rust 984 s for the run,
+including sampler initialization and the two evaluations.
+
+**The export's check against the model.** The 200-step Rust checkpoint exported through `trainer-export`
+(`model.safetensors` is now read beside `pytorch_model.bin`) and ran through onnxruntime-node 1.30.0 on 16 recorded rows
+(`trainer export-feeds`, then `packages/neural/tools/onnx-model-check.run.ts`), every other one with its own address
+system as `locale_hint`. Largest absolute difference from the Rust forward: `logits` 4.8e-6, `locale_logits` 3.8e-6,
+`address_system_logits` 4.8e-6, against 1e-4. The int8 graph from the Rust quantizer differs from the fp32 forward by up
+to 0.102 on `logits`, which is the quantization and not a parity bar.
+
+**What remains.** Stage 8, one GPU run of a current recipe on the CUDA libtorch, graded by `training-arc` and
+`eval-model`, needs spend approval; it also checks the CUDA autocast path, which this CPU work exercises only through
+the same shim on the CPU device. The torch 2.12 → 2.13 upgrade of the Python export pin. The items listed under "Not
+built". The launcher (Phase 7) calling `trainer train` in place of the Python entry point. The Python trainer stays
+until stage 8 and the launcher land.
 
 ### Phase 6 — Export, quantization and packaging
 

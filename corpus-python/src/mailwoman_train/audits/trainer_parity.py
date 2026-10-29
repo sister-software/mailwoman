@@ -115,6 +115,8 @@ def run_f1(out: Path, hidden: int, heads: int, ff: int, seq: int) -> None:
     out_eval = block(xg, kpm)
     tensors.append(("eval", out_eval.detach()))
     (out_eval * cot).sum().backward()
+    if xg.grad is None:
+        raise RuntimeError("the block's backward left no gradient on its input")
     tensors += [("eval.grad.x", xg.grad), *[(f"eval.{n}", g) for n, g in _grads(block.named_parameters())]]
 
     block.train()
@@ -143,10 +145,7 @@ def run_f1(out: Path, hidden: int, heads: int, ff: int, seq: int) -> None:
             "param_order": [n for n, _ in block.named_parameters()],
             "lrs": lrs,
             "grad_norms": norms,
-            "schedule_multipliers": {
-                str(s): scheduler.lr_lambdas[0](s)
-                for s in (0, 1, 2, 5, 10, 11)  # type: ignore[attr-defined]
-            },
+            "schedule_multipliers": {str(s): scheduler.lr_lambdas[0](s) for s in (0, 1, 2, 5, 10, 11)},
         },
     )
     print(f"[f1] wrote {out}")
@@ -171,8 +170,8 @@ def _load(config: str, overrides: list[str]) -> Any:
 def _loss_terms(model: Any, tb: dict[str, Any], out: Any, hidden: torch.Tensor) -> list[tuple[str, torch.Tensor]]:
     """Each unweighted loss term `losses.py` and `address_system.py` sum, recomputed from the forward's outputs.
 
-    The total is the model's own `out.loss`; the terms let a mismatch be attributed. `hidden` is the classifier's
-    input, which the span-boundary head reads.
+    The total is the model's own `out.loss`; the terms let a mismatch be attributed. The span-boundary head reads
+    `hidden`, the classifier's input.
     """
     from torch import nn
 
@@ -317,7 +316,7 @@ def run_capture(args: argparse.Namespace) -> None:
             masks[i] = (masked, mlm_labels)
             tensors += [(f"batch{i}.mlm_input_ids", masked), (f"batch{i}.mlm_labels", mlm_labels)]
 
-    # Stages 2 to 4 in eval mode: no dropout and no drawn hints, so the numbers are the arithmetic alone.
+    # Stages 2 to 4 in eval mode. Eval mode draws no dropout mask and no hint. The comparison then sees the arithmetic.
     model.eval()
     out, terms = _forward(model, batches[0], masks[0], args.autocast)
     tensors += _outputs("eval", out, terms)

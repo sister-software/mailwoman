@@ -63,8 +63,10 @@ pub fn parse_npy(bytes: &[u8]) -> Result<(Vec<i64>, Vec<f32>)> {
 		.map(|s| s.parse().map_err(|_| fail!(".npy shape {shape_text}")))
 		.collect::<Result<_>>()?;
 	let data = bytes[start + len..]
-		.chunks_exact(4)
-		.map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+		.as_chunks::<4>()
+		.0
+		.iter()
+		.map(|c| f32::from_le_bytes(*c))
 		.collect();
 	Ok((shape, data))
 }
