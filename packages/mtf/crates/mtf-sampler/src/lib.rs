@@ -33,4 +33,4 @@ mod text;
 pub use config::{AugmentProbabilities, CharConfig, RunLength, SamplerConfig, Weights};
 pub use error::{Error, Result};
 pub use row::{Row, SpanTriple};
-pub use sampler::{CancelToken, Event, Observer, Sampler, SkipReason, TrainingBatches};
+pub use sampler::{CancelToken, Event, Observer, RawRows, Sampler, SkipReason, TrainingBatches};

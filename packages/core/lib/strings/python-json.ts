@@ -102,6 +102,179 @@ export function pyJSONDumps(value: unknown, options: PyJSONDumpOptions = {}): st
 }
 
 /**
+ * A number Python holds as a `float`, so {@linkcode pythonJSONDumps} writes it as
+ * `repr(float)` writes it: `2.0` rather than `2`, `1e-05` rather than `0.00001`.
+ *
+ * A plain `number` is written as a Python `int`, and must then be an integer.
+ */
+export class PythonFloat {
+	readonly value: number
+
+	constructor(value: number) {
+		this.value = value
+	}
+}
+
+/**
+ * Marks `value` as a Python `float`, keeping `null` as `null`.
+ */
+export function asPythonFloat(value: number): PythonFloat
+export function asPythonFloat(value: number | null): PythonFloat | null
+
+export function asPythonFloat(value: number | null): PythonFloat | null {
+	return value == null ? null : new PythonFloat(value)
+}
+
+/**
+ * The smallest decimal exponent `repr(float)` writes in fixed notation: CPython's
+ * `float_repr_style` "short" switches to scientific notation below `1e-4`.
+ */
+const REPR_FIXED_MIN_EXPONENT = -4
+
+/**
+ * One past the largest decimal exponent `repr(float)` writes in fixed notation:
+ * from `1e16` up it writes `1e+16`.
+ */
+const REPR_FIXED_MAX_EXPONENT = 16
+
+/**
+ * `repr(x)` of a Python float: the shortest round-trip digits, in scientific
+ * notation below 1e-4 or from 1e16 up.
+ */
+export function pythonFloatRepr(x: number): string {
+	if (Number.isNaN(x)) return "NaN"
+
+	if (!Number.isFinite(x)) return x > 0 ? "Infinity" : "-Infinity"
+
+	if (x === 0) return Object.is(x, -0) ? "-0.0" : "0.0"
+
+	const [mantissa = "", exponentText = "0"] = x.toExponential().split("e")
+	const exponent = Number(exponentText)
+	const sign = mantissa.startsWith("-") ? "-" : ""
+	const digits = mantissa.replace("-", "").replace(".", "")
+
+	if (exponent < REPR_FIXED_MIN_EXPONENT || exponent >= REPR_FIXED_MAX_EXPONENT) {
+		const lead = digits.length > 1 ? `${digits[0]}.${digits.slice(1)}` : digits
+
+		return `${sign}${lead}e${exponent < 0 ? "-" : "+"}${String(Math.abs(exponent)).padStart(2, "0")}`
+	}
+
+	if (exponent >= 0) {
+		const whole = digits.slice(0, exponent + 1).padEnd(exponent + 1, "0")
+
+		return `${sign}${whole}.${digits.slice(exponent + 1) || "0"}`
+	}
+
+	return `${sign}0.${"0".repeat(-exponent - 1)}${digits}`
+}
+
+/**
+ * Options for {@linkcode pythonJSONDumps}, named as `json.dumps` names them.
+ */
+export interface PythonJSONOptions {
+	/**
+	 * Spaces per nesting level.
+	 * Unset writes one line with `", "` and `": "` separators.
+	 */
+	indent?: number
+	sortKeys?: boolean
+	/**
+	 * @default true
+	 */
+	ensureASCII?: boolean
+}
+
+function pythonString(value: string, ensureASCII: boolean): string {
+	// JSON.stringify escapes the quote, the backslash and the C0 controls as Python's json does.
+	// Python's `ensure_ascii` also escapes DEL and every code unit above it, one `\uXXXX` per UTF-16 unit.
+	const out = stringifyJSON(value)
+
+	if (!ensureASCII) return out
+
+	let escaped = ""
+
+	for (let i = 0; i < out.length; i++) {
+		const code = out.charCodeAt(i)
+
+		escaped += code >= 0x7f ? "\\u" + code.toString(16).padStart(4, "0") : out[i]
+	}
+
+	return escaped
+}
+
+function pythonValue(value: unknown, options: Required<PythonJSONOptions>, depth: number): string {
+	if (value == null) return "null"
+
+	if (value instanceof PythonFloat) return pythonFloatRepr(value.value)
+
+	if (typeof value === "boolean") return value ? "true" : "false"
+
+	if (typeof value === "bigint") return value.toString()
+
+	if (typeof value === "number") {
+		if (!Number.isInteger(value)) {
+			throw new TypeError(`pythonJSONDumps: ${value} is not an integer; mark a Python float with asPythonFloat`)
+		}
+
+		return Object.is(value, -0) ? "0" : String(value)
+	}
+
+	if (typeof value === "string") return pythonString(value, options.ensureASCII)
+
+	const indented = options.indent >= 0
+	const inner = indented ? "\n" + " ".repeat(options.indent * (depth + 1)) : ""
+	const outer = indented ? "\n" + " ".repeat(options.indent * depth) : ""
+	const separator = indented ? "," : ", "
+
+	if (Array.isArray(value)) {
+		if (!value.length) return "[]"
+
+		const items = value.map((item) => pythonValue(item, options, depth + 1))
+
+		return `[${inner}${items.join(separator + inner)}${outer}]`
+	}
+
+	if (value instanceof Map || typeof value === "object") {
+		const entries = value instanceof Map ? [...value.entries()] : Object.entries(value as Record<string, unknown>)
+
+		if (!entries.length) return "{}"
+
+		if (options.sortKeys) {
+			entries.sort(([a], [b]) => (String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0))
+		}
+
+		const items = entries.map(
+			([key, item]) => `${pythonString(String(key), options.ensureASCII)}: ${pythonValue(item, options, depth + 1)}`
+		)
+
+		return `{${inner}${items.join(separator + inner)}${outer}}`
+	}
+
+	throw new TypeError(`pythonJSONDumps: unsupported value of type ${typeof value}`)
+}
+
+/**
+ * `json.dumps(value, indent=…, sort_keys=…, ensure_ascii=…)`, byte for byte.
+ *
+ * A `number` is a Python `int` and a {@linkcode PythonFloat} a Python `float`,
+ * because JavaScript has one number type and Python writes `2.0` and `2` differently.
+ * A `Map` keeps its insertion order, as a `dict` does.
+ *
+ * @throws When a plain `number` is not an integer.
+ */
+export function pythonJSONDumps(value: unknown, options: PythonJSONOptions = {}): string {
+	return pythonValue(
+		value,
+		{
+			indent: options.indent ?? -1,
+			sortKeys: options.sortKeys ?? false,
+			ensureASCII: options.ensureASCII ?? true,
+		},
+		0
+	)
+}
+
+/**
  * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` —
  * single-quoted keys, `, ` / `: ` separators (e.g. `{'US': 1840, 'FR': 950}`).
  * Insertion order is preserved.

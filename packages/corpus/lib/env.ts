@@ -7,6 +7,7 @@
  */
 
 import { $private as corePrivate, $public as corePublic, liveEnv } from "@mailwoman/core/env"
+import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
 
 /**
@@ -26,6 +27,19 @@ export const PublicCorpusEnvSchema = z.object({
 		title: "WOF record cache",
 		description:
 			"Directory where the WOF adapters keep the records parsed from the GeoJSON checkouts, keyed by every file's path, size and modification time; a relative path resolves against the data root. Unset parses the GeoJSON on every build.",
+	}),
+	// The mount the training volume's paths start with.
+	// A manifest built on Modal lists its files under it.
+	MAILWOMAN_VOLUME_MOUNT: blankAsAbsent(z.string().default("/data")).meta({
+		title: "Training volume mount",
+		description:
+			"The path the training volume is mounted at. A config or manifest path under it reads the copy under the data root on a host that mirrors the volume.",
+	}),
+	// The training sampler's sidecar of measured corpus-file sha256s (`mtf-sampler/src/sha256_cache.rs`).
+	MAILWOMAN_SHA256_CACHE: blankAsAbsent(z.string().optional()).meta({
+		title: "Corpus sha256 cache",
+		description:
+			"A JSON file where the training sampler remembers each corpus file's measured sha256 by path, size and modification time. Unset hashes every file the sampler opens.",
 	}),
 })
 

@@ -59,9 +59,11 @@ packages/mtf/
   crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
   crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
   crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core, mtf-channels and mtf-sampler
+  crates/mtf-node/      The Node addon over mtf-sampler and mtf-channels, for the TypeScript audits and tools
   crates/mtf-tools/     The `mtf-tokenizer` binary behind tools/tokenizer: model edits, corpus sampling, ONNX surgery
   lib/                  TypeScript loader and result conversion
   tools/tokenizer/      Tokenizer training, splicing, pruning and checks
+  tools/sampler/        The loader for the mtf-node addon, built from source on first use
   wasm/                 Committed WASM binary and its build metadata
   test/fixtures/        Reference outputs from the deployed runtime
 ```
