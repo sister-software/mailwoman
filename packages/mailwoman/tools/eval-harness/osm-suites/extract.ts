@@ -132,12 +132,17 @@ export function renderOSMExtractRecord(
 	}
 
 	const { lat: _lat, lon: _lon, ...mapped } = record
+	const { span_starts: starts, span_ends: ends, span_tags: tags } = aligned.row
+
+	// A labeled row always holds its span triple.
+	// A row without one is a fault of the aligner.
+	if (!starts || !ends || !tags) throw new Error(`the aligner labeled ${sourceID} without its span triple`)
 
 	return {
 		raw: aligned.row.raw,
-		span_starts: aligned.row.span_starts,
-		span_ends: aligned.row.span_ends,
-		span_tags: aligned.row.span_tags,
+		span_starts: [...starts],
+		span_ends: [...ends],
+		span_tags: [...tags],
 		country,
 		source: OSM_ADAPTER_ID,
 		source_id: sourceID,
