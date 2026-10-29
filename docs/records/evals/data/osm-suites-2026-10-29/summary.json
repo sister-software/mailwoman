@@ -1,0 +1,57 @@
+{
+	"extracts": 90,
+	"suites": [
+		{
+			"shape": "unit",
+			"sampled": 2975,
+			"kept": 2160,
+			"counts": {
+				"verified_unseen": 2160,
+				"unseen_by_candidate": 0,
+				"known_overlap": 815,
+				"unknown": 0
+			},
+			"reasons": [],
+			"manifest": "/mnt/mw/eval/osm-suites/2026-10-29/osm-suite-unit.json"
+		},
+		{
+			"shape": "suburb-before-city",
+			"sampled": 8780,
+			"kept": 5895,
+			"counts": {
+				"verified_unseen": 5895,
+				"unseen_by_candidate": 0,
+				"known_overlap": 2885,
+				"unknown": 0
+			},
+			"reasons": [],
+			"manifest": "/mnt/mw/eval/osm-suites/2026-10-29/osm-suite-suburb-before-city.json"
+		},
+		{
+			"shape": "region-after-locality",
+			"sampled": 2090,
+			"kept": 1388,
+			"counts": {
+				"verified_unseen": 1388,
+				"unseen_by_candidate": 0,
+				"known_overlap": 702,
+				"unknown": 0
+			},
+			"reasons": [],
+			"manifest": "/mnt/mw/eval/osm-suites/2026-10-29/osm-suite-region-after-locality.json"
+		},
+		{
+			"shape": "place-without-street",
+			"sampled": 10205,
+			"kept": 8382,
+			"counts": {
+				"verified_unseen": 8382,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1823,
+				"unknown": 0
+			},
+			"reasons": [],
+			"manifest": "/mnt/mw/eval/osm-suites/2026-10-29/osm-suite-place-without-street.json"
+		}
+	]
+}

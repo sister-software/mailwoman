@@ -1,0 +1,2655 @@
+{
+	"suites": "/mnt/mw/eval/osm-suites/2026-10-29",
+	"workers": 3,
+	"threads": 2,
+	"arms": [
+		{
+			"name": "shipped",
+			"cache": "/mnt/mw/models/arms/shipped-10.7.0/full-cache",
+			"model": {
+				"card": "/mnt/mw/models/arms/shipped-10.7.0/full-cache/node_modules/@mailwoman/neural-weights-en-us/model-card.json",
+				"version": "10.7.0",
+				"sha256": "986b4e0b9fc7b8e1fa7dcfa528388dc2bd54b20022a8575a482b87bf30959d52"
+			}
+		},
+		{
+			"name": "b42",
+			"cache": "/mnt/mw/models/arms/v830-base-c6-90k-mixed-s42/step-090000/full-cache",
+			"model": {
+				"card": "/mnt/mw/models/arms/v830-base-c6-90k-mixed-s42/step-090000/full-cache/node_modules/@mailwoman/neural-weights-en-us/model-card.json",
+				"version": "9.1.0",
+				"sha256": "720966caaa48f3804d073d309139effe7fae957032d972d0251221b488e59e31"
+			}
+		}
+	],
+	"grades": [
+		{
+			"shape": "unit",
+			"datasetID": "osm-suite-unit",
+			"version": "12ed0e10155e9300",
+			"rowsSHA256": "43cc64bfc2870cc257f2deb7fe91cf738268778013129edd2a3fdf0cade16c2b",
+			"rows": 2160,
+			"arms": {
+				"shipped": {
+					"rows": 2160,
+					"exact": 164,
+					"countries": [
+						{
+							"country": "AL",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AM",
+							"rows": 8,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AR",
+							"rows": 191,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "AW",
+							"rows": 51,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AZ",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BA",
+							"rows": 59,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BM",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "BN",
+							"rows": 8,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BY",
+							"rows": 40,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 184,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "CO",
+							"rows": 133,
+							"exact": 13,
+							"goldRecovered": 13
+						},
+						{
+							"country": "CR",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CU",
+							"rows": 34,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "CW",
+							"rows": 72,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "DO",
+							"rows": 4,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "EC",
+							"rows": 13,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "EG",
+							"rows": 194,
+							"exact": 50,
+							"goldRecovered": 50
+						},
+						{
+							"country": "GE",
+							"rows": 51,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "GL",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "GT",
+							"rows": 14,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "HK",
+							"rows": 191,
+							"exact": 13,
+							"goldRecovered": 4
+						},
+						{
+							"country": "HT",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IR",
+							"rows": 10,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "JM",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "JO",
+							"rows": 193,
+							"exact": 4,
+							"goldRecovered": 1
+						},
+						{
+							"country": "KE",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KG",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KW",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KZ",
+							"rows": 26,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "LK",
+							"rows": 10,
+							"exact": 3,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MD",
+							"rows": 14,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MK",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MM",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MN",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MO",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MY",
+							"rows": 162,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "NA",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PA",
+							"rows": 18,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PE",
+							"rows": 34,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "PH",
+							"rows": 82,
+							"exact": 59,
+							"goldRecovered": 7
+						},
+						{
+							"country": "PR",
+							"rows": 37,
+							"exact": 4,
+							"goldRecovered": 3
+						},
+						{
+							"country": "PY",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "RS",
+							"rows": 39,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "RW",
+							"rows": 17,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SA",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SM",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SV",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TH",
+							"rows": 17,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TM",
+							"rows": 6,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TN",
+							"rows": 4,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TT",
+							"rows": 4,
+							"exact": 1,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UA",
+							"rows": 192,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UG",
+							"rows": 7,
+							"exact": 3,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 4,
+							"exact": 0,
+							"goldRecovered": 0
+						}
+					]
+				},
+				"b42": {
+					"rows": 2160,
+					"exact": 139,
+					"countries": [
+						{
+							"country": "AL",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AM",
+							"rows": 8,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AR",
+							"rows": 191,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "AW",
+							"rows": 51,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "AZ",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BA",
+							"rows": 59,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BM",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "BN",
+							"rows": 8,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BY",
+							"rows": 40,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 184,
+							"exact": 30,
+							"goldRecovered": 30
+						},
+						{
+							"country": "CO",
+							"rows": 133,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "CR",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CU",
+							"rows": 34,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CW",
+							"rows": 72,
+							"exact": 6,
+							"goldRecovered": 6
+						},
+						{
+							"country": "DO",
+							"rows": 4,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "EC",
+							"rows": 13,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "EG",
+							"rows": 194,
+							"exact": 31,
+							"goldRecovered": 31
+						},
+						{
+							"country": "GE",
+							"rows": 51,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "GL",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "GT",
+							"rows": 14,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "HK",
+							"rows": 191,
+							"exact": 1,
+							"goldRecovered": 0
+						},
+						{
+							"country": "HT",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IR",
+							"rows": 10,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "JM",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 0
+						},
+						{
+							"country": "JO",
+							"rows": 193,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KE",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KG",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KW",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KZ",
+							"rows": 26,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "LK",
+							"rows": 10,
+							"exact": 4,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MD",
+							"rows": 14,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MK",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MM",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MN",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MO",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MY",
+							"rows": 162,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "MZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "NA",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PA",
+							"rows": 18,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PE",
+							"rows": 34,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PH",
+							"rows": 82,
+							"exact": 46,
+							"goldRecovered": 2
+						},
+						{
+							"country": "PR",
+							"rows": 37,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "PY",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "RS",
+							"rows": 39,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "RW",
+							"rows": 17,
+							"exact": 2,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SA",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SM",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SV",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TH",
+							"rows": 17,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TM",
+							"rows": 6,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TN",
+							"rows": 4,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TT",
+							"rows": 4,
+							"exact": 1,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UA",
+							"rows": 192,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UG",
+							"rows": 7,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UZ",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 4,
+							"exact": 1,
+							"goldRecovered": 0
+						}
+					]
+				}
+			}
+		},
+		{
+			"shape": "suburb-before-city",
+			"datasetID": "osm-suite-suburb-before-city",
+			"version": "2c6f2913cc7a9a86",
+			"rowsSHA256": "7e97cc313762f620a5a912435ab63701d610faec3eef30fa611189bad6b946b6",
+			"rows": 5895,
+			"arms": {
+				"shipped": {
+					"rows": 5895,
+					"exact": 4829,
+					"countries": [
+						{
+							"country": "AE",
+							"rows": 154,
+							"exact": 154,
+							"goldRecovered": 154
+						},
+						{
+							"country": "AL",
+							"rows": 156,
+							"exact": 150,
+							"goldRecovered": 150
+						},
+						{
+							"country": "AM",
+							"rows": 169,
+							"exact": 161,
+							"goldRecovered": 161
+						},
+						{
+							"country": "AO",
+							"rows": 60,
+							"exact": 60,
+							"goldRecovered": 60
+						},
+						{
+							"country": "AR",
+							"rows": 182,
+							"exact": 180,
+							"goldRecovered": 180
+						},
+						{
+							"country": "AZ",
+							"rows": 34,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BA",
+							"rows": 189,
+							"exact": 160,
+							"goldRecovered": 160
+						},
+						{
+							"country": "BB",
+							"rows": 169,
+							"exact": 59,
+							"goldRecovered": 46
+						},
+						{
+							"country": "BT",
+							"rows": 20,
+							"exact": 20,
+							"goldRecovered": 20
+						},
+						{
+							"country": "BY",
+							"rows": 172,
+							"exact": 168,
+							"goldRecovered": 168
+						},
+						{
+							"country": "BZ",
+							"rows": 170,
+							"exact": 162,
+							"goldRecovered": 151
+						},
+						{
+							"country": "CI",
+							"rows": 24,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 179,
+							"exact": 174,
+							"goldRecovered": 174
+						},
+						{
+							"country": "CO",
+							"rows": 163,
+							"exact": 163,
+							"goldRecovered": 163
+						},
+						{
+							"country": "CU",
+							"rows": 71,
+							"exact": 61,
+							"goldRecovered": 61
+						},
+						{
+							"country": "CW",
+							"rows": 15,
+							"exact": 15,
+							"goldRecovered": 15
+						},
+						{
+							"country": "DO",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "DZ",
+							"rows": 167,
+							"exact": 167,
+							"goldRecovered": 167
+						},
+						{
+							"country": "EC",
+							"rows": 49,
+							"exact": 47,
+							"goldRecovered": 47
+						},
+						{
+							"country": "EG",
+							"rows": 197,
+							"exact": 193,
+							"goldRecovered": 193
+						},
+						{
+							"country": "GE",
+							"rows": 148,
+							"exact": 110,
+							"goldRecovered": 110
+						},
+						{
+							"country": "GH",
+							"rows": 177,
+							"exact": 176,
+							"goldRecovered": 28
+						},
+						{
+							"country": "GL",
+							"rows": 67,
+							"exact": 67,
+							"goldRecovered": 67
+						},
+						{
+							"country": "GT",
+							"rows": 114,
+							"exact": 87,
+							"goldRecovered": 87
+						},
+						{
+							"country": "HK",
+							"rows": 93,
+							"exact": 36,
+							"goldRecovered": 33
+						},
+						{
+							"country": "HT",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 160,
+							"exact": 157,
+							"goldRecovered": 153
+						},
+						{
+							"country": "JE",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "KG",
+							"rows": 181,
+							"exact": 178,
+							"goldRecovered": 178
+						},
+						{
+							"country": "KH",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KW",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "LK",
+							"rows": 4,
+							"exact": 4,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MA",
+							"rows": 12,
+							"exact": 11,
+							"goldRecovered": 11
+						},
+						{
+							"country": "MD",
+							"rows": 200,
+							"exact": 7,
+							"goldRecovered": 7
+						},
+						{
+							"country": "ME",
+							"rows": 3,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "MG",
+							"rows": 4,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "MK",
+							"rows": 33,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MM",
+							"rows": 7,
+							"exact": 4,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MN",
+							"rows": 164,
+							"exact": 164,
+							"goldRecovered": 164
+						},
+						{
+							"country": "MY",
+							"rows": 152,
+							"exact": 152,
+							"goldRecovered": 152
+						},
+						{
+							"country": "NA",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 0
+						},
+						{
+							"country": "NP",
+							"rows": 8,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PA",
+							"rows": 179,
+							"exact": 174,
+							"goldRecovered": 174
+						},
+						{
+							"country": "PE",
+							"rows": 193,
+							"exact": 129,
+							"goldRecovered": 129
+						},
+						{
+							"country": "PH",
+							"rows": 112,
+							"exact": 86,
+							"goldRecovered": 67
+						},
+						{
+							"country": "RS",
+							"rows": 161,
+							"exact": 161,
+							"goldRecovered": 161
+						},
+						{
+							"country": "SA",
+							"rows": 103,
+							"exact": 103,
+							"goldRecovered": 103
+						},
+						{
+							"country": "SN",
+							"rows": 192,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SR",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "SV",
+							"rows": 81,
+							"exact": 78,
+							"goldRecovered": 78
+						},
+						{
+							"country": "TH",
+							"rows": 25,
+							"exact": 4,
+							"goldRecovered": 3
+						},
+						{
+							"country": "TJ",
+							"rows": 60,
+							"exact": 60,
+							"goldRecovered": 60
+						},
+						{
+							"country": "TM",
+							"rows": 143,
+							"exact": 98,
+							"goldRecovered": 98
+						},
+						{
+							"country": "TT",
+							"rows": 95,
+							"exact": 90,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TZ",
+							"rows": 118,
+							"exact": 116,
+							"goldRecovered": 116
+						},
+						{
+							"country": "UA",
+							"rows": 185,
+							"exact": 144,
+							"goldRecovered": 144
+						},
+						{
+							"country": "UZ",
+							"rows": 145,
+							"exact": 140,
+							"goldRecovered": 140
+						},
+						{
+							"country": "VE",
+							"rows": 18,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "VI",
+							"rows": 15,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 191,
+							"exact": 183,
+							"goldRecovered": 183
+						}
+					]
+				},
+				"b42": {
+					"rows": 5895,
+					"exact": 4688,
+					"countries": [
+						{
+							"country": "AE",
+							"rows": 154,
+							"exact": 154,
+							"goldRecovered": 154
+						},
+						{
+							"country": "AL",
+							"rows": 156,
+							"exact": 156,
+							"goldRecovered": 156
+						},
+						{
+							"country": "AM",
+							"rows": 169,
+							"exact": 155,
+							"goldRecovered": 155
+						},
+						{
+							"country": "AO",
+							"rows": 60,
+							"exact": 60,
+							"goldRecovered": 60
+						},
+						{
+							"country": "AR",
+							"rows": 182,
+							"exact": 180,
+							"goldRecovered": 180
+						},
+						{
+							"country": "AZ",
+							"rows": 34,
+							"exact": 21,
+							"goldRecovered": 24
+						},
+						{
+							"country": "BA",
+							"rows": 189,
+							"exact": 178,
+							"goldRecovered": 178
+						},
+						{
+							"country": "BB",
+							"rows": 169,
+							"exact": 49,
+							"goldRecovered": 36
+						},
+						{
+							"country": "BT",
+							"rows": 20,
+							"exact": 19,
+							"goldRecovered": 19
+						},
+						{
+							"country": "BY",
+							"rows": 172,
+							"exact": 172,
+							"goldRecovered": 172
+						},
+						{
+							"country": "BZ",
+							"rows": 170,
+							"exact": 113,
+							"goldRecovered": 101
+						},
+						{
+							"country": "CI",
+							"rows": 24,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 179,
+							"exact": 175,
+							"goldRecovered": 175
+						},
+						{
+							"country": "CO",
+							"rows": 163,
+							"exact": 163,
+							"goldRecovered": 163
+						},
+						{
+							"country": "CU",
+							"rows": 71,
+							"exact": 50,
+							"goldRecovered": 50
+						},
+						{
+							"country": "CW",
+							"rows": 15,
+							"exact": 15,
+							"goldRecovered": 15
+						},
+						{
+							"country": "DO",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "DZ",
+							"rows": 167,
+							"exact": 167,
+							"goldRecovered": 167
+						},
+						{
+							"country": "EC",
+							"rows": 49,
+							"exact": 48,
+							"goldRecovered": 48
+						},
+						{
+							"country": "EG",
+							"rows": 197,
+							"exact": 191,
+							"goldRecovered": 191
+						},
+						{
+							"country": "GE",
+							"rows": 148,
+							"exact": 142,
+							"goldRecovered": 142
+						},
+						{
+							"country": "GH",
+							"rows": 177,
+							"exact": 177,
+							"goldRecovered": 28
+						},
+						{
+							"country": "GL",
+							"rows": 67,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "GT",
+							"rows": 114,
+							"exact": 113,
+							"goldRecovered": 113
+						},
+						{
+							"country": "HK",
+							"rows": 93,
+							"exact": 73,
+							"goldRecovered": 70
+						},
+						{
+							"country": "HT",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 160,
+							"exact": 160,
+							"goldRecovered": 156
+						},
+						{
+							"country": "JE",
+							"rows": 2,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KG",
+							"rows": 181,
+							"exact": 181,
+							"goldRecovered": 181
+						},
+						{
+							"country": "KH",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "KW",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "LK",
+							"rows": 4,
+							"exact": 4,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MA",
+							"rows": 12,
+							"exact": 11,
+							"goldRecovered": 11
+						},
+						{
+							"country": "MD",
+							"rows": 200,
+							"exact": 7,
+							"goldRecovered": 7
+						},
+						{
+							"country": "ME",
+							"rows": 3,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "MG",
+							"rows": 4,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "MK",
+							"rows": 33,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MM",
+							"rows": 7,
+							"exact": 5,
+							"goldRecovered": 1
+						},
+						{
+							"country": "MN",
+							"rows": 164,
+							"exact": 164,
+							"goldRecovered": 164
+						},
+						{
+							"country": "MY",
+							"rows": 152,
+							"exact": 133,
+							"goldRecovered": 133
+						},
+						{
+							"country": "NA",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 0
+						},
+						{
+							"country": "NP",
+							"rows": 8,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "PA",
+							"rows": 179,
+							"exact": 149,
+							"goldRecovered": 149
+						},
+						{
+							"country": "PE",
+							"rows": 193,
+							"exact": 17,
+							"goldRecovered": 17
+						},
+						{
+							"country": "PH",
+							"rows": 112,
+							"exact": 74,
+							"goldRecovered": 55
+						},
+						{
+							"country": "RS",
+							"rows": 161,
+							"exact": 161,
+							"goldRecovered": 161
+						},
+						{
+							"country": "SA",
+							"rows": 103,
+							"exact": 103,
+							"goldRecovered": 103
+						},
+						{
+							"country": "SN",
+							"rows": 192,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SR",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "SV",
+							"rows": 81,
+							"exact": 80,
+							"goldRecovered": 80
+						},
+						{
+							"country": "TH",
+							"rows": 25,
+							"exact": 18,
+							"goldRecovered": 17
+						},
+						{
+							"country": "TJ",
+							"rows": 60,
+							"exact": 53,
+							"goldRecovered": 53
+						},
+						{
+							"country": "TM",
+							"rows": 143,
+							"exact": 95,
+							"goldRecovered": 95
+						},
+						{
+							"country": "TT",
+							"rows": 95,
+							"exact": 94,
+							"goldRecovered": 0
+						},
+						{
+							"country": "TZ",
+							"rows": 118,
+							"exact": 114,
+							"goldRecovered": 114
+						},
+						{
+							"country": "UA",
+							"rows": 185,
+							"exact": 144,
+							"goldRecovered": 144
+						},
+						{
+							"country": "UZ",
+							"rows": 145,
+							"exact": 142,
+							"goldRecovered": 142
+						},
+						{
+							"country": "VE",
+							"rows": 18,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "VI",
+							"rows": 15,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 191,
+							"exact": 191,
+							"goldRecovered": 191
+						}
+					]
+				}
+			}
+		},
+		{
+			"shape": "region-after-locality",
+			"datasetID": "osm-suite-region-after-locality",
+			"version": "2e598f570254c440",
+			"rowsSHA256": "18b1b1282a0d9663d3bb39a6314b7e04738520ddd7d0712b5d416b7743b6c2b6",
+			"rows": 1388,
+			"arms": {
+				"shipped": {
+					"rows": 1388,
+					"exact": 1095,
+					"countries": [
+						{
+							"country": "AM",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AR",
+							"rows": 195,
+							"exact": 194,
+							"goldRecovered": 194
+						},
+						{
+							"country": "CD",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 7,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "CO",
+							"rows": 51,
+							"exact": 50,
+							"goldRecovered": 50
+						},
+						{
+							"country": "CU",
+							"rows": 171,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "EG",
+							"rows": 199,
+							"exact": 195,
+							"goldRecovered": 195
+						},
+						{
+							"country": "HK",
+							"rows": 28,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 169,
+							"exact": 146,
+							"goldRecovered": 143
+						},
+						{
+							"country": "MN",
+							"rows": 173,
+							"exact": 173,
+							"goldRecovered": 173
+						},
+						{
+							"country": "MY",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PA",
+							"rows": 180,
+							"exact": 174,
+							"goldRecovered": 174
+						},
+						{
+							"country": "PE",
+							"rows": 51,
+							"exact": 21,
+							"goldRecovered": 21
+						},
+						{
+							"country": "PH",
+							"rows": 132,
+							"exact": 128,
+							"goldRecovered": 68
+						},
+						{
+							"country": "TH",
+							"rows": 17,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "UA",
+							"rows": 11,
+							"exact": 11,
+							"goldRecovered": 11
+						},
+						{
+							"country": "UZ",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						}
+					]
+				},
+				"b42": {
+					"rows": 1388,
+					"exact": 1206,
+					"countries": [
+						{
+							"country": "AM",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 0
+						},
+						{
+							"country": "AR",
+							"rows": 195,
+							"exact": 194,
+							"goldRecovered": 194
+						},
+						{
+							"country": "CD",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 7,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "CO",
+							"rows": 51,
+							"exact": 49,
+							"goldRecovered": 49
+						},
+						{
+							"country": "CU",
+							"rows": 171,
+							"exact": 147,
+							"goldRecovered": 147
+						},
+						{
+							"country": "EG",
+							"rows": 199,
+							"exact": 193,
+							"goldRecovered": 193
+						},
+						{
+							"country": "HK",
+							"rows": 28,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 169,
+							"exact": 146,
+							"goldRecovered": 143
+						},
+						{
+							"country": "MN",
+							"rows": 173,
+							"exact": 173,
+							"goldRecovered": 173
+						},
+						{
+							"country": "MY",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "PA",
+							"rows": 180,
+							"exact": 149,
+							"goldRecovered": 149
+						},
+						{
+							"country": "PE",
+							"rows": 51,
+							"exact": 23,
+							"goldRecovered": 23
+						},
+						{
+							"country": "PH",
+							"rows": 132,
+							"exact": 125,
+							"goldRecovered": 65
+						},
+						{
+							"country": "TH",
+							"rows": 17,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "UA",
+							"rows": 11,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UZ",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						}
+					]
+				}
+			}
+		},
+		{
+			"shape": "place-without-street",
+			"datasetID": "osm-suite-place-without-street",
+			"version": "0bc7474200b70e4f",
+			"rowsSHA256": "5e4f8e3061c12379fdf484f36d313b678f495f1be14ca0f8c950fb0acfbcbe54",
+			"rows": 8382,
+			"arms": {
+				"shipped": {
+					"rows": 8382,
+					"exact": 6058,
+					"countries": [
+						{
+							"country": "AE",
+							"rows": 184,
+							"exact": 179,
+							"goldRecovered": 179
+						},
+						{
+							"country": "AL",
+							"rows": 190,
+							"exact": 181,
+							"goldRecovered": 181
+						},
+						{
+							"country": "AM",
+							"rows": 175,
+							"exact": 160,
+							"goldRecovered": 160
+						},
+						{
+							"country": "AO",
+							"rows": 195,
+							"exact": 194,
+							"goldRecovered": 194
+						},
+						{
+							"country": "AR",
+							"rows": 192,
+							"exact": 171,
+							"goldRecovered": 171
+						},
+						{
+							"country": "AZ",
+							"rows": 162,
+							"exact": 112,
+							"goldRecovered": 113
+						},
+						{
+							"country": "BA",
+							"rows": 188,
+							"exact": 127,
+							"goldRecovered": 127
+						},
+						{
+							"country": "BB",
+							"rows": 183,
+							"exact": 115,
+							"goldRecovered": 115
+						},
+						{
+							"country": "BN",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BS",
+							"rows": 3,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "BT",
+							"rows": 12,
+							"exact": 12,
+							"goldRecovered": 12
+						},
+						{
+							"country": "BW",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "BY",
+							"rows": 185,
+							"exact": 103,
+							"goldRecovered": 103
+						},
+						{
+							"country": "BZ",
+							"rows": 183,
+							"exact": 183,
+							"goldRecovered": 183
+						},
+						{
+							"country": "CD",
+							"rows": 197,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "CI",
+							"rows": 19,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 176,
+							"exact": 175,
+							"goldRecovered": 175
+						},
+						{
+							"country": "CO",
+							"rows": 183,
+							"exact": 181,
+							"goldRecovered": 181
+						},
+						{
+							"country": "CR",
+							"rows": 175,
+							"exact": 157,
+							"goldRecovered": 157
+						},
+						{
+							"country": "CU",
+							"rows": 155,
+							"exact": 120,
+							"goldRecovered": 120
+						},
+						{
+							"country": "CW",
+							"rows": 62,
+							"exact": 61,
+							"goldRecovered": 61
+						},
+						{
+							"country": "DO",
+							"rows": 83,
+							"exact": 63,
+							"goldRecovered": 63
+						},
+						{
+							"country": "DZ",
+							"rows": 134,
+							"exact": 96,
+							"goldRecovered": 96
+						},
+						{
+							"country": "EC",
+							"rows": 87,
+							"exact": 81,
+							"goldRecovered": 81
+						},
+						{
+							"country": "EG",
+							"rows": 195,
+							"exact": 182,
+							"goldRecovered": 182
+						},
+						{
+							"country": "GE",
+							"rows": 171,
+							"exact": 60,
+							"goldRecovered": 60
+						},
+						{
+							"country": "GH",
+							"rows": 75,
+							"exact": 72,
+							"goldRecovered": 72
+						},
+						{
+							"country": "GL",
+							"rows": 191,
+							"exact": 129,
+							"goldRecovered": 129
+						},
+						{
+							"country": "GT",
+							"rows": 94,
+							"exact": 43,
+							"goldRecovered": 43
+						},
+						{
+							"country": "HK",
+							"rows": 116,
+							"exact": 115,
+							"goldRecovered": 115
+						},
+						{
+							"country": "HT",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 197,
+							"exact": 196,
+							"goldRecovered": 196
+						},
+						{
+							"country": "IR",
+							"rows": 55,
+							"exact": 9,
+							"goldRecovered": 9
+						},
+						{
+							"country": "JM",
+							"rows": 2,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "JO",
+							"rows": 8,
+							"exact": 7,
+							"goldRecovered": 7
+						},
+						{
+							"country": "KE",
+							"rows": 22,
+							"exact": 15,
+							"goldRecovered": 15
+						},
+						{
+							"country": "KG",
+							"rows": 176,
+							"exact": 167,
+							"goldRecovered": 167
+						},
+						{
+							"country": "KH",
+							"rows": 27,
+							"exact": 26,
+							"goldRecovered": 26
+						},
+						{
+							"country": "KW",
+							"rows": 57,
+							"exact": 57,
+							"goldRecovered": 57
+						},
+						{
+							"country": "KZ",
+							"rows": 178,
+							"exact": 109,
+							"goldRecovered": 109
+						},
+						{
+							"country": "LB",
+							"rows": 136,
+							"exact": 136,
+							"goldRecovered": 136
+						},
+						{
+							"country": "LK",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "MA",
+							"rows": 35,
+							"exact": 21,
+							"goldRecovered": 21
+						},
+						{
+							"country": "MD",
+							"rows": 171,
+							"exact": 115,
+							"goldRecovered": 115
+						},
+						{
+							"country": "ME",
+							"rows": 12,
+							"exact": 5,
+							"goldRecovered": 5
+						},
+						{
+							"country": "MG",
+							"rows": 192,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "MK",
+							"rows": 57,
+							"exact": 18,
+							"goldRecovered": 18
+						},
+						{
+							"country": "MM",
+							"rows": 37,
+							"exact": 35,
+							"goldRecovered": 35
+						},
+						{
+							"country": "MN",
+							"rows": 159,
+							"exact": 158,
+							"goldRecovered": 158
+						},
+						{
+							"country": "MT",
+							"rows": 27,
+							"exact": 5,
+							"goldRecovered": 5
+						},
+						{
+							"country": "MV",
+							"rows": 91,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "MY",
+							"rows": 180,
+							"exact": 175,
+							"goldRecovered": 175
+						},
+						{
+							"country": "MZ",
+							"rows": 191,
+							"exact": 94,
+							"goldRecovered": 94
+						},
+						{
+							"country": "NA",
+							"rows": 5,
+							"exact": 5,
+							"goldRecovered": 5
+						},
+						{
+							"country": "NP",
+							"rows": 14,
+							"exact": 6,
+							"goldRecovered": 6
+						},
+						{
+							"country": "OM",
+							"rows": 18,
+							"exact": 18,
+							"goldRecovered": 18
+						},
+						{
+							"country": "PA",
+							"rows": 179,
+							"exact": 142,
+							"goldRecovered": 142
+						},
+						{
+							"country": "PE",
+							"rows": 197,
+							"exact": 157,
+							"goldRecovered": 157
+						},
+						{
+							"country": "PF",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "PH",
+							"rows": 163,
+							"exact": 113,
+							"goldRecovered": 113
+						},
+						{
+							"country": "PR",
+							"rows": 185,
+							"exact": 172,
+							"goldRecovered": 172
+						},
+						{
+							"country": "PY",
+							"rows": 4,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "RS",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "SA",
+							"rows": 148,
+							"exact": 44,
+							"goldRecovered": 44
+						},
+						{
+							"country": "SN",
+							"rows": 193,
+							"exact": 56,
+							"goldRecovered": 56
+						},
+						{
+							"country": "SV",
+							"rows": 36,
+							"exact": 35,
+							"goldRecovered": 35
+						},
+						{
+							"country": "TH",
+							"rows": 166,
+							"exact": 161,
+							"goldRecovered": 161
+						},
+						{
+							"country": "TJ",
+							"rows": 9,
+							"exact": 9,
+							"goldRecovered": 9
+						},
+						{
+							"country": "TM",
+							"rows": 158,
+							"exact": 104,
+							"goldRecovered": 104
+						},
+						{
+							"country": "TN",
+							"rows": 154,
+							"exact": 145,
+							"goldRecovered": 145
+						},
+						{
+							"country": "TT",
+							"rows": 137,
+							"exact": 106,
+							"goldRecovered": 106
+						},
+						{
+							"country": "TZ",
+							"rows": 46,
+							"exact": 46,
+							"goldRecovered": 46
+						},
+						{
+							"country": "UA",
+							"rows": 180,
+							"exact": 44,
+							"goldRecovered": 44
+						},
+						{
+							"country": "UG",
+							"rows": 5,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "UZ",
+							"rows": 182,
+							"exact": 155,
+							"goldRecovered": 155
+						},
+						{
+							"country": "VE",
+							"rows": 7,
+							"exact": 7,
+							"goldRecovered": 7
+						},
+						{
+							"country": "VI",
+							"rows": 15,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 196,
+							"exact": 98,
+							"goldRecovered": 98
+						}
+					]
+				},
+				"b42": {
+					"rows": 8382,
+					"exact": 6075,
+					"countries": [
+						{
+							"country": "AE",
+							"rows": 184,
+							"exact": 178,
+							"goldRecovered": 178
+						},
+						{
+							"country": "AL",
+							"rows": 190,
+							"exact": 179,
+							"goldRecovered": 179
+						},
+						{
+							"country": "AM",
+							"rows": 175,
+							"exact": 154,
+							"goldRecovered": 154
+						},
+						{
+							"country": "AO",
+							"rows": 195,
+							"exact": 76,
+							"goldRecovered": 76
+						},
+						{
+							"country": "AR",
+							"rows": 192,
+							"exact": 177,
+							"goldRecovered": 177
+						},
+						{
+							"country": "AZ",
+							"rows": 162,
+							"exact": 150,
+							"goldRecovered": 154
+						},
+						{
+							"country": "BA",
+							"rows": 188,
+							"exact": 160,
+							"goldRecovered": 160
+						},
+						{
+							"country": "BB",
+							"rows": 183,
+							"exact": 56,
+							"goldRecovered": 56
+						},
+						{
+							"country": "BN",
+							"rows": 3,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BS",
+							"rows": 3,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "BT",
+							"rows": 12,
+							"exact": 12,
+							"goldRecovered": 12
+						},
+						{
+							"country": "BW",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "BY",
+							"rows": 185,
+							"exact": 148,
+							"goldRecovered": 148
+						},
+						{
+							"country": "BZ",
+							"rows": 183,
+							"exact": 110,
+							"goldRecovered": 110
+						},
+						{
+							"country": "CD",
+							"rows": 197,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CI",
+							"rows": 19,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "CL",
+							"rows": 176,
+							"exact": 172,
+							"goldRecovered": 172
+						},
+						{
+							"country": "CO",
+							"rows": 183,
+							"exact": 159,
+							"goldRecovered": 159
+						},
+						{
+							"country": "CR",
+							"rows": 175,
+							"exact": 45,
+							"goldRecovered": 45
+						},
+						{
+							"country": "CU",
+							"rows": 155,
+							"exact": 107,
+							"goldRecovered": 107
+						},
+						{
+							"country": "CW",
+							"rows": 62,
+							"exact": 57,
+							"goldRecovered": 57
+						},
+						{
+							"country": "DO",
+							"rows": 83,
+							"exact": 83,
+							"goldRecovered": 83
+						},
+						{
+							"country": "DZ",
+							"rows": 134,
+							"exact": 86,
+							"goldRecovered": 86
+						},
+						{
+							"country": "EC",
+							"rows": 87,
+							"exact": 79,
+							"goldRecovered": 79
+						},
+						{
+							"country": "EG",
+							"rows": 195,
+							"exact": 183,
+							"goldRecovered": 183
+						},
+						{
+							"country": "GE",
+							"rows": 171,
+							"exact": 163,
+							"goldRecovered": 163
+						},
+						{
+							"country": "GH",
+							"rows": 75,
+							"exact": 75,
+							"goldRecovered": 75
+						},
+						{
+							"country": "GL",
+							"rows": 191,
+							"exact": 174,
+							"goldRecovered": 174
+						},
+						{
+							"country": "GT",
+							"rows": 94,
+							"exact": 90,
+							"goldRecovered": 90
+						},
+						{
+							"country": "HK",
+							"rows": 116,
+							"exact": 111,
+							"goldRecovered": 111
+						},
+						{
+							"country": "HT",
+							"rows": 1,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "IQ",
+							"rows": 197,
+							"exact": 196,
+							"goldRecovered": 196
+						},
+						{
+							"country": "IR",
+							"rows": 55,
+							"exact": 14,
+							"goldRecovered": 14
+						},
+						{
+							"country": "JM",
+							"rows": 2,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "JO",
+							"rows": 8,
+							"exact": 7,
+							"goldRecovered": 7
+						},
+						{
+							"country": "KE",
+							"rows": 22,
+							"exact": 10,
+							"goldRecovered": 10
+						},
+						{
+							"country": "KG",
+							"rows": 176,
+							"exact": 172,
+							"goldRecovered": 172
+						},
+						{
+							"country": "KH",
+							"rows": 27,
+							"exact": 26,
+							"goldRecovered": 26
+						},
+						{
+							"country": "KW",
+							"rows": 57,
+							"exact": 29,
+							"goldRecovered": 29
+						},
+						{
+							"country": "KZ",
+							"rows": 178,
+							"exact": 101,
+							"goldRecovered": 101
+						},
+						{
+							"country": "LB",
+							"rows": 136,
+							"exact": 132,
+							"goldRecovered": 132
+						},
+						{
+							"country": "LK",
+							"rows": 2,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "MA",
+							"rows": 35,
+							"exact": 16,
+							"goldRecovered": 16
+						},
+						{
+							"country": "MD",
+							"rows": 171,
+							"exact": 113,
+							"goldRecovered": 113
+						},
+						{
+							"country": "ME",
+							"rows": 12,
+							"exact": 12,
+							"goldRecovered": 12
+						},
+						{
+							"country": "MG",
+							"rows": 192,
+							"exact": 116,
+							"goldRecovered": 116
+						},
+						{
+							"country": "MK",
+							"rows": 57,
+							"exact": 18,
+							"goldRecovered": 18
+						},
+						{
+							"country": "MM",
+							"rows": 37,
+							"exact": 28,
+							"goldRecovered": 28
+						},
+						{
+							"country": "MN",
+							"rows": 159,
+							"exact": 110,
+							"goldRecovered": 110
+						},
+						{
+							"country": "MT",
+							"rows": 27,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "MV",
+							"rows": 91,
+							"exact": 91,
+							"goldRecovered": 91
+						},
+						{
+							"country": "MY",
+							"rows": 180,
+							"exact": 160,
+							"goldRecovered": 160
+						},
+						{
+							"country": "MZ",
+							"rows": 191,
+							"exact": 102,
+							"goldRecovered": 102
+						},
+						{
+							"country": "NA",
+							"rows": 5,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "NP",
+							"rows": 14,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "OM",
+							"rows": 18,
+							"exact": 18,
+							"goldRecovered": 18
+						},
+						{
+							"country": "PA",
+							"rows": 179,
+							"exact": 106,
+							"goldRecovered": 106
+						},
+						{
+							"country": "PE",
+							"rows": 197,
+							"exact": 109,
+							"goldRecovered": 109
+						},
+						{
+							"country": "PF",
+							"rows": 2,
+							"exact": 2,
+							"goldRecovered": 2
+						},
+						{
+							"country": "PH",
+							"rows": 163,
+							"exact": 81,
+							"goldRecovered": 81
+						},
+						{
+							"country": "PR",
+							"rows": 185,
+							"exact": 172,
+							"goldRecovered": 172
+						},
+						{
+							"country": "PY",
+							"rows": 4,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "RS",
+							"rows": 1,
+							"exact": 1,
+							"goldRecovered": 1
+						},
+						{
+							"country": "SA",
+							"rows": 148,
+							"exact": 136,
+							"goldRecovered": 136
+						},
+						{
+							"country": "SN",
+							"rows": 193,
+							"exact": 49,
+							"goldRecovered": 49
+						},
+						{
+							"country": "SV",
+							"rows": 36,
+							"exact": 36,
+							"goldRecovered": 36
+						},
+						{
+							"country": "TH",
+							"rows": 166,
+							"exact": 157,
+							"goldRecovered": 157
+						},
+						{
+							"country": "TJ",
+							"rows": 9,
+							"exact": 4,
+							"goldRecovered": 4
+						},
+						{
+							"country": "TM",
+							"rows": 158,
+							"exact": 119,
+							"goldRecovered": 119
+						},
+						{
+							"country": "TN",
+							"rows": 154,
+							"exact": 143,
+							"goldRecovered": 143
+						},
+						{
+							"country": "TT",
+							"rows": 137,
+							"exact": 84,
+							"goldRecovered": 84
+						},
+						{
+							"country": "TZ",
+							"rows": 46,
+							"exact": 43,
+							"goldRecovered": 43
+						},
+						{
+							"country": "UA",
+							"rows": 180,
+							"exact": 42,
+							"goldRecovered": 42
+						},
+						{
+							"country": "UG",
+							"rows": 5,
+							"exact": 3,
+							"goldRecovered": 3
+						},
+						{
+							"country": "UZ",
+							"rows": 182,
+							"exact": 138,
+							"goldRecovered": 138
+						},
+						{
+							"country": "VE",
+							"rows": 7,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "VI",
+							"rows": 15,
+							"exact": 0,
+							"goldRecovered": 0
+						},
+						{
+							"country": "ZW",
+							"rows": 196,
+							"exact": 178,
+							"goldRecovered": 178
+						}
+					]
+				}
+			}
+		}
+	]
+}
