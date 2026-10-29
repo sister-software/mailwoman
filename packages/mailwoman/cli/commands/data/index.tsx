@@ -89,7 +89,8 @@ function overview(dataRoot: PathBuilderLike): string {
 		"  mailwoman data --list            every bundle, its size, and where it lands",
 		"  mailwoman data status            present / missing / stale, per artifact",
 		"  mailwoman data pull <bundle>     download one (atomic: staged, verified, swapped into place)",
-		"  mailwoman doctor                 what is missing and the one command that fixes it",
+		"  mailwoman data build osm-address-points --countries <cc>   build a country's layer from OpenStreetMap",
+		"  mailwoman doctor                what is missing and the one command that fixes it",
 		"",
 		`Known bundles: ${Object.keys(BUNDLES).join(", ")}`,
 	].join("\n")

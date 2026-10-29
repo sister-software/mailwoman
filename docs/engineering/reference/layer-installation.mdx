@@ -103,6 +103,43 @@ provider takes the selected address-point and street-centroid paths per country 
 `lib/geocode/selection-parity.integration.test.ts` reads the same BAN bytes from the conventional path
 and from the selection with eight queries and records an empty difference list.
 
+## Source builds
+
+`mailwoman data build <recipe> --countries <cc>` runs a build recipe through the same installer.
+`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/build.ts`) implement it, and the recipe
+interface is `BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one registered recipe is
+`osm-address-points` (`packages/osm/tools/address-points-recipe.ts`), which ships in the optional
+`@mailwoman/osm` package. Without that package the command names it and stops before any request.
+
+1. Plan. The recipe resolves each country's extraction policy (`packages/osm/lib/<cc>/extraction-policy.ts`)
+   to a Geofabrik region (`packages/osm/sdk/geofabrik/regions.ts`), and lists one input per region and
+   one outline per country it clips. `--region` names one region for every requested country. The plan
+   reads no network and writes no file, and `--dry-run` stops after it.
+2. Check prerequisites. The build reads the extract with GDAL's OSM driver, so `ogr2ogr` must run. A
+   missing tool refuses the build before any transfer.
+3. Acquire. Each input stages under `tmp/acquire/` with the receipt-backed transfer `data pull` uses,
+   and the verified file is kept at `src/<source>/<name>/<release>/` with its receipt. A kept input with
+   the same remote identity and SHA-256 is reused, so two countries derived from one region read one file.
+4. Build into `derived/<recipe>/<build id>/`. The build id digests the recipe, the builder, each output's
+   policy version and its inputs' SHA-256, so a changed input or policy builds again. A completed build
+   whose outputs are installed is reused.
+5. Validate and install each output like a download: manifest fields, reader compatibility, then one
+   rename into `db/<role>/<sha256>/`. The installation's origin is `built` with the recipe and build id.
+6. Activate with `--activate`. Each artifact joins its country's entry after the sources that entry
+   already lists from other providers, and replaces only sources of the same recipe, so a selected
+   national register stays first.
+
+Each output's manifest records `recipe: "osm-address-points"`, the extract as `sources[0]` with its
+SHA-256, and a `derivation`: the policy name and version, the outline's SHA-256 when the build clipped,
+the row filter, and the counts (rows read, kept, outside the outline, without a street). A country is
+clipped when its region holds another country or only part of it. A country built from its own extract
+is not clipped, as the command-line builder has never clipped one.
+
+`lib/data/build.integration.test.ts` builds Germany and the Netherlands from one fixture region through
+a local registry: the extract transfers once, each country keeps only its own points, a repeated build
+transfers neither the extract nor an outline, and an activation keeps a national source first.
+`cli/commands/data/build.integration.test.ts` runs the compiled CLI from an empty data root.
+
 ## Replacement, concurrency and rollback
 
 `replaceActiveSelection` (`packages/mailwoman/lib/data/catalog.ts`) holds `.active.lock/`, reads the

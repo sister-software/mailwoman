@@ -15,7 +15,7 @@ This page is the flag interface for the `mailwoman` command-line interface. Each
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
-The CLI has 186 commands. This page documents the 30 that a consumer of the published
+The CLI has 187 commands. This page documents the 31 that a consumer of the published
 package runs. The rest build the datasets and train the models inside a checkout of the repository,
 and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).
 
@@ -305,6 +305,29 @@ mailwoman data bom [options]
 | `--out [out]`             | string  | —       | Override the output path                                                                                                                                              |
 | `--data-root [data-root]` | string  | —       | Override the data root                                                                                                                                                |
 | `--skip-inventory`        | boolean | `false` | Leave out the data root's manifested databases. The document then lists only the four bundles, and no component records attribution, source vintage or build revision |
+
+### `mailwoman data build`
+
+Build a data layer from source data, install it, and optionally activate it
+
+```
+mailwoman data build [options] <recipe>
+```
+
+| Argument   | Required | Description                          |
+| ---------- | -------- | ------------------------------------ |
+| `<recipe>` | Yes      | The build recipe: osm-address-points |
+
+| Flag                                        | Type    | Default | Description                                                                                                         |
+| ------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--countries [countries]`                   | string  | —       | Comma-separated ISO 3166-1 alpha-2 codes to build (e.g. --countries DE,NL)                                          |
+| `--region [region]`                         | string  | —       | One publisher region every requested country is derived from (e.g. europe/dach). Default: each country's own region |
+| `--dry-run`                                 | boolean | `false` | Print the plan and the prerequisite check without network access or data writes                                     |
+| `--activate`                                | boolean | `false` | Select each built layer after it installs, after any source its country already selects                             |
+| `--data-root [data-root]`                   | string  | —       | Override the data root (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                      |
+| `--geofabrik-host [geofabrik-host]`         | string  | —       | A mirror serving Geofabrik's region paths. Default: https://download.geofabrik.de/                                  |
+| `--geoboundaries-host [geoboundaries-host]` | string  | —       | A mirror serving the geoBoundaries API paths. Default: https://www.geoboundaries.org/                               |
+| `--json`                                    | boolean | `false` | Emit the plan, its problems by kind and the build's result as JSON                                                  |
 
 ### `mailwoman data coverage`
 
@@ -683,7 +706,7 @@ flag changes, and no check catches it. The generator reads the same command spec
 build the binary, so a flag string here is the flag string `--help` prints. A test asserts the
 committed page against a fresh render. A stale page therefore fails the build.
 
-The scope split is deliberate. A page that covers all 186 commands would bury the 30 that run against
+The scope split is deliberate. A page that covers all 187 commands would bury the 31 that run against
 an installed package under training and dataset tooling that requires the repository, its data root,
 and hours of wall clock. The generator refuses to run if it meets a command group it has never been
 told about, so the boundary is a decision someone makes rather than an omission.

@@ -47,6 +47,7 @@
 		{ "path": "../../normalize" },
 		{ "path": "../../osm" },
 		{ "path": "../../osm/sdk" },
+		{ "path": "../../osm/tools" },
 		{ "path": "../../phrase-grouper" },
 		{ "path": "../../poi-taxonomy" },
 		{ "path": "../../query-shape" },

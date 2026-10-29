@@ -251,13 +251,15 @@ interface ExecuteOptions {
  * Move a validated artifact, its manifest and its receipt into `db/<role>/<hex>/` with one directory rename.
  *
  * An identical artifact already installed there is kept, and the staged copy is discarded.
+ *
+ * @param receipt How the artifact was acquired: a transfer's {@link AcquisitionReceipt}, or a build's record.
  */
-async function placeArtifact(
+export async function placeArtifact(
 	dataRoot: string,
 	stagedPath: string,
 	fileName: string,
 	manifest: ArtifactManifest,
-	receipt: AcquisitionReceipt
+	receipt: AcquisitionReceipt | Readonly<Record<string, unknown>>
 ): Promise<string> {
 	const paths = catalogPaths(dataRoot)
 	const destination = paths.artifactDirectory(manifest.role, manifest.id)
