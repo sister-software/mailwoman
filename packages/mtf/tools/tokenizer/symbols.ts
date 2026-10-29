@@ -12,7 +12,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pythonRightStrip, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { pythonRightStrip, pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
 
 /**
  * The default symbols: US state and territory codes, country abbreviations
@@ -91,29 +91,6 @@ export const DEFAULT_USER_DEFINED_SYMBOLS: readonly string[] = [
 	"CEDEX",
 	"BP",
 ]
-
-/**
- * The single characters besides `\r\n` that Python's `str.splitlines` splits on, as a character class body.
- */
-const PYTHON_LINE_BREAK_CHARACTERS = "\\n\\r\\v\\f\\x1c-\\x1e\\x85\\u2028\\u2029"
-
-/**
- * The line breaks Python's `str.splitlines` splits on.
- */
-export const PYTHON_LINE_BREAK = new RegExp(`\\r\\n|[${PYTHON_LINE_BREAK_CHARACTERS}]`)
-
-/**
- * Python's `str.splitlines()`: the text split at each line break, with no empty entry after a final break.
- */
-export function pythonSplitLines(text: string): string[] {
-	const lines = text.split(PYTHON_LINE_BREAK)
-
-	if (lines.at(-1) === "") {
-		lines.pop()
-	}
-
-	return lines
-}
 
 /**
  * One literal per line.

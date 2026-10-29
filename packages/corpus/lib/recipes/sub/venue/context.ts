@@ -49,7 +49,7 @@ export const GB_CONTEXT_TUPLE_SOURCE = "gb-os-open"
 
 /**
  * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue tuples
- * (`corpora/house_venue_tuples.py`, whose GB rows come from the `gb-os-open` adapter's OS OpenData rows),
+ * (`#recipes/house-venue-tuples`, whose GB rows come from the `gb-os-open` adapter's OS OpenData rows),
  * DE and ES streamed out of OpenAddresses.
  *
  * @throws When a GB tuple does not carry {@linkcode GB_CONTEXT_TUPLE_SOURCE},
@@ -70,7 +70,7 @@ export async function loadContextTuples(
 			throw new Error(
 				`${tuplesPath.toString()} holds a GB tuple from source ${stringifyJSON(tuple.source ?? null)}; ` +
 					`GB address skeletons must come from ${GB_CONTEXT_TUPLE_SOURCE}. Rebuild the tuples with ` +
-					"`python -m mailwoman_train.corpora.house_venue_tuples`."
+					"`node packages/corpus/lib/tools/house-venue-tuples.run.ts`."
 			)
 		}
 

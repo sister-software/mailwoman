@@ -91,9 +91,8 @@ export const GB_OS_OPEN_PRODUCT_DIRECTORIES = {
 /**
  * The rows `mailwoman corpus run gb-os-open --out $MAILWOMAN_DATA_ROOT/corpus/staging/gb-os-open` writes.
  *
- * The `locale` recipe's GB part and corpus-python's `countries/gb/tuples.py` read
- * their Great Britain address skeletons from this file.
- * The Python reader spells the same path parts.
+ * The `locale` recipe's GB part and `#gb/recipes/house-venue-tuples` read their
+ * Great Britain address skeletons from this file.
  */
 export function gbOSOpenCanonicalRowsPath(): PathBuilder {
 	return dataRootPath("corpus", "staging", GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_ADAPTER_ID, "canonical.jsonl")

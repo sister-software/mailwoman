@@ -30,7 +30,7 @@ import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
-import { SourceOperation, type AddressSourceRegister } from "#source-register/types"
+import { SourceOperation, type AddressSourceRecord, type AddressSourceRegister } from "#source-register/types"
 
 /**
  * The operations a register decision must permit before a source's rows may
@@ -329,6 +329,30 @@ export function sourceRightsGaps(
 	}
 
 	return gaps
+}
+
+/**
+ * The register fields a permission check reads: each row's license and each license's decision.
+ */
+export interface RegisterDecisions {
+	sources: ReadonlyArray<Pick<AddressSourceRecord, "sourceID" | "license">>
+	licenses: readonly LicenseDecision<SourceOperation>[]
+}
+
+/**
+ * Whether one register row holds a decision that permits every operation in {@linkcode TRAINING_OPERATIONS}.
+ *
+ * A row the register lacks, or whose license has no decision, does not.
+ */
+export function registerSourcePermitsTraining(register: RegisterDecisions, registerSource: string): boolean {
+	const row = register.sources.find((entry) => entry.sourceID === registerSource)
+	const decision = row ? register.licenses.find((entry) => entry.licenseID === row.license) : undefined
+
+	if (!decision) return false
+
+	return TRAINING_OPERATIONS.every(
+		(operation) => permissionFor(decision, operation).permission === OperationPermission.Permitted
+	)
 }
 
 /**

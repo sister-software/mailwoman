@@ -4,7 +4,7 @@ Each country has one directory for its own knowledge: its corpus builder, govern
 readers, source samplers, plus script-specific text handling. Two countries never share a file.
 
 Code that several countries share stays in the role directories at the package root — `text/` for script normalization,
-`corpora/` for the row builders, the record verifier and the country-agnostic address-point sampler,
+`corpora/` for the row builders and the record verifier,
 `tokenizer/` for encoding.
 
 Countries divide by what they provide: `COUNTRY_MODULES` names a country with its own corpus builder,
@@ -28,7 +28,7 @@ COUNTRY_MODULES: dict[str, CountryModule] = {
 #: Codes whose directory contributes sources only. Listed rather than inferred, so a directory that
 #: meant to declare a label set is a failure rather than a silent demotion; `test_country_registry`
 #: refuses a directory in neither group.
-SOURCE_ONLY = frozenset({"de", "fr", "gb", "us"})
+SOURCE_ONLY = frozenset({"de"})
 
 #: Directories under here that are regional groupings rather than countries.
 REGIONS = frozenset({"cjk"})
