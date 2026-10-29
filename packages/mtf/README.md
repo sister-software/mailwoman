@@ -57,7 +57,8 @@ packages/mtf/
   crates/mtf-core/      Model representation, normalization, unigram encode, decode, errors
   crates/mtf-wasm/      Thin wasm-bindgen adapter around mtf-core
   crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
-  crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core and mtf-channels
+  crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
+  crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core, mtf-channels and mtf-sampler
   crates/mtf-tools/     Offline model importer and compiler
   lib/                  TypeScript loader and result conversion
   wasm/                 Committed WASM binary and its build metadata
