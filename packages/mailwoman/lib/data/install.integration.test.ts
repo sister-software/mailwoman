@@ -20,7 +20,7 @@ import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { BUNDLES, type DataBundle } from "#data/bundles"
 import { catalogPaths, LayerCatalog, readActiveSelection } from "#data/catalog"
@@ -284,6 +284,45 @@ describe("the published installation path", () => {
 		using after = await USStateDatabaseProvider.create(factory, scratch.path)
 
 		expect(after.for("dc").addressPoints?.find(DC_QUERY)).toMatchObject(FIXTURE_DC_POINT)
+	})
+
+	it("reports a cancelled transfer as cancelled, keeps its bytes and the selection, and resumes it next time", async () => {
+		await pull(["candidate"])
+		registry.stallAfter.set("street/us/dc/situs.db", 4096)
+
+		const plan = await planInstallation(request(["us"], "dc"))
+		const controller = new AbortController()
+
+		await using client = new APIClient({ displayName: "fixture", retry: false })
+
+		const running = executeInstallation(plan, { client, signal: controller.signal })
+
+		// The interrupt arrives once the server has written the first bytes, as Ctrl-C mid-transfer does.
+		await vi.waitFor(() => expect(registry.stalled).toContain("street/us/dc/situs.db"))
+		controller.abort()
+
+		const cancelled = await running
+
+		expect(cancelled.cancelled).toBe(true)
+		expect(cancelled.ok).toBe(false)
+		expect(cancelled.selection).toBeNull()
+
+		expect(cancelled.results.map((result) => [result.outcome, result.problem])).toEqual([
+			[ArtifactOutcome.Cancelled, "cancelled"],
+		])
+
+		expect((await readActiveSelection(scratch.path))?.generation).toBe(1)
+
+		expect((await readInstallationState(scratch.path)).interrupted).toMatchObject([
+			{ remotePath: "street/us/dc/situs.db", partialBytes: 4096 },
+		])
+
+		registry.requests.length = 0
+
+		const resumed = await pull(["us"], "dc")
+
+		expect(resumed.ok).toBe(true)
+		expect(registry.requests).toContain("GET street/us/dc/situs.db bytes=4096-")
 	})
 
 	it("restarts rather than resumes when the remote object changed, and says why", async () => {

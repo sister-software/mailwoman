@@ -56,6 +56,15 @@ export class FixtureRegistry implements AsyncDisposable {
 	 * Object keys that answer 404.
 	 */
 	readonly missing = new Set<string>()
+	/**
+	 * Object key to the number of bytes the next unranged GET sends before the body stalls,
+	 * open, until the client closes the connection.
+	 */
+	readonly stallAfter = new Map<string, number>()
+	/**
+	 * The keys whose stalled bytes have been written, in order.
+	 */
+	readonly stalled: string[] = []
 	#server: Server | null = null
 	baseURL = ""
 
@@ -134,6 +143,16 @@ export class FixtureRegistry implements AsyncDisposable {
 			this.interruptAfter.delete(key)
 			// The delay lets the client read the bytes before the connection drops mid-body.
 			response.write(object.body.subarray(0, sentBeforeDrop), () => setTimeout(() => response.destroy(), 100))
+
+			return
+		}
+
+		const sentBeforeStall = this.stallAfter.get(key)
+
+		if (sentBeforeStall != null) {
+			this.stallAfter.delete(key)
+			// The body stays open until the client gives up, as a transfer a customer cancels does.
+			response.write(object.body.subarray(0, sentBeforeStall), () => this.stalled.push(key))
 
 			return
 		}
