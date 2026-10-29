@@ -350,7 +350,7 @@ extend-glob = ["voie-type.ts", "voie-type.test.ts", "postal-lines.ts", "postal-l
 extend-words = { centre = "centre", espace = "espace", objets = "objets", aout = "aout", decembre = "decembre" }
 
 [type.german-board]
-extend-glob = ["fragment_board.py"]
+extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
 
 [type.fcc-notes]

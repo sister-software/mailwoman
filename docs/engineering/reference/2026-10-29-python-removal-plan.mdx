@@ -617,6 +617,7 @@ Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `c
 | `countries/cjk/foreign_places.py` | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                                                                                                         |
 | `countries/jp/probe_corpora.py`   | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced; over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal                                                                                           |
 | `corpora/fragment/`               | `lib/recipes/fragment-assay/`, `lib/tools/fragment-assay.run.ts`   | `fragment-build-reference.json` reproduced; on the lab data at the default cap (13 OpenAddresses locales, Ryhti, the v0.5.0 harvest), 216,570 train rows and the 24,063-row dev file equal, schema included, with the snapshot's surfaces; with the codex's, 2,000 NZ rows differ, see below |
+| `countries/de/fragment_board.py`  | `lib/de/fragment-board.ts`, `lib/tools/de-fragment-board.run.ts`   | over all of Overture-DE and `locality-surface-lexicon-v7.json` with the defaults, both write the committed `overture-fragments-de.jsonl` (2,404 rows, `4292479b…`) and `overture-fragments-de.surfaces.txt` (2,293 surfaces, `ca6a1538…`) byte for byte                                      |
 
 Classified differences (**decided**):
 
@@ -637,13 +638,15 @@ Classified differences (**decided**):
   240,633 rows (NZ country-tail rows) end in `Aotearoa` where Python wrote `New Zealand`; no other row differs. The
   `v7.8.0-rights-clean-60k.yaml` recipe comment keeps the Python command that built that corpus.
 - `base_source_id` is written as a null-typed column, the type pyarrow inferred, through a new `ParquetColumnKind.Null`.
+- The DE board's patterns spell Python's Unicode `\w`, `\d` and `\b` as `[\p{L}\p{N}_]`, `\p{Nd}` and lookarounds,
+  because JavaScript's `\b` and `\d` are ASCII even under the `u` flag: with them, `Großstraße des 1` would read as a
+  date street. A letter assigned after Unicode 15.0 is a word character here and not in Python.
 
 Deleted: `countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpora.py`, `corpora/fragment/`,
-`data/country-surfaces.json`, `packages/mailwoman/tools/dev-tools/codex/export-country-surfaces.ts` and their tests.
+`countries/de/fragment_board.py`, `data/country-surfaces.json`, `packages/mailwoman/tools/dev-tools/codex/export-country-surfaces.ts` and their tests.
 `countries/cjk/staging.py` stays with the launcher.
 
-Not ported yet: `countries/de/fragment_board.py`,
-`corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
+Not ported yet: `corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
 
 ### Phase 3 — The Rust sampler and character path
 
