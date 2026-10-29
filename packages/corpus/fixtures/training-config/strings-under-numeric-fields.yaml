@@ -1,0 +1,9 @@
+# Both loaders read these values identically. The Python loader keeps each as a string, because it converts a
+# numeric string only under a field annotated exactly `int` or `float`, and `int("12.0")` raises. The TypeScript
+# resolver then refuses the file, since neither field declares a string.
+data:
+  source_weights:
+    ban: 1.0
+train:
+  span_head_learning_rate: 1e-3
+  warmup_steps: "12.0"

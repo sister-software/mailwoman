@@ -351,13 +351,17 @@ export function describeSourceRightsGap(gap: SourceRightsGap): string {
 export class SourceRightsError extends Error {
 	readonly gaps: readonly SourceRightsGap[]
 
-	constructor(context: string, gaps: readonly SourceRightsGap[]) {
+	/**
+	 * @param overrideHint Follows the flag in the message, naming where else the caller
+	 * sets the override, as a training config's `data.unshippable_reason`.
+	 */
+	constructor(context: string, gaps: readonly SourceRightsGap[], overrideHint?: string) {
 		super(
 			`${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
 				`lack an elected decision permitting ${TRAINING_OPERATIONS.join(" and ")}:\n  ` +
 				gaps.map(describeSourceRightsGap).join("\n  ") +
 				"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
-				"packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why> for a local " +
+				`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +
 				"experiment, which marks the output as not shippable."
 		)
 
@@ -427,6 +431,17 @@ export interface SourceRightsAdmissionOptions {
 	 * Setting it marks the output unshippable rather than relaxing the rule.
 	 */
 	unshippableReason?: string | null
+	/**
+	 * The built corpus the output reads, so a source whose inputs changed under the same id is
+	 * judged by the inputs that built that corpus, as {@linkcode sourceRightsGaps} reads it.
+	 *
+	 * A build omits it and is judged by today's inputs.
+	 */
+	corpusVersion?: string
+	/**
+	 * Names where else the caller sets the override, in the refusal's message.
+	 */
+	overrideHint?: string
 	log?: (line: string) => void
 }
 
@@ -462,7 +477,7 @@ export function createSourceRightsAdmission(
 				continue
 			}
 
-			const gaps = sourceRightsGaps(source, inputs, register)
+			const gaps = sourceRightsGaps(source, inputs, register, options.corpusVersion)
 
 			fresh.push(...gaps)
 			all.push(...gaps)
@@ -474,7 +489,7 @@ export function createSourceRightsAdmission(
 
 		if (!fresh.length) return all
 
-		if (reason === null) throw new SourceRightsError(options.context, fresh)
+		if (reason === null) throw new SourceRightsError(options.context, fresh, options.overrideHint)
 
 		for (const gap of fresh) {
 			log(`UNSHIPPABLE ${options.context}: ${describeSourceRightsGap(gap)} (override: ${reason})`)

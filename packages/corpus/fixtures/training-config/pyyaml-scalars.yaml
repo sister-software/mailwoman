@@ -1,0 +1,47 @@
+# Plain scalars PyYAML 6.0.3 resolves differently from the YAML 1.1 schema of the `yaml` package, under fields
+# whose coercion reads the result. The comparison test reads this file through both loaders.
+data:
+  corpus_dir: /data/corpus/versioned/v0.7.2-address-systems/corpus-v0.7.2-address-systems/
+  max_length: "96"
+  char_ctx: 0x10
+  max_unit_width: 010
+  coarse_filter: off
+  gazetteer_choreography: Yes
+  code_unit_features: NO
+  augment_case_prob: 5e-4
+  augment_glue_prob: .5
+  augment_ordinal_prob: 1.
+  augment_region_prob: "1_000.5"
+  label_set: y
+  anchor_paint_mode: 1.0e3
+  country_weights:
+    "NO": 1
+    US: 2.5
+    FR: 1_0.0
+  source_weights:
+    ban: 1.0
+    rendered-gb: 0
+  source_reps:
+    fragment-fr: 2
+  val_rows: ~
+  train_rows_per_epoch: 1:30
+model:
+  hidden_size: 1_024
+  use_crf: on
+  crf_fp32: TRUE
+  hidden_dropout_prob: "  0.25 "
+  label_smoothing: "1e-1"
+  char_kernel_sizes: [3, 0b101, -7]
+train:
+  learning_rate: 5e-4
+  weight_decay: 1.0e+2
+  grad_clip_norm: 2.5e-1
+  max_steps: "+1_000"
+  precision: bf16
+  precision: fp32
+  output_dir: /data/models/checkpoints/scalars
+  csv_log_path: "{output_dir}/{{literal}}/log.csv"
+  trackio_project: 2026-10-29T10:00
+eval:
+  <<: { golden_dir: /data/golden, val_jsonl: merged }
+  val_jsonl: ""
