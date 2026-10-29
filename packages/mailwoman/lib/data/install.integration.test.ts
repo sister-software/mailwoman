@@ -25,7 +25,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { BUNDLES, type DataBundle } from "#data/bundles"
 import { catalogPaths, LayerCatalog, readActiveSelection } from "#data/catalog"
 import { ArtifactOutcome, executeInstallation, type InstallationResult } from "#data/install"
+import { takeInventory } from "#data/inventory"
 import { planInstallation, PlannedAction, type InstallationRequest } from "#data/plan"
+import { readInstallationState } from "#data/state"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { resolveCandidateDBPath } from "#resolver-backend"
 import {
@@ -262,6 +264,18 @@ describe("the published installation path", () => {
 
 		expect(before.for("dc").addressPoints).toBeFalsy()
 
+		// The diagnostics report the stopped transfer and the unselected sibling apart from the active gazetteer.
+		const state = await readInstallationState(scratch.path)
+
+		expect(state.generation).toBe(1)
+		expect(state.active.map((copy) => copy.receipt?.remotePath)).toEqual(["gazetteer/fixture/candidate.db"])
+		expect(state.inactive.map((copy) => copy.receipt?.remotePath)).toEqual(["street/us/dc/fixture/interp.db"])
+		expect(state.interrupted).toMatchObject([{ remotePath: "street/us/dc/situs.db", partialBytes: 4096 }])
+
+		const inventory = await takeInventory({ dataRoot: scratch.path, installation: state })
+
+		expect(inventory.entries.map((entry) => entry.selection).toSorted()).toEqual(["active", "inactive"])
+
 		registry.requests.length = 0
 
 		const resumed = await pull(["us"], "dc")
@@ -337,19 +351,27 @@ describe("the published installation path", () => {
 
 		await using client = new APIClient({ displayName: "fixture", retry: false })
 
-		const results = await Promise.all(plans.map((plan) => executeInstallation(plan, { client })))
+		const outcomes = await Promise.allSettled(plans.map((plan) => executeInstallation(plan, { client })))
+		const completed = outcomes.filter((outcome) => outcome.status === "fulfilled")
+		const refused = outcomes.filter((outcome) => outcome.status === "rejected")
 
-		expect(results.filter((result) => result.ok)).toHaveLength(1)
+		expect(completed.map((outcome) => outcome.value.ok)).toEqual([true])
 
-		const loser = results.find((result) => !result.ok)!
-		const reasons = [loser.activationError ?? "", ...loser.results.map((artifact) => artifact.detail)].join("\n")
+		expect(refused.map((outcome) => String(outcome.reason))).toEqual([
+			expect.stringMatching(/another installer is running under/u),
+		])
 
-		expect(reasons).toMatch(/another installer|selection moved|selection lock/u)
+		// The second plan read generation 1.
+		// The first installer replaced it, so activation refuses the second plan.
+		const stale = await executeInstallation(plans[1]!, { client })
+
+		expect(stale.selection).toBeNull()
 
 		const catalog = await LayerCatalog.read(scratch.path)
 
 		expect(catalog.generation).toBe(2)
 		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-DC" })).toBeTruthy()
 		expect(await pathExists(catalogPaths(scratch.path).lock)).toBe(false)
+		expect(await pathExists(catalogPaths(scratch.path).installLock)).toBe(false)
 	})
 })

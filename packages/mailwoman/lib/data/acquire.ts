@@ -20,6 +20,7 @@ import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File, sha256Hex } from "@mailwoman/core/hash"
+import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
 import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
@@ -278,8 +279,10 @@ export async function acquireRemoteObject(options: {
 
 		if (got !== identity.md5) {
 			await removePathIfPresent(finalPath)
-			throw new Error(
-				`${options.remotePath}: md5 mismatch (expected ${identity.md5}, got ${got}); the bytes were removed`
+			throw new UnreadableArtifactError(
+				identity.url,
+				UnreadableReason.Corrupt,
+				`md5 mismatch (expected ${identity.md5}, got ${got}). The bytes were removed`
 			)
 		}
 
@@ -287,16 +290,20 @@ export async function acquireRemoteObject(options: {
 	} else if (expectedLength != null) {
 		if (bytes !== expectedLength) {
 			await removePathIfPresent(finalPath)
-			throw new Error(
-				`${options.remotePath}: received ${bytes} bytes and the host reported ${expectedLength}; the bytes were removed`
+			throw new UnreadableArtifactError(
+				identity.url,
+				UnreadableReason.Corrupt,
+				`received ${bytes} bytes and the host reported ${expectedLength}. The bytes were removed`
 			)
 		}
 
 		verifiedBy = "length"
 	} else {
 		await removePathIfPresent(finalPath)
-		throw new Error(
-			`${options.remotePath}: the host published neither an md5 sidecar nor a length, so the ${bytes} bytes received cannot be verified; the bytes were removed`
+		throw new UnreadableArtifactError(
+			identity.url,
+			UnreadableReason.Corrupt,
+			`the host published neither an md5 sidecar nor a length, so the ${bytes} bytes received cannot be verified. The bytes were removed`
 		)
 	}
 

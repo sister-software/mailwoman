@@ -221,6 +221,8 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 			...property("mailwoman:sourceSHA256", manifest.source_sha256),
 			...property("mailwoman:bytes", entry.bytes),
 			...property("mailwoman:linkTarget", entry.linkTarget),
+			// Whether the active selection lists the artifact, for an artifact the catalog holds.
+			...property("mailwoman:selection", entry.selection),
 		],
 	}
 }

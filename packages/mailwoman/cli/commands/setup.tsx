@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman setup`: the first run as one command. It reads the data and config roots, runs the parser on a sample
- *   address, lists the tiers for the countries that matter with their size and whether each is free or licensed, and
- *   offers the three routes to a token. A declaration or an evaluation is made in place. A download is printed as the
+ *   address, lists the tiers for the countries that matter with their size and whether each is free or licensed,
+ *   states what works now per capability and the next smallest installation, and offers the three routes to a
+ *   token. Both come from the plan `data pull --dry-run` prints. A declaration or an evaluation is made in place. A download is printed as the
  *   `data pull` command to run next, because a multi-gigabyte transfer has its own progress output and belongs to
  *   that command. `--no-interactive` prints the same report without prompts.
  */
@@ -19,9 +20,14 @@ import { type CommandComponent, type CommandSpec, CommandTaskResult, useCommandT
 import { declareAction, evaluateAction, spec as licenseSpec } from "#cli/native/commands/license"
 import { parseCommand } from "#cli/native/spec"
 import {
+	bundlesFor,
+	installedBundles,
+	nextInstallation,
 	parseSample,
-	readInstalledTiers,
+	readInstallationPlan,
+	setupCapabilities,
 	type SetupChecks,
+	type SetupInstallation,
 	SetupRoute,
 	setupSummary,
 	type TierRow,
@@ -55,20 +61,25 @@ export const spec = {
 interface SetupReport {
 	checks: SetupChecks
 	tiers: TierRow[]
+	installation: SetupInstallation
 }
 
 async function runChecks(countries: readonly string[]): Promise<SetupReport> {
 	const dataRoot = dataRootPath()
 	const configRoot = configRootPath()
-	const installed = await readInstalledTiers(dataRoot)
+
+	// The plan `data pull --dry-run` prints for these bundles, so setup and the pull agree on what is installed.
+	const plan = await readInstallationPlan(
+		dataRoot,
+		bundlesFor(countries).map((bundle) => bundle.name)
+	)
+
+	const parse = await parseSample(await mailwomanCLIPath())
 
 	return {
-		checks: {
-			dataRoot: dataRoot.toString(),
-			configRoot: configRoot.toString(),
-			parse: await parseSample(await mailwomanCLIPath()),
-		},
-		tiers: tiersFor(countries, installed),
+		checks: { dataRoot: dataRoot.toString(), configRoot: configRoot.toString(), parse },
+		tiers: tiersFor(countries, installedBundles(plan)),
+		installation: { capabilities: setupCapabilities(parse, plan), next: nextInstallation(plan) },
 	}
 }
 
@@ -98,7 +109,7 @@ function declareArguments(intent: string, answers: readonly string[]): string[] 
 function Report({ report }: { report: SetupReport }): React.ReactElement {
 	return (
 		<Box flexDirection="column">
-			{setupSummary(report.checks, report.tiers).map((line, index) => (
+			{setupSummary(report.checks, report.tiers, report.installation).map((line, index) => (
 				// oxlint-disable-next-line react/no-array-index-key -- the summary is a fixed list rendered once, so the index is the stable key
 				<Text key={index}>{line}</Text>
 			))}
@@ -251,7 +262,8 @@ const Interactive: CommandComponent<typeof spec> = ({ options }) => {
 }
 
 function Finished({ report, exitCode, note }: { report: SetupReport; exitCode: number; note: string }) {
-	const pulls = report.tiers.filter((row) => !row.installed).map((row) => `  mailwoman data pull ${row.name}`)
+	// The interactive and non-interactive runs print the same next installation, from the same plan.
+	const pulls = report.installation.next.map((command) => `  ${command}`)
 
 	// The one-shot task exits the process with the wizard's code once this screen has rendered.
 	useCommandTask(
@@ -262,7 +274,7 @@ function Finished({ report, exitCode, note }: { report: SetupReport; exitCode: n
 	return (
 		<Box flexDirection="column">
 			{note ? <Text>{note}</Text> : null}
-			{pulls.length ? <Text>Fetch the tiers you want next:</Text> : null}
+			{pulls.length ? <Text>Next installation:</Text> : null}
 			{pulls.map((line) => (
 				<Text key={line}>{line}</Text>
 			))}

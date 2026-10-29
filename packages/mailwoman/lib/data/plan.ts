@@ -76,6 +76,119 @@ export const PlannedAction = {
 export type PlannedAction = (typeof PlannedAction)[keyof typeof PlannedAction]
 
 /**
+ * Why a requested installation did not complete, kept distinct in human and structured output.
+ */
+export const ProblemKind = {
+	/**
+	 * The registry publishes no artifact for the request: an unknown bundle,
+	 * or an `--only` that matched none.
+	 */
+	Unavailable: "unavailable",
+	/**
+	 * A licensed bundle and no token whose scope admits it.
+	 */
+	InsufficientAccess: "insufficient-access",
+	/**
+	 * A configured obligation refusal applies to the bundle's recorded expression or to a copy on disk.
+	 */
+	RefusedObligation: "refused-obligation",
+	/**
+	 * A bundle the request needs first is not installed.
+	 * The request still installs.
+	 */
+	MissingDependency: "missing-dependency",
+	/**
+	 * The artifact's schema or normalization is one this release's reader does not open.
+	 */
+	Unsupported: "unsupported",
+	/**
+	 * The bytes fail verification: a digest, length or manifest mismatch.
+	 */
+	Corrupt: "corrupt",
+	/**
+	 * The transfer failed.
+	 * Its partial bytes are kept for a resume.
+	 */
+	Transfer: "transfer",
+	Cancelled: "cancelled",
+	/**
+	 * The artifact installed and stays unselected because another artifact of its bundle did not.
+	 */
+	SiblingFailed: "sibling-failed",
+	/**
+	 * Every artifact installed and the selection replacement was refused, such as by a concurrent installer.
+	 */
+	Activation: "activation",
+	/**
+	 * The recorded transfer does not fit in the free space of the data root's filesystem.
+	 */
+	InsufficientDisk: "insufficient-disk",
+} as const
+
+export type ProblemKind = (typeof ProblemKind)[keyof typeof ProblemKind]
+
+/**
+ * One problem a plan reports before any transfer.
+ */
+export interface PlanProblem {
+	/**
+	 * The bundle it concerns, or `null` for the plan as a whole.
+	 */
+	bundle: string | null
+	kind: ProblemKind
+	detail: string
+}
+
+/**
+ * Every problem a plan states before any transfer, by kind.
+ *
+ * A missing dependency is listed and does not stop the installation.
+ */
+export function planProblems(plan: InstallationPlan): PlanProblem[] {
+	const problems: PlanProblem[] = []
+
+	for (const bundle of plan.bundles) {
+		for (const detail of bundle.problems) {
+			problems.push({ bundle: bundle.name, kind: ProblemKind.Unavailable, detail })
+		}
+
+		if (bundle.access?.kind === "refused") {
+			problems.push({
+				bundle: bundle.name,
+				kind: ProblemKind.InsufficientAccess,
+				detail: bundle.access.lines.join(" "),
+			})
+		}
+
+		for (const { subject, finding } of bundle.refusals) {
+			problems.push({
+				bundle: bundle.name,
+				kind: ProblemKind.RefusedObligation,
+				detail: `--refuse ${finding.refusal}: ${finding.reason} (${subject})`,
+			})
+		}
+
+		for (const dependency of bundle.missingDependencies) {
+			problems.push({
+				bundle: bundle.name,
+				kind: ProblemKind.MissingDependency,
+				detail: `${bundle.name} needs ${dependency}, which is not installed: mailwoman data pull ${dependency}`,
+			})
+		}
+	}
+
+	if (plan.fitsOnDisk === false && plan.disk) {
+		problems.push({
+			bundle: null,
+			kind: ProblemKind.InsufficientDisk,
+			detail: `${plan.transfer.recordedBytes} bytes to transfer and ${plan.disk.availableBytes} available at ${plan.disk.measuredAt}`,
+		})
+	}
+
+	return problems
+}
+
+/**
  * An installed artifact found under the data root, with the receipt that ties it to a registry object.
  */
 export interface InstalledCopy {

@@ -340,6 +340,7 @@ mailwoman data pull [options] <bundle...>
 | `--data-root [data-root]` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
 | `--host [host]`           | string                        | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |
 | `--refuse [refuse...]`    | `share-alike` \| `unresolved` | —       | Decline a bundle whose recorded expression has this class of obligation (share-alike, unresolved). Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS       |
+| `--json`                  | boolean                       | `false` | Emit the plan, its problems by kind and each artifact's outcome as JSON                                                                                     |
 
 ### `mailwoman data sources`
 
@@ -373,6 +374,7 @@ mailwoman data status [options] [bundle...]
 | ------------------------- | ------- | ------- | ------------------------- |
 | `--check-remote`          | boolean | `false` | Check live artifact sizes |
 | `--data-root [data-root]` | string  | —       | Override the data root    |
+| `--json`                  | boolean | `false` | Emit the status as JSON   |
 
 ## `mailwoman skill`
 

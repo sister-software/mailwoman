@@ -22,6 +22,7 @@ import {
 	sourceRecordsHint,
 	takeInventory,
 } from "#data/inventory"
+import { readInstallationState } from "#data/state"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
@@ -80,6 +81,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const report = await takeInventory({
 			dataRoot,
 			...(options.depth ? { maxDepth: Number(options.depth) } : {}),
+			installation: await readInstallationState(dataRoot),
 		})
 
 		if (options.json) {
@@ -133,7 +135,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 
 			for (const entry of report.entries) {
 				lines.push(
-					`  ${entry.provenance.padEnd(14)} ${ByteFormatter.formatSI(entry.bytes).padStart(10)}  ${entry.path}`
+					`  ${entry.provenance.padEnd(14)} ${ByteFormatter.formatSI(entry.bytes).padStart(10)}  ${entry.path}${entry.selection ? `  (${entry.selection})` : ""}`
 				)
 
 				lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${rebuildHint(entry)}`)

@@ -12,7 +12,7 @@
  *   - `installations/<installation id>.json` records one installation: an artifact set and its origin.
  *   - `active.json` is the active selection. It lists the installed artifacts each role reads, per scope, in order.
  *   - `selections/<generation>.json` keeps every generation written, so a rollback can restore the one before.
- *   - `.active.lock/` is held while a writer replaces the selection.
+ *   - `.active.lock/` is held while a writer replaces the selection, and `.install.lock/` for a whole installation.
  *
  *   A file under `db/` is selected only when `active.json` names it. Readers that find no entry for their role
  *   and scope keep today's resolution through the conventional paths and `releases.json`, so a data root
@@ -64,6 +64,10 @@ export function catalogPaths(dataRoot: PathBuilderLike) {
 		selectionHistory: root("selections"),
 		installations: root("installations"),
 		lock: root(".active.lock"),
+		/**
+		 * Held by `executeInstallation` for a whole run.
+		 */
+		installLock: root(".install.lock"),
 		acquisitions: root("tmp", "acquire"),
 		/**
 		 * The directory that holds one artifact, `db/<role>/<hex>/`.
