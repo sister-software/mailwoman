@@ -596,10 +596,18 @@ Classified differences (**decided**):
 - KEN_ALL is read through Node's `shift_jis` decoder, which decodes all 9,792 two-byte sequences CPython's cp932 decodes
   the same way. `decodeCP932` maps the eight single bytes where the two differ.
 
+Korea (`countries/kr/corpora/`, `countries/kr/{juso,registers}.py`) moved to `lib/kr/corpus/` over the existing
+`lib/kr/adapters/` readers. It reproduces `kr-build-reference.json` with the Python test's `gdaltransform` stub, and on
+real data (`--max-rows-per-region 20000 --permit-glob barber_shops.csv`, real `gdaltransform`) both the label corpus
+(20,500 rows) and the registry corpus (2,590 rows), both boards and the 19 centroids are equal; both reports differ only
+in `per_tag_rows` order.
+
 Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `countries/{fr,gb,us}/`,
-`countries/{jp,tw}/registers.py`, `countries/jp/corpora/`, `countries/jp/{kana,text}.py`, `countries/tw/corpora/`, and
-their tests. Japan and Taiwan move to `SOURCE_ONLY`; their directories keep `staging.py`, and Japan's
-`probe_corpora.py`.
+`countries/{jp,tw}/registers.py`, `countries/{jp,tw,kr}/corpora/`, `countries/jp/{kana,text}.py`,
+`countries/kr/{juso,registers}.py`, and their tests. No Python country builder remains, so `COUNTRY_MODULES` and
+`protocols.CountryModule` are deleted and every country directory is listed in `SOURCE_ONLY`. Not ported yet:
+`countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpora.py`, `corpora/fragment/`,
+`countries/de/fragment_board.py`, `corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
 
 ### Phase 3 — The Rust sampler and character path
 
