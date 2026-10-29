@@ -80,6 +80,7 @@ fn compare_outputs(stage: &mut StageResult, prefix: &str, out: &EncoderOutput, r
 	for (name, value) in [
 		("locale_logits", out.locale_logits.as_ref()),
 		("address_system_logits", out.address_system_logits.as_ref()),
+		("span_scores", out.span_scores.as_ref()),
 	] {
 		let key = format!("{prefix}.{name}");
 		match (value, record.has(&key)) {
@@ -433,8 +434,7 @@ fn stage6(
 			saved.display()
 		));
 	}
-	let labels = encoder.schema.set("stage3")?.bio_labels.clone();
-	let mut restored = CoarseEncoder::from_pretrained(&saved, &labels)?;
+	let mut restored = CoarseEncoder::from_pretrained(&saved, encoder.defaults())?;
 	// `config.json` records a disabled channel's width as 0, as `to_config_dict` does, so the specs are compared as
 	// the file states them.
 	if restored.spec.to_config_json() != model.spec.to_config_json() {

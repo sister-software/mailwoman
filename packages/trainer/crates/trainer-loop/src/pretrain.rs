@@ -42,7 +42,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut model = match &resume {
 		Some(dir) => {
 			println!("[pretrain] resuming from {}", dir.display());
-			CoarseEncoder::from_pretrained(dir, &encoder.schema.set("stage3")?.bio_labels)?
+			CoarseEncoder::from_pretrained(dir, encoder.defaults())?
 		}
 		None => build_model(run, &encoder)?,
 	};

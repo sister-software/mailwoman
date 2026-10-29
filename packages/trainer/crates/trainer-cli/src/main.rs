@@ -49,15 +49,6 @@ fn report(results: &[StageResult], args: &[String]) -> Result<bool, String> {
 	Ok(results.iter().all(|r| r.pass() && r.notes.is_empty()))
 }
 
-/// The `stage3` BIO labels, the map a checkpoint without `id2label` takes.
-fn stage3_labels(text: &str) -> Result<Vec<String>, String> {
-	let doc: serde_json::Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
-	doc.pointer("/label_sets/stage3/bio_labels")
-		.and_then(|v| v.as_array())
-		.map(|a| a.iter().filter_map(|v| v.as_str().map(str::to_owned)).collect())
-		.ok_or_else(|| "the label schema has no stage3 set".to_owned())
-}
-
 fn run(args: &[String]) -> Result<bool, String> {
 	set_threads(args);
 	let err = |e: trainer_loop::Error| e.to_string();
@@ -135,9 +126,16 @@ fn run(args: &[String]) -> Result<bool, String> {
 			let out = PathBuf::from(option(args, "--out").ok_or(USAGE)?);
 			let rows = option(args, "--rows").and_then(|n| n.parse().ok()).unwrap_or(64);
 			let files = DataFiles::discover();
-			let schema = std::fs::read_to_string(&files.label_schema).map_err(|e| e.to_string())?;
-			let schema = stage3_labels(&schema)?;
-			let n = trainer_loop::export_check::write_feeds(&checkpoint, &record, &out, rows, &schema).map_err(err)?;
+			let schema = trainer_loop::batch::read_label_schema(&files).map_err(err)?;
+			let (labels, conventions) = (
+				schema.set("stage3").map_err(|e| e.to_string())?,
+				schema.conventions_by_locale(),
+			);
+			let defaults = trainer_model::SchemaDefaults {
+				labels: &labels.bio_labels,
+				conventions: &conventions,
+			};
+			let n = trainer_loop::export_check::write_feeds(&checkpoint, &record, &out, rows, defaults).map_err(err)?;
 			println!("{n} probes -> {}", out.display());
 			Ok(true)
 		}

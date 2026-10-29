@@ -11,6 +11,7 @@ use crate::fisher::{EwcPenalty, FisherAccumulator};
 use crate::metrics::{cross_pollution, per_locale_tag_f1, token_f1, Metrics};
 use crate::noise::{apply_curricula, Curricula};
 use crate::optim::{build_groups, clip_grad_norm, AdamW};
+use crate::realized::RealizedRows;
 use crate::schedules::{restamp_resume_lrs, LambdaLr, Schedule};
 use crate::{fail, Result};
 use mtf_sampler::{CancelToken, Sampler, SamplerConfig, TrainingBatches};
@@ -33,7 +34,8 @@ pub struct Precision {
 /// `resolve_precision`: bf16 on an NVIDIA device runs under autocast with fp32 parameters; the CPU runs fp32.
 ///
 /// `autocast_on_cpu` asks for the CPU autocast the staged comparison runs; the Python trainer never autocasts
-/// on the CPU. The parameter cast that fp16 and ROCm bf16 take in Python is not ported and is refused.
+/// on the CPU. The parameter cast that fp16 and ROCm bf16 take in Python is retired: fp16 on a CUDA device is
+/// refused, and the trainer links CPU or CUDA libtorch only, so it has no ROCm device.
 pub fn resolve_precision(run: &RunConfig, device: Device, autocast_on_cpu: bool) -> Result<Precision> {
 	let accum = run.train_i64("grad_accum_steps")?.max(1);
 	let precision = run.train_str("precision")?;
@@ -54,8 +56,9 @@ pub fn resolve_precision(run: &RunConfig, device: Device, autocast_on_cpu: bool)
 		}),
 		(Some(_), Device::Cpu) => Ok(Precision { autocast: None, accum }),
 		(Some(k), _) => Err(fail!(
-			"train.precision={precision:?} on {device:?} casts the parameters to {k:?} in the Python trainer, \
-			 which the Rust trainer does not port"
+			"train.precision={precision:?} on {device:?} cast the parameters to {k:?} in the Python trainer, with no \
+			 gradient scaler; the Rust trainer retires that cast, so use bf16, which runs under autocast with fp32 \
+			 parameters"
 		)),
 	}
 }
@@ -77,16 +80,16 @@ pub fn build_model(run: &RunConfig, encoder: &RunEncoder) -> Result<CoarseEncode
 		&encoder.label_set,
 		encoder.schema.locale_countries.len() as i64,
 		encoder.address_systems.count(),
+		&encoder.conventions,
 	)?;
 	Ok(CoarseEncoder::new(spec)?)
 }
 
 /// `load_or_build_model`.
 pub fn load_or_build_model(run: &RunConfig, encoder: &RunEncoder, resume_from: Option<&Path>) -> Result<CoarseEncoder> {
-	let default_labels = encoder.schema.set("stage3")?.bio_labels.clone();
 	if let Some(dir) = resume_from {
 		println!("resuming from {}", dir.display());
-		return Ok(CoarseEncoder::from_pretrained(dir, &default_labels)?);
+		return Ok(CoarseEncoder::from_pretrained(dir, encoder.defaults())?);
 	}
 	let model = build_model(run, encoder)?;
 	let init_from = run.train_str("init_from")?;
@@ -384,6 +387,7 @@ pub struct TrainOptions {
 
 /// `train`: the supervised run, or the MLM run when `train.objective` is `mlm`.
 pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
+	crate::callbacks::refuse_trackio(run)?;
 	let seed = run.train_i64("seed")?;
 	tch::manual_seed(seed);
 	if run.train_str("objective")? == "mlm" {
@@ -409,6 +413,8 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		Some(dir) => Some(PathBuf::from(dir)),
 	};
 	let encoder = RunEncoder::build(run, &files)?;
+	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
+	encoder.verify_tokenizer_alignment(&sampler)?;
 	let device = device();
 	let mut model = load_or_build_model(run, &encoder, resume_from.as_deref())?;
 	model.to_device(device);
@@ -477,7 +483,6 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			save_every: run.train_i64("save_every_steps")?.max(1),
 		}),
 	];
-	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
 	let labels = encoder.labels()?;
 	let locales = encoder.schema.locale_countries.clone();
 	let curricula = Curricula {
@@ -501,6 +506,8 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut micro_step = 0i64;
 	let mut running = 0.0f64;
 	let (mut train_loss, mut learning_rate) = (0.0f64, 0.0f64);
+	// Every row a consumed batch held: the realized draws the exposure report counts.
+	let mut realized = RealizedRows::create(&output_dir, resume_step)?;
 	if step < max_steps {
 		let mut batches = TrainingBatches::new(
 			sampler.clone(),
@@ -512,6 +519,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		);
 		while step < max_steps {
 			let rows = batches.next_batch()?;
+			realized.add(&rows)?;
 			model.mode = Mode::Train;
 			let mut batch = encoder.encode(&rows)?.to_device(device);
 			apply_curricula(&curricula, &mut batch, step)?;
@@ -610,8 +618,11 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		let path = f.save(&final_ck, meta)?;
 		println!("[fisher] artifact → {} ({} batches)", path.display(), f.count);
 	}
+	let described = realized.finish(&output_dir, &corpus_dir, &encoder.label_set, step)?;
 	println!(
-		"[exposure] the realized-draws report is not written by the Rust trainer: exposure/report.py moves with Phase 2"
+		"[exposure] realized draws → {} (report: node packages/mailwoman/tools/training/exposure/realized.run.ts {})",
+		described.display(),
+		described.display()
 	);
 	for c in &mut callbacks {
 		c.on_train_end()?;

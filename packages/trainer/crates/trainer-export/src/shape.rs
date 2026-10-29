@@ -141,7 +141,7 @@ impl<'a> Inference<'a> {
 				};
 				single(Some(Info { elem, dims }))
 			}
-			"Erf" | "Softmax" | "LayerNormalization" | "Clip" | "Relu" => single(same(None)),
+			"Erf" | "Softmax" | "LayerNormalization" | "Clip" | "Relu" | "Tanh" => single(same(None)),
 			"Conv" => {
 				// onnx's `convPoolShapeInference` for a 1-D convolution with explicit pads, unit strides and dilations.
 				let (Some(x), Some(w)) = (input(0), input(1)) else {

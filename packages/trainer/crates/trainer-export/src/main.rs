@@ -2,7 +2,8 @@
 //!
 //! - `export-onnx --checkpoint <dir> --output <model.onnx> [--char-window N]`: the opset-17 float32 graph of a
 //!   checkpoint directory (`config.json` beside `model.safetensors` or `pytorch_model.bin`). A char-path checkpoint
-//!   needs `--char-window`, the training config's `data.max_unit_width`.
+//!   needs `--char-window`, the training config's `data.max_unit_width`. A span-scorer checkpoint also gets
+//!   `semi-crf-transitions.json` beside the graph, and the run's `CORPUS.json` beside its checkpoints is copied there.
 //! - `quantize --input <model.onnx> --output <model-int8.onnx>`: `quantize_dynamic(QInt8)`'s int8 graph.
 //! - `split-embeddings --input <model-int8.onnx> --out-dir <dir> [--counts <counts.npy|.json>] [--coverage 0.99]
 //!   [--always 0,1,2,3]`: `encoder.onnx` and the `MWE1` row file `embeddings.rows`, and with per-piece counts the hot
@@ -21,10 +22,12 @@ use std::process::ExitCode;
 
 use prost::Message;
 use trainer_export::checkpoint::read_checkpoint;
-use trainer_export::export::{export_checkpoint, ExportOptions};
+use trainer_export::config::ModelConfig;
+use trainer_export::export::{build_model, ExportOptions};
 use trainer_export::onnx::tensor_proto::DataType;
 use trainer_export::onnx::ModelProto;
 use trainer_export::quantize::quantize_dynamic_qint8;
+use trainer_export::span::{semi_crf_transitions, SEMI_CRF_TRANSITIONS_FILE};
 use trainer_export::split::{read_counts, split_model_file, HotSelection};
 use trainer_export::{fail, Result};
 
@@ -53,12 +56,23 @@ fn read_model(path: &Path) -> Result<ModelProto> {
 	Ok(ModelProto::decode(bytes.as_slice())?)
 }
 
-fn write_model(model: &ModelProto, path: &Path) -> Result<()> {
+fn write_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
 	let staged = PathBuf::from(format!("{}.partial", path.display()));
-	std::fs::write(&staged, model.encode_to_vec()).map_err(|error| fail!("{}: {error}", staged.display()))?;
+	std::fs::write(&staged, bytes).map_err(|error| fail!("{}: {error}", staged.display()))?;
 	std::fs::rename(&staged, path).map_err(|error| fail!("{}: {error}", path.display()))?;
 	Ok(())
 }
+
+fn write_text(path: &Path, text: &str) -> Result<()> {
+	write_bytes(path, text.as_bytes())
+}
+
+fn write_model(model: &ModelProto, path: &Path) -> Result<()> {
+	write_bytes(path, &model.encode_to_vec())
+}
+
+/// The trainer's corpus record, `train/corpus_record.py`'s `CORPUS_RECORD_FILE`, beside a run's checkpoints.
+const CORPUS_RECORD_FILE: &str = "CORPUS.json";
 
 /// An initializer's type, dims and elements as `raw_data` would hold them, by name.
 type InitializerIndex = BTreeMap<String, (Option<i32>, Vec<i64>, Vec<u8>)>;
@@ -198,8 +212,34 @@ fn run(args: &[String]) -> Result<bool> {
 				.map(|w| w.parse().map_err(|_| fail!("--char-window {w} is not a count")))
 				.transpose()?;
 			let options = ExportOptions { char_window };
-			let model = export_checkpoint(Path::new(required(&flags, "checkpoint")?), &options)?;
-			write_model(&model, Path::new(required(&flags, "output")?))?;
+			let checkpoint = Path::new(required(&flags, "checkpoint")?);
+			let output = Path::new(required(&flags, "output")?);
+			let config = ModelConfig::read(&checkpoint.join("config.json"))?;
+			let state = read_checkpoint(checkpoint)?;
+			let model = build_model(&config, &state, &options)?;
+			let beside = output.parent().unwrap_or_else(|| Path::new("."));
+			// The decoder reads the span scorer's transitions from a sidecar, because the graph does not carry them.
+			if let Some(transitions) = semi_crf_transitions(&config, &state)? {
+				let sidecar = beside.join(SEMI_CRF_TRANSITIONS_FILE);
+				write_text(&sidecar, &transitions.to_json()?)?;
+				println!("span transitions sidecar: {}", sidecar.display());
+			}
+			write_model(&model, output)?;
+			// The trainer writes its corpus record beside the checkpoints; a copy beside the model ties the export to its
+			// corpus.
+			let record = checkpoint.parent().map(|p| p.join(CORPUS_RECORD_FILE));
+			match record.filter(|r| r.is_file()) {
+				Some(record) => {
+					let copy = beside.join(CORPUS_RECORD_FILE);
+					let bytes = std::fs::read(&record).map_err(|e| fail!("{}: {e}", record.display()))?;
+					write_bytes(&copy, &bytes)?;
+					println!("corpus record: {}", copy.display());
+				}
+				None => println!(
+					"no {CORPUS_RECORD_FILE} beside {}; the run predates it",
+					checkpoint.display()
+				),
+			}
 		}
 		"split-embeddings" => {
 			let model = read_model(Path::new(required(&flags, "input")?))?;

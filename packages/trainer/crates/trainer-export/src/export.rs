@@ -16,6 +16,9 @@
 //!   The window is the training config's `data.max_unit_width`, which the checkpoint does not store, so the caller
 //!   passes it in [`ExportOptions`].
 //!
+//! - The span scorer (`use_span_scorer`) adds the `span_scores` output `[batch, sequence, max_span, types]` from the
+//!   classifier's input, with `Pad`, `Slice`, `Concat` and `Tanh` for the shifted end projections.
+//!
 //! The declared output shapes are the pinned exporter's: dimension 0 of every output is the literal 1, because
 //! torch.export specializes the traced batch of one inside the attention blocks. The computation here does not
 //! specialize it; see the F2 record in `docs/engineering/reference/2026-10-29-python-removal-plan.mdx`.
@@ -82,6 +85,14 @@ pub struct Interface {
 	address_system: bool,
 	locale_hint: bool,
 	phrase_width: usize,
+	span: Option<SpanHead>,
+}
+
+/// The span scorer's widths: the projection width, the segment-type count and the longest span.
+struct SpanHead {
+	dim: usize,
+	types: usize,
+	max_span: usize,
 }
 
 fn enabled(config: &ModelConfig, prefix: &str) -> bool {
@@ -142,10 +153,6 @@ fn char_front(config: &ModelConfig, state: &StateDict, options: &ExportOptions) 
 /// Reads the interface and refuses a combination the Python exporter refuses or this writer does not build.
 pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<Interface> {
 	let unsupported = [
-		(
-			config.use_span_scorer,
-			"use_span_scorer (the span_scores output; the Rust model has no span scorer to check it against)",
-		),
 		(config.use_affix_head, "use_affix_head"),
 		(config.use_deploc_head, "use_deploc_head"),
 		(config.inject_first_token, "inject_first_token"),
@@ -223,6 +230,32 @@ pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOption
 		));
 	}
 
+	let span = if config.use_span_scorer {
+		let shape = state.shape("span_scorer.start_proj.weight")?;
+		let [dim, cols] = shape else {
+			return Err(fail!("span_scorer.start_proj.weight has shape {shape:?}"));
+		};
+		if *cols != hidden {
+			return Err(fail!(
+				"span_scorer.start_proj.weight has {cols} columns, expected hidden_size {hidden}"
+			));
+		}
+		let shape = state.shape("span_scorer.type_out.weight")?;
+		let [types, _] = shape else {
+			return Err(fail!("span_scorer.type_out.weight has shape {shape:?}"));
+		};
+		if config.max_span == 0 {
+			return Err(fail!("config max_span is 0"));
+		}
+		Some(SpanHead {
+			dim: *dim,
+			types: *types,
+			max_span: config.max_span,
+		})
+	} else {
+		None
+	};
+
 	let phrase_width = if config.use_phrase_priors {
 		let shape = state.shape("phrase_input_projection.weight")?;
 		match shape {
@@ -240,6 +273,7 @@ pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOption
 		address_system: config.use_address_system_head,
 		locale_hint,
 		phrase_width,
+		span,
 	})
 }
 
@@ -496,6 +530,50 @@ impl Writer<'_> {
 			"char_cnn.shape",
 		);
 		Ok(self.g.op("Reshape", &[&projected, &shape], vec![], "char_embedding"))
+	}
+}
+
+impl Writer<'_> {
+	/// `SpanScorer.forward`: `type_out(tanh(start_proj(h)[:, i] + end_proj(h)[:, i + l]))` for every start `i` and
+	/// length offset `l`, as `[B, S, max_span, types]`.
+	///
+	/// The end projections are padded with `max_span - 1` zero rows after the sequence, as `F.pad` pads them, and the
+	/// window for offset `l` is rows `l .. l + S` of the padded tensor.
+	fn span_scores(&mut self, h: &str, span: &SpanHead, seq_dim: &str) -> Result<()> {
+		let (e, d, l) = (self.hidden, span.dim, span.max_span as i64);
+		let starts = self.linear3(h, "span_scorer.start_proj", d, e, "span.starts")?;
+		let ends = self.linear3(h, "span_scorer.end_proj", d, e, "span.ends")?;
+		let pads = self.g.ints(&[0, 0, 0, 0, l - 1, 0]);
+		let padded = self.g.op("Pad", &[&ends, &pads], vec![], "span.ends.padded");
+		let axis = self.g.ints(&[1]);
+		let mut windows = Vec::new();
+		for offset in 0..l {
+			let begin = self.g.ints(&[offset]);
+			let end = self
+				.g
+				.op("Add", &[seq_dim, &begin], vec![], &format!("span.window{offset}.end"));
+			let window = self.g.op(
+				"Slice",
+				&[&padded, &begin, &end, &axis],
+				vec![],
+				&format!("span.window{offset}"),
+			);
+			windows.push(self.unsqueeze(&window, &[2], &format!("span.window{offset}.column")));
+		}
+		let refs: Vec<&str> = windows.iter().map(String::as_str).collect();
+		let shifted = self.g.op("Concat", &refs, vec![attr_int("axis", 2)], "span.shifted");
+		let starts = self.unsqueeze(&starts, &[2], "span.starts.column");
+		let summed = self.g.op("Add", &[&starts, &shifted], vec![], "span.summed");
+		let activated = self.g.op("Tanh", &[&summed], vec![], "span.tanh");
+		let weight = self.state.f32("span_scorer.type_out.weight", &[span.types, d])?;
+		let wt = transposed(weight, span.types, d);
+		let wt = self
+			.g
+			.f32("span_scorer.type_out.weight.T", &[d as i64, span.types as i64], &wt);
+		let bias = self.param("span_scorer.type_out.bias", &[span.types])?;
+		let product = self.g.op("MatMul", &[&activated, &wt], vec![], "span.type_out.matmul");
+		self.g.op_into("Add", &[&product, &bias], vec![], "span_scores");
+		Ok(())
 	}
 }
 
@@ -771,6 +849,25 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 	let bias = w.param("classifier.bias", &[config.num_labels])?;
 	let product = w.g.op("MatMul", &[&h, &wt], vec![], "classifier.matmul");
 	w.g.op_into("Add", &[&product, &bias], vec![], "logits");
+
+	// The span scores read the classifier's input. They come after `locale_logits` and before
+	// `address_system_logits`, as `PlainOutputs._outputs` orders them.
+	if let Some(span) = &iface.span {
+		w.span_scores(&h, span, &seq_dim)?;
+		outputs.insert(
+			1 + usize::from(iface.locale),
+			value_info(
+				"span_scores",
+				DataType::Float,
+				&[
+					Dim::Fixed(1),
+					sequence(),
+					Dim::Fixed(span.max_span as i64),
+					Dim::Fixed(span.types as i64),
+				],
+			),
+		);
+	}
 
 	let mut graph = GraphProto {
 		node: w.g.nodes,

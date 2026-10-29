@@ -20,6 +20,19 @@ describe("label schema", () => {
 		expect({ ...committed, address_systems: null }).toEqual({ ...schema, address_systems: null })
 	})
 
+	test("the conventions table names locale countries and stage-3 tags only", () => {
+		const stage3 = new Set<string>(schema.label_sets.stage3.tags)
+
+		for (const [country, tags] of Object.entries(schema.conventions_forbidden_tags)) {
+			expect(schema.locale_countries, country).toContain(country)
+			expect(tags.length, country).toBeGreaterThan(0)
+
+			for (const tag of tags) {
+				expect(stage3.has(tag), `${country}: ${tag}`).toBe(true)
+			}
+		}
+	})
+
 	test("an address-system id out of order is refused", () => {
 		expect(() => buildLabelSchema({ registry: "test", systems: [{ id: 1, key: "a" }] })).toThrow(
 			"address system 0 has id 1"

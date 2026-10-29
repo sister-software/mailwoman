@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .app import app
-from .artifacts import export_onnx, push_artifact_r2
+from .artifacts import push_artifact_r2
 from .bucket import bucket_census
 from .census import country_census_raw, diagnose_corpus, digit_prior, label_support, locale_supply_census, piece_prior
 from .grade import (
@@ -28,7 +28,6 @@ __all__ = [
     "diagnose_suffix_plasticity",
     "digit_prior",
     "eval_de",
-    "export_onnx",
     "grade_evidence_bundle",
     "grade_exposure",
     "grade_street_type_contrast",

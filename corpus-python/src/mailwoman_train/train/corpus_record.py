@@ -1,7 +1,7 @@
 """The record that ties a training run's checkpoints to the corpus MANIFEST it read.
 
-The trainer writes `CORPUS.json` beside its checkpoints, and `export_onnx` copies it beside `model.onnx`. A reader
-given a model can then find the MANIFEST, check its bytes against `manifest_sha256`, and run
+The trainer writes `CORPUS.json` beside its checkpoints, and `trainer-export export-onnx` copies it beside
+`model.onnx`. A reader given a model can then find the MANIFEST, check its bytes against `manifest_sha256`, and run
 `mailwoman corpus input-changes` on it to list the source records that changed since the corpus was built.
 """
 

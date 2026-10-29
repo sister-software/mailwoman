@@ -9,7 +9,7 @@ use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
 use trainer_model::layers::Mode;
-use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec};
+use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec, SchemaDefaults};
 
 /// libtorch's global generator is shared by the test threads, so a test that seeds it holds this lock.
 static GENERATOR: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -36,9 +36,32 @@ fn spec() -> EncoderSpec {
 		"use_locale_conditioning": true, "locale_loss_weight": 0.3, "use_postcode_anchor": true,
 		"use_span_boundary_head": true, "span_boundary_loss_weight": 0.5, "use_affix_head": true,
 		"use_address_system_head": true, "address_system_loss_weight": 0.3, "use_locale_hint": true,
-		"class_weights": {"O": 0.5}
+		"use_span_scorer": true, "span_loss_weight": 0.5, "span_dim": 8, "max_span": 3,
+		"use_conventions_loss_mask": true, "class_weights": {"O": 0.5}
 	});
-	EncoderSpec::from_model_section(model.as_object().unwrap(), 50, 0, 0, &labels(), "stage3", 9, 4).unwrap()
+	EncoderSpec::from_model_section(
+		model.as_object().unwrap(),
+		50,
+		0,
+		0,
+		&labels(),
+		"stage3",
+		9,
+		4,
+		&conventions(),
+	)
+	.unwrap()
+}
+
+/// Locale 1 forbids `street_suffix`, as the schema's FR row does; the other eight forbid nothing.
+fn conventions() -> Vec<Vec<String>> {
+	let mut out = vec![Vec::new(); 9];
+	out[1] = vec!["street_suffix".to_owned()];
+	out
+}
+
+fn defaults<'a>(labels: &'a [String], conventions: &'a [Vec<String>]) -> SchemaDefaults<'a> {
+	SchemaDefaults { labels, conventions }
 }
 
 fn inputs() -> EncoderInputs {
@@ -136,6 +159,115 @@ fn construction_is_deterministic_and_named_as_in_python() {
 }
 
 #[test]
+fn the_realized_stream_holds_every_row_and_is_described_last() {
+	use trainer_loop::realized::{realized_paths, RealizedRows};
+	let dir = tempfile::tempdir().unwrap();
+	let row = |raw: &str, country: Option<&str>, spans: bool| mtf_sampler::Row {
+		raw: raw.into(),
+		tokens: vec![],
+		labels: vec![],
+		country: country.map(str::to_owned),
+		source: "s".into(),
+		spans: spans.then(|| mtf_sampler::SpanTriple {
+			starts: vec![0],
+			ends: vec![2],
+			tags: vec!["street".into()],
+		}),
+	};
+	let mut stream = RealizedRows::create(dir.path(), 7).unwrap();
+	stream
+		.add(&[row("Rue", Some("FR"), true), row("é", None, false)])
+		.unwrap();
+	let (rows_path, meta_path) = realized_paths(dir.path(), 7);
+	assert!(!meta_path.exists(), "the description is written when the stream closes");
+	let meta = stream.finish(dir.path(), "/corpus", "stage3", 9).unwrap();
+	assert_eq!(meta, meta_path);
+	let text = String::from_utf8(zstd::decode_all(std::fs::File::open(&rows_path).unwrap()).unwrap()).unwrap();
+	let lines: Vec<serde_json::Value> = text.lines().map(|l| serde_json::from_str(l).unwrap()).collect();
+	assert_eq!(lines[0]["span_tags"], serde_json::json!(["street"]));
+	assert_eq!(lines[1]["country"], serde_json::Value::Null);
+	assert_eq!(lines[1]["span_starts"], serde_json::Value::Null);
+	let described: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&meta_path).unwrap()).unwrap();
+	assert_eq!(described["row_count"], 2);
+	assert_eq!(described["inputs"]["counted_from_step"], "7");
+	assert_eq!(described["inputs"]["counted_to_step"], "9");
+}
+
+fn run_config(train: serde_json::Value) -> trainer_loop::config::RunConfig {
+	let config = serde_json::json!({"data": {}, "model": {}, "train": train});
+	trainer_loop::config::RunConfig {
+		path: "test.json".into(),
+		config_path: String::new(),
+		config_sha256: String::new(),
+		data: config["data"].as_object().unwrap().clone(),
+		model: config["model"].as_object().unwrap().clone(),
+		train: config["train"].as_object().unwrap().clone(),
+		config,
+		csv_log_path: "train_log.csv".into(),
+	}
+}
+
+#[test]
+fn the_retired_parameter_casts_and_trackio_are_refused_by_name() {
+	use trainer_loop::supervised::resolve_precision;
+	let fp16 = run_config(serde_json::json!({"precision": "fp16", "grad_accum_steps": 1}));
+	let error = resolve_precision(&fp16, tch::Device::Cuda(0), false)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("retires that cast"), "{error}");
+	// The CPU runs fp32 whatever the precision, as the Python trainer does.
+	let cpu = resolve_precision(&fp16, tch::Device::Cpu, false).unwrap();
+	assert!(cpu.autocast.is_none());
+	let bf16 = run_config(serde_json::json!({"precision": "bf16", "grad_accum_steps": 2}));
+	let cuda = resolve_precision(&bf16, tch::Device::Cuda(0), false).unwrap();
+	assert_eq!((cuda.autocast, cuda.accum), (Some(Kind::BFloat16), 2));
+	let trackio = run_config(serde_json::json!({"trackio_enabled": true}));
+	let error = trainer_loop::callbacks::refuse_trackio(&trackio)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("trackio_enabled"), "{error}");
+	assert!(
+		trainer_loop::callbacks::refuse_trackio(&run_config(serde_json::json!({"trackio_enabled": false}))).is_ok()
+	);
+}
+
+#[test]
+fn the_conventions_mask_reaches_the_cross_entropy_only() {
+	let _guard = seeded(0);
+	let mut model = CoarseEncoder::new(spec()).unwrap();
+	model.mode = Mode::Eval;
+	let ce_of = |logits: &Tensor, labels: &Tensor| {
+		let weights = model.store.get("class_weights").unwrap();
+		logits
+			.view([-1, 11])
+			.cross_entropy_loss(&labels.view([-1]), Some(&weights), tch::Reduction::Mean, -100, 0.1)
+			.double_value(&[])
+	};
+	for (locales, forbidden) in [([0i64, -100], false), ([1, 1], true)] {
+		let mut inputs = inputs();
+		inputs.locale_ids = Some(Tensor::from_slice(&locales));
+		let labels = inputs.labels.as_ref().unwrap().shallow_clone();
+		let out = tch::no_grad(|| model.forward(&inputs).unwrap());
+		let ce = out.terms.iter().find(|(n, _)| *n == "ce").unwrap().1.double_value(&[]);
+		let expected = if forbidden {
+			// B- and I-street_suffix, ids 9 and 10, are masked on both rows.
+			let mut mask = vec![false; 11];
+			mask[9] = true;
+			mask[10] = true;
+			let mask = Tensor::from_slice(&mask).view([1, 1, 11]);
+			ce_of(&out.logits.masked_fill(&mask, -1e9), &labels)
+		} else {
+			ce_of(&out.logits, &labels)
+		};
+		assert_eq!(ce, expected, "locales {locales:?}");
+		assert!(
+			out.logits.double_value(&[0, 0, 9]).abs() < 1e8,
+			"the returned logits are unmasked"
+		);
+	}
+}
+
+#[test]
 fn every_loss_term_fires_and_backward_reaches_the_heads() {
 	let _guard = seeded(0);
 	let mut model = CoarseEncoder::new(spec()).unwrap();
@@ -144,14 +276,25 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 	let names: Vec<&str> = out.terms.iter().map(|(n, _)| *n).collect();
 	assert_eq!(
 		names,
-		vec!["ce", "affix", "crf", "locale", "span_boundary", "address_system"]
+		vec![
+			"ce",
+			"affix",
+			"crf",
+			"locale",
+			"span_boundary",
+			"span",
+			"address_system"
+		]
 	);
+	assert_eq!(out.span_scores.as_ref().unwrap().size(), vec![2, 6, 3, 6]);
 	out.loss.unwrap().backward();
 	for name in [
 		"span_boundary_head.weight",
 		"affix_head.0.weight",
 		"address_system_head.weight",
 		"crf.transitions",
+		"span_scorer.start_proj.weight",
+		"semi_crf.transitions",
 	] {
 		assert!(
 			model.store.get(name).unwrap().grad().defined(),
@@ -197,7 +340,8 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		find_latest_checkpoint(dir.path()).unwrap().as_deref(),
 		Some(saved.as_path())
 	);
-	let restored = CoarseEncoder::from_pretrained(&saved, &labels()).unwrap();
+	let (bio, table) = (labels(), conventions());
+	let restored = CoarseEncoder::from_pretrained(&saved, defaults(&bio, &table)).unwrap();
 	// `config.json` records a disabled channel's width as 0, so the specs agree as the file states them.
 	assert_eq!(restored.spec.to_config_json(), model.spec.to_config_json());
 	model.mode = Mode::Eval;

@@ -5,7 +5,8 @@
 //! encoder computes the expected outputs, one row per probe in eval mode, and
 //! `packages/neural/tools/onnx-model-check.run.ts` runs the feeds through the graph `trainer-export` wrote and compares
 //! every element. Every other probe passes the row's own address system as `locale_hint`, the rest the "no hint" id.
-//! A char-path checkpoint's probes feed the record's `char_ids` in place of `input_ids`.
+//! A char-path checkpoint's probes feed the record's `char_ids` in place of `input_ids`. A span-scorer checkpoint's
+//! probes also expect its `span_scores`.
 
 use crate::batch::TensorBatch;
 use crate::compare::Record;
@@ -15,7 +16,7 @@ use std::path::Path;
 use tch::{Kind, Tensor};
 use trainer_model::encoder::IGNORE_INDEX;
 use trainer_model::layers::Mode;
-use trainer_model::CoarseEncoder;
+use trainer_model::{CoarseEncoder, SchemaDefaults};
 
 fn values_f32(t: &Tensor) -> Result<Vec<f32>> {
 	Ok(Vec::<f32>::try_from(t.to_kind(Kind::Float).contiguous().view([-1]))?)
@@ -41,9 +42,9 @@ pub fn write_feeds(
 	record: &Path,
 	out: &Path,
 	rows: usize,
-	default_labels: &[String],
+	defaults: SchemaDefaults,
 ) -> Result<usize> {
-	let mut model = CoarseEncoder::from_pretrained(checkpoint, default_labels)?;
+	let mut model = CoarseEncoder::from_pretrained(checkpoint, defaults)?;
 	model.mode = Mode::Eval;
 	let record = Record::read(record)?;
 	let systems = model.spec.num_address_systems;
@@ -126,6 +127,10 @@ pub fn write_feeds(
 			}
 			if let Some(l) = &output.address_system_logits {
 				let (k, v) = feed("address_system_logits", l)?;
+				expected.insert(k, v);
+			}
+			if let Some(s) = &output.span_scores {
+				let (k, v) = feed("span_scores", s)?;
 				expected.insert(k, v);
 			}
 			probes.push(json!({"feeds": feeds, "expected": expected}));

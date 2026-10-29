@@ -579,5 +579,8 @@
 				"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality locality"
 			}
 		]
+	},
+	"conventions_forbidden_tags": {
+		"FR": ["street_suffix"]
 	}
 }

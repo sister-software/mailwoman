@@ -10,8 +10,8 @@
 //! - Dropout, the locale-hint draws and every curriculum draw consume the generator in the same order, so a
 //!   training step in train mode draws the same masks.
 //!
-//! The span scorer and the conventions loss mask are not built: a configuration that enables either is refused
-//! by name.
+//! The semi-Markov span scorer (`span`) and the conventions loss mask read the label schema's segment types and
+//! conventions table, as `nn/span_scorer.py` and `features/conventions.py` read theirs.
 
 #![recursion_limit = "256"]
 // A tensor's `+=` is an in-place `add_`, which autograd refuses on a tensor the backward pass saved; the
@@ -25,9 +25,10 @@ pub mod crf;
 pub mod encoder;
 pub mod init;
 pub mod layers;
+pub mod span;
 pub mod store;
 
-pub use config::EncoderSpec;
+pub use config::{EncoderSpec, SchemaDefaults};
 pub use encoder::{CoarseEncoder, EncoderInputs, EncoderOutput};
 pub use store::Store;
 

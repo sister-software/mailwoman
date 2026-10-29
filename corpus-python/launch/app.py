@@ -6,7 +6,7 @@ second app object here would produce functions that no launcher can call.
 
 Every name, mount and GPU comes from `launch/settings.py`. This module imports without error when
 credentials are absent: a function that needs R2 calls `require_r2_env()` at its start, so `versions`,
-`debug_volume`, `run_tests` and `export_onnx` run without R2 credentials.
+`debug_volume` and `run_tests` run without R2 credentials.
 """
 
 from __future__ import annotations

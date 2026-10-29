@@ -1546,9 +1546,11 @@ dependencies = [
 name = "trainer-loop"
 version = "0.1.0"
 dependencies = [
+ "arrow-array",
  "mtf-channels",
  "mtf-core",
  "mtf-sampler",
+ "parquet",
  "serde",
  "serde_json",
  "sha2",
@@ -1556,6 +1558,7 @@ dependencies = [
  "tempfile",
  "trainer-model",
  "zip 9.1.3",
+ "zstd 0.14.3",
 ]
 
 [[package]]

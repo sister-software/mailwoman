@@ -223,6 +223,8 @@ jist = "jist"
 STATUSS = "STATUSS"
 organisationID = "organisationID"
 ND = "ND"
+# libtorch's `constant_pad_nd`, which `tch` exposes and `F.pad` issues for a constant pad.
+constant_pad_nd = "constant_pad_nd"
 PNGs = "PNGs"
 OTPs = "OTPs"
 BA = "BA"

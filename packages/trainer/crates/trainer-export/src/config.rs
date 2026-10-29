@@ -35,6 +35,11 @@ fn sixty_four() -> usize {
 	64
 }
 
+/// `SpanScorer`'s default `max_span`.
+fn eight() -> usize {
+	8
+}
+
 /// `CharCNNEmbedding`'s default `kernel_sizes`.
 fn char_kernel_sizes() -> Vec<usize> {
 	vec![3, 4, 5]
@@ -87,6 +92,8 @@ pub struct ModelConfig {
 	pub use_deploc_head: bool,
 	#[serde(default)]
 	pub use_span_scorer: bool,
+	#[serde(default = "eight")]
+	pub max_span: usize,
 	#[serde(default)]
 	pub use_char_embed: bool,
 	#[serde(default)]

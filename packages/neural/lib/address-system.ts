@@ -7,7 +7,7 @@
  *   threshold, so a low-confidence parse applies no conventions.
  */
 
-import type { SystemCode } from "@mailwoman/codex"
+import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 import { isLatinScriptText } from "@mailwoman/codex/address/format"
 import { stringifyJSON } from "@mailwoman/core/json"
 
@@ -142,6 +142,27 @@ const COUNTRY_TO_SYSTEM: Partial<Record<(typeof LOCALE_COUNTRIES)[number], Syste
 	CA: "ca",
 	GB: "gb",
 	JP: "jp",
+}
+
+/**
+ * The tags each locale country's address system forbids, for the trainer's conventions loss mask.
+ *
+ * Only a locale whose codex system lists `forbiddenTags` has an entry.
+ * The training mask and the decoder's emission mask read the same codex rows through this map.
+ */
+export function forbiddenTagsByLocale(): Record<string, readonly string[]> {
+	const out: Record<string, readonly string[]> = {}
+
+	for (const country of LOCALE_COUNTRIES) {
+		const system = COUNTRY_TO_SYSTEM[country]
+		const tags = system ? conventionsForSystem(system)?.forbiddenTags : undefined
+
+		if (tags?.length) {
+			out[country] = [...tags]
+		}
+	}
+
+	return out
 }
 
 /**

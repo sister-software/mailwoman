@@ -6,13 +6,15 @@
 //! `address_system.py`'s operations in their order.
 
 use crate::autocast::Autocast;
-use crate::config::EncoderSpec;
+use crate::config::{EncoderSpec, SchemaDefaults};
 use crate::crf::{LinearChainCrf, Reduction};
 use crate::init;
 use crate::layers::{dropout, CharCnn, Embedding, EncoderBlock, LayerNorm, Linear, Mode};
+use crate::span::{gold_segments, SemiMarkovCrf, SpanScorer};
 use crate::store::Store;
 use crate::{fail, Result};
 use tch::{Device, Kind, Tensor};
+use trainer_export::span::segment_types;
 
 /// The ignore index of every label tensor, `labels.IGNORE_INDEX`.
 pub const IGNORE_INDEX: i64 = -100;
@@ -55,7 +57,10 @@ pub struct EncoderOutput {
 	pub loss: Option<Tensor>,
 	pub locale_logits: Option<Tensor>,
 	pub address_system_logits: Option<Tensor>,
-	/// `ce`, `affix`, `crf`, `locale`, `span_boundary`, `address_system`, `mlm`: each unweighted term computed.
+	/// The span scorer's `(B, S, max_span, T)` scores, when the model has the scorer.
+	pub span_scores: Option<Tensor>,
+	/// `ce`, `affix`, `crf`, `locale`, `span_boundary`, `span`, `address_system`, `mlm`: each unweighted term
+	/// computed.
 	pub terms: Vec<(&'static str, Tensor)>,
 }
 
@@ -101,6 +106,12 @@ pub struct CoarseEncoder {
 	span_boundary_head: Option<Linear>,
 	bio_is_begin: Option<Tensor>,
 	bio_is_inside: Option<Tensor>,
+	pub span_scorer: Option<SpanScorer>,
+	pub semi_crf: Option<SemiMarkovCrf>,
+	/// The span scorer's segment types, `O` first.
+	pub segment_types: Vec<String>,
+	/// `conventions_forbidden`: `(num_locales, num_labels)`, 1 where the conventions forbid the label in that locale.
+	conventions_forbidden: Option<Tensor>,
 	pub crf: Option<LinearChainCrf>,
 	locale_head: Option<Linear>,
 	locale_film: Option<Linear>,
@@ -189,6 +200,29 @@ impl CoarseEncoder {
 		let final_ln = LayerNorm::new(&mut s, "final_ln", h);
 		let classifier = Linear::new(&mut s, "classifier", h, n_labels, true);
 		// `_build_merge_heads`.
+		let conventions_forbidden = if spec.use_conventions_loss_mask {
+			let locales = spec.conventions.len();
+			if locales as i64 != spec.num_locales {
+				return Err(fail!(
+					"use_conventions_loss_mask needs the conventions table for each of the {} locales, got {locales}",
+					spec.num_locales
+				));
+			}
+			let mut mask = vec![0f32; locales * n_labels as usize];
+			for (locale, tags) in spec.conventions.iter().enumerate() {
+				for tag in tags {
+					for prefix in ["B-", "I-"] {
+						if let Some(id) = labels.iter().position(|l| *l == format!("{prefix}{tag}")) {
+							mask[locale * n_labels as usize + id] = 1.0;
+						}
+					}
+				}
+			}
+			let mask = Tensor::from_slice(&mask).view([locales as i64, n_labels]);
+			Some(s.buffer("conventions_forbidden", mask, false))
+		} else {
+			None
+		};
 		let (mut affix_head, mut affix_label_ids, mut affix_target_lut) = (None, None, None);
 		if spec.use_affix_head {
 			let affix_in = h + if dims[1] > 0 { dims[1] } else { 5 };
@@ -233,6 +267,20 @@ impl CoarseEncoder {
 			bio_is_begin = Some(s.buffer("bio_is_begin", Tensor::from_slice(&begin), false));
 			bio_is_inside = Some(s.buffer("bio_is_inside", Tensor::from_slice(&inside), false));
 		}
+		let types = segment_types(&labels);
+		let (mut span_scorer, mut semi_crf) = (None, None);
+		if spec.use_span_scorer {
+			let n = types.len() as i64;
+			span_scorer = Some(SpanScorer::new(
+				&mut s,
+				"span_scorer",
+				h,
+				spec.span_dim,
+				spec.max_span,
+				n,
+			));
+			semi_crf = Some(SemiMarkovCrf::new(&mut s, "semi_crf", spec.max_span, n));
+		}
 		let crf = spec.use_crf.then(|| LinearChainCrf::new(&mut s, "crf", &labels));
 		let (locale_head, locale_film) = if spec.use_locale_conditioning {
 			(
@@ -265,6 +313,10 @@ impl CoarseEncoder {
 			span_boundary_head,
 			bio_is_begin,
 			bio_is_inside,
+			span_scorer,
+			semi_crf,
+			segment_types: types,
+			conventions_forbidden,
 			crf,
 			locale_head,
 			locale_film,
@@ -329,9 +381,9 @@ impl CoarseEncoder {
 	}
 
 	/// Builds the encoder a checkpoint directory describes and loads its weights, as `from_pretrained` does.
-	pub fn from_pretrained(dir: &std::path::Path, default_labels: &[String]) -> Result<Self> {
+	pub fn from_pretrained(dir: &std::path::Path, defaults: SchemaDefaults) -> Result<Self> {
 		let text = std::fs::read_to_string(dir.join("config.json"))?;
-		let spec = EncoderSpec::from_checkpoint_config(&text, default_labels)?;
+		let spec = EncoderSpec::from_checkpoint_config(&text, defaults)?;
 		let model = Self::new(spec)?;
 		let tensors = crate::checkpoint::read_model_tensors(dir)?;
 		model.store.load(&tensors, true)?;
@@ -553,7 +605,7 @@ impl CoarseEncoder {
 			logits = merged;
 		}
 		let mut terms = Vec::new();
-		let loss = self.compute_losses(
+		let (loss, span_scores) = self.compute_losses(
 			&h,
 			&logits,
 			inputs,
@@ -567,6 +619,7 @@ impl CoarseEncoder {
 			loss,
 			locale_logits,
 			address_system_logits,
+			span_scores,
 			terms,
 		})
 	}
@@ -580,11 +633,20 @@ impl CoarseEncoder {
 		locale_logits: Option<&Tensor>,
 		affix_logits: Option<&Tensor>,
 		terms: &mut Vec<(&'static str, Tensor)>,
-	) -> Result<Option<Tensor>> {
+	) -> Result<(Option<Tensor>, Option<Tensor>)> {
 		let n = self.spec.num_labels();
 		let mut loss: Option<Tensor> = None;
 		if let Some(labels) = &inputs.labels {
-			let mut ce = logits.view([-1, n]).cross_entropy_loss(
+			// The conventions mask reaches the cross-entropy's input only; the returned logits are unmasked. An ignored
+			// locale id reads locale 0's row, as `losses.py` clamps it.
+			let ce_logits = match (&self.conventions_forbidden, &inputs.locale_ids) {
+				(Some(forbidden), Some(ids)) => {
+					let rows = forbidden.index(&[Some(&ids.clamp_min(0))]);
+					logits.masked_fill(&rows.unsqueeze(1).to_kind(Kind::Bool), -1e9)
+				}
+				_ => logits.shallow_clone(),
+			};
+			let mut ce = ce_logits.view([-1, n]).cross_entropy_loss(
 				&labels.view([-1]),
 				self.class_weights.as_ref(),
 				tch::Reduction::Mean,
@@ -692,7 +754,51 @@ impl CoarseEncoder {
 				}
 			}
 		}
-		Ok(loss)
+		// The semi-Markov span loss, in fp32. A row whose gold segmentation holds a span longer than `max_span` is left
+		// out rather than truncated.
+		let mut span_scores = None;
+		if let (Some(scorer), Some(semi_crf)) = (&self.span_scorer, &self.semi_crf) {
+			let scores = scorer.forward(hidden);
+			if let (Some(labels), Some(mask)) = (&inputs.labels, &inputs.attention_mask) {
+				if self.spec.span_loss_weight > 0.0 {
+					let lengths = mask.sum_dim_intlist(&[1i64][..], false, None).to_kind(Kind::Int64);
+					let lengths_cpu = Vec::<i64>::try_from(lengths.to_device(Device::Cpu))?;
+					let labels_cpu = labels.to_device(Device::Cpu);
+					let (mut rows, mut segments) = (Vec::new(), Vec::new());
+					for (b, &n) in lengths_cpu.iter().enumerate() {
+						let row = Vec::<i64>::try_from(labels_cpu.get(b as i64).narrow(0, 0, n))?;
+						let (segs, representable) = gold_segments(
+							&row,
+							&self.spec.id_to_label,
+							&self.segment_types,
+							IGNORE_INDEX,
+							scorer.max_span as usize,
+						)?;
+						if representable && !segs.is_empty() {
+							rows.push(b as i64);
+							segments.push(segs);
+						}
+					}
+					if !rows.is_empty() {
+						let idx = Tensor::from_slice(&rows).to_device(scores.device());
+						let nll = semi_crf
+							.nll(&scores.index_select(0, &idx), &segments, &lengths.index_select(0, &idx))
+							.mean(None);
+						terms.push(("span", nll.shallow_clone()));
+						let term = nll * self.spec.span_loss_weight;
+						loss = Some(match loss {
+							None => term,
+							Some(l) => {
+								let k = l.kind();
+								l + term.to_kind(k)
+							}
+						});
+					}
+				}
+			}
+			span_scores = Some(scores);
+		}
+		Ok((loss, span_scores))
 	}
 
 	/// `_address_system_loss`.
@@ -766,6 +872,7 @@ impl CoarseEncoder {
 			loss,
 			locale_logits: None,
 			address_system_logits: None,
+			span_scores: None,
 			terms,
 		}
 	}

@@ -1,4 +1,6 @@
-"""`labels.py`, `semantic_tags.py` and `address_systems.py` match the label schema `@mailwoman/neural` writes.
+"""`labels.py`, `semantic_tags.py`, `address_systems.py` and `features/conventions.py` match the label schema.
+
+`@mailwoman/neural` writes the schema.
 
 The TypeScript constants own the label vocabulary and the semantic tag registry, and the schema references the
 address-system registry's ids. Until the trainer moves to Rust, the Python modules stay as readers of the same
@@ -38,6 +40,13 @@ def test_the_semantic_tag_registry_matches_the_schema() -> None:
     for name in labels._LABEL_SETS:
         contract = semantic_tags.label_set_contract(name)
         assert contract["head_mapping"] == registry["head_mappings"][name], name
+
+
+def test_the_conventions_mirror_matches_the_schema() -> None:
+    from mailwoman_train.features.conventions import CONVENTIONS_FORBIDDEN_TAGS
+
+    mirror = {country: list(tags) for country, tags in CONVENTIONS_FORBIDDEN_TAGS.items()}
+    assert mirror == SCHEMA["conventions_forbidden_tags"]
 
 
 def test_the_address_systems_the_schema_references_are_the_registry_python_reads() -> None:

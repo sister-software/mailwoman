@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { forbiddenTagsByLocale } from "./address-system.ts"
 import {
 	bioLabelsOf,
 	DEFAULT_LABEL_SET,
@@ -93,11 +94,16 @@ export interface LabelSchema {
 	label_sets: Record<LabelSetName, LabelSchemaSet>
 	semantic_tags: LabelSchemaSemanticTags
 	address_systems: LabelSchemaAddressSystems
+	/**
+	 * The tags the trainer's conventions loss mask forbids, by locale country.
+	 * A locale country without an entry has none.
+	 */
+	conventions_forbidden_tags: Readonly<Record<string, readonly string[]>>
 }
 
 /**
- * Build the label schema from the TypeScript label constants, the semantic tag registry
- * and the address systems the registry at `addressSystems.registry` assigns.
+ * Build the label schema from the TypeScript label constants, the semantic tag registry,
+ * the address systems the registry at `addressSystems.registry` assigns, and the codex conventions.
  *
  * @throws When the address-system ids are not `0…n-1` in order.
  * The head's output layout requires that order.
@@ -145,5 +151,6 @@ export function buildLabelSchema(addressSystems: LabelSchemaAddressSystems): Lab
 			registry: addressSystems.registry,
 			systems: addressSystems.systems.map(({ id, key }) => ({ id, key })),
 		},
+		conventions_forbidden_tags: forbiddenTagsByLocale(),
 	}
 }

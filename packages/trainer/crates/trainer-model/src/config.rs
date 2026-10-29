@@ -70,6 +70,18 @@ pub struct EncoderSpec {
 	pub use_locale_hint: bool,
 	pub locale_hint_drop_prob: f64,
 	pub locale_hint_noise_prob: f64,
+	/// The conventions loss mask's table: for each locale-head class in order, the tags its address system forbids.
+	/// The label schema's `conventions_forbidden_tags` supplies it, and `config.json` does not record it, as
+	/// `to_config_dict` does not.
+	pub conventions: Vec<Vec<String>>,
+}
+
+/// What a spec reads from the label schema rather than from a config: the `stage3` labels a checkpoint without
+/// `id2label` takes, and the conventions table in locale-head order.
+#[derive(Clone, Copy, Debug)]
+pub struct SchemaDefaults<'a> {
+	pub labels: &'a [String],
+	pub conventions: &'a [Vec<String>],
 }
 
 fn get<'a>(obj: &'a Map<String, Value>, key: &str) -> Option<&'a Value> {
@@ -150,9 +162,10 @@ fn class_weights(obj: &Map<String, Value>, labels: &[String]) -> Result<Option<V
 }
 
 impl EncoderSpec {
-	/// Reads a checkpoint's `config.json`, with `_constructor_kwargs`' defaults. `default_labels` is the
-	/// `stage3` map a checkpoint without `id2label` takes.
-	pub fn from_checkpoint_config(text: &str, default_labels: &[String]) -> Result<Self> {
+	/// Reads a checkpoint's `config.json`, with `_constructor_kwargs`' defaults. A checkpoint without `id2label`
+	/// takes the `stage3` labels of `defaults`.
+	pub fn from_checkpoint_config(text: &str, defaults: SchemaDefaults) -> Result<Self> {
+		let default_labels = defaults.labels;
 		let doc: Value = serde_json::from_str(text)?;
 		let obj = doc.as_object().ok_or_else(|| fail!("config.json is not an object"))?;
 		let num_labels = i64_req(obj, "num_labels")?;
@@ -227,6 +240,7 @@ impl EncoderSpec {
 			use_locale_hint: bool_or(obj, "use_locale_hint", false)?,
 			locale_hint_drop_prob: f64_or(obj, "locale_hint_drop_prob", 0.5)?,
 			locale_hint_noise_prob: f64_or(obj, "locale_hint_noise_prob", 0.05)?,
+			conventions: defaults.conventions.to_vec(),
 			id_to_label,
 		})
 		.and_then(Self::checked)
@@ -234,8 +248,9 @@ impl EncoderSpec {
 
 	/// Builds the spec `build_model` builds from a training config's `model` section, with its defaults.
 	///
-	/// `labels` is the config's label set, `num_locales` the locale-head width, and `num_address_systems` the
-	/// registry's id count, which `build_model` reads from the registry rather than the config.
+	/// `labels` is the config's label set, `num_locales` the locale-head width, `num_address_systems` the
+	/// registry's id count, which `build_model` reads from the registry rather than the config, and `conventions` the
+	/// label schema's conventions table in locale-head order.
 	#[allow(clippy::too_many_arguments)]
 	pub fn from_model_section(
 		model: &Map<String, Value>,
@@ -246,6 +261,7 @@ impl EncoderSpec {
 		label_set: &str,
 		num_locales: i64,
 		num_address_systems: i64,
+		conventions: &[Vec<String>],
 	) -> Result<Self> {
 		if label_set != "stage3" {
 			for flag in [
@@ -323,6 +339,7 @@ impl EncoderSpec {
 			use_locale_hint: locale_hint,
 			locale_hint_drop_prob: f64_or(model, "locale_hint_drop_prob", 0.5)?,
 			locale_hint_noise_prob: f64_or(model, "locale_hint_noise_prob", 0.05)?,
+			conventions: conventions.to_vec(),
 		})
 		.and_then(Self::checked)
 	}
@@ -334,14 +351,11 @@ impl EncoderSpec {
 				self.crf_normalization
 			));
 		}
-		if self.use_span_scorer {
+		if self.use_span_scorer && (self.max_span < 1 || self.span_dim < 1) {
 			return Err(fail!(
-				"model.use_span_scorer is not built in the Rust encoder: the semi-Markov span scorer is not ported"
-			));
-		}
-		if self.use_conventions_loss_mask {
-			return Err(fail!(
-				"model.use_conventions_loss_mask is not built in the Rust encoder: features.conventions is not ported"
+				"the span scorer needs max_span >= 1 and span_dim >= 1, got {} and {}",
+				self.max_span,
+				self.span_dim
 			));
 		}
 		if self.use_char_embed && self.char_vocab_size <= 0 {
@@ -452,8 +466,8 @@ impl EncoderSpec {
 			"span_boundary_loss_weight": self.span_boundary_loss_weight,
 			"use_span_scorer": self.use_span_scorer,
 			"span_loss_weight": self.span_loss_weight,
-			"span_dim": 128,
-			"max_span": 8,
+			"span_dim": if self.use_span_scorer { self.span_dim } else { 128 },
+			"max_span": if self.use_span_scorer { self.max_span } else { 8 },
 			"use_char_embed": self.use_char_embed,
 			"char_vocab_size": self.char_vocab_size,
 			"char_embed_dim": self.char_embed_dim,

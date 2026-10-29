@@ -106,8 +106,8 @@ def detect_channels(model: nn.Module) -> Channels:
         locale=getattr(model, "locale_head", None) is not None,
         # Export the span scorer's (B, S, L, T) scores as a separate output. This addition is
         # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
-        # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
-        # (package_weights.export_semi_crf_transitions) consume it.
+        # the unfetched branch). The JS decoder reads it with the semi-crf-transitions.json sidecar.
+        # `trainer-export export-onnx` writes that sidecar.
         spans=bool(getattr(model, "use_span_scorer", False)),
         # `address_system_logits`, shape [batch, num_address_systems], in address_systems.json id order.
         address_system=getattr(model, "address_system_head", None) is not None,

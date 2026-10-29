@@ -32,12 +32,14 @@ version. Rows appended from 2026-10-24 also record `tokenizer_md5`, read from th
 cd corpus-python
 modal run -d -m launch.train_remote --config v1.0.2-consolidation-runB.yaml --resume auto
 
-# 2. Export ONNX (on Modal — local onnxruntime can trip ShapeInferenceError on dynamo graphs)
-modal run -m launch.train_remote::export_onnx --output-dir=/data/output-v101-runB-s42 --step=020000
-modal volume get mailwoman-training output-v101-runB-s42/model.onnx ./model-fp32.onnx --force
+# 2. Fetch the checkpoint (config.json, pytorch_model.bin) through launch.train_remote::push_artifact_r2,
+#    then export ONNX on the host. A span-scorer checkpoint also gets semi-crf-transitions.json.
+cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+  export-onnx --checkpoint ./step-020000 --output ./model-fp32.onnx
 
-# 3. Quantize int8 (local, PINNED toolchain — see below; verify the md5 is deterministic by running twice)
-corpus-python/.venv/bin/python -m mailwoman_train.cli quantize --input ./model-fp32.onnx --output ./model-int8.onnx
+# 3. Quantize int8 on the host
+cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+  quantize --input ./model-fp32.onnx --output ./model-int8.onnx
 
 # 4. Check (one command — the check spec is the interface)
 node mailwoman/out/cli.js eval check --model ./model-fp32.onnx --int8 ./model-int8.onnx --spec mailwoman/eval-harness/specs/v4.2.0-ship.json

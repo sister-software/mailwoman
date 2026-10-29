@@ -17,6 +17,11 @@ serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
 sha2 = "0.10"
 # `fisher-diag-v1.npz` is a deflated zip of `.npy` arrays, as `numpy.savez_compressed` writes it.
 zip = { version = "9", default-features = false, features = ["deflate"] }
+# The realized-draws stream is zstd-compressed JSON lines, which `spliterator` reads.
+zstd = { version = "0.14", default-features = false }
 
 [dev-dependencies]
 tempfile = "3"
+# `tests/alignment.rs` writes fixture corpora with `mtf-sampler`'s own test helper, which writes parquet through arrow.
+arrow-array = "60"
+parquet = { version = "60", default-features = false, features = ["arrow"] }

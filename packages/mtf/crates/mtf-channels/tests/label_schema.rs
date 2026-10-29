@@ -54,7 +54,37 @@ fn another_layout_version_and_a_wrong_expansion_are_refused() {
 		.to_string()
 		.contains("BIO expansion"));
 	let unknown = r#"{"schema_version":1,"default_label_set":"a","ignore_index":-100,"locale_countries":[],
-		"label_sets":{"a":{"tags":[],"bio_labels":["O"]}}}"#;
+		"label_sets":{"a":{"tags":[],"bio_labels":["O"]}},"conventions_forbidden_tags":{}}"#;
 	let schema = LabelSchema::from_json(unknown).expect("parses");
 	assert!(schema.set("b").unwrap_err().to_string().contains("defined: a"));
+}
+
+#[test]
+fn the_conventions_table_is_read_in_locale_order_and_required() {
+	let schema = committed();
+	let by_locale = schema.conventions_by_locale();
+	assert_eq!(by_locale.len(), schema.locale_countries.len());
+	for (country, tags) in schema.locale_countries.iter().zip(&by_locale) {
+		assert_eq!(
+			tags,
+			&schema
+				.conventions_forbidden_tags
+				.get(country)
+				.cloned()
+				.unwrap_or_default(),
+			"{country}"
+		);
+	}
+	let missing = r#"{"schema_version":1,"default_label_set":"a","ignore_index":-100,"locale_countries":["FR"],
+		"label_sets":{"a":{"tags":[],"bio_labels":["O"]}}}"#;
+	assert!(LabelSchema::from_json(missing)
+		.unwrap_err()
+		.to_string()
+		.contains("conventions_forbidden_tags"));
+	let stray = r#"{"schema_version":1,"default_label_set":"a","ignore_index":-100,"locale_countries":["FR"],
+		"label_sets":{"a":{"tags":[],"bio_labels":["O"]}},"conventions_forbidden_tags":{"XX":["street"]}}"#;
+	assert!(LabelSchema::from_json(stray)
+		.unwrap_err()
+		.to_string()
+		.contains("not a locale country"));
 }

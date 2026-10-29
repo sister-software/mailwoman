@@ -1,12 +1,11 @@
-"""This module converts a checkpoint into the fp32 ONNX artifact on the volume and moves an artifact back out.
+"""This module moves a volume artifact, such as a checkpoint file, back out through R2.
 
-    modal run -m launch.train_remote::export_onnx --output-dir=/data/output-<run> --step=40000
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
-The int8 graph is made on the host from the fetched fp32 file by `trainer-export quantize` in
-`packages/trainer`, which writes `quantize_dynamic(QInt8)`'s graph without onnxruntime's shape inference.
-A checkpoint the Rust exporter builds can skip this module: `trainer-export export-onnx` reads
-`model.safetensors` or `pytorch_model.bin` directly. The push exists because this volume's container and CLI views are fully divergent —
+The ONNX graph is made on the host from the fetched checkpoint by `trainer-export export-onnx` in
+`packages/trainer`, which reads `model.safetensors` or `pytorch_model.bin`, writes the span scorer's
+`semi-crf-transitions.json` sidecar, and copies the run's `CORPUS.json` beside the graph. `trainer-export quantize`
+then writes the int8 graph. The push exists because this volume's container and CLI views are fully divergent —
 `modal volume get` cannot pull a container-written file — so an artifact leaves the way the corpus
 arrived.
 """
@@ -17,88 +16,6 @@ import json
 import os
 
 from .app import BUCKET, VOL_MOUNT, app, r2_secret, training_image, vol
-
-
-@app.function(
-    volumes={VOL_MOUNT: vol},
-    image=training_image,
-    timeout=600,
-)
-def export_onnx(
-    output_dir: str = "",
-    step: str = "",
-    tokenizer_path: str = "",
-    model_dir: str = "",
-) -> None:
-    """Export a checkpoint to ONNX.
-
-    Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
-    MAILWOMAN_EXPORT_TOKENIZER) apply when a CLI param is unset. A CLI param takes precedence.
-
-    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat
-    ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
-    into that same dir, so an ad-hoc checkpoint can be exported without restructuring it into the
-    training layout.
-    """
-    import sys
-    from pathlib import Path
-
-    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
-
-    import torch
-
-    from mailwoman_train.export.onnx import export_to_onnx
-    from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-    from mailwoman_train.tokenizer import Tokenizer
-    from mailwoman_train.train.checkpoint import checkpoint_dir_name
-
-    output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", f"{VOL_MOUNT}/output-v054")
-    step = step or os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
-    tokenizer_path = tokenizer_path or os.environ.get(
-        "MAILWOMAN_EXPORT_TOKENIZER", f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"
-    )
-
-    if model_dir:
-        ck_dir = Path(model_dir)
-        out_path = Path(f"{model_dir}/model.onnx")
-    else:
-        ck_dir = Path(output_dir) / "checkpoints" / checkpoint_dir_name(step)
-        out_path = Path(f"{output_dir}/model.onnx")
-    tokenizer = Tokenizer(Path(tokenizer_path))
-
-    _orig_load = torch.load
-    torch.load = lambda *a, **kw: _orig_load(*a, **{**kw, "map_location": "cpu"})
-    model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
-    torch.load = _orig_load
-    print(f"Exporting {ck_dir} → {out_path}")
-    export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
-    print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
-
-    # A span-scorer model's ONNX export includes a `span_scores` output. The JS k-best decoder also needs
-    # the segment-transition table for decoding. The graph does not contain this table. Write it as
-    # a sidecar next to model.onnx. A span-less model returns None and keeps the export unchanged.
-    import json as _json
-
-    from mailwoman_train.export.package_weights import export_semi_crf_transitions
-
-    transitions = export_semi_crf_transitions(model)
-    if transitions is not None:
-        sidecar = out_path.parent / "semi-crf-transitions.json"
-        sidecar.write_text(_json.dumps(transitions, indent=2) + "\n", encoding="utf-8")
-        print(f"span transitions sidecar: {sidecar}")
-
-    # The trainer writes its corpus record beside the checkpoints. A copy beside the model ties the export to its corpus.
-    # The name is `CORPUS_RECORD_FILE` in `mailwoman_train.train.corpus_record`, spelled here because this module is
-    # mounted from the local checkout while `mailwoman_train` comes from the volume. The volume may hold older code.
-    corpus_record = ck_dir.parent / "CORPUS.json"
-    if corpus_record.is_file():
-        (out_path.parent / corpus_record.name).write_bytes(corpus_record.read_bytes())
-        print(f"corpus record: {out_path.parent / corpus_record.name}")
-    else:
-        print(f"no corpus record at {corpus_record}; the run predates it")
-
-    vol.commit()
-    print("Committed to volume.")
 
 
 @app.function(

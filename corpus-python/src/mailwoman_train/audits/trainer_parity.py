@@ -171,7 +171,8 @@ def _loss_terms(model: Any, tb: dict[str, Any], out: Any, hidden: torch.Tensor) 
     """Each unweighted loss term `losses.py` and `address_system.py` sum, recomputed from the forward's outputs.
 
     The total is the model's own `out.loss`; the terms let a mismatch be attributed. The span-boundary head reads
-    `hidden`, the classifier's input.
+    `hidden`, the classifier's input. The cross-entropy reads the conventions-masked logits, and the span term the
+    forward's `span_scores`.
     """
     from torch import nn
 
@@ -182,7 +183,11 @@ def _loss_terms(model: Any, tb: dict[str, Any], out: Any, hidden: torch.Tensor) 
     kwargs: dict[str, Any] = {"ignore_index": -100, "label_smoothing": model.label_smoothing}
     if isinstance(model.class_weights, torch.Tensor):
         kwargs["weight"] = model.class_weights
-    terms.append(("ce", nn.functional.cross_entropy(logits.view(-1, model.num_labels), labels.view(-1), **kwargs)))
+    ce_logits = logits
+    if model.use_conventions_loss_mask and tb.get("locale_ids") is not None:
+        rows = model.conventions_forbidden[tb["locale_ids"].clamp_min(0)]
+        ce_logits = logits.masked_fill(rows.unsqueeze(1).bool(), -1e9)
+    terms.append(("ce", nn.functional.cross_entropy(ce_logits.view(-1, model.num_labels), labels.view(-1), **kwargs)))
     if model.crf is not None and model.crf_loss_weight > 0:
         reduction = "per_token" if model.crf_normalization == "per_token" else "mean"
         terms.append(
@@ -213,6 +218,21 @@ def _loss_terms(model: Any, tb: dict[str, Any], out: Any, hidden: torch.Tensor) 
                 model.span_boundary_head(hidden).float(), targets, reduction="none"
             ).mean(dim=-1)
             terms.append(("span_boundary", per_pos[valid].mean()))
+    if out.span_scores is not None and model.span_loss_weight > 0:
+        from ..nn.span_scorer import gold_segments
+
+        lengths = mask.sum(dim=1).long()
+        rows_kept: list[int] = []
+        segments: list[list[tuple[int, int, int]]] = []
+        for b in range(labels.shape[0]):
+            segs, representable = gold_segments(labels[b, : int(lengths[b])].tolist(), model.span_scorer.max_span)
+            if representable and segs:
+                rows_kept.append(b)
+                segments.append(segs)
+        if rows_kept:
+            idx = torch.tensor(rows_kept)
+            nll = model.semi_crf.nll(out.span_scores.index_select(0, idx), segments, lengths.index_select(0, idx))
+            terms.append(("span", nll.mean()))
     ids = tb.get("address_system_ids")
     if (
         out.address_system_logits is not None
@@ -248,7 +268,7 @@ def _forward(model: Any, tb: dict[str, Any], mlm: Any, autocast: bool) -> tuple[
 
 def _outputs(prefix: str, out: Any, terms: list[tuple[str, torch.Tensor]]) -> list[tuple[str, torch.Tensor]]:
     rows = [(f"{prefix}.logits", out.logits.detach()), (f"{prefix}.loss", out.loss.detach().reshape(()))]
-    for name in ("locale_logits", "address_system_logits"):
+    for name in ("locale_logits", "address_system_logits", "span_scores"):
         value = getattr(out, name, None)
         if value is not None:
             rows.append((f"{prefix}.{name}", value.detach()))

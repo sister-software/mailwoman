@@ -1,6 +1,19 @@
 //! `train/callbacks/`: the console lines, `train_log.csv`, and the interval checkpoints.
 //!
-//! The Trackio mirror is not ported: the plan replaces it with an uploader that reads `train_log.csv`.
+//! The Trackio mirror is retired: `train_log.csv` is the run's metric record, and a config that sets
+//! `train.trackio_enabled` is refused by [`refuse_trackio`].
+
+/// Refuses `train.trackio_enabled`, which the Python trainer mirrored to a Hugging Face Space and the Rust trainer
+/// does not.
+pub fn refuse_trackio(run: &crate::config::RunConfig) -> crate::Result<()> {
+	if run.train_bool("trackio_enabled")? {
+		return Err(crate::fail!(
+			"train.trackio_enabled is set, and the Rust trainer has no Trackio mirror (retired in the Python removal \
+			 plan); unset it and read train_log.csv"
+		));
+	}
+	Ok(())
+}
 
 use crate::checkpoint::{checkpoint_extras, save_checkpoint};
 use crate::metrics::{eval_csv_row, Metrics};

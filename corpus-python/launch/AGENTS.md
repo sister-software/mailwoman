@@ -76,7 +76,7 @@ modal secret create mailwoman-hf HF_TOKEN="$HF_TOKEN"
 
 then add `MAILWOMAN_MODAL_R2_SECRET=mailwoman-r2` and `MAILWOMAN_MODAL_HF_SECRET=mailwoman-hf` to `.env`.
 Until then the fallback copies the `RCLONE_S3_*` keys from `.env` into an ephemeral secret, as before.
-Neither path raises at import, so `versions`, `debug_volume`, `run_tests` and `export_onnx` run without
+Neither path raises at import, so `versions`, `debug_volume` and `run_tests` run without
 R2 credentials; `sync`, `sync_assets` and the R2 pushes raise at their start naming the missing keys.
 
 Every rclone transfer passes `--s3-no-check-bucket`. R2 answers the bucket check with `NotImplemented`,
@@ -222,7 +222,8 @@ unquoted spelling. The omission is visible only from the parse.
 ## Trackio
 
 Trackio (`src/mailwoman_train/observability/trackio.py`) logs training progress to the private HF
-Space `sister-software/mailwoman-trackio`. It is off by default and a no-op when disabled. The
+Space `sister-software/mailwoman-trackio`. It is off by default and a no-op when disabled. The Rust
+trainer (`packages/trainer`) retires it and refuses a config that sets `train.trackio_enabled`. The
 durable store is the HF bucket `sister-software/mailwoman-trackio-bucket` at `trackio/mailwoman.db`
 rather than an HF dataset. The Space's `TRACKIO_DIR` is ephemeral and is restored from the bucket on
 boot, so a legend that lists runs beside empty charts means a stale running Space: restart it with
@@ -264,13 +265,19 @@ no `crf-transitions.json`; production therefore decodes **argmax**, and a check 
 
 ```bash
 # (from corpus-python/)
-# 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
-uv run --extra dev modal run -m launch.train_remote::export_onnx \
-  --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
+# 1. Fetch the final checkpoint's config.json and pytorch_model.bin, and the run's CORPUS.json, which the
+#    trainer writes beside its step directories. A container-written file leaves through R2.
+RUN=/data/output-v160-boundary-stress-s42/checkpoints
+for f in step-040000/config.json step-040000/pytorch_model.bin CORPUS.json; do
+  uv run --extra dev modal run -m launch.train_remote::push_artifact_r2 \
+    --volume-path="$RUN/$f" --r2-subpath="artifacts/v1.6.0-boundary-stress/checkpoints/$f"
+  rclone copyto ":s3:mailwoman-assets/artifacts/v1.6.0-boundary-stress/checkpoints/$f" "./out/v160/checkpoints/$f"
+done
 
-# 2. Fetch the fp32 graph
-mkdir -p ./out/v160
-modal volume get mailwoman-training /output-v160-boundary-stress-s42/model.onnx ./out/v160/model-fp32.onnx
+# 2. Export it to fp32 ONNX on the host. The exporter copies CORPUS.json beside the graph, and for a span-scorer
+#    checkpoint it also writes semi-crf-transitions.json there.
+cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+  export-onnx --checkpoint ./out/v160/checkpoints/step-040000 --output ./out/v160/model-fp32.onnx
 
 # 3. Int8-quantize it on the host (the ship format — grade what production runs). The Rust quantizer writes
 #    quantize_dynamic(QInt8)'s graph and needs no onnxruntime shape inference.

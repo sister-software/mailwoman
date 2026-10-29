@@ -10,6 +10,7 @@
 #![allow(clippy::assign_op_pattern)]
 
 pub mod address_systems;
+pub mod alignment;
 pub mod batch;
 pub mod callbacks;
 pub mod checkpoint;
@@ -25,6 +26,7 @@ pub mod noise;
 pub mod optim;
 pub mod parity;
 pub mod pretrain;
+pub mod realized;
 pub mod schedules;
 pub mod supervised;
 

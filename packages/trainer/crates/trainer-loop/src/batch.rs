@@ -18,6 +18,7 @@ use mtf_sampler::Row;
 use std::path::Path;
 use tch::{Device, Kind, Tensor};
 use trainer_model::encoder::{ChannelInput, EncoderInputs, CHANNELS};
+use trainer_model::SchemaDefaults;
 
 /// One batch as the model reads it, every tensor on the CPU until moved.
 pub struct TensorBatch {
@@ -124,6 +125,11 @@ fn read(path: &Path) -> Result<String> {
 	std::fs::read_to_string(path).map_err(|e| fail!("{}: {e}", path.display()))
 }
 
+/// The label schema the repository data files name.
+pub fn read_label_schema(files: &DataFiles) -> Result<LabelSchema> {
+	Ok(LabelSchema::from_json(&read(&files.label_schema)?)?)
+}
+
 fn lexicon(path: Option<String>) -> Result<Option<Lexicon>> {
 	path.map(|p| Lexicon::from_json(&read(Path::new(&p))?, &p).map_err(Into::into))
 		.transpose()
@@ -151,11 +157,25 @@ pub struct RunEncoder {
 	pub unk_id: i64,
 	/// The char vocabulary's size, 0 on the SentencePiece path.
 	pub char_vocab_size: i64,
+	/// The schema's conventions table in locale-head order.
+	pub conventions: Vec<Vec<String>>,
+	/// The schema's `stage3` BIO labels, which a checkpoint without `id2label` takes.
+	pub stage3_labels: Vec<String>,
 }
 
 impl RunEncoder {
+	/// What a model spec reads from the label schema.
+	pub fn defaults(&self) -> SchemaDefaults<'_> {
+		SchemaDefaults {
+			labels: &self.stage3_labels,
+			conventions: &self.conventions,
+		}
+	}
+
 	pub fn build(run: &RunConfig, files: &DataFiles) -> Result<Self> {
-		let schema = LabelSchema::from_json(&read(&files.label_schema)?)?;
+		let schema = read_label_schema(files)?;
+		let conventions = schema.conventions_by_locale();
+		let stage3_labels = schema.set("stage3")?.bio_labels.clone();
 		let label_set = run.label_set()?;
 		let address_systems = AddressSystems::load(&files.address_systems)?;
 		let char_mode = run.char_mode()?;
@@ -192,6 +212,8 @@ impl RunEncoder {
 				pad_id: 0,
 				unk_id: 1,
 				char_vocab_size,
+				conventions,
+				stage3_labels,
 			});
 		}
 		if label_set != "stage3" {
@@ -253,6 +275,8 @@ impl RunEncoder {
 			label_set,
 			address_systems,
 			char_vocab_size: 0,
+			conventions,
+			stage3_labels,
 		};
 		out.encoder_check()?;
 		Ok(out)
@@ -269,6 +293,16 @@ impl RunEncoder {
 			Encoder::new(config, lexicons, Some(finders.as_ref() as &dyn Finders))?;
 		}
 		Ok(())
+	}
+
+	/// `verify_tokenizer_alignment` on the SentencePiece path; the char path reads no tokenizer, as in Python.
+	pub fn verify_tokenizer_alignment(&self, sampler: &mtf_sampler::SamplerConfig) -> Result<()> {
+		match &self.path {
+			Path_::Pieces { processor, .. } => {
+				crate::alignment::verify_tokenizer_alignment(sampler, processor, crate::alignment::SAMPLE_SIZE)
+			}
+			Path_::Char(_) => Ok(()),
+		}
 	}
 
 	/// The stage3 tags, which the sampler's coarse filter reads.

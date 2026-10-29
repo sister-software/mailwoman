@@ -22,13 +22,16 @@ pub struct LabelSet {
 	pub bio_labels: Vec<String>,
 }
 
-/// The label schema: every label set by name, the default set, the ignore index and the locale-head countries.
+/// The label schema: every label set by name, the default set, the ignore index, the locale-head countries and the
+/// tags each locale's address system forbids.
 #[derive(Debug, Clone)]
 pub struct LabelSchema {
 	pub default_label_set: String,
 	pub ignore_index: i64,
 	pub locale_countries: Vec<String>,
 	pub label_sets: HashMap<String, LabelSet>,
+	/// `conventions_forbidden_tags`: the tags the conventions loss mask forbids, for each locale country that has any.
+	pub conventions_forbidden_tags: HashMap<String, Vec<String>>,
 }
 
 fn strings(value: &Value, field: &str) -> Result<Vec<String>, Error> {
@@ -87,14 +90,38 @@ impl LabelSchema {
 				"label schema: default set {default_label_set:?} is not defined"
 			)));
 		}
+		let locale_countries = strings(field("locale_countries")?, "locale_countries")?;
+		let conventions = field("conventions_forbidden_tags")?
+			.as_object()
+			.ok_or_else(|| Error::Input("label schema: conventions_forbidden_tags is not an object".to_owned()))?;
+		let mut conventions_forbidden_tags = HashMap::with_capacity(conventions.len());
+		for (country, tags) in conventions {
+			if !locale_countries.contains(country) {
+				return Err(Error::Input(format!(
+					"label schema: conventions_forbidden_tags names {country}, which is not a locale country"
+				)));
+			}
+			let tags = strings(tags, &format!("conventions_forbidden_tags.{country}"))?;
+			conventions_forbidden_tags.insert(country.clone(), tags);
+		}
 		Ok(Self {
 			default_label_set,
 			ignore_index: field("ignore_index")?
 				.as_i64()
 				.ok_or_else(|| Error::Input("label schema: ignore_index is not an integer".to_owned()))?,
-			locale_countries: strings(field("locale_countries")?, "locale_countries")?,
+			locale_countries,
 			label_sets,
+			conventions_forbidden_tags,
 		})
+	}
+
+	/// The conventions table in locale-head order: each locale country's forbidden tags, empty for a country without
+	/// a row.
+	pub fn conventions_by_locale(&self) -> Vec<Vec<String>> {
+		self.locale_countries
+			.iter()
+			.map(|c| self.conventions_forbidden_tags.get(c).cloned().unwrap_or_default())
+			.collect()
 	}
 
 	/// The label set `name`, or an error naming the sets that exist.
