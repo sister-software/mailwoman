@@ -54,11 +54,7 @@ The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Out
   postcode consistency), tree assembly under `PARENT_OF` (`build-tree.ts`), and
   `validate-tree.ts`'s two checks (illegal-edge, stranded-dependent). These steps are checks and
   local rewrites. They cannot move the decode to a different global optimum.
-- Greedy overlap resolution (`resolve-proposal-overlaps.ts`, by descending confidence and then
-  shorter span first) was built for the proposal arbitration path, and no parse path calls it
-  (checked 2026-10-28). A BIO decode yields disjoint spans by construction. A caller that passes a
-  decision list receives each dropped proposal, the kept proposal it overlapped, and the ranking key
-  that decided.
+- A BIO decode yields disjoint spans by construction, so the parse has no overlap-resolution step.
 
 `traceParse` itemizes this objective in `NeuralParseTrace.explanation`. For each decoded span it
 reports the highest-scoring reading that labels the span differently, and the margin to that reading

@@ -431,11 +431,6 @@
 			"node": "./lib/decoder/serialize/xml.ts",
 			"default": "./out/decoder/serialize/xml.js"
 		},
-		"./decoder/resolve-proposal-overlaps": {
-			"types": "./out/decoder/resolve-proposal-overlaps.d.ts",
-			"node": "./lib/decoder/resolve-proposal-overlaps.ts",
-			"default": "./out/decoder/resolve-proposal-overlaps.js"
-		},
 		"./decoder/containment": {
 			"types": "./out/decoder/containment.d.ts",
 			"node": "./lib/decoder/containment.ts",
