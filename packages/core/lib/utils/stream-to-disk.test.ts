@@ -10,8 +10,9 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { readLocalTextFile } from "#fs/readers"
 import { pathExists } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
+import { writeLocalTextFile } from "#fs/writers"
 import { createHash } from "#hash"
-import { streamToDisk } from "#utils/stream-to-disk"
+import { ResumeRefusedError, streamToDisk } from "#utils/stream-to-disk"
 
 const CHUNKS = ["first chunk ", "second chunk ", "third chunk"]
 const LAST_MODIFIED = "Fri, 02 Oct 2026 22:13:30 GMT"
@@ -73,5 +74,54 @@ describe("streamToDisk", () => {
 
 		expect(await pathExists(destination)).toBe(false)
 		expect(await pathExists(`${destination}.part`)).toBe(false)
+	})
+
+	it("resumes after the partial bytes when the host answers the requested range", async () => {
+		const body = CHUNKS.join("")
+		const offset = CHUNKS[0]!.length
+		let requested: string | null = null
+
+		vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+			requested = new Headers(init.headers).get("range")
+
+			return new Response(body.slice(offset), {
+				status: 206,
+				headers: { "content-range": `bytes ${offset}-${body.length - 1}/${body.length}` },
+			})
+		})
+
+		await using scratch = await temporaryDirectory()
+		const destination = scratch.path("resumed.bin")
+		const partialPath = scratch.path("resumed.partial").toString()
+
+		await writeLocalTextFile(CHUNKS[0]!, partialPath)
+
+		const bytes = await streamToDisk({
+			url: "https://example.test/file",
+			destination,
+			context: "test",
+			partialPath,
+			resumeFrom: offset,
+		})
+
+		expect(requested).toBe(`bytes=${offset}-`)
+		expect(bytes).toBe(body.length)
+		expect(await readLocalTextFile(destination)).toBe(body)
+	})
+
+	it("refuses a resume the host answers with the whole object and keeps the partial bytes", async () => {
+		vi.stubGlobal("fetch", async () => chunkedResponse())
+		await using scratch = await temporaryDirectory()
+		const destination = scratch.path("whole.bin")
+		const partialPath = scratch.path("whole.partial").toString()
+
+		await writeLocalTextFile("first ", partialPath)
+
+		await expect(
+			streamToDisk({ url: "https://example.test/file", destination, context: "test", partialPath, resumeFrom: 6 })
+		).rejects.toBeInstanceOf(ResumeRefusedError)
+
+		expect(await readLocalTextFile(partialPath)).toBe("first ")
+		expect(await pathExists(destination)).toBe(false)
 	})
 })

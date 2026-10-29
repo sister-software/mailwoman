@@ -69,6 +69,16 @@ function fold(input: string): string {
 }
 
 /**
+ * The name and version of the street-key normalization {@link normalizeStreetForKeyLocale} applies.
+ *
+ * An artifact manifest of a street-keyed role records this pair with its locale,
+ * and a reader refuses an artifact keyed by another version.
+ * Version `1` is the normalization in this module when versions began to be recorded, on 2026-10-29.
+ * A change to any key it produces is a new version.
+ */
+export const STREET_KEY_NORMALIZATION = { algorithm: "street-key", version: "1" } as const
+
+/**
  * Normalizes a US or English street name into an address-point key, folding directionals,
  * spelled ordinals and the USPS street-type suffix.
  * The extract builder and the probe must both call it.
@@ -137,6 +147,23 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * name into an address-point key.
  */
 export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
+
+/**
+ * Every locale {@link normalizeStreetForKeyLocale} keys streets under.
+ */
+export const STREET_LOCALES = [
+	"us",
+	"en",
+	"es",
+	"fr",
+	"de",
+	"it",
+	"nl",
+	"pl",
+	"vn",
+	"id",
+	"zh",
+] as const satisfies readonly StreetLocale[]
 
 function foldHan(input: string): string {
 	return input.normalize("NFKC").replaceAll("臺", "台").replaceAll(/\s+/g, "").toLowerCase()

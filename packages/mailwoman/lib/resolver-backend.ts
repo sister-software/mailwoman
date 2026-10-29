@@ -2,6 +2,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
+import { ServingRole } from "@mailwoman/core/layers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type {
@@ -17,6 +18,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
+import { LayerCatalog } from "#data/catalog"
 import { $public } from "#env"
 
 /**
@@ -27,11 +29,16 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
 }
 
 /**
- * Resolves the candidate gazetteer path from an explicit option, then
- * `$MAILWOMAN_CANDIDATE_DB`, then the default path.
+ * Resolves the candidate gazetteer path from an explicit option, then `$MAILWOMAN_CANDIDATE_DB`,
+ * then the candidate the active selection names, then the default path.
  *
  * An explicit or environment path that does not exist yields `null` without trying the default path.
  * The value `none` selects the FTS backend.
+ *
+ * A data root without `active.json` resolves as it did before the selection existed.
+ *
+ * @throws {@link UnreadableArtifactError} when the selection or the selected
+ * candidate exists and cannot be read.
  */
 export async function resolveCandidateDBPath(
 	explicit?: string | null,
@@ -42,6 +49,11 @@ export async function resolveCandidateDBPath(
 	if (pinned === "none") return null
 
 	if (pinned) return (await pathExists(pinned)) ? pinned : null
+
+	const catalog = await LayerCatalog.read(dataRoot)
+	const selected = await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+
+	if (selected) return selected
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
