@@ -13,7 +13,7 @@
  *   will produce nonsense. Regenerate the fixture via:
  *
  *   ```
- *   python3 packages/neural/test/fixtures/generate-tokenizer-parity.py \
+ *   node packages/neural/tools/fixtures/tokenizer-parity.run.ts \
  *   --model packages/neural/test/fixtures/tokenizer-v0.1.0.model \
  *   --out   packages/neural/test/fixtures/tokenizer-parity-v0.1.0.json
  * ```

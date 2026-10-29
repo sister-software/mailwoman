@@ -34,7 +34,6 @@ import spliterator
 
 from ..address_systems import address_system_id, address_system_table
 from ..labels import IGNORE_INDEX
-from ..tokenizer.train import git_commit
 from .phenomena import (
     ARITY,
     PHENOMENON_IDS,
@@ -47,6 +46,20 @@ from .phenomena import (
 )
 
 SCHEMA: Final[str] = "mailwoman.exposure/v1"
+
+
+def git_commit() -> str | None:
+    """The checkout's `HEAD` commit, or `None` outside a git checkout."""
+    import subprocess  # nosec B404
+
+    try:
+        out = subprocess.check_output(  # nosec B603, B607
+            ["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, stderr=subprocess.DEVNULL
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    return out.decode("utf-8").strip()
+
 
 STAGES: Final[tuple[str, ...]] = (
     "source_records",

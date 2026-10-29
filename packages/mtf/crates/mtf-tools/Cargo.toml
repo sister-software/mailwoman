@@ -1,0 +1,20 @@
+[package]
+name = "mtf-tools"
+description = "The `mtf-tokenizer` binary behind @mailwoman/mtf's tokenizer tools: model editing, corpus sampling, byte-fallback measurement, and ONNX embedding surgery."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "mtf-tokenizer"
+path = "src/main.rs"
+
+[dependencies]
+mtf-core = { path = "../mtf-core", features = ["edit"] }
+mtf-channels = { path = "../mtf-channels" }
+mtf-sampler = { path = "../mtf-sampler" }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[dev-dependencies]
+tempfile = "3"

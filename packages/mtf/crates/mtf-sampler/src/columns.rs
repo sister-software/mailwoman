@@ -41,6 +41,10 @@ impl StrColumn {
 		}
 	}
 
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
+
 	/// The value at `i`, or `None` for a null.
 	pub fn get(&self, i: usize) -> Option<&str> {
 		match self {

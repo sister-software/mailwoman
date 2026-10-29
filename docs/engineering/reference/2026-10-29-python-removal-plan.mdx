@@ -392,6 +392,19 @@ Caller checklist: `tokenizer/train.py` ← `cli/commands/tokenizer.py`. `splice.
   `packages/neural/test/fixtures/generate-{tokenizer-parity,evidence-parity}.py`, their tests, and the
   `sentencepiece` pin.
 
+Status, 2026-10-29 (**observed** on the lab host): the tools are `packages/mtf/tools/tokenizer/*.run.ts` over the
+`mtf-tokenizer` binary in `packages/mtf/crates/mtf-tools`. The `mailwoman tokenizer` subcommands were not added,
+because each tool is a standalone run and the CLI wiring adds a Pastel schema per tool and no behavior.
+`tokenizer/{train,splice,byte_fallback,legacy_train,uds}.py`, `tokenizer/vocab/`, the two CLI commands, their tests and
+the two fixture generators are deleted. Three items remain:
+
+- `launch/{splices,mean_init}.py` stay. `train_remote` registers `mean_init`, which expands a PyTorch checkpoint,
+  and that format belongs to Phase 5. `mean_init.py` now reads the tokenizers through `mailwoman_mtf` rather than
+  the `sentencepiece` package. The ONNX form of the same expansion is `splice.run.ts onnx-mean-init`.
+- The `sentencepiece` pin stays. `evaluation/seg_at_1.py`, `audits/encoder_parity.py` and
+  `tests/mailwoman_train/tokenizer/test_mailwoman_mtf.py` still import it.
+- `tokenizer/{__init__,char,spans}.py` stay with the Phase 3 loader.
+
 ### Phase 5 — Rust trainer
 
 Caller checklist: `nn/`, `train/`, `optim/` ← `cli/commands/{train,smoke}.py`, `launch/train.py`, `launch/grade.py`

@@ -1,6 +1,13 @@
 [workspace]
 resolver = "2"
-members = ["crates/mtf-core", "crates/mtf-wasm", "crates/mtf-channels", "crates/mtf-sampler", "crates/mtf-py"]
+members = [
+	"crates/mtf-core",
+	"crates/mtf-wasm",
+	"crates/mtf-channels",
+	"crates/mtf-sampler",
+	"crates/mtf-py",
+	"crates/mtf-tools",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -22,3 +29,9 @@ panic = "abort"
 inherits = "release"
 opt-level = 3
 panic = "unwind"
+
+# The profile `packages/mtf/tools/tokenizer` builds `mtf-tokenizer` with. It encodes every training row when it counts
+# piece use, so it is optimized for speed rather than size.
+[profile.tools]
+inherits = "release"
+opt-level = 3

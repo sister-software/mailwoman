@@ -19,10 +19,47 @@ counted under its own form.
 from __future__ import annotations
 
 import re
+import unicodedata
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from typing import Final, NamedTuple
 
-from ..tokenizer.byte_fallback import detect_script
+#: Unicode name prefixes of the script blocks `detect_script` names, in match order. The same table generates
+#: `SCRIPT_BLOCK` in `packages/mtf/crates/mtf-channels/src/python_text/tables.rs` for the tokenizer tools.
+SCRIPT_NAME_PREFIXES: Final[tuple[tuple[str, tuple[str, ...]], ...]] = (
+    ("latin", ("LATIN", "FULLWIDTH LATIN")),
+    ("cjk", ("CJK", "HIRAGANA", "KATAKANA", "HANGUL")),
+    ("cyrillic", ("CYRILLIC",)),
+    ("armenian", ("ARMENIAN",)),
+    ("arabic", ("ARABIC",)),
+    ("greek", ("GREEK",)),
+    ("hebrew", ("HEBREW",)),
+    ("devanagari", ("DEVANAGARI",)),
+    ("thai", ("THAI",)),
+)
+
+
+def detect_script(text: str) -> str:
+    """A coarse script tag for a string: a block of `SCRIPT_NAME_PREFIXES`, ``mixed``, or ``other``.
+
+    Spaces, numbers, punctuation, separators and symbols are skipped. A block holding 90% or more of the counted
+    characters is the string's tag, so surrounding Latin punctuation does not force ``mixed``.
+    """
+    blocks: Counter[str] = Counter()
+    for ch in text:
+        if ch.isspace() or unicodedata.category(ch).startswith(("N", "P", "Z", "S")):
+            continue
+        name = unicodedata.name(ch, "")
+        block = next((tag for tag, prefixes in SCRIPT_NAME_PREFIXES if name and name.startswith(prefixes)), "other")
+        blocks[block] += 1
+    if not blocks:
+        return "other"
+    if len(blocks) == 1:
+        return next(iter(blocks))
+    total = sum(blocks.values())
+    top, n = blocks.most_common(1)[0]
+    return top if n / total >= 0.9 else "mixed"
+
 
 #: The phenomenon ids, mirroring ``ConventionClaimID``. ``test_exposure`` compares this tuple with
 #: the TypeScript declaration, so a renamed id fails here rather than drifting.
