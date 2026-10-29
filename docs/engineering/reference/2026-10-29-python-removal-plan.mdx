@@ -615,6 +615,7 @@ Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `c
 | --------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `countries/cjk/overlay.py`        | `lib/cjk/overlay.ts`, `lib/tools/cjk-overlay.run.ts`               | over `v8-jp-full-2026-08-04`, the 151 `cn-units` rows and four extra corpora (the KR, TW, KR-registry and TW-registry corpora): both parts, the board, vocabulary, manifest, report and rights record equal |
 | `countries/cjk/foreign_places.py` | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                        |
+| `countries/jp/probe_corpora.py`   | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced; over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal          |
 
 Classified differences (**decided**):
 
@@ -630,10 +631,10 @@ Classified differences (**decided**):
 - The overlay takes the first `char-vocab-*.json` in code-point order where Python took the first the directory listed.
   Every corpus on the volume holds one.
 
-Deleted: `countries/cjk/{overlay,foreign_places}.py` and their tests. `countries/cjk/staging.py` stays with the
-launcher.
+Deleted: `countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpora.py` and their tests.
+`countries/cjk/staging.py` stays with the launcher.
 
-Not ported yet: `countries/jp/probe_corpora.py`, `corpora/fragment/`, `countries/de/fragment_board.py`,
+Not ported yet: `corpora/fragment/`, `countries/de/fragment_board.py`,
 `corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
 
 ### Phase 3 — The Rust sampler and character path

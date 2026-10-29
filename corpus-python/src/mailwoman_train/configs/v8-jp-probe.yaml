@@ -4,7 +4,7 @@
 # side, and uses the stage3 label head. It runs without gazetteer or anchor channels, a CRF or
 # locale conditioning.
 #
-# The corpus holds 200k train and 4k val rows that `countries/jp/probe_corpora.py` rendered from
+# The corpus holds 200k train and 4k val rows that `packages/corpus/lib/jp/corpus/probe.ts` renders from
 # Overture JP. A board of held-out municipalities never appears in train or val.
 #
 # The run passes when JP coordinate acceptability on the held-out board reaches 0.70.
