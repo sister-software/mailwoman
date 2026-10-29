@@ -172,6 +172,22 @@ describe("createSourceRightsAdmission", () => {
 		expect(lines[0]).toMatch(/^UNSHIPPABLE test build: .*override: local experiment/)
 	})
 
+	it("judges a source by the inputs of the corpus version it is given, and names the override hint", () => {
+		const today = createSourceRightsAdmission(register, inputs, { context: "test run" })
+
+		expect(today.admit("spliced-sub-venue").map((gap) => gap.registerSource)).not.toContain("gb-property-building-1")
+
+		const built = createSourceRightsAdmission(register, inputs, {
+			context: "test run",
+			corpusVersion: "v0.7.2-address-systems",
+			overrideHint: "a config's data.unshippable_reason for a training run",
+		})
+
+		expect(() => built.admit("spliced-sub-venue")).toThrow(
+			/gb-property-building-1.*--unshippable-reason <why> \(a config's data.unshippable_reason for a training run\)/s
+		)
+	})
+
 	it("refuses a blank override, which says nothing about why", () => {
 		expect(() =>
 			createSourceRightsAdmission(register, inputs, { context: "test build", unshippableReason: " " })

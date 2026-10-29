@@ -276,6 +276,10 @@ jobs:
       - name: Test Python
         run: yarn python:test
 
+      # The fast suite skips this comparison where uv is absent, so this leg runs it against the Python loader.
+      - name: Compare the training config resolver with the Python loader
+        run: yarn vitest run packages/corpus/lib/training/config/load-python-parity.test.ts
+
   # The root Vitest sweep runs as two concurrent legs. unit-fast runs every test that needs no
   # model, WOF database or CLI harness. unit-slow runs the rest.
   unit-fast:
