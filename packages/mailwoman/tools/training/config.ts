@@ -10,6 +10,7 @@
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isPlainObject } from "@mailwoman/core/objects"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import { parsePythonYAML, type PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
@@ -65,9 +66,10 @@ export function applyOverrides(config: TrainingConfig, overrides: readonly strin
 		const separator = override.indexOf("=")
 		const key = separator === -1 ? "" : override.slice(0, separator)
 		const [section = "", attribute = ""] = key.split(".", 2)
-		const target = (config as unknown as Record<string, Record<string, unknown> | undefined>)[section]
+		const sections: Record<string, unknown> = config
+		const target = sections[section]
 
-		if (separator === -1 || !attribute || !target || !Object.hasOwn(target, attribute)) {
+		if (separator === -1 || !attribute || !isPlainObject(target) || !Object.hasOwn(target, attribute)) {
 			throw new Error(`--set expects section.key=value naming an existing field, got ${stringifyJSON(override)}`)
 		}
 
@@ -82,7 +84,7 @@ export function applyOverrides(config: TrainingConfig, overrides: readonly strin
  * host copy, as the encoder-parity audit's `prepare_config` does.
  */
 export function rerootToHost(config: TrainingConfig): TrainingConfig {
-	const data = config.data as unknown as Record<string, unknown>
+	const data: Record<string, unknown> = config.data
 
 	data.corpus_dir = hostPath(config.data.corpus_dir)
 

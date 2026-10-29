@@ -183,6 +183,27 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
    never a quiet pass. A bar restated from memory drifts.
 
+## Standalone audits run on the host
+
+The preflight still runs the corpus-receipt, validation-coverage and label-support audits inside its CPU
+container. To audit a corpus without launching, run the TypeScript audits on a host that mirrors the
+volume at `$MAILWOMAN_DATA_ROOT`. They write the reports the Python audits wrote, byte for byte, and read
+the corpus through the `mtf-node` addon, which Cargo builds on first use:
+
+```bash
+node packages/mailwoman/tools/training/audits/epoch-mixture.run.ts --config <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/validation-coverage.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/label-support.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/opening-token.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/region-code-token.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/comma-segment-number.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/suffix-feed.run.ts --config <yaml> \
+  --classify-lexicon <v2 lexicon> --relabel-lexicon <lexicon> --json <path>
+```
+
+A config states its paths under `/data`. Pass `--corpus-dir` with the host copy, where the tool takes one,
+or audit a copy of the config with its paths re-rooted.
+
 ## A config derived from a control
 
 When a training config is derived from a control's config, load both with `load_config` and assert

@@ -6,7 +6,16 @@
 
 import { describe, expect, it } from "vitest"
 
-import { clamp, pyFixed, pyFloat, pyRound } from "#numeric"
+import { clamp, pyFixed, pyFloat, pyRound, pySum } from "#numeric"
+
+describe("pySum", () => {
+	// The expectations are CPython 3.12's `sum()` of the same lists.
+	it("compensates as CPython 3.12's float sum does", () => {
+		expect(pySum(Array.from({ length: 10 }, () => 0.1))).toBe(1)
+		expect(pySum([1e16, 1, -1e16])).toBe(1)
+		expect(pySum([0.1, 0.2, 0.3])).toBe(0.6)
+	})
+})
 
 describe("clamp", () => {
 	it("keeps a value inside the closed interval", () => {

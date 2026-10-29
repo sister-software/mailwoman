@@ -23,6 +23,7 @@ use mtf_core::Processor;
 use mtf_sampler::batch::encode_pieces;
 use mtf_sampler::char_path::CharEncoder as RustCharEncoder;
 use mtf_sampler::source_reps::{derive_source_weights as derive, DerivedReps};
+use mtf_sampler::split_columns::{ColumnValues, SplitColumns as RustSplitColumns};
 use mtf_sampler::{
 	CancelToken, CharConfig, Event, Observer, RawRows as RustRawRows, Row, Sampler as RustSampler, SamplerConfig,
 	SkipReason, SpanTriple, TrainingBatches as RustTrainingBatches, Weights,
@@ -30,6 +31,7 @@ use mtf_sampler::{
 use napi::bindgen_prelude::{BigInt64Array, Float32Array};
 use napi::{Error, Result, Status};
 use napi_derive::napi;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 fn sampler_error(error: mtf_sampler::Error) -> Error {
@@ -755,6 +757,61 @@ impl CharEncoder {
 			attention_mask: BigInt64Array::new(batch.attention_mask),
 			labels: BigInt64Array::new(batch.labels),
 		})
+	}
+}
+
+/// One row group's admitted rows over the requested columns: a string column under `strings`, a list-of-strings
+/// column under `lists`.
+#[napi(object)]
+pub struct SplitColumnChunk {
+	pub rows: u32,
+	pub strings: HashMap<String, Vec<Option<String>>>,
+	pub lists: HashMap<String, Vec<Option<Vec<String>>>>,
+}
+
+/// Every row a split holds over a few columns, in file and row order, one row group at a time.
+#[napi]
+pub struct SplitColumns {
+	inner: RustSplitColumns,
+}
+
+#[napi]
+impl SplitColumns {
+	#[napi(constructor)]
+	pub fn new(config: String, split: String, columns: Vec<String>) -> Result<Self> {
+		Ok(Self {
+			inner: RustSplitColumns::open(&self::config(&config)?, &split, &columns).map_err(sampler_error)?,
+		})
+	}
+
+	/// The files the split lists.
+	#[napi(getter)]
+	pub fn files(&self) -> u32 {
+		self.inner.files() as u32
+	}
+
+	/// The next row group's admitted rows, or null after the last file.
+	#[napi]
+	pub fn next_chunk(&mut self) -> Result<Option<SplitColumnChunk>> {
+		let Some(chunk) = self.inner.next_chunk().map_err(sampler_error)? else {
+			return Ok(None);
+		};
+		let mut out = SplitColumnChunk {
+			rows: chunk.rows as u32,
+			strings: HashMap::new(),
+			lists: HashMap::new(),
+		};
+		for (name, values) in chunk.columns {
+			match values {
+				ColumnValues::Strings(v) => {
+					out.strings.insert(name, v);
+				}
+				ColumnValues::Lists(v) => {
+					out.lists.insert(name, v);
+				}
+			}
+		}
+		Ok(Some(out))
 	}
 }
 
