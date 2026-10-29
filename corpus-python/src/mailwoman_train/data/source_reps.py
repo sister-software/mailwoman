@@ -1,15 +1,10 @@
-"""Choose the reps per row and derive the weight.
+"""Choose the reps per row and derive the weight, through `mtf-sampler`'s `source_reps`.
 
-The sampler allocates draw share by weight normalized across sources. Row count never enters, so a
-source's per-row exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit
-configs do not express directly. ``source_reps`` lets a config set the exposure and derive the weight
-once the corpus is known.
-
-With ``W`` the sum of the fixed weights, ``S`` the run's total samples and ``D = sum(reps_i * rows_i)``
-over the reps-targeted sources, those sources take ``D / S`` of the draws, so
-``total_weight = W / (1 - D / S)`` and ``weight_i = reps_i * rows_i * total_weight / S``. Their draws
-come out of the fixed sources' share, ``D`` must stay below ``S``, and at least one source must receive a
-fixed weight or there is no reference to scale against.
+The sampler allocates draw share by weight normalized across sources. Row count never enters, so a source's per-row
+exposure is ``reps_per_row = (weight / total_weight) * total_samples / rows``, a unit configs do not express directly.
+``source_reps`` lets a config set the exposure and derive the weight once the corpus is known. The derivation and the
+row counts it reads run in Rust (`packages/mtf/crates/mtf-sampler/src/source_reps.rs`), so the weights the launch log
+reports are the weights the Rust sampler reads.
 """
 
 from __future__ import annotations
@@ -17,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import mailwoman_mtf
 
 
 @dataclass(frozen=True)
@@ -44,44 +41,15 @@ def derive_source_weights(
     derivation record for the launch log. Raises when a reps-targeted source is also weighted, has no
     readable row count, or the reps targets together would need more than the run's samples.
     """
-    fixed = dict(fixed_weights or {})
     if not source_reps:
         return (fixed_weights, [])
-    if samples <= 0:
-        raise ValueError(f"total samples must be positive to derive a weight from reps per row, got {samples}")
-
-    both = sorted(set(source_reps) & set(fixed))
-    if both:
-        raise ValueError(f"sources carry both a weight and a reps target: {both}; a source takes one or the other")
-
-    positive_fixed = sum(w for w in fixed.values() if w > 0)
-    if positive_fixed <= 0:
-        raise ValueError("source_reps need at least one positively weighted source in source_weights to derive against")
-
-    missing = sorted(src for src in source_reps if not rows_by_source.get(src))
-    if missing:
-        # An unreadable row count leaves the exposure unknown. A derived weight would
-        # silently change the mixture.
-        raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
-
-    demanded = sum(reps * rows_by_source[src] for src, reps in source_reps.items())
-    if demanded >= samples:
-        raise ValueError(
-            f"source_reps demand {demanded:,.0f} draws, at or over the run's {samples:,} samples; lower a reps target or lengthen the run"
-        )
-
-    scale = positive_fixed / (1.0 - demanded / samples)
-    derived: list[DerivedReps] = []
-    merged = dict(fixed)
-    for src, reps in sorted(source_reps.items()):
-        if reps <= 0:
-            raise ValueError(f"source_reps[{src!r}] must be positive, got {reps}")
-        rows = rows_by_source[src]
-        weight = reps * rows * scale / samples
-        merged[src] = weight
-        derived.append(DerivedReps(source=src, target_reps_per_row=reps, rows=rows, weight=weight))
-
-    return (merged, derived)
+    merged, derived = mailwoman_mtf.derive_source_weights(
+        list((fixed_weights or {}).items()),
+        list(source_reps.items()),
+        list(rows_by_source.items()),
+        samples,
+    )
+    return dict(merged), [DerivedReps(*entry) for entry in derived]
 
 
 def resolve_config_reps(cfg: Any, corpus_dir: Path | None = None) -> list[DerivedReps]:
@@ -93,9 +61,12 @@ def resolve_config_reps(cfg: Any, corpus_dir: Path | None = None) -> list[Derive
     reps = getattr(cfg.data, "source_reps", None)
     if not reps:
         return []
-    from .loader import source_row_counts
+    from dataclasses import replace
 
-    rows_by_source = source_row_counts(Path(corpus_dir or cfg.data.corpus_dir), "train")
+    from .loader.encode import sampler_config
+
+    data = replace(cfg.data, corpus_dir=str(corpus_dir)) if corpus_dir is not None else cfg.data
+    rows_by_source = dict(mailwoman_mtf.source_row_counts(sampler_config(data), "train"))
     samples = total_samples(cfg.train.max_steps, cfg.train.batch_size, getattr(cfg.train, "grad_accum_steps", 1))
     merged, derived = derive_source_weights(cfg.data.source_weights, reps, rows_by_source, samples)
     cfg.data.source_weights = merged

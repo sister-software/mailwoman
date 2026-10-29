@@ -11,7 +11,6 @@ import pytest
 
 from mailwoman_train.data.augment import SkipReason, augment_row, move_postcode, postcode_layouts
 from mailwoman_train.data.emit import POSTCODE_MOVE_EXCLUDED_SOURCES, EmitPolicy, emit_row
-from mailwoman_train.data.loader.stream import TrainOnlyPolicy, neutralized_for
 from mailwoman_train.tokenizer import whitespace_spans
 
 # The corpus tokenizer's word runs (`packages/corpus/lib/utils/tokenize.ts`), which never include separator commas.
@@ -411,7 +410,3 @@ class TestTheKnob:
             "Via del Corso 12, 00186 Roma"
         ]
         assert len(list(emit_row(self._row(), random.Random(1), policy))) == 2
-
-    def test_validation_never_moves_a_postcode(self) -> None:
-        assert neutralized_for("val", TrainOnlyPolicy(postcode_move_prob=1.0)).postcode_move_prob == 0.0
-        assert neutralized_for("train", TrainOnlyPolicy(postcode_move_prob=1.0)).postcode_move_prob == 1.0

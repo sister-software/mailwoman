@@ -12,7 +12,6 @@ stricter than token F1 and is what a user of the parse sees.
 
 from __future__ import annotations
 
-import random
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
@@ -60,9 +59,7 @@ def grade_heldout(
     original = cfg.data.country_weights
     cfg.data.country_weights = {country: 1.0}
     try:
-        for example in iter_encoded(
-            cfg.data, tokenizer, split=split, rng=random.Random(0), row_limit=max_rows, observer=rows.append
-        ):
+        for example in iter_encoded(cfg.data, tokenizer, split=split, seed=0, row_limit=max_rows, observer=rows.append):
             examples.append(example)
             if len(examples) == batch_size:
                 score()

@@ -9,7 +9,6 @@ parquet files. It refuses any per-SP-piece channel configuration.
 
 from __future__ import annotations
 
-import random
 from pathlib import Path
 
 import pyarrow as pa
@@ -218,7 +217,7 @@ def _char_cfg(tmp_path: Path, corpus: Path, **over) -> DataConfig:
 
 def test_loader_char_mode_yields_unit_tensors(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [JP_ROW])
-    [ex] = list(iter_encoded(_char_cfg(tmp_path, corpus), tokenizer=None, rng=random.Random(0)))
+    [ex] = list(iter_encoded(_char_cfg(tmp_path, corpus), tokenizer=None, seed=0))
     n = len(JP_ROW["raw"])
     assert ex.char_ids is not None
     assert len(ex.char_ids) == 32
@@ -240,21 +239,21 @@ def test_loader_char_mode_requires_span_schema(tmp_path: Path) -> None:
     schema = schema.remove(schema.get_field_index("span_tags"))
     corpus = _write_corpus(tmp_path, [JP_ROW], schema=schema)
     with pytest.raises(ValueError, match="span-schema"):
-        list(iter_encoded(_char_cfg(tmp_path, corpus), tokenizer=None, rng=random.Random(0)))
+        list(iter_encoded(_char_cfg(tmp_path, corpus), tokenizer=None, seed=0))
 
 
 def test_loader_char_mode_refuses_channel_paths(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [JP_ROW])
     cfg = _char_cfg(tmp_path, corpus, street_type_lexicon_path="/nonexistent/lexicon.json")
     with pytest.raises(ValueError, match="channel-free"):
-        list(iter_encoded(cfg, tokenizer=None, rng=random.Random(0)))
+        list(iter_encoded(cfg, tokenizer=None, seed=0))
 
 
 def test_loader_char_mode_narrow_window_raises(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [JP_ROW])
     cfg = _char_cfg(tmp_path, corpus, max_unit_width=5)  # < 2*3 + 1
     with pytest.raises(ValueError, match="truncates the char window"):
-        list(iter_encoded(cfg, tokenizer=None, rng=random.Random(0)))
+        list(iter_encoded(cfg, tokenizer=None, seed=0))
 
 
 def test_char_batch_trains_a_char_embed_model(tmp_path: Path) -> None:
@@ -267,7 +266,7 @@ def test_char_batch_trains_a_char_embed_model(tmp_path: Path) -> None:
 
     corpus = _write_corpus(tmp_path, [JP_ROW])
     cfg = _char_cfg(tmp_path, corpus)
-    [ex] = list(iter_encoded(cfg, tokenizer=None, rng=random.Random(0)))
+    [ex] = list(iter_encoded(cfg, tokenizer=None, seed=0))
     batch = collate([ex])
     model = MailwomanCoarseEncoder(
         vocab_size=2,

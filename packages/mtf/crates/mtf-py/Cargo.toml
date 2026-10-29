@@ -15,5 +15,6 @@ crate-type = ["cdylib"]
 [dependencies]
 mtf-core = { path = "../mtf-core" }
 mtf-channels = { path = "../mtf-channels", features = ["finders"] }
+mtf-sampler = { path = "../mtf-sampler" }
 pyo3 = { version = "0.30", features = ["extension-module"] }
 numpy = "0.30"

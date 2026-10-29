@@ -1,7 +1,7 @@
 """Time the training loader's host-side cost per batch, split into the sampler and everything after it.
 
-The training step waits on the loader for each batch: the sampler (`iter_rows`: parquet reads, the shuffle buffer,
-augmentation and relabeling), then the encoder and the batch assembly (`iter_batches`), then the conversion to
+The training step waits on the loader for each batch: the sampler (`mailwoman_mtf.Sampler`: parquet reads, the shuffle
+buffer, augmentation and relabeling), then the encoder and the batch assembly (`iter_batches`), then the conversion to
 tensors (`to_tensor_batch`). This tool draws the same seeded train rows twice, once through the sampler alone and
 once through `iter_batches`, so the difference between the two is the encoder's share.
 
@@ -25,18 +25,18 @@ import argparse
 import json
 import os
 import platform
-import random
 import resource
 import sys
 import time
 from pathlib import Path
 from typing import Any
 
+import mailwoman_mtf
 import torch
 
 from ..config import Config
-from ..data.loader import build_row_encoder, iter_batches, iter_rows
-from ..data.loader.encode import sampler_inputs
+from ..data.loader import build_row_encoder, iter_batches
+from ..data.loader.encode import sampler_config
 from ..train.batch import to_tensor_batch
 from .encoder_parity import prepare_config
 
@@ -63,7 +63,7 @@ def loader_input(cfg: Config) -> Any:
 
 def time_sampler(cfg: Config, *, seed: int, rows: int) -> tuple[float, int]:
     """Seconds to draw `rows` rows after the first, and the rows drawn."""
-    stream = iter_rows(Path(cfg.data.corpus_dir), "train", rng=random.Random(seed), **sampler_inputs(cfg.data))
+    stream = mailwoman_mtf.Sampler(sampler_config(cfg.data), "train", seed)
     next(stream)
     started = time.perf_counter()
     drawn = 0

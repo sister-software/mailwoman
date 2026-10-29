@@ -145,11 +145,9 @@ def test_wide_head_without_a_map_raises() -> None:
 
 
 def test_sp_path_refuses_a_non_default_set() -> None:
-    import random
-
     from mailwoman_train.config import DataConfig
     from mailwoman_train.data.loader import iter_encoded
 
     cfg = DataConfig(corpus_dir="/nonexistent", label_set="stage3-jp", char_mode="off")
     with pytest.raises(ValueError, match="only supported with data.char_mode"):
-        list(iter_encoded(cfg, tokenizer=None, rng=random.Random(0)))
+        list(iter_encoded(cfg, tokenizer=None, seed=0))

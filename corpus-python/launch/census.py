@@ -39,7 +39,6 @@ def diagnose_corpus(
     This is the pre-launch "verify the loader sees the source, then launch" check.
     """
     import json
-    import random
     import sys
     from collections import Counter
     from pathlib import Path
@@ -114,7 +113,7 @@ def diagnose_corpus(
             iter_rows(
                 corpus_root,
                 "train",
-                rng=random.Random(0),
+                seed=0,
                 country_weights=cw,
                 source_weights=sw,
                 coarse_filter=True,
@@ -242,7 +241,6 @@ def digit_prior(
 
     Also reports the CONTEXT split: same token, with vs without a street designator in the row.
     """
-    import random
     import re
     import sys
     from collections import Counter, defaultdict
@@ -302,16 +300,15 @@ def digit_prior(
     stream = iter_rows(
         Path(corpus_dir),
         "train",
-        rng=random.Random(seed),
+        seed=seed,
         country_weights=country_weights,
         source_weights=source_weights,
         coarse_filter=coarse_filter,
         row_limit=rows,
-        augment_directional_prob=data_cfg.get("augment_directional_prob", 0.0),
-        augment_region_prob=data_cfg.get("augment_region_prob", 0.0),
-        augment_glue_prob=data_cfg.get("augment_glue_prob", 0.0),
-        augment_case_prob=data_cfg.get("augment_case_prob", 0.0),
-        augment_punct_drop_prob=data_cfg.get("augment_punct_drop_prob", 0.0),
+        augment={
+            name: data_cfg.get(f"augment_{name}_prob", 0.0)
+            for name in ("directional", "region", "glue", "case", "punct_drop")
+        },
     )
 
     for row in stream:
@@ -421,7 +418,6 @@ def piece_prior(
       - the same split by run length, since length is the variable doing the work
       - observed fertility per digit-run length, to check the `fertility == digit count` assumption
     """
-    import random
     import re
     import sys
     from collections import Counter, defaultdict
@@ -457,7 +453,7 @@ def piece_prior(
     fertility: defaultdict[int, Counter[int]] = defaultdict(Counter)
     n_rows = 0
 
-    stream = iter_encoded(data_cfg, tok, split="train", rng=random.Random(seed), row_limit=rows)
+    stream = iter_encoded(data_cfg, tok, split="train", seed=seed, row_limit=rows)
 
     for ex in stream:
         n_rows += 1
@@ -740,7 +736,6 @@ def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> N
     the rows that hold it in both splits, then the sources and countries that supply its train rows,
     each as rows carrying the label over that supplier's rows in the draw.
     """
-    import random
     import sys
     from collections import Counter, defaultdict
     from pathlib import Path
@@ -770,9 +765,7 @@ def label_support(config_name: str, train_rows: int = 200000, top: int = 8) -> N
         total = 0
         # `iter_encoded` calls the observer once per row, immediately before yielding that row's example.
         seen: list[dict[str, Any]] = []
-        stream = iter_encoded(
-            cfg.data, tokenizer, split=split, rng=random.Random(seed), row_limit=limit, observer=seen.append
-        )
+        stream = iter_encoded(cfg.data, tokenizer, split=split, seed=seed, row_limit=limit, observer=seen.append)
         for example in stream:
             row = seen.pop()
             total += 1

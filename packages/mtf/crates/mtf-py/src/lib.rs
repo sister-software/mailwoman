@@ -8,7 +8,9 @@
 //! the space a `▁` piece covers. `RowEncoder` holds a run's lexicons and encodes a batch of sampled rows into
 //! numpy arrays: `[B, L]` int64 ids, mask and labels, and per configured channel `[B, L, D]` float32 features
 //! and `[B, L]` float32 confidence. Each array owns its buffer, so `torch.from_numpy` wraps it without a copy
-//! and it stays valid after later calls.
+//! and it stays valid after later calls. `Sampler` and `TrainingBatches` stream sampled rows from `mtf-sampler`, and
+//! `CharEncoder` encodes them for the character path; the Python trainer reads its rows through them until the
+//! Rust trainer replaces it.
 
 use mtf_channels::anchor::AnchorLookup;
 use mtf_channels::code_units;
@@ -32,38 +34,9 @@ fn to_py(error: Error) -> PyErr {
 	}
 }
 
-/// The code-point index of the character owning each UTF-8 byte of `text`, plus the end.
-fn byte_to_char(text: &str) -> Vec<usize> {
-	let mut out = vec![0usize; text.len() + 1];
-	let mut chars = 0;
-	for (b, ch) in text.char_indices() {
-		for slot in &mut out[b..b + ch.len_utf8()] {
-			*slot = chars;
-		}
-		chars += 1;
-	}
-	out[text.len()] = chars;
-	out
-}
+mod sampler;
 
-/// One piece as `(id, piece, char_begin, char_end)`.
-type PieceTuple = (u32, String, usize, usize);
-
-fn encode_pieces(processor: &Processor, raw: &str) -> Result<Vec<PieceTuple>, Error> {
-	let map = byte_to_char(raw);
-	let chars = map[raw.len()];
-	let pieces = processor
-		.encode(raw)
-		.map_err(|e| Error::Row(format!("tokenizer failed on {raw:?}: {e}")))?;
-	Ok(pieces
-		.into_iter()
-		.map(|p| {
-			let begin = map[p.begin.min(raw.len())];
-			let end = if p.end <= raw.len() { map[p.end] } else { chars };
-			(p.id, p.piece, begin, end)
-		})
-		.collect())
-}
+use mtf_sampler::batch::{encode_pieces, PieceTuple};
 
 /// A SentencePiece unigram model loaded by `mtf-core`.
 #[pyclass(frozen, module = "mailwoman_mtf")]
@@ -437,6 +410,7 @@ fn mailwoman_mtf(m: &Bound<'_, PyModule>) -> PyResult<()> {
 	m.add_class::<PyPostcodeShapes>()?;
 	m.add_class::<PyPostcodeSyntax>()?;
 	m.add_function(wrap_pyfunction!(segment_code_units, m)?)?;
+	sampler::register(m)?;
 	m.add("UNICODE_VERSION", mtf_channels::python_text::UNICODE_VERSION)?;
 	m.add("CHANNEL_NAMES", CHANNEL_NAMES.to_vec())?;
 	m.add("CODE_UNIT_FEATURE_DIM", code_units::CODE_UNIT_FEATURE_DIM)?;
