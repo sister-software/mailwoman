@@ -25,6 +25,7 @@ import json, platform, random, sys
 SEEDS = [0, 42, 2**31 - 1, 2**40 + 7, -5, "20260601:corpus", "42-postcode", ""]
 N = 50
 
+
 def case(seed, method, args, calls):
     rng = random.Random(seed)
     out = []
@@ -39,6 +40,7 @@ def case(seed, method, args, calls):
             out.append(str(value) if isinstance(value, int) and value >= 2**63 else value)
     return {"seed": seed, "method": method, "args": args, "outputs": out}
 
+
 def shuffled(seed, n, rounds):
     rng = random.Random(seed)
     out = []
@@ -47,6 +49,7 @@ def shuffled(seed, n, rounds):
         rng.shuffle(items)
         out.append(items)
     return {"seed": seed, "method": "shuffle", "args": [n], "outputs": out}
+
 
 def mixed(seed):
     rng = random.Random(seed)
@@ -71,6 +74,7 @@ def mixed(seed):
         else:
             trace.append(["choice", [11], rng.choice(range(11))])
     return {"seed": seed, "method": "mixed", "args": [], "outputs": trace}
+
 
 cases = []
 for seed in SEEDS:
