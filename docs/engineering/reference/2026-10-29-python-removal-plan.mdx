@@ -745,6 +745,7 @@ CSV and checkpoint callbacks) and `trainer-cli` (the `trainer` binary). The trai
 **Not built (decided, refused by name):** the semi-Markov span scorer, the conventions loss mask, the fp16 and ROCm
 parameter casts, the Trackio mirror (the plan replaces it with a CSV uploader), the realized-exposure report
 (`exposure/report.py` moves in Phase 2), and the corpus/tokenizer alignment smoke check (`verify_tokenizer_alignment`).
+The "Trainer gaps status" section below ports or retires each of them.
 
 **Reference.** `mailwoman_train.audits.trainer_parity` writes the reference under
 `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/`. The configuration is a lab copy of `v8.3.0-probe-code-unit-2k` (host
@@ -857,7 +858,8 @@ write.
 **Span scorer: blocked.** The Rust model has no span scorer (Phase 5, "Not built"), so there is no forward pass to
 check a `span_scores` output against. The exporter refuses `use_span_scorer` by name, as it refuses the affix and
 dependent-locality heads and `inject_first_token`. `launch/artifacts.py::export_onnx` and its
-`semi-crf-transitions.json` sidecar stay on the Python exporter until the scorer is ported.
+`semi-crf-transitions.json` sidecar stay on the Python exporter until the scorer is ported. The "Trainer gaps
+status" section below ports it and moves both.
 
 **Split embeddings.** `trainer-export split-embeddings --input <int8> --out-dir <dir> [--counts <.npy|.json>]
 [--coverage 0.99] [--always 0,1,2,3]` writes `encoder.onnx`, `embeddings.rows` and `embeddings-hot.bin`. On the
@@ -897,8 +899,9 @@ shipped graph it replaces uses. The repository has no operator allowlist, and th
 arm. The token-path bytes did not change, so F2's SLO result (11 of 11 on the wasm arm) still describes them. The
 real iOS device check was not run; it is required before any promotion.
 
-**Callers and deletions.** Deleted: `export/split_embeddings.py`, `cli/commands/{export,quantize,package,
-split_embeddings}.py`, `tests/mailwoman_train/export/{test_split_embeddings,test_export_staging}.py`,
+**Callers and deletions.** Deleted: `export/split_embeddings.py`,
+`cli/commands/{export,quantize,package,split_embeddings}.py`,
+`tests/mailwoman_train/export/{test_split_embeddings,test_export_staging}.py`,
 `packages/neural/test/fixtures/generate-split-embeddings.py`, and the `quantize_onnx` Modal function. The launcher's
 procedure now quantizes on the host with `trainer-export quantize`. Kept, with their importers:
 
@@ -913,6 +916,108 @@ procedure now quantizes on the host with `trainer-export quantize`. Kept, with t
 
 `verify-export-quant-versions.run.ts` still reads `corpus-python/launch/app.py`, because the TS image definition is
 Phase 7 work.
+
+#### Trainer gaps status (2026-10-29)
+
+This section closes the items listed under "Not built" in the Phase 5 status and the span-scorer block in the Phase 6
+status. Observed on the lab host, branch `feat/2874-trainer-gaps`. The Python references ran on `torch==2.13.0+cpu`
+and CPython 3.12.3 at 4 threads, and the Python graph on the pinned export stack (torch 2.12.0, onnxscript 0.7.2).
+The records are under `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/gaps/`.
+
+**Span scorer: ported.** `trainer-model/src/span.rs` holds `SpanScorer`, `SemiMarkovCRF` (partition function, gold
+path score, NLL) and `gold_segments`. The encoder registers `span_scorer.*` and `semi_crf.*` where `_build_structured_heads`
+does, so construction draws the same initial weights, and the span loss is added after the span-boundary term as
+`_add_auxiliary_losses` adds it. The forward returns `span_scores`. `trainer-export export-onnx` writes the `span_scores`
+output after `locale_logits`, with `Pad`, `Slice`, `Concat` and `Tanh` for the shifted end projections, and writes
+`semi-crf-transitions.json` beside the graph. The segment types are `trainer_export::span::segment_types` of the
+checkpoint's `id2label`, which the model and the sidecar share. The export also copies the run's `CORPUS.json` beside
+the graph, as the Modal function did.
+
+`trainer parity stages` over 7 new cells, from the Phase 5 step-200 checkpoint with the span weights drawn from the
+seed, and one cell built from the seed only. The largest absolute difference in every stage of every cell is 0:
+
+| Cell                                                                        | Construction | 1   | 2–3 (eval, train) | 4 (eval, train) | 5   | 6   |
+| --------------------------------------------------------------------------- | ------------ | --- | ----------------- | --------------- | --- | --- |
+| span scorer, `span_loss_weight` 0.5                                         | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| `max_span` 4, `span_dim` 64, CRF loss weight 0.1, `span_head_learning_rate` | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| span scorer, bf16 CPU autocast                                              | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| span scorer, `grad_accum_steps` 4                                           | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| span scorer, built from the seed with no checkpoint                         | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| conventions loss mask                                                       | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| conventions loss mask, `grad_accum_steps` 4, bf16 autocast                  | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+
+Stages 2–3 compare `span_scores` and the `span` term beside the other outputs and terms. The span-head learning-rate
+cell builds the parameter groups 112 and 9. The capture (`trainer_parity capture`) now recomputes the span term and
+the masked cross-entropy.
+
+The export check: a 100-step `trainer train` run with the span scorer (`span_loss_weight` 0.5) from the Python
+step-200 checkpoint, exported by `trainer-export` and run through onnxruntime-node 1.30.0 on 16 recorded rows
+(`trainer export-feeds`, which now records `span_scores`, then `onnx-model-check.run.ts`):
+
+| Check                                                                                | Result                                                                                        | Requirement |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ----------- |
+| Rust graph against the Rust forward pass                                             | `span_scores` 4.2e-6, `logits` 5.7e-6, `locale_logits` 2.4e-6, `address_system_logits` 2.9e-6 | 1e-4        |
+| Python graph of the same checkpoint (`export_to_onnx`) against the Rust forward pass | `span_scores` 5.7e-6, `logits` 5.7e-6                                                         | 1e-4        |
+| Inputs, outputs, element types and declared dimensions                               | equal to the Python graph; `span_scores` is `float[1, sequence, 8, 17]`                       | equal       |
+| Opset                                                                                | Rust 17, Python 18                                                                            | ≤ 17        |
+| `semi-crf-transitions.json`                                                          | byte-equal to `export_semi_crf_transitions` (SHA-256 `ca17d09e…`)                             | equal       |
+| Rust int8 graph against the fp32 forward                                             | `span_scores` up to 0.41, `logits` up to 0.19                                                 | not a bar   |
+
+The int8 difference is the quantization of the span projections. No shipped model has the span scorer, so no browser
+SLO or iOS WebGPU check was run for `Pad` and `Tanh`; both are required before a span-scorer model is promoted.
+
+**Conventions loss mask: ported.** The label schema gains `conventions_forbidden_tags`, written from the codex rows
+through `forbiddenTagsByLocale` in `@mailwoman/neural`'s `address-system.ts`, the map the decoder's emission mask also
+reads. It holds `{"FR": ["street_suffix"]}`. `mtf-channels` refuses a schema without the field or with a country
+outside `locale_countries`, and `test_label_schema.py` pins `features/conventions.py`'s mirror to it. The mask reaches
+the cross-entropy's input only, as in `losses.py`. In both mask cells the FR rows of the stage-5 batches with a gold
+`street_suffix` raise the micro-batch loss to the order of 1e6 (1,413,097 against 2.73 unmasked), the explosion
+`launch/AGENTS.md` records for v1.6.0, and the Rust loss is equal to it.
+
+**`verify_tokenizer_alignment`: ported.** `trainer-loop/src/alignment.rs` reads the first 100 rows of row group 0 of
+the first `train` file, as `data/loader/verify.py` does, and refuses a row whose tokens are not found in `raw` left to
+right, naming the row and the file. The supervised loop runs it on the SentencePiece path before the model is built.
+`tests/alignment.rs` covers a passing corpus and a broken row. The 200-step reference run below passes it, and its
+`train_log.csv` stays equal to the Python run's at all 20 logged rows.
+
+**Realized exposure: decided, the Rust loop emits the observer stream.** The phenomenon predicates have one
+implementation, `packages/mailwoman/tools/training/exposure/phenomena.ts`, which `exposure.run.ts` already uses for the
+other stages. A Rust copy would be a third implementation to keep equal to it. `trainer train` writes the rows of every
+consumed batch to `exposure-realized-from-<step>.rows.jsonl.zst` and, when the run ends,
+`exposure-realized-from-<step>.rows.json`, which records the stream's file name, its row count, the label set and the
+report's inputs. `realized.run.ts <description>` counts the rows with the same `StageCounter` and writes
+`exposure-realized-from-<step>.json`. Over the 200-step reference run (1,600 rows) the report equals the Python loop's
+on all 6,336 lines apart from `measured_at`, `code_revision` and `inputs.output_dir`. The stream took 61,745 bytes,
+38.6 bytes per row. A 90,000-step run of 128 rows would write about 440 MB (an estimate from that rate). The report is
+now a step after training: the launcher (Phase 7) runs `realized.run.ts` before the release check reads the report.
+
+**fp16 and ROCm parameter casts: retired (decided).** No committed config sets `train.precision: fp16` (0 of 264; all
+264 are `bf16`). The Python fp16 path cast the parameters to fp16 and ran with no gradient scaler. `resolve_precision`'s
+docstring gives the missing scaler as the reason it does not autocast fp16. Fp16 parameters also lose any AdamW update
+below half the fp16 spacing at a weight's magnitude, the failure that docstring gives for bf16 parameters. That loss is
+inferred for fp16 and was not measured. `resolve_precision` refuses fp16 on a CUDA device by name, and the CPU still
+runs fp32, as Python did. The ROCm bf16
+cast served the lab Radeon 780M recipe in `corpus-python/README.md`. The Rust trainer links CPU or CUDA libtorch only,
+the lab's parity and smoke runs use the CPU, and training runs on Modal CUDA, so the trainer has no ROCm device to cast
+for. `tests/units.rs` covers the refusal and the CUDA bf16 autocast path.
+
+**Trackio: retired (decided).** No committed config enables it (0 of 264), and the launcher's `--trackio` flag is the
+only path that does. `train_log.csv` records the loss, rate, validation loss, macro F1, and per-tag F1 and support that
+the mirror sent. The mirror also sent the cross-pollution rates and the locale accuracy, which the console prints and
+the CSV omits. `trainer train` refuses `train.trackio_enabled: true` by name. The CSV-to-HF uploader in the Phase 5
+item list is unbuilt; it is optional Phase 7 work.
+
+**Python moved and deleted.** Deleted: the `export_onnx` Modal function in `launch/artifacts.py`,
+`export/package_weights.py::export_semi_crf_transitions`, and its two tests in `test_span_export.py`. The launcher's
+procedure in `launch/AGENTS.md` and `REPRODUCIBILITY.md` now fetches the checkpoint through `push_artifact_r2` and runs
+`trainer-export export-onnx` on the host. Kept, each for the Python trainer, which stays until stage 8 and the
+launcher land: `export/onnx.py`, `graph.py` and `wrappers.py` (`cli/commands/smoke.py`, `scripts/verify_toolchain.py`),
+`exposure/report.py` (`train/loop.py`), `data/loader/verify.py` (`train/setup.py`), `features/conventions.py`
+(`nn/encoder/heads.py`), and `observability/` (the Python Trackio mirror).
+
+**Not done.** Stage 8 on CUDA libtorch, which also exercises CUDA autocast for the span and mask paths. A browser and
+iOS WebGPU check of a span-scorer graph. The launcher step that runs `realized.run.ts`. The affix and
+dependent-locality heads and `inject_first_token` in the exporter, which it still refuses by name.
 
 ### Phase 7 — TypeScript launcher
 
