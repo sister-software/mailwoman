@@ -7,6 +7,8 @@ database, and Rust's standard library carries a different Unicode version. The c
 
 - `str.isspace`, `str.isalnum`, `str.isdecimal`, `str.isalpha` and `str.isdigit` as sorted inclusive ranges, and the
   characters whose Unicode name starts with a CJK script prefix (`is_cjk_named`);
+- the characters the tokenizer's byte-fallback report skips, and the script block each other character's name
+  places it in (`exposure.phenomena.SCRIPT_NAME_PREFIXES`, which `detect_script` there also reads);
 - the cased and case-ignorable properties `str.lower` reads for the final-sigma rule;
 - the full lowercase and uppercase mapping of each character whose mapping is not itself.
 
@@ -26,6 +28,7 @@ import sys
 import unicodedata
 from collections.abc import Callable, Iterator
 
+from ..exposure.phenomena import SCRIPT_NAME_PREFIXES
 from ..paths import repo_root_path
 
 #: The generated module, relative to the repository root.
@@ -84,6 +87,34 @@ def is_cjk_named(char: str) -> bool:
     return unicodedata.name(char, "").startswith(CJK_NAME_PREFIXES)
 
 
+def is_script_skipped(char: str) -> bool:
+    """Whether the byte-fallback report leaves the character out: a space, number, punctuation, separator or symbol."""
+    return char.isspace() or unicodedata.category(char).startswith(("N", "P", "Z", "S"))
+
+
+def script_block(char: str) -> int:
+    """The character's index in `SCRIPT_NAME_PREFIXES`, or -1 for a character no prefix names."""
+    name = unicodedata.name(char, "")
+    for index, (_, prefixes) in enumerate(SCRIPT_NAME_PREFIXES):
+        if name.startswith(prefixes):
+            return index
+    return -1
+
+
+def tagged_ranges(classify: Callable[[str], int]) -> list[tuple[int, int, int]]:
+    """The inclusive ranges of scalar values `classify` maps to one non-negative tag, with that tag."""
+    out: list[tuple[int, int, int]] = []
+    for code in scalar_values():
+        tag = classify(chr(code))
+        if tag < 0:
+            continue
+        if out and out[-1][2] == tag and (out[-1][1] == code - 1 or (out[-1][1] == 0xD7FF and code == 0xE000)):
+            out[-1] = (out[-1][0], code, tag)
+        else:
+            out.append((code, code, tag))
+    return out
+
+
 def mapping(convert: Callable[[str], str]) -> list[tuple[int, str]]:
     """Every scalar value whose one-character conversion differs from itself, with the converted string."""
     out: list[tuple[int, str]] = []
@@ -98,6 +129,11 @@ def mapping(convert: Callable[[str], str]) -> list[tuple[int, str]]:
 def _rust_ranges(name: str, values: list[tuple[int, int]]) -> str:
     body = "\n".join(f"\t(0x{a:04X}, 0x{b:04X})," for a, b in values)
     return f"pub static {name}: &[(u32, u32)] = &[\n{body}\n];\n"
+
+
+def _rust_tagged_ranges(name: str, values: list[tuple[int, int, int]]) -> str:
+    body = "\n".join(f"\t(0x{a:04X}, 0x{b:04X}, {tag})," for a, b, tag in values)
+    return f"pub static {name}: &[(u32, u32, u8)] = &[\n{body}\n];\n"
 
 
 def _rust_code_points(value: str) -> str:
@@ -131,6 +167,10 @@ def render() -> str:
         _rust_ranges("CASED", ranges(is_cased)),
         "\n",
         _rust_ranges("CASE_IGNORABLE", ranges(is_case_ignorable)),
+        "\n",
+        _rust_ranges("SCRIPT_SKIPPED", ranges(is_script_skipped)),
+        "\n",
+        _rust_tagged_ranges("SCRIPT_BLOCK", tagged_ranges(script_block)),
         "\n",
         _rust_mapping("LOWER", mapping(str.lower)),
         "\n",

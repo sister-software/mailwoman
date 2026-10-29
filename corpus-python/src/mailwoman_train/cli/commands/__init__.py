@@ -3,14 +3,14 @@
 A command is a module exporting `NAME`, `add_parser`, plus `run` — `protocols.CLICommand`. Each new command
 needs a module here and a registry entry below. `build_parser` stays unchanged.
 
-The order matches `--help`: the pipeline commands come first, followed by the two tokenizer commands.
-The tokenizer commands sit outside the pipeline.
+The order matches `--help`, the pipeline order. Tokenizer training, splicing, pruning and checking are the
+TypeScript tools under `packages/mtf/tools/tokenizer/`.
 """
 
 from __future__ import annotations
 
 from ...protocols import CLICommand
-from . import evaluate, export, package, quantize, smoke, split_embeddings, tokenizer, train, verify_tokenizer
+from . import evaluate, export, package, quantize, smoke, split_embeddings, train
 
 COMMANDS: tuple[CLICommand, ...] = (
     train,
@@ -20,8 +20,6 @@ COMMANDS: tuple[CLICommand, ...] = (
     split_embeddings,
     package,
     smoke,
-    tokenizer,
-    verify_tokenizer,
 )
 
 __all__ = ["COMMANDS"]

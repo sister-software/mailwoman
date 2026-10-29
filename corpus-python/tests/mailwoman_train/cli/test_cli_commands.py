@@ -26,8 +26,6 @@ EXPECTED = {
     "split-embeddings",
     "package",
     "smoke",
-    "tokenizer",
-    "verify-tokenizer",
 }
 
 

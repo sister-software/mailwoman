@@ -59,8 +59,9 @@ packages/mtf/
   crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
   crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
   crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core, mtf-channels and mtf-sampler
-  crates/mtf-tools/     Offline model importer and compiler
+  crates/mtf-tools/     The `mtf-tokenizer` binary behind tools/tokenizer: model edits, corpus sampling, ONNX surgery
   lib/                  TypeScript loader and result conversion
+  tools/tokenizer/      Tokenizer training, splicing, pruning and checks
   wasm/                 Committed WASM binary and its build metadata
   test/fixtures/        Reference outputs from the deployed runtime
 ```
@@ -180,6 +181,32 @@ Natively, the same load takes 15.2 ms (`cargo run --release --example load_profi
 Run the parity test from this directory with
 `MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
 reads `../neural-weights-en-us/tokenizer.model` and fails if that file is absent.
+
+## Tokenizer tools
+
+`tools/tokenizer/` trains, splices, prunes and checks tokenizers. Each entry point is a `.run.ts` file, run from the
+repository root with `node`:
+
+| Tool                            | What it does                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `train.run.ts`                  | Samples a corpus's train split per country, trains with `spm_train`, writes the model card    |
+| `train-text.run.ts`             | Trains the 16,000-piece first-generation recipe on a text file                                |
+| `splice.run.ts build-tokenizer` | Appends a locale model's diacritic pieces to a frozen tokenizer and checks code point overlap |
+| `splice.run.ts onnx-mean-init`  | Grows an exported model's embedding table, and its int8 twin's, onto a spliced tokenizer      |
+| `utilization.run.ts`            | Counts each piece's use over a corpus's train split                                           |
+| `prune.run.ts`                  | Drops unused pieces from a tokenizer and the matching rows from the int8 model                |
+| `verify.run.ts prune`           | Checks a pruned tokenizer and model for segmentation identity and bit-equal logits            |
+| `verify.run.ts byte-fallback`   | Reports a tokenizer's byte-fallback rate on a fixture, overall and per script                 |
+
+Training runs native `spm_train`, built from google/sentencepiece `v0.2.2` under the cache root on first use. It
+reproduces the Python wheel's model byte for byte: the CLI records every trainer default it set, and the tool drops
+the spec fields the training call did not name, which is the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
+checks five recorded wheel trainings against `test/fixtures/spm-recipes/`.
+
+The proto edits, parquet reads, CPython-compatible sampling, the byte-fallback count and the ONNX initializer
+rewrite run in `mtf-tokenizer`, which Cargo builds under the `tools` profile on first use. It is a binary rather
+than a Node addon: each tool calls it a few times over files, and a binary needs no addon toolchain or
+per-platform artifact.
 
 ## License
 

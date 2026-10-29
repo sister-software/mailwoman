@@ -340,7 +340,7 @@ When a golden version changes a convention:
 ### Splice safety check — codepoint overlap is pre-registered rather than post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
 
 Any tokenizer vocab splice must run the overlap check **before grading begins**
-(`mailwoman_train/tokenizer/splice.py build-tokenizer --trained-samples <locale=sample,…>`). The check computes the
+(`packages/mtf/tools/tokenizer/splice.run.ts build-tokenizer --trained-samples <locale=sample,…>`). The check computes the
 non-ASCII codepoints shared between the new pieces and every trained locale's character inventory,
 writes the per-locale report artifact next to the spliced tokenizer, and fails with an error on any
 overlapping locale that was not explicitly accepted. Locale acceptance (`--accept-overlap fr,de`)

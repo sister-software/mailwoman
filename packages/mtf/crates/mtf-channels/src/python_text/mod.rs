@@ -76,6 +76,43 @@ pub fn is_cjk_named(c: char) -> bool {
 	in_ranges(tables::CJK_NAMED, c)
 }
 
+/// The script blocks the tokenizer's byte-fallback report names, in the generator's `SCRIPT_NAME_PREFIXES` order.
+pub const SCRIPT_BLOCKS: [&str; 9] = [
+	"latin",
+	"cjk",
+	"cyrillic",
+	"armenian",
+	"arabic",
+	"greek",
+	"hebrew",
+	"devanagari",
+	"thai",
+];
+
+/// Whether the byte-fallback report skips the character: `str.isspace`, or a `unicodedata.category` starting with
+/// `N`, `P`, `Z` or `S`.
+pub fn is_script_skipped(c: char) -> bool {
+	in_ranges(tables::SCRIPT_SKIPPED, c)
+}
+
+/// The [`SCRIPT_BLOCKS`] entry whose name prefix `unicodedata.name(c)` starts with, or `None` for a character with no
+/// name or another name.
+pub fn script_block(c: char) -> Option<&'static str> {
+	let code = c as u32;
+	tables::SCRIPT_BLOCK
+		.binary_search_by(|&(start, end, _)| {
+			if end < code {
+				std::cmp::Ordering::Less
+			} else if start > code {
+				std::cmp::Ordering::Greater
+			} else {
+				std::cmp::Ordering::Equal
+			}
+		})
+		.ok()
+		.map(|i| SCRIPT_BLOCKS[tables::SCRIPT_BLOCK[i].2 as usize])
+}
+
 /// What `\w` matches in a `str` pattern: an alphanumeric character or the underscore.
 pub fn is_word(c: char) -> bool {
 	c == '_' || is_alnum(c)

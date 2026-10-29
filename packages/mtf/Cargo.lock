@@ -594,6 +594,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mtf-tools"
+version = "0.1.0"
+dependencies = [
+ "mtf-channels",
+ "mtf-core",
+ "mtf-sampler",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "mtf-wasm"
 version = "0.1.0"
 dependencies = [

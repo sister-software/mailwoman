@@ -14,7 +14,7 @@
 pub mod augment;
 pub mod batch;
 pub mod char_path;
-mod columns;
+pub mod columns;
 pub mod config;
 pub mod corpus_files;
 pub mod emit;

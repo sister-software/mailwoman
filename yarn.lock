@@ -7286,6 +7286,14 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@types/node": "npm:^26.6.5"
+    onnxruntime-node: "npm:^1.30.0"
+    path-ts: "npm:^2.5.0"
+    spliterator: "npm:^10.1.1"
+  peerDependencies:
+    onnxruntime-node: ^1.26.0
+  peerDependenciesMeta:
+    onnxruntime-node:
+      optional: true
   languageName: unknown
   linkType: soft
 

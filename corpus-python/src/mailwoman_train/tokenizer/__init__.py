@@ -8,8 +8,8 @@ SentencePiece pieces, which are finer-grained than the whitespace tokens.
 `Tokenizer` loads a model with `mtf-core`, which reproduces SentencePiece 0.2.2's ids and UTF-8 offsets, and
 reports each piece's code-point range. The training encoder in `packages/mtf/crates/mtf-channels` projects labels
 and channels onto those pieces. `spans` holds the Python projection the char path and the tokenizer check use;
-`char` implements the character path without SentencePiece; `splice` and `train` build and edit a model with the
-`sentencepiece` package.
+`char` implements the character path without SentencePiece. Training, splicing and pruning a model are the
+TypeScript tools under `packages/mtf/tools/tokenizer/`.
 """
 
 from __future__ import annotations
