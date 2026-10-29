@@ -213,6 +213,30 @@ PASS (1/1 checks)
 data OK
 ```
 
+## Upgrades, interruptions, rollback and pruning (unreleased)
+
+The commands in this section ship with the release after 10.7.0. The
+[layer installation reference](../../../engineering/reference/layer-installation.mdx) specifies them.
+
+- **Plan an upgrade.** `mailwoman data pull <bundle> --dry-run` prints each artifact's action (download,
+  reuse, activate or present), its size and whether that size is an estimate, the free space on the data
+  root's filesystem, the access it needs, and which selected source the activation replaces. It makes no
+  network request and writes no file.
+- **Recover from an interruption.** A transfer stopped by Ctrl-C or a dropped connection keeps its partial
+  bytes under `<data-root>/tmp/acquire/`. `mailwoman data status` lists it as an interrupted transfer.
+  Run the same pull again: it resumes from the kept bytes when the host still reports the same ETag,
+  Last-Modified date and length, and otherwise starts over and prints why.
+- **A failed upgrade leaves the previous one in force.** A bundle is selected only once every one of its
+  artifacts installed, and every bundle of one pull is selected by one replacement of
+  `<data-root>/active.json`. Until that replacement succeeds, the geocoder reads the previous generation.
+- **Roll back.** `mailwoman data activate --rollback` restores the generation the active one replaced.
+  `mailwoman data status --json` lists the installation identity of each installed and unselected
+  artifact, and `mailwoman data activate <installation-id>` selects it.
+- **Prune separately.** `mailwoman data prune --dry-run` lists installed artifacts that neither the active
+  generation, the one before it, nor a running session references, with the bytes reclaimable. Run it
+  without `--dry-run` to delete them. It refuses when the selection or the running sessions changed after
+  it planned, and it never deletes a file at a conventional path or a partial transfer.
+
 ## Limits
 
 - **`data status` compares against the published artifact rather than against validity.** A database you built

@@ -79,6 +79,31 @@ Since 4.0.0, consumers need only the npm version. The shipped weights' `model-ca
 
 Earlier training-series numbering (`v0.1.0`, `v0.2.0`, the realigned `3.0.0`) predates the lockstep policy. For those versions, the eval ledger is the record.
 
+## Unreleased changes
+
+These are merged to `main` after 10.7.0 and belong in the next release's notes
+([#2868](https://github.com/sister-software/mailwoman/issues/2868)).
+
+- **Data installs through an active selection.** `mailwoman data pull` installs the `candidate`, `us`,
+  `fr` and `poi` bundles under `<data-root>/db/<role>/<sha256>/` and selects them in
+  `<data-root>/active.json`. A file already at its conventional path keeps working: every reader consults
+  the selection first and then the conventional path, and a data root without `active.json` resolves as
+  before.
+- **The candidate pull prints no `export MAILWOMAN_CANDIDATE_DB` line.** The gazetteer is selected, and
+  every entry point reads it without the variable. The variable still pins a gazetteer outside the data
+  root, and `none` still pins the FTS backend.
+- **An unverifiable transfer is refused.** A download that neither a published `.md5` sidecar nor a
+  reported length can verify is removed and reported as corrupt. Earlier releases installed it with a
+  warning.
+- **One installer per data root.** `data pull` holds `<data-root>/.install.lock/` for its whole run. A
+  second pull under the same data root refuses before any transfer and prints the holder's pid.
+- **Interrupted transfers resume.** A cancelled or dropped transfer keeps its bytes, and the next pull
+  resumes it when the remote ETag, Last-Modified date and length still match.
+- **New commands.** `data activate <installation-id>` and `data activate --rollback`, `data prune` with
+  `--dry-run`, and `data migrate --dry-run`. `data pull` and `data status` gain `--json`.
+- **Setup reports capabilities.** `mailwoman setup` lists what works now per capability and the next
+  smallest installation, and lists the `fr`, `us` and `poi` tiers only for the countries they cover.
+
 ## In flight
 
 | Series                      | Target               | Status                                                                                                                                                                                                                                                        |

@@ -54,6 +54,12 @@ The customer-facing explanation is the [OpenStreetMap attribution page](https://
 
 ## Build a per-country database
 
+The rooftop table this builder writes, with its H3 spine and layer-interface tables, is declared in
+`@mailwoman/resolver-wof-sqlite/address/point/spine-schema` (`createSpineAddressPointTables`), which the
+G-NAF builder shares. This package keeps the OpenStreetMap-specific acquisition, extraction and
+interpretation. The steps below still run the package's build scripts. A public `mailwoman data build`
+command is proposed in [#2868](https://github.com/sister-software/mailwoman/issues/2868) and does not exist yet.
+
 You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)
 aren't lost.

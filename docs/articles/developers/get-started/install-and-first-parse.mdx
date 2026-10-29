@@ -137,6 +137,11 @@ You have a parser running in your own process, without a service dependency. It 
 addresses into labeled components with confidence scores you can route on. It does not produce
 coordinates yet, because coordinates require a gazetteer database. That database is a separate download.
 
+The parser needs no geographic data. `npx mailwoman setup --no-interactive --countries US` reports what
+works now, per capability, and prints the next smallest installation, which is the gazetteer:
+`npx mailwoman data pull candidate`. From the release after 10.7.0, setup reads the same installation plan
+that `data pull --dry-run` prints.
+
 ## Next
 
 - [Your first ten minutes](./ten-minute-trial.mdx) — what works out of the box, what does not work
