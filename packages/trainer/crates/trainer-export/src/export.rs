@@ -18,7 +18,7 @@
 
 use std::path::Path;
 
-use crate::checkpoint::{read_state_dict, StateDict};
+use crate::checkpoint::{read_checkpoint, StateDict};
 use crate::config::ModelConfig;
 use crate::graph::{attr_float, attr_int, attr_ints, value_info, Dim, GraphBuilder};
 use crate::onnx::tensor_proto::DataType;
@@ -608,9 +608,10 @@ pub fn build_model(config: &ModelConfig, state: &StateDict) -> Result<ModelProto
 	})
 }
 
-/// Reads `<checkpoint>/config.json` and `<checkpoint>/pytorch_model.bin` and builds the model.
+/// Reads `<checkpoint>/config.json` and the checkpoint's weights (`model.safetensors` or `pytorch_model.bin`) and
+/// builds the model.
 pub fn export_checkpoint(checkpoint: &Path) -> Result<ModelProto> {
 	let config = ModelConfig::read(&checkpoint.join("config.json"))?;
-	let state = read_state_dict(&checkpoint.join("pytorch_model.bin"))?;
+	let state = read_checkpoint(checkpoint)?;
 	build_model(&config, &state)
 }

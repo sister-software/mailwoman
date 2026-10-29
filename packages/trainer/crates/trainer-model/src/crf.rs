@@ -112,13 +112,19 @@ impl LinearChainCrf {
 		let seq_len = emissions.size()[1];
 		let first = tags.select(1, 0);
 		let mut score = self.masked_start_transitions().index(&[Some(&first)])
-			+ emissions.select(1, 0).gather(1, &first.unsqueeze(1), false).squeeze_dim(1);
+			+ emissions
+				.select(1, 0)
+				.gather(1, &first.unsqueeze(1), false)
+				.squeeze_dim(1);
 		let masked = self.masked_transitions();
 		for t in 1..seq_len {
 			let prev = tags.select(1, t - 1);
 			let curr = tags.select(1, t);
 			let trans = masked.index(&[Some(&prev), Some(&curr)]);
-			let emit = emissions.select(1, t).gather(1, &curr.unsqueeze(1), false).squeeze_dim(1);
+			let emit = emissions
+				.select(1, t)
+				.gather(1, &curr.unsqueeze(1), false)
+				.squeeze_dim(1);
 			let step = trans + emit;
 			score = score + step * mask.select(1, t);
 		}

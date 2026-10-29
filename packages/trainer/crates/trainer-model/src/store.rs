@@ -109,7 +109,10 @@ impl Store {
 	pub fn buffer(&mut self, name: &str, tensor: Tensor, persistent: bool) -> Tensor {
 		let (path, leaf) = split(name);
 		let handle = tensor.shallow_clone();
-		self.root.child(&path).buffers.push((leaf.to_owned(), tensor, persistent));
+		self.root
+			.child(&path)
+			.buffers
+			.push((leaf.to_owned(), tensor, persistent));
 		handle
 	}
 

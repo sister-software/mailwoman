@@ -41,7 +41,10 @@ pub fn parse_npy(bytes: &[u8]) -> Result<(Vec<i64>, Vec<f32>)> {
 	}
 	let (len, start) = match bytes[6] {
 		1 => (u16::from_le_bytes([bytes[8], bytes[9]]) as usize, 10),
-		2 | 3 => (u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]) as usize, 12),
+		2 | 3 => (
+			u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]) as usize,
+			12,
+		),
 		v => return Err(fail!(".npy version {v} is not read")),
 	};
 	let header = std::str::from_utf8(&bytes[start..start + len]).map_err(|_| fail!(".npy header is not UTF-8"))?;

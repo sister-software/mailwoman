@@ -130,7 +130,9 @@ fn class_weights(obj: &Map<String, Value>, labels: &[String]) -> Result<Option<V
 	let Some(v) = get(obj, "class_weights") else {
 		return Ok(None);
 	};
-	let map = v.as_object().ok_or_else(|| fail!("config class_weights is not a mapping"))?;
+	let map = v
+		.as_object()
+		.ok_or_else(|| fail!("config class_weights is not a mapping"))?;
 	if map.is_empty() {
 		return Ok(None);
 	}
@@ -381,7 +383,11 @@ impl EncoderSpec {
 	/// `to_config_dict`: the `config.json` a checkpoint carries.
 	pub fn to_config_json(&self) -> Value {
 		let dims = self.channel_dims();
-		let phrase_dim = if self.use_phrase_priors { self.phrase_feature_dim } else { 0 };
+		let phrase_dim = if self.use_phrase_priors {
+			self.phrase_feature_dim
+		} else {
+			0
+		};
 		let class_weights = self.class_weights.as_ref().map(|w| {
 			Value::Object(
 				self.id_to_label

@@ -320,7 +320,15 @@ impl CharCnn {
 		let convs = kernel_sizes
 			.iter()
 			.enumerate()
-			.map(|(i, &k)| Conv1d::new(store, &name(prefix, &format!("convs.{i}")), char_embed_dim, per_kernel, k))
+			.map(|(i, &k)| {
+				Conv1d::new(
+					store,
+					&name(prefix, &format!("convs.{i}")),
+					char_embed_dim,
+					per_kernel,
+					k,
+				)
+			})
 			.collect();
 		let proj = Linear::new(
 			store,

@@ -1,0 +1,47 @@
+{
+  "runtime": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cpu",
+    "threads": 4,
+    "cpu_capability": "AVX512"
+  },
+  "dims": {
+    "hidden": 32,
+    "heads": 4,
+    "ff": 64,
+    "seq": 12
+  },
+  "param_order": [
+    "ln1.weight",
+    "ln1.bias",
+    "attn.in_proj_weight",
+    "attn.in_proj_bias",
+    "attn.out_proj.weight",
+    "attn.out_proj.bias",
+    "ln2.weight",
+    "ln2.bias",
+    "ff.0.weight",
+    "ff.0.bias",
+    "ff.3.weight",
+    "ff.3.bias"
+  ],
+  "lrs": [
+    0.0,
+    0.00025,
+    0.0005,
+    0.0004809698831278217
+  ],
+  "grad_norms": [
+    207.73216247558594,
+    198.40792846679688,
+    199.03994750976562
+  ],
+  "schedule_multipliers": {
+    "0": 0.0,
+    "1": 0.5,
+    "2": 1.0,
+    "5": 0.6913417161825449,
+    "10": 0.0,
+    "11": 0.0
+  }
+}

@@ -21,10 +21,13 @@ pub fn read_pytorch_model(path: &Path) -> Result<Vec<(String, Tensor)>> {
 		.iter()
 		.map(|name| {
 			let tensor = &dict.tensors[name];
-			let data = tensor
-				.data
-				.as_deref()
-				.ok_or_else(|| fail!("{}: tensor {name} is {}, not floating point", path.display(), tensor.storage))?;
+			let data = tensor.data.as_deref().ok_or_else(|| {
+				fail!(
+					"{}: tensor {name} is {}, not floating point",
+					path.display(),
+					tensor.storage
+				)
+			})?;
 			let shape: Vec<i64> = tensor.shape.iter().map(|&d| d as i64).collect();
 			Ok((name.clone(), Tensor::from_slice(data).view(shape.as_slice())))
 		})
@@ -41,7 +44,10 @@ pub fn read_model_tensors(dir: &Path) -> Result<Vec<(String, Tensor)>> {
 	if bin.is_file() {
 		return read_pytorch_model(&bin);
 	}
-	Err(fail!("{} holds neither {MODEL_FILE} nor {PYTORCH_MODEL_FILE}", dir.display()))
+	Err(fail!(
+		"{} holds neither {MODEL_FILE} nor {PYTORCH_MODEL_FILE}",
+		dir.display()
+	))
 }
 
 /// Writes `store`'s state dict as `model.safetensors` and `spec` as `config.json` into `dir`.
@@ -82,7 +88,13 @@ pub fn same_bytes(a: &[(String, Tensor)], b: &[(String, Tensor)]) -> Result<()> 
 			.find(|(n, _)| n == name)
 			.ok_or_else(|| fail!("{name} is in one list only"))?;
 		if x.size() != y.size() || x.kind() != y.kind() {
-			return Err(fail!("{name}: {:?} {:?} against {:?} {:?}", x.size(), x.kind(), y.size(), y.kind()));
+			return Err(fail!(
+				"{name}: {:?} {:?} against {:?} {:?}",
+				x.size(),
+				x.kind(),
+				y.size(),
+				y.kind()
+			));
 		}
 		let xs = x.to_kind(Kind::Float).contiguous();
 		let ys = y.to_kind(Kind::Float).contiguous();

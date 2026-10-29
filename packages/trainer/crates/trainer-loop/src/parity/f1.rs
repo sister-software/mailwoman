@@ -21,9 +21,17 @@ pub fn run(dir: &Path) -> Result<Vec<StageResult>> {
 	let meta: Value = serde_json::from_str(&std::fs::read_to_string(dir.join("f1.json"))?)?;
 	let mut results = Vec::new();
 
+	let dim = |k: &str, d: i64| meta["dims"][k].as_i64().unwrap_or(d);
 	tch::manual_seed(0);
 	let mut store = Store::default();
-	let block = EncoderBlock::new(&mut store, "", 384, 6, 1536, 0.1);
+	let block = EncoderBlock::new(
+		&mut store,
+		"",
+		dim("hidden", 384),
+		dim("heads", 6),
+		dim("ff", 1536),
+		0.1,
+	);
 	let order: Vec<String> = store.parameters().into_iter().map(|(n, _)| n).collect();
 	let expected: Vec<String> = meta["param_order"]
 		.as_array()
@@ -58,7 +66,12 @@ pub fn run(dir: &Path) -> Result<Vec<StageResult>> {
 	(&out * cot).sum(None).backward();
 	eval_grad.push(diff("grad.x", &xg.grad(), record.get("eval.grad.x")?, GRADIENT)?);
 	for (name, p) in store.parameters() {
-		eval_grad.push(diff(&name, &p.grad(), record.get(&format!("eval.grad.{name}"))?, GRADIENT)?);
+		eval_grad.push(diff(
+			&name,
+			&p.grad(),
+			record.get(&format!("eval.grad.{name}"))?,
+			GRADIENT,
+		)?);
 	}
 	results.push(eval_grad);
 
@@ -89,7 +102,12 @@ pub fn run(dir: &Path) -> Result<Vec<StageResult>> {
 		(&y * cot).sum(None).backward();
 		let mut grads = StageResult::new(&format!("train step {step}: gradients"), "1e-4 rel");
 		for (name, p) in &params {
-			grads.push(diff(name, &p.grad(), record.get(&format!("train{step}.grad.{name}"))?, GRADIENT)?);
+			grads.push(diff(
+				name,
+				&p.grad(),
+				record.get(&format!("train{step}.grad.{name}"))?,
+				GRADIENT,
+			)?);
 		}
 		results.push(grads);
 		let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
@@ -100,7 +118,12 @@ pub fn run(dir: &Path) -> Result<Vec<StageResult>> {
 		lrs.push(scheduler.get_last_lr()[0]);
 		let mut update = StageResult::new(&format!("train step {step}: AdamW update"), "1e-6 abs");
 		for (name, p) in &params {
-			update.push(diff(name, p, record.get(&format!("train{step}.param.{name}"))?, UPDATE)?);
+			update.push(diff(
+				name,
+				p,
+				record.get(&format!("train{step}.param.{name}"))?,
+				UPDATE,
+			)?);
 		}
 		results.push(update);
 	}

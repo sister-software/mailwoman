@@ -11,6 +11,7 @@ pub mod callbacks;
 pub mod checkpoint;
 pub mod compare;
 pub mod config;
+pub mod export_check;
 pub mod fisher;
 mod latin_letters;
 pub mod masking;

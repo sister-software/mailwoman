@@ -267,6 +267,29 @@ jobs:
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-core --features edit --test model_edit --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-tools --locked
 
+      # The Rust trainer links libtorch through `tch` 0.26.0, which pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
+      - name: Restore libtorch
+        id: libtorch
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/libtorch
+          key: libtorch-2.13.0-cpu-edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e
+
+      - name: Download libtorch
+        if: steps.libtorch.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/libtorch.zip" \
+            'https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-2.13.0%2Bcpu.zip'
+          echo "edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e  $RUNNER_TEMP/libtorch.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/libtorch.zip" -d "$RUNNER_TEMP"
+
+      - name: Test the Rust trainer crates
+        env:
+          LIBTORCH: ${{ runner.temp }}/libtorch
+          LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+        run: |
+          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-model -p trainer-loop -p trainer-cli --locked
+
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:

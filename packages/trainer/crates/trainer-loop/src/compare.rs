@@ -34,14 +34,23 @@ pub enum Tolerance {
 }
 
 fn values(t: &Tensor) -> Result<Vec<f64>> {
-	let flat = t.detach().to_device(tch::Device::Cpu).to_kind(Kind::Double).contiguous().view([-1]);
+	let flat = t
+		.detach()
+		.to_device(tch::Device::Cpu)
+		.to_kind(Kind::Double)
+		.contiguous()
+		.view([-1]);
 	Ok(Vec::<f64>::try_from(flat)?)
 }
 
 /// Compares `actual` against `reference`; a shape or dtype mismatch is an error rather than a diff.
 pub fn diff(name: &str, actual: &Tensor, reference: &Tensor, tolerance: Tolerance) -> Result<Diff> {
 	if actual.size() != reference.size() {
-		return Err(fail!("{name}: shape {:?} against reference {:?}", actual.size(), reference.size()));
+		return Err(fail!(
+			"{name}: shape {:?} against reference {:?}",
+			actual.size(),
+			reference.size()
+		));
 	}
 	let bitwise_equal = actual.kind() == reference.kind() && {
 		let a = actual.detach().to_device(tch::Device::Cpu).contiguous();
@@ -105,7 +114,9 @@ pub struct Record(pub Vec<(String, Tensor)>);
 
 impl Record {
 	pub fn read(path: &Path) -> Result<Self> {
-		Ok(Self(Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?))
+		Ok(Self(
+			Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?,
+		))
 	}
 
 	pub fn get(&self, name: &str) -> Result<&Tensor> {

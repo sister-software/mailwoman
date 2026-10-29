@@ -231,7 +231,9 @@ impl RunEncoder {
 			locality_surface: lexicon(run.data_str("locality_surface_lexicon_path")?)?,
 		};
 		let config = EncoderConfig {
-			max_length: run.data_i64("max_length")?.ok_or_else(|| fail!("data.max_length is null"))? as usize,
+			max_length: run
+				.data_i64("max_length")?
+				.ok_or_else(|| fail!("data.max_length is null"))? as usize,
 			pad_id: specials.pad,
 			anchor_mode,
 			gazetteer_choreography: run.data_bool("gazetteer_choreography")?,

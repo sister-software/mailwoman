@@ -1535,6 +1535,7 @@ dependencies = [
  "prost",
  "prost-build",
  "protox",
+ "safetensors 0.6.2",
  "serde",
  "serde_json",
  "tempfile",

@@ -72,7 +72,8 @@ struct Head2 {
 
 impl Head2 {
 	fn forward(&self, x: &Tensor, mode: Mode) -> Tensor {
-		self.second.forward(&dropout(&self.first.forward(x).gelu("none"), 0.1, mode))
+		self.second
+			.forward(&dropout(&self.first.forward(x).gelu("none"), 0.1, mode))
 	}
 }
 
@@ -155,7 +156,10 @@ impl CoarseEncoder {
 		for (i, name) in CHANNELS.iter().enumerate() {
 			if dims[i] > 0 {
 				let projection = Linear::new(&mut s, &format!("{name}_projection"), dims[i], h, true);
-				let cue = s.param(&format!("{name}_token_embedding"), Tensor::zeros([h], (Kind::Float, Device::Cpu)));
+				let cue = s.param(
+					&format!("{name}_token_embedding"),
+					Tensor::zeros([h], (Kind::Float, Device::Cpu)),
+				);
 				channels[i] = Some(Channel {
 					projection,
 					cue,
@@ -193,10 +197,15 @@ impl CoarseEncoder {
 				first: Linear::new(&mut s, "affix_head.0", affix_in, 256, true),
 				second: Linear::new(&mut s, "affix_head.3", 256, 5, true),
 			});
-			let ids = ["B-street_prefix", "I-street_prefix", "B-street_suffix", "I-street_suffix"]
-				.iter()
-				.map(|l| label_index(&labels, l))
-				.collect::<Result<Vec<i64>>>()?;
+			let ids = [
+				"B-street_prefix",
+				"I-street_prefix",
+				"B-street_suffix",
+				"I-street_suffix",
+			]
+			.iter()
+			.map(|l| label_index(&labels, l))
+			.collect::<Result<Vec<i64>>>()?;
 			let mut lut = vec![0i64; n_labels as usize];
 			for (k, &id) in ids.iter().enumerate() {
 				lut[id as usize] = k as i64 + 1;
@@ -545,7 +554,14 @@ impl CoarseEncoder {
 			logits = merged;
 		}
 		let mut terms = Vec::new();
-		let loss = self.compute_losses(&h, &logits, inputs, locale_logits.as_ref(), affix_logits.as_ref(), &mut terms)?;
+		let loss = self.compute_losses(
+			&h,
+			&logits,
+			inputs,
+			locale_logits.as_ref(),
+			affix_logits.as_ref(),
+			&mut terms,
+		)?;
 		let loss = self.address_system_loss(loss, address_system_logits.as_ref(), inputs, &mut terms);
 		Ok(EncoderOutput {
 			logits,
@@ -580,7 +596,9 @@ impl CoarseEncoder {
 			if let (Some(a), Some(lut)) = (affix_logits, &self.affix_target_lut) {
 				let safe = labels.clamp_min(0);
 				let targets = lut.index(&[Some(&safe)]);
-				let targets = targets.full_like(IGNORE_INDEX).where_self(&labels.eq(IGNORE_INDEX), &targets);
+				let targets = targets
+					.full_like(IGNORE_INDEX)
+					.where_self(&labels.eq(IGNORE_INDEX), &targets);
 				let affix = a.view([-1, 5]).cross_entropy_loss::<Tensor>(
 					&targets.view([-1]),
 					None,
