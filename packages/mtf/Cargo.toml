@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/mtf-core", "crates/mtf-wasm", "crates/mtf-channels", "crates/mtf-py"]
+members = ["crates/mtf-core", "crates/mtf-wasm", "crates/mtf-channels", "crates/mtf-sampler", "crates/mtf-py"]
 
 [workspace.package]
 version = "0.1.0"

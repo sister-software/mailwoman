@@ -256,10 +256,11 @@ jobs:
         with:
           workspaces: packages/mtf
 
-      - name: Test the training encoder crate
+      - name: Test the training encoder and sampler crates
         run: |
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --features finders --locked
+          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-sampler --locked
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7

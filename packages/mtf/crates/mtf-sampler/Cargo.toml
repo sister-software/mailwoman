@@ -1,0 +1,15 @@
+[package]
+name = "mtf-sampler"
+description = "Mailwoman's training-row sampler: the CPython-compatible generator the sampler's draws require, and the row and batch streams built on it."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# CPython seeds a generator from a string through the string's SHA-512 digest.
+sha2 = "0.10"
+
+[dev-dependencies]
+# `float_roundtrip` parses each recorded `random()` value to the exact double CPython printed.
+serde_json = { version = "1", features = ["float_roundtrip"] }
