@@ -165,6 +165,33 @@ describe("the OpenStreetMap suites", () => {
 		expect(lineage.overlap.auditSHA256).toMatch(/^[0-9a-f]{64}$/u)
 	})
 
+	it("keeps one row for an address two extracts render alike, and counts the other", async () => {
+		const first = await writeExtract("pk", PK_ROWS)
+		const second = `${root}/extracts/osm-pk-261017.corpus.jsonl`
+
+		await writeLocalTextFile(`${stringifyJSON(PK_ROWS[1])}\n`, second)
+		await writeLocalJSONFile({ outline: null }, `${second}.stats.json`)
+
+		const training = await writeTraining("nothing-matches")
+		const collected = await collectOSMSuiteRows({ files: [first, second], perCountry: 10, seed: 1 })
+
+		const frozen = await freezeOSMSuites({
+			collected,
+			perCountry: 10,
+			seed: 1,
+			overlap: { corpora: [training.manifest], modelCards: [training.card], pathRoot: root },
+			outDirectory: `${root}/out-duplicates`,
+			createdAt: "2026-10-29T00:00:00Z",
+			policyFor: () => null,
+		})
+
+		const suite = frozen.find((candidate) => candidate.shape === OSMSuiteShape.PlaceWithoutStreet)!
+		const lineage = await readLocalJSONFile<{ crossCountryDuplicates: number }>(suite.lineagePath)
+
+		expect(suite).toMatchObject({ sampled: 2, kept: 2 })
+		expect(lineage.crossCountryDuplicates).toBe(1)
+	})
+
 	it("keeps no row when a model card's training corpus was not read", async () => {
 		const pk = await writeExtract("pk", PK_ROWS)
 		const card = `${root}/cards/unread.json`
