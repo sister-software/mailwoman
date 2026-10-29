@@ -624,7 +624,7 @@
 				{
 					"registerSource": "fi-property-building-1",
 					"license": "unchecked-access-free-fi-suomen-ymp-rist-keskus",
-					"reads": "Finnish street names, numbers, postal office names and postcodes from Ryhti's open_address.csv (RYHTI_FILE in corpora/fragment/sources.py)"
+					"reads": "Finnish street names, numbers, postal office names and postcodes from Ryhti's open_address.csv (RYHTI_FILE in packages/corpus/lib/recipes/fragment-assay/sources.ts)"
 				},
 				{
 					"registerSource": "hr-property-building-1",
@@ -679,7 +679,7 @@
 				{
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
-					"reads": "locality spans of the wof-admin rows in v0.5.0's train/part-0000 to part-0011 (LOCALITY_PARQUET_GLOB in corpora/fragment/sources.py), and the candidate-gazetteer famous localities of the ZZ rows carried from v0.7.2"
+					"reads": "locality spans of the wof-admin rows in v0.5.0's train/part-0000 to part-0011 (LOCALITY_PARQUET_GLOB in packages/corpus/lib/recipes/fragment-assay/sources.ts), and the candidate-gazetteer famous localities of the ZZ rows carried from v0.7.2"
 				},
 				{
 					"registerSource": "fr-property-building-1",
@@ -690,7 +690,7 @@
 			"authored": [
 				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries"
 			],
-			"note": "OA_FILES in corpus-python/src/mailwoman_train/corpora/fragment/sources.py lists each file the build reads with its publisher's register row.",
+			"note": "OA_FILES in packages/corpus/lib/recipes/fragment-assay/sources.ts lists each file the build reads with its publisher's register row.",
 			"history": [
 				{
 					"corpora": [

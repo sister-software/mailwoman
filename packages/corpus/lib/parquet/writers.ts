@@ -46,7 +46,7 @@ import {
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
-import { Field, Int32, Int64, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
+import { Field, Int32, Int64, List, Null, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
@@ -171,6 +171,10 @@ export const ParquetColumnKind = {
 	StringList: "string[]",
 	Int32List: "int32[]",
 	Int64List: "int64[]",
+	/**
+	 * A column whose every value is null, the type pyarrow infers for one.
+	 */
+	Null: "null",
 } as const
 
 export type ParquetColumnKind = (typeof ParquetColumnKind)[keyof typeof ParquetColumnKind]
@@ -195,6 +199,10 @@ function columnVector(values: unknown[], kind: ParquetColumnKind) {
 				values.map((list) => (list == null ? null : (list as number[]).map((value) => BigInt(value)))),
 				int64ListType
 			)
+		case ParquetColumnKind.Null:
+			if (values.some((value) => value != null)) throw new Error("a null column holds a value")
+
+			return vectorFromArray(values as null[], new Null())
 	}
 }
 
