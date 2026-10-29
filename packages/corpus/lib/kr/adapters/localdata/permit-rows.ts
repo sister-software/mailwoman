@@ -12,12 +12,11 @@
  */
 
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CJKRecord, labelTokensByFirstSpan } from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan, sortedGlob } from "#cjk/builder"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
@@ -148,9 +147,7 @@ export async function* readPermitDirectory(
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
 	const files = options.pattern
-		? (await Globerator.from(options.pattern, { cwd: directory.toString(), absolute: false }).toArray())
-				.map(String)
-				.toSorted(compareByCodePoint)
+		? await sortedGlob(directory, options.pattern)
 		: await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {

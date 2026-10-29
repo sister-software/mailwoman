@@ -110,7 +110,10 @@ describe("writeColumnParquetFile", () => {
 		)
 
 		using db = await openDuckDB()
-		const described = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path)}')`)
+
+		const described = await db.runAndReadAll(
+			`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`
+		)
 
 		expect(described.getRowObjects().map((row) => [row["column_name"], row["column_type"]])).toEqual([
 			["raw", "VARCHAR"],

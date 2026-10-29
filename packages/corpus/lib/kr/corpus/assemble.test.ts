@@ -12,11 +12,10 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { pyRound } from "@mailwoman/core/numeric"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { JSONSpliterator } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
+import { sortedGlob } from "#cjk/builder"
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
 
@@ -44,9 +43,7 @@ async function rendered(directory: string): Promise<unknown[]> {
 	const rows: unknown[] = []
 
 	for (const split of ["train", "val"]) {
-		const paths = (await Globerator.from("*.parquet", { cwd: `${directory}/${split}`, absolute: true }).toArray())
-			.map(String)
-			.toSorted(compareByCodePoint)
+		const paths = await sortedGlob(`${directory}/${split}`, "*.parquet")
 
 		for (const path of paths) {
 			const read = await readParquetRows<Record<string, unknown>>(path, {

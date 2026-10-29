@@ -48,7 +48,7 @@ const carryFrom = values["carry-from"] ? resolvePath(values["carry-from"] as str
 if (carryFrom && carryFrom.toString() === out.toString()) throw new Error("--carry-from names the output file")
 
 const parts = await assembleHouseVenueTuples({
-	budgets: Object.fromEntries(codes.map((code) => [code, Number(values[code])])),
+	budgets: Object.fromEntries(codes.map((code) => [code, Number((values as Record<string, unknown>)[code])])),
 	seed: Number(values.seed),
 	carry,
 	carryFrom,

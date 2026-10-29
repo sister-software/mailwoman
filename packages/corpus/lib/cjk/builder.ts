@@ -11,18 +11,21 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
-import type { PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { normalizeCJKText } from "#cjk/text"
+import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
 import { stampRowLicenses } from "#source-register/row-license"
 import type { PyRandom } from "#training/pyrandom"
@@ -166,6 +169,28 @@ export function labelTokensByFirstSpan(
 }
 
 /**
+ * Whether `directory` exists and holds any entry, the test a builder runs
+ * before refusing to overwrite a corpus.
+ */
+export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {
+	if (!(await isDirectory(directory))) return false
+
+	const entries = await Globerator.from("*", { cwd: directory.toString(), onlyFiles: false }).toArray()
+
+	return entries.length > 0
+}
+
+/**
+ * The absolute paths `pattern` matches in `directory`, in code-point order,
+ * as Python's `sorted(Path.glob())` lists one directory's files.
+ */
+export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
+	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
+
+	return paths.toSorted(compareByCodePoint)
+}
+
+/**
  * The separator between the parts of a composite key, written as an escape
  * so no NUL byte enters the source.
  *
@@ -264,6 +289,34 @@ export function waterFill(counts: ReadonlyMap<string, number>, target: number): 
 	}
 
 	return low
+}
+
+/**
+ * Each group's quota under a water-filled cap, with the remainder up to `target` granted to the groups
+ * with the most headroom first, so the quotas total `target` whenever the pool holds that many.
+ */
+export function waterFillQuotas(
+	poolCounts: ReadonlyMap<string, number>,
+	target: number
+): { cap: number; quotas: Map<string, number> } {
+	const cap = waterFill(poolCounts, target)
+	const quotas = new Map([...poolCounts].map(([group, count]) => [group, Math.min(cap, count)]))
+	let shortfall = target - pySum(quotas.values())
+
+	if (shortfall > 0) {
+		const headroom = (group: string) => poolCounts.get(group)! - quotas.get(group)!
+
+		for (const group of [...poolCounts.keys()].toSorted((a, b) => headroom(b) - headroom(a))) {
+			const grant = Math.min(headroom(group), shortfall)
+
+			quotas.set(group, quotas.get(group)! + grant)
+			shortfall -= grant
+
+			if (shortfall <= 0) break
+		}
+	}
+
+	return { cap, quotas }
 }
 
 /**
@@ -530,6 +583,27 @@ export function buildCharVocab(texts: Iterable<string>, minCount = 1): Map<strin
 		.toSorted(compareByCodePoint)) {
 		vocab.set(character, next++)
 	}
+
+	return vocab
+}
+
+/**
+ * The vocabulary of characters seen at least twice in a corpus's train split, written as `name` beside it.
+ *
+ * Each corpus seals its own from its own train parts, read in code-point order of their paths.
+ */
+export async function sealCharVocab(corpusDirectory: PathBuilderLike, name: string): Promise<Map<string, number>> {
+	const raws: string[] = []
+
+	for (const path of await sortedGlob(resolvePath(corpusDirectory, "train"), "*.parquet")) {
+		for (const row of await readParquetRows<{ raw: string }>(path, { columns: ["raw"] })) {
+			raws.push(row.raw)
+		}
+	}
+
+	const vocab = buildCharVocab(raws, 2)
+
+	await saveCharVocab(vocab, resolvePath(corpusDirectory, name))
 
 	return vocab
 }

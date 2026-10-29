@@ -12,26 +12,23 @@
  *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, draw for draw.
  */
 
-import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import {
-	buildCharVocab,
 	type CJKRecord,
 	coverageStats,
+	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,
 	readLabelSetTags,
-	saveCharVocab,
+	sealCharVocab,
 	selectExact,
-	waterFill,
+	waterFillQuotas,
 	writeCJKCorpusParquet,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
@@ -48,7 +45,6 @@ import { iterJPSourceRows, type JPSourceRow, type KenAllIndex, loadKenAllPostcod
 import { municipalityKanaFromAdminDB, municipalityKanaLookup } from "#jp/kana"
 import { JP_BOARD_BUCKET_MIN } from "#jp/registers"
 import { splitJPStreet, VARIANT_HYPHENS } from "#jp/text"
-import { readParquetRows } from "#parquet/readers"
 import { PyRandom } from "#training/pyrandom"
 
 /**
@@ -161,24 +157,7 @@ async function surveySource(options: JPCorpusOptions): Promise<SourceSurvey> {
 	}
 
 	const target = options.trainRows + options.valRows
-	const cap = waterFill(poolCounts, target)
-	const quotas = new Map([...poolCounts].map(([prefecture, count]) => [prefecture, Math.min(cap, count)]))
-	let shortfall = target - pySum(quotas.values())
-
-	// Water-filling lands at or below the target.
-	// The remainder goes to the prefectures with headroom.
-	if (shortfall > 0) {
-		const headroom = (prefecture: string) => poolCounts.get(prefecture)! - quotas.get(prefecture)!
-
-		for (const prefecture of [...poolCounts.keys()].toSorted((a, b) => headroom(b) - headroom(a))) {
-			const grant = Math.min(headroom(prefecture), shortfall)
-
-			quotas.set(prefecture, quotas.get(prefecture)! + grant)
-			shortfall -= grant
-
-			if (shortfall <= 0) break
-		}
-	}
+	const { cap, quotas } = waterFillQuotas(poolCounts, target)
 
 	console.log(
 		`pass 1: per-prefecture cap ${cap.toLocaleString("en-US")}; quota total ${pySum(quotas.values()).toLocaleString("en-US")} of target ${target.toLocaleString("en-US")}`
@@ -370,11 +349,7 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 	const encoder = new JPRowEncoder(options, rng, kenall, tagSet, kana)
 	const outDir = resolvePath(options.outDir)
 
-	const occupied =
-		(await isDirectory(outDir)) &&
-		(await Globerator.from("*", { cwd: outDir.toString(), onlyFiles: false, dot: true }).toArray()).length > 0
-
-	if (occupied && !options.force) {
+	if ((await directoryHasEntries(outDir)) && !options.force) {
 		throw new Error(
 			`${outDir.toString()} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)`
 		)
@@ -455,23 +430,7 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 
 	if (overlap.length) throw new Error(`board municipalities leak into train/val: ${overlap.slice(0, 5).join(", ")}`)
 
-	const trainParts = (
-		await Globerator.from("*.parquet", { cwd: resolvePath(outDir, "train").toString(), absolute: true }).toArray()
-	)
-		.map(String)
-		.toSorted(compareByCodePoint)
-
-	const raws: string[] = []
-
-	for (const path of trainParts) {
-		for (const row of await readParquetRows<{ raw: string }>(path, { columns: ["raw"] })) {
-			raws.push(row.raw)
-		}
-	}
-
-	const vocab = buildCharVocab(raws, 2)
-
-	await saveCharVocab(vocab, resolvePath(outDir, "char-vocab-jp-full.json"))
+	const vocab = await sealCharVocab(outDir, "char-vocab-jp-full.json")
 
 	const report = new Map<string, unknown>([
 		["seed", options.seed],

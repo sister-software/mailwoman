@@ -17,24 +17,22 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitLines, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import {
-	buildCharVocab,
 	type CJKRecord,
 	coverageStats,
+	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,
 	readLabelSetTags,
-	saveCharVocab,
+	sealCharVocab,
 	selectExact,
 	verifyCJKRecord,
-	waterFill,
+	waterFillQuotas,
 	writeCJKCorpusParquet,
 } from "#cjk/builder"
 import { type JusoLabelRow, parenthetical, readJusoLabelRows } from "#kr/adapters/juso/label-rows"
@@ -54,7 +52,6 @@ import {
 	krRegistryRecord,
 	renderKRRow,
 } from "#kr/corpus/rows"
-import { readParquetRows } from "#parquet/readers"
 import { PyRandom } from "#training/pyrandom"
 
 /**
@@ -183,53 +180,6 @@ export const KR_CORPUS_DEFAULTS = {
 	maxFieldChars: MAX_FIELD_CHARS,
 	seed: 42,
 } as const
-
-const quotasFor = (poolCounts: Map<string, number>, target: number) => {
-	const cap = waterFill(poolCounts, target)
-	const quotas = new Map([...poolCounts].map(([region, count]) => [region, Math.min(cap, count)]))
-	let shortfall = target - pySum(quotas.values())
-
-	if (shortfall > 0) {
-		const headroom = (region: string) => poolCounts.get(region)! - quotas.get(region)!
-
-		for (const region of [...poolCounts.keys()].toSorted((a, b) => headroom(b) - headroom(a))) {
-			const grant = Math.min(headroom(region), shortfall)
-
-			quotas.set(region, quotas.get(region)! + grant)
-			shortfall -= grant
-
-			if (shortfall <= 0) break
-		}
-	}
-
-	return { cap, quotas }
-}
-
-const occupied = async (directory: PathBuilderLike) =>
-	(await isDirectory(directory)) &&
-	(await Globerator.from("*", { cwd: directory.toString(), onlyFiles: false, dot: true }).toArray()).length > 0
-
-async function sealedVocab(directory: PathBuilderLike, name: string): Promise<Map<string, number>> {
-	const paths = (
-		await Globerator.from("*.parquet", { cwd: resolvePath(directory, "train").toString(), absolute: true }).toArray()
-	)
-		.map(String)
-		.toSorted(compareByCodePoint)
-
-	const raws: string[] = []
-
-	for (const path of paths) {
-		for (const row of await readParquetRows<{ raw: string }>(path, { columns: ["raw"] })) {
-			raws.push(row.raw)
-		}
-	}
-
-	const vocab = buildCharVocab(raws, 2)
-
-	await saveCharVocab(vocab, resolvePath(directory, name))
-
-	return vocab
-}
 
 const partName = (prefix: string, part: number) => `${prefix}-${String(part).padStart(4, "0")}.parquet`
 
@@ -380,7 +330,7 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 	const registryDir = resolvePath(options.registryOutDir)
 
 	for (const directory of [outDir, registryDir]) {
-		if ((await occupied(directory)) && !options.force) {
+		if ((await directoryHasEntries(directory)) && !options.force) {
 			throw new Error(
 				`${directory.toString()} exists and is non-empty — pass --force to overwrite (a built corpus is a read-only artifact)`
 			)
@@ -397,7 +347,7 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 	const permitRows = () => readPermitDirectory(options.permitDir, { pattern: options.permitGlob })
 
 	const { index, poolCounts, dropped, boardCount, scanned } = await surveyRegister(options, labelRows)
-	const { cap, quotas } = quotasFor(poolCounts, options.trainRows + options.valRows)
+	const { cap, quotas } = waterFillQuotas(poolCounts, options.trainRows + options.valRows)
 	const permits = await surveyPermits(options, permitRows, index, transform)
 	const { centroids, registryPool, registryBoardPool, unalignedPool } = permits
 
@@ -623,8 +573,8 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 		resolvePath(registryDir, "kr-registry-board.jsonl")
 	)
 
-	const vocab = await sealedVocab(outDir, "char-vocab-kr.json")
-	const registryVocab = await sealedVocab(registryDir, "char-vocab-kr-registry.json")
+	const vocab = await sealCharVocab(outDir, "char-vocab-kr.json")
+	const registryVocab = await sealCharVocab(registryDir, "char-vocab-kr-registry.json")
 
 	const registry = new Map<string, unknown>([
 		[

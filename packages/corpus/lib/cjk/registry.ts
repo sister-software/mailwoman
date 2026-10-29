@@ -15,23 +15,20 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import {
-	buildCharVocab,
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
 	coverageStats,
+	directoryHasEntries,
 	muniBucket,
 	nextSelection,
 	readLabelSetTags,
-	saveCharVocab,
+	sealCharVocab,
 	selectExact,
 	verifyCJKRecord,
 	writeCJKCorpusParquet,
@@ -45,7 +42,6 @@ import {
 	JPKeyIndex,
 	jpRegistryRecord,
 } from "#jp/registers"
-import { readParquetRows } from "#parquet/readers"
 import { PyRandom } from "#training/pyrandom"
 import {
 	alignRegisterAddress,
@@ -183,11 +179,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 	const locale: RegistryLocaleSpec = REGISTRY_LOCALES[options.locale]
 	const outDir = resolvePath(options.outDir)
 
-	const occupied =
-		(await isDirectory(outDir)) &&
-		(await Globerator.from("*", { cwd: outDir.toString(), onlyFiles: false, dot: true }).toArray()).length > 0
-
-	if (occupied && !options.force) {
+	if ((await directoryHasEntries(outDir)) && !options.force) {
 		throw new Error(`${outDir.toString()} exists and is non-empty — pass --force to overwrite`)
 	}
 
@@ -298,23 +290,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 		resolvePath(outDir, locale.board)
 	)
 
-	const trainParts = (
-		await Globerator.from("*.parquet", { cwd: resolvePath(outDir, "train").toString(), absolute: true }).toArray()
-	)
-		.map(String)
-		.toSorted(compareByCodePoint)
-
-	const raws: string[] = []
-
-	for (const path of trainParts) {
-		for (const row of await readParquetRows<{ raw: string }>(path, { columns: ["raw"] })) {
-			raws.push(row.raw)
-		}
-	}
-
-	const vocab = buildCharVocab(raws, 2)
-
-	await saveCharVocab(vocab, resolvePath(outDir, locale.vocab))
+	const vocab = await sealCharVocab(outDir, locale.vocab)
 
 	const report = new Map<string, unknown>([
 		["locale", options.locale],

@@ -11,11 +11,10 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { JSONSpliterator } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
+import { sortedGlob } from "#cjk/builder"
 import { buildJPCorpus } from "#jp/corpus/assemble"
 import { iterJPSourceRows, loadKenAllPostcodes } from "#jp/corpus/sources"
 import { municipalityKanaFromAdminDB } from "#jp/kana"
@@ -99,9 +98,7 @@ const pin = (row: Record<string, unknown>): Pinned => ({
 })
 
 async function rendered(directory: string): Promise<Pinned[]> {
-	const paths = (await Globerator.from("*.parquet", { cwd: directory, absolute: true }).toArray())
-		.map(String)
-		.toSorted(compareByCodePoint)
+	const paths = await sortedGlob(directory, "*.parquet")
 
 	const rows: Pinned[] = []
 

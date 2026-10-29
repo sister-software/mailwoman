@@ -209,7 +209,7 @@ function columnVector(values: unknown[], kind: ParquetColumnKind) {
  * The caller stamps each row first.
  */
 export async function writeColumnParquetFile(
-	rows: ReadonlyArray<Readonly<Record<string, unknown>>>,
+	rows: readonly object[],
 	columns: ParquetColumns,
 	path: PathBuilderLike
 ): Promise<void> {
@@ -217,7 +217,7 @@ export async function writeColumnParquetFile(
 		columns.map(([name, kind]) => [
 			name,
 			columnVector(
-				rows.map((row) => row[name] ?? null),
+				rows.map((row) => (row as Readonly<Record<string, unknown>>)[name] ?? null),
 				kind
 			),
 		])

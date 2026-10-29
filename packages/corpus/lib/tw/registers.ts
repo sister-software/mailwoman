@@ -9,13 +9,11 @@
  */
 
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
 
-import { addToKeySet, type CJKRecord, codePointLength, unitKey } from "#cjk/builder"
+import { addToKeySet, type CJKRecord, codePointLength, sortedGlob, unitKey } from "#cjk/builder"
 import { asciiDigits, normalizeCJKText } from "#cjk/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"
@@ -130,9 +128,7 @@ export async function* iterTWRegisterRows(sourceDirectory: PathBuilderLike): Asy
 		throw new Error(`No GCIS register directory at ${sourceDirectory.toString()}`)
 	}
 
-	const paths = (await Globerator.from("*.csv", { cwd: sourceDirectory.toString(), absolute: true }).toArray())
-		.map(String)
-		.toSorted(compareByCodePoint)
+	const paths = await sortedGlob(sourceDirectory, "*.csv")
 
 	if (!paths.length) throw new Error(`No GCIS register CSV in ${sourceDirectory.toString()}`)
 

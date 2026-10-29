@@ -89,11 +89,14 @@ const titleCase = (text: string): string => pythonSplitWhitespace(text).map(pyth
  * would read as a country with no rows.
  */
 export async function listSitusDatabases(directory: PathBuilderLike = usSitusDirectory()): Promise<string[]> {
-	const found = await Globerator.from(`${SITUS_PREFIX}*.db`, { cwd: directory.toString(), absolute: true }).toArray()
+	const found: string[] = await Globerator.from(`${SITUS_PREFIX}*.db`, {
+		cwd: directory.toString(),
+		absolute: true,
+	}).toArray()
 
 	if (!found.length) throw new Error(`No ${SITUS_PREFIX}*.db database in ${directory.toString()}`)
 
-	return found.map(String).toSorted(compareByCodePoint)
+	return found.toSorted(compareByCodePoint)
 }
 
 /**
