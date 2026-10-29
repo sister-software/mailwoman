@@ -1,9 +1,12 @@
 import { readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import { summarizeLicense } from "@mailwoman/core/license/obligations"
+import {
+	createSpineAddressPointTables,
+	type SpineAddressPointDatabase,
+} from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-import { createOSMAddressPointTables, type OSMAddressPointDatabase } from "#address-point-schema"
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
 import { osmAddressPointLayerManifest, type OSMAddressPointBuild } from "#tools/layer-manifest"
 
@@ -23,9 +26,9 @@ const BUILD: OSMAddressPointBuild = {
 
 describe("osmAddressPointLayerManifest", () => {
 	it("records the license, credit, extract URL and digest, snapshot date and build revision in the sealed row", async () => {
-		using db = DatabaseClient.temp<OSMAddressPointDatabase>()
+		using db = DatabaseClient.temp<SpineAddressPointDatabase>()
 
-		await createOSMAddressPointTables(db)
+		await createSpineAddressPointTables(db)
 		await writeLayerManifest(db, osmAddressPointLayerManifest(BUILD))
 
 		const manifest = await readLayerManifest(db)

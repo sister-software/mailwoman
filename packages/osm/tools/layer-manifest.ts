@@ -12,8 +12,8 @@
  */
 
 import { assertTierMatchesLicense, LayerFreshnessPolicy, LayerTier, type LayerManifest } from "@mailwoman/core/layers"
+import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 
-import { OSM_ADDRESS_H3_RESOLUTION } from "#address-point-schema"
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
 import type { ExtractProvenance } from "#sdk/extract/receipt"
 
@@ -61,7 +61,7 @@ export function osmAddressPointLayerManifest(build: OSMAddressPointBuild): Layer
 		buildCmd: build.buildCmd,
 		buildSHA: build.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+		spineKeys: { h3: { column: "h3_cell", resolution: ADDRESS_POINT_H3_RESOLUTION } },
 		createdAt: build.createdAt,
 		sourceRecords: null,
 		sourceURL: build.provenance.sourceURL,

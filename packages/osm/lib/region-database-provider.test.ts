@@ -1,14 +1,14 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { writeLayerManifest, type LayerManifest } from "@mailwoman/core/layers"
+import {
+	createSpineAddressPointTables,
+	ADDRESS_POINT_H3_RESOLUTION,
+	type SpineAddressPointDatabase,
+} from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-import {
-	createOSMAddressPointTables,
-	OSM_ADDRESS_H3_RESOLUTION,
-	type OSMAddressPointDatabase,
-} from "#address-point-schema"
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
 import { osmDatabaseRoot } from "#paths"
 import { OSMRegionDatabaseProvider } from "#region-database-provider"
@@ -25,7 +25,7 @@ const MANIFEST: LayerManifest = {
 	buildCmd: "fixture",
 	buildSHA: "fixture",
 	freshnessPolicy: "sealed",
-	spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+	spineKeys: { h3: { column: "h3_cell", resolution: ADDRESS_POINT_H3_RESOLUTION } },
 	createdAt: "2026-08-07T00:00:00.000Z",
 	sourceRecords: null,
 	sourceURL: "https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf",
@@ -40,9 +40,9 @@ async function dataRootWithExtract(directory: Awaited<ReturnType<typeof temporar
 
 	await makeDirectories(root)
 
-	using db = new DatabaseClient<OSMAddressPointDatabase>(root("address-points-nz-nz.db").toString())
+	using db = new DatabaseClient<SpineAddressPointDatabase>(root("address-points-nz-nz.db").toString())
 
-	await createOSMAddressPointTables(db)
+	await createSpineAddressPointTables(db)
 	await writeLayerManifest(db, MANIFEST)
 }
 

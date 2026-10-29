@@ -10,17 +10,17 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 import {
-	createOSMAddressPointIndexes,
-	createOSMAddressPointTables,
-	OSM_ADDRESS_H3_RESOLUTION,
-	type OSMAddressPointDatabase,
-} from "#address-point-schema"
+	createSpineAddressPointIndexes,
+	createSpineAddressPointTables,
+	ADDRESS_POINT_H3_RESOLUTION,
+	type SpineAddressPointDatabase,
+} from "#address/point/spine-schema"
 
-describe("OSM address-point layer schema", () => {
+describe("address-point spine schema", () => {
 	it("adds an indexed H3 spine and honest empty coverage to the shared rooftop table", async () => {
-		using db = DatabaseClient.temp<OSMAddressPointDatabase>()
+		using db = DatabaseClient.temp<SpineAddressPointDatabase>()
 
-		await createOSMAddressPointTables(db)
+		await createSpineAddressPointTables(db)
 
 		const street = "Dollis Park"
 		const streetNorm = normalizeStreetForKeyLocale(street, "en")
@@ -43,7 +43,7 @@ describe("OSM address-point layer schema", () => {
 			})
 			.execute()
 
-		await createOSMAddressPointIndexes(db)
+		await createSpineAddressPointIndexes(db)
 
 		await writeLayerManifest(db, {
 			name: "osm-address-points-gb-test",
@@ -57,7 +57,7 @@ describe("OSM address-point layer schema", () => {
 			buildCmd: "fixture",
 			buildSHA: "test",
 			freshnessPolicy: "sealed",
-			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+			spineKeys: { h3: { column: "h3_cell", resolution: ADDRESS_POINT_H3_RESOLUTION } },
 			createdAt: "2026-08-09T00:00:00.000Z",
 			sourceRecords: null,
 		})
@@ -78,8 +78,8 @@ describe("OSM address-point layer schema", () => {
 		const path = dir("address-points-fr.db")
 
 		try {
-			using db = new DatabaseClient<OSMAddressPointDatabase>(path)
-			await createOSMAddressPointTables(db)
+			using db = new DatabaseClient<SpineAddressPointDatabase>(path)
+			await createSpineAddressPointTables(db)
 			const street = "Rue de Rivoli"
 			const streetNorm = normalizeStreetForKeyLocale(street, "fr")
 
