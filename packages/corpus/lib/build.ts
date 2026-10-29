@@ -20,7 +20,7 @@ import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
 import { alignTotalsOf } from "#build/align-totals"
 import { planWorkerBudget } from "#build/budget"
-import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
+import { readSourceDecisionTable, readSourceEligibility } from "#build/eligibility"
 import {
 	admitParquetManifest,
 	stageAdmittedManifestForResume,
@@ -148,7 +148,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	})
 
 	const holdouts = defaultHoldouts()
-	const registerDecisions = await readRegisterDecisions()
+	const decisionTable = await readSourceDecisionTable()
 
 	const align = await runAlignPhase({
 		adapterRuns,
@@ -241,7 +241,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdoutCheck,
 		totals: alignTotalsOf(align),
 		rights,
-		registerDecisions,
+		decisionTable,
 		onProgress: opts.onProgress,
 	})
 }

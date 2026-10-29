@@ -19,8 +19,9 @@
  *   what one stage of its assembly observed.
  *
  *   The profile and the refused set are the base record's, because an overlay file enters by a recipe or an
- *   adapter run that applies no eligibility reading of its own. The license decisions are read from the register
- *   as it stands when this runs, and `builtAt` is when the overlay was applied.
+ *   adapter run that applies no eligibility reading of its own. Each source's license decisions are read from the
+ *   register as it stands when this runs, through the register inputs `corpus-source-inputs.json` maps the source
+ *   to, and `builtAt` is when the corpus overlay was applied.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts \
@@ -33,7 +34,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { readRegisterDecisions } from "@mailwoman/corpus/build/eligibility"
+import { readSourceDecisionTable } from "@mailwoman/corpus/build/eligibility"
 import { foldSourceLicenses, rowsBySourceFromTally } from "@mailwoman/corpus/parquet/record"
 import { freezeTrainingManifest, type TrainingManifest } from "@mailwoman/corpus/source-register"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
@@ -110,7 +111,7 @@ const frozen = freezeTrainingManifest({
 	builtAt: plan.appliedAt,
 	profile: base.profile,
 	rowsBySource: rowsBySourceFromTally(tally),
-	decisionsByLicense: await readRegisterDecisions(),
+	decisionTable: await readSourceDecisionTable(),
 	refused: new Map(Object.entries(base.refused)),
 })
 

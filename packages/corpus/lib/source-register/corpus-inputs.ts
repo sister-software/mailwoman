@@ -204,6 +204,18 @@ export function auditCorpusSourceInputs(file: CorpusSourceInputsFile, register: 
 }
 
 /**
+ * The register inputs a source's rows were built from in `corpusVersion`.
+ *
+ * A `history` entry naming the corpus wins over `inputs`, which describes what a build reads today.
+ * Without `corpusVersion` the function reads today's inputs.
+ */
+export function mappingInputsFor(mapping: CorpusSourceMapping, corpusVersion?: string): readonly CorpusSourceInput[] {
+	const former = corpusVersion ? mapping.history?.find((entry) => entry.corpora.includes(corpusVersion)) : null
+
+	return former?.inputs ?? mapping.inputs
+}
+
+/**
  * Reads the committed table and checks it against the register.
  *
  * @throws When the file does not parse or the audit reports a problem.
@@ -285,9 +297,7 @@ export function sourceRightsGaps(
 	const rows = new Map(register.sources.map((row) => [row.sourceID, row]))
 	const gaps: SourceRightsGap[] = []
 
-	const former = corpusVersion ? resolved.mapping.history?.find((entry) => entry.corpora.includes(corpusVersion)) : null
-
-	for (const input of former?.inputs ?? resolved.mapping.inputs) {
+	for (const input of mappingInputsFor(resolved.mapping, corpusVersion)) {
 		const row = rows.get(input.registerSource)
 		const decision = row ? decisions.get(row.license) : null
 

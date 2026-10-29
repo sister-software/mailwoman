@@ -361,9 +361,10 @@ source the register never names. The check runs before augmentation, so a refuse
 re-enter as the ancestor of a synthetic row.
 
 A build freezes what contributed. `TRAINING_SOURCES.json` records per source the rows that survived
-both refusals, the license stamped on them, and the register's decision as the build read it,
-under a digest over itself. `sourcesNotPermitting` is what a publish path asks, and it separates the
-three ways a source fails to permit an act. No released model was built from a corpus carrying one.
+both refusals, the license stamped on them, and the register's decisions over the source's mapped
+inputs as the build read them, under a digest over itself. `sourcesNotPermitting` is what a publish
+path asks, and it separates the ways a source fails to permit an act: an unmapped source, a missing
+decision, an unelected decision and an elected grant that omits the act. No released model was built from a corpus carrying one.
 
 ## Runtime datasets, and what they oblige
 

@@ -560,6 +560,15 @@ corpus `MANIFEST.json` records the same digest as `training_manifest_digest`, so
 drifted from the build it claims is detectable. `auditTrainingManifest` recomputes the digest and compares
 the source rows against `totalRows`.
 
+Each source's decision is found through the register inputs `corpus-source-inputs.json` maps it to, and
+combined by `combineSourceDecisions` when there are several. A source with no decision records a
+`decisionGap` naming why. Every record committed here through `v0.8.2.json` was frozen while the lookup
+keyed the row's `license` label against `licenseID`, two values that never coincide, so each records
+`decision: null` for every source and no `decisionGap`. Those files state what their builds recorded and
+are not regenerated. The current freeze, rerun over `v0.8.2.json`'s sources against the register and
+table as committed in `31b6d6e88`, resolves 177 of its 178 sources, all elected. The remaining one,
+`invented-po-box-military`, maps to authored inputs only.
+
 `mwops release rights-audit` looks a manifest up by the `training.corpus_version` a package's
 `model-card.json` names. Observed 2026-09-28: of the twelve `neural-weights-*` cards, ten have no
 `training.corpus_version` at all and the two that do hold prose rather than a version, so no card yet

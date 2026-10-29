@@ -21,6 +21,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
 
 import {
+	type CorpusSourceInput,
 	type CorpusSourceInputs,
 	type CorpusSourceInputsFile,
 	type CorpusSourceMapping,
@@ -45,6 +46,32 @@ export function decisionLicenseID(decision: LicenseDecision): string {
 }
 
 /**
+ * The license decisions a source's register inputs point at, one per distinct `licenseID` in input order.
+ *
+ * `missing` lists each input whose `license` names a decision the register does not declare.
+ * A caller decides whether that is a refusal or a recorded gap.
+ */
+export function inputDecisions<Decision extends LicenseDecision>(
+	inputs: readonly CorpusSourceInput[],
+	decisions: ReadonlyMap<string, Decision>
+): { found: Decision[]; missing: CorpusSourceInput[] } {
+	const found = new Map<string, Decision>()
+	const missing: CorpusSourceInput[] = []
+
+	for (const input of inputs) {
+		const decision = decisions.get(input.license)
+
+		if (decision) {
+			found.set(decision.licenseID, decision)
+		} else {
+			missing.push(input)
+		}
+	}
+
+	return { found: [...found.values()], missing }
+}
+
+/**
  * The `license` value for rows of a source, or `null` when the mapping lists no register source.
  *
  * @throws When an input points at a license decision the register does not declare.
@@ -53,20 +80,17 @@ export function mappingLicenseID(
 	mapping: CorpusSourceMapping,
 	decisions: ReadonlyMap<string, LicenseDecision>
 ): string | null {
-	const ids = new Set<string>()
+	const { found, missing } = inputDecisions(mapping.inputs, decisions)
+	const [input] = missing
 
-	for (const input of mapping.inputs) {
-		const decision = decisions.get(input.license)
-
-		if (!decision) {
-			throw new Error(
-				`corpus source input ${stringifyJSON(input.registerSource)} names license ${stringifyJSON(input.license)}, ` +
-					"which the register does not declare"
-			)
-		}
-
-		ids.add(decisionLicenseID(decision))
+	if (input) {
+		throw new Error(
+			`corpus source input ${stringifyJSON(input.registerSource)} names license ${stringifyJSON(input.license)}, ` +
+				"which the register does not declare"
+		)
 	}
+
+	const ids = new Set(found.map(decisionLicenseID))
 
 	if (!ids.size) return null
 

@@ -46,7 +46,7 @@ import {
 	type WorkerBudget,
 	type WorkerClass,
 } from "#build/budget"
-import { readRegisterDecisions } from "#build/eligibility"
+import { readSourceDecisionTable } from "#build/eligibility"
 import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
 import { adapterDerivations, derivationConfig, type ResolvedBuildSettings } from "#build/settings"
@@ -388,7 +388,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 	const { opts, settings, intermediateDir, outputDir } = ctx
 	const onProgress = (stage: BuildStage, message: string): void => opts.onProgress?.(stage, message)
 	const holdouts = defaultHoldouts()
-	const registerDecisions = await readRegisterDecisions()
+	const decisionTable = await readSourceDecisionTable()
 
 	for (const source of opts.freshSources ?? []) {
 		await forgetSource(intermediateDir, source)
@@ -628,7 +628,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		holdoutCheck,
 		totals,
 		rights: ctx.rights,
-		registerDecisions,
+		decisionTable,
 		onProgress: opts.onProgress,
 	})
 }

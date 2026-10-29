@@ -35,13 +35,23 @@ export {
 
 export {
 	auditTrainingManifest,
+	combineSourceDecisions,
 	freezeTrainingManifest,
 	NO_LICENSE_RECORDED,
+	resolveSourceDecision,
 	sourcesNotPermitting,
+	TrainingDecisionGapReason,
 	trainingManifestDigest,
 } from "#source-register/training-manifest"
 
-export type { TrainingManifest, TrainingSourceRecord } from "#source-register/training-manifest"
+export type {
+	SourceDecisionTable,
+	TrainingDecisionGap,
+	TrainingInputDecision,
+	TrainingManifest,
+	TrainingSourceDecision,
+	TrainingSourceRecord,
+} from "#source-register/training-manifest"
 
 export {
 	deriveEffectiveTrainingManifest,
