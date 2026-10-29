@@ -500,8 +500,18 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                    | receipt byte-equal; the TypeScript `verify` accepts the Python receipt                |
 | `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts` | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
 | `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                | output line equal on both tables                                                      |
+| `semantic_tags.py` (Phase 1)            | `packages/neural/lib/semantic-tags.ts`, schema `semantic_tags`      | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal; Python reader pinned     |
 
 Classified differences (**decided**):
+
+- The semantic tag registry moved to `packages/neural/lib/semantic-tags.ts`, and `emit-label-schema.run.ts` writes
+  it to the label schema's `semantic_tags` section. The address systems stay defined by `@mailwoman/codex`'s
+  layouts, with ids assigned by `mailwoman dev generate address-systems` in
+  `corpus-python/src/mailwoman_train/address_systems.json`. That file stays where it is because training
+  containers read it as package data from the volume's copy of `corpus-python/src`. The schema's
+  `address_systems` section references the systems by their append-only ids, in order, so its length is the head
+  width. `semantic_tags.py` and `address_systems.py` remain as readers, and `test_label_schema.py` pins both to the
+  schema, as it pins `labels.py`.
 
 - `label_support` fills `rows_with_label` from a Python `set` of labels per row, so its key order follows
   `PYTHONHASHSEED` (two seeds give two orders over the same six labels). No byte-equal reference exists. The port

@@ -19,6 +19,10 @@ Rules for this module:
   so a family without it reports the tag instead of guessing.
 - ``SEMANTIC_TAG_REGISTRY_VERSION`` increments whenever ``SEMANTIC_TAGS`` or ``REFINES`` changes, and
   every model card records it beside ``label_set`` and ``head_mapping``.
+
+``packages/neural/lib/semantic-tags.ts`` owns the registry and writes it to the ``semantic_tags`` section of
+``packages/neural/data/label-schema.v1.json``. This module reads the same registry until the trainer moves, and
+``tests/mailwoman_train/test_label_schema.py`` fails when the two drift. Change the TypeScript owner first.
 """
 
 from __future__ import annotations

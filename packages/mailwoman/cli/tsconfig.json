@@ -44,6 +44,7 @@
 		{ "path": "../../map-tui" },
 		{ "path": "../../match" },
 		{ "path": "../../neural" },
+		{ "path": "../../neural/tools" },
 		{ "path": "../../normalize" },
 		{ "path": "../../osm" },
 		{ "path": "../../osm/sdk" },

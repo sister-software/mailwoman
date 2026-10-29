@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Writes `data/label-schema.v1.json` from the TypeScript label constants and formats it with oxfmt.
+ *   Writes `data/label-schema.v1.json` from the TypeScript label constants, the semantic tag registry and the committed
+ *   address-system registry, and formats it with oxfmt.
  *
  *   With `--check`, the tool only reads the committed file. It exits non-zero when that file's content differs from
  *   the constants.
@@ -19,11 +20,12 @@ import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { buildLabelSchema, type LabelSchema } from "#label-schema"
+import { readAddressSystemsReference } from "#tools/address-system-registry"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 
 const target = workspacePath("neural", "data", "label-schema.v1.json")
-const schema = buildLabelSchema()
+const schema = buildLabelSchema(await readAddressSystemsReference())
 
 if (values.check) {
 	const committed = await readLocalJSONFile<LabelSchema>(target)

@@ -8,6 +8,9 @@ a checkpoint's head has one output per id.
 A country has a ``local`` system and, where libaddressinput states a separate Latin-script layout, a
 ``latin`` one. A row written in Latin script reads the ``latin`` system when its country has one. Every
 other row reads ``local``. A country with no layout has no system, and its rows get ``IGNORE_INDEX``.
+
+``packages/neural/data/label-schema.v1.json`` references these systems by id in its ``address_systems`` section,
+and ``tests/mailwoman_train/test_label_schema.py`` pins this reader to it.
 """
 
 from __future__ import annotations

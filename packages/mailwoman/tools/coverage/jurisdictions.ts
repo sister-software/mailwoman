@@ -28,7 +28,7 @@ import {
 	type NaturalEarthUnit,
 	NATURAL_EARTH_RELEASE,
 } from "#tools/coverage/natural-earth"
-import type { AddressSystemRegistry } from "#tools/dev-tools/codex/address/systems"
+import type { AddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 /**
  * The source-layer name the jurisdiction tiles use.

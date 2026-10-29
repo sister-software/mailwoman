@@ -1,10 +1,7 @@
+import { type AddressSystemRegistry, readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 import { describe, expect, it } from "vitest"
 
-import {
-	type AddressSystemRegistry,
-	deriveAddressSystemRegistry,
-	readAddressSystemRegistry,
-} from "#tools/dev-tools/codex/address/systems"
+import { deriveAddressSystemRegistry } from "#tools/dev-tools/codex/address/systems"
 
 describe("address-system registry", () => {
 	it("matches what codex's layouts derive, so the trainer and the runtime read the same ids", async () => {

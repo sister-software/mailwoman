@@ -11,5 +11,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": ".." }, { "path": "../../core" }, { "path": "../../mtf/tools" }]
+	"references": [{ "path": ".." }, { "path": "../../codex" }, { "path": "../../core" }, { "path": "../../mtf/tools" }]
 }

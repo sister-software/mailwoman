@@ -140,7 +140,7 @@ export type DrawEvidence = (typeof DrawEvidence)[keyof typeof DrawEvidence]
 
 /**
  * The head a checkpoint trained: its label set and where each head tag sits in the shared
- * semantic tag registry (`corpus-python/src/mailwoman_train/semantic_tags.py`).
+ * semantic tag registry (`SEMANTIC_TAGS` in `@mailwoman/neural/semantic-tags`).
  */
 export interface LabelSetContract {
 	labelSetID: string

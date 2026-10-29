@@ -62,7 +62,7 @@ const CoverageJurisdictions: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildJurisdictionTiles } = await import("#tools/coverage/jurisdictions")
 		const { fetchNaturalEarthFile, readNaturalEarthMapUnits } = await import("#tools/coverage/natural-earth")
-		const { readAddressSystemRegistry } = await import("#tools/dev-tools/codex/address/systems")
+		const { readAddressSystemRegistry } = await import("@mailwoman/neural/tools/address-system-registry")
 
 		const systems = await readAddressSystemRegistry()
 

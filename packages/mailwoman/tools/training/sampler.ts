@@ -30,8 +30,7 @@ import type {
 	SamplerEvent,
 } from "@mailwoman/mtf/tools/sampler/native"
 import { IGNORE_INDEX, LOCALE_COUNTRIES, STAGE3_TAGS } from "@mailwoman/neural/labels"
-
-import { readAddressSystemRegistry } from "../dev-tools/codex/address/systems.ts"
+import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 /**
  * A file under the Python training package's data, which the sampler
