@@ -605,9 +605,36 @@ in `per_tag_rows` order.
 Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `countries/{fr,gb,us}/`,
 `countries/{jp,tw}/registers.py`, `countries/{jp,tw,kr}/corpora/`, `countries/jp/{kana,text}.py`,
 `countries/kr/{juso,registers}.py`, and their tests. No Python country builder remains, so `COUNTRY_MODULES` and
-`protocols.CountryModule` are deleted and every country directory is listed in `SOURCE_ONLY`. Not ported yet:
-`countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpora.py`, `corpora/fragment/`,
-`countries/de/fragment_board.py`, `corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
+`protocols.CountryModule` are deleted and every country directory is listed in `SOURCE_ONLY`.
+
+#### Phase 2.2 and 2.3 status, second branch, 2026-10-29
+
+**Observed**, lab host, branch `feat/2874-corpus-builders-2`, the same comparison as the table above.
+
+| Python module                     | TypeScript port                                                    | Result                                                                                                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `countries/cjk/overlay.py`        | `lib/cjk/overlay.ts`, `lib/tools/cjk-overlay.run.ts`               | over `v8-jp-full-2026-08-04`, the 151 `cn-units` rows and four extra corpora (the KR, TW, KR-registry and TW-registry corpora): both parts, the board, vocabulary, manifest, report and rights record equal |
+| `countries/cjk/foreign_places.py` | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                        |
+
+Classified differences (**decided**):
+
+- `compareByCodePoint` in `@mailwoman/core/strings/compare` compares UTF-16 code units, so a character outside the Basic
+  Multilingual Plane sorted before U+FF06 and the first overlay vocabulary differed at `𨦻`. The CJK builders now sort
+  with `compareByScalarValue`, the code-point order Python's `sorted` gives, and the comparator's comment states its
+  order. Its other callers are unchanged.
+- `cjk_share` named a CJK letter by `unicodedata.name`. JavaScript has no character names, so the port freezes the 32
+  code-point ranges CPython 3.12 (Unicode 15.0) names, and counts letters by general category `L`. Node's tables are
+  Unicode 17.0, which has 9,568 letters Python's `isalpha` refuses; a row holding one has a larger denominator here.
+- The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` is not read; a caller
+  on another mount passes the flag.
+- The overlay takes the first `char-vocab-*.json` in code-point order where Python took the first the directory listed.
+  Every corpus on the volume holds one.
+
+Deleted: `countries/cjk/{overlay,foreign_places}.py` and their tests. `countries/cjk/staging.py` stays with the
+launcher.
+
+Not ported yet: `countries/jp/probe_corpora.py`, `corpora/fragment/`, `countries/de/fragment_board.py`,
+`corpora/{builder,sample_raws}.py` and `corpora/deepseek/`.
 
 ### Phase 3 — The Rust sampler and character path
 

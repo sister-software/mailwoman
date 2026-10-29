@@ -15,6 +15,7 @@
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -426,7 +427,10 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 
 	const trainMunicipalities = new Set([...selection.train, ...selection.val].map((row) => normalizeCJKText(row[1])))
 	const boardMunicipalities = new Set(selection.board.map((row) => normalizeCJKText(row[1])))
-	const overlap = [...boardMunicipalities].filter((name) => trainMunicipalities.has(name)).toSorted()
+
+	const overlap = [...boardMunicipalities]
+		.filter((name) => trainMunicipalities.has(name))
+		.toSorted(compareByScalarValue)
 
 	if (overlap.length) throw new Error(`board municipalities leak into train/val: ${overlap.slice(0, 5).join(", ")}`)
 

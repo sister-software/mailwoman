@@ -452,7 +452,7 @@ resolver mechanism ships.
   overlay for a dev checkout.
 - **Corpus.** `packages/corpus/lib/jp/corpus/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
   compact folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
-  `countries/cjk/overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
+  `packages/corpus/lib/cjk/overlay.ts` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
   register is a renderer entry with a weight and a build report that states the row count it landed on.
 - **The board read.** `python -m mailwoman_train.evaluation.jp_probe_board --label-set stage3-cjk` over the 20,000-row JP board: the check
   is coordinate-acceptability at 15 km through the municipality centroid table. Beside it are the municipality macro, the

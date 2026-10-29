@@ -9,7 +9,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { pythonCapitalize, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { basename, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -96,7 +96,7 @@ export async function listSitusDatabases(directory: PathBuilderLike = usSitusDir
 
 	if (!found.length) throw new Error(`No ${SITUS_PREFIX}*.db database in ${directory.toString()}`)
 
-	return found.toSorted(compareByCodePoint)
+	return found.toSorted(compareByScalarValue)
 }
 
 /**

@@ -14,6 +14,7 @@
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -256,7 +257,7 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<strin
 
 	const poolUnits = new Set([...train, ...val].map((row) => normalizeCJKText(unitOf(row))))
 	const boardUnits = new Set(board.map((row) => normalizeCJKText(unitOf(row))))
-	const overlap = [...boardUnits].filter((unit) => poolUnits.has(unit)).toSorted()
+	const overlap = [...boardUnits].filter((unit) => poolUnits.has(unit)).toSorted(compareByScalarValue)
 
 	if (overlap.length) throw new Error(`board 鄉鎮市區 leak into train/val: ${overlap.slice(0, 5).join(", ")}`)
 

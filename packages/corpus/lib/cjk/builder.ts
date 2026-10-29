@@ -18,7 +18,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -28,6 +28,7 @@ import { normalizeCJKText } from "#cjk/text"
 import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
 import { stampRowLicenses } from "#source-register/row-license"
+import { pythonRepr } from "#training/config/python-yaml"
 import type { PyRandom } from "#training/pyrandom"
 
 /**
@@ -187,7 +188,7 @@ export async function directoryHasEntries(directory: PathBuilderLike): Promise<b
 export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
 	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
 
-	return paths.toSorted(compareByCodePoint)
+	return paths.toSorted(compareByScalarValue)
 }
 
 /**
@@ -386,10 +387,23 @@ export interface VerifyRecordOptions {
 }
 
 /**
+ * A record {@linkcode verifyRecord} refuses for one of its own checks.
+ *
+ * Its message begins with the defect's kind, before the first colon, so a builder
+ * that counts refusals groups them by that prefix.
+ * Spans the label array refuses throw a plain `Error` instead.
+ */
+export class RecordCheckError extends Error {
+	override name = "RecordCheckError"
+}
+
+/**
  * Refuses a record that would train badly: no span, too long to read whole, a tag outside the label set,
  * an empty span, whitespace inside a span when forbidden, or spans the label array refuses.
  *
- * @throws On the first such defect, naming it.
+ * Each message quotes text as Python's `repr` does, the messages the Python builders wrote.
+ *
+ * @throws {@linkcode RecordCheckError} On the first such defect, naming it.
  */
 export function verifyRecord(
 	record: Pick<CJKRecord, "raw" | "span_starts" | "span_ends" | "span_tags">,
@@ -399,12 +413,12 @@ export function verifyRecord(
 	const { raw } = record
 	const characters = [...raw]
 	const max = options.maxRenderedChars ?? MAX_RENDERED_CHARS
-	const quoted = stringifyJSON(raw)
+	const quoted = pythonRepr(raw)
 
-	if (!record.span_tags.length) throw new Error(`all-O row: ${quoted}`)
+	if (!record.span_tags.length) throw new RecordCheckError(`all-O row: ${quoted}`)
 
 	if (characters.length > max) {
-		throw new Error(`row of ${characters.length} chars exceeds S=${max} and would truncate: ${quoted}`)
+		throw new RecordCheckError(`row of ${characters.length} chars exceeds S=${max} and would truncate: ${quoted}`)
 	}
 
 	for (const [index, tag] of record.span_tags.entries()) {
@@ -412,15 +426,17 @@ export function verifyRecord(
 		const end = record.span_ends[index]!
 
 		if (!tagSet.has(tag)) {
-			throw new Error(`tag ${stringifyJSON(tag)} is outside ${options.labelSetName} — it would collapse to O at load`)
+			throw new RecordCheckError(
+				`tag ${pythonRepr(tag)} is outside ${options.labelSetName} — it would collapse to O at load`
+			)
 		}
 
 		const text = characters.slice(start, end)
 
-		if (!text.length) throw new Error(`empty span ${tag}@[${start},${end}) in ${quoted}`)
+		if (!text.length) throw new RecordCheckError(`empty span ${tag}@[${start},${end}) in ${quoted}`)
 
 		if ((options.forbidWhitespace ?? true) && text.some(pythonIsSpace)) {
-			throw new Error(`whitespace inside span ${tag}@[${start},${end}): ${stringifyJSON(text.join(""))}`)
+			throw new RecordCheckError(`whitespace inside span ${tag}@[${start},${end}): ${pythonRepr(text.join(""))}`)
 		}
 	}
 
@@ -570,21 +586,7 @@ export function buildCharVocab(texts: Iterable<string>, minCount = 1): Map<strin
 		}
 	}
 
-	const vocab = new Map<string, number>([
-		["<pad>", PAD_CHAR_ID],
-		["<unk>", UNK_CHAR_ID],
-	])
-
-	let next = 2
-
-	for (const character of [...counts]
-		.filter(([, n]) => n >= minCount)
-		.map(([c]) => c)
-		.toSorted(compareByCodePoint)) {
-		vocab.set(character, next++)
-	}
-
-	return vocab
+	return sealCharacters([...counts].filter(([, n]) => n >= minCount).map(([character]) => character))
 }
 
 /**
@@ -604,6 +606,53 @@ export async function sealCharVocab(corpusDirectory: PathBuilderLike, name: stri
 	const vocab = buildCharVocab(raws, 2)
 
 	await saveCharVocab(vocab, resolvePath(corpusDirectory, name))
+
+	return vocab
+}
+
+/**
+ * Reads a character vocabulary a builder wrote.
+ *
+ * The object's key order is not the vocabulary's order, because JSON parsing
+ * lists integer-like keys such as `"1"` first.
+ * A caller reads its characters and size, and orders them itself.
+ *
+ * @throws When the file is missing, or holds anything other than an object of integer ids.
+ */
+export async function loadCharVocab(path: PathBuilderLike): Promise<Record<string, number>> {
+	const loaded = await readLocalJSONFile<unknown>(path)
+
+	if (
+		typeof loaded !== "object" ||
+		loaded === null ||
+		Array.isArray(loaded) ||
+		!Object.values(loaded).every((id) => Number.isSafeInteger(id))
+	) {
+		throw new TypeError(`char vocab ${path.toString()} is not an object of integer ids`)
+	}
+
+	return loaded as Record<string, number>
+}
+
+/**
+ * A vocabulary of `<pad>`, `<unk>` and `characters` in code-point order,
+ * numbered from 2, the seal {@linkcode buildCharVocab} writes.
+ */
+export function sealCharacters(characters: Iterable<string>): Map<string, number> {
+	const vocab = new Map<string, number>([
+		["<pad>", PAD_CHAR_ID],
+		["<unk>", UNK_CHAR_ID],
+	])
+
+	let next = 2
+
+	for (const character of new Set(characters)
+		.difference(new Set(["<pad>", "<unk>"]))
+		.values()
+		.toArray()
+		.toSorted(compareByScalarValue)) {
+		vocab.set(character, next++)
+	}
 
 	return vocab
 }
