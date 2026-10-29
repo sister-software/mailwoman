@@ -15,13 +15,16 @@
  *   3. Freeze each suite as a held-out dataset (`heldout/dataset/manifest.ts`), which `heldout/per/country.run.ts`
  *      grades, with a lineage file beside it: each extract's digest, the PBF digest its receipt records, the
  *      extraction parameters its stats sidecar states, the country's OpenStreetMap extraction policy and
- *      version where `@mailwoman/osm` has one, the shape filter, the sampling rule and the audit.
+ *      version where `@mailwoman/osm` has one, the shape filter, the sampling rule, and a summary of the audit: each
+ *      compared model's training corpus and where it was read (a model card, or the training config of a model
+ *      whose card does not record it), and each corpus manifest's digest and rows read. The full audit lists every
+ *      training file. It is written once as `osm-suites.audit.json`, and each lineage cites it by digest.
  *
  *   The builder reads the extracts and writes only under the output directory it is given.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
@@ -207,6 +210,10 @@ export interface SuiteOverlapInputs {
 	corpora: readonly string[]
 	modelCards: readonly string[]
 	/**
+	 * Training configs of compared models whose cards do not record their corpus.
+	 */
+	trainingConfigs?: readonly string[]
+	/**
 	 * The local directory that stands for a corpus manifest's `/data` prefix.
 	 */
 	pathRoot: string
@@ -329,6 +336,7 @@ export async function freezeOSMSuites(input: {
 				dataset: sample as HeldoutDatasetManifest,
 				corpora: input.overlap.corpora,
 				modelCards: input.overlap.modelCards,
+				trainingConfigs: input.overlap.trainingConfigs ?? [],
 				pathRoot: input.overlap.pathRoot,
 			})
 		: null
@@ -343,6 +351,32 @@ export async function freezeOSMSuites(input: {
 	}
 
 	const classOf = (row: OSMSuiteRow): HeldoutProvenance => provenance?.rows[heldoutRowID(row)]?.provenance ?? "unknown"
+
+	// The audit lists every training file of every corpus, so it is written once beside
+	// the suites, and each lineage cites it by digest with a per-corpus summary.
+	const auditPath = resolvePath(input.outDirectory, "osm-suites.audit.json")
+
+	await writeLocalJSONFile(provenance ?? { audit, auditSHA256: null, rows: {}, unknown: [] }, auditPath)
+
+	const auditSummary = {
+		path: "osm-suites.audit.json",
+		sha256: await sha256File(auditPath),
+		auditSHA256: provenance?.auditSHA256 ?? null,
+		dataset: audit.dataset,
+		models: audit.modelCards,
+		corpora: audit.corpora.map((corpus) => ({
+			manifest: corpus.manifest,
+			sha256: corpus.sha256,
+			corpusVersion: corpus.corpusVersion,
+			filesRead: corpus.files.filter((file) => file.read).length,
+			rowsRead: corpus.files.reduce((sum, file) => sum + (file.read ? file.rows : 0), 0),
+			testFilesSkipped: corpus.files.filter((file) => !file.read).length,
+			matches: corpus.files.reduce((sum, file) => sum + file.matches, 0),
+		})),
+		verifiedUnseenAdmitted: audit.verifiedUnseenAdmitted,
+		reasons: audit.reasons,
+		counts: audit.counts,
+	}
 
 	for (const shape of Object.values(OSMSuiteShape)) {
 		const sampled = sampledByShape.get(shape)!
@@ -394,7 +428,7 @@ export async function freezeOSMSuites(input: {
 					rule: "keep only rows the overlap audit classes verified_unseen",
 					auditSHA256: provenance?.auditSHA256 ?? null,
 					counts,
-					audit,
+					audit: auditSummary,
 				},
 				sampled: sampled.length,
 				crossCountryDuplicates: crossCountryDuplicates[shape] ?? 0,

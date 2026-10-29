@@ -20,13 +20,14 @@
  *   The audit refuses a partial read: a missing file, a file lacking an id column, a row count that differs
  *   from the manifest's record, an attribute file whose sha256 differs, or a file entry with no split throws,
  *   naming the file. A row is `verified_unseen` only when it is absent from every corpus read and every named
- *   model card's `training.corpus_version` identifies a corpus that was read. Otherwise a row without overlap is
- *   `unknown`, and the audit records why.
+ *   model card's `training.corpus_version` identifies a corpus that was read. For a model whose card does not
+ *   record its corpus, the caller passes its training config instead. The config's `data.corpus_dir` must then
+ *   identify a corpus that was read. Otherwise a row without overlap is `unknown`, and the audit records why.
  *
  *   Limits: overlap is decided by identity and group alone, and text is never compared. A training row holding
  *   the same address text under another source or id goes undetected. A model card records the corpus of its
- *   final training run only. A card that records an `init_from` is refused for `verified_unseen`, because the
- *   ancestry's corpora are unrecorded.
+ *   final training run only. A card that records an `init_from`, or a config that sets `train.init_from`, is
+ *   refused for `verified_unseen`, because the ancestry's corpora are unrecorded.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -38,6 +39,7 @@ import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
+import { readTrainingConfig, trainingCorpusVersion, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { HeldoutProvenance, ProvenanceRecord } from "#tools/eval-harness/heldout/per/country"
@@ -79,8 +81,29 @@ export interface OverlapCorpusRecord {
 	files: OverlapFileRecord[]
 }
 
+/**
+ * Where an audit read a compared model's training corpus.
+ */
+export const OverlapModelSource = {
+	/**
+	 * The model card's `training.corpus_version` and `training.init_from`.
+	 */
+	ModelCard: "model-card",
+	/**
+	 * The training config's `data.corpus_dir` and `train.init_from`, for a model
+	 * whose card does not record its corpus.
+	 */
+	TrainingConfig: "training-config",
+} as const
+
+export type OverlapModelSource = (typeof OverlapModelSource)[keyof typeof OverlapModelSource]
+
 export interface OverlapModelCardRecord {
+	/**
+	 * The model card or training config read.
+	 */
 	path: string
+	source: OverlapModelSource
 	corpusVersion: string | null
 	matched: boolean
 	problem: string | null
@@ -136,9 +159,45 @@ async function loadKeys(db: Awaited<ReturnType<typeof openDuckDB>>, table: strin
 }
 
 /**
+ * The corpus read whose `corpus_version` a model's recorded corpus names, or `null`.
+ *
+ * A card or config names its corpus as `v<version>` (the training-manifest key)
+ * while a MANIFEST.json records `<version>`.
+ */
+function corpusReadAs(corpusVersion: string, corporaRead: ReadonlySet<string>): string | null {
+	const bare = (version: string) => version.replace(/^v(?=\d)/u, "")
+
+	return [...corporaRead].find((read) => bare(read) === bare(corpusVersion)) ?? null
+}
+
+/**
+ * Matches a model's recorded training corpus against the corpora the audit read.
+ */
+function matchTrainingCorpus(
+	path: string,
+	source: OverlapModelSource,
+	corpusVersion: string,
+	corporaRead: ReadonlySet<string>
+): OverlapModelCardRecord {
+	if (corpusReadAs(corpusVersion, corporaRead) == null) {
+		return {
+			path,
+			source,
+			corpusVersion,
+			matched: false,
+			problem: `${corpusVersion} is not among the corpora read`,
+		}
+	}
+
+	return { path, source, corpusVersion, matched: true, problem: null }
+}
+
+/**
  * Reads one model card's training corpus identity.
  */
 async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Promise<OverlapModelCardRecord> {
+	const source = OverlapModelSource.ModelCard
+
 	const card = await readLocalJSONFile<{
 		training?: { corpus_version?: unknown; init_from?: unknown }
 	}>(path)
@@ -148,6 +207,7 @@ async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Pr
 	if (typeof corpusVersion !== "string" || !corpusVersion) {
 		return {
 			path,
+			source,
 			corpusVersion: null,
 			matched: false,
 			problem: "the card records no training.corpus_version",
@@ -157,25 +217,78 @@ async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Pr
 	if (card.training?.init_from != null) {
 		return {
 			path,
+			source,
 			corpusVersion,
 			matched: false,
 			problem: "the card records an init_from whose training corpora are not named",
 		}
 	}
 
-	// A card names its corpus as `v<version>` (the training-manifest key) while a MANIFEST.json records `<version>`.
-	const bare = (version: string) => version.replace(/^v(?=\d)/u, "")
+	return matchTrainingCorpus(path, source, corpusVersion, corporaRead)
+}
 
-	if (![...corporaRead].some((read) => bare(read) === bare(corpusVersion))) {
+/**
+ * Reads one training config's corpus identity: `data.corpus_dir`'s version and
+ * whether `train.init_from` is set.
+ *
+ * @throws {TrainingConfigError} When the config does not load as the trainer loads it.
+ */
+async function readTrainingConfigCorpus(
+	path: string,
+	corporaRead: ReadonlySet<string>
+): Promise<OverlapModelCardRecord> {
+	const source = OverlapModelSource.TrainingConfig
+	const config = typedTrainingConfig(await readTrainingConfig(path), path)
+	const corpusVersion = trainingCorpusVersion(config)
+
+	if (config.train.init_from) {
 		return {
 			path,
+			source,
 			corpusVersion,
 			matched: false,
-			problem: `${corpusVersion} is not among the corpora read`,
+			problem: `the config's train.init_from ${config.train.init_from} names a checkpoint whose training corpora are not named`,
 		}
 	}
 
-	return { path, corpusVersion, matched: true, problem: null }
+	return matchTrainingCorpus(path, source, corpusVersion, corporaRead)
+}
+
+/**
+ * Reads every compared model's training corpus and the reasons, if any, that refuse `verified_unseen`.
+ */
+async function readComparedModels(
+	cardPaths: readonly string[],
+	configPaths: readonly string[],
+	corpora: readonly OverlapCorpusRecord[],
+	corporaRead: ReadonlySet<string>
+): Promise<{ modelCards: OverlapModelCardRecord[]; reasons: string[] }> {
+	const modelCards = [
+		...(await Promise.all(cardPaths.map((path) => readModelCard(path, corporaRead)))),
+		...(await Promise.all(configPaths.map((path) => readTrainingConfigCorpus(path, corporaRead)))),
+	]
+
+	const reasons: string[] = []
+
+	if (!modelCards.length) {
+		reasons.push("no model card was named, so the training corpora of the compared models are unestablished")
+	}
+
+	for (const card of modelCards) {
+		if (!card.matched) {
+			const what = card.source === OverlapModelSource.TrainingConfig ? "training config" : "model card"
+
+			reasons.push(`${what} ${card.path}: ${card.problem}`)
+		}
+	}
+
+	for (const record of corpora) {
+		if (!record.corpusVersion) {
+			reasons.push(`corpus manifest ${record.manifest} records no corpus_version`)
+		}
+	}
+
+	return { modelCards, reasons }
 }
 
 /**
@@ -188,7 +301,13 @@ export async function auditHeldoutOverlap(input: {
 	corpora: readonly string[]
 	modelCards: readonly string[]
 	/**
-	 * Which of `modelCards` is the candidate's.
+	 * Training configs of compared models whose cards do not record their training corpus.
+	 *
+	 * Each is read for `data.corpus_dir` and `train.init_from` and is held to the rules a model card is.
+	 */
+	trainingConfigs?: readonly string[]
+	/**
+	 * Which of `modelCards` or `trainingConfigs` is the candidate's.
 	 *
 	 * When named and its corpus was read, a row absent from that corpus is at least
 	 * `unseen_by_candidate`, whatever the published model's history.
@@ -201,8 +320,16 @@ export async function auditHeldoutOverlap(input: {
 
 	if (!input.corpora.length) throw new Error("the overlap audit names no training corpus")
 
-	if (input.candidateModelCard != null && !input.modelCards.includes(input.candidateModelCard)) {
-		throw new Error(`the candidate model card ${input.candidateModelCard} is not among the model cards named`)
+	const trainingConfigs = input.trainingConfigs ?? []
+
+	if (
+		input.candidateModelCard != null &&
+		!input.modelCards.includes(input.candidateModelCard) &&
+		!trainingConfigs.includes(input.candidateModelCard)
+	) {
+		throw new Error(
+			`the candidate model card ${input.candidateModelCard} is not among the model cards or training configs named`
+		)
 	}
 
 	const byID = new Set(dataset.rows.map((entry) => entry.rowID))
@@ -392,32 +519,20 @@ export async function auditHeldoutOverlap(input: {
 	}
 
 	const corporaRead = new Set(corpora.flatMap((record) => (record.corpusVersion ? [record.corpusVersion] : [])))
-	const modelCards = await Promise.all(input.modelCards.map((path) => readModelCard(path, corporaRead)))
-	const reasons: string[] = []
-
-	if (!modelCards.length) {
-		reasons.push("no model card was named, so the training corpora of the compared models are unestablished")
-	}
-
-	for (const card of modelCards) {
-		if (!card.matched) {
-			reasons.push(`model card ${card.path}: ${card.problem}`)
-		}
-	}
-
-	for (const record of corpora) {
-		if (!record.corpusVersion) {
-			reasons.push(`corpus manifest ${record.manifest} records no corpus_version`)
-		}
-	}
-
+	const { modelCards, reasons } = await readComparedModels(input.modelCards, trainingConfigs, corpora, corporaRead)
 	const verifiedUnseenAdmitted = reasons.length === 0
 
 	const candidateCard =
 		input.candidateModelCard == null ? null : modelCards.find((card) => card.path === input.candidateModelCard)!
 
-	// The candidate's own history is established when its card records a corpus that was read and no init_from.
-	const candidateCorpus = candidateCard?.matched ? candidateCard.corpusVersion : null
+	// The candidate's own history is established when its card records a corpus
+	// that was read and no init_from.
+	// Overlap is labeled by the manifest's corpus_version.
+	// That value may lack the card's `v` prefix.
+	const candidateCorpus =
+		candidateCard?.matched && candidateCard.corpusVersion != null
+			? corpusReadAs(candidateCard.corpusVersion, corporaRead)
+			: null
 
 	const counts: Record<HeldoutProvenance, number> = {
 		verified_unseen: 0,

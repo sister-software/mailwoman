@@ -4,17 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Builds the OpenStreetMap evaluation suites by address shape from the per-country extracts, filters them to
- *   rows neither compared model trained on, freezes each as a held-out dataset with its lineage, and with
- *   `--weights-cache` grades one model on each suite across worker threads.
+ *   rows neither compared model trained on, and freezes each as a held-out dataset with its lineage.
+ *   `grade.run.ts` beside it grades models on the frozen suites.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/osm-suites/build.run.ts \
  *     --extracts "$MAILWOMAN_DATA_ROOT/db/osm/corpus" --out scratchpad/osm-suites \
- *     --corpus <training MANIFEST.json> --corpus <…> --model-card <model-card.json> --model-card <…> \
- *     [--path-root /mnt/mw] [--per-country 200] [--seed 2868] [--countries al,au] \
- *     [--weights-cache <dir>] [--workers 2]
+ *     --corpus <training MANIFEST.json> --corpus <…> --model-card <model-card.json> \
+ *     [--training-config <config .yaml>] [--path-root /mnt/mw] [--per-country 200] [--seed 2868] \
+ *     [--countries al,au]
  *
- *   It reads the extracts and writes only under `--out`, which may not lie under the extract directory.
+ *   Name each compared model by its `--model-card`, or by its `--training-config` when the card's
+ *   `training.corpus_version` is stale. It reads the extracts and writes only under `--out`, which may not lie
+ *   under the extract directory.
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -24,11 +26,8 @@ import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { readHeldoutLocalePackages } from "#tools/eval-harness/heldout/per/country"
 import { collectOSMSuiteRows, freezeOSMSuites, type PolicyLookup } from "#tools/eval-harness/osm-suites/build"
-import { extractCountryOf, type OSMSuiteRow } from "#tools/eval-harness/osm-suites/extract"
-import { gradeOSMSuite, totalSuiteOutcomes } from "#tools/eval-harness/osm-suites/grade"
+import { extractCountryOf } from "#tools/eval-harness/osm-suites/extract"
 
 const { values } = parseArguments({
 	options: {
@@ -36,12 +35,11 @@ const { values } = parseArguments({
 		out: { type: "string" },
 		corpus: { type: "string", multiple: true },
 		"model-card": { type: "string", multiple: true },
+		"training-config": { type: "string", multiple: true },
 		"path-root": { type: "string" },
 		"per-country": { type: "string" },
 		seed: { type: "string" },
 		countries: { type: "string" },
-		"weights-cache": { type: "string" },
-		workers: { type: "string" },
 	},
 })
 
@@ -107,6 +105,7 @@ const frozen = await freezeOSMSuites({
 	overlap: {
 		corpora: values.corpus ?? [],
 		modelCards: values["model-card"] ?? [],
+		trainingConfigs: values["training-config"] ?? [],
 		pathRoot: values["path-root"] ?? "/data",
 	},
 	outDirectory: out.toString(),
@@ -132,29 +131,6 @@ for (const suite of frozen) {
 			.map(([cls, n]) => `${cls} ${n}`)
 			.join(", ")})`
 	)
-}
-
-if (values["weights-cache"]) {
-	const packages = [...(await readHeldoutLocalePackages()).entries()]
-	const grades: Record<string, unknown> = {}
-
-	for (const suite of frozen) {
-		const { rows } = await readHeldoutDatasetRows(suite.manifestPath)
-
-		if (!rows.length) continue
-
-		const outcomes = await Array.fromAsync(
-			gradeOSMSuite(
-				rows as OSMSuiteRow[],
-				{ cacheRoot: values["weights-cache"], packages },
-				Number(values.workers ?? 2)
-			)
-		)
-
-		grades[suite.shape] = totalSuiteOutcomes(outcomes)
-	}
-
-	summary["grades"] = grades
 }
 
 await writeLocalJSONFile(summary, resolvePath(out, "summary.json"))

@@ -192,6 +192,86 @@ describe("the OpenStreetMap suites", () => {
 		expect(lineage.crossCountryDuplicates).toBe(1)
 	})
 
+	it("drops rows either compared model trained on, reading one model's corpus from its training config", async () => {
+		const pk = await writeExtract("pk", PK_ROWS)
+		const published = await writeTraining(renderOSMExtractRecord(PK_ROWS[0]!, "PK", {})!.source_id!)
+		const candidateFile = `${root}/candidate/train/part-0.parquet`
+		const candidateID = renderOSMExtractRecord(PK_ROWS[1]!, "PK", {})!.source_id!
+
+		await makeDirectories(`${root}/candidate/train`)
+
+		{
+			using db = await openDuckDB()
+
+			await db.run(
+				`COPY (SELECT * FROM (VALUES ('osm', '${candidateID}', NULL::VARCHAR)) t(source, source_id, base_source_id)) ` +
+					`TO '${candidateFile}' (FORMAT parquet)`
+			)
+		}
+
+		const candidateManifest = `${root}/candidate/MANIFEST.json`
+		const config = `${root}/configs/candidate.yaml`
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.9.9-candidate",
+				files: [{ path: "/data/candidate/train/part-0.parquet", split: "train", rows: 1 }],
+			},
+			candidateManifest
+		)
+
+		await writeLocalTextFile(
+			"data:\n  corpus_dir: /data/corpus/versioned/v0.9.9-candidate/corpus-v0.9.9-candidate\n",
+			config
+		)
+
+		const frozen = await freezeOSMSuites({
+			collected: await collectOSMSuiteRows({ files: [pk], perCountry: 10, seed: 1 }),
+			perCountry: 10,
+			seed: 1,
+			overlap: {
+				corpora: [published.manifest, candidateManifest],
+				modelCards: [published.card],
+				trainingConfigs: [config],
+				pathRoot: root,
+			},
+			outDirectory: `${root}/out-two-models`,
+			createdAt: "2026-10-29T00:00:00Z",
+			policyFor: () => null,
+		})
+
+		const suite = frozen.find((candidate) => candidate.shape === OSMSuiteShape.PlaceWithoutStreet)!
+
+		// The published model trained on the first Karachi row and the candidate on the second.
+		expect(suite).toMatchObject({ sampled: 2, kept: 0, counts: { known_overlap: 2 } })
+
+		const lineage = await readLocalJSONFile<{
+			overlap: {
+				audit: {
+					path: string
+					sha256: string
+					models: Array<{ source: string; corpusVersion: string; matched: boolean }>
+					corpora: Array<{ corpusVersion: string; rowsRead: number; matches: number }>
+				}
+			}
+		}>(suite.lineagePath)
+
+		expect(lineage.overlap.audit.models.map((model) => [model.source, model.corpusVersion, model.matched])).toEqual([
+			["model-card", "v-fixture", true],
+			["training-config", "v0.9.9-candidate", true],
+		])
+
+		expect(
+			lineage.overlap.audit.corpora.map((corpus) => [corpus.corpusVersion, corpus.rowsRead, corpus.matches])
+		).toEqual([
+			["v-fixture", 1, 1],
+			["0.9.9-candidate", 1, 1],
+		])
+
+		expect(lineage.overlap.audit.path).toBe("osm-suites.audit.json")
+		expect(lineage.overlap.audit.sha256).toMatch(/^[0-9a-f]{64}$/u)
+	})
+
 	it("keeps no row when a model card's training corpus was not read", async () => {
 		const pk = await writeExtract("pk", PK_ROWS)
 		const card = `${root}/cards/unread.json`

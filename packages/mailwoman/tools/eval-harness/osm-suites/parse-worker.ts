@@ -23,16 +23,20 @@ import type { OSMSuiteRow } from "#tools/eval-harness/osm-suites/extract"
  */
 export interface SuiteParseWorkerData {
 	/**
-	 * A package-shaped weights cache, as `mwdev_arc` writes one.
+	 * A package-shaped weights cache, as `mwdev_arc` writes one, or `null` for the installed weights packages.
 	 */
-	cacheRoot: string
+	cacheRoot: string | null
 	/**
 	 * Country to weights locale, as `readHeldoutLocalePackages` reads the release configuration.
 	 */
 	packages: ReadonlyArray<[string, string]>
+	/**
+	 * ONNX intra-op threads per worker, so the pool's threads stay within the cores it is given.
+	 */
+	intraOpNumThreads: number
 }
 
-const { cacheRoot, packages } = (workerData?.userData ?? {}) as SuiteParseWorkerData
+const { cacheRoot, packages, intraOpNumThreads } = (workerData?.userData ?? {}) as SuiteParseWorkerData
 // A worker started without `userData` has no packages, and every row then reads the base locale.
 const localePackages = packages ? new Map(packages) : new Map<string, string>()
 const classifiers = new Map<string, Promise<HeldoutClassifier>>()
@@ -43,7 +47,7 @@ async function classifierFor(locale: string): Promise<HeldoutClassifier> {
 	if (!pending) {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
-		pending = NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot })
+		pending = NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot, intraOpNumThreads })
 		classifiers.set(locale, pending)
 	}
 
