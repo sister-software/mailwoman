@@ -22,7 +22,7 @@ import { pythonIsDigit, pythonSplitWhitespace, pythonStrip } from "@mailwoman/co
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { addToKeySet, type CJKRecord, codePointLength, unitKey } from "#cjk/builder"
+import { addToKeySet, type CJKRecord, codePointLength, labelTokensByFirstSpan, unitKey } from "#cjk/builder"
 import { JP_PREFECTURE_NAMES, normalizeJPName, splitJPStreet } from "#jp/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"
@@ -271,26 +271,10 @@ export function alignCorporateRow(row: CorporateRow, index: JPKeyIndex, withPost
  */
 export function jpRegistryRecord(aligned: JPAligned): CJKRecord {
 	const { raw } = aligned
-	const tokens: string[] = []
-	const labels: string[] = []
-	let cursor = 0
-
-	for (const token of pythonSplitWhitespace(raw)) {
-		const found = raw.indexOf(token, cursor)
-		const index = codePointLength(raw.slice(0, found))
-
-		cursor = found + token.length
-
-		const span = aligned.span_starts.findIndex((start, i) => start <= index && index < aligned.span_ends[i]!)
-
-		tokens.push(token)
-		labels.push(span === -1 ? "O" : `B-${aligned.span_tags[span]}`)
-	}
 
 	return {
 		raw,
-		tokens,
-		labels,
+		...labelTokensByFirstSpan(raw, aligned.span_starts, aligned.span_ends, aligned.span_tags),
 		span_starts: [...aligned.span_starts],
 		span_ends: [...aligned.span_ends],
 		span_tags: [...aligned.span_tags],

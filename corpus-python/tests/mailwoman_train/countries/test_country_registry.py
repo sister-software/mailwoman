@@ -17,8 +17,8 @@ COUNTRIES_ROOT = paths.SOURCE_ROOT / "countries"
 ALPHA2 = frozenset(COUNTRY_MODULES) | SOURCE_ONLY
 
 
-def test_the_three_built_countries_are_registered() -> None:
-    assert set(COUNTRY_MODULES) == {"jp", "kr", "tw"}
+def test_the_built_countries_are_registered() -> None:
+    assert set(COUNTRY_MODULES) == {"kr", "tw"}
 
 
 def test_every_country_directory_is_declared_as_one_kind_or_the_other() -> None:
@@ -58,14 +58,12 @@ def test_every_registered_country_satisfies_the_protocol() -> None:
 
 def test_each_country_names_the_label_set_its_rows_are_tagged_against() -> None:
     """Each country's label set must match its rows: Japan's head is its own, while Korea and Taiwan share the CJK head."""
-    assert country_module("jp").LABEL_SET_NAME == "stage3-jp"
     assert country_module("kr").LABEL_SET_NAME == "stage3-cjk"
     assert country_module("tw").LABEL_SET_NAME == "stage3-cjk"
 
 
 def test_the_board_floor_is_per_country() -> None:
     """The municipality-population floor above which a row is held out for the board. A single shared constant would move two countries' boards to fix one."""
-    assert country_module("jp").BOARD_BUCKET_MIN == 97
     assert country_module("kr").BOARD_BUCKET_MIN == 90
     assert country_module("tw").BOARD_BUCKET_MIN == 90
 
@@ -73,9 +71,9 @@ def test_the_board_floor_is_per_country() -> None:
 def test_an_unknown_code_names_the_known_ones() -> None:
     with pytest.raises(KeyError) as caught:
         country_module("zz")
-    assert "jp" in str(caught.value)
+    assert "kr" in str(caught.value)
 
 
 def test_the_lookup_is_case_insensitive() -> None:
     """Callers get alpha-2 codes from configs or filenames. Those values are not always lowercase."""
-    assert country_module("JP") is country_module("jp")
+    assert country_module("KR") is country_module("kr")

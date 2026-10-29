@@ -450,7 +450,7 @@ resolver mechanism ships.
   One package for the family, `@mailwoman/neural-weights-cjk`; `release.config.json` `charWeights.<family>` names the
   graph and the sealed vocabulary, and the package's `scripts/link-dev-weights.ts` links them into the data-root
   overlay for a dev checkout.
-- **Corpus.** `countries/jp/corpora/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
+- **Corpus.** `packages/corpus/lib/jp/corpus/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
   compact folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
   `countries/cjk/overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
   register is a renderer entry with a weight and a build report that states the row count it landed on.

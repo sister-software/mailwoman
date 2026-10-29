@@ -10,11 +10,10 @@ import argparse
 import inspect
 
 from mailwoman_train import protocols
-from mailwoman_train.countries.jp import corpora as jp_corpora
 from mailwoman_train.countries.kr import corpora as kr_corpora
 from mailwoman_train.countries.tw import corpora as tw_corpora
 
-COUNTRY_BUILDERS = (jp_corpora, kr_corpora, tw_corpora)
+COUNTRY_BUILDERS = (kr_corpora, tw_corpora)
 
 
 def test_country_module_protocol_declares_the_expected_members() -> None:
@@ -45,8 +44,8 @@ def test_every_country_builder_already_carries_the_constants() -> None:
 def test_build_corpus_matches_the_signature_every_builder_already_has() -> None:
     """The protocol takes a parsed `Namespace` because that is what `build` takes.
 
-    Each builder reads more than a dozen settings off it. The JP one reads eighteen — so a
-    narrower interface would either drop them or silently substitute defaults.
+    Each builder reads more than a dozen settings off it, so a narrower interface would either
+    drop them or silently substitute defaults.
     """
     # eval_str resolves annotations. `from __future__ import annotations` leaves them as
     # strings on both sides — comparing the strings would pass on a name that resolves to

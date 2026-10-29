@@ -1,9 +1,10 @@
 {
 	"README": [
 		"Pins one seeded Japan build across a refactor.",
-		"Regenerate: uv run python tests/mailwoman_train/countries/test_jp_build_parity.py",
-		"Fixture: write_fixture() in the test beside this file — a synthetic Overture-JP parquet and",
-		"  KEN_ALL CSV carrying the shapes the renderers branch on, not a sample of the real source.",
+		"Written by the Python assembler (corpus-python countries/jp/corpora) before it moved to",
+		"  packages/corpus/lib/jp/corpus. It records that assembler's output and is not regenerated.",
+		"Fixture: the synthetic Overture-JP parquet and KEN_ALL CSV that lib/jp/corpus/assemble.test.ts",
+		"  writes, carrying the shapes the renderers branch on, not a sample of the real source.",
 		"",
 		"train / val: every rendered row as raw + register + the span triple, in emission order.",
 		"  The ORDER is the assertion: one moved draw off the shared RNG re-renders the whole corpus.",

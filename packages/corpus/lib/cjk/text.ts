@@ -37,6 +37,54 @@ export function fullwidthDigits(text: string): string {
 	return text.replaceAll(/[0-9]/gu, (digit) => FULLWIDTH_DIGITS[Number(digit)]!)
 }
 
+/**
+ * The single bytes on which Node's `shift_jis` decoder and CPython's `cp932`
+ * codec disagree, as CPython decodes them.
+ *
+ * Every one of the 9,792 two-byte sequences CPython 3.12.3 decodes decodes the same in Node 26.
+ * These eight do not.
+ */
+const CP932_SINGLE_BYTES: ReadonlyMap<number, string> = new Map([
+	[0x1a, "\u001A"],
+	[0x1c, "\u001C"],
+	[0x7f, "\u007F"],
+	[0x80, "\u0080"],
+	[0xa0, ""],
+	[0xfd, ""],
+	[0xfe, ""],
+	[0xff, ""],
+])
+
+const isCP932Lead = (byte: number): boolean => (byte >= 0x81 && byte <= 0x9f) || (byte >= 0xe0 && byte <= 0xfc)
+
+/**
+ * Bytes decoded as CPython's `cp932` codec decodes them, the encoding of Japan Post's KEN_ALL files.
+ */
+export function decodeCP932(bytes: Uint8Array): string {
+	const decoder = new TextDecoder("shift_jis")
+	let out = ""
+	let segment = 0
+
+	for (let index = 0; index < bytes.length; index++) {
+		const byte = bytes[index]!
+
+		if (isCP932Lead(byte)) {
+			index++
+
+			continue
+		}
+
+		const mapped = CP932_SINGLE_BYTES.get(byte)
+
+		if (mapped === undefined) continue
+
+		out += decoder.decode(bytes.subarray(segment, index)) + mapped
+		segment = index + 1
+	}
+
+	return out + decoder.decode(bytes.subarray(segment))
+}
+
 const isHalfwidthKana = (character: string): boolean => {
 	const code = character.codePointAt(0)!
 

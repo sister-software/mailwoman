@@ -19,7 +19,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
-import { pythonIsSpace } from "@mailwoman/core/strings/python-text"
+import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import type { PathBuilderLike } from "path-ts"
 
 import { normalizeCJKText } from "#cjk/text"
@@ -132,6 +132,37 @@ export class RowRenderer {
 	get length(): number {
 		return this.#length
 	}
+}
+
+/**
+ * The legacy token columns of a span-labeled row: each whitespace token of `raw`,
+ * labeled `B-<tag>` with the span its first character falls in, or `O` when none covers it.
+ *
+ * The character path ignores them, and the corpus schema requires them.
+ */
+export function labelTokensByFirstSpan(
+	raw: string,
+	starts: readonly number[],
+	ends: readonly number[],
+	tags: readonly string[]
+): { tokens: string[]; labels: string[] } {
+	const tokens: string[] = []
+	const labels: string[] = []
+	let cursor = 0
+
+	for (const token of pythonSplitWhitespace(raw)) {
+		const found = raw.indexOf(token, cursor)
+		const index = codePointLength(raw.slice(0, found))
+
+		cursor = found + token.length
+
+		const span = starts.findIndex((start, i) => start <= index && index < ends[i]!)
+
+		tokens.push(token)
+		labels.push(span === -1 ? "O" : `B-${tags[span]}`)
+	}
+
+	return { tokens, labels }
 }
 
 /**
