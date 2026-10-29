@@ -30,6 +30,8 @@ import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
+import { LayerCatalog } from "#data/catalog"
+import { holdSelectionLease } from "#data/retention"
 import { loadBundledCoarsePlacer } from "#default/placer"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
 import {
@@ -476,6 +478,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	progress("Checking gazetteer…")
 
+	// A session reading an active selection holds a lease on its generation,
+	// so a prune keeps those artifacts until the session is disposed.
+	// A data root with no selection takes no lease and receives no write.
+	const generation = (await LayerCatalog.read(options.dataRoot)).generation
+	const lease = generation ? await holdSelectionLease(options.dataRoot, generation) : null
+
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot)
 	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
@@ -592,6 +600,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	const dispose = (): void => {
+		disposeQuietly(lease)
 		disposeQuietly(explicitAp)
 		disposeQuietly(explicitIp)
 		disposeQuietly(regionDatabaseProvider)

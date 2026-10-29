@@ -243,6 +243,14 @@ export class LayerCatalog {
 	}
 
 	/**
+	 * A snapshot with no selection, which resolves every role to its conventional path,
+	 * as a data root read before the selection existed does.
+	 */
+	static empty(dataRoot: PathBuilderLike): LayerCatalog {
+		return new LayerCatalog(resolvePath(dataRoot.toString()), null, [])
+	}
+
+	/**
 	 * The generation this snapshot read, or `null` when the data root has no selection.
 	 */
 	get generation(): number | null {
@@ -463,6 +471,57 @@ export async function replaceActiveSelection(
 	await writeRecordAtomically(next, paths.activeSelection)
 
 	return next
+}
+
+/**
+ * Select every artifact of one installed installation for the role and scope
+ * its manifest records, as a new generation.
+ *
+ * An entry of the same role and scope is replaced.
+ * Other entries are kept.
+ *
+ * @throws {@link ActiveSelectionError} when the installation is not installed
+ * or an artifact fails validation.
+ */
+export async function activateInstallation(
+	dataRoot: PathBuilderLike,
+	installationID: LayerInstallationID,
+	now: () => Date = () => new Date()
+): Promise<ActiveSelection> {
+	const root = resolvePath(dataRoot.toString())
+	const installation = (await readInstallations(root)).find((candidate) => candidate.id === installationID)
+
+	if (!installation) {
+		throw new ActiveSelectionError("activation", [`installation ${installationID} is not installed under ${root}`])
+	}
+
+	const set: SelectionEntry[] = []
+
+	for (const artifact of installation.artifacts) {
+		const manifest = await readInstalledManifest(resolvePath(root, artifact.path, ".."))
+
+		if (!manifest) {
+			throw new ActiveSelectionError("activation", [`${artifact.path} has no manifest`])
+		}
+
+		const subdivision = manifest.scope.subdivisions?.[0] ?? null
+
+		const country = subdivision
+			? subdivision.slice(0, 2)
+			: manifest.scope.countries.length === 1
+				? (manifest.scope.countries[0] ?? null)
+				: null
+
+		set.push({
+			role: manifest.role,
+			scope: { country, subdivision },
+			order: [{ installationID, artifactID: artifact.artifactID }],
+		})
+	}
+
+	const current = await readActiveSelection(root)
+
+	return replaceActiveSelection(root, { basedOn: current?.generation ?? null, set }, now)
 }
 
 /**

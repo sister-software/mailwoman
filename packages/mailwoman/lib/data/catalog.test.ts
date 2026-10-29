@@ -9,31 +9,18 @@
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import * as writers from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import {
-	type ActiveSelection,
-	type ArtifactManifest,
-	ArtifactFormat,
-	artifactIDFromSHA256,
-	artifactSetID,
-	type LayerInstallation,
-	layerInstallationID,
-	type SelectionEntry,
-	ServingRole,
-	UnreadableArtifactError,
-} from "@mailwoman/core/layers"
-import { relative } from "path-ts"
+import { type ActiveSelection, ServingRole, UnreadableArtifactError } from "@mailwoman/core/layers"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
+	activateInstallation,
 	catalogPaths,
 	LayerCatalog,
 	readActiveSelection,
 	replaceActiveSelection,
 	rollbackActiveSelection,
-	writeInstallation,
-	writeRecordAtomically,
 } from "#data/catalog"
+import { installFixtureArtifact } from "#test-kit/fixture-registry"
 
 vi.mock("@mailwoman/core/fs/writers", { spy: true })
 
@@ -48,59 +35,8 @@ afterEach(async () => {
 	await scratch[Symbol.asyncDispose]()
 })
 
-/**
- * Install one artifact of `bytes` as `role`, writing its file, manifest and installation record.
- */
-async function install(
-	role: ServingRole,
-	fileName: string,
-	bytes: string
-): Promise<{ entry: SelectionEntry; path: string }> {
-	const root = scratch.path.toString()
-	const id = artifactIDFromSHA256(sha256Hex(bytes))
-	const directory = catalogPaths(root).artifactDirectory(role, id)
-	const path = directory(fileName).toString()
-
-	const manifest: ArtifactManifest = {
-		id,
-		role,
-		format: ArtifactFormat.SQLite,
-		schemaVersion: 1,
-		bytes: bytes.length,
-		normalization: role === ServingRole.Candidate ? null : { algorithm: "street-key", version: "1", locale: "us" },
-		scope:
-			role === ServingRole.Candidate
-				? { countries: [], subdivisions: null }
-				: { countries: ["US"], subdivisions: ["US-DC"] },
-		observedCountries: null,
-		coverageEvidence: false,
-		sources: [{ publisher: "fixture", release: null, url: null, sha256: null, md5: null }],
-		recipe: null,
-		builderSHA: null,
-		license: "CC0-1.0",
-		createdAt: "2026-10-29T00:00:00Z",
-	}
-
-	await writers.writeLocalTextFile(bytes, path)
-	await writeRecordAtomically(manifest, directory("manifest.json"))
-
-	const set = artifactSetID([{ artifactID: id, role, schemaVersion: 1 }])
-	const origin = { kind: "published" as const, entry: role, release: fileName }
-
-	const installation: LayerInstallation = {
-		id: layerInstallationID(set, origin),
-		artifactSet: set,
-		origin,
-		artifacts: [{ artifactID: id, role, path: relative(root, path) }],
-		installedAt: "2026-10-29T00:00:00Z",
-	}
-
-	await writeInstallation(root, installation)
-
-	const scope =
-		role === ServingRole.Candidate ? { country: null, subdivision: null } : { country: "US", subdivision: "US-DC" }
-
-	return { entry: { role, scope, order: [{ installationID: installation.id, artifactID: id }] }, path }
+function install(role: ServingRole, fileName: string, bytes: string) {
+	return installFixtureArtifact(scratch.path, role, fileName, bytes)
 }
 
 describe("replaceActiveSelection", () => {
@@ -211,6 +147,24 @@ describe("rollbackActiveSelection", () => {
 		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
 
 		await expect(rollbackActiveSelection(scratch.path)).rejects.toThrow(/replaced no earlier generation/u)
+	})
+})
+
+describe("activateInstallation", () => {
+	it("selects an installed installation's artifacts for the scope their manifests record", async () => {
+		const candidate = await install(ServingRole.Candidate, "candidate.db", "candidate bytes")
+		const dc = await install(ServingRole.AddressPoints, "address-points-us-dc.db", "dc bytes")
+
+		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
+
+		const next = await activateInstallation(scratch.path, dc.installationID)
+
+		expect(next.generation).toBe(2)
+		expect(next.entries).toEqual([candidate.entry, dc.entry])
+	})
+
+	it("refuses an installation that is not installed", async () => {
+		await expect(activateInstallation(scratch.path, "inst-0000000000000000")).rejects.toThrow(/is not installed/u)
 	})
 })
 

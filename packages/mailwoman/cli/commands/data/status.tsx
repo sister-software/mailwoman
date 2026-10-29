@@ -95,7 +95,7 @@ interface StatusReport {
 	dataRoot: string
 	generation: number | null
 	artifacts: ArtifactStatus[]
-	inactive: Array<{ remotePath: string | null; artifactID: string; role: string; path: string }>
+	inactive: Array<{ installationID: string; remotePath: string | null; artifactID: string; role: string; path: string }>
 	interrupted: InterruptedAcquisition[]
 }
 
@@ -221,7 +221,7 @@ async function statusForBundles(
 		checks.push({
 			ok: true,
 			check: "installed, not selected",
-			detail: `${copy.receipt?.remotePath ?? copy.manifest.role} at ${copy.path}; a pull of its bundle selects it`,
+			detail: `${copy.receipt?.remotePath ?? copy.manifest.role} at ${copy.path}; \`mailwoman data activate ${copy.installationID}\` or a pull of its bundle selects it`,
 		})
 	}
 
@@ -241,6 +241,7 @@ async function statusForBundles(
 			generation: installation.generation,
 			artifacts,
 			inactive: installation.inactive.map((copy) => ({
+				installationID: copy.installationID,
 				remotePath: copy.receipt?.remotePath ?? null,
 				artifactID: copy.artifactID,
 				role: copy.manifest.role,

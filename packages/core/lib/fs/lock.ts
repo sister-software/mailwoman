@@ -42,7 +42,7 @@ export interface DirectoryLock extends AsyncDisposable {
  * Signal 0 is an existence check: the kernel reports whether the pid can be signaled and delivers no signal.
  * `EPERM` means the process exists under another user.
  */
-function processExists(pid: number): boolean {
+export function processExists(pid: number): boolean {
 	try {
 		process.kill(pid, 0)
 
