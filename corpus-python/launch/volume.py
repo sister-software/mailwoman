@@ -102,3 +102,7 @@ def versions() -> None:
     print(f"onnx        {onnx.__version__}")
     print(f"onnxruntime {onnxruntime.__version__}")
     print(f"onnxscript  {onnxscript.__version__}")
+    # The training loader encodes rows through this extension, which the image builds from `packages/mtf`.
+    import mailwoman_mtf
+
+    print(f"mailwoman_mtf Unicode {mailwoman_mtf.UNICODE_VERSION}")

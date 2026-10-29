@@ -40,7 +40,7 @@ def _main_checkout_of(directory: Path) -> Path | None:
     return (git_directory / common.read_text().strip()).resolve().parent
 
 
-def _repository_root() -> Path:
+def repository_root() -> Path:
     """The checkout this file belongs to: `corpus-python/launch/settings.py` sits two levels below it."""
     return Path(__file__).resolve().parents[2]
 
@@ -51,7 +51,7 @@ def resolve_env_file(working_directory: Path | None = None) -> Path | None:
     The working directory's own file wins, then the repository root's, then the main checkout's when the
     repository root is a worktree.
     """
-    candidates = [working_directory or Path.cwd(), _repository_root()]
+    candidates = [working_directory or Path.cwd(), repository_root()]
     for directory in candidates:
         local = directory / ".env"
         if local.is_file():

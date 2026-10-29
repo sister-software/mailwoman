@@ -91,8 +91,46 @@ def _modal_packages() -> set[str]:
     text = MODAL_IMAGE.read_text()
     block = text[text.index(".pip_install(") : text.index(".add_local_python_source")]
     code = "\n".join(line for line in block.splitlines() if not line.lstrip().startswith("#"))
+    packages = {_requirement_name(m.group(1)) for m in re.finditer(r'"([A-Za-z0-9_.-]+[^"]*)"', code)}
+    if "maturin build --locked" in code:
+        packages |= BUILT_IN_IMAGE
 
-    return {_requirement_name(m.group(1)) for m in re.finditer(r'"([A-Za-z0-9_.-]+[^"]*)"', code)}
+    return packages
+
+
+#: The `mailwoman_mtf` extension's project. Its build requirement sets the maturin floor and ceiling.
+MTF_PY_PROJECT = REPO_ROOT / "packages" / "mtf" / "crates" / "mtf-py" / "pyproject.toml"
+MTF_TOOLCHAIN = REPO_ROOT / "packages" / "mtf" / "rust-toolchain.toml"
+
+#: The extension the image builds from the crates rather than installing from an index.
+BUILT_IN_IMAGE = {"mailwoman-mtf"}
+
+
+def _extension_problems() -> list[str]:
+    """Disagreements between the image's Rust toolchain and maturin pins and the extension's own declarations."""
+    problems: list[str] = []
+    text = MODAL_IMAGE.read_text()
+    rust = re.search(r'^RUST_TOOLCHAIN = "([^"]+)"', text, re.MULTILINE)
+    maturin = re.search(r'^MATURIN_VERSION = "([^"]+)"', text, re.MULTILINE)
+    channel = tomllib.loads(MTF_TOOLCHAIN.read_text())["toolchain"]["channel"]
+    if rust is None or rust.group(1) != channel:
+        problems.append(
+            f"app.py RUST_TOOLCHAIN is {rust.group(1) if rust else '(absent)'} but "
+            f"{MTF_TOOLCHAIN.relative_to(REPO_ROOT)} pins {channel}"
+        )
+    requires = tomllib.loads(MTF_PY_PROJECT.read_text())["build-system"]["requires"]
+    spec = next((r for r in requires if _requirement_name(r) == "maturin"), None)
+    bounds = re.fullmatch(r"maturin>=([0-9.]+),<([0-9]+)", spec or "")
+    if maturin is None or bounds is None:
+        problems.append(f"cannot compare the image's maturin pin with the extension's build requirement {spec!r}")
+    else:
+        version = tuple(int(part) for part in maturin.group(1).split("."))
+        floor = tuple(int(part) for part in bounds.group(1).split("."))
+        if not (floor <= version and version[0] < int(bounds.group(2))):
+            problems.append(f"app.py MATURIN_VERSION {maturin.group(1)} does not satisfy {spec}")
+    if "maturin build --locked" not in text or "import mailwoman_mtf" not in text:
+        problems.append("app.py no longer builds and imports mailwoman_mtf, which the training loader imports")
+    return problems
 
 
 def _ruff_dev_pin() -> str | None:
@@ -143,6 +181,7 @@ def main() -> int:
             problems.append(f"{dep}: pinned =={py} in pyproject but absent from the Modal image pins")
 
     missing_from_image = sorted(_base_requirements() - _modal_packages())
+    problems.extend(_extension_problems())
     if missing_from_image:
         problems.append(
             "the Modal image does not install "

@@ -29,11 +29,20 @@ fn in_ranges(table: &[(u32, u32)], c: char) -> bool {
 		.is_ok()
 }
 
-fn mapped(table: &'static [(u32, &'static str)], c: char) -> Option<&'static str> {
+/// The code points a character maps to in `table`, or `None` when it maps to itself.
+fn mapped(table: &'static [(u32, &'static [u32])], c: char) -> Option<&'static [u32]> {
 	table
 		.binary_search_by_key(&(c as u32), |&(code, _)| code)
 		.ok()
 		.map(|i| table[i].1)
+}
+
+fn push_code_points(out: &mut String, code_points: &[u32]) {
+	out.extend(
+		code_points
+			.iter()
+			.map(|&code| char::from_u32(code).expect("the generated tables hold scalar values only")),
+	);
 }
 
 /// `str.isspace` for one character.
@@ -91,7 +100,7 @@ pub fn lower(text: &[char]) -> String {
 		if c == '\u{3A3}' {
 			out.push(if is_final_sigma(text, i) { '\u{3C2}' } else { '\u{3C3}' });
 		} else if let Some(m) = mapped(tables::LOWER, c) {
-			out.push_str(m);
+			push_code_points(&mut out, m);
 		} else {
 			out.push(c);
 		}
@@ -104,7 +113,7 @@ pub fn upper(text: &[char]) -> String {
 	let mut out = String::with_capacity(text.len());
 	for &c in text {
 		match mapped(tables::UPPER, c) {
-			Some(m) => out.push_str(m),
+			Some(m) => push_code_points(&mut out, m),
 			None => out.push(c),
 		}
 	}
@@ -142,7 +151,7 @@ mod tests {
 	}
 
 	#[test]
-	fn decimal_covers_non_ascii_digits_only_in_nd() {
+	fn decimal_covers_only_the_decimal_number_category() {
 		assert!(is_decimal('٣') && is_decimal('7'));
 		assert!(!is_decimal('²') && !is_decimal('Ⅳ'));
 	}

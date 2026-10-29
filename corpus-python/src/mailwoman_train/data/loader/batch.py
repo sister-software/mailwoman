@@ -1,8 +1,10 @@
-"""Stack encoded examples into the batch the trainer feeds the model.
+"""Assemble the batches the trainer feeds the model.
 
-A channel is present in the batch only when the examples include it, decided from the first example
-because every example in a run comes from one config. An absent channel is omitted rather than
-zero-filled, so the trainer's tensor conversion skips it and the model runs without it.
+The SentencePiece path hands each batch of sampled rows to the row encoder, which returns `[B, L]` and
+`[B, L, D]` arrays, and adds each row's locale and address-system ids in row order. The char path stacks one
+`EncodedExample` per row with `collate`. A channel is present in a batch only when its lexicon is configured. An
+absent channel is omitted rather than zero-filled, so the trainer's tensor conversion skips it and the model runs
+without it.
 """
 
 from __future__ import annotations
@@ -11,9 +13,12 @@ import random
 from collections.abc import Callable, Iterator
 from typing import Any
 
+import mailwoman_mtf
+
+from ...address_systems import address_system_id
 from ...config import Config
-from ...tokenizer import Tokenizer
-from .encode import iter_encoded
+from ...labels import locale_id
+from .encode import iter_encoded, iter_sampled_rows, require_label_set_supported, resolve_char_mode
 from .example import EncodedExample
 
 
@@ -26,40 +31,27 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
         "locale_ids": [ex.locale_id for ex in batch],
         "address_system_ids": [ex.address_system_id for ex in batch],
     }
-    # Postcode-anchor channel (#239/#240): only present when every example includes anchor features
-    # (i.e. an anchor lookup is configured). Absent → omitted, so the trainer's tensor-conversion
-    # skips it and the model runs anchor-free (back-compat).
-    if batch and batch[0].anchor_features is not None:
-        out["anchor_features"] = [ex.anchor_features for ex in batch]
-        out["anchor_confidence"] = [ex.anchor_confidence for ex in batch]
-    # Gazetteer-anchor channel (#464): same presence interface as the postcode anchor.
-    if batch and batch[0].gazetteer_features is not None:
-        out["gazetteer_features"] = [ex.gazetteer_features for ex in batch]
-        out["gazetteer_confidence"] = [ex.gazetteer_confidence for ex in batch]
-    # Country-lexicon channel (#1104): same presence interface.
-    if batch and batch[0].country_features is not None:
-        out["country_features"] = [ex.country_features for ex in batch]
-        out["country_confidence"] = [ex.country_confidence for ex in batch]
-    # Street-type channel (P-A / Option A): same presence interface.
-    if batch and batch[0].street_type_features is not None:
-        out["street_type_features"] = [ex.street_type_features for ex in batch]
-        out["street_type_confidence"] = [ex.street_type_confidence for ex in batch]
-    # Locality-surface channel (v3.16.0): same presence interface.
-    if batch and batch[0].locality_surface_features is not None:
-        out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
-        out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
-    if batch and batch[0].code_unit_features is not None:
-        out["code_unit_features"] = [ex.code_unit_features for ex in batch]
-        out["code_unit_confidence"] = [ex.code_unit_confidence for ex in batch]
+    for channel in mailwoman_mtf.CHANNEL_NAMES:
+        if batch and getattr(batch[0], f"{channel}_features") is not None:
+            out[f"{channel}_features"] = [getattr(ex, f"{channel}_features") for ex in batch]
+            out[f"{channel}_confidence"] = [getattr(ex, f"{channel}_confidence") for ex in batch]
     # CharCNN input path (#825 / v8 CJK): same presence interface — set iff char_mode != "off".
     if batch and batch[0].char_ids is not None:
         out["char_ids"] = [ex.char_ids for ex in batch]
     return out
 
 
+def encode_rows(encoder: mailwoman_mtf.RowEncoder, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """One batch from the row encoder, with each row's locale and address-system ids in row order."""
+    out: dict[str, Any] = dict(encoder.encode_batch(rows))
+    out["locale_ids"] = [locale_id(row.get("country")) for row in rows]
+    out["address_system_ids"] = [address_system_id(row.get("country"), row["raw"]) for row in rows]
+    return out
+
+
 def iter_batches(
     cfg: Config,
-    tokenizer: Tokenizer | None,
+    encoder: mailwoman_mtf.RowEncoder | None,
     *,
     split: str,
     batch_size: int,
@@ -67,29 +59,49 @@ def iter_batches(
     row_limit: int | None = None,
     observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[dict[str, Any]]:
-    """Yield collated batches indefinitely until the underlying iterator exhausts.
+    """Yield batches until the sampled rows run out.
 
-    ``observer`` receives each source row of a batch once the consumer asks for the batch after it,
-    so a batch fetched and then abandoned (the loop breaking at ``max_steps``) is never observed.
+    ``encoder`` is the row encoder the process built with `build_row_encoder`, or None on the char path.
+    ``observer`` receives each source row of a batch once the consumer asks for the batch after it, so a batch
+    fetched and then abandoned (the loop breaking at ``max_steps``) is never observed.
     """
     rng = random.Random(seed)
-    buf: list[EncodedExample] = []
+    char = resolve_char_mode(cfg.data)
     rows: list[dict[str, Any]] = []
-    for ex in iter_encoded(
-        cfg.data, tokenizer, split=split, rng=rng, row_limit=row_limit, observer=rows.append if observer else None
-    ):
-        buf.append(ex)
-        if len(buf) == batch_size:
-            batch_rows = rows[:]
-            rows.clear()
+    if char is not None:
+        buf: list[EncodedExample] = []
+        for ex in iter_encoded(
+            cfg.data, None, split=split, rng=rng, row_limit=row_limit, observer=rows.append if observer else None
+        ):
+            buf.append(ex)
+            if len(buf) == batch_size:
+                batch_rows = rows[:]
+                rows.clear()
+                yield collate(buf)
+                buf = []
+                if observer:
+                    for row in batch_rows:
+                        observer(row)
+        if buf:
             yield collate(buf)
-            buf = []
             if observer:
-                for row in batch_rows:
+                for row in rows:
                     observer(row)
-    if buf:
-        batch_rows = rows
-        yield collate(buf)
+        return
+
+    require_label_set_supported(cfg.data, char)
+    if encoder is None:
+        raise ValueError("the SentencePiece path requires a row encoder (build_row_encoder)")
+    for row in iter_sampled_rows(cfg.data, split, rng=rng, row_limit=row_limit):
+        rows.append(row)
+        if len(rows) == batch_size:
+            batch_rows, rows = rows, []
+            yield encode_rows(encoder, batch_rows)
+            if observer:
+                for observed in batch_rows:
+                    observer(observed)
+    if rows:
+        yield encode_rows(encoder, rows)
         if observer:
-            for row in batch_rows:
-                observer(row)
+            for observed in rows:
+                observer(observed)

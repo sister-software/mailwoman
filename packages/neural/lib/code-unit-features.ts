@@ -13,8 +13,8 @@ import type { InferChannel } from "#ort-feeds"
 /**
  * The features each piece of a code unit carries.
  *
- * `corpus-python/src/mailwoman_train/tokenizer/code_units.py` computes the same five
- * for training, and `test/fixtures/code-unit-parity.json` holds the two equal.
+ * `packages/mtf/crates/mtf-channels/src/code_units.rs` computes the same five for training,
+ * and `test/fixtures/code-unit-parity.json` holds the two equal.
  */
 export const CODE_UNIT_FEATURE_DIM = 5
 

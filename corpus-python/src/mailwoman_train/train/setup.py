@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+import mailwoman_mtf
 import torch
 from torch import nn
 from torch.optim import AdamW
@@ -61,6 +62,13 @@ def resolve_tokenizer(cfg: Config) -> tuple[Tokenizer | None, int]:
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
     return tokenizer, 0
+
+
+def resolve_encoder(cfg: Config, tokenizer: Tokenizer | None) -> mailwoman_mtf.RowEncoder | None:
+    """The process's row encoder, which reads every lexicon once, or None on the char path."""
+    from ..data.loader import build_row_encoder
+
+    return build_row_encoder(cfg.data, tokenizer) if tokenizer is not None else None
 
 
 def load_or_build_model(

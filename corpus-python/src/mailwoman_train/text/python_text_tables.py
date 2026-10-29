@@ -90,13 +90,14 @@ def _rust_ranges(name: str, values: list[tuple[int, int]]) -> str:
     return f"pub static {name}: &[(u32, u32)] = &[\n{body}\n];\n"
 
 
-def _rust_string(value: str) -> str:
-    return '"' + "".join(f"\\u{{{ord(c):X}}}" for c in value) + '"'
+def _rust_code_points(value: str) -> str:
+    """A string as a Rust array literal of `0x` code points, which the spelling check reads as numbers."""
+    return "&[" + ", ".join(f"0x{ord(c):04X}" for c in value) + "]"
 
 
 def _rust_mapping(name: str, values: list[tuple[int, str]]) -> str:
-    body = "\n".join(f"\t(0x{code:04X}, {_rust_string(text)})," for code, text in values)
-    return f"pub static {name}: &[(u32, &str)] = &[\n{body}\n];\n"
+    body = "\n".join(f"\t(0x{code:04X}, {_rust_code_points(text)})," for code, text in values)
+    return f"pub static {name}: &[(u32, &[u32])] = &[\n{body}\n];\n"
 
 
 def render() -> str:

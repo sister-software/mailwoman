@@ -6,28 +6,30 @@ items 6 + 8, plus the positive case the migration exists for):
 (a) **Label-stream bit-identity** — on rows without intra-span punctuation, the spans-based
     piece-label stream must be BIT-IDENTICAL to the token-based one. Fixtures: plain US row,
     accented FR row (NFC ``é``), multi-span DE row, all-O row.
-(b) **Channel invariance** — the anchor channel (``realign_anchor_to_pieces`` vs the spans
-    sibling) and the gazetteer painting must produce identical tensors under both paths on those
-    fixtures (the per-piece channels key off the same underlying data the migration touches).
+(b) **Channel invariance** — the anchor channel (gold, from tokens and from spans) and the gazetteer
+    painting must produce identical tensors under both paths on those fixtures (the per-piece channels
+    key off the same underlying data the migration touches).
 (c) **Punctuation inside a span** — a row with intra-span punctuation ("P.O. Box 19", one po_box span
     over chars [0, 11)) must produce the punctuation-covering label stream the token path
     structurally cannot: continuous B/I over the period pieces instead of O-fragmented.
 
-Uses mock ``PieceSpan``s (explicit char offsets, the ``test_anchor_alignment`` pattern) so no
-SentencePiece model is needed — torch-free, runnable locally and via the Modal ``run_tests``
-entrypoint.
+The encoder is the training one, `mailwoman_mtf.RowEncoder`, given explicit pieces (char offsets) so no
+SentencePiece model is needed. The Python projection in `tokenizer/spans.py`, which the char path keeps, is
+checked against it on every fixture.
 """
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
+import mailwoman_mtf
 import pytest
 
-from mailwoman_train.features.gazetteer_anchor import GazetteerLexicon, realign_gazetteer_to_pieces
+from mailwoman_train.data.loader.encode import row_encoder
+from mailwoman_train.labels import LABEL_TO_ID
 from mailwoman_train.tokenizer import (
     char_label_array_from_spans,
-    encode_row,
-    realign_anchor_to_pieces,
-    realign_anchor_to_pieces_from_spans,
     realign_labels_to_pieces,
     realign_spans_to_pieces,
 )
@@ -45,16 +47,40 @@ def _pieces(raw: str, chunks: list[str]) -> list[PieceSpan]:
     return out
 
 
-class FakeTokenizer:
-    """Duck-typed stand-in for ``Tokenizer``: fixed pieces, pad_id 0."""
+def encode_row(
+    encoder: mailwoman_mtf.RowEncoder,
+    pieces: list[PieceSpan],
+    raw: str,
+    tokens: list[str],
+    labels: list[str],
+    *,
+    span_starts: list[int] | None = None,
+    span_ends: list[int] | None = None,
+    span_tags: list[str] | None = None,
+) -> dict[str, list[Any]]:
+    """One row through the row encoder with the given pieces, every tensor as a list."""
+    row = {"raw": raw, "tokens": tokens, "labels": labels}
+    if span_starts is not None or span_ends is not None or span_tags is not None:
+        row |= {"span_starts": span_starts, "span_ends": span_ends, "span_tags": span_tags}
+    batch = encoder.encode_batch([row], pieces=[[(p.piece_id, p.char_begin, p.char_end) for p in pieces]])
+    return {name: array[0].tolist() for name, array in batch.items()}
 
-    pad_id = 0
 
-    def __init__(self, pieces: list[PieceSpan]) -> None:
-        self._pieces = pieces
+@pytest.fixture(scope="module")
+def plain() -> mailwoman_mtf.RowEncoder:
+    return row_encoder(None, max_length=32, pad_id=0)
 
-    def encode_with_spans(self, raw: str) -> list[PieceSpan]:
-        return list(self._pieces)
+
+@pytest.fixture(scope="module")
+def channels(tmp_path_factory: pytest.TempPathFactory) -> mailwoman_mtf.RowEncoder:
+    root = tmp_path_factory.mktemp("span-labels")
+    anchor = root / "anchor.json"
+    anchor.write_text(json.dumps({k: list(v) for k, v in ANCHOR_LOOKUP.items()}), encoding="utf-8")
+    lexicon = root / "lexicon.json"
+    lexicon.write_text(json.dumps(LEXICON), encoding="utf-8")
+    return row_encoder(
+        None, max_length=32, pad_id=0, anchor_lookup_path=str(anchor), gazetteer_lexicon_path=str(lexicon)
+    )
 
 
 # endregion
@@ -114,16 +140,16 @@ ANCHOR_LOOKUP = {
     "75008": ({"FR": 1.0}, 48.87, 2.32),
 }
 
-# Tiny in-memory lexicon: enough surface hits (DC code, Berlin/Paris/Washington names) to make the
+# Tiny lexicon: enough surface hits (DC code, Berlin/Paris/Washington names) to make the
 # gazetteer tensors non-trivial on the fixtures.
-LEXICON = GazetteerLexicon(
-    feature_dim=2,
-    slots=("region", "locality_homograph"),
-    bits={"region": 1, "locality_homograph": 2},
-    max_ngram=2,
-    entries={"berlin": 2, "paris": 2, "washington": 2},
-    code_entries={"DC": 1},
-)
+LEXICON = {
+    "feature_dim": 2,
+    "slots": ["region", "locality_homograph"],
+    "bits": {"region": 1, "locality_homograph": 2},
+    "max_ngram": 2,
+    "entries": {"berlin": 2, "paris": 2, "washington": 2},
+    "code_entries": {"DC": 1},
+}
 
 
 def _fixture_sanity(raw, tokens, labels, span_starts, span_ends, span_tags):
@@ -149,12 +175,25 @@ def test_check_a_label_stream_bit_identical(name, raw, tokens, labels, starts, e
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_check_a_encode_row_bit_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
-    """Full encode_row output (ids + mask + label ids, padded) identical under both paths."""
-    tok = FakeTokenizer(_pieces(raw, chunks))
-    via_tokens = encode_row(tok, raw, tokens, labels, max_length=32)
-    via_spans = encode_row(tok, raw, tokens, labels, max_length=32, span_starts=starts, span_ends=ends, span_tags=tags)
-    assert via_spans == via_tokens, f"{name}: encode_row outputs diverged"
+def test_check_a_encode_row_bit_identical(plain, name, raw, tokens, labels, starts, ends, tags, chunks):
+    """Full encoder output (ids + mask + label ids, padded) identical under both paths."""
+    pieces = _pieces(raw, chunks)
+    via_tokens = encode_row(plain, pieces, raw, tokens, labels)
+    via_spans = encode_row(plain, pieces, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags)
+    assert via_spans == via_tokens, f"{name}: encoder outputs diverged"
+
+
+@pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
+def test_the_encoder_projects_labels_as_the_python_projection_does(
+    plain, name, raw, tokens, labels, starts, ends, tags, chunks
+):
+    """The char path keeps `tokenizer/spans.py`, so the two projections must agree."""
+    pieces = _pieces(raw, chunks)
+    n = len(pieces)
+    via_spans = encode_row(plain, pieces, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags)
+    assert via_spans["labels"][:n] == [LABEL_TO_ID[x] for x in realign_spans_to_pieces(raw, starts, ends, tags, pieces)]
+    via_tokens = encode_row(plain, pieces, raw, tokens, labels)
+    assert via_tokens["labels"][:n] == [LABEL_TO_ID[x] for x in realign_labels_to_pieces(raw, tokens, labels, pieces)]
 
 
 # endregion
@@ -163,34 +202,26 @@ def test_check_a_encode_row_bit_identical(name, raw, tokens, labels, starts, end
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_check_b_anchor_channel_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
+def test_check_b_channels_identical_through_the_encoder(
+    channels, name, raw, tokens, labels, starts, ends, tags, chunks
+):
+    """Anchor + gazetteer tensors identical through the full encoder, both label sources."""
     pieces = _pieces(raw, chunks)
-    feats_tok, confs_tok = realign_anchor_to_pieces(raw, tokens, labels, pieces, ANCHOR_LOOKUP)
-    feats_spn, confs_spn = realign_anchor_to_pieces_from_spans(raw, starts, ends, tags, pieces, ANCHOR_LOOKUP)
-    assert confs_spn == confs_tok, f"{name}: anchor confidence diverged"
-    assert feats_spn == feats_tok, f"{name}: anchor features diverged"
-    if "postcode" in tags:
-        assert any(c > 0 for c in confs_spn), f"{name}: anchor never fired — vacuous check"
-
-
-@pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_check_b_channels_identical_through_encode_row(name, raw, tokens, labels, starts, ends, tags, chunks):
-    """Anchor + gazetteer tensors identical through the full encode_row, both label sources."""
-    tok = FakeTokenizer(_pieces(raw, chunks))
-    kwargs = dict(max_length=32, anchor_lookup=ANCHOR_LOOKUP, gazetteer_lexicon=LEXICON)
-    via_tokens = encode_row(tok, raw, tokens, labels, **kwargs)
-    via_spans = encode_row(tok, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags, **kwargs)
+    via_tokens = encode_row(channels, pieces, raw, tokens, labels)
+    via_spans = encode_row(channels, pieces, raw, tokens, labels, span_starts=starts, span_ends=ends, span_tags=tags)
     for key in ("anchor_features", "anchor_confidence", "gazetteer_features", "gazetteer_confidence"):
         assert via_spans[key] == via_tokens[key], f"{name}: {key} diverged"
+    if "postcode" in tags:
+        assert any(c > 0 for c in via_spans["anchor_confidence"]), f"{name}: anchor never fired — vacuous check"
 
 
-def test_check_b_gazetteer_painting_fires_on_fixtures():
+def test_check_b_gazetteer_painting_fires_on_fixtures(channels):
     """Anti-vacuity: the gazetteer clue is set on at least one fixture piece."""
     raw = "Strasse 12 10115 Berlin"
-    pieces = _pieces(raw, ["Strasse", "12", "101", "15", "Ber", "lin"])
-    feats, confs = realign_gazetteer_to_pieces(raw, pieces, LEXICON)
+    out = encode_row(channels, _pieces(raw, ["Strasse", "12", "101", "15", "Ber", "lin"]), raw, [], [])
+    confs = out["gazetteer_confidence"]
     assert any(c > 0 for c in confs)  # "Berlin" matched
-    assert feats[confs.index(1.0)] == [0.0, 1.0]  # locality_homograph bit
+    assert out["gazetteer_features"][confs.index(1.0)] == [0.0, 1.0]  # locality_homograph bit
 
 
 # endregion
@@ -225,12 +256,12 @@ def test_check_c_span_path_covers_the_punctuation():
     assert span_stream != token_stream
 
 
-def test_check_c_through_encode_row():
-    tok = FakeTokenizer(_pieces(PO_RAW, PO_CHUNKS))
+def test_check_c_through_the_encoder(plain):
+    pieces = _pieces(PO_RAW, PO_CHUNKS)
     starts, ends, tags = PO_SPANS
-    via_tokens = encode_row(tok, PO_RAW, PO_TOKENS, PO_LABELS, max_length=16)
+    via_tokens = encode_row(plain, pieces, PO_RAW, PO_TOKENS, PO_LABELS)
     via_spans = encode_row(
-        tok, PO_RAW, PO_TOKENS, PO_LABELS, max_length=16, span_starts=starts, span_ends=ends, span_tags=tags
+        plain, pieces, PO_RAW, PO_TOKENS, PO_LABELS, span_starts=starts, span_ends=ends, span_tags=tags
     )
     assert via_spans["labels"] != via_tokens["labels"]
     assert via_spans["input_ids"] == via_tokens["input_ids"]  # only the labels differ
@@ -261,7 +292,6 @@ def test_out_of_bounds_span_raises():
         char_label_array_from_spans("abc", [0], [4], ["street"])
 
 
-def test_partial_span_kwargs_raise():
-    tok = FakeTokenizer(_pieces("abc", ["abc"]))
+def test_partial_span_kwargs_raise(plain):
     with pytest.raises(ValueError, match="supplied together"):
-        encode_row(tok, "abc", ["abc"], ["O"], max_length=8, span_starts=[0])
+        encode_row(plain, _pieces("abc", ["abc"]), "abc", ["abc"], ["O"], span_starts=[0])

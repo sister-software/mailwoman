@@ -1,16 +1,15 @@
 """Count the corpus rows the anchor painter PAINTS, per lookup.
 
 A zero here is not a smaller number: it is the anchor channel being switched off for a country while
-    the config still sets ``use_postcode_anchor: true``. Run it before a launch, once per recipe output
+the config still sets ``use_postcode_anchor: true``. Run it before a launch, once per recipe output
 whose country you expect the anchor to serve. A zero on a recipe output you expected to paint is a
 stop rather than a warning — either the lookup lacks that country's keys or the key normalization
 diverged.
 
-It exercises the real train-side code rather than a re-implementation:
-``mailwoman_train.features.postcode_shapes.collect_matches`` for the spans (``anchor_paint_mode: shaped``) and
-``mailwoman_train.tokenizer._paint_anchor_chars`` for the lookup + normalization. The only skipped
-step is the char->piece projection. It copies per-char values onto pieces, so it cannot turn a painted
-row into an unpainted one.
+It runs the training encoder's own anchor painter (`mailwoman_mtf.RowEncoder` with ``anchor_paint_mode: shaped``)
+with one piece per character, so the anchor confidence it returns is the per-character paint before the
+projection onto pieces. The projection copies per-character values onto pieces, so it cannot turn a painted row
+into an unpainted one.
 
     python -m mailwoman_train.audits.painted_anchor_rows \\
       --lookup $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json \\
@@ -23,45 +22,50 @@ Exits non-zero when a JSONL file paints zero rows (``--allow-zero`` to survey in
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
+import mailwoman_mtf
 import spliterator
 
-from ..data.loader import load_anchor_lookup
-from ..features.postcode_shapes import collect_matches
-from ..tokenizer import ANCHOR_FEATURE_DIM
-from ..tokenizer.anchors import _paint_anchor_chars
+from ..data.loader.encode import row_encoder
+
+#: The longest row the audit paints. The audit passes one piece per character, so the encoder's width bounds the
+#: row's length.
+MAX_ROW_CHARACTERS = 2048
 
 
-def count_painted_rows(
-    jsonl: Path,
-    lookup: dict[str, tuple[dict[str, float], float, float]],
-    limit: int | None,
-) -> dict[str, int]:
+def count_painted_rows(jsonl: Path, encoder: mailwoman_mtf.RowEncoder, limit: int | None) -> dict[str, int]:
     """Walk one JSONL recipe output and count rows by what the painter does to them."""
     stats = {"rows": 0, "shaped": 0, "painted": 0, "spans": 0, "spans_hit": 0, "gold_postcode": 0}
-    zero = [0.0] * ANCHOR_FEATURE_DIM
     for row in spliterator.read_jsonl(jsonl, take=limit):
         raw = row.get("raw") or ""
+        if len(raw) > MAX_ROW_CHARACTERS:
+            raise ValueError(f"{jsonl}: a row has {len(raw)} characters, over the audit's {MAX_ROW_CHARACTERS}")
         stats["rows"] += 1
         if (row.get("components") or {}).get("postcode"):
             stats["gold_postcode"] += 1
 
-        matches = collect_matches(raw)
-        if matches:
+        spans = encoder.shaped_postcode_spans(raw)
+        if spans:
             stats["shaped"] += 1
-        stats["spans"] += len(matches)
+        stats["spans"] += len(spans)
 
-        char_feat: list[list[float]] = [zero] * len(raw)
-        char_conf: list[float] = [0.0] * len(raw)
-        for m in matches:
-            before = sum(char_conf)
-            _paint_anchor_chars(raw, m.start, m.end, lookup, char_feat, char_conf)
-            if sum(char_conf) > before:
-                stats["spans_hit"] += 1
-        if any(char_conf):
+        pieces = [[(0, i, i + 1) for i in range(len(raw))]]
+        confidence = encoder.encode_batch([{"raw": raw, "tokens": [], "labels": []}], pieces=pieces)[
+            "anchor_confidence"
+        ][0]
+        stats["spans_hit"] += sum(1 for start, end in spans if confidence[start:end].any())
+        if confidence.any():
             stats["painted"] += 1
     return stats
+
+
+def letter_key_count(lookup_path: str) -> tuple[int, int]:
+    """The lookup's keys that hold an ASCII capital letter, and all its keys."""
+    with open(lookup_path, encoding="utf-8") as fh:
+        keys = json.load(fh).keys()
+    return sum(1 for k in keys if any("A" <= c <= "Z" for c in k)), len(keys)
 
 
 def main() -> int:
@@ -72,15 +76,17 @@ def main() -> int:
     ap.add_argument("--allow-zero", action="store_true", help="survey mode — do not fail on a zero")
     args = ap.parse_args()
 
-    lookup = load_anchor_lookup(args.lookup)
-    letter_key_count = sum(1 for k in lookup if any("A" <= c <= "Z" for c in k))
+    encoder = row_encoder(
+        None, max_length=MAX_ROW_CHARACTERS, pad_id=0, anchor_lookup_path=args.lookup, anchor_paint_mode="shaped"
+    )
+    letters, keys = letter_key_count(args.lookup)
     print(f"lookup {args.lookup}")
-    print(f"  keys {len(lookup):,}   letter-containing {letter_key_count:,}")
+    print(f"  keys {keys:,}   letter-containing {letters:,}")
 
     zeroes: list[str] = []
     for jsonl_path in args.jsonl:
         jsonl = Path(jsonl_path)
-        stats = count_painted_rows(jsonl, lookup, args.limit)
+        stats = count_painted_rows(jsonl, encoder, args.limit)
         rows = stats["rows"] or 1
         print(f"\n{jsonl.name}  rows {stats['rows']:,}")
         print(f"  gold postcode component : {stats['gold_postcode']:,} ({100 * stats['gold_postcode'] / rows:.1f}%)")

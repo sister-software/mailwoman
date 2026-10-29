@@ -21,6 +21,7 @@ from .grade import (
     grade_street_type_contrast,
     measure_exposure,
 )
+from .loader_profile import loader_profile
 from .mean_init import mean_init
 from .stage import stage_v8cjk_regs
 from .syncs import sync, sync_assets
@@ -49,6 +50,7 @@ __all__ = [
     "grade_exposure",
     "grade_street_type_contrast",
     "label_support",
+    "loader_profile",
     "locale_supply_census",
     "main",
     "mean_init",

@@ -40,7 +40,7 @@ def run(args: argparse.Namespace) -> int:
     import torch
 
     from ...config import load_config
-    from ...data.loader import iter_batches
+    from ...data.loader import build_row_encoder, iter_batches
     from ...evaluation.evaluate import load_golden_dir, render_report_markdown, report_to_json, run_eval
     from ...export.onnx import export_to_onnx, verify_parity
     from ...export.package_weights import build_model_card, render_package_json, render_readme, write_package
@@ -81,8 +81,9 @@ def run(args: argparse.Namespace) -> int:
     export_to_onnx(model, fp32_path, max_length=cfg.data.max_length, pad_token_id=tokenizer.pad_id)
 
     samples = []
-    for batch in iter_batches(cfg, tokenizer, split="val", batch_size=1, seed=0, row_limit=PARITY_SAMPLES):
-        samples.append((batch["input_ids"][0], batch["attention_mask"][0]))
+    encoder = build_row_encoder(cfg.data, tokenizer)
+    for batch in iter_batches(cfg, encoder, split="val", batch_size=1, seed=0, row_limit=PARITY_SAMPLES):
+        samples.append((batch["input_ids"][0].tolist(), batch["attention_mask"][0].tolist()))
         if len(samples) >= PARITY_SAMPLES:
             break
     print(f"smoke: ONNX parity {verify_parity(model, fp32_path, samples, atol=1e-4)}")

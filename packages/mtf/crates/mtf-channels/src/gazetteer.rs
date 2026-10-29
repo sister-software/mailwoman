@@ -264,12 +264,12 @@ pub fn suppress_near_postcode(channel: &mut Channel, anchor_confidence: &[f64], 
 	let n = channel.len();
 	let mut suppress = vec![false; n];
 	for (i, _) in anchor_confidence.iter().take(n).enumerate().filter(|(_, &c)| c > 0.0) {
-		let neighbours = i.saturating_sub(window)..(i + window + 1).min(n);
+		let window_range = i.saturating_sub(window)..(i + window + 1).min(n);
 		for (j, slot) in suppress
 			.iter_mut()
 			.enumerate()
-			.take(neighbours.end)
-			.skip(neighbours.start)
+			.take(window_range.end)
+			.skip(window_range.start)
 		{
 			if j != i {
 				*slot = true;

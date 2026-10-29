@@ -1,9 +1,9 @@
 """Stream parquet rows into encoded tensors for Phase 2 training.
 
 Reads ``corpus-v0.1.0`` parquet files with PyArrow's lazy, memory-stable row-group iterator.
-Filters and weights rows according to the YAML config. Encodes rows through SentencePiece with
-realigned BIO labels. Yields PyTorch ``(input_ids, attention_mask, labels)`` tensors in a batched
-``DataLoader``-compatible shape.
+Filters and weights rows according to the YAML config. Encodes each batch of rows through the Rust row
+encoder (`mailwoman_mtf.RowEncoder`), which tokenizes them, projects the BIO labels and paints the channels.
+Yields ``(input_ids, attention_mask, labels)`` arrays and the configured channels in a batched shape.
 
 Why PyArrow + a generator and not ``datasets.load_dataset('parquet', streaming=True)``?
 
@@ -25,7 +25,7 @@ Per Phase 2 §2:
 v0.5.0 char-offset labels (#519): parquet files whose schema has
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
 augmentations (which re-target it. see ``augment.py``) and the #511 relabel pass (char
-arithmetic. see ``relabel.py``) into ``encode_row``, which builds the per-char label array from
+arithmetic. see ``relabel.py``) into the row encoder, which builds the per-char label array from
 the spans. Frozen pre-v0.5.0 files have no span columns and use the legacy token path. A
 file with a partial column set, or a null span value in a span-schema file, is corrupt and
 raises loudly — never a silent fallback.
@@ -36,10 +36,9 @@ The modules, in the order a row travels them:
 - `parquet.py` — reading rows out of one file, shuffled, with the per-row filters applied.
 - `mixture.py` — sampling across sources so the observed mix matches `source_weights`.
 - `stream.py` — the shuffle buffer plus the train-only policy and augmentation step.
-- `encode.py` — one row to one `EncodedExample`, through SentencePiece or the char path.
-- `batch.py` — stacking examples into the batch the trainer feeds the model.
+- `encode.py` — the sampled rows, the Rust row encoder's construction, and the char path.
+- `batch.py` — the batch the trainer feeds the model, encoded by the row encoder or stacked by `collate`.
 - `example.py` — the fields of an encoded row.
-- `anchors.py` — the postcode→anchor lookup reader.
 - `verify.py` — the corpus/tokenizer compatibility check a run makes before it starts.
 
 EVERY STAGE DRAWS FROM ONE `random.Random`. File order, row-group order, row order, the
@@ -55,7 +54,6 @@ The underscore names below are re-exported because the audits and the census rea
 from __future__ import annotations
 
 from ...labels import IGNORE_INDEX
-from .anchors import load_anchor_lookup
 from .batch import collate, iter_batches
 from .corpus_files import (
     CorpusFile,
@@ -67,7 +65,7 @@ from .corpus_files import (
     source_row_counts,
 )
 from .corpus_files import _parquet_paths as _parquet_paths
-from .encode import iter_encoded
+from .encode import build_row_encoder, iter_encoded, iter_sampled_rows
 from .example import EncodedExample
 from .mixture import _raw_row_stream as _raw_row_stream
 from .stream import iter_rows
@@ -82,10 +80,11 @@ __all__ = [
     "collate",
     "corpus_split_files",
     "file_source_counts",
+    "build_row_encoder",
     "iter_batches",
     "iter_encoded",
     "iter_rows",
-    "load_anchor_lookup",
+    "iter_sampled_rows",
     "manifest_files",
     "source_row_counts",
     "verify_tokenizer_alignment",

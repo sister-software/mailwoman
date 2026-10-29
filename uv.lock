@@ -1057,6 +1057,7 @@ name = "mailwoman-corpus-python"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "mailwoman-mtf" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "platformdirs" },
@@ -1090,6 +1091,7 @@ train = [
 requires-dist = [
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.8" },
     { name = "datasets", marker = "extra == 'train'", specifier = ">=5.0.1" },
+    { name = "mailwoman-mtf", directory = "packages/mtf/crates/mtf-py" },
     { name = "modal", marker = "extra == 'dev'", specifier = "==1.6.2" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15" },
     { name = "numpy", specifier = ">=1.26,<3" },
@@ -1110,6 +1112,18 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12" },
 ]
 provides-extras = ["dev", "train"]
+
+[[package]]
+name = "mailwoman-mtf"
+version = "0.1.0"
+source = { directory = "packages/mtf/crates/mtf-py" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "numpy", specifier = ">=1.26,<3" }]
 
 [[package]]
 name = "markdown-it-py"

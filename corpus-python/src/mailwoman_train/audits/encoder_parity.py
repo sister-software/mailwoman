@@ -203,22 +203,22 @@ def open_batches(
     observer: Callable[[dict[str, Any]], None],
 ) -> Iterator[dict[str, Any]]:
     """The loader's batches for one draw, through the interface the training loop calls."""
-    from pathlib import Path as _Path
-
     from ..data.loader import batch as batch_module
     from ..data.loader import encode as encode_module
     from ..tokenizer import Tokenizer
 
-    tokenizer = Tokenizer(_Path(cfg.data.tokenizer_dir) / "tokenizer.model")
-    sampler = encode_module.iter_rows
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
+    encoder = encode_module.build_row_encoder(cfg.data, tokenizer)
+    # The sampler `iter_sampled_rows` reads, replaced for the token-label arm by one that drops the span triple.
+    sampler = getattr(encode_module, "iter_rows")  # noqa: B009
     if drop_spans:
-        encode_module.iter_rows = lambda *a, **k: _drop_spans(sampler(*a, **k))  # type: ignore[assignment]
+        setattr(encode_module, "iter_rows", lambda *a, **k: _drop_spans(sampler(*a, **k)))  # noqa: B010
     try:
         yield from batch_module.iter_batches(
-            cfg, tokenizer, split=split, batch_size=batch_size, seed=seed, row_limit=rows, observer=observer
+            cfg, encoder, split=split, batch_size=batch_size, seed=seed, row_limit=rows, observer=observer
         )
     finally:
-        encode_module.iter_rows = sampler  # type: ignore[assignment]
+        setattr(encode_module, "iter_rows", sampler)  # noqa: B010
 
 
 def _tensor_names(batch: dict[str, Any]) -> list[str]:
@@ -326,6 +326,21 @@ def capture(
     np.savez_compressed(out_dir / "arrays.npz", **arrays)  # type: ignore[arg-type]
     (out_dir / "record.json").write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
     return record
+
+
+def recorded_config_path(record: dict[str, Any]) -> Path:
+    """The config a record was captured with: its recorded path, or the package's copy of that file.
+
+    A record stores the config's absolute path in the checkout it was captured in. When that checkout is gone,
+    the package's config of the same name is used, and only if its SHA-256 is the recorded one.
+    """
+    path = Path(record["config"]["path"])
+    if not path.is_file():
+        path = package_path("configs", path.name)
+    digest = _sha256(path)
+    if digest != record["config"]["sha256"]:
+        raise ValueError(f"encoder parity: {path} has sha256 {digest}, the record was captured with {record['config']}")
+    return path
 
 
 def _first_difference(reference: np.ndarray, actual: np.ndarray) -> dict[str, Any]:
@@ -466,7 +481,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out_dir = record_dir(args.name)
     record = json.loads((out_dir / "record.json").read_text(encoding="utf-8"))
-    cfg = prepare_config(Path(record["config"]["path"]), record["config"]["overrides"])
+    cfg = prepare_config(recorded_config_path(record), record["config"]["overrides"])
     report = verify(record, cfg, out_dir=out_dir)
     text = json.dumps(report, indent=1)
     if args.report is not None:

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import mailwoman_mtf
 import torch
 
 from ..config import Config
@@ -32,6 +33,9 @@ class TrainState:
     scheduler: Any
     output_dir: Path
     started: float
+
+    #: The row encoder every train and validation batch is encoded with, or None on the char path.
+    encoder: mailwoman_mtf.RowEncoder | None = None
 
     #: The char path sets `vocab_size` to 2 because it reads no SentencePiece table.
     #: `build_model` uses the same dummy width. The checkpoint extras record it here.

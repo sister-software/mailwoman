@@ -119,7 +119,7 @@ def run_training_loop(
         epoch += 1
         for batch in iter_batches(
             cfg,
-            state.tokenizer,
+            state.encoder,
             split="train",
             batch_size=cfg.train.batch_size,
             seed=cfg.train.seed + epoch,
@@ -176,7 +176,7 @@ def run_training_loop(
                 callback.on_step_end(state, step)
 
             if step % cfg.train.eval_every_steps == 0:
-                state.val = evaluate(cfg, state.tokenizer, model, device, max_rows=cfg.data.val_rows)
+                state.val = evaluate(cfg, state.encoder, model, device, max_rows=cfg.data.val_rows)
                 state.elapsed = time.time() - state.started
                 for callback in callbacks:
                     callback.on_eval_end(state, step, state.val)

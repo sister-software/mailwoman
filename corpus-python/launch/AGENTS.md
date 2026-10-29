@@ -21,6 +21,12 @@ the volume and the app, so the global binary runs them as well.
 `sync_assets --code`,** because containers import `mailwoman_train` from the volume and mount only `launch/`
 locally.
 
+**A crate change reaches a run only through an image rebuild.** The training loader encodes rows through the
+`mailwoman_mtf` extension, which `training_image` builds from `packages/mtf` with the pinned Rust toolchain and
+maturin. Modal rebuilds the image when a file under `packages/mtf` changes, which takes a few minutes on the next
+launch. `corpus upload --code` carries `corpus-python/src` only, so it never carries a crate change.
+`loader_profile` measures the loader's host-side cost per batch in a CPU container from this checkout's source.
+
 **Module mode, never a file path.** `modal run launch/train_remote.py` imports the file as a TOP-LEVEL
 module with `launch/` itself on `sys.path`, so `launch` is unimportable and every `from .x import y` in
 the package raises `ImportError: attempted relative import with no known parent package`. `-m` imports it

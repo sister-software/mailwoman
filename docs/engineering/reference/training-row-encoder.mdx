@@ -1,0 +1,167 @@
+---
+title: Training-row encoder — the Rust encoder the training loader calls, and how its parity is checked
+role: reference
+audience: maintainer
+owner: model
+source-of-truth: packages/mtf/crates/mtf-channels/src/encoder.rs
+tags:
+  - model
+  - training
+---
+
+# Training-row encoder
+
+The training loader turns each sampled corpus row into the tensors one step reads: piece ids, an attention
+mask, label ids, and the soft-feed channels. The channels are the postcode anchor, gazetteer, country,
+street type, locality surface and code unit. Since #2870 the encoding runs in Rust, in
+`packages/mtf/crates/mtf-channels`, called from Python through the `mailwoman_mtf` extension in
+`packages/mtf/crates/mtf-py`. The sampler stays in Python because every sampling stage draws from one
+`random.Random`: `iter_rows`, `emit_row`, the shuffle buffer, the astral skip, the observer and the
+`seed + epoch` restart.
+
+The Rust encoder reproduces the Python encoder it replaced byte for byte. The encoded tensors are the model's
+inputs, so this change moves no model behavior and needs no release verdict.
+
+## What runs where
+
+| Stage                                                     | Implementation                                              |
+| --------------------------------------------------------- | ----------------------------------------------------------- |
+| Sampling, augmentation, relabeling, astral skip, observer | Python: `data/loader/stream.py`, `data/loader/encode.py`    |
+| Tokenization                                              | Rust: `mtf-core`, through `mailwoman_mtf.Tokenizer`         |
+| Label projection                                          | Rust: `mtf-channels/src/labels.rs`                          |
+| Channel painting                                          | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`          |
+| Postcode-shape and postcode-syntax finders                | Rust, the `finders` feature: `finders.rs`                   |
+| Packing into arrays                                       | Rust: `encoder.rs`, returned as numpy arrays                |
+| `locale_ids`, `address_system_ids`                        | Python, added to the batch in row order                     |
+| Tensor conversion                                         | Python: `train/batch.py` wraps each array with `from_numpy` |
+| The character path (`char_mode != "off"`)                 | Python, unchanged                                           |
+
+The painters and the label projection compile without a regex engine. The serving side can therefore
+adopt them later through `mtf-wasm`. That adoption is a separate change, because the serving painters
+differ from the training painters in three places:
+
+- `anchoredPostcodeSpans` upper-cases the text before matching, and training matches the raw case;
+- `buildSoftFeatures` builds the locality-surface channel only when the street-type channel matched a
+  piece, and training always paints it;
+- `tokenizer.ts` trims the leading space from a `▁` piece's range, and training keeps it.
+
+Training uses the Rust encoder while serving continues to use the TypeScript painters.
+
+## Interfaces
+
+`mailwoman_mtf.Tokenizer(model_bytes)` loads a SentencePiece unigram model. `encode(raw)` returns
+`(id, piece, char_begin, char_end)` per piece in code points. A `▁` piece's range includes the space before
+its word. `pad_id`, `unk_id`, `bos_id` and `eos_id` follow SentencePiece. Each is the id of the trainer
+spec's piece when that piece has the control type (the unknown type for `unk_id`), and -1 otherwise.
+`id_to_piece` and `piece_to_id` match `IdToPiece` and `PieceToId`.
+
+`mailwoman_mtf.RowEncoder(tokenizer, *, max_length, label_to_id, active_tags, ignore_index,
+locale_countries, postcode_shapes_path, postcode_syntax_path, ...)` reads each configured lexicon once.
+`encode_batch(rows)` returns a dict of C-contiguous arrays:
+
+- `input_ids`, `attention_mask`, `labels`: int64 `[B, L]`;
+- per configured channel, `<name>_features` float32 `[B, L, D]` and `<name>_confidence` float32 `[B, L]`.
+
+The arrays own their buffers. `torch.from_numpy` shares that CPU memory, and the arrays stay valid after
+later calls. A row with a partial span triple, unsorted, overlapping or out-of-bounds spans, mismatched
+token and label counts, or a token absent from its text raises `ValueError` naming the row's batch index
+and text. A failed finder match raises `RuntimeError` naming the pattern and the text.
+`data/loader/encode.py::build_row_encoder` builds the encoder from a `DataConfig`.
+
+## Python semantics
+
+The Rust code reproduces the reference interpreter's string semantics rather than Rust's.
+
+- `str.isspace`, `str.isalnum` and `str.isdecimal`, the cased and case-ignorable properties, and the full
+  `str.lower` and `str.upper` mappings come from `src/python_text/tables.rs`. The tables are generated
+  over every scalar value by `python -m mailwoman_train.text.python_text_tables` (Python 3.12, Unicode
+  15.0.0). `test_python_text_tables.py` regenerates them and fails on any difference, so an interpreter
+  upgrade that moves a table fails there. Rust's `char::is_alphanumeric` admits marks such as U+0940
+  that Python's `isalnum` rejects, and its `is_whitespace` rejects U+001C..U+001F.
+- `str.lower` applies CPython's final-sigma rule.
+- The finders rewrite `\d`, `\s`, `\w` and `\b` into explicit classes built from those tables before
+  `fancy-regex` compiles a pattern, because the Rust engines define `\w` to include marks and connector
+  punctuation.
+- The code-unit segmenter is written out by hand. It reproduces
+  `(?<![A-Za-z0-9])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-(?=\d)[A-Za-z0-9]+)*(?![A-Za-z0-9])`, including the
+  lookahead that accepts a non-ASCII digit after the ASCII run.
+- Channel values are computed in `f64` and converted to `f32` once, as `torch.tensor(..., float32)`
+  converted the Python floats. The anchor posterior is renormalized in the file's key order, with
+  serde_json's `float_roundtrip` parsing so every decimal becomes the double Python's `json` produces.
+
+## Parity procedure
+
+`python -m mailwoman_train.audits.encoder_parity capture` draws batches through `iter_batches` and writes a
+record under `$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/`:
+
+- `record.json` holds the source revision, the config and its overrides, the SHA-256 of every input
+  (tokenizer, each lexicon, the shape and syntax records, the corpus manifest), the runtime versions, the
+  requested and emitted row counts, the batch sizes, each row's identity hash, its country, per-channel
+  nonzero counts with their denominators, and a SHA-256 per row of every model-input tensor over its
+  little-endian bytes;
+- `arrays.npz` holds every tensor, so `verify` can report the first differing row, tensor and element with
+  both values.
+
+`verify --name <name>` re-draws the sample through the current loader. It fails on a changed emitted count,
+row identity, batch boundary, tensor set, dtype or shape before it compares digests. The records were
+captured from the Python encoder at revision `47495cabf` and are never regenerated against the Rust
+encoder.
+
+The recorded configuration matrix:
+
+| Record                  | Config and change                              | Covers                                       |
+| ----------------------- | ---------------------------------------------- | -------------------------------------------- |
+| `c6-train-50k`          | `v8.3.0-base-c6-90k-mixed-s42`, train, seed 43 | the C6 run's channels on its train draw      |
+| `c6-val-36864`          | the same config, val, seed 43                  | the run's whole validation draw              |
+| `c6-train-2k`           | the same config, train, 2,000 rows             | the short check                              |
+| `code-unit-train-5k`    | `v8.3.0-probe-code-unit-2k`                    | the code-unit channel and the C4 vocabulary  |
+| `c6-gold-spans-5k`      | `anchor_paint_mode=gold`                       | the gold anchor from spans                   |
+| `c6-gold-tokens-5k`     | gold, with each row's span triple removed      | token labels and the gold anchor from tokens |
+| `c6-no-choreography-5k` | `gazetteer_choreography=false`                 | the gazetteer without suppression            |
+| `c6-channel-free-5k`    | every channel path unset                       | channel-free encoding                        |
+| `c6-max-length-16-5k`   | `max_length=16`                                | exact width and truncation                   |
+
+The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the Python
+`encode_row` fixture, `python_reference.rs` against the Python finders and string operations for every
+scalar value in 17 templates, and `code_unit_parity.rs` from segmentation through acceptance counts.
+
+Each record verified with 0 differing rows against the Rust encoder (113,920 emitted rows in total). The broad
+sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
+validation rows, where the validation draw exhausts below its 36,864-row limit.
+
+## Measured cost
+
+`python -m mailwoman_train.audits.loader_profile` measures the host side of a training step: `iter_batches` and
+`to_tensor_batch` over 40 batches of 128 rows of the C6 config's train stream after the first batch.
+`launch.train_remote::loader_profile` runs it in a Modal container with 8 CPUs. The Python figures were measured
+at revision `1115bbe3f`, the Rust figures at the revision that deleted the Python encoder, on 2026-10-28 and
+2026-10-29.
+
+| Host, path                   | `iter_batches` ms | `to_tensor_batch` ms | Host ms per batch | Initialization s | RSS after init MB | Peak RSS MB |
+| ---------------------------- | ----------------: | -------------------: | ----------------: | ---------------: | ----------------: | ----------: |
+| Lab (Ryzen 9 8945HS), Python |             51.12 |                24.18 |             75.30 |             94.9 |             6,158 |       9,157 |
+| Lab, Rust                    |             13.29 |                 0.11 |             13.40 |            112.1 |             5,516 |       8,569 |
+| Modal cpu=8, Python          |             56.27 |                37.84 |             94.11 |            122.5 |             9,482 |      12,827 |
+| Modal cpu=8, Rust            |             21.41 |                 0.10 |             21.51 |            134.2 |             8,820 |      12,216 |
+
+The sampler alone costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
+third of the Rust path's remaining `iter_batches` time. Initialization is dominated by the sampler's stream
+setup: building the Rust encoder with the 2,286,339-key anchor table takes 2.04 s, against 5.46 s for the
+Python `json.load` of the same table. The training effect on an A100 is an estimate until a training probe
+measures it. Lowering the host share from 94 to 22 ms per batch shortens a 182 ms step only by the part of the
+host share the GPU work does not overlap.
+
+## Builds
+
+The extension builds from source for each interpreter, so the root project keeps `requires-python >=3.11`.
+It builds under the workspace's `py` profile (`opt-level = 3`, `panic = "unwind"`). A Rust panic therefore
+raises in Python, where the release profile's `panic = "abort"` would end the training process.
+`packages/mtf/rust-toolchain.toml` pins the toolchain.
+
+- The lab venv and CI install it through the root `pyproject.toml`'s uv path dependency, which rebuilds on
+  any crate source, manifest or lockfile change.
+- The Python CI job installs the pinned toolchain and runs `cargo test` for `mtf-channels` with and
+  without `finders`. `lib/repo-health/ci-scope.ts` selects that job for a change to the extension's inputs.
+- The Modal training image builds the wheel from `packages/mtf` and imports it as its last build step.
+  `corpus-python/scripts/verify_toolchain.py` checks that the image's toolchain and maturin pins agree with
+  the crate's declarations.
