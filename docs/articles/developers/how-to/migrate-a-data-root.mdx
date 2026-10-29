@@ -1,0 +1,72 @@
+---
+title: Plan the migration of an existing data root
+description: Read the dry-run plan that registers the databases you already have in the active selection, decide what to do with each file it cannot register, and know how to undo it.
+role: guide
+verified-with: unreleased (the branch for issue 2868)
+---
+
+# Plan the migration of an existing data root
+
+**Outcome.** You know which of the databases already under your data root can join the active
+selection as they are, which need a rebuild or a decision from you, and how the change would be undone.
+
+The commands on this page are new and unreleased. They ship with the release that follows 10.7.0.
+`mailwoman data migrate` only plans in that release: it runs with `--dry-run` and refuses without it.
+
+## Prerequisites
+
+- A data root that predates the active selection: databases under `<data-root>/db/` placed by an
+  earlier `data pull` or a local build, and no `<data-root>/active.json`.
+- No build or import writing to the data root while you plan. The plan reports a database with a WAL
+  sidecar as blocked, because a writer may hold it open.
+
+## 1. Print the plan
+
+```bash
+mailwoman data migrate --dry-run
+mailwoman data migrate --dry-run --json > migration-plan.json
+```
+
+The plan writes no file. It asks the same readers the geocoder uses which file each one opens today:
+the candidate gazetteer through `$MAILWOMAN_CANDIDATE_DB` and its conventional path, each US state
+through `releases.json` and the legacy names, every published bundle's conventional path, the
+OpenStreetMap extracts and the WOF extracts.
+
+## 2. Read each classification
+
+| Classification       | What it means                                                                        | What to do                                                         |
+| -------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `importable`         | The file records a `layer_manifest`, and its role is known                           | Leave it. A migration registers it in place                        |
+| `registry-manifest`  | A published artifact with no `layer_manifest`; the registry's record states its role | Leave it. A migration writes its manifest from the registry record |
+| `source-rebuild`     | A local build with no `layer_manifest`, so its inputs are unrecorded                 | Rebuild it from its source to record its inputs                    |
+| `unknown-provenance` | Neither the file nor the registry records where it came from                         | Keep it where it is, or replace it with a published download       |
+| `blocked-wal`        | A `-wal` sidecar is present                                                          | Stop the writer, or seal the database, and plan again              |
+
+Each line also reports a symlink and its target, a file with more than one hard link, and a path
+outside the data root, such as a gazetteer pinned through `$MAILWOMAN_CANDIDATE_DB`. A migration
+registers a file at the path the reader resolves today, so a symlink keeps pointing where it did.
+
+A field the file does not record stays unrecorded. A migration never fills in a vintage, a license or
+a checksum the file lacks.
+
+## 3. Check what changes for the geocoder
+
+A registered file is selected for the same role and scope its reader resolves today, so the geocoder
+reads the same bytes before and after. The plan copies 0 bytes. It hashes each registered file once,
+and the `hashes` line gives the total.
+
+## 4. Know the rollback
+
+The plan's `rollback` line states how to undo it. With no earlier selection, the undo is to remove
+`active.json` and the `installations/` directory; the registered files are neither moved nor changed.
+With an earlier selection, `mailwoman data activate --rollback` restores the generation the migration
+replaced.
+
+## Cleanup is a separate step
+
+Migration deletes no file. `mailwoman data prune --dry-run` lists installed artifacts that no
+retained generation and no running session references. It keeps the active generation, the one before
+it and every generation a running session holds. Run `mailwoman data prune` without `--dry-run` to
+delete what it listed. The command refuses when the selection changed after it planned. The
+[layer installation reference](../../../engineering/reference/layer-installation.mdx) states the
+retention policy in full.
