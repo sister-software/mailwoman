@@ -561,9 +561,13 @@ jobs:
 
   # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
   # configuration runs one worker, so the suite runs serially inside this job.
+  #
+  # The job is disabled: its map-idle waits time out on runs whose change does not touch Earth. To enable
+  # it, restore `if: needs.scope.outputs.earth == 'true'` here and the `earth` entry in `summary`'s
+  # `selected` map. Run the suite locally with `yarn workspace @mailwoman/earth test:browser`.
   earth:
     needs: scope
-    if: needs.scope.outputs.earth == 'true'
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -708,7 +712,8 @@ jobs:
             'unit-slow': fleet && scope.slow === 'true',
             'lexicon-full': fleet && scope.lexicon === 'true',
             react: ['react', 'planetary', 'opportunity', 'worker'].some(key => scope[key] === 'true'),
-            earth: scope.earth === 'true',
+            // The earth job is disabled (see its definition), so it is never selected.
+            earth: false,
             smoke: fleet && scope.smoke === 'true',
           };
           const failed = Object.entries(jobs).filter(([name, job]) =>
