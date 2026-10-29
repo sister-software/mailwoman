@@ -75,11 +75,23 @@ Notes:
 
 ## Python job
 
-Runs separate hosted Python checks (lint, type, security, tests) when:
+Runs separate hosted Python checks (lint, type, security, tests) and the Rust checks (`cargo test`
+and `cargo clippy -D warnings` for the `packages/mtf` and `packages/trainer` cargo workspaces) when:
 
 - any Python file changes, or
 - anything under `corpus-python/` changes, or
+- a crate source, manifest, lockfile or toolchain file under `packages/mtf/` changes, or
+- anything under `packages/trainer/` changes, or
 - a global/full-run trigger happens
+
+`mtf-core`'s `board_reference` test reads the uncommitted en-us `tokenizer.model`, so this hosted job
+does not run it.
+
+## Rust in the fast leg
+
+The training audit and exposure tests load the `mtf-node` addon, which Cargo builds on first use.
+`unit-fast` installs the toolchain `packages/mtf/rust-toolchain.toml` names before its tests start,
+and caches the `packages/mtf` build.
 
 Cache keys:
 

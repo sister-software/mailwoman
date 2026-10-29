@@ -267,6 +267,11 @@ jobs:
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-core --features edit --test model_edit --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-tools --locked
 
+      # `mtf-node`, `mtf-py` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`, and
+      # this leg's Python tests build `mtf-py`. Clippy checks every crate's code.
+      - name: Lint the mtf crates
+        run: cargo clippy --manifest-path packages/mtf/Cargo.toml --workspace --all-targets --locked -- -D warnings
+
       # The Rust trainer links libtorch through `tch` 0.26.0, which pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
       - name: Restore libtorch
         id: libtorch
@@ -289,6 +294,12 @@ jobs:
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
         run: |
           cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-model -p trainer-loop -p trainer-cli --locked
+
+      - name: Lint the Rust trainer crates
+        env:
+          LIBTORCH: ${{ runner.temp }}/libtorch
+          LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+        run: cargo clippy --manifest-path packages/trainer/Cargo.toml --workspace --all-targets --locked -- -D warnings
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -371,6 +382,23 @@ jobs:
         with:
           path: node_modules/@vvago/vale/native
           key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      # The training audit and exposure tests load the `mtf-node` addon.
+      # `packages/mtf/tools/sampler/native.ts` builds it with Cargo on first use. This step installs
+      # everything `packages/mtf/rust-toolchain.toml` names before the tests start. Without it,
+      # rustup installs the toolchain while the tests run, and parallel test files race on the
+      # download.
+      - name: Setup Rust (mtf-node addon)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.1"
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Cargo (mtf-node addon)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/mtf
 
       - name: Test (fast)
         env:
