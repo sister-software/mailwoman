@@ -14,7 +14,6 @@ because they project per SentencePiece piece without per-unit alignment.
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -22,7 +21,7 @@ import mailwoman_mtf
 
 from ...address_systems import address_system_id
 from ...config import DataConfig
-from ...env import sha256_cache_path, volume_mount
+from ...env import optional_data_root, sha256_cache_path, volume_mount
 from ...labels import ACTIVE_TAGS, IGNORE_INDEX, LABEL_TO_ID, LOCALE_COUNTRIES, locale_id, resolve_label_set
 from ...paths import package_path
 from ...tokenizer import Tokenizer
@@ -46,11 +45,6 @@ POSTCODE_SYNTAX = package_path("data", "postcode-syntax.json")
 
 #: Each country's postcode side relative to its locality-and-region block, which the postcode move reads.
 POSTCODE_LAYOUTS = package_path("data", "augment", "postcode-layouts.json")
-
-
-def _data_root() -> str | None:
-    """`MAILWOMAN_DATA_ROOT`, the host mirror of the volume mount, or None when unset or blank."""
-    return os.environ.get("MAILWOMAN_DATA_ROOT") or None
 
 
 def sampler_config(cfg_data: DataConfig, *, drop_spans: bool = False) -> str:
@@ -110,7 +104,7 @@ def _sampler_document(
         "affix_relabel_lexicon_path": affix_relabel_lexicon_path or None,
         "postcode_layouts_path": str(POSTCODE_LAYOUTS),
         "drop_spans": drop_spans,
-        "data_root": _data_root(),
+        "data_root": str(data_root) if (data_root := optional_data_root()) is not None else None,
         "volume_mount": str(volume_mount()),
         "sha256_cache_path": str(cache) if cache is not None else None,
     }

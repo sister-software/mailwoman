@@ -129,6 +129,16 @@ def volume_mount() -> Path:
     return Path(_blank_as_absent("MAILWOMAN_VOLUME_MOUNT") or DEFAULT_VOLUME_MOUNT)
 
 
+def optional_data_root() -> Path | None:
+    """`MAILWOMAN_DATA_ROOT`, or `None` when it is unset or blank.
+
+    A reader that has a fallback for a missing data root, such as the sampler re-rooting volume paths only when a
+    host mirror exists, reads this rather than `public()`, which raises.
+    """
+    root = _blank_as_absent("MAILWOMAN_DATA_ROOT")
+    return Path(root) if root is not None else None
+
+
 def volume_path_on_host(path: Path) -> Path | None:
     """The host copy of a path under the volume mount, or `None` when it has none.
 
