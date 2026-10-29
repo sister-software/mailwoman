@@ -1,7 +1,6 @@
-"""Script-level text normalization, shared across countries.
+"""Unicode tables the Rust training encoder is generated from.
 
-`kana` folds half-width katakana and converts kanji numerals; `normalize` handles the cases every
-script meets. Normalization only one country needs stays with that country in
-`countries/<code>/text.py`. A government-register reader can normalize a name without importing a corpus
-builder.
+`python_text_tables` writes the CPython 3.12 character predicates and case mappings that
+`packages/mtf/crates/mtf-channels` reads. The CJK text normalization the corpus builders ran is in
+`packages/corpus/lib/cjk/text.ts`.
 """

@@ -24,10 +24,10 @@ import pyarrow as pa
 import torch
 
 from mailwoman_train.config import Config, load_config
-from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train.trainer import train
 from tests import paths
+from tests.corpus_fixture import CJK_CORPUS_SCHEMA as SCHEMA
 from tests.corpus_fixture import write_corpus_parquet
 
 CONFIGS = paths.CONFIGS

@@ -15,11 +15,15 @@ import {
 	buildCharVocab,
 	charLabelArrayFromSpans,
 	coverageStats,
+	MAX_RENDERED_CHARS,
 	muniBucket,
 	readLabelSetTags,
+	RecordCheckError,
+	RowRenderer,
 	saveCharVocab,
 	selectExact,
 	verifyCJKRecord,
+	verifyRecord,
 	waterFill,
 } from "#cjk/builder"
 import { foldHalfwidthKana, intToKanji, kanjiToInt } from "#cjk/text"
@@ -171,5 +175,56 @@ describe("the CJK builder helpers", async () => {
 		).toThrow(/outside stage3-cjk/)
 
 		await expect(readLabelSetTags("stage9")).rejects.toThrow(/label-schema\.v1\.json/)
+	})
+})
+
+describe("the record check and the renderer", () => {
+	const record = (raw: string, end: number) => ({ raw, span_starts: [0], span_ends: [end], span_tags: ["region"] })
+	const tags = new Set(["region"])
+
+	it("names the label set its caller gave", () => {
+		const foreign = { ...record("東京都", 3), span_tags: ["nonsense"] }
+
+		expect(() => verifyRecord(foreign, tags, { labelSetName: "stage3-cjk" })).toThrow(/stage3-cjk/)
+		expect(() => verifyRecord(foreign, tags, { labelSetName: "stage3-jp" })).toThrow(/stage3-jp/)
+	})
+
+	it("forbids whitespace inside a span by default and admits it on request", () => {
+		expect(() => verifyRecord(record("東京 都", 4), tags, { labelSetName: "stage3-jp" })).toThrow(
+			"whitespace inside span region@[0,4): '東京 都'"
+		)
+
+		expect(() =>
+			verifyRecord(record("東京 都", 4), tags, { labelSetName: "stage3-cjk", forbidWhitespace: false })
+		).not.toThrow()
+	})
+
+	it("refuses a row that would truncate, counting code points", () => {
+		const long = "𠮷".repeat(MAX_RENDERED_CHARS + 1)
+
+		expect(() => verifyRecord(record(long, MAX_RENDERED_CHARS + 1), tags, { labelSetName: "stage3-jp" })).toThrow(
+			RecordCheckError
+		)
+
+		expect(() =>
+			verifyRecord(record("𠮷".repeat(MAX_RENDERED_CHARS), MAX_RENDERED_CHARS), tags, { labelSetName: "stage3-jp" })
+		).not.toThrow()
+	})
+
+	it("records a code-point span per labeled field", () => {
+		const renderer = new RowRenderer()
+
+		renderer.put("region", "𠮷野")
+		renderer.glue(" ")
+		renderer.put("locality", "千代田区")
+
+		expect([renderer.raw, renderer.tags, renderer.starts, renderer.ends]).toEqual([
+			"𠮷野 千代田区",
+			["region", "locality"],
+			[0, 3],
+			[2, 7],
+		])
+
+		expect(muniBucket("千代田区")).toBe(muniBucket("千代田　区"))
 	})
 })

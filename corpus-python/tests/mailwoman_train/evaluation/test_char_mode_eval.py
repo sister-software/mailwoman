@@ -16,12 +16,12 @@ import pytest
 import torch
 
 from mailwoman_train.config import load_config
-from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.nn.encoder import build_model
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train import validation
 from mailwoman_train.train.trainer import _eval_val
 from tests import paths
+from tests.corpus_fixture import CJK_CORPUS_SCHEMA as SCHEMA
 from tests.corpus_fixture import write_corpus_parquet
 
 CONFIGS = paths.CONFIGS

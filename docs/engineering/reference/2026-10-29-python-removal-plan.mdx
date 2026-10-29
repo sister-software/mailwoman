@@ -656,7 +656,15 @@ concurrent runner and its sink) and the two workers in `transliteration.py` and 
 and the TypeScript halves are its prompts and ids until then. Python's `json.loads` accepts `NaN` and `Infinity` in a
 completion line, which `JSON.parse` drops.
 
-Not ported yet: `corpora/{builder,sample_raws}.py` and the DeepSeek request path.
+Once these ports landed, `corpora/builder.py` had no importer but three training tests that wrote fixture parquet
+with its `SCHEMA`, which moved to `tests/corpus_fixture.py` as `CJK_CORPUS_SCHEMA`. `builder.py`,
+`text/{kana,normalize}.py` (whose only importers were the builders) and `test_text_normalize.py` are deleted. The
+renderer, bucket and record-check cases that test pinned are in `lib/cjk/builder.test.ts`. `corpora/sample_raws.py`
+had no importer, and `sample_balanced_raws` in `packages/mtf/crates/mtf-tools/src/corpus.rs` is its port, so it is
+deleted unported.
+
+Not ported yet: the DeepSeek request path. `source_rights.py` stays, because `config/load.py`, `config/dump.py` and
+the DeepSeek `cli.py` import it.
 
 ### Phase 3 — The Rust sampler and character path
 

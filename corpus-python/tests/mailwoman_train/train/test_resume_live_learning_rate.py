@@ -15,7 +15,6 @@ import pyarrow.parquet as pq
 import torch
 
 from mailwoman_train.config import Config, load_config
-from mailwoman_train.corpora.builder import SCHEMA
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 from mailwoman_train.train.setup import (
     Optimization,
@@ -25,6 +24,7 @@ from mailwoman_train.train.setup import (
     restore_training_state,
 )
 from tests import paths
+from tests.corpus_fixture import CJK_CORPUS_SCHEMA as SCHEMA
 
 PROBE_2K = paths.CONFIGS / "v8-cjk-full-2k.yaml"
 

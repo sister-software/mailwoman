@@ -1,5 +1,5 @@
-"""Corpus construction: the shared row schema, renderer and verifier, and the country-agnostic builders.
+"""Corpus generation that remains in Python: the DeepSeek generator's request path.
 
-Country-specific builders live under `countries/<code>/corpora/` and reach here for the row schema,
-the renderer and the verifier.
+Every corpus builder runs from `packages/corpus` (`lib/tools/*.run.ts`), and the generator's prompts and ids are
+in `packages/corpus/lib/recipes/deepseek/`.
 """
