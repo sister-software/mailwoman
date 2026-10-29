@@ -28,8 +28,6 @@ extend-exclude = [
 	"**/*preregistration*.mdx",
 	# A registered release specification is hashed into every verdict that cites it, so its text stays as registered.
 	"packages/mailwoman/tools/eval-harness/release/specs/",
-	# A plan committed byte for byte as a dated record keeps the text it was accepted with.
-	"docs/records/plan/2026-10-28-layer-paths-plan-v2.md",
 	"docs/static/benchmarks/",
 	"packages/corpus/data/",
 	"packages/core/data/libpostal/",

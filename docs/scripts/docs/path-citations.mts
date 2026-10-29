@@ -58,6 +58,7 @@ const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
 const RECORD_TREES = new Map([
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
+	["docs/records/engineering/", "engineering notes that describe the tree on the date they were written"],
 	["config/vale/fixtures/", "fixtures for the prose-rule tests"],
 ])
 
