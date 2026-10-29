@@ -5,6 +5,7 @@
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
+import { ServingRole } from "@mailwoman/core/layers"
 import { summarizeLicense } from "@mailwoman/core/license/obligations"
 import type { PathBuilderLike } from "path-ts"
 
@@ -167,6 +168,43 @@ export interface DataBundle {
 	 * The precision-ceiling statement reads it.
 	 */
 	countries?: readonly string[]
+
+	/**
+	 * The serving role of every artifact that names no {@link BundleArtifact.family}.
+	 */
+	role?: ServingRole
+
+	/**
+	 * Names of the bundles a query needs before this bundle's artifacts are consulted.
+	 *
+	 * A street tier is reached only after place resolution finds the region, so it needs the gazetteer.
+	 */
+	dependencies?: readonly string[]
+
+	/**
+	 * `selection` when `data pull` installs the bundle under `db/<role>/<artifact id>/` and activates
+	 * it through `active.json`, because every reader of its roles consults the active selection.
+	 *
+	 * Absent when the bundle's readers still resolve only its conventional path,
+	 * so `data pull` writes the artifact there as before.
+	 */
+	activation?: "selection"
+}
+
+/**
+ * The serving role a bundle artifact's reader opens, or `null` when the registry records none.
+ */
+export function bundleArtifactRole(bundle: DataBundle, artifact: BundleArtifact): ServingRole | null {
+	return artifact.family ?? bundle.role ?? null
+}
+
+/**
+ * The ISO 3166-2 code of a per-state US artifact, such as `US-DC`, or `null` for any other artifact.
+ */
+export function bundleArtifactSubdivision(artifact: BundleArtifact): string | null {
+	// country-branch: the per-state street databases are the US bundle's.
+	// Their slug is the ISO 3166-2 suffix.
+	return artifact.stateSlug ? `US-${artifact.stateSlug.toUpperCase()}` : null
 }
 
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
@@ -258,6 +296,8 @@ function usStreetArtifacts(): BundleArtifact[] {
 export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
 		name: "candidate",
+		role: ServingRole.Candidate,
+		activation: "selection",
 		description:
 			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries.",
 		artifacts: [
@@ -301,6 +341,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	poi: {
 		name: "poi",
+		role: ServingRole.POI,
+		countries: ["US", "CA", "MX", "FR"],
 		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [
 			{
@@ -329,6 +371,9 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	fr: {
 		name: "fr",
+		role: ServingRole.AddressPoints,
+		dependencies: ["candidate"],
+		countries: ["FR"],
 		description:
 			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier.",
 		artifacts: [
@@ -359,6 +404,9 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	us: {
 		name: "us",
+		activation: "selection",
+		dependencies: ["candidate"],
+		countries: ["US"],
 		description:
 			"US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. " +
 			"Use --only <slug> to pull a single state.",

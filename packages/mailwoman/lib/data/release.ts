@@ -21,7 +21,9 @@ import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layer
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { BundleArtifact } from "#data/bundles"
+import type { BundleArtifact, DataBundle } from "#data/bundles"
+import { LayerCatalog } from "#data/catalog"
+import { availableDataEntry, selectionScopeOf } from "#data/registry"
 
 /**
  * Family (database subdir + filename prefix, e.g. `"address-points"`) → current version string.
@@ -88,15 +90,31 @@ const FAMILY_DIRECTORIES = {
 } as const satisfies Record<DatabaseFamily, (dataRoot: PathBuilderLike) => PathBuilder>
 
 /**
- * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db`
- * when present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
+ * Resolve a database's on-disk path: the artifact the active selection names for the family's role
+ * and the state, else the manifest-pinned `<family>-us-<slug>-<version>.db` when present,
+ * else the legacy unversioned `<family>-us-<slug>.db`, else null if none exists.
+ *
+ * A data root without `active.json` resolves as it did before the selection existed.
+ *
+ * @param catalog One reading of the catalog, so a caller resolving every state
+ * and territory slug reads `active.json` once.
+ * Read here when omitted.
+ * @throws {@link UnreadableArtifactError} when the selection or a selected
+ * artifact exists and cannot be read.
  */
 export async function resolveDatabasePath(
 	dataRoot: PathBuilderLike,
 	family: DatabaseFamily,
 	slug: string,
-	manifest: DataReleaseManifest | null
+	manifest: DataReleaseManifest | null,
+	catalog?: LayerCatalog
 ): Promise<string | null> {
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	// country-branch: the per-state street databases are the US bundle's, and the slug is the ISO 3166-2 suffix.
+	const selected = await snapshot.firstPath(family, { country: "US", subdivision: `US-${slug.toUpperCase()}` })
+
+	if (selected) return selected
+
 	const directory = FAMILY_DIRECTORIES[family](dataRoot)
 	const version = manifest?.[family]
 
@@ -121,10 +139,20 @@ export async function existingLocalPath(
 	dataRoot: PathBuilderLike,
 	manifest: DataReleaseManifest | null,
 	artifact: BundleArtifact,
-	resolvedAbsPath: string
+	resolvedAbsPath: string,
+	bundle?: DataBundle,
+	catalog?: LayerCatalog
 ): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest, catalog)
+	}
+
+	if (bundle?.activation === "selection") {
+		const [available] = availableDataEntry({ ...bundle, artifacts: [artifact] }).artifacts
+		const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+		const selected = available ? await snapshot.firstPath(available.role, selectionScopeOf(available)) : null
+
+		if (selected) return selected
 	}
 
 	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null

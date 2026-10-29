@@ -18,6 +18,7 @@ import type {
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
+import { LayerCatalog } from "#data/catalog"
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
 
 /**
@@ -141,8 +142,8 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * Opens and caches per-state address-point and interpolation lookups,
  * so each state's databases open once per batch.
  *
- * Paths resolve through the `releases.json` manifest when one exists. {@link reload}
- * swaps in a newly published version. {@link close} releases every cached handle.
+ * Paths resolve through the active selection, then the `releases.json` manifest when one exists.
+ * {@link reload} swaps in a newly published version. {@link close} releases every cached handle.
  *
  * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
  * Construct instances with {@linkcode USStateDatabaseProvider.create}.
@@ -190,12 +191,15 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	async warm(): Promise<void> {
 		this.#paths.clear()
 
+		// One reading of the active selection serves every state, so every path comes from one generation.
+		const catalog = await LayerCatalog.read(this.#dataRoot)
+
 		for (const abbreviation of Object.keys(US_STATE_BY_ABBREVIATION)) {
 			const slug = abbreviation.toLowerCase()
 
 			const [apPath, ipPath] = await Promise.all([
-				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest),
-				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest),
+				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest, catalog),
+				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest, catalog),
 			])
 
 			this.#paths.set(slug, { apPath, ipPath })

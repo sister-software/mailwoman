@@ -322,6 +322,8 @@ mailwoman data inventory [options]
 
 ### `mailwoman data pull`
 
+Install published data bundles
+
 ```
 mailwoman data pull [options] <bundle...>
 ```
@@ -332,7 +334,7 @@ mailwoman data pull [options] <bundle...>
 
 | Flag                      | Type                          | Default | Description                                                                                                                                                 |
 | ------------------------- | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--dry-run`               | boolean                       | `false` | Print the download plan without network access or data writes                                                                                               |
+| `--dry-run`               | boolean                       | `false` | Print the installation plan without network access or data writes                                                                                           |
 | `--only [only]`           | string                        | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
 | `--force`                 | boolean                       | `false` | Re-download even when a local copy already appears present                                                                                                  |
 | `--data-root [data-root]` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |

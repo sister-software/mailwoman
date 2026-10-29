@@ -9,21 +9,123 @@
  *   records: a registry entry can list an artifact's expected digest and size, and only the
  *   downloaded file's manifest establishes what the file holds. Neither record stores CLI wording.
  *
- *   `BUNDLES` in `bundles.ts` stays the registry the CLI reads until the installation planner moves
- *   onto these entries.
+ *   `BUNDLES` in `bundles.ts` stays the published registry format, and {@link availableDataEntry} reads each
+ *   bundle as an entry. The installation planner reads entries only.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	type ArtifactID,
+	type ArtifactScope,
 	isArtifactID,
 	isRecordedMD5,
 	isScopeCountryCode,
 	isScopeSubdivisionCode,
+	type NormalizationIdentity,
+	NormalizationRequirement,
+	ROLE_REQUIREMENTS,
+	type SelectionScope,
 	ServingRole,
 } from "@mailwoman/core/layers"
+import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+
+import { bundleArtifactRole, bundleArtifactSubdivision, BUNDLES, type DataBundle } from "#data/bundles"
 
 const ROLES = new Set<string>(Object.values(ServingRole))
+
+/**
+ * The role schema version every artifact the public bucket serves today was written at.
+ *
+ * Version 1 is the schema each role's reader opens when versions began to be recorded.
+ */
+export const PUBLISHED_SCHEMA_VERSION = 1
+
+/**
+ * The street locale a bundle's street-keyed artifacts were normalized under.
+ */
+function streetLocale(bundle: DataBundle): string | null {
+	const [country] = bundle.countries ?? []
+
+	return country ? country.toLowerCase() : null
+}
+
+/**
+ * Read one published bundle as an available-data entry.
+ *
+ * Every field comes from the bundle's own record.
+ * A size is `estimated` because the registry's surveyed size is not measured by this read,
+ * and no SHA-256 is expected because the bucket publishes none.
+ *
+ * @throws When an artifact has no recorded role, or a street-keyed artifact has no recorded locale.
+ */
+export function availableDataEntry(bundle: DataBundle): AvailableDataEntry {
+	const countries = bundle.countries ?? []
+
+	const artifacts = bundle.artifacts.map((artifact): AvailableArtifact => {
+		const role = bundleArtifactRole(bundle, artifact)
+
+		if (!role) throw new Error(`${bundle.name}: ${artifact.remotePath} records no serving role`)
+
+		const subdivision = bundleArtifactSubdivision(artifact)
+		let normalization: NormalizationIdentity | null = null
+
+		if (ROLE_REQUIREMENTS[role].normalization === NormalizationRequirement.Required) {
+			const locale = streetLocale(bundle)
+
+			if (!locale) throw new Error(`${bundle.name}: ${artifact.remotePath} is street-keyed and records no country`)
+
+			normalization = { ...STREET_KEY_NORMALIZATION, locale }
+		}
+
+		return {
+			role,
+			remotePath: artifact.remotePath,
+			expectedID: null,
+			md5: null,
+			size: { basis: SizeBasis.Estimated, bytes: artifact.approxBytes },
+			scope: {
+				countries: subdivision ? [subdivision.slice(0, 2)] : countries,
+				subdivisions: subdivision ? [subdivision] : null,
+			},
+			schemaVersion: PUBLISHED_SCHEMA_VERSION,
+			normalization,
+		}
+	})
+
+	const subdivisions = artifacts.flatMap((artifact) => artifact.scope.subdivisions ?? [])
+
+	return {
+		name: bundle.name,
+		kind: AvailabilityKind.Download,
+		capabilities: [...new Set(artifacts.map((artifact) => artifact.role))],
+		countries,
+		subdivisions: subdivisions.length ? subdivisions : null,
+		dependencies: bundle.dependencies ?? [],
+		access: bundle.access === "licensed" ? AccessRequirement.Licensed : AccessRequirement.Public,
+		license: bundle.rights.expression,
+		artifacts,
+		recipe: null,
+		activation: bundle.activation ?? "conventional-path",
+	}
+}
+
+/**
+ * The selection scope an available artifact is activated under: its subdivision
+ * when it has one, else its single country, else none.
+ */
+export function selectionScopeOf(available: AvailableArtifact): SelectionScope {
+	const subdivision = available.scope.subdivisions?.[0] ?? null
+	const country = available.scope.countries.length === 1 ? (available.scope.countries[0] ?? null) : null
+
+	return { country: subdivision ? subdivision.slice(0, 2) : country, subdivision }
+}
+
+/**
+ * Every published bundle as an available-data entry.
+ */
+export function availableDataRegistry(bundles: Readonly<Record<string, DataBundle>> = BUNDLES): AvailableDataEntry[] {
+	return Object.values(bundles).map(availableDataEntry)
+}
 
 /**
  * How a registry entry's data reaches the data root.
@@ -104,6 +206,18 @@ export interface AvailableArtifact {
 	 */
 	md5: string | null
 	size: RecordedSize
+	/**
+	 * Where a selection may consider the artifact once installed.
+	 */
+	scope: ArtifactScope
+	/**
+	 * The role schema version the artifact was published at.
+	 */
+	schemaVersion: number
+	/**
+	 * The normalization that keyed the artifact's streets, for a street-keyed role, and `null` otherwise.
+	 */
+	normalization: NormalizationIdentity | null
 }
 
 /**
@@ -147,6 +261,14 @@ export interface AvailableDataEntry {
 	 * The recipe a build entry runs, or `null` for a download.
 	 */
 	recipe: string | null
+	/**
+	 * How an installed artifact becomes the one its readers open.
+	 *
+	 * `selection`: installed under `db/<role>/<artifact id>/` and listed in `active.json`.
+	 * `conventional-path`: written to the path its readers resolve today,
+	 * because they do not yet read the selection.
+	 */
+	activation: "selection" | "conventional-path"
 }
 
 /**
@@ -244,6 +366,26 @@ export function availableDataEntryProblems(entry: Partial<AvailableDataEntry>): 
 
 		if (!artifact.remotePath) {
 			problems.push(`${label}.remotePath is missing`)
+		}
+
+		if (!Number.isSafeInteger(artifact.schemaVersion) || artifact.schemaVersion < 1) {
+			problems.push(`${label}.schemaVersion must be a positive integer`)
+		}
+
+		if (ROLES.has(artifact.role)) {
+			const required = ROLE_REQUIREMENTS[artifact.role].normalization === NormalizationRequirement.Required
+
+			if (required && !artifact.normalization?.locale) {
+				problems.push(`${label} is street-keyed (${artifact.role}) and records no normalization`)
+			} else if (!required && artifact.normalization != null) {
+				problems.push(`${label} keys no street (${artifact.role}) and records a normalization`)
+			}
+		}
+
+		if (!artifact.scope || !Array.isArray(artifact.scope.countries)) {
+			problems.push(`${label}.scope is missing`)
+		} else if (artifact.scope.countries.some((country) => !(entry.countries ?? []).includes(country))) {
+			problems.push(`${label}.scope names a country the entry does not`)
 		}
 
 		if (artifact.expectedID !== null && !isArtifactID(artifact.expectedID)) {

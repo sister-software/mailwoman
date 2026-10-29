@@ -15,6 +15,11 @@ import { movePath, removePathIfPresent } from "#fs/writers"
 
 const DEFAULT_PROGRESS_STRIDE_BYTES = 16 * 1024 * 1024
 
+/**
+ * The status a host answers a satisfied byte-range request with (RFC 9110 §15.3.7).
+ */
+const HTTP_PARTIAL_CONTENT = 206
+
 export interface StreamToDiskOptions {
 	url: string
 	destination: PathBuilderLike
@@ -44,25 +49,63 @@ export interface StreamToDiskOptions {
 	 * rather than 404 for a version date it does not hold, so a bare status would misdirect a reader.
 	 */
 	describeStatus?: (status: number) => string | undefined
+	/**
+	 * Where the bytes accumulate before the final rename.
+	 * Defaults to `<destination>.part`.
+	 */
+	partialPath?: string
+	/**
+	 * The number of bytes already in {@link partialPath} to continue after.
+	 *
+	 * The request asks for `bytes=<resumeFrom>-` and appends the response.
+	 * A response other than a 206 starting at that byte raises {@link ResumeRefusedError}
+	 * and leaves the partial file as it was.
+	 *
+	 * The caller decides beforehand that the partial bytes belong to the same remote object.
+	 */
+	resumeFrom?: number
+	/**
+	 * Keep the partial file after a failed transfer so a later call can resume it.
+	 * By default a failure removes it.
+	 */
+	retainPartial?: boolean
+	/**
+	 * Cancels the transfer.
+	 */
+	signal?: AbortSignal
 }
 
 /**
- * Download one file to `destination`, returning the bytes received.
+ * A host that answered a resumed request with something other than the requested byte range.
+ */
+export class ResumeRefusedError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = "ResumeRefusedError"
+	}
+}
+
+/**
+ * Download one file to `destination`, returning its size: the bytes received plus any resumed offset.
  *
  * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects again.
  * The downloader would write a redirect page to disk and report success if it stopped at the redirect.
  *
  * @throws {Error} When the response is not OK or contains no body.
- * A partial file is removed on any failure.
+ * A partial file is removed on any failure unless `retainPartial` is set.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {
-	const partialPath = `${options.destination}.part`
+	const partialPath = options.partialPath ?? `${options.destination}.part`
+	const offset = options.resumeFrom ?? 0
 
-	options.onProgress?.(`downloading ${options.url}`)
+	options.onProgress?.(offset ? `resuming ${options.url} at byte ${offset}` : `downloading ${options.url}`)
+
+	const headers = { ...options.headers, ...(offset ? { range: `bytes=${offset}-` } : {}) }
 
 	const response = await fetch(options.url, {
 		redirect: "follow",
-		...(options.headers ? { headers: options.headers } : {}),
+		...(Object.keys(headers).length ? { headers } : {}),
+		...(options.signal ? { signal: options.signal } : {}),
 	})
 
 	if (!response.ok || !response.body) {
@@ -71,12 +114,26 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 		throw new Error(`${options.context}: ${options.url} answered HTTP ${response.status}${explanation ?? ""}`)
 	}
 
+	if (offset) {
+		const range = response.headers.get("content-range")
+		const start = range ? /^bytes (\d+)-/u.exec(range)?.[1] : undefined
+
+		// A host that ignores the range answers 200 with the whole object, and appending it would corrupt the file.
+		if (response.status !== HTTP_PARTIAL_CONTENT || Number(start) !== offset) {
+			await response.body.cancel()
+
+			throw new ResumeRefusedError(
+				`${options.context}: ${options.url} did not resume at byte ${offset} (HTTP ${response.status}, content-range ${range ?? "absent"})`
+			)
+		}
+	}
+
 	options.onResponse?.(response)
 
 	const strideBytes = options.progressStrideBytes ?? DEFAULT_PROGRESS_STRIDE_BYTES
 
-	let received = 0
-	let reported = 0
+	let received = offset
+	let reported = offset
 
 	const source = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
 
@@ -92,9 +149,11 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	})
 
 	try {
-		await pipeline(source, openWriteStream(partialPath))
+		await pipeline(source, openWriteStream(partialPath, offset ? { flags: "a" } : undefined))
 	} catch (error) {
-		await removePathIfPresent(partialPath)
+		if (!options.retainPartial) {
+			await removePathIfPresent(partialPath)
+		}
 
 		throw error
 	}

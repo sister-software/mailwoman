@@ -14,6 +14,7 @@ import {
 	readlink,
 	realpath,
 	stat,
+	statfs,
 	type FileHandle,
 } from "node:fs/promises"
 
@@ -274,6 +275,45 @@ export function entryLeadsToDirectory(entry: Dirent): Promise<boolean> {
  */
 export function readFileSize(path: PathBuilderLike | URL): Promise<number> {
 	return statPath(path).then((stats) => stats.size)
+}
+
+/**
+ * The space on the filesystem that holds a path.
+ */
+export interface FilesystemSpace {
+	/**
+	 * The existing path the filesystem was read from: `path` itself, or its nearest existing ancestor.
+	 */
+	measuredAt: string
+	/**
+	 * The bytes an unprivileged process may still write.
+	 */
+	availableBytes: number
+	totalBytes: number
+}
+
+/**
+ * The space on the filesystem that will hold `path`, read from its nearest
+ * existing ancestor when `path` does not exist yet.
+ *
+ * @throws The system error when the nearest existing ancestor cannot be read.
+ */
+export async function readFilesystemSpace(path: PathBuilderLike): Promise<FilesystemSpace> {
+	let current: string = resolvePath(path.toString())
+
+	for (;;) {
+		try {
+			const stats = await statfs(current)
+
+			return { measuredAt: current, availableBytes: stats.bavail * stats.bsize, totalBytes: stats.blocks * stats.bsize }
+		} catch (error) {
+			const parent = resolvePath(current, "..")
+
+			if ((error as NodeJS.ErrnoException).code !== "ENOENT" || parent === current) throw error
+
+			current = parent
+		}
+	}
 }
 
 /**

@@ -3,6 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
+ *   An artifact listed in the active selection is reported with its generation and checked against the size its
+ *   own manifest records. A selected artifact of another size raises an unreadable-artifact error with its path.
+ *
  *   The command runs offline by default. It reports an on-disk artifact as "present" when its size matches
  *   the registry's surveyed `approxBytes`. This size-only integrity check catches truncation and does not
  *   compare versions. `--check-remote` adds a live head `Content-Length` probe through `APIClient`.
@@ -30,6 +33,8 @@ import {
 	resolveBundleArtifacts,
 	type BundleArtifact,
 } from "#data/bundles"
+import { LayerCatalog } from "#data/catalog"
+import { availableDataEntry, selectionScopeOf } from "#data/registry"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
 import { headContentLength } from "#data/remote"
 
@@ -66,6 +71,7 @@ async function statusForBundles(
 	checkRemote: boolean
 ): Promise<{ ok: boolean; checks: Check[] }> {
 	const manifest = await readReleaseManifest(dataRoot)
+	const catalog = await LayerCatalog.read(dataRoot)
 	const checks: Check[] = []
 	let ok = true
 
@@ -95,6 +101,24 @@ async function statusForBundles(
 		for (const artifact of resolveBundleArtifacts(bundle, manifest)) {
 			const label = `${name}: ${artifact.localPath}`
 			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
+
+			// An artifact listed in the active selection is checked against the exact
+			// size its own manifest records.
+			// The registry's surveyed size is an estimate.
+			const [available] = availableDataEntry({ ...bundle, artifacts: [artifact] }).artifacts
+			const selected = available ? await catalog.resolve(available.role, selectionScopeOf(available)) : []
+			const [first] = selected
+
+			if (first) {
+				checks.push({
+					ok: true,
+					check: label,
+					detail: `selected in generation ${catalog.generation} (${ByteFormatter.formatSI(first.manifest.bytes)}, size matches its manifest ${first.manifest.id}) at ${first.path}`,
+				})
+
+				continue
+			}
+
 			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (!existing) {

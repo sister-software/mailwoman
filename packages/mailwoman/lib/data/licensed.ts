@@ -57,6 +57,60 @@ export function licensedArtifactName(bundle: DataBundle, artifact: BundleArtifac
 }
 
 /**
+ * The configured token with its offline verification, or `null` when none is configured.
+ *
+ * Read only when a licensed bundle asks, so a free pull touches no key.
+ */
+export async function readConfiguredKey(): Promise<ConfiguredKey | null> {
+	const { readConfiguredLicenseToken, trustedLicenseSigningKeys, verifyLicenseKey } =
+		await import("@mailwoman/core/license")
+
+	const configured = await readConfiguredLicenseToken()
+
+	if (!configured) return null
+
+	return {
+		token: configured.token,
+		verification: await verifyLicenseKey(configured.token, { trustedKeys: trustedLicenseSigningKeys() }),
+	}
+}
+
+/**
+ * A presigned download of one licensed artifact.
+ */
+export interface GrantedDownload {
+	url: string
+	/**
+	 * The object's size as the worker's catalog records it, the one check a presigned object admits.
+	 */
+	bytes: number | null
+}
+
+/**
+ * Trade the token for a presigned URL of one licensed artifact.
+ *
+ * @throws When the worker refuses, is not provisioned, or does not answer,
+ * with the worker's word in the message.
+ */
+export async function requestGrantedDownload(token: string, artifact: string): Promise<GrantedDownload> {
+	const { requestDownload } = await import("@mailwoman/core/license/status")
+	const { readInstallationID } = await import("@mailwoman/core/license")
+	const install = await readInstallationID()
+	const answer = await requestDownload({ token, artifact, ...(install ? { install } : {}) })
+
+	switch (answer.status) {
+		case "granted":
+			return { url: answer.url, bytes: answer.bytes }
+		case "refused":
+			throw new Error(`${artifact}: the license worker refused the download (${answer.reason})`)
+		case "unavailable":
+			throw new Error(`${artifact}: the license worker's download bucket is not provisioned yet`)
+		case "unreachable":
+			throw new Error(`${artifact}: the license worker did not answer: ${answer.reason}`)
+	}
+}
+
+/**
  * Decide whether a bundle may be pulled with the configured key.
  */
 export function licensedPullDecision(bundle: DataBundle, configured: ConfiguredKey | null): LicensedPullDecision {

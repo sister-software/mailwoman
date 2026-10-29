@@ -7,11 +7,12 @@
  */
 
 import { isAsyncDisposable } from "async-init"
-import Axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type CreateAxiosDefaults } from "axios"
+import Axios, { type AxiosInstance, type AxiosResponse, type CreateAxiosDefaults } from "axios"
 import {
 	type AxiosCacheInstance,
 	type CacheAxiosResponse,
 	type CacheOptions,
+	type CacheRequestConfig,
 	setupCache,
 } from "axios-cache-interceptor"
 
@@ -32,6 +33,14 @@ const MS_PER_MINUTE = 60_000
 /**
  * Configuration for an API client.
  */
+/**
+ * One request's options: Axios's, with the cache interceptor's per-request switch.
+ *
+ * `cache: false` skips both the cache read and the cache write, for a request whose answer
+ * must be current, such as the head that identifies a remote object before a resumed transfer.
+ */
+export type APIRequestConfig = CacheRequestConfig
+
 export interface APIClientConfig {
 	displayName: string
 	/**
@@ -224,7 +233,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * A cache hit incurs no cost.
 	 * Each retry re-enters the adapter, so a retry burst cannot outrun the pacer.
 	 */
-	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+	public fetch = async <T>(options: APIRequestConfig): Promise<AxiosResponse<T>> => {
 		this.#shutdown.signal.throwIfAborted()
 
 		const completed = Promise.withResolvers<void>()
@@ -239,7 +248,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		}
 	}
 
-	async #fetch<T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+	async #fetch<T>(options: APIRequestConfig): Promise<AxiosResponse<T>> {
 		const method = options.method?.toUpperCase() || "GET"
 
 		// `mergeConfig` prefers a per-request `adapter` over the instance default.
