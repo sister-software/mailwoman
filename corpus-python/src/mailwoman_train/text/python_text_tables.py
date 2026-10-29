@@ -5,7 +5,8 @@ keys and matches postcode shapes the way the Python loader did. Those operations
 database, and Rust's standard library carries a different Unicode version. The crate therefore reads
 `src/python_text/tables.rs`, generated here from every scalar value this interpreter knows:
 
-- `str.isspace`, `str.isalnum` and `str.isdecimal` as sorted inclusive ranges;
+- `str.isspace`, `str.isalnum`, `str.isdecimal`, `str.isalpha` and `str.isdigit` as sorted inclusive ranges, and the
+  characters whose Unicode name starts with a CJK script prefix (`is_cjk_named`);
 - the cased and case-ignorable properties `str.lower` reads for the final-sigma rule;
 - the full lowercase and uppercase mapping of each character whose mapping is not itself.
 
@@ -74,6 +75,15 @@ def is_case_ignorable(char: str) -> bool:
     return final_before_end and medial_before_cased
 
 
+#: The name prefixes the grouping augmentation reads as CJK text, through `unicodedata.name`.
+CJK_NAME_PREFIXES = ("CJK UNIFIED", "HIRAGANA", "KATAKANA", "HANGUL")
+
+
+def is_cjk_named(char: str) -> bool:
+    """Whether the character's Unicode name starts with one of `CJK_NAME_PREFIXES`."""
+    return unicodedata.name(char, "").startswith(CJK_NAME_PREFIXES)
+
+
 def mapping(convert: Callable[[str], str]) -> list[tuple[int, str]]:
     """Every scalar value whose one-character conversion differs from itself, with the converted string."""
     out: list[tuple[int, str]] = []
@@ -111,6 +121,12 @@ def render() -> str:
         _rust_ranges("ALNUM", ranges(str.isalnum)),
         "\n",
         _rust_ranges("DECIMAL", ranges(str.isdecimal)),
+        "\n",
+        _rust_ranges("ALPHA", ranges(str.isalpha)),
+        "\n",
+        _rust_ranges("DIGIT", ranges(str.isdigit)),
+        "\n",
+        _rust_ranges("CJK_NAMED", ranges(is_cjk_named)),
         "\n",
         _rust_ranges("CASED", ranges(is_cased)),
         "\n",

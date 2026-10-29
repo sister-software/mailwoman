@@ -60,6 +60,22 @@ pub fn is_decimal(c: char) -> bool {
 	in_ranges(tables::DECIMAL, c)
 }
 
+/// `str.isalpha` for one character.
+pub fn is_alpha(c: char) -> bool {
+	in_ranges(tables::ALPHA, c)
+}
+
+/// `str.isdigit` for one character, which admits superscripts and other `Numeric_Type=Digit` characters that
+/// `str.isdecimal` rejects.
+pub fn is_digit(c: char) -> bool {
+	in_ranges(tables::DIGIT, c)
+}
+
+/// Whether `unicodedata.name(c)` starts with `CJK UNIFIED`, `HIRAGANA`, `KATAKANA` or `HANGUL`.
+pub fn is_cjk_named(c: char) -> bool {
+	in_ranges(tables::CJK_NAMED, c)
+}
+
 /// What `\w` matches in a `str` pattern: an alphanumeric character or the underscore.
 pub fn is_word(c: char) -> bool {
 	c == '_' || is_alnum(c)
@@ -154,6 +170,14 @@ mod tests {
 	fn decimal_covers_only_the_decimal_number_category() {
 		assert!(is_decimal('٣') && is_decimal('7'));
 		assert!(!is_decimal('²') && !is_decimal('Ⅳ'));
+	}
+
+	#[test]
+	fn alpha_digit_and_cjk_names_follow_python() {
+		assert!(is_alpha('é') && is_alpha('ア') && !is_alpha('1') && !is_alpha('\u{940}'));
+		assert!(is_digit('²') && is_digit('7') && !is_decimal('²') && !is_digit('Ⅳ'));
+		assert!(is_cjk_named('東') && is_cjk_named('あ') && is_cjk_named('ー') && is_cjk_named('한'));
+		assert!(!is_cjk_named('ｱ') && !is_cjk_named('「') && !is_cjk_named('A'));
 	}
 
 	#[test]
