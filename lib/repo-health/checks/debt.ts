@@ -532,6 +532,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[".yarn/", "vendored third-party release"],
+	[
+		"packages/trainer/crates/trainer-export/proto/",
+		"the ONNX project's onnx.proto, whose sharding messages keep their upstream names",
+	],
 ]
 
 /**

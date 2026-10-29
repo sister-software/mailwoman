@@ -148,6 +148,18 @@ describe("selectCIScope", () => {
 		expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: false, python: true })
 	})
 
+	it.each(["packages/trainer/crates/trainer-export/src/quantize.rs", "packages/trainer/Cargo.lock"])(
+		"selects only the job that tests the trainer crates for %s",
+		(file) => {
+			expect(selectCIScope(workspaces, files, [file], [])).toMatchObject({
+				full: false,
+				python: true,
+				fast: false,
+				slow: false,
+			})
+		}
+	)
+
 	it("leaves Python unselected for an mtf change outside the extension's inputs", () => {
 		expect(selectCIScope(withMTF, files, ["packages/mtf/lib/index.ts"], [])).toMatchObject({
 			full: false,

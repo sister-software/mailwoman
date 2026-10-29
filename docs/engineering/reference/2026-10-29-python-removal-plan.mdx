@@ -280,12 +280,81 @@ run. None runs as part of this plan's commit.
 | Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Spend                                                     |
 | --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
 | F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | image build on Modal: **spend** (approval). Lab CPU: none |
-| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`)                                                                                                                                                                                                                                                                                                                                                                                          | none                                                      |
+| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element; the iOS device check was not run. See §4.1                                                                                                                                                                                                             | none                                                      |
 | F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | none                                                      |
 | F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded | CPU Sandbox minutes: **spend** (approval)                 |
 | F5  | Native SentencePiece                     | `spm_train` built from the `v0.2.2` tag reproduces the recorded tokenizer model hash on the recorded inputs with one thread. The Rust `sentencepiece` 0.14.0 crate's trainer exposure is checked. The proto writer round-trips the shipped model byte for byte                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | none                                                      |
 | F6  | Bounded CPython RNG                      | `pyrandom.rs` matches `cpython-random.json` for every method and seed form in §1.3, including string seeds and `_randbelow` rejection. The mixed-call sequence test (the JP assembler's draw order) matches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | none                                                      |
 | F7  | Config resolver                          | The 148-config dump comparison and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | none                                                      |
+
+### 4.1 F2 result: the Rust exporter and quantizer
+
+Observed on 2026-10-29 on the lab host. The exporter is `packages/trainer/crates/trainer-export` in the new cargo
+workspace `packages/trainer`, which has no npm package because no JavaScript module imports it. It reads
+`pytorch_model.bin` directly with a zip reader and a pickle machine that records `REDUCE` calls without running
+them, so no converter to safetensors was needed. Both checkpoints store bfloat16 tensors, which the reader widens to
+float32 exactly, as `load_state_dict` does. It writes the graph with prost types generated from `onnx.proto` of onnx
+1.22.0. The quantizer follows onnxruntime 1.30.0's `quantization/` source for `quantize_dynamic(QInt8)` with its
+defaults: the `Gemm` to `MatMul` rewrite, `MatMulInteger` with `DynamicQuantizeLinear`, uint8 `Gather` tables, and
+the scale and zero point arithmetic in the same float32 and float64 steps.
+
+```bash
+cargo run --release --manifest-path packages/trainer/Cargo.toml -- export-onnx --checkpoint <dir> --output fp32.onnx
+cargo run --release --manifest-path packages/trainer/Cargo.toml -- quantize --input fp32.onnx --output int8.onnx
+node packages/neural/tools/onnx-export-parity.run.ts --weights-overlay <root> --reference <a.onnx> \
+  --candidate <b.onnx> --rows <heldout rows.jsonl> --count 1000 --tolerance 1e-3 --out receipt.json
+```
+
+The reference is the pinned exporter run on the lab CPU: torch 2.12.0, onnxscript 0.7.2, onnx 1.22.0, onnxruntime
+1.30.0, CPython 3.12.3, `export_to_onnx(opset=17, max_length=128)` and then `quantize_dynamic_int8`. For en-us 10.7.0
+(`output-v7100-gb-county-s42/checkpoints/step-060000`, read from the volume) the reference fp32 and int8 are byte for
+byte the shipped candidate and the quantized artifact. For arm B (`v830-base-c6-90k-mixed-s42` step 90000) the
+reference int8 is byte for byte the `model.onnx` beside the checkpoint on the data root.
+
+The probe is 1,000 rows of `heldout-dev-v0.8.2.rows.jsonl` (50,829 rows), every 50th from the first. The Node
+runtime parses each row and the tool records the feed it builds, with the token ids, mask, five channels and hint.
+Every other row is parsed with its own country as `localeHint`, for 500 hinted probes. Arm B's feeds use its c6
+tokenizer. Every tenth probe is also run trimmed to its real length, so the `sequence` axis varies.
+
+| Check                                                   | Arm B step 90000               | en-us 10.7.0                   | Requirement      |
+| ------------------------------------------------------- | ------------------------------ | ------------------------------ | ---------------- |
+| fp32 graph loads in onnxruntime-node 1.30.0             | yes                            | yes                            | loads            |
+| Inputs, outputs, element types, declared dimensions     | equal                          | equal                          | equal            |
+| fp32 `logits`, largest absolute difference              | 2.96e-5                        | 3.98e-5                        | 1e-4             |
+| fp32 `locale_logits` / `address_system_logits`          | 2.9e-6 / 3.8e-6                | 3.8e-6 / 3.8e-6                | 1e-4             |
+| fp32 argmax label agreement on real tokens              | 18,157 of 18,157               | 21,337 of 21,337               | not a threshold  |
+| int8 from the Rust graph and quantizer, every output    | 0 on every element             | 0 on every element             | 1e-3             |
+| Rust quantizer on the reference fp32: initializers      | 189 of 189 equal               | 189 of 189 equal               | none registered  |
+| Browser SLO suite on the Rust int8 (wasm arm), 11 tests | pass; p50 43.5 ms, p95 45.6 ms | pass; p50 43.7 ms, p95 45.4 ms | the suite        |
+| WebGPU on a real iOS device                             | not run                        | not run                        | before promotion |
+
+The shipped en-us int8 measured 43.7 ms p50 and 46.1 ms p95 on the same host in the same session. The SLO suite
+has no WebGPU arm, so the WebGPU constraint is untested. The quantizer's unit tests cover the stale `value_info`
+case: an annotation that contradicts the graph is dropped and the output is identical to the one without it. The
+dynamo graph's 514 annotations pass through the same path.
+
+What does not match, and why:
+
+1. **Graph bytes, node names and initializer names** differ, which §3 permits. The Rust fp32 graph has 105
+   initializers and 18 `Reshape` nodes, against 115 and 72.
+2. **The fp32 logits differ by up to 4e-5.** onnxruntime's optimizer fuses `input_ln` and `final_ln` into
+   `SkipLayerNormalization` in the reference fp32 graph and only `final_ln` in the Rust one (observed in each
+   session's optimized graph). That fusion is inferred to cause the difference. The int8 graphs get the same single
+   fusion and agree exactly.
+3. **Shape annotations change int8 numerics.** Without `value_info`, onnxruntime does not fuse `final_ln`, and the
+   int8 `logits` move by up to 2.68e-2 for en-us and 3.49e-2 for arm B. The reference int8 with its `value_info`
+   removed gives the same numbers, and the Rust quantizer's output without annotations equals it exactly. So the
+   quantizer writes the shapes onnx's inference would write (`trainer-export/src/shape.rs`, including onnx's `unk__`
+   symbols), as `quantize_dynamic` saves them. A change to those annotations is a change to int8 output.
+4. **Batch size.** Both graphs declare dimension 0 of every output as 1, as torch.export specialized it. The
+   reference graph refuses a batch of two (`Attempting to broadcast an axis by a dimension other than 1. 128 by 256`
+   at `node_add_440`); the Rust graph computes it. The runtime feeds one row per run, so no served output changes.
+5. **Not built yet:** the char path's CharCNN, the span scorer's `span_scores`, the affix and dependent-locality
+   heads, and `inject_first_token`. The exporter refuses each by name. The quantizer refuses `Conv`, `Attention`,
+   `LSTM`, `EmbedLayerNormalization` and subgraphs, which onnxruntime would quantize.
+
+The Rust export took 0.49 s and 0.57 s with peak RSS 246 MB and 322 MB, and quantization 0.48 s and 0.64 s. The Python
+export was not timed. The shipped artifacts and the Python export path are unchanged.
 
 ## 5. Phases
 
@@ -426,12 +495,15 @@ Caller checklist: `export/*` ← `cli/commands/{export,quantize,package,split_em
 `packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts` (reads `corpus-python/launch/app.py`,
 **observed**).
 
-- `packages/trainer/crates/trainer-export`: the graph writer and quantizer from F2, `trainer split-embeddings`, and
+- `packages/trainer/crates/trainer-export`: the graph writer and quantizer from F2 (§4.1), extended to the char path
+  and the span scorer, then `trainer split-embeddings`, and
   `packages/mailwoman/tools/release/package-weights.run.ts`. Repoint `verify-export-quant-versions.run.ts` to the TS
   image definition.
 - Preservation: §3 row "ONNX export and quantization".
 - Verification: the reference checkpoint and the shipped `en-us` checkpoint re-exported and quantized, the Node and
-  browser checks, and the iOS WebGPU check recorded before any promotion.
+  browser checks, and the iOS WebGPU check recorded before any promotion. `onnx-export-parity.run.ts` compares
+  against the pinned exporter's graphs as in §4.1. The export's own check against the model, which `verify_parity`
+  runs against torch today, needs the Rust trainer's forward pass from Phase 5.
 - Deletion: `export/`, `cli/`, `__main__.py`, `env.py`, `paths.py`, `protocols.py`, `types.py`,
   `packages/neural/test/fixtures/generate-split-embeddings.py`, and their tests. After this phase
   `corpus-python/src` holds only the temporary `labels.py` and `config/` readers, and those go in Phase 7.

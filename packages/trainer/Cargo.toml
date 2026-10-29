@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = ["crates/trainer-export"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+# The crates are AGPL; `crates/trainer-export/proto/onnx.proto` is the ONNX project's, under Apache-2.0.
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
+repository = "https://github.com/sister-software/mailwoman"
+
+[profile.release]
+opt-level = 3
