@@ -103,6 +103,20 @@ These are merged to `main` after 10.7.0 and belong in the next release's notes
   `--dry-run`, and `data migrate --dry-run`. `data pull` and `data status` gain `--json`.
 - **Setup reports capabilities.** `mailwoman setup` lists what works now per capability and the next
   smallest installation, and lists the `fr`, `us` and `poi` tiers only for the countries they cover.
+- **Every data reader consults the selection.** The OpenStreetMap address-point layers, the WOF extract
+  set, the gazetteer and street-morphology FSTs, autocomplete's FST, and the Nominatim and Photon
+  servers read the active selection before their conventional paths, from one generation per session.
+  A new `gazetteer-fst` role selects a locale's gazetteer FST. A reader whose role has no selection entry
+  reads the file it read before.
+- **`mailwoman data build osm-address-points --countries <cc>`** builds an OpenStreetMap address-point
+  database through the installer: plan (`--dry-run`), a GDAL check before any download, a
+  receipt-backed acquisition of the Geofabrik extract kept under `src/`, a build clipped to the
+  country's outline when the extract holds other countries, validation, installation, and with
+  `--activate` selection after any national register the country already selects. The recipe ships in
+  `@mailwoman/osm`; without it the command prints the package to install and stops. The command-line builder
+  `build-rooftop-database` keeps working.
+- **`@mailwoman/nominatim` and `@mailwoman/photon`** no longer depend on `@mailwoman/ban` directly; they
+  open BAN through `mailwoman`.
 
 ## In flight
 

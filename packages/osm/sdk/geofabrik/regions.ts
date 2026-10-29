@@ -46,6 +46,8 @@ const REGIONS: readonly GeofabrikRegion[] = [
 	{ id: "europe/britain-and-ireland", countries: ["GB", "IE", "IM"], partial: [] },
 	{ id: "europe/dach", countries: ["DE", "AT", "CH"], partial: [] },
 	{ id: "europe/france", countries: ["FR"], partial: [] },
+	// Corsica, the 34 MB sub-region the build-the-planet tutorial builds.
+	{ id: "europe/france/corse", countries: ["FR"], partial: ["FR"] },
 	{ id: "europe/germany", countries: ["DE"], partial: [] },
 	{ id: "europe/ireland-and-northern-ireland", countries: ["IE", "GB"], partial: ["GB"] },
 	{ id: "europe/netherlands", countries: ["NL"], partial: [] },

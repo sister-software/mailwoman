@@ -104,6 +104,22 @@ The gazetteer is a separate download and is not part of any npm package. The pub
 `gazetteer/2026-08-25b/candidate.db` at 2,880,921,600 bytes (2.88 GB), covering 244 countries. Run
 `mailwoman doctor` for the current URL instead of copying one from a page.
 
+## Geographic data: published, buildable, installed and evaluated
+
+Four questions about geographic data have four separate answers, and each has its own source.
+
+| Question                                | Answer today                                                                                                                                                                                           | Where to check it                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| What can be downloaded                  | Four published bundles: `candidate` (the global gazetteer), `us` (rooftop and interpolation per state), `fr` (the BAN register) and `poi`                                                              | `mailwoman data --list`, read from the bundle registry                          |
+| What can be built locally               | The `osm-address-points` recipe for CA, DE, FR, GB, ID, NL, NZ, PK, PL and VN, unreleased, and the US rooftop and interpolation builds in [Build the US dataset](./tutorials/build-the-us-dataset.mdx) | `mailwoman data build osm-address-points --countries <cc> --dry-run`            |
+| What your installation has              | The artifacts your `active.json` selects, and any file at a conventional path that no selection entry replaces                                                                                         | `mailwoman setup --countries <cc>`, `mailwoman data status`, `mailwoman doctor` |
+| Which countries have evaluated coverage | The locale tiers below. A country with installed data and no coordinate-graded evaluation is not a supported locale                                                                                    | `docs/engineering/SCOPE.mdx` and the evaluation coverage register               |
+
+A built OpenStreetMap layer is consulted after a national register for the same country, so building one
+does not change answers where a published register is installed. The
+[jurisdiction coverage table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx)
+lists, per jurisdiction, the corpus rows, gazetteer places and board rows that exist.
+
 ## Locales
 
 The tiers below are copied from
@@ -140,15 +156,15 @@ scripts.
 Each row states the limit and the next step. Where a limit is an off-by-default setting and not a
 missing feature, the next step turns it on.
 
-| Limit                                                                                      | Next step                                                                                                          |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| The gazetteer database enables coordinate resolution. The parser uses no gazetteer.        | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
-| Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                        |
-| The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                        |
-| One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |
-| Korean resolves no finer than the 시군구. No sub-county register has been adopted.         | None today. The constraint is data coverage rather than engineering.                                               |
-| The locale hint reports a single BCP-47 tag, so Han-script input is labeled `ja-JP`.       | Read the resolved country rather than the hint's locale when the input is Han-script.                              |
-| Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible. Arbitrary translation is not performed.            |
+| Limit                                                                                      | Next step                                                                                                                 |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| The gazetteer database enables coordinate resolution. The parser uses no gazetteer.        | Download it once: `mailwoman data pull candidate`, which installs and selects it. `mailwoman doctor` prints that command. |
+| Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                               |
+| The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                               |
+| One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                             |
+| Korean resolves no finer than the 시군구. No sub-county register has been adopted.         | None today. The constraint is data coverage rather than engineering.                                                      |
+| The locale hint reports a single BCP-47 tag, so Han-script input is labeled `ja-JP`.       | Read the resolved country rather than the hint's locale when the input is Han-script.                                     |
+| Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible. Arbitrary translation is not performed.                   |
 
 ## Rationale
 
