@@ -14,7 +14,7 @@ import { APIClient } from "@mailwoman/core/api"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { type BuildRecipe, BuildRecipeName, ServingRole } from "@mailwoman/core/layers"
+import { type AcquiredBuildInput, type BuildRecipe, BuildRecipeName, ServingRole } from "@mailwoman/core/layers"
 import { createOSMAddressPointsRecipe } from "@mailwoman/osm/tools/address-points-recipe"
 import { writePBF } from "@mailwoman/osm/tools/pbf-writer"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -227,15 +227,22 @@ describe("data build osm-address-points", () => {
 
 	it("builds again under a changed policy version instead of reusing the earlier extraction", async () => {
 		const report = await planBuild(scratch.path("root"), recipe, REQUEST)
-		const inputs = new Map(report.plan.inputs.map((input) => [input.key, { sha256: "a".repeat(64) }]))
-		const before = buildIdentity(report.plan, inputs as never, "fixture")
+
+		const inputs = new Map<string, AcquiredBuildInput>(
+			report.plan.inputs.map((input) => [
+				input.key,
+				{ input, path: input.fileName, sha256: "a".repeat(64), md5: null, release: null, url: input.url },
+			])
+		)
+
+		const before = buildIdentity(report.plan, inputs, "fixture")
 
 		const bumped = {
 			...report.plan,
 			outputs: report.plan.outputs.map((output) => ({ ...output, policy: { ...output.policy, version: 2 } })),
 		}
 
-		expect(buildIdentity(bumped, inputs as never, "fixture")).not.toBe(before)
+		expect(buildIdentity(bumped, inputs, "fixture")).not.toBe(before)
 	})
 
 	it("activates a build after the national source its country already selects", async () => {

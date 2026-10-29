@@ -17,7 +17,7 @@ import { afterAll, describe, expect, it } from "vitest"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { collectOSMSuiteRows, freezeOSMSuites } from "#tools/eval-harness/osm-suites/build"
-import { countExtractLines, renderOSMExtractRecord } from "#tools/eval-harness/osm-suites/extract"
+import { countExtractLines, type OSMSuiteRow, renderOSMExtractRecord } from "#tools/eval-harness/osm-suites/extract"
 import { OSMSuiteShape } from "#tools/eval-harness/osm-suites/shapes"
 
 const directory = await temporaryDirectory("mw-osm-suites-")
@@ -138,7 +138,7 @@ describe("the OpenStreetMap suites", () => {
 
 		expect(rows.map((row) => row.raw)).toEqual(["4, Gulshan e Iqbal Block 2, Karachi"])
 		// The mapped tags stay apart from the rendered components.
-		expect((rows[0] as unknown as { mapped: object }).mapped).toEqual(PK_ROWS[1])
+		expect((rows[0] as OSMSuiteRow).mapped).toEqual(PK_ROWS[1])
 
 		const lineage = await readLocalJSONFile<{
 			filter: string
