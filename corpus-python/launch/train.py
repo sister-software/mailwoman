@@ -29,19 +29,7 @@ import modal
 from .app import VOL_MOUNT, app, hf_secret, training_image, vol
 from .resume import check_clearable, resolve_run_paths, resume_point
 from .settings import settings
-
-# Training-function wall-clock budget per attempt: 32,400 s (9h) covers a 90k A100 recipe, which the estimate below
-# puts at about 30,400 s. The preflight checks any recipe against the ceiling, so a config that cannot fit fails before
-# a GPU is billed.
-TRAIN_TIMEOUT_SECONDS = 32400
-# ~4.25 optimizer steps/s at batch 128, measured on the A100 40 GB. The default GPU is the 80 GB card. It has
-# the same compute and more memory bandwidth, so this rate stays a conservative bound. A launch on
-# a smaller `--gpu` is not covered by this measurement.
-MEASURED_STEPS_PER_SECOND = 4.25
-# Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
-# batches) plus a flat allowance for startup/shutdown outside the step loop.
-TIMEOUT_HEADROOM = 1.35
-STARTUP_SHUTDOWN_OVERHEAD_SECONDS = 1800
+from .wall_clock import TRAIN_TIMEOUT_SECONDS, check_wall_clock
 
 #: The audits a receipt records, by name. The GPU run requires the subset its config declares.
 CORPUS_FILES = "corpus_files"
@@ -49,11 +37,6 @@ CORPUS_RECEIPTS = "corpus_receipts"
 VALIDATION_COVERAGE = "validation_coverage"
 VALIDATION_LABEL_SUPPORT = "validation_label_support"
 WALL_CLOCK = "wall_clock"
-
-
-def _required_train_seconds(max_steps: int) -> int:
-    """Conservative wall-clock estimate for a run of ``max_steps`` optimizer steps."""
-    return int(max_steps / MEASURED_STEPS_PER_SECOND * TIMEOUT_HEADROOM) + STARTUP_SHUTDOWN_OVERHEAD_SECONDS
 
 
 def required_audits(cfg: object) -> list[str]:
@@ -99,9 +82,10 @@ def _config_path(config_name: str) -> str:
     timeout=7200,
     memory=16384,
 )
-def preflight(config_name: str, fresh: bool = False) -> str:
+def preflight(config_name: str, gpu: str, fresh: bool = False) -> str:
     """Run every pre-training audit on CPU, write the receipt, and return its key as the GPU run's token.
 
+    ``gpu`` is the Modal GPU type the run will train on. Its observed step rate sizes the wall-clock check.
     ``fresh`` clears the run's output directory once, here, so no GPU attempt ever deletes a checkpoint.
     """
     import shutil
@@ -172,16 +156,12 @@ def preflight(config_name: str, fresh: bool = False) -> str:
             reports[VALIDATION_LABEL_SUPPORT] = str(report_path)
             print(f"Validation label support: verified ({len(cfg.data.required_validation_label_support)} labels)")
 
-        required = _required_train_seconds(cfg.train.max_steps)
-        if required > TRAIN_TIMEOUT_SECONDS:
-            raise RuntimeError(
-                f"cfg.train.max_steps={cfg.train.max_steps} needs ~{required}s wall clock "
-                f"({MEASURED_STEPS_PER_SECOND} steps/s measured, ×{TIMEOUT_HEADROOM} headroom, "
-                f"+{STARTUP_SHUTDOWN_OVERHEAD_SECONDS}s startup/shutdown) but the train function's "
-                f"timeout is {TRAIN_TIMEOUT_SECONDS}s. Raise TRAIN_TIMEOUT_SECONDS deliberately; "
-                "do not let Modal kill the run at the wire."
-            )
-        print(f"Wall-clock preflight: ~{required}s required of {TRAIN_TIMEOUT_SECONDS}s budget")
+        estimate = check_wall_clock(gpu, cfg.train.max_steps, cfg.train.eval_every_steps, TRAIN_TIMEOUT_SECONDS)
+        print(
+            f"Wall-clock preflight on {estimate.gpu}: ~{estimate.total_seconds}s required of "
+            f"{TRAIN_TIMEOUT_SECONDS}s budget ({estimate.train_seconds}s of steps, "
+            f"{estimate.evaluations} validation passes)"
+        )
 
         token = write_receipt(audits_dir, config_path, corpus_dir, required_audits(cfg), reports)
         print(f"Preflight receipt: {audits_dir}/preflight-{token}.json")
@@ -308,7 +288,7 @@ def main(
     """
     check_source_rights(config)
     print(f"Preflighting config={config} on CPU{' (fresh start)' if fresh else ''}...")
-    token = preflight.remote(config_name=config, fresh=fresh)
+    token = preflight.remote(config_name=config, gpu=gpu or settings().train_gpu, fresh=fresh)
 
     function = _train_gpu.with_options(gpu=gpu) if gpu else _train_gpu
     call = function.spawn(

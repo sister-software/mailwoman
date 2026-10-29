@@ -162,9 +162,9 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 
    **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card. The default stays
    `A100-80GB`. The probe model is small (384 hidden, 6 layers, batch 128) and likely fits a cheaper card,
-   but the wall-clock preflight's 4.25 steps/s is an A100 measurement, and a slower card can push a 60k
-   recipe past the 6 h timeout. Change the default only after measuring steps/s on the candidate card
-   with a short run and updating `MEASURED_STEPS_PER_SECOND`.
+   but the wall-clock preflight reads an observed rate per GPU type from `OBSERVED_SECONDS_PER_100_STEPS` in
+   `launch/wall_clock.py` and refuses a GPU that has none. Measure a candidate card with a 2,000-step probe,
+   read the median seconds per 100 steps from its `train_log.csv`, and add the row before changing the default.
 
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
