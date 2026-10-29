@@ -105,7 +105,7 @@ export interface DoctorDeps {
 	/**
 	 * Every layer database the geocode session would attach, present or not.
 	 */
-	layerDatabases(): LayerDatabaseRef[]
+	layerDatabases(): Promise<LayerDatabaseRef[]>
 	/**
 	 * `.db` files in a layer's directory other than the one the session attaches, a build under another name.
 	 */
@@ -428,7 +428,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	})
 
 	const fixedLayerObservations = (
-		await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer)))
+		await Promise.all((await deps.layerDatabases()).map((layer) => gatherLayerLicense(deps, layer)))
 	).filter((o): o is LayerLicenseObservation => o !== null)
 
 	const addressPointObservations = await Promise.all(

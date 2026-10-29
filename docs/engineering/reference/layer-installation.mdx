@@ -14,8 +14,9 @@ tags:
 This page specifies how `mailwoman data pull` installs a published artifact, how the geocoder chooses
 which installed artifact to read, and how an installation is upgraded, rolled back, pruned and
 migrated. It is the accepted form of the design tracked in
-[#2868](https://github.com/sister-software/mailwoman/issues/2868). The artifact shape every layer
-database embeds is in the [spatial-layer interface](./layer-interface.mdx).
+[#2868](https://github.com/sister-software/mailwoman/issues/2868). The proposal it came from is kept
+verbatim as a dated record, [the 2026-10-28 layer paths plan](../../records/plan/2026-10-28-layer-paths-plan-v2.md).
+The artifact shape every layer database embeds is in the [spatial-layer interface](./layer-interface.mdx).
 
 ## Three records
 
@@ -188,16 +189,21 @@ shared readers, on 2026-10-29.
 
 ## Readers that do not read the selection yet
 
+The national Overture provider and the four overlays read the selection. Overture reads the first
+selected address-point source for each of its countries (`it`, `es`, `tw`). Its countries and the BAN
+country (`fr`) are disjoint, so no selection entry lists both, and the session still consults BAN before
+Overture. Each overlay has its own role (`flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`,
+`zoning-overlay`), read unscoped. `selection-parity.integration.test.ts` compares Overture on fixed
+bytes (empty difference list) and each overlay's selected file against its conventional one.
+
+The rail-station database stays beside the conventional `poi.db` path. No published bundle carries it,
+so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+
 These still resolve their conventional paths only, and stay on them until each is migrated with a
 comparison on fixed artifact bytes:
 
-- the national Overture provider (`packages/mailwoman/lib/geocode/national-overture.ts`), which serves
-  the same `address-points` role and country scope as BAN, so one selection entry would order the two
-  sources and that order needs its own evaluation;
 - the OpenStreetMap extract provider (`osm-layers.ts`, `layer-paths.ts`), whose regional files carry
   several countries and no registry entry;
-- the overlay layers (soil, flood, coastal, zoning), which share the one `overlay` role;
-- the rail-station database beside the conventional `poi.db`;
 - the WOF extract set (`resolveWOFDatabasePaths`), the street-centroid databases and the FST with its
   pair index;
 - the Nominatim and Photon entry points and autocomplete, whose data paths have not yet been traced to

@@ -25,14 +25,34 @@ import { LayerCatalog } from "#data/catalog"
  * and each naming its directory through the owning package's `paths` export.
  */
 const LAYER_DATABASES = {
-	flood: { label: "Flood zones (EA England)", directory: floodDatabaseRoot, filename: "flood.db" },
-	soil: { label: "Soil capability (NRCS SSURGO)", directory: soilDatabaseRoot, filename: "soil.db" },
-	coastal: { label: "Coastal erosion (EA NCERM)", directory: coastalDatabaseRoot, filename: "coastal-england.db" },
-	zoning: { label: "Zoning (Ireland)", directory: zoningDatabaseRoot, filename: "zoning-ireland.db" },
-	poi: { label: "POI layer", directory: poiDatabaseRoot, filename: "poi.db" },
+	flood: {
+		label: "Flood zones (EA England)",
+		directory: floodDatabaseRoot,
+		filename: "flood.db",
+		role: ServingRole.FloodOverlay,
+	},
+	soil: {
+		label: "Soil capability (NRCS SSURGO)",
+		directory: soilDatabaseRoot,
+		filename: "soil.db",
+		role: ServingRole.SoilOverlay,
+	},
+	coastal: {
+		label: "Coastal erosion (EA NCERM)",
+		directory: coastalDatabaseRoot,
+		filename: "coastal-england.db",
+		role: ServingRole.CoastalErosionOverlay,
+	},
+	zoning: {
+		label: "Zoning (Ireland)",
+		directory: zoningDatabaseRoot,
+		filename: "zoning-ireland.db",
+		role: ServingRole.ZoningOverlay,
+	},
+	poi: { label: "POI layer", directory: poiDatabaseRoot, filename: "poi.db", role: ServingRole.POI },
 } as const satisfies Record<
 	string,
-	{ label: string; directory: (dataRoot: PathBuilderLike) => PathBuilder; filename: string }
+	{ label: string; directory: (dataRoot: PathBuilderLike) => PathBuilder; filename: string; role: ServingRole }
 >
 
 export type LayerID = keyof typeof LAYER_DATABASES
@@ -59,11 +79,8 @@ export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): strin
  * The layer database a reader opens: the one the active selection lists for the
  * layer's role, else its conventional path.
  *
- * Only the POI layer has a serving role of its own.
- * The four overlays share the `overlay` role.
- *
- * One role and scope cannot tell flood from coastal erosion in England.
- * The overlays keep their conventional paths until each has a role of its own.
+ * Each layer has a serving role of its own, read unscoped.
+ * A data root without a selection entry for the role reads the conventional path, as before.
  *
  * @throws {@link UnreadableArtifactError} when the selection or the selected file cannot be read.
  */
@@ -72,25 +89,27 @@ export async function resolveLayerDatabasePath(
 	id: LayerID,
 	catalog?: LayerCatalog
 ): Promise<string> {
-	if (id === "poi") {
-		const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
-		const selected = await snapshot.firstPath(ServingRole.POI, { country: null, subdivision: null })
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	const selected = await snapshot.firstPath(LAYER_DATABASES[id].role, { country: null, subdivision: null })
 
-		if (selected) return selected
-	}
-
-	return layerDatabasePath(dataRoot, id)
+	return selected ?? layerDatabasePath(dataRoot, id)
 }
 
 /**
- * Every layer database the session would attach, in a stable order.
+ * Every layer database the session would attach, in a stable order, at the path the session
+ * reads: the selected file when the active selection lists one, else the conventional path.
  */
-export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
-	return (Object.keys(LAYER_DATABASES) as LayerID[]).map((id) => ({
-		id,
-		label: LAYER_DATABASES[id].label,
-		path: layerDatabasePath(dataRoot, id),
-	}))
+export async function layerDatabases(dataRoot: PathBuilderLike): Promise<LayerDatabaseRef[]> {
+	const catalog = await LayerCatalog.read(dataRoot)
+	const ids = Object.keys(LAYER_DATABASES) as LayerID[]
+
+	return Promise.all(
+		ids.map(async (id) => ({
+			id,
+			label: LAYER_DATABASES[id].label,
+			path: await resolveLayerDatabasePath(dataRoot, id, catalog),
+		}))
+	)
 }
 
 /**

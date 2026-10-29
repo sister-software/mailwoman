@@ -115,9 +115,23 @@ export const ServingRole = {
 	 */
 	POI: "poi",
 	/**
-	 * An H3-keyed polygon overlay such as soil, flood, coastal or zoning.
+	 * The flood-zone overlay, a polygon layer such as the Environment Agency's flood zones.
+	 *
+	 * Each overlay has its own role, because one role and scope cannot tell two overlays of one country apart.
 	 */
-	Overlay: "overlay",
+	FloodOverlay: "flood-overlay",
+	/**
+	 * The soil-capability overlay.
+	 */
+	SoilOverlay: "soil-overlay",
+	/**
+	 * The coastal-erosion overlay.
+	 */
+	CoastalErosionOverlay: "coastal-erosion-overlay",
+	/**
+	 * The zoning-designation overlay.
+	 */
+	ZoningOverlay: "zoning-overlay",
 	/**
 	 * The street-morphology FST and the files built with it.
 	 */
@@ -189,7 +203,22 @@ export const ROLE_REQUIREMENTS: Readonly<Record<ServingRole, RoleRequirement>> =
 		formats: [ArtifactFormat.SQLite],
 	},
 	[ServingRole.POI]: { normalization: NormalizationRequirement.NotApplicable, formats: [ArtifactFormat.SQLite] },
-	[ServingRole.Overlay]: { normalization: NormalizationRequirement.NotApplicable, formats: [ArtifactFormat.SQLite] },
+	[ServingRole.FloodOverlay]: {
+		normalization: NormalizationRequirement.NotApplicable,
+		formats: [ArtifactFormat.SQLite],
+	},
+	[ServingRole.SoilOverlay]: {
+		normalization: NormalizationRequirement.NotApplicable,
+		formats: [ArtifactFormat.SQLite],
+	},
+	[ServingRole.CoastalErosionOverlay]: {
+		normalization: NormalizationRequirement.NotApplicable,
+		formats: [ArtifactFormat.SQLite],
+	},
+	[ServingRole.ZoningOverlay]: {
+		normalization: NormalizationRequirement.NotApplicable,
+		formats: [ArtifactFormat.SQLite],
+	},
 	[ServingRole.StreetMorphology]: {
 		normalization: NormalizationRequirement.NotApplicable,
 		formats: [ArtifactFormat.FST, ArtifactFormat.PairIndex, ArtifactFormat.JSON],
