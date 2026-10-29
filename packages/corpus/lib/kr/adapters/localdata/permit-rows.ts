@@ -12,10 +12,12 @@
  */
 
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { type CJKRecord, labelTokensByFirstSpan } from "#cjk/builder"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
@@ -94,6 +96,12 @@ export interface ReadPermitOptions {
 	 * Empty admits every status.
 	 */
 	statuses?: readonly string[]
+	/**
+	 * A directory read takes only the category files this glob matches, for a smoke run.
+	 *
+	 * @defaultValue every `.csv` file
+	 */
+	pattern?: string
 }
 
 /**
@@ -139,7 +147,11 @@ export async function* readPermitDirectory(
 	directory: PathBuilderLike,
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
-	const files = await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
+	const files = options.pattern
+		? (await Globerator.from(options.pattern, { cwd: directory.toString(), absolute: false }).toArray())
+				.map(String)
+				.toSorted(compareByCodePoint)
+		: await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
 		yield* readPermitFile(resolvePathBuilder(directory, name), options)
@@ -154,35 +166,12 @@ export async function* readPermitDirectory(
  * A span covering several tokens labels only the token where it starts.
  * The char-path trainer reads this label from each span.
  */
-export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
+export function alignedToCJKRow(aligned: Aligned): CJKRecord {
 	const raw = aligned.raw
-	const tokens: string[] = []
-	const labels: string[] = []
-	let cursor = 0
-
-	for (const token of raw.split(/\s+/u).filter((piece) => piece.length)) {
-		const index = raw.indexOf(token, cursor)
-
-		cursor = index + token.length
-
-		let label = "O"
-
-		for (let span = 0; span < aligned.spanStarts.length; span += 1) {
-			if (aligned.spanStarts[span]! <= index && index < aligned.spanEnds[span]!) {
-				label = `B-${aligned.spanTags[span]}`
-
-				break
-			}
-		}
-
-		tokens.push(token)
-		labels.push(label)
-	}
 
 	return {
 		raw,
-		tokens,
-		labels,
+		...labelTokensByFirstSpan(raw, aligned.spanStarts, aligned.spanEnds, aligned.spanTags),
 		span_starts: [...aligned.spanStarts],
 		span_ends: [...aligned.spanEnds],
 		span_tags: [...aligned.spanTags],

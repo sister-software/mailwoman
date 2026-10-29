@@ -1,30 +1,23 @@
-"""A country is found through the registry rather than by importing its module by name: `protocols.CountryModule` fixes the four names every country answers to."""
+"""Every country directory is declared, and no country module reaches into another country."""
 
 from __future__ import annotations
 
 import ast
 
-import pytest
-
-from mailwoman_train import protocols
-from mailwoman_train.countries import COUNTRY_MODULES, REGIONS, SOURCE_ONLY, country_module
+from mailwoman_train.countries import REGIONS, SOURCE_ONLY
 from tests import paths
 
 COUNTRIES_ROOT = paths.SOURCE_ROOT / "countries"
 
 #: Alpha-2 codes as they appear in a module's own identifiers and string literals. A directory
 #: naming another country's code reaches across the boundary this layout draws.
-ALPHA2 = frozenset(COUNTRY_MODULES) | SOURCE_ONLY
+ALPHA2 = SOURCE_ONLY
 
 
-def test_the_built_countries_are_registered() -> None:
-    assert set(COUNTRY_MODULES) == {"kr"}
-
-
-def test_every_country_directory_is_declared_as_one_kind_or_the_other() -> None:
-    """A directory in neither group has no registry entry or test, so the registry and filesystem would drift apart silently."""
+def test_every_country_directory_is_declared() -> None:
+    """An undeclared directory has no entry or test, so the declaration and the filesystem would drift apart silently."""
     on_disk = {path.name for path in COUNTRIES_ROOT.iterdir() if path.is_dir() and not path.name.startswith("__")}
-    declared = set(COUNTRY_MODULES) | SOURCE_ONLY | REGIONS
+    declared = SOURCE_ONLY | REGIONS
     assert on_disk == declared, f"undeclared: {sorted(on_disk - declared)}; missing: {sorted(declared - on_disk)}"
 
 
@@ -48,30 +41,3 @@ def test_a_country_directory_names_no_other_country() -> None:
                     if node.value.upper() in {code.upper() for code in foreign}:
                         offenders.append(f"{path.relative_to(COUNTRIES_ROOT)}:{node.lineno} names {node.value!r}")
     assert offenders == [], "a country module reaches into another country:\n" + "\n".join(offenders)
-
-
-def test_every_registered_country_satisfies_the_protocol() -> None:
-    for code, module in COUNTRY_MODULES.items():
-        assert module.COUNTRY_CODE == code, f"{code} disagrees with its own key"
-        assert isinstance(module, protocols.CountryModule), code
-
-
-def test_each_country_names_the_label_set_its_rows_are_tagged_against() -> None:
-    """Each country's label set must match its rows: Japan's head is its own, while Korea and Taiwan share the CJK head."""
-    assert country_module("kr").LABEL_SET_NAME == "stage3-cjk"
-
-
-def test_the_board_floor_is_per_country() -> None:
-    """The municipality-population floor above which a row is held out for the board. A single shared constant would move two countries' boards to fix one."""
-    assert country_module("kr").BOARD_BUCKET_MIN == 90
-
-
-def test_an_unknown_code_names_the_known_ones() -> None:
-    with pytest.raises(KeyError) as caught:
-        country_module("zz")
-    assert "kr" in str(caught.value)
-
-
-def test_the_lookup_is_case_insensitive() -> None:
-    """Callers get alpha-2 codes from configs or filenames. Those values are not always lowercase."""
-    assert country_module("KR") is country_module("kr")

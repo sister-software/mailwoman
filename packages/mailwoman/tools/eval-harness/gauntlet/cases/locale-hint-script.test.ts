@@ -21,7 +21,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 
-const KOREAN_REFERENCE = "corpus-python/tests/mailwoman_train/countries/kr-build-reference.json"
+const KOREAN_REFERENCE = "packages/corpus/fixtures/builders/kr/kr-build-reference.json"
 const CHINESE_BOARD = "packages/mailwoman/tools/eval-harness/gauntlet/cases/cn/organizational-units.jsonl"
 const JAPANESE_GOLD = "data/eval/external/jp-overture-gold.jsonl"
 

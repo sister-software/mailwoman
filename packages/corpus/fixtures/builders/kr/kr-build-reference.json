@@ -1,8 +1,10 @@
 {
 	"README": [
 		"Pins one seeded Korea build across a refactor.",
-		"Regenerate: uv run python tests/mailwoman_train/countries/test_kr_build_parity.py",
-		"Fixture: REGIONS and PERMITS in the test beside this file — a 주소DB archive and permit CSVs",
+		"Written by the Python assembler (corpus-python countries/kr/corpora) before it moved to",
+		"  packages/corpus/lib/kr/corpus. It records that assembler's output and is not regenerated.",
+		"Fixture: juso-fixture.zip.b64 and permits-fixture.csv.b64 beside this file, the bytes the Python",
+		"  parity test's REGIONS and PERMITS wrote — a 주소DB archive and permit CSVs",
 		"  at the portal's CP949 shapes, sized so a build finishes in a second.",
 		"  gdaltransform is stubbed: the projection is not this builder's code, and skipping on a",
 		"  missing binary would report a green suite that exercised none of this.",

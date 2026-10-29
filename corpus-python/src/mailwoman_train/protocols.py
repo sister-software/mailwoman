@@ -1,36 +1,9 @@
-"""Define interfaces for country modules and CLI commands. Define the training callback interface."""
+"""Define interfaces for CLI commands. Define the training callback interface."""
 
 from __future__ import annotations
 
 import argparse
 from typing import Any, Protocol, runtime_checkable
-
-
-@runtime_checkable
-class CountryModule(Protocol):
-    """What one country contributes to training, as a module rather than an instance.
-
-    `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the held-out
-    board rather than the training pool. Each country sets its own because the population
-    distributions differ.
-    """
-
-    COUNTRY_CODE: str
-    """ISO 3166-1 alpha-2, lower case — the same string that keys the country registry."""
-
-    LABEL_SET_NAME: str
-    """The label set this country's rows are tagged against, e.g. `stage3-jp`."""
-
-    BOARD_BUCKET_MIN: int
-
-    def build_corpus(self, args: argparse.Namespace) -> dict[str, Any]:
-        """Write this country's parquet parts and answer the build's own statistics.
-
-            The argument is a parsed `Namespace` because the builders read a dozen or more settings off
-        one — source paths, row budgets, the seed, the augmentation fractions. A plain row
-            count would discard the per-register alignment rates the recipes are judged on.
-        """
-        ...
 
 
 @runtime_checkable
