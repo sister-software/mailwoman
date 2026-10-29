@@ -94,6 +94,13 @@ first-party artifact and the corpus provenance is tracked per row.
 The following are used to build the corpus, gazetteer databases, evaluations, and the
 documentation site. They are **not** redistributed in any published npm package.
 
+### ONNX — Apache-2.0
+
+`packages/trainer/crates/trainer-export/proto/onnx.proto` is `onnx/onnx.proto` from the
+[onnx](https://github.com/onnx/onnx) 1.22.0 wheel (© ONNX Project Contributors), under the
+[Apache License 2.0](https://github.com/onnx/onnx/blob/main/LICENSE), with its documentation comments
+removed. The Rust exporter generates its message types from it. No published package ships it.
+
 ### oxlint-plugin-comment-reflow — MIT
 
 `config/oxlint/comment-reflow/` is a fork of

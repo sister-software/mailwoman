@@ -254,10 +254,13 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: packages/mtf
+          workspaces: |
+            packages/mtf
+            packages/trainer
 
-      - name: Test the training encoder and sampler crates
+      - name: Test the training encoder, sampler and export crates
         run: |
+          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-export --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --features finders --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-sampler --locked

@@ -1,0 +1,5 @@
+# The same toolchain `packages/mtf` builds with, so one CI job and one host install serve both workspaces.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

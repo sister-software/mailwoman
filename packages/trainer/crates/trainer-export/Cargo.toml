@@ -1,0 +1,26 @@
+[package]
+name = "trainer-export"
+description = "Exports a Mailwoman coarse-encoder checkpoint to an opset-17 ONNX graph and quantizes it to int8 the way onnxruntime 1.30.0's quantize_dynamic(QInt8) does, without Python."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "trainer-export"
+path = "src/main.rs"
+
+[dependencies]
+prost = "0.14"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+# Stored entries only: `torch.save` writes its archive without compression.
+zip = { version = "9", default-features = false }
+
+[build-dependencies]
+prost-build = "0.14"
+# Compiles `proto/onnx.proto` in Rust, so a build needs no `protoc` on the host.
+protox = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

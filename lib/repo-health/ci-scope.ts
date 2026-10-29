@@ -63,6 +63,15 @@ const PYTHON_EXTENSION_INPUTS = [
 ]
 
 /**
+ * The cargo workspace of the Rust trainer crates.
+ *
+ * It has no npm package.
+ * The `python` job runs its crate tests beside the training encoder's.
+ * A change under it selects that job and no JavaScript suite.
+ */
+const TRAINER_CRATES = "packages/trainer/"
+
+/**
  * Finds the workspace containing a repository-relative path.
  */
 function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIWorkspace | null {
@@ -209,6 +218,12 @@ export function selectCIScope(
 			PYTHON_EXTENSION_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))
 		) {
 			python = true
+		}
+
+		if (file.startsWith(TRAINER_CRATES)) {
+			python = true
+
+			continue
 		}
 
 		if (file.startsWith("corpus-python/")) {
