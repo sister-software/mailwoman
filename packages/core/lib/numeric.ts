@@ -60,6 +60,24 @@ export function incDecimalString(s: string): string {
 }
 
 /**
+ * Python 3.12's `sum()` of floats: Neumaier's compensated summation,
+ * so it differs from a running `+=` in the last bits.
+ */
+export function pySum(values: Iterable<number>): number {
+	let total = 0
+	let compensation = 0
+
+	for (const x of values) {
+		const t = total + x
+
+		compensation += Math.abs(total) >= Math.abs(x) ? total - t + x : x - t + total
+		total = t
+	}
+
+	return compensation && Number.isFinite(compensation) ? total + compensation : total
+}
+
+/**
  * Python `round()` — correctly-rounded, round-half-to-even.
  *
  * Works off the double's exact (terminating) decimal expansion via `toFixed(80)`, so it matches

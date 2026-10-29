@@ -120,6 +120,23 @@ export interface NativeRawRows {
 }
 
 /**
+ * One row group's admitted rows over the requested columns.
+ */
+export interface SplitColumnChunk {
+	rows: number
+	strings: Record<string, Array<string | null>>
+	lists: Record<string, Array<string[] | null>>
+}
+
+/**
+ * Every row a split holds over a few columns, in file and row order.
+ */
+export interface NativeSplitColumns {
+	readonly files: number
+	nextChunk(): SplitColumnChunk | null
+}
+
+/**
  * What a row encoder reads.
  * Every lexicon path left unset leaves its channel off.
  */
@@ -222,8 +239,12 @@ interface NativeModule {
 		skipBatches?: number | null
 	) => NativeTrainingBatches
 	RawRows: new (config: string, split: string, seed: number, options?: NativeStreamOptions | null) => NativeRawRows
-	RowEncoder: new (options: NativeRowEncoderOptions) => NativeRowEncoder
-	CharEncoder: new (options: CharEncoderOptions) => NativeCharEncoder
+	SplitColumns: new (config: string, split: string, columns: string[]) => NativeSplitColumns
+	RowEncoder: new (options: NativeRowEncoderOptions) => {
+		encodeBatch(rows: SampledRow[]): RawEncodedRows
+		readonly channelDims: Array<{ name: string; dim: number }>
+	}
+	CharEncoder: new (options: CharEncoderOptions) => { encodeBatch(rows: SampledRow[]): RawEncodedChars }
 	sourceRowCounts(config: string, split: string): SourceCount[]
 	deriveSourceWeights(
 		fixed: SourceWeight[] | null,
@@ -308,6 +329,7 @@ export interface MTFNode {
 	Sampler: NativeModule["Sampler"]
 	TrainingBatches: NativeModule["TrainingBatches"]
 	RawRows: NativeModule["RawRows"]
+	SplitColumns: NativeModule["SplitColumns"]
 	createRowEncoder(options: RowEncoderOptions): NativeRowEncoder
 	createCharEncoder(options: CharEncoderOptions): NativeCharEncoder
 	sourceRowCounts: NativeModule["sourceRowCounts"]
@@ -325,6 +347,7 @@ export async function mtfNode(): Promise<MTFNode> {
 		Sampler: native.Sampler,
 		TrainingBatches: native.TrainingBatches,
 		RawRows: native.RawRows,
+		SplitColumns: native.SplitColumns,
 		createRowEncoder(options) {
 			const { padID, ...rest } = options
 			const encoder = new native.RowEncoder({ ...rest, padId: padID })
@@ -334,7 +357,7 @@ export async function mtfNode(): Promise<MTFNode> {
 					return encoder.channelDims
 				},
 				encodeBatch(rows) {
-					const { inputIds, ...batch } = encoder.encodeBatch(rows) as unknown as RawEncodedRows
+					const { inputIds, ...batch } = encoder.encodeBatch(rows)
 
 					return { ...batch, inputIDs: inputIds }
 				},
@@ -345,7 +368,7 @@ export async function mtfNode(): Promise<MTFNode> {
 
 			return {
 				encodeBatch(rows) {
-					const { charIds, ...batch } = encoder.encodeBatch(rows) as unknown as RawEncodedChars
+					const { charIds, ...batch } = encoder.encodeBatch(rows)
 
 					return { ...batch, charIDs: charIds }
 				},

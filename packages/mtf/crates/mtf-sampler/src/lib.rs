@@ -28,6 +28,7 @@ pub mod row;
 pub mod sampler;
 pub mod sha256_cache;
 pub mod source_reps;
+pub mod split_columns;
 mod text;
 
 pub use config::{AugmentProbabilities, CharConfig, RunLength, SamplerConfig, Weights};

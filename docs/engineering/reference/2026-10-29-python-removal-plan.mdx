@@ -444,6 +444,53 @@ the sampler observer in Phase 3, so `exposure/report.py` is the last of this pha
   whose bodies were the group (`launch/census.py`, `launch/audits.py`, most of `launch/grade.py`, `launch/stage.py`).
   `source_rights.py` goes with the last of its fifteen importers (the config loader, Phase 7).
 
+#### Phase 2 status, 2026-10-29
+
+**Observed**, lab host, on a copy of `v8.3.0-base-c6-90k-mixed-s42.yaml` with its `/data` paths rewritten to
+`$MAILWOMAN_DATA_ROOT`. Each Python reference was captured at `ae90ae7a2` before its module was deleted, and the
+TypeScript port wrote its report from the same config, seed and row count. The draw counts are 200,000 rows, and
+`epoch_mixture` also ran the config's full 1,000,000-row epoch.
+
+| Python module                           | TypeScript port                                                     | Result                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `audits/epoch_mixture/` (200k, failing) | `packages/mailwoman/tools/training/audits/epoch-mixture.run.ts`     | byte-equal (137,562 bytes), same refusal message                                      |
+| `audits/epoch_mixture/` (1M epoch)      | the same                                                            | byte-equal (167,345 bytes); Python 399.8 s, TypeScript 60.7 s                         |
+| `audits/validation_coverage.py`         | `validation-coverage.run.ts`                                        | byte-equal (75,124 bytes)                                                             |
+| `audits/label_support.py`               | `label-support.run.ts`                                              | values equal; `rows_with_label` key order differs, see below                          |
+| `audits/opening_token.py`               | `opening-token.run.ts`                                              | byte-equal (76,979 bytes); Python 220.0 s, TypeScript 37.4 s                          |
+| `audits/region_code_token.py`           | `region-code-token.run.ts`                                          | byte-equal (45,357 bytes)                                                             |
+| `audits/comma_segment_number.py`        | `comma-segment-number.run.ts`                                       | byte-equal (349 bytes)                                                                |
+| `audits/suffix_feed.py`                 | `suffix-feed.run.ts`                                                | byte-equal (8,094 bytes) against `audit_feed` given the resolved weights, see below   |
+| `audits/config_keys.py`                 | `config-keys.run.ts`                                                | output equal over the 264 configs                                                     |
+| `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                    | receipt byte-equal; the TypeScript `verify` accepts the Python receipt                |
+| `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts` | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
+| `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                | output line equal on both tables                                                      |
+
+Classified differences (**decided**):
+
+- `label_support` fills `rows_with_label` from a Python `set` of labels per row, so its key order follows
+  `PYTHONHASHSEED` (two seeds give two orders over the same six labels). No byte-equal reference exists. The port
+  writes the labels in their first appearance, in piece order, and every count is equal.
+- `suffix_feed.run` and `mixed_script` pass `data.source_weights` without folding in `source_reps`, so on a config
+  with `source_reps`, such as C6, the Python stream refuses 130 unweighted sources. The port reads the weights the
+  trainer samples. Given the folded weights, the Python `audit_feed` writes the port's bytes.
+- `epoch_mixture`'s requested shares divide by Python 3.12's compensated `sum()`. The port uses
+  `@mailwoman/core/numeric`'s `pySum`, which reproduces it, because a running sum differs in the last bit.
+- The calibration split is NumPy's `default_rng(20260607).permutation(n)`, recorded in
+  `data/eval/calibration/permutations.json` for the two committed inputs and the 2,000-span fixture. Means are NumPy's
+  pairwise sums. The committed tables `isotonic-en-us-v4.13.0.json` and `isotonic-en-us-v5.3.0.json` differ from what
+  the Python fitter writes today from the same inputs, in both the Python and the TypeScript refit.
+- The standalone audit Modal functions in `launch/audits.py` are deleted. The audits run on a host that mirrors the
+  volume, as `launch/AGENTS.md` describes. The preflight in `launch/train.py` still runs the Python
+  `epoch_mixture`, `validation_coverage`, `label_support` and `preflight` modules inside the training image, which
+  has no Node runtime. Those four modules and their tests are deleted when the launcher moves (Phase 7).
+
+Deleted: `launch/audits.py`, `audits/{opening_token,region_code_token,comma_segment_number,suffix_feed,config_keys}.py`,
+`calibration/`, and their tests. Not ported yet: `audits/mixed_script.py` (it names scripts by Unicode character
+names, which Node does not carry), `exposure/` (it needs `semantic_tags.py`'s registry, and `exposure/grade.py`
+runs a PyTorch checkpoint), and `evaluation/` with the JP probe board (both run a PyTorch checkpoint, so they move
+with the trainer or onto exported ONNX models).
+
 ### Phase 3 — The Rust sampler and character path
 
 Caller checklist: `data/loader/*` ← `train/loop.py`, `train/validation.py`, `train/pretrain.py`, `audits/*`,
