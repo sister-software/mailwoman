@@ -987,7 +987,7 @@ consumed batch to `exposure-realized-from-<step>.rows.jsonl.zst` and, when the r
 `exposure-realized-from-<step>.rows.json`, which records the stream's file name, its row count, the label set and the
 report's inputs. `realized.run.ts <description>` counts the rows with the same `StageCounter` and writes
 `exposure-realized-from-<step>.json`. Over the 200-step reference run (1,600 rows) the report equals the Python loop's
-on all 6,336 lines apart from `measured_at`, `code_revision` and `inputs.output_dir`. The stream took 61,745 bytes,
+on 6,335 of its 6,338 lines; the 3 that differ hold `measured_at`, `code_revision` and `inputs.output_dir`. The stream took 61,745 bytes,
 38.6 bytes per row. A 90,000-step run of 128 rows would write about 440 MB (an estimate from that rate). The report is
 now a step after training: the launcher (Phase 7) runs `realized.run.ts` before the release check reads the report.
 
