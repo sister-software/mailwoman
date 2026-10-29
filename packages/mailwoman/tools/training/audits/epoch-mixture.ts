@@ -17,13 +17,14 @@
  */
 
 import { pySum } from "@mailwoman/core/numeric"
+import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
 import { samplerConfigJSON } from "../sampler.ts"
 import { auditAugment, drawnRows, emittedRows } from "./census.ts"
-import { AuditFloorError, countInto, mostCommon, sortedByKey } from "./receipt.ts"
+import { AuditFloorError, sortedByKey } from "./receipt.ts"
 
 type ReceiptConfig = TrainingConfig["data"]["required_corpus_receipts"][number]
 

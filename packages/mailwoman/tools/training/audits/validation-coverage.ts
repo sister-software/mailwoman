@@ -14,11 +14,12 @@
  *   audit's question.
  */
 
+import { countInto, mostCommon } from "@mailwoman/core/stats"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
 import { samplerConfigJSON } from "../sampler.ts"
-import { AuditFloorError, countInto, mostCommon } from "./receipt.ts"
+import { AuditFloorError } from "./receipt.ts"
 
 /**
  * Tags whose presence makes a row street-level.

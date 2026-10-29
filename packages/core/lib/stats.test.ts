@@ -6,7 +6,24 @@
 
 import { describe, expect, it } from "vitest"
 
-import { formatPercent, median, percentile } from "#stats"
+import { countInto, formatPercent, median, mostCommon, percentile } from "#stats"
+
+describe("Counter forms", () => {
+	it("most_common breaks ties by first appearance", () => {
+		const counter = new Map<string, number>()
+
+		countInto(counter, "a")
+		countInto(counter, "b", 2)
+		countInto(counter, "c")
+		countInto(counter, "c")
+
+		expect(mostCommon(counter)).toEqual([
+			["b", 2],
+			["c", 2],
+			["a", 1],
+		])
+	})
+})
 
 describe("stats", () => {
 	it("percentile matches the check scripts' nearest-rank shape", () => {

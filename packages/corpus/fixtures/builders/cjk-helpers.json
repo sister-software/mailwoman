@@ -1,0 +1,245 @@
+{
+	"README": [
+		"What the Python CJK builder helpers answered on crafted inputs, recorded on CPython 3.12.3 from corpus-python",
+		"(corpora/builder.py, countries/jp/registers.py, countries/jp/text.py, countries/tw/registers.py, text/kana.py,",
+		"tokenizer/char.py) before those modules moved to packages/corpus/lib/{cjk,jp,tw}. select_exact draws from",
+		"random.Random(42): two selectors, then the next random() value. coverage_stats.per_tag_rows was counted from a",
+		"Python set, so its key order is the order of that run's PYTHONHASHSEED and only its counts are compared."
+	],
+	"muni_bucket": { "千代田区": 81, "札幌市 中央区": 71, "臺北市|大安區": 19, "𠮷野町": 17, "": 66 },
+	"select_exact": [
+		[false, true, false, true, false, false, false, true, false, false],
+		[true, true, true, true, true],
+		0.1988376506866485
+	],
+	"water_fill": [4, 0, 2],
+	"kanji_to_int": {
+		"二十三": 23,
+		"百": 100,
+		"一〇": 10,
+		"３": 3,
+		"十": 10,
+		"二百五": 205,
+		"x": null,
+		"": null,
+		"一丁": null
+	},
+	"int_to_kanji": {
+		"0": "〇",
+		"7": "七",
+		"10": "十",
+		"11": "十一",
+		"23": "二十三",
+		"100": "百",
+		"105": "百五",
+		"999": "九百九十九"
+	},
+	"fold_halfwidth_kana": { "ﾃﾞﾝｴﾝ": "デンエン", "テスト": "テスト", "ｶﾞｷﾞ１２": "ガギ１２" },
+	"normalize_name": { "西与賀町　字今津乙": "西与賀町字今津乙", " ｻｸﾗ 町 ": "サクラ町" },
+	"normalize_number": { "３ー１６": "３-１６", " 12－3 ": "12-3", "5‐7": "5-7" },
+	"split_street": {
+		"八島町二丁目": ["八島町", 2],
+		"字崎枝": ["字崎枝", null],
+		"二丁目": ["", 2],
+		"本町３丁目": ["本町", 3],
+		"一丁目北": ["一丁目北", null]
+	},
+	"jp_prefectures": [
+		"三重県",
+		"京都府",
+		"佐賀県",
+		"兵庫県",
+		"北海道",
+		"千葉県",
+		"和歌山県",
+		"埼玉県",
+		"大分県",
+		"大阪府",
+		"奈良県",
+		"宮城県",
+		"宮崎県",
+		"富山県",
+		"山口県",
+		"山形県",
+		"山梨県",
+		"岐阜県",
+		"岡山県",
+		"岩手県",
+		"島根県",
+		"広島県",
+		"徳島県",
+		"愛媛県",
+		"愛知県",
+		"新潟県",
+		"東京都",
+		"栃木県",
+		"沖縄県",
+		"滋賀県",
+		"熊本県",
+		"石川県",
+		"神奈川県",
+		"福井県",
+		"福岡県",
+		"福島県",
+		"秋田県",
+		"群馬県",
+		"茨城県",
+		"長崎県",
+		"長野県",
+		"青森県",
+		"静岡県",
+		"香川県",
+		"高知県",
+		"鳥取県",
+		"鹿児島県"
+	],
+	"char_vocab_text": "{\n\t\"<pad>\": 0,\n\t\"<unk>\": 1,\n\t\"0\": 2,\n\t\"9\": 3,\n\t\"a\": 4,\n\t\"b\": 5,\n\t\"c\": 6,\n\t\"𠮷\": 7\n}\n",
+	"coverage_stats": {
+		"rows": 2,
+		"bio_char_coverage_all": 0.913043,
+		"bio_char_coverage_significant": 1.0,
+		"raw_len_min_median_max": [6, 17, 17],
+		"registers": { "registry": 1, "native": 1 },
+		"per_tag_rows": { "postcode": 1, "prefecture": 1, "municipality": 1, "subregion": 1, "region": 1 },
+		"per_tag_spans": { "postcode": 1, "prefecture": 1, "municipality": 1, "region": 1, "subregion": 1 },
+		"per_tag_chars": { "postcode": 8, "municipality": 4, "prefecture": 3, "region": 3, "subregion": 3 },
+		"per_label_chars": {
+			"I-postcode": 7,
+			"I-municipality": 3,
+			"O": 2,
+			"I-prefecture": 2,
+			"I-region": 2,
+			"I-subregion": 2,
+			"B-postcode": 1,
+			"B-prefecture": 1,
+			"B-municipality": 1,
+			"B-region": 1,
+			"B-subregion": 1
+		}
+	},
+	"tw_fold_key": { "台北市 和平東路２段": "臺北市和平東路二段", "中山路11段": "中山路11段", "臺中市": "臺中市" },
+	"tw_align": {
+		"台北市大安區錦安里和平東路1段１２號３樓": {
+			"raw": "台北市大安區錦安里和平東路1段１２號３樓",
+			"tokens": ["台北市大安區錦安里和平東路1段１２號３樓"],
+			"labels": ["B-region"],
+			"span_starts": [0, 3, 6, 9, 15, 18],
+			"span_ends": [3, 6, 9, 15, 18, 20],
+			"span_tags": ["region", "subregion", "dependent_locality", "street", "house_number", "unit"],
+			"country": "TW",
+			"source": "gcis-tw",
+			"register": "registry"
+		},
+		"臺北市 中正區 重慶南路一段 122號": {
+			"raw": "臺北市中正區重慶南路一段122號",
+			"tokens": ["臺北市中正區重慶南路一段122號"],
+			"labels": ["B-region"],
+			"span_starts": [0, 3, 6, 12],
+			"span_ends": [3, 6, 12, 16],
+			"span_tags": ["region", "subregion", "street", "house_number"],
+			"country": "TW",
+			"source": "gcis-tw",
+			"register": "registry"
+		},
+		"新北市板橋區文化路一段188巷": null,
+		"台北市大安區信義路10之2號B1": null,
+		"高雄市前鎮區": null,
+		"臺北市大安區信義路5號附1號頂樓": null
+	},
+	"jp_align": [
+		[
+			"霞が関３丁目１番１号",
+			false,
+			{
+				"raw": "東京都千代田区霞が関３丁目１番１号",
+				"tokens": ["東京都千代田区霞が関３丁目１番１号"],
+				"labels": ["B-prefecture"],
+				"span_starts": [0, 3, 7, 10, 13, 15],
+				"span_ends": [3, 7, 10, 13, 15, 17],
+				"span_tags": ["prefecture", "municipality", "district", "block", "house_number", "building_name"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		[
+			"霞が関３丁目１番１号",
+			true,
+			{
+				"raw": "〒100-0013 東京都千代田区霞が関３丁目１番１号",
+				"tokens": ["〒100-0013", "東京都千代田区霞が関３丁目１番１号"],
+				"labels": ["O", "B-prefecture"],
+				"span_starts": [1, 10, 13, 17, 20, 23, 25],
+				"span_ends": [9, 13, 17, 20, 23, 25, 27],
+				"span_tags": ["postcode", "prefecture", "municipality", "district", "block", "house_number", "building_name"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		[
+			"一番町１８４ ビル名 ３Ｆ",
+			false,
+			{
+				"raw": "東京都千代田区一番町１８４ビル名３Ｆ",
+				"tokens": ["東京都千代田区一番町１８４ビル名３Ｆ"],
+				"labels": ["B-prefecture"],
+				"span_starts": [0, 3, 7, 10, 13],
+				"span_ends": [3, 7, 10, 13, 18],
+				"span_tags": ["prefecture", "municipality", "district", "house_number", "building_name"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		[
+			"一番町１８４ ビル名 ３Ｆ",
+			true,
+			{
+				"raw": "〒102-0082 東京都千代田区一番町１８４ビル名３Ｆ",
+				"tokens": ["〒102-0082", "東京都千代田区一番町１８４ビル名３Ｆ"],
+				"labels": ["O", "B-prefecture"],
+				"span_starts": [1, 10, 13, 17, 20, 23],
+				"span_ends": [9, 13, 17, 20, 23, 28],
+				"span_tags": ["postcode", "prefecture", "municipality", "district", "house_number", "building_name"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		[
+			"一条通北２丁目３－２５",
+			false,
+			{
+				"raw": "北海道札幌市中央区一条通北２丁目３－２５",
+				"tokens": ["北海道札幌市中央区一条通北２丁目３－２５"],
+				"labels": ["B-prefecture"],
+				"span_starts": [0, 3, 9, 13, 16],
+				"span_ends": [3, 9, 13, 16, 20],
+				"span_tags": ["prefecture", "municipality", "district", "block", "house_number"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		[
+			"一条通北２丁目３－２５",
+			true,
+			{
+				"raw": "北海道札幌市中央区一条通北２丁目３－２５",
+				"tokens": ["北海道札幌市中央区一条通北２丁目３－２５"],
+				"labels": ["B-prefecture"],
+				"span_starts": [0, 3, 9, 13, 16],
+				"span_ends": [3, 9, 13, 16, 20],
+				"span_tags": ["prefecture", "municipality", "district", "block", "house_number"],
+				"country": "JP",
+				"source": "houjin-jp",
+				"register": "registry"
+			}
+		],
+		["芝公園４丁目", false, null],
+		["芝公園４丁目", true, null],
+		["永田町１", false, null],
+		["永田町１", true, null]
+	]
+}

@@ -8,16 +8,8 @@
  * of a string — 시도, 시군구, road, 동, 리 — must be one the register lists under its parent.
  */
 
+import { addToKeySet, UNIT_SEPARATOR, unitKey } from "#cjk/builder"
 import { type JusoLabelRow, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
-
-/**
- * The separator between the parts of a composite key, written as an escape
- * so no NUL byte enters the source.
- *
- * A space cannot serve, because a 시군구 is written with one (`수원시 장안구`)
- * and `unitKey("A", "B C")` would collide with `unitKey("A B", "C")`.
- */
-const UNIT_SEPARATOR = "\0"
 
 /**
  * The key sets keyed as the register nests them, as composite string keys rather than
@@ -43,13 +35,6 @@ export interface KeyIndex {
 	risByDong: Map<string, Set<string>>
 }
 
-/**
- * The parts of a composite key, joined so no two different part lists produce the same key.
- */
-export function unitKey(...parts: readonly string[]): string {
-	return parts.join(UNIT_SEPARATOR)
-}
-
 export function emptyKeyIndex(): KeyIndex {
 	return {
 		regions: new Set(),
@@ -60,15 +45,7 @@ export function emptyKeyIndex(): KeyIndex {
 	}
 }
 
-function add(map: Map<string, Set<string>>, key: string, value: string): void {
-	const existing = map.get(key)
-
-	if (existing) {
-		existing.add(value)
-	} else {
-		map.set(key, new Set([value]))
-	}
-}
+const add = addToKeySet
 
 /**
  * Add one label row's names to the key sets.

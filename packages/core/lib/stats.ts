@@ -60,3 +60,19 @@ export function percentileSorted(sorted: readonly number[], p: number): number |
 
 	return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!
 }
+
+/**
+ * Adds `by` to a key's count, keeping the order in which keys were first counted,
+ * as a Python `Counter` does.
+ */
+export function countInto<K>(counter: Map<K, number>, key: K, by = 1): void {
+	counter.set(key, (counter.get(key) ?? 0) + by)
+}
+
+/**
+ * `Counter.most_common()`: the entries by count, largest first, ties in the
+ * order the keys were first counted.
+ */
+export function mostCommon<K>(counter: ReadonlyMap<K, number>): Array<[K, number]> {
+	return [...counter].toSorted((a, b) => b[1] - a[1])
+}

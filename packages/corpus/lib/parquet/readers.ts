@@ -12,7 +12,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
-import { openParquetRowStream, type ParquetRowStreamOptions } from "#parquet/streams"
+import { openParquetRowStream, type ParquetRowStreamOptions, validateRowLimit } from "#parquet/streams"
 
 /**
  * Reads every row of a parquet file into memory.
@@ -83,4 +83,25 @@ export async function parquetColumnNames(path: PathBuilderLike): Promise<string[
 	const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(path.toString())}')`)
 
 	return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
+}
+
+/**
+ * The number of rows in a parquet file's first `rowGroups` row groups,
+ * so a smoke read can stop where they end.
+ *
+ * @throws When the file is missing.
+ */
+export async function parquetRowGroupRows(path: PathBuilderLike, rowGroups: number): Promise<number> {
+	if (!(await pathExists(path))) {
+		throw new Error(`No parquet file at ${path}`)
+	}
+
+	using db = await openDuckDB()
+
+	const result = await db.runAndReadAll(
+		`SELECT coalesce(sum(n), 0) AS rows FROM (SELECT DISTINCT row_group_id, row_group_num_rows AS n ` +
+			`FROM parquet_metadata('${escapeSQLString(path.toString())}') WHERE row_group_id < ${validateRowLimit(rowGroups)})`
+	)
+
+	return Number((result.getRowObjects() as Array<{ rows: unknown }>)[0]?.rows ?? 0)
 }

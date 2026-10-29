@@ -13,7 +13,6 @@ import { expect, test } from "vitest"
 
 import {
 	auditReportText,
-	mostCommon,
 	preflightKey,
 	PreflightReceiptError,
 	verifyPreflightReceipt,
@@ -35,22 +34,6 @@ test("a report is json.dumps(report, indent=2)", () => {
 	expect(auditReportText({ share: asPythonFloat(0.5), rows: 3, empty: {} })).toBe(
 		'{\n  "share": 0.5,\n  "rows": 3,\n  "empty": {}\n}'
 	)
-})
-
-test("most_common breaks ties by first appearance", () => {
-	expect(
-		mostCommon(
-			new Map([
-				["a", 1],
-				["b", 2],
-				["c", 2],
-			])
-		)
-	).toEqual([
-		["b", 2],
-		["c", 2],
-		["a", 1],
-	])
 })
 
 test("the key ignores manifest order and formatting and moves with a digest or the config", async () => {

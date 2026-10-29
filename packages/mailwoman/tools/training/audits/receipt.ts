@@ -61,22 +61,6 @@ export async function writeAuditReport(path: string, report: unknown, options: A
 }
 
 /**
- * Adds `by` to a key's count, keeping the order in which keys were first counted,
- * as a Python `Counter` does.
- */
-export function countInto<K>(counter: Map<K, number>, key: K, by = 1): void {
-	counter.set(key, (counter.get(key) ?? 0) + by)
-}
-
-/**
- * `Counter.most_common()`: the entries by count, largest first, ties in the
- * order the keys were first counted.
- */
-export function mostCommon<K>(counter: Map<K, number>): Array<[K, number]> {
-	return [...counter].toSorted((a, b) => b[1] - a[1])
-}
-
-/**
  * A map's entries sorted by key in code-point order, as Python's `sorted(d.items())` orders string keys.
  */
 export function sortedByKey<V>(entries: Iterable<[string, V]>): Array<[string, V]> {

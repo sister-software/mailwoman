@@ -8,7 +8,8 @@
  * a training row of matched spans and one that does not becomes a board row.
  */
 
-import { type KeyIndex, sigunguSpan, unitKey } from "#kr/adapters/localdata/key-index"
+import { unitKey } from "#cjk/builder"
+import { type KeyIndex, sigunguSpan } from "#kr/adapters/localdata/key-index"
 
 /**
  * A building number: `233`, `43-1`, `지하 1476`.
