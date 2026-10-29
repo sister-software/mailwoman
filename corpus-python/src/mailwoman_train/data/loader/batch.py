@@ -18,7 +18,7 @@ import mailwoman_mtf
 from ...address_systems import address_system_id
 from ...config import Config
 from ...labels import locale_id
-from .encode import iter_encoded, iter_sampled_rows, require_label_set_supported, resolve_char_mode
+from .encode import encode_char_row, iter_sampled_rows, require_label_set_supported, resolve_char_mode
 from .example import EncodedExample
 
 
@@ -49,6 +49,41 @@ def encode_rows(encoder: mailwoman_mtf.RowEncoder, rows: list[dict[str, Any]]) -
     return out
 
 
+def iter_batch_rows(
+    cfg: Config, *, split: str, batch_size: int, seed: int, row_limit: int | None = None
+) -> Iterator[list[dict[str, Any]]]:
+    """Yield the sampled rows of each batch, unencoded, ending with a partial batch when the rows run out.
+
+    The encoder leaves the sampler's generator untouched. The rows a batch holds therefore depend only on the seed and
+    the batches drawn before it.
+    """
+    rng = random.Random(seed)
+    rows: list[dict[str, Any]] = []
+    for row in iter_sampled_rows(cfg.data, split, rng=rng, row_limit=row_limit):
+        rows.append(row)
+        if len(rows) == batch_size:
+            yield rows
+            rows = []
+    if rows:
+        yield rows
+
+
+def batch_encoder(
+    cfg: Config, encoder: mailwoman_mtf.RowEncoder | None
+) -> Callable[[list[dict[str, Any]]], dict[str, Any]]:
+    """Return the function that turns one batch of sampled rows into the batch the model reads.
+
+    ``encoder`` is the row encoder the process built with `build_row_encoder`, or None on the char path.
+    """
+    char = resolve_char_mode(cfg.data)
+    label_set = require_label_set_supported(cfg.data, char)
+    if char is not None:
+        return lambda rows: collate([encode_char_row(row, char, label_set) for row in rows])
+    if encoder is None:
+        raise ValueError("the SentencePiece path requires a row encoder (build_row_encoder)")
+    return lambda rows: encode_rows(encoder, rows)
+
+
 def iter_batches(
     cfg: Config,
     encoder: mailwoman_mtf.RowEncoder | None,
@@ -61,47 +96,47 @@ def iter_batches(
 ) -> Iterator[dict[str, Any]]:
     """Yield batches until the sampled rows run out.
 
-    ``encoder`` is the row encoder the process built with `build_row_encoder`, or None on the char path.
     ``observer`` receives each source row of a batch once the consumer asks for the batch after it, so a batch
     fetched and then abandoned (the loop breaking at ``max_steps``) is never observed.
     """
-    rng = random.Random(seed)
-    char = resolve_char_mode(cfg.data)
-    rows: list[dict[str, Any]] = []
-    if char is not None:
-        buf: list[EncodedExample] = []
-        for ex in iter_encoded(
-            cfg.data, None, split=split, rng=rng, row_limit=row_limit, observer=rows.append if observer else None
-        ):
-            buf.append(ex)
-            if len(buf) == batch_size:
-                batch_rows = rows[:]
-                rows.clear()
-                yield collate(buf)
-                buf = []
-                if observer:
-                    for row in batch_rows:
-                        observer(row)
-        if buf:
-            yield collate(buf)
+    encode = batch_encoder(cfg, encoder)
+    for rows in iter_batch_rows(cfg, split=split, batch_size=batch_size, seed=seed, row_limit=row_limit):
+        yield encode(rows)
+        if observer:
+            for row in rows:
+                observer(row)
+
+
+def iter_training_batches(
+    cfg: Config,
+    encoder: mailwoman_mtf.RowEncoder | None,
+    *,
+    batch_size: int,
+    seed: int,
+    row_limit: int | None = None,
+    skip_batches: int = 0,
+    observer: Callable[[dict[str, Any]], None] | None = None,
+) -> Iterator[dict[str, Any]]:
+    """Yield the train split's batches without end, reopening the stream with ``seed + epoch`` for epochs 1, 2, ….
+
+    A resumed run passes the number of batches its earlier attempts consumed as ``skip_batches``. Those batches are
+    sampled in order and dropped before encoding, and the observer never sees them, so the stream continues with the
+    batch an uninterrupted run would read next. ``observer`` has the semantics of `iter_batches`.
+    """
+    encode = batch_encoder(cfg, encoder)
+    remaining = skip_batches
+    epoch = 0
+    while True:
+        epoch += 1
+        drawn = 0
+        for rows in iter_batch_rows(cfg, split="train", batch_size=batch_size, seed=seed + epoch, row_limit=row_limit):
+            drawn += 1
+            if remaining > 0:
+                remaining -= 1
+                continue
+            yield encode(rows)
             if observer:
                 for row in rows:
                     observer(row)
-        return
-
-    require_label_set_supported(cfg.data, char)
-    if encoder is None:
-        raise ValueError("the SentencePiece path requires a row encoder (build_row_encoder)")
-    for row in iter_sampled_rows(cfg.data, split, rng=rng, row_limit=row_limit):
-        rows.append(row)
-        if len(rows) == batch_size:
-            batch_rows, rows = rows, []
-            yield encode_rows(encoder, batch_rows)
-            if observer:
-                for observed in batch_rows:
-                    observer(observed)
-    if rows:
-        yield encode_rows(encoder, rows)
-        if observer:
-            for observed in rows:
-                observer(observed)
+        if drawn == 0:
+            raise ValueError(f"the train split yielded no rows in epoch {epoch} (seed {seed + epoch})")

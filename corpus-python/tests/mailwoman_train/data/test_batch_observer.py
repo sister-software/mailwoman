@@ -8,12 +8,14 @@ behavior the training loop relies on.
 
 from __future__ import annotations
 
+import itertools
 import random
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
 
 import numpy as np
+import pytest
 
 from mailwoman_train.data.loader import batch as batch_module
 from mailwoman_train.labels import locale_id
@@ -110,19 +112,54 @@ def test_locale_ids_follow_row_order() -> None:
     assert len(batch["address_system_ids"]) == 2
 
 
-def test_an_epoch_restart_and_a_resume_draw_the_same_rows_from_the_same_seed() -> None:
-    """The loop reopens the stream per epoch with `seed + epoch`, and a resumed process reopens it the same way."""
+def seeded(_cfg: Any, _split: str, *, rng: random.Random, row_limit: int | None = None, observer: Any = None) -> Any:
+    """A stand-in for `iter_sampled_rows` whose row order depends on the generator it is given."""
+    order = list(range(len(ROWS)))
+    rng.shuffle(order)
+    for i in order:
+        yield ROWS[i]
 
-    def seeded(
-        _cfg: Any, _split: str, *, rng: random.Random, row_limit: int | None = None, observer: Any = None
-    ) -> Any:
-        order = list(range(len(ROWS)))
-        rng.shuffle(order)
-        for i in order:
-            yield ROWS[i]
 
+def training_stream(events: Events, *, skip_batches: int, batch_size: int = 2) -> Any:
+    return batch_module.iter_training_batches(
+        config(),
+        RecordingEncoder(events),  # type: ignore[arg-type]
+        batch_size=batch_size,
+        seed=42,
+        skip_batches=skip_batches,
+        observer=lambda row: events.append(("observe", [row["raw"]])),
+    )
+
+
+def test_each_epoch_reopens_the_stream_with_seed_plus_epoch() -> None:
     with mock.patch.object(batch_module, "iter_sampled_rows", seeded):
-        first, second, resumed = (ids(next(run([], batch_size=5, seed=42 + epoch))) for epoch in (1, 2, 1))
-    assert first == resumed
+        stream = training_stream([], skip_batches=0, batch_size=len(ROWS))
+        first, second = ids(next(stream)), ids(next(stream))
+        assert first == ids(next(run([], batch_size=len(ROWS), seed=43)))
+        assert second == ids(next(run([], batch_size=len(ROWS), seed=44)))
     assert first != second
     assert sorted(first) == sorted(second) == list(range(len(ROWS)))
+
+
+def test_a_resumed_stream_continues_with_the_batch_an_uninterrupted_stream_reads_next() -> None:
+    """Five rows in batches of two make three batches per epoch, so the skips cross epoch boundaries."""
+    with mock.patch.object(batch_module, "iter_sampled_rows", seeded):
+        uninterrupted = [ids(b) for b in itertools.islice(training_stream([], skip_batches=0), 14)]
+        for consumed in range(8):
+            resumed = [ids(b) for b in itertools.islice(training_stream([], skip_batches=consumed), 6)]
+            assert resumed == uninterrupted[consumed : consumed + 6], consumed
+
+
+def test_skipped_batches_are_neither_encoded_nor_observed() -> None:
+    events: Events = []
+    with mock.patch.object(batch_module, "iter_sampled_rows", sampled(ROWS)):
+        stream = training_stream(events, skip_batches=2)
+        assert ids(next(stream)) == [4]
+        assert events == [("encode", ["4 Main St"])]
+
+
+def test_a_train_split_without_rows_raises_rather_than_looping() -> None:
+    with mock.patch.object(batch_module, "iter_sampled_rows", sampled([])):
+        stream = training_stream([], skip_batches=0)
+        with pytest.raises(ValueError, match="yielded no rows in epoch 1"):
+            next(stream)

@@ -54,7 +54,7 @@ The underscore names below are re-exported because the audits and the census rea
 from __future__ import annotations
 
 from ...labels import IGNORE_INDEX
-from .batch import collate, iter_batches
+from .batch import collate, iter_batches, iter_training_batches
 from .corpus_files import (
     CorpusFile,
     RowFilter,
@@ -85,6 +85,7 @@ __all__ = [
     "iter_encoded",
     "iter_rows",
     "iter_sampled_rows",
+    "iter_training_batches",
     "manifest_files",
     "source_row_counts",
     "verify_tokenizer_alignment",

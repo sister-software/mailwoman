@@ -31,7 +31,7 @@ import torch
 from torch.optim import AdamW
 
 from ..config import Config
-from ..data.loader import build_row_encoder, iter_batches
+from ..data.loader import build_row_encoder, iter_batches, iter_training_batches
 from ..data.masking import mask_tokens
 from ..nn.encoder import build_model, force_math_sdpa, model_param_count
 from ..observability.trackio import init_tracker
@@ -155,16 +155,16 @@ def run_pretrain_loop(
             "vocab_size": tokenizer.vocab_size,
         }
 
-    epoch = 0
-    while step < cfg.train.max_steps:
-        epoch += 1
-        for batch in iter_batches(
+    # Each optimizer step consumes one batch. A resumed attempt therefore skips the `resume_step`
+    # batches its predecessors trained on. The mask generator restarts from the seed on resume.
+    if step < cfg.train.max_steps:
+        for batch in iter_training_batches(
             cfg,
             encoder,
-            split="train",
             batch_size=cfg.train.batch_size,
-            seed=cfg.train.seed + epoch,
+            seed=cfg.train.seed,
             row_limit=cfg.data.train_rows_per_epoch,
+            skip_batches=resume_step,
         ):
             if step >= cfg.train.max_steps:
                 break

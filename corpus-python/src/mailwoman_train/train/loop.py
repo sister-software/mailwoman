@@ -14,7 +14,7 @@ from typing import Any
 import torch
 
 from ..config import Config
-from ..data.loader import iter_batches
+from ..data.loader import iter_training_batches
 from ..exposure.report import StageCounter, build_report
 from ..protocols import TrainCallback
 from ..semantic_tags import label_set_contract
@@ -112,18 +112,17 @@ def run_training_loop(
     # own segment, taken from the step it resumed from, so a preempted run's segments sum.
     realized = StageCounter("realized_draws")
 
-    # The streaming iterator may exhaust before max_steps when row_limit is set, so restart per
-    # epoch.
-    epoch = 0
-    while step < cfg.train.max_steps:
-        epoch += 1
-        for batch in iter_batches(
+    # Every optimizer step consumed `accum` micro-batches, so a resumed attempt skips the
+    # `resume_step * accum` batches its predecessors trained on and reads the batch an uninterrupted
+    # run would read next.
+    if step < cfg.train.max_steps:
+        for batch in iter_training_batches(
             cfg,
             state.encoder,
-            split="train",
             batch_size=cfg.train.batch_size,
-            seed=cfg.train.seed + epoch,
+            seed=cfg.train.seed,
             row_limit=cfg.data.train_rows_per_epoch,
+            skip_batches=resume_step * accum,
             observer=realized.add_span_row,
         ):
             if step >= cfg.train.max_steps:

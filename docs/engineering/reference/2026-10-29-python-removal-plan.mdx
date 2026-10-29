@@ -76,10 +76,11 @@ The issue's prerequisite list is confirmed against the tree (**observed**):
   extended before the char path is captured (Phase 0).
 - Resume: `train/checkpoint.py::save_checkpoint` accepts `rng_state` (line 36) and writes `rng_state.pt` only when
   given (line 57). Its callers in `train/loop.py` (line 62), `train/callbacks/checkpointer.py` (line 43) and
-  `train/pretrain.py` (lines 223, 225) pass none. The supervised loop opens `iter_batches` with
-  `seed=cfg.train.seed + epoch` (`train/loop.py` line 125) and `pretrain.py` does the same (line 166). The Rust
-  trainer preserves this behavior: a checkpoint stores no RNG state, and each epoch reseeds with `seed + epoch`.
-  Exact mid-epoch resume is a separate behavior change outside this plan.
+  `train/pretrain.py` (lines 223, 225) pass none. Since #2872, both loops read `iter_training_batches`, which
+  reseeds each epoch with `seed + epoch` and, on resume, samples and drops the `resume_step × grad_accum_steps`
+  batches the earlier attempts consumed, so a resumed run reads the batches an uninterrupted run reads. The Rust
+  trainer preserves this behavior: a checkpoint stores no RNG state, the data stream is recovered by skipping, and
+  the torch generator (dropout, evidence curricula, MLM masks) restarts from the seed.
 - `packages/neural/lib/labels.ts` exports `STAGE1_*`, `STAGE2_*` and `STAGE3_*` only (lines 26–88). `labels.py`
   also defines `STAGE4_FINE_TAGS`, `STAGE4_TAGS`, `STAGE4_BIO_LABELS` (lines 102–114), `JP_FINE_TAGS`,
   `STAGE3_JP_TAGS`, `STAGE3_JP_BIO_LABELS` (129–141), `CN_FINE_TAGS`, `STAGE3_CN_*` (157–161), `CJK_FINE_TAGS`,
