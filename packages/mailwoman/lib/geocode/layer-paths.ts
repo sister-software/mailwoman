@@ -10,12 +10,15 @@
 import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"
 import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { ServingRole } from "@mailwoman/core/layers"
 import { floodDatabaseRoot } from "@mailwoman/flood/paths"
 import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { soilDatabaseRoot } from "@mailwoman/soil/paths"
 import { zoningDatabaseRoot } from "@mailwoman/zoning/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
+
+import { LayerCatalog } from "#data/catalog"
 
 /**
  * The layer databases the session attaches when present, keyed by the layer's short id
@@ -50,6 +53,33 @@ export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): strin
 	const { directory, filename } = LAYER_DATABASES[id]
 
 	return directory(dataRoot)(filename).toString()
+}
+
+/**
+ * The layer database a reader opens: the one the active selection lists for the
+ * layer's role, else its conventional path.
+ *
+ * Only the POI layer has a serving role of its own.
+ * The four overlays share the `overlay` role.
+ *
+ * One role and scope cannot tell flood from coastal erosion in England.
+ * The overlays keep their conventional paths until each has a role of its own.
+ *
+ * @throws {@link UnreadableArtifactError} when the selection or the selected file cannot be read.
+ */
+export async function resolveLayerDatabasePath(
+	dataRoot: PathBuilderLike,
+	id: LayerID,
+	catalog?: LayerCatalog
+): Promise<string> {
+	if (id === "poi") {
+		const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+		const selected = await snapshot.firstPath(ServingRole.POI, { country: null, subdivision: null })
+
+		if (selected) return selected
+	}
+
+	return layerDatabasePath(dataRoot, id)
 }
 
 /**

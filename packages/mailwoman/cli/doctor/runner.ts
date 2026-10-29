@@ -50,8 +50,8 @@ import { $public } from "#env"
 import {
 	addressPointDatabases,
 	layerDatabaseAlternates,
-	layerDatabasePath,
 	layerDatabases,
+	resolveLayerDatabasePath,
 	type AddressPointDatabaseRef,
 	type LayerDatabaseRef,
 	type LayerID,
@@ -95,9 +95,9 @@ export interface DoctorDeps {
 	conventionCandidatePath(): Promise<string | null>
 	wofExtractPaths(): string[]
 	/**
-	 * The default POI layer path, matching `gazetteer build poi`'s own default.
+	 * The POI layer path the session opens: the selected one, else `gazetteer build poi`'s own default.
 	 */
-	poiPath(): string
+	poiPath(): Promise<string>
 	/**
 	 * Reads the identity fields of a layer manifest, throwing on a missing or invalid manifest.
 	 */
@@ -221,7 +221,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 			$public.MAILWOMAN_CANDIDATE_DB ? ((await resolveCandidateDBPath(undefined, dataRoot)) ?? null) : null,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
-		poiPath: () => layerDatabasePath(dataRoot, "poi"),
+		poiPath: () => resolveLayerDatabasePath(dataRoot, "poi"),
 		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
 		layerAlternates: (id) => layerDatabaseAlternates(dataRoot, id),
@@ -310,7 +310,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 }
 
 async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
-	const path = deps.poiPath()
+	const path = await deps.poiPath()
 
 	if (!(await deps.exists(path))) return { path, exists: false, manifest: null, error: null }
 
@@ -543,7 +543,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB ?? null, source: "env" },
 		{ key: "candidate.db (convention)", value: await deps.conventionCandidatePath(), source: "derived" },
 		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB ?? null, source: "env" },
-		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
+		{ key: "POI layer", value: await deps.poiPath(), source: "derived" },
 		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS ?? null, source: "env" },
 	]
 
