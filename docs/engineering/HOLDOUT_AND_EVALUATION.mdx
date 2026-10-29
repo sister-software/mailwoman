@@ -278,6 +278,62 @@ run per corpus change, about $17 to $23 and 6 to 8 hours on an A100 at 60,000 st
 specification: one seed pair measured once gives a floor whose own variance is unknown, so a result inside twice
 the measured spread is reported as unestablished rather than as a loss.
 
+### 7.3 When a screen run decides
+
+A screen run reads an arm at an intermediate checkpoint of one seed in place of the arm's final two-seed result.
+A screen decides a comparison between two arms only when all three of these hold:
+
+1. **The two arms share their stage structure up to the screen step.** Neither arm changes its data or its
+   schedule after the screen step. A primer stage followed by a second stage fails this, because the second stage
+   changes what the first stage taught.
+2. **The screen gap exceeds the registered margin** `m = max(0.05, 2s)`, where `s` is the larger seed difference of
+   the two arms on the measure, on every seed screened.
+3. **A second seed's screen agrees in sign.**
+
+Otherwise the comparison runs both arms in full on two seeds.
+
+The rule comes from the 30,000-step checkpoints of the three #2857 arms, exported locally from the Modal volume's
+checkpoints and graded in fp32 on the held-out structure board (measured 2026-10-29). H is the
+`wof-heldout-order` rate on 556 rows:
+
+| Arm                        | Screen checkpoint                | H at the screen, s42 / s43 | H at the final step, s42 / s43 |
+| -------------------------- | -------------------------------- | -------------------------- | ------------------------------ |
+| B, one stage, 90,000 steps | step 30,000                      | 0.642 / 0.626              | 0.656 / 0.653                  |
+| A, primer then base        | base step 30,000 (60,000 in all) | 0.610 / 0.613              | 0.601 / 0.613                  |
+| A, primer then base        | primer step 30,000               | 0.683 / 0.673              | 0.601 / 0.613                  |
+| C, one stage, 60,000 steps | step 30,000                      | 0.426 / 0.396              | 0.439 / 0.424                  |
+
+The final two-seed order is B, then A, then C. Against it:
+
+- The screen of B against C clears the margin on both seeds (gaps 0.216 and 0.230) and agrees with the final order.
+- The screen of B against A, each at its own step 30,000, gives the final order's sign on both seeds. Its gaps
+  of 0.032 and 0.013 are inside the margin, so under rule 2 the comparison needs the full arms. The final gap is 0.055 and 0.040.
+- The screen of A at its primer's step 30,000, the same number of total steps as B's screen, ranks A first on both
+  seeds by 0.041 and 0.047. The final order ranks A second. Rule 1 excludes that screen.
+
+The comparison battery (`battery/battery.run.ts`, 26,743 decision rows, percent right) reads the same checkpoints
+differently:
+
+| Arm                   | At the screen, s42 / s43 | At the final step, s42 / s43 |
+| --------------------- | ------------------------ | ---------------------------- |
+| B, step 30,000        | 66.7 / 68.7              | 69.7 / 69.2                  |
+| A, base step 30,000   | 69.9 / 70.9              | 70.1 / 69.6                  |
+| A, primer step 30,000 | 0.0 / 0.0                | 70.1 / 69.6                  |
+| C, step 30,000        | 67.4 / 67.4              | 67.9 / 67.9                  |
+
+The battery registers no margin, so `m` is twice the largest final seed difference of the two arms, 1.0 point.
+
+- A against B: the screen gaps (3.2 and 2.2 points) clear `m` and agree in sign. The final gaps (0.4 and 0.4) agree
+  in sign but sit inside the seed spread. The screen decides the order correctly and overstates its size.
+- B against C: the screen gaps are −0.7 and +1.3, opposite in sign, so under rule 3 the comparison runs both arms
+  in full. The final order puts B ahead by 1.8 and 1.3.
+- The WOF-only primer parses no battery row right. Rule 1 excludes its screen.
+
+The two measures disagree on the final order of A and B: the structure board puts B ahead by 0.040 to 0.055, and
+the battery puts A ahead by 0.4 points. A screen inherits whichever measure it is read on, so a screen decision
+names its measure. These are three arm pairs, each with two seeds, so the rule rests on 12 screen readings and
+stays provisional until another arm family is measured.
+
 ## 8. When a training run launches
 
 A run launches only when all of the following hold, checked in this order:
