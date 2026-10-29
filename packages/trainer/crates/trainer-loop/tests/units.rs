@@ -11,6 +11,15 @@ use trainer_loop::schedules::{LambdaLr, Schedule};
 use trainer_model::layers::Mode;
 use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec};
 
+/// libtorch's global generator is shared by the test threads, so a test that seeds it holds this lock.
+static GENERATOR: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn seeded(seed: i64) -> std::sync::MutexGuard<'static, ()> {
+	let guard = GENERATOR.lock().unwrap_or_else(|e| e.into_inner());
+	tch::manual_seed(seed);
+	guard
+}
+
 fn labels() -> Vec<String> {
 	let mut out = vec!["O".to_owned()];
 	for tag in ["locality", "postcode", "street", "street_prefix", "street_suffix"] {
@@ -74,9 +83,10 @@ fn schedules_follow_the_python_lambdas() {
 fn npy_round_trips_and_matches_numpys_header() {
 	let bytes = npy_bytes(&[2, 3], &[1.0, 2.0, 3.0, 4.0, 5.0, 6.5]);
 	assert_eq!((bytes.len() - 6 * 4) % 64, 0);
-	assert!(std::str::from_utf8(&bytes[10..60])
-		.unwrap()
-		.starts_with("{'descr': '<f4', 'fortran_order': False, 'shape': (2, 3), }"));
+	let header = "{'descr': '<f4', 'fortran_order': False, 'shape': (2, 3), }";
+	assert_eq!(std::str::from_utf8(&bytes[10..10 + header.len()]).unwrap(), header);
+	assert_eq!(bytes.len(), 128 + 6 * 4, "the header pads to a multiple of 64 bytes");
+	assert_eq!(bytes[127], b'\n', "the header ends in a newline");
 	let (shape, data) = parse_npy(&bytes).unwrap();
 	assert_eq!(shape, vec![2, 3]);
 	assert_eq!(data[5], 6.5);
@@ -100,10 +110,11 @@ fn metrics_skip_unsupported_tags_and_write_gaps() {
 
 #[test]
 fn construction_is_deterministic_and_named_as_in_python() {
-	tch::manual_seed(3);
+	let guard = seeded(3);
 	let a = CoarseEncoder::new(spec()).unwrap();
 	tch::manual_seed(3);
 	let b = CoarseEncoder::new(spec()).unwrap();
+	drop(guard);
 	for ((n, x), (_, y)) in a.store.state_dict().iter().zip(b.store.state_dict()) {
 		assert!(x.equal(&y), "{n} differs between two builds from one seed");
 	}
@@ -126,7 +137,7 @@ fn construction_is_deterministic_and_named_as_in_python() {
 
 #[test]
 fn every_loss_term_fires_and_backward_reaches_the_heads() {
-	tch::manual_seed(0);
+	let _guard = seeded(0);
 	let mut model = CoarseEncoder::new(spec()).unwrap();
 	model.mode = Mode::Eval;
 	let out = model.forward(&inputs()).unwrap();
@@ -151,7 +162,7 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 
 #[test]
 fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
-	tch::manual_seed(1);
+	let _guard = seeded(1);
 	let mut model = CoarseEncoder::new(spec()).unwrap();
 	model.mode = Mode::Train;
 	let groups = build_groups(model.store.parameters(), 1e-3, 0.01, None, Some(1e-2)).unwrap();
@@ -187,7 +198,8 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		Some(saved.as_path())
 	);
 	let restored = CoarseEncoder::from_pretrained(&saved, &labels()).unwrap();
-	assert_eq!(restored.spec, model.spec);
+	// `config.json` records a disabled channel's width as 0, so the specs agree as the file states them.
+	assert_eq!(restored.spec.to_config_json(), model.spec.to_config_json());
 	model.mode = Mode::Eval;
 	let mut restored = restored;
 	restored.mode = Mode::Eval;

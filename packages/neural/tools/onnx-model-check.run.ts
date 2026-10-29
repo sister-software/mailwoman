@@ -18,6 +18,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import * as ort from "onnxruntime-node"
 
@@ -57,13 +58,18 @@ interface FeedsFile {
 
 function tensor(recorded: RecordedTensor): ort.Tensor {
 	if (recorded.type === "int64") {
-		return new ort.Tensor("int64", BigInt64Array.from(recorded.data, (v) => BigInt(v)), recorded.dims)
+		return new ort.Tensor(
+			"int64",
+			BigInt64Array.from(recorded.data, (v) => BigInt(v)),
+			recorded.dims
+		)
 	}
 
 	return new ort.Tensor("float32", Float32Array.from(recorded.data), recorded.dims)
 }
 
 const recorded = await readLocalJSONFile<FeedsFile>(feedsPath)
+
 const session = await ort.InferenceSession.create(modelPath, {
 	executionProviders: ["cpu"],
 	graphOptimizationLevel: "all",
@@ -90,6 +96,7 @@ for (const [index, probe] of recorded.probes.entries()) {
 
 		if (!actual) {
 			missing.add(name)
+
 			continue
 		}
 
@@ -114,6 +121,7 @@ for (const [index, probe] of recorded.probes.entries()) {
 }
 
 const pass = missing.size === 0 && Object.values(worst).every((w) => w.maxAbs <= tolerance)
+
 const receipt = {
 	model: modelPath,
 	modelSHA256: await sha256File(modelPath),
@@ -128,8 +136,12 @@ const receipt = {
 	pass,
 }
 
-console.log(JSON.stringify(receipt, null, 2))
+process.stdout.write(prettyJSON(receipt))
 
-if (values.out) await writeLocalJSONFile(receipt, values.out)
+if (values.out) {
+	await writeLocalJSONFile(receipt, values.out)
+}
 
-if (!pass) process.exitCode = 1
+if (!pass) {
+	process.exitCode = 1
+}

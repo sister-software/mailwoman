@@ -236,6 +236,7 @@ impl EncoderSpec {
 	///
 	/// `labels` is the config's label set, `num_locales` the locale-head width, and `num_address_systems` the
 	/// registry's id count, which `build_model` reads from the registry rather than the config.
+	#[allow(clippy::too_many_arguments)]
 	pub fn from_model_section(
 		model: &Map<String, Value>,
 		vocab_size: i64,

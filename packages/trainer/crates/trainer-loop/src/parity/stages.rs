@@ -438,7 +438,8 @@ fn stage6(
 	// `config.json` records a disabled channel's width as 0, as `to_config_dict` does, so the specs are compared as
 	// the file states them.
 	if restored.spec.to_config_json() != model.spec.to_config_json() {
-		s6.notes.push("the restored config.json differs from the saved one".into());
+		s6.notes
+			.push("the restored config.json differs from the saved one".into());
 	}
 	for ((name, a), (_, b)) in model.store.state_dict().iter().zip(restored.store.state_dict()) {
 		s6.push(diff(&format!("state.{name}"), &b, a, EXACT)?);
@@ -472,7 +473,7 @@ fn stage6(
 	optim2.load(&saved)?;
 	sched2.load(&saved)?;
 	// One more step from each, from the same generator state.
-	let mut gen_state = |m: &mut CoarseEncoder, o: &mut AdamW, s: &mut LambdaLr| -> Result<Vec<(String, Tensor)>> {
+	let gen_state = |m: &mut CoarseEncoder, o: &mut AdamW, s: &mut LambdaLr| -> Result<Vec<(String, Tensor)>> {
 		m.mode = Mode::Train;
 		tch::manual_seed(4242);
 		o.zero_grad();

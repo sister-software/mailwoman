@@ -5,6 +5,10 @@
 //! encoder), and step `optim::AdamW` under `schedules::LambdaLr`. Each draw from the global generator (dropout, the
 //! locale hint, the curricula, the MLM mask) happens where the Python loop makes it.
 
+// A tensor's `+=` is an in-place `add_`, which autograd refuses on a tensor the backward pass saved; the
+// out-of-place `x = x + y` is also the operation the Python code issues.
+#![allow(clippy::assign_op_pattern)]
+
 pub mod address_systems;
 pub mod batch;
 pub mod callbacks;
@@ -13,6 +17,7 @@ pub mod compare;
 pub mod config;
 pub mod export_check;
 pub mod fisher;
+#[allow(dead_code)]
 mod latin_letters;
 pub mod masking;
 pub mod metrics;

@@ -14,6 +14,9 @@
 //! by name.
 
 #![recursion_limit = "256"]
+// A tensor's `+=` is an in-place `add_`, which autograd refuses on a tensor the backward pass saved; the
+// out-of-place `x = x + y` is also the operation the Python code issues.
+#![allow(clippy::assign_op_pattern)]
 
 pub mod autocast;
 pub mod checkpoint;

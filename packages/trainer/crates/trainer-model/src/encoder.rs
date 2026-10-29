@@ -120,7 +120,6 @@ fn label_index(labels: &[String], label: &str) -> Result<i64> {
 impl CoarseEncoder {
 	/// Builds the encoder on the CPU, drawing its initialization from the global generator as Python does.
 	pub fn new(spec: EncoderSpec) -> Result<Self> {
-		let spec = spec;
 		let mut s = Store::default();
 		let h = spec.hidden_size;
 		let labels = spec.id_to_label.clone();
@@ -671,7 +670,7 @@ impl CoarseEncoder {
 					let in_entity = is_b.logical_or(&is_i);
 					let seq = is_i.size()[1];
 					let next_is_i = is_i.zeros_like();
-					let _ = next_is_i.narrow(1, 0, seq - 1).copy_(&is_i.narrow(1, 1, seq - 1));
+					next_is_i.narrow(1, 0, seq - 1).copy_(&is_i.narrow(1, 1, seq - 1));
 					let start = is_b.to_kind(Kind::Float);
 					let end = in_entity.logical_and(&next_is_i.logical_not()).to_kind(Kind::Float);
 					let sb_logits = head.forward(hidden);
