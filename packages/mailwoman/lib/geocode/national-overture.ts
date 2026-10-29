@@ -5,11 +5,14 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { ServingRole } from "@mailwoman/core/layers"
 import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import type { PathBuilderLike } from "path-ts"
+
+import { LayerCatalog } from "#data/catalog"
 
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["tw", "zh"],
@@ -195,14 +198,24 @@ export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<
 	readonly #dataRoot: PathBuilderLike
 	readonly #cache = new Map<string, RegionDatabases>()
 	readonly #onDisk = new Set<string>()
+	/**
+	 * Per-country paths the active selection lists, read in place of the conventional path.
+	 */
+	readonly #selected = new Map<string, string>()
+	readonly #catalog: LayerCatalog | undefined
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: PathBuilderLike) {
+	constructor(dataRoot: PathBuilderLike, catalog?: LayerCatalog) {
 		this.#dataRoot = dataRoot
+		this.#catalog = catalog
 	}
 
-	static async create(dataRoot: PathBuilderLike): Promise<OvertureNationalDatabaseProvider> {
-		const provider = new OvertureNationalDatabaseProvider(dataRoot)
+	/**
+	 * @param catalog One reading of the active selection.
+	 * Read here when omitted.
+	 */
+	static async create(dataRoot: PathBuilderLike, catalog?: LayerCatalog): Promise<OvertureNationalDatabaseProvider> {
+		const provider = new OvertureNationalDatabaseProvider(dataRoot, catalog)
 
 		await provider.warm()
 
@@ -211,9 +224,26 @@ export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<
 
 	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probe())
 
+	#path(cc: string): string {
+		return this.#selected.get(cc) ?? nationalAddressPointsPath(this.#dataRoot, cc)
+	}
+
 	async #probe(): Promise<void> {
+		const catalog = this.#catalog ?? (await LayerCatalog.read(this.#dataRoot))
+
 		for (const cc of supportedOvertureCountries()) {
-			const path = nationalAddressPointsPath(this.#dataRoot, cc)
+			// The national Overture countries and the BAN countries are disjoint today (it, es, tw and fr),
+			// so a selection entry for one of these countries lists its Overture database alone.
+			const selected = await catalog.firstPath(ServingRole.AddressPoints, {
+				country: cc.toUpperCase(),
+				subdivision: null,
+			})
+
+			if (selected) {
+				this.#selected.set(cc, selected)
+			}
+
+			const path = this.#path(cc)
 
 			if (await pathExists(path)) {
 				this.#onDisk.add(path)
@@ -234,7 +264,7 @@ export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<
 		const entry: RegionDatabases = {}
 
 		if (supportedOvertureCountries().includes(cc)) {
-			const path = nationalAddressPointsPath(this.#dataRoot, cc)
+			const path = this.#path(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForOvertureCountry(cc) })

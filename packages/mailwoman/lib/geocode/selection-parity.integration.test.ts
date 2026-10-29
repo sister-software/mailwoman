@@ -13,7 +13,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { copyFileTo, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { copyFileTo, makeDirectories, removePath, writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { artifactSetID, ArtifactFormat, type SelectionEntry, ServingRole } from "@mailwoman/core/layers"
@@ -34,7 +34,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { LayerCatalog, replaceActiveSelection } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
-import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
+import { layerDatabasePath, layerDatabases, resolveLayerDatabasePath } from "#geocode/layer-paths"
+import { nationalAddressPointsPath, OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 
 /**
@@ -302,6 +303,89 @@ describe("a non-SQLite artifact set", () => {
 			[pairs.path, ArtifactFormat.PairIndex],
 		])
 	})
+})
+
+describe("national Overture on the active selection, against its conventional path on the same bytes", () => {
+	it("answers every query identically, so the difference list is empty", async () => {
+		const legacy = scratch.path("overture-legacy")
+		const selected = scratch.path("overture-selected")
+
+		const rows = [
+			{ street: "Via del Corso", number: "1", postcode: "00186", locality: "Roma", lat: 41.9009, lon: 12.4783 },
+			{ street: "Via Roma", number: "10", postcode: "10121", locality: "Torino", lat: 45.0677, lon: 7.6825 },
+		]
+
+		await writePoints(scratch.path("fixtures", "overture-it.db"), "it", "overture:it", rows)
+
+		const bytes = await readLocalBuffer(scratch.path("fixtures", "overture-it.db"))
+
+		await copyFileTo(scratch.path("fixtures", "overture-it.db"), nationalAddressPointsPath(legacy, "it"))
+
+		const installed = await installFixtureArtifact(selected, ServingRole.AddressPoints, "address-points-it.db", bytes, {
+			scope: { countries: ["IT"], subdivisions: null },
+			entryScope: { country: "IT", subdivision: null },
+			locale: "it",
+		})
+
+		await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
+
+		using before = await OvertureNationalDatabaseProvider.create(legacy)
+		using after = await OvertureNationalDatabaseProvider.create(selected)
+
+		const queries = [
+			{ street: "Via del Corso", number: "1", postcode: "00186", bbox: null },
+			{ street: "Via del Corso", number: "3", postcode: "00186", bbox: null },
+			{ street: "Via Roma", number: "10", postcode: "10121", bbox: null },
+			{ street: "Via Roma", number: "10", postcode: "00100", bbox: null },
+			{ street: "Via Roma", number: "10", locality: "Torino", bbox: null },
+		]
+
+		const differences = queries.flatMap((query) => {
+			const was = before.for("it").addressPoints?.find(query) ?? null
+			const now = after.for("it").addressPoints?.find(query) ?? null
+
+			return stringifyJSON(was) === stringifyJSON(now) ? [] : [{ query, was, now }]
+		})
+
+		expect(differences).toEqual([])
+		expect(queries.filter((query) => after.for("it").addressPoints?.find(query)).length).toBeGreaterThan(0)
+	})
+})
+
+describe("each overlay on its own role", () => {
+	it.each(["flood", "soil", "coastal", "zoning"] as const)(
+		"opens the selected %s database, with the same bytes as the conventional one",
+		async (id) => {
+			const legacy = scratch.path(`${id}-legacy`)
+			const selected = scratch.path(`${id}-selected`)
+			const conventional = layerDatabasePath(legacy, id)
+			const bytes = Buffer.from(`${id} overlay fixture`)
+
+			await makeDirectories(resolveDirectory(conventional))
+			await writeLocalBuffer(bytes, conventional)
+
+			const role = {
+				flood: ServingRole.FloodOverlay,
+				soil: ServingRole.SoilOverlay,
+				coastal: ServingRole.CoastalErosionOverlay,
+				zoning: ServingRole.ZoningOverlay,
+			}[id]
+
+			const installed = await installFixtureArtifact(selected, role, `${id}.db`, bytes, {
+				scope: { countries: [], subdivisions: null },
+				entryScope: { country: null, subdivision: null },
+			})
+
+			await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
+
+			expect(await resolveLayerDatabasePath(legacy, id)).toBe(conventional)
+			expect(await resolveLayerDatabasePath(selected, id)).toBe(installed.path)
+			expect(await sha256File(installed.path)).toBe(await sha256File(conventional))
+
+			// The doctor lists the path the session reads.
+			expect((await layerDatabases(selected)).find((layer) => layer.id === id)?.path).toBe(installed.path)
+		}
+	)
 })
 
 function resolveDirectory(path: string): string {

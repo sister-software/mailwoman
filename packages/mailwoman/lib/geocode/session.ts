@@ -342,7 +342,7 @@ export interface ForkEntityProbe {
 export async function loadAuthorityDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<AuthorityDesignationRoute | null> {
-	const floodDBPath = layerDatabasePath(options.dataRoot, "flood")
+	const floodDBPath = await resolveLayerDatabasePath(options.dataRoot, "flood")
 
 	if (!(await pathExists(floodDBPath))) return null
 
@@ -362,7 +362,7 @@ export async function loadAuthorityDesignationRoute(
 export async function loadSoilCapabilityRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<SoilCapabilityRoute | null> {
-	const soilDBPath = layerDatabasePath(options.dataRoot, "soil")
+	const soilDBPath = await resolveLayerDatabasePath(options.dataRoot, "soil")
 
 	if (!(await pathExists(soilDBPath))) return null
 
@@ -382,7 +382,7 @@ export async function loadSoilCapabilityRoute(
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<CoastalErosionRoute | null> {
-	const coastalDBPath = layerDatabasePath(options.dataRoot, "coastal")
+	const coastalDBPath = await resolveLayerDatabasePath(options.dataRoot, "coastal")
 
 	if (!(await pathExists(coastalDBPath))) return null
 
@@ -402,7 +402,7 @@ export async function loadCoastalErosionRoute(
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<ZoningDesignationRoute | null> {
-	const zoningDBPath = layerDatabasePath(options.dataRoot, "zoning")
+	const zoningDBPath = await resolveLayerDatabasePath(options.dataRoot, "zoning")
 
 	if (!(await pathExists(zoningDBPath))) return null
 
