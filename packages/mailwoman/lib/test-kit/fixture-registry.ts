@@ -11,7 +11,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
 import {
 	type ArtifactManifest,
@@ -22,6 +22,8 @@ import {
 	type LayerInstallationID,
 	layerInstallationID,
 	type SelectionEntry,
+	NormalizationRequirement,
+	ROLE_REQUIREMENTS,
 	ServingRole,
 } from "@mailwoman/core/layers"
 import {
@@ -201,8 +203,9 @@ export async function writeFixtureAddressPoints(path: PathBuilderLike): Promise<
 /**
  * Install one artifact of `bytes` as `role` under `dataRoot`: its file, manifest and installation record.
  *
- * A candidate is unscoped.
- * Every other role is scoped to the District of Columbia and keyed by US streets.
+ * By default a candidate or a POI database is unscoped, and every other role is
+ * scoped to the District of Columbia and keyed by US streets.
+ * `options` sets another scope, street locale or file format.
  *
  * @returns The selection entry that selects it, and its path.
  */
@@ -210,22 +213,31 @@ export async function installFixtureArtifact(
 	dataRoot: PathBuilderLike,
 	role: ServingRole,
 	fileName: string,
-	bytes: string
+	bytes: string | Buffer,
+	options: {
+		scope?: ArtifactManifest["scope"]
+		entryScope?: SelectionEntry["scope"]
+		locale?: string
+		format?: ArtifactManifest["format"]
+	} = {}
 ): Promise<{ entry: SelectionEntry; path: string; installationID: LayerInstallationID }> {
 	const root = dataRoot.toString()
 	const id = artifactIDFromSHA256(sha256Hex(bytes))
 	const directory = catalogPaths(root).artifactDirectory(role, id)
 	const path = directory(fileName).toString()
-	const unscoped = role === ServingRole.Candidate
+	const unscoped = role === ServingRole.Candidate || role === ServingRole.POI
+	const keyed = ROLE_REQUIREMENTS[role].normalization === NormalizationRequirement.Required
 
 	const manifest: ArtifactManifest = {
 		id,
 		role,
-		format: ArtifactFormat.SQLite,
+		format: options.format ?? ArtifactFormat.SQLite,
 		schemaVersion: 1,
 		bytes: Buffer.byteLength(bytes),
-		normalization: unscoped ? null : { algorithm: "street-key", version: "1", locale: "us" },
-		scope: unscoped ? { countries: [], subdivisions: null } : { countries: ["US"], subdivisions: ["US-DC"] },
+		normalization: keyed ? { algorithm: "street-key", version: "1", locale: options.locale ?? "us" } : null,
+		scope:
+			options.scope ??
+			(unscoped ? { countries: [], subdivisions: null } : { countries: ["US"], subdivisions: ["US-DC"] }),
 		observedCountries: null,
 		coverageEvidence: false,
 		sources: [{ publisher: "fixture", release: null, url: null, sha256: null, md5: null }],
@@ -235,7 +247,7 @@ export async function installFixtureArtifact(
 		createdAt: "2026-10-29T00:00:00Z",
 	}
 
-	await writeLocalTextFile(bytes, path)
+	await (typeof bytes === "string" ? writeLocalTextFile(bytes, path) : writeLocalBuffer(bytes, path))
 	await writeRecordAtomically(manifest, directory("manifest.json"))
 
 	const set = artifactSetID([{ artifactID: id, role, schemaVersion: 1 }])
@@ -251,7 +263,8 @@ export async function installFixtureArtifact(
 
 	await writeInstallation(root, installation)
 
-	const scope = unscoped ? { country: null, subdivision: null } : { country: "US", subdivision: "US-DC" }
+	const scope =
+		options.entryScope ?? (unscoped ? { country: null, subdivision: null } : { country: "US", subdivision: "US-DC" })
 
 	return {
 		entry: { role, scope, order: [{ installationID: installation.id, artifactID: id }] },

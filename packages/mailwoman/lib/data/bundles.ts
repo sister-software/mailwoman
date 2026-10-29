@@ -342,6 +342,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	poi: {
 		name: "poi",
 		role: ServingRole.POI,
+		activation: "selection",
 		countries: ["US", "CA", "MX", "FR"],
 		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [
@@ -372,6 +373,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	fr: {
 		name: "fr",
 		role: ServingRole.AddressPoints,
+		activation: "selection",
 		dependencies: ["candidate"],
 		countries: ["FR"],
 		description:

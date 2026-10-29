@@ -31,8 +31,20 @@ export interface BANExtracts extends Pick<RegionDatabases, "addressPoints" | "st
  * Opens and caches BAN rooftop lookups per country.
  * Call `warm` before the first `for`.
  */
+/**
+ * Extract paths chosen outside the provider, such as by an installation's active
+ * selection, keyed by lowercase country code.
+ *
+ * A country listed here reads that file in place of its conventional path.
+ */
+export interface BANSelectedPaths {
+	addressPoints?: ReadonlyMap<string, string>
+	streetCentroids?: ReadonlyMap<string, string>
+}
+
 export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string, BANExtracts> {
 	readonly #dataRoot: PathBuilder
+	readonly #selected: BANSelectedPaths
 	readonly #cache = new Map<string, BANExtracts>()
 	/**
 	 * Extract paths {@linkcode warm} observed on disk, the synchronous existence source `for` consults.
@@ -40,27 +52,36 @@ export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: PathBuilder) {
+	constructor(dataRoot: PathBuilder, selected: BANSelectedPaths = {}) {
 		this.#dataRoot = dataRoot
+		this.#selected = selected
 	}
 
 	/**
 	 * Construct a provider and warm its existence map before answering.
+	 *
+	 * @param selected Paths chosen for some countries, read in place of their conventional paths.
 	 */
-	static async create(dataRoot: PathBuilder): Promise<BANRegionDatabaseProvider> {
-		const provider = new BANRegionDatabaseProvider(dataRoot)
+	static async create(dataRoot: PathBuilder, selected: BANSelectedPaths = {}): Promise<BANRegionDatabaseProvider> {
+		const provider = new BANRegionDatabaseProvider(dataRoot, selected)
 
 		await provider.warm()
 
 		return provider
 	}
 
-	#addressPointsPath(countryCode: string): PathBuilder {
-		return banDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}.db`)
+	#addressPointsPath(countryCode: string): PathBuilder | string {
+		return (
+			this.#selected.addressPoints?.get(countryCode) ??
+			banDatabaseRoot(this.#dataRoot)(`address-points-${countryCode}.db`)
+		)
 	}
 
-	#streetCentroidPath(countryCode: string): PathBuilder {
-		return banDatabaseRoot(this.#dataRoot)(`street-centroids-${countryCode}.db`)
+	#streetCentroidPath(countryCode: string): PathBuilder | string {
+		return (
+			this.#selected.streetCentroids?.get(countryCode) ??
+			banDatabaseRoot(this.#dataRoot)(`street-centroids-${countryCode}.db`)
+		)
 	}
 
 	/**

@@ -41,7 +41,7 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode/core"
-import { layerDatabasePath } from "#geocode/layer-paths"
+import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
@@ -423,10 +423,11 @@ export async function loadZoningDesignationRoute(
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
-	const poiDBPath = layerDatabasePath(options.dataRoot, "poi")
-	// The rail-station layer sits beside poi.db as its own sealed database, because it is
-	// built from OSM under a different license and tier than the Overture places in poi.db.
-	const stationsDBPath = resolvePath(dirname(poiDBPath), STATIONS_DATABASE_FILE)
+	const poiDBPath = await resolveLayerDatabasePath(options.dataRoot, "poi")
+	// The rail-station layer sits beside the conventional poi.db as its own sealed database,
+	// because it is built from OSM under a different license and tier than the Overture places in poi.db.
+	// It has no registry entry, so it stays at that path when the selection lists a POI database elsewhere.
+	const stationsDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), STATIONS_DATABASE_FILE)
 	const paths = []
 
 	for (const path of [poiDBPath, stationsDBPath]) {
