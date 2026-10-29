@@ -148,9 +148,16 @@ at revision `1115bbe3f`, the Rust figures at the revision that deleted the Pytho
 The sampler alone costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
 third of the Rust path's remaining `iter_batches` time. Initialization is dominated by the sampler's stream
 setup: building the Rust encoder with the 2,286,339-key anchor table takes 2.04 s, against 5.46 s for the
-Python `json.load` of the same table. The training effect on an A100 is an estimate until a training probe
-measures it. Lowering the host share from 94 to 22 ms per batch shortens a 182 ms step only by the part of the
-host share the GPU work does not overlap.
+Python `json.load` of the same table.
+
+A 2,000-step training probe measured the effect on an A100-40GB on 2026-10-29
+(`v8.3.0-probe-rust-loader-2k.yaml`, call `fc-01M62R4Y9MDJW0WMAHRR5KVGQ6`). Over steps 300 to 2,000 its median
+wall time per 100 steps was 6.50 s (17 windows, range 6.10 to 7.70). The control is the same config's seed 42
+run on the Python encoder, `v8.3.0-base-c6-90k-mixed-s42`, over the same steps on the same GPU type: 16.10 s
+(17 windows, range 14.10 to 16.90). The Rust path therefore runs 2.48 times as many steps per second
+(16.10 / 6.50). The probe differs from the control in three settings that do not run in the compared window:
+validation passes, Fisher capture and the run length. Its `source_reps` targets are scaled by 2,000 / 90,000,
+so it draws different rows in the same source proportions.
 
 ## Builds
 
