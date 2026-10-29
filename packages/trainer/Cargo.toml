@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["crates/trainer-export"]
+members = ["crates/trainer-export", "crates/trainer-model", "crates/trainer-loop", "crates/trainer-cli"]
+
+# The crates that link libtorch read it from `LIBTORCH`: the `libtorch-shared-with-deps` archive of the version
+# `tch` names (`torch-sys`'s `TORCH_VERSION`). `trainer-export` needs no libtorch.
+[workspace.dependencies]
+tch = "0.26.0"
 
 [workspace.package]
 version = "0.1.0"
