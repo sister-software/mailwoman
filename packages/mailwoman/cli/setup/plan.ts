@@ -9,14 +9,22 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { ServingRole } from "@mailwoman/core/layers"
 import { runFile } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { BUNDLES, type DataBundle } from "#data/bundles"
-import { installedBundleNames } from "#data/ceiling"
 import { licenseRouteLines } from "#data/licensed"
+import {
+	type InstallationPlan,
+	type InstallationRequest,
+	planInstallation,
+	PlannedAction,
+	type PlannedArtifact,
+} from "#data/plan"
+import { SizeBasis } from "#data/registry"
 
 /**
  * The installation inventory could not be read, naming the input that failed.
@@ -34,26 +42,180 @@ export class InstallationReadError extends CommandError {
 }
 
 /**
- * The bundles installed under `dataRoot`.
+ * The installation plan for `bundles` under `dataRoot`, the one `data pull --dry-run` prints.
  *
- * A failure to read the installation is an error naming the unreadable path:
+ * A failure to read the installation is an error with the unreadable path:
  * the system call's own path when it reports one, and the data root otherwise.
  * An empty installation in place of the failure would print every tier as not installed,
  * a report about an installation setup never read.
  *
- * @throws {@link InstallationReadError} when the inventory cannot be read.
+ * @throws {@link InstallationReadError} when the installation cannot be read.
  */
-export async function readInstalledTiers(
+export async function readInstallationPlan(
 	dataRoot: PathBuilderLike,
-	read: (dataRoot: PathBuilderLike) => Promise<ReadonlySet<string>> = installedBundleNames
-): Promise<ReadonlySet<string>> {
+	bundles: readonly string[],
+	read: (request: InstallationRequest) => Promise<InstallationPlan> = planInstallation
+): Promise<InstallationPlan> {
 	try {
-		return await read(dataRoot)
+		return await read({ dataRoot, bundles })
 	} catch (error) {
 		const path = (error as { path?: unknown } | null)?.path
 
 		throw new InstallationReadError(typeof path === "string" ? path : dataRoot.toString(), error)
 	}
+}
+
+/**
+ * Whether a planned artifact is installed: selected and reused, or present at its conventional path.
+ */
+function isInstalled(artifact: PlannedArtifact): boolean {
+	return artifact.action === PlannedAction.Reuse || artifact.action === PlannedAction.Present
+}
+
+/**
+ * The bundles of a plan whose every artifact is installed.
+ */
+export function installedBundles(plan: InstallationPlan): ReadonlySet<string> {
+	return new Set(
+		plan.bundles
+			.filter((bundle) => bundle.artifacts.length && bundle.artifacts.every(isInstalled))
+			.map((bundle) => bundle.name)
+	)
+}
+
+/**
+ * What a customer can do with the installation, one row per capability.
+ */
+export const Capability = {
+	Parsing: "parsing",
+	PlaceResolution: "place resolution",
+	Rooftop: "rooftop lookup",
+	Interpolation: "interpolation",
+	PointsOfInterest: "points of interest",
+} as const
+
+export type Capability = (typeof Capability)[keyof typeof Capability]
+
+const ROLE_CAPABILITIES: ReadonlyArray<[ServingRole, Capability]> = [
+	[ServingRole.Candidate, Capability.PlaceResolution],
+	[ServingRole.AddressPoints, Capability.Rooftop],
+	[ServingRole.Interpolation, Capability.Interpolation],
+	[ServingRole.POI, Capability.PointsOfInterest],
+]
+
+/**
+ * One capability's state.
+ */
+export interface CapabilityRow {
+	capability: Capability
+	state: "available" | "partial" | "unavailable"
+	detail: string
+}
+
+/**
+ * The capabilities the installation provides for the asked bundles.
+ *
+ * The parser needs only the model the package ships.
+ * Each other capability is read from the plan's artifacts of its role, counted per scope,
+ * so a US installation with one state reads as partial and lists that state's code.
+ */
+export function setupCapabilities(parse: SampleParse, plan: InstallationPlan): CapabilityRow[] {
+	const rows: CapabilityRow[] = [
+		parse.status === "ok"
+			? {
+					capability: Capability.Parsing,
+					state: "available",
+					detail: "the parser runs on the shipped model and needs no geographic data",
+				}
+			: { capability: Capability.Parsing, state: "unavailable", detail: parse.reason },
+	]
+
+	const artifacts = plan.bundles.flatMap((bundle) => bundle.artifacts)
+
+	for (const [role, capability] of ROLE_CAPABILITIES) {
+		const ofRole = artifacts.filter((artifact) => artifact.available.role === role)
+
+		if (!ofRole.length) continue
+
+		const installed = ofRole.filter(isInstalled)
+
+		const scopes = installed.flatMap((artifact) =>
+			artifact.available.scope.subdivisions?.length
+				? artifact.available.scope.subdivisions
+				: artifact.available.scope.countries
+		)
+
+		const where = scopes.length ? ` (${scopes.join(", ")})` : ""
+
+		if (installed.length === ofRole.length) {
+			rows.push({ capability, state: "available", detail: `installed${where}` })
+		} else if (installed.length) {
+			rows.push({
+				capability,
+				state: "partial",
+				detail: `installed for ${installed.length} of ${ofRole.length} published scopes${where}`,
+			})
+		} else {
+			rows.push({ capability, state: "unavailable", detail: "not installed" })
+		}
+	}
+
+	return rows
+}
+
+function plannedBytes(artifact: PlannedArtifact): number {
+	return artifact.available.size.basis === SizeBasis.Unknown ? 0 : artifact.available.size.bytes
+}
+
+/**
+ * The next smallest installation for the asked bundles, as the commands to run.
+ *
+ * Place resolution comes first, because every finer tier is reached through it.
+ * A bundle published per state is offered one state at a time with `--only`,
+ * with the smallest and largest state's size, rather than as the whole bundle.
+ */
+export function nextInstallation(plan: InstallationPlan): string[] {
+	const pending = plan.bundles.filter((bundle) => bundle.artifacts.some((artifact) => !isInstalled(artifact)))
+
+	const gazetteer = pending.find((bundle) =>
+		bundle.artifacts.some((artifact) => artifact.available.role === ServingRole.Candidate)
+	)
+
+	const steps = pending.map((bundle) => {
+		const missing = bundle.artifacts.filter((artifact) => !isInstalled(artifact))
+		const bySlug = new Map<string, number>()
+
+		for (const artifact of missing) {
+			const slug = artifact.artifact.stateSlug
+
+			if (slug) {
+				bySlug.set(slug, (bySlug.get(slug) ?? 0) + plannedBytes(artifact))
+			}
+		}
+
+		if (!bySlug.size) {
+			const bytes = missing.reduce((sum, artifact) => sum + plannedBytes(artifact), 0)
+
+			return { bundle, bytes, command: `mailwoman data pull ${bundle.name}   # ${ByteFormatter.formatSI(bytes)}` }
+		}
+
+		const sizes = [...bySlug.entries()].toSorted((a, b) => a[1] - b[1])
+		const smallest = sizes[0]!
+		const largest = sizes.at(-1)!
+
+		return {
+			bundle,
+			bytes: smallest[1],
+			command:
+				`mailwoman data pull ${bundle.name} --only <state>   # one of ${sizes.length} states, ` +
+				`from ${ByteFormatter.formatSI(smallest[1])} (${smallest[0]}) to ${ByteFormatter.formatSI(largest[1])} (${largest[0]})`,
+		}
+	})
+
+	// The gazetteer first, then the smallest step.
+	return steps
+		.toSorted((a, b) => Number(b.bundle === gazetteer) - Number(a.bundle === gazetteer) || a.bytes - b.bytes)
+		.map((step) => step.command)
 }
 
 /**
@@ -111,15 +273,25 @@ export function tiersFor(
 	installed: ReadonlySet<string>,
 	bundles: Readonly<Record<string, DataBundle>> = BUNDLES
 ): TierRow[] {
+	return bundlesFor(countries, bundles).map((bundle) => tierRow(bundle, installed))
+}
+
+/**
+ * The bundles for the asked countries: every global bundle, plus each bundle
+ * whose countries include one asked.
+ * With no country asked, every bundle.
+ */
+export function bundlesFor(
+	countries: readonly string[],
+	bundles: Readonly<Record<string, DataBundle>> = BUNDLES
+): DataBundle[] {
 	const asked = new Set(countries.map((country) => country.trim().toUpperCase()).filter((country) => country.length))
 
-	return Object.values(bundles)
-		.filter((bundle) => {
-			if (!bundle.countries || !asked.size) return true
+	return Object.values(bundles).filter((bundle) => {
+		if (!bundle.countries || !asked.size) return true
 
-			return bundle.countries.some((country) => asked.has(country.toUpperCase()))
-		})
-		.map((bundle) => tierRow(bundle, installed))
+		return bundle.countries.some((country) => asked.has(country.toUpperCase()))
+	})
 }
 
 export type SampleParse = { status: "ok"; components: Record<string, string> } | { status: "failed"; reason: string }
@@ -173,12 +345,27 @@ function tierLine(row: TierRow): string {
 }
 
 /**
+ * What the installation provides now and the next smallest installation, read from one plan.
+ */
+export interface SetupInstallation {
+	capabilities: readonly CapabilityRow[]
+	/**
+	 * The commands of the next smallest installation, in the order to run them.
+	 */
+	next: readonly string[]
+}
+
+/**
  * The lines the non-interactive run prints.
  *
- * They are the roots, the parsed sample, one line per tier, the pull commands for the tiers
- * that are not installed, and the routes to a token when a licensed tier is among them.
+ * They are the roots, the parsed sample, one line per tier, what works now, the next smallest
+ * installation, and the routes to a token when a licensed tier is among the tiers not installed.
  */
-export function setupSummary(checks: SetupChecks, tiers: readonly TierRow[]): string[] {
+export function setupSummary(
+	checks: SetupChecks,
+	tiers: readonly TierRow[],
+	installation?: SetupInstallation
+): string[] {
 	const lines = [`Data root:   ${checks.dataRoot}`, `Config root: ${checks.configRoot}`, ""]
 
 	if (checks.parse.status === "ok") {
@@ -199,11 +386,21 @@ export function setupSummary(checks: SetupChecks, tiers: readonly TierRow[]): st
 
 	const missing = tiers.filter((row) => !row.installed)
 
-	if (missing.length) {
-		lines.push("", "Fetch a tier:")
+	if (installation) {
+		lines.push("", "Works now:")
 
-		for (const row of missing) {
-			lines.push(`  mailwoman data pull ${row.name}`)
+		for (const row of installation.capabilities) {
+			lines.push(`  ${row.capability.padEnd(20)} ${row.state.padEnd(12)} ${row.detail}`)
+		}
+	}
+
+	const next = installation?.next ?? missing.map((row) => `mailwoman data pull ${row.name}`)
+
+	if (next.length) {
+		lines.push("", "Next installation:")
+
+		for (const command of next) {
+			lines.push(`  ${command}`)
 		}
 	}
 

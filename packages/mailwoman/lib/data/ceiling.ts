@@ -13,7 +13,8 @@ import type { GeocodeResult } from "@mailwoman/core/geocode"
 import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PathBuilderLike } from "path-ts"
 
-import { bundleArtifactPath, BUNDLES, type DataBundle } from "#data/bundles"
+import { bundleArtifactPath, BUNDLES, type DataBundle, resolveBundleArtifacts } from "#data/bundles"
+import { LayerCatalog } from "#data/catalog"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
 
 /**
@@ -25,20 +26,23 @@ import { existingLocalPath, readReleaseManifest } from "#data/release"
 const CEILING_TIERS: ReadonlySet<GeocodeResult["resolution_tier"]> = new Set(["postcode", "admin"])
 
 /**
- * The bundles whose every artifact is on disk under the data root, by name.
+ * The bundles whose every artifact is on disk under the data root, by name:
+ * selected in the active selection, or at its conventional or release-pinned path.
  */
 export async function installedBundleNames(
 	dataRoot: PathBuilderLike,
 	bundles: Readonly<Record<string, DataBundle>> = BUNDLES
 ): Promise<ReadonlySet<string>> {
 	const manifest = await readReleaseManifest(dataRoot)
+	const catalog = await LayerCatalog.read(dataRoot)
 	const installed = new Set<string>()
 
 	for (const bundle of Object.values(bundles)) {
 		let present = bundle.artifacts.length > 0
 
-		for (const artifact of bundle.artifacts) {
-			const existing = await existingLocalPath(dataRoot, manifest, artifact, bundleArtifactPath(dataRoot, artifact))
+		for (const artifact of resolveBundleArtifacts(bundle, manifest)) {
+			const conventional = bundleArtifactPath(dataRoot, artifact)
+			const existing = await existingLocalPath(dataRoot, manifest, artifact, conventional, bundle, catalog)
 
 			if (!existing) {
 				present = false

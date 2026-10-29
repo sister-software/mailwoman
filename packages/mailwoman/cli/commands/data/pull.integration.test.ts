@@ -130,6 +130,16 @@ async function cli(...args: string[]): Promise<{ status: number; stdout: string;
 describe("mailwoman data pull from an empty data root", () => {
 	test("installs the gazetteer, then the District of Columbia, and geocodes through the selection", async () => {
 		const host = ["--host", registry.baseURL]
+
+		// Setup's next installation is a command that runs as printed.
+		const setup = await cli("setup", "--no-interactive", "--countries", "US")
+
+		expect(setup.status).toBe(0)
+		expect(setup.stdout).toMatch(/parsing\s+available/u)
+		expect(setup.stdout).toMatch(/place resolution\s+unavailable/u)
+
+		expect(setup.stdout).toMatch(/Next installation:\s+mailwoman data pull candidate /u)
+
 		const dry = await cli("data", "pull", "candidate", "--dry-run", ...host)
 
 		expect(dry.status).toBe(0)
@@ -159,9 +169,20 @@ describe("mailwoman data pull from an empty data root", () => {
 		expect(again.stdout).toContain("reused")
 		expect(registry.requests).toHaveLength(transfers)
 
-		const status = await cli("data", "status", "candidate")
+		const status = await cli("data", "status", "candidate", "--json")
 
 		expect(status.status).toBe(0)
+
+		expect(parseJSONStrict<{ generation: number; artifacts: Array<{ state: string }> }>(status.stdout)).toMatchObject({
+			generation: 2,
+			artifacts: [{ state: "active" }],
+		})
+
+		const after = await cli("setup", "--no-interactive", "--countries", "US")
+
+		expect(after.stdout).toMatch(/place resolution\s+available/u)
+		// Ink wraps a line at the terminal width, so the match allows a break between any two words.
+		expect(after.stdout).toMatch(/rooftop lookup\s+partial\s+installed for 1 of \d+ published scopes\s+\(US-DC\)/u)
 
 		const geocode = await cli("geocode", "1275 Pennsylvania Ave NW, Washington, DC 20004", "--format", "json")
 

@@ -23,12 +23,21 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	useCommandTask,
+	writeRawStdout,
 } from "#cli-kit"
 import { BUNDLES } from "#data/bundles"
-import { ArtifactOutcome, executeInstallation } from "#data/install"
+import { ArtifactOutcome, type ArtifactResult, executeInstallation } from "#data/install"
 import { readConfiguredKey } from "#data/licensed"
 import { OBLIGATION_REFUSALS, parseObligationRefusals } from "#data/obligations"
-import { describePlannedArtifact, describePlanSummary, type InstallationPlan, planInstallation } from "#data/plan"
+import {
+	describePlannedArtifact,
+	describePlanSummary,
+	type InstallationPlan,
+	planInstallation,
+	type PlanProblem,
+	planProblems,
+	ProblemKind,
+} from "#data/plan"
 import { $public } from "#env"
 
 /**
@@ -78,12 +87,31 @@ export const spec = {
 				`Decline a bundle whose recorded expression has this class of obligation (${OBLIGATION_REFUSALS.join(", ")}). ` +
 				"Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS",
 		},
+		json: {
+			type: "boolean",
+			default: false,
+			description: "Emit the plan, its problems by kind and each artifact's outcome as JSON",
+		},
 	},
 } as const satisfies CommandSpec
 
 interface PullResult {
 	ok: boolean
 	checks: Check[]
+	/**
+	 * The structured result `--json` prints: the plan's problems by kind, each artifact's
+	 * outcome with its problem kind, and the generation written.
+	 */
+	report: {
+		dataRoot: string
+		basedOnGeneration: number | null
+		problems: PlanProblem[]
+		artifacts: Array<{ bundle: string; remotePath: string; action: string; destination: string }>
+		results: ArtifactResult[]
+		generation: number | null
+		activationError: string | null
+		cancelled: boolean
+	}
 }
 
 /**
@@ -97,7 +125,7 @@ function planChecks(plan: InstallationPlan, dryRun: boolean): { ok: boolean; che
 	for (const bundle of plan.bundles) {
 		for (const problem of bundle.problems) {
 			ok = false
-			checks.push({ ok: false, check: bundle.name, detail: problem })
+			checks.push({ ok: false, check: `${bundle.name}: ${ProblemKind.Unavailable}`, detail: problem })
 		}
 
 		for (const line of bundle.terms) {
@@ -122,7 +150,7 @@ function planChecks(plan: InstallationPlan, dryRun: boolean): { ok: boolean; che
 			ok = false
 
 			for (const line of bundle.access.lines) {
-				checks.push({ ok: false, check: `${bundle.name}: license`, detail: line })
+				checks.push({ ok: false, check: `${bundle.name}: ${ProblemKind.InsufficientAccess}`, detail: line })
 			}
 		}
 
@@ -177,7 +205,25 @@ async function pull(
 
 	const planned = planChecks(plan, opts.dryRun)
 
-	if (opts.dryRun || plan.fitsOnDisk === false) return planned
+	const report: PullResult["report"] = {
+		dataRoot: plan.dataRoot,
+		basedOnGeneration: plan.basedOnGeneration,
+		problems: planProblems(plan),
+		artifacts: plan.bundles.flatMap((bundle) =>
+			bundle.artifacts.map((artifact) => ({
+				bundle: bundle.name,
+				remotePath: artifact.artifact.remotePath,
+				action: artifact.action,
+				destination: artifact.destination,
+			}))
+		),
+		results: [],
+		generation: null,
+		activationError: null,
+		cancelled: false,
+	}
+
+	if (opts.dryRun || plan.fitsOnDisk === false) return { ...planned, report }
 
 	const { APIClient } = await import("@mailwoman/core/api")
 
@@ -201,7 +247,7 @@ async function pull(
 			checks.push({
 				ok: artifact.outcome !== ArtifactOutcome.Failed && artifact.outcome !== ArtifactOutcome.Cancelled,
 				check: `${artifact.bundle}: ${artifact.remotePath}`,
-				detail: `${artifact.outcome}: ${artifact.detail}`,
+				detail: `${artifact.outcome}${artifact.problem ? ` (${artifact.problem})` : ""}: ${artifact.detail}`,
 			})
 		}
 
@@ -233,7 +279,17 @@ async function pull(
 			})
 		}
 
-		return { ok: planned.ok && result.ok, checks }
+		return {
+			ok: planned.ok && result.ok,
+			checks,
+			report: {
+				...report,
+				results: result.results,
+				generation: result.selection?.generation ?? null,
+				activationError: result.activationError,
+				cancelled: result.cancelled,
+			},
+		}
 	} finally {
 		process.off("SIGINT", abort)
 	}
@@ -250,7 +306,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 			// The variable is the installation's standing one.
 			const refused = options.refuse?.length ? options.refuse : [$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""]
 
-			return pull(args, {
+			const result = await pull(args, {
 				dryRun: options.dryRun,
 				...(options.only ? { only: options.only } : {}),
 				force: options.force,
@@ -258,11 +314,19 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				...(options.host ? { host: options.host } : {}),
 				refuse: parseObligationRefusals(refused),
 			})
+
+			if (options.json) {
+				writeRawStdout({ ok: result.ok, ...result.report })
+			}
+
+			return result
 		},
 		(result) => (result.ok ? 0 : 1)
 	)
 
 	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">pulling…</Text>} />
+
+	if (options.json) return null
 
 	return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 }

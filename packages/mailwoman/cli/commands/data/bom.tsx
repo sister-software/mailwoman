@@ -19,6 +19,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { buildDataBOM, dataBOMPath, serializeDataBOM } from "#data/bom"
 import { takeInventory } from "#data/inventory"
 import { readPublishedBundlesSnapshot } from "#data/published-bundles"
+import { readInstallationState } from "#data/state"
 import { readMailwomanManifest } from "#metadata"
 
 export const description =
@@ -55,7 +56,9 @@ const DataBOMCommand: CommandComponent<typeof spec> = ({ options }) => {
 		// Metadata without an inventory could claim that the data root holds none.
 		// The metadata has no `mailwoman:dataRoot` property in that case.
 		const inventory =
-			options.skipInventory || !(await pathExists(dataRoot)) ? undefined : await takeInventory({ dataRoot })
+			options.skipInventory || !(await pathExists(dataRoot))
+				? undefined
+				: await takeInventory({ dataRoot, installation: await readInstallationState(dataRoot) })
 
 		const document = buildDataBOM({ mailwomanVersion: version, snapshot, inventory })
 		const serialized = serializeDataBOM(document)

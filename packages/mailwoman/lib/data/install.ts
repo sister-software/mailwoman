@@ -16,6 +16,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { readFileHead } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
@@ -36,6 +37,8 @@ import {
 	ROLE_REQUIREMENTS,
 	type SelectionEntry,
 	type ServingRole,
+	UnreadableArtifactError,
+	UnreadableReason,
 } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { STREET_KEY_NORMALIZATION, STREET_LOCALES } from "@mailwoman/resolver-wof-sqlite/street/normalize"
@@ -67,6 +70,7 @@ import {
 	PlannedAction,
 	type PlannedArtifact,
 	type PlannedBundle,
+	ProblemKind,
 } from "#data/plan"
 import { PUBLISHED_SCHEMA_VERSION, selectionScopeOf } from "#data/registry"
 
@@ -96,6 +100,23 @@ export interface ArtifactResult {
 	 * The artifact's installed or conventional path, or `null` when it did not install.
 	 */
 	path: string | null
+	/**
+	 * What kind of failure a failed or cancelled artifact met, or `null` when it did not fail.
+	 */
+	problem: ProblemKind | null
+}
+
+/**
+ * The kind of failure an error during installation is.
+ */
+function problemOf(error: unknown): ProblemKind {
+	if (error instanceof AcquisitionCancelledError) return ProblemKind.Cancelled
+
+	if (error instanceof UnreadableArtifactError) {
+		return error.reason === UnreadableReason.Unsupported ? ProblemKind.Unsupported : ProblemKind.Corrupt
+	}
+
+	return ProblemKind.Transfer
 }
 
 /**
@@ -304,6 +325,19 @@ export async function executeInstallation(
 	plan: InstallationPlan,
 	options: ExecuteOptions
 ): Promise<InstallationResult> {
+	const installLock = catalogPaths(plan.dataRoot).installLock
+
+	// One installer runs per data root.
+	// A second refuses before any transfer, so the first completes rather than both
+	// failing on each other's staging directories.
+	await using _installer = await acquireDirectoryLock(
+		installLock,
+		(held) =>
+			`another installer is running under ${plan.dataRoot}` +
+			(held ? ` (pid ${held.pid} on ${held.host} since ${held.started_at})` : "") +
+			`; wait for it to finish and run the command again (lock ${installLock})`
+	)
+
 	const now = options.now ?? (() => new Date())
 	const results: ArtifactResult[] = []
 	const refusedBundles: InstallationResult["refusedBundles"] = []
@@ -339,8 +373,13 @@ export async function executeInstallation(
 		for (const planned of bundle.artifacts) {
 			if (cancelled) break
 
-			const record = (outcome: ArtifactOutcome, detail: string, path: string | null) =>
-				results.push({ bundle: bundle.name, remotePath: planned.artifact.remotePath, outcome, detail, path })
+			const record = (
+				outcome: ArtifactOutcome,
+				detail: string,
+				path: string | null,
+				problem: ProblemKind | null = null
+			) =>
+				results.push({ bundle: bundle.name, remotePath: planned.artifact.remotePath, outcome, detail, path, problem })
 
 			try {
 				switch (planned.action) {
@@ -353,7 +392,13 @@ export async function executeInstallation(
 						const copy = planned.installed!
 						const problem = await verifyCopy(copy)
 
-						if (problem) throw new Error(`the installed copy failed verification: ${problem}; pull again with --force`)
+						if (problem) {
+							throw new UnreadableArtifactError(
+								copy.path,
+								UnreadableReason.Corrupt,
+								`the installed copy failed verification: ${problem}. Pull again with --force`
+							)
+						}
 
 						if (planned.action === PlannedAction.Reuse) {
 							record(ArtifactOutcome.Reused, `installed and verified at ${copy.path}; nothing transferred`, copy.path)
@@ -404,7 +449,11 @@ export async function executeInstallation(
 
 						if (problems.length || incompatible) {
 							await removePathIfPresent(acquired.path)
-							throw new Error(`${planned.artifact.remotePath} was refused: ${incompatible ?? problems.join("; ")}`)
+							throw new UnreadableArtifactError(
+								planned.url,
+								incompatible ? UnreadableReason.Unsupported : UnreadableReason.Unmanifested,
+								`refused before installation: ${incompatible ?? problems.join("; ")}`
+							)
 						}
 
 						const path = await placeArtifact(
@@ -426,9 +475,9 @@ export async function executeInstallation(
 
 				if (error instanceof AcquisitionCancelledError) {
 					cancelled = true
-					record(ArtifactOutcome.Cancelled, error.message, null)
+					record(ArtifactOutcome.Cancelled, error.message, null, ProblemKind.Cancelled)
 				} else {
-					record(ArtifactOutcome.Failed, error instanceof Error ? error.message : String(error), null)
+					record(ArtifactOutcome.Failed, error instanceof Error ? error.message : String(error), null, problemOf(error))
 				}
 			}
 		}
@@ -484,6 +533,7 @@ export async function executeInstallation(
 					outcome: ArtifactOutcome.Failed,
 					detail: `installed at ${path} and not selected, because another artifact of ${bundle.name} did not install`,
 					path,
+					problem: ProblemKind.SiblingFailed,
 				})
 			}
 
@@ -507,6 +557,7 @@ export async function executeInstallation(
 				outcome: installationID ? ArtifactOutcome.Activated : ArtifactOutcome.Installed,
 				detail: installationID ? `verified and selected at ${path}` : `installed and selected at ${path}`,
 				path,
+				problem: null,
 			}
 
 			results.push(result)
@@ -521,11 +572,12 @@ export async function executeInstallation(
 		try {
 			selection = await replaceActiveSelection(plan.dataRoot, { basedOn: plan.basedOnGeneration, set: entries }, now)
 		} catch (error) {
-			activationError = `${error instanceof Error ? error.message : String(error)}; the previous selection stays in force, and the installed artifacts are selected by the next pull`
+			activationError = `${error instanceof Error ? error.message : String(error)}. The previous selection stays in force, and the next pull selects the installed artifacts`
 
 			for (const result of selected) {
 				result.outcome = ArtifactOutcome.Failed
 				result.detail = `installed at ${result.path} and not selected`
+				result.problem = ProblemKind.Activation
 			}
 		}
 	}

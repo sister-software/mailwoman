@@ -10,7 +10,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
-import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import { readLayerManifest, type layerschemadatabase, ServingRole } from "@mailwoman/core/layers"
 import {
 	isSelfServicePayload,
 	type LicenseKeyVerification,
@@ -44,6 +44,7 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#cli/doctor/checks"
+import { LayerCatalog } from "#data/catalog"
 import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import { $public } from "#env"
 import {
@@ -162,8 +163,18 @@ async function readEnginesFloor(): Promise<string> {
 	}
 }
 
+/**
+ * The candidate gazetteer the data root provides without a pin: the one the active
+ * selection lists, else the file at the conventional path.
+ * The geocoder reads them in the same order.
+ */
 async function defaultConventionCandidatePath(dataRoot: PathBuilderLike): Promise<string | null> {
 	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return null
+
+	const catalog = await LayerCatalog.read(dataRoot)
+	const selected = await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+
+	if (selected) return selected
 
 	const convention = conventionCandidateDBPath(dataRoot)
 

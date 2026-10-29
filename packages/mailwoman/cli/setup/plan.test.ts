@@ -9,13 +9,18 @@ import { changeMode, makeDirectories, writeLocalTextFile } from "@mailwoman/core
 import { describe, expect, it } from "vitest"
 
 import {
+	Capability,
+	installedBundles,
 	InstallationReadError,
-	readInstalledTiers,
+	nextInstallation,
+	readInstallationPlan,
 	SETUP_SAMPLE_ADDRESS,
+	setupCapabilities,
 	setupSummary,
 	tiersFor,
 } from "#cli/setup/plan"
-import type { DataBundle } from "#data/bundles"
+import { BUNDLES, type DataBundle } from "#data/bundles"
+import { planInstallation } from "#data/plan"
 
 const candidate: DataBundle = {
 	name: "candidate",
@@ -124,14 +129,61 @@ describe("setupSummary", () => {
 	})
 })
 
-describe("readInstalledTiers", () => {
-	it("names the path the failed system call reports", async () => {
+describe("setupCapabilities and nextInstallation", () => {
+	const parse = { status: "ok", components: {} } as const
+
+	it("keeps parsing available on an empty data root and offers the gazetteer first, then one state", async () => {
+		await using root = await temporaryDirectory("mw-setup-empty-")
+		const plan = await planInstallation({ dataRoot: root.path, bundles: ["candidate", "us"] })
+
+		expect(setupCapabilities(parse, plan).map((row) => [row.capability, row.state])).toEqual([
+			[Capability.Parsing, "available"],
+			[Capability.PlaceResolution, "unavailable"],
+			[Capability.Rooftop, "unavailable"],
+			[Capability.Interpolation, "unavailable"],
+		])
+
+		const next = nextInstallation(plan)
+
+		expect(next[0]).toMatch(/^mailwoman data pull candidate {3}# 2\.9 GB$/u)
+
+		expect(next[1]).toMatch(
+			/^mailwoman data pull us --only <state> {3}# one of 52 states, from .+ \(vi\) to .+ \(ca\)$/u
+		)
+
+		expect(installedBundles(plan)).toEqual(new Set())
+	})
+
+	it("reads files at the conventional paths as installed and names the one state that is", async () => {
+		await using root = await temporaryDirectory("mw-setup-legacy-")
+
+		await writeLocalTextFile("candidate", root.path("db", "wof", "candidate.db"))
+		await writeLocalTextFile("dc", root.path("db", "address-points", "address-points-us-dc.db"))
+
+		const plan = await planInstallation({ dataRoot: root.path, bundles: ["candidate", "us"] })
+		const rows = setupCapabilities(parse, plan)
+
+		expect(rows.find((row) => row.capability === Capability.PlaceResolution)?.state).toBe("available")
+
+		expect(rows.find((row) => row.capability === Capability.Rooftop)).toEqual({
+			capability: Capability.Rooftop,
+			state: "partial",
+			detail: `installed for 1 of ${BUNDLES["us"]!.artifacts.filter((a) => a.family === "address-points").length} published scopes (US-DC)`,
+		})
+
+		expect(nextInstallation(plan)).toHaveLength(1)
+		expect(installedBundles(plan)).toEqual(new Set(["candidate"]))
+	})
+})
+
+describe("readInstallationPlan", () => {
+	it("reports the path the failed system call reports", async () => {
 		const failure = Object.assign(new Error("EACCES: permission denied, stat '/data/db/wof/candidate.db'"), {
 			code: "EACCES",
 			path: "/data/db/wof/candidate.db",
 		})
 
-		const read = readInstalledTiers("/data", () => Promise.reject(failure))
+		const read = readInstallationPlan("/data", ["candidate"], () => Promise.reject(failure))
 
 		await expect(read).rejects.toThrow(InstallationReadError)
 
@@ -140,20 +192,31 @@ describe("readInstalledTiers", () => {
 		)
 	})
 
-	it("names the data root when the failure reports no path", async () => {
-		await expect(readInstalledTiers("/data", () => Promise.reject(new Error("bad manifest")))).rejects.toThrow(
-			"setup could not read the installation at /data: bad manifest"
-		)
+	it("reports the data root when the failure reports no path", async () => {
+		await expect(
+			readInstallationPlan("/data", ["candidate"], () => Promise.reject(new Error("bad manifest")))
+		).rejects.toThrow("setup could not read the installation at /data: bad manifest")
 	})
 
-	it("names a malformed release manifest instead of reading the installation as unpinned", async () => {
+	it("reports a malformed release manifest instead of reading the installation as unpinned", async () => {
 		await using root = await temporaryDirectory("mw-setup-manifest-")
 		const manifest = root.path("releases.json")
 
 		await writeLocalTextFile("{ not json", manifest)
 
-		await expect(readInstalledTiers(root.path)).rejects.toThrow(
+		await expect(readInstallationPlan(root.path, ["candidate"])).rejects.toThrow(
 			`setup could not read the installation at ${manifest}: ${manifest} is unreadable (corrupt)`
+		)
+	})
+
+	it("reports a malformed active selection instead of reading the installation as empty", async () => {
+		await using root = await temporaryDirectory("mw-setup-selection-")
+		const selection = root.path("active.json")
+
+		await writeLocalTextFile("{ not json", selection)
+
+		await expect(readInstallationPlan(root.path, ["candidate"])).rejects.toThrow(
+			`setup could not read the installation at ${selection}: ${selection} is unreadable (corrupt)`
 		)
 	})
 
@@ -166,7 +229,7 @@ describe("readInstalledTiers", () => {
 		await changeMode(locked, 0o000)
 
 		try {
-			await expect(readInstalledTiers(root.path)).rejects.toThrow(
+			await expect(readInstallationPlan(root.path, ["candidate"])).rejects.toThrow(
 				`setup could not read the installation at ${locked("candidate.db")}`
 			)
 		} finally {
