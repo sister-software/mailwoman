@@ -261,6 +261,7 @@ jobs:
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --features finders --locked
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-sampler --locked
+          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-core --features edit --test model_edit --locked
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7

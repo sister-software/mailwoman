@@ -26,6 +26,19 @@ pub enum PieceType {
 }
 
 impl PieceType {
+	/// The value this type is serialized as.
+	#[cfg(feature = "edit")]
+	pub fn wire(self) -> u64 {
+		match self {
+			Self::Normal => 1,
+			Self::Unknown => 2,
+			Self::Control => 3,
+			Self::UserDefined => 4,
+			Self::Unused => 5,
+			Self::Byte => 6,
+		}
+	}
+
 	fn from_wire(value: u64) -> Result<Self, Error> {
 		Ok(match value {
 			1 => Self::Normal,
@@ -79,12 +92,12 @@ const WIRE_FIXED64: u64 = 1;
 const WIRE_LEN: u64 = 2;
 const WIRE_FIXED32: u64 = 5;
 
-struct Reader<'a> {
+pub(crate) struct Reader<'a> {
 	buf: &'a [u8],
-	pos: usize,
+	pub(crate) pos: usize,
 }
 
-enum Value<'a> {
+pub(crate) enum Value<'a> {
 	Varint(u64),
 	Fixed32(u32),
 	Len(&'a [u8]),
@@ -92,7 +105,7 @@ enum Value<'a> {
 }
 
 impl<'a> Reader<'a> {
-	fn new(buf: &'a [u8]) -> Self {
+	pub(crate) fn new(buf: &'a [u8]) -> Self {
 		Self { buf, pos: 0 }
 	}
 
@@ -121,7 +134,7 @@ impl<'a> Reader<'a> {
 	}
 
 	/// Reads the next `(field number, value)`, or `None` at the end of the message.
-	fn next(&mut self) -> Result<Option<(u64, Value<'a>)>, Error> {
+	pub(crate) fn next(&mut self) -> Result<Option<(u64, Value<'a>)>, Error> {
 		if self.pos >= self.buf.len() {
 			return Ok(None);
 		}
@@ -155,7 +168,7 @@ fn utf8(bytes: &[u8], what: &str) -> Result<String, Error> {
 	String::from_utf8(bytes.to_vec()).map_err(|_| Error::MalformedModel(format!("{what} is not UTF-8")))
 }
 
-fn parse_piece(buf: &[u8]) -> Result<PieceProto<'_>, Error> {
+pub(crate) fn parse_piece(buf: &[u8]) -> Result<PieceProto<'_>, Error> {
 	let mut piece = PieceProto {
 		piece: "",
 		score: 0.0,

@@ -14,6 +14,8 @@
 
 mod darts;
 mod error;
+#[cfg(feature = "edit")]
+pub mod model_edit;
 mod normalizer;
 mod processor;
 mod proto;
@@ -22,3 +24,4 @@ mod utf8;
 
 pub use error::Error;
 pub use processor::{EncodedPiece, Processor, SpecialIDs};
+pub use proto::PieceType;

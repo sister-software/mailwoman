@@ -1,0 +1,49 @@
+{
+	"keep_rules": {
+		"prune": "every id i with i < 4 or i % 5 != 0, ascending",
+		"reorder": "0, 1, 2, 3, then n - 1, n - 8, n - 15, ... while the id is above 3"
+	},
+	"model": "tokenizer-v0.1.0.model",
+	"input_sha256": "82d126743d240c38beb58d9d0c2fd4b0af5f91f03aedd5db054c028f5f33c1a1",
+	"pieces": 16000,
+	"cases": [
+		{
+			"name": "round-trip",
+			"keep": null,
+			"append": [],
+			"sha256": "82d126743d240c38beb58d9d0c2fd4b0af5f91f03aedd5db054c028f5f33c1a1"
+		},
+		{
+			"name": "prune",
+			"keep": "prune",
+			"append": [],
+			"sha256": "6564fd821c0a3e4e2de6bf83c4e9c575c23ccd9d8e431488e8757548f6b08913"
+		},
+		{
+			"name": "reorder",
+			"keep": "reorder",
+			"append": [],
+			"sha256": "bf1e25e0c20ba1adf5630a2680c18ac7e60f56f5015d8f7ecb34a21f32f7753b"
+		},
+		{
+			"name": "splice",
+			"keep": null,
+			"append": [
+				["▁Zürich", -12.5],
+				["▁Łódź", -13.25],
+				["ß", -9.0]
+			],
+			"sha256": "5fb0edc266f1a366356e56a9804677c78cf35c6a6916b4ee0f3c2da1909592b0"
+		},
+		{
+			"name": "prune-then-splice",
+			"keep": "prune",
+			"append": [
+				["▁Zürich", -12.5],
+				["▁Łódź", -13.25],
+				["ß", -9.0]
+			],
+			"sha256": "93e156f5b4500f1051d308378d3373d5760c6481fa777a60ac2ddaa6e2926848"
+		}
+	]
+}
