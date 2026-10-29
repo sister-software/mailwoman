@@ -1,12 +1,12 @@
-"""This module converts a checkpoint into the shipping artifact: fp32 ONNX, int8 and the way back out.
+"""This module converts a checkpoint into the fp32 ONNX artifact on the volume and moves an artifact back out.
 
     modal run -m launch.train_remote::export_onnx --output-dir=/data/output-<run> --step=40000
-    modal run -m launch.train_remote::quantize_onnx --fp32-path=… --int8-path=…
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
-Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
-inference in some local onnxruntime builds, while the training image's pinned one quantizes it
-without error. The push exists because this volume's container and CLI views are fully divergent —
+The int8 graph is made on the host from the fetched fp32 file by `trainer-export quantize` in
+`packages/trainer`, which writes `quantize_dynamic(QInt8)`'s graph without onnxruntime's shape inference.
+A checkpoint the Rust exporter builds can skip this module: `trainer-export export-onnx` reads
+`model.safetensors` or `pytorch_model.bin` directly. The push exists because this volume's container and CLI views are fully divergent —
 `modal volume get` cannot pull a container-written file — so an artifact leaves the way the corpus
 arrived.
 """
@@ -97,45 +97,6 @@ def export_onnx(
     else:
         print(f"no corpus record at {corpus_record}; the run predates it")
 
-    vol.commit()
-    print("Committed to volume.")
-
-
-@app.function(
-    volumes={VOL_MOUNT: vol},
-    image=training_image,
-    timeout=600,
-)
-def quantize_onnx(
-    fp32_path: str = "",
-    int8_path: str = "",
-) -> None:
-    """Int8-quantize an fp32 ONNX on the volume, in the training image."""
-    import hashlib
-    import sys
-    from pathlib import Path
-
-    # Reload the volume before reading. This function runs right after `export_onnx` writes its fp32
-    # artifact. A container with an older view could otherwise read stale contents from that path.
-    vol.reload()
-
-    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
-    from mailwoman_train.export.quantize import quantize_dynamic_int8
-
-    fp32 = Path(fp32_path)
-    int8 = Path(int8_path)
-
-    if not fp32.is_file():
-        raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
-
-    # The input's digest travels with the output. The int8 file has no field for its source checkpoint.
-    # The next export can overwrite the fp32 input.
-    fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()
-
-    print(f"Quantizing {fp32} (md5 {fp32_md5}) → {int8}")
-    quantize_dynamic_int8(fp32, int8)
-    int8_md5 = hashlib.md5(int8.read_bytes()).hexdigest()
-    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB, md5 {int8_md5})")
     vol.commit()
     print("Committed to volume.")
 

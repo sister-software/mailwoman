@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .app import app
-from .artifacts import export_onnx, push_artifact_r2, quantize_onnx
+from .artifacts import export_onnx, push_artifact_r2
 from .bucket import bucket_census
 from .census import country_census_raw, diagnose_corpus, digit_prior, label_support, locale_supply_census, piece_prior
 from .grade import (
@@ -40,7 +40,6 @@ __all__ = [
     "piece_prior",
     "preflight",
     "push_artifact_r2",
-    "quantize_onnx",
     "run_tests",
     "stage_v8cjk_regs",
     "sync",

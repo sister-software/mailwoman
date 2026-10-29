@@ -767,6 +767,96 @@ Caller checklist: `export/*` ← `cli/commands/{export,quantize,package,split_em
   `packages/neural/test/fixtures/generate-split-embeddings.py`, and their tests. After this phase
   `corpus-python/src` holds only the temporary `labels.py` and `config/` readers, and those go in Phase 7.
 
+#### Phase 6 status (2026-10-29)
+
+Observed on the lab host. The records are under `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/phase6-char/` and
+`phase6-reference/`. The Python references ran on the pinned stack: torch 2.12.0, onnxscript 0.7.2, onnx 1.22.0,
+onnxruntime 1.30.0 and CPython 3.12.3.
+
+**Char path.** `trainer-export export-onnx --char-window <data.max_unit_width>` writes the `CharCNNEmbedding`
+front-end behind `char_ids int64[batch, sequence, window]` and `attention_mask`, with no `input_ids`. The front-end is
+`Conv`, `Relu`, `Slice`, `Where` and `ReduceMax`. The writer refuses a char checkpoint without the window, and one
+that also enables a channel or the locale hint. The Python exporter would drop those inputs from the graph. The
+checkpoint is a 100-step `trainer train` run of the lab `v8-cjk-regs` config (`phase6-char/checkpoints/step-000100`).
+The probes are the 16 rows of the `char-cjk` cell's two recorded batches, written by `trainer export-feeds`, which now
+feeds `char_ids` for a char checkpoint.
+
+| Check                                                                 | Result                                                        | Requirement |
+| --------------------------------------------------------------------- | ------------------------------------------------------------- | ----------- |
+| Rust graph against the Rust forward pass, `logits`, onnxruntime-node  | 6.7e-6 largest absolute difference                            | 1e-4        |
+| The same probes trimmed to their real lengths (15 to 35 units)        | 5.7e-6                                                        | 1e-4        |
+| The probes stacked in batches of two                                  | 6.7e-6                                                        | not a bar   |
+| Python graph of the same checkpoint (`export_to_onnx(char_window=7)`) | 6.7e-6 against the Rust forward pass                          | 1e-4        |
+| Python graph, batches of two                                          | refused at `node_add_243` (`96 by 192`), as F2 saw for tokens | none        |
+| Inputs, outputs, element types and declared dimensions                | equal to the Python graph and to the shipped `cjk` graph      | equal       |
+| Opset                                                                 | Rust 17. The Python graph and the shipped `cjk` graph are 18  | ≤ 17        |
+| Operator types                                                        | the same 23 as the shipped `cjk` graph                        | none        |
+
+The dynamo exporter writes opset 18 for the char path although `export_to_onnx` asks for 17. The shipped `cjk`
+graph is fp32 at opset 18, so it is outside the repository's opset invariant. The char path ships fp32, and the
+quantizer still refuses `Conv` by name. An int8 char graph would need `ConvInteger`, which `quantize_dynamic` would
+write.
+
+**Span scorer: blocked.** The Rust model has no span scorer (Phase 5, "Not built"), so there is no forward pass to
+check a `span_scores` output against. The exporter refuses `use_span_scorer` by name, as it refuses the affix and
+dependent-locality heads and `inject_first_token`. `launch/artifacts.py::export_onnx` and its
+`semi-crf-transitions.json` sidecar stay on the Python exporter until the scorer is ported.
+
+**Split embeddings.** `trainer-export split-embeddings --input <int8> --out-dir <dir> [--counts <.npy|.json>]
+[--coverage 0.99] [--always 0,1,2,3]` writes `encoder.onnx`, `embeddings.rows` and `embeddings-hot.bin`. On the
+committed fixture (`packages/neural/test/fixtures/split-embeddings/`) the three files equal the Python output byte for
+byte, which `cargo test -p trainer-export` checks. On the shipped en-us int8 (73,143 × 384 table) with seeded counts,
+coverage 0.99 and ids 0 to 3 always kept, the Python and Rust outputs are equal byte for byte: `encoder.onnx`
+11,347,342 B, `embeddings.rows` 28,086,944 B, `embeddings-hot.bin` 15,479,292 B (39,895 rows). The Rust split took
+0.11 s. The printed summary's `scale` is the float32 scale widened to float64, as Python prints it.
+
+**Weights package.** `packages/mailwoman/tools/release-tools/package-weights.run.ts` writes the package directory:
+`model.onnx`, `tokenizer.model`, `model-card.json`, `package.json` and `README.md`. The cards and `package.json` are
+written as `json.dumps(indent=2)` writes them, through `pythonJSONDumps`. Over three packages from two input sets
+(no eval report and 40 address systems; an eval report with float fields, non-ASCII notes and hardware, a
+trailing-slash checkpoint path, `--smoke`, and no address systems), all 15 files equal the Python packager's output
+byte for byte, with `completed_at` given to both. Differences, by decision:
+
+1. The eval report is an input (`--eval-report`). The Python command ran the golden-set eval on the torch model
+   itself; that eval moves with `evaluation/`.
+2. The tool refuses a checkpoint whose `num_labels` differs from the active label set's BIO count. The Python command
+   wrote the stage 3 labels for any head.
+3. `--completed-at` fixes the card's timestamp, which the Python command took from the clock.
+4. Neither writes `crf-transitions.json`: the Python command called `export_crf_transitions` with its default loss
+   weight 0, which returns `None`.
+
+**Stale `value_info`, shapes, ids and labels.** The quantizer's stale-annotation test stands. The split drops every
+`value_info` entry, including one that contradicts the table, and still writes the fixture's bytes. The exporter
+annotates `Conv`, `Relu` and `ReduceMax` outputs, so the char front-end carries shapes. The `sequence` axis is
+checked by the trimmed probes and the batch axis by the stacked ones. The pad character id 0 is masked to `-1e4`
+before the window maximum, as `CharCNNEmbedding` masks it. The control pieces 0 to 3 are in every hot subset. The
+exporter refuses an `id2label` shorter than the head. The token-path graph is unchanged: re-exporting the Phase 5
+step-200 checkpoint gives the same fp32 and int8 bytes as before (SHA-256 `f512217a…` and `73501f4d…`).
+
+**WebGPU.** The repository states two requirements: opset ≤ 17 (`verify_toolchain.py`) and the int8 scheme of
+`DynamicQuantizeLinear` with `MatMulInteger`, served through the native `onnxruntime-web/webgpu` provider. The Rust
+char graph, the Rust int8 graph and the Rust split encoder are opset 17, and each uses only operator types the
+shipped graph it replaces uses. The repository has no operator allowlist, and the browser SLO suite has no WebGPU
+arm. The token-path bytes did not change, so F2's SLO result (11 of 11 on the wasm arm) still describes them. The
+real iOS device check was not run; it is required before any promotion.
+
+**Callers and deletions.** Deleted: `export/split_embeddings.py`, `cli/commands/{export,quantize,package,
+split_embeddings}.py`, `tests/mailwoman_train/export/{test_split_embeddings,test_export_staging}.py`,
+`packages/neural/test/fixtures/generate-split-embeddings.py`, and the `quantize_onnx` Modal function. The launcher's
+procedure now quantizes on the host with `trainer-export quantize`. Kept, with their importers:
+
+- `export/onnx.py`, `graph.py` and `wrappers.py`: `launch/artifacts.py::export_onnx` (span-scorer and other
+  unported heads), `cli/commands/smoke.py`, and `scripts/verify_toolchain.py`, which reads the export opset from
+  `onnx.py`.
+- `export/quantize.py`: `cli/commands/smoke.py`.
+- `export/package_weights.py`: `cli/commands/smoke.py` (the smoke card) and `launch/artifacts.py`
+  (`export_semi_crf_transitions`).
+- `cli/` (`train`, `eval`, `smoke`), `__main__.py`, `env.py`, `paths.py`, `protocols.py` and `types.py`: the Python
+  trainer, which stays until stage 8 and the launcher land.
+
+`verify-export-quant-versions.run.ts` still reads `corpus-python/launch/app.py`, because the TS image definition is
+Phase 7 work.
+
 ### Phase 7 — TypeScript launcher
 
 Caller checklist: `launch/*` ← operator commands in `corpus-python/launch/AGENTS.md`,

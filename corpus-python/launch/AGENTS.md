@@ -268,14 +268,14 @@ no `crf-transitions.json`; production therefore decodes **argmax**, and a check 
 uv run --extra dev modal run -m launch.train_remote::export_onnx \
   --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
 
-# 2. Int8-quantize it (must run in the training image; local ORT trips on the dynamo graph)
-uv run --extra dev modal run -m launch.train_remote::quantize_onnx \
-  --fp32-path=/data/output-v160-boundary-stress-s42/model.onnx \
-  --int8-path=/data/models/quantized/model-v160-step-40000-int8.onnx
-
-# 3. Fetch the int8 artifact (the ship format — grade what production runs)
+# 2. Fetch the fp32 graph
 mkdir -p ./out/v160
-modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8.onnx ./out/v160/model.onnx
+modal volume get mailwoman-training /output-v160-boundary-stress-s42/model.onnx ./out/v160/model-fp32.onnx
+
+# 3. Int8-quantize it on the host (the ship format — grade what production runs). The Rust quantizer writes
+#    quantize_dynamic(QInt8)'s graph and needs no onnxruntime shape inference.
+cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+  quantize --input ./out/v160/model-fp32.onnx --output ./out/v160/model.onnx
 
 TOK=$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model
 

@@ -21,10 +21,6 @@ from mailwoman_train.cli import COMMANDS, build_parser
 EXPECTED = {
     "train",
     "eval",
-    "export",
-    "quantize",
-    "split-embeddings",
-    "package",
     "smoke",
 }
 
@@ -67,5 +63,5 @@ def test_each_subcommand_accepts_help(name: str) -> None:
 def test_the_module_entry_point_dispatches_to_the_named_command() -> None:
     """`python -m mailwoman_train <name>` must reach that command's `run`, not another's."""
     parser = build_parser()
-    args = parser.parse_args(["quantize", "--input", "a.onnx", "--output", "b.onnx"])
-    assert args.func.__module__.endswith("commands.quantize")
+    args = parser.parse_args(["eval", "--checkpoint", "step-000100"])
+    assert args.func.__module__.endswith("commands.evaluate")

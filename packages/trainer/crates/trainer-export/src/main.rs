@@ -1,8 +1,13 @@
 //! `trainer-export`: the Python-free ONNX export and int8 quantization.
 //!
-//! - `export-onnx --checkpoint <dir> --output <model.onnx>`: the opset-17 float32 graph of a checkpoint directory
-//!   (`config.json` beside `model.safetensors` or `pytorch_model.bin`).
+//! - `export-onnx --checkpoint <dir> --output <model.onnx> [--char-window N]`: the opset-17 float32 graph of a
+//!   checkpoint directory (`config.json` beside `model.safetensors` or `pytorch_model.bin`). A char-path checkpoint
+//!   needs `--char-window`, the training config's `data.max_unit_width`.
 //! - `quantize --input <model.onnx> --output <model-int8.onnx>`: `quantize_dynamic(QInt8)`'s int8 graph.
+//! - `split-embeddings --input <model-int8.onnx> --out-dir <dir> [--counts <counts.npy|.json>] [--coverage 0.99]
+//!   [--always 0,1,2,3]`: `encoder.onnx` and the `MWE1` row file `embeddings.rows`, and with per-piece counts the hot
+//!   subset `embeddings-hot.bin`. Prints the summary as JSON.
+//! - `inspect --model <model.onnx>`: the opsets, declared inputs and outputs, and the count of each operator type.
 //! - `tensors --checkpoint <dir>`: each state-dict tensor's name, storage type and shape, one per line.
 //! - `diff-initializers --left <a.onnx> --right <b.onnx>`: the initializers the two graphs share by name, with the
 //!   ones whose type, shape or bytes differ listed first. Exits 1 when any differ or either graph has one the other
@@ -16,10 +21,11 @@ use std::process::ExitCode;
 
 use prost::Message;
 use trainer_export::checkpoint::read_checkpoint;
-use trainer_export::export::export_checkpoint;
+use trainer_export::export::{export_checkpoint, ExportOptions};
 use trainer_export::onnx::tensor_proto::DataType;
 use trainer_export::onnx::ModelProto;
 use trainer_export::quantize::quantize_dynamic_qint8;
+use trainer_export::split::{read_counts, split_model_file, HotSelection};
 use trainer_export::{fail, Result};
 
 fn flags(args: &[String]) -> Result<BTreeMap<String, String>> {
@@ -119,6 +125,67 @@ fn diff_initializers(left: &Path, right: &Path) -> Result<bool> {
 	Ok(differ.is_empty())
 }
 
+/// The value's element type and dimensions, as `int64[batch, sequence, 7]`.
+fn signature(value: &trainer_export::onnx::ValueInfoProto) -> String {
+	use trainer_export::onnx::tensor_shape_proto::dimension::Value as D;
+	use trainer_export::onnx::type_proto::Value as T;
+	let Some(T::TensorType(t)) = value.r#type.as_ref().and_then(|t| t.value.as_ref()) else {
+		return "(not a tensor)".into();
+	};
+	let elem = t
+		.elem_type
+		.and_then(|e| DataType::try_from(e).ok())
+		.map(|e| e.as_str_name().to_lowercase())
+		.unwrap_or_default();
+	let dims: Vec<String> = t
+		.shape
+		.iter()
+		.flat_map(|s| s.dim.iter())
+		.map(|d| match &d.value {
+			Some(D::DimValue(v)) => v.to_string(),
+			Some(D::DimParam(p)) => p.clone(),
+			None => "?".into(),
+		})
+		.collect();
+	format!("{elem}[{}]", dims.join(", "))
+}
+
+/// Prints the opsets, the declared inputs and outputs, and the count of each operator type.
+fn inspect(model: &ModelProto) {
+	let graph = model.graph.clone().unwrap_or_default();
+	for opset in &model.opset_import {
+		println!(
+			"opset\t{}\t{}",
+			opset.domain.as_deref().filter(|d| !d.is_empty()).unwrap_or("ai.onnx"),
+			opset.version.unwrap_or_default()
+		);
+	}
+	println!("ir_version\t{}", model.ir_version.unwrap_or_default());
+	for input in &graph.input {
+		println!(
+			"input\t{}\t{}",
+			input.name.as_deref().unwrap_or_default(),
+			signature(input)
+		);
+	}
+	for output in &graph.output {
+		println!(
+			"output\t{}\t{}",
+			output.name.as_deref().unwrap_or_default(),
+			signature(output)
+		);
+	}
+	let mut ops: BTreeMap<String, usize> = BTreeMap::new();
+	for node in &graph.node {
+		let domain = node.domain.as_deref().filter(|d| !d.is_empty()).unwrap_or("ai.onnx");
+		*ops.entry(format!("{domain}::{}", node.op_type.as_deref().unwrap_or_default()))
+			.or_default() += 1;
+	}
+	for (op, count) in ops {
+		println!("op\t{op}\t{count}");
+	}
+}
+
 fn run(args: &[String]) -> Result<bool> {
 	let (command, rest) = args
 		.split_first()
@@ -126,9 +193,42 @@ fn run(args: &[String]) -> Result<bool> {
 	let flags = flags(rest)?;
 	match command.as_str() {
 		"export-onnx" => {
-			let model = export_checkpoint(Path::new(required(&flags, "checkpoint")?))?;
+			let char_window = flags
+				.get("char-window")
+				.map(|w| w.parse().map_err(|_| fail!("--char-window {w} is not a count")))
+				.transpose()?;
+			let options = ExportOptions { char_window };
+			let model = export_checkpoint(Path::new(required(&flags, "checkpoint")?), &options)?;
 			write_model(&model, Path::new(required(&flags, "output")?))?;
 		}
+		"split-embeddings" => {
+			let model = read_model(Path::new(required(&flags, "input")?))?;
+			let counts = flags.get("counts").map(|p| read_counts(Path::new(p))).transpose()?;
+			let coverage: f64 = match flags.get("coverage") {
+				Some(c) => c.parse().map_err(|_| fail!("--coverage {c} is not a number"))?,
+				None => 0.99,
+			};
+			let always: Vec<usize> = flags
+				.get("always")
+				.map(String::as_str)
+				.unwrap_or("0,1,2,3")
+				.split(',')
+				.map(str::trim)
+				.filter(|s| !s.is_empty())
+				.map(|s| s.parse().map_err(|_| fail!("--always holds {s}, not an id")))
+				.collect::<Result<_>>()?;
+			let selection = counts.as_deref().map(|counts| HotSelection {
+				counts,
+				coverage,
+				always: &always,
+			});
+			let summary = split_model_file(model, Path::new(required(&flags, "out-dir")?), selection)?;
+			println!(
+				"{}",
+				serde_json::to_string_pretty(&summary).map_err(|error| fail!("{error}"))?
+			);
+		}
+		"inspect" => inspect(&read_model(Path::new(required(&flags, "model")?))?),
 		"quantize" => {
 			let model = quantize_dynamic_qint8(read_model(Path::new(required(&flags, "input")?))?)?;
 			write_model(&model, Path::new(required(&flags, "output")?))?;

@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file A split release's encoder plus its embedding rows reproduces the unsplit graph in the Node runner.
  *
- *   The fixture is written by `packages/neural/test/fixtures/generate-split-embeddings.py`.
+ *   The fixture's `model.onnx` is a frozen 64 x 8 int8-shaped graph. `trainer-export split-embeddings` writes the
+ *   other three files from it, and `packages/trainer/crates/trainer-export/tests/export.rs` checks that by bytes.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"

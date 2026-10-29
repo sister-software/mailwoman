@@ -5,7 +5,7 @@
  *
  *   The token-embedding lookup for a split release. A split release ships `encoder.onnx`, which takes
  *   `inputs_embeds` in place of `input_ids`, and the quantized embedding table as MWE1 row files written
- *   by `corpus-python/src/mailwoman_train/export/split_embeddings.py`. The lookup reproduces the two
+ *   by `trainer-export split-embeddings` (`packages/trainer/crates/trainer-export/src/split.rs`). The lookup reproduces the two
  *   nodes the split removed: a `Gather` of UINT8 rows and one per-tensor `DequantizeLinear`,
  *   `(row - zeroPoint) * scale`.
  *

@@ -5,6 +5,7 @@
 //! encoder computes the expected outputs, one row per probe in eval mode, and
 //! `packages/neural/tools/onnx-model-check.run.ts` runs the feeds through the graph `trainer-export` wrote and compares
 //! every element. Every other probe passes the row's own address system as `locale_hint`, the rest the "no hint" id.
+//! A char-path checkpoint's probes feed the record's `char_ids` in place of `input_ids`.
 
 use crate::batch::TensorBatch;
 use crate::compare::Record;
@@ -75,8 +76,13 @@ pub fn write_feeds(
 					.iter()
 					.map(|(n, f, c)| (n.clone(), one(f), one(c)))
 					.collect(),
-				char_ids: None,
+				char_ids: batch.char_ids.as_ref().map(one),
 			};
+			if model.spec.use_char_embed && row.char_ids.is_none() {
+				return Err(fail!(
+					"the record's batches hold no char_ids for a char-path checkpoint"
+				));
+			}
 			let own = row.address_system_ids.int64_value(&[0]);
 			let hint = if probes.len() % 2 == 1 && own != IGNORE_INDEX {
 				own
@@ -93,10 +99,12 @@ pub fn write_feeds(
 			}
 			let output = tch::no_grad(|| model.forward(&inputs))?;
 			let mut feeds = Map::new();
-			for (k, v) in [
-				feed("input_ids", &row.input_ids)?,
-				feed("attention_mask", &row.attention_mask)?,
-			] {
+			// The char graph declares `char_ids` in place of `input_ids`.
+			let units = match (&row.char_ids, model.spec.use_char_embed) {
+				(Some(chars), true) => feed("char_ids", chars)?,
+				_ => feed("input_ids", &row.input_ids)?,
+			};
+			for (k, v) in [units, feed("attention_mask", &row.attention_mask)?] {
 				feeds.insert(k, v);
 			}
 			for (name, f, c) in &row.channels {

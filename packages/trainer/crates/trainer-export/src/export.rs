@@ -11,6 +11,10 @@
 //! - `nn.GELU` is `x * (0.5 * (erf(x / sqrt(2)) + 1))`.
 //! - Scaled dot-product attention scales both the query and the transposed key by `head_dim ** -0.25` before their
 //!   product, adds the key-padding mask (`-inf` where `attention_mask == 0`), and applies `Softmax` on the last axis.
+//! - The char path (`use_char_embed`) reads `char_ids (batch, sequence, window)` in place of `input_ids`, as
+//!   `LogitsOnlyChar` declares it, and computes `CharCNNEmbedding` with `Conv`, `Relu`, `Where` and `ReduceMax`.
+//!   The window is the training config's `data.max_unit_width`, which the checkpoint does not store, so the caller
+//!   passes it in [`ExportOptions`].
 //!
 //! The declared output shapes are the pinned exporter's: dimension 0 of every output is the literal 1, because
 //! torch.export specializes the traced batch of one inside the attention blocks. The computation here does not
@@ -53,8 +57,26 @@ struct Channel {
 	scale: Option<Vec<f32>>,
 }
 
+/// The char path's front-end: `CharCNNEmbedding` over `char_ids (batch, sequence, window)`.
+struct CharFront {
+	/// The config's `max_unit_width`, the declared size of `char_ids`' last axis. The checkpoint does not store it.
+	window: usize,
+	vocab: usize,
+	embed: usize,
+	/// Each convolution's kernel size and output channels.
+	convs: Vec<(usize, usize)>,
+}
+
+/// What the export needs that the checkpoint does not record.
+#[derive(Clone, Debug, Default)]
+pub struct ExportOptions {
+	/// The char path's unit window: the training config's `data.max_unit_width` (`export_to_onnx(char_window=…)`).
+	pub char_window: Option<usize>,
+}
+
 /// The channel flags read from a checkpoint, as `export/graph.py::detect_channels` reads them from the model.
 pub struct Interface {
+	char: Option<CharFront>,
 	channels: Vec<Channel>,
 	locale: bool,
 	address_system: bool,
@@ -74,14 +96,56 @@ fn enabled(config: &ModelConfig, prefix: &str) -> bool {
 	}
 }
 
+/// Reads the char path's convolutions from the checkpoint and refuses a char model without its window.
+fn char_front(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<CharFront> {
+	let window = match options.char_window {
+		Some(w) if w > 0 => w,
+		_ => {
+			return Err(fail!(
+				"a char-path model needs char_window (the config's data.max_unit_width) to export"
+			))
+		}
+	};
+	let table = state.shape("char_cnn.char_embeddings.weight")?;
+	let [vocab, embed] = table else {
+		return Err(fail!("char_cnn.char_embeddings.weight has shape {table:?}"));
+	};
+	if config.char_vocab_size != 0 && config.char_vocab_size != *vocab {
+		return Err(fail!(
+			"char_cnn.char_embeddings.weight has {vocab} rows, config char_vocab_size is {}",
+			config.char_vocab_size
+		));
+	}
+	let mut convs = Vec::new();
+	for (i, k) in config.char_kernel_sizes.iter().enumerate() {
+		let shape = state.shape(&format!("char_cnn.convs.{i}.weight"))?;
+		match shape {
+			[out, inp, kernel] if inp == embed && kernel == k => convs.push((*k, *out)),
+			_ => {
+				return Err(fail!(
+					"char_cnn.convs.{i}.weight has shape {shape:?}, expected [out, {embed}, {k}]"
+				))
+			}
+		}
+	}
+	if convs.is_empty() {
+		return Err(fail!("config char_kernel_sizes is empty"));
+	}
+	Ok(CharFront {
+		window,
+		vocab: *vocab,
+		embed: *embed,
+		convs,
+	})
+}
+
 /// Reads the interface and refuses a combination the Python exporter refuses or this writer does not build.
-pub fn interface(config: &ModelConfig, state: &StateDict) -> Result<Interface> {
+pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<Interface> {
 	let unsupported = [
 		(
-			config.use_char_embed,
-			"use_char_embed (the char path's CharCNN front-end)",
+			config.use_span_scorer,
+			"use_span_scorer (the span_scores output; the Rust model has no span scorer to check it against)",
 		),
-		(config.use_span_scorer, "use_span_scorer (the span_scores output)"),
 		(config.use_affix_head, "use_affix_head"),
 		(config.use_deploc_head, "use_deploc_head"),
 		(config.inject_first_token, "inject_first_token"),
@@ -124,6 +188,22 @@ pub fn interface(config: &ModelConfig, state: &StateDict) -> Result<Interface> {
 	let has = |p: &str| channels.iter().any(|c| c.prefix == p);
 	let bundle = has("street_type") || has("locality_surface");
 	let locale_hint = config.use_locale_hint;
+	let char = if config.use_char_embed {
+		// The char path is channel-free by interface: `LogitsOnlyChar` declares `char_ids` and `attention_mask` only.
+		// The Python exporter would drop a trained channel's inputs from such a graph; this writer refuses instead.
+		if let Some(channel) = channels.first() {
+			return Err(fail!(
+				"a char-path model exports behind char_ids and attention_mask only; it also enables the {} channel",
+				channel.prefix
+			));
+		}
+		if locale_hint {
+			return Err(fail!("use_locale_hint is only exportable on the full evidence bundle"));
+		}
+		Some(char_front(config, state, options)?)
+	} else {
+		None
+	};
 	if has("code_unit") && !(bundle && locale_hint) {
 		return Err(fail!(
 			"use_code_unit_anchor is only exportable on the hinted evidence bundle"
@@ -154,6 +234,7 @@ pub fn interface(config: &ModelConfig, state: &StateDict) -> Result<Interface> {
 	};
 
 	Ok(Interface {
+		char,
 		channels,
 		locale: config.use_locale_conditioning,
 		address_system: config.use_address_system_head,
@@ -340,9 +421,87 @@ impl Writer<'_> {
 	}
 }
 
+impl Writer<'_> {
+	/// `CharCNNEmbedding.forward` in eval mode: each unit's vector from its character window, `[B, S, hidden]`.
+	///
+	/// The window's characters are embedded and convolved per kernel size (`padding = k // 2`, clipped back to the
+	/// window), the padding characters are set to `-1e4` after the ReLU, and each channel keeps its maximum over the
+	/// window. The concatenated maxima pass through `proj`.
+	fn char_front(&mut self, front: &CharFront, batch_seq: &str) -> Result<String> {
+		let w = front.window as i64;
+		let rows = self.g.ints(&[-1, w]);
+		let flat = self.g.op("Reshape", &["char_ids", &rows], vec![], "char_ids.rows");
+		let table = self.param("char_cnn.char_embeddings.weight", &[front.vocab, front.embed])?;
+		let embedded = self.g.op(
+			"Gather",
+			&[&table, &flat],
+			vec![attr_int("axis", 0)],
+			"char_cnn.embedded",
+		);
+		let x = self.g.op(
+			"Transpose",
+			&[&embedded],
+			vec![attr_ints("perm", &[0, 2, 1])],
+			"char_cnn.channels",
+		);
+		let pad = self.g.scalar_i64(0);
+		let padded = self.g.op("Equal", &[&flat, &pad], vec![], "char_cnn.padding");
+		let padded = self.unsqueeze(&padded, &[1], "char_cnn.padding.row");
+		let floor = self.g.scalar_f32(-1e4);
+		let (start, end, axis) = (self.g.ints(&[0]), self.g.ints(&[w]), self.g.ints(&[2]));
+		let mut features = Vec::new();
+		let mut width = 0;
+		for (i, (k, out)) in front.convs.iter().enumerate() {
+			let p = format!("char_cnn.convs.{i}");
+			let weight = self.param(&format!("{p}.weight"), &[*out, front.embed, *k])?;
+			let bias = self.param(&format!("{p}.bias"), &[*out])?;
+			let half = (*k / 2) as i64;
+			let conv = self.g.op(
+				"Conv",
+				&[&x, &weight, &bias],
+				vec![
+					attr_ints("dilations", &[1]),
+					attr_int("group", 1),
+					attr_ints("kernel_shape", &[*k as i64]),
+					attr_ints("pads", &[half, half]),
+					attr_ints("strides", &[1]),
+				],
+				&p,
+			);
+			let relu = self.g.op("Relu", &[&conv], vec![], &format!("{p}.relu"));
+			let clipped = self
+				.g
+				.op("Slice", &[&relu, &start, &end, &axis], vec![], &format!("{p}.window"));
+			let masked = self
+				.g
+				.op("Where", &[&padded, &floor, &clipped], vec![], &format!("{p}.masked"));
+			features.push(self.g.op(
+				"ReduceMax",
+				&[&masked],
+				vec![attr_ints("axes", &[2]), attr_int("keepdims", 0)],
+				&format!("{p}.max"),
+			));
+			width += out;
+		}
+		let refs: Vec<&str> = features.iter().map(String::as_str).collect();
+		let joined = self
+			.g
+			.op("Concat", &refs, vec![attr_int("axis", -1)], "char_cnn.features");
+		let projected = self.gemm(&joined, "char_cnn.proj", self.hidden, width, None)?;
+		let hidden = self.g.ints(&[self.hidden as i64]);
+		let shape = self.g.op(
+			"Concat",
+			&[batch_seq, &hidden],
+			vec![attr_int("axis", 0)],
+			"char_cnn.shape",
+		);
+		Ok(self.g.op("Reshape", &[&projected, &shape], vec![], "char_embedding"))
+	}
+}
+
 /// Builds the ONNX model for a checkpoint already read.
-pub fn build_model(config: &ModelConfig, state: &StateDict) -> Result<ModelProto> {
-	let iface = interface(config, state)?;
+pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<ModelProto> {
+	let iface = interface(config, state, options)?;
 	let e = config.hidden_size;
 	if config.num_attention_heads == 0 || !e.is_multiple_of(config.num_attention_heads) {
 		return Err(fail!(
@@ -367,8 +526,18 @@ pub fn build_model(config: &ModelConfig, state: &StateDict) -> Result<ModelProto
 	let batch = || Dim::Param("batch".into());
 	let sequence = || Dim::Param("sequence".into());
 
+	// The char path reads no token ids: an `input_ids` input would bind the runtime to a vocabulary the model lacks.
+	let units = match &iface.char {
+		Some(front) => value_info(
+			"char_ids",
+			DataType::Int64,
+			&[batch(), sequence(), Dim::Fixed(front.window as i64)],
+		),
+		None => value_info("input_ids", DataType::Int64, &[batch(), sequence()]),
+	};
+	let units_name = units.name.clone().unwrap_or_default();
 	let mut inputs = vec![
-		value_info("input_ids", DataType::Int64, &[batch(), sequence()]),
+		units,
 		value_info("attention_mask", DataType::Int64, &[batch(), sequence()]),
 	];
 	for channel in &iface.channels {
@@ -391,37 +560,55 @@ pub fn build_model(config: &ModelConfig, state: &StateDict) -> Result<ModelProto
 		w.g.reserve(input.name.as_deref().unwrap_or_default());
 	}
 
-	// The token and position embeddings.
-	let token_table = w.param("token_embeddings.weight", &[config.vocab_size, e])?;
-	let tokens = w.g.op(
-		"Gather",
-		&[&token_table, "input_ids"],
-		vec![attr_int("axis", 0)],
-		"embedding",
-	);
+	// The token (or character-window) and position embeddings. The token path's node order is the one F2 measured.
+	let token_gather = |w: &mut Writer| -> Result<String> {
+		let token_table = w.param("token_embeddings.weight", &[config.vocab_size, e])?;
+		Ok(w.g.op(
+			"Gather",
+			&[&token_table, "input_ids"],
+			vec![attr_int("axis", 0)],
+			"embedding",
+		))
+	};
+	let mut tokens = match iface.char {
+		Some(_) => String::new(),
+		None => token_gather(&mut w)?,
+	};
 	let batch_dim = w.g.op(
 		"Shape",
-		&["input_ids"],
+		&[&units_name],
 		vec![attr_int("start", 0), attr_int("end", 1)],
 		"batch_dim",
 	);
 	let seq_dim = w.g.op(
 		"Shape",
-		&["input_ids"],
+		&[&units_name],
 		vec![attr_int("start", 1), attr_int("end", 2)],
 		"sequence_dim",
 	);
+	let mut batch_seq = String::new();
+	if let Some(front) = &iface.char {
+		batch_seq = w.g.op(
+			"Concat",
+			&[&batch_dim, &seq_dim],
+			vec![attr_int("axis", 0)],
+			"batch_sequence",
+		);
+		tokens = w.char_front(front, &batch_seq)?;
+	}
 	let seq_len = w.g.op("Squeeze", &[&seq_dim], vec![], "sequence_len");
 	let zero = w.g.scalar_i64(0);
 	let step = w.g.scalar_i64(1);
 	let positions = w.g.op("Range", &[&zero, &seq_len, &step], vec![], "positions");
 	let positions = w.unsqueeze(&positions, &[0], "positions.row");
-	let batch_seq = w.g.op(
-		"Concat",
-		&[&batch_dim, &seq_dim],
-		vec![attr_int("axis", 0)],
-		"batch_sequence",
-	);
+	if iface.char.is_none() {
+		batch_seq = w.g.op(
+			"Concat",
+			&[&batch_dim, &seq_dim],
+			vec![attr_int("axis", 0)],
+			"batch_sequence",
+		);
+	}
 	let positions = w.g.op("Expand", &[&positions, &batch_seq], vec![], "position_ids");
 	let position_table = w.param("position_embeddings.weight", &[config.max_position_embeddings, e])?;
 	let positions = w.g.op(
@@ -610,8 +797,8 @@ pub fn build_model(config: &ModelConfig, state: &StateDict) -> Result<ModelProto
 
 /// Reads `<checkpoint>/config.json` and the checkpoint's weights (`model.safetensors` or `pytorch_model.bin`) and
 /// builds the model.
-pub fn export_checkpoint(checkpoint: &Path) -> Result<ModelProto> {
+pub fn export_checkpoint(checkpoint: &Path, options: &ExportOptions) -> Result<ModelProto> {
 	let config = ModelConfig::read(&checkpoint.join("config.json"))?;
 	let state = read_checkpoint(checkpoint)?;
-	build_model(&config, &state)
+	build_model(&config, &state, options)
 }

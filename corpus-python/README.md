@@ -127,24 +127,29 @@ python -m mailwoman_train eval \
   --checkpoint /data/models/checkpoints/stage1-coarse/step-050000 \
   --golden-dir /path/to/data/eval/golden/v0.1.0
 
-# 3. Export the checkpoint to ONNX with dynamic axes + verify PyTorch ↔ ONNX parity.
-python -m mailwoman_train export \
-  --config src/mailwoman_train/configs/stage1-coarse.yaml \
+# 3. Export the checkpoint to ONNX (from the repository root). A char-path checkpoint also takes
+#    --char-window, the config's data.max_unit_width.
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- export-onnx \
   --checkpoint /data/models/checkpoints/stage1-coarse/step-050000 \
-  --output /data/models/onnx/model-v0.1.0-fp32.onnx \
-  --parity-samples 1000
+  --output /data/models/onnx/model-v0.1.0-fp32.onnx
 
-# 4. Int8-quantize the ONNX model.
-python -m mailwoman_train quantize \
+# 4. Check the graph against the model's own forward pass on recorded rows.
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-cli --bin trainer -- export-feeds \
+  --checkpoint /data/models/checkpoints/stage1-coarse/step-050000 --record <record.safetensors> --out feeds.json
+node packages/neural/tools/onnx-model-check.run.ts --model /data/models/onnx/model-v0.1.0-fp32.onnx --feeds feeds.json
+
+# 5. Int8-quantize the ONNX model, then split its embedding table for the browser release set.
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- quantize \
   --input /data/models/onnx/model-v0.1.0-fp32.onnx \
   --output /data/models/quantized/model-v0.1.0-int8.onnx
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- split-embeddings \
+  --input /data/models/quantized/model-v0.1.0-int8.onnx --out-dir /data/models/split/v0.1.0 --counts <counts.npy>
 
-# 5. Assemble the neural-weights-{en-us,fr-fr} package directories.
-python -m mailwoman_train package \
-  --config src/mailwoman_train/configs/stage1-coarse.yaml \
+# 6. Assemble the neural-weights-{en-us,fr-fr} package directories.
+node packages/mailwoman/tools/release-tools/package-weights.run.ts \
   --checkpoint /data/models/checkpoints/stage1-coarse/step-050000 \
   --int8-model /data/models/quantized/model-v0.1.0-int8.onnx \
-  --golden-dir /path/to/data/eval/golden/v0.1.0 \
+  --tokenizer <tokenizer.model> --eval-report <report.json> \
   --steps 50000 --hardware "1× A100 / 80GB" \
   --corpus-version 0.1.0 --tokenizer-version 0.1.0
 ```

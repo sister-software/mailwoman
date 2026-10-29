@@ -31,6 +31,15 @@ fn unit() -> f32 {
 	1.0
 }
 
+fn sixty_four() -> usize {
+	64
+}
+
+/// `CharCNNEmbedding`'s default `kernel_sizes`.
+fn char_kernel_sizes() -> Vec<usize> {
+	vec![3, 4, 5]
+}
+
 /// The fields of `config.json` the export reads.
 #[derive(Clone, Debug, Deserialize)]
 pub struct ModelConfig {
@@ -80,6 +89,12 @@ pub struct ModelConfig {
 	pub use_span_scorer: bool,
 	#[serde(default)]
 	pub use_char_embed: bool,
+	#[serde(default)]
+	pub char_vocab_size: usize,
+	#[serde(default = "sixty_four")]
+	pub char_embed_dim: usize,
+	#[serde(default = "char_kernel_sizes")]
+	pub char_kernel_sizes: Vec<usize>,
 	#[serde(default)]
 	pub use_address_system_head: bool,
 	#[serde(default)]

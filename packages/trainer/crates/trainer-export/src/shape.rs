@@ -141,7 +141,42 @@ impl<'a> Inference<'a> {
 				};
 				single(Some(Info { elem, dims }))
 			}
-			"Erf" | "Softmax" | "LayerNormalization" | "Clip" => single(same(None)),
+			"Erf" | "Softmax" | "LayerNormalization" | "Clip" | "Relu" => single(same(None)),
+			"Conv" => {
+				// onnx's `convPoolShapeInference` for a 1-D convolution with explicit pads, unit strides and dilations.
+				let (Some(x), Some(w)) = (input(0), input(1)) else {
+					return vec![None];
+				};
+				if x.dims.len() != 3 || w.dims.len() != 3 {
+					return vec![None];
+				}
+				let pads = attr_ints(node, "pads").unwrap_or_else(|| vec![0, 0]);
+				let length = match (&x.dims[2], &w.dims[2]) {
+					(D::Value(n), D::Value(k)) => D::Value(n + pads[0] + pads[1] - k + 1),
+					_ => D::Unknown,
+				};
+				single(Some(Info {
+					elem: x.elem,
+					dims: vec![x.dims[0].clone(), w.dims[0].clone(), length],
+				}))
+			}
+			"ReduceMax" => single(input(0).and_then(|x| {
+				// Opset 17's `ReduceMax` takes its axes as an attribute.
+				let rank = x.dims.len();
+				let axes: Vec<usize> = attr_ints(node, "axes")?.iter().map(|a| normalize(*a, rank)).collect();
+				let keep = attr_i(node, "keepdims").unwrap_or(1) == 1;
+				let dims = x
+					.dims
+					.iter()
+					.enumerate()
+					.filter_map(|(i, d)| match (axes.contains(&i), keep) {
+						(true, true) => Some(D::Value(1)),
+						(true, false) => None,
+						_ => Some(d.clone()),
+					})
+					.collect();
+				Some(Info { elem: x.elem, dims })
+			})),
 			"Cast" => single(same(attr_i(node, "to").map(|v| v as i32))),
 			"DequantizeLinear" => single(input(0).zip(input(1)).map(|(x, s)| Info {
 				elem: s.elem,
