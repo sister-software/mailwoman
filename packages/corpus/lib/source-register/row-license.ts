@@ -131,6 +131,23 @@ export function createRowLicenses(
 	}
 }
 
+/**
+ * `rows` with each `license` set to its source's license id, appended as the last key.
+ *
+ * A builder writing its own schema calls it before a row reaches a file.
+ *
+ * @throws When a row's source has no license id, naming `context`.
+ */
+export async function stampRowLicenses<T extends { source: string }>(
+	rows: Iterable<T>,
+	context: string,
+	licenses?: RowLicenses
+): Promise<Array<T & { license: string }>> {
+	const lookup = licenses ?? (await committedRowLicenses())
+
+	return Array.from(rows, (row) => ({ ...row, license: lookup.require(row.source, context) }))
+}
+
 let committed: Promise<RowLicenses> | null = null
 
 /**

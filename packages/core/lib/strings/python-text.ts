@@ -29,3 +29,45 @@ const PYTHON_DIGITS = new RegExp(`^[\\p{Nd}${NON_DECIMAL_DIGITS}]+$`, "u")
 export function pythonIsDigit(value: string): boolean {
 	return PYTHON_DIGITS.test(value)
 }
+
+/**
+ * The characters Python's `str.isspace` admits, as a character class body.
+ *
+ * They are the characters of bidirectional class WS, B or S and of general category Zs.
+ * `str.split()` and `str.strip()` split and strip on exactly these.
+ */
+const PYTHON_SPACE = "\\t\\n\\v\\f\\r\\x1c-\\x20\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000"
+const ONE_SPACE = new RegExp(`^[${PYTHON_SPACE}]$`)
+const SPACE_RUN = new RegExp(`[${PYTHON_SPACE}]+`)
+const LEADING_SPACE = new RegExp(`^[${PYTHON_SPACE}]+`)
+const TRAILING_SPACE = new RegExp(`[${PYTHON_SPACE}]+$`)
+
+/**
+ * Python `str.isspace()` for one character.
+ */
+export function pythonIsSpace(character: string): boolean {
+	return ONE_SPACE.test(character)
+}
+
+/**
+ * Python `str.rstrip()`.
+ */
+export function pythonRightStrip(text: string): string {
+	return text.replace(TRAILING_SPACE, "")
+}
+
+/**
+ * Python `str.strip()`.
+ */
+export function pythonStrip(text: string): string {
+	return pythonRightStrip(text).replace(LEADING_SPACE, "")
+}
+
+/**
+ * Python `str.split()` with no separator: the runs between whitespace, with no empty entry.
+ */
+export function pythonSplitWhitespace(text: string): string[] {
+	const stripped = pythonStrip(text)
+
+	return stripped ? stripped.split(SPACE_RUN) : []
+}

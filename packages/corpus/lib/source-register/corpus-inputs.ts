@@ -17,6 +17,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	LicenseReviewState,
@@ -25,7 +26,8 @@ import {
 	type LicenseDecision,
 } from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import type { PathBuilderLike } from "path-ts"
+import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
 import { SourceOperation, type AddressSourceRegister } from "#source-register/types"
@@ -528,6 +530,26 @@ export function createSourceRightsAdmission(
 			}
 		},
 	}
+}
+
+/**
+ * The file name of the record a corpus builder writes beside its output.
+ */
+export const SOURCE_RIGHTS_FILE_NAME = "SOURCE_RIGHTS.json"
+
+/**
+ * Writes `record` beside an output as {@linkcode SOURCE_RIGHTS_FILE_NAME},
+ * two-space indented with a trailing newline, the bytes the Python builders'
+ * `write_rights_record` wrote for a record with no gaps.
+ *
+ * @returns The path written.
+ */
+export async function writeSourceRightsRecord(record: SourceRightsRecord, outDir: PathBuilderLike): Promise<string> {
+	const path = resolvePath(outDir, SOURCE_RIGHTS_FILE_NAME)
+
+	await writeLocalTextFile(pythonJSONDumps(record, { indent: 2, ensureASCII: false }) + "\n", path)
+
+	return path
 }
 
 /**

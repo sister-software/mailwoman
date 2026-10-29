@@ -17,13 +17,14 @@ import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { pythonStrip } from "@mailwoman/core/strings/python-text"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { runMTFTokenizer } from "./binary.ts"
 import { editModel, loadEncoder, PieceType, readModelPieces, type VocabularyPiece } from "./model.ts"
 import { trainSentencePiece } from "./sentencepiece.ts"
-import { pythonSplitLines, pythonStrip } from "./symbols.ts"
+import { pythonSplitLines } from "./symbols.ts"
 
 /**
  * The corpus sample size and the seed of its shuffle.

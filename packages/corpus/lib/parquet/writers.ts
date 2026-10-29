@@ -46,7 +46,7 @@ import {
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
-import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
+import { Field, Int32, Int64, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
@@ -145,6 +145,88 @@ function parquetTable(rows: readonly ParquetRow[]) {
 }
 
 /**
+ * Writes an Arrow table as one SNAPPY parquet file with a row group every {@linkcode ROW_GROUP_SIZE} rows.
+ */
+async function writeArrowParquet(arrow: ArrowTable, path: PathBuilderLike): Promise<void> {
+	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
+
+	const properties = new WriterPropertiesBuilder()
+		.setCompression(Compression.SNAPPY)
+		.setCreatedBy("mailwoman")
+		.setMaxRowGroupSize(ROW_GROUP_SIZE)
+		.build()
+
+	// parquet-wasm serializes key-value metadata through a hash map.
+	// Its order can change between writes.
+	// File identity and provenance live in manifest.json, so omitting file
+	// metadata preserves deterministic bytes.
+	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+}
+
+/**
+ * The logical type of one column {@linkcode writeColumnParquetFile} writes.
+ */
+export const ParquetColumnKind = {
+	String: "string",
+	StringList: "string[]",
+	Int32List: "int32[]",
+	Int64List: "int64[]",
+} as const
+
+export type ParquetColumnKind = (typeof ParquetColumnKind)[keyof typeof ParquetColumnKind]
+
+/**
+ * A file's columns in file order, each with its logical type.
+ */
+export type ParquetColumns = ReadonlyArray<readonly [name: string, kind: ParquetColumnKind]>
+
+const int64ListType = new List(new Field("item", new Int64(), true))
+
+function columnVector(values: unknown[], kind: ParquetColumnKind) {
+	switch (kind) {
+		case ParquetColumnKind.String:
+			return vectorFromArray(values as Array<string | null>, new Utf8())
+		case ParquetColumnKind.StringList:
+			return vectorFromArray(values as Array<string[] | null>, stringListType)
+		case ParquetColumnKind.Int32List:
+			return vectorFromArray(values as Array<number[] | null>, int32ListType)
+		case ParquetColumnKind.Int64List:
+			return vectorFromArray(
+				values.map((list) => (list == null ? null : (list as number[]).map((value) => BigInt(value)))),
+				int64ListType
+			)
+	}
+}
+
+/**
+ * Writes rows held in memory as one parquet file with exactly `columns`, in their order.
+ *
+ * It is the writer for an output whose schema is fixed by an earlier writer
+ * rather than by {@linkcode LABELED_ROW_SCHEMA}, such as a CJK corpus.
+ * A row missing a column writes `null` there.
+ *
+ * It stamps no license and writes no record.
+ * The caller stamps each row first.
+ */
+export async function writeColumnParquetFile(
+	rows: ReadonlyArray<Readonly<Record<string, unknown>>>,
+	columns: ParquetColumns,
+	path: PathBuilderLike
+): Promise<void> {
+	const vectors = Object.fromEntries(
+		columns.map(([name, kind]) => [
+			name,
+			columnVector(
+				rows.map((row) => row[name] ?? null),
+				kind
+			),
+		])
+	)
+
+	await writeArrowParquet(new ArrowTable(vectors), path)
+}
+
+/**
  * Replace a row's `license` with its source's register license id, counting the statement it replaced.
  *
  * Every parquet writer calls it before a row reaches a file, so the column holds an SPDX
@@ -209,20 +291,7 @@ export async function writeParquetFile(
 
 	addToTally(tally, rows[0]!.source, rows[0]!.license, rows.length)
 
-	const arrow = parquetTable(rows)
-	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
-
-	const properties = new WriterPropertiesBuilder()
-		.setCompression(Compression.SNAPPY)
-		.setCreatedBy("mailwoman")
-		.setMaxRowGroupSize(ROW_GROUP_SIZE)
-		.build()
-
-	// parquet-wasm serializes key-value metadata through a hash map.
-	// Its order can change between writes.
-	// File identity and provenance live in manifest.json, so omitting file
-	// metadata preserves deterministic bytes.
-	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+	await writeArrowParquet(parquetTable(rows), path)
 
 	return writeParquetRecord({
 		path,

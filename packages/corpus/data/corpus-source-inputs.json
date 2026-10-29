@@ -4677,7 +4677,7 @@
 		"synthetic-secondary": {
 			"inputs": [],
 			"authored": [
-				"designator lists and thirteen base addresses in corpus-python/src/mailwoman_train/corpora/secondary.py",
+				"designator lists and thirteen base addresses in packages/corpus/lib/recipes/secondary.ts",
 				"@mailwoman/codex tables that follow USPS Publication 28 appendix C2"
 			]
 		},

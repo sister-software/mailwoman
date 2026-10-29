@@ -6,13 +6,13 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { pythonStrip } from "@mailwoman/core/strings/python-text"
 import { describe, expect, it } from "vitest"
 
 import {
 	dedupeKeepOrder,
 	DEFAULT_USER_DEFINED_SYMBOLS,
 	pythonSplitLines,
-	pythonStrip,
 	readUserDefinedSymbolsFile,
 	sentencePieceSymbol,
 } from "./symbols.ts"

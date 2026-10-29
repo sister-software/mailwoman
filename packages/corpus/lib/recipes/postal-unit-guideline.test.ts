@@ -1,13 +1,12 @@
 import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal-guideline"
 import { US_UNIT_DESIGNATOR_VARIANTS, US_UNIT_GUIDELINE_RULES } from "@mailwoman/codex/us"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { GB_SUB_BUILDING_GUIDELINE_LEG } from "#gb/recipes/sub-building-guideline"
 import { generatePostalGuidelineRows, partitionPlaces } from "#recipes/postal-guideline"
 import type { PostalGuidelinePlace } from "#recipes/postal-guideline/leg"
 import { POSTAL_UNIT_GUIDELINE_LEGS } from "#recipes/postal-unit-guideline"
+import { SECONDARY_DESIGNATOR_FORMS } from "#recipes/secondary"
 import { defaultRecipeSource } from "#recipes/sources"
 import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 import { PROPOSED_DESIGNATORS, SHIPPED_DESIGNATOR_SEED } from "#subvenue/table"
@@ -89,35 +88,6 @@ const headWord = (form: string) =>
 	form.normalize("NFD").replaceAll(/\p{M}/gu, "").toLowerCase().replaceAll(".", "").split(/\s+/u)[0]!
 
 /**
- * The string tuples `synthetic-secondary` draws its designators from, read from the Python builder.
- */
-async function readSyntheticSecondaryDesignators(): Promise<string[]> {
-	const source = await readLocalTextFile(
-		repoRootPath("corpus-python", "src", "mailwoman_train", "corpora", "secondary.py")
-	)
-
-	const names = [
-		"US_UNIT_DESIGNATORS",
-		"US_LEVEL_DESIGNATORS",
-		"US_BUILDING_DESIGNATORS",
-		"EU_ENTRANCES",
-		"EU_STAIRCASES",
-	]
-
-	const forms: string[] = []
-
-	for (const name of names) {
-		const line = new RegExp(`^${name}:.*$`, "mu").exec(source)?.[0]
-
-		if (!line) throw new Error(`secondary.py no longer defines ${name}; update this test's reader.`)
-
-		forms.push(...[...line.matchAll(/"([^"]+)"/gu)].map((match) => match[1]!))
-	}
-
-	return forms
-}
-
-/**
  * Every unit, level, building, entrance and sub-venue designator a training
  * recipe draws: `spliced-unit`'s Pub 28 C2 table, `synthetic-secondary`'s lists,
  * and `spliced-sub-venue`'s designators and curated phrases.
@@ -127,7 +97,7 @@ let trainingHeads: Set<string>
 beforeAll(async () => {
 	const forms = [
 		...Object.entries(US_UNIT_DESIGNATOR_VARIANTS).flatMap(([canonical, variants]) => [canonical, ...variants]),
-		...(await readSyntheticSecondaryDesignators()),
+		...SECONDARY_DESIGNATOR_FORMS,
 		...SHIPPED_DESIGNATOR_SEED.map((designator) => designator.id),
 		...PROPOSED_DESIGNATORS.map((designator) => designator.id),
 		...SUBVENUE_PROMOTIONS.map((promotion) => promotion.phrase),

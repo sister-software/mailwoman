@@ -12,6 +12,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pythonRightStrip, pythonStrip } from "@mailwoman/core/strings/python-text"
 
 /**
  * The default symbols: US state and territory codes, country abbreviations
@@ -100,27 +101,6 @@ const PYTHON_LINE_BREAK_CHARACTERS = "\\n\\r\\v\\f\\x1c-\\x1e\\x85\\u2028\\u2029
  * The line breaks Python's `str.splitlines` splits on.
  */
 export const PYTHON_LINE_BREAK = new RegExp(`\\r\\n|[${PYTHON_LINE_BREAK_CHARACTERS}]`)
-
-/**
- * The characters Python's `str.isspace` admits, which `str.strip()` removes.
- */
-const PYTHON_SPACE = "\\t\\n\\v\\f\\r\\x1c-\\x20\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000"
-const LEADING_SPACE = new RegExp(`^[${PYTHON_SPACE}]+`)
-const TRAILING_SPACE = new RegExp(`[${PYTHON_SPACE}]+$`)
-
-/**
- * Python's `str.rstrip()`.
- */
-export function pythonRightStrip(text: string): string {
-	return text.replace(TRAILING_SPACE, "")
-}
-
-/**
- * Python's `str.strip()`.
- */
-export function pythonStrip(text: string): string {
-	return pythonRightStrip(text).replace(LEADING_SPACE, "")
-}
 
 /**
  * Python's `str.splitlines()`: the text split at each line break, with no empty entry after a final break.
