@@ -560,6 +560,47 @@ kept: `exposure/report.py` and `exposure/phenomena.py`, for the trainer's in-loo
 Not ported yet: `exposure/grade.py` and `evaluation/` with the JP probe board (each runs a PyTorch checkpoint, so they
 move with the trainer or onto exported ONNX models).
 
+#### Phase 2.1 and 2.2 status, 2026-10-29
+
+**Observed**, lab host, branch `feat/2874-corpus-builders`. `packages/corpus/lib/training/pyrandom.ts` reproduces all
+136 cases of `cpython-random.json`, so the builders draw CPython's stream. Each Python reference was captured before
+its module was deleted. Parquet files are compared by schema and by ordered logical rows; other outputs by bytes. The
+capped real-data runs read `$MAILWOMAN_DATA_ROOT` with the flags each row names.
+
+| Python module                                           | TypeScript port                                                                     | Result                                                                                                                                   |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `corpora/secondary.py`                                  | `lib/recipes/secondary.ts`, `lib/tools/secondary.run.ts`                            | 9,600 of 9,600 rows equal; `SOURCE_RIGHTS.json` byte-equal; both refuse at the license stamp, see below                                  |
+| `corpora/house_venue_tuples.py` and its samplers        | `lib/recipes/house-venue-tuples.ts`, `lib/{fr,us,gb}/recipes/house-venue-tuples.ts` | byte-equal at 1,000 tuples and at 62,290 with `--carry gb`, with the reserved list resolved, see below                                   |
+| `corpora/registry.py`, `countries/{jp,tw}/registers.py` | `lib/cjk/registry.ts`, `lib/{jp,tw}/registers.ts`                                   | TW (25,006 aligned) and JP (176,544 aligned) parts, board, vocabulary and rights record equal; report equal but for `per_tag_rows` order |
+| `countries/jp/corpora/`, `countries/jp/{kana,text}.py`  | `lib/jp/corpus/`, `lib/jp/{kana,text}.ts`                                           | `jp-build-reference.json` reproduced; 4 row groups, 20,500 rows plus 1,000 board rows equal with the kana register on                    |
+| `countries/tw/corpora/`                                 | `lib/tw/corpus/`                                                                    | `tw-build-reference.json` reproduced; 4 row groups, 20,500 rows, board and centroids equal                                               |
+
+Classified differences (**decided**):
+
+- `coverage_stats` counts `per_tag_rows` from a Python `set`, so its tie order follows `PYTHONHASHSEED`: two Python runs
+  of one TW registry build (hash seeds 0 and 7) wrote two orders. The port writes first-appearance order. Every count is
+  equal, as with `label_support`.
+- `synthetic-secondary` maps only to authored inputs, so it has no license id, and both builders refuse its rows at the
+  stamp on `main`. The port keeps the refusal.
+- The Python FR tuple sampler named the board's reserved surfaces by a working-directory path that resolves from no
+  directory of the checkout, so the reserved set was empty: `house-venue-tuples-v6.jsonl` holds 275 FR tuples on 132 reserved
+  streets. The port reads the list from the repository and refuses when it is missing. Python as committed keeps 10 more
+  FR tuples out of 2,000; the US and GB tuples are unchanged, because the filter runs after the draws.
+- An empty US situs directory and a missing FR, GB or situs-table input now throw an error naming the path. Python
+  answered no US tuples for an empty directory.
+- `pythonCapitalize` reads CPython's title case through a frozen table of the 135 characters whose title case differs
+  from upper case. Over every code point, 55 of 1,112,064 inputs still differ, each a character Node's newer Unicode
+  version gave a case mapping.
+- `pick_kana_stem` sorted a `set` of readings by length, so between two shortest readings of equal length Python's choice
+  followed `PYTHONHASHSEED`. The port keeps the first in the database's row order.
+- KEN_ALL is read through Node's `shift_jis` decoder, which decodes all 9,792 two-byte sequences CPython's cp932 decodes
+  the same way. `decodeCP932` maps the eight single bytes where the two differ.
+
+Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `countries/{fr,gb,us}/`,
+`countries/{jp,tw}/registers.py`, `countries/jp/corpora/`, `countries/jp/{kana,text}.py`, `countries/tw/corpora/`, and
+their tests. Japan and Taiwan move to `SOURCE_ONLY`; their directories keep `staging.py`, and Japan's
+`probe_corpora.py`.
+
 ### Phase 3 — The Rust sampler and character path
 
 Caller checklist: `data/loader/*` ← `train/loop.py`, `train/validation.py`, `train/pretrain.py`, `audits/*`,
