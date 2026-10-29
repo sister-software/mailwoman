@@ -23,13 +23,14 @@
  */
 
 import { gitHead } from "@mailwoman/core/git"
+import { countInto } from "@mailwoman/core/stats"
 import type { PythonText } from "@mailwoman/mtf/tools/sampler/native"
 import { IGNORE_INDEX } from "@mailwoman/neural/labels"
 import type { LabelSetContract } from "@mailwoman/neural/semantic-tags"
 import type { AddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 import { JSONSpliterator } from "spliterator"
 
-import { countInto, sortedByKey } from "../audits/receipt.ts"
+import { sortedByKey } from "../audits/receipt.ts"
 import {
 	isRelational,
 	LocateError,

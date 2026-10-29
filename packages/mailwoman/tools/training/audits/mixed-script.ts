@@ -14,12 +14,13 @@
  *   `mtf-node` addon, because Node has no character-name table.
  */
 
+import { countInto } from "@mailwoman/core/stats"
 import { asPythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode, PythonText, SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
 import { openRawRows } from "../sampler.ts"
-import { countInto, sortedByKey } from "./receipt.ts"
+import { sortedByKey } from "./receipt.ts"
 
 /**
  * Whether a UTF-16 offset of `text` falls between two characters.
