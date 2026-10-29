@@ -1,0 +1,80 @@
+# Label convention
+
+This page states how an address's components are labeled where the written form leaves a choice. Every rule gives
+the reading a person writing the address means, so a model is scored against the address and not against the
+adapter that produced the row. An adapter that labels a form differently is wrong under this page. Correct the adapter
+before you count a model's disagreement with it as a model error.
+
+The rules use the tags of [`SCHEMA.mdx`](./SCHEMA.mdx). A field here is all spans of one tag joined in text
+order, with `street_prefix`, `street` and `street_suffix` joined into one street, as the comparison battery scores
+them (`packages/mailwoman/tools/eval-harness/battery/classify.ts`).
+
+The hand-labeled disagreement rows in
+`packages/mailwoman/tools/eval-harness/fixtures/label-convention/disagreement-labels-v1.jsonl` apply these rules, and
+each row records the rule that decided it. `battery/hand-labels.ts` scores a battery report against them.
+
+## A city that shares its region's name
+
+`Hamburg`, `Sevilla`, `Fier`, `Tacna`, `Hong Kong`, `Singapore`.
+
+- A name written once, as the address's last place before any postcode or country, is the `locality`:
+  `Altona, Hamburg` is `dependent_locality=Altona`, `locality=Hamburg`. `Calle Sierpes 12, 41004 Sevilla` is
+  `locality=Sevilla`.
+- The same name written a second time after the locality is the `region`:
+  `Calle Sierpes 12, 41004 Sevilla, Sevilla` adds `region=Sevilla`.
+- A name written after a different locality is the `region`, or the `country` for a territory that is one:
+  `16B Man Tai Street, Hung Hom, Kowloon, Hong Kong` is `locality=Kowloon`, `region=Hong Kong`. A city-state written
+  once is its own `locality`: `Guardian, 1, Fusionopolis Way, Singapore`.
+
+Who's On First stores Hamburg and Sevilla as regions with a locality of the same name. The address writes the name
+once, and the reader means the city.
+
+## `LOT 38`
+
+- After a house number, `LOT <n>` is a sub-premise, the `unit`: `439 MORROW RD LOT 142` is `house_number=439`,
+  `street=MORROW RD`, `unit=LOT 142`. US mobile-home and trailer parks write this.
+- In place of a house number, `LOT <n>` is the `house_number`, designator included: `LOT 38 Smith Road` is
+  `house_number=LOT 38`. Australian and New Zealand rural parcels write this, and so do the Philippine block-and-lot
+  forms (`Blk 12 Lot 16 Sec 18`).
+
+## `# 200`
+
+The number sign is a unit designator, with or without a space, as the only designator or after another one.
+
+- `300 N WASHINGTON ST # 710` is `street=N WASHINGTON ST`, `unit=# 710`.
+- `2331 MILL ROAD SUITE # 100` is `unit=SUITE # 100`, and `STE 111 # 216` is one `unit`.
+- Before the street with no other number, `# 6` is the `house_number`: `# 6 EUREKA CIRCLE`.
+- A number sign inside a business name stays in the venue: `John Chea & Sons Food Store #1`, `THE BOSTICK #1`.
+
+## `P O BOX`
+
+A post office box is a `po_box`, whatever its spacing or punctuation: `PO BOX 190`, `P O BOX 190`, `P.O. Box 190` and
+`Post Office Box 190` are each `po_box`, the number included. It is never a `street`. A street and a box in one
+address are labeled separately.
+
+## A unit inside a venue name
+
+A unit designator followed by its number, written after the occupant's name, is the `unit`:
+`Dr. Carlos Días López Suite 102, 1449 Calle Américo Salas` is `venue=Dr. Carlos Días López`, `unit=Suite 102`.
+A doubled designator stays in the unit (`Suite Suite 203`).
+
+The occupant's own name keeps any number written in it (`Мактаби №25`, School No. 25). A name repeated after the street
+is the venue again, and a facility name in the second address line is the venue (`610 East 24TH Street MEDICAL
+CLINIC` is `venue=MEDICAL CLINIC`).
+
+## A bare place between the number and the city
+
+A name with no thoroughfare word, written between the house number and the locality, is decided by its words:
+
+- A thoroughfare word makes it the `street`: `Sheshi Skënderbej` (square), `Calle`, `Rruga`, `улица`, `Street`.
+- A settlement word makes it the `dependent_locality`: `Idogan Village`, `Richmond Estate`, `Purok 1`, Thailand's
+  `Moo 5` (village number), `commune`, `barrio`, `colonia`.
+- With neither, the source's own field decides: OSM `addr:place` or `addr:suburb` is the `dependent_locality`, and
+  `addr:street` is the `street`. Senegal's `457, Parcelles Assainies, commune de parcelles assainies` is
+  `dependent_locality=Parcelles Assainies`, because OSM tags the commune as a place.
+
+## Values that are no component
+
+A telephone number written where the house number goes is no component (`Sadik munshi, 037634557 Mohammed Bin
+Khalifa St.`). A value in the house-number field that has the country's postcode form and stands before a place
+name is the `postcode` (`SWEDISH CHURCH BRANCH, 35091 SHIWINGA`).
