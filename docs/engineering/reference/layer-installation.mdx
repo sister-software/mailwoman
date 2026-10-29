@@ -96,8 +96,11 @@ together. The installed artifacts of a bundle that failed are recorded and stay 
 next pull verifies and selects them without transferring them again. A repeated pull verifies each
 installed copy by its SHA-256 and transfers no bytes.
 
-The `candidate` and `us` bundles install through the selection. The `fr` and `poi` bundles keep
-writing their conventional paths, because their readers do not read the selection yet.
+All four published bundles, `candidate`, `us`, `fr` and `poi`, install through the selection. The BAN
+provider takes the selected address-point and street-centroid paths per country through
+`BANSelectedPaths`, and `resolveLayerDatabasePath` returns the selected POI database.
+`lib/geocode/selection-parity.integration.test.ts` reads the same BAN bytes from the conventional path
+and from the selection with eight queries and records an empty difference list.
 
 ## Replacement, concurrency and rollback
 
@@ -188,10 +191,13 @@ shared readers, on 2026-10-29.
 These still resolve their conventional paths only, and stay on them until each is migrated with a
 comparison on fixed artifact bytes:
 
-- the BAN provider (`packages/mailwoman/lib/geocode/ban-layers.ts`) and the national Overture provider
-  (`national-overture.ts`);
-- the OpenStreetMap extract provider (`osm-layers.ts`, `layer-paths.ts`);
-- the POI database and the overlay layers (soil, flood, coastal, zoning);
+- the national Overture provider (`packages/mailwoman/lib/geocode/national-overture.ts`), which serves
+  the same `address-points` role and country scope as BAN, so one selection entry would order the two
+  sources and that order needs its own evaluation;
+- the OpenStreetMap extract provider (`osm-layers.ts`, `layer-paths.ts`), whose regional files carry
+  several countries and no registry entry;
+- the overlay layers (soil, flood, coastal, zoning), which share the one `overlay` role;
+- the rail-station database beside the conventional `poi.db`;
 - the WOF extract set (`resolveWOFDatabasePaths`), the street-centroid databases and the FST with its
   pair index;
 - the Nominatim and Photon entry points and autocomplete, whose data paths have not yet been traced to
