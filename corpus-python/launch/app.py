@@ -229,6 +229,16 @@ def trainer_image(variant: str) -> modal.Image:
     )
     for relative in TRAINER_DATA_FILES:
         image = image.add_local_file(str(root / relative), remote_path=f"{TRAINER_REPO_ROOT}/{relative}", copy=True)
+    # A CUDA binary must list `libtorch_cuda.so` as NEEDED. Without it libtorch never loads its CUDA backend and the
+    # trainer picks the CPU on a GPU host (`trainer-cli/build.rs`).
+    linkage = (
+        [
+            "readelf -d /usr/local/bin/trainer | grep 'NEEDED'",
+            "readelf -d /usr/local/bin/trainer | grep -q 'libtorch_cuda\\.so'",
+        ]
+        if variant != "cpu"
+        else ["trainer device --device cpu"]
+    )
     return (
         image.run_commands(
             f"cd {TRAINER_REPO_ROOT}/packages/trainer && cargo build --release --locked -p trainer-cli",
@@ -240,6 +250,7 @@ def trainer_image(variant: str) -> modal.Image:
             # container lacks and Modal mounts into a GPU container at run time.
             "ldd /usr/local/bin/trainer | grep 'not found' || true",
             "! ldd /usr/local/bin/trainer | grep 'not found' | grep -v 'libcuda\\.so\\.1'",
+            *linkage,
             # The image's size, in the build log.
             "du -sxm / /opt/libtorch 2>/dev/null",
         )

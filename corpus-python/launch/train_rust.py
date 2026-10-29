@@ -212,7 +212,11 @@ def _run_trainer(
 
     marker = run_base / f"fault-injected-{call_id}"
     inject = fail_at_step > 0 and not marker.exists()
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    # The trainer refuses on its own when the device it gets is not this one, before it opens the corpus.
+    environment = {**os.environ, "MAILWOMAN_EXPECT_DEVICE": expect_device.lower()}
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, env=environment
+    )
     assert process.stdout is not None
     try:
         for line in process.stdout:

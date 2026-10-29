@@ -1156,6 +1156,16 @@ node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cw
 3. The lock is advisory. Two launches inside the seconds between one's check and its volume commit can both pass.
 4. The image is rebuilt whenever a file under `packages/trainer` or `packages/mtf` changes, and every `modal run` of
    the app hydrates both trainer images, as it does `training_image`.
+5. **The first CUDA run trained on the CPU's device and was stopped.** Stage 8's probe `fc-01M64TG3JV4C2HKPEZC9QYY38Y`
+   on an A100-40GB logged `device=Cpu`, and the wrapper's device check raised. Cause (observed): `readelf -d` on the
+   image's binary listed `libtorch_cpu.so` and `libc10.so` as NEEDED and not `libtorch_cuda.so`. `torch-sys` 0.26.0
+   passes `-ltorch_cuda`, but the binary calls no symbol from it, so `--as-needed` drops it. libtorch then never
+   registers its CUDA backend, and `Device::cuda_if_available()` returns the CPU. `trainer-cli/build.rs` now links
+   `libtorch_cuda.so` between `-Wl,--no-as-needed` and `-Wl,--as-needed` when `$LIBTORCH/lib` holds it, and the CUDA
+   image refuses a binary whose NEEDED entries lack it. The rebuilt binary lists it (observed). `trainer train` and
+   the new `trainer device` refuse a run whose device differs from `--device` or `MAILWOMAN_EXPECT_DEVICE`, which the
+   wrapper sets, before the corpus is opened. The GPU check of the rebuilt image did not run: the launch's preflight
+   finished, and the next Modal call answered `ConflictError: workspace ac-ZmHIahtLYncX6SaC7TBVKZ is disabled`.
 
 **Cost.** `modal billing report --for today --show-resources`: $0.3275 for the 13 apps this work created (CPU
 $0.232, memory $0.095, network egress $0.0009, and without a GPU line). The six image-build apps cost $0.144 and the seven F4

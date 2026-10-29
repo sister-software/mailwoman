@@ -11,7 +11,8 @@ use trainer_loop::config::{DataFiles, RunConfig};
 use trainer_loop::supervised::TrainOptions;
 
 const USAGE: &str = "usage:
-  trainer train <resolved.json> [--set section.key=value]... [--resume <dir>|auto] [--threads N]
+  trainer train <resolved.json> [--set section.key=value]... [--resume <dir>|auto] [--threads N] [--device cpu|cuda]
+  trainer device [--device cpu|cuda]
   trainer convert-checkpoint <python-checkpoint-dir> [--out <dir>]
   trainer compare-checkpoints <dir-a> <dir-b> [--report <json>]
   trainer export-feeds --checkpoint <dir> --record <record.safetensors> --out <feeds.json> [--rows N]
@@ -49,11 +50,59 @@ fn report(results: &[StageResult], args: &[String]) -> Result<bool, String> {
 	Ok(results.iter().all(|r| r.pass() && r.notes.is_empty()))
 }
 
+/// The device a run must train on: `--device`, else `MAILWOMAN_EXPECT_DEVICE`, else whichever the trainer picks.
+fn expected_device(args: &[String]) -> Option<String> {
+	option(args, "--device")
+		.map(str::to_owned)
+		.or_else(|| std::env::var("MAILWOMAN_EXPECT_DEVICE").ok())
+		.filter(|v| !v.is_empty())
+		.map(|v| v.to_ascii_lowercase())
+}
+
+/// What libtorch reports about CUDA, for the refusal and for `trainer device`.
+fn cuda_report() -> String {
+	format!(
+		"has_cuda={} has_cudart={} cuda_available={} device_count={}",
+		tch::utils::has_cuda(),
+		tch::utils::has_cudart(),
+		tch::Cuda::is_available(),
+		tch::Cuda::device_count()
+	)
+}
+
+/// Refuse a run whose chosen device is not the expected one, before the corpus is opened. The trainer takes the first
+/// CUDA device when libtorch has one, so a CUDA backend that failed to load would otherwise train on the CPU.
+fn check_device(args: &[String]) -> Result<(), String> {
+	let chosen = trainer_loop::supervised::device();
+	let Some(expected) = expected_device(args) else {
+		return Ok(());
+	};
+	let matches = match expected.as_str() {
+		"cuda" => chosen.is_cuda(),
+		"cpu" => !chosen.is_cuda(),
+		other => return Err(format!("unknown device {other:?} (expected cpu or cuda)")),
+	};
+	if matches {
+		Ok(())
+	} else {
+		Err(format!(
+			"the run expects device {expected}, but libtorch gives {chosen:?} ({})",
+			cuda_report()
+		))
+	}
+}
+
 fn run(args: &[String]) -> Result<bool, String> {
 	set_threads(args);
 	let err = |e: trainer_loop::Error| e.to_string();
 	match args.first().map(String::as_str) {
+		Some("device") => {
+			println!("device={:?} {}", trainer_loop::supervised::device(), cuda_report());
+			check_device(args)?;
+			Ok(true)
+		}
 		Some("train") => {
+			check_device(args)?;
 			let path = PathBuf::from(args.get(1).ok_or(USAGE)?);
 			let mut run = RunConfig::read(&path).map_err(err)?;
 			for s in options(args, "--set") {

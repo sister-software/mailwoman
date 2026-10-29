@@ -201,8 +201,11 @@ node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cw
 - Every attempt verifies the preflight receipt in the training image (`verify_launch`). It then takes the run's lock,
   `LAUNCH_LOCK.json` beside the checkpoint directory, and runs `trainer train <resolved.json> --resume auto`. A second
   launch onto a run whose lock holder is still running is refused, and so is a `--fresh` preflight. The attempt
-  commits the volume after every checkpoint. It refuses a run whose trainer chose a device other than the function's,
-  so a CUDA failure cannot train on the CPU.
+  commits the volume after every checkpoint. It sets `MAILWOMAN_EXPECT_DEVICE` to the function's device, so
+  `trainer train` refuses before it opens the corpus when libtorch gives another device. The wrapper also refuses on
+  the trainer's `device=` line. `trainer device [--device cpu|cuda]` prints what libtorch reports about CUDA.
+- A CUDA build of `trainer` must list `libtorch_cuda.so` as NEEDED (`readelf -d`), or libtorch never loads its CUDA
+  backend and the run gets the CPU. `trainer-cli/build.rs` links it, and the image build refuses a binary without it.
 - The GPU image (`trainer_cuda_image`) links libtorch 2.13.0+cu130 and installs torch 2.13.0+cu130's CUDA wheels. A
   change under `packages/trainer` or `packages/mtf` rebuilds it on the next `modal run`, which takes about 2.5
   minutes.
