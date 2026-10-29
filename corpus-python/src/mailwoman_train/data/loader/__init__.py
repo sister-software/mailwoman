@@ -4,7 +4,7 @@ The trainer's rows come from the Rust sampler in `packages/mtf/crates/mtf-sample
 `mailwoman_mtf.TrainingBatches`. It lists each split from its manifest, verifies every file's sha256, indexes the train
 files by source, draws each row's source from the `source_weights` multinomial, mixes rows in a shuffle buffer, and
 augments and relabels train rows. Every stage draws from one generator that reproduces CPython's `random.Random`, so the
-rows equal the ones the Python sampler drew for the same seed; the encoder-parity records in
+rows equal the ones the Python sampler drew for the same seed. The encoder-parity records in
 `docs/engineering/reference/training-row-encoder.mdx` verify that. The row encoder (`mailwoman_mtf.RowEncoder`) or the
 char encoder (`mailwoman_mtf.CharEncoder`) encodes each batch.
 

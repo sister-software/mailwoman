@@ -56,8 +56,8 @@ def _data_root() -> str | None:
 def sampler_config(cfg_data: DataConfig, *, drop_spans: bool = False) -> str:
     """The sampler's JSON configuration for a `DataConfig`.
 
-    `source_weights` must already hold any `source_reps` targets, which `resolve_config_reps` folds in, so the
-    sampler reads the weights the launch log reports. `drop_spans` removes each row's span triple before the astral
+    `source_weights` must already hold any `source_reps` targets. `resolve_config_reps` folds them in, and the
+    sampler then reads the weights the launch log reports. `drop_spans` removes each row's span triple before the astral
     check, the encoder-parity token-label arm.
     """
     return _sampler_document(
@@ -155,7 +155,7 @@ def iter_rows(
 
 
 def check_char_mode(cfg_data: DataConfig) -> bool:
-    """Whether the config encodes on the char path, refusing a char config that names a channel or no vocabulary."""
+    """Whether the config encodes on the char path, refusing a char config that configures a channel or lacks a vocabulary."""
     mode = getattr(cfg_data, "char_mode", "off")
     if mode not in ("off", "word", "char"):
         raise ValueError(f"unknown data.char_mode {mode!r} (expected off | word | char)")
@@ -314,11 +314,12 @@ def iter_encoded(
     """
     char = build_char_encoder(cfg_data)
     require_label_set_supported(cfg_data, char is not None)
-    encoder: mailwoman_mtf.RowEncoder | mailwoman_mtf.CharEncoder | None = char
-    if char is None:
-        if tokenizer is None:
-            raise ValueError("the SentencePiece path requires a tokenizer")
+    encoder: mailwoman_mtf.RowEncoder | mailwoman_mtf.CharEncoder
+    if char is not None:
+        encoder = char
+    elif tokenizer is None:
+        raise ValueError("the SentencePiece path requires a tokenizer")
+    else:
         encoder = build_row_encoder(cfg_data, tokenizer)
-    assert encoder is not None
     for row in iter_sampled_rows(cfg_data, split, seed=seed, row_limit=row_limit, observer=observer):
         yield example_from_batch(encoder.encode_batch([row]), row)

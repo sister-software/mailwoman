@@ -1,7 +1,7 @@
 """Assemble the batches the trainer feeds the model.
 
 The rows come from the Rust sampler. The SentencePiece path hands each batch to the row encoder, which returns `[B, L]`
-and `[B, L, D]` arrays; the char path hands it to the char encoder, which returns `[B, S, W]` char ids and `[B, S]`
+and `[B, L, D]` arrays. The char path hands it to the char encoder, which returns `[B, S, W]` char ids and `[B, S]`
 masks and labels. Both add each row's locale and address-system ids in row order. A channel is present in a batch only
 when its lexicon is configured. An absent channel is omitted rather than zero-filled, so the trainer's tensor
 conversion skips it and the model runs without it.

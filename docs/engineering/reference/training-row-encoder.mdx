@@ -158,7 +158,7 @@ The recorded configuration matrix:
 | `char-v8-cjk-regs-5k`   | `v8-cjk-regs`, the sealed corpus below                 | the character path, `char` mode, `stage3-cjk`                                |
 
 The C6 overrides re-root the lexicons to their host copies. Every CJK char-path corpus on the lab host lists
-its files without a sha256, which the loader refuses, so `char-v8-cjk-regs-5k` reads
+its files without a sha256, and the loader refuses such a manifest. `char-v8-cjk-regs-5k` therefore reads
 `$MAILWOMAN_DATA_ROOT/audits/port-parity/corpora/v8-cjk-regs-2026-09-08-sealed/MANIFEST.json`: the
 original manifest's entries, unchanged, with each file's sha256 measured on 2026-10-29.
 
@@ -223,7 +223,7 @@ was shared with other jobs: the load average was 26 to 30 during the first pair 
 
 Init is process start to the first converted batch; the sampler's share covers the listing, the sha256 check
 against the cache, the source index and the 131,072-row buffer fill. The milliseconds are per batch. RSS after
-init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. On the second pair the Rust sampler cut
+init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. On the second pair the Rust sampler reduced
 sampling from 8.09 to 1.75 ms per batch and sampler initialization from 220.3 to 21.0 s. Encoding is the same
 Rust code in both arms; its spread follows the host load rather than the sampler.
 
