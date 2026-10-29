@@ -57,17 +57,46 @@ The customer-facing explanation is the [OpenStreetMap attribution page](https://
 The rooftop table this builder writes, with its H3 spine and layer-interface tables, is declared in
 `@mailwoman/resolver-wof-sqlite/address/point/spine-schema` (`createSpineAddressPointTables`), which the
 G-NAF builder shares. This package keeps the OpenStreetMap-specific acquisition, extraction and
-interpretation. The steps below still run the package's build scripts. A public `mailwoman data build`
-command is proposed in [#2868](https://github.com/sister-software/mailwoman/issues/2868) and does not exist yet.
+interpretation:
 
-You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
+- `sdk/geofabrik/regions.ts` lists the Geofabrik regions the build acquires and the countries each holds.
+- `lib/<cc>/extraction-policy.ts` states, per country, the regions that may supply it and the
+  geoBoundaries outline that clips it out of a region holding other countries.
+- `tools/address-points-recipe.ts` is the `osm-address-points` build recipe, and
+  `tools/rooftop-database.ts` the builder it runs.
+
+You need GDAL (`ogr2ogr`) on the path, the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)
 aren't lost.
 
-Install the package beside `mailwoman`, which loads it as an optional peer when it is present:
+Install the package beside `mailwoman`, which loads it as an optional peer when it is present, and build
+through the public CLI:
 
 ```bash
 npm install mailwoman @mailwoman/osm
+
+# The plan: the regional extract, the outline when the region holds other countries, the outputs,
+# and whether ogr2ogr runs. No network request and no write.
+mailwoman data build osm-address-points --countries NZ --dry-run
+
+# Acquire, build, validate, install, and select the result for New Zealand.
+mailwoman data build osm-address-points --countries NZ --activate
+
+# One regional extract for several countries: each is clipped to its own outline.
+mailwoman data build osm-address-points --countries DE --region europe/dach --activate
+```
+
+The extract is kept under `$MAILWOMAN_DATA_ROOT/src/geofabrik/<region>/<date>/` with a receipt, and a
+repeated build verifies and reuses it. Each database is installed under `db/address-points/<sha256>/`, and
+its manifest records the extract's URL and SHA-256, the extraction policy and its version, the outline's
+SHA-256 when the build clipped, the row filter and the counts. `--activate` adds the database to its
+country's selection after any source the country already selects, so a national register stays first.
+Without `--activate`, the command prints the `mailwoman data activate <inst-id>` that selects it.
+
+The scripts below build one database at the conventional `db/osm/address-points-<cc>-<cc>.db` path
+instead, from an extract you download yourself:
+
+```bash
 OSM="$(npm root)/@mailwoman/osm/out/tools"
 
 # 1. Download a Geofabrik extract. The tool dates the file name from the server's Last-Modified header and
@@ -94,10 +123,10 @@ that gap is large for a country, the fix is a street-association recovery pass t
 then the enclosing polygon's `addr:street`, then point-in-polygon. The pass is sized to the measured gap
 rather than built before a measurement.
 
-Supported countries are a deliberately small set (currently DE, FR, GB, NL, and NZ, listed in
-`streetLocaleForCountry`). Each needs a matching
-branch in the locale street normalizer, so adding one is two edits in lockstep, never a silent fold with
-the wrong rules.
+Supported countries are a deliberately small set: the countries with a street locale in
+`streetLocaleForCountry`, and for `data build`, an extraction policy under `lib/<cc>/` as well (CA, DE,
+FR, GB, ID, NL, NZ, PK, PL and VN). Each needs a matching branch in the locale street normalizer, so
+adding one is two edits in lockstep, never a silent fold with the wrong rules.
 
 ### Clip the extract to its own country
 
