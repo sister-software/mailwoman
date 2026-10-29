@@ -1164,8 +1164,12 @@ node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cw
    `libtorch_cuda.so` between `-Wl,--no-as-needed` and `-Wl,--as-needed` when `$LIBTORCH/lib` holds it, and the CUDA
    image refuses a binary whose NEEDED entries lack it. The rebuilt binary lists it (observed). `trainer train` and
    the new `trainer device` refuse a run whose device differs from `--device` or `MAILWOMAN_EXPECT_DEVICE`, which the
-   wrapper sets, before the corpus is opened. The GPU check of the rebuilt image did not run: the launch's preflight
-   finished, and the next Modal call answered `ConflictError: workspace ac-ZmHIahtLYncX6SaC7TBVKZ is disabled`.
+   wrapper sets, before the corpus is opened. The first GPU check of the rebuilt image stopped after its preflight,
+   when Modal answered `ConflictError: workspace ac-ZmHIahtLYncX6SaC7TBVKZ is disabled`. Once the workspace was
+   re-enabled, `fc-01M64Y2MXCRYCT5Y2P8H1810EA` ran the stage 8 probe config on an A100-40GB and logged
+   `device=Cuda(0)` (observed). `train_loss` fell from 4.1287 at step 100 to 1.7972 at step 400. Steps 100 to 400
+   took 16 s by the log's one-second timestamps, about 5.3 s per 100 steps, against 8.1 s for the Python trainer's
+   fp32-master runs on the same card. The call was cancelled at step 400.
 
 **Cost.** `modal billing report --for today --show-resources`: $0.3275 for the 13 apps this work created (CPU
 $0.232, memory $0.095, network egress $0.0009, and without a GPU line). The six image-build apps cost $0.144 and the seven F4
