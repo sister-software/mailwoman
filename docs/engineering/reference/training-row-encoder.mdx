@@ -94,6 +94,16 @@ In Rust, `mtf_sampler::Sampler::open(config, split, seed, row_limit)` returns th
 that receives `RowEmitted`, `RowSkipped(reason)`, `SourceRestarted` and `EpochComplete`, and `batch::encode_rows`
 encodes a batch through `mtf-channels`.
 
+In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
+`packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
+`nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows
+before the shuffle buffer, with `nextEmitted(n)` running the emit step on the same generator for the audits. Each call
+hands out one chunk, so a consumer holds one chunk at a time. `takeEvents()` drains the observer events of the kinds
+named in `events`, and `cancel()` stops a stream, which then fails with the `Cancelled` status. `createRowEncoder` and
+`createCharEncoder` return the arrays as `BigInt64Array` and `Float32Array`. `packages/mailwoman/tools/training/sampler.ts`
+writes the sampler document from a training config resolved by `packages/corpus/lib/training/config/`, and adds each
+row's locale and address-system ids to an encoded batch.
+
 ## Python semantics
 
 The Rust code reproduces the reference interpreter's string semantics rather than Rust's.
@@ -178,6 +188,12 @@ Each record verified with 0 differing rows against the Rust encoder (113,920 emi
 sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
 validation rows, where the validation draw exhausts below its 36,864-row limit.
 
+`node packages/mailwoman/tools/training/sampler-parity.run.ts verify --name <record>` re-draws a record through the
+Node binding and compares the same fields from `record.json`, without reading `arrays.npz`. On 2026-10-29 it verified
+`c6-train-2k`, `aug-postcode-move-5k`, `c6-gold-tokens-5k` and `code-unit-train-5k` with 0 differing rows. The binding
+reproduced every row identity and every tensor digest, including the `locale_ids` and `address_system_ids` that
+TypeScript computes.
+
 Every record, the nine and the six, verified with 0 differing rows against the Rust sampler on 2026-10-29
 (136,158 emitted rows in total): no emitted count, row identity, batch boundary, tensor set, shape or digest
 moved. `mtf-sampler`'s tests cover what a sample may miss: `loader_split_reference.rs` replays the Python
@@ -256,6 +272,11 @@ raises in Python, where the release profile's `panic = "abort"` would end the tr
 
 - The lab venv and CI install it through the root `pyproject.toml`'s uv path dependency, which rebuilds on
   any crate source, manifest or lockfile change.
+- The Node addon `mtf-node` builds from source on first use, with
+  `cargo build --profile node --locked -p mtf-node`. The `node` profile is `opt-level = 3` and
+  `panic = "unwind"`, so napi-rs raises a Rust panic as a JavaScript exception. The addon builds on Linux and
+  macOS. It is never part of `wasm/mtf.wasm`, whose dependency tree is `mtf-wasm` → `mtf-core` alone. The
+  wasm build with the addon in the workspace gives the same SHA-256 as a build without it.
 - The Python CI job installs the pinned toolchain and runs `cargo test` for `mtf-channels` with and
   without `finders`. `lib/repo-health/ci-scope.ts` selects that job for a change to the extension's inputs.
 - The Modal training image builds the wheel from `packages/mtf` and imports it as its last build step.

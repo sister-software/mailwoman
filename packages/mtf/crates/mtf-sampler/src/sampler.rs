@@ -212,6 +212,47 @@ impl Sampler {
 		cancel: CancelToken,
 		observer: Option<Box<dyn Observer>>,
 	) -> Result<Self> {
+		let parts = StreamParts::open(config, split, row_limit, cancel, observer, true)?;
+		Ok(Self {
+			rng: PyRandom::new(Seed::Int(seed)),
+			shared: parts.shared,
+			stream: Stream {
+				upstream: parts.upstream,
+				buffer: Vec::new(),
+				filled: false,
+				draining: None,
+				pending: VecDeque::new(),
+				policy: parts.policy,
+				shuffle_buffer: config.shuffle_buffer,
+				row_limit,
+				emitted: 0,
+				finished: false,
+			},
+			drop_spans: config.drop_spans,
+			yielded: 0,
+			astral_skipped: 0,
+		})
+	}
+}
+
+/// What a split's stream is built from: the shared stage settings, the upstream rows and the emit policy.
+struct StreamParts {
+	shared: Shared,
+	upstream: Upstream,
+	policy: EmitPolicy,
+}
+
+impl StreamParts {
+	/// `check_exclusions` refuses an `augment_exclude_sources` entry no train source carries, as the training stream
+	/// does. The audits' raw stream leaves the list unchecked, as the Python `_raw_row_stream` did.
+	fn open(
+		config: &SamplerConfig,
+		split: &str,
+		row_limit: Option<u64>,
+		cancel: CancelToken,
+		observer: Option<Box<dyn Observer>>,
+		check_exclusions: bool,
+	) -> Result<Self> {
 		if config.country_weights.is_empty() {
 			return Err(Error::Input("country_weights must be non-empty".into()));
 		}
@@ -228,7 +269,7 @@ impl Sampler {
 		} else {
 			None
 		};
-		if let Some(weights) = &source_weights {
+		if let Some(weights) = source_weights.as_ref().filter(|_| check_exclusions) {
 			let mut unmatched: Vec<&str> = config
 				.augment_exclude_sources
 				.iter()
@@ -273,32 +314,105 @@ impl Sampler {
 		};
 		shared.check_cancelled()?;
 		Ok(Self {
-			rng: PyRandom::new(Seed::Int(seed)),
 			shared,
-			stream: Stream {
-				upstream,
-				buffer: Vec::new(),
-				filled: false,
-				draining: None,
-				pending: VecDeque::new(),
-				policy: EmitPolicy {
-					augment,
-					excluded_sources: config.augment_exclude_sources.clone(),
-					relabel: if train { relabel } else { None },
-					layouts,
-					postcode_move_outcomes: Default::default(),
-				},
-				shuffle_buffer: config.shuffle_buffer,
-				row_limit,
-				emitted: 0,
-				finished: false,
+			upstream,
+			policy: EmitPolicy {
+				augment,
+				excluded_sources: config.augment_exclude_sources.clone(),
+				relabel: if train { relabel } else { None },
+				layouts,
+				postcode_move_outcomes: Default::default(),
 			},
-			drop_spans: config.drop_spans,
-			yielded: 0,
-			astral_skipped: 0,
+		})
+	}
+}
+
+/// A split's rows before the shuffle buffer, with the emit step available on the same generator.
+///
+/// The audits count what the source mixture draws and what the emit step makes of it. They read the upstream
+/// rows directly, as the Python audits read `_raw_row_stream`: no shuffle buffer, no astral skip, and the
+/// `augment_exclude_sources` list unchecked. [`RawRows::next_emitted`] draws a row and emits it with the one
+/// generator, so a pass that emits consumes the generator as the trainer's emit step does.
+pub struct RawRows {
+	rng: PyRandom,
+	shared: Shared,
+	upstream: Upstream,
+	policy: EmitPolicy,
+	row_limit: Option<u64>,
+	drawn: u64,
+}
+
+impl RawRows {
+	pub fn open(
+		config: &SamplerConfig,
+		split: &str,
+		seed: i128,
+		row_limit: Option<u64>,
+		cancel: CancelToken,
+		observer: Option<Box<dyn Observer>>,
+	) -> Result<Self> {
+		let parts = StreamParts::open(config, split, row_limit, cancel, observer, false)?;
+		Ok(Self {
+			rng: PyRandom::new(Seed::Int(seed)),
+			shared: parts.shared,
+			upstream: parts.upstream,
+			policy: parts.policy,
+			row_limit,
+			drawn: 0,
 		})
 	}
 
+	/// The next upstream row, or `None` at exhaustion. A held-out split draws to its row limit as the stream does.
+	pub fn next_raw(&mut self) -> Result<Option<Row>> {
+		self.shared.check_cancelled()?;
+		let row = self.upstream.next(&mut self.rng, &mut self.shared)?;
+		if row.is_some() {
+			self.drawn += 1;
+		}
+		Ok(row)
+	}
+
+	/// The next upstream row and the rows the emit step makes of it, or `None` at exhaustion.
+	pub fn next_emitted(&mut self) -> Result<Option<(Row, Vec<Row>)>> {
+		let Some(row) = self.next_raw()? else {
+			return Ok(None);
+		};
+		let emitted = self
+			.policy
+			.emit(row.clone(), &mut self.rng)
+			.into_iter()
+			.collect::<Result<Vec<_>>>()?;
+		Ok(Some((row, emitted)))
+	}
+
+	/// The upstream rows drawn so far.
+	pub fn drawn(&self) -> u64 {
+		self.drawn
+	}
+
+	/// The row limit the stream was opened with.
+	pub fn row_limit(&self) -> Option<u64> {
+		self.row_limit
+	}
+
+	/// Each postcode-move draw so far, as moved or under its skip reason.
+	pub fn postcode_move_outcomes(&self) -> Vec<(&'static str, u64)> {
+		sorted_outcomes(&self.policy)
+	}
+
+	/// Takes the observer back, so a caller can read what it collected.
+	pub fn take_observer(&mut self) -> Option<Box<dyn Observer>> {
+		self.shared.observer.take()
+	}
+}
+
+fn sorted_outcomes(policy: &EmitPolicy) -> Vec<(&'static str, u64)> {
+	let mut out: Vec<(&'static str, u64)> = policy.postcode_move_outcomes.0.iter().map(|(&k, &v)| (k, v)).collect();
+	out.sort_unstable();
+	out
+}
+
+impl Sampler {
 	/// The next row, or `None` once the split is exhausted or the row limit is reached.
 	pub fn next_row(&mut self) -> Result<Option<Row>> {
 		loop {
@@ -364,16 +478,7 @@ impl Sampler {
 
 	/// Each postcode-move draw so far, as moved or under its skip reason.
 	pub fn postcode_move_outcomes(&self) -> Vec<(&'static str, u64)> {
-		let mut out: Vec<(&'static str, u64)> = self
-			.stream
-			.policy
-			.postcode_move_outcomes
-			.0
-			.iter()
-			.map(|(&k, &v)| (k, v))
-			.collect();
-		out.sort_unstable();
-		out
+		sorted_outcomes(&self.stream.policy)
 	}
 
 	/// Takes the observer back, so a caller can read what it collected.
