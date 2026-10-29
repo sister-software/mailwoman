@@ -16,10 +16,13 @@ from .mean_init import mean_init
 from .stage import stage_v8cjk_regs
 from .syncs import sync, sync_assets
 from .train import _train_gpu, main, preflight
+from .train_rust import _train_rust_cpu, _train_rust_gpu, stage_launch_inputs, verify_launch
 from .volume import debug_volume, run_tests, versions
 
 __all__ = [
     "_train_gpu",
+    "_train_rust_cpu",
+    "_train_rust_gpu",
     "app",
     "bucket_census",
     "country_census_raw",
@@ -40,8 +43,10 @@ __all__ = [
     "preflight",
     "push_artifact_r2",
     "run_tests",
+    "stage_launch_inputs",
     "stage_v8cjk_regs",
     "sync",
     "sync_assets",
+    "verify_launch",
     "versions",
 ]

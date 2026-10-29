@@ -33,6 +33,12 @@ OBSERVED_SECONDS_PER_100_STEPS: dict[str, float] = {
     "A100-80GB": 6.50,
 }
 
+#: Seconds per 100 steps for the dev-only CPU device the Rust lifecycle checks run on (`launch/train_rust.py`'s
+#: `_train_rust_cpu`). Unlike the GPU rows it is at the 200-step trainer-parity config's batch 8: `trainer train` on the
+#: lab CPU at 4 threads ran steps 10 to 100 in 39.0 s (`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/rust-smoke/`). No
+#: recipe trains on this device, so the row only lets that small job's preflight write its receipt.
+DEV_OBSERVED_SECONDS_PER_100_STEPS: dict[str, float] = {"cpu": 43.3}
+
 #: Modal accepts ``A100`` for the 40 GB card.
 GPU_ALIASES: dict[str, str] = {"A100": "A100-40GB"}
 
@@ -67,7 +73,7 @@ def estimate_wall_clock(gpu: str, max_steps: int, eval_every_steps: int) -> Wall
     Raises ``ValueError`` for a GPU with no observed rate, naming the GPUs that have one.
     """
     card = GPU_ALIASES.get(gpu, gpu)
-    rate = OBSERVED_SECONDS_PER_100_STEPS.get(card)
+    rate = OBSERVED_SECONDS_PER_100_STEPS.get(card, DEV_OBSERVED_SECONDS_PER_100_STEPS.get(card))
     if rate is None:
         known = ", ".join(sorted(OBSERVED_SECONDS_PER_100_STEPS))
         raise ValueError(

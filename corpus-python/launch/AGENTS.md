@@ -183,6 +183,42 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
    never a quiet pass. A bar restated from memory drifts.
 
+## Launch on the Rust trainer
+
+`--trainer rust` runs `trainer train` (`packages/trainer`) instead of the Python trainer, through
+`launch/train_rust.py`. It is a temporary shell-out that the TypeScript launcher (plan Phase 7) replaces.
+
+```bash
+yarn compile   # the entry point resolves the config with the compiled CLI
+node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python \
+  -- uv run --extra dev modal run -d -m launch.train_remote --trainer rust --config <yaml> --fresh [--gpu <type>]
+```
+
+- `--config` is a name under `configs/` or a host path. The entry point runs `mailwoman train config resolve` on it,
+  which is also the source-rights admission. `stage_launch_inputs` then writes the YAML and the resolved JSON to
+  `/data/launch/<sha256 prefix>/` from inside a container, and the preflight runs on that copy. No `corpus upload
+  --code` is needed for the config.
+- Every attempt verifies the preflight receipt in the training image (`verify_launch`). It then takes the run's lock,
+  `LAUNCH_LOCK.json` beside the checkpoint directory, and runs `trainer train <resolved.json> --resume auto`. A second
+  launch onto a run whose lock holder is still running is refused, and so is a `--fresh` preflight. The attempt
+  commits the volume after every checkpoint. It refuses a run whose trainer chose a device other than the function's,
+  so a CUDA failure cannot train on the CPU.
+- The GPU image (`trainer_cuda_image`) links libtorch 2.13.0+cu130 and installs torch 2.13.0+cu130's CUDA wheels. A
+  change under `packages/trainer` or `packages/mtf` rebuilds it on the next `modal run`, which takes about 2.5
+  minutes.
+- **Give a Rust run its own `output_dir`.** Under `--fresh`, a Python run's config would clear that run's checkpoints.
+  Without it, the Rust trainer would try to resume from a `pytorch_model.bin` checkpoint.
+- Trackio is retired. The entry point refuses `--trackio`, and the trainer refuses `train.trackio_enabled`.
+- `--threads <n>` sets libtorch's threads. `--timeout-seconds` and `--retries` override the function's values for
+  one launch.
+- The lifecycle checks run on the CPU: `--cpu` runs `_train_rust_cpu` on the CPU libtorch image, and
+  `--fail-at-step <n>`, which only `--cpu` accepts, kills the trainer once per call after it logs step `n`. The CPU
+  wall-clock row is `DEV_OBSERVED_SECONDS_PER_100_STEPS` in `launch/wall_clock.py`. The records of the first such run
+  are under `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/f4/`.
+
+`uv run --extra dev python -m launch.call_status fc-… [--wait <s>] [--logs <n>] [--cancel]` reads, tails or cancels a
+call. `--cancel` terminates its container and stops its retries. A timed-out call exits 1 with `FunctionTimeoutError`.
+
 ## Standalone audits run on the host
 
 The preflight still runs the corpus-receipt, validation-coverage and label-support audits inside its CPU

@@ -70,7 +70,12 @@ def check_source_rights(config_name: str) -> None:
 
 
 def _config_path(config_name: str) -> str:
-    path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}"
+    """A config on the volume: an absolute path under the mount as given (a Rust launch's staged copy), otherwise a
+    name in the synced package's configs."""
+    if config_name.startswith(f"{VOL_MOUNT}/"):
+        path = config_name
+    else:
+        path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}"
     if not os.path.isfile(path):
         raise RuntimeError(f"Config not found: {path}")
     return path
@@ -167,8 +172,14 @@ def preflight(config_name: str, gpu: str, fresh: bool = False) -> str:
         print(f"Preflight receipt: {audits_dir}/preflight-{token}.json")
 
         if fresh:
+            from .run_lock import refuse_if_held
+            from .train_rust import call_is_running
+
             paths = resolve_run_paths(cfg.train.output_dir, cfg.train.csv_log_path, VOL_MOUNT)
             check_clearable(paths.output_dir, VOL_MOUNT)
+            # A Rust run's lock records the call training into this directory. A clear under that call would delete
+            # its checkpoints.
+            refuse_if_held(Path(paths.run_base), call_is_running)
             if os.path.isdir(paths.output_dir):
                 shutil.rmtree(paths.output_dir)
                 print(f"Fresh start: cleared {paths.output_dir}")
@@ -271,6 +282,12 @@ def main(
     gpu: str = "",
     trackio: bool = False,
     trackio_space: str = "",
+    trainer: str = "python",
+    cpu: bool = False,
+    threads: int = 0,
+    fail_at_step: int = 0,
+    timeout_seconds: int = 0,
+    retries: int = -1,
 ) -> None:
     """
     Preflight a config on CPU, then spawn its GPU training run and print the call id.
@@ -285,7 +302,25 @@ def main(
     --gpu            Modal GPU type for this launch (default: MAILWOMAN_MODAL_TRAIN_GPU, A100-80GB)
     --trackio        Mirror metrics to a Hugging Face Space dashboard (Trackio)
     --trackio-space  HF Space id for the dashboard, e.g. sister-software/mailwoman-trackio
+    --trainer        `python` (default) or `rust`: run `trainer train` through `launch/train_rust.py`. With `rust`,
+                     --config is a configs name or a host path, resolved on the host
+    --cpu            Rust only: run on the CPU libtorch image (the lifecycle checks), not a GPU
+    --threads        Rust only: libtorch's thread count (`trainer train --threads`)
+    --fail-at-step   Rust with --cpu only: kill the trainer once after it logs this step (the controlled failure)
+    --timeout-seconds  Rust only: override the training function's timeout for this launch
+    --retries        Rust only: override MAILWOMAN_MODAL_TRAIN_RETRIES for this launch
     """
+    if trainer == "rust":
+        from .train_rust import launch_rust
+
+        if trackio or trackio_space:
+            raise ValueError("the Rust trainer retires Trackio; drop --trackio and --trackio-space")
+        launch_rust(config, fresh, branch_from, gpu, cpu, threads, fail_at_step, timeout_seconds, retries)
+        return
+    if trainer != "python":
+        raise ValueError(f"--trainer is python or rust, not {trainer!r}")
+    if cpu or threads or fail_at_step or timeout_seconds or retries >= 0:
+        raise ValueError("--cpu, --threads, --fail-at-step, --timeout-seconds and --retries apply to --trainer rust")
     check_source_rights(config)
     print(f"Preflighting config={config} on CPU{' (fresh start)' if fresh else ''}...")
     token = preflight.remote(config_name=config, gpu=gpu or settings().train_gpu, fresh=fresh)
