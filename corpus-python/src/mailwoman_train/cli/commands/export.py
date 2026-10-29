@@ -48,7 +48,7 @@ def _require_samples(samples: list[Any]) -> None:
 
 def run(args: argparse.Namespace) -> int:
     from ...config import load_config
-    from ...data.loader import iter_batches
+    from ...data.loader import build_row_encoder, iter_batches
     from ...export.onnx import export_to_onnx, verify_parity
     from ...nn.encoder import MailwomanCoarseEncoder
     from ...tokenizer import Tokenizer
@@ -67,8 +67,9 @@ def run(args: argparse.Namespace) -> int:
 
     try:
         samples: list[tuple[list[int], list[int]]] = []
-        for batch in iter_batches(cfg, tokenizer, split="val", batch_size=1, seed=0, row_limit=args.parity_samples):
-            samples.append((batch["input_ids"][0], batch["attention_mask"][0]))
+        encoder = build_row_encoder(cfg.data, tokenizer)
+        for batch in iter_batches(cfg, encoder, split="val", batch_size=1, seed=0, row_limit=args.parity_samples):
+            samples.append((batch["input_ids"][0].tolist(), batch["attention_mask"][0].tolist()))
             if len(samples) >= args.parity_samples:
                 break
         _require_samples(samples)

@@ -59,10 +59,11 @@ def test_realign_labels_preserves_bio_continuity():
 
 
 def test_encode_row_pads_and_masks_correctly():
-    from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.data.loader.encode import encode_one, row_encoder
+    from mailwoman_train.tokenizer import Tokenizer
 
     t = Tokenizer(TOKENIZER_PATH)
-    enc = encode_row(t, "France", ["France"], ["B-country"], max_length=16)
+    enc = encode_one(row_encoder(t, max_length=16), {"raw": "France", "tokens": ["France"], "labels": ["B-country"]})
     assert len(enc["input_ids"]) == 16
     assert len(enc["attention_mask"]) == 16
     assert len(enc["labels"]) == 16

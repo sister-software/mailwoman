@@ -98,11 +98,11 @@ def eval_de(
     import pyarrow.parquet as pq
     import torch
 
-    from mailwoman_train.data.loader import load_anchor_lookup
+    from mailwoman_train.data.loader.encode import encode_one, row_encoder
     from mailwoman_train.evaluation.metrics import token_f1
     from mailwoman_train.labels import ACTIVE_BIO_LABELS
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-    from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.tokenizer import Tokenizer
     from mailwoman_train.train.checkpoint import checkpoint_dir_name
 
     ck = Path(output_dir) / "checkpoints" / checkpoint_dir_name(step)
@@ -111,7 +111,8 @@ def eval_de(
     torch.load = lambda *a, **kw: _orig(*a, **{**kw, "map_location": "cpu"})
     model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
     torch.load = _orig
-    lookup = load_anchor_lookup(anchor_lookup) if anchor_lookup else None
+    lookup = anchor_lookup or None
+    encoder = row_encoder(tok, max_length=128, anchor_lookup_path=lookup)
 
     rows = pq.read_table(val_path).to_pylist()[:max_rows]
     all_preds, all_labels = [], []
@@ -120,7 +121,7 @@ def eval_de(
         chunk = rows[i : i + B]
         ids, masks, labs, afeats, aconfs = [], [], [], [], []
         for r in chunk:
-            enc = encode_row(tok, r["raw"], r["tokens"], r["labels"], 128, anchor_lookup=lookup)
+            enc = encode_one(encoder, {"raw": r["raw"], "tokens": r["tokens"], "labels": r["labels"]})
             ids.append(enc["input_ids"])
             masks.append(enc["attention_mask"])
             labs.append(enc["labels"])
@@ -163,7 +164,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
     the same retrained checkpoint — the clean, fully-controlled read of "does street-type input evidence
     improve street<->locality discrimination." For each ban-fragments-fr row we build the full feature
-    set (anchor + gazetteer + country + street_type, faithful to training) via encode_row, run forward
+    set (anchor + gazetteer + country + street_type, faithful to training) via the row encoder, run forward
     twice (street_type_features as-computed, then zeroed), argmax-decode the street span and compare it to
     the gold street. The ON-OFF street-match delta per class is the verdict. the P-C classes (admin-
     street-homonym / bare-street / street-particle) are where the evidence hypothesis lives."""
@@ -175,12 +176,10 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     import torch
 
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
-    from mailwoman_train.data.loader import load_anchor_lookup
-    from mailwoman_train.features.country_lexicon import load_country_lexicon
-    from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.data.loader.encode import encode_one, row_encoder
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-    from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.tokenizer import Tokenizer
 
     vol.reload()
     # Pull the fixture from R2 (self-contained + re-runnable).
@@ -200,10 +199,16 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
     print(f"loaded checkpoint step-{step}; use_street_type_anchor={model.use_street_type_anchor}")
 
-    gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
-    ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
-    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json")
-    anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
+    encoder = row_encoder(
+        tok,
+        max_length=128,
+        anchor_lookup_path=f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json",
+        anchor_paint_mode="shaped",
+        gazetteer_lexicon_path=f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json",
+        gazetteer_choreography=True,
+        country_lexicon_path=f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json",
+        street_type_lexicon_path=f"{VOL_MOUNT}/gazetteer/street-type-lexicon-v1.json",
+    )
 
     STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
 
@@ -268,19 +273,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         gs = r.get("expect", {}).get("street")
         gold = norm(" ".join(gs)) if isinstance(gs, list) else norm(gs or "")
         expect_no_street = not gold
-        feats = encode_row(
-            tok,
-            raw,
-            raw.split(),
-            ["O"] * len(raw.split()),
-            max_length=128,
-            anchor_lookup=anchor,
-            anchor_paint_mode="shaped",
-            gazetteer_lexicon=gaz,
-            gazetteer_choreography=True,
-            country_lexicon=ctry,
-            street_type_lexicon=street,
-        )
+        feats = encode_one(encoder, {"raw": raw, "tokens": raw.split(), "labels": ["O"] * len(raw.split())})
         on = predicted_street(raw, feats, zero_street=False)
         off = predicted_street(raw, feats, zero_street=True)
         ok_on = (on == "") if expect_no_street else (on == gold)
@@ -335,12 +328,10 @@ def grade_evidence_bundle(
     import torch
 
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
-    from mailwoman_train.data.loader import load_anchor_lookup
-    from mailwoman_train.features.country_lexicon import load_country_lexicon
-    from mailwoman_train.features.gazetteer_anchor import load_gazetteer_lexicon
+    from mailwoman_train.data.loader.encode import encode_one, row_encoder
     from mailwoman_train.labels import ID_TO_LABEL
     from mailwoman_train.nn.encoder import MailwomanCoarseEncoder
-    from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.tokenizer import Tokenizer
 
     vol.reload()
     R = STEADY
@@ -362,11 +353,17 @@ def grade_evidence_bundle(
         f"loaded step-{step}; street_type={model.use_street_type_anchor} locality_surface={model.use_locality_surface_anchor}"
     )
 
-    gaz = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json")
-    ctry = load_country_lexicon(f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json")
-    street = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/{street_lexicon}")
-    locality = load_gazetteer_lexicon(f"{VOL_MOUNT}/gazetteer/{lexicon}")
-    anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
+    encoder = row_encoder(
+        tok,
+        max_length=128,
+        anchor_lookup_path=f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json",
+        anchor_paint_mode="shaped",
+        gazetteer_lexicon_path=f"{VOL_MOUNT}/gazetteer/anchor-lexicon-v1.json",
+        gazetteer_choreography=True,
+        country_lexicon_path=f"{VOL_MOUNT}/gazetteer/country-surface-lexicon-v1.json",
+        street_type_lexicon_path=f"{VOL_MOUNT}/gazetteer/{street_lexicon}",
+        locality_surface_lexicon_path=f"{VOL_MOUNT}/gazetteer/{lexicon}",
+    )
 
     STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
     # Channel attribution (`zero`): which channels the ablated arm zeroes — both | street | locality | none.
@@ -453,20 +450,7 @@ def grade_evidence_bundle(
         gs = r.get("expect", {}).get("street")
         gold = norm(" ".join(gs)) if isinstance(gs, list) else norm(gs or "")
         expect_no_street = not gold
-        feats = encode_row(
-            tok,
-            raw,
-            raw.split(),
-            ["O"] * len(raw.split()),
-            max_length=128,
-            anchor_lookup=anchor,
-            anchor_paint_mode="shaped",
-            gazetteer_lexicon=gaz,
-            gazetteer_choreography=True,
-            country_lexicon=ctry,
-            street_type_lexicon=street,
-            locality_surface_lexicon=locality,
-        )
+        feats = encode_one(encoder, {"raw": raw, "tokens": raw.split(), "labels": ["O"] * len(raw.split())})
         on = predicted_street(raw, feats, zero_bundle=False)
         off = predicted_street(raw, feats, zero_bundle=True)
         ok_on = (on == "") if expect_no_street else (on == gold)

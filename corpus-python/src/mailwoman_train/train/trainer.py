@@ -15,6 +15,7 @@ import random
 import time
 from pathlib import Path
 
+import mailwoman_mtf
 import torch
 
 from ..config import Config
@@ -23,7 +24,6 @@ from ..data.source_reps import format_derivation, resolve_config_reps
 from ..evaluation.metrics import cross_pollution, per_locale_tag_f1, token_f1
 from ..nn.encoder import force_math_sdpa
 from ..protocols import TrainCallback
-from ..tokenizer import Tokenizer
 from .callbacks import default_callbacks
 from .checkpoint import find_latest_checkpoint
 from .corpus_record import write_corpus_record
@@ -33,6 +33,7 @@ from .setup import (
     build_optimization,
     build_regularizers,
     load_or_build_model,
+    resolve_encoder,
     resolve_precision,
     resolve_tokenizer,
     restore_training_state,
@@ -51,7 +52,7 @@ def _set_seed(seed: int) -> None:
 @torch.no_grad()
 def _eval_val(
     cfg: Config,
-    tokenizer: Tokenizer | None,
+    encoder: mailwoman_mtf.RowEncoder | None,
     model: torch.nn.Module,
     device: torch.device,
     max_rows: int | None,
@@ -63,8 +64,8 @@ def _eval_val(
 
     ``draw`` holds the encoded validation batches between evaluations. Without one, the draw is encoded for this call.
 
-    ``tokenizer`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
-    that refuses a None tokenizer here would stop every char-mode run at its first eval."""
+    ``encoder`` is None on the char path, where ``iter_batches`` encodes per character, so a guard
+    that refuses a None encoder here would stop every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -73,9 +74,7 @@ def _eval_val(
     all_locale_ids: list[torch.Tensor] = []
     all_locale_preds: list[torch.Tensor] = []
     rows_seen = 0
-    batches = (
-        draw.batches(cfg, tokenizer, max_rows) if draw is not None else validation_batches(cfg, tokenizer, max_rows)
-    )
+    batches = draw.batches(cfg, encoder, max_rows) if draw is not None else validation_batches(cfg, encoder, max_rows)
     for batch in batches:
         tb = to_device(batch, device)
         out = model(**tb)
@@ -172,6 +171,7 @@ def train(
         cfg=cfg,
         model=model,
         tokenizer=tokenizer,
+        encoder=resolve_encoder(cfg, tokenizer),
         device=device,
         optimizer=optimization.optimizer,
         scheduler=optimization.scheduler,

@@ -137,6 +137,24 @@ describe("selectCIScope", () => {
 		expect(selectCIScope(workspaces, files, ["packages/corpus/fixtures/generate.py"], []).python).toBe(true)
 	})
 
+	const withMTF = [...workspaces, { name: "@mailwoman/mtf", directory: "packages/mtf", dependencies: [] }]
+
+	it.each([
+		"packages/mtf/crates/mtf-channels/src/anchor.rs",
+		"packages/mtf/crates/mtf-py/pyproject.toml",
+		"packages/mtf/Cargo.toml",
+		"packages/mtf/Cargo.lock",
+	])("selects Python for %s, an input of the extension the loader imports", (file) => {
+		expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: false, python: true })
+	})
+
+	it("leaves Python unselected for an mtf change outside the extension's inputs", () => {
+		expect(selectCIScope(withMTF, files, ["packages/mtf/lib/index.ts"], [])).toMatchObject({
+			full: false,
+			python: false,
+		})
+	})
+
 	it("selects JavaScript consumers of a Python script or fixture", () => {
 		const consumers = workspaces.map((workspace) =>
 			workspace.name === "@mailwoman/corpus"

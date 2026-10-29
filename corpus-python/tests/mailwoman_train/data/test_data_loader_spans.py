@@ -22,11 +22,33 @@ from mailwoman_train.data.loader import encode as encode_module
 from mailwoman_train.data.loader import iter_encoded, iter_rows
 from tests.corpus_fixture import write_corpus_parquet
 
-#: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``encode_row``,
+#: Stands in for the SentencePiece tokenizer in the tests below. Each of them replaces ``build_row_encoder``,
 #: which is the only thing that would touch a tokenizer, so the object is never called — but
 #: ``iter_encoded`` refuses a None tokenizer on the SentencePiece path before it reaches the patched
-#: function. The tokenizer must be non-None because a None value crashes deeper without a row identifier.
+#: function.
 UNUSED_TOKENIZER = object()
+
+
+class CapturingEncoder:
+    """Records the rows `iter_encoded` hands to the row encoder and encodes each as one piece."""
+
+    def __init__(self) -> None:
+        self.rows: list[dict] = []
+
+    def encode_batch(self, rows: list[dict]) -> dict:
+        import numpy as np
+
+        self.rows.extend(rows)
+        one = np.ones((len(rows), 1), dtype=np.int64)
+        return {"input_ids": one, "attention_mask": one, "labels": one * 0}
+
+
+def capture(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    """Patch the encoder builder and return the list the encoded rows land in."""
+    encoder = CapturingEncoder()
+    monkeypatch.setattr(encode_module, "build_row_encoder", lambda _cfg, _tokenizer: encoder)
+    return encoder.rows
+
 
 FULL_SCHEMA = pa.schema(
     [
@@ -234,15 +256,9 @@ def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Pa
     ]
 
 
-def test_iter_encoded_hands_the_triple_to_encode_row(tmp_path: Path, monkeypatch) -> None:
+def test_iter_encoded_hands_the_triple_to_the_encoder(tmp_path: Path, monkeypatch) -> None:
     corpus = _write_corpus(tmp_path, [_row()])
-    captured: list[dict] = []
-
-    def fake_encode_row(tokenizer, raw, tokens, labels, max_length, **kwargs):
-        captured.append({"raw": raw, **kwargs})
-        return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
-
-    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
+    captured = capture(monkeypatch)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
     assert len(captured) == 1
@@ -253,17 +269,11 @@ def test_iter_encoded_hands_the_triple_to_encode_row(tmp_path: Path, monkeypatch
 
 def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> None:
     corpus = _write_corpus(tmp_path, [_row()], drop_columns=("span_starts", "span_ends", "span_tags"))
-    captured: list[dict] = []
-
-    def fake_encode_row(tokenizer, raw, tokens, labels, max_length, **kwargs):
-        captured.append(kwargs)
-        return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
-
-    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
+    captured = capture(monkeypatch)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
-    assert captured[0]["span_starts"] is None
-    assert captured[0]["span_tags"] is None
+    assert captured[0].get("span_starts") is None
+    assert captured[0].get("span_tags") is None
 
 
 def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch) -> None:
@@ -279,15 +289,9 @@ def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch
         span_tags=["country"],
     )
     corpus = _write_corpus(tmp_path, [_row(), astral])
-    captured: list[dict] = []
-
-    def fake_encode_row(tokenizer, raw, tokens, labels, max_length, **kwargs):
-        captured.append({"raw": raw, **kwargs})
-        return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
-
-    monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
+    captured = capture(monkeypatch)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
-    # Only the BMP row reached encode_row. the astral row was skipped before it (no crash).
+    # Only the BMP row reached the encoder. The astral row was skipped before it.
     assert len(captured) == 1
     assert captured[0]["raw"] == "P.O. Box 19, Buffalo, NY 14201"

@@ -9,55 +9,52 @@ from __future__ import annotations
 
 from typing import Any
 
+import mailwoman_mtf
+import numpy as np
 import torch
+
+#: The id tensors every batch carries.
+_REQUIRED_LONG_KEYS = ("input_ids", "attention_mask", "labels")
+
+#: The per-row targets: the locale head's and the address-system head's, which a batch carries when the loader
+#: emitted them.
+_TARGET_KEYS = ("locale_ids", "address_system_ids")
+
+
+def _tensor(value: Any, dtype: torch.dtype, device: torch.device, name: str) -> torch.Tensor:
+    """One batch value as a tensor on `device`.
+
+    An array from the row encoder is wrapped without a copy on the CPU and copied once to another device. Its dtype
+    must already be the one the model reads, because a silent cast would hide an encoder that packed the wrong type.
+    A list from the char path's `collate` is converted with `torch.tensor`.
+    """
+    if isinstance(value, np.ndarray):
+        tensor = torch.from_numpy(value)
+        if tensor.dtype != dtype:
+            raise TypeError(f"batch value {name!r} is {tensor.dtype}, the model reads {dtype}")
+        return tensor.to(device)
+    return torch.tensor(value, dtype=dtype, device=device)
 
 
 def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
-    """Collated lists to device tensors, carrying every channel the loader emitted.
+    """Batch values to device tensors, carrying every channel the loader emitted.
 
-        A channel is present only when its lexicon is configured. Copy each channel under its own guard.
-        The encoder zero-fills a missing channel, so a dropped channel makes the projection train on zeros.
-    The shipped weights would then include an untrained channel. `test_train_channels` checks key parity
-        between the collator and this function.
+    A channel is present only when its lexicon is configured. Copy each channel under its own guard.
+    A dropped channel makes the projection train on zeros, and the shipped weights would then include an
+    untrained channel. `test_train_channels` checks key parity between the loader and this function.
     """
-    tb = {
-        "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
-        "attention_mask": torch.tensor(batch["attention_mask"], dtype=torch.long, device=device),
-        "labels": torch.tensor(batch["labels"], dtype=torch.long, device=device),
-    }
-    # PR3: per-row locale target for the self-conditioning aux head. Present whenever the data
-    # loader emitted it (always, post-PR3); guarded so a pre-PR3 batch dict still works. The model
-    # ignores it unless built with use_locale_conditioning.
-    if "locale_ids" in batch:
-        tb["locale_ids"] = torch.tensor(batch["locale_ids"], dtype=torch.long, device=device)
-    # The address-system head's target and, in training, the locale hint's source.
-    if "address_system_ids" in batch:
-        tb["address_system_ids"] = torch.tensor(batch["address_system_ids"], dtype=torch.long, device=device)
-    if "anchor_features" in batch:
-        tb["anchor_features"] = torch.tensor(batch["anchor_features"], dtype=torch.float32, device=device)
-        tb["anchor_confidence"] = torch.tensor(batch["anchor_confidence"], dtype=torch.float32, device=device)
-    if "gazetteer_features" in batch:
-        tb["gazetteer_features"] = torch.tensor(batch["gazetteer_features"], dtype=torch.float32, device=device)
-        tb["gazetteer_confidence"] = torch.tensor(batch["gazetteer_confidence"], dtype=torch.float32, device=device)
-    if "country_features" in batch:
-        tb["country_features"] = torch.tensor(batch["country_features"], dtype=torch.float32, device=device)
-        tb["country_confidence"] = torch.tensor(batch["country_confidence"], dtype=torch.float32, device=device)
-    if "street_type_features" in batch:
-        tb["street_type_features"] = torch.tensor(batch["street_type_features"], dtype=torch.float32, device=device)
-        tb["street_type_confidence"] = torch.tensor(batch["street_type_confidence"], dtype=torch.float32, device=device)
-    if "locality_surface_features" in batch:
-        tb["locality_surface_features"] = torch.tensor(
-            batch["locality_surface_features"], dtype=torch.float32, device=device
-        )
-        tb["locality_surface_confidence"] = torch.tensor(
-            batch["locality_surface_confidence"], dtype=torch.float32, device=device
-        )
-    if "code_unit_features" in batch:
-        tb["code_unit_features"] = torch.tensor(batch["code_unit_features"], dtype=torch.float32, device=device)
-        tb["code_unit_confidence"] = torch.tensor(batch["code_unit_confidence"], dtype=torch.float32, device=device)
+    tb = {name: _tensor(batch[name], torch.long, device, name) for name in _REQUIRED_LONG_KEYS}
+    for name in _TARGET_KEYS:
+        if name in batch:
+            tb[name] = _tensor(batch[name], torch.long, device, name)
+    for channel in mailwoman_mtf.CHANNEL_NAMES:
+        for part in ("features", "confidence"):
+            name = f"{channel}_{part}"
+            if name in batch:
+                tb[name] = _tensor(batch[name], torch.float32, device, name)
     # CharCNN input path (#825 / v8 CJK): (B, S, W) long char IDs — present iff data.char_mode is on.
     if "char_ids" in batch:
-        tb["char_ids"] = torch.tensor(batch["char_ids"], dtype=torch.long, device=device)
+        tb["char_ids"] = _tensor(batch["char_ids"], torch.long, device, "char_ids")
     return tb
 
 

@@ -20,6 +20,10 @@ dependencies = [
 	# - Decompresses zstd and gzip by magic bytes, and reads `part.jsonl.zst` when asked for `part.jsonl`.
 	# - Imported as `spliterator`; the PyPI name `spliterator` belongs to an unrelated project.
 	"sister-software-spliterator>=10.1.1",
+	# The training-row encoder and the mtf tokenizer, built from `packages/mtf/crates/mtf-py` by maturin.
+	# - uv rebuilds it when a crate source, manifest or the lockfile changes (the crate's `tool.uv.cache-keys`).
+	# - The Modal image builds the same crate (`corpus-python/launch/app.py`).
+	"mailwoman-mtf",
 ]
 
 # Why extras:
@@ -73,6 +77,9 @@ train = [
 [build-system]
 requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+mailwoman-mtf = { path = "packages/mtf/crates/mtf-py" }
 
 [tool.setuptools.packages.find]
 where = ["corpus-python/src"]

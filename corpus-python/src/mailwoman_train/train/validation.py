@@ -11,24 +11,26 @@ from __future__ import annotations
 
 from typing import Any
 
+import mailwoman_mtf
 import torch
 
 from ..config import Config
 from ..data.loader import iter_batches
-from ..tokenizer import Tokenizer
 from .batch import to_tensor_batch
 
 #: The CPU device the cached batches live on between evaluations.
 _CPU = torch.device("cpu")
 
 
-def validation_batches(cfg: Config, tokenizer: Tokenizer | None, max_rows: int | None) -> list[dict[str, Any]]:
+def validation_batches(
+    cfg: Config, encoder: mailwoman_mtf.RowEncoder | None, max_rows: int | None
+) -> list[dict[str, Any]]:
     """Encode the run's validation draw into CPU tensor batches, in the order the loader yields them."""
     return [
         to_tensor_batch(batch, _CPU)
         for batch in iter_batches(
             cfg,
-            tokenizer,
+            encoder,
             split="val",
             batch_size=cfg.train.eval_batch_size,
             seed=cfg.train.seed + 1,
@@ -48,11 +50,13 @@ class ValidationDraw:
         self._key: tuple[int | None, int, int] | None = None
         self._batches: list[dict[str, Any]] = []
 
-    def batches(self, cfg: Config, tokenizer: Tokenizer | None, max_rows: int | None) -> list[dict[str, Any]]:
+    def batches(
+        self, cfg: Config, encoder: mailwoman_mtf.RowEncoder | None, max_rows: int | None
+    ) -> list[dict[str, Any]]:
         """The draw's CPU tensor batches, encoding them on the first call for this key."""
         key = (max_rows, int(cfg.train.eval_batch_size), int(cfg.train.seed))
         if key != self._key:
-            self._batches = validation_batches(cfg, tokenizer, max_rows)
+            self._batches = validation_batches(cfg, encoder, max_rows)
             self._key = key
         return self._batches
 

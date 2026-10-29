@@ -26,6 +26,7 @@ from mailwoman_train.features.gazetteer_anchor import (
     GazetteerLexicon,
     realign_gazetteer_to_pieces,
 )
+
 from mailwoman_train.tokenizer import Tokenizer
 
 FIXTURE_DIR = Path(__file__).parent

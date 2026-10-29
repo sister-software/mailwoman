@@ -26,11 +26,12 @@ import time
 from pathlib import Path
 from typing import Any
 
+import mailwoman_mtf
 import torch
 from torch.optim import AdamW
 
 from ..config import Config
-from ..data.loader import iter_batches
+from ..data.loader import build_row_encoder, iter_batches
 from ..data.masking import mask_tokens
 from ..nn.encoder import build_model, force_math_sdpa, model_param_count
 from ..observability.trackio import init_tracker
@@ -41,14 +42,22 @@ from .checkpoint import find_latest_checkpoint, save_checkpoint
 
 
 @torch.no_grad()
-def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mask_token_id: int) -> dict[str, Any]:
+def _mlm_eval(
+    cfg: Config,
+    model: Any,
+    tokenizer: Tokenizer,
+    encoder: mailwoman_mtf.RowEncoder,
+    device: Any,
+    *,
+    mask_token_id: int,
+) -> dict[str, Any]:
     """MLM cross-entropy + perplexity over a bounded sample of the val split."""
     was_training = model.training
     model.eval()
     gen = torch.Generator().manual_seed(cfg.train.seed)
     total, n = 0.0, 0
     max_batches = max(1, cfg.train.eval_every_steps // 50)  # cheap, bounded
-    for batch in iter_batches(cfg, tokenizer, split="val", batch_size=cfg.train.batch_size, seed=cfg.train.seed):
+    for batch in iter_batches(cfg, encoder, split="val", batch_size=cfg.train.batch_size, seed=cfg.train.seed):
         tb = to_tensor_batch(batch, device)
         masked, labels = mask_tokens(
             tb["input_ids"].cpu(),
@@ -114,6 +123,7 @@ def run_pretrain_loop(
     cfg: Config,
     model: Any,
     tokenizer: Tokenizer,
+    encoder: mailwoman_mtf.RowEncoder,
     device: torch.device,
     *,
     optim: AdamW,
@@ -150,7 +160,7 @@ def run_pretrain_loop(
         epoch += 1
         for batch in iter_batches(
             cfg,
-            tokenizer,
+            encoder,
             split="train",
             batch_size=cfg.train.batch_size,
             seed=cfg.train.seed + epoch,
@@ -205,7 +215,7 @@ def run_pretrain_loop(
                 )
 
             if step % cfg.train.eval_every_steps == 0:
-                metrics = _mlm_eval(cfg, model, tokenizer, device, mask_token_id=mask_token_id)
+                metrics = _mlm_eval(cfg, model, tokenizer, encoder, device, mask_token_id=mask_token_id)
                 print(f"[pretrain]   [eval] {metrics}")
                 tracker.log(metrics, step=step)
 
@@ -248,6 +258,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             cfg,
             model,
             tokenizer,
+            build_row_encoder(cfg.data, tokenizer),
             device,
             optim=optim,
             scheduler=scheduler,

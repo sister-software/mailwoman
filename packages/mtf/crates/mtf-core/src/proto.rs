@@ -52,6 +52,11 @@ pub struct TrainerSpecProto {
 	pub treat_whitespace_as_suffix: bool,
 	pub byte_fallback: bool,
 	pub unk_surface: String,
+	/// The texts `unk_id`, `bos_id`, `eos_id` and `pad_id` look up.
+	pub unk_piece: String,
+	pub bos_piece: String,
+	pub eos_piece: String,
+	pub pad_piece: String,
 }
 
 pub struct NormalizerSpecProto {
@@ -178,6 +183,10 @@ fn parse_trainer_spec(buf: &[u8], spec: &mut TrainerSpecProto) -> Result<(), Err
 			(24, Value::Varint(v)) => spec.treat_whitespace_as_suffix = v != 0,
 			(35, Value::Varint(v)) => spec.byte_fallback = v != 0,
 			(44, Value::Len(b)) => spec.unk_surface = utf8(b, "unk_surface")?,
+			(45, Value::Len(b)) => spec.unk_piece = utf8(b, "unk_piece")?,
+			(46, Value::Len(b)) => spec.bos_piece = utf8(b, "bos_piece")?,
+			(47, Value::Len(b)) => spec.eos_piece = utf8(b, "eos_piece")?,
+			(48, Value::Len(b)) => spec.pad_piece = utf8(b, "pad_piece")?,
 			_ => {}
 		}
 	}
@@ -216,6 +225,10 @@ pub fn parse_model(buf: &[u8]) -> Result<ModelProto<'_>, Error> {
 			treat_whitespace_as_suffix: false,
 			byte_fallback: false,
 			unk_surface: " \u{2047} ".into(),
+			unk_piece: "<unk>".into(),
+			bos_piece: "<s>".into(),
+			eos_piece: "</s>".into(),
+			pad_piece: "<pad>".into(),
 		},
 		normalizer_spec: default_normalizer_spec(),
 		has_denormalizer_charsmap: false,

@@ -1,45 +1,24 @@
-"""SentencePiece tokenization with byte-exact character offsets.
+"""SentencePiece tokenization with character offsets, through the `mailwoman_mtf` extension.
 
-The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel
-``labels`` list (BIO over those whitespace tokens). As of the v0.5.0 char-offset migration
-(#519) rows additionally store ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
-over ``raw`` (sorted, non-overlapping). Labels are derived from these ranges. The neural model
-trains over SentencePiece sub-tokens. These are *finer-grained* than the whitespace tokens.
+The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel ``labels`` list
+(BIO over those whitespace tokens). As of the v0.5.0 char-offset migration (#519) rows additionally store
+``span_starts[]``/``span_ends[]``/``span_tags[]``, char ranges over ``raw``. The neural model trains over
+SentencePiece pieces, which are finer-grained than the whitespace tokens.
 
-The byte-offset hook is ``EncodeAsImmutableProto`` — the only SentencePiece API that exposes
-``piece.begin`` / ``piece.end`` (in bytes). We convert those to char offsets via a precomputed
-byte→char index map so multibyte UTF-8 (accents, CJK) round-trips correctly.
-
-Why not a HuggingFace fast tokenizer? Two reasons:
-
-   - We don't have a ``tokenizer.json`` for this SP model — only ``tokenizer.model``. A conversion
-  is doable (PreTrainedTokenizerFast supports loading SP via slow→fast bridge) but adds a
-   fragile build step. A direct load is simpler and preserves exact offsets.
-- We need labels aligned at *training-data prep* time rather than inference time. The training loop
-  consumes pre-aligned ``(input_ids, label_ids)`` tensors, so we don't need a HF tokenizer
-  object at all once labels are baked.
-
-`spans` projects row labels onto pieces. `anchors` projects the postcode-anchor channel.
-`encode` assembles row tensors. `char` implements the character path without SentencePiece.
-`splice` and `train` build and surgically edit a model.
+`Tokenizer` loads a model with `mtf-core`, which reproduces SentencePiece 0.2.2's ids and UTF-8 offsets, and
+reports each piece's code-point range. The training encoder in `packages/mtf/crates/mtf-channels` projects labels
+and channels onto those pieces. `spans` holds the Python projection the char path and the tokenizer check use;
+`char` implements the character path without SentencePiece; `splice` and `train` build and edit a model with the
+`sentencepiece` package.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
 
-import sentencepiece as spm
+import mailwoman_mtf
 
 from ..types import PieceSpan
-from .anchors import (
-    ANCHOR_FEATURE_DIM,
-    anchor_feature_vector,
-    realign_anchor_to_pieces,
-    realign_anchor_to_pieces_from_spans,
-    realign_anchor_to_pieces_shaped,
-)
-from .encode import encode_row
 from .spans import (
     char_label_array,
     char_label_array_from_spans,
@@ -50,17 +29,11 @@ from .spans import (
 )
 
 __all__ = [
-    "ANCHOR_FEATURE_DIM",
     "PieceSpan",
     "Tokenizer",
-    "anchor_feature_vector",
     "char_label_array",
     "char_label_array_from_spans",
-    "encode_row",
     "project_char_labels_to_pieces",
-    "realign_anchor_to_pieces",
-    "realign_anchor_to_pieces_from_spans",
-    "realign_anchor_to_pieces_shaped",
     "realign_labels_to_pieces",
     "realign_spans_to_pieces",
     "whitespace_spans",
@@ -68,64 +41,43 @@ __all__ = [
 
 
 class Tokenizer:
-    """SentencePiece tokenizer + sub-token char-span realignment helpers."""
+    """A SentencePiece model loaded by `mtf-core`, with each piece's character range."""
 
     def __init__(self, model_path: Path | str) -> None:
         self.model_path = Path(model_path)
-        self.sp = spm.SentencePieceProcessor(model_file=str(self.model_path))
+        #: The extension's tokenizer, which `data.loader.encode.row_encoder` hands to the row encoder.
+        self.mtf = mailwoman_mtf.Tokenizer(self.model_path.read_bytes())
 
     @property
     def vocab_size(self) -> int:
-        return int(self.sp.get_piece_size())
+        return self.mtf.vocab_size
 
     @property
     def pad_id(self) -> int:
-        return int(self.sp.pad_id())
+        return self.mtf.pad_id
 
     @property
     def unk_id(self) -> int:
-        return int(self.sp.unk_id())
+        return self.mtf.unk_id
 
     @property
     def bos_id(self) -> int:
-        return int(self.sp.bos_id())
+        return self.mtf.bos_id
 
     @property
     def eos_id(self) -> int:
-        return int(self.sp.eos_id())
+        return self.mtf.eos_id
+
+    def id_to_piece(self, piece_id: int) -> str:
+        """The text of piece `piece_id`."""
+        return self.mtf.id_to_piece(piece_id)
 
     def encode_with_spans(self, raw: str) -> list[PieceSpan]:
-        """Encode raw text and return one ``PieceSpan`` per sub-token with char offsets."""
-        try:
-            proto = self.sp.encode(raw, out_type=cast(Any, "immutable_proto"))
-        except ValueError:
-            # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
-            # spelling. local dev venvs track newer). Identical pieces/offsets either way.
-            proto = self.sp.encode(raw, out_type=cast(Any, "proto"))
-        # Build a byte→char index for the original raw string so we can map proto byte offsets.
-        raw_bytes = raw.encode("utf-8")
-        # ``byte_to_char[i]`` is the char index of the codepoint that owns byte ``i`` (start byte).
-        byte_to_char = [0] * (len(raw_bytes) + 1)
-        ci = 0
-        bi = 0
-        for ch in raw:
-            ch_bytes = ch.encode("utf-8")
-            for offset in range(len(ch_bytes)):
-                byte_to_char[bi + offset] = ci
-            bi += len(ch_bytes)
-            ci += 1
-        byte_to_char[bi] = ci
+        """Encode raw text and return one ``PieceSpan`` per piece, with code-point offsets.
 
-        out: list[PieceSpan] = []
-        for piece in proto.pieces:
-            begin = byte_to_char[piece.begin]
-            end = byte_to_char[piece.end] if piece.end <= len(raw_bytes) else len(raw)
-            out.append(
-                PieceSpan(
-                    piece=piece.piece,
-                    piece_id=piece.id,
-                    char_begin=begin,
-                    char_end=end,
-                )
-            )
-        return out
+        A piece that begins with the `▁` word marker covers the space before its word.
+        """
+        return [
+            PieceSpan(piece=piece, piece_id=piece_id, char_begin=begin, char_end=end)
+            for piece_id, piece, begin, end in self.mtf.encode(raw)
+        ]

@@ -1,9 +1,12 @@
-"""One corpus row to one `EncodedExample`, through SentencePiece or the char path.
+"""Sampled rows to encoded examples, through the Rust row encoder or the char path.
 
-Load everything a channel needs before the row loop. Pass it to every `encode_row` call.
-The two paths are exclusive. The char path skips SentencePiece and requires span-schema parquet
-files. It refuses configured channels because they project per SentencePiece piece without per-unit
-alignment.
+The SentencePiece path encodes through `mailwoman_mtf.RowEncoder`, built from `packages/mtf/crates/mtf-py`. It holds
+the tokenizer, the label table and every channel lexicon, loaded once by `build_row_encoder`, and encodes a batch of
+rows into arrays (`docs/engineering/reference/training-row-encoder.mdx`). The sampler stays here: `iter_sampled_rows`
+draws rows through `iter_rows`, skips the astral rows and calls the observer, and both paths read it.
+
+The two paths are exclusive. The char path skips SentencePiece and requires span-schema parquet files. It refuses
+configured channels because they project per SentencePiece piece without per-unit alignment.
 """
 
 from __future__ import annotations
@@ -15,13 +18,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import mailwoman_mtf
+
 from ...address_systems import address_system_id
 from ...config import DataConfig
-from ...labels import locale_id, resolve_label_set
-from ...tokenizer import Tokenizer, char_label_array_from_spans, encode_row, whitespace_spans
+from ...labels import ACTIVE_TAGS, IGNORE_INDEX, LABEL_TO_ID, LOCALE_COUNTRIES, locale_id, resolve_label_set
+from ...paths import package_path
+from ...tokenizer import Tokenizer, char_label_array_from_spans, whitespace_spans
 from ...tokenizer.char import encode_row_units, load_char_vocab
 from ..relabel import AffixRelabelLexicon
-from .anchors import load_anchor_lookup
 from .example import EncodedExample
 from .stream import iter_rows
 
@@ -38,6 +43,11 @@ CHANNEL_PATHS = (
     "locality_surface_lexicon_path",
 )
 
+#: The records the Rust finders read: the postcode shapes the shaped anchor paints and each country's postcode
+#: syntax, which counts the countries accepting a code unit.
+POSTCODE_SHAPES = package_path("features", "postcode-shapes.json")
+POSTCODE_SYNTAX = package_path("data", "postcode-syntax.json")
+
 
 @dataclass(frozen=True)
 class CharMode:
@@ -48,21 +58,6 @@ class CharMode:
     max_units: int
     max_unit_width: int
     char_ctx: int
-
-
-@dataclass(frozen=True)
-class Lexicons:
-    """Every channel input, loaded once before the row loop and passed to each `encode_row`.
-
-    One table load per row would reread a 1.3 GB anchor table for every address.
-    """
-
-    anchor: dict[str, tuple[dict[str, float], float, float]] | None = None
-    gazetteer: Any = None
-    country: Any = None
-    street_type: Any = None
-    locality_surface: Any = None
-    affix_relabel: AffixRelabelLexicon | None = None
 
 
 def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
@@ -98,28 +93,133 @@ def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
     return CharMode(mode, load_char_vocab(char_vocab_path), max_units, max_unit_width, char_ctx)
 
 
-def load_lexicons(cfg_data: DataConfig) -> Lexicons:
-    """Every configured channel input, read once. An absent path leaves its channel at None."""
-    # Street-type and locality-surface share the gazetteer lexicon's JSON schema, so they share its
-    # reader. the country lexicon has its own.
-    from ...features.country_lexicon import load_country_lexicon
-    from ...features.gazetteer_anchor import load_gazetteer_lexicon
+def require_label_set_supported(cfg_data: DataConfig, char: CharMode | None) -> Any:
+    """The config's label set, raising when the SentencePiece path is asked for a set other than `stage3`.
 
-    def gazetteer_shaped(attribute: str) -> Any:
-        path = getattr(cfg_data, attribute, None)
-        return load_gazetteer_lexicon(path) if path else None
+    Non-default sets are threaded through the char path only. The row encoder encodes against the `stage3` maps,
+    so a non-default set there would mislabel every row without an error (#1349).
+    """
+    label_set = resolve_label_set(getattr(cfg_data, "label_set", "stage3"))
+    if label_set.name != "stage3" and char is None:
+        raise ValueError(f"data.label_set={label_set.name!r} is only supported with data.char_mode != 'off'")
+    return label_set
 
-    country_path = getattr(cfg_data, "country_lexicon_path", None)
-    affix_path = getattr(cfg_data, "affix_relabel_lexicon_path", None)
-    return Lexicons(
-        # Postcode-anchor lookup (#239/#240): None → no anchor features produced (back-compat).
-        anchor=load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None,
-        gazetteer=gazetteer_shaped("gazetteer_lexicon_path"),
-        country=load_country_lexicon(country_path) if country_path else None,
-        street_type=gazetteer_shaped("street_type_lexicon_path"),
-        locality_surface=gazetteer_shaped("locality_surface_lexicon_path"),
-        affix_relabel=AffixRelabelLexicon.load(affix_path) if affix_path else None,
+
+def row_encoder(
+    tokenizer: Tokenizer | None,
+    *,
+    max_length: int,
+    pad_id: int | None = None,
+    anchor_lookup_path: str | None = None,
+    anchor_paint_mode: str = "gold",
+    gazetteer_lexicon_path: str | None = None,
+    gazetteer_choreography: bool = False,
+    country_lexicon_path: str | None = None,
+    street_type_lexicon_path: str | None = None,
+    locality_surface_lexicon_path: str | None = None,
+    code_units: bool = False,
+) -> mailwoman_mtf.RowEncoder:
+    """A row encoder over the `stage3` label table, the locale table and the given lexicons.
+
+    An empty path leaves its channel off. `tokenizer` may be None when every call passes its own pieces.
+    """
+    return mailwoman_mtf.RowEncoder(
+        tokenizer.mtf if tokenizer is not None else None,
+        max_length=max_length,
+        pad_id=pad_id,
+        label_to_id=dict(LABEL_TO_ID),
+        active_tags=list(ACTIVE_TAGS),
+        ignore_index=IGNORE_INDEX,
+        locale_countries=list(LOCALE_COUNTRIES),
+        postcode_shapes_path=str(POSTCODE_SHAPES),
+        postcode_syntax_path=str(POSTCODE_SYNTAX),
+        anchor_lookup_path=anchor_lookup_path or None,
+        anchor_paint_mode=anchor_paint_mode,
+        gazetteer_lexicon_path=gazetteer_lexicon_path or None,
+        gazetteer_choreography=gazetteer_choreography,
+        country_lexicon_path=country_lexicon_path or None,
+        street_type_lexicon_path=street_type_lexicon_path or None,
+        locality_surface_lexicon_path=locality_surface_lexicon_path or None,
+        code_units=code_units,
     )
+
+
+def build_row_encoder(cfg_data: DataConfig, tokenizer: Tokenizer) -> mailwoman_mtf.RowEncoder:
+    """The row encoder a config's SentencePiece path encodes with, every lexicon read once."""
+    require_label_set_supported(cfg_data, None)
+    return row_encoder(
+        tokenizer,
+        max_length=cfg_data.max_length,
+        anchor_lookup_path=cfg_data.anchor_lookup_path,
+        anchor_paint_mode=getattr(cfg_data, "anchor_paint_mode", "gold"),
+        gazetteer_lexicon_path=getattr(cfg_data, "gazetteer_lexicon_path", None),
+        gazetteer_choreography=bool(getattr(cfg_data, "gazetteer_choreography", False)),
+        country_lexicon_path=getattr(cfg_data, "country_lexicon_path", None),
+        street_type_lexicon_path=getattr(cfg_data, "street_type_lexicon_path", None),
+        locality_surface_lexicon_path=getattr(cfg_data, "locality_surface_lexicon_path", None),
+        code_units=bool(getattr(cfg_data, "code_unit_features", False)),
+    )
+
+
+def encode_one(encoder: mailwoman_mtf.RowEncoder, row: dict[str, Any]) -> dict[str, list[Any]]:
+    """One row's tensors as lists, for a tool that scores rows one at a time."""
+    return {name: array[0].tolist() for name, array in encoder.encode_batch([row]).items()}
+
+
+def sampler_inputs(cfg_data: DataConfig) -> dict[str, Any]:
+    """The keyword arguments the loader passes `iter_rows`, with the affix-relabel lexicon loaded."""
+    affix_path = getattr(cfg_data, "affix_relabel_lexicon_path", None)
+    return {
+        "country_weights": cfg_data.country_weights,
+        "source_weights": cfg_data.source_weights,
+        "coarse_filter": cfg_data.coarse_filter,
+        "augment_directional_prob": cfg_data.augment_directional_prob,
+        "augment_region_prob": cfg_data.augment_region_prob,
+        "augment_glue_prob": getattr(cfg_data, "augment_glue_prob", 0.0),
+        "augment_case_prob": getattr(cfg_data, "augment_case_prob", 0.0),
+        "augment_punct_drop_prob": getattr(cfg_data, "augment_punct_drop_prob", 0.0),
+        "augment_upper_case_prob": getattr(cfg_data, "augment_upper_case_prob", 0.0),
+        "augment_ordinal_prob": getattr(cfg_data, "augment_ordinal_prob", 0.0),
+        "augment_postcode_move_prob": getattr(cfg_data, "augment_postcode_move_prob", 0.0),
+        "augment_grouping_prob": getattr(cfg_data, "augment_grouping_prob", 0.0),
+        "augment_exclude_sources": getattr(cfg_data, "augment_exclude_sources", ()),
+        "affix_relabel_lexicon": AffixRelabelLexicon.load(affix_path) if affix_path else None,
+    }
+
+
+def iter_sampled_rows(
+    cfg_data: DataConfig,
+    split: str,
+    *,
+    rng: random.Random,
+    row_limit: int | None = None,
+    observer: Callable[[dict[str, Any]], None] | None = None,
+) -> Iterator[dict[str, Any]]:
+    """The rows the loader encodes, in sampler order, with the astral-offset rows skipped.
+
+    `observer` sees each yielded row as it is yielded, so it sees exactly the rows encoded.
+    """
+    astral_skipped = 0
+    for row in iter_rows(Path(cfg_data.corpus_dir), split, rng=rng, row_limit=row_limit, **sampler_inputs(cfg_data)):
+        # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code
+        # units, but this consumer (char_label_array_from_spans + SentencePiece pieces) is code-point-
+        # native. For astral-plane rows (~0.06% — exotic-script country-name variants like Gothic), a
+        # UTF-16 span end can exceed the code-point len(raw) and the encoder would raise
+        # span-out-of-bounds. The loader counts and skips the row rather than crashing a multi-hour training run. Durable fix:
+        # emit code-point offsets in the TS build and re-align (corpus-v0.5.1). 2026-06-12.
+        _se = row.get("span_ends")
+        if _se and max(_se) > len(row["raw"]):
+            astral_skipped += 1
+            if astral_skipped <= 5 or astral_skipped % 50000 == 0:
+                logger.warning(
+                    "iter_sampled_rows: skipped astral UTF-16-offset row #%d (span end > code-point len): %r",
+                    astral_skipped,
+                    row["raw"][:40],
+                )
+            continue
+        if observer is not None:
+            observer(row)
+        yield row
 
 
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
@@ -165,6 +265,19 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     )
 
 
+def example_from_batch(batch: dict[str, Any], row: dict[str, Any]) -> EncodedExample:
+    """The `EncodedExample` of the one row a batch encoded."""
+    values = {name: array[0].tolist() for name, array in batch.items()}
+    return EncodedExample(
+        input_ids=values.pop("input_ids"),
+        attention_mask=values.pop("attention_mask"),
+        labels=values.pop("labels"),
+        locale_id=locale_id(row.get("country")),
+        address_system_id=address_system_id(row.get("country"), row["raw"]),
+        **values,
+    )
+
+
 def iter_encoded(
     cfg_data: DataConfig,
     tokenizer: Tokenizer | None,
@@ -174,111 +287,22 @@ def iter_encoded(
     row_limit: int | None = None,
     observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> Iterator[EncodedExample]:
-    """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
+    """Yield one encoded example per sampled row, for a tool that reads rows one at a time.
 
-    Length-filter rationale: address text is short by nature. long rows have come from adapter
-    bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
-
-    ``tokenizer`` may be None only when ``cfg_data.char_mode != "off"`` — the char path never
-    touches SentencePiece.
+    The SentencePiece path builds its row encoder once for the stream. The training loop reads `iter_batches`
+    instead, which encodes whole batches with the encoder the process built. ``tokenizer`` may be None only when
+    ``cfg_data.char_mode != "off"``, because the char path never touches SentencePiece.
     """
     rng = rng or random.Random(0)
     char = resolve_char_mode(cfg_data)
-    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the char path only.
-    # The SP path still encodes against the module-global STAGE3 maps, so a non-default set there
-    # would silently mislabel — raise instead (the #1349 lesson: silent label-space mismatches).
-    label_set = resolve_label_set(getattr(cfg_data, "label_set", "stage3"))
-    if label_set.name != "stage3" and char is None:
-        raise ValueError(f"data.label_set={label_set.name!r} is only supported with data.char_mode != 'off'")
-    lexicons = load_lexicons(cfg_data)
-    astral_skipped = 0
-    for row in iter_rows(
-        Path(cfg_data.corpus_dir),
-        split,
-        rng=rng,
-        country_weights=cfg_data.country_weights,
-        source_weights=cfg_data.source_weights,
-        coarse_filter=cfg_data.coarse_filter,
-        row_limit=row_limit,
-        augment_directional_prob=cfg_data.augment_directional_prob,
-        augment_region_prob=cfg_data.augment_region_prob,
-        augment_glue_prob=getattr(cfg_data, "augment_glue_prob", 0.0),
-        augment_case_prob=getattr(cfg_data, "augment_case_prob", 0.0),
-        augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
-        augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
-        augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
-        augment_postcode_move_prob=getattr(cfg_data, "augment_postcode_move_prob", 0.0),
-        augment_grouping_prob=getattr(cfg_data, "augment_grouping_prob", 0.0),
-        augment_exclude_sources=getattr(cfg_data, "augment_exclude_sources", ()),
-        affix_relabel_lexicon=lexicons.affix_relabel,
-    ):
-        # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code
-        # units, but this consumer (char_label_array_from_spans + SentencePiece pieces) is code-point-
-        # native. For astral-plane rows (~0.06% — exotic-script country-name variants like Gothic), a
-        # UTF-16 span end can exceed the code-point len(raw) and encode_row would raise
-        # span-out-of-bounds. The loader counts and skips the row rather than crashing a multi-hour training run. Durable fix:
-        # emit code-point offsets in the TS build and re-align (corpus-v0.5.1). 2026-06-12.
-        _se = row.get("span_ends")
-        if _se and max(_se) > len(row["raw"]):
-            astral_skipped += 1
-            if astral_skipped <= 5 or astral_skipped % 50000 == 0:
-                logger.warning(
-                    "iter_encoded: skipped astral UTF-16-offset row #%d (span end > code-point len): %r",
-                    astral_skipped,
-                    row["raw"][:40],
-                )
-            continue
-        # One row yields one example from here on, so the observer sees exactly the rows encoded.
-        if observer is not None:
-            observer(row)
-        if char is not None:
-            yield encode_char_row(row, char, label_set)
-            continue
+    label_set = require_label_set_supported(cfg_data, char)
+    encoder: mailwoman_mtf.RowEncoder | None = None
+    if char is None:
         if tokenizer is None:
             raise ValueError("the SentencePiece path requires a tokenizer")
-        enc = encode_row(
-            tokenizer,
-            row["raw"],
-            row["tokens"],
-            row["labels"],
-            max_length=cfg_data.max_length,
-            anchor_lookup=lexicons.anchor,
-            anchor_paint_mode=getattr(cfg_data, "anchor_paint_mode", "gold"),
-            gazetteer_lexicon=lexicons.gazetteer,
-            gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
-            country_lexicon=lexicons.country,
-            street_type_lexicon=lexicons.street_type,
-            locality_surface_lexicon=lexicons.locality_surface,
-            code_units=getattr(cfg_data, "code_unit_features", False),
-            # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train from the
-            # spans (encode_row builds the per-char label array from them. the token path is the
-            # legacy fallback for frozen corpora). encode_row raises on a partial triple.
-            span_starts=row.get("span_starts"),
-            span_ends=row.get("span_ends"),
-            span_tags=row.get("span_tags"),
-        )
-        # Drop rows whose non-padding length exceeds max_length (length filter §2).
-        non_pad = sum(enc["attention_mask"])
-        if non_pad >= cfg_data.max_length:
-            # Even at exactly max_length we keep — the spec drops tokens > 128. Equality is valid.
-            # But hand-curated coarse rows almost never hit this. Track via downstream metrics.
-            pass
-        yield EncodedExample(
-            input_ids=enc["input_ids"],
-            attention_mask=enc["attention_mask"],
-            labels=enc["labels"],
-            locale_id=locale_id(row.get("country")),
-            address_system_id=address_system_id(row.get("country"), row["raw"]),
-            anchor_features=enc.get("anchor_features"),
-            anchor_confidence=enc.get("anchor_confidence"),
-            gazetteer_features=enc.get("gazetteer_features"),
-            gazetteer_confidence=enc.get("gazetteer_confidence"),
-            country_features=enc.get("country_features"),
-            country_confidence=enc.get("country_confidence"),
-            street_type_features=enc.get("street_type_features"),
-            street_type_confidence=enc.get("street_type_confidence"),
-            locality_surface_features=enc.get("locality_surface_features"),
-            locality_surface_confidence=enc.get("locality_surface_confidence"),
-            code_unit_features=enc.get("code_unit_features"),
-            code_unit_confidence=enc.get("code_unit_confidence"),
-        )
+        encoder = build_row_encoder(cfg_data, tokenizer)
+    for row in iter_sampled_rows(cfg_data, split, rng=rng, row_limit=row_limit, observer=observer):
+        if encoder is None:
+            yield encode_char_row(row, char, label_set)  # type: ignore[arg-type]
+        else:
+            yield example_from_batch(encoder.encode_batch([row]), row)

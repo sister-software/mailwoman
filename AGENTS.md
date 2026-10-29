@@ -36,6 +36,9 @@ repository root must read the applicable file explicitly.
 - `lib/release-kit/AGENTS.md` covers publish artifacts, workspace registration, CI releases, and
   partial-release recovery.
 - `packages/sqlite/AGENTS.md` covers database construction and the SQL that deliberately remains raw.
+- `docs/engineering/reference/training-row-encoder.mdx` covers the training loader's Rust encoder in
+  `packages/mtf/crates/mtf-channels`, its `mailwoman_mtf` binding in `crates/mtf-py`, and the parity
+  records a change to either must verify.
 
 Use repository skills for procedures rather than copying their steps into this file:
 

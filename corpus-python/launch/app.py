@@ -16,7 +16,7 @@ import os
 import modal
 
 from .plan import BUCKET, VOL_MOUNT
-from .settings import container_env, read_keys, resolve_env_file, settings
+from .settings import container_env, read_keys, repository_root, resolve_env_file, settings
 
 app = modal.App(settings().app_name)
 
@@ -43,9 +43,21 @@ RCLONE_VERSION = "v1.71.2"
 RCLONE_ZIP_SHA256 = "ab9fa5877cee91c64fdfd61a27028a458cf618b39259e5c371dc2ec34a12e415"
 _RCLONE_ZIP = f"rclone-{RCLONE_VERSION}-linux-amd64"
 
+#: The Rust toolchain the image builds `mailwoman_mtf` with. It equals `packages/mtf/rust-toolchain.toml`'s channel,
+#: which `verify_toolchain.py` checks.
+RUST_TOOLCHAIN = "1.99.1"
+
+#: The wheel builder. It satisfies `packages/mtf/crates/mtf-py/pyproject.toml`'s build requirement, which
+#: `verify_toolchain.py` checks.
+MATURIN_VERSION = "1.15.0"
+
+#: Where the image copies `packages/mtf`. The extension builds there once per image, so a crate change rebuilds the
+#: image while `corpus upload --code`, which carries only `corpus-python/src` to the volume, does not carry it.
+_MTF_BUILD_DIR = "/build/mtf"
+
 training_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .apt_install("curl", "unzip")
+    .apt_install("build-essential", "curl", "unzip")
     .run_commands(
         f"curl -fsSL -o /tmp/rclone.zip https://downloads.rclone.org/{RCLONE_VERSION}/{_RCLONE_ZIP}.zip",
         f"echo '{RCLONE_ZIP_SHA256}  /tmp/rclone.zip' | sha256sum -c -",
@@ -80,14 +92,34 @@ training_image = (
         # The same floor as the `train` extra in the root `pyproject.toml`.
         "datasets>=5.0.1",
         "tqdm>=4.66",
-        # `mailwoman_train.env` reads it for the platform data root. No module imports it until the
-        # anchor painter reaches `features/postcode_shapes.py`, so its absence surfaces mid-training
-        # rather than at startup.
+        # `mailwoman_train.env` imports it for the platform data, config and cache roots, and every module that
+        # resolves a path through `mailwoman_train.paths` imports `env`.
         "platformdirs>=4.3",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
         # Pinned to the version `uv.lock` resolves, so an image rebuild cannot move the dashboard client.
         "trackio==0.42.0",
+        f"maturin=={MATURIN_VERSION}",
+    )
+    # rustup verifies each toolchain component it downloads. The toolchain version is pinned here.
+    .run_commands(
+        "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
+        f"sh -s -- -y --profile minimal --default-toolchain {RUST_TOOLCHAIN}",
+    )
+    .env({"PATH": "/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"})
+    .add_local_dir(
+        str(repository_root() / "packages" / "mtf"),
+        remote_path=_MTF_BUILD_DIR,
+        copy=True,
+        # The wheel reads the crates and the workspace manifests only.
+        ignore=["target", "node_modules", "out", "wasm", "lib", "tools", "test", "third-party", "*.md", "*.json"],
+    )
+    # The `py` profile in `pyproject.toml` builds with `panic = "unwind"`, so a Rust panic raises in Python.
+    .run_commands(
+        f"cd {_MTF_BUILD_DIR}/crates/mtf-py && maturin build --locked --out /build/wheels",
+        "pip install /build/wheels/mailwoman_mtf-*.whl",
+        f"rm -rf {_MTF_BUILD_DIR}/target",
+        'python -c "import mailwoman_mtf"',
     )
     # The container reads the launch settings the local process used to define the app.
     .env(container_env())

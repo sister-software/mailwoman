@@ -21,6 +21,12 @@ the volume and the app, so the global binary runs them as well.
 `sync_assets --code`,** because containers import `mailwoman_train` from the volume and mount only `launch/`
 locally.
 
+**A crate change reaches a run only through an image rebuild.** The training loader encodes rows through the
+`mailwoman_mtf` extension, which `training_image` builds from `packages/mtf` with the pinned Rust toolchain and
+maturin. Modal rebuilds the image when a file under `packages/mtf` changes, which takes a few minutes on the next
+launch. `corpus upload --code` carries `corpus-python/src` only, so it never carries a crate change.
+`loader_profile` measures the loader's host-side cost per batch in a CPU container from this checkout's source.
+
 **Module mode, never a file path.** `modal run launch/train_remote.py` imports the file as a TOP-LEVEL
 module with `launch/` itself on `sys.path`, so `launch` is unimportable and every `from .x import y` in
 the package raises `ImportError: attempted relative import with no known parent package`. `-m` imports it
@@ -56,8 +62,8 @@ The non-secret values are baked into the image with `Image.env`, so a container 
 process read. `mailwoman_train/env.py` reads `MAILWOMAN_VOLUME_MOUNT` and `MAILWOMAN_SHA256_CACHE` from
 that environment.
 
-**Credentials come from a named Modal secret.** Create it once from `.env` (operator step; it is a cloud
-resource):
+**Credentials come from a named Modal secret.** Create it once from `.env`. This is an operator step,
+because a secret is a cloud resource:
 
 ```bash
 set -a; source .env; set +a
@@ -143,7 +149,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    **Resume is automatic.** The GPU function runs under `modal.Retries` (`MAILWOMAN_MODAL_TRAIN_RETRIES`,
    default 3) with `single_use_containers=True`, and every attempt resumes from the newest complete
    `step-*` checkpoint in the run's output directory (`launch/resume.py`). `--fresh` clears that directory
-   once, in the preflight, before anything is spawned; no attempt deletes anything. `--branch-from
+   once, in the preflight, before anything is spawned. No attempt deletes anything. `--branch-from
    <checkpoint>` names a start point used only while the output directory holds no checkpoint. The old
    `--resume` flag is gone. `--resume none` is now `--fresh`, `--resume auto` is the default, and the
    recipe headers use the new spellings.
@@ -154,7 +160,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    that changes most already travels on the volume, so a deployment would save only the few seconds
    an ephemeral app takes to register its functions. Revisit if launches need to start from somewhere without this checkout.
 
-   **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card; the default stays
+   **GPU sizing.** `--gpu <type>` (or `MAILWOMAN_MODAL_TRAIN_GPU`) picks the card. The default stays
    `A100-80GB`. The probe model is small (384 hidden, 6 layers, batch 128) and likely fits a cheaper card,
    but the wall-clock preflight's 4.25 steps/s is an A100 measurement, and a slower card can push a 60k
    recipe past the 6 h timeout. Change the default only after measuring steps/s on the candidate card
@@ -212,7 +218,7 @@ also ships configs uses `PACKAGE_AND_CONFIGS`.
 
 The Volume persists across runs (outputs under `/data/output*`). A failed train doesn't corrupt the
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
-`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts; the path
+`modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts. The path
 is the config's `output_dir` without the `/data` mount. A run that died past its retries continues from
 its last save on a relaunch without `--fresh`.
 

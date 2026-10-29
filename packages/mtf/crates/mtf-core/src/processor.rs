@@ -57,6 +57,21 @@ pub struct Processor {
 	unk_surface: String,
 	add_dummy_prefix: bool,
 	remove_extra_whitespaces: bool,
+	/// Control, unknown and byte pieces by text, the map `PieceToId` searches after `piece_index`.
+	reserved: HashMap<String, u32>,
+	special: SpecialIDs,
+}
+
+/// The special-piece IDs SentencePiece reports, each -1 when the model lacks that piece.
+///
+/// `unk` is the ID of the trainer's `unk_piece` when that piece is the unknown piece. `bos`, `eos` and `pad` are
+/// the IDs of the trainer's `bos_piece`, `eos_piece` and `pad_piece` when each is a control piece.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SpecialIDs {
+	pub unk: i64,
+	pub bos: i64,
+	pub eos: i64,
+	pub pad: i64,
 }
 
 impl Processor {
@@ -153,6 +168,30 @@ impl Processor {
 			}
 		}
 
+		let reserved: HashMap<String, u32> = reserved.into_iter().map(|(k, v)| (k.to_string(), v)).collect();
+		let piece_to_id = |text: &str| {
+			piece_index
+				.get(text.as_bytes())
+				.map(|id| id as u32)
+				.or_else(|| reserved.get(text).copied())
+				.unwrap_or(unk_id)
+		};
+		let id_if = |text: &str, kind: PieceType| {
+			let id = piece_to_id(text);
+			if pieces[id as usize].kind == kind {
+				id as i64
+			} else {
+				-1
+			}
+		};
+		let trainer = &model.trainer_spec;
+		let special = SpecialIDs {
+			unk: id_if(&trainer.unk_piece, PieceType::Unknown),
+			bos: id_if(&trainer.bos_piece, PieceType::Control),
+			eos: id_if(&trainer.eos_piece, PieceType::Control),
+			pad: id_if(&trainer.pad_piece, PieceType::Control),
+		};
+
 		let spec = &model.normalizer_spec;
 		let normalizer = Normalizer::new(
 			&spec.precompiled_charsmap,
@@ -174,7 +213,28 @@ impl Processor {
 			unk_surface: model.trainer_spec.unk_surface,
 			add_dummy_prefix: spec.add_dummy_prefix,
 			remove_extra_whitespaces: spec.remove_extra_whitespaces,
+			reserved,
+			special,
 		})
+	}
+
+	/// The special-piece IDs, as SentencePiece's `unk_id`, `bos_id`, `eos_id` and `pad_id` report them.
+	pub fn special_ids(&self) -> SpecialIDs {
+		self.special
+	}
+
+	/// The text of piece `id`, as `IdToPiece` returns it, or `None` outside the vocabulary.
+	pub fn piece(&self, id: u32) -> Option<&str> {
+		self.pieces.get(id as usize).map(|p| self.piece_text(p))
+	}
+
+	/// The ID of the piece whose text is `piece`, or the unknown piece's ID, as `PieceToId` answers.
+	pub fn piece_to_id(&self, piece: &str) -> u32 {
+		self.piece_index
+			.get(piece.as_bytes())
+			.map(|id| id as u32)
+			.or_else(|| self.reserved.get(piece).copied())
+			.unwrap_or(self.unk_id)
 	}
 
 	fn piece_text(&self, piece: &Piece) -> &str {

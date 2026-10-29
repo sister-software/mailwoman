@@ -1,5 +1,8 @@
 """The soft-feed channels: per-piece clues painted from the RAW SURFACE, never from gold labels.
 
+The painters live in Rust, in `packages/mtf/crates/mtf-channels`, called through `mailwoman_mtf.RowEncoder`. This
+package keeps the records they read (`postcode-shapes.json`) and the Python-side conventions and priors.
+
 Every channel here computes the same value at train time and at inference. A channel that read a
 label would teach the model to expect evidence the runtime cannot supply.
 
@@ -17,11 +20,10 @@ Five feature channels and their purposes:
 **Postcode anchor** — a uniform country posterior over the locale set plus a 2-d centroid, painted on
 the postcode span. This position-local design has a property the global locale FiLM lacks. The two
 compose, with the anchor at the input and FiLM after the blocks. Robustness comes from a confidence CURRICULUM
-applied upstream in the loader. It is painted beside the tokenizer rather than here, because locating
-a postcode span needs piece offsets.
+applied upstream in the loader. The anchor painter is `mtf-channels/src/anchor.rs`.
 
 **Gazetteer anchor** — a multi-hot candidate-tag set (country/region/po_box/cedex/homograph) from the
-codex lexicon. The homograph bit explicitly marks "context decides here". See `gazetteer_anchor.py`.
+codex lexicon. The homograph bit explicitly marks "context decides here". See `mtf-channels/src/gazetteer.rs`.
 
 **Country lexicon** — `[country_surface, country_ambiguous]`. Country is a closed, enumerable class of
 roughly 250 surfaces that the learned grammar mislabels in the WOF-admin leading-long-form case. It

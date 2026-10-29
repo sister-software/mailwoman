@@ -461,7 +461,7 @@ def piece_prior(
 
     for ex in stream:
         n_rows += 1
-        pieces = [tok.sp.id_to_piece(i) for i in ex.input_ids]
+        pieces = [tok.id_to_piece(i) for i in ex.input_ids]
         labels = ex.labels
 
         # Walk maximal runs of digit-containing pieces. The run is the unit under investigation:
