@@ -17,17 +17,16 @@ Mail addresses name countries rather than regions.
 from __future__ import annotations
 
 from ..protocols import CountryModule
-from . import kr, tw
+from . import kr
 
 COUNTRY_MODULES: dict[str, CountryModule] = {
     "kr": kr,
-    "tw": tw,
 }
 
 #: Codes whose directory contributes sources only. Listed rather than inferred, so a directory that
 #: meant to declare a label set is a failure rather than a silent demotion; `test_country_registry`
 #: refuses a directory in neither group.
-SOURCE_ONLY = frozenset({"de", "jp"})
+SOURCE_ONLY = frozenset({"de", "jp", "tw"})
 
 #: Directories under here that are regional groupings rather than countries.
 REGIONS = frozenset({"cjk"})

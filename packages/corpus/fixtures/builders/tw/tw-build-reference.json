@@ -1,8 +1,9 @@
 {
 	"README": [
 		"Pins one seeded Taiwan build across a refactor.",
-		"Regenerate: uv run python -m tests.mailwoman_train.countries.test_tw_build_parity",
-		"Fixture: SOURCE_ROWS in the test beside this file — an Overture-TW-shaped parquet carrying the",
+		"Written by the Python assembler (corpus-python countries/tw/corpora) before it moved to",
+		"  packages/corpus/lib/tw/corpus. It records that assembler's output and is not regenerated.",
+		"Fixture: SOURCE_ROWS in lib/tw/corpus/assemble.test.ts, an Overture-TW-shaped parquet carrying the",
 		"  shapes the renderers branch on, not a sample of the source.",
 		"",
 		"train / val: every rendered row as raw + register + the span triple, in emission order.",

@@ -11,9 +11,8 @@ import inspect
 
 from mailwoman_train import protocols
 from mailwoman_train.countries.kr import corpora as kr_corpora
-from mailwoman_train.countries.tw import corpora as tw_corpora
 
-COUNTRY_BUILDERS = (kr_corpora, tw_corpora)
+COUNTRY_BUILDERS = (kr_corpora,)
 
 
 def test_country_module_protocol_declares_the_expected_members() -> None:

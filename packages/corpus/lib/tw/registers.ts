@@ -47,7 +47,7 @@ const KANJI_SECTION = "〇一二三四五六七八九十"
 /**
  * The admin levels an Overture-TW row must carry: 縣市, 鄉鎮市區 and 村里.
  */
-const ADMIN_LEVELS = 3
+export const TW_ADMIN_LEVELS = 3
 
 /**
  * A register or Overture value folded to its key: whitespace-free NFC, ASCII digits,
@@ -89,9 +89,9 @@ export class TWKeyIndex {
 		for await (const row of openParquetRowStream<Row>(parquet, { columns: ["address_levels", "street"], limit })) {
 			const level = row.address_levels
 
-			if (!level || level.length < ADMIN_LEVELS || !row.street) continue
+			if (!level || level.length < TW_ADMIN_LEVELS || !row.street) continue
 
-			const [region, district, village] = level.slice(0, ADMIN_LEVELS).map((entry) => twFoldKey(entry.value || ""))
+			const [region, district, village] = level.slice(0, TW_ADMIN_LEVELS).map((entry) => twFoldKey(entry.value || ""))
 
 			if (!region || !district) continue
 
