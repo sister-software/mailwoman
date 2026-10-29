@@ -501,6 +501,10 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts` | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
 | `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                | output line equal on both tables                                                      |
 | `semantic_tags.py` (Phase 1)            | `packages/neural/lib/semantic-tags.ts`, schema `semantic_tags`      | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal; Python reader pinned     |
+| `exposure/cli.py`, replayed draws       | `packages/mailwoman/tools/training/exposure/exposure.run.ts`        | byte-equal (495,948 bytes) but `measured_at`; Python 209 s, TypeScript 43 s           |
+| `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                           | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
+| `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
+| `exposure/release_check.py`             | `release-check.run.ts`                                              | `preflight` and `completed` findings byte-equal, exit status equal                    |
 
 Classified differences (**decided**):
 
@@ -512,7 +516,17 @@ Classified differences (**decided**):
   `address_systems` section references the systems by their append-only ids, in order, so its length is the head
   width. `semantic_tags.py` and `address_systems.py` remain as readers, and `test_label_schema.py` pins both to the
   schema, as it pins `labels.py`.
-
+- The exposure references were captured at `4753d3762` (replayed and eligible) and `ba72cbdec` (canonical). The
+  ports ran at `ba72cbdec`. Each pair differs only in `measured_at`, and the first two also in `code_revision`,
+  which records the checkout's `HEAD`. Case folding, letter scripts and the Latin-text test read CPython 3.12's
+  Unicode tables through `mtf-node` (`python_text::casefold`, `detect_script`, `is_latin_text`), generated into
+  `mtf-channels/src/python_text/tables.rs` by `python_text_tables.py` and checked over every scalar value by its
+  `--check`. The eligible stage reads `SplitColumns` with a country filter in Rust; without it the same output took
+  1,374 s. `exposure/report.py` and `exposure/phenomena.py` stay, because `train/loop.py` counts realized draws
+  with `StageCounter`, `exposure/grade.py` reads the phenomena and `python_text_tables.py` reads
+  `SCRIPT_NAME_PREFIXES`. They go with the trainer (Phase 3 and 5). The `measure_exposure` Modal function is
+  deleted, and the tool runs on a host that mirrors the volume. `grade_exposure` stays, because it forwards a
+  PyTorch checkpoint.
 - `label_support` fills `rows_with_label` from a Python `set` of labels per row, so its key order follows
   `PYTHONHASHSEED` (two seeds give two orders over the same six labels). No byte-equal reference exists. The port
   writes the labels in their first appearance, in piece order, and every count is equal.
@@ -531,10 +545,12 @@ Classified differences (**decided**):
   has no Node runtime. Those four modules and their tests are deleted when the launcher moves (Phase 7).
 
 Deleted: `launch/audits.py`, `audits/{opening_token,region_code_token,comma_segment_number,suffix_feed,config_keys}.py`,
-`calibration/`, and their tests. Not ported yet: `audits/mixed_script.py` (it names scripts by Unicode character
-names, which Node does not carry), `exposure/` (it needs `semantic_tags.py`'s registry, and `exposure/grade.py`
-runs a PyTorch checkpoint), and `evaluation/` with the JP probe board (both run a PyTorch checkpoint, so they move
-with the trainer or onto exported ONNX models).
+`calibration/`, `exposure/{cli,__main__,release_check}.py` with `test_exposure_release_check.py`, and their tests.
+`exposure/floors.json` moved to `packages/mailwoman/tools/training/exposure/`. Not ported yet:
+`audits/mixed_script.py` (it names scripts by Unicode character names, which Node does not carry),
+`exposure/grade.py` (it runs a PyTorch checkpoint), `exposure/report.py` and `exposure/phenomena.py` (ported, kept
+for the trainer's in-loop counter and `grade.py`), and `evaluation/` with the JP probe board (both run a PyTorch
+checkpoint, so they move with the trainer or onto exported ONNX models).
 
 ### Phase 3 — The Rust sampler and character path
 

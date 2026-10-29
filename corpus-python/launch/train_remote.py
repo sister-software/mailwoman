@@ -10,7 +10,6 @@ from .grade import (
     grade_evidence_bundle,
     grade_exposure,
     grade_street_type_contrast,
-    measure_exposure,
 )
 from .loader_profile import loader_profile
 from .mean_init import mean_init
@@ -38,7 +37,6 @@ __all__ = [
     "locale_supply_census",
     "main",
     "mean_init",
-    "measure_exposure",
     "piece_prior",
     "preflight",
     "push_artifact_r2",

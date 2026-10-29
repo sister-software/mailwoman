@@ -14,6 +14,9 @@ Every unary predicate returns ``None`` when the row does not hold the components
 about, and a short string stating which form the row exercises when it does. The string is the
 observation. A caller counting rows counts each form, so a row exercising the opposite order is
 counted under its own form.
+
+``packages/mailwoman/tools/training/exposure/phenomena.ts`` is the TypeScript port. This module stays for the
+trainer's in-loop counter, ``grade.py`` and ``text/python_text_tables.py`` until those move.
 """
 
 from __future__ import annotations

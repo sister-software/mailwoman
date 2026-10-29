@@ -23,7 +23,7 @@ use mtf_core::Processor;
 use mtf_sampler::batch::encode_pieces;
 use mtf_sampler::char_path::CharEncoder as RustCharEncoder;
 use mtf_sampler::source_reps::{derive_source_weights as derive, DerivedReps};
-use mtf_sampler::split_columns::{ColumnValues, SplitColumns as RustSplitColumns};
+use mtf_sampler::split_columns::{ColumnValues, KeepRows, SplitColumns as RustSplitColumns};
 use mtf_sampler::{
 	CancelToken, CharConfig, Event, Observer, RawRows as RustRawRows, Row, Sampler as RustSampler, SamplerConfig,
 	SkipReason, SpanTriple, TrainingBatches as RustTrainingBatches, Weights,
@@ -761,12 +761,13 @@ impl CharEncoder {
 }
 
 /// One row group's admitted rows over the requested columns: a string column under `strings`, a list-of-strings
-/// column under `lists`.
+/// column under `lists`, and a list-of-integers column under `int_lists`.
 #[napi(object)]
 pub struct SplitColumnChunk {
 	pub rows: u32,
 	pub strings: HashMap<String, Vec<Option<String>>>,
 	pub lists: HashMap<String, Vec<Option<Vec<String>>>>,
+	pub int_lists: HashMap<String, Vec<Option<Vec<i64>>>>,
 }
 
 /// Every row a split holds over a few columns, in file and row order, one row group at a time.
@@ -775,12 +776,24 @@ pub struct SplitColumns {
 	inner: RustSplitColumns,
 }
 
+/// The rows a split read keeps: those whose string column `column`, uppercased, is one of `values`.
+#[napi(object)]
+pub struct SplitKeep {
+	pub column: String,
+	pub values: Vec<String>,
+}
+
 #[napi]
 impl SplitColumns {
 	#[napi(constructor)]
-	pub fn new(config: String, split: String, columns: Vec<String>) -> Result<Self> {
+	pub fn new(config: String, split: String, columns: Vec<String>, keep: Option<SplitKeep>) -> Result<Self> {
+		let keep = keep.map(|k| KeepRows {
+			column: k.column,
+			values: k.values.into_iter().collect(),
+		});
 		Ok(Self {
-			inner: RustSplitColumns::open(&self::config(&config)?, &split, &columns).map_err(sampler_error)?,
+			inner: RustSplitColumns::open_keeping(&self::config(&config)?, &split, &columns, keep)
+				.map_err(sampler_error)?,
 		})
 	}
 
@@ -800,6 +813,7 @@ impl SplitColumns {
 			rows: chunk.rows as u32,
 			strings: HashMap::new(),
 			lists: HashMap::new(),
+			int_lists: HashMap::new(),
 		};
 		for (name, values) in chunk.columns {
 			match values {
@@ -808,6 +822,9 @@ impl SplitColumns {
 				}
 				ColumnValues::Lists(v) => {
 					out.lists.insert(name, v);
+				}
+				ColumnValues::IntLists(v) => {
+					out.int_lists.insert(name, v);
 				}
 			}
 		}
@@ -893,6 +910,33 @@ pub fn derive_source_weights(
 			)
 			.collect(),
 	})
+}
+
+/// `str.casefold` under the trainer's CPython Unicode tables.
+#[napi]
+pub fn python_casefold(text: String) -> String {
+	mtf_channels::python_text::casefold(&text)
+}
+
+/// The consecutive runs of letter scripts in `text`, as the mixed-script audit's `script_runs` names them.
+#[napi]
+pub fn python_script_runs(text: String) -> Vec<String> {
+	mtf_channels::python_text::script_runs(&text)
+		.into_iter()
+		.map(str::to_owned)
+		.collect()
+}
+
+/// The exposure phenomena's coarse script tag for `text`.
+#[napi]
+pub fn python_detect_script(text: String) -> String {
+	mtf_channels::python_text::detect_script(&text).to_owned()
+}
+
+/// Whether `text` holds a letter and every letter is Latin script by Unicode name.
+#[napi]
+pub fn python_is_latin_text(text: String) -> bool {
+	mtf_channels::python_text::is_latin_text(&text)
 }
 
 /// The channel names the row encoder may emit, in its block order.

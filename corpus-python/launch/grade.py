@@ -483,38 +483,6 @@ def grade_evidence_bundle(
 @app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
-    timeout=7200,
-    memory=32768,
-)
-def measure_exposure(config_name: str, countries: str = "", draws: int = 0, replay_only: bool = False) -> None:
-    """Measure a config's eligible and replayed-draw stages by phenomenon, on CPU, against the volume's corpus.
-
-    Writes ``/data/audits/exposure-<config stem>.json``. ``countries`` limits both stages to a
-    comma-separated list, and ``draws`` overrides the epoch length the replay reads. ``replay_only``
-    skips the eligible stage. That stage reads every admitted row of the corpus.
-    """
-    import sys
-    from pathlib import Path
-
-    vol.reload()
-    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
-    from mailwoman_train.exposure.cli import main
-
-    config = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
-    argv = ["--config", str(config), "--json", f"{VOL_MOUNT}/audits/exposure-{config.stem}.json"]
-    if countries:
-        argv += ["--countries", countries]
-    if draws:
-        argv += ["--draws", str(draws)]
-    if replay_only:
-        argv.append("--replay-only")
-    main(argv)
-    vol.commit()
-
-
-@app.function(
-    volumes={VOL_MOUNT: vol},
-    image=training_image,
     gpu=settings().eval_gpu,
     timeout=3600,
     memory=32768,

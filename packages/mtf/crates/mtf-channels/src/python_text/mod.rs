@@ -113,6 +113,115 @@ pub fn script_block(c: char) -> Option<&'static str> {
 		.map(|i| SCRIPT_BLOCKS[tables::SCRIPT_BLOCK[i].2 as usize])
 }
 
+/// The writing systems [`letter_script`] names, in the generator's `LETTER_SCRIPTS` order.
+pub const LETTER_SCRIPTS: [&str; 26] = [
+	"Latin",
+	"Han",
+	"Hiragana",
+	"Katakana",
+	"Hangul",
+	"Cyrillic",
+	"Arabic",
+	"Hebrew",
+	"Greek",
+	"Devanagari",
+	"Thai",
+	"Armenian",
+	"Georgian",
+	"Ethiopic",
+	"Bengali",
+	"Gurmukhi",
+	"Gujarati",
+	"Tamil",
+	"Telugu",
+	"Kannada",
+	"Malayalam",
+	"Sinhala",
+	"Khmer",
+	"Lao",
+	"Myanmar",
+	"Other",
+];
+
+/// The writing system of a letter, as the mixed-script audit's `character_script` named it, or `None` for a
+/// character whose category is not a letter.
+pub fn letter_script(c: char) -> Option<&'static str> {
+	let code = c as u32;
+	tables::LETTER_SCRIPT
+		.binary_search_by(|&(start, end, _)| {
+			if end < code {
+				std::cmp::Ordering::Less
+			} else if start > code {
+				std::cmp::Ordering::Greater
+			} else {
+				std::cmp::Ordering::Equal
+			}
+		})
+		.ok()
+		.map(|i| LETTER_SCRIPTS[tables::LETTER_SCRIPT[i].2 as usize])
+}
+
+/// The consecutive runs of letter scripts in `text`, with every character that is not a letter skipped.
+pub fn script_runs(text: &str) -> Vec<&'static str> {
+	let mut runs: Vec<&'static str> = Vec::new();
+	for script in text.chars().filter_map(letter_script) {
+		if runs.last() != Some(&script) {
+			runs.push(script);
+		}
+	}
+	runs
+}
+
+/// The exposure phenomena's coarse script tag for a string: a [`SCRIPT_BLOCKS`] entry, `mixed` or `other`.
+///
+/// Characters [`is_script_skipped`] admits are not counted. A block holding 90% or more of the counted characters
+/// is the string's tag. A character no block names counts as `other`.
+pub fn detect_script(text: &str) -> &'static str {
+	let mut counts: Vec<(&'static str, usize)> = Vec::new();
+	for c in text.chars().filter(|&c| !is_script_skipped(c)) {
+		let block = script_block(c).unwrap_or("other");
+		match counts.iter_mut().find(|(name, _)| *name == block) {
+			Some((_, n)) => *n += 1,
+			None => counts.push((block, 1)),
+		}
+	}
+	let total: usize = counts.iter().map(|(_, n)| n).sum();
+	match counts.as_slice() {
+		[] => "other",
+		[(only, _)] => only,
+		_ => {
+			// `Counter.most_common(1)`: the largest count, the first counted among equals.
+			let (top, n) = counts
+				.iter()
+				.fold(counts[0], |best, &entry| if entry.1 > best.1 { entry } else { best });
+			if n as f64 / total as f64 >= 0.9 {
+				top
+			} else {
+				"mixed"
+			}
+		}
+	}
+}
+
+/// Whether `text` holds a letter and every letter it holds is Latin script, by Unicode name, as the trainer's
+/// `address_systems.is_latin_text` reads it.
+pub fn is_latin_text(text: &str) -> bool {
+	let mut letters = text.chars().filter(|&c| is_alpha(c)).peekable();
+	letters.peek().is_some() && letters.all(|c| script_block(c) == Some("latin"))
+}
+
+/// `str.casefold`.
+pub fn casefold(text: &str) -> String {
+	let mut out = String::with_capacity(text.len());
+	for c in text.chars() {
+		match mapped(tables::CASEFOLD, c) {
+			Some(code_points) => push_code_points(&mut out, code_points),
+			None => out.push(c),
+		}
+	}
+	out
+}
+
 /// What `\w` matches in a `str` pattern: an alphanumeric character or the underscore.
 pub fn is_word(c: char) -> bool {
 	c == '_' || is_alnum(c)

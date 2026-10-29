@@ -199,7 +199,14 @@ node packages/mailwoman/tools/training/audits/region-code-token.run.ts <yaml> --
 node packages/mailwoman/tools/training/audits/comma-segment-number.run.ts <yaml> --json <path>
 node packages/mailwoman/tools/training/audits/suffix-feed.run.ts --config <yaml> \
   --classify-lexicon <v2 lexicon> --relabel-lexicon <lexicon> --json <path>
+node packages/mailwoman/tools/training/exposure/exposure.run.ts --config <yaml> [--countries RU] \
+  [--draws <n>] [--replay-only] --json <path>
+node packages/mailwoman/tools/training/exposure/release-check.run.ts preflight --report <exposure.json> \
+  --claim RU:streetless-premise-identity
 ```
+
+The exposure tool replaces the `measure_exposure` Modal function. `grade_exposure` still runs on the GPU, because
+it forwards a checkpoint.
 
 A config states its paths under `/data`. Pass `--corpus-dir` with the host copy, where the tool takes one,
 or audit a copy of the config with its paths re-rooted.

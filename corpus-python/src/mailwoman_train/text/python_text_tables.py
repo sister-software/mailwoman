@@ -10,7 +10,8 @@ database, and Rust's standard library carries a different Unicode version. The c
 - the characters the tokenizer's byte-fallback report skips, and the script block each other character's name
   places it in (`exposure.phenomena.SCRIPT_NAME_PREFIXES`, which `detect_script` there also reads);
 - the cased and case-ignorable properties `str.lower` reads for the final-sigma rule;
-- the full lowercase and uppercase mapping of each character whose mapping is not itself.
+- the full lowercase, uppercase and case-folding mapping of each character whose mapping is not itself;
+- the writing system of each letter (`character_script`), which the mixed-script audit reads.
 
 Surrogate code points are left out, because a Rust `char` cannot hold one and decoded UTF-8 never contains one.
 
@@ -101,6 +102,68 @@ def script_block(char: str) -> int:
     return -1
 
 
+#: The writing systems the mixed-script audit names, in match order: a letter whose Unicode name contains a marker
+#: belongs to that marker's script. `Other` is last. The audit's `character_script` rule moved here with it.
+LETTER_SCRIPT_MARKERS: tuple[tuple[str, str], ...] = (
+    ("LATIN", "Latin"),
+    ("CJK UNIFIED IDEOGRAPH", "Han"),
+    ("CJK COMPATIBILITY IDEOGRAPH", "Han"),
+    ("HIRAGANA", "Hiragana"),
+    ("KATAKANA", "Katakana"),
+    ("HANGUL", "Hangul"),
+    ("CYRILLIC", "Cyrillic"),
+    ("ARABIC", "Arabic"),
+    ("HEBREW", "Hebrew"),
+    ("GREEK", "Greek"),
+    ("DEVANAGARI", "Devanagari"),
+    ("THAI", "Thai"),
+    ("ARMENIAN", "Armenian"),
+    ("GEORGIAN", "Georgian"),
+    ("ETHIOPIC", "Ethiopic"),
+    ("BENGALI", "Bengali"),
+    ("GURMUKHI", "Gurmukhi"),
+    ("GUJARATI", "Gujarati"),
+    ("TAMIL", "Tamil"),
+    ("TELUGU", "Telugu"),
+    ("KANNADA", "Kannada"),
+    ("MALAYALAM", "Malayalam"),
+    ("SINHALA", "Sinhala"),
+    ("KHMER", "Khmer"),
+    ("LAO", "Lao"),
+    ("MYANMAR", "Myanmar"),
+)
+
+#: The script names `LETTER_SCRIPT` indexes, deduplicated in first-match order, then `Other`.
+LETTER_SCRIPTS: tuple[str, ...] = (*dict.fromkeys(script for _, script in LETTER_SCRIPT_MARKERS), "Other")
+
+
+def character_script(char: str) -> str | None:
+    """The writing system of a letter, or None for a character whose category is not a letter.
+
+    A letter whose name holds no marker reads its compatibility decomposition: Spanish º and ª decompose to Latin
+    letters, so they are Latin rather than `Other`. A decomposition into one script names that script, and any
+    other letter is `Other`.
+    """
+    if not unicodedata.category(char).startswith("L"):
+        return None
+    name = unicodedata.name(char, "")
+    for marker, script in LETTER_SCRIPT_MARKERS:
+        if marker in name:
+            return script
+    compatibility = unicodedata.normalize("NFKD", char)
+    if compatibility != char:
+        scripts = {sc for item in compatibility if (sc := character_script(item)) is not None}
+        if len(scripts) == 1:
+            return scripts.pop()
+    return "Other"
+
+
+def letter_script(char: str) -> int:
+    """The character's index in `LETTER_SCRIPTS`, or -1 for a character that is not a letter."""
+    script = character_script(char)
+    return -1 if script is None else LETTER_SCRIPTS.index(script)
+
+
 def tagged_ranges(classify: Callable[[str], int]) -> list[tuple[int, int, int]]:
     """The inclusive ranges of scalar values `classify` maps to one non-negative tag, with that tag."""
     out: list[tuple[int, int, int]] = []
@@ -175,6 +238,10 @@ def render() -> str:
         _rust_mapping("LOWER", mapping(str.lower)),
         "\n",
         _rust_mapping("UPPER", mapping(str.upper)),
+        "\n",
+        _rust_tagged_ranges("LETTER_SCRIPT", tagged_ranges(letter_script)),
+        "\n",
+        _rust_mapping("CASEFOLD", mapping(str.casefold)),
     ]
     return "".join(parts)
 

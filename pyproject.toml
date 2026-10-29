@@ -98,7 +98,6 @@ mailwoman_train = [
 	"address_systems.json",
 	"features/postcode-shapes.json",
 	"data/augment/postcode-layouts.json",
-	"exposure/floors.json",
 	"configs/*.yaml",
 ]
 

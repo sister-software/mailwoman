@@ -19,6 +19,9 @@ Stages, in pipeline order:
 
 A stage that was not measured is ``null``. A stage measured at zero is ``{"total": 0, ...}``. The two
 are different facts and the report never writes one for the other.
+
+``packages/mailwoman/tools/training/exposure/exposure.run.ts`` writes every stage but ``realized_draws``. This
+module stays for the trainer's in-loop ``StageCounter``, which writes ``realized_draws``, until the trainer moves.
 """
 
 from __future__ import annotations

@@ -126,6 +126,19 @@ export interface SplitColumnChunk {
 	rows: number
 	strings: Record<string, Array<string | null>>
 	lists: Record<string, Array<string[] | null>>
+	/**
+	 * Each list-of-integers column, such as `span_starts`.
+	 */
+	intLists: Record<string, Array<number[] | null>>
+}
+
+/**
+ * The rows a split read keeps: those whose string column `column`, uppercased, is one of `values`.
+ * A row whose value is null is not kept.
+ */
+export interface SplitKeep {
+	column: string
+	values: string[]
 }
 
 /**
@@ -239,7 +252,7 @@ interface NativeModule {
 		skipBatches?: number | null
 	) => NativeTrainingBatches
 	RawRows: new (config: string, split: string, seed: number, options?: NativeStreamOptions | null) => NativeRawRows
-	SplitColumns: new (config: string, split: string, columns: string[]) => NativeSplitColumns
+	SplitColumns: new (config: string, split: string, columns: string[], keep?: SplitKeep | null) => NativeSplitColumns
 	RowEncoder: new (options: NativeRowEncoderOptions) => {
 		encodeBatch(rows: SampledRow[]): RawEncodedRows
 		readonly channelDims: Array<{ name: string; dim: number }>
@@ -253,6 +266,36 @@ interface NativeModule {
 		samples: number
 	): { merged: SourceWeight[]; derived: DerivedSourceReps[] }
 	channelNames(): string[]
+	pythonCasefold(text: string): string
+	pythonScriptRuns(text: string): string[]
+	pythonDetectScript(text: string): string
+	pythonIsLatinText(text: string): boolean
+}
+
+/**
+ * Python 3.12's string semantics for the training tools, read from the CPython
+ * Unicode tables in `mtf-channels/src/python_text/tables.rs`.
+ *
+ * Node's ICU follows another Unicode version and has no character-name table.
+ */
+export interface PythonText {
+	/**
+	 * `str.casefold`.
+	 */
+	casefold(text: string): string
+	/**
+	 * The consecutive runs of letter scripts, every character that is not a letter skipped,
+	 * as the mixed-script audit's `script_runs` names them.
+	 */
+	scriptRuns(text: string): string[]
+	/**
+	 * The exposure phenomena's coarse script tag: a script block, `mixed` or `other`.
+	 */
+	detectScript(text: string): string
+	/**
+	 * Whether the text holds a letter and every letter is Latin script by Unicode name.
+	 */
+	isLatinText(text: string): boolean
 }
 
 /**
@@ -335,6 +378,7 @@ export interface MTFNode {
 	sourceRowCounts: NativeModule["sourceRowCounts"]
 	deriveSourceWeights: NativeModule["deriveSourceWeights"]
 	channelNames: NativeModule["channelNames"]
+	pythonText: PythonText
 }
 
 /**
@@ -377,5 +421,11 @@ export async function mtfNode(): Promise<MTFNode> {
 		sourceRowCounts: native.sourceRowCounts,
 		deriveSourceWeights: native.deriveSourceWeights,
 		channelNames: native.channelNames,
+		pythonText: {
+			casefold: native.pythonCasefold,
+			scriptRuns: native.pythonScriptRuns,
+			detectScript: native.pythonDetectScript,
+			isLatinText: native.pythonIsLatinText,
+		},
 	}
 }
