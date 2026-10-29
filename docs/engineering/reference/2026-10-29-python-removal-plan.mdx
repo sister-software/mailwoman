@@ -1,0 +1,507 @@
+---
+title: Python removal plan — porting corpus-python to TypeScript and Rust with zero Python left
+role: reference
+audience: maintainer
+owner: model
+source-of-truth: corpus-python/src/mailwoman_train
+tags:
+  - model
+  - training
+  - operations
+---
+
+# Python removal plan
+
+This plan implements issue #2874. The issue decides the outcome: the repository ends with zero tracked Python
+implementation, test or generator files, without a Python manifest or the `mtf-py` binding, and with a Rust trainer,
+Python-free ONNX export and int8 quantization, and a TypeScript launcher. A capability is retired only by an explicit
+product decision. A language port keeps every feature in place. Read the issue in full before starting a phase,
+with `gh issue view 2874`.
+
+Every claim below is tagged **observed** (read from the tree at `9a2220290`, the head of `origin/main` on
+2026-10-29, or from a tool result on that date), **inferred**, **decided** (a choice this plan makes that the
+operator may override) or **unknown**. Where the issue corrects the earlier host-local draft, this document records
+the correction and the source that confirms it.
+
+## 1. Inventory
+
+### 1.1 Totals
+
+**Observed** at `9a2220290`: `git ls-tree -r --name-only origin/main | grep -c '\.py$'` prints 378, and the
+`.py` set has no diff from the tree the earlier draft measured, so the 51,332-line `wc -l` total stands. The
+review in the issue inspected `9081ee101`, the #2873 merge commit. That commit is an ancestor of `9a2220290`
+(`git merge-base --is-ancestor` printed yes).
+
+| Area                                                                                                   | Files |  Lines |
+| ------------------------------------------------------------------------------------------------------ | ----: | -----: |
+| `corpus-python/src/mailwoman_train/`                                                                   |   214 | 28,885 |
+| `corpus-python/launch/`                                                                                |    20 |  4,020 |
+| `corpus-python/scripts/` (`verify_toolchain.py` and `comment_nodes.py`, beside `train_with_resume.ts`) |     2 |    375 |
+| `corpus-python/tests/`                                                                                 |   142 | 17,632 |
+| `packages/neural/test/fixtures/generate-{tokenizer-parity,evidence-parity,split-embeddings}.py`        |     3 |    397 |
+| `config/vale/fixtures/{clean,dirty}.py`                                                                |     2 |     19 |
+| `lib/repo-health/test/fixtures/comments.py`                                                            |     1 |      4 |
+
+Per-package line counts under `corpus-python/src/mailwoman_train/` (**observed**): `countries` 5,007 / 40 files,
+`audits` 3,317 / 18, `data` 3,183 / 21, `corpora` 2,989 / 20, `nn` 2,601 / 18, `tokenizer` 2,119 / 12, `train` 1,624 /
+16, `evaluation` 1,333 / 10, `export` 1,308 / 7, `exposure` 1,041 / 8, `cli` 839 / 14, `config` 588 / 3,
+`calibration` 545 / 3, `optim` 357 / 4, `text` 256 / 4, `features` 195 / 3, `observability` 175 / 2, and 1,408 lines
+in the 11 top-level modules (`labels.py` 299, `source_rights.py` 358, `semantic_tags.py` 176, `env.py` 162,
+`fit_crf_transitions.py` 125, `address_systems.py` 98, `paths.py` 76, `protocols.py` 66, `types.py` 21,
+`__init__.py` 21, `__main__.py` 6).
+
+Third-party import lines across `src`, `launch` and `scripts` (**observed**): torch 72, pyarrow 38, spliterator 14,
+numpy 13, sentencepiece 12, mailwoman_mtf 11, onnx 8, yaml 7, onnxruntime 5, modal 5, sqlite3 2, trackio 1,
+platformdirs 1, onnxscript 1, transformers 1. The one `transformers` import is
+`corpus-python/launch/volume.py::versions` (line 97), and it prints the installed version. The issue's correction is
+confirmed. The earlier draft's "install-only" claim was wrong. The `versions` command migrates with the launcher
+and reports the Rust image's pins instead.
+
+The Python test run at the #2873 merge: 3,053 passed, 4 skipped (**observed** in PR #2873's body).
+
+### 1.2 A module without a torch import can still be a training dependency
+
+The issue's prerequisite list is confirmed against the tree (**observed**):
+
+- `corpus-python/src/mailwoman_train/source_rights.py` is imported by `config/load.py`, `config/schema.py`,
+  `corpora/builder.py`, `corpora/registry.py`, `corpora/secondary.py`, `corpora/fragment/build.py`,
+  `corpora/deepseek/cli.py`, `countries/cjk/overlay.py`, `countries/jp/corpora/assemble.py`,
+  `countries/jp/probe_corpora.py`, `countries/kr/corpora/assemble.py`, `countries/tw/corpora/assemble.py`,
+  `countries/us/tuples.py` and `launch/train.py`. That is fifteen importers, where the earlier draft counted one.
+- `corpus-python/src/mailwoman_train/data/masking.py` is imported by `train/pretrain.py` (`mask_tokens`, line 35)
+  for MLM pretraining. That loop reuses `unk_id` as the mask token (line 242).
+- `corpus-python/src/mailwoman_train/audits/encoder_parity.py` constructs
+  `Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")` at line 210 unconditionally and records
+  `sentencepiece.__version__` at line 170. A character-path config has no SentencePiece model, so the reader is
+  extended before the char path is captured (Phase 0).
+- Resume: `train/checkpoint.py::save_checkpoint` accepts `rng_state` (line 36) and writes `rng_state.pt` only when
+  given (line 57). Its callers in `train/loop.py` (line 62), `train/callbacks/checkpointer.py` (line 43) and
+  `train/pretrain.py` (lines 223, 225) pass none. The supervised loop opens `iter_batches` with
+  `seed=cfg.train.seed + epoch` (`train/loop.py` line 125) and `pretrain.py` does the same (line 166). The Rust
+  trainer preserves this behavior: a checkpoint stores no RNG state, and each epoch reseeds with `seed + epoch`.
+  Exact mid-epoch resume is a separate behavior change outside this plan.
+- `packages/neural/lib/labels.ts` exports `STAGE1_*`, `STAGE2_*` and `STAGE3_*` only (lines 26–88). `labels.py`
+  also defines `STAGE4_FINE_TAGS`, `STAGE4_TAGS`, `STAGE4_BIO_LABELS` (lines 102–114), `JP_FINE_TAGS`,
+  `STAGE3_JP_TAGS`, `STAGE3_JP_BIO_LABELS` (129–141), `CN_FINE_TAGS`, `STAGE3_CN_*` (157–161), `CJK_FINE_TAGS`,
+  `STAGE3_CJK_*` (174–178), `_LABEL_SETS` (221), `IGNORE_INDEX = -100` (238) and `LOCALE_COUNTRIES` (253). The
+  TypeScript owner must gain all of these with their index order before the Python reader goes.
+
+### 1.3 Randomness inventory
+
+Every `random.Random(...)` and NumPy generator construction under `corpus-python/src` (**observed** by grep):
+
+| Consumer                                                                                                                  | Construction                                                         | Seed form      | Methods drawn (to confirm per module in Phase 2)                   |
+| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `corpora/fragment/sources.py` (lines 146, 238, 280), `corpora/fragment/build.py` (321, 426)                               | `random.Random(f"{SEED}:{key}")`, `random.Random(SEED)`              | string and int | `choice`, `shuffle`, `random`, `sample`                            |
+| `corpora/registry.py` (102, 117)                                                                                          | `random.Random(args.seed)`, `random.Random(f"{args.seed}-postcode")` | int and string | `random`, `choice`                                                 |
+| `countries/jp/corpora/assemble.py` (311), `countries/jp/probe_corpora.py` (417)                                           | `random.Random(args.seed)`                                           | int            | one generator shared across selection, shuffle and register choice |
+| `countries/kr/corpora/assemble.py` (277), `countries/tw/corpora/assemble.py` (251), `countries/de/fragment_board.py` (90) | `random.Random(args.seed)`                                           | int            | `shuffle`, `choice`, `sample`                                      |
+| `corpora/secondary.py` (148), `corpora/house_venue_tuples.py` (93), `corpora/sample_raws.py` (67)                         | `random.Random(SEED)` or `args.seed`                                 | int            | `shuffle`, `sample`, `random`                                      |
+| `data/loader/batch.py` (68), `data/loader/encode.py` (296), `data/relabel.py` (178)                                       | `random.Random(seed)`, `random.Random(0)`, `random.Random(42)`       | int            | the sampler: `random`, `randrange`, `choices`, `shuffle`, `choice` |
+| `audits/*` (8 sites), `exposure/cli.py` (89), `exposure/grade.py` (64), `audits/loader_profile.py` (66)                   | `random.Random(seed)`                                                | int            | pass a generator into the sampler                                  |
+| `tokenizer/train.py` (94), `tokenizer/splice.py` (69), `tokenizer/vocab/prune_verify.py` (43, 202)                        | `random.Random(seed)`                                                | int            | `sample`, `shuffle`                                                |
+| `calibration/isotonic.py` (220), `calibration/drift_guard.py` (71)                                                        | `np.random.default_rng(seed)` and `rng.permutation(n)`               | int            | NumPy PCG64 permutation, a separate generator from CPython's       |
+
+`random.Random(str)` seeds from the SHA-512 of the string (CPython 3.11+ `version=2` seeding). The CPython
+`random` module's 43 call sites under `data/` are the sampler's (**observed** count of method calls).
+
+### 1.4 Python tooling outside the training tree
+
+`.github/workflows/publish-clients.yml` and `.github/actions/generate-clients/action.yml` install uv and run
+`packages/mailwoman/tools/generate-clients.ts`. That tool calls `uvx openapi-python-client@0.29` (line 170) to
+generate the Python API client, writes its `pyproject.toml` from `pythonPyproject()` (line 191) and builds a wheel.
+This is the external user deliverable the issue keeps. It is TypeScript orchestration over a third-party generator,
+holds no repository Python implementation, and needs uv only in that workflow. It stays and is tracked as
+"client publishing" rather than as training migration. Its uv pin (`astral-sh/setup-uv@v7`) remains after the
+training migration deletes the root `pyproject.toml`.
+
+### 1.5 Reusable code already in the tree
+
+**Observed**: `packages/corpus/lib/{build,runner,recipes,parquet,source-register}.ts` and forty per-country
+directories. `packages/corpus/lib/source-register/corpus-inputs.ts` (source admission).
+`packages/mtf/crates/mtf-core` and `packages/mtf/crates/mtf-channels` (encode, label projection, painters, packing)
+with `packages/mtf/lib` for Node and browsers. `packages/neural/lib` (ONNX runner, viterbi, soft features, char
+encoder). `packages/mailwoman/tools/eval-harness` (gauntlet, heldout, promotion, release, score, specs) and the
+`mailwoman eval check` command. `packages/core/lib/decoder/calibration.ts`.
+`packages/mailwoman/tools/dev-tools/launch-detached.run.ts`. `packages/sentencepiece-wasm/build.sh`, which builds
+google/sentencepiece at tag `v0.2.2` from source with CMake. `packages/corpus/lib/{jp,kr,tw}` hold adapters and
+fetchers only (`jp/adapters/wof-admin`, `kr/adapters/{juso,localdata}`, `{jp,kr,tw}/tools/fetch`). The assemblers
+exist only in Python.
+
+The Rust `spliterator` crate 10.1.1 is on crates.io (created 2026-10-28, repository
+`https://github.com/sister-software/spliterator`, "the Rust counterpart of the spliterator npm package, sharing its
+semantics"). It is a registry dependency rather than a vendored one (**observed**: no `Cargo.toml` names it). The
+Rust `sentencepiece` crate 0.14.0 (`https://github.com/danieldk/sentencepiece`, MIT OR Apache-2.0) binds the C++
+library with `static` and `system` features (**observed** via `cargo info`). It exposes the processor, and whether it
+exposes the trainer is **unknown** until Phase 0 reads `sentencepiece-sys`.
+
+## 2. Destinations and interfaces
+
+| Python                                                                                                                                                                     | Destination                                                                                                                                                                                                                      | Interface the consumers use                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `labels.py`, `semantic_tags.py`, `address_systems.py`, `features/phrase_priors.py`, `types.py`                                                                             | `packages/neural/lib/labels.ts` (every label set, BIO expansion, semantic mapping, `LOCALE_COUNTRIES`, `IGNORE_INDEX`). `packages/codex` keeps the address-system registry with append-only IDs                                  | `packages/neural/tools/labels/emit-label-schema.run.ts` writes `packages/neural/data/label-schema.v1.json`, read by `mtf-channels` and the trainer. A vitest pins the JSON to the TS constants                                                                                                                                                                                                                                                                                                          |
+| `config/schema.py`, `config/load.py`, 148 YAML files                                                                                                                       | `packages/corpus/lib/training/config/{schema,load}.ts` (zod). YAMLs move to `packages/corpus/data/training-configs/`                                                                                                             | `mailwoman train config resolve <yaml> --out resolved.json` writes a versioned resolved config (`schema_version`, every default applied, paths absolute, source admission result embedded) that the Rust sampler and trainer read. `scope.config.json` and `packages/core/lib/scope-config.ts` repoint to the new directory                                                                                                                                                                             |
+| `source_rights.py`                                                                                                                                                         | `packages/corpus/lib/source-register/corpus-inputs.ts`                                                                                                                                                                           | `admitSources(config)` returns the admitted set, the gaps, provenance and the `unshippable_reason` behavior. Every Python consumer in §1.2 is replaced by a TS consumer that calls it, and the config resolver embeds the result                                                                                                                                                                                                                                                                        |
+| `countries/{jp,kr,tw,cjk}`, `countries/{gb,fr,us}/tuples.py`, `countries/de/fragment_board.py`                                                                             | `packages/corpus/lib/<cc>/recipes/` and `packages/corpus/lib/cjk/`. The DE board goes to `packages/mailwoman/tools/eval-harness/de/fragment-board.ts`                                                                            | `mailwoman corpus build --recipe <id>`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `corpora/{fragment,secondary,builder,registry,house_venue_tuples,address_points,sample_raws}.py`, `corpora/deepseek/`                                                      | `packages/corpus/lib/recipes/fragment/`, `recipes/secondary.ts`, `recipes/house-venue-tuples.ts`. `deepseek/` becomes `packages/corpus/sdk/deepseek/` (it fetches generated rows from an external service, so it is acquisition) | recipe ids in the corpus registry                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `audits/` (pyarrow audits)                                                                                                                                                 | `packages/mailwoman/tools/training/audits/<name>.run.ts` with a shared `receipt.ts`                                                                                                                                              | each writes the receipt the preflight verifies                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `audits/{encoder_parity,loader_profile,painted_anchor_rows}.py`                                                                                                            | `cargo` examples and tests in `packages/mtf/crates/mtf-channels` and `packages/mtf/crates/mtf-sampler`                                                                                                                           | `cargo run --release --example encoder_parity -- verify --name <record>`                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `exposure/`                                                                                                                                                                | `packages/mailwoman/tools/eval-harness/release/exposure/`                                                                                                                                                                        | `exposure.run.ts`. The in-loop `StageCounter` becomes a sampler observer event                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `calibration/`                                                                                                                                                             | `packages/mailwoman/tools/eval-harness/calibration/{isotonic,drift-guard}.run.ts`                                                                                                                                                | writes `data/eval/calibration/isotonic-<locale>-<version>.json` for `packages/core/lib/decoder/calibration.ts`                                                                                                                                                                                                                                                                                                                                                                                          |
+| `evaluation/`                                                                                                                                                              | `packages/mailwoman/tools/eval-harness/score/` and `eval-harness/jp/probe-board/`                                                                                                                                                | `mailwoman eval check`, `probe-board.run.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `data/` (sampler, augment, relabel, emit, source reps, masking), `tokenizer/{char,spans,uds}.py`                                                                           | `packages/mtf/crates/mtf-sampler`                                                                                                                                                                                                | `Sampler::open(resolved_config, split, seed)` with `rows()` (ordered sampled rows: text, tokens, labels, spans, country, source, row identity) and `batches(batch_size)` (encoded tensors through `mtf-channels`). It takes `row_limit`, reports exhaustion as `None`, raises errors that identify the row, accepts a cancellation token, and emits observer events (`row_emitted`, `row_skipped(reason)`, `source_restarted`, `epoch_complete`). `mask_tokens` becomes `Sampler::mlm_mask(batch, rng)` |
+| `nn/`, `train/`, `optim/`, `export/{onnx,graph,wrappers,quantize,split_embeddings}.py`, `cli/commands/{train,export,quantize,smoke,split_embeddings}.py`, `observability/` | new Rust workspace `packages/trainer` (`crates/trainer-model`, `trainer-loop`, `trainer-export`, `trainer-cli`)                                                                                                                  | `trainer train --config resolved.json --output <dir>`, `trainer export-onnx`, `trainer quantize`, `trainer smoke`, `trainer split-embeddings`                                                                                                                                                                                                                                                                                                                                                           |
+| `export/package_weights.py`                                                                                                                                                | `packages/mailwoman/tools/release/package-weights.run.ts`                                                                                                                                                                        | writes a `neural-weights-*` package from an exported artifact and a model card                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `launch/`                                                                                                                                                                  | `packages/mailwoman/tools/training/launch/` on the `modal` npm SDK, driven by Pastel commands under `packages/mailwoman/cli/commands/train/`                                                                                     | the `mailwoman train` subcommands `launch`, `sync`, `preflight`, `status`, `cancel`, `export`, `quantize`, `census` and `audit`                                                                                                                                                                                                                                                                                                                                                                         |
+| `scripts/verify_toolchain.py`                                                                                                                                              | `lib/repo-health/checks/training-toolchain-pins.ts`                                                                                                                                                                              | repo-health                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `scripts/comment_nodes.py`, `config/vale/python-docstrings.ts`, Vale and triage fixtures                                                                                   | deleted with the last `.py`                                                                                                                                                                                                      | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `packages/neural/test/fixtures/generate-*.py`                                                                                                                              | `packages/neural/tools/fixtures/*.run.ts` on `@mailwoman/mtf` and `onnxruntime-node`. Split embeddings go through `trainer split-embeddings`                                                                                     | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `text/python_text_tables.py`                                                                                                                                               | deleted. `packages/mtf/crates/mtf-channels/src/python_text/tables.rs` stays as data (§3.4)                                                                                                                                       | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `tokenizer/{train,splice,byte_fallback,legacy_train}.py`, `tokenizer/vocab/`                                                                                               | `packages/mtf/tools/tokenizer/*.run.ts` orchestrating native SentencePiece (§3.5) and Rust proto transformations in `packages/mtf/crates/mtf-core`                                                                               | the `mailwoman tokenizer` subcommands `train`, `splice`, `prune` and `verify`                                                                                                                                                                                                                                                                                                                                                                                                                           |
+
+### 2.1 Node sampler integration (decided, subject to F3)
+
+`packages/mtf/crates/mtf-wasm` builds for `wasm32-unknown-unknown` (**observed** in
+`packages/mtf/tools/build-wasm.run.ts` lines 6 and 24) and depends only on `mtf-core`. The browser tokenizer
+artifact stays that way, without filesystem or parquet dependencies. The sampler's Node consumers (the
+`epoch_mixture` audit, exposure `replayed_draws`, loader profiling) use a native Node binding,
+`packages/mtf/crates/mtf-node` built with napi-rs. It is published as an optional platform package only if a consumer
+outside the repository needs it. Inside the repository it builds from source with the pinned toolchain the way
+`mtf-py` does today. A WASI build is rejected because the `parquet` crate's `zstd` and `tokio` features would need
+disabling and the file I/O would still need a host shim (**inferred**). The decision is confirmed or reversed by
+feasibility check F3.
+
+## 3. Preservation classification
+
+Universal byte identity is not the bar. Each capability states what stays identical, what changes deliberately, and
+how it is verified.
+
+| Capability                                                                       | Must stay identical                                                                                                                                                                                                                                                                                                                                                           | Deliberately changes                                                                                                                                                   | Verification                                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model-input tensors from the sampler and encoder on the C6 and code-unit configs | Names, shapes, dtypes, batch boundaries, little-endian bytes, emitted row identity sequence                                                                                                                                                                                                                                                                                   | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | The nine existing `encoder-parity` records (113,920 rows, **observed** in `docs/engineering/reference/training-row-encoder.mdx`) plus new records for augmentation paths and the char path, at 0 differing rows |
+| Corpus outputs of the JP, KR, TW, CJK, fragment and secondary builders           | Schema, ordered logical rows, labels, code-point offsets, provenance block, manifest invariants, split and admission rules                                                                                                                                                                                                                                                    | Parquet compression and footer metadata (the writer differs). Logical rows are compared, physical bytes are left aside                                                 | Row-hash sequence over a canonical JSON serialization (§3.1) against the Phase 0 record and the existing `*-reference.json` files                                                                               |
+| Resolved configuration                                                           | Values, defaults, coercions, validation failures that identify the key, iteration order of `source_weights` and `country_weights`                                                                                                                                                                                                                                             | Serialization format (YAML dataclass dump → versioned JSON)                                                                                                            | 148-config dump comparison and the `NO` key refusal                                                                                                                                                             |
+| Source admission                                                                 | Permission set (`transform`, `train`), source enumeration, gaps, provenance records, `unshippable_reason` behavior                                                                                                                                                                                                                                                            | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | `corpus-inputs.ts` tested against every Python consumer's fixtures in `corpus-python/tests/mailwoman_train/test_source_rights.py`                                                                               |
+| Deterministic evaluation (golden set, JP probe board, metrics)                   | Per-row predictions and integer counts (TP, FP, FN per tag) before rounding                                                                                                                                                                                                                                                                                                   | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | Per-row diff, then integer counts, then rounded F1                                                                                                                                                              |
+| Calibration fit                                                                  | The PAV lookup table (exact arithmetic over sorted means)                                                                                                                                                                                                                                                                                                                     | The held-out permutation: NumPy's PCG64 `permutation` is replaced by a recorded permutation file for the existing artifacts and a documented TS generator for new ones | Table equality on the recorded permutation. A new permutation is a new fit with its own report                                                                                                                  |
+| Sampler randomness                                                               | The CPython `random.Random` stream for the methods the sampler calls (`random`, `randrange`, `randint`, `choice`, `choices`, `sample`, `shuffle`) under int seeds, including `_randbelow` rejection                                                                                                                                                                           | No deliberate change while the parity records are the bar: the stream is preserved                                                                                     | Bounded compatibility module `mtf-sampler/src/pyrandom.rs` tested against recorded CPython sequences for the used methods only                                                                                  |
+| Corpus-builder randomness                                                        | Decided per builder in Phase 2 after reading its draws. The JP assembler's shared generator and the fragment builders' string seeds are kept identical because their outputs are promised by reference files. String seeding is implemented (SHA-512 of the string, CPython `version=2`)                                                                                      | A builder whose outputs have no pinning reference may move to a documented TS generator, with changed source and country exposure reported                             | Row-hash equality where identical, and an exposure report where changed                                                                                                                                         |
+| Trainer numerics                                                                 | Forward outputs, loss components, gradients, optimizer updates and schedules on identical saved parameters and batches within stated tolerances, and checkpoint restore                                                                                                                                                                                                       | Initialization (equal seeds give different initializations across libraries). The comparison starts from a saved checkpoint rather than from a seed                    | Staged comparison §3.3                                                                                                                                                                                          |
+| ONNX export and quantization                                                     | Graph inputs and outputs, dynamic axes, opset 17, special ids, label order, numeric results within 1e-4 of the pinned exporter on the probe. The quantization scheme is derived from `onnxruntime==1.30.0`'s `quantize_dynamic` with `QuantType.QInt8` (**observed** in `corpus-python/src/mailwoman_train/export/quantize.py`)                                               | Graph bytes and node names                                                                                                                                             | Reference checkpoint re-export, then Node and browser runtime checks including WebGPU                                                                                                                           |
+| Tokenizer training, splicing, pruning                                            | The `spm_train` flags (`vocab_size`, `character_coverage`, `model_type`, `byte_fallback`, `split_digits`, `allow_whitespace_only_pieces`, ids 0–3, `user_defined_symbols`, `extra_sp_kwargs`, **observed** in `corpus-python/src/mailwoman_train/tokenizer/train.py` lines 247–261), sampling, SentencePiece version, seed and thread settings, and the proto transformations | No deliberate change: the trainer stays SentencePiece v0.2.2. Any other trainer is a new tokenizer experiment                                                          | Model hash equality for the same inputs, version, seed and single thread. Splice and prune outputs are compared piece by piece                                                                                  |
+| Launcher                                                                         | Preflight receipt key and refusal, resume from the newest complete checkpoint, `--fresh` semantics, settings and defaults from `corpus-python/launch/AGENTS.md`, `.env` reading                                                                                                                                                                                               | Process shape (Sandbox or deployed Function instead of `modal run -d`)                                                                                                 | Feasibility check F4 and its controlled-failure test                                                                                                                                                            |
+
+### 3.1 Cross-language reference serialization
+
+Reference records use canonical JSON: UTF-8, keys sorted, whitespace limited to what the grammar requires,
+integers as JSON integers, floats as the shortest round-trip decimal (`Number.prototype.toString`, Python `repr`,
+Rust `ryu`), `null` for a missing field, strings as code points. Offsets are recorded as code-point offsets with an
+explicit `offset_unit: "code_point"` field. The serving side converts to UTF-16 in `packages/neural/lib/tokenizer.ts`,
+and that conversion is the one place the two units meet. A record stores the source revision, every input path with
+its SHA-256 and order, the config, runtime versions, emitted counts, output schema, and either the expected rows or
+arrays, so a mismatch report identifies the first differing row, field, tensor or element.
+
+### 3.2 Phase 0 capture list
+
+| Record                                                                   | Source                                                                                     | Covers                                                                                                                                                |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The nine `encoder-parity` records already captured                       | captured at `47495cabf`                                                                    | C6 channels, code unit, gold anchor, choreography, channel-free, width                                                                                |
+| `aug-splice-5k`, `aug-postcode-move-5k`, `aug-grouping-5k`, `relabel-5k` | `encoder_parity capture` with the matching config overrides                                | each augmentation and relabel path                                                                                                                    |
+| `char-v8-cjk-regs-5k`                                                    | `encoder_parity capture` after the reader accepts `char_mode != "off"` with no tokenizer   | the character path                                                                                                                                    |
+| `builders/<recipe>/record.json`                                          | each assembler on fixed inputs                                                             | JP, KR, TW, CJK overlay, fragment, secondary, house-venue, DE board, JP probe corpora                                                                 |
+| `configs/resolved.json`                                                  | `config/load.py` over the 148 YAMLs                                                        | resolved configuration                                                                                                                                |
+| `audits/<name>/receipt.json`                                             | each audit on the C6 config                                                                | audit receipts                                                                                                                                        |
+| `exposure/exposure.json`, `release-check cases`                          | exposure CLI                                                                               | exposure                                                                                                                                              |
+| `calibration/permutation.json`                                           | `np.random.default_rng(seed).permutation(n)` for the seeds in the committed reports        | held-out split                                                                                                                                        |
+| `cpython-random.json`                                                    | CPython 3.12                                                                               | 1,000 values per method per seed form (ints `0`, `42`, `2**31-1`, `2**40+7` and strings `"20260601:corpus"`, `"42-postcode"`) for the methods in §1.3 |
+| `trainer/reference-checkpoint/`                                          | one smoke run of `v8.3.0-probe-code-unit-2k` on CPU, 200 steps, plus saved batches         | the trainer staged comparison                                                                                                                         |
+| `trainer/reference-export/`                                              | `export_onnx` and `quantize_onnx` of that checkpoint and of the shipped `en-us` checkpoint | export and quantization                                                                                                                               |
+| `tokenizer/reference-model/`                                             | `spm_train` on the recorded v0.9.0 inputs, `--num_threads=1`, recorded seed                | tokenizer training                                                                                                                                    |
+
+### 3.3 Trainer staged comparison
+
+The issue fixes the order. Each stage passes before the next starts, over this matrix: supervised and MLM, `use_crf`
+on and off, each channel on by itself and all channels on, the char path, fp32 and the configured autocast dtype,
+and `grad_accum_steps` 1 and 4.
+
+1. Load the reference checkpoint's parameters into both models and assert every tensor equal by bytes.
+2. Forward on the saved batches: logits, CRF scores and auxiliary heads within 1e-5 relative in fp32.
+3. Loss components (CE, CRF, locale, address-system, MLM) within 1e-5 relative, with identical mask semantics.
+4. Gradients per parameter within 1e-4 relative after one backward.
+5. One AdamW step with identical hyperparameters and parameter groups: parameters within 1e-6 absolute, and
+   schedule values equal at steps 0, 1, 100, warmup end, max.
+6. Save and restore a checkpoint in the Rust format, with forward equality after restore and the
+   `find_latest_checkpoint` semantics (`training_state.json` marks completeness) preserved.
+7. 2,000 deterministic CPU steps from the reference checkpoint with batches from the Rust sampler: the loss column
+   of `train_log.csv` within 1e-3 relative at every logged step. Divergence beyond that is investigated and
+   classified before acceptance.
+8. One approved GPU run of a current recipe, graded by `training-arc` and `eval-model` against the registered
+   release requirements in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` and the split rules in
+   `docs/engineering/HOLDOUT_AND_EVALUATION.mdx`. One successful run is evidence for the trainer. Release
+   eligibility is decided by that procedure.
+
+The runtime question is separated from the language question. The repository pins `torch==2.12.0` (**observed**
+in `pyproject.toml`), and `tch` 0.26.0 requires libtorch v2.13.0 (**observed** on docs.rs). F1 therefore first
+looks for a `tch` release that pins libtorch 2.12 (the 0.25 line, **unknown** until checked). If none exists, Phase 0
+adds a Python reference run on torch 2.13 so the comparison in stage 7 is same-runtime, and the 2.12 → 2.13 upgrade
+is recorded as its own change with its own export and runtime checks.
+
+### 3.4 The CPython Unicode tables
+
+`packages/mtf/crates/mtf-channels/src/python_text/tables.rs` stays as data. It gains a header recording
+"generated from CPython 3.12.3, Unicode 15.0.0, by `corpus-python/src/mailwoman_train/text/python_text_tables.py`
+at revision `<sha>`", a committed SHA-256 of the table bytes checked by a `cargo test`, and an archival regeneration
+recipe in `docs/engineering/reference/training-row-encoder.mdx`. The recipe is the exact Python invocation, kept as
+prose, so the final tree holds no tracked `.py` generator. `corpus-python/tests/mailwoman_train/text/test_python_text_tables.py`
+is deleted with the generator. A future replacement generator must reproduce the tables or declare a semantic change
+evaluated under the model procedure.
+
+### 3.5 Tokenizer tooling (decided, subject to F5)
+
+Preserve the capability through native SentencePiece rather than a new unigram trainer. The repository already
+builds google/sentencepiece `v0.2.2` from source in `packages/sentencepiece-wasm/build.sh`. The same CMake build
+without emscripten yields `spm_train`, `spm_encode` and `spm_normalize`. `packages/mtf/tools/tokenizer/train.run.ts`
+samples the balanced raws (port of `sample_balanced_raws`), writes the input file, resolves user-defined symbols
+(port of `tokenizer/uds.py`), runs `spm_train` with the recorded flags and `--num_threads=1 --random_seed=<seed>`,
+and writes the model card with input hashes and order, the SentencePiece version, the flags, and the model hash.
+The splice and prune steps (`tokenizer/splice.py`, `tokenizer/vocab/prune.py`) edit `ModelProto`.
+`mtf-core/src/proto.rs` is a reader today (**observed**) and gains a writer. The transformations move to
+`packages/mtf/crates/mtf-core` behind the `mailwoman tokenizer splice` and `mailwoman tokenizer prune` commands.
+Verification (`prune_verify.py`, `byte_fallback.py`) ports to TS on `@mailwoman/mtf`. If F5 finds the Rust
+`sentencepiece` crate exposes the trainer, the binary step is replaced by a library call. The flags and records are
+the same either way. The shipped `tokenizer.model` and its weights are untouched.
+
+## 4. Feasibility checks
+
+Each check states what it must demonstrate. Checks marked **spend** need the operator's authorization before they
+run. None runs as part of this plan's commit.
+
+| Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Spend                                                     |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | image build on Modal: **spend** (approval). Lab CPU: none |
+| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`)                                                                                                                                                                                                                                                                                                                                                                                          | none                                                      |
+| F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | none                                                      |
+| F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded | CPU Sandbox minutes: **spend** (approval)                 |
+| F5  | Native SentencePiece                     | `spm_train` built from the `v0.2.2` tag reproduces the recorded tokenizer model hash on the recorded inputs with one thread. The Rust `sentencepiece` 0.14.0 crate's trainer exposure is checked. The proto writer round-trips the shipped model byte for byte                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | none                                                      |
+| F6  | Bounded CPython RNG                      | `pyrandom.rs` matches `cpython-random.json` for every method and seed form in §1.3, including string seeds and `_randbelow` rejection. The mixed-call sequence test (the JP assembler's draw order) matches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | none                                                      |
+| F7  | Config resolver                          | The 148-config dump comparison and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | none                                                      |
+
+## 5. Phases
+
+Phases are in dependency order. Each phase lists its caller checklist (what must be repointed before the deletion),
+its preservation class from §3, its verification, and the deletion it ends with. Python tests, ruff, mypy, bandit,
+`yarn lint:python`, `yarn python:test`, the `.husky/pre-commit` Python block and the CI `python` job stay until
+Phase 9 deletes their last consumer. A module is deleted only after every tracked importer has moved off it.
+
+### Phase 0 — References, schemas and feasibility
+
+Prerequisite for everything. Every file stays in place.
+
+- Extend `corpus-python/src/mailwoman_train/audits/encoder_parity.py` so the reader skips tokenizer construction when
+  `cfg.data.char_mode != "off"` and records the char encoder's inputs instead. This is the one Python edit the plan
+  makes before porting.
+- Capture every record in §3.2 under `$MAILWOMAN_DATA_ROOT/audits/port-parity/` and commit the manifest of paths and
+  hashes to `docs/records/port-parity/2026-10-29-python-removal-references.md`.
+- Run F1 (lab CPU part), F2, F3, F5, F6 and F7. Request approval for F1's image build and for F4.
+- Verification: every record verifies against the Python at `9a2220290` with 0 differences, and each feasibility
+  check has a written result in the records directory.
+
+### Phase 1 — Canonical labels and configuration
+
+Caller checklist: `labels.py` is imported by every training and corpus module, `config/load.py` by every launch
+function and audit, and `source_rights.py` by the fifteen importers in §1.2. All three stay in place in this phase.
+
+- Extend `packages/neural/lib/labels.ts` with `STAGE4_*`, `STAGE3_JP_*`, `STAGE3_CN_*`, `STAGE3_CJK_*`, the label
+  set registry, `IGNORE_INDEX` and `LOCALE_COUNTRIES` in Python's index order. Write
+  `packages/neural/tools/labels/emit-label-schema.run.ts` and `packages/neural/data/label-schema.v1.json`. Add
+  `packages/mtf/crates/mtf-channels/src/label_schema.rs` reading it. Keep address systems in `packages/codex` and
+  have the schema reference them by ID.
+- Write `packages/corpus/lib/training/config/{schema,load}.ts`, move the YAMLs to
+  `packages/corpus/data/training-configs/`, add `mailwoman train config resolve`, embed the admission result from
+  `packages/corpus/lib/source-register/corpus-inputs.ts`, and repoint `scope.config.json`,
+  `packages/core/lib/scope-config.ts` and `lib/repo-health/checks/stale-path-literals.ts`.
+- Make the Python `config/load.py` read the moved YAML directory and `labels.py` read `label-schema.v1.json`
+  (temporary readers, deleted in Phase 2 and Phase 7).
+- Preservation: §3 rows "Resolved configuration" and "Source admission". The label JSON is pinned to the Python
+  constants recorded in Phase 0.
+- Verification: F7. `corpus-inputs.ts` tests cover every fixture in
+  `corpus-python/tests/mailwoman_train/test_source_rights.py`. `test_labels.py` and `test_label_sets.py` pass over the
+  JSON.
+- Deletion: deferred (the readers go when their last Python consumer goes).
+
+### Phase 2 — Corpus builders, audits, exposure, calibration and evaluation to TypeScript
+
+Caller checklist per module group (from §1.2 and the launch functions): `countries/*` ←
+`launch/stage.py`, `launch/census.py`, `python -m …countries.<cc>.corpora`. `corpora/*` ← `launch/census.py`,
+`launch/grade.py`. `audits/*` ← `launch/audits.py` (7 functions), `launch/census.py`, `launch/train.py` preflight.
+`exposure/*` ← `launch/grade.py`, `train/loop.py` (`StageCounter`). `calibration/*` ← hand-run.
+`evaluation/*` ← `launch/grade.py`, `cli/commands/evaluate.py`, `cli/commands/smoke.py`. Each group's Python callers
+are repointed to `node … .run.ts` or deleted with the group. `train/loop.py`'s `StageCounter` import is replaced by
+the sampler observer in Phase 3, so `exposure/report.py` is the last of this phase to go.
+
+- Order within the phase: config consumers first (2.1 `secondary`, `house_venue_tuples`, `registry`), then the
+  country assemblers (2.2 JP, KR, TW, CJK), then fragment (2.3), audits (2.4, except `epoch_mixture`, which needs
+  Phase 3), exposure (2.5), calibration (2.6), evaluation and the JP probe board (2.7).
+- Randomness: implement the bounded `pyrandom` in TS (`packages/corpus/lib/training/pyrandom.ts`, the same
+  recorded sequences as the Rust module) before 2.1, because the JP assembler and the fragment builders promise
+  identical rows. Calibration uses the recorded permutation file.
+- Preservation: §3 rows "Corpus outputs", "Deterministic evaluation", "Calibration fit", "Corpus-builder randomness".
+- Verification: row-hash equality against Phase 0 records and the committed `*-reference.json` files under
+  `corpus-python/tests/mailwoman_train/`, per-row evaluation equality, the calibration table equality, and each
+  reader's missing-input test asserting a thrown error whose message states the path.
+- Deletion, in the same PR as each group's verification: the group's modules and tests, and the launch functions
+  whose bodies were the group (`launch/census.py`, `launch/audits.py`, most of `launch/grade.py`, `launch/stage.py`).
+  `source_rights.py` goes with the last of its fifteen importers (the config loader, Phase 7).
+
+### Phase 3 — The Rust sampler and character path
+
+Caller checklist: `data/loader/*` ← `train/loop.py`, `train/validation.py`, `train/pretrain.py`, `audits/*`,
+`exposure/*`, `cli/commands/smoke.py`. `data/masking.py` ← `train/pretrain.py`. `tokenizer/char.py` and
+`tokenizer/spans.py` ← the loader's char path and `nn/char_cnn.py` input shapes.
+
+- `packages/mtf/crates/mtf-sampler`: `pyrandom.rs` (bounded, §3), `corpus_files.rs` (manifest, row filters,
+  re-rooting, sha256 cache, a missing path is an error), `parquet.rs`, `mixture.rs`, `stream.rs` (shuffle buffer,
+  astral skip, observer), `emit.rs`, `source_reps.rs`, `relabel.rs`, `augment/*`, `char.rs`, `spans.rs`, `mlm_mask.rs`,
+  and the row and batch interfaces in §2.
+- Expose it through `mtf-py` as `Sampler` for the remaining Python trainer (temporary), and through `mtf-node` (F3)
+  for TS tooling. Port `audits/epoch_mixture` and exposure `replayed_draws` onto `mtf-node`.
+- Measure separately and record in `docs/engineering/reference/training-row-encoder.mdx`: parquet read, sampling,
+  encoding, conversion, cold initialization, RSS after init and peak, on the lab host and Modal, before and after.
+  The existing 13.40 ms and 21.51 ms per batch and the 2.7–7.2 ms sampler share are measurements of the current
+  configuration. Targets are set from the separated measurements.
+- Preservation: §3 rows "Model-input tensors" and "Sampler randomness".
+- Verification: all Phase 0 encoder-parity records (existing nine, augmentation, relabel, char) at 0 differing rows.
+  Skips, row limits, exhaustion, source restarts, held-out quotas, observer events and `seed + epoch` behavior each
+  have a Rust test. F6.
+- Deletion: `data/`, `tokenizer/{char,spans,uds}.py`, `audits/{encoder_parity,loader_profile,painted_anchor_rows}.py`
+  (rewritten as Rust examples), `audits/epoch_mixture/`, `exposure/report.py`, and their tests.
+
+### Phase 4 — Tokenizer tooling
+
+Caller checklist: `tokenizer/train.py` ← `cli/commands/tokenizer.py`. `splice.py` ← `launch/splices.py`,
+`launch/mean_init.py`. `vocab/*` ← `cli/commands/verify_tokenizer.py`. `byte_fallback.py` ← `train.py`.
+
+- The F5 result decides binary or library. Write `packages/mtf/tools/tokenizer/{train,splice,prune,verify}.run.ts`,
+  the proto writer in `packages/mtf/crates/mtf-core/src/proto.rs`, and `packages/neural/tools/fixtures/*.run.ts`
+  replacing the three Python fixture generators (split embeddings waits for Phase 6's `trainer split-embeddings`).
+- Preservation: §3 row "Tokenizer training, splicing, pruning".
+- Verification: the recorded model hash reproduced from the recorded inputs. Splice and prune outputs equal piece by
+  piece. `verify` reports the same byte-fallback figures as the Phase 0 record.
+- Deletion: `tokenizer/`, `cli/commands/{tokenizer,verify_tokenizer}.py`, `launch/{splices,mean_init}.py`,
+  `packages/neural/test/fixtures/generate-{tokenizer-parity,evidence-parity}.py`, their tests, and the
+  `sentencepiece` pin.
+
+### Phase 5 — Rust trainer
+
+Caller checklist: `nn/`, `train/`, `optim/` ← `cli/commands/{train,smoke}.py`, `launch/train.py`, `launch/grade.py`
+remnants. `env.py` and `paths.py` ← everything remaining.
+
+- `packages/trainer` workspace (F1 decides the `tch` version): model crates mirroring `nn/`, loops mirroring
+  `train/loop.py` and `train/pretrain.py` with the callbacks (`checkpointer`, `console`, `csv_metrics`, and `trackio`
+  replaced by a CSV-to-HF uploader in TS, because the Python `trackio` client is the only consumer of that service),
+  `optim/` groups, schedules and Fisher, checkpoints in safetensors with `training_state.json` as the completeness
+  marker and a one-time converter from `pytorch_model.bin`.
+- Preservation: §3 row "Trainer numerics". Resume behavior is unchanged (§1.2).
+- Verification: §3.3 stages 1–7 on the lab host, and stage 8 after approval.
+- Deletion: `nn/`, `train/`, `optim/`, `cli/commands/{train,smoke}.py`, `observability/`, their tests, and the
+  `trackio` pin. `export/` stays until Phase 6.
+
+### Phase 6 — Export, quantization and packaging
+
+Caller checklist: `export/*` ← `cli/commands/{export,quantize,package,split_embeddings}.py`, `launch/artifacts.py`,
+`packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts` (reads `corpus-python/launch/app.py`,
+**observed**).
+
+- `packages/trainer/crates/trainer-export`: the graph writer and quantizer from F2, `trainer split-embeddings`, and
+  `packages/mailwoman/tools/release/package-weights.run.ts`. Repoint `verify-export-quant-versions.run.ts` to the TS
+  image definition.
+- Preservation: §3 row "ONNX export and quantization".
+- Verification: the reference checkpoint and the shipped `en-us` checkpoint re-exported and quantized, the Node and
+  browser checks, and the iOS WebGPU check recorded before any promotion.
+- Deletion: `export/`, `cli/`, `__main__.py`, `env.py`, `paths.py`, `protocols.py`, `types.py`,
+  `packages/neural/test/fixtures/generate-split-embeddings.py`, and their tests. After this phase
+  `corpus-python/src` holds only the temporary `labels.py` and `config/` readers, and those go in Phase 7.
+
+### Phase 7 — TypeScript launcher
+
+Caller checklist: `launch/*` ← operator commands in `corpus-python/launch/AGENTS.md`,
+`lib/dev-mcp/hooks/bash/write/rules.ts` (the `uv run modal run` guidance, lines 189–249, **observed**),
+`packages/mailwoman/tools/dev-tools/launch-detached.run.ts`, `.claude/skills/training-arc/SKILL.md`.
+
+- Build `packages/mailwoman/tools/training/launch/` on the result of F4. The image is defined once in TS, and
+  `lib/repo-health/checks/training-toolchain-pins.ts` keeps its pins equal to `packages/trainer/Cargo.toml` and
+  `packages/neural/package.json`'s `onnxruntime-web` line.
+- Preservation: §3 row "Launcher".
+- Verification: F4's lifecycle list, each as a test or a recorded run, and a dry run with no GPU that runs preflight
+  end to end.
+- Deletion: `corpus-python/launch/`, `corpus-python/tests/launch/`, `scripts/verify_toolchain.py`, the temporary
+  `labels.py`, `config/` and `source_rights.py` readers (their last consumer was the launcher's local entry point),
+  `scripts/train_with_resume.ts`, and the `modal` pin.
+
+### Phase 8 — `mtf-py` and the Python manifests
+
+- Delete `packages/mtf/crates/mtf-py`, its `pyproject.toml` and the `py` profile in `packages/mtf/Cargo.toml`. Delete
+  the root `pyproject.toml`, `uv.lock`, `.python-version`, `corpus-python/` entirely, `scripts/comment_nodes.py`,
+  `config/vale/python-docstrings.ts`, `config/vale/fixtures/{clean,dirty}.py`, the Python branch of
+  `lib/repo-health/comment/triage/inventory.ts` and `lib/repo-health/test/fixtures/comments.py`, and
+  `lib/repo-health/checks/python-prefix-directories.ts`.
+- Verification: `git ls-files '*.py' | wc -l` prints 0, and `git grep -n 'uv run\|python3\?\b\|mailwoman_train' --
+':!docs/records' ':!docs/superpowers' ':!scratchpad'` returns only `packages/mailwoman/tools/generate-clients.ts`
+  and the client-publishing workflow (§1.4).
+
+### Phase 9 — CI, hooks, image and documentation
+
+- `.github/workflows/test.yml`: replace the `python` job (lines 230–277, **observed**) with a `rust` job running
+  `cargo test --locked`, `cargo clippy -D warnings` and `cargo fmt --check` for `packages/mtf` and `packages/trainer`.
+  `lib/repo-health/ci-scope.ts` renames `python` to `rust` keyed on `packages/mtf/**`, `packages/trainer/**` and
+  `Cargo.lock`. The `summary` job's scope list drops `python`. `.github/dependabot.yml` replaces the
+  `python-dependencies` group with `cargo` entries. `package.json` drops `lint:python*`, `python:*`, `fix:python`.
+  `.husky/pre-commit` drops its Python block. `knip.json` and `typos.toml` drop their `corpus-python` entries.
+  `lib/dev-mcp/hooks/bash/write/rules.ts` drops `python` and `python3` from the admitted heads and rewrites the
+  launch guidance.
+- Documentation: replace `corpus-python/launch/AGENTS.md` with `packages/mailwoman/tools/training/AGENTS.md`.
+  Update `AGENTS.md`'s routing list, `docs/engineering/reference/workspaces.mdx`,
+  `docs/engineering/reference/training-row-encoder.mdx`, `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`,
+  `docs/engineering/HOLDOUT_AND_EVALUATION.mdx`, `REPRODUCIBILITY.md`, `.github/CI.md`, `packages/mtf/README.md`,
+  `.claude/skills/training-arc/SKILL.md`, and the other `.md` and `.mdx` files outside `docs/records/` that mention
+  `corpus-python` or `uv run` (30 files, **observed** count). Records stay as written.
+- Clean-environment build: a fresh clone without a Python interpreter on `PATH` runs `yarn install`, `yarn compile`,
+  `cargo build --release` for both workspaces, `mailwoman corpus build` for one recipe, `trainer smoke`,
+  `trainer export-onnx` on the reference checkpoint, `mailwoman eval check`, and `mailwoman train preflight` dry run.
+- Final measurements recorded in `docs/engineering/reference/training-row-encoder.mdx` and a new
+  `docs/records/evals/` report: behavior comparisons, cold initialization, peak and steady memory, per-batch costs,
+  and measured training performance. Any unmeasured speedup stays labeled as an estimate.
+
+## 6. Milestones
+
+Hour estimates from the earlier draft are withdrawn. Milestones are concrete deliverables, and the ones that depend
+on an unresolved feasibility check are marked.
+
+| Milestone | Deliverable                                                                                                                                                   | Depends on                                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| M0        | Phase 0 records committed. F2, F3, F5, F6, F7 results written. F1 and F4 approved and run                                                                     | operator approval for F1 image build and F4 |
+| M1        | Label schema JSON and resolved-config command in use by Python readers                                                                                        | none                                        |
+| M2        | Every corpus builder, audit, exposure, calibration and evaluation tool in TS, with their Python deleted                                                       | M1                                          |
+| M3        | `mtf-sampler` at 0 differing rows on every record. `mtf-node` in use by TS tooling. Python `data/` deleted                                                    | F3, F6                                      |
+| M4        | Tokenizer tooling Python-free. Python `tokenizer/` deleted                                                                                                    | F5                                          |
+| M5        | Rust trainer through §3.3 stage 7. Python `nn/`, `train/`, `optim/` deleted                                                                                   | F1                                          |
+| M6        | Rust export and quantization verified. Python `export/` and `cli/` deleted                                                                                    | F2                                          |
+| M7        | TS launcher through the F4 lifecycle list. Python `launch/` deleted                                                                                           | F4                                          |
+| M8        | Zero `.py`. `mtf-py`, `pyproject.toml`, `uv.lock` gone                                                                                                        | M2–M7                                       |
+| M9        | CI, hooks, image, docs updated. Clean-environment build passes. Measurements recorded                                                                         | M8                                          |
+| M10       | One approved GPU run graded under `training-arc` and `eval-model` (stage 8). The registered procedure decides release eligibility, and this plan defers to it | M5, M6, operator approval                   |
+
+## 7. Risks and the smallest test that retires each
+
+| Risk                                                                                         | Test                                                                                                 |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| No `tch` release pins libtorch 2.12, so the runtime and language changes cannot be separated | F1's version lookup, and otherwise the Python reference run on torch 2.13 in Phase 0                 |
+| The Modal JS SDK cannot express retries, resume or detached execution for a Sandbox          | F4's controlled-failure run. The fallback is a Rust supervisor in the Sandbox                        |
+| `spm_train` with one thread is not deterministic across builds                               | F5's hash reproduction on two builds of the same tag                                                 |
+| CPython string seeding or `_randbelow` rejection differs in the port                         | F6's string-seed and mixed-call sequences                                                            |
+| The `parquet` crate orders row groups differently from pyarrow                               | `c6-train-2k` before any larger record in Phase 3                                                    |
+| A hand-written ONNX graph is refused by `onnxruntime-web` WebGPU on Safari                   | F2's browser SLO suite and the iOS device check                                                      |
+| The quantizer's rounding differs from ORT's                                                  | F2's same-fp32-file comparison before any eval                                                       |
+| A TS YAML parser resolves `NO`, `on`, `yes` differently from PyYAML                          | F7's refusal test and the 148-config dump                                                            |
+| A deletion leaves an importer                                                                | each phase's caller checklist is grepped before the PR, and CI's Python job still runs until Phase 9 |
+| A sweep edits recorded data while repointing paths                                           | commit messages list touched file types, and `docs/records/` and `evals/` are excluded               |
