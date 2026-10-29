@@ -97,8 +97,8 @@ const sectionList = <Fields extends Record<string, ConfigFieldSpec>>(element: Co
 })
 
 /**
- * `CorpusReceiptConfig`: a floor on the training draws that hold one source,
- * country and component sequence.
+ * The Python CorpusReceiptConfig dataclass: a floor on the training draws that
+ * hold one source, country and component sequence.
  */
 export const CORPUS_RECEIPT_SECTION = {
 	className: "CorpusReceiptConfig",
@@ -112,7 +112,7 @@ export const CORPUS_RECEIPT_SECTION = {
 } as const satisfies ConfigSectionSpec
 
 /**
- * `ValidationCoverageConfig`: a floor on one country's rows in a held-out split.
+ * The Python ValidationCoverageConfig dataclass: a floor on one country's rows in a held-out split.
  */
 export const VALIDATION_COVERAGE_SECTION = {
 	className: "ValidationCoverageConfig",
@@ -125,8 +125,8 @@ export const VALIDATION_COVERAGE_SECTION = {
 } as const satisfies ConfigSectionSpec
 
 /**
- * `LabelSupportConfig`: a floor on the rows of a held-out split's trainer
- * draw that hold one component label.
+ * The Python LabelSupportConfig dataclass: a floor on the rows of a held-out
+ * split's trainer draw that hold one component label.
  */
 export const LABEL_SUPPORT_SECTION = {
 	className: "LabelSupportConfig",

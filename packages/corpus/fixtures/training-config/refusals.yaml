@@ -3,7 +3,7 @@
 train:
   reinit_label_rowz: [B-dependent_locality]
 ---
-trian:
+trainer:
   max_steps: 10
 ---
 on: 1

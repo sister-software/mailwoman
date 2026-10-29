@@ -50,7 +50,7 @@ const CONFIG_SUBSET = [
 	"v8-cjk-regs.yaml",
 	// A corpus whose `fragment-assay` rows are judged by the inputs recorded for it.
 	"v7.7.0-no-ppd-60k.yaml",
-	// No `source_weights`, so nothing is enumerable to check.
+	// No `source_weights`, so the admission has no source list to check.
 	"stage1-smoke.yaml",
 	// `required_corpus_receipts`, `required_validation_coverage` and `required_validation_label_support`.
 	"v4.15.0-ru-exposure-d100-2k.yaml",
@@ -167,8 +167,8 @@ async function hasUV(): Promise<boolean> {
 }
 
 /**
- * Runs the Python dumper over `names` relative to `cwd`, so each message names
- * a file as the TypeScript side does.
+ * Runs the Python dumper over `names` relative to `cwd`, so each message spells
+ * a file path as the TypeScript side spells it.
  */
 async function dumpPython(cwd: string, names: readonly string[]): Promise<Map<string, Dump>> {
 	const { stdout } = await runFile(
