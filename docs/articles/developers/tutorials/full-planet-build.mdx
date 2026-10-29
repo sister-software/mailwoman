@@ -21,8 +21,9 @@ terms of data.
 ## Prerequisites
 
 **This page forks partway through, and it is a packaging fork rather than a preference.** Steps 1 and 2
-run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm, so that section needs a
-repository checkout. Each requirement below states which half it belongs to.
+need only the published CLI and the French register's builder. Step 3 builds from OpenStreetMap through
+`mailwoman data build`, which loads its recipe from the optional `@mailwoman/osm` package and needs GDAL.
+Each requirement below states which half it belongs to.
 
 - **About 3 GB of free disk** for the path below: 2.88 GB of gazetteer and under 100 MB of everything
   else. France's whole national register adds 6.95 GB instead of the three départements; the US
@@ -34,10 +35,11 @@ repository checkout. Each requirement below states which half it belongs to.
   npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban
   ```
 
-- **Step 3, from a checkout.** `@mailwoman/osm` has no npm package, so `npm install @mailwoman/osm`
-  answers `E404`. Step 3 restates this where you hit it, along with the clone and build it needs.
-- **GDAL on your `PATH`**, for step 3 only — `ogr2ogr --version` should answer. Steps 1 and 2 do not
-  touch it.
+- **Step 3, the build recipe.** `mailwoman data build osm-address-points` loads the recipe from
+  `@mailwoman/osm` and, when the package is absent, names it and stops before any download. Install it
+  beside `mailwoman`, or run the CLI from a checkout after `yarn compile`.
+- **GDAL on your `PATH`**, for step 3 only — `ogr2ogr --version` should answer. `data build` runs that
+  check before it downloads anything. Steps 1 and 2 do not touch it.
 - **A data root**, and the willingness to keep it:
 
   ```bash
@@ -183,16 +185,40 @@ build: credit OpenStreetMap where its data is shown, and when you publicly use t
 database derived from it, offer that database under ODbL to its recipients. The
 [OpenStreetMap attribution page](../../resources/osm/attribution.mdx) states the terms in full.
 
-Five countries have a registered street-normalization locale for this path: `de`, `fr`, `gb`, `nl` and
-`nz`. A build that adds another means registering the country and writing its branch in the street
-normalizer in the same commit. That is why the list grows one considered country at a time.
+Ten countries have both a street-normalization locale and an extraction policy for this path: CA, DE,
+FR, GB, ID, NL, NZ, PK, PL and VN. A build that adds another means registering the country, writing its
+branch in the street normalizer and its policy under `packages/osm/lib/<cc>/` in the same commit. That
+is why the list grows one considered country at a time.
 
-Install the builder and download an extract. The fetch tool dates the file name from the server's
-`Last-Modified` header and writes a receipt beside it with the URL and the SHA-256, which the builder
-records in the database's manifest. The Corsica extract is 34 MB, small enough to finish in seconds:
+`mailwoman data build` runs the build through the same installer `data pull` uses. Start with the plan.
+It lists the Geofabrik extract, the outline the build clips to, the database it writes and whether
+`ogr2ogr` runs, and it makes no request and writes no file:
 
 ```bash
 npm install @mailwoman/osm
+
+npx mailwoman data build osm-address-points --countries FR --region europe/france/corse --dry-run
+```
+
+Corsica is a part of France, so the build clips the 34 MB extract to France's geoBoundaries outline, which
+it downloads beside the extract. Then build it, install it, and select it:
+
+```bash
+npx mailwoman data build osm-address-points --countries FR --region europe/france/corse --activate
+```
+
+The extract is kept under `$MAILWOMAN_DATA_ROOT/src/geofabrik/europe/france/corse/<date>/` with a receipt
+naming its URL, its `Last-Modified` date and its SHA-256, and a second run verifies and reuses it. The
+database installs under `db/address-points/<sha256>/`, and its manifest records the extract's SHA-256,
+France's extraction policy and version, the outline's SHA-256 and the counts the build made.
+`--activate` adds it to France's selection after the BAN register you selected in step 2, so the
+register still answers first. `mailwoman data status` lists both.
+
+`data build` is unreleased: it is listed under the unreleased changes and has run against local fixtures
+only, so the recorded output below comes from the builder script the recipe runs. The script still builds the same database at the
+conventional `db/osm/address-points-fr-corse.db` path, from an extract you download with the fetch tool:
+
+```bash
 OSM="$(npm root)/@mailwoman/osm/out/tools"
 
 node "$OSM/fetch/extract.js" --region europe/france/corse

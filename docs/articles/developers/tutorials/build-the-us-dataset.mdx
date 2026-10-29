@@ -269,6 +269,22 @@ PASS (1/1 checks)
 the object and compares the byte count it downloaded against what the server declared. The bucket publishes
 no checksum sidecar for any artifact, so content-length is the strongest integrity signal available.
 
+The transcript predates the active selection. A current pull prints no `export` line: it installs the
+gazetteer under `db/candidate/<sha256>/` and records it in `<data root>/active.json`, which every reader
+consults before the conventional path. See [Keep data fresh](../how-to/keep-data-fresh.mdx).
+
+### What you built and what you pulled, side by side
+
+The rooftop and interpolation databases you built in steps 3 and 4 sit at the conventional paths,
+`address-points/address-points-us-<state>.db` and `interpolation/interpolation-us-<state>.db`. They are
+not installations: the builds write no manifest and no `active.json` entry. A reader looks a state up in
+the active selection first and reads the conventional path only when the selection has no entry for
+that state. A state you build and a state you pull therefore coexist, and when you have both for one
+state, the pulled one answers. `mailwoman data status` lists the selected artifacts as `active`, and
+`mailwoman data migrate --dry-run` classifies each built file by the manifest it carries and plans
+its registration in place. The [layer installation reference](../../../engineering/reference/layer-installation.mdx) states
+the order every reader follows.
+
 ## 7. Check what you have
 
 ```bash
