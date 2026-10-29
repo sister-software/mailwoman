@@ -105,6 +105,38 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
+ * The order a country prints a value that pairs a local-script name with its Latin name.
+ *
+ * Hong Kong and Macau name streets and places in two official languages.
+ * OpenStreetMap writes both names in one value there: `明安街 Ming On Street`, `林茂巷 Travessa de Lam Mau`.
+ *
+ * In the 2026-10-17 extract, 60,874 of 63,725 Hong Kong rows and 12,933 of
+ * 12,975 Macau rows hold such a pair.
+ * In Thailand, the other two-order country in that extract, 284 of about 45,000 rows do.
+ *
+ * The local order prints its lines, and a street and its number, with no separator.
+ * That join is right between Han characters.
+ *
+ * Next to a Latin name it glues two words (`Quarry Bay祐民街`, `Yau Man Street6`).
+ * The Latin order separates every value and puts the number where the Latin register
+ * writes it: `6 祐民街 Yau Man Street, 鰂魚涌 Quarry Bay, 香港 Hong Kong`.
+ *
+ * A country absent from this table prints a paired value in its local order.
+ */
+export const NAME_PAIR_SCRIPTS: Readonly<Record<string, AddressScript>> = {
+	HK: "latin",
+	MO: "latin",
+}
+
+/**
+ * Returns the order `countryCode` prints a value that pairs a local-script name
+ * with its Latin name, or `null` when the country has none.
+ */
+export function namePairScriptForCountry(countryCode: string): AddressScript | null {
+	return NAME_PAIR_SCRIPTS[countryCode.trim().toUpperCase()] ?? null
+}
+
+/**
  * Whether the country selected by `countryCode` prints the largest unit first, in `script`.
  *
  * Every country carrying a distinct Latin order writes it smallest-first,

@@ -547,7 +547,7 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 		components.venue = name
 	}
 
-	const script = scriptOfComponents({ street: line, locality: city })
+	const script = scriptOfComponents({ street: line, locality: city }, country)
 
 	if (PO_BOX_LINE.test(line)) {
 		components.po_box = line

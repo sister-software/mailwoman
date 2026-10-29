@@ -591,7 +591,7 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 	// Han-script line, with no separator between them.
 	const rendered = formatAddressRow(components, country, {
 		singleLine: true,
-		script: scriptOfComponents(components),
+		script: scriptOfComponents(components, country),
 	})
 
 	if (!rendered) return { refused: CORDISRefusal.Unrenderable, country }

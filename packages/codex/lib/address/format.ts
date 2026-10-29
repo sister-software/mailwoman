@@ -12,6 +12,7 @@ import {
 	defaultScriptForCountry,
 	layoutForCountry,
 	lineJoinForCountry,
+	namePairScriptForCountry,
 	regionLayoutForCountry,
 	type AddressScript,
 } from "#address/layouts"
@@ -110,24 +111,30 @@ export function isLatinScriptText(value: string): boolean {
 }
 
 /**
- * The script `components` are written in, read from the first witness that contains a letter.
+ * The script `components` are written in for `country`, read from the first witness that contains a letter.
  *
  * A witness without letters does not identify a script.
- * All-digit or absent witnesses return `undefined`.
+ * All-digit or absent witnesses return `null`.
  * The country default then determines the address order.
+ *
+ * A witness holding both Latin and non-Latin letters (`明安街 Ming On Street`)
+ * pairs a name with its Latin name.
+ * It reads as the country's name-pair order, {@linkcode namePairScriptForCountry}, when the country has one.
  */
 // repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint
 // and answers its ISO 15924 script.
 // This takes a dict and answers which of a country's two orders it is written for.
 // This package cannot import it because it has no runtime dependencies.
 // The core package adds 11 MB of shipped data.
-export function scriptOfComponents(components: ComponentDict): AddressScript | null {
+export function scriptOfComponents(components: ComponentDict, country: string): AddressScript | null {
 	for (const tag of SCRIPT_WITNESSES) {
 		const value = components[tag]?.trim()
 
 		if (!value || !/\p{Letter}/u.test(value)) continue
 
-		return carriesNonLatinLetter(value) ? "local" : "latin"
+		if (!carriesNonLatinLetter(value)) return "latin"
+
+		return (/\p{Script=Latin}/u.test(value) ? namePairScriptForCountry(country) : null) ?? "local"
 	}
 
 	return null
@@ -230,7 +237,7 @@ export function formatAddressRow(
 	// An explicit `script` overrides both derived checks.
 	// A dictionary with no letters identifies no register.
 	// The function also avoids an order that would drop a component in this country.
-	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components) : null
+	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components, country) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 
 	const layout = (opts.withRegion ? regionLayoutForCountry(country, script) : null) ?? layoutForCountry(country, script)

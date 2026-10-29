@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { componentsPresentIn, formatAddress, formatAddressRow } from "#address/format"
+import { componentsPresentIn, formatAddress, formatAddressRow, scriptOfComponents } from "#address/format"
 import type { ComponentDict } from "#address/render"
 
 const US_ADDRESS: ComponentDict = {
@@ -335,6 +335,56 @@ describe("the script a row renders in", () => {
 
 		expect(latin).toBe("52-1, Cheongun-dong, Jongno-gu, Seoul")
 		expect(local).toBe("서울특별시 종로구청운동 52-1")
+	})
+
+	it("prints a Hong Kong value pairing its Chinese and English names in the English order", () => {
+		// OpenStreetMap writes both names in one value.
+		// The Chinese order's unseparated join would print this row
+		// as `香港 Hong Kong鰂魚涌 Quarry Bay祐民街 Yau Man Street6`.
+		const row = formatAddressRow(
+			{
+				street: "祐民街 Yau Man Street",
+				house_number: "6",
+				dependent_locality: "鰂魚涌 Quarry Bay",
+				locality: "香港 Hong Kong",
+			},
+			"HK",
+			{ singleLine: true }
+		)
+
+		expect(row).toMatchObject({ script: "latin", raw: "6 祐民街 Yau Man Street, 鰂魚涌 Quarry Bay, 香港 Hong Kong" })
+
+		expect(
+			formatAddress({ street: "彌敦道 Nathan Road", house_number: "580A", venue: "周大福 Chow Tai Fook" }, "HK", {
+				singleLine: true,
+			})
+		).toBe("周大福 Chow Tai Fook, 580A 彌敦道 Nathan Road")
+	})
+
+	it("prints a Macau value pairing its Chinese and Portuguese names in the Portuguese order", () => {
+		// The Chinese order's join would glue the number to the venue: `林茂巷 Travessa de Lam Mau 8港灣大酒店 Hotel Porto Grande`.
+		expect(
+			formatAddressRow(
+				{ street: "林茂巷 Travessa de Lam Mau", house_number: "8", venue: "港灣大酒店 Hotel Porto Grande" },
+				"MO",
+				{ singleLine: true }
+			)
+		).toMatchObject({ script: "latin", raw: "港灣大酒店 Hotel Porto Grande, 林茂巷 Travessa de Lam Mau 8" })
+
+		expect(
+			formatAddress(
+				{ street: "水坑尾街 Rua do Campo", house_number: "338-342", venue: "中國銀行 Banco da China" },
+				"MO",
+				{ singleLine: true }
+			)
+		).toBe("中國銀行 Banco da China, 水坑尾街 Rua do Campo 338-342")
+	})
+
+	it("keeps a Chinese-only Hong Kong value, and a mixed value elsewhere, in the local order", () => {
+		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true })?.script).toBe("local")
+		// A country with no name-pair order reads a value holding any non-Latin letter as local.
+		expect(scriptOfComponents({ street: "AH18 (เอเซีย18)" }, "TH")).toBe("local")
+		expect(scriptOfComponents({ street: "祐民街 Yau Man Street" }, "HK")).toBe("latin")
 	})
 
 	it("lets the caller override what the values say", () => {
