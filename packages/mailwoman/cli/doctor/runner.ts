@@ -57,7 +57,12 @@ import {
 	type LayerID,
 } from "#geocode/layer-paths"
 import { readMailwomanManifest } from "#metadata"
-import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
+import {
+	conventionCandidateDBPath,
+	resolveCandidateDBPath,
+	resolveWOFDatabasePaths,
+	selectedWOFExtracts,
+} from "#resolver-backend"
 
 /**
  * The resolved-weights shape the runner needs: a structural subset of
@@ -93,7 +98,11 @@ export interface DoctorDeps {
 	 * used to detect the env-unset trap.
 	 */
 	conventionCandidatePath(): Promise<string | null>
-	wofExtractPaths(): string[]
+	/**
+	 * The WOF extracts the session would attach before it checks which exist: a pinned list,
+	 * else the selected extracts, else the conventional set.
+	 */
+	wofExtractPaths(): Promise<string[]>
 	/**
 	 * The POI layer path the session opens: the selected one, else `gazetteer build poi`'s own default.
 	 */
@@ -220,7 +229,9 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		envCandidatePath: async () =>
 			$public.MAILWOMAN_CANDIDATE_DB ? ((await resolveCandidateDBPath(undefined, dataRoot)) ?? null) : null,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
-		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
+		wofExtractPaths: async () =>
+			($public.MAILWOMAN_WOF_DB ? null : await selectedWOFExtracts(dataRoot)) ??
+			resolveWOFDatabasePaths(undefined, dataRoot),
 		poiPath: () => resolveLayerDatabasePath(dataRoot, "poi"),
 		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
@@ -276,7 +287,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	}
 
 	const convention = await deps.conventionCandidatePath()
-	const databases = deps.wofExtractPaths()
+	const databases = await deps.wofExtractPaths()
 
 	if (convention) {
 		return {
@@ -547,7 +558,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS ?? null, source: "env" },
 	]
 
-	for (const [index, database] of deps.wofExtractPaths().entries()) {
+	for (const [index, database] of (await deps.wofExtractPaths()).entries()) {
 		entries.push({
 			key: `WOF database [${index}]`,
 			value: database,

@@ -11,6 +11,7 @@ import { ServingRole } from "@mailwoman/core/layers"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
+import { isNationalAddressPointArtifact } from "#geocode/osm-layers"
 
 /**
  * Open the BAN extracts under `dataRoot`.
@@ -38,7 +39,8 @@ export async function openBANRegionDatabases(
 	// Every other country reads its conventional path.
 	for (const cc of supportedBANCountries()) {
 		const scope = { country: cc.toUpperCase(), subdivision: null }
-		const points = await snapshot.firstPath(ServingRole.AddressPoints, scope)
+		// An OpenStreetMap build in the same entry is the OpenStreetMap tier's, consulted after this one.
+		const points = await snapshot.firstPath(ServingRole.AddressPoints, scope, isNationalAddressPointArtifact)
 		const streets = await snapshot.firstPath(ServingRole.StreetCentroids, scope)
 
 		if (points) {

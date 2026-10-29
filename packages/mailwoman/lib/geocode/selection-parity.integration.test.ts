@@ -2,8 +2,12 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The BAN and POI readers on the active selection, compared with their conventional paths on fixed bytes,
- *   and the overlapping-national, multi-country and FST artifact-set fixtures opened through the catalog.
+ * @file Every reader on the active selection, compared with its conventional path on fixed bytes, and the
+ *   overlapping-national, multi-country and FST artifact-set fixtures opened through the catalog.
+ *
+ *   The readers compared: BAN, POI, national Overture, the four overlays, the OpenStreetMap extract provider,
+ *   the Nominatim and Photon rooftop providers, the WOF extract set, the autocomplete FST, and the gazetteer
+ *   and street-morphology FSTs a parse reads.
  *
  *   The same database bytes sit at the conventional path under one data root and in an installed, selected
  *   artifact under another. Every query answers the same under both, so the difference list is empty. Two
@@ -16,27 +20,45 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { copyFileTo, makeDirectories, removePath, writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { artifactSetID, ArtifactFormat, type SelectionEntry, ServingRole } from "@mailwoman/core/layers"
+import {
+	artifactSetID,
+	ArtifactFormat,
+	BuildRecipeName,
+	type SelectionEntry,
+	ServingRole,
+} from "@mailwoman/core/layers"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
 	AddressPointSqliteLookup,
 	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address"
+import { deserializeFST, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
+import { resolveFSTPath, runAutocomplete } from "#autocomplete-core"
 import { LayerCatalog, replaceActiveSelection } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
+import { gazetteerFSTScope, selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import { layerDatabasePath, layerDatabases, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { nationalAddressPointsPath, OvertureNationalDatabaseProvider } from "#geocode/national-overture"
+import { openOSMRegionDatabases } from "#geocode/osm-layers"
+import { openServingRooftopProviders } from "#geocode/serving-layers"
+import { existingWOFDatabasePaths } from "#resolver-backend"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
+import { buildFixtureFST, FIXTURE_FST_PLACES } from "#test-kit/fst-fixture"
 
 /**
  * Write an address-point database with one point per row, keyed under `locale`.
@@ -386,6 +408,374 @@ describe("each overlay on its own role", () => {
 			expect((await layerDatabases(selected)).find((layer) => layer.id === id)?.path).toBe(installed.path)
 		}
 	)
+})
+
+/**
+ * The difference list of two arms over the same queries: every query whose answers serialize differently.
+ */
+function differencesOf<Q, A>(queries: readonly Q[], before: (query: Q) => A, after: (query: Q) => A) {
+	return queries.flatMap((query) => {
+		const was = before(query) ?? null
+		const now = after(query) ?? null
+
+		return stringifyJSON(was) === stringifyJSON(now) ? [] : [{ query, was, now }]
+	})
+}
+
+const DE_ROWS = [
+	{ street: "Unter den Linden", number: "77", postcode: "10117", locality: "Mitte", lat: 52.5163, lon: 13.3807 },
+	{ street: "Friedrichstraße", number: "43", postcode: "10117", locality: "Mitte", lat: 52.5076, lon: 13.3904 },
+]
+
+const DE_QUERIES = [
+	{ street: "Unter den Linden", number: "77", postcode: "10117", bbox: null },
+	{ street: "Unter den Linden", number: "79", postcode: "10117", bbox: null },
+	{ street: "Friedrichstr.", number: "43", postcode: "10117", bbox: null },
+	{ street: "Friedrichstraße", number: "43", locality: "Mitte", bbox: null },
+	{ street: "Friedrichstraße", number: "43", postcode: "80331", bbox: null },
+]
+
+const OSM_DE_SCOPE = {
+	scope: { countries: ["DE"], subdivisions: null },
+	entryScope: { country: "DE", subdivision: null },
+	locale: "de",
+	recipe: BuildRecipeName.OSMAddressPoints,
+}
+
+describe("the OpenStreetMap extract provider on the active selection, against its conventional path", () => {
+	it("answers every query identically on the same bytes, so the difference list is empty", async () => {
+		const legacy = scratch.path("osm-legacy")
+		const selected = scratch.path("osm-selected")
+
+		await writePoints(scratch.path("fixtures", "osm-de.db"), "de", "openstreetmap:de", DE_ROWS)
+		await copyFileTo(scratch.path("fixtures", "osm-de.db"), legacy("db", "osm", "address-points-de-de.db"))
+
+		const installed = await installFixtureArtifact(
+			selected,
+			ServingRole.AddressPoints,
+			"address-points-de.db",
+			await readLocalBuffer(scratch.path("fixtures", "osm-de.db")),
+			OSM_DE_SCOPE
+		)
+
+		await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
+
+		using before = (await openOSMRegionDatabases(legacy))!
+		using after = (await openOSMRegionDatabases(selected))!
+
+		const differences = differencesOf(
+			DE_QUERIES,
+			(query) => before.for("de").addressPoints?.find(query),
+			(query) => after.for("de").addressPoints?.find(query)
+		)
+
+		expect(differences).toEqual([])
+		expect(DE_QUERIES.filter((query) => after.for("de").addressPoints?.find(query))).toHaveLength(3)
+		// A country the selection does not list keeps its conventional path, which holds no file here.
+		expect(after.for("nl")).toEqual({})
+	})
+
+	it("reads an OpenStreetMap build only in the OpenStreetMap tier when one entry lists it after BAN", async () => {
+		const root = scratch.path("osm-after-ban")
+
+		await writePoints(scratch.path("fixtures", "osm-fr-built.db"), "fr", "openstreetmap:fr", [
+			{ street: "Rue de Rivoli", number: "4", postcode: "75001", locality: "Paris", lat: 48.857, lon: 2.351 },
+		])
+
+		const options = { scope: FR_SCOPE, entryScope: FR_ENTRY, locale: "fr" }
+		const ban = await installFixtureArtifact(root, ServingRole.AddressPoints, "address-points-fr.db", banBytes, options)
+
+		const osm = await installFixtureArtifact(
+			root,
+			ServingRole.AddressPoints,
+			"address-points-fr-osm.db",
+			await readLocalBuffer(scratch.path("fixtures", "osm-fr-built.db")),
+			{ ...options, recipe: BuildRecipeName.OSMAddressPoints }
+		)
+
+		await replaceActiveSelection(root, {
+			basedOn: null,
+			set: [{ role: ServingRole.AddressPoints, scope: FR_ENTRY, order: [...ban.entry.order, ...osm.entry.order] }],
+		})
+
+		{
+			using providers = await openServingRooftopProviders(root)
+
+			// The national tier reads BAN, and a miss there stays its answer.
+			expect(providers.national.for("fr").addressPoints?.find(FR_QUERIES[0]!)).toMatchObject({ source: "ban:fr" })
+			expect(providers.national.for("fr").addressPoints?.find(FR_QUERIES[2]!) ?? null).toBeNull()
+
+			// The OpenStreetMap tier reads the build, as it read its own file beside BAN's before the selection.
+			expect(providers.osm?.for("fr").addressPoints?.find(FR_QUERIES[2]!)).toMatchObject({
+				source: "openstreetmap:fr",
+			})
+		}
+
+		await removePath(resolveDirectory(ban.path))
+
+		using fallback = await openServingRooftopProviders(root)
+
+		// With BAN gone, the national tier reads its conventional path, and the build stays the OpenStreetMap tier's.
+		expect(fallback.national.for("fr").addressPoints).toBeUndefined()
+		expect(fallback.osm?.for("fr").addressPoints?.find(FR_QUERIES[2]!)).toMatchObject({ source: "openstreetmap:fr" })
+	})
+})
+
+describe("the Nominatim and Photon rooftop providers on the active selection, against their conventional paths", () => {
+	it("answer every BAN and OpenStreetMap query identically on the same bytes", async () => {
+		const legacy = scratch.path("serving-legacy")
+		const selected = scratch.path("serving-selected")
+		const osmBytes = await readLocalBuffer(scratch.path("fixtures", "osm-de.db"))
+
+		await copyFileTo(scratch.path("fixtures", "ban-fr.db"), legacy("db", "ban", "address-points-fr.db"))
+		await copyFileTo(scratch.path("fixtures", "osm-de.db"), legacy("db", "osm", "address-points-de-de.db"))
+
+		const ban = await installFixtureArtifact(selected, ServingRole.AddressPoints, "address-points-fr.db", banBytes, {
+			scope: FR_SCOPE,
+			entryScope: FR_ENTRY,
+			locale: "fr",
+		})
+
+		const osm = await installFixtureArtifact(
+			selected,
+			ServingRole.AddressPoints,
+			"address-points-de.db",
+			osmBytes,
+			OSM_DE_SCOPE
+		)
+
+		await replaceActiveSelection(selected, { basedOn: null, set: [ban.entry, osm.entry] })
+
+		using before = await openServingRooftopProviders(legacy)
+		using after = await openServingRooftopProviders(selected)
+
+		expect(before.generation).toBeNull()
+		expect(after.generation).toBe(1)
+
+		const banDifferences = differencesOf(
+			FR_QUERIES,
+			(query) => before.national.for("fr").addressPoints?.find(query),
+			(query) => after.national.for("fr").addressPoints?.find(query)
+		)
+
+		const osmDifferences = differencesOf(
+			DE_QUERIES,
+			(query) => before.osm?.for("de").addressPoints?.find(query),
+			(query) => after.osm?.for("de").addressPoints?.find(query)
+		)
+
+		expect({ ban: banDifferences, osm: osmDifferences }).toEqual({ ban: [], osm: [] })
+	})
+})
+
+/**
+ * Write a WOF FTS extract with the given `spr` rows.
+ */
+function writeWOFExtract(path: PathBuilder, rows: string): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+			latitude REAL, longitude REAL,
+			min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
+			is_current INTEGER, is_deprecated INTEGER
+		);
+		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
+		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
+		${rows}
+	`)
+
+	buildPlaceSearchFTS(db)
+}
+
+describe("the WOF extract set on the active selection, against the conventional set", () => {
+	it("attaches the same files in the same order and answers every query identically", async () => {
+		const legacy = scratch.path("wof-legacy")
+		const selected = scratch.path("wof-selected")
+		const [adminName, postcodeName] = ["admin-global-priority.db", "postalcode-us.db"]
+
+		writeWOFExtract(
+			scratch.path("fixtures", adminName),
+			`INSERT INTO spr VALUES (101, NULL, 'Springfield', 'locality', 'US', 39.80, -89.65, 39.75, 39.85, -89.70, -89.60, -1, 0);
+			 INSERT INTO spr VALUES (103, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);`
+		)
+
+		writeWOFExtract(
+			scratch.path("fixtures", postcodeName),
+			`INSERT INTO spr VALUES (201, 101, '62701', 'postalcode', 'US', 39.80, -89.65, 39.78, 39.82, -89.67, -89.63, 1, 0);`
+		)
+
+		const set: SelectionEntry[] = []
+
+		for (const name of [adminName, postcodeName]) {
+			await copyFileTo(scratch.path("fixtures", name), wofDatabaseRoot(legacy)(name))
+
+			const installed = await installFixtureArtifact(
+				selected,
+				ServingRole.WOFExtract,
+				name,
+				await readLocalBuffer(scratch.path("fixtures", name)),
+				{ scope: { countries: [], subdivisions: null }, entryScope: { country: null, subdivision: null } }
+			)
+
+			set.push(installed.entry)
+		}
+
+		await replaceActiveSelection(selected, {
+			basedOn: null,
+			set: [{ ...set[0]!, order: set.flatMap((entry) => entry.order) }],
+		})
+
+		const legacyPaths = await existingWOFDatabasePaths(null, legacy)
+		const selectedPaths = await existingWOFDatabasePaths(null, selected)
+
+		// The lookup names each attached schema after its file, so an installed extract keeps its file name.
+		expect(selectedPaths.map((path) => path.split("/").at(-1))).toEqual([adminName, postcodeName])
+
+		expect(await Promise.all(selectedPaths.map((path) => sha256File(path)))).toEqual(
+			await Promise.all(legacyPaths.map((path) => sha256File(path)))
+		)
+
+		using before = new WOFSQLitePlaceLookup({ databasePath: legacyPaths })
+		using after = new WOFSQLitePlaceLookup({ databasePath: selectedPaths })
+
+		const queries = [
+			{ text: "Springfield", placetype: "locality" },
+			{ text: "Paris", placetype: "locality" },
+			{ text: "62701", placetype: "postalcode" },
+			{ text: "62702", placetype: "postalcode" },
+			{ text: "Nowhere", placetype: "locality" },
+		] as const
+
+		const answers = async (lookup: WOFSQLitePlaceLookup) =>
+			Promise.all(queries.map(async (query) => (await lookup.findPlace({ ...query })).map((place) => place.id)))
+
+		const was = await answers(before)
+		const now = await answers(after)
+
+		expect(
+			differencesOf(
+				[...queries.keys()],
+				(index) => was[index],
+				(index) => now[index]
+			)
+		).toEqual([])
+
+		expect(now.filter((ids) => ids.length)).toHaveLength(3)
+	})
+})
+
+describe("the FSTs on the active selection, against the files beside the weights and under the data root", () => {
+	it("autocompletes every prefix identically from the selected gazetteer FST", async () => {
+		const legacy = scratch.path("fst-legacy")
+		const selected = scratch.path("fst-selected")
+		const bytes = serializeFST(buildFixtureFST(FIXTURE_FST_PLACES))
+
+		await makeDirectories(wofDatabaseRoot(legacy)("fst-per-locale"))
+		await writeLocalBuffer(bytes, wofDatabaseRoot(legacy)("fst-per-locale", "fst-en-us.bin"))
+
+		const installed = await installFixtureArtifact(selected, ServingRole.GazetteerFST, "fst-en-us.bin", bytes, {
+			format: ArtifactFormat.FST,
+			scope: { countries: ["US"], subdivisions: null },
+			entryScope: gazetteerFSTScope("en-US"),
+		})
+
+		await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
+
+		const legacyPath = await resolveFSTPath(undefined, legacy)
+		const selectedPath = await resolveFSTPath(undefined, selected)
+
+		expect(selectedPath).toBe(installed.path)
+
+		const prefixes = ["new", "new y", "san", "san j", "united", "x"]
+
+		const run = (fstPath: PathBuilderLike) =>
+			Promise.all(prefixes.map((prefix) => runAutocomplete(prefix, { fstPath })))
+
+		const was = await run(legacyPath)
+		const now = await run(selectedPath)
+
+		expect(
+			differencesOf(
+				[...prefixes.keys()],
+				(index) => was[index],
+				(index) => now[index]
+			)
+		).toEqual([])
+
+		expect(now.filter((entries) => entries.length)).toHaveLength(5)
+	})
+
+	it("reads the selected gazetteer and street-morphology FSTs in place of the weights' siblings", async () => {
+		const selected = scratch.path("fst-priors-selected")
+		const bytes = serializeFST(buildFixtureFST(FIXTURE_FST_PLACES))
+		const weightsSibling = scratch.path("fixtures", "fst-en-us.bin").toString()
+
+		await writeLocalBuffer(bytes, weightsSibling)
+
+		const gazetteer = await installFixtureArtifact(selected, ServingRole.GazetteerFST, "fst-en-us.bin", bytes, {
+			format: ArtifactFormat.FST,
+			scope: { countries: ["US"], subdivisions: null },
+			entryScope: gazetteerFSTScope("en-US"),
+		})
+
+		const morphology = await installFixtureArtifact(
+			selected,
+			ServingRole.StreetMorphology,
+			"fst-street-morphology.bin",
+			bytes,
+			{
+				format: ArtifactFormat.FST,
+				scope: { countries: [], subdivisions: null },
+				entryScope: { country: null, subdivision: null },
+			}
+		)
+
+		await replaceActiveSelection(selected, { basedOn: null, set: [gazetteer.entry, morphology.entry] })
+
+		const weights = { fstPath: weightsSibling, streetMorphologyPath: weightsSibling, postcodePrefixPaths: [] }
+		const empty = scratch.path("fst-priors-empty")
+
+		// No selection: the weights' own files, unchanged.
+		expect(await selectedParsePriorArtifacts(weights, "en-US", empty)).toEqual(weights)
+
+		const chosen = await selectedParsePriorArtifacts(weights, "en-US", selected)
+
+		expect(chosen).toEqual({ ...weights, fstPath: gazetteer.path, streetMorphologyPath: morphology.path })
+		// A locale of another country has no entry and keeps the weights' FST.
+		expect((await selectedParsePriorArtifacts(weights, "en-GB", selected)).fstPath).toBe(weightsSibling)
+
+		const tokens = [["new", "york"], ["new", "york", "city"], ["san", "jose"], ["paris"]]
+
+		const walk = async (path: PathBuilderLike) => {
+			const matcher = deserializeFST(await readLocalBuffer(path))
+
+			return tokens.map((sequence) => matcher.walk(sequence))
+		}
+
+		const was = await walk(weightsSibling)
+		const now = await walk(chosen.fstPath!)
+
+		expect(
+			differencesOf(
+				[...tokens.keys()],
+				(index) => was[index],
+				(index) => now[index]
+			)
+		).toEqual([])
+
+		const morphologyWas = (await loadStreetMorphologyFST({ artifactPath: weightsSibling })).matcher
+		const morphologyNow = (await loadStreetMorphologyFST({ artifactPath: chosen.streetMorphologyPath! })).matcher
+
+		expect(
+			differencesOf(
+				tokens,
+				(sequence) => morphologyWas.walk(sequence),
+				(sequence) => morphologyNow.walk(sequence)
+			)
+		).toEqual([])
+	})
 })
 
 function resolveDirectory(path: string): string {

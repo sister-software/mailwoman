@@ -59,7 +59,6 @@
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
-		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/gazetteer": "workspace:*",

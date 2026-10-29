@@ -24,7 +24,7 @@ import {
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openOSMRegionDatabases } from "mailwoman/geocode/osm-layers"
+import { openServingRooftopProviders } from "mailwoman/geocode/serving-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
 import { titleCase } from "spliterator"
 
@@ -90,9 +90,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse,
 	// a no-op when the extract is absent.
-	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
-	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
-	const osmExtracts = await openOSMRegionDatabases(dataRootPath())
+	// Both read one generation of the active selection, else their conventional paths.
+	const rooftops = await openServingRooftopProviders(dataRootPath())
+	const banExtracts = rooftops.national
+	const osmExtracts = rooftops.osm
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
 
 	const engine: PhotonEngine = {

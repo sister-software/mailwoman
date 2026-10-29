@@ -21,15 +21,24 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { LayerCatalog } from "#data/catalog"
+import { openBANRegionDatabases } from "#geocode/ban-layers"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { loadParsePriors, venueHeadOptsFor } from "#geocode/parse-priors"
+import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
+import { openOSMRegionDatabases } from "#geocode/osm-layers"
+import { loadParsePriors, type ParsePriorArtifacts, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS, loadForkEntityDeps } from "#geocode/session"
 import { poiTaxonomyLookup } from "#poi/intent"
-import { capitalIndexFor, type CapitalTier, createResolverBackend, resolveCandidateDBPath } from "#resolver-backend"
+import {
+	capitalIndexFor,
+	type CapitalTier,
+	createResolverBackend,
+	existingWOFDatabasePaths,
+	resolveCandidateDBPath,
+} from "#resolver-backend"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
 import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/switch-pin"
 
@@ -530,14 +539,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return { ...verdict, kind: opts.forceQueryKind }
 	}
 
-	// The database set is the paths that exist.
-	// Presence is materialized up front so the filter below stays a synchronous
-	// read over facts already gathered.
-	const wofDatabasePresence = await Promise.all(
-		wofExtractPaths().map(async (path) => ({ path, present: await pathExists(path) }))
-	)
-
-	const presentWofDatabases = wofDatabasePresence.filter((entry) => entry.present).map((entry) => entry.path)
+	// The gauntlet reads one generation of the active selection, as the geocode session does.
+	const catalog = await LayerCatalog.read(dataRootPath())
+	// The database set is the paths that exist: the selected WOF extracts, else the conventional set.
+	const presentWofDatabases = await existingWOFDatabasePaths(null, dataRootPath(), catalog)
 
 	const resolver = createWOFResolver(
 		await createResolverBackend(resolverMod, {
@@ -554,7 +559,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// matching `createGeocodeSession`.
 	const capitalIndex = await capitalIndexFor(
 		pins.capitalTier === "production" ? GEOCODE_SESSION_DEFAULTS.capitalTier : pins.capitalTier,
-		await resolveCandidateDBPath(opts.candidateDB)
+		await resolveCandidateDBPath(opts.candidateDB, dataRootPath(), catalog)
 	)
 
 	const capitalLevel = capitalIndex
@@ -563,15 +568,15 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		: null
 
 	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-	// Load this module lazily, like the resolver module above.
-	// `@mailwoman/osm` is an optional peer of `mailwoman`.
-	// A static import would break the published CLI on an install without it.
-	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/region-database-provider")
-	const osmProvider = await OSMRegionDatabaseProvider.create(dataRootPath)
+	// `@mailwoman/osm` is an optional peer of `mailwoman`, which the opener loads lazily.
+	// The gauntlet grades with the OpenStreetMap tier, so its absence is an error here.
+	const osmProvider = await openOSMRegionDatabases(dataRootPath(), catalog)
+
+	if (!osmProvider) throw new Error("the gauntlet grades the OpenStreetMap tier and needs @mailwoman/osm installed")
+
 	// The BAN national-register tier sits ahead of OSM in production, so without it the
 	// gauntlet would grade an OSM-first cascade production never runs.
-	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
-	const banProvider = await BANRegionDatabaseProvider.create(dataRootPath)
+	const banProvider = await openBANRegionDatabases(dataRootPath(), catalog)
 
 	const pinDeps = resolverPinDeps(pins)
 
@@ -592,8 +597,18 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">> {
 		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
+		// The FSTs the active selection lists for the case's locale, else the files
+		// beside the weights, as the geocode session reads them.
+		// The base package is the en-US model.
+		const artifacts = await selectedParsePriorArtifacts(
+			forClassifier as ParsePriorArtifacts,
+			label === "base" ? "en-US" : label,
+			dataRootPath(),
+			catalog
+		)
+
 		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
-		const fstPath = (forClassifier as { fstPath?: PathBuilderLike }).fstPath?.toString()
+		const fstPath = artifacts.fstPath?.toString()
 
 		if (!fstPath) {
 			// Loud, once per locale: a prior-on run against an overlay with no FST silently
@@ -619,8 +634,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		const loaded = await loadParsePriors(
 			{
 				fstPath,
-				streetMorphologyPath: (forClassifier as { streetMorphologyPath?: string }).streetMorphologyPath,
-				postcodePrefixPaths: (forClassifier as { postcodePrefixPaths?: readonly string[] }).postcodePrefixPaths,
+				streetMorphologyPath: artifacts.streetMorphologyPath,
+				postcodePrefixPaths: artifacts.postcodePrefixPaths,
 			},
 			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
 		)
