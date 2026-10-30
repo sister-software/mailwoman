@@ -68,3 +68,11 @@ test("a limit of 0 rows per region emits one row per region, as Python's loop di
 	expect(regions.size).toBeGreaterThan(0)
 	expect(limited.map((row) => row.region)).toEqual([...regions])
 })
+
+test("a negative or fractional row limit is refused rather than read as one row or unlimited", async () => {
+	for (const maxRowsPerRegion of [-1, Number.NaN, 0.5]) {
+		await expect(Array.fromAsync(readJusoLabelRows("/nonexistent.zip", { maxRowsPerRegion }))).rejects.toThrow(
+			/maxRowsPerRegion must be a non-negative integer/
+		)
+	}
+})

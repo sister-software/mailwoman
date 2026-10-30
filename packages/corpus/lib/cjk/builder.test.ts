@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest"
 import {
 	buildCharVocab,
 	charLabelArrayFromSpans,
+	CJKStatsSample,
 	coverageStats,
 	MAX_RENDERED_CHARS,
 	muniBucket,
@@ -27,6 +28,7 @@ import {
 	verifyCJKRecord,
 	verifyRecord,
 	waterFill,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { foldHalfwidthKana, intToKanji, kanjiToInt } from "#cjk/text"
 import { JP_PREFECTURE_NAMES, normalizeJPName, normalizeJPNumber, splitJPStreet } from "#jp/text"
@@ -232,6 +234,28 @@ describe("the record check and the renderer", () => {
 		])
 
 		expect(muniBucket("千代田区")).toBe(muniBucket("千代田　区"))
+	})
+})
+
+describe("writeCJKSplit", () => {
+	it("refuses a part size below one row before it creates the directory", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-cjk-split-")
+
+		for (const rowsPerPart of [0, -1, 0.5, Number.NaN]) {
+			await expect(
+				writeCJKSplit({
+					directory: scratch.path("train"),
+					rows: [1, 2, 3],
+					rowsPerPart,
+					encodePart: () => [],
+					partPrefix: "part",
+					context: "test",
+					statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: 1 },
+				})
+			).rejects.toThrow(/rowsPerPart must be a positive integer/)
+		}
+
+		expect(await directoryHasEntries(scratch.path)).toBe(false)
 	})
 })
 

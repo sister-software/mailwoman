@@ -166,6 +166,12 @@ export async function* readJusoLabelRows(
 	archivePath: PathBuilderLike,
 	options: ReadJusoOptions = {}
 ): AsyncGenerator<JusoLabelRow> {
+	const limit = options.maxRowsPerRegion
+
+	if (limit != null && !(Number.isInteger(limit) && limit >= 0)) {
+		throw new Error(`maxRowsPerRegion must be a non-negative integer, got ${limit}`)
+	}
+
 	const names = (await listZipEntries(archivePath, { filenameEncoding: ENCODING })).map((entry) => entry.name)
 
 	const roadCodeMember = names.find((name) => name.includes("도로명코드") && !name.includes("변동"))

@@ -28,6 +28,14 @@ test("a gate after a separator keeps its unit proposal", () => {
 	expect(unitPhrases("Departures, gate 6")).toEqual(["gate 6"])
 })
 
+test("a lowercase gate after a capitalized name keeps its unit proposal when the input names an airport", () => {
+	// The street-type shape (a capitalized name, then the lowercase designator, with no separator) holds
+	// here, so only the airport word keeps the unit: the same shape without one is read as a street.
+	expect(unitPhrases("Departures gate 6, Heathrow Airport")).toEqual(["gate 6"])
+	expect(unitPhrases("Gardermoen Lufthavn gate 12")).toEqual(["gate 12"])
+	expect(unitPhrases("Departures gate 6, London")).toEqual([])
+})
+
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])
 	expect(lex.systems).toEqual(new Set(["us"]))

@@ -17,7 +17,7 @@
 import { describe, expect, test } from "vitest"
 
 import { buildAddressTree } from "#decoder/build-tree"
-import { containmentFor, PARENT_OF, WESTERN_PARENT_OF } from "#decoder/containment"
+import { containmentFor, WESTERN_PARENT_OF } from "#decoder/containment"
 import type { DecoderToken } from "#decoder/types"
 import { validateTree } from "#decoder/validate-tree"
 import { tok, WHITE_HOUSE_RAW } from "#test/decoder-fixtures"
@@ -70,10 +70,6 @@ describe("AddressTree.system + containmentFor", () => {
 		expect(containmentFor(undefined)).toBe(WESTERN_PARENT_OF)
 		expect(containmentFor("western")).toBe(WESTERN_PARENT_OF)
 		expect(containmentFor("japanese")).toBe(WESTERN_PARENT_OF)
-	})
-
-	test("PARENT_OF alias still points at the Western map (back-compat for existing imports)", () => {
-		expect(PARENT_OF).toBe(WESTERN_PARENT_OF)
 	})
 
 	test("validateTree honors the tree's system (a valid Western tree stays valid when tagged)", () => {

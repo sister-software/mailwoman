@@ -24,6 +24,10 @@ export const TRAIN_TIMEOUT_SECONDS = 32_400
  *
  * `A100-40GB` is the median of the two 90,000-step `v8.3.0-base-c6-90k-fp32master`
  * runs (7.2 and 7.0 s over 932 and 837 windows).
+ * The Rust trainer's 2,000-step probe on that card measured 6.5 s at batch 128 in bf16,
+ * startup included (#2879 T37, `/mnt/mw/audits/trainer-parity/stage8/T37-FINDINGS.md`),
+ * so 7.2 stays the slower bound.
+ *
  * `A100-80GB` reuses it as an upper bound that no run has measured.
  *
  * `cpu` is the lab CPU at 4 threads on the 200-step trainer-parity config at batch 8,

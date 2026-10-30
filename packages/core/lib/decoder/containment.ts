@@ -22,10 +22,10 @@
  *   shape, retrofitting a second system gets expensive (DeepSeek resolver consult, 2026-05-30).
  *
  *   The cheap insurance is this indirection: callers ask `containmentFor(system)` rather than
- *   importing one global constant. Today every system resolves to `WESTERN_PARENT_OF` (the
- *   historical map, behavior-identical), and `PARENT_OF` is kept as an alias so existing imports
- *   don't break. When a distinct system map lands (Phase 6 JP), it slots in here with zero
- *   call-site churn. See `AddressSystem` in `./types.ts`.
+ *   importing one global constant. Every system resolves to `WESTERN_PARENT_OF`, and a country
+ *   that numbers houses inside settlements to `SETTLEMENT_PARENT_OF`. When a distinct system map
+ *   lands (Phase 6 JP), it slots in here with zero call-site churn. See `AddressSystem` in
+ *   `./types.ts`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -109,11 +109,3 @@ export function containmentFor(
 ): Partial<Record<ComponentTag, ComponentTag[]>> {
 	return numbersHousesInSettlements(country) ? SETTLEMENT_PARENT_OF : WESTERN_PARENT_OF
 }
-
-/**
- * Backwards-compatible alias for the default (Western) containment map.
- *
- * Prefer `containmentFor()` in new code so the system parameter threads through.
- * This export remains for existing call sites.
- */
-export const PARENT_OF = WESTERN_PARENT_OF

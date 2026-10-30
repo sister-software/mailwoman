@@ -372,8 +372,16 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	sched3.load(&saved).unwrap();
 	assert_eq!(sched3.last_epoch, 1);
 	assert_eq!(sched3.schedule, live);
-	assert_eq!(sched3.schedule.multiplier(30), live.multiplier(30));
-	assert_ne!(sched3.schedule.multiplier(9), sched.schedule.multiplier(9));
+	// The rate the restored scheduler sets is the live schedule's at the restored step plus the steps taken: at
+	// step 25 the cooldown gives 0.75 of the restored base rate, where the saved cosine run would give 0.
+	for _ in 0..24 {
+		sched3.step(&mut optim3);
+	}
+	assert_eq!(sched3.last_epoch, 25);
+	let expected = sched3.base_lrs[0] * live.multiplier(25);
+	assert!((sched3.get_last_lr()[0] - expected).abs() < 1e-15, "{:?}", sched3.get_last_lr());
+	assert!((live.multiplier(25) - 0.75).abs() < 1e-12);
+	assert_ne!(live.multiplier(25), sched.schedule.multiplier(25));
 }
 
 #[test]

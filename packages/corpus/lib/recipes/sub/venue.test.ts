@@ -220,7 +220,7 @@ describe("sampleIdentifier", () => {
 	})
 })
 
-describe("buildPositiveForms", () => {
+describe("buildSubVenueForm", () => {
 	it("never emits a bare or modified Halle for de-DE", () => {
 		const leg = legFor("de-DE")
 		const promoted = promotedSurfacesFor("de-DE", lexicon)

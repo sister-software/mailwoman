@@ -131,6 +131,10 @@ export interface CJKSplitReport {
  * Writes one split as parquet parts of `rowsPerPart` rows each, and counts its coverage.
  */
 export async function writeCJKSplit<T>(options: WriteCJKSplitOptions<T>): Promise<CJKSplitReport> {
+	if (!Number.isInteger(options.rowsPerPart) || options.rowsPerPart < 1) {
+		throw new Error(`rowsPerPart must be a positive integer, got ${options.rowsPerPart}`)
+	}
+
 	await makeDirectories(options.directory)
 
 	const sampled: CJKRecord[] = []

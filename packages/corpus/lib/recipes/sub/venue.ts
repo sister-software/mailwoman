@@ -310,13 +310,6 @@ export function buildSubVenueForm(
 	}
 }
 
-/**
- * An alias of {@link buildSubVenueForm}.
- *
- * @deprecated Use {@link buildSubVenueForm}.
- */
-export const buildPositiveForms = buildSubVenueForm
-
 // #endregion
 
 // #region Negatives
