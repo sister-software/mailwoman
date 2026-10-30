@@ -539,6 +539,50 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `exposure/release_check.py`             | `release-check.run.ts`                                              | `preflight` and `completed` findings byte-equal, exit status equal                    |
 | `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed-script.run.ts`      | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
 
+**Records (observed 2026-10-30, lab host).** Each comparison above was rerun on both sides and recorded under
+`$MAILWOMAN_DATA_ROOT/audits/phase2-ports/<audit>/`. The Python side ran in a temporary `git worktree` at `ae90ae7a2`
+under CPython 3.12.3 with `PYTHONHASHSEED=0`. The TypeScript side ran under Node v26.2.0 in a checkout at
+`6b7b9a216`. That commit differs from `origin/main` `558cc490a` only under `packages/trainer`. The checkout also held
+the uncommitted DeepSeek port of the next change: files under `lib/recipes/deepseek/` that no audit imports, and
+one `authored` note in `corpus-source-inputs.json`. Each directory holds `python/` and `typescript/` outputs, both logs, the
+Python source the run executed, and a `record.json`. The `record.json` holds both revisions and commands, each input's
+path, sha256 and size, each output's sha256 and size, the equality verdict, and the comparison with the 2026-10-29
+capture. `index.json` lists every verdict, and `inputs/` keeps both config copies, the driver `phase2-records.ts` and
+`py_mixed_script_folded.py`. One process ran at a time.
+
+| Record directory          | Verdict                                                    | Bytes          | Python s / TS s | 2026-10-29 Python output reproduced |
+| ------------------------- | ---------------------------------------------------------- | -------------- | --------------- | ----------------------------------- |
+| `epoch-mixture-200k`      | byte-equal; both exit 1 with the same refusal              | 137,562        | 275 / 50        | yes                                 |
+| `epoch-mixture-1m`        | byte-equal                                                 | 167,345        | 303 / 62        | yes                                 |
+| `validation-coverage`     | byte-equal                                                 | 75,124         | 172 / 160       | yes                                 |
+| `label-support`           | values equal; key order differs                            | 1,606          | 87 / 83         | values equal; key order differs     |
+| `opening-token`           | byte-equal                                                 | 76,979         | 220 / 37        | yes                                 |
+| `region-code-token`       | byte-equal                                                 | 45,357         | 196 / 36        | yes                                 |
+| `comma-segment-number`    | byte-equal                                                 | 349            | 196 / 36        | yes                                 |
+| `suffix-feed`             | byte-equal (`audit_feed` with folded weights)              | 8,094          | 99 / 20         | yes                                 |
+| `config-keys`             | differs in the count line only: 264 against 268            | 127            | 4 / 1           | yes                                 |
+| `preflight`               | byte-equal; TypeScript `verify` accepts the Python receipt | 847            | 0.5 / 0.1       | yes                                 |
+| `calibration-isotonic`    | byte-equal, all four files                                 | 9,461 to 5,245 | 0.3 / 0.4       | yes                                 |
+| `calibration-drift-guard` | byte-equal                                                 | 188            | 0.2 / 0.3       | not captured on 2026-10-29          |
+| `mixed-script`            | byte-equal (`audit_rows` with folded weights)              | 67,532         | 104 / 20        | yes                                 |
+| `exposure-replay`         | equal but `measured_at` and `code_revision`                | 495,948        | 104 / 19        | yes, but the same two fields        |
+| `exposure-eligible`       | equal but `measured_at` and `code_revision`                | 34,931         | 275 / 153       | yes, but the same two fields        |
+| `exposure-canonical`      | equal but `measured_at` and `code_revision`                | 27,975         | 2.3 / 1.3       | yes, but the same two fields        |
+| `release-check`           | byte-equal, both stages and exit statuses                  | 1,772          | 0.04 / 0.2      | yes                                 |
+
+Notes on the records:
+
+- `config-keys` audits each checkout's own committed configs. `ae90ae7a2` holds 264, and `main` holds 268. Both
+  report no junk keys and no other load error, so this record does not compare the two ports on one input.
+- `label-support`: neither the earlier capture nor this one is a byte reference, because `rows_with_label`'s order
+  follows the hash seed.
+- `release-check` and `exposure-canonical`: the 2026-10-29 capture recorded no command. The arguments were read back
+  from its outputs. The claims, `--epochs 8`, and the contrast ids `ru-contrast-postcode-ru-native` and `nocontrast`
+  come from the findings. `--corpus-version v0.29.0` and the IN and VN `--source-stats` files come from the report.
+  With those arguments both earlier Python outputs are reproduced, so the arguments are the ones used (inferred).
+- The exposure references were first captured at `4753d3762` and `ba72cbdec`. `exposure/`, `data/` and
+  `audits/mixed_script.py` have no diff between those revisions and `ae90ae7a2`.
+
 Classified differences (**decided**):
 
 - The semantic tag registry moved to `packages/neural/lib/semantic-tags.ts`, and `emit-label-schema.run.ts` writes
