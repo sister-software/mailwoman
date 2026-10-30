@@ -128,46 +128,10 @@ fn run(args: &[String]) -> Result<bool, String> {
 			Ok(true)
 		}
 		Some("compare-checkpoints") => {
-			// Two checkpoint directories' weights, and their Fisher artifacts when both hold one.
 			let a = PathBuf::from(args.get(1).ok_or(USAGE)?);
 			let b = PathBuf::from(args.get(2).ok_or(USAGE)?);
-			let ta = trainer_model::checkpoint::read_model_tensors(&a).map_err(|e| e.to_string())?;
-			let tb = trainer_model::checkpoint::read_model_tensors(&b).map_err(|e| e.to_string())?;
-			let mut result = StageResult::new("checkpoint weights", "exact");
-			for (name, t) in &ta {
-				let other = tb.iter().find(|(n, _)| n == name).map(|(_, t)| t);
-				match other {
-					Some(o) => result.push(
-						trainer_loop::compare::diff(name, t, o, trainer_loop::compare::Tolerance::Exact)
-							.map_err(err)?,
-					),
-					None => result.notes.push(format!("{name} is in the first checkpoint only")),
-				}
-			}
-			let mut results = vec![result];
-			let fa = a.join(trainer_loop::fisher::FISHER_ARTIFACT);
-			let fb = b.join(trainer_loop::fisher::FISHER_ARTIFACT);
-			if fa.is_file() && fb.is_file() {
-				let xa = trainer_loop::fisher::read_npz(&fa).map_err(err)?;
-				let xb = trainer_loop::fisher::read_npz(&fb).map_err(err)?;
-				let mut fisher = StageResult::new("Fisher artifact", "1e-5 rel");
-				for (name, t) in &xa {
-					if let Some((_, o)) = xb.iter().find(|(n, _)| n == name) {
-						fisher.push(
-							trainer_loop::compare::diff(
-								name,
-								t,
-								o,
-								trainer_loop::compare::Tolerance::Relative { rel: 1e-5, floor: 1e-3 },
-							)
-							.map_err(err)?,
-						);
-					} else {
-						fisher.notes.push(format!("{name} is in the first artifact only"));
-					}
-				}
-				results.push(fisher);
-			}
+			println!("scope: {}", trainer_loop::compare::CHECKPOINT_SCOPE);
+			let results = trainer_loop::compare::compare_checkpoints(&a, &b).map_err(err)?;
 			report(&results, args)
 		}
 		Some("export-feeds") => {
