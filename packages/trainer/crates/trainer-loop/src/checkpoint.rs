@@ -89,6 +89,9 @@ pub fn checkpoint_extras(step: i64, config: &Value, vocab_size: i64) -> Value {
 }
 
 /// `_report_resume_drift`: one line per config field that differs from the checkpoint's stamped config.
+///
+/// `max_steps` is reported because the live config's schedule replaces the checkpoint's on resume
+/// (`LambdaLr::load`), so a changed horizon changes every later rate.
 pub fn resume_drift(live: &Value, saved: &Value) -> Vec<String> {
 	let mut drift = Vec::new();
 	for section in ["data", "model", "train"] {
@@ -96,7 +99,7 @@ pub fn resume_drift(live: &Value, saved: &Value) -> Vec<String> {
 			continue;
 		};
 		for (key, live_value) in live_section {
-			if ["output_dir", "max_steps", "trackio_run_name", "csv_log_path"].contains(&key.as_str()) {
+			if ["output_dir", "trackio_run_name", "csv_log_path"].contains(&key.as_str()) {
 				continue;
 			}
 			let saved_value = saved.get(section).and_then(|s| s.get(key));

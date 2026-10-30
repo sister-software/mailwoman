@@ -358,4 +358,19 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	assert_eq!(sched2.last_epoch, 1);
 	assert_eq!(optim2.state.len(), optim.state.len());
 	assert!(Path::new(&saved.join("training_state.json")).is_file());
+
+	// A resume under another schedule keeps the restored step and follows the live config, as torch's
+	// `load_state_dict` does: the saved run was cosine to step 10, and the live config cools down linearly to 40.
+	let live = Schedule::LinearCooldown {
+		cooldown_start: 20,
+		max_steps: 40,
+	};
+	let groups = build_groups(restored.store.parameters(), 1e-3, 0.01, None, Some(1e-2)).unwrap();
+	let mut optim3 = AdamW::new(groups);
+	let mut sched3 = LambdaLr::new(&mut optim3, live.clone());
+	sched3.load(&saved).unwrap();
+	assert_eq!(sched3.last_epoch, 1);
+	assert_eq!(sched3.schedule, live);
+	assert_eq!(sched3.schedule.multiplier(30), live.multiplier(30));
+	assert_ne!(sched3.schedule.multiplier(9), sched.schedule.multiplier(9));
 }

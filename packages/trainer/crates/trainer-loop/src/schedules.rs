@@ -115,10 +115,15 @@ impl LambdaLr {
 		Ok(())
 	}
 
-	/// `scheduler.load_state_dict`.
+	/// `scheduler.load_state_dict`: the step state comes from the checkpoint and the schedule stays the live config's.
+	///
+	/// torch's `LambdaLR.state_dict` omits the multiplier functions, so a resumed Python run follows the schedule its
+	/// config builds. The saved `schedule` is read only to keep `scheduler.json` complete.
 	pub fn load(&mut self, dir: &Path) -> Result<()> {
 		let saved: LambdaLr = serde_json::from_str(&std::fs::read_to_string(dir.join("scheduler.json"))?)?;
-		*self = saved;
+		self.base_lrs = saved.base_lrs;
+		self.last_epoch = saved.last_epoch;
+		self.last_lr = saved.last_lr;
 		Ok(())
 	}
 }
