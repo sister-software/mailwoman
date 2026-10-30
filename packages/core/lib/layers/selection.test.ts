@@ -184,6 +184,20 @@ describe("selectedSources", () => {
 		expect(selectedSources(SELECTION, ServingRole.AddressPoints, { country: "US", subdivision: "US-VA" })).toEqual([])
 	})
 
+	it("answers an unscoped lookup with every scoped entry's sources, a multi-country artifact once", () => {
+		expect(selectedSources(SELECTION, ServingRole.AddressPoints, { country: null, subdivision: null })).toEqual([
+			source(dach, DACH_OSM),
+			source(ban, FR_BAN),
+			source(frOSM, FR_OSM),
+			source(dc, DC_ADDRESS_POINTS),
+		])
+
+		// A country lookup still reads only its own entries, so France never answers from the DACH extract.
+		expect(
+			selectedSources(SELECTION, ServingRole.AddressPoints, { country: "FR", subdivision: null })
+		).not.toContainEqual(source(dach, DACH_OSM))
+	})
+
 	it("answers an unscoped role for every scope", () => {
 		expect(selectedSources(SELECTION, ServingRole.Candidate, { country: "LI", subdivision: null })).toEqual([
 			source(candidate, CANDIDATE),
