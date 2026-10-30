@@ -8,8 +8,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	collectCLISurface,
+	compiledCommandsWithoutSource,
 	COMMANDS_DIRECTORY,
 	escapeCell,
 	OUTPUT_PATH,
@@ -148,5 +151,18 @@ describe("renderTable", () => {
 		expect(renderTable(["A", "Long header"], [["x", "y"]])).toBe(
 			["| A   | Long header |", "| --- | ----------- |", "| x   | y           |"].join("\n")
 		)
+	})
+
+	it("names a compiled command whose source was moved or deleted", async () => {
+		await using scratch = await temporaryDirectory("cli-orphans-")
+
+		await writeLocalTextFile("", scratch.path("out", "corpus", "recipe.js"))
+		await writeLocalTextFile("", scratch.path("out", "corpus", "slice", "index.js"))
+		await writeLocalTextFile("", scratch.path("out", "corpus", "recipe.d.js"))
+		await writeLocalTextFile("", scratch.path("src", "corpus", "recipe.tsx"))
+
+		expect(await compiledCommandsWithoutSource(scratch.path("out"), scratch.path("src"))).toEqual([
+			"corpus/slice/index",
+		])
 	})
 })
