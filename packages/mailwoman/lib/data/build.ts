@@ -45,6 +45,7 @@ import {
 	readerIncompatibility,
 	type SelectedSource,
 	type SelectionEntry,
+	selectionScopesOf,
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
@@ -455,27 +456,29 @@ async function activationEntries(
 	}
 
 	for (const built of outputs) {
-		const scope = { country: built.output.country, subdivision: null }
+		for (const scope of selectionScopesOf(built.manifest.scope)) {
+			const existing =
+				current?.entries.find(
+					(entry) =>
+						entry.role === built.manifest.role &&
+						entry.scope.country === scope.country &&
+						entry.scope.subdivision === scope.subdivision
+				)?.order ?? []
 
-		const existing =
-			current?.entries.find(
-				(entry) =>
-					entry.role === built.manifest.role && entry.scope.country === scope.country && !entry.scope.subdivision
-			)?.order ?? []
+			const kept: SelectedSource[] = []
 
-		const kept: SelectedSource[] = []
-
-		for (const source of existing) {
-			if ((await recipeOf(source)) !== built.manifest.recipe) {
-				kept.push(source)
+			for (const source of existing) {
+				if ((await recipeOf(source)) !== built.manifest.recipe) {
+					kept.push(source)
+				}
 			}
-		}
 
-		entries.push({
-			role: built.manifest.role,
-			scope,
-			order: [...kept, { installationID: installation.id, artifactID: built.manifest.id }],
-		})
+			entries.push({
+				role: built.manifest.role,
+				scope,
+				order: [...kept, { installationID: installation.id, artifactID: built.manifest.id }],
+			})
+		}
 	}
 
 	return entries

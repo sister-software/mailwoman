@@ -17,6 +17,7 @@ import {
 	type LayerInstallation,
 	layerInstallationID,
 	selectedSources,
+	selectionScopesOf,
 	ServingRole,
 } from "#layers"
 import { CANDIDATE, DACH_OSM, DC_ADDRESS_POINTS, DC_INTERPOLATION, FR_BAN, FR_OSM } from "#test/layer-artifact-fixtures"
@@ -196,5 +197,24 @@ describe("layerInstallationID", () => {
 
 		expect(layerInstallationID(dc.artifactSet, origin)).toBe(dc.id)
 		expect(layerInstallationID(dc.artifactSet, { ...origin, release: "2026-11-01" })).not.toBe(dc.id)
+	})
+})
+
+describe("selectionScopesOf", () => {
+	it("gives a multi-country artifact one entry per country and no unscoped entry", () => {
+		expect(selectionScopesOf(DACH_OSM.scope)).toEqual(
+			["AT", "CH", "DE", "LI"].map((country) => ({ country, subdivision: null }))
+		)
+	})
+
+	it("gives a subdivision artifact one entry per subdivision, inside its country", () => {
+		expect(selectionScopesOf({ countries: ["US"], subdivisions: ["US-DC", "US-MD"] })).toEqual([
+			{ country: "US", subdivision: "US-DC" },
+			{ country: "US", subdivision: "US-MD" },
+		])
+	})
+
+	it("gives an artifact scoped to no country the unscoped entry", () => {
+		expect(selectionScopesOf({ countries: [], subdivisions: null })).toEqual([{ country: null, subdivision: null }])
 	})
 })

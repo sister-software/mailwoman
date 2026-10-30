@@ -44,6 +44,7 @@ import {
 	selectedSources,
 	type SelectionEntry,
 	type SelectionScope,
+	selectionScopesOf,
 	type ServingRole,
 	type UncheckedActiveSelection,
 	UnreadableArtifactError,
@@ -567,19 +568,9 @@ export async function activateInstallation(
 			throw new ActiveSelectionError("activation", [`${artifact.path} has no manifest`])
 		}
 
-		const subdivision = manifest.scope.subdivisions?.[0] ?? null
-
-		const country = subdivision
-			? subdivision.slice(0, 2)
-			: manifest.scope.countries.length === 1
-				? (manifest.scope.countries[0] ?? null)
-				: null
-
-		set.push({
-			role: manifest.role,
-			scope: { country, subdivision },
-			order: [{ installationID, artifactID: artifact.artifactID }],
-		})
+		for (const scope of selectionScopesOf(manifest.scope)) {
+			set.push({ role: manifest.role, scope, order: [{ installationID, artifactID: artifact.artifactID }] })
+		}
 	}
 
 	const current = await readActiveSelection(root)

@@ -36,6 +36,7 @@ import {
 	readerIncompatibility,
 	ROLE_REQUIREMENTS,
 	type SelectionEntry,
+	selectionScopesOf,
 	type ServingRole,
 	UnreadableArtifactError,
 	UnreadableReason,
@@ -72,7 +73,7 @@ import {
 	type PlannedBundle,
 	ProblemKind,
 } from "#data/plan"
-import { PUBLISHED_SCHEMA_VERSION, selectionScopeOf } from "#data/registry"
+import { PUBLISHED_SCHEMA_VERSION } from "#data/registry"
 
 /**
  * What happened to one planned artifact.
@@ -584,11 +585,13 @@ export async function executeInstallation(
 		for (const activation of activations) {
 			const installationID = activation.installationID ?? freshID!
 
-			entries.push({
-				role: activation.manifest.role,
-				scope: selectionScopeOf(activation.planned.available),
-				order: [{ installationID, artifactID: activation.manifest.id }],
-			})
+			for (const scope of selectionScopesOf(activation.manifest.scope)) {
+				entries.push({
+					role: activation.manifest.role,
+					scope,
+					order: [{ installationID, artifactID: activation.manifest.id }],
+				})
+			}
 		}
 
 		for (const { planned, path, installationID } of activations) {

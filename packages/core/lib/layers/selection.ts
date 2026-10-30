@@ -23,6 +23,7 @@ import { sha256Hex } from "#hash"
 import { canonicalJSON, stringifyJSON } from "#json"
 import {
 	type ArtifactID,
+	type ArtifactScope,
 	type ArtifactSetID,
 	isArtifactID,
 	isScopeCountryCode,
@@ -365,6 +366,24 @@ export function assertSelectionSuccessor(current: ActiveSelection | null, next: 
 	}
 
 	if (problems.length) throw new ActiveSelectionError("selection replacement", problems)
+}
+
+/**
+ * The selection scopes an artifact is activated under, one entry per scope.
+ *
+ * An artifact scoped to subdivisions gets one entry per subdivision, one scoped to
+ * countries one entry per country, and one scoped to neither the unscoped entry.
+ * A multi-country artifact therefore answers only for its own countries:
+ * the unscoped entry would answer every country's lookup.
+ */
+export function selectionScopesOf(scope: ArtifactScope): SelectionScope[] {
+	if (scope.subdivisions?.length) {
+		return scope.subdivisions.map((subdivision) => ({ country: subdivision.slice(0, 2), subdivision }))
+	}
+
+	if (scope.countries.length) return scope.countries.map((country) => ({ country, subdivision: null }))
+
+	return [{ country: null, subdivision: null }]
 }
 
 /**
