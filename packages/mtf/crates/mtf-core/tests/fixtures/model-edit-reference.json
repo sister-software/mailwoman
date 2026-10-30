@@ -3,6 +3,7 @@
 		"prune": "every id i with i < 4 or i % 5 != 0, ascending",
 		"reorder": "0, 1, 2, 3, then n - 1, n - 8, n - 15, ... while the id is above 3"
 	},
+	"generated_by": "CPython 3.12 (the `.python-version` pin) with protobuf 6.33.6 and sentencepiece 0.2.2, the versions uv.lock pinned at 553606715: each case parsed the model into sentencepiece_model_pb2.ModelProto, rebuilt `pieces` from the ids its keep rule lists, appended each `push` piece with piece, score and type set, and recorded the sha256 of SerializeToString(). The generator was a scratch script, and the Python tree it ran in is deleted (#2874), so these hashes are the record.",
 	"model": "tokenizer-v0.1.0.model",
 	"input_sha256": "82d126743d240c38beb58d9d0c2fd4b0af5f91f03aedd5db054c028f5f33c1a1",
 	"pieces": 16000,

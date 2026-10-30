@@ -1,5 +1,5 @@
 {
-	"generated_by": "the sentencepiece 0.2.2 wheel, SentencePieceTrainer.train(**flags) run in a directory holding the recipe's input as input.txt",
+	"generated_by": "the sentencepiece 0.2.2 wheel on CPython 3.12 (the `.python-version` pin), SentencePieceTrainer.train(**flags) run in a directory holding the recipe's input as input.txt",
 	"recipes": [
 		{
 			"name": "comma-symbol",
