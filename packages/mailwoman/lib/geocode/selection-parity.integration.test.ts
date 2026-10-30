@@ -513,11 +513,10 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 
 		await removePath(resolveDirectory(ban.path))
 
-		using fallback = await openServingRooftopProviders(root)
-
-		// With BAN gone, the national tier reads its conventional path, and the build stays the OpenStreetMap tier's.
-		expect(fallback.national.for("fr").addressPoints).toBeUndefined()
-		expect(fallback.osm?.for("fr").addressPoints?.find(FR_QUERIES[2]!)).toMatchObject({ source: "openstreetmap:fr" })
+		// With the selected BAN artifact gone, the national tier has no named source to read.
+		// Reading its conventional path would answer from a layer the selection did not choose,
+		// so opening the providers refuses and names BAN's file.
+		await expect(openServingRooftopProviders(root)).rejects.toThrow(ban.path)
 	})
 })
 

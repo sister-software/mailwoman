@@ -260,9 +260,12 @@ export class LayerCatalog {
 	/**
 	 * The selected sources for a role and scope, in order, each resolved to its file.
 	 *
-	 * A source whose installation record or file is missing is absent, and the next one is consulted.
-	 * A file present with a size other than its manifest records, or a manifest that
-	 * cannot be read, is unreadable and raises an error.
+	 * A source whose installation record or file is missing is skipped,
+	 * so the next source the selection names answers.
+	 * When every named source is missing, the call raises rather than answering with none, because an
+	 * empty answer would send the caller to its conventional path, a layer the selection did not choose.
+	 *
+	 * A file whose size differs from its manifest, or a manifest that cannot be read, always raises.
 	 *
 	 * @throws {@link UnreadableArtifactError} naming the artifact's path.
 	 */
@@ -270,14 +273,19 @@ export class LayerCatalog {
 		if (!this.selection) return []
 
 		const resolved: ResolvedSource[] = []
+		let missing: UnreadableArtifactError | null = null
 
 		for (const source of selectedSources(this.selection, role, scope)) {
 			const found = await this.#resolveSource(source)
 
-			if (found) {
+			if (found instanceof UnreadableArtifactError) {
+				missing ??= found
+			} else {
 				resolved.push(found)
 			}
 		}
+
+		if (missing && !resolved.length) throw missing
 
 		return resolved
 	}
@@ -289,7 +297,11 @@ export class LayerCatalog {
 	 * providers of one role, such as a national register and an OpenStreetMap build,
 	 * each read their own sources in the entry's order.
 	 * Absent, every source is read.
-	 * @throws {@link UnreadableArtifactError} when an installed source before the answer is unreadable.
+	 * A named source whose record or file is missing is skipped.
+	 * `null` means no named source was missing and none was accepted,
+	 * which leaves the caller its conventional path.
+	 * @throws {@link UnreadableArtifactError} when a named source before the answer is unreadable,
+	 * or when no source answered and one was missing, since the missing source may have been the answer.
 	 */
 	async firstPath(
 		role: ServingRole,
@@ -298,25 +310,52 @@ export class LayerCatalog {
 	): Promise<string | null> {
 		if (!this.selection) return null
 
+		let missing: UnreadableArtifactError | null = null
+
 		for (const source of selectedSources(this.selection, role, scope)) {
 			const found = await this.#resolveSource(source)
 
-			if (found && (!accept || accept(found.manifest))) return found.path
+			if (found instanceof UnreadableArtifactError) {
+				missing ??= found
+			} else if (!accept || accept(found.manifest)) return found.path
 		}
+
+		if (missing) throw missing
 
 		return null
 	}
 
-	async #resolveSource(source: SelectedSource): Promise<ResolvedSource | null> {
+	/**
+	 * Resolves a source the selection names, or returns the error that describes its absence.
+	 *
+	 * A missing installation record or file is returned rather than thrown, so the caller
+	 * can try the selection's next source and raise only when none answers.
+	 *
+	 * @throws {@link UnreadableArtifactError} when the file is present and its manifest
+	 * is absent or does not identify it, or its size differs from the manifest's.
+	 */
+	async #resolveSource(source: SelectedSource): Promise<ResolvedSource | UnreadableArtifactError> {
 		const installation = this.installations.get(source.installationID)
 		const artifact = installation?.artifacts.find((candidate) => candidate.artifactID === source.artifactID)
 
-		if (!artifact) return null
+		if (!artifact) {
+			return new UnreadableArtifactError(
+				catalogPaths(this.dataRoot).installations(`${source.installationID}.json`).toString(),
+				UnreadableReason.Unmanifested,
+				`the selection names artifact ${source.artifactID} of installation ${source.installationID}, and no installation record lists it`
+			)
+		}
 
 		const path = resolvePath(this.dataRoot, artifact.path)
 		const stats = await tryStat(path)
 
-		if (!stats) return null
+		if (!stats) {
+			return new UnreadableArtifactError(
+				path,
+				UnreadableReason.Unopenable,
+				`the selection names artifact ${source.artifactID}, and its file is missing`
+			)
+		}
 
 		const directory = resolvePath(path, "..")
 		let manifest = this.#manifests.get(directory)

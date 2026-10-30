@@ -189,6 +189,50 @@ describe("LayerCatalog", () => {
 		expect((failure as UnreadableArtifactError).reason).toBe("corrupt")
 	})
 
+	it("reports a selected artifact whose file was deleted as unreadable, naming its path", async () => {
+		const candidate = await install(ServingRole.Candidate, "candidate.db", "candidate bytes")
+
+		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
+		await writers.removePath(candidate.path)
+
+		const catalog = await LayerCatalog.read(scratch.path)
+
+		const failure = await catalog
+			.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+			.catch((error: unknown) => error)
+
+		expect(failure).toBeInstanceOf(UnreadableArtifactError)
+		expect((failure as UnreadableArtifactError).path).toBe(candidate.path)
+		expect((failure as UnreadableArtifactError).reason).toBe("unopenable")
+
+		await expect(catalog.resolve(ServingRole.Candidate, { country: null, subdivision: null })).rejects.toBeInstanceOf(
+			UnreadableArtifactError
+		)
+	})
+
+	it("reports a selected artifact with no installation record as unreadable", async () => {
+		const candidate = await install(ServingRole.Candidate, "candidate.db", "candidate bytes")
+
+		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
+		await writers.removePath(catalogPaths(scratch.path).installations(`${candidate.installationID}.json`))
+
+		const catalog = await LayerCatalog.read(scratch.path)
+
+		await expect(catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).rejects.toThrow(
+			/no installation record lists it/u
+		)
+	})
+
+	it("answers null for a role the selection names no source for", async () => {
+		const candidate = await install(ServingRole.Candidate, "candidate.db", "candidate bytes")
+
+		await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
+
+		const catalog = await LayerCatalog.read(scratch.path)
+
+		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "DC" })).toBeNull()
+	})
+
 	it("reports an active.json that is not JSON as unreadable rather than as no selection", async () => {
 		await writers.writeLocalTextFile("{ not json", catalogPaths(scratch.path).activeSelection)
 
