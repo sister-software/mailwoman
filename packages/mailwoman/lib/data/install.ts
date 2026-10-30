@@ -45,7 +45,7 @@ import { STREET_KEY_NORMALIZATION, STREET_LOCALES } from "@mailwoman/resolver-wo
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { basename, relative, resolvePath } from "path-ts"
+import { basename, type PathBuilderLike, relative, resolvePath } from "path-ts"
 
 import {
 	AcquisitionCancelledError,
@@ -248,9 +248,35 @@ interface ExecuteOptions {
 }
 
 /**
+ * Whether `db/<role>/<hex>/` already holds `fileName` with bytes that hash to `manifest.id`,
+ * under a readable manifest of the same identity.
+ */
+async function holdsIdenticalArtifact(
+	destination: PathBuilderLike,
+	fileName: string,
+	manifest: ArtifactManifest
+): Promise<boolean> {
+	// An unreadable manifest is not reused.
+	// The caller then replaces the directory with the staged copy and its manifest.
+	const installed = await readInstalledManifest(destination).catch(() => null)
+
+	if (installed?.id !== manifest.id) return false
+
+	const path = resolvePath(destination.toString(), fileName)
+
+	if (!(await tryStat(path))) return false
+
+	return artifactIDFromSHA256(await sha256File(path)) === manifest.id
+}
+
+/**
  * Move a validated artifact, its manifest and its receipt into `db/<role>/<hex>/` with one directory rename.
  *
- * An identical artifact already installed there is kept, and the staged copy is discarded.
+ * An installed copy there whose bytes hash to `manifest.id` is kept, and the staged copy is discarded.
+ * Any other directory there, such as one whose file was corrupted in place, is replaced by the staged copy.
+ *
+ * The old directory is renamed aside first and removed only once the new one is in place,
+ * so a failure leaves either the staged copy or the old directory on disk.
  *
  * @param receipt How the artifact was acquired: a transfer's {@link AcquisitionReceipt}, or a build's record.
  */
@@ -264,8 +290,9 @@ export async function placeArtifact(
 	const paths = catalogPaths(dataRoot)
 	const destination = paths.artifactDirectory(manifest.role, manifest.id)
 	const finalPath = destination(fileName).toString()
+	const existing = await tryStat(destination)
 
-	if (await readInstalledManifest(destination).catch(() => null)) {
+	if (existing && (await holdsIdenticalArtifact(destination, fileName, manifest))) {
 		await removePathIfPresent(stagedPath)
 
 		return finalPath
@@ -278,7 +305,19 @@ export async function placeArtifact(
 	await movePath(stagedPath, resolvePath(staging, fileName))
 	await writeRecordAtomically(manifest, resolvePath(staging, "manifest.json"))
 	await writeRecordAtomically(receipt, resolvePath(staging, "receipt.json"))
+
+	if (!existing) {
+		await movePath(staging, destination)
+
+		return finalPath
+	}
+
+	const replaced = `${destination.toString()}.replaced-${process.pid}`
+
+	await removePathIfPresent(replaced)
+	await movePath(destination, replaced)
 	await movePath(staging, destination)
+	await removePathIfPresent(replaced)
 
 	return finalPath
 }
