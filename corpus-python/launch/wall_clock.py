@@ -6,7 +6,7 @@ too: the estimate would be a guess, and a slow card can push a recipe past the t
 
 The estimate has three parts:
 
-- the training steps, at the GPU's observed seconds per 100 optimizer steps (batch 128) between
+- the training steps, at the GPU's observed seconds per 100 optimizer steps at the config's batch size between
   validation passes, times ``STEP_HEADROOM`` for slow batches and checkpoint writes;
 - the validation passes, ``max_steps // eval_every_steps + 1`` of them, at ``EVALUATION_SECONDS`` each;
 - ``STARTUP_SHUTDOWN_SECONDS`` outside the step loop.
@@ -20,7 +20,8 @@ from dataclasses import dataclass
 #: A100 recipe evaluated every 2,000 steps at about 9,900 s.
 TRAIN_TIMEOUT_SECONDS = 32400
 
-#: Seconds per 100 optimizer steps at batch 128, between validation passes, by Modal GPU type.
+#: Seconds per 100 optimizer steps between validation passes, by Modal GPU type and then by batch size. A batch with no
+#: measured row is refused rather than scaled from batch 128, because no per-batch measurement supports a scaling rule.
 #:
 #: ``A100-40GB``: the two 90,000-step runs ``v8.3.0-base-c6-90k-fp32master-s42`` and ``-s43`` (2026-10-29) keep
 #: fp32 parameters under bf16 autocast. They ran at a median 7.2 and 7.0 s per 100 steps over 932 and 837 windows
@@ -29,16 +30,16 @@ TRAIN_TIMEOUT_SECONDS = 32400
 #:
 #: ``A100-80GB`` reuses the 40 GB rate. It has the same compute and more memory bandwidth, so the 40 GB rate bounds
 #: it from above. That bound is inferred, and no run has measured the 80 GB card.
-OBSERVED_SECONDS_PER_100_STEPS: dict[str, float] = {
-    "A100-40GB": 7.20,
-    "A100-80GB": 7.20,
+OBSERVED_SECONDS_PER_100_STEPS: dict[str, dict[int, float]] = {
+    "A100-40GB": {128: 7.20},
+    "A100-80GB": {128: 7.20},
 }
 
 #: Seconds per 100 steps for the dev-only CPU device the Rust lifecycle checks run on (`launch/train_rust.py`'s
 #: `_train_rust_cpu`). Unlike the GPU rows it is at the 200-step trainer-parity config's batch 8: `trainer train` on the
 #: lab CPU at 4 threads ran steps 10 to 100 in 39.0 s (`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/rust-smoke/`). No
 #: recipe trains on this device, so the row only lets that small job's preflight write its receipt.
-DEV_OBSERVED_SECONDS_PER_100_STEPS: dict[str, float] = {"cpu": 43.3}
+DEV_OBSERVED_SECONDS_PER_100_STEPS: dict[str, dict[int, float]] = {"cpu": {8: 43.3}}
 
 #: Modal accepts ``A100`` for the 40 GB card.
 GPU_ALIASES: dict[str, str] = {"A100": "A100-40GB"}
@@ -60,6 +61,7 @@ class WallClockEstimate:
     """A run's estimated wall clock on one GPU, by part."""
 
     gpu: str
+    batch_size: int
     seconds_per_100_steps: float
     train_seconds: int
     evaluations: int
@@ -67,18 +69,25 @@ class WallClockEstimate:
     total_seconds: int
 
 
-def estimate_wall_clock(gpu: str, max_steps: int, eval_every_steps: int) -> WallClockEstimate:
-    """The wall clock ``max_steps`` steps need on ``gpu``.
+def estimate_wall_clock(gpu: str, max_steps: int, eval_every_steps: int, batch_size: int) -> WallClockEstimate:
+    """The wall clock ``max_steps`` steps of ``batch_size`` rows need on ``gpu``.
 
-    Raises ``ValueError`` for a GPU with no observed rate, naming the GPUs that have one.
+    Raises ``ValueError`` for a GPU, or a batch size on it, with no observed rate, naming the ones that have one.
     """
     card = GPU_ALIASES.get(gpu, gpu)
-    rate = OBSERVED_SECONDS_PER_100_STEPS.get(card, DEV_OBSERVED_SECONDS_PER_100_STEPS.get(card))
-    if rate is None:
+    rates = OBSERVED_SECONDS_PER_100_STEPS.get(card, DEV_OBSERVED_SECONDS_PER_100_STEPS.get(card))
+    if rates is None:
         known = ", ".join(sorted(OBSERVED_SECONDS_PER_100_STEPS))
         raise ValueError(
             f"no step rate has been observed on GPU {gpu!r} (observed: {known}); measure one with a 2,000-step "
             "probe and add it to OBSERVED_SECONDS_PER_100_STEPS in launch/wall_clock.py"
+        )
+    rate = rates.get(batch_size)
+    if rate is None:
+        known = ", ".join(str(b) for b in sorted(rates))
+        raise ValueError(
+            f"no step rate has been observed on {card} at batch_size={batch_size} (observed batches: {known}); "
+            "measure one with a 2,000-step probe at that batch and add it to OBSERVED_SECONDS_PER_100_STEPS"
         )
     if max_steps <= 0 or eval_every_steps <= 0:
         raise ValueError(f"max_steps={max_steps} and eval_every_steps={eval_every_steps} must be positive")
@@ -88,6 +97,7 @@ def estimate_wall_clock(gpu: str, max_steps: int, eval_every_steps: int) -> Wall
     evaluation_seconds = evaluations * EVALUATION_SECONDS
     return WallClockEstimate(
         gpu=card,
+        batch_size=batch_size,
         seconds_per_100_steps=rate,
         train_seconds=train_seconds,
         evaluations=evaluations,
@@ -96,9 +106,11 @@ def estimate_wall_clock(gpu: str, max_steps: int, eval_every_steps: int) -> Wall
     )
 
 
-def check_wall_clock(gpu: str, max_steps: int, eval_every_steps: int, timeout_seconds: int) -> WallClockEstimate:
+def check_wall_clock(
+    gpu: str, max_steps: int, eval_every_steps: int, batch_size: int, timeout_seconds: int
+) -> WallClockEstimate:
     """The estimate, or ``RuntimeError`` when it exceeds ``timeout_seconds``."""
-    estimate = estimate_wall_clock(gpu, max_steps, eval_every_steps)
+    estimate = estimate_wall_clock(gpu, max_steps, eval_every_steps, batch_size)
     if estimate.total_seconds > timeout_seconds:
         raise RuntimeError(
             f"max_steps={max_steps} on {estimate.gpu} needs ~{estimate.total_seconds}s wall clock: "

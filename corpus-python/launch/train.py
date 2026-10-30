@@ -161,7 +161,9 @@ def preflight(config_name: str, gpu: str, fresh: bool = False) -> str:
             reports[VALIDATION_LABEL_SUPPORT] = str(report_path)
             print(f"Validation label support: verified ({len(cfg.data.required_validation_label_support)} labels)")
 
-        estimate = check_wall_clock(gpu, cfg.train.max_steps, cfg.train.eval_every_steps, TRAIN_TIMEOUT_SECONDS)
+        estimate = check_wall_clock(
+            gpu, cfg.train.max_steps, cfg.train.eval_every_steps, cfg.train.batch_size, TRAIN_TIMEOUT_SECONDS
+        )
         print(
             f"Wall-clock preflight on {estimate.gpu}: ~{estimate.total_seconds}s required of "
             f"{TRAIN_TIMEOUT_SECONDS}s budget ({estimate.train_seconds}s of steps, "

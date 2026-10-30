@@ -53,6 +53,6 @@ def test_staged_inputs_are_keyed_by_the_config_sha256() -> None:
 
 
 def test_the_cpu_device_has_a_dev_rate() -> None:
-    estimate = estimate_wall_clock("cpu", 200, 100)
+    estimate = estimate_wall_clock("cpu", 200, 100, 8)
     assert estimate.seconds_per_100_steps == 43.3
     assert estimate.evaluations == 3
