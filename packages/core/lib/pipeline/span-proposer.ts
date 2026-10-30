@@ -108,6 +108,14 @@ export interface SpanProposerLexicon {
 	 */
 	modifierEligibleStructureDesignators: ReadonlySet<string>
 	/**
+	 * Venue designators that also follow a street name as a lowercase street-type word (`Friggs gate 6`).
+	 */
+	streetFormingStructureDesignators?: ReadonlySet<string>
+	/**
+	 * Words that keep a street-forming designator's venue reading: the input is at an airport.
+	 */
+	airportContextTerms?: ReadonlySet<string>
+	/**
 	 * A regex for delivery-service phrases.
 	 * It must use the `g` flag.
 	 */
@@ -346,6 +354,22 @@ function isShortIdentifier(body: string): boolean {
 	return /^#?\d{1,6}[A-Za-z]{0,2}$/.test(body) || /^[A-Za-z]$/.test(body) || /^[A-Za-z]\d{1,4}$/.test(body)
 }
 
+/**
+ * Reports whether the designator at `index` reads as a street-type word:
+ * it is street-forming, written in lowercase, and follows a capitalized word with
+ * no separator between them, in an input that names no airport.
+ */
+function streetFormingShape(tokens: readonly RawToken[], index: number, lexicon: SpanProposerLexicon): boolean {
+	const designator = tokens[index]!
+	const name = tokens[index - 1]
+
+	if (!name || !lexicon.streetFormingStructureDesignators?.has(designator.stripped)) return false
+
+	if (name.stripped !== name.body || !/^\p{Lu}/u.test(name.stripped)) return false
+
+	return !tokens.some((token) => lexicon.airportContextTerms?.has(token.stripped.toLowerCase()))
+}
+
 function proposeDesignatorPhrases(
 	text: string,
 	tokens: readonly RawToken[],
@@ -367,6 +391,8 @@ function proposeDesignatorPhrases(
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
 		const venueStructure = !isLevel && lexicon.venueStructureDesignators.has(lead)
+
+		if (venueStructure && streetFormingShape(tokens, i, lexicon)) continue
 
 		out.push({
 			start: tokens[i]!.strippedStart,

@@ -80,6 +80,29 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
 ]
 
 /**
+ * Venue-interior designators that are also a street-type word written after a street's name,
+ * in lowercase and joined to it without a separator: the Norwegian `gate` of `Friggs gate 6`.
+ *
+ * The proposer skips such a designator in that shape unless the input names an airport.
+ * An entry claims that some address system writes streets as "<Name> <entry> <number>".
+ */
+export const STREET_FORMING_STRUCTURE_DESIGNATORS: readonly string[] = ["gate"]
+
+/**
+ * Words that place an input at an airport, where a lowercase `gate` after a name is a boarding gate.
+ */
+export const AIRPORT_CONTEXT_TERMS: readonly string[] = [
+	"airport",
+	"terminal",
+	"aeroporto",
+	"aeropuerto",
+	"aéroport",
+	"flughafen",
+	"flygplats",
+	"lufthavn",
+]
+
+/**
  * Venue-interior designators that may be preceded by a {@link VENUE_STRUCTURE_MODIFIERS}
  * term: a subset of {@link VENUE_STRUCTURE_DESIGNATORS} that excludes `gate`
  * and `building`, which form ordinary street names in the modifier+designator shape

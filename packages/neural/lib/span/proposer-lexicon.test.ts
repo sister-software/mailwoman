@@ -4,10 +4,29 @@
  * @author Teffen Ellis, et al.
  */
 
+import { proposeSpans } from "@mailwoman/core/pipeline/span-proposer"
 import { expect, test } from "vitest"
 
 import { buildCodexSpanLexicon } from "#span"
 import { VENUE_STRUCTURE_DESIGNATORS } from "#venue/structure"
+
+const unitPhrases = (text: string) =>
+	proposeSpans(text, buildCodexSpanLexicon())
+		.filter((span) => span.kind === "UNIT_PHRASE")
+		.map((span) => text.slice(span.start, span.end))
+
+test("a lowercase gate after a street name and before its number proposes no unit (Friggs gate 6)", () => {
+	expect(unitPhrases("Friggs gate 6, Våland, 4011 Stavanger")).toEqual([])
+})
+
+test("a gate at an airport keeps its unit proposal (Terminal 2, Gate 6, Heathrow Airport)", () => {
+	expect(unitPhrases("Terminal 2, Gate 6, Heathrow Airport")).toEqual(["Terminal 2", "Gate 6"])
+	expect(unitPhrases("Oslo lufthavn gate 12")).toEqual(["gate 12"])
+})
+
+test("a gate after a separator keeps its unit proposal", () => {
+	expect(unitPhrases("Departures, gate 6")).toEqual(["gate 6"])
+})
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])
