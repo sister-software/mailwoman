@@ -678,11 +678,15 @@ Classified differences (**decided**):
   answered no US tuples for an empty directory.
 - `pythonCapitalize` reads CPython's title case through a frozen table of the 135 characters whose title case differs
   from upper case. Over every code point, 55 of 1,112,064 inputs still differ, each a character Node's newer Unicode
-  version gave a case mapping.
+  version gave a case mapping (re-measured 2026-10-30 against CPython 3.12.3 and Unicode 15.0.0,
+  `$MAILWOMAN_DATA_ROOT/audits/port-parity/python-text/record.json`, which lists the 55 code points).
 - `pick_kana_stem` sorted a `set` of readings by length, so between two shortest readings of equal length Python's choice
   followed `PYTHONHASHSEED`. The port keeps the first in the database's row order.
-- KEN_ALL is read through Node's `shift_jis` decoder, which decodes all 9,792 two-byte sequences CPython's cp932 decodes
-  the same way. `decodeCP932` maps the eight single bytes where the two differ.
+- KEN_ALL is read through Node's `shift_jis` decoder, and `decodeCP932` maps the eight single bytes where the two
+  differ. Re-measured on 2026-10-30 (`audits/port-parity/python-text/record.json`): over every lead byte 81–9F and E0–FC
+  and every trail byte 40–7E and 80–FC, CPython's cp932 decodes 9,604 two-byte sequences, and `decodeCP932` decodes
+  each of them the same way. It also decodes the 196 single bytes CPython decodes the same way. The earlier figure of
+  9,792 sequences came from a counting rule that was not recorded.
 
 Korea (`countries/kr/corpora/`, `countries/kr/{juso,registers}.py`) moved to `lib/kr/corpus/` over the existing
 `lib/kr/adapters/` readers. It reproduces `kr-build-reference.json` with the Python test's `gdaltransform` stub, and on
